@@ -4,7 +4,7 @@
 >
 > 层级：本文档位于 `ARCHITECTURE.md` 之下，定义第一版 Snapshot 的具体数据需求、Dataset 语义、Raw 契约、Snapshot 输出结构与执行边界。架构层面的稳定边界以 `ARCHITECTURE.md` 为准；本文档不得与其冲突。
 >
-> 实现本 Guide 任务的 Agent 应先阅读 `ARCHITECTURE.md` 第 2、3、4、6、9 节，再按本文档执行。
+> 实现本 Guide 任务的 Agent 应先阅读 `ARCHITECTURE.md` 第 2、3 节（核心架构与 Raw/Snapshot 边界）、第 4 节（架构边界的执行）与第 9 节（项目结构），再按本文档执行。
 
 ## 1. 第一版目标与范围
 
@@ -34,9 +34,8 @@ Dataset 名称是本项目语义名称，不要求与 Tushare endpoint 同名（
 ## 3. 输入：trade_date
 
 * 目标交易日由调用方给定。
-* 脚本层输入使用 `YYYY-MM-DD`（与 `ARCHITECTURE.md` 第 6 节一致）。
-* 传给 Tushare 时转换为 `YYYYMMDD`。
-* 给定日期无数据（非交易日、停市、源无数据）时：属于采集失败，按 `ARCHITECTURE.md` 第 4 节显式报错，不得产出空 Snapshot，不得自动寻找最近交易日或自动 fallback。
+* 脚本层输入使用 `YYYY-MM-DD`，传给 Tushare 时转换为 `YYYYMMDD`。
+* 给定日期无数据（非交易日、停市、源无数据）时：属于采集实现需要明确处理的失败/空结果情况。本 Definition 只明确这一边界，不规定具体失败机制；不自动寻找最近交易日，不自动 fallback。
 
 ## 4. Dataset 定义
 
@@ -93,6 +92,8 @@ Dataset 名称是本项目语义名称，不要求与 Tushare endpoint 同名（
 
 Tushare `daily` 是未复权日行情；停牌期间不会返回对应股票数据。
 
+`pre_close` 是昨收价（除权价）：除权除息日按交易所口径给出除权参考价，不是简单的未复权昨收。`pct_chg` 保持为 Tushare Source 提供的涨跌幅事实，不在 Raw 层重算或改写。
+
 因此第一版 Snapshot 中基于该 Dataset 计算出来的股票数量，应理解为：
 
 > 当日 `daily` Dataset 中实际返回并参与统计的股票数量。
@@ -109,7 +110,7 @@ Tushare `daily` 是未复权日行情；停牌期间不会返回对应股票数�
 | `high` | 最高价 | 元（未复权） |
 | `low` | 最低价 | 元（未复权） |
 | `close` | 收盘价 | 元（未复权） |
-| `pre_close` | 昨收价 | 元（未复权） |
+| `pre_close` | 昨收价（除权价） | 元；除权除息日为交易所口径的除权参考价 |
 | `change` | 涨跌额 | 元，源定义 = close − pre_close |
 | `pct_chg` | 涨跌幅 | %（数值 1 表示 1%） |
 | `vol` | 成交量 | 手 |
@@ -164,7 +165,7 @@ Raw Dataset 应尽量保留 Source 返回数据的原始语义。
 
 ### 执行边界
 
-Raw 的写入与重跑策略遵循 `ARCHITECTURE.md` 第 4 节：已存在的 Raw 文件不静默覆盖；采集失败显式报错，不得以空数据集静默替代；写入先落临时文件，校验通过后再发布。
+Raw 文件的写入、覆盖与重跑策略属于采集实现细节，本 Definition 不预设；无数据交易日的处理边界见第 3 节，Raw → Snapshot 的依赖边界见第 7 节。
 
 ## 6. 第一版 Snapshot Definition
 
@@ -224,7 +225,7 @@ snapshot
 
 * 来源：`index_daily` Raw Dataset。
 * 按指数代码组织：对象 key 即指数 `ts_code`，identity 由 key 表达，对象内部不再重复携带 `ts_code`。
-* `indices` 必须包含第 4.1 节列出的全部六个指数；缺失任一只指数属于 Raw 不符合预期，Snapshot Assembly 按 `ARCHITECTURE.md` 第 4 节显式失败。
+* `indices` 必须包含第 4.1 节列出的全部六个指数；缺失任一只指数属于 Raw 不符合预期，不完整的 Raw 不能用于产出第一版 Snapshot。
 * 每个指数包含以下字段，语义与单位沿用 Raw（见 4.1）：`open`、`high`、`low`、`close`、`pre_close`、`change`、`pct_chg`、`vol`（手）、`amount`（千元）。
 * 不增加技术指标或趋势评价。
 
@@ -252,7 +253,7 @@ advancers + decliners + unchanged = traded_stocks
 ```
 
 * `pct_chg` 的比较基于 Source 数值（百分比数值，例如 `pct_chg = 3.5` 表示 +3.5%）。
-* 若 Raw 中 `pct_chg` 或 `amount` 缺失、不符合预期，Snapshot Assembly 按 `ARCHITECTURE.md` 第 4 节显式失败，不得静默跳过记录或估算数值。
+* 若 Raw 中 `pct_chg` 或 `amount` 缺失、不符合预期，不得静默跳过记录或估算数值——breadth 各字段按本节定义基于当日全部记录计算。
 * `total_amount` 保留千元单位。Snapshot 中不得出现无法判断单位的金额语义。
 
 ## 7. Snapshot 与 Raw 的依赖关系

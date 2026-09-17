@@ -175,9 +175,8 @@ Daily Snapshot
 
 Snapshot 可以频繁调整，而不要求重新设计数据采集层。
 
-### 语义与失败规则
+### 语义规则
 
-* 采集失败必须显式报错，不得以空数据集或省略数据集静默替代。
 * 原始数据不做分析层解读。
 * Snapshot 只能包含 Raw Dataset 的下游组织结果，不得包含只存在于 Snapshot 中且无法回溯到 Raw Dataset 的数据事实。
 
@@ -189,15 +188,12 @@ Snapshot 可以频繁调整，而不要求重新设计数据采集层。
 
 ---
 
-## 4. 写入与重跑策略
+## 4. 架构边界的执行
 
-本节裁定原始数据与 Snapshot 的幂等性，避免"重跑一次数据就变了"这类静默语义漂移。
+架构边界在运行时的直接推论：
 
-* 同一交易日的原始数据**不静默覆盖**。已存在的 Raw Dataset 文件视为事实记录，重跑默认报错退出；需要重新获取时使用显式参数（例如 `--overwrite`）。
-* 源未返回数据的交易日（非交易日、停市、源无数据）**不得**产出空 Snapshot。应显式失败并报告原因。
-* Snapshot Assembly 只从本地 Raw Dataset 组装，**不得在组装阶段静默发起采集**。
-* 组装所需的数据集或字段缺失、不符合预期时，以非零退出码失败并给出明确原因。
-* 写入前先写入目标日期目录内的临时文件或临时目录，校验通过后再发布为正式文件，避免留下半成品 Snapshot。
+* Snapshot Assembly 只从本地 Raw Dataset 组装，不得在组装阶段直接发起采集。
+* 采集与组装的具体写入、覆盖、重跑与失败处理属于实现策略，不由本文件预设；需要时由对应 Guide 明确。
 
 ---
 
@@ -286,19 +282,13 @@ Snapshot Definition A
 
 > 对当前已经确定的数据需求，能够稳定、明确、可复现地生成 Snapshot。
 
-### Snapshot Definition 在本阶段的落点
+### Snapshot Definition 的 authority 落点
 
-Snapshot Definition 由以下两部分共同构成：
+Snapshot Definition 的 authority 是 `guides/` 中对应的 Guide（当前为 `guides/daily-market-snapshot.md`）。
 
-* `guides/` 中对该 Snapshot 数据需求的描述；
-* `scripts/build_snapshot.py` 中当前的组装逻辑。
+`scripts/build_snapshot.py` 只是该 Definition 的实现：它按照 Guide 读取 Raw Dataset 并组装 Snapshot，不构成 authority，不得反向定义或修改 Snapshot Definition。实现与 Guide 不一致时，必须对实现做 reconciliation，不得静默改变语义。
 
 本阶段**不**引入额外的 schema 定义文件、Snapshot 注册表或版本管理框架。
-
-### 日期基线
-
-* 交易日由调用方显式传入（例如 `--date YYYY-MM-DD`）。
-* 脚本不得以运行当天隐式替代传入日期。
 
 ### 可复现性要求
 
@@ -520,19 +510,17 @@ write local snapshot files
 
 ### 需要更新本文件的变更
 
-* 新增数据源类型或改变 Source 的职责；
-* Dataset 语义或职责边界的变化；
-* Snapshot Definition 组织方式的变化；
-* 采集层与 Snapshot 层之间职责边界的变化；
-* 输出结构所有权的变化（谁决定 Snapshot 的输出结构）。
+* Source / Dataset / Snapshot 的职责边界变化；
+* Snapshot 输出组织的所有权变化（谁决定 Snapshot 的输出结构）。
 
 ### 不需要更新本文件的变更
 
-* 新增一个具体 Dataset；
-* 调整某个 Snapshot 的字段清单或文件拆分方式；
-* 某个脚本内部的实现调整。
+以下变化由对应的 Guide 承载，不修改本文件：
 
-上述变更由对应的 Guide 承载。
+* 新增一个具体 Dataset；
+* Dataset 具体内容（字段、分类）的变化；
+* 具体 Snapshot 的字段清单、文件拆分或输出结构变化；
+* 某个脚本内部的实现调整。
 
 ### reconciliation
 
