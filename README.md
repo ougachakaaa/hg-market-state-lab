@@ -6,7 +6,7 @@
 
 项目架构及架构层面的 authority 定义在 `ARCHITECTURE.md` 中。当前第一版 Daily Snapshot 的具体定义（Dataset、Raw 契约、Snapshot 结构与执行边界）在 `guides/daily-market-snapshot.md` 中。
 
-当前架构定义、第一版 Snapshot Definition 与基础开发环境已就绪，尚未实现市场数据采集与 Snapshot 生成。
+当前架构定义、第一版 Snapshot Definition 与基础开发环境已就绪，已实现两个 Raw Dataset Collector（`index_daily`、`stock_daily`）；Snapshot Assembly 尚未实现。
 
 ## 基础环境
 
@@ -38,11 +38,37 @@ poetry run mypy .
 * `guides/daily-market-snapshot.md`：第一版 Daily Snapshot Definition（具体 Dataset、Raw 契约、Snapshot 结构与执行边界）
 * `config/`：配置
 * `guides/`：DSH 执行任务使用的 Guide
-* `scripts/`：后续 Python 执行脚本
-* `data/raw/`：后续原始数据输出目录
+* `scripts/`：Raw Dataset Collector（`fetch_*.py`）与后续的 `build_snapshot.py`
+* `data/raw/`：Raw Dataset 输出目录
 * `data/snapshots/`：后续 Snapshot 输出目录
 * `tests/`：测试
 
 ## 环境变量
 
 复制 `.env.example` 为 `.env` 并填入本地值。`.env` 不进入版本控制。
+
+```bash
+TUSHARE_TOKEN=<你的 Tushare token>
+```
+
+## 采集 Raw Dataset
+
+两个 Collector 相互独立，都接受显式给出的交易日 `YYYY-MM-DD`：
+
+```bash
+poetry run python scripts/fetch_index_daily.py 2026-09-17
+poetry run python scripts/fetch_stock_daily.py 2026-09-17
+```
+
+输出：
+
+```text
+data/raw/
+└─ 2026-09-17/
+   ├─ index_daily.json
+   └─ stock_daily.json
+```
+
+数据集语义、字段单位与 Raw 文件形态以 `guides/daily-market-snapshot.md` 为准。给定日期没有数据（非交易日、停市、源无数据）时脚本明确失败，不自动 fallback 到其他日期。
+
+`data/raw/` 是运行产物，不进入版本控制。

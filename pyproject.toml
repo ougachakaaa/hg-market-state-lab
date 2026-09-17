@@ -4,7 +4,7 @@ version = "0.1.0"
 description = "Collect market data and turn it into a fixed Daily Market Snapshot for GPT analysis."
 readme = "README.md"
 requires-python = ">=3.13,<3.14"
-dependencies = []
+dependencies = ["tushare (>=1.4.29,<2.0.0)", "python-dotenv (>=1.2.3,<2.0.0)"]
 
 [tool.poetry]
 package-mode = false
@@ -28,6 +28,18 @@ line-length = 100
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B"]
 
+[tool.ruff.lint.isort]
+# scripts/ and tests/ are flat directories imported directly, so ruff cannot
+# infer these as first-party on its own.
+known-first-party = ["_common", "fake_source", "fetch_stock_daily", "fetch_index_daily"]
+
 [tool.mypy]
 python_version = "3.13"
-files = ["tests"]
+files = ["scripts", "tests"]
+
+[[tool.mypy.overrides]]
+# Neither the Tushare SDK nor pandas ships type hints or a py.typed marker.
+# The project's own scripts and tests stay fully checked; only these imports
+# are treated as untyped.
+module = ["tushare", "tushare.*", "pandas", "pandas.*"]
+ignore_missing_imports = true
