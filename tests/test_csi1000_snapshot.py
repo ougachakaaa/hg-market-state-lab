@@ -53,14 +53,14 @@ TARGET_CLOSE = close_at(TARGET_INDEX)
 # Guide 7.4 ordering: (expiry_date, strike, option_type). The two MO monthly
 # series carry distinct contract codes, as the Raw contract does.
 OPTIONS = [
-    # contract, Source maturity_date, strike, call_put, close premium
-    ("MO2609-C-7450.CFE", "20260925", 7450.0, "C", 760.0),
-    ("MO2609-P-7200.CFE", "20260925", 7200.0, "P", 380.0),
-    ("MO2609-C-7000.CFE", "20260925", 7000.0, "C", 900.0),
-    ("MO2610-C-7000.CFE", "20261023", 7000.0, "C", 950.0),
+    # contract, Raw maturity_date, strike, call_put, close premium
+    ("MO2609-C-7450.CFE", "2026-09-25", 7450.0, "C", 760.0),
+    ("MO2609-P-7200.CFE", "2026-09-25", 7200.0, "P", 380.0),
+    ("MO2609-C-7000.CFE", "2026-09-25", 7000.0, "C", 900.0),
+    ("MO2610-C-7000.CFE", "2026-10-23", 7000.0, "C", 950.0),
 ]
-# Guide 7.2: the Goal 2 Collector still writes maturity_date as YYYYMMDD, while
-# the snapshot expresses the same fact as expiry_date in YYYY-MM-DD.
+# Guide 7.2: the collector normalizes maturity_date to YYYY-MM-DD; the snapshot
+# renames the same fact to expiry_date without changing its representation.
 NEAR_EXPIRY_DATE = "2026-09-25"
 FAR_EXPIRY_DATE = "2026-10-23"
 
@@ -454,15 +454,15 @@ def test_mo_chain_is_joined_renamed_sorted_and_derived(
     assert chain[3]["days_to_expiry"] == 36
 
 
-def test_mo_expiry_date_is_normalized_from_source_date_form(
+def test_mo_expiry_date_is_a_rename_of_the_iso_maturity_date(
     tmp_path: Path, raw_root: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """Guide 7.2 / 16: maturity_date may still arrive as YYYYMMDD."""
+    """Guide 7.2: maturity_date (already YYYY-MM-DD) is renamed to expiry_date."""
     patch_dirs(monkeypatch, tmp_path, raw_root)
     raw = base_raw()
     assert {record["maturity_date"] for record in raw["mo_option_basic"]} == {
-        "20260925",
-        "20261023",
+        "2026-09-25",
+        "2026-10-23",
     }
     write_raw(raw_root, raw)
 
@@ -476,6 +476,20 @@ def test_mo_expiry_date_is_normalized_from_source_date_form(
     ]
     assert all("maturity_date" not in row for row in chain)
 
+
+def test_mo_maturity_date_in_source_yyyymmdd_form_fails(
+    tmp_path: Path, raw_root: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Raw contract is YYYY-MM-DD; a YYYYMMDD value violates it and fails."""
+    patch_dirs(monkeypatch, tmp_path, raw_root)
+    raw = base_raw()
+    raw["mo_option_basic"][0]["maturity_date"] = "20260925"
+    write_raw(raw_root, raw)
+
+    with pytest.raises(SnapshotError, match="maturity_date"):
+        build_snapshot.build_snapshot(TARGET_DATE)
+
+
 def test_mo_malformed_maturity_date_fails(
     tmp_path: Path, raw_root: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
@@ -484,6 +498,27 @@ def test_mo_malformed_maturity_date_fails(
     raw["mo_option_basic"][0]["maturity_date"] = "2026092"
     write_raw(raw_root, raw)
     with pytest.raises(SnapshotError, match="maturity_date"):
+        build_snapshot.build_snapshot(TARGET_DATE)
+
+
+@pytest.mark.parametrize("value", [None, "900.0", float("nan"), float("inf")])
+def test_mo_missing_or_malformed_close_fails(
+    tmp_path: Path,
+    raw_root: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    value: Any,
+) -> None:
+    """close feeds close_premium_pct_of_spot, so null / malformed fails.
+
+    A null close must surface as a SnapshotError, never as a Python TypeError
+    from dividing by ``None``.
+    """
+    patch_dirs(monkeypatch, tmp_path, raw_root)
+    raw = base_raw()
+    raw["mo_option_daily"][0]["close"] = value
+    write_raw(raw_root, raw)
+
+    with pytest.raises(SnapshotError, match="close"):
         build_snapshot.build_snapshot(TARGET_DATE)
 
 
@@ -1010,6 +1045,43 @@ def test_missing_im_number_fails(
 
     with pytest.raises(SnapshotError, match="oi_chg"):
         build_snapshot.build_snapshot(TARGET_DATE)
+
+
+def test_im_missing_close_fails(
+    tmp_path: Path, raw_root: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """close feeds the basis fields, so a null close must fail, not pass through."""
+    patch_dirs(monkeypatch, tmp_path, raw_root)
+    raw = base_raw()
+    raw["im_futures_daily"][0]["close"] = None
+    write_raw(raw_root, raw)
+
+    with pytest.raises(SnapshotError, match="close"):
+        build_snapshot.build_snapshot(TARGET_DATE)
+
+
+def test_im_snapshot_does_not_copy_unselected_raw_fields(
+    tmp_path: Path, raw_root: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Raw im_futures_daily holds extra Source facts the Snapshot does not copy.
+
+    Guide 8.3: the first-version projection selects only the listed fields, so
+    ``pre_close`` / ``pre_settle`` / ``change1`` / ``change2`` stay out of both
+    ``history`` and ``target_date_curve``. Raw-schema and Snapshot-schema are
+    not the same thing.
+    """
+    patch_dirs(monkeypatch, tmp_path, raw_root)
+    raw = base_raw()
+    extra_fields = {"pre_close", "pre_settle", "change1", "change2"}
+    assert extra_fields <= set(raw["im_futures_daily"][0])
+    write_raw(raw_root, raw)
+
+    im_futures = run_builder(tmp_path, raw_root)["im_futures"]
+
+    for observation in im_futures["history"]:
+        assert not extra_fields & set(observation)
+    for observation in im_futures["target_date_curve"]:
+        assert not extra_fields & set(observation)
 
 
 def test_no_analysis_fields_leak_into_the_snapshot(

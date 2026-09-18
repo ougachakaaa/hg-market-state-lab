@@ -133,7 +133,7 @@ output/
 
 `YYYY-MM-DD` 表示 `target_trade_date`（目录名是目标交易日，不是文件中所有记录共同的 `trade_date`）。第一版只使用一个 JSON 文件，不提前拆分多个文件，不引入 schema registry 或 version framework。
 
-> reconciliation：`snapshot.json` 是 Data Service `csi1000-5d-analysis` 的最终 artifact，其 canonical user-facing output 锁定为 `output/csi1000-5d-analysis/<target_trade_date>/snapshot.json`（见 `guides/data-services.md`）。本文档定义的是 `snapshot.json` 的**内容与组织方式**，不因输出目录变化而改变。当前 `build_snapshot.py` 仍写 `data/snapshots/csi1000-5d-analysis/<date>/snapshot.json`，这是 Data Service 概念引入前的内部位置；实现阶段应改为直接写 `output/`，不得长期维护两份相同 canonical artifact。
+`snapshot.json` 是 Data Service `csi1000-5d-analysis` 的最终 artifact，其 canonical user-facing output 锁定为 `output/csi1000-5d-analysis/<target_trade_date>/snapshot.json`（见 `guides/data-services.md`）。本文档定义的是 `snapshot.json` 的**内容与组织方式**；`build_snapshot.py` 直接写该 canonical 位置，不再写 `data/snapshots/...`，不维护两份 artifact。
 
 ## 4. 输出逻辑结构
 
@@ -319,7 +319,7 @@ strike      ← exercise_price
 expiry_date ← maturity_date
 ```
 
-`expiry_date` 输出统一为 `YYYY-MM-DD`。当前 Goal 2 Collector 将 `maturity_date` 以 Source 的 `YYYYMMDD` 形式落地（未像 `list_date` / `delist_date` 那样归一化），Snapshot Assembly 派生 `expiry_date` 时需先将其归一化为 `YYYY-MM-DD`（见第 16 节 reconciliation）。
+`expiry_date` 直接等于 `maturity_date`。Raw 层已按 `ARCHITECTURE.md` 第 3 节 minimal normalization 将 `maturity_date` 落地为 `YYYY-MM-DD`（与 `list_date` / `delist_date` 一致，见 `guides/csi1000-5d-analysis-data.md` 4.2），因此 Snapshot 只做 analysis-friendly rename `maturity_date → expiry_date`，不再做额外的日期格式归一化。
 
 其余行情字段（`open` / `high` / `low` / `close` / `settle` / `vol` / `amount` / `oi`）沿用 `mo_option_daily` 的 Source 字段名与语义。
 
@@ -345,6 +345,12 @@ strike_minus_spot_points
 moneyness_pct
 close_premium_pct_of_spot
 ```
+
+字段分类（见第 12 节的三种状态）：
+
+* Structural / required：`ts_code`、`option_type`、`strike`、`expiry_date`、`days_to_expiry`。缺失、`null` 或 malformed → 失败。
+* Derived-required numeric：`close`。它进入 `close_premium_pct_of_spot = close / underlying_close * 100`，因此 `close` 缺失或 `null` → 失败，不得作为 pass-through null 输出。
+* Nullable pass-through：`open`、`high`、`low`、`settle`、`vol`、`amount`、`oi`。Source 合法缺失 / `null` → Snapshot 输出 `null`；present 但 malformed → 失败。
 
 其中派生字段：
 
@@ -437,6 +443,26 @@ annualized_basis_pct
 ```
 
 其中 `underlying_close` 是该观测 `trade_date` 对应的 CSI1000 close（从 `underlying.history` 按 `trade_date` 对齐），其余行情字段沿用 `im_futures_daily` 的 Source 字段名与语义。
+
+字段分类（见第 12 节的三种状态）：
+
+* Structural / required：`ts_code`、`trade_date`、`delist_date`、`days_to_delist`。
+* Derived-required numeric：`close`、`underlying_close`。其中 `underlying_close` 来自 underlying history；`close` 进入 `basis_points` / `basis_pct` / `annualized_basis_pct`，因此 `close` 缺失或 `null` → 失败。
+* Nullable pass-through：`open`、`high`、`low`、`settle`、`vol`、`amount`、`oi`、`oi_chg`。Source 合法 null → Snapshot null；例如 `oi_chg == null` 表达首个可观察交易日 Source 没有该变化事实。
+
+#### Raw → Snapshot projection
+
+`im_futures_daily` Raw Dataset 可以包含更多 Source facts，例如 `pre_close`、`pre_settle`、`change1`、`change2`（见 `guides/csi1000-5d-analysis-data.md` 4.5），但第一版 Snapshot 只选择 §8.3 明确列出的字段。
+
+因此：
+
+```text
+Raw contains field
+≠
+Snapshot must contain field
+```
+
+Snapshot 是 deterministic analysis-ready projection，不是 Raw 的完整复制。`pre_close`、`pre_settle`、`change1`、`change2` 第一版不进入 IM Snapshot observation（`history` 与 `target_date_curve` 都不包含）；这不是 data loss bug 或 schema drift，而是 Snapshot Definition 的显式 projection。不要把这些字段加入 implementation。
 
 ### 8.4 派生字段
 
@@ -602,7 +628,45 @@ Snapshot 内不得出现无法回溯到 Raw Dataset 的"只存在于 Snapshot �
 
 ## 12. Completeness failure
 
-Snapshot Assembly 不得静默估算或跳过关键记录。至少锁定以下失败条件：
+Snapshot Assembly 不得静默估算或跳过关键记录。先明确 numeric fact 的三种状态，再锁定失败条件。
+
+### A. Required structural / derived input
+
+字段用于 identity、join、window selection、date calculation 或 derived formula 时：
+
+```text
+missing
+null
+malformed
+NaN
+infinity
+```
+
+全部 → Snapshot Assembly fail。不得填零、估算或 fallback。
+
+### B. Nullable Source pass-through fact
+
+字段只作为 Source fact 被复制到 Snapshot，且不参与任何 required derived formula 时，Source 合法未提供该事实：
+
+```text
+missing key
+or
+null
+```
+
+允许 → Snapshot 输出 `null`。这表示：
+
+```text
+Source 没有这个事实
+```
+
+不是 `0`，也不是未知值的估算。字段非 null 但 malformed（string、NaN、infinity、invalid numeric representation）仍然 → fail。
+
+### C. Derived field explicitly defines null
+
+`annualized_basis_pct` 在 `days_to_delist == 0` 时 authority 已定义为 `null`（第 8.4 节）。这是 derived semantic null，与 Source pass-through null 是不同原因；保持现有语义。
+
+失败条件（任一成立则 Snapshot Assembly 失败）：
 
 ```text
 underlying < 120 days → fail
@@ -613,8 +677,9 @@ MO basic/daily cannot one-to-one join → fail
 
 IM daily cannot map to known IM contract → fail
 
-required numeric field malformed/missing
-and therefore derived field cannot be calculated → fail
+required structural / derived input missing / null / malformed → fail
+
+nullable pass-through fact present but malformed → fail
 ```
 
 补充：MO chain 为空、IM history 为空（进而 `target_date_curve` 为空）也属于 Raw 不完整，失败而非静默输出空结果。本文档不设计复杂 validation framework，简单明确即可；具体异常类型、CLI exit code 属于 implementation，可 deferred。
@@ -664,17 +729,12 @@ output/csi1000-5d-analysis/<target_trade_date>/snapshot.json
 
 实现不得超出本 Guide 与 `guides/csi1000-5d-analysis-data.md`、`ARCHITECTURE.md` 的范围；若实现与本文档不一致，应做 reconciliation，不得静默选择另一套设计。
 
-## 16. Reconciliation（authority / implementation drift）
+## 16. Reconciliation state
 
-本 Goal 只落 authority，不修改 Python implementation。对 `guides/csi1000-5d-analysis-data.md` 与 Goal 2 Collector 的自检结论：
+当前 authority 与 implementation 已一致。锁定的 reconciliation 事实：
 
-* 未把 analyzer conclusion 偷进 Snapshot：第 2.2、7.5、8.4、13 节已明确禁止，禁止字段清单已锁定。
-* 未重新定义 Raw Dataset：五个 Raw artifact 的字段与语义沿用 data Guide；本文档只定义 Snapshot 层的选择、join、派生与排序。
-* 未修改 Source contract：Source / endpoint 不变。
-* 所有 derived field 均为 deterministic，且每个都有明确输入、公式与单位（第 6、7、8 节）。
-* Snapshot schema（第 10 节）足以让下一 Goal 直接实现，无需自行发明业务语义。
+* Snapshot canonical output 为 `output/csi1000-5d-analysis/<target_trade_date>/snapshot.json`；`build_snapshot.py` 直接写该位置，不再写 `data/snapshots/...`，不维护两份 artifact（见 `guides/data-services.md`）。
+* `mo_option_basic.maturity_date` 由采集层按 `ARCHITECTURE.md` 第 3 节 minimal normalization 统一落地为 `YYYY-MM-DD`（与 `list_date` / `delist_date` 一致）。Snapshot 只做 `maturity_date → expiry_date` 的 analysis-friendly rename，不再自行归一化 `YYYYMMDD`（第 7.2 节）。
+* Source legitimate null 与 required derived input 的边界已锁定（第 12 节）：nullable pass-through fact 保留 `null`；required / derived input 缺失或 malformed → 失败；`close` 属于 required derived input，不得走 pass-through null 路径。
 
-发现的 drift（仅记录，不在本 Goal 修复 Python）：
-
-* Snapshot 输出位置：`build_snapshot.py` 仍写 `data/snapshots/csi1000-5d-analysis/<date>/snapshot.json`，而 Data Service canonical output 为 `output/csi1000-5d-analysis/<date>/snapshot.json`（见 `guides/data-services.md`）。实现阶段应改为直接写 `output/`，不得长期维护两份相同 canonical artifact。
-* `mo_option_basic` 的 `maturity_date`：Goal 2 Collector 将其以 Source 的 `YYYYMMDD` 形式落地，而 `list_date` / `delist_date` 已归一化为 `YYYY-MM-DD`。`ARCHITECTURE.md` 第 3 节与 data Guide 第 7 节允许/隐含对日期事实做 `YYYY-MM-DD` 归一化，`maturity_date` 属于遗漏。Snapshot Assembly 派生 `expiry_date` 时需自行归一化（第 7.2 节已注明）；理想情况下应在此后对 `fetch_mo_option_basic.py` 做 reconciliation（将 `maturity_date` 纳入日期归一化），但不影响本文档锁定 Snapshot 输出为 `YYYY-MM-DD`。
+本文档不保留已解决的 drift 历史；Git commit 已保存历史。

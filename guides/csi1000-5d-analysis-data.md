@@ -145,6 +145,7 @@ analysis-ready
 * 可以保留 Source 返回的其他字段。
 * Raw 层**不得**做分析视角重命名：`exercise_price` → `strike`、`maturity_date` → `expiry_date`、`call_put` → `option_type`。
 * 这些更友好的字段名如果未来需要，应在 Snapshot / analysis-ready assembly 中处理。
+* Raw 层对 contract lifecycle date facts 做 minimal date normalization：`list_date` / `delist_date` / `maturity_date` 统一落地为 `YYYY-MM-DD`（与 `trade_date` 一致，见 `ARCHITECTURE.md` 第 3 节）。这只改变表示形式，不改变 Source 语义。
 
 ### 4.3 Dataset: mo_option_daily
 

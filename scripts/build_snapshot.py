@@ -21,11 +21,12 @@ also collects the five Raw artifacts this Builder reads. Running this module
 directly is a development / debugging entrypoint that assumes the Raw artifacts
 already exist.
 
-Missing Source facts: a quote field that only gets copied onto the Snapshot
-(``open`` / ``high`` / ``low`` of a contract that did not trade, ``pre_close``
-of a contract's first trading day) stays ``null`` when the Source did not return
-it, instead of failing the assembly. Every field a derived formula reads must
-still be present and well formed.
+Missing Source facts: a quote field that only gets copied onto the Snapshot and
+feeds no derived formula (``open`` / ``high`` / ``low`` of a contract that did
+not trade, ``oi_chg`` of an observation on its first trading day) stays ``null``
+when the Source did not return it, instead of failing the assembly. Every field
+a derived formula reads (``close`` in particular) must still be present and well
+formed, or the assembly fails.
 
 Usage:
     poetry run python scripts/build_snapshot.py 2026-09-17
@@ -64,7 +65,7 @@ TRADING_DAYS_PER_YEAR = 252
 # Guide 8.4: calendar days per year used to annualize the futures basis.
 CALENDAR_DAYS_PER_YEAR = 365
 
-# Guide 5.2 / 8.3: Raw Fact fields of the snapshot copy, in output order.
+# Guide 5.2: Raw Fact fields of the underlying history copy, in output order.
 UNDERLYING_HISTORY_FIELDS = (
     "trade_date",
     "open",
@@ -77,12 +78,17 @@ UNDERLYING_HISTORY_FIELDS = (
     "vol",
     "amount",
 )
-MO_RAW_FIELDS = ("open", "high", "low", "close", "settle", "vol", "amount", "oi")
-IM_RAW_FIELDS = (
+
+# Guide 5.1 / 8.3: the quote fields the Snapshot copies straight from the Source
+# fact without reading them into any derived formula. ``close`` is deliberately
+# absent: it feeds ``close_premium_pct_of_spot`` (MO) and the basis fields (IM),
+# so it is a required derived input, read once with ``require_number`` instead of
+# passing through as a possibly-missing fact.
+MO_PASSTHROUGH_FIELDS = ("open", "high", "low", "settle", "vol", "amount", "oi")
+IM_PASSTHROUGH_FIELDS = (
     "open",
     "high",
     "low",
-    "close",
     "settle",
     "vol",
     "amount",
@@ -102,24 +108,6 @@ RawRecord = dict[str, Any]
 
 class SnapshotError(Exception):
     """Raised when the Snapshot cannot be assembled as the Guide requires."""
-
-
-def to_iso_date(value: Any, field: str) -> str:
-    """Normalize one Source contract date fact to ``YYYY-MM-DD``.
-
-    ``mo_option_basic.maturity_date`` is still written as ``YYYYMMDD`` by the
-    Goal 2 Collector (see Guide 16), so both the Source form and an already
-    normalized Raw value are accepted; anything else fails.
-    """
-    if value is None:
-        raise SnapshotError(f"required {field} is missing: {value!r}.")
-    try:
-        iso_date = _common.to_iso_date_or_none(value)
-    except _common.CollectionError as exc:
-        raise SnapshotError(f"{field} is not a usable date: {value!r}.") from exc
-    if iso_date is None:
-        raise SnapshotError(f"required {field} is missing: {value!r}.")
-    return iso_date
 
 
 def require_text(record: RawRecord, field: str) -> str:
@@ -149,12 +137,16 @@ def require_number(record: RawRecord, field: str) -> float | int:
 def passthrough_fields(record: RawRecord, fields: tuple[str, ...]) -> RawRecord:
     """Project quote fields the Snapshot only copies onto a row.
 
-    None of these fields feeds a derived formula, so a value the Source did not
-    return stays ``null`` in the Snapshot instead of failing the assembly: a
-    contract that did not trade on the target date has no ``open`` / ``high`` /
-    ``low``, and a contract on its first trading day has no ``pre_close``. The
-    missing fact is preserved as missing rather than filled in, and a value that
-    is present but malformed (a string, NaN, an infinity) still fails.
+    None of these fields feeds a required derived formula, so a value the Source
+    did not return stays ``null`` in the Snapshot instead of failing the
+    assembly: a contract that did not trade has no ``open`` / ``high`` / ``low``,
+    and an observation on its first trading day has no ``oi_chg``. The missing
+    fact is preserved as missing rather than filled in, and a value that is
+    present but malformed (a string, NaN, an infinity) still fails.
+
+    Only the nullable pass-through fields named by the caller belong here;
+    ``close`` is a required derived input and is therefore read once with
+    ``require_number`` at the call site instead.
     """
     row: RawRecord = {}
     for field in fields:
@@ -355,7 +347,11 @@ def load_mo_options(
                 f"expected {target_trade_date}."
             )
         strike = require_number(contract, "exercise_price")
-        expiry_date = to_iso_date(contract.get("maturity_date"), "maturity_date")
+        expiry_date = require_date(contract, "maturity_date")
+        # ``close`` feeds ``close_premium_pct_of_spot``, so it is a required
+        # derived input: a missing or malformed close must fail here instead of
+        # passing through as ``null``.
+        close = require_number(daily, "close")
         row: RawRecord = {
             "ts_code": ts_code,
             "option_type": require_text(contract, "call_put"),
@@ -363,12 +359,15 @@ def load_mo_options(
             "expiry_date": expiry_date,
             "days_to_expiry": (date.fromisoformat(expiry_date) - target).days,
         }
-        # The quote fields are copied from the Source fact; a contract without a
-        # trade on the target date keeps its missing quote as ``null``.
-        row.update(passthrough_fields(daily, MO_RAW_FIELDS))
+        # Guide 7.3 output order lists the quote fields as open, high, low,
+        # close, settle, vol, amount, oi: the nullable pass-through groups sit
+        # around the required close.
+        row.update(passthrough_fields(daily, MO_PASSTHROUGH_FIELDS[:3]))
+        row["close"] = close
+        row.update(passthrough_fields(daily, MO_PASSTHROUGH_FIELDS[3:]))
         row["strike_minus_spot_points"] = strike - underlying_close
         row["moneyness_pct"] = percent_change(strike, underlying_close)
-        row["close_premium_pct_of_spot"] = row["close"] / underlying_close * 100
+        row["close_premium_pct_of_spot"] = close / underlying_close * 100
         chain.append(row)
 
     chain.sort(key=lambda row: (row["expiry_date"], row["strike"], row["option_type"]))
@@ -423,7 +422,12 @@ def load_im_futures(
             "delist_date": delist_date,
             "days_to_delist": days_to_delist,
         }
-        row.update(passthrough_fields(daily, IM_RAW_FIELDS))
+        # Guide 8.3 output order lists the quote fields as open, high, low,
+        # close, settle, vol, amount, oi, oi_chg: the nullable pass-through
+        # groups sit around the required close, which is read once above.
+        row.update(passthrough_fields(daily, IM_PASSTHROUGH_FIELDS[:3]))
+        row["close"] = close
+        row.update(passthrough_fields(daily, IM_PASSTHROUGH_FIELDS[3:]))
         row["underlying_close"] = underlying_close
         row["basis_points"] = close - underlying_close
         row["basis_pct"] = percent_change(close, underlying_close)

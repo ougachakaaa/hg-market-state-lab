@@ -222,19 +222,9 @@ service_id + target_trade_date
 
 reconciliation（当前 CSI1000 Data Service）：
 
-> `output/<service>/<date>/` 成为 Data Service 的 canonical user-facing output。
+> `output/<service>/<date>/` 是 Data Service 的 canonical user-facing output。
 
-当前 `build_snapshot.py` 仍写 `data/snapshots/csi1000-5d-analysis/<date>/snapshot.json`，这是 Data Service 概念引入之前的内部位置。Data Service `csi1000-5d-analysis` 复用同一份 `snapshot.json` 内容（由 `guides/csi1000-5d-analysis-snapshot.md` 定义），但其 canonical 用户位置为 `output/csi1000-5d-analysis/<date>/snapshot.json`。
-
-不得长期同时维护：
-
-```text
-data/snapshots/csi1000-5d-analysis/<date>/snapshot.json
-+
-output/csi1000-5d-analysis/<date>/snapshot.json
-```
-
-两份相同 canonical artifact。实现阶段（deferred）应将 Snapshot Builder / orchestration 改为直接写 `output/`。
+`build_snapshot.py` 直接写该位置；`data/snapshots/csi1000-5d-analysis/<date>/snapshot.json` 不再产生，不维护两份相同 artifact。
 
 本 Goal 不重构无关的 Daily Snapshot；`data/snapshots/YYYY-MM-DD/` 语义保持不变。
 
@@ -373,9 +363,7 @@ GPT analyzer / trading analysis
 ## 13. Deferred
 
 ```text
-scripts/dms.py 实现（get 的 orchestration）
 真正 dms console entry point
-build_snapshot.py 改为直接写 canonical output/
 ```
 
 ## 14. 完成自检
