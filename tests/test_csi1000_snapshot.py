@@ -108,7 +108,7 @@ def option_basic_rows() -> list[dict[str, Any]]:
         {
             "ts_code": ts_code,
             "exchange": "CFFEX",
-            "opt_code": "OPMO2609.CFE",
+            "opt_code": "OP000852.SH",
             "call_put": call_put,
             "exercise_price": strike,
             "maturity_date": maturity_date,
@@ -764,15 +764,104 @@ def test_non_positive_underlying_close_fails(
         build_snapshot.build_snapshot(TARGET_DATE)
 
 
-def test_missing_option_quote_field_fails(
+def test_option_quote_field_the_source_omits_stays_null(
     tmp_path: Path, raw_root: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
+    """A key the Source did not return at all is a missing fact, not an error.
+
+    The assembly only rejects a value that is present but malformed; the Snapshot
+    never invents a quote the Source did not return.
+    """
     patch_dirs(monkeypatch, tmp_path, raw_root)
     raw = base_raw()
     del raw["mo_option_daily"][0]["settle"]
     write_raw(raw_root, raw)
 
-    with pytest.raises(SnapshotError, match="settle"):
+    chain = run_builder(tmp_path, raw_root)["mo_options"]["chain"]
+
+    missing = next(row for row in chain if row["ts_code"] == raw["mo_option_daily"][0]["ts_code"])
+    assert missing["settle"] is None
+    assert missing["close"] is not None
+
+
+def test_unquoted_option_contract_keeps_null_quotes(
+    tmp_path: Path, raw_root: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A contract with no trade on the target date has no open / high / low.
+
+    The Source omits those facts, so the Snapshot keeps them missing; the
+    contract and its hand-checkable close-based derived fields stay in the chain.
+    """
+    patch_dirs(monkeypatch, tmp_path, raw_root)
+    raw = base_raw()
+    ts_code, _, _, _, premium = OPTIONS[0]
+    row_index = next(
+        index
+        for index, record in enumerate(raw["mo_option_daily"])
+        if record["ts_code"] == ts_code
+    )
+    raw["mo_option_daily"][row_index].update(
+        {"open": None, "high": None, "low": None, "vol": 0.0}
+    )
+    write_raw(raw_root, raw)
+
+    chain = run_builder(tmp_path, raw_root)["mo_options"]["chain"]
+
+    row = next(entry for entry in chain if entry["ts_code"] == ts_code)
+    assert row["open"] is None
+    assert row["high"] is None
+    assert row["low"] is None
+    assert row["vol"] == 0.0
+    assert row["close"] == premium
+    assert row["settle"] == premium + 0.1
+    assert row["close_premium_pct_of_spot"] == pytest.approx(premium / TARGET_CLOSE * 100)
+    # Every contract of the active universe stays in the chain.
+    assert len(chain) == len(OPTIONS)
+
+
+def test_first_trading_day_observation_keeps_a_null_optional_quote(
+    tmp_path: Path, raw_root: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A fact the Source does not return stays missing in the Snapshot.
+
+    ``oi_chg`` is a per-observation change the Source leaves empty on a
+    contract's first trading day; the basis fields never read it.
+    """
+    patch_dirs(monkeypatch, tmp_path, raw_root)
+    raw = base_raw()
+    first_day = raw["im_futures_daily"][0]
+    assert first_day["trade_date"] == IM_START
+    first_day["oi_chg"] = None
+    write_raw(raw_root, raw)
+
+    history = run_builder(tmp_path, raw_root)["im_futures"]["history"]
+
+    observation = next(
+        row
+        for row in history
+        if row["ts_code"] == first_day["ts_code"] and row["trade_date"] == first_day["trade_date"]
+    )
+    assert observation["oi_chg"] is None
+    # The basis fields never read it, so they are still computed from the
+    # underlying close of that observation's own trade date.
+    underlying_close = observation["underlying_close"]
+    assert observation["basis_points"] == pytest.approx(observation["close"] - underlying_close)
+    assert observation["basis_pct"] == pytest.approx(
+        (observation["close"] / underlying_close - 1) * 100
+    )
+
+
+@pytest.mark.parametrize("field", ["open", "high", "low", "vol"])
+def test_present_but_malformed_option_quote_field_fails(
+    tmp_path: Path, raw_root: Path, monkeypatch: pytest.MonkeyPatch, field: str
+) -> None:
+    """Only a missing fact is tolerated; a malformed one is still an error."""
+    patch_dirs(monkeypatch, tmp_path, raw_root)
+    raw = base_raw()
+    raw["mo_option_daily"][0][field] = "n/a"
+    write_raw(raw_root, raw)
+
+    with pytest.raises(SnapshotError, match=field):
         build_snapshot.build_snapshot(TARGET_DATE)
 
 

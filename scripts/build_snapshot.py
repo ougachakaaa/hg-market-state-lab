@@ -21,6 +21,12 @@ also collects the five Raw artifacts this Builder reads. Running this module
 directly is a development / debugging entrypoint that assumes the Raw artifacts
 already exist.
 
+Missing Source facts: a quote field that only gets copied onto the Snapshot
+(``open`` / ``high`` / ``low`` of a contract that did not trade, ``pre_close``
+of a contract's first trading day) stays ``null`` when the Source did not return
+it, instead of failing the assembly. Every field a derived formula reads must
+still be present and well formed.
+
 Usage:
     poetry run python scripts/build_snapshot.py 2026-09-17
 """
@@ -138,6 +144,23 @@ def require_number(record: RawRecord, field: str) -> float | int:
     if not math.isfinite(value):
         raise SnapshotError(f"{field} must be a finite number, got {value!r}.")
     return value
+
+
+def passthrough_fields(record: RawRecord, fields: tuple[str, ...]) -> RawRecord:
+    """Project quote fields the Snapshot only copies onto a row.
+
+    None of these fields feeds a derived formula, so a value the Source did not
+    return stays ``null`` in the Snapshot instead of failing the assembly: a
+    contract that did not trade on the target date has no ``open`` / ``high`` /
+    ``low``, and a contract on its first trading day has no ``pre_close``. The
+    missing fact is preserved as missing rather than filled in, and a value that
+    is present but malformed (a string, NaN, an infinity) still fails.
+    """
+    row: RawRecord = {}
+    for field in fields:
+        value: Any = record.get(field)
+        row[field] = None if value is None else require_number(record, field)
+    return row
 
 
 def require_positive_number(record: RawRecord, field: str) -> float | int:
@@ -340,8 +363,9 @@ def load_mo_options(
             "expiry_date": expiry_date,
             "days_to_expiry": (date.fromisoformat(expiry_date) - target).days,
         }
-        for field in MO_RAW_FIELDS:
-            row[field] = require_number(daily, field)
+        # The quote fields are copied from the Source fact; a contract without a
+        # trade on the target date keeps its missing quote as ``null``.
+        row.update(passthrough_fields(daily, MO_RAW_FIELDS))
         row["strike_minus_spot_points"] = strike - underlying_close
         row["moneyness_pct"] = percent_change(strike, underlying_close)
         row["close_premium_pct_of_spot"] = row["close"] / underlying_close * 100
@@ -399,8 +423,7 @@ def load_im_futures(
             "delist_date": delist_date,
             "days_to_delist": days_to_delist,
         }
-        for field in IM_RAW_FIELDS:
-            row[field] = require_number(daily, field)
+        row.update(passthrough_fields(daily, IM_RAW_FIELDS))
         row["underlying_close"] = underlying_close
         row["basis_points"] = close - underlying_close
         row["basis_pct"] = percent_change(close, underlying_close)
