@@ -1,8 +1,8 @@
-# guides/csi1000-5d-analysis-data.md — CSI1000 未来约 5 个交易日市场状态分析的数据需求 authority
+# guides/csi1000-5d-analysis-data.md — CSI1000 未来约 5 个交易日市场状态分析的数据需求与 Raw Dataset 契约 authority
 
-> 状态：本阶段为数据需求 authority（design-only，尚未进入实现）。本文档锁定"外部分析器分析从目标交易日往后约 5 个交易日的中证1000市场状态"这一场景所需的**输入数据需求**，不定义也不实现任何业务分析。
+> 状态：本阶段为数据需求与 Raw Dataset 契约 authority（design-only，尚未进入实现）。本文档锁定"外部分析器分析从目标交易日往后约 5 个交易日的中证1000市场状态"这一场景所需的**输入数据需求**，以及支撑下一阶段 Raw Collection 直接实现的 **Source / Dataset / Raw artifact 契约**。不定义也不实现任何业务分析。
 >
-> 层级：本文档位于 `ARCHITECTURE.md` 之下，与 `guides/daily-market-snapshot.md` 并列。架构层面的稳定边界以 `ARCHITECTURE.md` 为准（尤其第 1.1 节职责边界、第 2 节核心架构、第 3 节 Raw/Snapshot 边界、第 4 节架构边界的执行、第 8 节 Guide 职责）；本文档不得与其冲突。
+> 层级：本文档位于 `ARCHITECTURE.md` 之下，与 `guides/daily-market-snapshot.md` 并列。架构层面的稳定边界以 `ARCHITECTURE.md` 为准（尤其第 1.1 节职责边界、第 2 节核心架构、第 3 节 Raw/Snapshot 边界、第 4 节架构边界的执行、第 8 节 Guide 职责、第 9 节项目结构）；本文档不得与其冲突。
 >
 > 实现本 Guide 任务的 Agent 应先阅读 `ARCHITECTURE.md` 第 1.1、2、3、4、9 节，再按本文档执行。
 
@@ -71,18 +71,36 @@ reproducible
 analysis-ready
 ```
 
-即外部分析器不需要重新理解 Source 的杂乱结构即可使用数据。第一阶段优先维持简单（见第 4 节），不提前设计复杂统一 schema。
+即外部分析器不需要重新理解 Source 的杂乱结构即可使用数据。第一阶段优先维持简单（见第 7 节），不提前设计复杂统一 schema。
 
-## 3. Dataset 需求
+## 3. Source 契约
 
-本场景围绕三组数据建立明确的数据需求 authority。
+本场景统一使用 **Tushare Pro**，不引入第二数据源，不引入 DataSource abstraction。
 
-### 3.1 Dataset: index_daily（复用现有 Dataset，CSI1000 历史窗口）
+| 数据需求 | Source（Tushare endpoint） | 对应 Dataset |
+| --- | --- | --- |
+| CSI1000 指数历史行情 | `index_daily` | `index_daily`（复用） |
+| MO 期权合约静态/生命周期事实 | `opt_basic` | `mo_option_basic` |
+| MO 期权日行情事实 | `opt_daily` | `mo_option_daily` |
+| IM 期货合约静态/生命周期事实 | `fut_basic` | `im_futures_basic` |
+| IM 期货日行情事实 | `fut_daily` | `im_futures_daily` |
+
+本阶段只锁定上述 Source / Dataset 契约，不实现 API 调用。
+
+## 4. Dataset 与 Raw artifact 契约
+
+字段语义与单位以 Tushare Source 原始定义为准；Raw 层保持 Source 字段名与语义，不做分析视角重命名或单位换算。下表仅作便于识别的最低字段清单；Source 返回的其他字段可按 `ARCHITECTURE.md` 第 3 节的 Raw 原则保留。
+
+### 4.1 Dataset: index_daily（复用，CSI1000 历史窗口）
 
 * 语义名称：`index_daily`（复用 `ARCHITECTURE.md` 与 `guides/daily-market-snapshot.md` 第 4.1 节已定义的 Dataset 语义，不新建同义 Dataset）。
 * 标的：`000852.SH`（中证1000指数）。
-* 时间窗口：目标交易日及之前约 **120 个交易日**（第一版建议；可随分析需求调整，不是架构层永久约束）。
-* 核心字段：与 `guides/daily-market-snapshot.md` 第 4.1 节一致。
+* Source：Tushare `index_daily`（支持 `ts_code` + `start_date` + `end_date` 的历史区间查询）。
+* Raw artifact：`index_daily_history.json`。
+
+#### 核心字段
+
+与 `guides/daily-market-snapshot.md` 第 4.1 节一致：
 
 | 字段 | 语义 | 单位/说明 |
 | --- | --- | --- |
@@ -102,133 +120,230 @@ analysis-ready
 
 * 现有 `fetch_index_daily.py` 按单日采集六个指数的 `index_daily`（用于第一版 Daily Snapshot）。
 * 第一版 Guide 中固定的六指数 universe 属于第一版 Snapshot Definition 的输入范围，不属于 `index_daily` Dataset 语义本身；本场景在同一 Dataset 语义下，聚焦 `000852.SH` 的**历史窗口**。
-* 本阶段只定义需求，**不设计具体历史采集实现方式**（例如是否按日拉取、是否使用 Source 支持的历史区间接口）；该 reconciliation 留到后续实现阶段。
+* 历史窗口的输出要求与 Collection / Assembly 分工见第 6.1 节。
 
-### 3.2 Dataset: mo_option_daily（MO 期权链）
+### 4.2 Dataset: mo_option_basic
+
+* 语义名称：`mo_option_basic`
+* Source：Tushare `opt_basic`
+* 语义：MO 期权合约自身的静态/生命周期事实。
+* Raw artifact：`mo_option_basic.json`。
+
+#### 至少保留的 Source 字段
+
+| 字段 | 说明 |
+| --- | --- |
+| `ts_code` | 期权合约代码 |
+| `exchange` | 交易所（MO 为 CFFEX） |
+| `opt_code` | 期权合约代码/简称 |
+| `call_put` | 认购/认沽（Source 字段） |
+| `exercise_price` | 行权价 |
+| `maturity_date` | 到期日 |
+| `list_date` | 上市日期 |
+| `delist_date` | 退市日期 |
+
+* 可以保留 Source 返回的其他字段。
+* Raw 层**不得**做分析视角重命名：`exercise_price` → `strike`、`maturity_date` → `expiry_date`、`call_put` → `option_type`。
+* 这些更友好的字段名如果未来需要，应在 Snapshot / analysis-ready assembly 中处理。
+
+### 4.3 Dataset: mo_option_daily
 
 * 语义名称：`mo_option_daily`
-* 范围：
-  * MO（中证1000股指期权）；
-  * 目标交易日可交易、与近期分析相关的期权合约；
-  * 第一版优先保留**完整 option chain**，而不是提前筛选几个 strike；
-  * 如具体 Source 能可靠提供历史数据，可保留一定历史窗口，但不在本阶段中为了未来需求过度设计。
+* Source：Tushare `opt_daily`
+* 语义：MO 期权各合约在某交易日的日行情事实。
+* Raw artifact：`mo_option_daily.json`。
 
-#### Contract identity / static facts
+#### 至少保留的 Source 字段
 
-至少考虑：
+| 字段 | 说明 |
+| --- | --- |
+| `ts_code` | 期权合约代码 |
+| `trade_date` | 交易日 |
+| `exchange` | 交易所 |
+| `pre_settle` | 昨结算价 |
+| `pre_close` | 昨收盘价 |
+| `open` | 开盘价 |
+| `high` | 最高价 |
+| `low` | 最低价 |
+| `close` | 收盘价 |
+| `settle` | 结算价 |
+| `vol` | 成交量 |
+| `amount` | 成交额 |
+| `oi` | 持仓量 |
 
-```text
-contract / ts_code
-option_type
-strike
-expiry_date
-```
+* 不人为增加 `strike`、`expiry`、`call_put`、`IV`、`Greeks`——这些不是 `opt_daily` 的 Raw Fact。
+* 需要这些属性时，由下游使用 `mo_option_basic` + `mo_option_daily` 确定性组合。
 
-#### Daily market facts
+### 4.4 Dataset: im_futures_basic
 
-至少考虑：
+* 语义名称：`im_futures_basic`
+* Source：Tushare `fut_basic`
+* 语义：IM 股指期货合约自身的静态/生命周期事实。
+* Raw artifact：`im_futures_basic.json`。
 
-```text
-trade_date
-open
-high
-low
-close
-settlement
-volume
-open_interest
-```
+#### 至少保留的 Source 字段
 
-* 若数据源稳定提供 `bid` / `ask`，可作为候选字段记录，但不为了尚未确认的数据能力强制设计复杂契约。
-* 本阶段**不要求** Source 直接提供 `IV`、`Delta`、`Gamma`、`Theta`、`Vega`，除非这些本身就是选定 Source 的可靠原始字段；这些量若未来需要由项目计算，属于后续明确设计的 deterministic derivation，不在本阶段中默认加入。
+至少需要能够确定：
 
-### 3.3 Dataset: im_futures_daily（IM 期货期限结构）
+| 字段 | 说明 |
+| --- | --- |
+| `ts_code` | 合约代码 |
+| `exchange` | 交易所（IM 为 CFFEX） |
+| `fut_code` | 合约代码/简称 |
+| `list_date` | 上市日期 |
+| `delist_date` | 退市日期 |
+
+以及 Source 中能够表达合约到期/交割时间的相关字段。
+
+* 不在 Raw 层创造分析字段。
+
+### 4.5 Dataset: im_futures_daily
 
 * 语义名称：`im_futures_daily`
-* 范围：目标交易日所有与 IM 有关、对当前期限结构有意义的主要可交易合约。
+* Source：Tushare `fut_daily`
+* 语义：IM 合约每日行情事实。
+* Raw artifact：`im_futures_daily.json`。
 
-#### 核心字段
+#### 至少保留的 Source 字段
+
+| 字段 | 说明 |
+| --- | --- |
+| `ts_code` | 合约代码 |
+| `trade_date` | 交易日 |
+| `pre_close` | 昨收盘价 |
+| `pre_settle` | 昨结算价 |
+| `open` | 开盘价 |
+| `high` | 最高价 |
+| `low` | 最低价 |
+| `close` | 收盘价 |
+| `settle` | 结算价 |
+| `change1` | 涨跌额（Source 字段） |
+| `change2` | 涨跌额（Source 字段） |
+| `vol` | 成交量 |
+| `amount` | 成交额 |
+| `oi` | 持仓量 |
+| `oi_chg` | 持仓量变化 |
+
+* 如 Source 返回其他字段，可按照现有 Raw 原则保留。
+
+## 5. Universe 语义
+
+### 5.1 完整 MO option chain
+
+第一版 "完整 MO option chain" 定义为确定性、不含分析判断的：
+
+> MO option chain = 在目标交易日处于有效交易生命周期内的全部 MO 中证1000股指期权合约，以及这些合约目标交易日的日行情记录。
+
+* 生命周期判定基于 Source contract facts：`list_date <= target_trade_date <= delist_date`。
+* 产品限定：MO，且 `exchange = CFFEX`。
+* 不得按 strike 距离、成交量、只保留 ATM、只保留近月、只保留"有分析价值"等做过滤——这些筛选属于下游数据组织需求，不属于 Raw Collection。
+* 第一版 MO 只要求目标交易日完整链，暂时不要求 MO 历史多日。
+
+### 5.2 IM universe
+
+"主要可交易合约 / 有意义"这类业务解释性措辞不用于 Raw Collection。IM universe 的确定性定义：
+
+> 对目标分析窗口，采集属于 IM 产品且在相关交易日处于有效生命周期内的普通月度合约。
+
+* 不得根据主力判断、成交量、持仓量、流动性阈值、analyzer 当前关注月份提前过滤。
+* 目标是 Raw Dataset 足以让下游重建 IM term structure。
+
+## 6. 历史窗口语义
+
+### 6.1 CSI1000 history
+
+* 复用 `index_daily`（`000852.SH`），Source 为 Tushare `index_daily`。
+* Analysis-ready 要求：下游应能取得截至 target_trade_date 的最近 120 个实际交易日记录。
+* 不为此引入交易日历 framework。
+* Raw Collector 可以获取一个包含不少于这些记录的历史区间/历史集合；Raw 不要求恰好 120 行。
+* 精确选取 `latest 120 trading rows <= target_trade_date` 属于后续 deterministic assembly。
+* 保持边界：Collector = Source Fact acquisition；Assembly = window selection。不为"精确 120 日"在 Collector 中引入业务组织逻辑。
+
+### 6.2 IM history
+
+* Analysis-ready 要求：下游应能取得 target_trade_date 及之前约 60 个实际交易日的 IM term-structure-related facts。
+* Raw Collection 应获取足够覆盖这一窗口的 `im_futures_basic` + `im_futures_daily` Source Fact。
+* Collector 不负责 basis / annualized basis / calendar spread / term structure interpretation，也不需要把 Raw 裁切成恰好 60 个交易日。
+* 精确窗口选择属于后续 assembly。
+
+## 7. Raw 文件组织
+
+本场景使用独立的 goal-scoped Raw 目录，避免与现有单日 Snapshot Definition 的 Raw artifact 语义冲突；不修改现有 `data/raw/YYYY-MM-DD/{index_daily.json, stock_daily.json}` 语义。
 
 ```text
-contract / ts_code
-trade_date
-expiry_date
-open
-high
-low
-close
-settlement
-volume
-open_interest
+data/raw/
+└─ csi1000-5d-analysis/
+   └─ YYYY-MM-DD/
+      ├─ index_daily_history.json
+      ├─ mo_option_basic.json
+      ├─ mo_option_daily.json
+      ├─ im_futures_basic.json
+      └─ im_futures_daily.json
 ```
 
-* 时间窗口：目标交易日之前约 **60 个交易日** 的必要历史数据（第一版建议；不升级成架构层永久约束）。
+* `YYYY-MM-DD` 表示该次数据准备的 target_trade_date，而不是文件中所有记录共同的 trade_date。
+* 尤其 `index_daily_history.json` 与 `im_futures_daily.json` 可以自然包含多个交易日。
+* 每个 Raw 文件统一为 JSON array，数组元素对应一个 Source row，经 `ARCHITECTURE.md` 第 3 节允许的 minimal normalization 后写入。
+* 不在 Raw 文件中 join basic + daily。
+* `data/raw/` 是运行产物，不进入版本控制。
 
-#### 数据充分性
+## 8. 文件与 Dataset 的对应关系
 
-原始数据必须**足以支持**后续基于 `CSI1000 index + IM futures` 的确定性计算，例如：
+* `index_daily_history.json` 不是新的 Dataset，仍属于 `index_daily`，只是本场景下对 `000852.SH` 历史 Source Fact 的 Raw artifact。不新增 `csi1000_history` 等同义 Dataset。
+* 其余文件与 Dataset 一一对应：
 
-```text
-basis_points
-basis_pct
-annualized_basis
-calendar_spread
-open_interest_change
-```
+| Raw artifact | Dataset |
+| --- | --- |
+| `mo_option_basic.json` | `mo_option_basic` |
+| `mo_option_daily.json` | `mo_option_daily` |
+| `im_futures_basic.json` | `im_futures_basic` |
+| `im_futures_daily.json` | `im_futures_daily` |
 
-但这些派生字段属于后续实现 / Snapshot Definition 设计；本阶段只明确"原始数据必须足以支持这些确定性计算"，不定义派生字段，也不把它们解释成 bullish / bearish 或交易信号。
+## 9. Raw completeness / failure boundary
 
-## 4. Raw 契约与输出语义（保持简单）
+对 target trade date 的最小明确边界：
 
-第一阶段优先维持：
+* CSI1000：必须存在 `000852.SH`；历史 Raw 必须包含 target_trade_date 对应记录。
+* MO：必须能够形成目标交易日的完整 active MO contract universe（`mo_option_basic` + `mo_option_daily`）；若 basic contract universe 与 daily facts 明显无法对应，不得静默丢弃。
+* IM：必须能够识别目标窗口中的 IM 合约及其 daily facts。
+* 不得：静默跳过 Source error、用其他日期自动 fallback、用分析推断补缺失 Source rows。
+* 具体异常类型、CLI exit code、重试策略仍属于 implementation，可 deferred。
 
-```text
-Raw Dataset
-    ↓
-deterministic transformation / assembly
-    ↓
-analysis-ready local files
-```
-
-* 输出应满足 `structured` / `reproducible` / `analysis-ready`。
-* 具体是单文件还是多文件，由数据的自然结构决定，不在本阶段提前抽象成复杂框架。
-* 本阶段**不引入**：Pipeline framework、Dataset registry、DataSource inheritance hierarchy、workflow engine、database、schema migration system、generic feature store、generic analyzer framework。
-
-## 5. 与第一版 Daily Snapshot 的关系
+## 10. 与第一版 Daily Snapshot 的关系
 
 * 本场景的 CSI1000 历史数据**复用**现有 `index_daily` Dataset 的 Source Fact 语义，不复制一套相同概念。
 * 现有 `stock_daily` 与第一版 `breadth` 继续存在；它们不是本阶段所定义的新分析数据输入的核心组成；不删除、不扩展、不阻塞本数据需求设计。
-* 本 Guide 不修改 `guides/daily-market-snapshot.md` 已锁定的语义。
+* 本 Guide 不修改 `guides/daily-market-snapshot.md` 已锁定的语义；本场景 Raw artifact 使用独立的 goal-scoped 目录（第 7 节），不与现有单日 Raw artifact 冲突。
 
-## 6. Non-goals（本阶段不实现）
+## 11. Non-goals（本阶段不实现）
 
 本阶段只做 authority，不实现：
 
 ```text
-新增 MO Collector
-新增 IM Collector
-修改 fetch_index_daily.py 实现
-实现历史窗口采集
-实现 build_snapshot.py
-实现 derived feature
-调 Tushare 实际下载数据
-实现 GPT 分析
-编写交易策略
-修改业务分析 prompt
-引入新的架构框架
+新增 / 修改任何 Collector
+新增 Python 文件
+调用真实 Tushare API
+生成测试数据
+实现 Snapshot Builder
+实现 derived features
+实现 analyzer
+引入新的抽象或 framework
 ```
 
-## 7. Deferred（留待下一阶段）
+## 12. Deferred（留待下一阶段）
 
 以下问题在本阶段尚未决定，留待后续实现 / Snapshot Definition 阶段：
 
 ```text
-MO 具体 Source / endpoint
-IM 具体 Source / endpoint
-历史窗口 Collector 如何实现
-Raw 文件具体组织
 Snapshot / analysis-ready output 的最终文件结构
-哪些 deterministic derived fields 第一版真正需要
+第一版具体 deterministic derived fields（ATR / RV / basis / option moneyness 等）
+derived field 的具体数学公式
+Snapshot Builder 的实现结构
+CLI 的具体参数设计
+Raw overwrite / retry 等运行策略
+历史窗口 Collector 的具体 API 调用循环方式
 ```
 
-只有确实尚未决定的问题才标记 deferred；本文档不替用户增加长期约束。
+* MO / IM 的具体 Source / endpoint 与 Raw 文件组织已在本轮锁定（第 3、7 节），不再 deferred。
+* 历史窗口 Collector 的 authority 已锁定"需要提供什么 Source Fact / Raw artifact 表达什么 / 必须覆盖什么数据窗口"；deferred 的只是具体 API 调用循环方式等 implementation detail。
+* 只有确实尚未决定的问题才标记 deferred；本文档不替用户增加长期约束。
