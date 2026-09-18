@@ -6,6 +6,7 @@ injects this in-memory Source instead.
 
 from __future__ import annotations
 
+from datetime import date, timedelta
 from typing import Any
 
 import pandas as pd
@@ -106,6 +107,23 @@ OPTION_EXCHANGE_SUFFIXES = {"CFE": "CFFEX", "SH": "SSE", "SZ": "SZSE"}
 def source_date(value: Any) -> str:
     """Normalize a frame's date value to Source form ``YYYYMMDD``."""
     return pd.Timestamp(str(value)).strftime("%Y%m%d")
+
+
+def business_days(start: str, end: str) -> list[str]:
+    """Build synthetic trading days in Source form for an ISO date range.
+
+    The fake Source has no trading calendar, so weekdays stand in for trading
+    days: enough for the history-completeness checks without depending on a
+    specific exchange calendar.
+    """
+    current = date.fromisoformat(start)
+    last = date.fromisoformat(end)
+    days: list[str] = []
+    while current <= last:
+        if current.weekday() < 5:
+            days.append(current.strftime("%Y%m%d"))
+        current += timedelta(days=1)
+    return days
 
 
 def as_source_frame(

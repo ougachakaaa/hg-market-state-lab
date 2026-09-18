@@ -12,6 +12,7 @@ import fetch_mo_option_basic as option_basic
 import fetch_mo_option_daily as option_daily
 from fake_source import (
     FakeTushareApi,
+    business_days,
     futures_basic_frame,
     futures_daily_frame,
     im_contract,
@@ -23,7 +24,9 @@ from fake_source import (
 
 TARGET_DATE = "2026-09-17"
 INDEX_CODE = "000852.SH"
-INDEX_SOURCE_DATES = ["20260803", "20260916", "20260917"]
+# Enough distinct trade dates for the downstream 120-trading-day window, all
+# inside the requested 240-calendar-day lookback window.
+INDEX_SOURCE_DATES = business_days("2026-01-20", TARGET_DATE)
 CONTRACTS = [
     mo_option_contract("MO2609-C-7000.CFE", exercise_price=7000.0, call_put="C"),
     mo_option_contract("MO2609-P-7000.CFE", exercise_price=7000.0, call_put="P"),
@@ -88,6 +91,52 @@ def test_all_five_collectors_share_the_goal_scoped_raw_directory(
         assert isinstance(records, list)
         assert records
     assert capsys.readouterr().out.count(str(dataset_dir)) == 5
+
+
+def test_raw_files_meet_the_documented_completeness_requirements(
+    test_workdir: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Every Raw artifact must be usable for the Guide window it feeds."""
+    monkeypatch.setenv(_common.TOKEN_ENV_VAR, "local-token")
+    api = fake_api()
+    monkeypatch.setattr(_common, "create_tushare_api", lambda token: api)
+
+    for collector in (index_history, option_basic, option_daily, futures_basic, futures_daily):
+        assert collector.main([TARGET_DATE]) == 0
+
+    dataset_dir = test_workdir / "raw" / _common.CSI1000_RAW_SUBDIR / TARGET_DATE
+    loaded: dict[str, list[dict[str, Any]]] = {
+        name: json.loads((dataset_dir / name).read_text(encoding="utf-8"))
+        for name in (
+            "index_daily_history.json",
+            "mo_option_basic.json",
+            "mo_option_daily.json",
+            "im_futures_basic.json",
+            "im_futures_daily.json",
+        )
+    }
+
+    history = loaded["index_daily_history.json"]
+    history_dates = {str(record["trade_date"]) for record in history}
+    assert len(history_dates) >= index_history.MIN_HISTORY_TRADE_DATES
+    assert TARGET_DATE in history_dates
+    assert {record["ts_code"] for record in history} == {INDEX_CODE}
+
+    basic_codes = {str(record["ts_code"]) for record in loaded["mo_option_basic.json"]}
+    daily_codes = {str(record["ts_code"]) for record in loaded["mo_option_daily.json"]}
+    assert basic_codes == set(OPTION_CODES)
+    assert daily_codes == basic_codes
+
+    for record in loaded["im_futures_basic.json"]:
+        assert record["list_date"] is not None
+        assert record["delist_date"] is not None
+        assert record["list_date"] <= record["delist_date"]
+
+    im_daily = loaded["im_futures_daily.json"]
+    im_daily_codes = {str(record["ts_code"]) for record in im_daily}
+    assert im_daily_codes == {str(record["ts_code"]) for record in loaded["im_futures_basic.json"]}
+    assert TARGET_DATE in {str(record["trade_date"]) for record in im_daily}
+    assert len({str(record["trade_date"]) for record in im_daily}) > 1
 
 
 def test_collectors_never_write_into_the_daily_snapshot_raw_directory(

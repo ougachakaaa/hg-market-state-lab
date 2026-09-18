@@ -48,30 +48,61 @@ def is_mo_option(record: _common.RawRecord) -> bool:
     return str(record.get("opt_code") or "").startswith(MO_OPTIONS_CODE)
 
 
-def lifecycle_covers(record: _common.RawRecord, trade_date: str) -> bool:
-    """Apply the Source-fact lifecycle rule ``list_date <= date <= delist_date``."""
+def require_mo_lifecycle(record: _common.RawRecord) -> tuple[str, str]:
+    """Return the ``(list_date, delist_date)`` a MO contract fact needs.
+
+    A contract fact that is already a member of the MO Dataset but carries no
+    usable lifecycle fact cannot be placed on a trade date at all. The Source
+    fact is incomplete, so this fails instead of treating the contract as
+    active, dropping it, or inferring a bound. An inverted lifecycle is invalid
+    for the same reason.
+    """
     list_date = _common.to_iso_date_or_none(record.get("list_date"))
     delist_date = _common.to_iso_date_or_none(record.get("delist_date"))
-    if list_date is not None and trade_date < list_date:
-        return False
-    return not (delist_date is not None and trade_date > delist_date)
+    if list_date is None or delist_date is None:
+        raise _common.CollectionError(
+            f"{PRODUCT} contract {record.get('ts_code')} of exchange={EXCHANGE} has no "
+            f"usable lifecycle facts in Tushare opt_basic "
+            f"(list_date={record.get('list_date')!r}, "
+            f"delist_date={record.get('delist_date')!r})."
+        )
+    if delist_date < list_date:
+        raise _common.CollectionError(
+            f"{PRODUCT} contract {record.get('ts_code')} has delist_date={delist_date} "
+            f"before list_date={list_date}."
+        )
+    return list_date, delist_date
+
+
+def lifecycle_covers(record: _common.RawRecord, trade_date: str) -> bool:
+    """Apply the Source-fact lifecycle rule ``list_date <= date <= delist_date``."""
+    list_date, delist_date = require_mo_lifecycle(record)
+    return list_date <= trade_date <= delist_date
 
 
 def select_active_mo_universe(
     frame: pd.DataFrame, trade_date: str
 ) -> list[_common.RawRecord]:
-    """Return the active MO option contract facts of one trade date."""
-    return [
+    """Return the active MO option contract facts of one trade date.
+
+    Dataset identity (``exchange`` / product) is decided before the lifecycle
+    check, so a member contract with incomplete lifecycle facts fails instead of
+    disappearing from the universe.
+    """
+    members = [
         record
         for record in _common.to_raw_records(frame)
-        if str(record.get("exchange") or "") == EXCHANGE
-        and is_mo_option(record)
-        and lifecycle_covers(record, trade_date)
+        if str(record.get("exchange") or "") == EXCHANGE and is_mo_option(record)
     ]
+    return [record for record in members if lifecycle_covers(record, trade_date)]
 
 
 def collect_mo_option_basic(trade_date: str, query: _common.QueryFunc) -> list[_common.RawRecord]:
-    """Return the ``mo_option_basic`` records for the given trade date."""
+    """Return the ``mo_option_basic`` records for the given trade date.
+
+    The Dataset membership is the whole MO / CFFEX contract universe of the
+    Source response; the lifecycle rule selects the active part of it.
+    """
     # Reject a malformed script-level date before any Source request.
     _common.to_tushare_date(trade_date)
     records = select_active_mo_universe(query(exchange=EXCHANGE), trade_date)

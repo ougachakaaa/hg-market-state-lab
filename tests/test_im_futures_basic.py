@@ -82,16 +82,26 @@ def test_contract_facts_keep_source_fields_and_units() -> None:
     assert not {"basis", "annualized_basis", "main_contract", "roll_yield"} & set(record)
 
 
-def test_contracts_without_lifecycle_facts_are_not_dataset_members() -> None:
+def test_contract_without_lifecycle_facts_is_an_error() -> None:
+    """A member contract with incomplete lifecycle facts fails, not disappears."""
     pending = im_contract("IM2703.CFE", list_date="20270315", delist_date=None)
 
-    records = collect(fake_api([*IM_CONTRACTS, pending]))
+    with pytest.raises(_common.CollectionError, match="lifecycle"):
+        collect(fake_api([*IM_CONTRACTS, pending]))
 
-    assert [record["ts_code"] for record in records] == [
-        "IM2601.CFE",
-        "IM2609.CFE",
-        "IM2612.CFE",
-    ]
+
+def test_contract_without_any_lifecycle_facts_is_an_error() -> None:
+    broken = im_contract("IM2706.CFE", list_date=None, delist_date=None)
+
+    with pytest.raises(_common.CollectionError, match="lifecycle"):
+        collect(fake_api([*IM_CONTRACTS, broken]))
+
+
+def test_lifecycle_ending_before_it_starts_is_an_error() -> None:
+    broken = im_contract("IM2706.CFE", list_date="20270615", delist_date="20270610")
+
+    with pytest.raises(_common.CollectionError, match="before"):
+        collect(fake_api([*IM_CONTRACTS, broken]))
 
 
 def test_non_im_or_non_cffex_contracts_are_not_part_of_the_universe() -> None:
@@ -99,6 +109,25 @@ def test_non_im_or_non_cffex_contracts_are_not_part_of_the_universe() -> None:
 
     assert {record["fut_code"] for record in records} == {"IM"}
     assert {record["exchange"] for record in records} == {"CFFEX"}
+
+
+def test_incomplete_non_member_contract_is_not_an_im_error() -> None:
+    """A contract outside the Dataset identity is not validated."""
+    other_product = im_contract(
+        "IF2612.CFE",
+        fut_code="IF",
+        name="沪深300股指期货2612",
+        list_date=None,
+        delist_date=None,
+    )
+
+    records = collect(fake_api([*IM_CONTRACTS, other_product]))
+
+    assert [record["ts_code"] for record in records] == [
+        "IM2601.CFE",
+        "IM2609.CFE",
+        "IM2612.CFE",
+    ]
 
 
 def test_source_without_contract_facts_is_an_error() -> None:

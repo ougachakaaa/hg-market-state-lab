@@ -6,12 +6,30 @@ import pytest
 
 import _common
 import fetch_csi1000_index_history
-from fake_source import FakeTushareApi, index_history_frame
+from fake_source import FakeTushareApi, business_days, index_history_frame
 
 TARGET_DATE = "2026-09-17"
+
+
+def iso_dates(source_dates: list[str]) -> list[str]:
+    """Convert Source-form ``YYYYMMDD`` dates to the Raw ``YYYY-MM-DD`` form."""
+    return [
+        datetime.strptime(source_date, _common.TRADE_DATE_TUSHARE_FORMAT).strftime(
+            _common.TRADE_DATE_ISO_FORMAT
+        )
+        for source_date in source_dates
+    ]
+
+
 # Source date form: the frame carries Tushare facts, the Raw records are ISO.
-SOURCE_HISTORY_DATES = ["20260803", "20260916", "20260917"]
-HISTORY_DATES = ["2026-08-03", "2026-09-16", "2026-09-17"]
+# Synthetic trading days from the start of the requested 240-calendar-day
+# lookback window to the target date: comfortably more distinct trade dates than
+# the 120 the analysis window needs.
+SOURCE_HISTORY_DATES = business_days("2026-01-20", TARGET_DATE)
+HISTORY_DATES = iso_dates(SOURCE_HISTORY_DATES)
+# Fewer distinct trade dates than the completeness requirement.
+SHORT_SOURCE_HISTORY_DATES = business_days("2026-08-03", TARGET_DATE)
+SHORT_HISTORY_DATES = iso_dates(SHORT_SOURCE_HISTORY_DATES)
 
 
 def fake_api(trade_dates: list[str] | None = None) -> FakeTushareApi:
@@ -87,8 +105,25 @@ def test_history_includes_the_target_trade_date() -> None:
     assert records[-1]["trade_date"] == TARGET_DATE
 
 
+def test_history_covers_at_least_120_distinct_trade_dates() -> None:
+    """The Raw artifact must be enough for the downstream 120-trading-day window."""
+    records = collect(fake_api())
+
+    trade_dates = {record["trade_date"] for record in records}
+    assert len(trade_dates) >= fetch_csi1000_index_history.MIN_HISTORY_TRADE_DATES
+    assert len(records) > fetch_csi1000_index_history.MIN_HISTORY_TRADE_DATES
+
+
+def test_history_without_enough_trade_dates_is_an_error() -> None:
+    api = fake_api(SHORT_SOURCE_HISTORY_DATES)
+
+    assert len(SHORT_HISTORY_DATES) < fetch_csi1000_index_history.MIN_HISTORY_TRADE_DATES
+    with pytest.raises(_common.CollectionError, match="distinct"):
+        collect(api)
+
+
 def test_history_without_target_trade_date_is_an_error() -> None:
-    api = fake_api(["20260803", "20260916"])
+    api = fake_api(SOURCE_HISTORY_DATES[:-1])
 
     with pytest.raises(_common.CollectionError):
         collect(api)
@@ -97,6 +132,25 @@ def test_history_without_target_trade_date_is_an_error() -> None:
 def test_source_without_data_is_an_error() -> None:
     with pytest.raises(_common.CollectionError):
         collect(FakeTushareApi())
+
+
+def test_duplicate_source_row_is_an_error() -> None:
+    """One trade date must appear exactly once in the Raw history."""
+    records = _common.to_raw_records(
+        index_history_frame("000852.SH", [*SOURCE_HISTORY_DATES, SOURCE_HISTORY_DATES[-1]])
+    )
+
+    with pytest.raises(_common.CollectionError, match="duplicate"):
+        fetch_csi1000_index_history.require_history_window(records, "2026-01-20", TARGET_DATE)
+
+
+def test_another_index_code_is_an_error() -> None:
+    records = _common.to_raw_records(
+        index_history_frame("000300.SH", SOURCE_HISTORY_DATES)
+    )
+
+    with pytest.raises(_common.CollectionError, match="ts_code"):
+        fetch_csi1000_index_history.require_history_window(records, "2026-01-20", TARGET_DATE)
 
 
 def test_source_row_after_target_trade_date_is_an_error() -> None:
@@ -122,6 +176,14 @@ def test_raw_layer_adds_no_derived_fields() -> None:
         for record in records
         for field in ("ma", "ma20", "atr", "realized_volatility", "return")
     )
+
+
+def test_raw_history_is_not_trimmed_to_120_rows() -> None:
+    """The Collector keeps the collected window; the 120-row cut is assembly."""
+    records = collect(fake_api())
+
+    assert len(records) == len(SOURCE_HISTORY_DATES)
+    assert len(records) != fetch_csi1000_index_history.MIN_HISTORY_TRADE_DATES
 
 
 def test_main_writes_raw_dataset_file(

@@ -78,8 +78,6 @@ def test_keeps_only_active_mo_contracts_of_the_target_date() -> None:
         ("20260622", "20260925", True),
         ("20260622", "20260916", False),
         ("20260918", "20260925", False),
-        (None, "20260925", True),
-        ("20260622", None, True),
     ],
 )
 def test_lifecycle_boundary_is_inclusive(
@@ -95,6 +93,50 @@ def test_lifecycle_boundary_is_inclusive(
     else:
         with pytest.raises(_common.CollectionError):
             collect(api)
+
+
+@pytest.mark.parametrize(
+    ("list_date", "delist_date"),
+    [
+        (None, "20260925"),
+        ("20260622", None),
+        (None, None),
+    ],
+)
+def test_mo_contract_without_lifecycle_facts_is_an_error(
+    list_date: str | None, delist_date: str | None
+) -> None:
+    """A missing lifecycle bound is a Source gap, not an unbounded lifecycle."""
+    contract = mo_option_contract(
+        "MO2609-C-7000.CFE", call_put="C", list_date=list_date, delist_date=delist_date
+    )
+
+    with pytest.raises(_common.CollectionError, match="lifecycle"):
+        collect(fake_api([contract]))
+
+
+def test_lifecycle_ending_before_it_starts_is_an_error() -> None:
+    contract = mo_option_contract(
+        "MO2609-C-7000.CFE", call_put="C", list_date="20260901", delist_date="20260801"
+    )
+
+    with pytest.raises(_common.CollectionError, match="before"):
+        collect(fake_api([contract]))
+
+
+def test_incomplete_other_product_contract_is_not_a_mo_error() -> None:
+    """A non-MO CFFEX product is not a member, so its facts are not validated."""
+    incomplete_io = {
+        **mo_option_contract("IO2609-C-4000.CFE", opt_code="OPIO2609.CFE", call_put="C"),
+        "list_date": None,
+        "delist_date": None,
+    }
+
+    records = collect(fake_api([*ACTIVE_CONTRACTS, incomplete_io]))
+
+    assert {record["ts_code"] for record in records} == {
+        str(contract["ts_code"]) for contract in ACTIVE_CONTRACTS
+    }
 
 
 def test_no_business_filters_are_applied() -> None:

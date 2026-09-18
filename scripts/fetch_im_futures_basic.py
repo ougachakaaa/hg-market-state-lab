@@ -48,30 +48,43 @@ def is_ordinary_monthly_contract(record: _common.RawRecord) -> bool:
     return symbol.startswith(PRODUCT) and symbol[len(PRODUCT) :].isdigit()
 
 
+def is_im_contract_member(record: _common.RawRecord) -> bool:
+    """Report whether a Source fact belongs to the IM ordinary contract Dataset.
+
+    Dataset membership is decided by the contract identity only: ``CFFEX``,
+    ``fut_code=IM`` and an ordinary monthly symbol. Lifecycle facts decide
+    whether a member can be placed in a date window, not whether it belongs to
+    the Dataset.
+    """
+    return (
+        str(record.get("exchange") or "") == EXCHANGE
+        and str(record.get("fut_code") or "") == PRODUCT
+        and is_ordinary_monthly_contract(record)
+    )
+
+
 def select_im_contracts(frame: pd.DataFrame) -> list[_common.RawRecord]:
     """Return the ordinary monthly IM contract facts of a ``fut_basic`` response.
 
     The Source is already asked for ``CFFEX`` / ordinary / ``IM``; the checks
     here only guard the Dataset identity against a Source response that does not
-    respect the request, and never filter on liquidity or trading activity. A
-    contract fact without usable lifecycle dates cannot be placed in the IM
-    window at all, so it is not a member of this Dataset.
+    respect the request, and never filter on liquidity or trading activity.
     """
     records = [
-        record
-        for record in _common.to_raw_records(frame)
-        if str(record.get("exchange") or "") == EXCHANGE
-        and str(record.get("fut_code") or "") == PRODUCT
-        and is_ordinary_monthly_contract(record)
-        and _common.to_iso_date_or_none(record.get("list_date")) is not None
-        and _common.to_iso_date_or_none(record.get("delist_date")) is not None
+        record for record in _common.to_raw_records(frame) if is_im_contract_member(record)
     ]
     records.sort(key=lambda record: str(record["ts_code"]))
     return records
 
 
 def require_im_contract_facts(records: Sequence[_common.RawRecord]) -> None:
-    """Ensure the collected contract facts can express a contract lifecycle."""
+    """Ensure the collected contract facts are complete and can express a lifecycle.
+
+    Every member contract needs a usable ``list_date`` and ``delist_date``, and
+    an inverted lifecycle is invalid. A member with incomplete lifecycle facts is
+    still a member, so the Collector fails here instead of dropping it from the
+    Dataset.
+    """
     if not records:
         raise _common.CollectionError(
             f"Tushare {DATASET} returned no {PRODUCT} contract of exchange={EXCHANGE}."
@@ -82,6 +95,20 @@ def require_im_contract_facts(records: Sequence[_common.RawRecord]) -> None:
         raise _common.CollectionError(
             f"Tushare {DATASET} returned duplicate contract(s): {', '.join(duplicates[:5])}."
         )
+    for record in records:
+        list_date = _common.to_iso_date_or_none(record.get("list_date"))
+        delist_date = _common.to_iso_date_or_none(record.get("delist_date"))
+        if list_date is None or delist_date is None:
+            raise _common.CollectionError(
+                f"{PRODUCT} contract {record.get('ts_code')} has no usable lifecycle facts "
+                f"in Tushare {DATASET} (list_date={record.get('list_date')!r}, "
+                f"delist_date={record.get('delist_date')!r})."
+            )
+        if delist_date < list_date:
+            raise _common.CollectionError(
+                f"{PRODUCT} contract {record.get('ts_code')} has delist_date={delist_date} "
+                f"before list_date={list_date}."
+            )
 
 
 def collect_active_im_contracts(query: _common.QueryFunc) -> list[_common.RawRecord]:
@@ -102,7 +129,8 @@ def collect_im_futures_basic(trade_date: str, query: _common.QueryFunc) -> list[
 
     ``fut_basic`` is a contract list without a trade date of its own, so the
     target trade date only validates the script-level date form. Contract
-    lifecycle facts are kept as Source facts, delisted contracts included.
+    lifecycle facts are kept as Source facts, delisted contracts included, and a
+    member contract with incomplete lifecycle facts fails the collection.
     """
     # Reject a malformed script-level date before any Source request.
     _common.to_tushare_date(trade_date)

@@ -29,6 +29,11 @@ INDEX_CODE = "000852.SH"
 # calendar window that is obviously long enough. The exact window selection
 # belongs to later assembly (Guide 6.1).
 LOOKBACK_CALENDAR_DAYS = 240
+# Completeness requirement of the same Guide 6.1 window: the Raw artifact must
+# let downstream assembly reach the latest 120 *actual* trading days, so at
+# least this many distinct trade dates have to be present. The Raw artifact is
+# not trimmed to exactly this count.
+MIN_HISTORY_TRADE_DATES = 120
 
 
 def query_index_daily_history(
@@ -50,13 +55,26 @@ def lookback_window(target_trade_date: str) -> tuple[str, str]:
 def require_history_window(
     records: Sequence[_common.RawRecord], start_date: str, target_trade_date: str
 ) -> None:
-    """Ensure the history stops at the target date, includes it, and starts in window."""
+    """Ensure the history is complete enough for the Guide 6.1 window.
+
+    The history must cover at least ``MIN_HISTORY_TRADE_DATES`` distinct trade
+    dates ending at ``target_trade_date``, hold one Source row per trade date,
+    and describe only ``INDEX_CODE``. The Raw artifact is not trimmed to that
+    count: the exact ``latest 120 trading rows`` selection stays assembly.
+    """
     if not records:
         raise _common.CollectionError(
             f"Tushare {DATASET} returned no data for ts_code={INDEX_CODE} "
             f"on or before trade_date={target_trade_date}."
         )
+
+    seen: set[tuple[str, str]] = set()
     for record in records:
+        if record.get("ts_code") != INDEX_CODE:
+            raise _common.CollectionError(
+                f"Tushare {DATASET} returned ts_code={record.get('ts_code')!r} "
+                f"for a request of ts_code={INDEX_CODE}."
+            )
         in_window = _common.in_date_range(
             record, _common.TRADE_DATE_FIELD, start_date, target_trade_date
         )
@@ -66,10 +84,25 @@ def require_history_window(
                 f"{record.get(_common.TRADE_DATE_FIELD)!r} outside the requested window "
                 f"{start_date}..{target_trade_date}."
             )
-    if target_trade_date not in {record[_common.TRADE_DATE_FIELD] for record in records}:
+        key = (str(record["ts_code"]), str(record[_common.TRADE_DATE_FIELD]))
+        if key in seen:
+            raise _common.CollectionError(
+                f"Tushare {DATASET} returned duplicate rows for ts_code={key[0]} "
+                f"trade_date={key[1]}."
+            )
+        seen.add(key)
+
+    trade_dates = {str(record[_common.TRADE_DATE_FIELD]) for record in records}
+    if target_trade_date not in trade_dates:
         raise _common.CollectionError(
             f"Tushare {DATASET} returned no record for ts_code={INDEX_CODE} "
             f"on trade_date={target_trade_date}."
+        )
+    if len(trade_dates) < MIN_HISTORY_TRADE_DATES:
+        raise _common.CollectionError(
+            f"Tushare {DATASET} returned only {len(trade_dates)} distinct "
+            f"{_common.TRADE_DATE_FIELD} values for ts_code={INDEX_CODE}, fewer than the "
+            f"{MIN_HISTORY_TRADE_DATES} the analysis window needs."
         )
 
 
@@ -78,8 +111,10 @@ def collect_index_daily_history(
 ) -> list[_common.RawRecord]:
     """Return the ``index_daily`` history records of ``000852.SH``.
 
-    The Raw artifact covers a range of trade dates; only the window boundaries
-    are checked here. Selecting the latest 120 trading rows is assembly.
+    The Raw artifact covers a range of trade dates; the window bounds and the
+    completeness requirement (at least ``MIN_HISTORY_TRADE_DATES`` distinct
+    trade dates ending at the target date) are checked here. Selecting the
+    latest 120 trading rows is assembly.
     """
     start_date, end_date = lookback_window(trade_date)
     frame = query(ts_code=INDEX_CODE, start_date=start_date, end_date=end_date)

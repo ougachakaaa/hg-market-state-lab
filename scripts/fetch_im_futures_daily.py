@@ -53,10 +53,12 @@ def window_start_date(target_trade_date: str) -> str:
     return start.strftime(_common.TRADE_DATE_ISO_FORMAT)
 
 
-def in_collection_window(
-    record: _common.RawRecord, start_date: str, target_trade_date: str
-) -> str:
-    """Return the contract ``list_date`` if its lifecycle overlaps the window."""
+def require_contract_lifecycle(record: _common.RawRecord) -> tuple[str, str]:
+    """Return the ``(list_date, delist_date)`` a window contract needs.
+
+    A member contract without usable lifecycle facts cannot be placed in the
+    collection window; that is a Source gap, not a reason to skip the contract.
+    """
     list_date = _common.to_iso_date_or_none(record.get("list_date"))
     delist_date = _common.to_iso_date_or_none(record.get("delist_date"))
     if list_date is None or delist_date is None:
@@ -69,6 +71,30 @@ def in_collection_window(
             f"{PRODUCT} contract {record.get('ts_code')} has delist_date={delist_date} "
             f"before list_date={list_date}."
         )
+    return list_date, delist_date
+
+
+def effective_range(
+    record: _common.RawRecord, target_trade_date: str
+) -> tuple[str, str] | None:
+    """Return the ``(start, end)`` of the contract's effective trading range.
+
+    The range is ``[list_date, min(delist_date, target_trade_date)]``: no fact of
+    the contract can exist before it was listed or after it was delisted, and the
+    collection itself stops at the target trade date. A contract whose lifecycle
+    does not overlap the collection window returns ``None``.
+    """
+    list_date, delist_date = require_contract_lifecycle(record)
+    if delist_date < window_start_date(target_trade_date) or list_date > target_trade_date:
+        return None
+    return list_date, min(delist_date, target_trade_date)
+
+
+def in_collection_window(
+    record: _common.RawRecord, start_date: str, target_trade_date: str
+) -> str:
+    """Return the contract ``list_date`` if its lifecycle overlaps the window."""
+    list_date, delist_date = require_contract_lifecycle(record)
     if list_date <= target_trade_date and delist_date >= start_date:
         return list_date
     return ""
@@ -94,8 +120,11 @@ def collect_im_futures_daily(
     """Return the ``im_futures_daily`` records of the target collection window.
 
     The window is derived from ``im_futures_basic`` contract lifecycles; every
-    selected contract is queried over ``[list_date, target_trade_date]``. Raw
-    rows are kept as Source facts and are not trimmed to a trading-day count.
+    selected contract is queried over ``[list_date, delist_date]`` capped at the
+    target trade date. A contract that has entered its effective trading range
+    but returns no daily row is a Source gap and fails, and every returned row
+    must belong to the requested contract and to its effective range. Raw rows
+    are kept as Source facts and are not trimmed to a trading-day count.
     """
     _common.to_tushare_date(trade_date)
     start_date = window_start_date(trade_date)
@@ -108,26 +137,37 @@ def collect_im_futures_daily(
 
     records: list[_common.RawRecord] = []
     for contract, list_date in contracts:
+        ts_code = str(contract["ts_code"])
+        effective = effective_range(contract, trade_date)
+        if effective is None:
+            continue
+        _, end_date = effective
         frame = daily_query(
-            ts_code=str(contract["ts_code"]),
+            ts_code=ts_code,
             start_date=_common.to_tushare_date(list_date),
-            end_date=_common.to_tushare_date(trade_date),
+            end_date=_common.to_tushare_date(end_date),
         )
         contract_records = _common.to_raw_records(frame)
+        if not contract_records:
+            raise _common.CollectionError(
+                f"Tushare {DATASET} returned no daily row for {PRODUCT} contract {ts_code} "
+                f"in its effective range {list_date}..{end_date}."
+            )
         for record in contract_records:
-            if not _common.in_date_range(record, _common.TRADE_DATE_FIELD, list_date, trade_date):
+            if record.get("ts_code") != ts_code:
+                raise _common.CollectionError(
+                    f"Tushare {DATASET} returned ts_code={record.get('ts_code')!r} "
+                    f"for a request of ts_code={ts_code}."
+                )
+            if not _common.in_date_range(
+                record, _common.TRADE_DATE_FIELD, list_date, end_date
+            ):
                 raise _common.CollectionError(
                     f"Tushare {DATASET} returned {_common.TRADE_DATE_FIELD}="
-                    f"{record.get(_common.TRADE_DATE_FIELD)!r} for {contract['ts_code']} "
-                    f"outside {list_date}..{trade_date}."
+                    f"{record.get(_common.TRADE_DATE_FIELD)!r} for {ts_code} "
+                    f"outside {list_date}..{end_date}."
                 )
         records.extend(contract_records)
-
-    if not records:
-        raise _common.CollectionError(
-            f"Tushare {DATASET} returned no data for the {len(contracts)} {PRODUCT} "
-            f"contract(s) of {start_date}..{trade_date}."
-        )
 
     records.sort(key=lambda record: (str(record["ts_code"]), record[_common.TRADE_DATE_FIELD]))
     return records

@@ -80,21 +80,45 @@ def test_keeps_daily_facts_of_the_active_mo_universe() -> None:
     assert {record["trade_date"] for record in records} == {TARGET_DATE}
 
 
-def test_daily_rows_outside_the_active_universe_are_an_error() -> None:
-    # One row of an MO contract that is not active on the target trade date and
-    # one row of another CFFEX option product.
-    other_contract = mo_option_contract(
-        "MO2610-C-7000.CFE", list_date="20260924", delist_date="20261023", call_put="C"
-    )
+def test_other_cffex_products_are_ignored_as_non_members() -> None:
+    """``exchange=CFFEX`` returns IO/HO too; they are not part of this Dataset."""
     api = fake_api(
+        basic_contracts=[*ACTIVE_CONTRACTS, DELISTED_CONTRACT, OTHER_PRODUCT],
         daily_contracts=[
             *ACTIVE_CODES,
-            str(other_contract["ts_code"]),
+            str(DELISTED_CONTRACT["ts_code"]),
             str(OTHER_PRODUCT["ts_code"]),
-        ]
+        ],
     )
 
-    with pytest.raises(_common.CollectionError, match="active universe"):
+    records = collect(api)
+
+    assert [record["ts_code"] for record in records] == ACTIVE_CODES
+
+
+def test_daily_row_of_an_inactive_mo_contract_is_ignored() -> None:
+    """A not-yet-listed or delisted MO contract is not in the active universe."""
+    not_yet_listed = mo_option_contract(
+        "MO2610-C-7000.CFE", list_date="20260924", delist_date="20261023", call_put="C"
+    )
+    api = fake_api(daily_contracts=[*ACTIVE_CODES, str(not_yet_listed["ts_code"])])
+
+    records = collect(api)
+
+    assert [record["ts_code"] for record in records] == ACTIVE_CODES
+
+
+def test_missing_active_mo_daily_row_is_an_error() -> None:
+    api = fake_api(daily_contracts=ACTIVE_CODES[:-1])
+
+    with pytest.raises(_common.CollectionError, match="no daily row"):
+        collect(api)
+
+
+def test_duplicate_active_mo_daily_row_is_an_error() -> None:
+    api = fake_api(daily_contracts=[*ACTIVE_CODES, ACTIVE_CODES[0]])
+
+    with pytest.raises(_common.CollectionError, match="more than one row"):
         collect(api)
 
 
