@@ -318,28 +318,23 @@ data/raw/
 
 ## 11. Non-goals
 
-本文档不定义或实现：
+本 Guide 定义五个 Source Capture 的 contract（Source endpoint、universe、Raw artifact，见第 3、4、5、6 节），但不实现这些 Source Capture：不调用真实 Tushare API，不生成测试数据。
+
+本 Guide 也不实现 Analysis Preparation（derived features 与 Analysis-ready Artifact 结构由 `guides/csi1000-5d-analysis-snapshot.md` 定义），不实现 analyzer，不引入新的抽象或 framework。
+
+本 Guide 不新增其明确范围之外的新 Capture。
+
+## 12. Deferred（留待实现）
+
+以下内容已由后续 authority 决定，不再在本文档 deferred：
+
+* Analysis-ready Artifact 的最终文件结构、第一版 deterministic derived fields 及其公式：由 `guides/csi1000-5d-analysis-snapshot.md` 定义；
+* Analysis Preparation 的代码组织：由 `ARCHITECTURE.md` 第 9 节定义；
+* CLI 参数语义：由 `guides/data-services.md` 定义。
+
+本文档仍 deferred 的只有尚未决定的 implementation detail：
 
 ```text
-新增 / 修改任何 Source Capture
-调用真实 Tushare API
-生成测试数据
-实现 Analysis Preparation
-实现 derived features
-实现 analyzer
-引入新的抽象或 framework
-```
-
-## 12. Deferred（留待后续阶段）
-
-以下问题在本文档中尚未决定，留待后续实现 / Preparation Definition 阶段：
-
-```text
-Analysis-ready Artifact 的最终文件结构
-第一版具体 deterministic derived fields（ATR / RV / basis / option moneyness 等）
-derived field 的具体数学公式
-Analysis Preparation 的实现结构
-CLI 的具体参数设计
 Raw overwrite / retry 等运行策略
 历史窗口 Capture 的具体 API 调用循环方式
 ```

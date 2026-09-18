@@ -106,7 +106,8 @@ Source 定义其自身的数据事实和 API 语义，负责提供数据，不�
 职责：
 
 ```text
-Source API request
+具体 endpoint 调用
+query parameters
 Source-domain scope selection
 minimal normalization
 Raw Artifact production
@@ -254,14 +255,28 @@ Capture 执行顺序的业务细节
 
 ### 依赖方向
 
-各层之间的依赖方向是单向的：
+代码组件之间的依赖方向是单向的：
 
 ```text
-Source ← Source Capture ← Raw Artifact ← Analysis Preparation ← Data Service
+CLI → Data Service
+
+Data Service → Source Capture
+Data Service → Analysis Preparation
+
+Source Capture → Source
+Analysis Preparation → Raw Artifact（层间 contract）
+```
+
+Raw Artifact 与 Analysis-ready Artifact 是层间数据契约 / persisted artifact，不是业务代码层：
+
+```text
+Source Capture produces Raw Artifact
+Analysis Preparation consumes Raw Artifact
+Analysis Preparation produces Analysis-ready Artifact
 ```
 
 * Data Service 依赖 Source Capture 与 Analysis Preparation，通过 orchestration 把它们串起来。
-* Analysis Preparation 依赖 Raw Artifact，不得依赖 Source，也不得在准备阶段发起采集。
+* Analysis Preparation 依赖 Raw Artifact contract，不得依赖 Source，也不得在准备阶段发起采集。
 * Source Capture 依赖 Source，不得依赖 Analysis Preparation 的输出结构。
 * Data Service 不重新定义 Source / Source Capture / Analysis Preparation 的语义；其具体内容由 `guides/data-services.md` 与对应 Guide 承载。
 
@@ -547,8 +562,8 @@ daily-market-snapshot/
 
 * `src/daily_market_snapshot/cli.py`：CLI（argparse、`list` / `get`、输入校验、service lookup、结果/错误呈现），不编排 Capture。
 * `src/daily_market_snapshot/artifacts.py`：真正共享的本地 artifact 能力（canonical roots、JSON read/write、Raw/output path construction），保持很薄，不发展为 storage framework。
-* `src/daily_market_snapshot/sources/tushare.py`：Tushare 集成（token、client creation、Source request / date representation），不建立通用 DataSource framework。
-* `src/daily_market_snapshot/capture/`：Source Capture 实现（承接当前 `fetch_*.py` 的业务逻辑：Source query、Source-domain scope selection、minimal normalization、Raw facts）。
+* `src/daily_market_snapshot/sources/tushare.py`：最薄的 Tushare integration——credential / token 读取、client creation、Source-specific representation / date conversion，以及真正通用的 Tushare helper。不承担具体 Capture 的 endpoint query orchestration，不建立通用 DataSource framework。
+* `src/daily_market_snapshot/capture/`：Source Capture 实现（承接当前 `fetch_*.py` 的业务逻辑：具体 endpoint 调用、query parameters、Source-domain scope selection、minimal normalization、Raw facts）。
 * `src/daily_market_snapshot/preparation/`：Analysis Preparation 实现（承接当前 `build_snapshot.py` 的确定性转换）。
 * `src/daily_market_snapshot/services/catalog.py`：显式静态 catalog，不做 dynamic registry / filesystem discovery。
 * `src/daily_market_snapshot/services/csi1000_5d_analysis.py`：Data Service orchestration（Capture 编排、Preparation 调用、失败边界、最终 artifact 发布）。

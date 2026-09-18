@@ -287,17 +287,19 @@ Analysis Preparation 应产生语义一致的结果。
 
 ## 9. 下一步实现范围
 
-本文档是第一版的设计 authority；实现阶段按本文档与 `ARCHITECTURE.md` 交付：
+本文档是第一版 daily-market-snapshot 场景的 Analysis Preparation Definition authority。各职责如下：
 
 ```text
 trade_date
    ↓
-采集 index_daily → data/raw/YYYY-MM-DD/index_daily.json
-采集 stock_daily → data/raw/YYYY-MM-DD/stock_daily.json
+Source Capture index_daily → data/raw/YYYY-MM-DD/index_daily.json
+Source Capture stock_daily → data/raw/YYYY-MM-DD/stock_daily.json
    ↓
 Analysis Preparation → data/snapshots/YYYY-MM-DD/snapshot.json
 ```
 
-实现对应 `ARCHITECTURE.md` 第 9 节的项目结构约定（`fetch_*.py` 负责采集单个 Source Capture 并写出 Raw Artifact；`build_snapshot.py` 负责 Analysis Preparation），并配套 `tests/` 测试。
+Source Capture 职责：调用 Tushare 对应 endpoint、按本文档 universe 选择范围、minimal normalization，写出 Raw Artifact。Analysis Preparation 职责：只消费上述 Raw Artifact，按本文档第 6 节组装 breadth / indices，写出 Analysis-ready Artifact；不得调用 Tushare。
+
+目标 implementation location 以 `ARCHITECTURE.md` 第 9 节为 authority（Source Capture 位于 `capture/`，Analysis Preparation 位于 `preparation/`）。当前历史实现文件 `fetch_*.py` / `build_snapshot.py` 仍位于扁平 `scripts/`，属于待迁移的 implementation drift，不是目标结构。配套 `tests/` 测试。
 
 本文档不包含实现细节；实现不得超出本文档与 `ARCHITECTURE.md` 的范围。

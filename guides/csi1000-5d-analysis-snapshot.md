@@ -133,7 +133,7 @@ output/
 
 `YYYY-MM-DD` 表示 `target_trade_date`（目录名是目标交易日，不是文件中所有记录共同的 `trade_date`）。第一版只使用一个 JSON 文件，不提前拆分多个文件，不引入 schema registry 或 version framework。
 
-`snapshot.json` 是 Data Service `csi1000-5d-analysis` 的最终 artifact，其 canonical user-facing output 锁定为 `output/csi1000-5d-analysis/<target_trade_date>/snapshot.json`（见 `guides/data-services.md`）。本文档定义的是 `snapshot.json` 的**内容与组织方式**；`build_snapshot.py` 直接写该 canonical 位置，不再写 `data/snapshots/...`，不维护两份 artifact。
+`snapshot.json` 是 Data Service `csi1000-5d-analysis` 的最终 artifact，其 canonical user-facing output 锁定为 `output/csi1000-5d-analysis/<target_trade_date>/snapshot.json`（见 `guides/data-services.md`）。本文档定义的是 `snapshot.json` 的**内容与组织方式**；该 canonical 位置由 Analysis Preparation 直接写入，不再写 `data/snapshots/...`，不维护两份 artifact。
 
 ## 4. 输出逻辑结构
 
@@ -715,26 +715,22 @@ business conclusion schema
 
 ## 15. 下一步实现范围
 
-本文档是第一版 Analysis Preparation Definition authority。实现阶段（下一 Goal）按本文档与 `ARCHITECTURE.md` 交付：
+本文档是第一版 Analysis Preparation Definition authority。Analysis Preparation 的职责是：读取五个 Raw Artifact，按本文档的窗口选择、join 规则、派生公式、排序与失败条件，产出 analysis-ready Artifact `output/csi1000-5d-analysis/<target_trade_date>/snapshot.json`。
 
-```text
-Raw artifacts（五个 Raw artifacts）
-        ↓
-build_snapshot.py（Analysis Preparation）
-        ↓
-output/csi1000-5d-analysis/<target_trade_date>/snapshot.json
-```
+目标 implementation location 以 `ARCHITECTURE.md` 第 9 节为 authority：Analysis Preparation 实现位于 `preparation/`（当前为 `csi1000_5d_analysis.py`），由 Data Service orchestration 调用。当前历史实现文件 `build_snapshot.py` 仍位于扁平 `scripts/`，属于待迁移的 implementation drift（见第 16 节），不是目标结构。配套 `tests/` 测试。
 
-实现对应 `ARCHITECTURE.md` 第 9 节的项目结构约定（`build_snapshot.py` 负责 Analysis Preparation），并配套 `tests/` 测试。Coding agent 不需要自行发明任何业务语义：所有窗口选择、join 规则、派生公式、排序与失败条件均已在本 Guide 锁定。
+Coding agent 不需要自行发明任何业务语义：所有窗口选择、join 规则、派生公式、排序与失败条件均已在本 Guide 锁定。
 
 实现不得超出本 Guide 与 `guides/csi1000-5d-analysis-data.md`、`ARCHITECTURE.md` 的范围；若实现与本文档不一致，应做 reconciliation，不得静默选择另一套设计。
 
 ## 16. Reconciliation state
 
-当前 authority 与 implementation 已一致。锁定的 reconciliation 事实：
+数据语义层面已与当前实现 reconciliation（不含代码组织结构）。锁定的数据语义 reconciliation 事实：
 
-* Analysis-ready Artifact 的 canonical output 为 `output/csi1000-5d-analysis/<target_trade_date>/snapshot.json`；`build_snapshot.py` 直接写该位置，不再写 `data/snapshots/...`，不维护两份 artifact（见 `guides/data-services.md`）。
+* Analysis-ready Artifact 的 canonical output 为 `output/csi1000-5d-analysis/<target_trade_date>/snapshot.json`；不再写 `data/snapshots/...`，不维护两份 artifact（见 `guides/data-services.md`）。
 * `mo_option_basic.maturity_date` 由 Source Capture 按 `ARCHITECTURE.md` 第 3 节 minimal normalization 统一落地为 `YYYY-MM-DD`（与 `list_date` / `delist_date` 一致）。Analysis Preparation 只做 `maturity_date → expiry_date` 的 analysis-friendly rename，不再自行归一化 `YYYYMMDD`（第 7.2 节）。
 * Source legitimate null 与 required derived input 的边界已锁定（第 12 节）：nullable pass-through fact 保留 `null`；required / derived input 缺失或 malformed → 失败；`close` 属于 required derived input，不得走 pass-through null 路径。
+
+仍存在的 implementation structural drift：当前实现仍位于扁平 `scripts/` 目录（`fetch_*.py`、`build_snapshot.py`、`dms.py`、`_common.py`），尚未迁入 `ARCHITECTURE.md` 第 9 节的 `src/daily_market_snapshot/{sources,capture,preparation,services}` 结构。该 drift 是预期的，不重开上面已解决的数据语义；留给下一个 implementation Goal 做代码组织 reconciliation。
 
 本文档不保留已解决的 drift 历史；Git commit 已保存历史。
