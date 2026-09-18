@@ -43,6 +43,14 @@ AI Analysis
 
 本阶段重点不是建设通用数据平台，而是建立简单、明确、容易扩展的数据边界。
 
+### 1.1 Responsibility Boundary
+
+本项目的职责止于产生结构化、可复现、可分析（analysis-ready）的市场数据（Source → Raw Dataset → Snapshot / data output）。第 1 节流程图中最后一步 "AI Analysis" 属于外部 analyzer，不属于本项目。
+
+业务分析及其规则（例如价格中枢、噪声区、期权反向交易候选区域、bullish / bearish 判断、交易信号、目标点位等结论）属于外部 analyzer，不进入本项目的数据契约，也不得作为本项目 Snapshot Assembly 的业务逻辑实现。
+
+分析目标可以作为数据需求（Dataset / output definition）的来源，驱动本项目确定"需要哪些数据"；但分析规则与结论不由本项目定义或执行。
+
 ---
 
 ## 2. Core Architecture
