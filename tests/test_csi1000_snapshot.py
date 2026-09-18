@@ -1,7 +1,7 @@
 """Tests for the CSI1000 5-day analysis Snapshot Assembly.
 
 Everything runs on temporary local Raw JSON: no test touches the network or the
-repository's real ``data/raw`` / ``data/snapshots``.
+repository's real ``data/raw`` / ``output``.
 """
 
 from __future__ import annotations
@@ -14,11 +14,11 @@ from datetime import date, timedelta
 from pathlib import Path
 from typing import Any
 
-import build_snapshot
 import pytest
-from build_snapshot import SnapshotError
 
 import _common
+import build_snapshot
+from build_snapshot import SnapshotError
 
 TARGET_DATE = "2026-09-17"
 TARGET = date.fromisoformat(TARGET_DATE)
@@ -210,20 +210,21 @@ def raw_root(tmp_path: Path) -> Path:
 
 
 def run_builder(tmp_path: Path, raw_root: Path) -> dict[str, Any]:
-    """Run the CLI entry point and return the written snapshot."""
+    """Run the Builder entry point and return the written snapshot."""
     code = build_snapshot.main([TARGET_DATE])
     assert code == 0
     return json.loads(snapshot_path(tmp_path).read_text(encoding="utf-8"))
 
 
 def snapshot_path(tmp_path: Path) -> Path:
-    return tmp_path / "snapshots" / _common.CSI1000_RAW_SUBDIR / TARGET_DATE / "snapshot.json"
+    """Canonical Data Service output path of the assembled Snapshot."""
+    return tmp_path / "output" / _common.CSI1000_RAW_SUBDIR / TARGET_DATE / "snapshot.json"
 
 
 def patch_dirs(monkeypatch: pytest.MonkeyPatch, tmp_path: Path, raw_root: Path) -> None:
-    """Point the builder at the temporary Raw and Snapshot roots."""
+    """Point the builder at the temporary Raw and canonical output roots."""
     monkeypatch.setattr(build_snapshot, "RAW_DIR", raw_root)
-    monkeypatch.setattr(build_snapshot, "SNAPSHOTS_DIR", tmp_path / "snapshots")
+    monkeypatch.setattr(build_snapshot, "OUTPUT_DIR", tmp_path / "output")
 
 
 def window_mean(size: int) -> float:
@@ -264,6 +265,19 @@ def test_happy_path_snapshot_is_written_with_the_locked_structure(
         "im_futures",
     ]
     assert snapshot["target_trade_date"] == TARGET_DATE
+
+
+def test_output_path_is_the_canonical_data_service_artifact(
+    tmp_path: Path, raw_root: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """guides/data-services.md 6 + 7: one canonical artifact, under ``output/``."""
+    patch_dirs(monkeypatch, tmp_path, raw_root)
+
+    run_builder(tmp_path, raw_root)
+
+    assert snapshot_path(tmp_path).is_file()
+    # The pre-Data-Service location must not be written as well.
+    assert not (tmp_path / "snapshots").exists()
 
 
 def test_underlying_history_is_the_latest_120_rows_in_ascending_order(
@@ -593,7 +607,7 @@ def test_repeated_runs_on_the_same_raw_produce_the_same_file(
     patch_dirs(monkeypatch, tmp_path, raw_root)
 
     first = build_snapshot.build_snapshot(TARGET_DATE)
-    path = build_snapshot.write_snapshot(first, TARGET_DATE)
+    path = build_snapshot.write_snapshot(first, TARGET_DATE, tmp_path / "output")
     second = build_snapshot.build_snapshot(TARGET_DATE)
 
     assert path.read_text(encoding="utf-8") == (

@@ -13,11 +13,14 @@ __pycache__/
 # Local environment / secrets
 .env
 
-# Data outputs
-data/raw/*
-data/snapshots/*
+# Raw Dataset (internal runtime artifacts)
+data/raw/**
 !data/raw/.gitkeep
+
+# Non-Data-Service Snapshot output (runtime artifacts)
+data/snapshots/**
 !data/snapshots/.gitkeep
 
-# Data Service output
-output/
+# Data Service canonical user-facing output (runtime artifacts)
+output/**
+!output/.gitkeep

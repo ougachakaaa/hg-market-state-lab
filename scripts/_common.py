@@ -29,10 +29,15 @@ from dotenv import load_dotenv
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 RAW_DIR = REPO_ROOT / "data" / "raw"
-# Snapshot output root of ARCHITECTURE.md section 9; the per-scenario sub
-# directory is decided by the Snapshot Definition, as it is for Raw.
+# Snapshot output root of ARCHITECTURE.md section 9, kept for the first-version
+# Daily Snapshot Definition (``data/snapshots/YYYY-MM-DD/``); a Data Service
+# writes its canonical user-facing output under ``OUTPUT_DIR`` instead.
 SNAPSHOTS_DIR = REPO_ROOT / "data" / "snapshots"
-# Goal-scoped Raw root of guides/csi1000-5d-analysis-data.md section 7.
+# Data Service canonical user-facing output root of guides/data-services.md
+# section 6: ``output/<service_id>/<target_trade_date>/``.
+OUTPUT_DIR = REPO_ROOT / "output"
+# Data Service id of the CSI1000 analysis scenario, which is also its goal
+# scoped Raw / output sub directory (guides/data-services.md section 2).
 CSI1000_RAW_SUBDIR = "csi1000-5d-analysis"
 ENV_FILE = REPO_ROOT / ".env"
 

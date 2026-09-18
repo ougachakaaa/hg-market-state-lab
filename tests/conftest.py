@@ -53,6 +53,14 @@ def snapshots_dir_in_test_workdir(
 
 
 @pytest.fixture(autouse=True)
+def output_dir_in_test_workdir(
+    test_workdir: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Keep Data Service output out of the repository's real ``output/``."""
+    monkeypatch.setattr(_common, "OUTPUT_DIR", test_workdir / "output")
+
+
+@pytest.fixture(autouse=True)
 def no_local_dotenv(monkeypatch: pytest.MonkeyPatch) -> None:
     """Never read the developer's real ``.env`` during tests."""
 

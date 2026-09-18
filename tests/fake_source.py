@@ -495,3 +495,47 @@ def index_frames_for_all(
         code: index_daily_frame(code, trade_date, close=100.0 + offset)
         for offset, code in enumerate(codes)
     }
+
+
+# --------------------------------------------------------------------------
+# One complete CSI1000 5-day analysis scenario.
+#
+# The Data Service CLI tests and the Raw-file tests both need a fake Source that
+# can serve every stage of ``csi1000-5d-analysis``, so the scenario lives here.
+# The window bounds cover the downstream 120-trading-day underlying window with
+# room to spare, and every IM daily fact fills its contract's whole effective
+# range.
+# --------------------------------------------------------------------------
+
+CSI1000_TARGET_DATE = "2026-09-17"
+CSI1000_INDEX_CODE = "000852.SH"
+CSI1000_INDEX_SOURCE_DATES = business_days("2026-01-20", CSI1000_TARGET_DATE)
+CSI1000_MO_CONTRACTS = [
+    mo_option_contract("MO2609-C-7000.CFE", exercise_price=7000.0, call_put="C"),
+    mo_option_contract("MO2609-P-7000.CFE", exercise_price=7000.0, call_put="P"),
+]
+CSI1000_MO_CODES = [str(contract["ts_code"]) for contract in CSI1000_MO_CONTRACTS]
+CSI1000_IM_CONTRACTS = [
+    im_contract("IM2609.CFE", list_date="20260817", delist_date="20260918"),
+]
+CSI1000_IM_DAILY_DATES = {
+    "IM2609.CFE": business_days("2026-08-17", CSI1000_TARGET_DATE),
+}
+
+
+def csi1000_5d_analysis_api() -> FakeTushareApi:
+    """Build one fake Source that can serve every stage of the scenario."""
+    return FakeTushareApi(
+        index_frames={
+            CSI1000_INDEX_CODE: index_history_frame(
+                CSI1000_INDEX_CODE, CSI1000_INDEX_SOURCE_DATES
+            )
+        },
+        option_basic=option_basic_frame(CSI1000_MO_CONTRACTS),
+        option_daily=option_daily_frame("20260917", CSI1000_MO_CODES),
+        futures_basic=futures_basic_frame(CSI1000_IM_CONTRACTS),
+        futures_daily={
+            ts_code: futures_daily_frame(ts_code, trade_dates)
+            for ts_code, trade_dates in CSI1000_IM_DAILY_DATES.items()
+        },
+    )

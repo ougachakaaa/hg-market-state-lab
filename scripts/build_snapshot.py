@@ -11,9 +11,15 @@ Input (read-only, no network, no fallback):
         im_futures_basic.json
         im_futures_daily.json
 
-Output:
+Output (Data Service canonical user-facing output):
 
-    data/snapshots/csi1000-5d-analysis/<target_trade_date>/snapshot.json
+    output/csi1000-5d-analysis/<target_trade_date>/snapshot.json
+
+The canonical interface is the Data Service CLI
+(``poetry run python scripts/dms.py get csi1000-5d-analysis --date ...``), which
+also collects the five Raw artifacts this Builder reads. Running this module
+directly is a development / debugging entrypoint that assumes the Raw artifacts
+already exist.
 
 Usage:
     poetry run python scripts/build_snapshot.py 2026-09-17
@@ -33,7 +39,7 @@ from typing import Any
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 import _common  # noqa: E402
-from _common import CSI1000_RAW_SUBDIR, RAW_DIR, SNAPSHOTS_DIR  # noqa: E402
+from _common import CSI1000_RAW_SUBDIR, OUTPUT_DIR, RAW_DIR  # noqa: E402
 
 # Guide section 10: one JSON file per target trade date.
 SNAPSHOT_FILENAME = "snapshot.json"
@@ -424,10 +430,16 @@ def load_im_futures(
     return {"history": history, "target_date_curve": curve}
 
 
-def build_snapshot(trade_date: str) -> RawRecord:
-    """Assemble the CSI1000 5-day analysis Snapshot for one target trade date."""
+def build_snapshot(trade_date: str, dataset_dir: Path | None = None) -> RawRecord:
+    """Assemble the CSI1000 5-day analysis Snapshot for one target trade date.
+
+    ``dataset_dir`` defaults to the Raw directory of ``trade_date`` under the
+    module-level :data:`RAW_DIR`; the Data Service CLI passes the directory it
+    collected into, and a test can pass a temporary one.
+    """
     target_trade_date = require_trade_date(trade_date, "target_trade_date")
-    dataset_dir = RAW_DIR / CSI1000_RAW_SUBDIR / target_trade_date
+    if dataset_dir is None:
+        dataset_dir = RAW_DIR / CSI1000_RAW_SUBDIR / target_trade_date
 
     # Guide 5.3: one target-date close, taken from the underlying history.
     history = underlying_history(
@@ -458,18 +470,33 @@ def build_snapshot(trade_date: str) -> RawRecord:
     }
 
 
-def write_snapshot(snapshot: RawRecord, trade_date: str) -> Path:
-    """Write ``snapshot.json`` and return its path."""
-    directory = SNAPSHOTS_DIR / CSI1000_RAW_SUBDIR / trade_date
-    directory.mkdir(parents=True, exist_ok=True)
-    path = directory / SNAPSHOT_FILENAME
-    path.write_text(
-        json.dumps(snapshot, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
-    )
+def write_snapshot(
+    snapshot: RawRecord, trade_date: str, output_dir: Path | None = None
+) -> Path:
+    """Write ``snapshot.json`` to the Data Service output and return its path.
+
+    ``output_dir`` defaults to the module-level :data:`OUTPUT_DIR`, so tests can
+    redirect the canonical output root without patching the module.
+    """
+    root = OUTPUT_DIR if output_dir is None else output_dir
+    directory = root / CSI1000_RAW_SUBDIR / trade_date
+    try:
+        directory.mkdir(parents=True, exist_ok=True)
+        path = directory / SNAPSHOT_FILENAME
+        path.write_text(
+            json.dumps(snapshot, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
+        )
+    except OSError as exc:
+        raise SnapshotError(f"cannot write the Snapshot to {directory}: {exc}.") from exc
     return path
 
 
 def main(argv: Sequence[str] | None = None) -> int:
+    """Assemble and write one Snapshot; return the process exit code.
+
+    Development / debugging entrypoint: the Data Service CLI is the canonical
+    interface and also collects the Raw artifacts.
+    """
     parser = argparse.ArgumentParser(
         description="Assemble the CSI1000 5-day analysis Snapshot from local Raw artifacts."
     )
@@ -490,6 +517,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         f"{len(snapshot['im_futures']['history'])} futures observations) to {path}"
     )
     return 0
+
 
 if __name__ == "__main__":
     raise SystemExit(main())

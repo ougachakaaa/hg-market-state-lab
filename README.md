@@ -8,26 +8,38 @@
 
 用户级调用语义（Data Service）与 CLI 契约定义在 `guides/data-services.md` 中。
 
-当前架构定义、第一版 Snapshot Definition 与基础开发环境已就绪，已实现 Raw Dataset Collector（第一版 Daily Snapshot 场景的 `index_daily`、`stock_daily`，以及 CSI1000 分析场景的 CSI1000 历史、MO 期权链与 IM 期货数据），以及 CSI1000 分析场景的 Snapshot Assembly（Raw → analysis-ready `snapshot.json`）；第一版 Daily Snapshot 的 Assembly 尚未实现。
+当前架构定义、第一版 Snapshot Definition 与基础开发环境已就绪，已实现 Raw Dataset Collector（第一版 Daily Snapshot 场景的 `index_daily`、`stock_daily`，以及 CSI1000 分析场景的 CSI1000 历史、MO 期权链与 IM 期货数据）、CSI1000 分析场景的 Snapshot Assembly（Raw → analysis-ready `snapshot.json`），以及 Data Service CLI（`scripts/dms.py`）；第一版 Daily Snapshot 的 Assembly 尚未实现。
 
 ## Data Service（用户入口）
 
-用户和 Agent 通过 Data Service CLI 请求数据产品，无需知道底层 Collector。第一版只有一个 Data Service：`csi1000-5d-analysis`。
+普通用户和 Agent 的日常主入口是 Data Service CLI，无需知道底层有哪些 Collector、它们的执行顺序或 Raw 目录结构。第一版只有一个 Data Service：`csi1000-5d-analysis`。
+
+列出当前支持的 Data Service：
 
 ```bash
 poetry run python scripts/dms.py list
+```
+
+请求某个交易日的 `csi1000-5d-analysis`：
+
+```bash
 poetry run python scripts/dms.py get csi1000-5d-analysis --date 2026-09-18
 ```
 
-语义分别等价于 `dms list` 与 `dms get csi1000-5d-analysis --date 2026-09-18`。`--date` 是显式给出的 `target_trade_date`，不自动 fallback。
+两条命令在语义上分别等价于 `dms list` 与 `dms get csi1000-5d-analysis --date 2026-09-18`。`--date` 是显式给出的 `target_trade_date`：不支持 `today` / `latest`，不自动寻找最近交易日，不 fallback。unsupported service 或非 `YYYY-MM-DD` 的日期在任何 Source 请求之前失败。
 
-最终输出（canonical user-facing）：
+`get` 自动完成整条链路（采集五个 Raw artifact → deterministic Snapshot Assembly），成功时打印 `service`、`target_trade_date` 与 `output_path`，最终 artifact 位于：
 
 ```text
-output/csi1000-5d-analysis/2026-09-18/snapshot.json
+output/
+└─ csi1000-5d-analysis/
+   └─ 2026-09-18/
+      └─ snapshot.json
 ```
 
-Data Service / CLI / output 契约以 `guides/data-services.md` 为准。CLI（`scripts/dms.py`）尚未实现，属 deferred。
+任一步骤失败时停止执行、返回非零退出码，并在 stderr 报告 `service`、`date`、失败的 stage 与原因；不会跳过失败的 Dataset、自动换日期或产出 partial final output。
+
+Data Service / CLI / output 契约以 `guides/data-services.md` 为准。
 
 ## 基础环境
 
@@ -62,9 +74,9 @@ poetry run mypy .
 * `guides/data-services.md`：Data Service / CLI / output 契约 authority（用户级调用语义）
 * `config/`：配置
 * `guides/`：DSH 执行任务使用的 Guide
-* `scripts/`：Raw Dataset Collector（`fetch_*.py`）与 Snapshot Assembly（`build_snapshot.py`）
-* `data/raw/`：Raw Dataset 输出目录
-* `data/snapshots/`：非 Data Service 的 Snapshot 输出目录
+* `scripts/`：Data Service CLI（`dms.py`）、Raw Dataset Collector（`fetch_*.py`）与 Snapshot Assembly（`build_snapshot.py`）
+* `data/raw/`：Raw Dataset 输出目录（内部运行产物）
+* `data/snapshots/`：非 Data Service 的 Snapshot 输出目录（运行产物）
 * `output/`：Data Service 的 canonical user-facing output（运行产物）
 * `tests/`：测试
 
@@ -96,7 +108,9 @@ data/raw/
 
 数据集语义、字段单位与 Raw 文件形态以 `guides/daily-market-snapshot.md` 为准。给定日期没有数据（非交易日、停市、源无数据）时脚本明确失败，不自动 fallback 到其他日期。
 
-## 采集 CSI1000 分析场景的 Raw Dataset
+## 底层 Collector 与 Builder（development / debugging entrypoints）
+
+以下脚本是 `csi1000-5d-analysis` 的实现层，用于 development、debugging、testing 与 reconciliation；日常数据任务请使用上面的 Data Service CLI，它会自行按顺序执行这些步骤。
 
 `guides/csi1000-5d-analysis-data.md` 定义的五个 Raw artifact 由五个相互独立的 Collector 采集，都接受显式给出的目标交易日 `YYYY-MM-DD`：
 
@@ -123,27 +137,16 @@ data/raw/
 
 这五个文件是 Source 事实的 Raw 落地（`index_daily_history.json` 与 `im_futures_daily.json` 可以包含多个交易日）；Dataset 语义、Universe 与历史窗口要求以 `guides/csi1000-5d-analysis-data.md` 为准。
 
-`data/raw/` 是运行产物，不进入版本控制。
-
-## 生成 CSI1000 分析场景的 Snapshot
-
 `guides/csi1000-5d-analysis-snapshot.md` 定义的 `snapshot.json` 由 `scripts/build_snapshot.py` 从上面五个 Raw artifact 组装，接受同一个目标交易日 `YYYY-MM-DD`：
 
 ```bash
 poetry run python scripts/build_snapshot.py 2026-09-17
 ```
 
-输出（Data Service canonical user-facing output；当前 `build_snapshot.py` 仍写 `data/snapshots/csi1000-5d-analysis/<date>/snapshot.json`，见 `guides/data-services.md` 的 reconciliation）：
-
-```text
-output/
-└─ csi1000-5d-analysis/
-   └─ 2026-09-17/
-      └─ snapshot.json
-```
+它写出同一个 canonical 位置：`output/csi1000-5d-analysis/<date>/snapshot.json`。
 
 Builder 只读取 `data/raw/csi1000-5d-analysis/<target_trade_date>/` 下的五个 Raw artifact：不调用 Tushare、不访问网络、不读取其他日期目录、不自动 fallback。Raw 缺失、形状不合法、120 / 60 日窗口不足、MO 或 IM 无法 join、字段缺失或无法计算派生值时，脚本明确失败并返回非零退出码，不跳过记录、不填零、不估算。
 
 窗口选择、join 规则、派生字段公式、排序与失败条件全部以 `guides/csi1000-5d-analysis-snapshot.md` 为准（该 Guide 是 Snapshot Definition 的 authority）。`snapshot.json` 是 analysis-ready 数据，不含任何市场判断或交易结论。
 
-`data/snapshots/` 是运行产物，不进入版本控制。
+`data/raw/` 与 `output/` 都是运行产物，不进入版本控制。
