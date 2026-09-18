@@ -31,7 +31,17 @@ select = ["E", "F", "I", "UP", "B"]
 [tool.ruff.lint.isort]
 # scripts/ and tests/ are flat directories imported directly, so ruff cannot
 # infer these as first-party on its own.
-known-first-party = ["_common", "fake_source", "fetch_stock_daily", "fetch_index_daily"]
+known-first-party = [
+    "_common",
+    "fake_source",
+    "fetch_csi1000_index_history",
+    "fetch_im_futures_basic",
+    "fetch_im_futures_daily",
+    "fetch_index_daily",
+    "fetch_mo_option_basic",
+    "fetch_mo_option_daily",
+    "fetch_stock_daily",
+]
 
 [tool.mypy]
 python_version = "3.13"

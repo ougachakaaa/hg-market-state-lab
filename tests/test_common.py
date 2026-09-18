@@ -94,3 +94,79 @@ def test_write_raw_dataset_writes_json_array(test_workdir: Path) -> None:
 
     assert path.name == "index_daily.json"
     assert json.loads(path.read_text(encoding="utf-8")) == records
+
+
+@pytest.mark.parametrize("value", [None, "", "  ", float("nan")])
+def test_to_iso_date_or_none_keeps_missing_source_dates(value: object) -> None:
+    assert _common.to_iso_date_or_none(value) is None
+
+
+def test_to_iso_date_or_none_converts_source_form() -> None:
+    assert _common.to_iso_date_or_none("20260917") == "2026-09-17"
+
+
+def test_to_iso_date_or_none_keeps_already_normalized_dates() -> None:
+    assert _common.to_iso_date_or_none("2026-06-22") == "2026-06-22"
+
+
+@pytest.mark.parametrize("value", ["2026-6-22", "20261301", "22/06/2026"])
+def test_to_iso_date_or_none_rejects_other_forms(value: str) -> None:
+    with pytest.raises(_common.CollectionError):
+        _common.to_iso_date_or_none(value)
+
+
+def test_to_raw_records_normalizes_source_date_facts() -> None:
+    import pandas as pd
+
+    frame = pd.DataFrame(
+        [{"ts_code": "MO2609-C-7000.CFE", "list_date": "20260622", "delist_date": "20260925"}]
+    )
+
+    records = _common.to_raw_records(frame)
+
+    assert records == [
+        {
+            "ts_code": "MO2609-C-7000.CFE",
+            "list_date": "2026-06-22",
+            "delist_date": "2026-09-25",
+        }
+    ]
+
+
+def test_to_raw_records_is_stable_for_already_normalized_dates() -> None:
+    import pandas as pd
+
+    frame = pd.DataFrame([{"ts_code": "MO2609-C-7000.CFE", "list_date": "2026-06-22"}])
+
+    records = _common.to_raw_records(frame)
+
+    assert records[0]["list_date"] == "2026-06-22"
+
+
+def test_to_raw_records_rejects_malformed_source_date_facts() -> None:
+    import pandas as pd
+
+    frame = pd.DataFrame([{"ts_code": "MO2609-C-7000.CFE", "list_date": "2026-6-22"}])
+
+    with pytest.raises(_common.CollectionError):
+        _common.to_raw_records(frame)
+
+
+def test_in_date_range_uses_inclusive_iso_bounds() -> None:
+    record = {"trade_date": "2026-09-17"}
+
+    assert _common.in_date_range(record, "trade_date", "2026-09-17", "2026-09-17")
+    assert not _common.in_date_range(record, "trade_date", "2026-01-01", "2026-09-16")
+    assert not _common.in_date_range({"trade_date": None}, "trade_date", "2026-01-01", "2026-12-31")
+
+
+def test_fetch_source_frames_keeps_the_requested_code() -> None:
+    import pandas as pd
+
+    def query(*, ts_code: str, start_date: str) -> pd.DataFrame:
+        return pd.DataFrame([{"ts_code": ts_code, "start_date": start_date}])
+
+    frames = list(_common.fetch_source_frames(query, ["B", "A"], start_date="20260101"))
+
+    assert [code for code, _ in frames] == ["A", "B"]
+    assert [frame.iloc[0]["ts_code"] for _, frame in frames] == ["A", "B"]
