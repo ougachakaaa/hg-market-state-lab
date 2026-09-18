@@ -1,8 +1,8 @@
-# guides/csi1000-5d-analysis-data.md — CSI1000 未来约 5 个交易日市场状态分析的数据需求与 Raw Dataset 契约 authority
+# guides/csi1000-5d-analysis-data.md — CSI1000 未来约 5 个交易日市场状态分析的数据需求与 Source Capture / Raw Artifact 契约 authority
 
-> 状态：本阶段为数据需求与 Raw Dataset 契约 authority（design-only，尚未进入实现）。本文档锁定"外部分析器分析从目标交易日往后约 5 个交易日的中证1000市场状态"这一场景所需的**输入数据需求**，以及支撑下一阶段 Raw Collection 直接实现的 **Source / Dataset / Raw artifact 契约**。不定义也不实现任何业务分析。
+> 状态：authority。本文档锁定"外部分析器分析从目标交易日往后约 5 个交易日的中证1000市场状态"这一场景所需的**输入数据需求**，以及支撑 Source Capture 直接实现的 **Source / Raw Artifact 契约**。不定义也不实现任何业务分析。
 >
-> 层级：本文档位于 `ARCHITECTURE.md` 之下，与 `guides/daily-market-snapshot.md` 并列。架构层面的稳定边界以 `ARCHITECTURE.md` 为准（尤其第 1.1 节职责边界、第 2 节核心架构、第 3 节 Raw/Snapshot 边界、第 4 节架构边界的执行、第 8 节 Guide 职责、第 9 节项目结构）；本文档不得与其冲突。
+> 层级：本文档位于 `ARCHITECTURE.md` 之下，与 `guides/daily-market-snapshot.md` 并列。架构层面的稳定边界以 `ARCHITECTURE.md` 为准（尤其第 1.1 节职责边界、第 2 节核心架构、第 3 节 Raw/Preparation 边界、第 4 节架构边界的执行、第 8 节 Guide 职责、第 9 节项目结构）；本文档不得与其冲突。
 >
 > 实现本 Guide 任务的 Agent 应先阅读 `ARCHITECTURE.md` 第 1.1、2、3、4、9 节，再按本文档执行。
 
@@ -22,7 +22,7 @@
 
 ## 2. 职责边界：确定性数据转换 vs 业务分析
 
-本文档在 authority 中明确区分两类事情，避免后续 coding agent 把业务分析逻辑塞进 Snapshot Builder。
+本文档在 authority 中明确区分两类事情，避免后续 coding agent 把业务分析逻辑塞进 Analysis Preparation。
 
 ### 2.1 本项目允许（确定性数据转换）
 
@@ -77,7 +77,7 @@ analysis-ready
 
 本场景统一使用 **Tushare Pro**，不引入第二数据源，不引入 DataSource abstraction。
 
-| 数据需求 | Source（Tushare endpoint） | 对应 Dataset |
+| 数据需求 | Source（Tushare endpoint） | 对应 Source Capture |
 | --- | --- | --- |
 | CSI1000 指数历史行情 | `index_daily` | `index_daily`（复用） |
 | MO 期权合约静态/生命周期事实 | `opt_basic` | `mo_option_basic` |
@@ -85,15 +85,15 @@ analysis-ready
 | IM 期货合约静态/生命周期事实 | `fut_basic` | `im_futures_basic` |
 | IM 期货日行情事实 | `fut_daily` | `im_futures_daily` |
 
-本阶段只锁定上述 Source / Dataset 契约，不实现 API 调用。
+本阶段只锁定上述 Source / Source Capture 契约，不实现 API 调用。
 
-## 4. Dataset 与 Raw artifact 契约
+## 4. Source Capture 与 Raw Artifact 契约
 
 字段语义与单位以 Tushare Source 原始定义为准；Raw 层保持 Source 字段名与语义，不做分析视角重命名或单位换算。下表仅作便于识别的最低字段清单；Source 返回的其他字段可按 `ARCHITECTURE.md` 第 3 节的 Raw 原则保留。
 
-### 4.1 Dataset: index_daily（复用，CSI1000 历史窗口）
+### 4.1 Source Capture: index_daily（复用，CSI1000 历史窗口）
 
-* 语义名称：`index_daily`（复用 `ARCHITECTURE.md` 与 `guides/daily-market-snapshot.md` 第 4.1 节已定义的 Dataset 语义，不新建同义 Dataset）。
+* 语义名称：`index_daily`（复用 `ARCHITECTURE.md` 与 `guides/daily-market-snapshot.md` 第 4.1 节已定义的 Source Capture 语义，不新建同义 Capture）。
 * 标的：`000852.SH`（中证1000指数）。
 * Source：Tushare `index_daily`（支持 `ts_code` + `start_date` + `end_date` 的历史区间查询）。
 * Raw artifact：`index_daily_history.json`。
@@ -118,11 +118,11 @@ analysis-ready
 
 #### 与现有单日采集的关系
 
-* 现有 `fetch_index_daily.py` 按单日采集六个指数的 `index_daily`（用于第一版 Daily Snapshot）。
-* 第一版 Guide 中固定的六指数 universe 属于第一版 Snapshot Definition 的输入范围，不属于 `index_daily` Dataset 语义本身；本场景在同一 Dataset 语义下，聚焦 `000852.SH` 的**历史窗口**。
-* 历史窗口的输出要求与 Collection / Assembly 分工见第 6.1 节。
+* 现有 `fetch_index_daily.py` 按单日采集六个指数的 `index_daily`（用于第一版 daily-market-snapshot 场景）。
+* 第一版 Guide 中固定的六指数 universe 属于第一版场景 Definition 的输入范围，不属于 `index_daily` Source Capture 语义本身；本场景在同一 Capture 语义下，聚焦 `000852.SH` 的**历史窗口**。
+* 历史窗口的输出要求与 Capture / Preparation 分工见第 6.1 节。
 
-### 4.2 Dataset: mo_option_basic
+### 4.2 Source Capture: mo_option_basic
 
 * 语义名称：`mo_option_basic`
 * Source：Tushare `opt_basic`
@@ -144,10 +144,10 @@ analysis-ready
 
 * 可以保留 Source 返回的其他字段。
 * Raw 层**不得**做分析视角重命名：`exercise_price` → `strike`、`maturity_date` → `expiry_date`、`call_put` → `option_type`。
-* 这些更友好的字段名如果未来需要，应在 Snapshot / analysis-ready assembly 中处理。
+* 这些更友好的字段名如果未来需要，应在 Analysis Preparation 中处理。
 * Raw 层对 contract lifecycle date facts 做 minimal date normalization：`list_date` / `delist_date` / `maturity_date` 统一落地为 `YYYY-MM-DD`（与 `trade_date` 一致，见 `ARCHITECTURE.md` 第 3 节）。这只改变表示形式，不改变 Source 语义。
 
-### 4.3 Dataset: mo_option_daily
+### 4.3 Source Capture: mo_option_daily
 
 * 语义名称：`mo_option_daily`
 * Source：Tushare `opt_daily`
@@ -175,7 +175,7 @@ analysis-ready
 * 不人为增加 `strike`、`expiry`、`call_put`、`IV`、`Greeks`——这些不是 `opt_daily` 的 Raw Fact。
 * 需要这些属性时，由下游使用 `mo_option_basic` + `mo_option_daily` 确定性组合。
 
-### 4.4 Dataset: im_futures_basic
+### 4.4 Source Capture: im_futures_basic
 
 * 语义名称：`im_futures_basic`
 * Source：Tushare `fut_basic`
@@ -198,7 +198,7 @@ analysis-ready
 
 * 不在 Raw 层创造分析字段。
 
-### 4.5 Dataset: im_futures_daily
+### 4.5 Source Capture: im_futures_daily
 
 * 语义名称：`im_futures_daily`
 * Source：Tushare `fut_daily`
@@ -237,17 +237,17 @@ analysis-ready
 
 * 生命周期判定基于 Source contract facts：`list_date <= target_trade_date <= delist_date`。
 * 产品限定：MO，且 `exchange = CFFEX`。
-* 不得按 strike 距离、成交量、只保留 ATM、只保留近月、只保留"有分析价值"等做过滤——这些筛选属于下游数据组织需求，不属于 Raw Collection。
+* 不得按 strike 距离、成交量、只保留 ATM、只保留近月、只保留"有分析价值"等做过滤——这些筛选属于下游数据组织需求，不属于 Source Capture。
 * 第一版 MO 只要求目标交易日完整链，暂时不要求 MO 历史多日。
 
 ### 5.2 IM universe
 
-"主要可交易合约 / 有意义"这类业务解释性措辞不用于 Raw Collection。IM universe 的确定性定义：
+"主要可交易合约 / 有意义"这类业务解释性措辞不用于 Source Capture。IM universe 的确定性定义：
 
 > 对目标分析窗口，采集属于 IM 产品且在相关交易日处于有效生命周期内的普通月度合约。
 
 * 不得根据主力判断、成交量、持仓量、流动性阈值、analyzer 当前关注月份提前过滤。
-* 目标是 Raw Dataset 足以让下游重建 IM term structure。
+* 目标是 Raw Artifact 足以让下游重建 IM term structure。
 
 ## 6. 历史窗口语义
 
@@ -256,20 +256,20 @@ analysis-ready
 * 复用 `index_daily`（`000852.SH`），Source 为 Tushare `index_daily`。
 * Analysis-ready 要求：下游应能取得截至 target_trade_date 的最近 120 个实际交易日记录。
 * 不为此引入交易日历 framework。
-* Raw Collector 可以获取一个包含不少于这些记录的历史区间/历史集合；Raw 不要求恰好 120 行。
-* 精确选取 `latest 120 trading rows <= target_trade_date` 属于后续 deterministic assembly。
-* 保持边界：Collector = Source Fact acquisition；Assembly = window selection。不为"精确 120 日"在 Collector 中引入业务组织逻辑。
+* Source Capture 可以获取一个包含不少于这些记录的历史区间/历史集合；Raw 不要求恰好 120 行。
+* 精确选取 `latest 120 trading rows <= target_trade_date` 属于后续 Analysis Preparation。
+* 保持边界：Capture = Source Fact acquisition；Preparation = window selection。不为"精确 120 日"在 Capture 中引入业务组织逻辑。
 
 ### 6.2 IM history
 
 * Analysis-ready 要求：下游应能取得 target_trade_date 及之前约 60 个实际交易日的 IM term-structure-related facts。
-* Raw Collection 应获取足够覆盖这一窗口的 `im_futures_basic` + `im_futures_daily` Source Fact。
-* Collector 不负责 basis / annualized basis / calendar spread / term structure interpretation，也不需要把 Raw 裁切成恰好 60 个交易日。
-* 精确窗口选择属于后续 assembly。
+* Source Capture 应获取足够覆盖这一窗口的 `im_futures_basic` + `im_futures_daily` Source Fact。
+* Capture 不负责 basis / annualized basis / calendar spread / term structure interpretation，也不需要把 Raw 裁切成恰好 60 个交易日。
+* 精确窗口选择属于后续 Preparation。
 
 ## 7. Raw 文件组织
 
-本场景使用独立的 goal-scoped Raw 目录，避免与现有单日 Snapshot Definition 的 Raw artifact 语义冲突；不修改现有 `data/raw/YYYY-MM-DD/{index_daily.json, stock_daily.json}` 语义。
+本场景使用独立的 goal-scoped Raw 目录，避免与现有单日 daily-market-snapshot 场景的 Raw artifact 语义冲突；不修改现有 `data/raw/YYYY-MM-DD/{index_daily.json, stock_daily.json}` 语义。
 
 ```text
 data/raw/
@@ -288,12 +288,12 @@ data/raw/
 * 不在 Raw 文件中 join basic + daily。
 * `data/raw/` 是运行产物，不进入版本控制。
 
-## 8. 文件与 Dataset 的对应关系
+## 8. 文件与 Source Capture 的对应关系
 
-* `index_daily_history.json` 不是新的 Dataset，仍属于 `index_daily`，只是本场景下对 `000852.SH` 历史 Source Fact 的 Raw artifact。不新增 `csi1000_history` 等同义 Dataset。
-* 其余文件与 Dataset 一一对应：
+* `index_daily_history.json` 不是新的 Source Capture，仍属于 `index_daily`，只是本场景下对 `000852.SH` 历史 Source Fact 的 Raw artifact。不新增 `csi1000_history` 等同义 Capture。
+* 其余文件与 Source Capture 一一对应：
 
-| Raw artifact | Dataset |
+| Raw artifact | Source Capture |
 | --- | --- |
 | `mo_option_basic.json` | `mo_option_basic` |
 | `mo_option_daily.json` | `mo_option_daily` |
@@ -310,41 +310,40 @@ data/raw/
 * 不得：静默跳过 Source error、用其他日期自动 fallback、用分析推断补缺失 Source rows。
 * 具体异常类型、CLI exit code、重试策略仍属于 implementation，可 deferred。
 
-## 10. 与第一版 Daily Snapshot 的关系
+## 10. 与第一版 daily-market-snapshot 场景的关系
 
-* 本场景的 CSI1000 历史数据**复用**现有 `index_daily` Dataset 的 Source Fact 语义，不复制一套相同概念。
+* 本场景的 CSI1000 历史数据**复用**现有 `index_daily` Source Capture 的 Source Fact 语义，不复制一套相同概念。
 * 现有 `stock_daily` 与第一版 `breadth` 继续存在；它们不是本阶段所定义的新分析数据输入的核心组成；不删除、不扩展、不阻塞本数据需求设计。
 * 本 Guide 不修改 `guides/daily-market-snapshot.md` 已锁定的语义；本场景 Raw artifact 使用独立的 goal-scoped 目录（第 7 节），不与现有单日 Raw artifact 冲突。
 
-## 11. Non-goals（本阶段不实现）
+## 11. Non-goals
 
-本阶段只做 authority，不实现：
+本文档不定义或实现：
 
 ```text
-新增 / 修改任何 Collector
-新增 Python 文件
+新增 / 修改任何 Source Capture
 调用真实 Tushare API
 生成测试数据
-实现 Snapshot Builder
+实现 Analysis Preparation
 实现 derived features
 实现 analyzer
 引入新的抽象或 framework
 ```
 
-## 12. Deferred（留待下一阶段）
+## 12. Deferred（留待后续阶段）
 
-以下问题在本阶段尚未决定，留待后续实现 / Snapshot Definition 阶段：
+以下问题在本文档中尚未决定，留待后续实现 / Preparation Definition 阶段：
 
 ```text
-Snapshot / analysis-ready output 的最终文件结构
+Analysis-ready Artifact 的最终文件结构
 第一版具体 deterministic derived fields（ATR / RV / basis / option moneyness 等）
 derived field 的具体数学公式
-Snapshot Builder 的实现结构
+Analysis Preparation 的实现结构
 CLI 的具体参数设计
 Raw overwrite / retry 等运行策略
-历史窗口 Collector 的具体 API 调用循环方式
+历史窗口 Capture 的具体 API 调用循环方式
 ```
 
-* MO / IM 的具体 Source / endpoint 与 Raw 文件组织已在本轮锁定（第 3、7 节），不再 deferred。
-* 历史窗口 Collector 的 authority 已锁定"需要提供什么 Source Fact / Raw artifact 表达什么 / 必须覆盖什么数据窗口"；deferred 的只是具体 API 调用循环方式等 implementation detail。
+* MO / IM 的具体 Source / endpoint 与 Raw 文件组织已锁定（第 3、7 节），不再 deferred。
+* 历史窗口 Capture 的 authority 已锁定"需要提供什么 Source Fact / Raw artifact 表达什么 / 必须覆盖什么数据窗口"；deferred 的只是具体 API 调用循环方式等 implementation detail。
 * 只有确实尚未决定的问题才标记 deferred；本文档不替用户增加长期约束。

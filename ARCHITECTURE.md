@@ -1,6 +1,6 @@
-# ARCHITECTURE.md — Daily Market Snapshot Phase 1 Architecture
+# ARCHITECTURE.md — daily-market-snapshot architecture
 
-本文件定义 `daily-market-snapshot` 在 Phase 1 的架构层面 authority。
+本文件定义 `daily-market-snapshot` 的架构层面 authority。
 
 它只描述理解本项目所必需的核心目标、语义与边界。具体的数据需求、执行规则和实现细节放在对应的下层文档或 Guide 中（见第 8 节与第 13 节），按需读取。
 
@@ -12,134 +12,278 @@
 
 | 术语 | 含义 |
 | --- | --- |
-| Data Service | 用户可直接请求的一组稳定业务语义的数据产品（最上层用户调用语义单位） |
-| Source | 外部数据来源 |
-| Dataset | 从某个 Source 获取的一组具有明确语义的数据 |
-| Raw Dataset | Dataset 落地后的事实文件 |
-| Snapshot | 为特定分析需求组织出来的每日数据产品 |
-| Snapshot Definition | 当前生效的 Snapshot 组织方式 |
-| Snapshot Assembly | 从 Raw Dataset 组装出 Snapshot 的过程 |
+| Data Service | 用户可直接请求的完整数据能力（最上层用户调用语义单位），负责 orchestration |
+| Source | 项目外部的数据提供方，定义其自身的数据事实与 API 语义 |
+| Source Capture | 按 Source 自身语义获取并保存事实数据的组件 |
+| Raw Artifact | Source Capture 的持久化输出，保留 Source 事实语义，允许 minimal normalization |
+| Analysis Preparation | 根据明确的 Analyzer 数据需求，对 Raw Artifact 进行的确定性分析准备 |
+| Analysis-ready Artifact | Analysis Preparation 的输出 |
+| CLI | Data Service 的用户接口，不是业务架构层 |
+| Analyzer | 项目之外、消费 Analysis-ready Artifact 的外部分析方 |
+
+`Dataset`、`Snapshot`、`Snapshot Assembly`、`Snapshot Definition` 不再是顶层通用 Architecture Concept。这些词在项目名（`daily-market-snapshot`）、具体 artifact 文件名（`snapshot.json`）或历史 Guide 文件名中仍可能保留，但不承担通用架构层的语义。
 
 ---
 
 ## 1. Purpose
 
-`daily-market-snapshot` 用于从金融市场数据源获取数据，并生成结构清晰、可复现、适合后续 AI 分析的每日市场快照。
+`daily-market-snapshot` 用于从金融市场数据源获取数据，并生成结构清晰、可复现、适合后续 AI 分析的每日市场数据产品。
 
 第一阶段目标是建立最小可运行闭环：
 
 ```text
-Data Source
+Source
     ↓
-Data Collection
+Source Capture
     ↓
-Raw Dataset
+Raw Artifact
     ↓
-Snapshot Assembly
+Analysis Preparation
     ↓
-Daily Snapshot Files
+Analysis-ready Artifact
     ↓
-AI Analysis
+External Analyzer
 ```
 
 本阶段重点不是建设通用数据平台，而是建立简单、明确、容易扩展的数据边界。
 
 ### 1.1 Responsibility Boundary
 
-本项目的职责止于产生结构化、可复现、可分析（analysis-ready）的市场数据（Source → Raw Dataset → Snapshot / data output）。第 1 节流程图中最后一步 "AI Analysis" 属于外部 analyzer，不属于本项目。
+本项目的职责止于产生结构化、可复现、可分析（analysis-ready）的市场数据（Source → Raw Artifact → Analysis-ready Artifact）。第 1 节流程图中最后一步 "External Analyzer" 属于外部 analyzer，不属于本项目。
 
-业务分析及其规则（例如价格中枢、噪声区、期权反向交易候选区域、bullish / bearish 判断、交易信号、目标点位等结论）属于外部 analyzer，不进入本项目的数据契约，也不得作为本项目 Snapshot Assembly 的业务逻辑实现。
+业务分析及其规则（例如价格中枢、噪声区、期权反向交易候选区域、bullish / bearish 判断、交易信号、目标点位等结论）属于外部 analyzer，不进入本项目的数据契约，也不得作为本项目 Analysis Preparation 的业务逻辑实现。
 
-分析目标可以作为数据需求（Dataset / output definition）的来源，驱动本项目确定"需要哪些数据"；但分析规则与结论不由本项目定义或执行。
+分析目标可以作为数据需求（Raw Artifact / Analysis-ready Artifact definition）的来源，驱动本项目确定"需要哪些数据"；但分析规则与结论不由本项目定义或执行。
 
 ---
 
 ## 2. Core Architecture
 
-第一阶段定义四个核心概念，其中 Data Service 是面向用户的最上层调用语义单位：
+第一阶段的核心模型以职责划分，Data Service 是面向用户的最上层调用语义单位：
 
 ```text
-Data Service → Snapshot → Dataset → Source
+Data Service
+    ↓
+orchestrates
+    ├─ Source Capture → Raw Artifact
+    └─ Analysis Preparation ← Raw Artifact
+            ↓
+   Analysis-ready Artifact
 ```
 
 ### Data Service
 
-面向用户的最上层调用语义单位。一个 Data Service 可以由多个 Dataset、Raw artifact 与确定性转换（Snapshot Assembly）共同生成；用户只按 `service_id` + `target_trade_date` 请求，无需知道底层有哪些 Collector / Dataset。
+用户可直接请求的完整数据能力。Data Service 负责 orchestration：
 
-Data Service 不是 Dataset、Source、Pipeline framework、Workflow engine 或 Plugin。具体 service 清单、输入/输出契约与 CLI 语义定义在 `guides/data-services.md`。
+```text
+target_trade_date
+    ↓
+required Source Captures
+    ↓
+Raw Artifacts
+    ↓
+required Analysis Preparation
+    ↓
+canonical Analysis-ready Artifact
+```
+
+Data Service 不定义 Source API 细节，也不实现 Preparation formula。具体 service 清单、输入/输出契约与 CLI 语义定义在 `guides/data-services.md`。
 
 ### Source
 
-外部数据来源。
+项目外部的数据提供方。
 
 例如：
 
 * Tushare
 
-Source 负责提供数据，不定义最终 Snapshot 的组织形式。
+Source 定义其自身的数据事实和 API 语义，负责提供数据，不定义最终 Analysis-ready Artifact 的组织形式。
 
-### Dataset
+### Source Capture
 
-从某个 Source 获取的一组具有明确语义的数据。
+负责按照 Source 自身语义获取并保存事实数据。
+
+职责：
+
+```text
+Source API request
+Source-domain scope selection
+minimal normalization
+Raw Artifact production
+```
+
+Source Capture 可以知道：
+
+```text
+这是 MO
+这是 IM
+这是 CFFEX
+某合约是否在生命周期内
+目标 trade_date 是什么
+```
+
+因为这些属于 Source fact / capture scope。
+
+Source Capture 不可以知道：
+
+```text
+Analyzer 想判断什么
+哪个 strike 更值得分析
+哪个合约流动性更好
+未来中枢在哪里
+是否适合卖 Call / Put
+```
+
+判断原则：
+
+> 如果一个处理步骤仅需要理解 Source 及本次采集目标，它属于 Source Capture；如果必须知道 Analyzer 为什么需要这些数据，它属于 Analysis Preparation。
+
+### Raw Artifact
+
+Source Capture 的持久化输出。
 
 例如：
 
-* 指数日行情
-* 每日估值
-* 资金流
-* 融资融券数据
+```text
+index_daily_history.json
+mo_option_basic.json
+mo_option_daily.json
+im_futures_basic.json
+im_futures_daily.json
+```
 
-Dataset 是数据采集层与 Snapshot 组织层之间的主要边界。
+Raw Artifact：
 
-不同 Dataset 应尽量能够独立采集和保存。
+```text
+保留 Source 事实语义
+允许 minimal normalization
+不包含 analyzer-specific interpretation
+```
 
-### Snapshot
+Raw Artifact 是层之间的数据契约，不是独立业务层。
 
-为特定分析需求组织出来的每日数据产品。
+### Analysis Preparation
 
-Snapshot 可以：
+根据明确的 Analyzer 数据需求，对 Raw Artifact 进行确定性的分析准备。
 
-* 组合多个 Dataset；
-* 选择 Dataset 中需要的字段；
-* 调整数据层级；
-* 增加新的分析主题；
-* 拆分成多个文件；
-* 修改最终输出格式。
+允许：
 
-Snapshot 的组织方式允许随着分析需求演进。
+```text
+window selection
+join
+projection
+analysis-oriented rename
+restructure
+
+return
+SMA
+ATR
+realized volatility
+moneyness
+normalized premium
+basis
+annualized basis
+```
+
+这些操作的共同特征是：
+
+```text
+same Raw Artifact
++
+same Preparation Definition
+=
+same output
+```
+
+Analysis Preparation 不负责业务判断。
+
+禁止：
+
+```text
+future center
+noise zone
+market regime
+bullish / bearish
+sell call / sell put
+recommended strike
+target price
+probability
+trading recommendation
+```
+
+最核心边界：
+
+> Analysis Preparation prepares data for analysis; it does not perform the analysis.
+
+### Analysis-ready Artifact
+
+Analysis Preparation 的输出。
+
+例如当前：
+
+```text
+output/csi1000-5d-analysis/<date>/snapshot.json
+```
+
+Analysis-ready Artifact 是通用架构术语。当前文件继续叫 `snapshot.json`，不在本轮修改输出文件名。`snapshot.json` 可以作为某个具体 Data Service 的 artifact 名称继续存在，但 Snapshot 不再是项目核心 Architecture Layer。
+
+### CLI
+
+CLI 是 Data Service 的用户接口，不是业务架构层。
+
+职责：
+
+```text
+parse arguments
+validate CLI-level input
+resolve Data Service
+invoke Data Service
+report result / error
+```
+
+CLI 不应该知道：
+
+```text
+需要五个 Capture
+opt_basic 应如何调用
+Preparation 有哪些 derived fields
+Capture 执行顺序的业务细节
+```
+
+这些属于 Data Service orchestration。
 
 ### 依赖方向
 
 各层之间的依赖方向是单向的：
 
 ```text
-Source ← Dataset ← Snapshot ← Data Service
+Source ← Source Capture ← Raw Artifact ← Analysis Preparation ← Data Service
 ```
 
-* Data Service 依赖 Snapshot，Snapshot 依赖 Dataset，Dataset 依赖 Source。
-* Dataset 不得依赖 Snapshot 的组织方式。
-* 采集层不得因为 Snapshot 的输出结构调整而改变。
-* Data Service 不重新定义 Source / Dataset / Snapshot 的语义；其具体内容由 `guides/data-services.md` 与对应 Guide 承载。
+* Data Service 依赖 Source Capture 与 Analysis Preparation，通过 orchestration 把它们串起来。
+* Analysis Preparation 依赖 Raw Artifact，不得依赖 Source，也不得在准备阶段发起采集。
+* Source Capture 依赖 Source，不得依赖 Analysis Preparation 的输出结构。
+* Data Service 不重新定义 Source / Source Capture / Analysis Preparation 的语义；其具体内容由 `guides/data-services.md` 与对应 Guide 承载。
 
 ---
 
-## 3. Raw Data and Snapshot Boundary
+## 3. Raw Artifact 与 Analysis-ready Artifact 的边界
 
 项目必须明确区分：
 
 ```text
-Raw Dataset
+Raw Artifact
 ```
 
 和：
 
 ```text
-Snapshot
+Analysis-ready Artifact
 ```
 
-### Raw Dataset
+### Raw Artifact
 
-Raw Dataset 表示从数据源获取的数据事实。
+Raw Artifact 表示从数据源获取的数据事实。
 
 主要职责是：
 
@@ -150,10 +294,10 @@ API Call
     ↓
 minimal normalization
     ↓
-Raw Dataset File
+Raw Artifact File
 ```
 
-Raw 层应尽量避免包含针对某个具体 Snapshot 的组织逻辑。
+Raw 层应尽量避免包含针对某个具体 Analysis Preparation 的组织逻辑。
 
 #### minimal normalization 的判据
 
@@ -173,32 +317,34 @@ Raw 层应尽量避免包含针对某个具体 Snapshot 的组织逻辑。
 * 补充源未返回的计算指标；
 * 丢弃源返回的行。
 
-判断标准：若某项处理需要知道"这个 Snapshot 要用它做什么"，则它属于 Snapshot Assembly，不属于采集层。
+判断标准：若某项处理需要知道"这个 Analysis-ready Artifact 要用它做什么"，则它属于 Analysis Preparation，不属于采集层。
 
-### Snapshot
+补充（Source-domain scope selection 属于 Capture）：Source Capture 可以基于 Source facts 选择自己定义的事实范围。例如 Tushare `opt_daily(exchange=CFFEX)` 同时返回 IO / HO / MO 时，`mo_option_daily` Capture 可以选择 MO universe。这属于 Capture scope，不属于分析过滤。
 
-Snapshot 是 Raw Dataset 的下游组织结果：
+### Analysis-ready Artifact
+
+Analysis-ready Artifact 是 Raw Artifact 的下游组织结果：
 
 ```text
-Raw Dataset A
-Raw Dataset B
-Raw Dataset C
+Raw Artifact A
+Raw Artifact B
+Raw Artifact C
       ↓
-Snapshot Assembly
+Analysis Preparation
       ↓
-Daily Snapshot
+Analysis-ready Artifact
 ```
 
-Snapshot 可以频繁调整，而不要求重新设计数据采集层。
+Analysis-ready Artifact 可以频繁调整，而不要求重新设计数据采集层。
 
 ### 语义规则
 
 * 原始数据不做分析层解读。
-* Snapshot 只能包含 Raw Dataset 的下游组织结果，不得包含只存在于 Snapshot 中且无法回溯到 Raw Dataset 的数据事实。
+* Analysis-ready Artifact 只能包含 Raw Artifact 的下游组织结果，不得包含只存在于 Analysis-ready Artifact 中且无法回溯到 Raw Artifact 的数据事实。
 
 因此：
 
-> 数据采集负责获得事实，Snapshot Assembly 负责按照当前分析需求组织事实。
+> Source Capture 负责获得事实，Analysis Preparation 负责按照当前分析需求组织事实。
 
 这是第一阶段最重要的架构边界。
 
@@ -208,8 +354,8 @@ Snapshot 可以频繁调整，而不要求重新设计数据采集层。
 
 架构边界在运行时的直接推论：
 
-* Snapshot Assembly 只从本地 Raw Dataset 组装，不得在组装阶段直接发起采集。
-* 采集与组装的具体写入、覆盖、重跑与失败处理属于实现策略，不由本文件预设；需要时由对应 Guide 明确。
+* Analysis Preparation 只从本地 Raw Artifact 准备数据，不得在准备阶段直接发起采集（调用 Source）。
+* Capture 与 Preparation 的具体写入、覆盖、重跑与失败处理属于实现策略，不由本文件预设；需要时由对应 Guide 明确。
 
 ---
 
@@ -224,91 +370,56 @@ Snapshot 可以频繁调整，而不要求重新设计数据采集层。
 当分析需要新的市场数据时：
 
 ```text
-Identify required Dataset
+Identify required Source Capture
     ↓
-Add data collection script
+Add Source Capture
     ↓
-Generate Raw Dataset
+Generate Raw Artifact
     ↓
-Include Dataset in Snapshot if needed
+Include Raw Artifact in Analysis Preparation if needed
 ```
 
-新增 Dataset 不应要求重构已有 Dataset。
+新增 Source Capture 不应要求重构已有 Source Capture。
 
-### 调整 Snapshot 内容
+### 调整 Analysis-ready Artifact 内容
 
-如果新的分析需要：
+如果新的分析需要增加字段、删除字段、增加 Raw Artifact、改变分类方式，主要修改 Analysis Preparation 和相关 Guide。
 
-* 增加字段；
-* 删除字段；
-* 增加 Dataset；
-* 改变分类方式；
+Raw Artifact 不应因为单纯的输出结构调整而改变。
 
-主要修改 Snapshot Assembly 和相关 Guide。
+### 调整 Analysis-ready Artifact 输出格式
 
-Raw Dataset 不应因为单纯的输出结构调整而改变。
-
-### 调整 Snapshot 输出格式
-
-Snapshot 可以从：
-
-```text
-snapshot.json
-```
-
-演进为：
-
-```text
-YYYY-MM-DD/
-    market.json
-    liquidity.json
-    breadth.json
-    metadata.json
-```
-
-或其他更适合分析的组织方式。
-
-Snapshot 输出结构不是项目长期固定 API。
+Analysis-ready Artifact 可以从 `snapshot.json` 演进为多个文件或其他更适合分析的组织方式。Analysis-ready Artifact 输出结构不是项目长期固定 API。
 
 ---
 
 ## 6. Reproducibility
 
-虽然 Snapshot 的定义允许演进，但同一个已经确定的 Snapshot 定义应该能够稳定重复执行。
-
-即：
+虽然 Analysis-ready Artifact 的定义允许演进，但同一个已经确定的 Preparation Definition 应该能够稳定重复执行：
 
 ```text
-Snapshot Definition A
-        ↓
-2026-09-15
-2026-09-16
-2026-09-17
+same Raw Artifact
++
+same Preparation Definition
+=
+same Analysis-ready Artifact
 ```
 
-应该产生语义一致的数据结构。
+当分析需求发生变化时，可以形成新的 Preparation Definition。
 
-当分析需求发生变化时，可以形成新的 Snapshot Definition。
+因此项目追求的不是永久固定的 artifact schema，而是对当前已经确定的数据需求，能够稳定、明确、可复现地生成 Analysis-ready Artifact。
 
-因此项目追求的不是：
+### Preparation Definition 的 authority 落点
 
-> 永久固定的 Snapshot Schema。
+Preparation Definition 的 authority 是 `guides/` 中对应的 Guide（当前为 `guides/csi1000-5d-analysis-snapshot.md`）。
 
-而是：
+`scripts/build_snapshot.py` 只是该 Definition 的实现：它按照 Guide 读取 Raw Artifact 并完成 Analysis Preparation，不构成 authority，不得反向定义或修改 Preparation Definition。实现与 Guide 不一致时，必须对实现做 reconciliation，不得静默改变语义。
 
-> 对当前已经确定的数据需求，能够稳定、明确、可复现地生成 Snapshot。
-
-### Snapshot Definition 的 authority 落点
-
-Snapshot Definition 的 authority 是 `guides/` 中对应的 Guide（当前为 `guides/daily-market-snapshot.md`）。
-
-`scripts/build_snapshot.py` 只是该 Definition 的实现：它按照 Guide 读取 Raw Dataset 并组装 Snapshot，不构成 authority，不得反向定义或修改 Snapshot Definition。实现与 Guide 不一致时，必须对实现做 reconciliation，不得静默改变语义。
-
-本阶段**不**引入额外的 schema 定义文件、Snapshot 注册表或版本管理框架。
+本阶段不引入额外的 schema 定义文件、registry 或版本管理框架。
 
 ### 可复现性要求
 
-Snapshot 的结果只依赖该交易日的 Raw Dataset 与当前 Snapshot Definition。
+Analysis-ready Artifact 的结果只依赖该交易日的 Raw Artifact 与当前 Preparation Definition。
 
 不得依赖运行时刻、网络状态、随机性或本地缓存残留。
 
@@ -316,7 +427,7 @@ Snapshot 的结果只依赖该交易日的 Raw Dataset 与当前 Snapshot Defini
 
 ## 7. Agent-oriented Workflow
 
-本项目允许 Agent 参与数据需求实现和 Snapshot 组织。
+本项目允许 Agent 参与数据需求实现和 Analysis Preparation 组织。
 
 推荐工作方式：
 
@@ -329,16 +440,16 @@ Authority / Guide
       ↓
 Agent
       ↓
-Implement required Dataset / Snapshot change
+Implement required Source Capture / Analysis Preparation change
       ↓
 Run and verify
 ```
 
 Agent 可以承担：
 
-* 根据数据需求识别需要的 Dataset；
-* 添加新的数据采集脚本；
-* 调整 Snapshot Assembly；
+* 根据数据需求识别需要的 Source Capture；
+* 添加新的 Source Capture；
+* 调整 Analysis Preparation；
 * 调整输出结构；
 * 增加必要测试；
 * 更新相关 Guide。
@@ -347,10 +458,10 @@ Agent 可以承担：
 
 已经确定的业务语义包括：
 
-* Dataset 的含义与职责；
-* Snapshot 的内容定义；
+* Source Capture 的含义与职责；
+* Analysis Preparation 的内容定义；
 * 输出的语义；
-* 采集层与 Snapshot 层之间的职责边界。
+* Capture 与 Preparation 之间的职责边界。
 
 上述变更必须先更新 authority（本文件或对应 Guide），再修改实现。
 
@@ -362,26 +473,24 @@ Agent 可以承担：
 
 Guide 可以说明：
 
-* 当前 Snapshot 需要哪些数据；
-* Dataset 对应什么数据源；
-* Snapshot 如何组织这些 Dataset；
+* 当前 Analysis-ready Artifact 需要哪些数据；
+* Source Capture 对应什么数据源；
+* Analysis Preparation 如何组织这些 Raw Artifact；
 * 如何运行采集；
-* 如何生成 Snapshot；
+* 如何生成 Analysis-ready Artifact；
 * 如何检查结果。
 
 Guide 是 Agent 执行具体任务时的重要上下文。
 
-架构 authority 定义稳定边界。
-
-Guide 定义当前任务和当前 Snapshot 的具体需求。
+架构 authority 定义稳定边界；Guide 定义当前任务和当前数据产品的具体需求。
 
 两者职责不同：
 
 | | authority（本文件） | Guide（`guides/`） |
 | --- | --- | --- |
-| 定义 | 稳定边界与核心语义 | 当前任务与当前 Snapshot 的具体需求 |
+| 定义 | 稳定边界与核心语义 | 当前任务与当前数据产品的具体需求 |
 | 变化频率 | 低 | 随分析需求变化 |
-| 内容 | Source / Dataset / Snapshot 的职责与分层规则 | 需要哪些数据、如何采集、如何组装、如何检查 |
+| 内容 | Source / Source Capture / Raw Artifact / Analysis Preparation 的职责与分层规则 | 需要哪些数据、如何采集、如何准备、如何检查 |
 | 优先级 | 冲突时以本文件为准 | 不得与本文件冲突 |
 
 约束：
@@ -391,74 +500,92 @@ Guide 定义当前任务和当前 Snapshot 的具体需求。
 
 ---
 
-## 9. Initial Project Structure
+## 9. Project Structure
 
-第一阶段保持简单：
+项目结构以职责分层。目标是：
 
 ```text
 daily-market-snapshot/
-
-├─ AGENTS.md
-├─ ARCHITECTURE.md
-├─ README.md
-├─ pyproject.toml
 │
-├─ guides/
-│   └─ ...
-│
-├─ config/
-│   └─ ...
+├─ src/
+│  └─ daily_market_snapshot/
+│     │
+│     ├─ cli.py
+│     ├─ artifacts.py
+│     │
+│     ├─ sources/
+│     │  └─ tushare.py
+│     │
+│     ├─ capture/
+│     │  ├─ common.py
+│     │  ├─ index_daily.py
+│     │  ├─ stock_daily.py
+│     │  ├─ csi1000_index_history.py
+│     │  ├─ mo_option_basic.py
+│     │  ├─ mo_option_daily.py
+│     │  ├─ im_futures_basic.py
+│     │  └─ im_futures_daily.py
+│     │
+│     ├─ preparation/
+│     │  └─ csi1000_5d_analysis.py
+│     │
+│     └─ services/
+│        ├─ catalog.py
+│        └─ csi1000_5d_analysis.py
 │
 ├─ scripts/
-│   ├─ fetch_*.py
-│   └─ build_snapshot.py
+│  └─ dms.py
 │
+├─ guides/
+├─ config/
 ├─ data/
-│   ├─ raw/
-│   └─ snapshots/
-│
 ├─ output/
-│   └─ <service_id>/<target_trade_date>/
-│
 └─ tests/
 ```
 
-具体脚本名称和 Snapshot 文件结构由实际数据需求决定。本文件不预设任何具体 Dataset、脚本名或 Snapshot 文件结构；这些由对应的 Guide 固化。
+各目录职责：
 
-约定的目录职责：
-
+* `src/daily_market_snapshot/cli.py`：CLI（argparse、`list` / `get`、输入校验、service lookup、结果/错误呈现），不编排 Capture。
+* `src/daily_market_snapshot/artifacts.py`：真正共享的本地 artifact 能力（canonical roots、JSON read/write、Raw/output path construction），保持很薄，不发展为 storage framework。
+* `src/daily_market_snapshot/sources/tushare.py`：Tushare 集成（token、client creation、Source request / date representation），不建立通用 DataSource framework。
+* `src/daily_market_snapshot/capture/`：Source Capture 实现（承接当前 `fetch_*.py` 的业务逻辑：Source query、Source-domain scope selection、minimal normalization、Raw facts）。
+* `src/daily_market_snapshot/preparation/`：Analysis Preparation 实现（承接当前 `build_snapshot.py` 的确定性转换）。
+* `src/daily_market_snapshot/services/catalog.py`：显式静态 catalog，不做 dynamic registry / filesystem discovery。
+* `src/daily_market_snapshot/services/csi1000_5d_analysis.py`：Data Service orchestration（Capture 编排、Preparation 调用、失败边界、最终 artifact 发布）。
+* `scripts/dms.py`：极薄 executable shim，转发到 `cli.py`。
 * `guides/`：描述具体数据需求与可执行 workflow。
 * `config/`：非敏感的运行配置。凭据（例如 `TUSHARE_TOKEN`）只从环境变量读取，不进 `config/`，不进版本控制。
-* `scripts/`：`fetch_*.py` 负责采集单个 Dataset 并写出 Raw Dataset；`build_snapshot.py` 负责 Snapshot Assembly。
-* `data/raw/`：Raw Dataset 输出目录。
-* `data/snapshots/`：Snapshot 输出目录（Data Service 的 canonical user-facing output 在 `output/`，见 `guides/data-services.md`）。
+* `data/raw/`：Raw Artifact 输出目录。
 * `output/`：Data Service 的 canonical user-facing output 目录（`output/<service_id>/<target_trade_date>/`）。
-* `tests/`：与 `scripts/` 对应的测试。
+* `tests/`：测试。
 
-`data/raw/`、`data/snapshots/` 与 `output/` 是运行产物，不进入版本控制。
+`data/raw/` 与 `output/` 是运行产物，不进入版本控制。
+
+reconciliation 说明：当前实现仍位于扁平 `scripts/` 目录（`dms.py` 混合承担 CLI、catalog、orchestration、Source endpoint binding；`_common.py` 混合承担 Tushare 集成、日期归一化与 Raw 处理），尚未迁入上面的目标结构。该 drift 是预期状态，留待 implementation reconciliation（独立 follow-up）完成；本文件先固定目标结构。
 
 ---
 
-## 10. Phase 1 Non-goals
+## 10. Non-goals
 
 第一阶段不主动建设：
 
 * 数据库；
 * 实时行情系统；
 * 分布式采集；
-* 通用工作流引擎；
-* Dataset 插件系统；
-* DataSource 基类体系；
-* Pipeline framework；
-* Dataset registry；
+* 通用工作流引擎 / Pipeline framework；
+* DataSource framework；
+* Plugin / Registry framework；
+* Repository pattern / DDD / Clean Architecture；
+* 第二个 Source；
+* 第二个 Data Service；
 * 复杂 Schema version framework；
 * 通用 ETL 平台。
 
 同时，以下内容也不属于第一阶段范围：
 
-* 采集层与 Snapshot 层之间的通用参数化配置层；
-* 跨 Dataset 的原始数据重试、缓存或版本化策略；
-* 采集层的调度、增量更新与自动化编排。
+* Capture 与 Preparation 之间的通用参数化配置层；
+* 跨 Raw Artifact 的原始数据重试、缓存或版本化策略；
+* Capture 的调度、增量更新与自动化编排。
 
 只有当实际需求产生足够复杂度时，才重新评估是否需要这些能力。
 
@@ -474,7 +601,7 @@ daily-market-snapshot/
 
 ### Semantics before implementation
 
-涉及 Dataset 含义、Snapshot 内容、输出结构和职责边界时，先明确设计，再修改实现。
+涉及 Source Capture 职责、Analysis Preparation 内容、输出结构和职责边界时，先明确设计，再修改实现。
 
 ### Authority before code
 
@@ -484,32 +611,32 @@ daily-market-snapshot/
 
 ### Stable boundaries, flexible content
 
-Source、Dataset、Snapshot 与 Data Service 各层边界应保持清晰。
+Source、Source Capture、Analysis Preparation 与 Data Service 各层边界应保持清晰。
 
-具体 Dataset 数量、Snapshot 内容和输出结构允许持续变化。
+具体 Capture 数量、Analysis-ready Artifact 内容和输出结构允许持续变化。
 
 ### Agent-friendly
 
-项目结构、Guide 和脚本应保持足够直接，使 Agent 能够通过阅读有限上下文理解并修改项目。
+项目结构、Guide 和实现应保持足够直接，使 Agent 能够通过阅读有限上下文理解并修改项目。
 
 不要为了扩展性提前增加会扩大 Agent 理解成本的抽象。
 
 ---
 
-## 12. Phase 1 Success Criterion
+## 12. Success Criterion
 
 第一阶段完成时，应能够：
 
 ```text
 given a trading date
         ↓
-collect required datasets
+run the required Source Captures
         ↓
-store raw data
+store Raw Artifacts
         ↓
-assemble the current snapshot definition
+run the Analysis Preparation
         ↓
-write local snapshot files
+write the Analysis-ready Artifact
 ```
 
 最终生成的数据应：
@@ -517,8 +644,8 @@ write local snapshot files
 * 语义明确；
 * 可重复生成；
 * 可以直接交给 AI 分析；
-* 可以通过增加 Dataset 横向扩展；
-* 可以在不破坏采集层的情况下调整 Snapshot 内容和输出结构。
+* 可以通过增加 Source Capture 横向扩展；
+* 可以在不破坏采集层的情况下调整 Analysis-ready Artifact 内容和输出结构。
 
 ---
 
@@ -530,17 +657,17 @@ write local snapshot files
 
 ### 需要更新本文件的变更
 
-* Source / Dataset / Snapshot 的职责边界变化；
-* Snapshot 输出组织的所有权变化（谁决定 Snapshot 的输出结构）。
+* Source / Source Capture / Raw Artifact / Analysis Preparation 的职责边界变化；
+* Analysis-ready Artifact 输出组织的所有权变化（谁决定其输出结构）。
 
 ### 不需要更新本文件的变更
 
 以下变化由对应的 Guide 承载，不修改本文件：
 
-* 新增一个具体 Dataset；
-* Dataset 具体内容（字段、分类）的变化；
-* 具体 Snapshot 的字段清单、文件拆分或输出结构变化；
-* 某个脚本内部的实现调整。
+* 新增一个具体 Source Capture；
+* Raw Artifact 具体内容（字段、分类）的变化；
+* 具体 Analysis-ready Artifact 的字段清单、文件拆分或输出结构变化；
+* 某个实现模块内部的实现调整。
 
 ### reconciliation
 

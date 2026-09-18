@@ -1,19 +1,19 @@
 # guides/data-services.md — Data Service / CLI / output contract authority
 
-> 状态：authority（design-only）。本文档定义项目最上层的用户调用语义单位 Data Service、用户级 CLI（`dms`）的语义，以及 Data Service 的 canonical user-facing output。只落 authority，不实现 CLI，不修改 Collector，不修改 `build_snapshot.py`。
+> 状态：authority。本文档定义项目最上层的用户调用语义单位 Data Service、用户级 CLI（`dms`）的语义，以及 Data Service 的 canonical user-facing output。
 >
-> 层级：本文档位于 `ARCHITECTURE.md` 之下。架构层面的稳定边界以 `ARCHITECTURE.md` 为准（尤其第 0 节术语、第 2 节核心架构、第 3 节 Raw/Snapshot 边界、第 8 节 Guide 职责、第 9 节项目结构）。本文档定义 Data Service 的清单、调用契约与输出契约；具体 Dataset / Raw / Snapshot 语义继续由对应 Guide 负责，不在本文档重复。
+> 层级：本文档位于 `ARCHITECTURE.md` 之下。架构层面的稳定边界以 `ARCHITECTURE.md` 为准（尤其第 0 节术语、第 2 节核心架构、第 3 节 Raw/Preparation 边界、第 8 节 Guide 职责、第 9 节项目结构）。本文档定义 Data Service 的清单、调用契约与输出契约；具体 Source Capture / Raw Artifact / Analysis Preparation 语义继续由对应 Guide 负责，不在本文档重复。
 
 ## 1. 什么是 Data Service
 
-Data Service 是用户可直接请求的一组稳定业务语义的数据产品。一个 Data Service 可以由多个 Dataset、Raw artifact 和 deterministic transformations（Snapshot Assembly）共同生成。
+Data Service 是用户可直接请求的完整数据能力。一个 Data Service 可以由多个 Source Capture、Raw Artifact 与 deterministic Analysis Preparation 共同生成。
 
 关系：
 
 ```text
 Data Service
     ↓
-existing Dataset / Collector / Snapshot Definition
+orchestrates existing Source Capture / Analysis Preparation
     ↓
 final dated output
 ```
@@ -21,14 +21,16 @@ final dated output
 Data Service 不是：
 
 ```text
-Dataset
+Source Capture
+Raw Artifact
+Analysis Preparation
 Source
 Pipeline framework
 Workflow engine
 Plugin
 ```
 
-它只是最上层的**用户调用语义单位**。用户和 Agent 不需要知道底层有哪些 Collector，只需要指定：
+它只是最上层的**用户调用语义单位**。用户和 Agent 不需要知道底层有哪些 Source Capture，只需要指定：
 
 ```text
 我要什么数据服务（service_id）
@@ -53,7 +55,7 @@ schema registry
 service lifecycle framework
 ```
 
-`index_daily`、`stock_daily` 仍属于 Dataset / Raw capability，**不**升级为 Data Service。
+`index_daily`、`stock_daily` 仍属于 Source Capture / Raw capability，**不**升级为 Data Service。
 
 ## 3. service: csi1000-5d-analysis
 
@@ -64,20 +66,20 @@ service lifecycle framework
 它复用当前已经存在的：
 
 ```text
-CSI1000 history（Dataset index_daily，000852.SH）
-MO option chain（Dataset mo_option_basic + mo_option_daily）
-IM futures（Dataset im_futures_basic + im_futures_daily）
-deterministic Snapshot Assembly（guides/csi1000-5d-analysis-snapshot.md）
+CSI1000 history（Source Capture index_daily，000852.SH）
+MO option chain（Source Capture mo_option_basic + mo_option_daily）
+IM futures（Source Capture im_futures_basic + im_futures_daily）
+deterministic Analysis Preparation（guides/csi1000-5d-analysis-snapshot.md）
 ```
 
 最终 artifact：`snapshot.json`。
 
 相关 authority：
 
-* Dataset / Raw artifact 契约：`guides/csi1000-5d-analysis-data.md`
-* Snapshot Definition（Raw → `snapshot.json`）：`guides/csi1000-5d-analysis-snapshot.md`
+* Source Capture / Raw Artifact 契约：`guides/csi1000-5d-analysis-data.md`
+* Analysis Preparation Definition（Raw → `snapshot.json`）：`guides/csi1000-5d-analysis-snapshot.md`
 
-Data Service 不重新定义 Source semantics / Dataset semantics / window semantics / derived formula / Snapshot schema；这些继续由上述 Guide 负责。
+Data Service 不重新定义 Source semantics / Source Capture semantics / window semantics / derived formula / Analysis-ready Artifact schema；这些继续由上述 Guide 负责。
 
 ## 4. CLI: dms
 
@@ -154,37 +156,37 @@ yesterday
 dms get csi1000-5d-analysis --date D
 ```
 
-CLI 负责 orchestration：
+Data Service 负责 orchestration；CLI 负责解析参数、校验 CLI-level 输入、resolve Data Service、调用 Data Service，并报告结果 / 错误：
 
 ```text
 D
 ↓
-collect CSI1000 history
+run CSI1000 history Capture
 ↓
-collect MO option basic
+run MO option basic Capture
 ↓
-collect MO option daily
+run MO option daily Capture
 ↓
-collect IM futures basic
+run IM futures basic Capture
 ↓
-collect IM futures daily
+run IM futures daily Capture
 ↓
-build analysis-ready Snapshot
+run Analysis Preparation (build analysis-ready artifact)
 ↓
 publish final Data Service output
 ```
 
-CLI 不重新定义：
+CLI 不编排 Capture，不重新定义：
 
 ```text
 Source semantics
-Dataset semantics
+Source Capture semantics
 window semantics
 derived formula
-Snapshot schema
+Analysis-ready Artifact schema
 ```
 
-这些继续由已有 authority 负责。
+这些继续由已有 authority 负责。CLI 不应该知道"需要五个 Capture"、"opt_basic 应如何调用"、"Preparation 有哪些 derived fields"、"Capture 执行顺序的业务细节"；这些属于 Data Service orchestration。
 
 ## 6. canonical output
 
@@ -214,10 +216,10 @@ service_id + target_trade_date
 
 唯一确定一次 Data Service 的最终用户输出位置。
 
-## 7. Raw / Snapshot / Output 边界与 reconciliation
+## 7. Raw Artifact / Analysis-ready Artifact / Output 边界与 reconciliation
 
-* `data/raw/`：Source Facts / internal runtime artifacts。继续不变，见 `ARCHITECTURE.md` 第 3、9 节。
-* `data/snapshots/`：非 Data Service 的 Snapshot 输出目录。第一版 Daily Snapshot（`data/snapshots/YYYY-MM-DD/snapshot.json`）不是 Data Service，继续使用 `data/snapshots/`。
+* `data/raw/`：Source Facts / internal runtime artifacts（Raw Artifact）。继续不变，见 `ARCHITECTURE.md` 第 3、9 节。
+* `data/snapshots/`：非 Data Service 的 Analysis-ready Artifact 输出目录。第一版 Daily 数据产品（`data/snapshots/YYYY-MM-DD/snapshot.json`）不是 Data Service，继续使用 `data/snapshots/`。
 * `output/<service_id>/<target_trade_date>/`：Data Service 的 canonical user-facing output。
 
 reconciliation（当前 CSI1000 Data Service）：
@@ -226,7 +228,7 @@ reconciliation（当前 CSI1000 Data Service）：
 
 `build_snapshot.py` 直接写该位置；`data/snapshots/csi1000-5d-analysis/<date>/snapshot.json` 不再产生，不维护两份相同 artifact。
 
-本 Goal 不重构无关的 Daily Snapshot；`data/snapshots/YYYY-MM-DD/` 语义保持不变。
+本 Goal 不重构无关的第一版 Daily 数据产品；`data/snapshots/YYYY-MM-DD/` 语义保持不变。
 
 ## 8. 日粒度语义
 
@@ -254,7 +256,7 @@ output/<service_id>/<target_trade_date>/
 
 需要明确：
 
-> “按日”描述的是 Data Service request / output partition，不表示所有内部 Raw artifact 只能包含一天数据。
+> “按日”描述的是 Data Service request / output partition，不表示所有内部 Raw Artifact 只能包含一天数据。
 
 例如：
 
@@ -306,9 +308,9 @@ Agent 应优先执行语义等价于：
 dms get csi1000-5d-analysis --date 2026-09-18
 ```
 
-而不是自行逐个寻找 Collector。
+而不是自行逐个寻找 Capture。
 
-底层 Collector / Builder 可以继续存在，用于：
+底层 Source Capture / Analysis Preparation 可以继续存在，用于：
 
 ```text
 development
@@ -379,7 +381,7 @@ GPT analyzer / trading analysis
 7. 一次调用最终写到哪里？
 8. `data/raw` 与 `output` 有什么区别？
 9. 哪些文件不进入 Git？
-10. 为什么普通用户/Agent 不需要知道底层 Collector？
+10. 为什么普通用户/Agent 不需要知道底层 Source Capture？
 11. 现有 `data/snapshots` 与新的 canonical output 如何 reconciliation？
 
 若这些问题仍需 implementation agent 自行发明，则本 authority 未完成。
