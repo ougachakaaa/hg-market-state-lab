@@ -122,14 +122,18 @@ data/raw/csi1000-5d-analysis/<target_trade_date>/
 
 ### 3.2 输出
 
+Data Service canonical user-facing output：
+
 ```text
-data/snapshots/
+output/
 └─ csi1000-5d-analysis/
    └─ YYYY-MM-DD/
       └─ snapshot.json
 ```
 
 `YYYY-MM-DD` 表示 `target_trade_date`（目录名是目标交易日，不是文件中所有记录共同的 `trade_date`）。第一版只使用一个 JSON 文件，不提前拆分多个文件，不引入 schema registry 或 version framework。
+
+> reconciliation：`snapshot.json` 是 Data Service `csi1000-5d-analysis` 的最终 artifact，其 canonical user-facing output 锁定为 `output/csi1000-5d-analysis/<target_trade_date>/snapshot.json`（见 `guides/data-services.md`）。本文档定义的是 `snapshot.json` 的**内容与组织方式**，不因输出目录变化而改变。当前 `build_snapshot.py` 仍写 `data/snapshots/csi1000-5d-analysis/<date>/snapshot.json`，这是 Data Service 概念引入前的内部位置；实现阶段应改为直接写 `output/`，不得长期维护两份相同 canonical artifact。
 
 ## 4. 输出逻辑结构
 
@@ -641,7 +645,7 @@ business conclusion schema
 ## 14. 与现有 Daily Snapshot 的关系
 
 * 现有 `guides/daily-market-snapshot.md` 及其 `data/snapshots/YYYY-MM-DD/snapshot.json` 继续独立存在，不被本 Guide 破坏或重定义。
-* CSI1000 场景使用独立的 `data/snapshots/csi1000-5d-analysis/YYYY-MM-DD/snapshot.json`，与 Daily Snapshot 的 Raw 目录、Snapshot 目录互不冲突。
+* CSI1000 场景使用独立的 `output/csi1000-5d-analysis/YYYY-MM-DD/snapshot.json`（Data Service canonical output，见 `guides/data-services.md`），与 Daily Snapshot 的 Raw 目录、Snapshot 目录互不冲突。
 * `000852.SH` 同时出现在两个场景中，但语义不同：Daily Snapshot 中它是六指数观察 universe 的成员；本场景中它是 `underlying` 的标的。两者复用同一 `index_daily` Dataset 语义，不复制新 Dataset。
 
 ## 15. 下一步实现范围
@@ -653,7 +657,7 @@ Raw files（五个 Raw artifact）
         ↓
 build_snapshot.py（Snapshot Assembly）
         ↓
-data/snapshots/csi1000-5d-analysis/<target_trade_date>/snapshot.json
+output/csi1000-5d-analysis/<target_trade_date>/snapshot.json
 ```
 
 实现对应 `ARCHITECTURE.md` 第 9 节的脚本约定（`scripts/build_snapshot.py` 负责 Snapshot Assembly），并配套 `tests/` 测试。Coding agent 不需要自行发明任何业务语义：所有窗口选择、join 规则、派生公式、排序与失败条件均已在本 Guide 锁定。
@@ -672,4 +676,5 @@ data/snapshots/csi1000-5d-analysis/<target_trade_date>/snapshot.json
 
 发现的 drift（仅记录，不在本 Goal 修复 Python）：
 
+* Snapshot 输出位置：`build_snapshot.py` 仍写 `data/snapshots/csi1000-5d-analysis/<date>/snapshot.json`，而 Data Service canonical output 为 `output/csi1000-5d-analysis/<date>/snapshot.json`（见 `guides/data-services.md`）。实现阶段应改为直接写 `output/`，不得长期维护两份相同 canonical artifact。
 * `mo_option_basic` 的 `maturity_date`：Goal 2 Collector 将其以 Source 的 `YYYYMMDD` 形式落地，而 `list_date` / `delist_date` 已归一化为 `YYYY-MM-DD`。`ARCHITECTURE.md` 第 3 节与 data Guide 第 7 节允许/隐含对日期事实做 `YYYY-MM-DD` 归一化，`maturity_date` 属于遗漏。Snapshot Assembly 派生 `expiry_date` 时需自行归一化（第 7.2 节已注明）；理想情况下应在此后对 `fetch_mo_option_basic.py` 做 reconciliation（将 `maturity_date` 纳入日期归一化），但不影响本文档锁定 Snapshot 输出为 `YYYY-MM-DD`。

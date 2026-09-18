@@ -6,7 +6,28 @@
 
 项目架构及架构层面的 authority 定义在 `ARCHITECTURE.md` 中。当前第一版 Daily Snapshot 的具体定义（Dataset、Raw 契约、Snapshot 结构与执行边界）在 `guides/daily-market-snapshot.md` 中。
 
+用户级调用语义（Data Service）与 CLI 契约定义在 `guides/data-services.md` 中。
+
 当前架构定义、第一版 Snapshot Definition 与基础开发环境已就绪，已实现 Raw Dataset Collector（第一版 Daily Snapshot 场景的 `index_daily`、`stock_daily`，以及 CSI1000 分析场景的 CSI1000 历史、MO 期权链与 IM 期货数据），以及 CSI1000 分析场景的 Snapshot Assembly（Raw → analysis-ready `snapshot.json`）；第一版 Daily Snapshot 的 Assembly 尚未实现。
+
+## Data Service（用户入口）
+
+用户和 Agent 通过 Data Service CLI 请求数据产品，无需知道底层 Collector。第一版只有一个 Data Service：`csi1000-5d-analysis`。
+
+```bash
+poetry run python scripts/dms.py list
+poetry run python scripts/dms.py get csi1000-5d-analysis --date 2026-09-18
+```
+
+语义分别等价于 `dms list` 与 `dms get csi1000-5d-analysis --date 2026-09-18`。`--date` 是显式给出的 `target_trade_date`，不自动 fallback。
+
+最终输出（canonical user-facing）：
+
+```text
+output/csi1000-5d-analysis/2026-09-18/snapshot.json
+```
+
+Data Service / CLI / output 契约以 `guides/data-services.md` 为准。CLI（`scripts/dms.py`）尚未实现，属 deferred。
 
 ## 基础环境
 
@@ -38,11 +59,13 @@ poetry run mypy .
 * `guides/daily-market-snapshot.md`：第一版 Daily Snapshot Definition（具体 Dataset、Raw 契约、Snapshot 结构与执行边界）
 * `guides/csi1000-5d-analysis-data.md`：CSI1000 "未来约 5 个交易日市场状态"分析场景的数据需求与 Raw Dataset 契约 authority（CSI1000 历史、MO 期权链、IM 期货）
 * `guides/csi1000-5d-analysis-snapshot.md`：同一场景的 Snapshot Definition authority（Raw → analysis-ready `snapshot.json` 的组织方式）
+* `guides/data-services.md`：Data Service / CLI / output 契约 authority（用户级调用语义）
 * `config/`：配置
 * `guides/`：DSH 执行任务使用的 Guide
 * `scripts/`：Raw Dataset Collector（`fetch_*.py`）与 Snapshot Assembly（`build_snapshot.py`）
 * `data/raw/`：Raw Dataset 输出目录
-* `data/snapshots/`：Snapshot 输出目录
+* `data/snapshots/`：非 Data Service 的 Snapshot 输出目录
+* `output/`：Data Service 的 canonical user-facing output（运行产物）
 * `tests/`：测试
 
 ## 环境变量
@@ -110,10 +133,10 @@ data/raw/
 poetry run python scripts/build_snapshot.py 2026-09-17
 ```
 
-输出：
+输出（Data Service canonical user-facing output；当前 `build_snapshot.py` 仍写 `data/snapshots/csi1000-5d-analysis/<date>/snapshot.json`，见 `guides/data-services.md` 的 reconciliation）：
 
 ```text
-data/snapshots/
+output/
 └─ csi1000-5d-analysis/
    └─ 2026-09-17/
       └─ snapshot.json

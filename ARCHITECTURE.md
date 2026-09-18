@@ -12,6 +12,7 @@
 
 | 术语 | 含义 |
 | --- | --- |
+| Data Service | 用户可直接请求的一组稳定业务语义的数据产品（最上层用户调用语义单位） |
 | Source | 外部数据来源 |
 | Dataset | 从某个 Source 获取的一组具有明确语义的数据 |
 | Raw Dataset | Dataset 落地后的事实文件 |
@@ -55,11 +56,17 @@ AI Analysis
 
 ## 2. Core Architecture
 
-第一阶段只定义三个核心概念：
+第一阶段定义四个核心概念，其中 Data Service 是面向用户的最上层调用语义单位：
 
 ```text
-Source → Dataset → Snapshot
+Data Service → Snapshot → Dataset → Source
 ```
+
+### Data Service
+
+面向用户的最上层调用语义单位。一个 Data Service 可以由多个 Dataset、Raw artifact 与确定性转换（Snapshot Assembly）共同生成；用户只按 `service_id` + `target_trade_date` 请求，无需知道底层有哪些 Collector / Dataset。
+
+Data Service 不是 Dataset、Source、Pipeline framework、Workflow engine 或 Plugin。具体 service 清单、输入/输出契约与 CLI 语义定义在 `guides/data-services.md`。
 
 ### Source
 
@@ -103,15 +110,16 @@ Snapshot 的组织方式允许随着分析需求演进。
 
 ### 依赖方向
 
-三层之间的依赖方向是单向的：
+各层之间的依赖方向是单向的：
 
 ```text
-Source ← Dataset ← Snapshot
+Source ← Dataset ← Snapshot ← Data Service
 ```
 
-* Snapshot 依赖 Dataset，Dataset 依赖 Source。
+* Data Service 依赖 Snapshot，Snapshot 依赖 Dataset，Dataset 依赖 Source。
 * Dataset 不得依赖 Snapshot 的组织方式。
 * 采集层不得因为 Snapshot 的输出结构调整而改变。
+* Data Service 不重新定义 Source / Dataset / Snapshot 的语义；其具体内容由 `guides/data-services.md` 与对应 Guide 承载。
 
 ---
 
@@ -409,6 +417,9 @@ daily-market-snapshot/
 │   ├─ raw/
 │   └─ snapshots/
 │
+├─ output/
+│   └─ <service_id>/<target_trade_date>/
+│
 └─ tests/
 ```
 
@@ -420,10 +431,11 @@ daily-market-snapshot/
 * `config/`：非敏感的运行配置。凭据（例如 `TUSHARE_TOKEN`）只从环境变量读取，不进 `config/`，不进版本控制。
 * `scripts/`：`fetch_*.py` 负责采集单个 Dataset 并写出 Raw Dataset；`build_snapshot.py` 负责 Snapshot Assembly。
 * `data/raw/`：Raw Dataset 输出目录。
-* `data/snapshots/`：Snapshot 输出目录。
+* `data/snapshots/`：Snapshot 输出目录（Data Service 的 canonical user-facing output 在 `output/`，见 `guides/data-services.md`）。
+* `output/`：Data Service 的 canonical user-facing output 目录（`output/<service_id>/<target_trade_date>/`）。
 * `tests/`：与 `scripts/` 对应的测试。
 
-`data/raw/` 与 `data/snapshots/` 是运行产物，不进入版本控制。
+`data/raw/`、`data/snapshots/` 与 `output/` 是运行产物，不进入版本控制。
 
 ---
 
@@ -472,7 +484,7 @@ daily-market-snapshot/
 
 ### Stable boundaries, flexible content
 
-Source、Dataset、Snapshot 三层边界应保持清晰。
+Source、Dataset、Snapshot 与 Data Service 各层边界应保持清晰。
 
 具体 Dataset 数量、Snapshot 内容和输出结构允许持续变化。
 
