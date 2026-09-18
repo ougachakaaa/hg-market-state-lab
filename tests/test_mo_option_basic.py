@@ -1,4 +1,4 @@
-import json
+﻿import json
 from pathlib import Path
 from typing import Any
 
@@ -34,7 +34,7 @@ OUT_OF_LIFECYCLE_CONTRACTS = [
     ),
 ]
 OTHER_PRODUCTS = [
-    mo_option_contract("IO2609-C-4000.CFE", opt_code="OPIO2609.CFE", call_put="C"),
+    mo_option_contract("IO2609-C-4000.CFE", opt_code="OP000300.SH", call_put="C"),
     mo_option_contract("510050C2609M03000.SH", opt_code="510050.SH", call_put="C"),
 ]
 ALL_CONTRACTS = [*ACTIVE_CONTRACTS, *OUT_OF_LIFECYCLE_CONTRACTS, *OTHER_PRODUCTS]
@@ -127,7 +127,7 @@ def test_lifecycle_ending_before_it_starts_is_an_error() -> None:
 def test_incomplete_other_product_contract_is_not_a_mo_error() -> None:
     """A non-MO CFFEX product is not a member, so its facts are not validated."""
     incomplete_io = {
-        **mo_option_contract("IO2609-C-4000.CFE", opt_code="OPIO2609.CFE", call_put="C"),
+        **mo_option_contract("IO2609-C-4000.CFE", opt_code="OP000300.SH", call_put="C"),
         "list_date": None,
         "delist_date": None,
     }
@@ -162,7 +162,7 @@ def test_source_field_semantics_are_kept() -> None:
     assert record["list_date"] == "2026-06-22"
     assert record["delist_date"] == "2026-09-25"
     assert record["exchange"] == "CFFEX"
-    assert record["opt_code"] == "OPMO2609.CFE"
+    assert record["opt_code"] == "OP000852.SH"
     assert set(record) == set(option_basic_frame(ALL_CONTRACTS).columns)
     assert not {"strike", "expiry_date", "option_type"} & set(record)
 
@@ -171,6 +171,28 @@ def test_other_cffex_products_are_not_part_of_the_mo_universe() -> None:
     records = collect(fake_api())
 
     assert all(str(record["ts_code"]).startswith("MO") for record in records)
+
+
+@pytest.mark.parametrize(
+    ("opt_code", "is_member"),
+    [
+        ("OP000852.SH", True),
+        # The other CFFEX products of the real Source response.
+        ("OP000300.SH", False),
+        ("OP000016.SH", False),
+        # Not the CSI1000 product identity.
+        ("OPMO2609.CFE", False),
+        ("510050.SH", False),
+        ("", False),
+    ],
+)
+def test_mo_membership_follows_the_source_product_identity(
+    opt_code: str, is_member: bool
+) -> None:
+    """The real Source identifies the product by its underlying index code."""
+    record = {**mo_option_contract("MO2609-C-7000.CFE", call_put="C"), "opt_code": opt_code}
+
+    assert fetch_mo_option_basic.is_mo_option(record) is is_member
 
 
 def test_source_without_mo_contracts_is_an_error() -> None:

@@ -1,4 +1,4 @@
-import json
+﻿import json
 from pathlib import Path
 from typing import Any
 
@@ -24,7 +24,7 @@ ACTIVE_CONTRACTS = [
 DELISTED_CONTRACT = mo_option_contract(
     "MO2608-C-7000.CFE", call_put="C", list_date="20260520", delist_date="20260828"
 )
-OTHER_PRODUCT = mo_option_contract("IO2609-C-4000.CFE", opt_code="OPIO2609.CFE", call_put="C")
+OTHER_PRODUCT = mo_option_contract("IO2609-C-4000.CFE", opt_code="OP000300.SH", call_put="C")
 ACTIVE_CODES = [str(contract["ts_code"]) for contract in ACTIVE_CONTRACTS]
 
 

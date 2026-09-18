@@ -1,4 +1,4 @@
-"""A fake Tushare Source used by tests.
+﻿"""A fake Tushare Source used by tests.
 
 Tests must not depend on the real Tushare API, so every collector test
 injects this in-memory Source instead.
@@ -240,11 +240,15 @@ def mo_option_contract(
     *,
     call_put: str,
     exercise_price: float = 7000.0,
-    opt_code: str = "OPMO2609.CFE",
+    opt_code: str = "OP000852.SH",
     list_date: str | None = "20260622",
     delist_date: str | None = "20260925",
 ) -> dict[str, Any]:
-    """Build one MO option contract fact in Source date form."""
+    """Build one MO option contract fact in Source date form.
+
+    ``opt_code`` follows the real Tushare convention: the underlying index of the
+    option in ``OP`` + index-code form, ``OP000852.SH`` for the CSI1000 MO options.
+    """
     return {
         "ts_code": ts_code,
         "symbol": ts_code.split(".")[0],

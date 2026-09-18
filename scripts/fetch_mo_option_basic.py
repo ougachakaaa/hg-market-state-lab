@@ -25,7 +25,12 @@ DATASET = "mo_option_basic"
 # Dataset, not an analysis subset.
 EXCHANGE = "CFFEX"
 PRODUCT = "MO"
-MO_OPTIONS_CODE = "OPMO"
+# ``opt_basic.opt_code`` is the underlying index of the option in Source form
+# (``OP`` + index code), not the exchange product code: the CSI1000 MO options
+# carry ``OP000852.SH`` (000852.SH, the CSI1000 index of this scenario), while
+# the other CFFEX products carry their own index (``OP000300.SH`` for IO,
+# ``OP000016.SH`` for HO).
+MO_OPTIONS_CODE = "OP000852.SH"
 
 
 def query_opt_basic(api: _common.TushareApi, exchange: str) -> pd.DataFrame:
@@ -40,12 +45,12 @@ def query_opt_basic(api: _common.TushareApi, exchange: str) -> pd.DataFrame:
 def is_mo_option(record: _common.RawRecord) -> bool:
     """Report whether a CFFEX option contract fact belongs to the MO product.
 
-    ``opt_basic`` expresses ``opt_code`` as the underlying futures contract of
-    the option (``OPMO2609.CFE`` for MO), which is the Source fact that
-    identifies the product; the contract name is not used, so the check stays
+    ``opt_basic`` identifies the option product by its underlying index
+    (``OP000852.SH`` for the CSI1000 MO options), which is the Source fact that
+    decides product membership; the contract name is not used, so the check stays
     independent of naming conventions.
     """
-    return str(record.get("opt_code") or "").startswith(MO_OPTIONS_CODE)
+    return str(record.get("opt_code") or "") == MO_OPTIONS_CODE
 
 
 def require_mo_lifecycle(record: _common.RawRecord) -> tuple[str, str]:
