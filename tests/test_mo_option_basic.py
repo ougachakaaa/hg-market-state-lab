@@ -157,7 +157,7 @@ def test_source_field_semantics_are_kept() -> None:
     record = records[0]
 
     assert record["exercise_price"] == 7000.0
-    assert record["maturity_date"] == "20260925"
+    assert record["maturity_date"] == "2026-09-25"
     assert record["call_put"] == "C"
     assert record["list_date"] == "2026-06-22"
     assert record["delist_date"] == "2026-09-25"

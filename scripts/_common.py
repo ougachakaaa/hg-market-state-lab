@@ -29,6 +29,9 @@ from dotenv import load_dotenv
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 RAW_DIR = REPO_ROOT / "data" / "raw"
+# Snapshot output root of ARCHITECTURE.md section 9; the per-scenario sub
+# directory is decided by the Snapshot Definition, as it is for Raw.
+SNAPSHOTS_DIR = REPO_ROOT / "data" / "snapshots"
 # Goal-scoped Raw root of guides/csi1000-5d-analysis-data.md section 7.
 CSI1000_RAW_SUBDIR = "csi1000-5d-analysis"
 ENV_FILE = REPO_ROOT / ".env"
@@ -41,8 +44,10 @@ TRADE_DATE_TUSHARE_FORMAT = "%Y%m%d"
 ISO_DATE_PATTERN = re.compile(r"\d{4}-\d{2}-\d{2}")
 
 # Other Source date facts (contract lifecycle) that Raw records express in the
-# same ``YYYY-MM-DD`` form as ``trade_date``.
-SOURCE_DATE_FIELDS = ("list_date", "delist_date", "last_ddate")
+# same ``YYYY-MM-DD`` form as ``trade_date``. ``maturity_date`` of
+# ``opt_basic`` is the expiry day of the contract, i.e. the same kind of
+# lifecycle fact as ``list_date`` / ``delist_date``.
+SOURCE_DATE_FIELDS = ("list_date", "delist_date", "last_ddate", "maturity_date")
 
 # One Source row, ready to be serialized to JSON.
 RawRecord = dict[str, Any]
@@ -147,7 +152,16 @@ def to_tushare_date(trade_date: str) -> str:
 
 
 def to_iso_date(trade_date: str) -> str:
-    """Convert a Source ``YYYYMMDD`` date to ``YYYY-MM-DD``."""
+    """Convert a Source ``YYYYMMDD`` date to ``YYYY-MM-DD``.
+
+    The eight-digit form is checked explicitly: ``strptime`` accepts a shorter
+    string such as ``2026092`` by reading a one-digit day, which would silently
+    turn a truncated Source fact into a valid-looking date.
+    """
+    if len(trade_date) != 8 or not trade_date.isdigit():
+        raise CollectionError(
+            f"source {TRADE_DATE_FIELD} must use YYYYMMDD, got {trade_date!r}."
+        )
     try:
         parsed = datetime.strptime(trade_date, TRADE_DATE_TUSHARE_FORMAT)
     except ValueError as exc:

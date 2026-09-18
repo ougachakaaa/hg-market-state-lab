@@ -13,6 +13,13 @@ def test_to_iso_date_converts_source_form_to_iso() -> None:
     assert _common.to_iso_date("20260917") == "2026-09-17"
 
 
+@pytest.mark.parametrize("value", ["2026092", "20261301", "2026-09-17", "202609171"])
+def test_to_iso_date_rejects_anything_but_eight_digits(value: str) -> None:
+    """A truncated or extended Source date is a Source gap, not a date."""
+    with pytest.raises(_common.CollectionError):
+        _common.to_iso_date(value)
+
+
 def test_date_conversion_round_trip() -> None:
     assert _common.to_iso_date(_common.to_tushare_date("2026-01-05")) == "2026-01-05"
 
@@ -109,7 +116,7 @@ def test_to_iso_date_or_none_keeps_already_normalized_dates() -> None:
     assert _common.to_iso_date_or_none("2026-06-22") == "2026-06-22"
 
 
-@pytest.mark.parametrize("value", ["2026-6-22", "20261301", "22/06/2026"])
+@pytest.mark.parametrize("value", ["2026-6-22", "20261301", "22/06/2026", "2026092"])
 def test_to_iso_date_or_none_rejects_other_forms(value: str) -> None:
     with pytest.raises(_common.CollectionError):
         _common.to_iso_date_or_none(value)
@@ -119,7 +126,14 @@ def test_to_raw_records_normalizes_source_date_facts() -> None:
     import pandas as pd
 
     frame = pd.DataFrame(
-        [{"ts_code": "MO2609-C-7000.CFE", "list_date": "20260622", "delist_date": "20260925"}]
+        [
+            {
+                "ts_code": "MO2609-C-7000.CFE",
+                "list_date": "20260622",
+                "delist_date": "20260925",
+                "maturity_date": "20260925",
+            }
+        ]
     )
 
     records = _common.to_raw_records(frame)
@@ -129,6 +143,7 @@ def test_to_raw_records_normalizes_source_date_facts() -> None:
             "ts_code": "MO2609-C-7000.CFE",
             "list_date": "2026-06-22",
             "delist_date": "2026-09-25",
+            "maturity_date": "2026-09-25",
         }
     ]
 
@@ -141,6 +156,17 @@ def test_to_raw_records_is_stable_for_already_normalized_dates() -> None:
     records = _common.to_raw_records(frame)
 
     assert records[0]["list_date"] == "2026-06-22"
+
+
+def test_to_raw_records_normalizes_an_absent_optional_date_fact() -> None:
+    """A contract without a ``maturity_date`` keeps the missing fact as it is."""
+    import pandas as pd
+
+    frame = pd.DataFrame([{"ts_code": "MO2609-C-7000.CFE", "maturity_date": None}])
+
+    records = _common.to_raw_records(frame)
+
+    assert records[0]["maturity_date"] is None
 
 
 def test_to_raw_records_rejects_malformed_source_date_facts() -> None:
