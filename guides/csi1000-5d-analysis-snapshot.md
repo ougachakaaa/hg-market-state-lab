@@ -1,0 +1,675 @@
+# guides/csi1000-5d-analysis-snapshot.md — CSI1000 未来约 5 个交易日市场状态分析场景的 Snapshot Definition authority
+
+> 状态：design-only authority（第一版 Snapshot Definition）。本文档锁定 "Raw Dataset → analysis-ready Snapshot" 的组织方式，只落 authority，不实现 `build_snapshot.py`，不执行任何业务分析。
+>
+> 层级：本文档位于 `ARCHITECTURE.md` 之下，与 `guides/csi1000-5d-analysis-data.md`、`guides/daily-market-snapshot.md` 并列。架构层面的稳定边界以 `ARCHITECTURE.md` 为准（尤其第 1.1 节职责边界、第 2 节核心架构、第 3 节 Raw/Snapshot 边界、第 4 节架构边界的执行、第 6 节 Reproducibility、第 8 节 Guide 职责）；本文档不得与其冲突。
+>
+> 职责分工：
+>
+> ```text
+> guides/csi1000-5d-analysis-data.md
+>     → Source / Dataset / Raw artifact authority
+>
+> guides/csi1000-5d-analysis-snapshot.md（本文档）
+>     → Raw → analysis-ready Snapshot authority
+> ```
+>
+> 实现本 Guide 任务的 Agent 应先阅读 `ARCHITECTURE.md` 第 1.1、2、3、4、6 节与 `guides/csi1000-5d-analysis-data.md`（五个 Raw artifact 的契约），再按本文档执行。
+
+## 1. 目标与范围
+
+本场景的分析目的不变（以某个目标交易日为观察基准，为外部分析器提供足够数据以分析未来约 5 个交易日的中证1000市场状态），但本文档只负责其中一段：
+
+```text
+Raw Dataset（五个 Raw artifact）
+        ↓
+deterministic Snapshot Assembly
+        ↓
+analysis-ready local file（snapshot.json）
+```
+
+本文档是这段过程的 Definition authority，回答：
+
+* 五个 Raw artifact 如何组成一个 analysis-ready Snapshot；
+* 最终文件写到哪里；
+* CSI1000 使用多少历史数据；
+* 第一版具体有哪些 derived fields，以及每个字段的输入、公式与单位；
+* MO basic + daily 如何组合；
+* IM basic + daily + CSI1000 如何组合；
+* 哪些数据属于 deterministic transformation；
+* 哪些结论严格属于 external analyzer。
+
+本文档**不**实现，也**不**重新定义 `guides/csi1000-5d-analysis-data.md` 已锁定的 Source / Dataset / Raw artifact 契约。任何与 Raw 契约重复的定义以 `guides/csi1000-5d-analysis-data.md` 为准。
+
+## 2. 职责边界：确定性数据转换 vs 业务分析
+
+### 2.1 本项目允许（deterministic transformation）
+
+输入相同则结果固定的确定性数据转换。第一版 Snapshot 允许包含：
+
+```text
+returns
+moving averages
+rolling high / low
+ATR
+realized volatility
+
+option moneyness / strike 位置
+normalized premium
+days to expiry
+
+IM basis
+annualized basis
+days to delist
+```
+
+这些都是对已有 Raw Fact 的确定性组织/计算，不引入业务判断。
+
+### 2.2 本项目不负责（业务分析，属于 external analyzer）
+
+Snapshot 禁止输出以下结论类字段，即使它们"很好算"：
+
+```text
+center / 未来5日中枢
+noise_zone / 噪声区
+upper_reversal_zone / lower_reversal_zone
+
+market_regime
+trend_strength
+overbought / oversold
+
+sell_call / sell_put
+cheap / expensive
+recommended strike
+
+probability_up / probability_down
+confidence
+recommendation
+```
+
+以及任何 bullish / bearish、反转概率、交易建议、目标点位等结论。这些始终属于 analyzer。
+
+### 2.3 输出语义
+
+最终 `snapshot.json` 必须满足：
+
+```text
+structured
+reproducible
+analysis-ready
+```
+
+即外部分析器不需要重新理解 Source 的杂乱结构、也不需要从 60 日历史中自行重建期限结构，即可直接消费。
+
+## 3. 输入与输出
+
+### 3.1 输入
+
+Snapshot Builder 只依赖：
+
+```text
+target_trade_date
+
+data/raw/csi1000-5d-analysis/<target_trade_date>/
+    index_daily_history.json
+    mo_option_basic.json
+    mo_option_daily.json
+    im_futures_basic.json
+    im_futures_daily.json
+
+当前 Snapshot Definition（本文档）
+```
+
+### 3.2 输出
+
+```text
+data/snapshots/
+└─ csi1000-5d-analysis/
+   └─ YYYY-MM-DD/
+      └─ snapshot.json
+```
+
+`YYYY-MM-DD` 表示 `target_trade_date`（目录名是目标交易日，不是文件中所有记录共同的 `trade_date`）。第一版只使用一个 JSON 文件，不提前拆分多个文件，不引入 schema registry 或 version framework。
+
+## 4. 输出逻辑结构
+
+```text
+snapshot
+├─ target_trade_date
+├─ underlying
+├─ mo_options
+└─ im_futures
+```
+
+* `underlying`：表达 CSI1000（`000852.SH`）的历史与派生指标；
+* `mo_options`：表达目标交易日 MO option chain；
+* `im_futures`：表达近期 IM term-structure facts。
+
+## 5. underlying
+
+### 5.1 输入与窗口选择
+
+输入：`index_daily_history.json`（Dataset `index_daily`，`000852.SH`）。
+
+Snapshot 精确选择：
+
+```text
+latest 120 distinct trading rows
+whose trade_date <= target_trade_date
+```
+
+要求：
+
+```text
+恰好 120 个交易日
+最后一行 = target_trade_date
+按 trade_date ascending
+```
+
+不足 120 日，或 `trade_date == target_trade_date` 缺失，则 Snapshot Assembly 失败。
+
+### 5.2 输出形态
+
+```text
+underlying:
+    ts_code
+    history
+    derived
+```
+
+* `ts_code`：固定为 `"000852.SH"`。identity 由该字段表达，`history` 内每行不再重复携带 `ts_code`。
+* `history`：上述 120 行，每行保留以下字段，语义与单位沿用 Raw（见 `guides/csi1000-5d-analysis-data.md` 4.1）：
+
+```text
+trade_date
+open
+high
+low
+close
+pre_close
+change
+pct_chg
+vol
+amount
+```
+
+* `derived`：单层对象，保存第 6 节定义的、以 `target_trade_date` 为终点的标量派生指标。
+
+### 5.3 目标日收盘价
+
+`underlying_close`（供 `mo_options` 与 `im_futures` 使用）定义为：
+
+```text
+underlying.history 最后一行（trade_date == target_trade_date）的 close
+```
+
+它是历史窗口中的既有 Fact，不是重新计算或从其他日期补出的值。Snapshot 中需要 `underlying_close` 的位置必须与此值一致，不得出现两个不同的"目标日收盘价"。
+
+## 6. underlying derived fields
+
+第一版只锁定以下 11 个标量字段，全部以 `target_trade_date`（记为 `t`）为终点，从 `underlying.history` 计算。不为了"可能有用"增加更多技术指标。
+
+记 `close_i` / `high_i` / `low_i` / `pre_close_i` 为 `history` 中第 `i` 个交易日的对应值（按 `trade_date` 升序，`t` 为最后一行）。
+
+### 6.1 return_Nd_pct
+
+| 字段 | 公式 | 单位 |
+| --- | --- | --- |
+| `return_1d_pct` | `(close_t / close_{t-1} - 1) * 100` | percentage points |
+| `return_5d_pct` | `(close_t / close_{t-5} - 1) * 100` | percentage points |
+| `return_20d_pct` | `(close_t / close_{t-20} - 1) * 100` | percentage points |
+
+`N` 表示 N 个交易日跨度；`close_{t-N}` 是 `history` 中在 `t` 之前第 N 个交易日的 close。该字段由 close 独立计算，不使用 Source 的 `pct_chg`。
+
+### 6.2 SMA
+
+| 字段 | 公式 | 单位 |
+| --- | --- | --- |
+| `sma_5` | `mean(close_{t-4}, ..., close_t)`（5 个） | index points |
+| `sma_20` | `mean(close_{t-19}, ..., close_t)`（20 个） | index points |
+| `sma_60` | `mean(close_{t-59}, ..., close_t)`（60 个） | index points |
+
+### 6.3 rolling high / low
+
+| 字段 | 公式 | 单位 |
+| --- | --- | --- |
+| `rolling_high_20` | `max(high_{t-19}, ..., high_t)` | index points |
+| `rolling_low_20` | `min(low_{t-19}, ..., low_t)` | index points |
+
+### 6.4 ATR 14
+
+先定义每日 True Range：
+
+```text
+TR_i = max(
+    high_i - low_i,
+    abs(high_i - pre_close_i),
+    abs(low_i - pre_close_i)
+)
+```
+
+然后：
+
+```text
+atr_14 = mean(TR_{t-13}, ..., TR_t)   （最近 14 个 TR）
+```
+
+单位：index points。本文档不在此解释 ATR 的"市场过热"等业务意义。
+
+### 6.5 Realized volatility
+
+使用 close-to-close log return：
+
+```text
+r_i = ln(close_i / close_{i-1})
+```
+
+最近 N 个 return 的 realized volatility：
+
+```text
+RV_N = sample_std(r_{t-N+1}, ..., r_t) * sqrt(252) * 100
+```
+
+其中 `sample_std` 使用 **sample standard deviation（ddof = 1）**，`N` 表示 return 个数。
+
+| 字段 | N | 公式 | 单位 |
+| --- | --- | --- | --- |
+| `realized_vol_5d_annualized_pct` | 5 | `sample_std(最近 5 个 r) * sqrt(252) * 100` | percentage points annualized |
+| `realized_vol_20d_annualized_pct` | 20 | `sample_std(最近 20 个 r) * sqrt(252) * 100` | percentage points annualized |
+
+`N = 5` 需要 6 个 close，`N = 20` 需要 21 个 close；120 日窗口保证这些字段始终可计算（窗口不足 120 日已在前置检查失败）。
+
+### 6.6 derived 输出形态
+
+`derived` 为单层对象，键为上述字段名，值为对应标量。不要输出序列，不要为每个历史日重复计算这些派生指标（历史窗口只保留 Raw Fact，派生指标只在 `t` 处求值一次）。
+
+## 7. MO option chain assembly
+
+### 7.1 输入与 join
+
+输入：
+
+```text
+mo_option_basic.json
+mo_option_daily.json
+underlying_close（目标日收盘价，见 5.3）
+```
+
+按 `ts_code` 做 **deterministic one-to-one join**。
+
+失败条件（任一成立则 Snapshot Assembly 失败）：
+
+```text
+basic 缺 daily（active contract 无目标日 daily fact）
+daily 缺 basic（daily fact 的 ts_code 无对应 basic）
+duplicate ts_code（basic 或 daily 内同一 ts_code 出现多行）
+```
+
+### 7.2 字段映射
+
+Snapshot 允许把 Source-friendly 字段变成 analysis-friendly 字段：
+
+```text
+option_type ← call_put      （Source 值原样保留，仅重命名）
+strike      ← exercise_price
+expiry_date ← maturity_date
+```
+
+`expiry_date` 输出统一为 `YYYY-MM-DD`。当前 Goal 2 Collector 将 `maturity_date` 以 Source 的 `YYYYMMDD` 形式落地（未像 `list_date` / `delist_date` 那样归一化），Snapshot Assembly 派生 `expiry_date` 时需先将其归一化为 `YYYY-MM-DD`（见第 16 节 reconciliation）。
+
+其余行情字段（`open` / `high` / `low` / `close` / `settle` / `vol` / `amount` / `oi`）沿用 `mo_option_daily` 的 Source 字段名与语义。
+
+### 7.3 每张期权输出字段
+
+```text
+ts_code
+option_type
+strike
+expiry_date
+days_to_expiry
+
+open
+high
+low
+close
+settle
+vol
+amount
+oi
+
+strike_minus_spot_points
+moneyness_pct
+close_premium_pct_of_spot
+```
+
+其中派生字段：
+
+| 字段 | 公式 | 单位 |
+| --- | --- | --- |
+| `days_to_expiry` | `expiry_date - target_trade_date` | calendar days（整数） |
+| `strike_minus_spot_points` | `strike - underlying_close` | index points |
+| `moneyness_pct` | `(strike / underlying_close - 1) * 100` | percentage points |
+| `close_premium_pct_of_spot` | `close / underlying_close * 100` | %（价格归一化） |
+
+语义约束：
+
+* `moneyness_pct` 只表达 strike 相对 spot 的位置，**不**根据 Call / Put 改变正负。
+* `close_premium_pct_of_spot` 只做价格归一化，不表达"便宜/贵"。
+* 这些字段不构成 ATM / OTM / ITM 分类，不构成交易建议。
+
+### 7.4 排序
+
+option chain 按以下 key 升序排列，使外部分析器可以直接读取完整价格面：
+
+```text
+expiry_date
+strike
+option_type
+```
+
+### 7.5 第一版明确不加
+
+```text
+ATM / OTM / ITM classification
+cheap / expensive
+IV
+Delta / Gamma / Theta / Vega
+probability
+recommended strike
+```
+
+全部 deferred。
+
+## 8. IM futures assembly
+
+### 8.1 输入与 join
+
+输入：
+
+```text
+im_futures_basic.json
+im_futures_daily.json
+underlying.history（供 60 日窗口与 underlying_close 使用）
+```
+
+以 `ts_code` 将 contract metadata（`im_futures_basic`）与 daily facts（`im_futures_daily`）做 deterministic join。`im_futures_daily` 中的每条 daily fact 必须能映射到 `im_futures_basic` 中的已知 IM 合约（取到 `delist_date`），否则 Snapshot Assembly 失败。
+
+### 8.2 60 日分析窗口
+
+IM history 使用：
+
+```text
+underlying.history 中最后 60 个 trade_date
+```
+
+作为统一的 60 日分析窗口，使 CSI1000 spot 与 IM 的时间窗口天然对齐。**不另建交易日历**。
+
+保留在这些日期中存在的 IM 普通月度合约 daily facts（合约限定来自 Raw Dataset 本身，见 `guides/csi1000-5d-analysis-data.md` 5.2，不在 Assembly 层再做"主力/流动性"判断）。
+
+`underlying.history` 含 120 个交易日，因此 60 日窗口内每个 IM 观测的 `trade_date` 都能在 `underlying.history` 中找到对应 close。
+
+### 8.3 每条 futures observation 输出字段
+
+```text
+ts_code
+trade_date
+delist_date
+days_to_delist
+
+open
+high
+low
+close
+settle
+vol
+amount
+oi
+oi_chg
+
+underlying_close
+basis_points
+basis_pct
+annualized_basis_pct
+```
+
+其中 `underlying_close` 是该观测 `trade_date` 对应的 CSI1000 close（从 `underlying.history` 按 `trade_date` 对齐），其余行情字段沿用 `im_futures_daily` 的 Source 字段名与语义。
+
+### 8.4 派生字段
+
+| 字段 | 公式 | 单位 |
+| --- | --- | --- |
+| `days_to_delist` | `delist_date - trade_date` | calendar days（整数） |
+| `basis_points` | `futures_close - underlying_close` | index points |
+| `basis_pct` | `(futures_close / underlying_close - 1) * 100` | percentage points |
+| `annualized_basis_pct` | `days_to_delist > 0`：`basis_pct * 365 / days_to_delist`；`days_to_delist == 0`：`null` | percentage points annualized |
+
+观测只存在于合约上市至退市的区间内，故 `days_to_delist >= 0`。这是简单线性年化。**不要**把它解释成看多 / 看空、贴水值得交易、滚仓信号等。
+
+### 8.5 排序
+
+IM `history` 按以下 key 升序排列（确定性顺序）：
+
+```text
+trade_date
+ts_code
+```
+
+（`ts_code` 在同一 `trade_date` 内唯一，故该顺序是确定的；按到期日组织的便捷视图见第 9 节。）
+
+## 9. IM target-date curve
+
+为了让 analyzer 不需要从 60 日历史中再次寻找当前期限结构，Snapshot 同时提供 deterministic convenience view：
+
+```text
+im_futures.target_date_curve
+```
+
+定义：
+
+```text
+history 中 trade_date == target_trade_date 的投影
+```
+
+按：
+
+```text
+delist_date ascending
+```
+
+排序。字段沿用第 8.3 节。
+
+它不是新的 Source Fact，也不是新的 Dataset，只是 Snapshot 内对已有 deterministic facts 的重新组织。
+
+## 10. 推荐 JSON 结构（结构 authority）
+
+本节是结构 authority；示例数值只允许作为明显的 placeholder，不形成任何业务结论。
+
+```json
+{
+  "target_trade_date": "2026-09-17",
+
+  "underlying": {
+    "ts_code": "000852.SH",
+    "history": [
+      {
+        "trade_date": "2026-04-02",
+        "open": 0,
+        "high": 0,
+        "low": 0,
+        "close": 0,
+        "pre_close": 0,
+        "change": 0,
+        "pct_chg": 0,
+        "vol": 0,
+        "amount": 0
+      }
+    ],
+    "derived": {
+      "return_1d_pct": 0,
+      "return_5d_pct": 0,
+      "return_20d_pct": 0,
+      "sma_5": 0,
+      "sma_20": 0,
+      "sma_60": 0,
+      "rolling_high_20": 0,
+      "rolling_low_20": 0,
+      "atr_14": 0,
+      "realized_vol_5d_annualized_pct": 0,
+      "realized_vol_20d_annualized_pct": 0
+    }
+  },
+
+  "mo_options": {
+    "underlying_close": 0,
+    "chain": [
+      {
+        "ts_code": "MO2609-C-7600.CFE",
+        "option_type": "C",
+        "strike": 0,
+        "expiry_date": "2026-09-17",
+        "days_to_expiry": 0,
+        "open": 0,
+        "high": 0,
+        "low": 0,
+        "close": 0,
+        "settle": 0,
+        "vol": 0,
+        "amount": 0,
+        "oi": 0,
+        "strike_minus_spot_points": 0,
+        "moneyness_pct": 0,
+        "close_premium_pct_of_spot": 0
+      }
+    ]
+  },
+
+  "im_futures": {
+    "history": [
+      {
+        "ts_code": "IM2609.CFE",
+        "trade_date": "2026-06-19",
+        "delist_date": "2026-09-18",
+        "days_to_delist": 0,
+        "open": 0,
+        "high": 0,
+        "low": 0,
+        "close": 0,
+        "settle": 0,
+        "vol": 0,
+        "amount": 0,
+        "oi": 0,
+        "oi_chg": 0,
+        "underlying_close": 0,
+        "basis_points": 0,
+        "basis_pct": 0,
+        "annualized_basis_pct": 0
+      }
+    ],
+    "target_date_curve": []
+  }
+}
+```
+
+说明：
+
+* `underlying.history` 恰好 120 行；上面只示意 1 行。
+* `underlying.derived` 为单层标量对象。
+* `mo_options.chain` 按 `expiry_date, strike, option_type` 升序；`mo_options.underlying_close` 等于 `underlying.history` 末行 close。
+* `im_futures.history` 只含第 8.2 节 60 日窗口内的观测，按 `trade_date, ts_code` 升序；`target_date_curve` 是 `trade_date == target_trade_date` 的投影，按 `delist_date` 升序。
+
+## 11. Reproducibility
+
+Snapshot Builder 必须只依赖第 3.1 节列出的输入。
+
+不得：
+
+```text
+调用 Tushare
+访问网络
+使用当前时间
+使用随机数
+自动 fallback
+读取其他日期目录补数据
+```
+
+同一组 Raw + 同一 Definition 必须产生语义一致的 Snapshot（结构一致、字段一致、数值一致）。
+
+Snapshot 内不得出现无法回溯到 Raw Dataset 的"只存在于 Snapshot 中的数据事实"。所有派生字段都可按本文档公式从 Raw 确定性重算。
+
+## 12. Completeness failure
+
+Snapshot Assembly 不得静默估算或跳过关键记录。至少锁定以下失败条件：
+
+```text
+underlying < 120 days → fail
+
+underlying target_trade_date missing → fail
+
+MO basic/daily cannot one-to-one join → fail
+
+IM daily cannot map to known IM contract → fail
+
+required numeric field malformed/missing
+and therefore derived field cannot be calculated → fail
+```
+
+补充：MO chain 为空、IM history 为空（进而 `target_date_curve` 为空）也属于 Raw 不完整，失败而非静默输出空结果。本文档不设计复杂 validation framework，简单明确即可；具体异常类型、CLI exit code 属于 implementation，可 deferred。
+
+## 13. Deferred（第一版明确不做）
+
+```text
+option IV
+Greeks
+ATM-straddle implied move
+volatility skew summary
+option surface interpolation
+
+futures pairwise calendar-spread summary
+
+breadth
+stock_daily
+macro
+news
+fund flow
+
+analysis prompt
+business conclusion schema
+```
+
+以后有明确数据需求时再增加，不在本 Goal 顺手加入。
+
+## 14. 与现有 Daily Snapshot 的关系
+
+* 现有 `guides/daily-market-snapshot.md` 及其 `data/snapshots/YYYY-MM-DD/snapshot.json` 继续独立存在，不被本 Guide 破坏或重定义。
+* CSI1000 场景使用独立的 `data/snapshots/csi1000-5d-analysis/YYYY-MM-DD/snapshot.json`，与 Daily Snapshot 的 Raw 目录、Snapshot 目录互不冲突。
+* `000852.SH` 同时出现在两个场景中，但语义不同：Daily Snapshot 中它是六指数观察 universe 的成员；本场景中它是 `underlying` 的标的。两者复用同一 `index_daily` Dataset 语义，不复制新 Dataset。
+
+## 15. 下一步实现范围
+
+本文档是第一版 Snapshot Definition authority。实现阶段（下一 Goal）按本文档与 `ARCHITECTURE.md` 交付：
+
+```text
+Raw files（五个 Raw artifact）
+        ↓
+build_snapshot.py（Snapshot Assembly）
+        ↓
+data/snapshots/csi1000-5d-analysis/<target_trade_date>/snapshot.json
+```
+
+实现对应 `ARCHITECTURE.md` 第 9 节的脚本约定（`scripts/build_snapshot.py` 负责 Snapshot Assembly），并配套 `tests/` 测试。Coding agent 不需要自行发明任何业务语义：所有窗口选择、join 规则、派生公式、排序与失败条件均已在本 Guide 锁定。
+
+实现不得超出本 Guide 与 `guides/csi1000-5d-analysis-data.md`、`ARCHITECTURE.md` 的范围；若实现与本文档不一致，应做 reconciliation，不得静默选择另一套设计。
+
+## 16. Reconciliation（authority / implementation drift）
+
+本 Goal 只落 authority，不修改 Python implementation。对 `guides/csi1000-5d-analysis-data.md` 与 Goal 2 Collector 的自检结论：
+
+* 未把 analyzer conclusion 偷进 Snapshot：第 2.2、7.5、8.4、13 节已明确禁止，禁止字段清单已锁定。
+* 未重新定义 Raw Dataset：五个 Raw artifact 的字段与语义沿用 data Guide；本文档只定义 Snapshot 层的选择、join、派生与排序。
+* 未修改 Source contract：Source / endpoint 不变。
+* 所有 derived field 均为 deterministic，且每个都有明确输入、公式与单位（第 6、7、8 节）。
+* Snapshot schema（第 10 节）足以让下一 Goal 直接实现，无需自行发明业务语义。
+
+发现的 drift（仅记录，不在本 Goal 修复 Python）：
+
+* `mo_option_basic` 的 `maturity_date`：Goal 2 Collector 将其以 Source 的 `YYYYMMDD` 形式落地，而 `list_date` / `delist_date` 已归一化为 `YYYY-MM-DD`。`ARCHITECTURE.md` 第 3 节与 data Guide 第 7 节允许/隐含对日期事实做 `YYYY-MM-DD` 归一化，`maturity_date` 属于遗漏。Snapshot Assembly 派生 `expiry_date` 时需自行归一化（第 7.2 节已注明）；理想情况下应在此后对 `fetch_mo_option_basic.py` 做 reconciliation（将 `maturity_date` 纳入日期归一化），但不影响本文档锁定 Snapshot 输出为 `YYYY-MM-DD`。

@@ -37,6 +37,7 @@ poetry run mypy .
 * `ARCHITECTURE.md`：项目架构及架构层面的 authority
 * `guides/daily-market-snapshot.md`：第一版 Daily Snapshot Definition（具体 Dataset、Raw 契约、Snapshot 结构与执行边界）
 * `guides/csi1000-5d-analysis-data.md`：CSI1000 "未来约 5 个交易日市场状态"分析场景的数据需求与 Raw Dataset 契约 authority（CSI1000 历史、MO 期权链、IM 期货）
+* `guides/csi1000-5d-analysis-snapshot.md`：同一场景的 Snapshot Definition authority（Raw → analysis-ready `snapshot.json` 的组织方式，design-only，尚未实现）
 * `config/`：配置
 * `guides/`：DSH 执行任务使用的 Guide
 * `scripts/`：Raw Dataset Collector（`fetch_*.py`）与后续的 `build_snapshot.py`
