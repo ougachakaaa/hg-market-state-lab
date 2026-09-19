@@ -51,6 +51,30 @@ output/
 
 Data Service / CLI / output 契约以 `market-snapshot/guides/data-services.md` 为准。
 
+## HTTP API（MO Option Chain read contract）
+
+`mo-option-chain` 没有 CLI 入口，它的 delivery surface 是 HTTP read contract（服务对象是 `web-ui` 等 read consumers）。在 `market-snapshot/` 目录内启动最小 delivery adapter：
+
+```bash
+poetry run python scripts/api.py
+```
+
+默认监听 `127.0.0.1:8011`，可用 `--host` / `--port` 覆盖：
+
+```bash
+poetry run python scripts/api.py --host 127.0.0.1 --port 8012
+```
+
+启动后：
+
+* `http://127.0.0.1:8011/openapi.json`：机器可读的 HTTP contract；
+* `http://127.0.0.1:8011/docs`：交互式 API 文档；
+* endpoint：`GET /mo-option-chain?target_trade_date=YYYY-MM-DD&option_product=MO[&price_type=close]`。
+
+端口号只是 launcher 细节，不属于 HTTP contract：endpoint 语义、request/query 参数、success / error response 与 status mapping 全部以 `market-snapshot/guides/mo-option-chain-http-contract.md` 为准；V1 不定义 server deployment、CORS、auth 或 API versioning。
+
+当前真实 `Capture → Raw → MO Option Chain Preparation → read model` 尚未接线，因此请求会明确返回 `503 service_not_wired`（`error.kind` 之一）而不是伪造数据；这是 Goal 2 的 bootstrap 状态，不是 HTTP contract 失败。
+
 ## 基础环境
 
 要求 Python 3.13 与 Poetry。以下命令在 `market-snapshot/` 目录内执行。
@@ -93,8 +117,8 @@ poetry run mypy .
   * `guides/data-services.md`：Data Service / CLI / output 契约 authority（用户级调用语义）
   * `config/`：配置
   * `guides/`：DSH 执行任务使用的 Guide
-  * `src/daily_market_snapshot/`：实现代码，按职责分层（`sources/`、`capture/`、`preparation/`、`services/`、`artifacts.py`、`cli.py`）
-  * `scripts/`：极薄 executable shim（`dms.py`），转发到 `src/daily_market_snapshot/cli.py`
+  * `src/daily_market_snapshot/`：实现代码，按职责分层（`sources/`、`capture/`、`preparation/`、`services/`、`api/`、`artifacts.py`、`cli.py`）
+  * `scripts/`：极薄 executable shim（`dms.py` 转发到 `src/daily_market_snapshot/cli.py`；`api.py` 启动 `src/daily_market_snapshot/api/` 的 HTTP delivery adapter，默认 `127.0.0.1:8011`）
   * `data/raw/`：Raw Artifact 输出目录（内部运行产物）
   * `data/snapshots/`：非 Data Service 的 Snapshot 输出目录（运行产物）
   * `output/`：Data Service 的 canonical user-facing output（运行产物）

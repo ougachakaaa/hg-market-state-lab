@@ -222,6 +222,7 @@ web-ui
 * HTTP 层通过明确的 service/application boundary 获取 read model；它不读 Raw Artifact，不调用 Source，不理解 Tushare。
 * HTTP 层不依赖 `csi1000-5d-analysis` 的 `snapshot.json`（`guides/mo-option-chain.md` Invariant 10）。
 * 本阶段真实 `Capture → Raw → MO Option Chain Preparation → read model` 实现仍然 deferred，HTTP contract 使用 fake/stub service 完成 contract test；stub 不属于业务语义层，也不进入正式 delivery 语义。
+* local 启动默认 bind `127.0.0.1:8011`（launcher 细节，可用 `--host` / `--port` 覆盖）。端口号**不属于**本 contract：endpoint 语义始终是 `GET /mo-option-chain`，换端口不改变 request / response / error 契约；V1 不定义 deployment、反向代理、TLS 或 CORS（见第 8 节）。
 
 ## 8. V1 Non-goals
 

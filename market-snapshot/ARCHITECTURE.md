@@ -600,7 +600,7 @@ market-snapshot/
   * `errors.py`：error envelope、transport error kind 闭集与 HTTP status mapping。
   字段级 HTTP contract 不在本文件，见 `guides/mo-option-chain-http-contract.md`。
 * `scripts/dms.py`：极薄 executable shim，转发到 `cli.py`。
-* `scripts/api.py`：极薄 executable shim，启动 HTTP delivery adapter。
+* `scripts/api.py`：极薄 executable shim，启动 HTTP delivery adapter（默认 `127.0.0.1:8011`，可用 `--host` / `--port` 覆盖；bind address 属于 launcher / deployment 细节，不属于 HTTP transport contract）。
 * `guides/`：描述具体数据需求与可执行 workflow。
 * `config/`：非敏感的运行配置。凭据（例如 `TUSHARE_TOKEN`）只从环境变量读取，不进 `config/`，不进版本控制。
 * `data/raw/`：Raw Artifact 输出目录。
