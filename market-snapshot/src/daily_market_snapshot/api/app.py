@@ -129,10 +129,12 @@ def contract_openapi(application: FastAPI) -> Callable[[], dict[str, Any]]:
     published contract therefore drops that one entry, so the web UI sees the
     statuses the adapter can actually return and no second error shape.
 
-    ``FastAPI.openapi`` is replaced, so the schema it builds is captured before
-    the replacement to avoid calling the override recursively.
+    ``FastAPI.openapi`` is replaced, so the schema builder is captured before the
+    replacement to avoid calling the override recursively. The application is
+    already set up by ``FastAPI.__init__``; calling ``setup()`` again here would
+    register the framework's own routes (``/openapi.json``, ``/docs``,
+    ``/docs/oauth2-redirect``, ``/redoc``) a second time.
     """
-    application.setup()
     build_openapi = application.openapi
 
     def openapi() -> dict[str, Any]:

@@ -219,7 +219,7 @@ def test_the_resolved_query_identity_carries_all_three_dimensions(
 
     assert provider.last_query == service.ChainQuery(
         target_trade_date=TARGET_DATE,
-        option_product="MO",
+        option_product=service.OptionProduct.MO,
         price_type=service.PriceType.CLOSE,
     )
 
@@ -335,6 +335,50 @@ def test_an_unsupported_price_type_is_rejected(client: TestClient) -> None:
     assert response.status_code == 400
     assert error_body(response)["kind"] == "invalid_request"
     assert error_body(response)["param"] == "price_type"
+
+
+def test_a_canonical_date_reaches_the_boundary_unchanged(
+    client: TestClient, provider: FakeChainReadProvider
+) -> None:
+    """A valid ``YYYY-MM-DD`` query reaches the boundary as canonical text."""
+    response = client.get(QUERY)
+
+    assert response.status_code == 200
+    assert [query.target_trade_date for query in provider.queries] == [TARGET_DATE]
+
+
+@pytest.mark.parametrize(
+    "malformed",
+    [
+        "2026-9-7",
+        "2026-9-17",
+        "2026/09/17",
+        "20260917",
+        "2026-13-40",
+        "2026-02-30",
+        "2026-09-17T00:00:00",
+        "20260917T000000",
+        "foo",
+        "",
+    ],
+)
+def test_a_malformed_date_is_rejected_before_the_provider(
+    client: TestClient, provider: FakeChainReadProvider, malformed: str
+) -> None:
+    """The query identity requires exactly ``YYYY-MM-DD``; nothing else is proxied.
+
+    A non-padded date, another separator, a compact date, an impossible date and
+    a timestamp are all invalid requests, and the provider is never asked for a
+    chain under a query the authority does not define.
+    """
+    response = client.get(
+        ENDPOINT, params={"target_trade_date": malformed, "option_product": "MO"}
+    )
+
+    assert response.status_code == 400
+    assert error_body(response)["kind"] == "invalid_request"
+    assert error_body(response)["param"] == "target_trade_date"
+    assert provider.queries == []
 
 
 def test_an_unknown_query_parameter_is_reported_as_invalid(
@@ -491,6 +535,45 @@ def test_openapi_exposes_the_endpoint_and_its_parameters(client: TestClient) -> 
 def test_the_declared_parameters_are_exactly_the_accepted_ones(client: TestClient) -> None:
     """A request may carry exactly the documented parameters, no more and no less."""
     assert set(query_parameters(client)) == set(api_errors.CONTRACT_QUERY_PARAMS)
+
+
+def test_openapi_locks_the_response_price_type_enum(client: TestClient) -> None:
+    """The response must not widen ``price_type`` into an arbitrary string."""
+    document = client.get("/openapi.json").json()
+    schemas = document["components"]["schemas"]
+    price_type = schema_of(document, schemas["OptionChainDTO"]["properties"]["price_type"])
+
+    assert price_type["enum"] == ["open", "high", "low", "close"]
+    assert schemas["OptionChainDTO"]["properties"]["price_type"]["$ref"].endswith("/PriceType")
+
+
+def test_openapi_locks_the_option_product_enum(client: TestClient) -> None:
+    document = client.get("/openapi.json").json()
+    schemas = document["components"]["schemas"]
+    product = schema_of(document, schemas["OptionChainDTO"]["properties"]["option_product"])
+    declared = schema_of(document, query_parameters(client)["option_product"]["schema"])
+
+    assert product["enum"] == ["MO"]
+    assert declared["enum"] == ["MO"]
+
+
+def test_the_published_enums_match_the_application_boundary(client: TestClient) -> None:
+    """One authoritative value set per dimension, not two that could drift."""
+    document = client.get("/openapi.json").json()
+    schemas = document["components"]["schemas"]
+
+    assert schemas["PriceType"]["enum"] == [price.value for price in service.PriceType]
+    assert schemas["OptionProduct"]["enum"] == [
+        product.value for product in service.OptionProduct
+    ]
+
+
+def test_the_published_date_parameter_is_a_canonical_date(client: TestClient) -> None:
+    """The published parameter is a date, and only canonical text is accepted."""
+    schema = query_parameters(client)["target_trade_date"]["schema"]
+
+    assert schema["format"] == "date"
+    assert schema.get("type", "string") == "string"
 
 
 def test_openapi_declares_the_success_schema_as_the_read_contract(client: TestClient) -> None:

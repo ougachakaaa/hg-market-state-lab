@@ -7,18 +7,68 @@ The DTOs are a faithful transport expression of the read model defined in
 ``services/mo_option_chain.py``: same fields, same names, same JSON shape, no
 envelope and no extra field. They exist so the wire contract is code-generated,
 validated and published as OpenAPI; they own no market semantics.
+
+The closed value sets of the contract (option product, price type) are reused
+from the application boundary instead of being re-declared here, so the request,
+the read model and the response can never drift into two different value sets.
 """
 
 from __future__ import annotations
 
-from typing import Annotated, Literal
+import re
+from datetime import date
+from typing import Annotated
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, PlainValidator, WithJsonSchema
 
-# The only option product V1 supports. Declaring it as a literal keeps the
-# contract closed in OpenAPI; a different value is a request the contract does
-# not accept (HTTP transport contract section 5).
-OptionProduct = Literal["MO"]
+from ..services.mo_option_chain import OptionProduct, PriceType
+
+__all__ = [
+    "ExpiryGroupDTO",
+    "IsoDate",
+    "OptionChainDTO",
+    "OptionPointDTO",
+    "OptionProduct",
+    "PriceType",
+    "UnderlyingRefDTO",
+]
+
+# The canonical target trade date representation of the query identity: exactly
+# ``YYYY-MM-DD`` (``guides/mo-option-chain.md`` section 3). Anything else - a
+# non-padded date, another separator, a compact date, an impossible date, a
+# timestamp - is a request the contract does not accept.
+ISO_DATE_PATTERN = re.compile(r"\d{4}-\d{2}-\d{2}")
+
+
+def to_iso_date(value: object) -> date:
+    """Accept exactly ``YYYY-MM-DD`` text and reject everything else.
+
+    The validator is a plain validator on purpose: Pydantic's own date parsing
+    accepts non-canonical input (``2026-9-7``, ``20260917``, a timestamp), which
+    the query identity does not. Only canonical text is parsed, and every other
+    value is reported as a request-validation error attributed to
+    ``target_trade_date``, so the chain read boundary is never reached with a
+    malformed query.
+    """
+    if isinstance(value, str) and ISO_DATE_PATTERN.fullmatch(value):
+        try:
+            return date.fromisoformat(value)
+        except ValueError:
+            # The shape is canonical but the date does not exist (month 13,
+            # 30 February): still an invalid request, reported the same way.
+            pass
+    raise ValueError("target_trade_date must be exactly YYYY-MM-DD")
+
+
+#: The request-side target trade date: strict ``YYYY-MM-DD`` in, canonical
+#: ``YYYY-MM-DD`` out (the endpoint writes ``isoformat()`` into the query). The
+#: JSON schema is declared explicitly, so the published contract still describes
+#: the parameter as a date string even though a plain validator now owns parsing.
+IsoDate = Annotated[
+    date,
+    PlainValidator(to_iso_date),
+    WithJsonSchema({"type": "string", "format": "date"}, mode="validation"),
+]
 
 Strike = Annotated[float, Field(description="Option exercise price.")]
 SelectedPrice = Annotated[
@@ -82,7 +132,7 @@ class OptionChainDTO(BaseModel):
     target_trade_date: Annotated[str, Field(description="Explicit target trade date, YYYY-MM-DD.")]
     option_product: OptionProduct
     price_type: Annotated[
-        str,
+        PriceType,
         Field(description="Resolved price_type used by every price in this response."),
     ]
     underlying: UnderlyingRefDTO

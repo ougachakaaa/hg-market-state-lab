@@ -33,7 +33,7 @@ def chain_fixture() -> service.OptionChain:
     """
     return service.OptionChain(
         target_trade_date=TARGET_DATE,
-        option_product="MO",
+        option_product=service.OptionProduct.MO,
         price_type=service.PriceType.CLOSE,
         underlying=service.UnderlyingRef(
             instrument_id=UNDERLYING_ID, price=UNDERLYING_PRICE

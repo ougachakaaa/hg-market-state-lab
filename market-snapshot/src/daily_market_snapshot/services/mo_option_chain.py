@@ -41,15 +41,30 @@ SERVICE_DESCRIPTION = (
     "of one target trade date"
 )
 
-# The option product dimension of the query identity. V1 supports ``MO`` only and
-# keeps the dimension explicit so a future ``IO`` / ``HO`` does not change the
-# query identity (``guides/mo-option-chain.md`` section 3).
-SUPPORTED_OPTION_PRODUCTS: tuple[str, ...] = ("MO",)
-DEFAULT_OPTION_PRODUCT = "MO"
+class OptionProduct(StrEnum):
+    """The option products V1 can serve.
 
-# The date representation the query identity requires. The HTTP layer passes the
-# caller's literal date string through; the format rule itself belongs to the
-# data product, not to the transport layer.
+    Authority: ``guides/mo-option-chain.md`` sections 3 and 4. The single
+    executable source of truth for the product dimension: the HTTP request, the
+    resolved query identity, the read model and the response DTO all use this
+    type, so a future ``IO`` / ``HO`` extends one authoritative type instead of
+    two that could drift.
+    """
+
+    MO = "MO"
+
+
+#: The products V1 supports, derived from the authoritative type above.
+SUPPORTED_OPTION_PRODUCTS: tuple[str, ...] = tuple(product.value for product in OptionProduct)
+
+#: The product a caller gets when the contract resolves one without an explicit
+#: choice; V1 has exactly one.
+DEFAULT_OPTION_PRODUCT = OptionProduct.MO
+
+# The date representation the query identity requires. The HTTP layer validates
+# the caller's literal date string against it and passes the canonical
+# ``YYYY-MM-DD`` string on; the data product owns the representation, not the
+# transport layer.
 TARGET_TRADE_DATE_FORMAT = "YYYY-MM-DD"
 
 
@@ -128,7 +143,7 @@ class ChainQuery:
     """
 
     target_trade_date: str
-    option_product: str
+    option_product: OptionProduct
     price_type: PriceType
 
 
@@ -178,7 +193,7 @@ class OptionChain:
     """
 
     target_trade_date: str
-    option_product: str
+    option_product: OptionProduct
     price_type: PriceType
     underlying: UnderlyingRef
     expiries: tuple[ExpiryGroup, ...]

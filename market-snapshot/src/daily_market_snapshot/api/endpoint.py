@@ -15,9 +15,7 @@ and it never fills, drops or substitutes a fact: all of that is owned by
 
 from __future__ import annotations
 
-import inspect
-from collections.abc import Callable
-from typing import Annotated, cast
+from typing import Annotated
 
 from fastapi import APIRouter, Depends, Query, Request
 
@@ -33,9 +31,9 @@ from .errors import (
 )
 from .schemas import (
     ExpiryGroupDTO,
+    IsoDate,
     OptionChainDTO,
     OptionPointDTO,
-    OptionProduct,
     UnderlyingRefDTO,
 )
 
@@ -58,16 +56,16 @@ def get_chain_read_provider() -> service.ChainReadProvider:
 def resolve_chain_query(
     request: Request,
     target_trade_date: Annotated[
-        str,
+        IsoDate,
         Query(
             description=(
-                "Explicit target trade date, YYYY-MM-DD. Not today / latest / "
+                "Explicit target trade date, exactly YYYY-MM-DD. Not today / latest / "
                 "current date; there is no fallback date."
             )
         ),
     ],
     option_product: Annotated[
-        OptionProduct,
+        service.OptionProduct,
         Query(description="Option product. V1 supports MO only."),
     ],
     price_type: Annotated[
@@ -77,11 +75,11 @@ def resolve_chain_query(
 ) -> service.ChainQuery:
     """Resolve the read query identity from the request.
 
-    Only transport-level input shape is handled here: the resolved identity
-    (``target_trade_date + option_product + resolved price_type``) is the data
-    product's. A request the contract does not accept - an omitted required
-    parameter, an unparsable value, an undeclared parameter - is rejected as
-    ``invalid_request``. Whether a well-formed query can be served at all (for
+    Only transport-level input shape is handled here: the date must already have
+    passed the strict ``YYYY-MM-DD`` validation, an undeclared parameter is
+    rejected, and the resolved identity (``target_trade_date + option_product +
+    resolved price_type``) is handed on as the data product's canonical
+    ``YYYY-MM-DD`` string. Whether a well-formed query can be served at all (for
     example a target date the Source has no facts for) is not a transport
     question and stays with the read model.
     """
@@ -94,7 +92,7 @@ def resolve_chain_query(
             f"unsupported query parameter {unexpected}",
         )
     return service.ChainQuery(
-        target_trade_date=target_trade_date,
+        target_trade_date=target_trade_date.isoformat(),
         option_product=option_product,
         price_type=price_type,
     )
@@ -145,16 +143,10 @@ def to_chain_dto(chain: service.OptionChain) -> OptionChainDTO:
     the payload is the read contract's semantic response rather than a
     transport-invented variant of it.
     """
-    product = chain.option_product
-    if product not in service.SUPPORTED_OPTION_PRODUCTS:  # pragma: no cover - defensive
-        raise ChainApiError(
-            ChainErrorKind.OPTION_CHAIN_UNAVAILABLE,
-            f"the chain read model reported unsupported option_product {chain.option_product!r}",
-        )
     return OptionChainDTO(
         target_trade_date=chain.target_trade_date,
-        option_product=cast("OptionProduct", product),
-        price_type=str(chain.price_type),
+        option_product=chain.option_product,
+        price_type=chain.price_type,
         underlying=UnderlyingRefDTO(
             instrument_id=chain.underlying.instrument_id,
             price=chain.underlying.price,
@@ -188,7 +180,7 @@ async def read_chain(
     A failure of the boundary is reported as the corresponding error envelope and
     status; a successful read becomes the self-describing success response.
     """
-    result = await resolve_chain_read_result(provider, query)
+    result = provider(query)
     if result.error is not None:
         raise ChainApiError(
             chain_error_kind(result.error),
@@ -197,23 +189,6 @@ async def read_chain(
         )
     assert result.chain is not None
     return to_chain_dto(result.chain)
-
-
-async def resolve_chain_read_result(
-    provider: service.ChainReadProvider | Callable[..., object],
-    query: service.ChainQuery,
-) -> service.ChainReadResult:
-    """Call the application boundary, accepting a sync or async provider.
-
-    The boundary is synchronous; awaiting an awaitable keeps a future
-    asynchronous preparation able to plug into the same seam without changing the
-    HTTP contract.
-    """
-    result = provider(query)
-    if inspect.isawaitable(result):
-        result = await result
-    assert isinstance(result, service.ChainReadResult)
-    return result
 
 
 @router.get(

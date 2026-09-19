@@ -19,6 +19,7 @@ into:
 from __future__ import annotations
 
 from dataclasses import FrozenInstanceError
+from enum import StrEnum
 
 import pytest
 
@@ -28,7 +29,9 @@ from support.fake_chain_service import TARGET_DATE, chain_fixture, chain_result,
 
 def query(price_type: service.PriceType = service.PriceType.CLOSE) -> service.ChainQuery:
     return service.ChainQuery(
-        target_trade_date=TARGET_DATE, option_product="MO", price_type=price_type
+        target_trade_date=TARGET_DATE,
+        option_product=service.OptionProduct.MO,
+        price_type=price_type,
     )
 
 
@@ -93,7 +96,17 @@ def test_v1_supports_exactly_the_authority_price_types() -> None:
 
 def test_v1_supports_mo_and_keeps_the_product_dimension() -> None:
     assert service.SUPPORTED_OPTION_PRODUCTS == ("MO",)
-    assert service.DEFAULT_OPTION_PRODUCT == "MO"
+    assert service.DEFAULT_OPTION_PRODUCT is service.OptionProduct.MO
+
+
+def test_the_product_dimension_has_one_authoritative_type() -> None:
+    """The supported list is derived from the enum, not maintained beside it."""
+    assert tuple(product.value for product in service.OptionProduct) == (
+        service.SUPPORTED_OPTION_PRODUCTS
+    )
+    assert service.DEFAULT_OPTION_PRODUCT.value in service.SUPPORTED_OPTION_PRODUCTS
+    assert issubclass(service.OptionProduct, StrEnum)
+    assert issubclass(service.PriceType, StrEnum)
 
 
 # ---------------------------------------------------------------------------
