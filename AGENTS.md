@@ -2,9 +2,9 @@
 
 ## 项目
 
-项目名称：`daily-market-snapshot`。
+项目名称：`hg-market-state-lab`。
 
-本仓库使用 Python 3.13 和 Poetry。
+本仓库的 Python 项目位于 `market-snapshot/`：Poetry、pytest、Ruff 与 mypy 都在该目录内执行。Python 目标版本为 3.13。
 
 项目架构及当前架构层面的 authority 定义在 `ARCHITECTURE.md` 中。
 
@@ -12,13 +12,13 @@
 
 ## 工作规则
 
-* 使用 Poetry 管理 Python 依赖和虚拟环境。
+* 使用 Poetry 管理 Python 依赖和虚拟环境（在 `market-snapshot/` 目录内执行）。
 * Python 目标版本为 3.13。
 * 使用 pytest 进行测试。
 * 使用 Ruff 进行 lint 检查。
 * 使用 mypy 进行类型检查。
 * 不得提交真实 API Token、密码或其他敏感信息。
-* 执行 `guides/` 中定义的 workflow 前，先阅读相关 Guide。
+* 执行 `market-snapshot/guides/` 中定义的 workflow 前，先阅读相关 Guide。
 * 当修改涉及数据语义、Source Capture 职责、Analysis Preparation 组织方式或项目结构时，先阅读 `ARCHITECTURE.md`。
 * 采用设计先行的工作方式：当任务涉及数据含义、输出结构、职责边界或 workflow 语义变化时，应先建立或更新相关 authority，再进行实现。
 * 实现必须遵循当前项目 authority。若实现与 authority 不一致，应明确指出差异并进行 reconciliation，不得静默选择另一套设计。

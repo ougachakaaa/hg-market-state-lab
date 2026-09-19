@@ -14,13 +14,13 @@ __pycache__/
 .env
 
 # Raw Dataset (internal runtime artifacts)
-data/raw/**
-!data/raw/.gitkeep
+market-snapshot/data/raw/**
+!market-snapshot/data/raw/.gitkeep
 
 # Non-Data-Service Snapshot output (runtime artifacts)
-data/snapshots/**
-!data/snapshots/.gitkeep
+market-snapshot/data/snapshots/**
+!market-snapshot/data/snapshots/.gitkeep
 
 # Data Service canonical user-facing output (runtime artifacts)
-output/**
-!output/.gitkeep
+market-snapshot/output/**
+!market-snapshot/output/.gitkeep

@@ -1,6 +1,6 @@
-# ARCHITECTURE.md — daily-market-snapshot architecture
+# ARCHITECTURE.md — hg-market-state-lab architecture
 
-本文件定义 `daily-market-snapshot` 的架构层面 authority。
+本文件定义 `hg-market-state-lab` 的架构层面 authority。
 
 它只描述理解本项目所必需的核心目标、语义与边界。具体的数据需求、执行规则和实现细节放在对应的下层文档或 Guide 中（见第 8 节与第 13 节），按需读取。
 
@@ -21,13 +21,13 @@
 | CLI | Data Service 的用户接口，不是业务架构层 |
 | Analyzer | 项目之外、消费 Analysis-ready Artifact 的外部分析方 |
 
-`Dataset`、`Snapshot`、`Snapshot Assembly`、`Snapshot Definition` 不再是顶层通用 Architecture Concept。这些词在项目名（`daily-market-snapshot`）、具体 artifact 文件名（`snapshot.json`）或历史 Guide 文件名中仍可能保留，但不承担通用架构层的语义。
+`Dataset`、`Snapshot`、`Snapshot Assembly`、`Snapshot Definition` 不再是顶层通用 Architecture Concept。这些词在项目名（`hg-market-state-lab`）、具体 artifact 文件名（`snapshot.json`）或历史 Guide 文件名中仍可能保留，但不承担通用架构层的语义。
 
 ---
 
 ## 1. Purpose
 
-`daily-market-snapshot` 用于从金融市场数据源获取数据，并生成结构清晰、可复现、适合后续 AI 分析的每日市场数据产品。
+`hg-market-state-lab` 用于从金融市场数据源获取数据，并生成结构清晰、可复现、适合后续 AI 分析的每日市场数据产品。
 
 第一阶段目标是建立最小可运行闭环：
 
