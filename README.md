@@ -14,7 +14,7 @@ presentation / interaction      （web-ui）
 
 本仓库的 Python 项目位于 `market-snapshot/`。下文的 `poetry` 命令，以及 `data/raw/`、`output/` 等运行产物路径，都以 `market-snapshot/` 为工作目录。
 
-顶层架构（模块职责边界与数据流）定义在 `ARCHITECTURE.md` 中；`market-snapshot` 模块的架构 authority 定义在 `market-snapshot/ARCHITECTURE.md` 中。当前第一版 Daily Snapshot 的具体定义（Raw Artifact 契约、Snapshot 结构与执行边界）在 `market-snapshot/guides/daily-market-snapshot.md` 中。
+顶层架构（模块职责边界与数据流）定义在 `ARCHITECTURE.md` 中；`market-snapshot` 模块的架构 authority 定义在 `market-snapshot/ARCHITECTURE.md` 中。当前第一版 Daily Snapshot 的具体定义（Raw Artifact 契约、Snapshot 结构与执行边界）在 `market-snapshot/guides/daily-market-snapshot.md` 中。`web-ui` 模块的架构 authority 定义在 `web-ui/ARCHITECTURE.md` 中；其第一个 Web vertical slice（MO option-chain visualization）的用户体验 / visualization contract 定义在 `web-ui/guides/mo-option-chain-visualization.md` 中。
 
 用户级调用语义（Data Service）与 CLI 契约定义在 `market-snapshot/guides/data-services.md` 中。
 
@@ -97,7 +97,7 @@ poetry run mypy .
   * `output/`：Data Service 的 canonical user-facing output（运行产物）
   * `tests/`：测试
 * `market-modeling/`：结构占位目录（当前无实现）
-* `web-ui/`：结构占位目录（当前无实现）
+* `web-ui/`：第一个 Web vertical slice 为 MO option-chain visualization；模块 authority 见 `ARCHITECTURE.md`，visualization contract 见 `guides/mo-option-chain-visualization.md`（当前无代码实现）
 
 ## 环境变量
 

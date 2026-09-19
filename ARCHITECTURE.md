@@ -86,7 +86,13 @@ market modeling semantics
 business calculation authority
 ```
 
-具体前端 architecture 当前保持 deferred。
+`web-ui` 不再只是完全 deferred placeholder。当前第一个明确的 Web vertical slice 是：
+
+```text
+MO option-chain visualization
+```
+
+本文件不展开图表字段、HTTP contract 或 React implementation；这些属于 `web-ui/ARCHITECTURE.md` 与 `web-ui/guides/*`，按需读取。
 
 ---
 
@@ -121,9 +127,9 @@ AGENTS.md
     ↓
 ARCHITECTURE.md（本文件）
     ↓
-market-snapshot/ARCHITECTURE.md
-    ↓
-market-snapshot/guides/*
+market-snapshot/ARCHITECTURE.md          web-ui/ARCHITECTURE.md
+    ↓                                      ↓
+market-snapshot/guides/*                  web-ui/guides/*
 ```
 
 各层回答的问题：
@@ -134,11 +140,14 @@ market-snapshot/guides/*
 | `ARCHITECTURE.md`（本文件） | 这个 repository 是什么；有哪些顶层模块；模块职责边界；模块之间的数据流；处理某模块任务下一步读哪里 |
 | `market-snapshot/ARCHITECTURE.md` | market-snapshot 是什么；Source / Capture / Preparation / Service 的边界；代码职责分层；Raw / analysis-ready artifact 边界 |
 | `market-snapshot/guides/*` | 具体的 Source Capture / Raw Artifact / Preparation / Data Service 契约：字段、窗口、公式、失败条件、输出结构 |
+| `web-ui/ARCHITECTURE.md` | web-ui 是什么；负责什么、不拥有什么；数据依赖方向 |
+| `web-ui/guides/*` | 具体 Web vertical slice 的用户体验 / visualization contract |
 
 Agent 处理任务时的默认路径：
 
 * 先读本文件，明确任务属于哪个顶层模块及其边界；
 * 任务属于 `market-snapshot/` 且涉及其架构、数据语义或职责边界时，再读 `market-snapshot/ARCHITECTURE.md`；
+* 任务属于 `web-ui/` 且涉及其模块边界或 visualization contract 时，再读 `web-ui/ARCHITECTURE.md` 与相关 `web-ui/guides/*`；
 * 只有任务需要具体数据产品时，才继续进入 `market-snapshot/guides/*`。
 
 不要求局部任务默认读取整个 repository 的全部 authority。
@@ -156,7 +165,8 @@ Agent 处理任务时的默认路径：
 
 * `market-snapshot` 内部 Source / Source Capture / Analysis Preparation / Data Service 的语义变化（属于 `market-snapshot/ARCHITECTURE.md`）；
 * 具体数据产品的字段、窗口、公式、失败条件、输出结构变化（属于 `market-snapshot/guides/*`）；
-* `market-modeling` / `web-ui` 在各自 authority 出现之前的 placeholder 状态维持，不修改本文件。
+* `web-ui` 模块内细节（图表字段、HTTP contract、React implementation）的变化，属于 `web-ui/ARCHITECTURE.md` 与 `web-ui/guides/*`；
+* `market-modeling` 的 placeholder 状态维持（其 authority 尚未出现），不修改本文件。
 
 ### reconciliation
 

@@ -1,0 +1,181 @@
+# guides/mo-option-chain-visualization.md — MO option-chain visualization 的用户体验 / visualization contract authority
+
+> 状态：authority。本文档锁定下一阶段第一个 Web vertical slice 的用户可见语义与可视化契约。
+>
+> 层级：本文档位于 `web-ui/ARCHITECTURE.md` 之下。模块级稳定边界（职责、依赖方向、数据来源边界）以 `web-ui/ARCHITECTURE.md` 为准。本文档只锁定这个 vertical slice 的输入、展示范围、散点语义与空/错误语义，不定义 HTTP schema、React implementation 或图表库选择。
+
+---
+
+## 1. Vertical slice 定义
+
+下一阶段第一个明确的 Web vertical slice 是：
+
+> 给定一个明确的 `target_trade_date`，用户可以在浏览器中查看该交易日完整的 MO 中证1000股指期权链价格分布。
+
+第一版用户流程：
+
+```text
+open web UI
+    ↓
+select target_trade_date
+    ↓
+load MO option-chain data
+    ↓
+group contracts by expiry
+    ↓
+render one scatter chart per expiry
+```
+
+## 2. Input
+
+```text
+target_trade_date
+```
+
+必须显式选择日期。
+
+第一版不定义：
+
+```text
+latest
+today
+automatic fallback
+date range
+```
+
+## 3. 页面共享语义
+
+整个页面共享：
+
+```text
+target_trade_date
+underlying_close
+```
+
+其中 `underlying_close` 是目标交易日的 CSI1000 underlying close，作为横轴上的市场基准点。
+
+## 4. Visualization scope
+
+目标日期全部处于有效生命周期内的 MO option contracts 都属于目标展示范围。
+
+按：
+
+```text
+expiry
+```
+
+分组。每个 expiry 一张独立 scatter chart，不把所有 expiry 混进同一张散点图。
+
+## 5. Scatter semantics
+
+每张图：
+
+```text
+X axis = strike / exercise price
+Y axis = option close premium
+```
+
+并且：
+
+* Call 与 Put 必须可视觉区分；
+* 标记目标交易日的 CSI1000 underlying close；
+* underlying close 是横轴上的市场基准点；
+* 每个 scatter point 代表一个 MO option contract。
+
+单个 option point 至少具有：
+
+```text
+contract identity
+expiry
+option_type
+strike
+close premium
+```
+
+这里锁定的是**用户可见语义**，不是 HTTP schema。
+
+## 6. 事实展示边界
+
+Visualization 展示事实，不解释市场。
+
+本 vertical slice 是：
+
+```text
+market facts
+    ↓
+deterministic data preparation
+    ↓
+delivery
+    ↓
+visualization
+```
+
+不是 market modeling。
+
+禁止在本 vertical slice 引入：
+
+```text
+recommended strike
+cheap / expensive option
+mispricing
+IV judgment
+probability
+expected range
+market regime
+noise zone
+sell Call / Put region
+trading signal
+trading recommendation
+```
+
+## 7. Empty / error semantics
+
+本文档不设计完整 UI error system。
+
+只锁定：
+
+> 如果目标日期无法取得支撑完整展示的数据，不得静默换日期或伪造/补齐 market facts。
+
+## 8. 数据来源语义
+
+本 vertical slice 需要的事实（contract identity、expiry、option_type、strike、close premium、underlying close）由 `market-snapshot` 的 analysis-ready 数据提供；`web-ui` 不直接理解 Source 或 Raw Artifact。
+
+本 vertical slice 不决定：
+
+```text
+前端直接消费现有 snapshot.json
+还是
+后端产生 option-chain-specific read model
+```
+
+这属于下一轮根据 visualization data requirements 做 reconciliation 后再决定。
+
+## 9. 下一轮实现范围（本 Guide 不实现）
+
+下一轮 Coding Agent 可以在不重新发明产品目标的情况下继续做：
+
+```text
+data requirement reconciliation
+HTTP contract
+FastAPI skeleton
+React skeleton
+scatter visualization
+```
+
+本 Guide 不定义（也不提前创建）：
+
+```text
+FastAPI folder structure
+endpoint URL
+HTTP method
+request schema
+response JSON schema
+OpenAPI model
+API versioning
+auth
+CORS policy
+server deployment
+React component tree
+state-management
+chart library
+```

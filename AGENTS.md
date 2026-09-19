@@ -14,6 +14,18 @@ Agent 处理任务时默认先读根 `ARCHITECTURE.md`（仓库级 authority）�
 
 只有任务需要具体数据产品时，才继续进入 `market-snapshot/guides/*`（具体 Source Capture / Raw Artifact / Preparation / Data Service 契约）。
 
+如果任务属于 `web-ui/`，并涉及其模块边界或 visualization contract，则按：
+
+```text
+ARCHITECTURE.md
+    ↓
+web-ui/ARCHITECTURE.md
+    ↓
+relevant web-ui/guides/*
+```
+
+顺序读取。普通 Web UI 任务不默认读取整个 `market-snapshot/guides/*`；只有涉及 backend data semantics / contract reconciliation 时，再进入 `market-snapshot` authority。
+
 遵循 Progressive Disclosure：不要求局部任务默认读取整个 repository 的全部 authority。
 
 ## 工作规则

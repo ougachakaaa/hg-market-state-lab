@@ -349,7 +349,7 @@ dms get ...
 不要设计：
 
 ```text
-scheduler / cron / database / API server
+scheduler / cron / database / generic API platform
 
 plugin system / dynamic registry / workflow engine / dependency graph framework
 
@@ -362,13 +362,64 @@ GPT analyzer / trading analysis
 
 保持第一版极小。
 
-## 13. Deferred
+## 13. HTTP delivery boundary
+
+本文档早先把 `API server` 整体列为 Non-goal。那是指**通用 API platform**（多租户、通用 endpoint、auth、版本化、schema registry 等）不是本阶段目标。
+
+下一阶段已明确第一个 Web vertical slice（MO option-chain visualization，见 `web-ui/guides/mo-option-chain-visualization.md`）需要 Web delivery。因此做最小 reconciliation：
+
+> 通用 API platform 仍然不是目标；但为了明确的 Web vertical slice，可以增加最小 HTTP delivery adapter。
+
+HTTP delivery adapter 与 CLI 的关系：
+
+```text
+                 ┌─ CLI
+Data capability ─┤
+                 └─ HTTP delivery adapter
+```
+
+两者都是 delivery surfaces，都不是业务语义 owner。
+
+HTTP delivery adapter 不拥有：
+
+```text
+Source Capture orchestration semantics
+Source endpoint semantics
+Preparation formulas
+market modeling
+```
+
+本文档不定义：
+
+```text
+FastAPI folder structure
+endpoint URL
+HTTP method
+request schema
+response JSON schema
+OpenAPI model
+API versioning
+auth
+CORS policy
+server deployment
+```
+
+这些属于下一轮 API contract / implementation design。
+
+可以记录：
+
+> 下一轮预期采用 FastAPI 实现最小 HTTP delivery adapter。
+
+但不要在本 Goal 开始实现。
+
+## 14. Deferred
 
 ```text
 真正 dms console entry point
+最小 HTTP delivery adapter 的 API contract / implementation design
 ```
 
-## 14. 完成自检
+## 15. 完成自检
 
 仅阅读相关 authority（`market-snapshot/ARCHITECTURE.md`、本文档及本文档引用的 Guide）应能明确回答：
 
@@ -383,5 +434,6 @@ GPT analyzer / trading analysis
 9. 哪些文件不进入 Git？
 10. 为什么普通用户/Agent 不需要知道底层 Source Capture？
 11. 现有 `data/snapshots` 与新的 canonical output 如何 reconciliation？
+12. HTTP delivery adapter 与 CLI 是否都是 delivery surfaces，而不是业务语义 owner？
 
 若这些问题仍需 implementation agent 自行发明，则本 authority 未完成。
