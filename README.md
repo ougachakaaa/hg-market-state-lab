@@ -87,6 +87,30 @@ poetry run python scripts/api.py --host 127.0.0.1 --port 8012
 
 当前真实 `Capture → Raw → MO Option Chain Preparation → read model` 尚未接线，因此请求会明确返回 `503 service_not_wired`（`error.kind` 之一）而不是伪造数据；这是 Goal 2 的 bootstrap 状态，不是 HTTP contract 失败。
 
+## Web UI（React Foundation）
+
+`web-ui/` 是独立的 npm frontend project，基于官方 Vite `react-ts` template。需要满足 Vite 要求的 Node.js（当前为 20.19+ 或 22.12+）。在 `web-ui/` 目录内执行：
+
+```bash
+npm install
+npm run dev
+```
+
+浏览器打开 `http://127.0.0.1:5173/` 可查看最小 React shell。production build 与 lint：
+
+```bash
+npm run build
+npm run lint
+```
+
+开发时 Vite 将 frontend origin 的 `/mo-option-chain` 请求转发到默认监听 `http://127.0.0.1:8011` 的 FastAPI，保留路径与 query。先按上一节启动 backend，再访问：
+
+```text
+http://127.0.0.1:5173/mo-option-chain?target_trade_date=2026-09-17&option_product=MO
+```
+
+当前返回 `503` 且 `error.kind` 为 `service_not_wired`，即可证明 proxy 到达现有 HTTP endpoint；不为此更改 backend 语义或添加 CORS。本阶段只建立 frontend foundation，尚无日期选择、option-chain 展示或散点图。
+
 ## 基础环境
 
 要求 Python 3.13 与 Poetry。以下命令在 `market-snapshot/` 目录内执行。
@@ -136,7 +160,7 @@ poetry run mypy .
   * `output/`：Data Service 的 canonical user-facing output（运行产物）
   * `tests/`：测试
 * `market-modeling/`：结构占位目录（当前无实现）
-* `web-ui/`：第一个 Web vertical slice 为 MO option-chain visualization；模块 authority 见 `ARCHITECTURE.md`，visualization contract 见 `guides/mo-option-chain-visualization.md`（当前无代码实现）
+* `web-ui/`：独立 Vite + React + TypeScript frontend project，目前只有 React shell 与本地 dev proxy；第一个 Web vertical slice 为 MO option-chain visualization，其模块 authority 见 `ARCHITECTURE.md`，visualization contract 见 `guides/mo-option-chain-visualization.md`（业务 UI 尚未实现）
 
 ## 环境变量
 

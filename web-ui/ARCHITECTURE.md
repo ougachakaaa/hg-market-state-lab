@@ -51,7 +51,7 @@ human-readable visualization
 
 前端不得为了绘图重新发明金融数据语义，也不得重新计算后端 authority 已拥有的业务派生逻辑。
 
-具体 framework / component / state-management architecture 不在本文件展开。React 可以作为下一轮实现技术选择记录，但不要由此设计大型 frontend architecture。
+Stage 3 已在独立的 `web-ui/` frontend project 中建立 Vite + React + TypeScript foundation；当前只提供可运行的 React shell，不实现 MO option-chain visualization。具体 dev 命令与 proxy 地址见根 `README.md` / `DEVELOPMENT.md`。component / state-management architecture 不在本文件展开，也不由 foundation 提前定义。
 
 ## 4. 数据来源边界
 
@@ -106,7 +106,7 @@ web-ui/guides/mo-option-chain-visualization.md
 ### 不需要更新本文件的变更
 
 * 某个 vertical slice 的具体输入、展示范围、图表字段、空/错误语义变化（属于 `web-ui/guides/*`）；
-* framework / component / state-management 选择（实现细节，不进入本文件）。
+* framework 的版本、component / state-management 选择及开发配置细节（实现细节，不进入本文件）。
 
 ### reconciliation
 

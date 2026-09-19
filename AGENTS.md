@@ -6,6 +6,8 @@
 
 本仓库的 Python 项目位于 `market-snapshot/`：Poetry、pytest、Ruff 与 mypy 都在该目录内执行。Python 目标版本为 3.13。
 
+独立 frontend project 位于 `web-ui/`：使用 npm 管理依赖，在该目录内运行 `npm install`、`npm run dev`、`npm run build` 和 `npm run lint`。React Foundation 使用 Vite + React + TypeScript；Node.js 需满足当前 Vite 的版本要求（当前为 20.19+ 或 22.12+）。本地开发时 `/mo-option-chain` 由 Vite proxy 转发到默认监听 `127.0.0.1:8011` 的 FastAPI；真实 provider 尚未接线时，`503 service_not_wired` 是预期响应。本阶段不修改 HTTP contract，也不实现业务 UI。
+
 ## Authority 导航
 
 Agent 处理任务时默认先读根 `ARCHITECTURE.md`（仓库级 authority）：它定义整个 repository 的定位、顶层模块（`market-snapshot` / `market-modeling` / `web-ui`）及其职责边界、顶层数据流方向，以及下一步该读哪里。
