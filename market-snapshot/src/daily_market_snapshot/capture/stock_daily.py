@@ -20,7 +20,7 @@ from .. import artifacts
 from ..sources import tushare
 from . import common
 
-DATASET = "stock_daily"
+RAW_ARTIFACT = "stock_daily"
 
 
 def query_stock_daily(api: tushare.TushareApi, trade_date: str) -> pd.DataFrame:
@@ -35,7 +35,7 @@ def collect_stock_daily(trade_date: str, query: common.QueryFunc) -> list[artifa
 
     if not records:
         raise common.CollectionError(
-            f"Tushare {DATASET} returned no data for trade_date={trade_date}."
+            f"Tushare {RAW_ARTIFACT} returned no data for trade_date={trade_date}."
         )
 
     common.require_target_trade_date(records, trade_date)
@@ -43,7 +43,7 @@ def collect_stock_daily(trade_date: str, query: common.QueryFunc) -> list[artifa
 
 
 def main(argv: Sequence[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(description=f"Collect the {DATASET} Raw artifact.")
+    parser = argparse.ArgumentParser(description=f"Collect the {RAW_ARTIFACT} Raw artifact.")
     parser.add_argument("trade_date", help="Target trade date in YYYY-MM-DD form.")
     args = parser.parse_args(argv)
 
@@ -57,7 +57,9 @@ def main(argv: Sequence[str] | None = None) -> int:
         print(f"error: {exc}", file=sys.stderr)
         return 1
 
-    path = artifacts.write_raw_artifact(records, artifacts.daily_raw_dir(args.trade_date), DATASET)
+    path = artifacts.write_raw_artifact(
+        records, artifacts.daily_raw_dir(args.trade_date), RAW_ARTIFACT
+    )
     print(f"wrote {len(records)} records to {path}")
     return 0
 

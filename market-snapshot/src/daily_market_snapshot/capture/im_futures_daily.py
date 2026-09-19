@@ -25,12 +25,10 @@ from .. import artifacts
 from ..sources import tushare
 from . import common, im_futures_basic
 
-EXCHANGE = im_futures_basic.EXCHANGE
-FUTURES_TYPE_ORDINARY = im_futures_basic.FUTURES_TYPE_ORDINARY
 PRODUCT = im_futures_basic.PRODUCT
-DATASET = "im_futures_daily"
+RAW_ARTIFACT = "im_futures_daily"
 # Implementation detail, not a data contract: the Guide asks for enough Source
-# facts to reach about 60 trading days before the target date, so the Collector
+# facts to reach about 60 trading days before the target date, so the Capture
 # requests a calendar window that is obviously long enough. The exact window
 # selection belongs to Analysis Preparation (Guide 6.2).
 COLLECTION_CALENDAR_DAYS = 400
@@ -112,27 +110,28 @@ def select_window_contracts(
 
 def collect_im_futures_daily(
     trade_date: str,
-    basic_frame: pd.DataFrame,
+    basic_facts: Sequence[artifacts.RawRecord],
     daily_query: common.QueryFunc,
 ) -> list[artifacts.RawRecord]:
     """Return the ``im_futures_daily`` records of the target collection window.
 
-    The window is derived from ``im_futures_basic`` contract lifecycles; every
-    selected contract is queried over ``[list_date, delist_date]`` capped at the
-    target trade date. A contract that has entered its effective trading range
-    but returns no daily row is a Source gap and fails, and every returned row
-    must belong to the requested contract and to its effective range. Raw rows
-    are kept as Source facts and are not trimmed to a trading-day count.
+    ``basic_facts`` are the IM contract facts the ``im_futures_basic`` Capture
+    collected for this request; the daily Capture reuses them to resolve its
+    window instead of asking the Source for the same contract facts a second
+    time. The window is derived from those contract lifecycles; every selected
+    contract is queried over ``[list_date, delist_date]`` capped at the target
+    trade date. A contract that has entered its effective trading range but
+    returns no daily row is a Source gap and fails, and every returned row must
+    belong to the requested contract and to its effective range. Raw rows are
+    kept as Source facts and are not trimmed to a trading-day count.
     """
     tushare.to_tushare_date(trade_date)
     start_date = window_start_date(trade_date)
-    contracts = select_window_contracts(
-        im_futures_basic.select_im_contracts(basic_frame), start_date, trade_date
-    )
+    contracts = select_window_contracts(basic_facts, start_date, trade_date)
     if not contracts:
         raise common.CollectionError(
             f"no {PRODUCT} contract lifecycle overlaps {start_date}..{trade_date}; "
-            f"{DATASET} needs the contract facts from Tushare fut_basic."
+            f"{RAW_ARTIFACT} needs the contract facts from the im_futures_basic Capture."
         )
 
     records: list[artifacts.RawRecord] = []
@@ -150,20 +149,20 @@ def collect_im_futures_daily(
         contract_records = common.to_raw_records(frame)
         if not contract_records:
             raise common.CollectionError(
-                f"Tushare {DATASET} returned no daily row for {PRODUCT} contract {ts_code} "
+                f"Tushare {RAW_ARTIFACT} returned no daily row for {PRODUCT} contract {ts_code} "
                 f"in its effective range {list_date}..{end_date}."
             )
         for record in contract_records:
             if record.get("ts_code") != ts_code:
                 raise common.CollectionError(
-                    f"Tushare {DATASET} returned ts_code={record.get('ts_code')!r} "
+                    f"Tushare {RAW_ARTIFACT} returned ts_code={record.get('ts_code')!r} "
                     f"for a request of ts_code={ts_code}."
                 )
             if not common.in_date_range(
                 record, tushare.TRADE_DATE_FIELD, list_date, end_date
             ):
                 raise common.CollectionError(
-                    f"Tushare {DATASET} returned {tushare.TRADE_DATE_FIELD}="
+                    f"Tushare {RAW_ARTIFACT} returned {tushare.TRADE_DATE_FIELD}="
                     f"{record.get(tushare.TRADE_DATE_FIELD)!r} for {ts_code} "
                     f"outside {list_date}..{end_date}."
                 )
@@ -175,30 +174,35 @@ def collect_im_futures_daily(
     return records
 
 
+def capture(
+    api: tushare.TushareApi, trade_date: str, basic_facts: Sequence[artifacts.RawRecord]
+) -> list[artifacts.RawRecord]:
+    """Run this Source Capture, reusing the IM basic facts of the same request.
+
+    The endpoint and its query parameters stay in this module; the collection
+    window comes from the ``im_futures_basic`` Capture facts the caller passes in
+    (``ARCHITECTURE.md`` 2).
+    """
+    return collect_im_futures_daily(
+        trade_date, basic_facts, lambda **kwargs: query_fut_daily(api, **kwargs)
+    )
+
+
 def main(argv: Sequence[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(description=f"Collect the {DATASET} Raw artifact.")
+    parser = argparse.ArgumentParser(description=f"Collect the {RAW_ARTIFACT} Raw artifact.")
     parser.add_argument("trade_date", help="Target trade date in YYYY-MM-DD form.")
     args = parser.parse_args(argv)
 
     try:
         api = tushare.create_tushare_api(tushare.get_tushare_token())
-        basic_frame = im_futures_basic.query_fut_basic(
-            api,
-            exchange=EXCHANGE,
-            fut_type=FUTURES_TYPE_ORDINARY,
-            fut_code=PRODUCT,
-        )
-        records = collect_im_futures_daily(
-            args.trade_date,
-            basic_frame,
-            lambda **kwargs: query_fut_daily(api, **kwargs),
-        )
+        basic_facts = im_futures_basic.capture(api, args.trade_date)
+        records = capture(api, args.trade_date, basic_facts)
     except common.CAPTURE_FAILURE_TYPES as exc:
         print(f"error: {exc}", file=sys.stderr)
         return 1
 
     path = artifacts.write_raw_artifact(
-        records, artifacts.csi1000_raw_dir(args.trade_date), DATASET
+        records, artifacts.csi1000_raw_dir(args.trade_date), RAW_ARTIFACT
     )
     print(f"wrote {len(records)} records to {path}")
     return 0

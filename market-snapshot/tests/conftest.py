@@ -1,6 +1,6 @@
 """Shared test setup.
 
-Collector and Data Service tests never touch the network or the repository's real
+Capture and Data Service tests never touch the network or the repository's real
 ``data/raw`` / ``data/snapshots`` / ``output`` directories.
 """
 
@@ -39,7 +39,7 @@ def test_workdir() -> Iterator[Path]:
 def raw_dir_in_test_workdir(
     test_workdir: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """Keep collector output out of the repository's real ``data/raw``."""
+    """Keep Capture output out of the repository's real ``data/raw``."""
     monkeypatch.setattr(artifacts, "RAW_DIR", test_workdir / "raw")
 
 

@@ -113,7 +113,7 @@ def test_non_im_or_non_cffex_contracts_are_not_part_of_the_universe() -> None:
 
 
 def test_incomplete_non_member_contract_is_not_an_im_error() -> None:
-    """A contract outside the Dataset identity is not validated."""
+    """A contract outside the Capture scope is not validated."""
     other_product = im_contract(
         "IF2612.CFE",
         fut_code="IF",

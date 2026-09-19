@@ -76,9 +76,10 @@ def fake_api(
 
 
 def collect(api: FakeTushareApi) -> list[artifacts.RawRecord]:
+    """Run the daily Capture on the IM basic facts of the same request."""
     return im_futures_daily.collect_im_futures_daily(
         TARGET_DATE,
-        api.futures_basic,
+        im_futures_basic.capture(api, TARGET_DATE),
         lambda **kwargs: api.fut_daily(**kwargs),
     )
 
@@ -88,7 +89,7 @@ def queried_contracts(api: FakeTushareApi) -> list[str]:
 
 
 def test_collects_the_im_contract_facts_from_fut_basic() -> None:
-    """The daily Collector reads its contracts from Tushare ``fut_basic``."""
+    """The IM basic Capture asks Tushare ``fut_basic`` for its contract facts."""
     api = fake_api()
 
     im_futures_basic.collect_im_futures_basic(
@@ -169,7 +170,7 @@ def test_records_cover_several_trade_dates_and_only_im_contracts() -> None:
 def test_records_cover_enough_history_for_a_60_trading_day_window() -> None:
     """The Raw artifact keeps the whole collected history, not a 60-day selection."""
     # One contract carries daily facts over its whole effective range, spanning
-    # more than the 60 trading days assembly needs.
+    # more than the 60 trading days Analysis Preparation needs.
     full_window = business_days("2025-08-14", "2026-09-17")
     api = fake_api(
         contracts=[*CONTRACTS, IM2512],
@@ -217,7 +218,7 @@ def test_rows_outside_the_contract_lifecycle_are_an_error() -> None:
     with pytest.raises(common.CollectionError, match="outside"):
         im_futures_daily.collect_im_futures_daily(
             TARGET_DATE,
-            api.futures_basic,
+            im_futures_basic.capture(api, TARGET_DATE),
             lambda **kwargs: (
                 before_listing if kwargs["ts_code"] == "IM2609.CFE" else api.fut_daily(**kwargs)
             ),
@@ -233,7 +234,7 @@ def test_rows_after_the_delist_date_are_an_error() -> None:
     with pytest.raises(common.CollectionError, match="outside"):
         im_futures_daily.collect_im_futures_daily(
             TARGET_DATE,
-            api.futures_basic,
+            im_futures_basic.capture(api, TARGET_DATE),
             lambda **kwargs: (
                 after_delisting if kwargs["ts_code"] == "IM2603.CFE" else api.fut_daily(**kwargs)
             ),
@@ -247,7 +248,7 @@ def test_rows_of_another_contract_are_an_error() -> None:
     with pytest.raises(common.CollectionError, match="ts_code"):
         im_futures_daily.collect_im_futures_daily(
             TARGET_DATE,
-            api.futures_basic,
+            im_futures_basic.capture(api, TARGET_DATE),
             lambda **kwargs: (
                 futures_daily_frame("IM2699.CFE", ["20260916"])
                 if kwargs["ts_code"] == "IM2609.CFE"
@@ -277,13 +278,13 @@ def test_source_without_contract_facts_is_an_error() -> None:
 
 
 def test_contract_without_lifecycle_facts_is_an_error() -> None:
-    """A member contract with incomplete lifecycle facts fails the collection."""
+    """A contract in scope with incomplete lifecycle facts fails the Capture."""
     pending = im_contract("IM2703.CFE", list_date="20270315", delist_date=None)
 
     with pytest.raises(common.CollectionError, match="lifecycle"):
         im_futures_daily.collect_im_futures_daily(
             TARGET_DATE,
-            futures_basic_frame([*CONTRACTS, pending]),
+            im_futures_basic.select_im_contracts(futures_basic_frame([*CONTRACTS, pending])),
             lambda **kwargs: pd.DataFrame(),
         )
 

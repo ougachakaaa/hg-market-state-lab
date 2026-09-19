@@ -21,9 +21,9 @@ from .. import artifacts
 from ..sources import tushare
 from . import common
 
-DATASET = "mo_option_basic"
-# Dataset membership of the MO chain (Guide 5.1). These limits select the
-# Dataset, not an analysis subset.
+RAW_ARTIFACT = "mo_option_basic"
+# Capture scope of the MO chain (Guide 5.1). These limits select the Capture
+# scope, not an analysis subset.
 EXCHANGE = "CFFEX"
 PRODUCT = "MO"
 # ``opt_basic.opt_code`` is the underlying index of the option in Source form
@@ -57,8 +57,8 @@ def is_mo_option(record: artifacts.RawRecord) -> bool:
 def require_mo_lifecycle(record: artifacts.RawRecord) -> tuple[str, str]:
     """Return the ``(list_date, delist_date)`` a MO contract fact needs.
 
-    A contract fact that is already a member of the MO Dataset but carries no
-    usable lifecycle fact cannot be placed on a trade date at all. The Source
+    A contract fact that is already a member of the MO Capture scope but carries
+    no usable lifecycle fact cannot be placed on a trade date at all. The Source
     fact is incomplete, so this fails instead of treating the contract as
     active, dropping it, or inferring a bound. An inverted lifecycle is invalid
     for the same reason.
@@ -87,17 +87,18 @@ def lifecycle_covers(record: artifacts.RawRecord, trade_date: str) -> bool:
 
 
 def select_active_mo_universe(
-    frame: pd.DataFrame, trade_date: str
+    facts: Sequence[artifacts.RawRecord], trade_date: str
 ) -> list[artifacts.RawRecord]:
     """Return the active MO option contract facts of one trade date.
 
-    Dataset identity (``exchange`` / product) is decided before the lifecycle
-    check, so a member contract with incomplete lifecycle facts fails instead of
+    ``facts`` are the normalized ``opt_basic`` contract facts of this Capture
+    (the Capture scope ``exchange`` / product is decided before the lifecycle
+    check), so a member contract with incomplete lifecycle facts fails instead of
     disappearing from the universe.
     """
     members = [
         record
-        for record in common.to_raw_records(frame)
+        for record in facts
         if str(record.get("exchange") or "") == EXCHANGE and is_mo_option(record)
     ]
     return [record for record in members if lifecycle_covers(record, trade_date)]
@@ -108,16 +109,18 @@ def collect_mo_option_basic(
 ) -> list[artifacts.RawRecord]:
     """Return the ``mo_option_basic`` records for the given trade date.
 
-    The Dataset membership is the whole MO / CFFEX contract universe of the
-    Source response; the lifecycle rule selects the active part of it.
+    The Capture scope is the whole MO / CFFEX contract universe of the Source
+    response; the lifecycle rule selects the active part of it.
     """
     # Reject a malformed project-level date before any Source request.
     tushare.to_tushare_date(trade_date)
-    records = select_active_mo_universe(query(exchange=EXCHANGE), trade_date)
+    records = select_active_mo_universe(
+        common.to_raw_records(query(exchange=EXCHANGE)), trade_date
+    )
 
     if not records:
         raise common.CollectionError(
-            f"Tushare {DATASET} returned no active {PRODUCT} contract on "
+            f"Tushare {RAW_ARTIFACT} returned no active {PRODUCT} contract on "
             f"trade_date={trade_date}."
         )
 
@@ -125,23 +128,33 @@ def collect_mo_option_basic(
     return records
 
 
+def capture(api: tushare.TushareApi, trade_date: str) -> list[artifacts.RawRecord]:
+    """Run this Source Capture for one target trade date against a Source api.
+
+    ``opt_basic`` has no product parameter, so the product limit is applied to
+    the returned Source facts inside this module; a caller (the Data Service or
+    the development entrypoint) only asks for the Capture
+    (``ARCHITECTURE.md`` 2).
+    """
+    return collect_mo_option_basic(
+        trade_date, lambda **kwargs: query_opt_basic(api, **kwargs)
+    )
+
+
 def main(argv: Sequence[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(description=f"Collect the {DATASET} Raw artifact.")
+    parser = argparse.ArgumentParser(description=f"Collect the {RAW_ARTIFACT} Raw artifact.")
     parser.add_argument("trade_date", help="Target trade date in YYYY-MM-DD form.")
     args = parser.parse_args(argv)
 
     try:
         api = tushare.create_tushare_api(tushare.get_tushare_token())
-        records = collect_mo_option_basic(
-            args.trade_date,
-            lambda **kwargs: query_opt_basic(api, **kwargs),
-        )
+        records = capture(api, args.trade_date)
     except common.CAPTURE_FAILURE_TYPES as exc:
         print(f"error: {exc}", file=sys.stderr)
         return 1
 
     path = artifacts.write_raw_artifact(
-        records, artifacts.csi1000_raw_dir(args.trade_date), DATASET
+        records, artifacts.csi1000_raw_dir(args.trade_date), RAW_ARTIFACT
     )
     print(f"wrote {len(records)} records to {path}")
     return 0

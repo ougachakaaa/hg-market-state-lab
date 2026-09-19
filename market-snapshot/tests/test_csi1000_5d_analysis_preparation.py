@@ -1,4 +1,4 @@
-"""Tests for the CSI1000 5-day analysis Snapshot Assembly.
+"""Tests for the CSI1000 5-day analysis Analysis Preparation.
 
 Everything runs on temporary local Raw JSON: no test touches the network or the
 repository's real ``data/raw`` / ``output``.
@@ -61,7 +61,7 @@ OPTIONS = [
     ("MO2609-C-7000.CFE", "2026-09-25", 7000.0, "C", 900.0),
     ("MO2610-C-7000.CFE", "2026-10-23", 7000.0, "C", 950.0),
 ]
-# Guide 7.2: the collector normalizes maturity_date to YYYY-MM-DD; the snapshot
+# Guide 7.2: the Capture normalizes maturity_date to YYYY-MM-DD; the snapshot
 # renames the same fact to expiry_date without changing its representation.
 NEAR_EXPIRY_DATE = "2026-09-25"
 FAR_EXPIRY_DATE = "2026-10-23"
@@ -815,8 +815,8 @@ def test_option_quote_field_the_source_omits_stays_null(
 ) -> None:
     """A key the Source did not return at all is a missing fact, not an error.
 
-    The assembly only rejects a value that is present but malformed; the Snapshot
-    never invents a quote the Source did not return.
+    The Analysis Preparation only rejects a value that is present but malformed;
+    the Snapshot never invents a quote the Source did not return.
     """
     patch_dirs(monkeypatch, tmp_path, raw_root)
     raw = base_raw()
@@ -1005,8 +1005,9 @@ def test_all_im_window_trade_dates_have_an_underlying_close(
     """Guide 8.2 + 8.3: every window observation aligns to a CSI1000 close.
 
     The 60-day window is taken from the underlying history, so this is an
-    invariant of the assembly rather than a reachable failure state: every
-    ``underlying_close`` of the assembled IM history is a close of that history.
+    invariant of the Analysis Preparation rather than a reachable failure state:
+    every ``underlying_close`` of the prepared IM history is a close of that
+    history.
     """
     patch_dirs(monkeypatch, tmp_path, raw_root)
 

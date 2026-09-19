@@ -58,17 +58,17 @@ def csi1000_raw_dir(trade_date: str) -> Path:
     return RAW_DIR / CSI1000_RAW_SUBDIR / trade_date
 
 
-def write_raw_artifact(records: Sequence[RawRecord], dataset_dir: Path, dataset: str) -> Path:
+def write_raw_artifact(records: Sequence[RawRecord], raw_dir: Path, raw_artifact: str) -> Path:
     """Write one Raw Artifact file and return its path."""
-    dataset_dir.mkdir(parents=True, exist_ok=True)
-    path = dataset_dir / f"{dataset}.json"
+    raw_dir.mkdir(parents=True, exist_ok=True)
+    path = raw_dir / f"{raw_artifact}.json"
     path.write_text(json.dumps(list(records), ensure_ascii=False, indent=2), encoding="utf-8")
     return path
 
 
-def read_raw_artifact(dataset_dir: Path, dataset: str) -> object:
+def read_raw_artifact(raw_dir: Path, raw_artifact: str) -> object:
     """Read one Raw Artifact file as decoded JSON."""
-    return json.loads((dataset_dir / f"{dataset}.json").read_text(encoding="utf-8"))
+    return json.loads((raw_dir / f"{raw_artifact}.json").read_text(encoding="utf-8"))
 
 
 def output_dir(output_root: Path, service_id: str, target_trade_date: str) -> Path:

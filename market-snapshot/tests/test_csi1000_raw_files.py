@@ -44,7 +44,7 @@ IM_DAILY_DATES = {
 
 
 def fake_api() -> FakeTushareApi:
-    """Build one fake Source that can serve every collector of the scenario."""
+    """Build one fake Source that can serve every Capture of the scenario."""
     return FakeTushareApi(
         index_frames={INDEX_CODE: index_history_frame(INDEX_CODE, INDEX_SOURCE_DATES)},
         option_basic=option_basic_frame(CONTRACTS),
@@ -57,7 +57,7 @@ def fake_api() -> FakeTushareApi:
     )
 
 
-def test_all_five_collectors_share_the_goal_scoped_raw_directory(
+def test_all_five_captures_share_the_goal_scoped_raw_directory(
     test_workdir: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
 ) -> None:
     monkeypatch.setenv(tushare.TOKEN_ENV_VAR, "local-token")
@@ -102,8 +102,8 @@ def test_raw_files_meet_the_documented_completeness_requirements(
     api = fake_api()
     monkeypatch.setattr(tushare, "create_tushare_api", lambda token: api)
 
-    for collector in (index_history, option_basic, option_daily, futures_basic, futures_daily):
-        assert collector.main([TARGET_DATE]) == 0
+    for capture in (index_history, option_basic, option_daily, futures_basic, futures_daily):
+        assert capture.main([TARGET_DATE]) == 0
 
     dataset_dir = test_workdir / "raw" / artifacts.CSI1000_RAW_SUBDIR / TARGET_DATE
     loaded: dict[str, list[dict[str, Any]]] = {
@@ -140,15 +140,15 @@ def test_raw_files_meet_the_documented_completeness_requirements(
     assert len({str(record["trade_date"]) for record in im_daily}) > 1
 
 
-def test_collectors_never_write_into_the_daily_snapshot_raw_directory(
+def test_captures_never_write_into_the_daily_snapshot_raw_directory(
     test_workdir: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     monkeypatch.setenv(tushare.TOKEN_ENV_VAR, "local-token")
     api = fake_api()
     monkeypatch.setattr(tushare, "create_tushare_api", lambda token: api)
 
-    for collector in (index_history, option_basic, option_daily, futures_basic, futures_daily):
-        assert collector.main([TARGET_DATE]) == 0
+    for capture in (index_history, option_basic, option_daily, futures_basic, futures_daily):
+        assert capture.main([TARGET_DATE]) == 0
 
     # data/raw/<target_trade_date>/ belongs to the daily snapshot Definition.
     assert not (test_workdir / "raw" / TARGET_DATE).exists()

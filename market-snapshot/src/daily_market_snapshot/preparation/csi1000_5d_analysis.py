@@ -87,11 +87,11 @@ IM_PASSTHROUGH_FIELDS = (
 )
 
 # The five Raw artifacts of ``guides/csi1000-5d-analysis-data.md`` section 7.
-INDEX_HISTORY_DATASET = "index_daily_history"
-MO_BASIC_DATASET = "mo_option_basic"
-MO_DAILY_DATASET = "mo_option_daily"
-IM_BASIC_DATASET = "im_futures_basic"
-IM_DAILY_DATASET = "im_futures_daily"
+INDEX_HISTORY_RAW_ARTIFACT = "index_daily_history"
+MO_BASIC_RAW_ARTIFACT = "mo_option_basic"
+MO_DAILY_RAW_ARTIFACT = "mo_option_daily"
+IM_BASIC_RAW_ARTIFACT = "im_futures_basic"
+IM_DAILY_RAW_ARTIFACT = "im_futures_daily"
 
 
 class SnapshotError(Exception):
@@ -159,13 +159,13 @@ def require_date(record: RawRecord, field: str) -> str:
     return value
 
 
-def require_mapping(records: Iterable[RawRecord], dataset: str) -> dict[str, RawRecord]:
+def require_mapping(records: Iterable[RawRecord], raw_artifact: str) -> dict[str, RawRecord]:
     """Index records by ``ts_code``, failing on a missing or duplicate key."""
     mapping: dict[str, RawRecord] = {}
     for record in records:
         code = require_text(record, "ts_code")
         if code in mapping:
-            raise SnapshotError(f"{dataset} holds more than one row for ts_code={code}.")
+            raise SnapshotError(f"{raw_artifact} holds more than one row for ts_code={code}.")
         mapping[code] = record
     return mapping
 
@@ -177,13 +177,13 @@ def require_trade_date(value: str, label: str) -> str:
     return value
 
 
-def load_raw_records(dataset_dir: Path, dataset: str) -> list[RawRecord]:
+def load_raw_records(raw_dir: Path, raw_artifact: str) -> list[RawRecord]:
     """Read one Raw artifact as a list of records, failing on any other shape."""
-    path = dataset_dir / f"{dataset}.json"
+    path = raw_dir / f"{raw_artifact}.json"
     if not path.is_file():
         raise SnapshotError(
             f"required Raw artifact is missing: {path}. "
-            f"Collect the Raw Artifacts of {dataset_dir.name} first."
+            f"Collect the Raw Artifacts of {raw_dir.name} first."
         )
     try:
         payload: object = json.loads(path.read_text(encoding="utf-8"))
@@ -242,13 +242,13 @@ def underlying_history(records: Sequence[RawRecord], target_trade_date: str) -> 
     for record in records:
         if record.get("ts_code") != UNDERLYING_TS_CODE:
             raise SnapshotError(
-                f"{INDEX_HISTORY_DATASET} returned ts_code={record.get('ts_code')!r} "
+                f"{INDEX_HISTORY_RAW_ARTIFACT} returned ts_code={record.get('ts_code')!r} "
                 f"for a request of ts_code={UNDERLYING_TS_CODE}."
             )
         trade_date = require_date(record, "trade_date")
         if trade_date in rows_by_date:
             raise SnapshotError(
-                f"{INDEX_HISTORY_DATASET} holds duplicate rows for "
+                f"{INDEX_HISTORY_RAW_ARTIFACT} holds duplicate rows for "
                 f"ts_code={UNDERLYING_TS_CODE} trade_date={trade_date}."
             )
         rows_by_date[trade_date] = record
@@ -256,12 +256,12 @@ def underlying_history(records: Sequence[RawRecord], target_trade_date: str) -> 
     trade_dates = sorted(date for date in rows_by_date if date <= target_trade_date)
     if target_trade_date not in rows_by_date:
         raise SnapshotError(
-            f"{INDEX_HISTORY_DATASET} holds no row for ts_code={UNDERLYING_TS_CODE} "
+            f"{INDEX_HISTORY_RAW_ARTIFACT} holds no row for ts_code={UNDERLYING_TS_CODE} "
             f"on trade_date={target_trade_date}."
         )
     if len(trade_dates) < UNDERLYING_HISTORY_DAYS:
         raise SnapshotError(
-            f"{INDEX_HISTORY_DATASET} holds only {len(trade_dates)} distinct trade dates on "
+            f"{INDEX_HISTORY_RAW_ARTIFACT} holds only {len(trade_dates)} distinct trade dates on "
             f"or before {target_trade_date}, fewer than the "
             f"{UNDERLYING_HISTORY_DAYS} the analysis window needs."
         )
@@ -304,25 +304,25 @@ def underlying_derived(history: Sequence[RawRecord]) -> RawRecord:
 
 
 def load_mo_options(
-    dataset_dir: Path, target_trade_date: str, underlying_close: float | int
+    raw_dir: Path, target_trade_date: str, underlying_close: float | int
 ) -> RawRecord:
     """Assemble the Guide 7 MO option chain from the two MO Raw artifacts."""
-    basics = load_raw_records(dataset_dir, MO_BASIC_DATASET)
-    dailies = load_raw_records(dataset_dir, MO_DAILY_DATASET)
-    basic_by_code = require_mapping(basics, MO_BASIC_DATASET)
-    daily_by_code = require_mapping(dailies, MO_DAILY_DATASET)
+    basics = load_raw_records(raw_dir, MO_BASIC_RAW_ARTIFACT)
+    dailies = load_raw_records(raw_dir, MO_DAILY_RAW_ARTIFACT)
+    basic_by_code = require_mapping(basics, MO_BASIC_RAW_ARTIFACT)
+    daily_by_code = require_mapping(dailies, MO_DAILY_RAW_ARTIFACT)
 
     unmatched_basic = sorted(set(basic_by_code) - set(daily_by_code))
     unmatched_daily = sorted(set(daily_by_code) - set(basic_by_code))
     if unmatched_basic or unmatched_daily:
         raise SnapshotError(
-            f"{MO_BASIC_DATASET} and {MO_DAILY_DATASET} cannot be joined one-to-one on "
+            f"{MO_BASIC_RAW_ARTIFACT} and {MO_DAILY_RAW_ARTIFACT} cannot be joined one-to-one on "
             f"ts_code: {len(unmatched_basic)} basic contract(s) without a daily fact "
             f"({', '.join(unmatched_basic[:5])}), {len(unmatched_daily)} daily fact(s) "
             f"without a basic contract ({', '.join(unmatched_daily[:5])})."
         )
     if not basic_by_code:
-        raise SnapshotError(f"{MO_BASIC_DATASET} holds no contract for {target_trade_date}.")
+        raise SnapshotError(f"{MO_BASIC_RAW_ARTIFACT} holds no contract for {target_trade_date}.")
 
     target = date.fromisoformat(target_trade_date)
     chain: list[RawRecord] = []
@@ -331,8 +331,8 @@ def load_mo_options(
         daily = daily_by_code[ts_code]
         if daily.get("trade_date") != target_trade_date:
             raise SnapshotError(
-                f"{MO_DAILY_DATASET} has trade_date={daily.get('trade_date')!r} for {ts_code}, "
-                f"expected {target_trade_date}."
+                f"{MO_DAILY_RAW_ARTIFACT} has trade_date={daily.get('trade_date')!r} "
+                f"for {ts_code}, expected {target_trade_date}."
             )
         strike = require_number(contract, "exercise_price")
         expiry_date = require_date(contract, "maturity_date")
@@ -363,14 +363,14 @@ def load_mo_options(
 
 
 def load_im_futures(
-    dataset_dir: Path, target_trade_date: str, underlying: Sequence[RawRecord]
+    raw_dir: Path, target_trade_date: str, underlying: Sequence[RawRecord]
 ) -> RawRecord:
     """Assemble IM history and the target-date curve (Guide 8 and 9)."""
-    basics = load_raw_records(dataset_dir, IM_BASIC_DATASET)
-    dailies = load_raw_records(dataset_dir, IM_DAILY_DATASET)
-    basic_by_code = require_mapping(basics, IM_BASIC_DATASET)
+    basics = load_raw_records(raw_dir, IM_BASIC_RAW_ARTIFACT)
+    dailies = load_raw_records(raw_dir, IM_DAILY_RAW_ARTIFACT)
+    basic_by_code = require_mapping(basics, IM_BASIC_RAW_ARTIFACT)
     if not basic_by_code:
-        raise SnapshotError(f"{IM_BASIC_DATASET} holds no contract for {target_trade_date}.")
+        raise SnapshotError(f"{IM_BASIC_RAW_ARTIFACT} holds no contract for {target_trade_date}.")
 
     # Guide 8.2: the IM window is the last 60 trade dates of the underlying
     # history, so every window trade date has a CSI1000 close by construction.
@@ -386,20 +386,20 @@ def load_im_futures(
         contract = basic_by_code.get(ts_code)
         if contract is None:
             raise SnapshotError(
-                f"{IM_DAILY_DATASET} holds ts_code={ts_code} on trade_date={trade_date}, "
-                f"which maps to no known contract in {IM_BASIC_DATASET}."
+                f"{IM_DAILY_RAW_ARTIFACT} holds ts_code={ts_code} on trade_date={trade_date}, "
+                f"which maps to no known contract in {IM_BASIC_RAW_ARTIFACT}."
             )
         delist_date = require_date(contract, "delist_date")
         underlying_close = underlying_close_by_date.get(trade_date)
         if underlying_close is None:
             raise SnapshotError(
-                f"{IM_DAILY_DATASET} holds trade_date={trade_date}, which has no matching "
+                f"{IM_DAILY_RAW_ARTIFACT} holds trade_date={trade_date}, which has no matching "
                 f"CSI1000 close in the underlying history."
             )
         days_to_delist = (date.fromisoformat(delist_date) - date.fromisoformat(trade_date)).days
         if days_to_delist < 0:
             raise SnapshotError(
-                f"{IM_DAILY_DATASET} holds trade_date={trade_date} after delist_date="
+                f"{IM_DAILY_RAW_ARTIFACT} holds trade_date={trade_date} after delist_date="
                 f"{delist_date} of contract {ts_code}."
             )
         close = require_number(daily, "close")
@@ -430,7 +430,7 @@ def load_im_futures(
 
     if not history:
         raise SnapshotError(
-            f"{IM_DAILY_DATASET} holds no observation inside the last {IM_WINDOW_DAYS} "
+            f"{IM_DAILY_RAW_ARTIFACT} holds no observation inside the last {IM_WINDOW_DAYS} "
             f"trade dates up to {target_trade_date}."
         )
 
@@ -438,32 +438,32 @@ def load_im_futures(
     curve = [row for row in history if row["trade_date"] == target_trade_date]
     if not curve:
         raise SnapshotError(
-            f"{IM_DAILY_DATASET} holds no observation for trade_date={target_trade_date}, "
+            f"{IM_DAILY_RAW_ARTIFACT} holds no observation for trade_date={target_trade_date}, "
             f"so the target-date futures curve would be empty."
         )
     curve.sort(key=lambda row: row["delist_date"])
     return {"history": history, "target_date_curve": curve}
 
 
-def build_snapshot(trade_date: str, dataset_dir: Path | None = None) -> RawRecord:
+def build_snapshot(trade_date: str, raw_dir: Path | None = None) -> RawRecord:
     """Prepare the CSI1000 5-day analysis artifact for one target trade date.
 
-    ``dataset_dir`` defaults to the Raw directory of ``trade_date`` under
+    ``raw_dir`` defaults to the Raw directory of ``trade_date`` under
     :data:`artifacts.RAW_DIR`; the Data Service passes the directory it collected
     into, and a test can pass a temporary one.
     """
     target_trade_date = require_trade_date(trade_date, "target_trade_date")
-    if dataset_dir is None:
-        dataset_dir = artifacts.csi1000_raw_dir(target_trade_date)
+    if raw_dir is None:
+        raw_dir = artifacts.csi1000_raw_dir(target_trade_date)
 
     # Guide 5.3: one target-date close, taken from the underlying history.
     history = underlying_history(
-        load_raw_records(dataset_dir, INDEX_HISTORY_DATASET), target_trade_date
+        load_raw_records(raw_dir, INDEX_HISTORY_RAW_ARTIFACT), target_trade_date
     )
     underlying_close = require_positive_number(history[-1], "close")
 
-    mo_options = load_mo_options(dataset_dir, target_trade_date, underlying_close)
-    im_futures = load_im_futures(dataset_dir, target_trade_date, history)
+    mo_options = load_mo_options(raw_dir, target_trade_date, underlying_close)
+    im_futures = load_im_futures(raw_dir, target_trade_date, history)
     # Guide 5.3: the artifact carries exactly one target-date close, so the
     # futures curve of that date has to read back the same underlying fact.
     for observation in im_futures["target_date_curve"]:

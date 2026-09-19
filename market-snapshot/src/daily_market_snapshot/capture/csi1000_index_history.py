@@ -23,11 +23,11 @@ from .. import artifacts
 from ..sources import tushare
 from . import common
 
-DATASET = "index_daily_history"
-# Dataset identity of the CSI1000 history window (Guide 4.1).
+RAW_ARTIFACT = "index_daily_history"
+# Capture scope of the CSI1000 history window (Guide 4.1).
 INDEX_CODE = "000852.SH"
 # Implementation detail, not a data contract: the Guide asks for enough Source
-# facts to reach the latest 120 trading days, so the Collector requests a
+# facts to reach the latest 120 trading days, so the Capture requests a
 # calendar window that is obviously long enough. The exact window selection
 # belongs to Analysis Preparation (Guide 6.1).
 LOOKBACK_CALENDAR_DAYS = 240
@@ -67,7 +67,7 @@ def require_history_window(
     """
     if not records:
         raise common.CollectionError(
-            f"Tushare {DATASET} returned no data for ts_code={INDEX_CODE} "
+            f"Tushare {RAW_ARTIFACT} returned no data for ts_code={INDEX_CODE} "
             f"on or before trade_date={target_trade_date}."
         )
 
@@ -75,7 +75,7 @@ def require_history_window(
     for record in records:
         if record.get("ts_code") != INDEX_CODE:
             raise common.CollectionError(
-                f"Tushare {DATASET} returned ts_code={record.get('ts_code')!r} "
+                f"Tushare {RAW_ARTIFACT} returned ts_code={record.get('ts_code')!r} "
                 f"for a request of ts_code={INDEX_CODE}."
             )
         in_window = common.in_date_range(
@@ -83,14 +83,14 @@ def require_history_window(
         )
         if not in_window:
             raise common.CollectionError(
-                f"Tushare {DATASET} returned {tushare.TRADE_DATE_FIELD}="
+                f"Tushare {RAW_ARTIFACT} returned {tushare.TRADE_DATE_FIELD}="
                 f"{record.get(tushare.TRADE_DATE_FIELD)!r} outside the requested window "
                 f"{start_date}..{target_trade_date}."
             )
         key = (str(record["ts_code"]), str(record[tushare.TRADE_DATE_FIELD]))
         if key in seen:
             raise common.CollectionError(
-                f"Tushare {DATASET} returned duplicate rows for ts_code={key[0]} "
+                f"Tushare {RAW_ARTIFACT} returned duplicate rows for ts_code={key[0]} "
                 f"trade_date={key[1]}."
             )
         seen.add(key)
@@ -98,12 +98,12 @@ def require_history_window(
     trade_dates = {str(record[tushare.TRADE_DATE_FIELD]) for record in records}
     if target_trade_date not in trade_dates:
         raise common.CollectionError(
-            f"Tushare {DATASET} returned no record for ts_code={INDEX_CODE} "
+            f"Tushare {RAW_ARTIFACT} returned no record for ts_code={INDEX_CODE} "
             f"on trade_date={target_trade_date}."
         )
     if len(trade_dates) < MIN_HISTORY_TRADE_DATES:
         raise common.CollectionError(
-            f"Tushare {DATASET} returned only {len(trade_dates)} distinct "
+            f"Tushare {RAW_ARTIFACT} returned only {len(trade_dates)} distinct "
             f"{tushare.TRADE_DATE_FIELD} values for ts_code={INDEX_CODE}, fewer than the "
             f"{MIN_HISTORY_TRADE_DATES} the analysis window needs."
         )
@@ -128,23 +128,32 @@ def collect_index_daily_history(
     return records
 
 
+def capture(api: tushare.TushareApi, trade_date: str) -> list[artifacts.RawRecord]:
+    """Run this Source Capture for one target trade date against a Source api.
+
+    The endpoint, its query parameters and the Capture scope stay in this module:
+    a caller (the Data Service or the development entrypoint) only asks for the
+    Capture, never for a Source endpoint (``ARCHITECTURE.md`` 2).
+    """
+    return collect_index_daily_history(
+        trade_date, lambda **kwargs: query_index_daily_history(api, **kwargs)
+    )
+
+
 def main(argv: Sequence[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(description=f"Collect the {DATASET} Raw artifact.")
+    parser = argparse.ArgumentParser(description=f"Collect the {RAW_ARTIFACT} Raw artifact.")
     parser.add_argument("trade_date", help="Target trade date in YYYY-MM-DD form.")
     args = parser.parse_args(argv)
 
     try:
         api = tushare.create_tushare_api(tushare.get_tushare_token())
-        records = collect_index_daily_history(
-            args.trade_date,
-            lambda **kwargs: query_index_daily_history(api, **kwargs),
-        )
+        records = capture(api, args.trade_date)
     except common.CAPTURE_FAILURE_TYPES as exc:
         print(f"error: {exc}", file=sys.stderr)
         return 1
 
     path = artifacts.write_raw_artifact(
-        records, artifacts.csi1000_raw_dir(args.trade_date), DATASET
+        records, artifacts.csi1000_raw_dir(args.trade_date), RAW_ARTIFACT
     )
     print(f"wrote {len(records)} records to {path}")
     return 0

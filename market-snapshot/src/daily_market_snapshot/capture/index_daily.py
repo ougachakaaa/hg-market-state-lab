@@ -20,7 +20,7 @@ from .. import artifacts
 from ..sources import tushare
 from . import common
 
-DATASET = "index_daily"
+RAW_ARTIFACT = "index_daily"
 # The fixed Phase 1 index observation universe (Guide 4.1).
 INDEX_CODES = (
     "000016.SH",
@@ -53,7 +53,7 @@ def collect_index_daily(
 
     if not records:
         raise common.CollectionError(
-            f"Tushare {DATASET} returned no data for trade_date={trade_date}."
+            f"Tushare {RAW_ARTIFACT} returned no data for trade_date={trade_date}."
         )
 
     common.require_target_trade_date(records, trade_date)
@@ -61,7 +61,7 @@ def collect_index_daily(
 
 
 def main(argv: Sequence[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(description=f"Collect the {DATASET} Raw artifact.")
+    parser = argparse.ArgumentParser(description=f"Collect the {RAW_ARTIFACT} Raw artifact.")
     parser.add_argument("trade_date", help="Target trade date in YYYY-MM-DD form.")
     args = parser.parse_args(argv)
 
@@ -75,7 +75,9 @@ def main(argv: Sequence[str] | None = None) -> int:
         print(f"error: {exc}", file=sys.stderr)
         return 1
 
-    path = artifacts.write_raw_artifact(records, artifacts.daily_raw_dir(args.trade_date), DATASET)
+    path = artifacts.write_raw_artifact(
+        records, artifacts.daily_raw_dir(args.trade_date), RAW_ARTIFACT
+    )
     print(f"wrote {len(records)} records to {path}")
     return 0
 

@@ -1,6 +1,6 @@
-﻿"""A fake Tushare Source used by tests.
+"""A fake Tushare Source used by tests.
 
-Tests must not depend on the real Tushare API, so every collector test
+Tests must not depend on the real Tushare API, so every Capture test
 injects this in-memory Source instead.
 """
 
@@ -367,6 +367,8 @@ class FakeTushareApi:
 
     Records the calls it receives so tests can assert the requested dates and
     codes, and returns empty frames when asked for something it does not hold.
+    ``calls`` holds every call in request order as ``(endpoint, arguments)``, so a
+    test can assert how often and in what order the Source was asked.
     """
 
     def __init__(
@@ -384,6 +386,7 @@ class FakeTushareApi:
         self.option_daily = option_daily if option_daily is not None else pd.DataFrame()
         self.futures_basic = futures_basic if futures_basic is not None else pd.DataFrame()
         self.futures_daily = futures_daily if futures_daily is not None else {}
+        self.calls: list[tuple[str, dict[str, str]]] = []
         self.index_calls: list[dict[str, str]] = []
         self.daily_calls: list[dict[str, str]] = []
         self.opt_basic_calls: list[dict[str, str]] = []
@@ -406,18 +409,22 @@ class FakeTushareApi:
             call["start_date"] = start_date
         if end_date is not None:
             call["end_date"] = end_date
+        self.calls.append(("index_daily", dict(call)))
         self.index_calls.append(call)
         frame = self.index_frames.get(ts_code, pd.DataFrame())
         return self._slice(frame, "trade_date", trade_date, start_date, end_date)
 
     def daily(self, *, trade_date: str) -> pd.DataFrame:
+        self.calls.append(("daily", {"trade_date": trade_date}))
         self.daily_calls.append({"trade_date": trade_date})
         return self.stock_frame
 
     def opt_basic(
         self, *, exchange: str, list_date: str | None = None, fields: str | None = None
     ) -> pd.DataFrame:
-        self.opt_basic_calls.append({"exchange": exchange, "list_date": list_date or ""})
+        call = {"exchange": exchange, "list_date": list_date or ""}
+        self.calls.append(("opt_basic", dict(call)))
+        self.opt_basic_calls.append(call)
         return self.option_basic
 
     def opt_daily(
@@ -428,13 +435,13 @@ class FakeTushareApi:
         start_date: str | None = None,
         end_date: str | None = None,
     ) -> pd.DataFrame:
-        self.opt_daily_calls.append(
-            {
-                "trade_date": trade_date or "",
-                "exchange": exchange or "",
-                "start_date": start_date or "",
-            }
-        )
+        call = {
+            "trade_date": trade_date or "",
+            "exchange": exchange or "",
+            "start_date": start_date or "",
+        }
+        self.calls.append(("opt_daily", dict(call)))
+        self.opt_daily_calls.append(call)
         frame = self.option_daily
         if exchange is not None and not frame.empty:
             frame = frame[frame["exchange"] == exchange]
@@ -448,9 +455,9 @@ class FakeTushareApi:
         fut_code: str | None = None,
         fields: str | None = None,
     ) -> pd.DataFrame:
-        self.fut_basic_calls.append(
-            {"exchange": exchange, "fut_type": fut_type or "", "fut_code": fut_code or ""}
-        )
+        call = {"exchange": exchange, "fut_type": fut_type or "", "fut_code": fut_code or ""}
+        self.calls.append(("fut_basic", dict(call)))
+        self.fut_basic_calls.append(call)
         return self.futures_basic
 
     def fut_daily(
@@ -461,14 +468,14 @@ class FakeTushareApi:
         start_date: str | None = None,
         end_date: str | None = None,
     ) -> pd.DataFrame:
-        self.fut_daily_calls.append(
-            {
-                "ts_code": ts_code or "",
-                "trade_date": trade_date or "",
-                "start_date": start_date or "",
-                "end_date": end_date or "",
-            }
-        )
+        call = {
+            "ts_code": ts_code or "",
+            "trade_date": trade_date or "",
+            "start_date": start_date or "",
+            "end_date": end_date or "",
+        }
+        self.calls.append(("fut_daily", dict(call)))
+        self.fut_daily_calls.append(call)
         frame = self.futures_daily.get(ts_code or "", pd.DataFrame())
         return self._slice(frame, "trade_date", trade_date, start_date, end_date)
 

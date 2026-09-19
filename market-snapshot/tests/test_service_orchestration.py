@@ -124,10 +124,10 @@ def test_a_failing_preparation_stage_is_reported_and_writes_no_output(
     write_raw = artifacts.write_raw_artifact
 
     def write_then_damage(
-        records: list[artifacts.RawRecord], dataset_dir: Path, dataset: str
+        records: list[artifacts.RawRecord], raw_dir: Path, raw_artifact: str
     ) -> Path:
-        path = write_raw(records, dataset_dir, dataset)
-        if dataset == "index_daily_history":
+        path = write_raw(records, raw_dir, raw_artifact)
+        if raw_artifact == "index_daily_history":
             # Fewer than the 120 trading rows the Definition needs.
             history = json.loads(path.read_text(encoding="utf-8"))
             path.write_text(json.dumps(history[:40]), encoding="utf-8")
@@ -135,7 +135,7 @@ def test_a_failing_preparation_stage_is_reported_and_writes_no_output(
 
     monkeypatch.setattr(artifacts, "write_raw_artifact", write_then_damage)
 
-    with pytest.raises(DataServiceError, match="stage=snapshot_assembly"):
+    with pytest.raises(DataServiceError, match="stage=analysis_preparation"):
         csi1000_5d_analysis.orchestrate_csi1000_5d_analysis(
             api, TARGET_DATE, raw_root, output_root
         )

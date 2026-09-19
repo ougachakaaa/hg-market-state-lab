@@ -6,7 +6,7 @@ import pandas as pd
 import pytest
 
 from daily_market_snapshot import artifacts
-from daily_market_snapshot.capture import common, mo_option_daily
+from daily_market_snapshot.capture import common, mo_option_basic, mo_option_daily
 from daily_market_snapshot.sources import tushare
 from support.fake_source import (
     FakeTushareApi,
@@ -50,9 +50,10 @@ def fake_api(
 
 
 def collect(api: FakeTushareApi) -> list[artifacts.RawRecord]:
+    """Run the daily Capture on the MO basic facts of the same request."""
     return mo_option_daily.collect_mo_option_daily(
         TARGET_DATE,
-        api.option_basic,
+        mo_option_basic.capture(api, TARGET_DATE),
         lambda **kwargs: api.opt_daily(**kwargs),
     )
 
@@ -82,7 +83,7 @@ def test_keeps_daily_facts_of_the_active_mo_universe() -> None:
 
 
 def test_other_cffex_products_are_ignored_as_non_members() -> None:
-    """``exchange=CFFEX`` returns IO/HO too; they are not part of this Dataset."""
+    """``exchange=CFFEX`` returns IO/HO too; they are not in this Capture scope."""
     api = fake_api(
         basic_contracts=[*ACTIVE_CONTRACTS, DELISTED_CONTRACT, OTHER_PRODUCT],
         daily_contracts=[

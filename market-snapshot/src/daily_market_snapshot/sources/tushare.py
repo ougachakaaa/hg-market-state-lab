@@ -177,7 +177,7 @@ def to_iso_date_or_none(value: object) -> str | None:
 
     Contract lifecycle facts (``list_date`` / ``delist_date``) are optional in
     the Source, so missing values stay ``None`` instead of failing: the
-    collectors treat such a contract as having no lifecycle bound on that side.
+    Captures treat such a contract as having no lifecycle bound on that side.
     A value that already uses the Raw form is kept as it is, so both a Source
     frame and an already-normalized Raw record give the same date.
     """

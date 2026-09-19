@@ -149,7 +149,7 @@ def test_no_business_filters_are_applied() -> None:
 
     records = collect(fake_api(contracts))
 
-    # Far from the money and far from expiry still belongs to the Dataset.
+    # Far from the money and far from expiry still belongs to the Capture scope.
     assert {record["exercise_price"] for record in records} == {5000.0, 7000.0, 9000.0}
 
 

@@ -157,7 +157,7 @@ def test_another_index_code_is_an_error() -> None:
 def test_source_row_after_target_trade_date_is_an_error() -> None:
     """A row beyond the requested end date must not reach the Raw file."""
     # The fake Source only returns rows inside the requested window, so the
-    # Collector's own guard is exercised directly.
+    # Capture's own guard is exercised directly.
     records = common.to_raw_records(
         index_history_frame("000852.SH", [*SOURCE_HISTORY_DATES, "20260918"])
     )
@@ -180,7 +180,7 @@ def test_raw_layer_adds_no_derived_fields() -> None:
 
 
 def test_raw_history_is_not_trimmed_to_120_rows() -> None:
-    """The Collector keeps the collected window; the 120-row cut is assembly."""
+    """The Capture keeps the collected window; the 120-row cut is Analysis Preparation."""
     records = collect(fake_api())
 
     assert len(records) == len(SOURCE_HISTORY_DATES)

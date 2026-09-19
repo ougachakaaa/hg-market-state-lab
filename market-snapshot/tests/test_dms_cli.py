@@ -233,7 +233,7 @@ def test_a_failing_collection_stage_stops_the_chain_and_writes_no_output(
     monkeypatch: pytest.MonkeyPatch,
     capsys: pytest.CaptureFixture[str],
 ) -> None:
-    """A failed Dataset is never skipped and never yields a partial artifact."""
+    """A failed Capture stage is never skipped and never yields a partial artifact."""
     # The Source holds no MO contract, so the second stage cannot succeed.
     api = csi1000_5d_analysis_api()
     api.option_basic = api.option_basic.iloc[0:0]
@@ -249,7 +249,7 @@ def test_a_failing_collection_stage_stops_the_chain_and_writes_no_output(
     assert "stage=mo_option_basic" in captured.err
     assert captured.out == ""
 
-    # The chain stopped: no later Dataset was collected, nothing was prepared.
+    # The chain stopped: no later Capture ran, nothing was prepared.
     written = dataset_dir(raw_root)
     assert sorted(path.name for path in written.iterdir()) == ["index_daily_history.json"]
     assert not output_path(output_root).exists()

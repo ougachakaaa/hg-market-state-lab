@@ -24,7 +24,7 @@ import pandas as pd
 from ..artifacts import RawRecord
 from ..sources import tushare
 
-# Signature of the Tushare call a collector needs, so tests can fake the Source.
+# Signature of the Tushare call a Capture needs, so tests can fake the Source.
 QueryFunc = Callable[..., pd.DataFrame]
 
 # Other Source date facts (contract lifecycle) that Raw records express in the
@@ -60,7 +60,7 @@ def to_raw_records(frame: pd.DataFrame) -> list[RawRecord]:
     Source fields are kept as-is; only Source date facts are expressed as
     ``YYYY-MM-DD`` (see ``SOURCE_DATE_FIELDS``) and numpy scalars become JSON
     scalars. Missing and already normalized date facts are kept as they are, so
-    a Raw record that another Collector re-normalizes stays stable.
+    a Raw record that another Capture re-normalizes stays stable.
     """
     records: list[RawRecord] = []
     for row in frame.to_dict(orient="records"):
