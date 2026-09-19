@@ -54,7 +54,7 @@ target_trade_date
 underlying reference price
 ```
 
-其中 underlying reference price 是目标交易日的 CSI1000（000852.SH）underlying 在选定 `price_type` 下的价格，作为横轴上的市场基准点。它使用与 option 相同的 `price_type`（见 `market-snapshot/guides/mo-option-chain.md` 第 12 节）。
+其中 underlying reference price 是目标交易日的 CSI1000（000852.SH）underlying 在选定 `price_type` 下的价格，作为横轴上的市场基准点。它使用与 option 相同的 `price_type`（见 `market-snapshot/guides/mo-option-chain-read-contract.md` 第 2 节）。
 
 ## 4. Visualization scope
 
@@ -84,17 +84,17 @@ Y axis = option selected price（默认 price_type = close）
 * underlying reference price 是横轴上的市场基准点；
 * 每个 scatter point 代表一个 MO option contract。
 
-单个 option point 至少具有：
+单个 option point 的 point 级字段（来自 read contract）：
 
 ```text
-contract identity（instrument_id）
-expiry
-option_type
+instrument_id
 strike
 selected price
 ```
 
-这里锁定的是**用户可见语义**，不是 HTTP schema。selected price 的 null / zero 语义（`0` 是数据、`null` 是缺价）由 `market-snapshot/guides/mo-option-chain.md` 第 13 节定义；`web-ui` 不得自行 fallback、补零或删除 contract。
+`expiry` 与 `option_type` 由 read contract 的父级 grouping 表达（`expiries[]` 的 `expiry_date`、`calls[]` / `puts[]` 的归属），不要求每个 point 重复携带（见 `market-snapshot/guides/mo-option-chain-read-contract.md` 第 6 节）。
+
+这里锁定的是**用户可见语义**，不是 HTTP schema。selected price 的 null / zero 语义（`0` 是数据、`null` 是缺价）由 `market-snapshot/guides/mo-option-chain-read-contract.md` 第 3 节定义；`web-ui` 不得自行 fallback、补零或删除 contract。
 
 ## 6. 事实展示边界
 
@@ -140,9 +140,9 @@ trading recommendation
 
 ## 8. 数据来源语义
 
-本 vertical slice 需要的事实（contract identity、expiry、option_type、strike、selected price、underlying reference price）由 `market-snapshot/guides/mo-option-chain.md` 定义的 MO Option Chain read contract 提供；`web-ui` 不直接理解 Source 或 Raw Artifact，也不直接消费 `csi1000-5d-analysis` 的 `snapshot.json`。
+本 vertical slice 需要的事实（contract identity、expiry、option_type、strike、selected price、underlying reference price）由 `market-snapshot/guides/mo-option-chain-read-contract.md` 定义的 MO Option Chain read contract 提供；`web-ui` 不直接理解 Source 或 Raw Artifact，也不直接消费 `csi1000-5d-analysis` 的 `snapshot.json`。
 
-active universe、option type、expiry、selected price fallback、contract completeness 等业务语义均由 read contract 拥有，`web-ui` 不自行推导（见 `market-snapshot/guides/mo-option-chain.md` 第 2 节 Ownership 与第 25 节 Invariants）。
+active universe、option type、expiry、selected price fallback、contract completeness 等业务语义均由 read contract 拥有，`web-ui` 不自行推导（ownership 与 invariants 见 `market-snapshot/guides/mo-option-chain.md` 第 2、5 节）。
 
 ## 9. 下一轮实现范围（本 Guide 不实现）
 

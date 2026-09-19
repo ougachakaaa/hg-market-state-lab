@@ -63,7 +63,7 @@ MO option-chain visualization 的数据来源边界已锁定：
 web-ui
     ↓ consumes
 MO Option Chain read contract
-（market-snapshot/guides/mo-option-chain.md）
+（market-snapshot/guides/mo-option-chain-read-contract.md）
 ```
 
 `web-ui` 不直接消费：
@@ -74,7 +74,7 @@ Raw Artifact
 Tushare Source
 ```
 
-具体 read contract 的 query identity、字段、分组、排序、价格语义与失败语义由 `market-snapshot/guides/mo-option-chain.md` 拥有；`web-ui` 只消费该 read contract，不重新定义或重新推导其业务语义。
+具体 read contract 的 query identity、字段、分组、排序、价格语义与失败语义由 `market-snapshot/guides/mo-option-chain-read-contract.md` 拥有；产品 identity（`MO → 000852.SH`）与 invariants 见 `market-snapshot/guides/mo-option-chain.md`。`web-ui` 只消费该 read contract，不重新定义或重新推导其业务语义。
 
 ## 5. Guide Responsibility
 

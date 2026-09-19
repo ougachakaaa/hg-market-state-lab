@@ -87,7 +87,9 @@ poetry run mypy .
   * `guides/daily-market-snapshot.md`：第一版 Daily Snapshot 定义（具体 Raw Artifact 契约、Snapshot 结构与执行边界）
   * `guides/csi1000-5d-analysis-data.md`：CSI1000 "未来约 5 个交易日市场状态"分析场景的数据需求与 Source Capture / Raw Artifact 契约 authority（CSI1000 历史、MO 期权链、IM 期货）
   * `guides/csi1000-5d-analysis-snapshot.md`：同一场景的 Analysis Preparation Definition authority（Raw → analysis-ready `snapshot.json` 的组织方式）
-  * `guides/mo-option-chain.md`：MO Option Chain 独立 deterministic data product 与 read contract authority（与 `csi1000-5d-analysis` 并列，不依赖其 artifact）
+  * `guides/mo-option-chain.md`：MO Option Chain 独立 deterministic data product authority（入口：产品定位 / ownership / query identity / invariants，与 `csi1000-5d-analysis` 并列）
+  * `guides/mo-option-chain-data.md`：MO Option Chain data contract（Source / Raw / universe / completeness）
+  * `guides/mo-option-chain-read-contract.md`：MO Option Chain read contract（price / null / grouping / ordering / response / failure）
   * `guides/data-services.md`：Data Service / CLI / output 契约 authority（用户级调用语义）
   * `config/`：配置
   * `guides/`：DSH 执行任务使用的 Guide
