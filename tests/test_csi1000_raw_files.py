@@ -4,13 +4,14 @@ from typing import Any
 
 import pytest
 
-import _common
-import fetch_csi1000_index_history as index_history
-import fetch_im_futures_basic as futures_basic
-import fetch_im_futures_daily as futures_daily
-import fetch_mo_option_basic as option_basic
-import fetch_mo_option_daily as option_daily
-from fake_source import (
+from daily_market_snapshot import artifacts
+from daily_market_snapshot.capture import csi1000_index_history as index_history
+from daily_market_snapshot.capture import im_futures_basic as futures_basic
+from daily_market_snapshot.capture import im_futures_daily as futures_daily
+from daily_market_snapshot.capture import mo_option_basic as option_basic
+from daily_market_snapshot.capture import mo_option_daily as option_daily
+from daily_market_snapshot.sources import tushare
+from support.fake_source import (
     FakeTushareApi,
     business_days,
     futures_basic_frame,
@@ -59,9 +60,9 @@ def fake_api() -> FakeTushareApi:
 def test_all_five_collectors_share_the_goal_scoped_raw_directory(
     test_workdir: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
 ) -> None:
-    monkeypatch.setenv(_common.TOKEN_ENV_VAR, "local-token")
+    monkeypatch.setenv(tushare.TOKEN_ENV_VAR, "local-token")
     api = fake_api()
-    monkeypatch.setattr(_common, "create_tushare_api", lambda token: api)
+    monkeypatch.setattr(tushare, "create_tushare_api", lambda token: api)
 
     exit_codes = [
         index_history.main([TARGET_DATE]),
@@ -72,7 +73,7 @@ def test_all_five_collectors_share_the_goal_scoped_raw_directory(
     ]
 
     assert exit_codes == [0, 0, 0, 0, 0]
-    dataset_dir = test_workdir / "raw" / _common.CSI1000_RAW_SUBDIR / TARGET_DATE
+    dataset_dir = test_workdir / "raw" / artifacts.CSI1000_RAW_SUBDIR / TARGET_DATE
     assert sorted(path.name for path in dataset_dir.iterdir()) == [
         "im_futures_basic.json",
         "im_futures_daily.json",
@@ -97,14 +98,14 @@ def test_raw_files_meet_the_documented_completeness_requirements(
     test_workdir: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     """Every Raw artifact must be usable for the Guide window it feeds."""
-    monkeypatch.setenv(_common.TOKEN_ENV_VAR, "local-token")
+    monkeypatch.setenv(tushare.TOKEN_ENV_VAR, "local-token")
     api = fake_api()
-    monkeypatch.setattr(_common, "create_tushare_api", lambda token: api)
+    monkeypatch.setattr(tushare, "create_tushare_api", lambda token: api)
 
     for collector in (index_history, option_basic, option_daily, futures_basic, futures_daily):
         assert collector.main([TARGET_DATE]) == 0
 
-    dataset_dir = test_workdir / "raw" / _common.CSI1000_RAW_SUBDIR / TARGET_DATE
+    dataset_dir = test_workdir / "raw" / artifacts.CSI1000_RAW_SUBDIR / TARGET_DATE
     loaded: dict[str, list[dict[str, Any]]] = {
         name: json.loads((dataset_dir / name).read_text(encoding="utf-8"))
         for name in (
@@ -142,9 +143,9 @@ def test_raw_files_meet_the_documented_completeness_requirements(
 def test_collectors_never_write_into_the_daily_snapshot_raw_directory(
     test_workdir: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    monkeypatch.setenv(_common.TOKEN_ENV_VAR, "local-token")
+    monkeypatch.setenv(tushare.TOKEN_ENV_VAR, "local-token")
     api = fake_api()
-    monkeypatch.setattr(_common, "create_tushare_api", lambda token: api)
+    monkeypatch.setattr(tushare, "create_tushare_api", lambda token: api)
 
     for collector in (index_history, option_basic, option_daily, futures_basic, futures_daily):
         assert collector.main([TARGET_DATE]) == 0

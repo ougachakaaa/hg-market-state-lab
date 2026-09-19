@@ -16,9 +16,11 @@ from typing import Any
 
 import pytest
 
-import _common
-import build_snapshot
-from build_snapshot import SnapshotError
+from daily_market_snapshot import artifacts
+from daily_market_snapshot.preparation import csi1000_5d_analysis as analysis
+from daily_market_snapshot.preparation.csi1000_5d_analysis import SnapshotError
+from daily_market_snapshot.services import csi1000_5d_analysis as service
+from daily_market_snapshot.sources import tushare
 
 TARGET_DATE = "2026-09-17"
 TARGET = date.fromisoformat(TARGET_DATE)
@@ -192,7 +194,7 @@ def base_raw() -> dict[str, list[dict[str, Any]]]:
 
 def write_raw(root: Path, raw: dict[str, list[dict[str, Any]]]) -> Path:
     """Write the Raw artifacts and return the goal-scoped dataset directory."""
-    dataset_dir = root / _common.CSI1000_RAW_SUBDIR / TARGET_DATE
+    dataset_dir = root / artifacts.CSI1000_RAW_SUBDIR / TARGET_DATE
     dataset_dir.mkdir(parents=True, exist_ok=True)
     for dataset, records in raw.items():
         (dataset_dir / f"{dataset}.json").write_text(
@@ -209,22 +211,33 @@ def raw_root(tmp_path: Path) -> Path:
     return root
 
 
-def run_builder(tmp_path: Path, raw_root: Path) -> dict[str, Any]:
-    """Run the Builder entry point and return the written snapshot."""
-    code = build_snapshot.main([TARGET_DATE])
-    assert code == 0
-    return json.loads(snapshot_path(tmp_path).read_text(encoding="utf-8"))
+def run_preparation(tmp_path: Path, raw_root: Path) -> dict[str, Any]:
+    """Run Analysis Preparation and publish its artifact like the service does.
+
+    The preparation itself only reads Raw Artifacts and returns the payload; the
+    canonical artifact is published here with the same shared artifact writer the
+    Data Service uses.
+    """
+    snapshot = analysis.build_snapshot(TARGET_DATE)
+    path = artifacts.write_analysis_ready_artifact(
+        snapshot, service.SERVICE_ID, TARGET_DATE, tmp_path / "output"
+    )
+    assert path == snapshot_path(tmp_path)
+    return snapshot
 
 
 def snapshot_path(tmp_path: Path) -> Path:
-    """Canonical Data Service output path of the assembled Snapshot."""
-    return tmp_path / "output" / _common.CSI1000_RAW_SUBDIR / TARGET_DATE / "snapshot.json"
+    """Canonical Data Service output path of the prepared artifact."""
+    return (
+        artifacts.output_dir(tmp_path / "output", service.SERVICE_ID, TARGET_DATE)
+        / artifacts.ANALYSIS_READY_FILENAME
+    )
 
 
 def patch_dirs(monkeypatch: pytest.MonkeyPatch, tmp_path: Path, raw_root: Path) -> None:
-    """Point the builder at the temporary Raw and canonical output roots."""
-    monkeypatch.setattr(build_snapshot, "RAW_DIR", raw_root)
-    monkeypatch.setattr(build_snapshot, "OUTPUT_DIR", tmp_path / "output")
+    """Point the preparation at the temporary Raw and canonical output roots."""
+    monkeypatch.setattr(artifacts, "RAW_DIR", raw_root)
+    monkeypatch.setattr(artifacts, "OUTPUT_DIR", tmp_path / "output")
 
 
 def window_mean(size: int) -> float:
@@ -256,7 +269,7 @@ def test_happy_path_snapshot_is_written_with_the_locked_structure(
 ) -> None:
     patch_dirs(monkeypatch, tmp_path, raw_root)
 
-    snapshot = run_builder(tmp_path, raw_root)
+    snapshot = run_preparation(tmp_path, raw_root)
 
     assert list(snapshot) == [
         "target_trade_date",
@@ -273,7 +286,7 @@ def test_output_path_is_the_canonical_data_service_artifact(
     """guides/data-services.md 6 + 7: one canonical artifact, under ``output/``."""
     patch_dirs(monkeypatch, tmp_path, raw_root)
 
-    run_builder(tmp_path, raw_root)
+    run_preparation(tmp_path, raw_root)
 
     assert snapshot_path(tmp_path).is_file()
     # The pre-Data-Service location must not be written as well.
@@ -285,7 +298,7 @@ def test_underlying_history_is_the_latest_120_rows_in_ascending_order(
 ) -> None:
     patch_dirs(monkeypatch, tmp_path, raw_root)
 
-    underlying = run_builder(tmp_path, raw_root)["underlying"]
+    underlying = run_preparation(tmp_path, raw_root)["underlying"]
 
     assert underlying["ts_code"] == UNDERLYING_CODE
     history = underlying["history"]
@@ -336,7 +349,7 @@ def test_underlying_window_excludes_trade_dates_after_the_target(
     )
     write_raw(raw_root, raw)
 
-    snapshot = run_builder(tmp_path, raw_root)
+    snapshot = run_preparation(tmp_path, raw_root)
 
     assert snapshot["underlying"]["history"][-1]["trade_date"] == TARGET_DATE
     assert snapshot["underlying"]["history"][-1]["close"] == TARGET_CLOSE
@@ -347,7 +360,7 @@ def test_underlying_derived_matches_the_locked_formulas(
 ) -> None:
     patch_dirs(monkeypatch, tmp_path, raw_root)
 
-    derived = run_builder(tmp_path, raw_root)["underlying"]["derived"]
+    derived = run_preparation(tmp_path, raw_root)["underlying"]["derived"]
 
     assert list(derived) == [
         "return_1d_pct",
@@ -399,7 +412,7 @@ def test_mo_chain_is_joined_renamed_sorted_and_derived(
 ) -> None:
     patch_dirs(monkeypatch, tmp_path, raw_root)
 
-    snapshot = run_builder(tmp_path, raw_root)
+    snapshot = run_preparation(tmp_path, raw_root)
     mo_options = snapshot["mo_options"]
 
     # Guide 5.3: the option section reads the history's target-date close.
@@ -466,7 +479,7 @@ def test_mo_expiry_date_is_a_rename_of_the_iso_maturity_date(
     }
     write_raw(raw_root, raw)
 
-    chain = run_builder(tmp_path, raw_root)["mo_options"]["chain"]
+    chain = run_preparation(tmp_path, raw_root)["mo_options"]["chain"]
 
     assert [row["expiry_date"] for row in chain] == [
         NEAR_EXPIRY_DATE,
@@ -487,7 +500,7 @@ def test_mo_maturity_date_in_source_yyyymmdd_form_fails(
     write_raw(raw_root, raw)
 
     with pytest.raises(SnapshotError, match="maturity_date"):
-        build_snapshot.build_snapshot(TARGET_DATE)
+        analysis.build_snapshot(TARGET_DATE)
 
 
 def test_mo_malformed_maturity_date_fails(
@@ -498,7 +511,7 @@ def test_mo_malformed_maturity_date_fails(
     raw["mo_option_basic"][0]["maturity_date"] = "2026092"
     write_raw(raw_root, raw)
     with pytest.raises(SnapshotError, match="maturity_date"):
-        build_snapshot.build_snapshot(TARGET_DATE)
+        analysis.build_snapshot(TARGET_DATE)
 
 
 @pytest.mark.parametrize("value", [None, "900.0", float("nan"), float("inf")])
@@ -519,7 +532,7 @@ def test_mo_missing_or_malformed_close_fails(
     write_raw(raw_root, raw)
 
     with pytest.raises(SnapshotError, match="close"):
-        build_snapshot.build_snapshot(TARGET_DATE)
+        analysis.build_snapshot(TARGET_DATE)
 
 
 def test_im_history_uses_the_last_60_underlying_trade_dates(
@@ -527,7 +540,7 @@ def test_im_history_uses_the_last_60_underlying_trade_dates(
 ) -> None:
     patch_dirs(monkeypatch, tmp_path, raw_root)
 
-    im_futures = run_builder(tmp_path, raw_root)["im_futures"]
+    im_futures = run_preparation(tmp_path, raw_root)["im_futures"]
     history = im_futures["history"]
 
     # Three contracts over 60 trade dates, sorted by trade_date then ts_code.
@@ -547,7 +560,7 @@ def test_im_basis_fields_match_the_locked_formulas(
 ) -> None:
     patch_dirs(monkeypatch, tmp_path, raw_root)
 
-    im_futures = run_builder(tmp_path, raw_root)["im_futures"]
+    im_futures = run_preparation(tmp_path, raw_root)["im_futures"]
     curve = im_futures["target_date_curve"]
 
     # Guide 9: the curve is the target-date projection, by delist_date.
@@ -609,7 +622,7 @@ def test_im_contract_delisting_on_the_target_date_has_a_null_annualization(
             record["delist_date"] = ZERO_DAY_TRADE_DATE
     write_raw(raw_root, raw)
 
-    curve = run_builder(tmp_path, raw_root)["im_futures"]["target_date_curve"]
+    curve = run_preparation(tmp_path, raw_root)["im_futures"]["target_date_curve"]
     zero_day = next(row for row in curve if row["ts_code"] == ZERO_DAY_CONTRACT)
 
     assert zero_day["days_to_delist"] == 0
@@ -630,7 +643,7 @@ def test_im_window_drops_observations_before_it(
     ]
     write_raw(raw_root, raw)
 
-    history = run_builder(tmp_path, raw_root)["im_futures"]["history"]
+    history = run_preparation(tmp_path, raw_root)["im_futures"]["history"]
 
     assert outside not in {row["trade_date"] for row in history}
     assert {row["trade_date"] for row in history} == set(ALL_DATES[TARGET_INDEX - 59 :])
@@ -641,9 +654,11 @@ def test_repeated_runs_on_the_same_raw_produce_the_same_file(
 ) -> None:
     patch_dirs(monkeypatch, tmp_path, raw_root)
 
-    first = build_snapshot.build_snapshot(TARGET_DATE)
-    path = build_snapshot.write_snapshot(first, TARGET_DATE, tmp_path / "output")
-    second = build_snapshot.build_snapshot(TARGET_DATE)
+    first = analysis.build_snapshot(TARGET_DATE)
+    path = artifacts.write_analysis_ready_artifact(
+        first, service.SERVICE_ID, TARGET_DATE, tmp_path / "output"
+    )
+    second = analysis.build_snapshot(TARGET_DATE)
 
     assert path.read_text(encoding="utf-8") == (
         snapshot_path(tmp_path).read_text(encoding="utf-8")
@@ -656,7 +671,7 @@ def test_builder_reads_no_other_directory_and_never_calls_the_source(
 ) -> None:
     patch_dirs(monkeypatch, tmp_path, raw_root)
     # A neighbouring date directory with garbage must not be read or fall back.
-    decoy = raw_root / _common.CSI1000_RAW_SUBDIR / "2026-09-16"
+    decoy = raw_root / artifacts.CSI1000_RAW_SUBDIR / "2026-09-16"
     decoy.mkdir(parents=True)
     (decoy / "index_daily_history.json").write_text("{ not json", encoding="utf-8")
     (decoy / "mo_option_basic.json").write_text("[]", encoding="utf-8")
@@ -664,26 +679,24 @@ def test_builder_reads_no_other_directory_and_never_calls_the_source(
     def unreachable(*args: Any, **kwargs: Any) -> Any:
         raise AssertionError("the Snapshot Builder must stay offline")
 
-    monkeypatch.setattr(_common, "get_tushare_token", unreachable)
-    monkeypatch.setattr(_common, "create_tushare_api", unreachable)
+    monkeypatch.setattr(tushare, "get_tushare_token", unreachable)
+    monkeypatch.setattr(tushare, "create_tushare_api", unreachable)
 
-    snapshot = build_snapshot.build_snapshot(TARGET_DATE)
+    snapshot = analysis.build_snapshot(TARGET_DATE)
 
     assert snapshot["target_trade_date"] == TARGET_DATE
     assert len(snapshot["underlying"]["history"]) == 120
 
 
-def test_main_reports_missing_raw_files(
-    tmp_path: Path,
-    raw_root: Path,
-    monkeypatch: pytest.MonkeyPatch,
-    capsys: pytest.CaptureFixture[str],
+def test_preparation_reports_a_missing_raw_file(
+    tmp_path: Path, raw_root: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     patch_dirs(monkeypatch, tmp_path, raw_root)
-    (raw_root / _common.CSI1000_RAW_SUBDIR / TARGET_DATE / "mo_option_daily.json").unlink()
+    (raw_root / artifacts.CSI1000_RAW_SUBDIR / TARGET_DATE / "mo_option_daily.json").unlink()
 
-    assert build_snapshot.main([TARGET_DATE]) == 1
-    assert "mo_option_daily.json" in capsys.readouterr().err
+    with pytest.raises(SnapshotError, match="mo_option_daily.json"):
+        analysis.build_snapshot(TARGET_DATE)
+
     assert not snapshot_path(tmp_path).exists()
 
 
@@ -703,11 +716,11 @@ def test_invalid_json_shape_fails(
     payload: str,
 ) -> None:
     patch_dirs(monkeypatch, tmp_path, raw_root)
-    dataset_dir = raw_root / _common.CSI1000_RAW_SUBDIR / TARGET_DATE
+    dataset_dir = raw_root / artifacts.CSI1000_RAW_SUBDIR / TARGET_DATE
     (dataset_dir / f"{dataset}.json").write_text(payload, encoding="utf-8")
 
     with pytest.raises(SnapshotError, match=dataset):
-        build_snapshot.build_snapshot(TARGET_DATE)
+        analysis.build_snapshot(TARGET_DATE)
 
 
 def test_non_iso_target_trade_date_fails(
@@ -716,9 +729,7 @@ def test_non_iso_target_trade_date_fails(
     patch_dirs(monkeypatch, tmp_path, raw_root)
 
     with pytest.raises(SnapshotError, match="target_trade_date"):
-        build_snapshot.build_snapshot("20260917")
-
-    assert build_snapshot.main(["20260917"]) == 1
+        analysis.build_snapshot("20260917")
 
 
 def test_underlying_with_fewer_than_120_trading_days_fails(
@@ -733,7 +744,7 @@ def test_underlying_with_fewer_than_120_trading_days_fails(
     write_raw(raw_root, raw)
 
     with pytest.raises(SnapshotError, match="119 distinct trade dates"):
-        build_snapshot.build_snapshot(TARGET_DATE)
+        analysis.build_snapshot(TARGET_DATE)
 
 
 def test_underlying_without_the_target_trade_date_fails(
@@ -747,7 +758,7 @@ def test_underlying_without_the_target_trade_date_fails(
     write_raw(raw_root, raw)
 
     with pytest.raises(SnapshotError, match="no row"):
-        build_snapshot.build_snapshot(TARGET_DATE)
+        analysis.build_snapshot(TARGET_DATE)
 
 
 def test_duplicate_underlying_trade_date_fails(
@@ -759,7 +770,7 @@ def test_duplicate_underlying_trade_date_fails(
     write_raw(raw_root, raw)
 
     with pytest.raises(SnapshotError, match="duplicate"):
-        build_snapshot.build_snapshot(TARGET_DATE)
+        analysis.build_snapshot(TARGET_DATE)
 
 
 def test_underlying_row_of_another_index_fails(
@@ -771,7 +782,7 @@ def test_underlying_row_of_another_index_fails(
     write_raw(raw_root, raw)
 
     with pytest.raises(SnapshotError, match="000852.SH"):
-        build_snapshot.build_snapshot(TARGET_DATE)
+        analysis.build_snapshot(TARGET_DATE)
 
 
 @pytest.mark.parametrize("field", ["close", "high", "pre_close"])
@@ -784,7 +795,7 @@ def test_missing_or_malformed_underlying_number_fails(
     write_raw(raw_root, raw)
 
     with pytest.raises(SnapshotError, match=field):
-        build_snapshot.build_snapshot(TARGET_DATE)
+        analysis.build_snapshot(TARGET_DATE)
 
 
 def test_non_positive_underlying_close_fails(
@@ -796,7 +807,7 @@ def test_non_positive_underlying_close_fails(
     write_raw(raw_root, raw)
 
     with pytest.raises(SnapshotError, match="greater than 0"):
-        build_snapshot.build_snapshot(TARGET_DATE)
+        analysis.build_snapshot(TARGET_DATE)
 
 
 def test_option_quote_field_the_source_omits_stays_null(
@@ -812,7 +823,7 @@ def test_option_quote_field_the_source_omits_stays_null(
     del raw["mo_option_daily"][0]["settle"]
     write_raw(raw_root, raw)
 
-    chain = run_builder(tmp_path, raw_root)["mo_options"]["chain"]
+    chain = run_preparation(tmp_path, raw_root)["mo_options"]["chain"]
 
     missing = next(row for row in chain if row["ts_code"] == raw["mo_option_daily"][0]["ts_code"])
     assert missing["settle"] is None
@@ -840,7 +851,7 @@ def test_unquoted_option_contract_keeps_null_quotes(
     )
     write_raw(raw_root, raw)
 
-    chain = run_builder(tmp_path, raw_root)["mo_options"]["chain"]
+    chain = run_preparation(tmp_path, raw_root)["mo_options"]["chain"]
 
     row = next(entry for entry in chain if entry["ts_code"] == ts_code)
     assert row["open"] is None
@@ -869,7 +880,7 @@ def test_first_trading_day_observation_keeps_a_null_optional_quote(
     first_day["oi_chg"] = None
     write_raw(raw_root, raw)
 
-    history = run_builder(tmp_path, raw_root)["im_futures"]["history"]
+    history = run_preparation(tmp_path, raw_root)["im_futures"]["history"]
 
     observation = next(
         row
@@ -897,7 +908,7 @@ def test_present_but_malformed_option_quote_field_fails(
     write_raw(raw_root, raw)
 
     with pytest.raises(SnapshotError, match=field):
-        build_snapshot.build_snapshot(TARGET_DATE)
+        analysis.build_snapshot(TARGET_DATE)
 
 
 @pytest.mark.parametrize("value", ["7000.0", None])
@@ -910,7 +921,7 @@ def test_malformed_option_strike_fails(
     write_raw(raw_root, raw)
 
     with pytest.raises(SnapshotError, match="exercise_price"):
-        build_snapshot.build_snapshot(TARGET_DATE)
+        analysis.build_snapshot(TARGET_DATE)
 
 
 def test_duplicate_mo_basic_contract_fails(
@@ -922,7 +933,7 @@ def test_duplicate_mo_basic_contract_fails(
     write_raw(raw_root, raw)
 
     with pytest.raises(SnapshotError, match="more than one row"):
-        build_snapshot.build_snapshot(TARGET_DATE)
+        analysis.build_snapshot(TARGET_DATE)
 
 
 def test_duplicate_mo_daily_contract_fails(
@@ -934,7 +945,7 @@ def test_duplicate_mo_daily_contract_fails(
     write_raw(raw_root, raw)
 
     with pytest.raises(SnapshotError, match="more than one row"):
-        build_snapshot.build_snapshot(TARGET_DATE)
+        analysis.build_snapshot(TARGET_DATE)
 
 
 @pytest.mark.parametrize("side", ["basic", "daily"])
@@ -948,7 +959,7 @@ def test_mo_basic_and_daily_set_mismatch_fails(
     write_raw(raw_root, raw)
 
     with pytest.raises(SnapshotError, match="one-to-one"):
-        build_snapshot.build_snapshot(TARGET_DATE)
+        analysis.build_snapshot(TARGET_DATE)
 
 
 def test_mo_daily_of_another_trade_date_fails(
@@ -960,7 +971,7 @@ def test_mo_daily_of_another_trade_date_fails(
     write_raw(raw_root, raw)
 
     with pytest.raises(SnapshotError, match="trade_date"):
-        build_snapshot.build_snapshot(TARGET_DATE)
+        analysis.build_snapshot(TARGET_DATE)
 
 
 def test_empty_mo_chain_fails(
@@ -973,7 +984,7 @@ def test_empty_mo_chain_fails(
     write_raw(raw_root, raw)
 
     with pytest.raises(SnapshotError, match="holds no contract"):
-        build_snapshot.build_snapshot(TARGET_DATE)
+        analysis.build_snapshot(TARGET_DATE)
 
 
 def test_unknown_im_daily_contract_fails(
@@ -985,7 +996,7 @@ def test_unknown_im_daily_contract_fails(
     write_raw(raw_root, raw)
 
     with pytest.raises(SnapshotError, match="maps to no known contract"):
-        build_snapshot.build_snapshot(TARGET_DATE)
+        analysis.build_snapshot(TARGET_DATE)
 
 
 def test_all_im_window_trade_dates_have_an_underlying_close(
@@ -999,7 +1010,7 @@ def test_all_im_window_trade_dates_have_an_underlying_close(
     """
     patch_dirs(monkeypatch, tmp_path, raw_root)
 
-    snapshot = run_builder(tmp_path, raw_root)
+    snapshot = run_preparation(tmp_path, raw_root)
     closes_by_date = {
         row["trade_date"]: row["close"] for row in snapshot["underlying"]["history"]
     }
@@ -1018,7 +1029,7 @@ def test_empty_im_history_fails(
     write_raw(raw_root, raw)
 
     with pytest.raises(SnapshotError, match="no observation inside"):
-        build_snapshot.build_snapshot(TARGET_DATE)
+        analysis.build_snapshot(TARGET_DATE)
 
 
 def test_empty_target_date_curve_fails(
@@ -1032,7 +1043,7 @@ def test_empty_target_date_curve_fails(
     write_raw(raw_root, raw)
 
     with pytest.raises(SnapshotError, match="target-date futures curve"):
-        build_snapshot.build_snapshot(TARGET_DATE)
+        analysis.build_snapshot(TARGET_DATE)
 
 
 def test_missing_im_number_fails(
@@ -1044,7 +1055,7 @@ def test_missing_im_number_fails(
     write_raw(raw_root, raw)
 
     with pytest.raises(SnapshotError, match="oi_chg"):
-        build_snapshot.build_snapshot(TARGET_DATE)
+        analysis.build_snapshot(TARGET_DATE)
 
 
 def test_im_missing_close_fails(
@@ -1057,7 +1068,7 @@ def test_im_missing_close_fails(
     write_raw(raw_root, raw)
 
     with pytest.raises(SnapshotError, match="close"):
-        build_snapshot.build_snapshot(TARGET_DATE)
+        analysis.build_snapshot(TARGET_DATE)
 
 
 def test_im_snapshot_does_not_copy_unselected_raw_fields(
@@ -1076,7 +1087,7 @@ def test_im_snapshot_does_not_copy_unselected_raw_fields(
     assert extra_fields <= set(raw["im_futures_daily"][0])
     write_raw(raw_root, raw)
 
-    im_futures = run_builder(tmp_path, raw_root)["im_futures"]
+    im_futures = run_preparation(tmp_path, raw_root)["im_futures"]
 
     for observation in im_futures["history"]:
         assert not extra_fields & set(observation)
@@ -1090,7 +1101,7 @@ def test_no_analysis_fields_leak_into_the_snapshot(
     """Guide 2.2 / 7.5 / 13: no analyzer conclusion may appear."""
     patch_dirs(monkeypatch, tmp_path, raw_root)
 
-    snapshot = run_builder(tmp_path, raw_root)
+    snapshot = run_preparation(tmp_path, raw_root)
 
     # Exact field names come from the serialized form, so the check does not
     # fire on an allowed name, such as ``derived``, that merely contains one.

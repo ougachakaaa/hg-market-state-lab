@@ -1,6 +1,10 @@
-"""Tests for the Data Service CLI (``scripts/dms.py``).
+"""Tests for the Data Service CLI (``scripts/dms.py`` -> ``cli.main``).
 
 Authority: ``guides/data-services.md``.
+
+The CLI resolves a Data Service from the explicit catalog, validates its own
+input and reports the result; the orchestration it triggers belongs to
+``services/csi1000_5d_analysis.py``.
 
 Everything runs against a fake Source and temporary Raw / output directories: no
 test touches the network, the repository's real ``data/raw`` or its real
@@ -15,9 +19,10 @@ from typing import Any
 
 import pytest
 
-import _common
-import dms
-from fake_source import (
+from daily_market_snapshot import artifacts, cli
+from daily_market_snapshot.services import catalog
+from daily_market_snapshot.sources import tushare
+from support.fake_source import (
     CSI1000_INDEX_CODE,
     CSI1000_MO_CODES,
     CSI1000_TARGET_DATE,
@@ -38,8 +43,8 @@ RAW_DATASETS = (
 
 def patch_source(monkeypatch: pytest.MonkeyPatch, api: FakeTushareApi) -> None:
     """Serve every Source request from the fake Source instead of Tushare."""
-    monkeypatch.setenv(_common.TOKEN_ENV_VAR, "local-token")
-    monkeypatch.setattr(_common, "create_tushare_api", lambda token: api)
+    monkeypatch.setenv(tushare.TOKEN_ENV_VAR, "local-token")
+    monkeypatch.setattr(tushare, "create_tushare_api", lambda token: api)
 
 
 @pytest.fixture
@@ -55,12 +60,12 @@ def output_root(tmp_path: Path) -> Path:
 
 
 def dataset_dir(raw_root: Path) -> Path:
-    return raw_root / _common.CSI1000_RAW_SUBDIR / TARGET_DATE
+    return raw_root / artifacts.CSI1000_RAW_SUBDIR / TARGET_DATE
 
 
 def output_path(output_root: Path) -> Path:
     """The canonical Data Service artifact of the request."""
-    return output_root / _common.CSI1000_RAW_SUBDIR / TARGET_DATE / "snapshot.json"
+    return output_root / artifacts.CSI1000_RAW_SUBDIR / TARGET_DATE / "snapshot.json"
 
 
 def read_records(directory: Path, dataset: str) -> list[dict[str, Any]]:
@@ -77,31 +82,31 @@ def read_records(directory: Path, dataset: str) -> list[dict[str, Any]]:
 def test_list_prints_the_catalog_entry_and_returns_success(
     capsys: pytest.CaptureFixture[str],
 ) -> None:
-    assert dms.main(["list"]) == 0
+    assert cli.main(["list"]) == 0
 
     lines = [line for line in capsys.readouterr().out.splitlines() if line.strip()]
-    assert len(lines) == len(dms.CATALOG)
+    assert len(lines) == len(catalog.CATALOG)
     service_id, description = lines[0].split("\t")
     assert service_id == SERVICE_ID
     assert description.strip()
 
 
 def test_list_order_is_stable(capsys: pytest.CaptureFixture[str]) -> None:
-    """The catalogue is explicit and static, not discovered by scanning."""
-    dms.main(["list"])
+    """The catalog is explicit and static, not discovered by scanning."""
+    cli.main(["list"])
     first = capsys.readouterr().out
 
-    dms.main(["list"])
+    cli.main(["list"])
     second = capsys.readouterr().out
 
     assert first == second
     assert [line.split("\t")[0] for line in first.splitlines()] == [
-        service.service_id for service in dms.CATALOG
+        service.service_id for service in catalog.CATALOG
     ]
 
 
 def test_catalog_holds_exactly_the_authority_locked_service() -> None:
-    assert [service.service_id for service in dms.CATALOG] == [SERVICE_ID]
+    assert [service.service_id for service in catalog.CATALOG] == [SERVICE_ID]
 
 
 # ---------------------------------------------------------------------------
@@ -115,10 +120,10 @@ def test_unknown_service_fails_without_touching_the_source(
     def unreachable(*args: Any, **kwargs: Any) -> Any:
         raise AssertionError("an unknown service must fail before any Source call")
 
-    monkeypatch.setattr(_common, "get_tushare_token", unreachable)
-    monkeypatch.setattr(_common, "create_tushare_api", unreachable)
+    monkeypatch.setattr(tushare, "get_tushare_token", unreachable)
+    monkeypatch.setattr(tushare, "create_tushare_api", unreachable)
 
-    assert dms.main(["get", "no-such-service", "--date", TARGET_DATE]) != 0
+    assert cli.main(["get", "no-such-service", "--date", TARGET_DATE]) != 0
 
     captured = capsys.readouterr()
     assert "no-such-service" in captured.err
@@ -136,10 +141,10 @@ def test_invalid_date_fails_without_touching_the_source(
     def unreachable(*args: Any, **kwargs: Any) -> Any:
         raise AssertionError("an invalid date must fail before any Source call")
 
-    monkeypatch.setattr(_common, "get_tushare_token", unreachable)
-    monkeypatch.setattr(_common, "create_tushare_api", unreachable)
+    monkeypatch.setattr(tushare, "get_tushare_token", unreachable)
+    monkeypatch.setattr(tushare, "create_tushare_api", unreachable)
 
-    assert dms.main(["get", SERVICE_ID, "--date", value]) != 0
+    assert cli.main(["get", SERVICE_ID, "--date", value]) != 0
 
     captured = capsys.readouterr()
     assert "invalid date" in captured.err
@@ -148,7 +153,7 @@ def test_invalid_date_fails_without_touching_the_source(
 
 def test_missing_date_argument_is_rejected() -> None:
     with pytest.raises(SystemExit) as excinfo:
-        dms.main(["get", SERVICE_ID])
+        cli.main(["get", SERVICE_ID])
 
     assert excinfo.value.code != 0
 
@@ -166,12 +171,12 @@ def test_get_runs_the_whole_orchestration_and_writes_the_canonical_artifact(
 ) -> None:
     api = csi1000_5d_analysis_api()
     patch_source(monkeypatch, api)
-    monkeypatch.setattr(_common, "RAW_DIR", raw_root)
-    monkeypatch.setattr(_common, "OUTPUT_DIR", output_root)
+    monkeypatch.setattr(artifacts, "RAW_DIR", raw_root)
+    monkeypatch.setattr(artifacts, "OUTPUT_DIR", output_root)
 
-    assert dms.main(["get", SERVICE_ID, "--date", TARGET_DATE]) == 0
+    assert cli.main(["get", SERVICE_ID, "--date", TARGET_DATE]) == 0
 
-    # All five Raw artifacts were collected for the requested target date.
+    # All five Raw Artifacts were collected for the requested target date.
     written = dataset_dir(raw_root)
     assert sorted(path.name for path in written.iterdir()) == [
         f"{dataset}.json" for dataset in sorted(RAW_DATASETS)
@@ -187,7 +192,7 @@ def test_get_runs_the_whole_orchestration_and_writes_the_canonical_artifact(
         CSI1000_MO_CODES
     )
 
-    # The Snapshot Assembly ran on exactly those Raw artifacts.
+    # The Analysis Preparation ran on exactly those Raw Artifacts.
     snapshot: dict[str, Any] = json.loads(output_path(output_root).read_text(encoding="utf-8"))
     assert snapshot["target_trade_date"] == TARGET_DATE
     assert len(snapshot["underlying"]["history"]) == 120
@@ -207,31 +212,14 @@ def test_get_prints_an_output_path_that_exists(
     capsys: pytest.CaptureFixture[str],
 ) -> None:
     patch_source(monkeypatch, csi1000_5d_analysis_api())
-    monkeypatch.setattr(_common, "RAW_DIR", raw_root)
-    monkeypatch.setattr(_common, "OUTPUT_DIR", output_root)
+    monkeypatch.setattr(artifacts, "RAW_DIR", raw_root)
+    monkeypatch.setattr(artifacts, "OUTPUT_DIR", output_root)
 
-    dms.main(["get", SERVICE_ID, "--date", TARGET_DATE])
+    cli.main(["get", SERVICE_ID, "--date", TARGET_DATE])
 
     report: dict[str, str] = json.loads(capsys.readouterr().out)
     assert Path(report["output_path"]) == output_path(output_root)
     assert Path(report["output_path"]).is_file()
-
-
-def test_orchestration_returns_the_canonical_output_path(
-    raw_root: Path, output_root: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    """The output contract is ``output/<service>/<date>/snapshot.json``."""
-    monkeypatch.setattr(_common, "RAW_DIR", raw_root)
-    monkeypatch.setattr(_common, "OUTPUT_DIR", output_root)
-
-    path = dms.run_csi1000_5d_analysis(csi1000_5d_analysis_api(), TARGET_DATE)
-
-    assert path == output_path(output_root)
-    assert path.is_file()
-    assert path.name == "snapshot.json"
-    assert path.parent.name == TARGET_DATE
-    assert path.parent.parent.name == SERVICE_ID
-    assert path.parent.parent.parent == output_root
 
 
 # ---------------------------------------------------------------------------
@@ -250,10 +238,10 @@ def test_a_failing_collection_stage_stops_the_chain_and_writes_no_output(
     api = csi1000_5d_analysis_api()
     api.option_basic = api.option_basic.iloc[0:0]
     patch_source(monkeypatch, api)
-    monkeypatch.setattr(_common, "RAW_DIR", raw_root)
-    monkeypatch.setattr(_common, "OUTPUT_DIR", output_root)
+    monkeypatch.setattr(artifacts, "RAW_DIR", raw_root)
+    monkeypatch.setattr(artifacts, "OUTPUT_DIR", output_root)
 
-    assert dms.main(["get", SERVICE_ID, "--date", TARGET_DATE]) != 0
+    assert cli.main(["get", SERVICE_ID, "--date", TARGET_DATE]) != 0
 
     captured = capsys.readouterr()
     assert f"service={SERVICE_ID}" in captured.err
@@ -261,7 +249,7 @@ def test_a_failing_collection_stage_stops_the_chain_and_writes_no_output(
     assert "stage=mo_option_basic" in captured.err
     assert captured.out == ""
 
-    # The chain stopped: no later Dataset was collected, nothing was assembled.
+    # The chain stopped: no later Dataset was collected, nothing was prepared.
     written = dataset_dir(raw_root)
     assert sorted(path.name for path in written.iterdir()) == ["index_daily_history.json"]
     assert not output_path(output_root).exists()
@@ -278,10 +266,10 @@ def test_a_failing_daily_stage_reports_itself_and_stops_the_chain(
     # whole active universe.
     api.option_daily = api.option_daily.iloc[0:1]
     patch_source(monkeypatch, api)
-    monkeypatch.setattr(_common, "RAW_DIR", raw_root)
-    monkeypatch.setattr(_common, "OUTPUT_DIR", output_root)
+    monkeypatch.setattr(artifacts, "RAW_DIR", raw_root)
+    monkeypatch.setattr(artifacts, "OUTPUT_DIR", output_root)
 
-    assert dms.main(["get", SERVICE_ID, "--date", TARGET_DATE]) != 0
+    assert cli.main(["get", SERVICE_ID, "--date", TARGET_DATE]) != 0
 
     captured = capsys.readouterr()
     assert "stage=mo_option_daily" in captured.err
@@ -290,36 +278,4 @@ def test_a_failing_daily_stage_reports_itself_and_stops_the_chain(
         "index_daily_history.json",
         "mo_option_basic.json",
     ]
-    assert not output_path(output_root).exists()
-
-
-def test_a_failing_snapshot_stage_is_reported_and_writes_no_output(
-    raw_root: Path, output_root: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    """The Snapshot Assembly is a stage: an unusable Raw artifact fails it.
-
-    The five collection stages enforce enough completeness that the assembly
-    normally succeeds, so the failure is injected into the collected Raw artifact
-    to reach the assembly error path of the CLI.
-    """
-    api = csi1000_5d_analysis_api()
-    patch_source(monkeypatch, api)
-    monkeypatch.setattr(_common, "RAW_DIR", raw_root)
-    monkeypatch.setattr(_common, "OUTPUT_DIR", output_root)
-
-    write_raw = _common.write_raw_dataset
-
-    def write_then_damage(records: Any, dataset_dir: Path, dataset: str) -> Path:
-        path = write_raw(records, dataset_dir, dataset)
-        if dataset == "index_daily_history":
-            # Fewer than the 120 trading rows the Snapshot Definition needs.
-            history = read_records(dataset_dir, "index_daily_history")
-            path.write_text(json.dumps(history[:40]), encoding="utf-8")
-        return path
-
-    monkeypatch.setattr(_common, "write_raw_dataset", write_then_damage)
-
-    with pytest.raises(dms.DataServiceError, match="stage=snapshot_assembly"):
-        dms.orchestrate_csi1000_5d_analysis(api, TARGET_DATE, raw_root, output_root)
-
     assert not output_path(output_root).exists()

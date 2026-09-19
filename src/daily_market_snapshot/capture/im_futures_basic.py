@@ -1,11 +1,13 @@
-"""Collect the ``im_futures_basic`` Raw Dataset.
+"""Source Capture ``im_futures_basic``: the IM ordinary monthly contract facts.
 
 Source: Tushare ``fut_basic`` (see ``guides/csi1000-5d-analysis-data.md`` 4.4
 and 5.2). The Dataset holds the ordinary monthly IM contracts, not the main /
 continuous contracts and not any other CFFEX product.
 
-Usage:
-    poetry run python scripts/fetch_im_futures_basic.py 2026-09-17
+Development / debugging entrypoint (the Data Service CLI is the canonical user
+interface, see ``guides/data-services.md`` 11):
+
+    poetry run python -m daily_market_snapshot.capture.im_futures_basic 2026-09-17
 """
 
 from __future__ import annotations
@@ -13,13 +15,12 @@ from __future__ import annotations
 import argparse
 import sys
 from collections.abc import Sequence
-from pathlib import Path
 
 import pandas as pd
 
-sys.path.insert(0, str(Path(__file__).resolve().parent))
-
-import _common  # noqa: E402
+from .. import artifacts
+from ..sources import tushare
+from . import common
 
 DATASET = "im_futures_basic"
 # Dataset membership of the IM universe (Guide 5.2): the Source parameters
@@ -30,13 +31,13 @@ PRODUCT = "IM"
 
 
 def query_fut_basic(
-    api: _common.TushareApi, exchange: str, fut_type: str, fut_code: str
+    api: tushare.TushareApi, exchange: str, fut_type: str, fut_code: str
 ) -> pd.DataFrame:
     """Read ordinary CFFEX futures contracts of one product from ``fut_basic``."""
     return api.fut_basic(exchange=exchange, fut_type=fut_type, fut_code=fut_code)
 
 
-def is_ordinary_monthly_contract(record: _common.RawRecord) -> bool:
+def is_ordinary_monthly_contract(record: artifacts.RawRecord) -> bool:
     """Report whether a Source fact is an ordinary monthly contract.
 
     ``fut_basic(fut_type="1")`` should only return ordinary contracts, but the
@@ -48,7 +49,7 @@ def is_ordinary_monthly_contract(record: _common.RawRecord) -> bool:
     return symbol.startswith(PRODUCT) and symbol[len(PRODUCT) :].isdigit()
 
 
-def is_im_contract_member(record: _common.RawRecord) -> bool:
+def is_im_contract_member(record: artifacts.RawRecord) -> bool:
     """Report whether a Source fact belongs to the IM ordinary contract Dataset.
 
     Dataset membership is decided by the contract identity only: ``CFFEX``,
@@ -63,7 +64,7 @@ def is_im_contract_member(record: _common.RawRecord) -> bool:
     )
 
 
-def select_im_contracts(frame: pd.DataFrame) -> list[_common.RawRecord]:
+def select_im_contracts(frame: pd.DataFrame) -> list[artifacts.RawRecord]:
     """Return the ordinary monthly IM contract facts of a ``fut_basic`` response.
 
     The Source is already asked for ``CFFEX`` / ordinary / ``IM``; the checks
@@ -71,13 +72,13 @@ def select_im_contracts(frame: pd.DataFrame) -> list[_common.RawRecord]:
     respect the request, and never filter on liquidity or trading activity.
     """
     records = [
-        record for record in _common.to_raw_records(frame) if is_im_contract_member(record)
+        record for record in common.to_raw_records(frame) if is_im_contract_member(record)
     ]
     records.sort(key=lambda record: str(record["ts_code"]))
     return records
 
 
-def require_im_contract_facts(records: Sequence[_common.RawRecord]) -> None:
+def require_im_contract_facts(records: Sequence[artifacts.RawRecord]) -> None:
     """Ensure the collected contract facts are complete and can express a lifecycle.
 
     Every member contract needs a usable ``list_date`` and ``delist_date``, and
@@ -86,32 +87,32 @@ def require_im_contract_facts(records: Sequence[_common.RawRecord]) -> None:
     Dataset.
     """
     if not records:
-        raise _common.CollectionError(
+        raise common.CollectionError(
             f"Tushare {DATASET} returned no {PRODUCT} contract of exchange={EXCHANGE}."
         )
     codes = [str(record["ts_code"]) for record in records]
     duplicates = sorted({code for code in codes if codes.count(code) > 1})
     if duplicates:
-        raise _common.CollectionError(
+        raise common.CollectionError(
             f"Tushare {DATASET} returned duplicate contract(s): {', '.join(duplicates[:5])}."
         )
     for record in records:
-        list_date = _common.to_iso_date_or_none(record.get("list_date"))
-        delist_date = _common.to_iso_date_or_none(record.get("delist_date"))
+        list_date = tushare.to_iso_date_or_none(record.get("list_date"))
+        delist_date = tushare.to_iso_date_or_none(record.get("delist_date"))
         if list_date is None or delist_date is None:
-            raise _common.CollectionError(
+            raise common.CollectionError(
                 f"{PRODUCT} contract {record.get('ts_code')} has no usable lifecycle facts "
                 f"in Tushare {DATASET} (list_date={record.get('list_date')!r}, "
                 f"delist_date={record.get('delist_date')!r})."
             )
         if delist_date < list_date:
-            raise _common.CollectionError(
+            raise common.CollectionError(
                 f"{PRODUCT} contract {record.get('ts_code')} has delist_date={delist_date} "
                 f"before list_date={list_date}."
             )
 
 
-def collect_active_im_contracts(query: _common.QueryFunc) -> list[_common.RawRecord]:
+def collect_active_im_contracts(query: common.QueryFunc) -> list[artifacts.RawRecord]:
     """Return the IM contract facts the Source currently lists.
 
     Used by the IM daily Collector to identify the contracts of its history
@@ -124,36 +125,39 @@ def collect_active_im_contracts(query: _common.QueryFunc) -> list[_common.RawRec
     return records
 
 
-def collect_im_futures_basic(trade_date: str, query: _common.QueryFunc) -> list[_common.RawRecord]:
+def collect_im_futures_basic(
+    trade_date: str, query: common.QueryFunc
+) -> list[artifacts.RawRecord]:
     """Return the ``im_futures_basic`` records for the given target trade date.
 
     ``fut_basic`` is a contract list without a trade date of its own, so the
-    target trade date only validates the script-level date form. Contract
+    target trade date only validates the project-level date form. Contract
     lifecycle facts are kept as Source facts, delisted contracts included, and a
     member contract with incomplete lifecycle facts fails the collection.
     """
-    # Reject a malformed script-level date before any Source request.
-    _common.to_tushare_date(trade_date)
+    # Reject a malformed project-level date before any Source request.
+    tushare.to_tushare_date(trade_date)
     return collect_active_im_contracts(query)
 
 
 def main(argv: Sequence[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(description=f"Collect the {DATASET} Raw Dataset.")
+    parser = argparse.ArgumentParser(description=f"Collect the {DATASET} Raw artifact.")
     parser.add_argument("trade_date", help="Target trade date in YYYY-MM-DD form.")
     args = parser.parse_args(argv)
 
     try:
-        api = _common.create_tushare_api(_common.get_tushare_token())
+        api = tushare.create_tushare_api(tushare.get_tushare_token())
         records = collect_im_futures_basic(
             args.trade_date,
             lambda **kwargs: query_fut_basic(api, **kwargs),
         )
-    except _common.CollectionError as exc:
+    except common.CAPTURE_FAILURE_TYPES as exc:
         print(f"error: {exc}", file=sys.stderr)
         return 1
 
-    dataset_dir = _common.RAW_DIR / _common.CSI1000_RAW_SUBDIR / args.trade_date
-    path = _common.write_raw_dataset(records, dataset_dir, DATASET)
+    path = artifacts.write_raw_artifact(
+        records, artifacts.csi1000_raw_dir(args.trade_date), DATASET
+    )
     print(f"wrote {len(records)} records to {path}")
     return 0
 

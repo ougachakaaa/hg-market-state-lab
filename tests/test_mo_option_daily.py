@@ -1,13 +1,14 @@
-﻿import json
+import json
 from pathlib import Path
 from typing import Any
 
 import pandas as pd
 import pytest
 
-import _common
-import fetch_mo_option_daily
-from fake_source import (
+from daily_market_snapshot import artifacts
+from daily_market_snapshot.capture import common, mo_option_daily
+from daily_market_snapshot.sources import tushare
+from support.fake_source import (
     FakeTushareApi,
     mo_option_contract,
     option_basic_frame,
@@ -48,8 +49,8 @@ def fake_api(
     )
 
 
-def collect(api: FakeTushareApi) -> list[_common.RawRecord]:
-    return fetch_mo_option_daily.collect_mo_option_daily(
+def collect(api: FakeTushareApi) -> list[artifacts.RawRecord]:
+    return mo_option_daily.collect_mo_option_daily(
         TARGET_DATE,
         api.option_basic,
         lambda **kwargs: api.opt_daily(**kwargs),
@@ -111,28 +112,28 @@ def test_daily_row_of_an_inactive_mo_contract_is_ignored() -> None:
 def test_missing_active_mo_daily_row_is_an_error() -> None:
     api = fake_api(daily_contracts=ACTIVE_CODES[:-1])
 
-    with pytest.raises(_common.CollectionError, match="no daily row"):
+    with pytest.raises(common.CollectionError, match="no daily row"):
         collect(api)
 
 
 def test_duplicate_active_mo_daily_row_is_an_error() -> None:
     api = fake_api(daily_contracts=[*ACTIVE_CODES, ACTIVE_CODES[0]])
 
-    with pytest.raises(_common.CollectionError, match="more than one row"):
+    with pytest.raises(common.CollectionError, match="more than one row"):
         collect(api)
 
 
 def test_universe_without_active_contract_is_an_error() -> None:
     api = fake_api(basic_contracts=[DELISTED_CONTRACT])
 
-    with pytest.raises(_common.CollectionError):
+    with pytest.raises(common.CollectionError):
         collect(api)
 
 
 def test_source_without_daily_rows_is_an_error() -> None:
     api = fake_api(daily_contracts=[])
 
-    with pytest.raises(_common.CollectionError):
+    with pytest.raises(common.CollectionError):
         collect(api)
 
 
@@ -142,7 +143,7 @@ def test_daily_rows_of_another_trade_date_are_an_error() -> None:
         [str(contract["ts_code"]) for contract in ACTIVE_CONTRACTS], trade_date="20260916"
     )
 
-    with pytest.raises(_common.CollectionError):
+    with pytest.raises(common.CollectionError):
         collect(api)
 
 
@@ -180,16 +181,16 @@ def test_static_contract_facts_are_not_joined_into_daily_raw() -> None:
 def test_main_writes_raw_dataset_file(
     test_workdir: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
 ) -> None:
-    monkeypatch.setenv(_common.TOKEN_ENV_VAR, "local-token")
+    monkeypatch.setenv(tushare.TOKEN_ENV_VAR, "local-token")
     api = fake_api()
-    monkeypatch.setattr(_common, "create_tushare_api", lambda token: api)
+    monkeypatch.setattr(tushare, "create_tushare_api", lambda token: api)
 
-    exit_code = fetch_mo_option_daily.main([TARGET_DATE])
+    exit_code = mo_option_daily.main([TARGET_DATE])
 
     assert exit_code == 0
     assert api.opt_basic_calls == [{"exchange": "CFFEX", "list_date": ""}]
     raw_path = (
-        test_workdir / "raw" / _common.CSI1000_RAW_SUBDIR / TARGET_DATE / "mo_option_daily.json"
+        test_workdir / "raw" / artifacts.CSI1000_RAW_SUBDIR / TARGET_DATE / "mo_option_daily.json"
     )
     records = json.loads(raw_path.read_text(encoding="utf-8"))
     assert len(records) == len(ACTIVE_CONTRACTS)
@@ -198,22 +199,22 @@ def test_main_writes_raw_dataset_file(
 
 
 def test_main_fails_without_token(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.delenv(_common.TOKEN_ENV_VAR, raising=False)
+    monkeypatch.delenv(tushare.TOKEN_ENV_VAR, raising=False)
 
-    def unreachable_api(token: str) -> _common.TushareApi:
+    def unreachable_api(token: str) -> tushare.TushareApi:
         raise AssertionError("no credential must mean no Source client")
 
-    monkeypatch.setattr(_common, "create_tushare_api", unreachable_api)
+    monkeypatch.setattr(tushare, "create_tushare_api", unreachable_api)
 
-    assert fetch_mo_option_daily.main([TARGET_DATE]) == 1
+    assert mo_option_daily.main([TARGET_DATE]) == 1
 
 
 def test_main_rejects_non_iso_trade_date(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setenv(_common.TOKEN_ENV_VAR, "local-token")
+    monkeypatch.setenv(tushare.TOKEN_ENV_VAR, "local-token")
     api = fake_api()
-    monkeypatch.setattr(_common, "create_tushare_api", lambda token: api)
+    monkeypatch.setattr(tushare, "create_tushare_api", lambda token: api)
 
-    exit_code = fetch_mo_option_daily.main(["20260917"])
+    exit_code = mo_option_daily.main(["20260917"])
 
     assert exit_code == 1
     assert api.opt_daily_calls == []

@@ -1,12 +1,13 @@
-﻿import json
+import json
 from pathlib import Path
 from typing import Any
 
 import pytest
 
-import _common
-import fetch_mo_option_basic
-from fake_source import FakeTushareApi, mo_option_contract, option_basic_frame
+from daily_market_snapshot import artifacts
+from daily_market_snapshot.capture import common, mo_option_basic
+from daily_market_snapshot.sources import tushare
+from support.fake_source import FakeTushareApi, mo_option_contract, option_basic_frame
 
 TARGET_DATE = "2026-09-17"
 ACTIVE_CONTRACTS = [
@@ -46,8 +47,8 @@ def fake_api(contracts: list[dict[str, Any]] | None = None) -> FakeTushareApi:
     )
 
 
-def collect(api: FakeTushareApi) -> list[_common.RawRecord]:
-    return fetch_mo_option_basic.collect_mo_option_basic(
+def collect(api: FakeTushareApi) -> list[artifacts.RawRecord]:
+    return mo_option_basic.collect_mo_option_basic(
         TARGET_DATE, lambda **kwargs: api.opt_basic(**kwargs)
     )
 
@@ -91,7 +92,7 @@ def test_lifecycle_boundary_is_inclusive(
     if included:
         assert [record["ts_code"] for record in collect(api)] == ["MO2609-C-7000.CFE"]
     else:
-        with pytest.raises(_common.CollectionError):
+        with pytest.raises(common.CollectionError):
             collect(api)
 
 
@@ -111,7 +112,7 @@ def test_mo_contract_without_lifecycle_facts_is_an_error(
         "MO2609-C-7000.CFE", call_put="C", list_date=list_date, delist_date=delist_date
     )
 
-    with pytest.raises(_common.CollectionError, match="lifecycle"):
+    with pytest.raises(common.CollectionError, match="lifecycle"):
         collect(fake_api([contract]))
 
 
@@ -120,7 +121,7 @@ def test_lifecycle_ending_before_it_starts_is_an_error() -> None:
         "MO2609-C-7000.CFE", call_put="C", list_date="20260901", delist_date="20260801"
     )
 
-    with pytest.raises(_common.CollectionError, match="before"):
+    with pytest.raises(common.CollectionError, match="before"):
         collect(fake_api([contract]))
 
 
@@ -192,24 +193,24 @@ def test_mo_membership_follows_the_source_product_identity(
     """The real Source identifies the product by its underlying index code."""
     record = {**mo_option_contract("MO2609-C-7000.CFE", call_put="C"), "opt_code": opt_code}
 
-    assert fetch_mo_option_basic.is_mo_option(record) is is_member
+    assert mo_option_basic.is_mo_option(record) is is_member
 
 
 def test_source_without_mo_contracts_is_an_error() -> None:
-    with pytest.raises(_common.CollectionError):
+    with pytest.raises(common.CollectionError):
         collect(FakeTushareApi())
 
 
 def test_source_without_active_mo_contract_is_an_error() -> None:
-    with pytest.raises(_common.CollectionError):
+    with pytest.raises(common.CollectionError):
         collect(fake_api(OUT_OF_LIFECYCLE_CONTRACTS))
 
 
 def test_non_iso_trade_date_is_an_error_before_the_source_call() -> None:
     api = fake_api()
 
-    with pytest.raises(_common.CollectionError):
-        fetch_mo_option_basic.collect_mo_option_basic(
+    with pytest.raises(tushare.TushareDateError):
+        mo_option_basic.collect_mo_option_basic(
             "20260917", lambda **kwargs: api.opt_basic(**kwargs)
         )
 
@@ -219,15 +220,15 @@ def test_non_iso_trade_date_is_an_error_before_the_source_call() -> None:
 def test_main_writes_raw_dataset_file(
     test_workdir: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
 ) -> None:
-    monkeypatch.setenv(_common.TOKEN_ENV_VAR, "local-token")
+    monkeypatch.setenv(tushare.TOKEN_ENV_VAR, "local-token")
     api = fake_api()
-    monkeypatch.setattr(_common, "create_tushare_api", lambda token: api)
+    monkeypatch.setattr(tushare, "create_tushare_api", lambda token: api)
 
-    exit_code = fetch_mo_option_basic.main([TARGET_DATE])
+    exit_code = mo_option_basic.main([TARGET_DATE])
 
     assert exit_code == 0
     raw_path = (
-        test_workdir / "raw" / _common.CSI1000_RAW_SUBDIR / TARGET_DATE / "mo_option_basic.json"
+        test_workdir / "raw" / artifacts.CSI1000_RAW_SUBDIR / TARGET_DATE / "mo_option_basic.json"
     )
     records = json.loads(raw_path.read_text(encoding="utf-8"))
     assert [record["ts_code"] for record in records] == [
@@ -240,11 +241,11 @@ def test_main_writes_raw_dataset_file(
 
 
 def test_main_fails_without_token(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.delenv(_common.TOKEN_ENV_VAR, raising=False)
+    monkeypatch.delenv(tushare.TOKEN_ENV_VAR, raising=False)
 
-    def unreachable_api(token: str) -> _common.TushareApi:
+    def unreachable_api(token: str) -> tushare.TushareApi:
         raise AssertionError("no credential must mean no Source client")
 
-    monkeypatch.setattr(_common, "create_tushare_api", unreachable_api)
+    monkeypatch.setattr(tushare, "create_tushare_api", unreachable_api)
 
-    assert fetch_mo_option_basic.main([TARGET_DATE]) == 1
+    assert mo_option_basic.main([TARGET_DATE]) == 1

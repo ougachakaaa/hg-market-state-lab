@@ -3,15 +3,15 @@ from pathlib import Path
 
 import pytest
 
-import _common
-import fetch_stock_daily
-from fake_source import FakeTushareApi, stock_daily_frame
+from daily_market_snapshot.capture import stock_daily
+from daily_market_snapshot.sources import tushare
+from support.fake_source import FakeTushareApi, stock_daily_frame
 
 
 def test_uses_requested_trade_date_in_source_form() -> None:
     api = FakeTushareApi(stock_frame=stock_daily_frame())
 
-    fetch_stock_daily.collect_stock_daily("2026-09-17", lambda **kwargs: api.daily(**kwargs))
+    stock_daily.collect_stock_daily("2026-09-17", lambda **kwargs: api.daily(**kwargs))
 
     assert api.daily_calls == [{"trade_date": "20260917"}]
 
@@ -19,7 +19,7 @@ def test_uses_requested_trade_date_in_source_form() -> None:
 def test_source_records_become_raw_records() -> None:
     api = FakeTushareApi(stock_frame=stock_daily_frame())
 
-    records = fetch_stock_daily.collect_stock_daily(
+    records = stock_daily.collect_stock_daily(
         "2026-09-17", lambda **kwargs: api.daily(**kwargs)
     )
 
@@ -42,7 +42,7 @@ def test_source_records_become_raw_records() -> None:
 def test_records_keep_source_pct_chg_without_recalculation() -> None:
     api = FakeTushareApi(stock_frame=stock_daily_frame())
 
-    records = fetch_stock_daily.collect_stock_daily(
+    records = stock_daily.collect_stock_daily(
         "2026-09-17", lambda **kwargs: api.daily(**kwargs)
     )
 
@@ -52,7 +52,7 @@ def test_records_keep_source_pct_chg_without_recalculation() -> None:
 def test_raw_layer_adds_no_snapshot_fields() -> None:
     api = FakeTushareApi(stock_frame=stock_daily_frame())
 
-    records = fetch_stock_daily.collect_stock_daily(
+    records = stock_daily.collect_stock_daily(
         "2026-09-17", lambda **kwargs: api.daily(**kwargs)
     )
 
@@ -69,29 +69,25 @@ def test_raw_layer_adds_no_snapshot_fields() -> None:
 def test_source_without_data_is_an_error() -> None:
     api = FakeTushareApi()
 
-    with pytest.raises(_common.CollectionError):
-        fetch_stock_daily.collect_stock_daily(
-            "2026-09-17", lambda **kwargs: api.daily(**kwargs)
-        )
+    with pytest.raises(tushare.TushareSourceError):
+        stock_daily.collect_stock_daily("2026-09-17", lambda **kwargs: api.daily(**kwargs))
 
 
 def test_date_mismatch_from_source_is_an_error() -> None:
     api = FakeTushareApi(stock_frame=stock_daily_frame(trade_date="20260916"))
 
-    with pytest.raises(_common.CollectionError):
-        fetch_stock_daily.collect_stock_daily(
-            "2026-09-17", lambda **kwargs: api.daily(**kwargs)
-        )
+    with pytest.raises(tushare.TushareSourceError):
+        stock_daily.collect_stock_daily("2026-09-17", lambda **kwargs: api.daily(**kwargs))
 
 
 def test_main_writes_raw_dataset_file(
     test_workdir: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
 ) -> None:
-    monkeypatch.setenv(_common.TOKEN_ENV_VAR, "local-token")
+    monkeypatch.setenv(tushare.TOKEN_ENV_VAR, "local-token")
     api = FakeTushareApi(stock_frame=stock_daily_frame())
-    monkeypatch.setattr(_common, "create_tushare_api", lambda token: api)
+    monkeypatch.setattr(tushare, "create_tushare_api", lambda token: api)
 
-    exit_code = fetch_stock_daily.main(["2026-09-17"])
+    exit_code = stock_daily.main(["2026-09-17"])
 
     assert exit_code == 0
     raw_path = test_workdir / "raw" / "2026-09-17" / "stock_daily.json"
@@ -105,29 +101,29 @@ def test_main_writes_raw_dataset_file(
 def test_main_fails_without_token(
     monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
 ) -> None:
-    monkeypatch.delenv(_common.TOKEN_ENV_VAR, raising=False)
+    monkeypatch.delenv(tushare.TOKEN_ENV_VAR, raising=False)
     called = False
 
-    def unreachable_api(token: str) -> _common.TushareApi:
+    def unreachable_api(token: str) -> tushare.TushareApi:
         nonlocal called
         called = True
         raise AssertionError("no credential must mean no Source client")
 
-    monkeypatch.setattr(_common, "create_tushare_api", unreachable_api)
+    monkeypatch.setattr(tushare, "create_tushare_api", unreachable_api)
 
-    exit_code = fetch_stock_daily.main(["2026-09-17"])
+    exit_code = stock_daily.main(["2026-09-17"])
 
     assert exit_code == 1
     assert called is False
-    assert _common.TOKEN_ENV_VAR in capsys.readouterr().err
+    assert tushare.TOKEN_ENV_VAR in capsys.readouterr().err
 
 
 def test_main_rejects_non_iso_trade_date(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setenv(_common.TOKEN_ENV_VAR, "local-token")
+    monkeypatch.setenv(tushare.TOKEN_ENV_VAR, "local-token")
     api = FakeTushareApi(stock_frame=stock_daily_frame())
-    monkeypatch.setattr(_common, "create_tushare_api", lambda token: api)
+    monkeypatch.setattr(tushare, "create_tushare_api", lambda token: api)
 
-    exit_code = fetch_stock_daily.main(["20260917"])
+    exit_code = stock_daily.main(["20260917"])
 
     assert exit_code == 1
     assert api.daily_calls == []

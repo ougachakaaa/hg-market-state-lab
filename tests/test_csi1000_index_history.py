@@ -4,9 +4,10 @@ from pathlib import Path
 
 import pytest
 
-import _common
-import fetch_csi1000_index_history
-from fake_source import FakeTushareApi, business_days, index_history_frame
+from daily_market_snapshot import artifacts
+from daily_market_snapshot.capture import common, csi1000_index_history
+from daily_market_snapshot.sources import tushare
+from support.fake_source import FakeTushareApi, business_days, index_history_frame
 
 TARGET_DATE = "2026-09-17"
 
@@ -14,8 +15,8 @@ TARGET_DATE = "2026-09-17"
 def iso_dates(source_dates: list[str]) -> list[str]:
     """Convert Source-form ``YYYYMMDD`` dates to the Raw ``YYYY-MM-DD`` form."""
     return [
-        datetime.strptime(source_date, _common.TRADE_DATE_TUSHARE_FORMAT).strftime(
-            _common.TRADE_DATE_ISO_FORMAT
+        datetime.strptime(source_date, tushare.TRADE_DATE_TUSHARE_FORMAT).strftime(
+            tushare.TRADE_DATE_ISO_FORMAT
         )
         for source_date in source_dates
     ]
@@ -35,16 +36,16 @@ SHORT_HISTORY_DATES = iso_dates(SHORT_SOURCE_HISTORY_DATES)
 def fake_api(trade_dates: list[str] | None = None) -> FakeTushareApi:
     return FakeTushareApi(
         index_frames={
-            fetch_csi1000_index_history.INDEX_CODE: index_history_frame(
-                fetch_csi1000_index_history.INDEX_CODE,
+            csi1000_index_history.INDEX_CODE: index_history_frame(
+                csi1000_index_history.INDEX_CODE,
                 trade_dates if trade_dates is not None else SOURCE_HISTORY_DATES,
             )
         }
     )
 
 
-def collect(api: FakeTushareApi) -> list[_common.RawRecord]:
-    return fetch_csi1000_index_history.collect_index_daily_history(
+def collect(api: FakeTushareApi) -> list[artifacts.RawRecord]:
+    return csi1000_index_history.collect_index_daily_history(
         TARGET_DATE, lambda **kwargs: api.index_daily(**kwargs)
     )
 
@@ -54,7 +55,7 @@ def test_requests_csi1000_over_a_history_window() -> None:
 
     collect(api)
 
-    start_date, end_date = fetch_csi1000_index_history.lookback_window(TARGET_DATE)
+    start_date, end_date = csi1000_index_history.lookback_window(TARGET_DATE)
     assert api.index_calls == [
         {
             "ts_code": "000852.SH",
@@ -65,13 +66,13 @@ def test_requests_csi1000_over_a_history_window() -> None:
 
 
 def test_requested_window_reaches_well_beyond_120_calendar_days() -> None:
-    start_date, end_date = fetch_csi1000_index_history.lookback_window(TARGET_DATE)
+    start_date, end_date = csi1000_index_history.lookback_window(TARGET_DATE)
 
     assert end_date == "20260917"
     assert start_date == "20260120"
     assert (
-        datetime.strptime(TARGET_DATE, _common.TRADE_DATE_ISO_FORMAT)
-        - datetime.strptime(start_date, _common.TRADE_DATE_TUSHARE_FORMAT)
+        datetime.strptime(TARGET_DATE, tushare.TRADE_DATE_ISO_FORMAT)
+        - datetime.strptime(start_date, tushare.TRADE_DATE_TUSHARE_FORMAT)
         > timedelta(days=120)
     )
 
@@ -94,7 +95,7 @@ def test_requests_cover_the_requested_window_only() -> None:
     collect(api)
 
     assert api.index_calls[0]["end_date"] == "20260917"
-    assert api.index_calls[0]["start_date"] == fetch_csi1000_index_history.lookback_window(
+    assert api.index_calls[0]["start_date"] == csi1000_index_history.lookback_window(
         TARGET_DATE
     )[0]
 
@@ -110,59 +111,59 @@ def test_history_covers_at_least_120_distinct_trade_dates() -> None:
     records = collect(fake_api())
 
     trade_dates = {record["trade_date"] for record in records}
-    assert len(trade_dates) >= fetch_csi1000_index_history.MIN_HISTORY_TRADE_DATES
-    assert len(records) > fetch_csi1000_index_history.MIN_HISTORY_TRADE_DATES
+    assert len(trade_dates) >= csi1000_index_history.MIN_HISTORY_TRADE_DATES
+    assert len(records) > csi1000_index_history.MIN_HISTORY_TRADE_DATES
 
 
 def test_history_without_enough_trade_dates_is_an_error() -> None:
     api = fake_api(SHORT_SOURCE_HISTORY_DATES)
 
-    assert len(SHORT_HISTORY_DATES) < fetch_csi1000_index_history.MIN_HISTORY_TRADE_DATES
-    with pytest.raises(_common.CollectionError, match="distinct"):
+    assert len(SHORT_HISTORY_DATES) < csi1000_index_history.MIN_HISTORY_TRADE_DATES
+    with pytest.raises(common.CollectionError, match="distinct"):
         collect(api)
 
 
 def test_history_without_target_trade_date_is_an_error() -> None:
     api = fake_api(SOURCE_HISTORY_DATES[:-1])
 
-    with pytest.raises(_common.CollectionError):
+    with pytest.raises(common.CollectionError):
         collect(api)
 
 
 def test_source_without_data_is_an_error() -> None:
-    with pytest.raises(_common.CollectionError):
+    with pytest.raises(common.CollectionError):
         collect(FakeTushareApi())
 
 
 def test_duplicate_source_row_is_an_error() -> None:
     """One trade date must appear exactly once in the Raw history."""
-    records = _common.to_raw_records(
+    records = common.to_raw_records(
         index_history_frame("000852.SH", [*SOURCE_HISTORY_DATES, SOURCE_HISTORY_DATES[-1]])
     )
 
-    with pytest.raises(_common.CollectionError, match="duplicate"):
-        fetch_csi1000_index_history.require_history_window(records, "2026-01-20", TARGET_DATE)
+    with pytest.raises(common.CollectionError, match="duplicate"):
+        csi1000_index_history.require_history_window(records, "2026-01-20", TARGET_DATE)
 
 
 def test_another_index_code_is_an_error() -> None:
-    records = _common.to_raw_records(
+    records = common.to_raw_records(
         index_history_frame("000300.SH", SOURCE_HISTORY_DATES)
     )
 
-    with pytest.raises(_common.CollectionError, match="ts_code"):
-        fetch_csi1000_index_history.require_history_window(records, "2026-01-20", TARGET_DATE)
+    with pytest.raises(common.CollectionError, match="ts_code"):
+        csi1000_index_history.require_history_window(records, "2026-01-20", TARGET_DATE)
 
 
 def test_source_row_after_target_trade_date_is_an_error() -> None:
     """A row beyond the requested end date must not reach the Raw file."""
     # The fake Source only returns rows inside the requested window, so the
     # Collector's own guard is exercised directly.
-    records = _common.to_raw_records(
+    records = common.to_raw_records(
         index_history_frame("000852.SH", [*SOURCE_HISTORY_DATES, "20260918"])
     )
 
-    with pytest.raises(_common.CollectionError):
-        fetch_csi1000_index_history.require_history_window(records, "2026-01-20", TARGET_DATE)
+    with pytest.raises(common.CollectionError):
+        csi1000_index_history.require_history_window(records, "2026-01-20", TARGET_DATE)
 
 
 def test_raw_layer_adds_no_derived_fields() -> None:
@@ -183,23 +184,23 @@ def test_raw_history_is_not_trimmed_to_120_rows() -> None:
     records = collect(fake_api())
 
     assert len(records) == len(SOURCE_HISTORY_DATES)
-    assert len(records) != fetch_csi1000_index_history.MIN_HISTORY_TRADE_DATES
+    assert len(records) != csi1000_index_history.MIN_HISTORY_TRADE_DATES
 
 
 def test_main_writes_raw_dataset_file(
     test_workdir: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
 ) -> None:
-    monkeypatch.setenv(_common.TOKEN_ENV_VAR, "local-token")
+    monkeypatch.setenv(tushare.TOKEN_ENV_VAR, "local-token")
     api = fake_api()
-    monkeypatch.setattr(_common, "create_tushare_api", lambda token: api)
+    monkeypatch.setattr(tushare, "create_tushare_api", lambda token: api)
 
-    exit_code = fetch_csi1000_index_history.main([TARGET_DATE])
+    exit_code = csi1000_index_history.main([TARGET_DATE])
 
     assert exit_code == 0
     raw_path = (
         test_workdir
         / "raw"
-        / _common.CSI1000_RAW_SUBDIR
+        / artifacts.CSI1000_RAW_SUBDIR
         / TARGET_DATE
         / "index_daily_history.json"
     )
@@ -211,22 +212,22 @@ def test_main_writes_raw_dataset_file(
 
 
 def test_main_fails_without_token(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.delenv(_common.TOKEN_ENV_VAR, raising=False)
+    monkeypatch.delenv(tushare.TOKEN_ENV_VAR, raising=False)
 
-    def unreachable_api(token: str) -> _common.TushareApi:
+    def unreachable_api(token: str) -> tushare.TushareApi:
         raise AssertionError("no credential must mean no Source client")
 
-    monkeypatch.setattr(_common, "create_tushare_api", unreachable_api)
+    monkeypatch.setattr(tushare, "create_tushare_api", unreachable_api)
 
-    assert fetch_csi1000_index_history.main([TARGET_DATE]) == 1
+    assert csi1000_index_history.main([TARGET_DATE]) == 1
 
 
 def test_main_rejects_non_iso_trade_date(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setenv(_common.TOKEN_ENV_VAR, "local-token")
+    monkeypatch.setenv(tushare.TOKEN_ENV_VAR, "local-token")
     api = fake_api()
-    monkeypatch.setattr(_common, "create_tushare_api", lambda token: api)
+    monkeypatch.setattr(tushare, "create_tushare_api", lambda token: api)
 
-    exit_code = fetch_csi1000_index_history.main(["20260917"])
+    exit_code = csi1000_index_history.main(["20260917"])
 
     assert exit_code == 1
     assert api.index_calls == []
