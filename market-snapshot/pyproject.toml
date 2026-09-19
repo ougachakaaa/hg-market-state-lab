@@ -4,7 +4,13 @@ version = "0.1.0"
 description = "Collect market data and turn it into a fixed Daily Market Snapshot for GPT analysis."
 readme = "README.md"
 requires-python = ">=3.13,<3.14"
-dependencies = ["tushare (>=1.4.29,<2.0.0)", "python-dotenv (>=1.2.3,<2.0.0)"]
+dependencies = [
+    "tushare (>=1.4.29,<2.0.0)",
+    "python-dotenv (>=1.2.3,<2.0.0)",
+    # The minimal HTTP delivery adapter of guides/mo-option-chain-http-contract.md.
+    "fastapi (>=0.141.1,<0.142.0)",
+    "uvicorn (>=0.53.0,<0.54.0)",
+]
 
 [tool.poetry]
 package-mode = false
@@ -13,6 +19,8 @@ package-mode = false
 pytest = "^8.3.0"
 ruff = "^0.9.0"
 mypy = "^1.14.0"
+# Test client of the FastAPI delivery adapter.
+httpx = "^0.28.1"
 
 [build-system]
 requires = ["poetry-core>=2.0.0"]
