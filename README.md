@@ -20,6 +20,18 @@ presentation / interaction      （web-ui）
 
 当前 `market-snapshot` 的架构定义、第一版 Daily Snapshot 定义与基础开发环境已就绪，已实现 Source Capture（第一版 Daily Snapshot 场景的 `index_daily`、`stock_daily`，以及 CSI1000 分析场景的 CSI1000 历史、MO 期权链与 IM 期货数据）、CSI1000 分析场景的 Analysis Preparation（Raw → analysis-ready `snapshot.json`），以及 Data Service CLI（`market-snapshot/scripts/dms.py`）；第一版 Daily Snapshot 的 Analysis Preparation 尚未实现。
 
+## Development CLI
+
+从仓库根目录检查本地开发状态或启动模块原生开发服务：
+
+```bash
+python dev.py doctor
+python dev.py backend
+python dev.py frontend
+```
+
+职责、状态与失败语义见 [DEVELOPMENT.md](DEVELOPMENT.md)。
+
 ## Data Service（用户入口）
 
 普通用户和 Agent 的日常主入口是 Data Service CLI，无需知道底层有哪些 Source Capture、它们的执行顺序或 Raw 目录结构。当前 Data Service catalog 声明两项：`csi1000-5d-analysis`（已实现）与 `mo-option-chain`（Stage 1 authority，实现 deferred，面向 HTTP read contract）。当前 CLI 用户入口只服务已实现的 `csi1000-5d-analysis`。
