@@ -300,6 +300,6 @@ Analysis Preparation → data/snapshots/YYYY-MM-DD/snapshot.json
 
 Source Capture 职责：调用 Tushare 对应 endpoint、按本文档 universe 选择范围、minimal normalization，写出 Raw Artifact。Analysis Preparation 职责：只消费上述 Raw Artifact，按本文档第 6 节组装 breadth / indices，写出 Analysis-ready Artifact；不得调用 Tushare。
 
-目标 implementation location 以 `ARCHITECTURE.md` 第 9 节为 authority（Source Capture 位于 `capture/`，Analysis Preparation 位于 `preparation/`）。当前历史实现文件 `fetch_*.py` / `build_snapshot.py` 仍位于扁平 `scripts/`，属于待迁移的 implementation drift，不是目标结构。配套 `tests/` 测试。
+目标 implementation location 以 `ARCHITECTURE.md` 第 9 节为 authority（Source Capture 位于 `capture/`，Analysis Preparation 位于 `preparation/`）。当前实现已位于 `src/daily_market_snapshot/capture/`（`index_daily.py`、`stock_daily.py`）；第一版 Daily Snapshot 的 Analysis Preparation 尚未实现。配套 `tests/` 测试。
 
 本文档不包含实现细节；实现不得超出本文档与 `ARCHITECTURE.md` 的范围。

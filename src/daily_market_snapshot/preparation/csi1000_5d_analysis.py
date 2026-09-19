@@ -1,8 +1,8 @@
-"""Assemble the analysis-ready CSI1000 5-day analysis Snapshot.
+"""Analysis Preparation: the CSI1000 5-day analysis analysis-ready artifact.
 
 Definition authority: ``guides/csi1000-5d-analysis-snapshot.md``.
 
-Input (read-only, no network, no fallback):
+Input (read-only, local Raw artifacts only; no network, no fallback):
 
     data/raw/csi1000-5d-analysis/<target_trade_date>/
         index_daily_history.json
@@ -11,45 +11,35 @@ Input (read-only, no network, no fallback):
         im_futures_basic.json
         im_futures_daily.json
 
-Output (Data Service canonical user-facing output):
+Output: the analysis-ready payload the Data Service publishes as
 
     output/csi1000-5d-analysis/<target_trade_date>/snapshot.json
 
-The canonical interface is the Data Service CLI
-(``poetry run python scripts/dms.py get csi1000-5d-analysis --date ...``), which
-also collects the five Raw artifacts this Builder reads. Running this module
-directly is a development / debugging entrypoint that assumes the Raw artifacts
-already exist.
+This module performs the deterministic preparation only: it never calls Tushare,
+never accesses the network and never publishes to the output root. Running the
+Data Service CLI is the canonical way to produce the artifact
+(``poetry run python scripts/dms.py get csi1000-5d-analysis --date ...``).
 
-Missing Source facts: a quote field that only gets copied onto the Snapshot and
+Missing Source facts: a quote field that only gets copied onto the artifact and
 feeds no derived formula (``open`` / ``high`` / ``low`` of a contract that did
 not trade, ``oi_chg`` of an observation on its first trading day) stays ``null``
-when the Source did not return it, instead of failing the assembly. Every field
-a derived formula reads (``close`` in particular) must still be present and well
-formed, or the assembly fails.
-
-Usage:
-    poetry run python scripts/build_snapshot.py 2026-09-17
+when the Source did not return it, instead of failing the preparation. Every
+field a derived formula reads (``close`` in particular) must still be present
+and well formed, or the preparation fails.
 """
 
 from __future__ import annotations
 
-import argparse
 import json
 import math
-import sys
 from collections.abc import Iterable, Sequence
 from datetime import date
 from pathlib import Path
 from typing import Any
 
-sys.path.insert(0, str(Path(__file__).resolve().parent))
-
-import _common  # noqa: E402
-from _common import CSI1000_RAW_SUBDIR, OUTPUT_DIR, RAW_DIR  # noqa: E402
-
-# Guide section 10: one JSON file per target trade date.
-SNAPSHOT_FILENAME = "snapshot.json"
+from .. import artifacts
+from ..artifacts import RawRecord
+from ..sources import tushare
 
 # Guide 4/5: the CSI1000 identity of the ``underlying`` section.
 UNDERLYING_TS_CODE = "000852.SH"
@@ -79,7 +69,7 @@ UNDERLYING_HISTORY_FIELDS = (
     "amount",
 )
 
-# Guide 5.1 / 8.3: the quote fields the Snapshot copies straight from the Source
+# Guide 5.1 / 8.3: the quote fields the artifact copies straight from the Source
 # fact without reading them into any derived formula. ``close`` is deliberately
 # absent: it feeds ``close_premium_pct_of_spot`` (MO) and the basis fields (IM),
 # so it is a required derived input, read once with ``require_number`` instead of
@@ -103,11 +93,9 @@ MO_DAILY_DATASET = "mo_option_daily"
 IM_BASIC_DATASET = "im_futures_basic"
 IM_DAILY_DATASET = "im_futures_daily"
 
-RawRecord = dict[str, Any]
-
 
 class SnapshotError(Exception):
-    """Raised when the Snapshot cannot be assembled as the Guide requires."""
+    """Raised when the analysis-ready artifact cannot be prepared as required."""
 
 
 def require_text(record: RawRecord, field: str) -> str:
@@ -123,7 +111,7 @@ def require_number(record: RawRecord, field: str) -> float | int:
 
     ``bool`` is rejected even though it is an ``int``, and ``None`` / strings /
     NaN / infinities fail: a malformed Raw fact must never reach a derived
-    formula. The number itself is kept as it was read, so the snapshot does not
+    formula. The number itself is kept as it was read, so the artifact does not
     change an integer Raw fact into a float.
     """
     value = record.get(field)
@@ -135,14 +123,14 @@ def require_number(record: RawRecord, field: str) -> float | int:
 
 
 def passthrough_fields(record: RawRecord, fields: tuple[str, ...]) -> RawRecord:
-    """Project quote fields the Snapshot only copies onto a row.
+    """Project quote fields the artifact only copies onto a row.
 
     None of these fields feeds a required derived formula, so a value the Source
-    did not return stays ``null`` in the Snapshot instead of failing the
-    assembly: a contract that did not trade has no ``open`` / ``high`` / ``low``,
-    and an observation on its first trading day has no ``oi_chg``. The missing
-    fact is preserved as missing rather than filled in, and a value that is
-    present but malformed (a string, NaN, an infinity) still fails.
+    did not return stays ``null`` in the artifact instead of failing the
+    preparation: a contract that did not trade has no ``open`` / ``high`` /
+    ``low``, and an observation on its first trading day has no ``oi_chg``. The
+    missing fact is preserved as missing rather than filled in, and a value that
+    is present but malformed (a string, NaN, an infinity) still fails.
 
     Only the nullable pass-through fields named by the caller belong here;
     ``close`` is a required derived input and is therefore read once with
@@ -166,7 +154,7 @@ def require_positive_number(record: RawRecord, field: str) -> float | int:
 def require_date(record: RawRecord, field: str) -> str:
     """Return a required ``YYYY-MM-DD`` date field."""
     value = record.get(field)
-    if not isinstance(value, str) or not _common.is_iso_date(value):
+    if not isinstance(value, str) or not tushare.is_iso_date(value):
         raise SnapshotError(f"{field} must use YYYY-MM-DD, got {value!r}.")
     return value
 
@@ -183,8 +171,8 @@ def require_mapping(records: Iterable[RawRecord], dataset: str) -> dict[str, Raw
 
 
 def require_trade_date(value: str, label: str) -> str:
-    """Return a validated ``YYYY-MM-DD`` script-level trade date."""
-    if not _common.is_iso_date(value):
+    """Return a validated ``YYYY-MM-DD`` project-level trade date."""
+    if not tushare.is_iso_date(value):
         raise SnapshotError(f"{label} must use YYYY-MM-DD, got {value!r}.")
     return value
 
@@ -195,7 +183,7 @@ def load_raw_records(dataset_dir: Path, dataset: str) -> list[RawRecord]:
     if not path.is_file():
         raise SnapshotError(
             f"required Raw artifact is missing: {path}. "
-            f"Collect the Raw Datasets of {dataset_dir.name} first."
+            f"Collect the Raw Artifacts of {dataset_dir.name} first."
         )
     try:
         payload: object = json.loads(path.read_text(encoding="utf-8"))
@@ -458,15 +446,15 @@ def load_im_futures(
 
 
 def build_snapshot(trade_date: str, dataset_dir: Path | None = None) -> RawRecord:
-    """Assemble the CSI1000 5-day analysis Snapshot for one target trade date.
+    """Prepare the CSI1000 5-day analysis artifact for one target trade date.
 
-    ``dataset_dir`` defaults to the Raw directory of ``trade_date`` under the
-    module-level :data:`RAW_DIR`; the Data Service CLI passes the directory it
-    collected into, and a test can pass a temporary one.
+    ``dataset_dir`` defaults to the Raw directory of ``trade_date`` under
+    :data:`artifacts.RAW_DIR`; the Data Service passes the directory it collected
+    into, and a test can pass a temporary one.
     """
     target_trade_date = require_trade_date(trade_date, "target_trade_date")
     if dataset_dir is None:
-        dataset_dir = RAW_DIR / CSI1000_RAW_SUBDIR / target_trade_date
+        dataset_dir = artifacts.csi1000_raw_dir(target_trade_date)
 
     # Guide 5.3: one target-date close, taken from the underlying history.
     history = underlying_history(
@@ -476,12 +464,12 @@ def build_snapshot(trade_date: str, dataset_dir: Path | None = None) -> RawRecor
 
     mo_options = load_mo_options(dataset_dir, target_trade_date, underlying_close)
     im_futures = load_im_futures(dataset_dir, target_trade_date, history)
-    # Guide 5.3: the snapshot carries exactly one target-date close, so the
+    # Guide 5.3: the artifact carries exactly one target-date close, so the
     # futures curve of that date has to read back the same underlying fact.
     for observation in im_futures["target_date_curve"]:
         if observation["underlying_close"] != underlying_close:
             raise SnapshotError(
-                f"target-date close mismatch inside the snapshot: "
+                f"target-date close mismatch inside the artifact: "
                 f"{observation['underlying_close']!r} vs {underlying_close!r}."
             )
 
@@ -495,56 +483,3 @@ def build_snapshot(trade_date: str, dataset_dir: Path | None = None) -> RawRecor
         "mo_options": mo_options,
         "im_futures": im_futures,
     }
-
-
-def write_snapshot(
-    snapshot: RawRecord, trade_date: str, output_dir: Path | None = None
-) -> Path:
-    """Write ``snapshot.json`` to the Data Service output and return its path.
-
-    ``output_dir`` defaults to the module-level :data:`OUTPUT_DIR`, so tests can
-    redirect the canonical output root without patching the module.
-    """
-    root = OUTPUT_DIR if output_dir is None else output_dir
-    directory = root / CSI1000_RAW_SUBDIR / trade_date
-    try:
-        directory.mkdir(parents=True, exist_ok=True)
-        path = directory / SNAPSHOT_FILENAME
-        path.write_text(
-            json.dumps(snapshot, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
-        )
-    except OSError as exc:
-        raise SnapshotError(f"cannot write the Snapshot to {directory}: {exc}.") from exc
-    return path
-
-
-def main(argv: Sequence[str] | None = None) -> int:
-    """Assemble and write one Snapshot; return the process exit code.
-
-    Development / debugging entrypoint: the Data Service CLI is the canonical
-    interface and also collects the Raw artifacts.
-    """
-    parser = argparse.ArgumentParser(
-        description="Assemble the CSI1000 5-day analysis Snapshot from local Raw artifacts."
-    )
-    parser.add_argument("trade_date", help="Target trade date in YYYY-MM-DD form.")
-    args = parser.parse_args(argv)
-
-    try:
-        snapshot = build_snapshot(args.trade_date)
-        path = write_snapshot(snapshot, args.trade_date)
-    except SnapshotError as exc:
-        print(f"error: {exc}", file=sys.stderr)
-        return 1
-
-    print(
-        f"wrote snapshot for {snapshot['target_trade_date']} "
-        f"({len(snapshot['underlying']['history'])} underlying rows, "
-        f"{len(snapshot['mo_options']['chain'])} option contracts, "
-        f"{len(snapshot['im_futures']['history'])} futures observations) to {path}"
-    )
-    return 0
-
-
-if __name__ == "__main__":
-    raise SystemExit(main())

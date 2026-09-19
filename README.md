@@ -8,7 +8,7 @@
 
 用户级调用语义（Data Service）与 CLI 契约定义在 `guides/data-services.md` 中。
 
-当前架构定义、第一版 Snapshot Definition 与基础开发环境已就绪，已实现 Raw Dataset Collector（第一版 Daily Snapshot 场景的 `index_daily`、`stock_daily`，以及 CSI1000 分析场景的 CSI1000 历史、MO 期权链与 IM 期货数据）、CSI1000 分析场景的 Snapshot Assembly（Raw → analysis-ready `snapshot.json`），以及 Data Service CLI（`scripts/dms.py`）；第一版 Daily Snapshot 的 Assembly 尚未实现。
+当前架构定义、第一版 Snapshot Definition 与基础开发环境已就绪，已实现 Source Capture（第一版 Daily Snapshot 场景的 `index_daily`、`stock_daily`，以及 CSI1000 分析场景的 CSI1000 历史、MO 期权链与 IM 期货数据）、CSI1000 分析场景的 Analysis Preparation（Raw → analysis-ready `snapshot.json`），以及 Data Service CLI（`scripts/dms.py`）；第一版 Daily Snapshot 的 Assembly 尚未实现。
 
 ## Data Service（用户入口）
 
@@ -74,7 +74,8 @@ poetry run mypy .
 * `guides/data-services.md`：Data Service / CLI / output 契约 authority（用户级调用语义）
 * `config/`：配置
 * `guides/`：DSH 执行任务使用的 Guide
-* `scripts/`：Data Service CLI（`dms.py`）、Raw Dataset Collector（`fetch_*.py`）与 Snapshot Assembly（`build_snapshot.py`）
+* `src/daily_market_snapshot/`：实现代码，按职责分层（`sources/`、`capture/`、`preparation/`、`services/`、`artifacts.py`、`cli.py`）
+* `scripts/`：极薄 executable shim（`dms.py`），转发到 `src/daily_market_snapshot/cli.py`
 * `data/raw/`：Raw Dataset 输出目录（内部运行产物）
 * `data/snapshots/`：非 Data Service 的 Snapshot 输出目录（运行产物）
 * `output/`：Data Service 的 canonical user-facing output（运行产物）
@@ -90,11 +91,11 @@ TUSHARE_TOKEN=<你的 Tushare token>
 
 ## 采集 Raw Dataset
 
-两个 Collector 相互独立，都接受显式给出的交易日 `YYYY-MM-DD`：
+两个 Source Capture 相互独立，都接受显式给出的交易日 `YYYY-MM-DD`：
 
 ```bash
-poetry run python scripts/fetch_index_daily.py 2026-09-17
-poetry run python scripts/fetch_stock_daily.py 2026-09-17
+poetry run python -m daily_market_snapshot.capture.index_daily 2026-09-17
+poetry run python -m daily_market_snapshot.capture.stock_daily 2026-09-17
 ```
 
 输出：
@@ -108,18 +109,18 @@ data/raw/
 
 数据集语义、字段单位与 Raw 文件形态以 `guides/daily-market-snapshot.md` 为准。给定日期没有数据（非交易日、停市、源无数据）时脚本明确失败，不自动 fallback 到其他日期。
 
-## 底层 Collector 与 Builder（development / debugging entrypoints）
+## 底层 Source Capture 与 Analysis Preparation（development / debugging entrypoints）
 
-以下脚本是 `csi1000-5d-analysis` 的实现层，用于 development、debugging、testing 与 reconciliation；日常数据任务请使用上面的 Data Service CLI，它会自行按顺序执行这些步骤。
+以下模块是 `csi1000-5d-analysis` 的实现层，用于 development、debugging、testing 与 reconciliation；日常数据任务请使用上面的 Data Service CLI，它会自行按顺序执行这些步骤。
 
-`guides/csi1000-5d-analysis-data.md` 定义的五个 Raw artifact 由五个相互独立的 Collector 采集，都接受显式给出的目标交易日 `YYYY-MM-DD`：
+`guides/csi1000-5d-analysis-data.md` 定义的五个 Raw artifact 由五个相互独立的 Source Capture 采集，都接受显式给出的目标交易日 `YYYY-MM-DD`：
 
 ```bash
-poetry run python scripts/fetch_csi1000_index_history.py 2026-09-17
-poetry run python scripts/fetch_mo_option_basic.py 2026-09-17
-poetry run python scripts/fetch_mo_option_daily.py 2026-09-17
-poetry run python scripts/fetch_im_futures_basic.py 2026-09-17
-poetry run python scripts/fetch_im_futures_daily.py 2026-09-17
+poetry run python -m daily_market_snapshot.capture.csi1000_index_history 2026-09-17
+poetry run python -m daily_market_snapshot.capture.mo_option_basic 2026-09-17
+poetry run python -m daily_market_snapshot.capture.mo_option_daily 2026-09-17
+poetry run python -m daily_market_snapshot.capture.im_futures_basic 2026-09-17
+poetry run python -m daily_market_snapshot.capture.im_futures_daily 2026-09-17
 ```
 
 输出（目录名是目标交易日，不是文件中所有记录共同的 `trade_date`）：
@@ -137,15 +138,9 @@ data/raw/
 
 这五个文件是 Source 事实的 Raw 落地（`index_daily_history.json` 与 `im_futures_daily.json` 可以包含多个交易日）；Dataset 语义、Universe 与历史窗口要求以 `guides/csi1000-5d-analysis-data.md` 为准。
 
-`guides/csi1000-5d-analysis-snapshot.md` 定义的 `snapshot.json` 由 `scripts/build_snapshot.py` 从上面五个 Raw artifact 组装，接受同一个目标交易日 `YYYY-MM-DD`：
+`guides/csi1000-5d-analysis-snapshot.md` 定义的 `snapshot.json` 由 Analysis Preparation（`src/daily_market_snapshot/preparation/csi1000_5d_analysis.py`）从上面五个 Raw artifact 确定性准备，再由 Data Service（`src/daily_market_snapshot/services/csi1000_5d_analysis.py`）发布到 canonical 位置。Analysis Preparation 是确定性的数据转换、不是独立 executable；调试时可在同一 Raw 目录上直接调用 `daily_market_snapshot.preparation.csi1000_5d_analysis.build_snapshot(<target_trade_date>)`。
 
-```bash
-poetry run python scripts/build_snapshot.py 2026-09-17
-```
-
-它写出同一个 canonical 位置：`output/csi1000-5d-analysis/<date>/snapshot.json`。
-
-Builder 只读取 `data/raw/csi1000-5d-analysis/<target_trade_date>/` 下的五个 Raw artifact：不调用 Tushare、不访问网络、不读取其他日期目录、不自动 fallback。Raw 缺失、形状不合法、120 / 60 日窗口不足、MO 或 IM 无法 join、字段缺失或无法计算派生值时，脚本明确失败并返回非零退出码，不跳过记录、不填零、不估算。
+Analysis Preparation 只读取 `data/raw/csi1000-5d-analysis/<target_trade_date>/` 下的五个 Raw artifact：不调用 Tushare、不访问网络、不读取其他日期目录、不自动 fallback。Raw 缺失、形状不合法、120 / 60 日窗口不足、MO 或 IM 无法 join、字段缺失或无法计算派生值时，Data Service 明确失败并返回非零退出码，不跳过记录、不填零、不估算。
 
 窗口选择、join 规则、派生字段公式、排序与失败条件全部以 `guides/csi1000-5d-analysis-snapshot.md` 为准（该 Guide 是 Snapshot Definition 的 authority）。`snapshot.json` 是 analysis-ready 数据，不含任何市场判断或交易结论。
 

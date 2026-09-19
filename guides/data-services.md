@@ -226,7 +226,7 @@ reconciliation（当前 CSI1000 Data Service）：
 
 > `output/<service>/<date>/` 是 Data Service 的 canonical user-facing output。
 
-`build_snapshot.py` 直接写该位置；`data/snapshots/csi1000-5d-analysis/<date>/snapshot.json` 不再产生，不维护两份相同 artifact。
+Data Service 的 orchestration 把 Analysis Preparation 产出的 artifact 发布到该位置（`src/daily_market_snapshot/services/csi1000_5d_analysis.py`）；`data/snapshots/csi1000-5d-analysis/<date>/snapshot.json` 不再产生，不维护两份相同 artifact。
 
 本 Goal 不重构无关的第一版 Daily 数据产品；`data/snapshots/YYYY-MM-DD/` 语义保持不变。
 

@@ -1,10 +1,12 @@
-"""Collect the ``mo_option_basic`` Raw Dataset for one trade date.
+"""Source Capture ``mo_option_basic``: the active MO contract facts of one date.
 
 Source: Tushare ``opt_basic`` (see ``guides/csi1000-5d-analysis-data.md`` 4.2
 and 5.1).
 
-Usage:
-    poetry run python scripts/fetch_mo_option_basic.py 2026-09-17
+Development / debugging entrypoint (the Data Service CLI is the canonical user
+interface, see ``guides/data-services.md`` 11):
+
+    poetry run python -m daily_market_snapshot.capture.mo_option_basic 2026-09-17
 """
 
 from __future__ import annotations
@@ -12,13 +14,12 @@ from __future__ import annotations
 import argparse
 import sys
 from collections.abc import Sequence
-from pathlib import Path
 
 import pandas as pd
 
-sys.path.insert(0, str(Path(__file__).resolve().parent))
-
-import _common  # noqa: E402
+from .. import artifacts
+from ..sources import tushare
+from . import common
 
 DATASET = "mo_option_basic"
 # Dataset membership of the MO chain (Guide 5.1). These limits select the
@@ -33,7 +34,7 @@ PRODUCT = "MO"
 MO_OPTIONS_CODE = "OP000852.SH"
 
 
-def query_opt_basic(api: _common.TushareApi, exchange: str) -> pd.DataFrame:
+def query_opt_basic(api: tushare.TushareApi, exchange: str) -> pd.DataFrame:
     """Read the CFFEX option contract facts from Tushare ``opt_basic``.
 
     ``opt_basic`` has no product parameter, so the product limit below is
@@ -42,7 +43,7 @@ def query_opt_basic(api: _common.TushareApi, exchange: str) -> pd.DataFrame:
     return api.opt_basic(exchange=exchange)
 
 
-def is_mo_option(record: _common.RawRecord) -> bool:
+def is_mo_option(record: artifacts.RawRecord) -> bool:
     """Report whether a CFFEX option contract fact belongs to the MO product.
 
     ``opt_basic`` identifies the option product by its underlying index
@@ -53,7 +54,7 @@ def is_mo_option(record: _common.RawRecord) -> bool:
     return str(record.get("opt_code") or "") == MO_OPTIONS_CODE
 
 
-def require_mo_lifecycle(record: _common.RawRecord) -> tuple[str, str]:
+def require_mo_lifecycle(record: artifacts.RawRecord) -> tuple[str, str]:
     """Return the ``(list_date, delist_date)`` a MO contract fact needs.
 
     A contract fact that is already a member of the MO Dataset but carries no
@@ -62,24 +63,24 @@ def require_mo_lifecycle(record: _common.RawRecord) -> tuple[str, str]:
     active, dropping it, or inferring a bound. An inverted lifecycle is invalid
     for the same reason.
     """
-    list_date = _common.to_iso_date_or_none(record.get("list_date"))
-    delist_date = _common.to_iso_date_or_none(record.get("delist_date"))
+    list_date = tushare.to_iso_date_or_none(record.get("list_date"))
+    delist_date = tushare.to_iso_date_or_none(record.get("delist_date"))
     if list_date is None or delist_date is None:
-        raise _common.CollectionError(
+        raise common.CollectionError(
             f"{PRODUCT} contract {record.get('ts_code')} of exchange={EXCHANGE} has no "
             f"usable lifecycle facts in Tushare opt_basic "
             f"(list_date={record.get('list_date')!r}, "
             f"delist_date={record.get('delist_date')!r})."
         )
     if delist_date < list_date:
-        raise _common.CollectionError(
+        raise common.CollectionError(
             f"{PRODUCT} contract {record.get('ts_code')} has delist_date={delist_date} "
             f"before list_date={list_date}."
         )
     return list_date, delist_date
 
 
-def lifecycle_covers(record: _common.RawRecord, trade_date: str) -> bool:
+def lifecycle_covers(record: artifacts.RawRecord, trade_date: str) -> bool:
     """Apply the Source-fact lifecycle rule ``list_date <= date <= delist_date``."""
     list_date, delist_date = require_mo_lifecycle(record)
     return list_date <= trade_date <= delist_date
@@ -87,7 +88,7 @@ def lifecycle_covers(record: _common.RawRecord, trade_date: str) -> bool:
 
 def select_active_mo_universe(
     frame: pd.DataFrame, trade_date: str
-) -> list[_common.RawRecord]:
+) -> list[artifacts.RawRecord]:
     """Return the active MO option contract facts of one trade date.
 
     Dataset identity (``exchange`` / product) is decided before the lifecycle
@@ -96,24 +97,26 @@ def select_active_mo_universe(
     """
     members = [
         record
-        for record in _common.to_raw_records(frame)
+        for record in common.to_raw_records(frame)
         if str(record.get("exchange") or "") == EXCHANGE and is_mo_option(record)
     ]
     return [record for record in members if lifecycle_covers(record, trade_date)]
 
 
-def collect_mo_option_basic(trade_date: str, query: _common.QueryFunc) -> list[_common.RawRecord]:
+def collect_mo_option_basic(
+    trade_date: str, query: common.QueryFunc
+) -> list[artifacts.RawRecord]:
     """Return the ``mo_option_basic`` records for the given trade date.
 
     The Dataset membership is the whole MO / CFFEX contract universe of the
     Source response; the lifecycle rule selects the active part of it.
     """
-    # Reject a malformed script-level date before any Source request.
-    _common.to_tushare_date(trade_date)
+    # Reject a malformed project-level date before any Source request.
+    tushare.to_tushare_date(trade_date)
     records = select_active_mo_universe(query(exchange=EXCHANGE), trade_date)
 
     if not records:
-        raise _common.CollectionError(
+        raise common.CollectionError(
             f"Tushare {DATASET} returned no active {PRODUCT} contract on "
             f"trade_date={trade_date}."
         )
@@ -123,22 +126,23 @@ def collect_mo_option_basic(trade_date: str, query: _common.QueryFunc) -> list[_
 
 
 def main(argv: Sequence[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(description=f"Collect the {DATASET} Raw Dataset.")
+    parser = argparse.ArgumentParser(description=f"Collect the {DATASET} Raw artifact.")
     parser.add_argument("trade_date", help="Target trade date in YYYY-MM-DD form.")
     args = parser.parse_args(argv)
 
     try:
-        api = _common.create_tushare_api(_common.get_tushare_token())
+        api = tushare.create_tushare_api(tushare.get_tushare_token())
         records = collect_mo_option_basic(
             args.trade_date,
             lambda **kwargs: query_opt_basic(api, **kwargs),
         )
-    except _common.CollectionError as exc:
+    except common.CAPTURE_FAILURE_TYPES as exc:
         print(f"error: {exc}", file=sys.stderr)
         return 1
 
-    dataset_dir = _common.RAW_DIR / _common.CSI1000_RAW_SUBDIR / args.trade_date
-    path = _common.write_raw_dataset(records, dataset_dir, DATASET)
+    path = artifacts.write_raw_artifact(
+        records, artifacts.csi1000_raw_dir(args.trade_date), DATASET
+    )
     print(f"wrote {len(records)} records to {path}")
     return 0
 

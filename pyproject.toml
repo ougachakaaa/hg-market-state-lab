@@ -20,38 +20,30 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+# The project source lives under src/ and Poetry stays package-mode = false, so
+# the tests import ``daily_market_snapshot`` from there.
+pythonpath = ["src"]
 
 [tool.ruff]
 target-version = "py313"
 line-length = 100
+src = ["src", "tests", "scripts"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B"]
 
 [tool.ruff.lint.isort]
-# scripts/ and tests/ are flat directories imported directly, so ruff cannot
-# infer these as first-party on its own.
-known-first-party = [
-    "_common",
-    "build_snapshot",
-    "dms",
-    "fake_source",
-    "fetch_csi1000_index_history",
-    "fetch_im_futures_basic",
-    "fetch_im_futures_daily",
-    "fetch_index_daily",
-    "fetch_mo_option_basic",
-    "fetch_mo_option_daily",
-    "fetch_stock_daily",
-]
+known-first-party = ["daily_market_snapshot"]
 
 [tool.mypy]
 python_version = "3.13"
-files = ["scripts", "tests"]
+files = ["src", "tests", "scripts"]
+mypy_path = "src"
 
 [[tool.mypy.overrides]]
 # Neither the Tushare SDK nor pandas ships type hints or a py.typed marker.
-# The project's own scripts and tests stay fully checked; only these imports
+# The project's own modules and tests stay fully checked; only these imports
 # are treated as untyped.
 module = ["tushare", "tushare.*", "pandas", "pandas.*"]
 ignore_missing_imports = true
+

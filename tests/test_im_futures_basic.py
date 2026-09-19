@@ -4,9 +4,10 @@ from typing import Any
 
 import pytest
 
-import _common
-import fetch_im_futures_basic
-from fake_source import FakeTushareApi, futures_basic_frame, im_contract
+from daily_market_snapshot import artifacts
+from daily_market_snapshot.capture import common, im_futures_basic
+from daily_market_snapshot.sources import tushare
+from support.fake_source import FakeTushareApi, futures_basic_frame, im_contract
 
 TARGET_DATE = "2026-09-17"
 IM_CONTRACTS = [
@@ -42,8 +43,8 @@ def fake_api(contracts: list[dict[str, Any]] | None = None) -> FakeTushareApi:
     )
 
 
-def collect(api: FakeTushareApi) -> list[_common.RawRecord]:
-    return fetch_im_futures_basic.collect_im_futures_basic(
+def collect(api: FakeTushareApi) -> list[artifacts.RawRecord]:
+    return im_futures_basic.collect_im_futures_basic(
         TARGET_DATE, lambda **kwargs: api.fut_basic(**kwargs)
     )
 
@@ -86,21 +87,21 @@ def test_contract_without_lifecycle_facts_is_an_error() -> None:
     """A member contract with incomplete lifecycle facts fails, not disappears."""
     pending = im_contract("IM2703.CFE", list_date="20270315", delist_date=None)
 
-    with pytest.raises(_common.CollectionError, match="lifecycle"):
+    with pytest.raises(common.CollectionError, match="lifecycle"):
         collect(fake_api([*IM_CONTRACTS, pending]))
 
 
 def test_contract_without_any_lifecycle_facts_is_an_error() -> None:
     broken = im_contract("IM2706.CFE", list_date=None, delist_date=None)
 
-    with pytest.raises(_common.CollectionError, match="lifecycle"):
+    with pytest.raises(common.CollectionError, match="lifecycle"):
         collect(fake_api([*IM_CONTRACTS, broken]))
 
 
 def test_lifecycle_ending_before_it_starts_is_an_error() -> None:
     broken = im_contract("IM2706.CFE", list_date="20270615", delist_date="20270610")
 
-    with pytest.raises(_common.CollectionError, match="before"):
+    with pytest.raises(common.CollectionError, match="before"):
         collect(fake_api([*IM_CONTRACTS, broken]))
 
 
@@ -131,15 +132,15 @@ def test_incomplete_non_member_contract_is_not_an_im_error() -> None:
 
 
 def test_source_without_contract_facts_is_an_error() -> None:
-    with pytest.raises(_common.CollectionError):
+    with pytest.raises(common.CollectionError):
         collect(FakeTushareApi())
 
 
 def test_non_iso_trade_date_is_an_error_before_the_source_call() -> None:
     api = fake_api()
 
-    with pytest.raises(_common.CollectionError):
-        fetch_im_futures_basic.collect_im_futures_basic(
+    with pytest.raises(tushare.TushareDateError):
+        im_futures_basic.collect_im_futures_basic(
             "20260917", lambda **kwargs: api.fut_basic(**kwargs)
         )
 
@@ -149,15 +150,15 @@ def test_non_iso_trade_date_is_an_error_before_the_source_call() -> None:
 def test_main_writes_raw_dataset_file(
     test_workdir: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
 ) -> None:
-    monkeypatch.setenv(_common.TOKEN_ENV_VAR, "local-token")
+    monkeypatch.setenv(tushare.TOKEN_ENV_VAR, "local-token")
     api = fake_api()
-    monkeypatch.setattr(_common, "create_tushare_api", lambda token: api)
+    monkeypatch.setattr(tushare, "create_tushare_api", lambda token: api)
 
-    exit_code = fetch_im_futures_basic.main([TARGET_DATE])
+    exit_code = im_futures_basic.main([TARGET_DATE])
 
     assert exit_code == 0
     raw_path = (
-        test_workdir / "raw" / _common.CSI1000_RAW_SUBDIR / TARGET_DATE / "im_futures_basic.json"
+        test_workdir / "raw" / artifacts.CSI1000_RAW_SUBDIR / TARGET_DATE / "im_futures_basic.json"
     )
     records = json.loads(raw_path.read_text(encoding="utf-8"))
     assert [record["ts_code"] for record in records] == [
@@ -169,11 +170,11 @@ def test_main_writes_raw_dataset_file(
 
 
 def test_main_fails_without_token(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.delenv(_common.TOKEN_ENV_VAR, raising=False)
+    monkeypatch.delenv(tushare.TOKEN_ENV_VAR, raising=False)
 
-    def unreachable_api(token: str) -> _common.TushareApi:
+    def unreachable_api(token: str) -> tushare.TushareApi:
         raise AssertionError("no credential must mean no Source client")
 
-    monkeypatch.setattr(_common, "create_tushare_api", unreachable_api)
+    monkeypatch.setattr(tushare, "create_tushare_api", unreachable_api)
 
-    assert fetch_im_futures_basic.main([TARGET_DATE]) == 1
+    assert im_futures_basic.main([TARGET_DATE]) == 1

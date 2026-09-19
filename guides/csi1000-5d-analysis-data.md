@@ -118,7 +118,7 @@ analysis-ready
 
 #### 与现有单日采集的关系
 
-* 现有 `fetch_index_daily.py` 按单日采集六个指数的 `index_daily`（用于第一版 daily-market-snapshot 场景）。
+* 现有 `index_daily` Source Capture（`src/daily_market_snapshot/capture/index_daily.py`）按单日采集六个指数的 `index_daily`（用于第一版 daily-market-snapshot 场景）。
 * 第一版 Guide 中固定的六指数 universe 属于第一版场景 Definition 的输入范围，不属于 `index_daily` Source Capture 语义本身；本场景在同一 Capture 语义下，聚焦 `000852.SH` 的**历史窗口**。
 * 历史窗口的输出要求与 Capture / Preparation 分工见第 6.1 节。
 

@@ -426,9 +426,7 @@ same Analysis-ready Artifact
 
 ### Preparation Definition 的 authority 落点
 
-Preparation Definition 的 authority 是 `guides/` 中对应的 Guide（当前为 `guides/csi1000-5d-analysis-snapshot.md`）。
-
-`scripts/build_snapshot.py` 只是该 Definition 的实现：它按照 Guide 读取 Raw Artifact 并完成 Analysis Preparation，不构成 authority，不得反向定义或修改 Preparation Definition。实现与 Guide 不一致时，必须对实现做 reconciliation，不得静默改变语义。
+Preparation Definition 的 authority 是 `guides/` 中对应的 Guide（当前为 `guides/csi1000-5d-analysis-snapshot.md`）。该 Definition 的实现位于 `src/daily_market_snapshot/preparation/`（当前为 `csi1000_5d_analysis.py`）：它按照 Guide 读取 Raw Artifact 并完成 Analysis Preparation，不构成 authority，不得反向定义或修改 Preparation Definition。实现与 Guide 不一致时，必须对实现做 reconciliation，不得静默改变语义。
 
 本阶段不引入额外的 schema 定义文件、registry 或版本管理框架。
 
@@ -563,8 +561,8 @@ daily-market-snapshot/
 * `src/daily_market_snapshot/cli.py`：CLI（argparse、`list` / `get`、输入校验、service lookup、结果/错误呈现），不编排 Capture。
 * `src/daily_market_snapshot/artifacts.py`：真正共享的本地 artifact 能力（canonical roots、JSON read/write、Raw/output path construction），保持很薄，不发展为 storage framework。
 * `src/daily_market_snapshot/sources/tushare.py`：最薄的 Tushare integration——credential / token 读取、client creation、Source-specific representation / date conversion，以及真正通用的 Tushare helper。不承担具体 Capture 的 endpoint query orchestration，不建立通用 DataSource framework。
-* `src/daily_market_snapshot/capture/`：Source Capture 实现（承接当前 `fetch_*.py` 的业务逻辑：具体 endpoint 调用、query parameters、Source-domain scope selection、minimal normalization、Raw facts）。
-* `src/daily_market_snapshot/preparation/`：Analysis Preparation 实现（承接当前 `build_snapshot.py` 的确定性转换）。
+* `src/daily_market_snapshot/capture/`：Source Capture 实现（具体 endpoint 调用、query parameters、Source-domain scope selection、minimal normalization、Raw facts）。
+* `src/daily_market_snapshot/preparation/`：Analysis Preparation 实现（确定性的 Raw → analysis-ready 转换）。
 * `src/daily_market_snapshot/services/catalog.py`：显式静态 catalog，不做 dynamic registry / filesystem discovery。
 * `src/daily_market_snapshot/services/csi1000_5d_analysis.py`：Data Service orchestration（Capture 编排、Preparation 调用、失败边界、最终 artifact 发布）。
 * `scripts/dms.py`：极薄 executable shim，转发到 `cli.py`。
@@ -576,7 +574,7 @@ daily-market-snapshot/
 
 `data/raw/` 与 `output/` 是运行产物，不进入版本控制。
 
-reconciliation 说明：当前实现仍位于扁平 `scripts/` 目录（`dms.py` 混合承担 CLI、catalog、orchestration、Source endpoint binding；`_common.py` 混合承担 Tushare 集成、日期归一化与 Raw 处理），尚未迁入上面的目标结构。该 drift 是预期状态，留待 implementation reconciliation（独立 follow-up）完成；本文件先固定目标结构。
+reconciliation 说明：上述目标结构已于 implementation reconciliation 落地。实现位于 `src/daily_market_snapshot/`（`sources/tushare.py`、`capture/`、`preparation/`、`services/`、`artifacts.py`、`cli.py`），`scripts/dms.py` 只是转发到 `cli.py` 的极薄 executable shim。Poetry 仍为 `package-mode = false`，因此该结构通过 `pytest` 的 `pythonpath` 与 mypy 的 `mypy_path` 指向 `src/`，而不是通过打包安装。
 
 ---
 
