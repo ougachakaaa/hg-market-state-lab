@@ -40,11 +40,12 @@ Plugin
 
 ## 2. Data Service Catalog
 
-第一版只定义一项 Data Service，不为了丰富 catalog 创造其他服务。
+Catalog 当前声明两项 Data Service（一项已实现，一项 authority-only），不为了丰富 catalog 创造其他服务：
 
-| service_id | description | input | output |
-| --- | --- | --- | --- |
-| `csi1000-5d-analysis` | 为外部 analyzer 分析中证1000未来约 5 个交易日市场状态准备的 analysis-ready 数据产品 | `target_trade_date`（CLI 的 `--date`） | `snapshot.json` |
+| service_id | description | input | output | 状态 |
+| --- | --- | --- | --- | --- |
+| `csi1000-5d-analysis` | 为外部 analyzer 分析中证1000未来约 5 个交易日市场状态准备的 analysis-ready 数据产品 | `target_trade_date`（CLI 的 `--date`） | `snapshot.json` | 已实现 |
+| `mo-option-chain` | 目标交易日的完整 MO 中证1000股指期权链 deterministic read model（与 `csi1000-5d-analysis` 并列，不依赖其 output） | `target_trade_date` + `option_product` + `price_type` | option-chain read model（`guides/mo-option-chain.md`） | authority，实现 deferred |
 
 Catalog 是显式、静态、authority-driven 的，不通过扫描文件系统动态发现。不做：
 
@@ -57,7 +58,9 @@ service lifecycle framework
 
 `index_daily`、`stock_daily` 仍属于 Source Capture / Raw capability，**不**升级为 Data Service。
 
-## 3. service: csi1000-5d-analysis
+## 3. service 语义
+
+### 3.1 service: csi1000-5d-analysis
 
 语义：
 
@@ -80,6 +83,34 @@ deterministic Analysis Preparation（guides/csi1000-5d-analysis-snapshot.md）
 * Analysis Preparation Definition（Raw → `snapshot.json`）：`guides/csi1000-5d-analysis-snapshot.md`
 
 Data Service 不重新定义 Source semantics / Source Capture semantics / window semantics / derived formula / Analysis-ready Artifact schema；这些继续由上述 Guide 负责。
+
+### 3.2 service: mo-option-chain（authority，实现 deferred）
+
+语义：
+
+> 目标交易日的完整 MO 中证1000股指期权链 deterministic read model，是与 `csi1000-5d-analysis` 并列的独立数据产品。
+
+输入（query identity，见 `guides/mo-option-chain.md` 第 3 节）：
+
+```text
+target_trade_date
+option_product
+price_type
+```
+
+它：
+
+```text
+不依赖 csi1000-5d-analysis 的 output（snapshot.json）
+不要求 120 日历史窗口 / IM futures / CSI1000 派生指标
+复用共享 Source Capture capability（mo_option_basic / mo_option_daily / index_daily）
+```
+
+完整 query identity、option product / underlying semantics、active universe、price_type、null / zero、completeness、grouping、ordering、read model semantic shape、failure semantic categories、invariants 全部由 `guides/mo-option-chain.md` 承载，本 catalog 不重复定义。
+
+本阶段只定义业务能力；具体 preparation / persistence / HTTP delivery 可以 deferred。
+
+delivery surface：`mo-option-chain` 的 delivery 目标是 HTTP read contract（面向 `web-ui`），不是当前 CLI `dms get` 的 `--date` 单参数形态；HTTP delivery adapter 的 transport 语义属于下一阶段（见第 13 节）。
 
 ## 4. CLI: dms
 
@@ -417,6 +448,7 @@ server deployment
 ```text
 真正 dms console entry point
 最小 HTTP delivery adapter 的 API contract / implementation design
+mo-option-chain 的 preparation / service / HTTP delivery 实现
 ```
 
 ## 15. 完成自检

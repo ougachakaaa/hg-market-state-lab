@@ -240,6 +240,8 @@ analysis-ready
 * 不得按 strike 距离、成交量、只保留 ATM、只保留近月、只保留"有分析价值"等做过滤——这些筛选属于下游数据组织需求，不属于 Source Capture。
 * 第一版 MO 只要求目标交易日完整链，暂时不要求 MO 历史多日。
 
+交叉引用：`MO Option Chain` 现已作为与 `csi1000-5d-analysis` 并列的独立 deterministic data product 定义在 `guides/mo-option-chain.md`（含其 read contract、active universe、grouping / ordering / price 语义与 invariants）。本节描述的 MO universe 与 Raw 契约继续服务于本 CSI1000 分析场景的 `mo_options` 准备，语义不变；两者共享底层 Source Capture capability，但 MO Option Chain 不依赖 `csi1000-5d-analysis` 的 artifact。
+
 ### 5.2 IM universe
 
 "主要可交易合约 / 有意义"这类业务解释性措辞不用于 Source Capture。IM universe 的确定性定义：

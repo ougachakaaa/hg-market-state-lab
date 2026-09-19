@@ -22,7 +22,7 @@ presentation / interaction      （web-ui）
 
 ## Data Service（用户入口）
 
-普通用户和 Agent 的日常主入口是 Data Service CLI，无需知道底层有哪些 Source Capture、它们的执行顺序或 Raw 目录结构。第一版只有一个 Data Service：`csi1000-5d-analysis`。
+普通用户和 Agent 的日常主入口是 Data Service CLI，无需知道底层有哪些 Source Capture、它们的执行顺序或 Raw 目录结构。当前 Data Service catalog 声明两项：`csi1000-5d-analysis`（已实现）与 `mo-option-chain`（Stage 1 authority，实现 deferred，面向 HTTP read contract）。当前 CLI 用户入口只服务已实现的 `csi1000-5d-analysis`。
 
 列出当前支持的 Data Service：
 
@@ -87,6 +87,7 @@ poetry run mypy .
   * `guides/daily-market-snapshot.md`：第一版 Daily Snapshot 定义（具体 Raw Artifact 契约、Snapshot 结构与执行边界）
   * `guides/csi1000-5d-analysis-data.md`：CSI1000 "未来约 5 个交易日市场状态"分析场景的数据需求与 Source Capture / Raw Artifact 契约 authority（CSI1000 历史、MO 期权链、IM 期货）
   * `guides/csi1000-5d-analysis-snapshot.md`：同一场景的 Analysis Preparation Definition authority（Raw → analysis-ready `snapshot.json` 的组织方式）
+  * `guides/mo-option-chain.md`：MO Option Chain 独立 deterministic data product 与 read contract authority（与 `csi1000-5d-analysis` 并列，不依赖其 artifact）
   * `guides/data-services.md`：Data Service / CLI / output 契约 authority（用户级调用语义）
   * `config/`：配置
   * `guides/`：DSH 执行任务使用的 Guide

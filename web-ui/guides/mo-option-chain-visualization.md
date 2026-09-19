@@ -34,6 +34,8 @@ target_trade_date
 
 必须显式选择日期。
 
+完整的 read query identity 是 `target_trade_date + option_product + price_type`，其语义由 `market-snapshot/guides/mo-option-chain.md` 拥有。第一版 visualization 的固定值：`option_product = MO`（唯一支持），`price_type` 默认 `close`。
+
 第一版不定义：
 
 ```text
@@ -49,10 +51,10 @@ date range
 
 ```text
 target_trade_date
-underlying_close
+underlying reference price
 ```
 
-其中 `underlying_close` 是目标交易日的 CSI1000 underlying close，作为横轴上的市场基准点。
+其中 underlying reference price 是目标交易日的 CSI1000（000852.SH）underlying 在选定 `price_type` 下的价格，作为横轴上的市场基准点。它使用与 option 相同的 `price_type`（见 `market-snapshot/guides/mo-option-chain.md` 第 12 节）。
 
 ## 4. Visualization scope
 
@@ -72,27 +74,27 @@ expiry
 
 ```text
 X axis = strike / exercise price
-Y axis = option close premium
+Y axis = option selected price（默认 price_type = close）
 ```
 
 并且：
 
 * Call 与 Put 必须可视觉区分；
-* 标记目标交易日的 CSI1000 underlying close；
-* underlying close 是横轴上的市场基准点；
+* 标记目标交易日的 CSI1000 underlying reference price（与 option 相同的 `price_type`）；
+* underlying reference price 是横轴上的市场基准点；
 * 每个 scatter point 代表一个 MO option contract。
 
 单个 option point 至少具有：
 
 ```text
-contract identity
+contract identity（instrument_id）
 expiry
 option_type
 strike
-close premium
+selected price
 ```
 
-这里锁定的是**用户可见语义**，不是 HTTP schema。
+这里锁定的是**用户可见语义**，不是 HTTP schema。selected price 的 null / zero 语义（`0` 是数据、`null` 是缺价）由 `market-snapshot/guides/mo-option-chain.md` 第 13 节定义；`web-ui` 不得自行 fallback、补零或删除 contract。
 
 ## 6. 事实展示边界
 
@@ -138,24 +140,15 @@ trading recommendation
 
 ## 8. 数据来源语义
 
-本 vertical slice 需要的事实（contract identity、expiry、option_type、strike、close premium、underlying close）由 `market-snapshot` 的 analysis-ready 数据提供；`web-ui` 不直接理解 Source 或 Raw Artifact。
+本 vertical slice 需要的事实（contract identity、expiry、option_type、strike、selected price、underlying reference price）由 `market-snapshot/guides/mo-option-chain.md` 定义的 MO Option Chain read contract 提供；`web-ui` 不直接理解 Source 或 Raw Artifact，也不直接消费 `csi1000-5d-analysis` 的 `snapshot.json`。
 
-本 vertical slice 不决定：
-
-```text
-前端直接消费现有 snapshot.json
-还是
-后端产生 option-chain-specific read model
-```
-
-这属于下一轮根据 visualization data requirements 做 reconciliation 后再决定。
+active universe、option type、expiry、selected price fallback、contract completeness 等业务语义均由 read contract 拥有，`web-ui` 不自行推导（见 `market-snapshot/guides/mo-option-chain.md` 第 2 节 Ownership 与第 25 节 Invariants）。
 
 ## 9. 下一轮实现范围（本 Guide 不实现）
 
 下一轮 Coding Agent 可以在不重新发明产品目标的情况下继续做：
 
 ```text
-data requirement reconciliation
 HTTP contract
 FastAPI skeleton
 React skeleton

@@ -282,6 +282,22 @@ Analysis Preparation produces Analysis-ready Artifact
 * Source Capture 依赖 Source，不得依赖 Analysis Preparation 的输出结构。
 * Data Service 不重新定义 Source / Source Capture / Analysis Preparation 的语义；其具体内容由 `guides/data-services.md` 与对应 Guide 承载。
 
+### Multiple Data Products（共享 Capture 能力的多个数据产品）
+
+本模块可以在同一套 Source / Source Capture capability 之上，暴露多个**并列**的 deterministic data product / preparation。
+
+当前两个 sibling downstream preparations：
+
+```text
+Shared Source facts / Capture capabilities
+      ├→ CSI1000 5D Analysis Preparation  → analysis-ready artifact
+      └→ MO Option Chain Preparation       → option-chain read model
+```
+
+* MO Option Chain 与 CSI1000 5D Analysis 并列，互不依赖彼此的最终 artifact。尤其 MO Option Chain 不依赖 `csi1000-5d-analysis` 的 analysis-ready artifact（`snapshot.json`），也不要求 120 日历史窗口、IM futures 或 CSI1000 分析派生指标。
+* MO Option Chain 的 `option-chain read model` 是面向 read / visualization 消费方的确定性输出，仍由 Analysis Preparation 从 Raw Artifact 产生，不引入新的通用架构层。
+* 具体字段、分组、排序、价格与失败语义不进入本文件，由 `guides/mo-option-chain.md` 承载。
+
 ---
 
 ## 3. Raw Artifact 与 Analysis-ready Artifact 的边界
@@ -592,7 +608,6 @@ reconciliation 说明：上述目标结构已于 implementation reconciliation �
 * Plugin / Registry framework；
 * Repository pattern / DDD / Clean Architecture；
 * 第二个 Source；
-* 第二个 Data Service；
 * 复杂 Schema version framework；
 * 通用 ETL 平台。
 
@@ -603,6 +618,8 @@ reconciliation 说明：上述目标结构已于 implementation reconciliation �
 * Capture 的调度、增量更新与自动化编排。
 
 只有当实际需求产生足够复杂度时，才重新评估是否需要这些能力。
+
+reconciliation：`mo-option-chain` 已在 Stage 1 authority 中声明为第二个 Data Service（见 `guides/data-services.md` 与 `guides/mo-option-chain.md`）；其 preparation / delivery 实现属于下一阶段，本阶段不建设，因此“第二个 Data Service”不再列入 Non-goal。
 
 ---
 

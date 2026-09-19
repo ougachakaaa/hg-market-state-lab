@@ -289,6 +289,8 @@ RV_N = sample_std(r_{t-N+1}, ..., r_t) * sqrt(252) * 100
 
 ## 7. MO option chain preparation
 
+> 交叉引用：本节定义的是 CSI1000 5D analysis `snapshot.json` 内 `mo_options` 的 preparation，与独立的 MO Option Chain data product（`guides/mo-option-chain.md`）是两回事——后者是与本数据产品并列的 read model，不依赖本 `snapshot.json`。本节的 join / 字段 / 排序语义保持不变。
+
 ### 7.1 输入与 join
 
 输入：

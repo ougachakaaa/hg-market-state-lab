@@ -57,15 +57,24 @@ human-readable visualization
 
 前端需要的数据必须来自明确的 backend / read contract；`web-ui` 不直接理解 Source 或 Raw Artifact。
 
-本模块不决定：
+MO option-chain visualization 的数据来源边界已锁定：
 
 ```text
-前端直接消费现有 analysis-ready snapshot
-还是
-后端产生 option-chain-specific read model
+web-ui
+    ↓ consumes
+MO Option Chain read contract
+（market-snapshot/guides/mo-option-chain.md）
 ```
 
-这属于下一轮根据 visualization data requirements 做 reconciliation 后再决定，不在本文件提前创建新 schema。
+`web-ui` 不直接消费：
+
+```text
+csi1000-5d-analysis snapshot.json
+Raw Artifact
+Tushare Source
+```
+
+具体 read contract 的 query identity、字段、分组、排序、价格语义与失败语义由 `market-snapshot/guides/mo-option-chain.md` 拥有；`web-ui` 只消费该 read contract，不重新定义或重新推导其业务语义。
 
 ## 5. Guide Responsibility
 

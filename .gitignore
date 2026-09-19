@@ -24,3 +24,6 @@ market-snapshot/data/snapshots/**
 # Data Service canonical user-facing output (runtime artifacts)
 market-snapshot/output/**
 !market-snapshot/output/.gitkeep
+
+# Temporary Documents
+_temp_docs/**
