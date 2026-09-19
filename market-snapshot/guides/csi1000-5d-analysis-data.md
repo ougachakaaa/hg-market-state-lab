@@ -2,9 +2,9 @@
 
 > 状态：authority。本文档锁定"外部分析器分析从目标交易日往后约 5 个交易日的中证1000市场状态"这一场景所需的**输入数据需求**，以及支撑 Source Capture 直接实现的 **Source / Raw Artifact 契约**。不定义也不实现任何业务分析。
 >
-> 层级：本文档位于 `ARCHITECTURE.md` 之下，与 `guides/daily-market-snapshot.md` 并列。架构层面的稳定边界以 `ARCHITECTURE.md` 为准（尤其第 1.1 节职责边界、第 2 节核心架构、第 3 节 Raw/Preparation 边界、第 4 节架构边界的执行、第 8 节 Guide 职责、第 9 节项目结构）；本文档不得与其冲突。
+> 层级：本文档位于 `market-snapshot/ARCHITECTURE.md` 之下，与 `guides/daily-market-snapshot.md` 并列。架构层面的稳定边界以 `market-snapshot/ARCHITECTURE.md` 为准（尤其第 1.1 节职责边界、第 2 节核心架构、第 3 节 Raw/Preparation 边界、第 4 节架构边界的执行、第 8 节 Guide 职责、第 9 节项目结构）；本文档不得与其冲突。
 >
-> 实现本 Guide 任务的 Agent 应先阅读 `ARCHITECTURE.md` 第 1.1、2、3、4、9 节，再按本文档执行。
+> 实现本 Guide 任务的 Agent 应先阅读 `market-snapshot/ARCHITECTURE.md` 第 1.1、2、3、4、9 节，再按本文档执行。
 
 ## 1. 目标与边界
 
@@ -89,11 +89,11 @@ analysis-ready
 
 ## 4. Source Capture 与 Raw Artifact 契约
 
-字段语义与单位以 Tushare Source 原始定义为准；Raw 层保持 Source 字段名与语义，不做分析视角重命名或单位换算。下表仅作便于识别的最低字段清单；Source 返回的其他字段可按 `ARCHITECTURE.md` 第 3 节的 Raw 原则保留。
+字段语义与单位以 Tushare Source 原始定义为准；Raw 层保持 Source 字段名与语义，不做分析视角重命名或单位换算。下表仅作便于识别的最低字段清单；Source 返回的其他字段可按 `market-snapshot/ARCHITECTURE.md` 第 3 节的 Raw 原则保留。
 
 ### 4.1 Source Capture: index_daily（复用，CSI1000 历史窗口）
 
-* 语义名称：`index_daily`（复用 `ARCHITECTURE.md` 与 `guides/daily-market-snapshot.md` 第 4.1 节已定义的 Source Capture 语义，不新建同义 Capture）。
+* 语义名称：`index_daily`（复用 `market-snapshot/ARCHITECTURE.md` 与 `guides/daily-market-snapshot.md` 第 4.1 节已定义的 Source Capture 语义，不新建同义 Capture）。
 * 标的：`000852.SH`（中证1000指数）。
 * Source：Tushare `index_daily`（支持 `ts_code` + `start_date` + `end_date` 的历史区间查询）。
 * Raw artifact：`index_daily_history.json`。
@@ -145,7 +145,7 @@ analysis-ready
 * 可以保留 Source 返回的其他字段。
 * Raw 层**不得**做分析视角重命名：`exercise_price` → `strike`、`maturity_date` → `expiry_date`、`call_put` → `option_type`。
 * 这些更友好的字段名如果未来需要，应在 Analysis Preparation 中处理。
-* Raw 层对 contract lifecycle date facts 做 minimal date normalization：`list_date` / `delist_date` / `maturity_date` 统一落地为 `YYYY-MM-DD`（与 `trade_date` 一致，见 `ARCHITECTURE.md` 第 3 节）。这只改变表示形式，不改变 Source 语义。
+* Raw 层对 contract lifecycle date facts 做 minimal date normalization：`list_date` / `delist_date` / `maturity_date` 统一落地为 `YYYY-MM-DD`（与 `trade_date` 一致，见 `market-snapshot/ARCHITECTURE.md` 第 3 节）。这只改变表示形式，不改变 Source 语义。
 
 ### 4.3 Source Capture: mo_option_daily
 
@@ -284,7 +284,7 @@ data/raw/
 
 * `YYYY-MM-DD` 表示该次数据准备的 target_trade_date，而不是文件中所有记录共同的 trade_date。
 * 尤其 `index_daily_history.json` 与 `im_futures_daily.json` 可以自然包含多个交易日。
-* 每个 Raw 文件统一为 JSON array，数组元素对应一个 Source row，经 `ARCHITECTURE.md` 第 3 节允许的 minimal normalization 后写入。
+* 每个 Raw 文件统一为 JSON array，数组元素对应一个 Source row，经 `market-snapshot/ARCHITECTURE.md` 第 3 节允许的 minimal normalization 后写入。
 * 不在 Raw 文件中 join basic + daily。
 * `data/raw/` 是运行产物，不进入版本控制。
 
@@ -329,7 +329,7 @@ data/raw/
 以下内容已由后续 authority 决定，不再在本文档 deferred：
 
 * Analysis-ready Artifact 的最终文件结构、第一版 deterministic derived fields 及其公式：由 `guides/csi1000-5d-analysis-snapshot.md` 定义；
-* Analysis Preparation 的代码组织：由 `ARCHITECTURE.md` 第 9 节定义；
+* Analysis Preparation 的代码组织：由 `market-snapshot/ARCHITECTURE.md` 第 9 节定义；
 * CLI 参数语义：由 `guides/data-services.md` 定义。
 
 本文档仍 deferred 的只有尚未决定的 implementation detail：

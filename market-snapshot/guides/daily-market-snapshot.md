@@ -2,9 +2,9 @@
 
 > 状态：当前生效。本文档是第一版 daily-market-snapshot 场景的 Analysis Preparation Definition authority。
 >
-> 层级：本文档位于 `ARCHITECTURE.md` 之下，定义第一版 daily-market-snapshot 场景的具体数据需求、Source Capture 语义、Raw 契约、Analysis-ready Artifact 输出结构与执行边界。架构层面的稳定边界以 `ARCHITECTURE.md` 为准；本文档不得与其冲突。
+> 层级：本文档位于 `market-snapshot/ARCHITECTURE.md` 之下，定义第一版 daily-market-snapshot 场景的具体数据需求、Source Capture 语义、Raw 契约、Analysis-ready Artifact 输出结构与执行边界。架构层面的稳定边界以 `market-snapshot/ARCHITECTURE.md` 为准；本文档不得与其冲突。
 >
-> 实现本 Guide 任务的 Agent 应先阅读 `ARCHITECTURE.md` 第 2、3 节（核心架构与 Raw/Preparation 边界）、第 4 节（架构边界的执行）与第 9 节（项目结构），再按本文档执行。
+> 实现本 Guide 任务的 Agent 应先阅读 `market-snapshot/ARCHITECTURE.md` 第 2、3 节（核心架构与 Raw/Preparation 边界）、第 4 节（架构边界的执行）与第 9 节（项目结构），再按本文档执行。
 
 ## 1. 第一版目标与范围
 
@@ -300,6 +300,6 @@ Analysis Preparation → data/snapshots/YYYY-MM-DD/snapshot.json
 
 Source Capture 职责：调用 Tushare 对应 endpoint、按本文档 universe 选择范围、minimal normalization，写出 Raw Artifact。Analysis Preparation 职责：只消费上述 Raw Artifact，按本文档第 6 节组装 breadth / indices，写出 Analysis-ready Artifact；不得调用 Tushare。
 
-目标 implementation location 以 `ARCHITECTURE.md` 第 9 节为 authority（Source Capture 位于 `capture/`，Analysis Preparation 位于 `preparation/`）。当前实现已位于 `src/daily_market_snapshot/capture/`（`index_daily.py`、`stock_daily.py`）；第一版 Daily Snapshot 的 Analysis Preparation 尚未实现。配套 `tests/` 测试。
+目标 implementation location 以 `market-snapshot/ARCHITECTURE.md` 第 9 节为 authority（Source Capture 位于 `capture/`，Analysis Preparation 位于 `preparation/`）。当前实现已位于 `src/daily_market_snapshot/capture/`（`index_daily.py`、`stock_daily.py`）；第一版 Daily Snapshot 的 Analysis Preparation 尚未实现。配套 `tests/` 测试。
 
-本文档不包含实现细节；实现不得超出本文档与 `ARCHITECTURE.md` 的范围。
+本文档不包含实现细节；实现不得超出本文档与 `market-snapshot/ARCHITECTURE.md` 的范围。

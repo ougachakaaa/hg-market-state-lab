@@ -2,7 +2,7 @@
 
 > 状态：authority。本文档定义项目最上层的用户调用语义单位 Data Service、用户级 CLI（`dms`）的语义，以及 Data Service 的 canonical user-facing output。
 >
-> 层级：本文档位于 `ARCHITECTURE.md` 之下。架构层面的稳定边界以 `ARCHITECTURE.md` 为准（尤其第 0 节术语、第 2 节核心架构、第 3 节 Raw/Preparation 边界、第 8 节 Guide 职责、第 9 节项目结构）。本文档定义 Data Service 的清单、调用契约与输出契约；具体 Source Capture / Raw Artifact / Analysis Preparation 语义继续由对应 Guide 负责，不在本文档重复。
+> 层级：本文档位于 `market-snapshot/ARCHITECTURE.md` 之下。架构层面的稳定边界以 `market-snapshot/ARCHITECTURE.md` 为准（尤其第 0 节术语、第 2 节核心架构、第 3 节 Raw/Preparation 边界、第 8 节 Guide 职责、第 9 节项目结构）。本文档定义 Data Service 的清单、调用契约与输出契约；具体 Source Capture / Raw Artifact / Analysis Preparation 语义继续由对应 Guide 负责，不在本文档重复。
 
 ## 1. 什么是 Data Service
 
@@ -218,7 +218,7 @@ service_id + target_trade_date
 
 ## 7. Raw Artifact / Analysis-ready Artifact / Output 边界与 reconciliation
 
-* `data/raw/`：Source Facts / internal runtime artifacts（Raw Artifact）。继续不变，见 `ARCHITECTURE.md` 第 3、9 节。
+* `data/raw/`：Source Facts / internal runtime artifacts（Raw Artifact）。继续不变，见 `market-snapshot/ARCHITECTURE.md` 第 3、9 节。
 * `data/snapshots/`：非 Data Service 的 Analysis-ready Artifact 输出目录。第一版 Daily 数据产品（`data/snapshots/YYYY-MM-DD/snapshot.json`）不是 Data Service，继续使用 `data/snapshots/`。
 * `output/<service_id>/<target_trade_date>/`：Data Service 的 canonical user-facing output。
 
@@ -370,7 +370,7 @@ GPT analyzer / trading analysis
 
 ## 14. 完成自检
 
-仅阅读相关 authority（`ARCHITECTURE.md`、本文档及本文档引用的 Guide）应能明确回答：
+仅阅读相关 authority（`market-snapshot/ARCHITECTURE.md`、本文档及本文档引用的 Guide）应能明确回答：
 
 1. 什么是 Data Service？
 2. 当前有哪些 Data Service？

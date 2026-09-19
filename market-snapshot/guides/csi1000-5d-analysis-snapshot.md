@@ -2,7 +2,7 @@
 
 > 状态：authority（第一版 Analysis Preparation Definition）。本文档锁定 "Raw Artifact → analysis-ready Artifact" 的准备方式，只落 authority，不实现 Analysis Preparation（`src/daily_market_snapshot/preparation/csi1000_5d_analysis.py`），不执行任何业务分析。
 >
-> 层级：本文档位于 `ARCHITECTURE.md` 之下，与 `guides/csi1000-5d-analysis-data.md`、`guides/daily-market-snapshot.md` 并列。架构层面的稳定边界以 `ARCHITECTURE.md` 为准（尤其第 1.1 节职责边界、第 2 节核心架构、第 3 节 Raw/Preparation 边界、第 4 节架构边界的执行、第 6 节 Reproducibility、第 8 节 Guide 职责）；本文档不得与其冲突。
+> 层级：本文档位于 `market-snapshot/ARCHITECTURE.md` 之下，与 `guides/csi1000-5d-analysis-data.md`、`guides/daily-market-snapshot.md` 并列。架构层面的稳定边界以 `market-snapshot/ARCHITECTURE.md` 为准（尤其第 1.1 节职责边界、第 2 节核心架构、第 3 节 Raw/Preparation 边界、第 4 节架构边界的执行、第 6 节 Reproducibility、第 8 节 Guide 职责）；本文档不得与其冲突。
 >
 > 职责分工：
 >
@@ -14,7 +14,7 @@
 >     → Raw Artifact → analysis-ready Artifact authority（Analysis Preparation Definition）
 > ```
 >
-> 实现本 Guide 任务的 Agent 应先阅读 `ARCHITECTURE.md` 第 1.1、2、3、4、6 节与 `guides/csi1000-5d-analysis-data.md`（五个 Raw artifact 的契约），再按本文档执行。
+> 实现本 Guide 任务的 Agent 应先阅读 `market-snapshot/ARCHITECTURE.md` 第 1.1、2、3、4、6 节与 `guides/csi1000-5d-analysis-data.md`（五个 Raw artifact 的契约），再按本文档执行。
 
 ## 1. 目标与范围
 
@@ -319,7 +319,7 @@ strike      ← exercise_price
 expiry_date ← maturity_date
 ```
 
-`expiry_date` 直接等于 `maturity_date`。Raw 层已按 `ARCHITECTURE.md` 第 3 节 minimal normalization 将 `maturity_date` 落地为 `YYYY-MM-DD`（与 `list_date` / `delist_date` 一致，见 `guides/csi1000-5d-analysis-data.md` 4.2），因此 Analysis Preparation 只做 analysis-friendly rename `maturity_date → expiry_date`，不再做额外的日期格式归一化。
+`expiry_date` 直接等于 `maturity_date`。Raw 层已按 `market-snapshot/ARCHITECTURE.md` 第 3 节 minimal normalization 将 `maturity_date` 落地为 `YYYY-MM-DD`（与 `list_date` / `delist_date` 一致，见 `guides/csi1000-5d-analysis-data.md` 4.2），因此 Analysis Preparation 只做 analysis-friendly rename `maturity_date → expiry_date`，不再做额外的日期格式归一化。
 
 其余行情字段（`open` / `high` / `low` / `close` / `settle` / `vol` / `amount` / `oi`）沿用 `mo_option_daily` 的 Source 字段名与语义。
 
@@ -717,20 +717,20 @@ business conclusion schema
 
 本文档是第一版 Analysis Preparation Definition authority。Analysis Preparation 的职责是：读取五个 Raw Artifact，按本文档的窗口选择、join 规则、派生公式、排序与失败条件，产出 analysis-ready Artifact `output/csi1000-5d-analysis/<target_trade_date>/snapshot.json`。
 
-目标 implementation location 以 `ARCHITECTURE.md` 第 9 节为 authority：Analysis Preparation 实现位于 `preparation/`（当前为 `csi1000_5d_analysis.py`），由 Data Service orchestration 调用。当前实现已位于 `src/daily_market_snapshot/preparation/csi1000_5d_analysis.py`。配套 `tests/` 测试。
+目标 implementation location 以 `market-snapshot/ARCHITECTURE.md` 第 9 节为 authority：Analysis Preparation 实现位于 `preparation/`（当前为 `csi1000_5d_analysis.py`），由 Data Service orchestration 调用。当前实现已位于 `src/daily_market_snapshot/preparation/csi1000_5d_analysis.py`。配套 `tests/` 测试。
 
 Coding agent 不需要自行发明任何业务语义：所有窗口选择、join 规则、派生公式、排序与失败条件均已在本 Guide 锁定。
 
-实现不得超出本 Guide 与 `guides/csi1000-5d-analysis-data.md`、`ARCHITECTURE.md` 的范围；若实现与本文档不一致，应做 reconciliation，不得静默选择另一套设计。
+实现不得超出本 Guide 与 `guides/csi1000-5d-analysis-data.md`、`market-snapshot/ARCHITECTURE.md` 的范围；若实现与本文档不一致，应做 reconciliation，不得静默选择另一套设计。
 
 ## 16. Reconciliation state
 
 数据语义层面已与当前实现 reconciliation（不含代码组织结构）。锁定的数据语义 reconciliation 事实：
 
 * Analysis-ready Artifact 的 canonical output 为 `output/csi1000-5d-analysis/<target_trade_date>/snapshot.json`；不再写 `data/snapshots/...`，不维护两份 artifact（见 `guides/data-services.md`）。
-* `mo_option_basic.maturity_date` 由 Source Capture 按 `ARCHITECTURE.md` 第 3 节 minimal normalization 统一落地为 `YYYY-MM-DD`（与 `list_date` / `delist_date` 一致）。Analysis Preparation 只做 `maturity_date → expiry_date` 的 analysis-friendly rename，不再自行归一化 `YYYYMMDD`（第 7.2 节）。
+* `mo_option_basic.maturity_date` 由 Source Capture 按 `market-snapshot/ARCHITECTURE.md` 第 3 节 minimal normalization 统一落地为 `YYYY-MM-DD`（与 `list_date` / `delist_date` 一致）。Analysis Preparation 只做 `maturity_date → expiry_date` 的 analysis-friendly rename，不再自行归一化 `YYYYMMDD`（第 7.2 节）。
 * Source legitimate null 与 required derived input 的边界已锁定（第 12 节）：nullable pass-through fact 保留 `null`；required / derived input 缺失或 malformed → 失败；`close` 属于 required derived input，不得走 pass-through null 路径。
 
-代码组织结构 drift 已由 implementation reconciliation 解决：实现位于 `ARCHITECTURE.md` 第 9 节的 `src/daily_market_snapshot/{sources,capture,preparation,services}`，不再存在扁平 `scripts/` 的重复实现。
+代码组织结构 drift 已由 implementation reconciliation 解决：实现位于 `market-snapshot/ARCHITECTURE.md` 第 9 节的 `src/daily_market_snapshot/{sources,capture,preparation,services}`，不再存在扁平 `scripts/` 的重复实现。
 
 本文档不保留已解决的 drift 历史；Git commit 已保存历史。

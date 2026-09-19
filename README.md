@@ -2,15 +2,23 @@
 
 ## 项目目标
 
-该项目后续用于：从市场数据源获取数据，整理成结构明确、可复现的 Daily Market Snapshot，供 GPT 进行后续分析。
+`hg-market-state-lab` 是用于**市场状态数据准备、市场状态建模与结果展示**的实验性系统：
+
+```text
+market state data preparation   （market-snapshot）
++
+market state modeling           （market-modeling）
++
+presentation / interaction      （web-ui）
+```
 
 本仓库的 Python 项目位于 `market-snapshot/`。下文的 `poetry` 命令，以及 `data/raw/`、`output/` 等运行产物路径，都以 `market-snapshot/` 为工作目录。
 
-项目架构及架构层面的 authority 定义在 `ARCHITECTURE.md` 中。当前第一版 Daily Snapshot 的具体定义（Dataset、Raw 契约、Snapshot 结构与执行边界）在 `market-snapshot/guides/daily-market-snapshot.md` 中。
+顶层架构（模块职责边界与数据流）定义在 `ARCHITECTURE.md` 中；`market-snapshot` 模块的架构 authority 定义在 `market-snapshot/ARCHITECTURE.md` 中。当前第一版 Daily Snapshot 的具体定义（Dataset、Raw 契约、Snapshot 结构与执行边界）在 `market-snapshot/guides/daily-market-snapshot.md` 中。
 
 用户级调用语义（Data Service）与 CLI 契约定义在 `market-snapshot/guides/data-services.md` 中。
 
-当前架构定义、第一版 Snapshot Definition 与基础开发环境已就绪，已实现 Source Capture（第一版 Daily Snapshot 场景的 `index_daily`、`stock_daily`，以及 CSI1000 分析场景的 CSI1000 历史、MO 期权链与 IM 期货数据）、CSI1000 分析场景的 Analysis Preparation（Raw → analysis-ready `snapshot.json`），以及 Data Service CLI（`market-snapshot/scripts/dms.py`）；第一版 Daily Snapshot 的 Assembly 尚未实现。
+当前 `market-snapshot` 的架构定义、第一版 Snapshot Definition 与基础开发环境已就绪，已实现 Source Capture（第一版 Daily Snapshot 场景的 `index_daily`、`stock_daily`，以及 CSI1000 分析场景的 CSI1000 历史、MO 期权链与 IM 期货数据）、CSI1000 分析场景的 Analysis Preparation（Raw → analysis-ready `snapshot.json`），以及 Data Service CLI（`market-snapshot/scripts/dms.py`）；第一版 Daily Snapshot 的 Assembly 尚未实现。
 
 ## Data Service（用户入口）
 
@@ -71,8 +79,9 @@ poetry run mypy .
 
 * `README.md`：本文件
 * `AGENTS.md`：Agent 工作规则
-* `ARCHITECTURE.md`：项目架构及架构层面的 authority
+* `ARCHITECTURE.md`：仓库级顶层架构 authority（顶层模块职责边界与数据流）
 * `market-snapshot/`：现有 Python 项目（Python 3.13 + Poetry）；`poetry` / `pytest` / `ruff` / `mypy` 命令都在该目录内执行
+  * `ARCHITECTURE.md`：market-snapshot 模块架构 authority（Source / Capture / Preparation / Data Service 边界）
   * `pyproject.toml`、`poetry.lock`：Python 项目与工具配置（pytest / Ruff / mypy）
   * `.env.example`：本地环境变量模板
   * `guides/daily-market-snapshot.md`：第一版 Daily Snapshot Definition（具体 Dataset、Raw 契约、Snapshot 结构与执行边界）
