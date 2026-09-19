@@ -44,3 +44,4 @@ relevant web-ui/guides/*
 * 优先采用满足当前 authority 和当前任务要求的最小实现。
 * 不得为了未来可能出现的需求，主动引入当前任务不需要的框架、抽象、基础设施或新的业务概念。
 * 不得实现当前任务显式范围之外的功能。
+* `_temp_docs/` 仅用于临时存放超长设计文档，不属于项目 authority，也不参与 `ARCHITECTURE.md` / `guides/*` 的导航链。除非当前任务显式引用或提到其中某个具体文档，Agent 默认跳过该目录，不读取、不引用、不作为参考依据；其中内容与数据都是服务于某个具体任务的临时材料，可能已过期或与当前 authority 不一致。若需固化为项目事实，必须先与当前 authority 做 reconciliation，并写入对应的 authority / Guide。
