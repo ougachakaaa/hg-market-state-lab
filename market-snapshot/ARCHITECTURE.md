@@ -568,8 +568,9 @@ market-snapshot/
 │     │
 │     └─ api/
 │        ├─ app.py
-│        ├─ errors.py
-│        └─ mo_option_chain.py
+│        ├─ endpoint.py
+│        ├─ schemas.py
+│        └─ errors.py
 │
 ├─ scripts/
 │  ├─ dms.py
@@ -592,13 +593,18 @@ market-snapshot/
 * `src/daily_market_snapshot/services/catalog.py`：显式静态 catalog，不做 dynamic registry / filesystem discovery。
 * `src/daily_market_snapshot/services/csi1000_5d_analysis.py`：Data Service orchestration（Capture 编排、Preparation 调用、失败边界、最终 artifact 发布）。
 * `src/daily_market_snapshot/services/mo_option_chain.py`：Data Service `mo-option-chain` 的 application boundary——read-model 数据结构、query identity 输入与失败类型；HTTP delivery adapter 只通过它获取 read model，不读 Raw、不调 Source（真实 provider 实现 deferred）。
-* `src/daily_market_snapshot/api/`：最小 HTTP delivery adapter（FastAPI app / DTO / error envelope / status mapping）。它只做 transport，不拥有 market semantics（契约见 `guides/mo-option-chain-http-contract.md`）。
+* `src/daily_market_snapshot/api/`：最小 HTTP delivery adapter。它只做 transport，不拥有 market semantics。内部职责：
+  * `app.py`：FastAPI application composition、exception handlers、OpenAPI 发布；
+  * `endpoint.py`：MO Option Chain HTTP endpoint、dependency wiring、read model → transport 映射；
+  * `schemas.py`：Pydantic request / response transport DTO（含 request-shape 校验）；
+  * `errors.py`：error envelope、transport error kind 闭集与 HTTP status mapping。
+  字段级 HTTP contract 不在本文件，见 `guides/mo-option-chain-http-contract.md`。
 * `scripts/dms.py`：极薄 executable shim，转发到 `cli.py`。
 * `scripts/api.py`：极薄 executable shim，启动 HTTP delivery adapter。
 * `guides/`：描述具体数据需求与可执行 workflow。
 * `config/`：非敏感的运行配置。凭据（例如 `TUSHARE_TOKEN`）只从环境变量读取，不进 `config/`，不进版本控制。
 * `data/raw/`：Raw Artifact 输出目录。
-* `output/`：Data Service 的 canonical user-facing output 目录（`output/<service_id>/<target_trade_date>/`）。
+* `output/`：**persisted-artifact Data Service** 的 canonical user-facing output root（`output/<service_id>/<target_trade_date>/`），当前适用于 `csi1000-5d-analysis`。它不是所有 Data Service 的通用规则：`mo-option-chain` 的 result semantics 是 request-scoped read model，经 HTTP delivery 提供结果，V1 不要求把最终 artifact 写入 `output/`（见 `guides/data-services.md` 第 3.2、6 节）。
 * `tests/`：测试。
 
 `data/raw/` 与 `output/` 是运行产物，不进入版本控制。
