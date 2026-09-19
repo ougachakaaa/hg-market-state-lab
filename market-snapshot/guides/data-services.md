@@ -441,20 +441,18 @@ CORS policy
 server deployment
 ```
 
-这些属于下一轮 API contract / implementation design。
+这些属于 HTTP delivery contract / implementation design：`mo-option-chain` 的最小 HTTP transport contract 已落在 `guides/mo-option-chain-http-contract.md`（Stage 2）。
 
 可以记录：
 
-> 下一轮预期采用 FastAPI 实现最小 HTTP delivery adapter。
-
-但不要在本 Goal 开始实现。
+> 最小 HTTP delivery adapter 采用 FastAPI 实现（`src/daily_market_snapshot/api/`）。
 
 ## 14. Deferred
 
 ```text
 真正 dms console entry point
-最小 HTTP delivery adapter 的 API contract / implementation design
-mo-option-chain 的 preparation / service / HTTP delivery 实现
+mo-option-chain 的 preparation / service 实现（真实 read model provider）
+把真实 read model 接到已存在的 HTTP service boundary 上
 ```
 
 ## 15. 完成自检

@@ -326,7 +326,7 @@ HTTP schema implementation
 OpenAPI definition
 ```
 
-这些属于下一阶段。
+这些属于 delivery 层，已由 `guides/mo-option-chain-http-contract.md`（Stage 2）补充；read contract 只锁 semantic shape，不锁其 transport 表达。
 
 字段到 Source 的确定性投影（Preparation 职责，非 web-ui 职责）：
 
@@ -444,7 +444,7 @@ error JSON shape
 exception class
 ```
 
-只锁 semantic categories。Stage 2 再映射 transport semantics。
+只锁 semantic categories。semantic category → transport 的映射由 `guides/mo-option-chain-http-contract.md`（Stage 2）锁定的 error envelope / error kind / HTTP status mapping 承担；本文档不重复，也不被其改写。
 
 ## 12. No Silent Recovery
 

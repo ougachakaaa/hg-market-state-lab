@@ -155,15 +155,21 @@ React skeleton
 scatter visualization
 ```
 
+其中 HTTP contract / FastAPI skeleton 已由 `market-snapshot/guides/mo-option-chain-http-contract.md`（Stage 2）锁定：
+
+```text
+GET /mo-option-chain
+query: target_trade_date / option_product / price_type（默认 close）
+success response = read contract 第 8 节 semantic shape
+error envelope: {"error": {"kind", "detail", "param"}}
+error kind 闭集 + HTTP status mapping
+```
+
+前端只能依赖该 HTTP contract 的字段与 error kind，不得自行推导 universe / underlying / expiry / option type / fallback / completeness（见第 8 节）。
+
 本 Guide 不定义（也不提前创建）：
 
 ```text
-FastAPI folder structure
-endpoint URL
-HTTP method
-request schema
-response JSON schema
-OpenAPI model
 API versioning
 auth
 CORS policy

@@ -4,7 +4,7 @@
 >
 > 本阶段为 authority only：不实现 Python、FastAPI、HTTP endpoint、Pydantic、React、chart、tests。
 >
-> 层级：本文档位于 `market-snapshot/ARCHITECTURE.md` 之下，是 MO Option Chain 的入口 authority。具体 data contract（Source / Raw / universe / completeness）见 `guides/mo-option-chain-data.md`；具体 read contract（price / null / grouping / ordering / response / failure）见 `guides/mo-option-chain-read-contract.md`。本文档只承载稳定边界与导航，不重复子 Guide 的字段细节。
+> 层级：本文档位于 `market-snapshot/ARCHITECTURE.md` 之下，是 MO Option Chain 的入口 authority。具体 data contract（Source / Raw / universe / completeness）见 `guides/mo-option-chain-data.md`；具体 read contract（price / null / grouping / ordering / response / failure）见 `guides/mo-option-chain-read-contract.md`；HTTP transport（endpoint / DTO / error envelope / status mapping）见 `guides/mo-option-chain-http-contract.md`。本文档只承载稳定边界与导航，不重复子 Guide 的字段细节。
 >
 > 实现本任务的 Agent 先读本文档，再按任务所在层进入对应子 Guide。
 
@@ -86,7 +86,7 @@ response serialization
 HTTP error representation
 ```
 
-HTTP 不重新定义 market semantics。
+HTTP 不重新定义 market semantics。其最小 transport contract（endpoint / query 参数 / success 与 error envelope / error kind 闭集 / HTTP status mapping）落在 `guides/mo-option-chain-http-contract.md`（Stage 2）。
 
 ### web-ui owns（presentation）
 
@@ -253,21 +253,29 @@ websocket
 
 ## 7. Delivery Boundary
 
-本数据产品 read model 的 transport / HTTP delivery 由 HTTP delivery owns（见第 2 节），并属于下一阶段：
+本数据产品 read model 的 transport / HTTP delivery 由 HTTP delivery owns（见第 2 节）。
 
 ```text
 HTTP Contract + FastAPI Foundation
 ```
 
-本阶段只锁定 semantic read contract 与 failure semantic categories，不定义：
+已由 `guides/mo-option-chain-http-contract.md`（Stage 2）锁定：
 
 ```text
 endpoint URL
 HTTP method
-request schema
-response JSON schema
-OpenAPI model
-status code
+request/query schema
+response JSON shape
+error envelope / error kind 闭集
+HTTP status mapping
+```
+
+仍然 deferred：
+
+```text
+真实 Capture → Raw → MO Option Chain Preparation → read model 实现
+Data Service mo-option-chain 实现
+把真实 read model 接到 HTTP service boundary 上
 ```
 
 ## 8. Navigation
@@ -275,22 +283,25 @@ status code
 ```text
 mo-option-chain.md（本文档：产品定位 / ownership / query identity / invariants / navigation）
     ├→ mo-option-chain-data.md          （Source / Raw / universe / completeness）
-    └→ mo-option-chain-read-contract.md （price / null / grouping / ordering / response / failure）
+    ├→ mo-option-chain-read-contract.md （price / null / grouping / ordering / response / failure）
+    └→ mo-option-chain-http-contract.md （HTTP transport：endpoint / DTO / error / status）
 ```
 
 实现 guidance：
 
 * 实现 Source Capture / Raw Artifact 或判断 completeness / universe → 读 `mo-option-chain-data.md`。
 * 实现 Preparation 的 read model 或 HTTP serialization 语义 → 读 `mo-option-chain-read-contract.md`。
-* 两者都需要先读本文档的定位与 invariants。
+* 实现 endpoint / DTO / error envelope / status mapping → 读 `mo-option-chain-http-contract.md`。
+* 以上都需要先读本文档的定位与 invariants。
 
 ## 9. Deferred（下一阶段再决定）
 
 ```text
-HTTP contract / FastAPI foundation
 MO Option Chain Preparation 实现
 Data Service mo-option-chain 实现
-tests
+真实 read model provider 接入 HTTP service boundary
+tests（真实数据链路）
 ```
 
 Raw Artifact 组织方式已在本轮锁定（见 `mo-option-chain-data.md`），不再 deferred。
+HTTP contract / FastAPI foundation 已由 `guides/mo-option-chain-http-contract.md` 锁定，不再 deferred。

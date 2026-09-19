@@ -561,12 +561,19 @@ market-snapshot/
 │     ├─ preparation/
 │     │  └─ csi1000_5d_analysis.py
 │     │
-│     └─ services/
-│        ├─ catalog.py
-│        └─ csi1000_5d_analysis.py
+│     ├─ services/
+│     │  ├─ catalog.py
+│     │  ├─ csi1000_5d_analysis.py
+│     │  └─ mo_option_chain.py
+│     │
+│     └─ api/
+│        ├─ app.py
+│        ├─ errors.py
+│        └─ mo_option_chain.py
 │
 ├─ scripts/
-│  └─ dms.py
+│  ├─ dms.py
+│  └─ api.py
 │
 ├─ guides/
 ├─ config/
@@ -584,7 +591,10 @@ market-snapshot/
 * `src/daily_market_snapshot/preparation/`：Analysis Preparation 实现（确定性的 Raw → analysis-ready 转换）。
 * `src/daily_market_snapshot/services/catalog.py`：显式静态 catalog，不做 dynamic registry / filesystem discovery。
 * `src/daily_market_snapshot/services/csi1000_5d_analysis.py`：Data Service orchestration（Capture 编排、Preparation 调用、失败边界、最终 artifact 发布）。
+* `src/daily_market_snapshot/services/mo_option_chain.py`：Data Service `mo-option-chain` 的 application boundary——read-model 数据结构、query identity 输入与失败类型；HTTP delivery adapter 只通过它获取 read model，不读 Raw、不调 Source（真实 provider 实现 deferred）。
+* `src/daily_market_snapshot/api/`：最小 HTTP delivery adapter（FastAPI app / DTO / error envelope / status mapping）。它只做 transport，不拥有 market semantics（契约见 `guides/mo-option-chain-http-contract.md`）。
 * `scripts/dms.py`：极薄 executable shim，转发到 `cli.py`。
+* `scripts/api.py`：极薄 executable shim，启动 HTTP delivery adapter。
 * `guides/`：描述具体数据需求与可执行 workflow。
 * `config/`：非敏感的运行配置。凭据（例如 `TUSHARE_TOKEN`）只从环境变量读取，不进 `config/`，不进版本控制。
 * `data/raw/`：Raw Artifact 输出目录。
@@ -593,7 +603,7 @@ market-snapshot/
 
 `data/raw/` 与 `output/` 是运行产物，不进入版本控制。
 
-reconciliation 说明：上述目标结构已于 implementation reconciliation 落地。实现位于 `src/daily_market_snapshot/`（`sources/tushare.py`、`capture/`、`preparation/`、`services/`、`artifacts.py`、`cli.py`），`scripts/dms.py` 只是转发到 `cli.py` 的极薄 executable shim。Python package 当前仍叫 `daily_market_snapshot`（repository 目录名 `market-snapshot` 与 Python package 名 `daily_market_snapshot` 是两个独立事实，本文件不把二者混为一谈）。Poetry 仍为 `package-mode = false`，因此该结构通过 `pytest` 的 `pythonpath` 与 mypy 的 `mypy_path` 指向 `src/`，而不是通过打包安装。
+reconciliation 说明：上述目标结构已于 implementation reconciliation 落地。实现位于 `src/daily_market_snapshot/`（`sources/tushare.py`、`capture/`、`preparation/`、`services/`、`api/`、`artifacts.py`、`cli.py`），`scripts/dms.py` 转发到 `cli.py`、`scripts/api.py` 启动 `api/`，两者都只是极薄 executable shim。Python package 当前仍叫 `daily_market_snapshot`（repository 目录名 `market-snapshot` 与 Python package 名 `daily_market_snapshot` 是两个独立事实，本文件不把二者混为一谈）。Poetry 仍为 `package-mode = false`，因此该结构通过 `pytest` 的 `pythonpath` 与 mypy 的 `mypy_path` 指向 `src/`，而不是通过打包安装。
 
 ---
 
@@ -621,6 +631,8 @@ reconciliation 说明：上述目标结构已于 implementation reconciliation �
 只有当实际需求产生足够复杂度时，才重新评估是否需要这些能力。
 
 reconciliation：`mo-option-chain` 已在 Stage 1 authority 中声明为第二个 Data Service（见 `guides/data-services.md` 与 `guides/mo-option-chain.md`）；其 preparation / delivery 实现属于下一阶段，本阶段不建设，因此“第二个 Data Service”不再列入 Non-goal。
+
+reconciliation：`guides/data-services.md` 第 13 节早先把 `API server` 整体列为 Non-goal，那是指**通用 API platform**。为第一个明确的 Web vertical slice（MO option-chain visualization）已增加**最小 HTTP delivery adapter**（`api/`，FastAPI），其 transport 契约由 `guides/mo-option-chain-http-contract.md` 拥有。通用 API platform（多租户、auth、versioning、schema registry、通用 endpoint 框架）仍然是 Non-goal。
 
 ---
 
