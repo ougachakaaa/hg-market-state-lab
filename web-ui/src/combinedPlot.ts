@@ -1,6 +1,7 @@
 import type { Config, Layout, ScatterData } from 'plotly.js'
 import type { ExpiryGroup, OptionChain, OptionPoint } from './api/moOptionChain'
 import type { projectCombinedChain } from './combinedChartData'
+import type { ExpiryColors } from './expiryPalette'
 import { formatPrice } from './priceDisplay'
 
 type Projection = ReturnType<typeof projectCombinedChain>
@@ -23,17 +24,18 @@ export function buildCombinedPlot(
   chain: OptionChain,
   projection: Projection,
   xDomain: [number, number],
-  palette: Record<string, string>,
+  palette: Record<string, ExpiryColors>,
 ) {
   const data: ScatterData[] = projection.groups.flatMap((group) => (
     ([['Call', group.calls], ['Put', group.puts]] as const)
       .filter(([, points]) => points.some((point) => point.price !== null))
-      .map(([side, points]) => optionTrace(group, points, side, palette[group.expiry_date]))
+      .map(([side, points]) => optionTrace(group, points, side,
+        side === 'Call' ? palette[group.expiry_date].call : palette[group.expiry_date].put))
   ))
   const futuresGroups = projection.groups.filter((group) => group.futures !== null)
   const layout: Partial<Layout> = {
     autosize: true, dragmode: false, hovermode: 'closest',
-    margin: { t: 70, r: 24, b: 52, l: 62 },
+    margin: { t: 76, r: 24, b: 76, l: 62 },
     xaxis: {
       title: { text: 'Strike' }, type: 'linear', range: xDomain, fixedrange: true,
       tickformat: '.1f', tick0: 0, dtick: 200, showgrid: true, gridcolor: '#e5e7eb',
@@ -54,20 +56,20 @@ export function buildCombinedPlot(
       ...futuresGroups.map((group) => ({
         type: 'line' as const, xref: 'x' as const, yref: 'paper' as const,
         x0: group.futures!.price, x1: group.futures!.price, y0: 0, y1: 1,
-        line: { color: palette[group.expiry_date], width: 1.5, dash: 'dot' as const },
+        line: { color: palette[group.expiry_date].futures, width: 1.5, dash: 'dot' as const },
       })),
     ],
     annotations: [
       {
-        xref: 'x', yref: 'paper', x: chain.underlying.price, y: 1,
+        xref: 'x', yref: 'paper', x: chain.underlying.price, y: 0,
         text: `Spot ${formatPrice(chain.underlying.price)}`, showarrow: false,
-        xanchor: 'right', yanchor: 'bottom', font: { color: '#475569' },
+        xanchor: 'right', yanchor: 'top', font: { color: '#475569' },
       },
       ...futuresGroups.map((group) => ({
-        xref: 'x' as const, yref: 'paper' as const, x: group.futures!.price, y: 0,
+        xref: 'x' as const, yref: 'paper' as const, x: group.futures!.price, y: 1,
         text: `${group.futures!.instrument_id} · ${formatPrice(group.futures!.price)}`,
-        showarrow: false, xanchor: 'right' as const, yanchor: 'top' as const,
-        font: { color: palette[group.expiry_date] },
+        showarrow: false, xanchor: 'right' as const, yanchor: 'bottom' as const,
+        font: { color: palette[group.expiry_date].futures },
       })),
     ],
   }

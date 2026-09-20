@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import type { OptionChain } from './api/moOptionChain'
 import { projectCombinedChain } from './combinedChartData'
 import { buildCombinedPlot } from './combinedPlot'
-import { buildExpiryPalette, DEFAULT_BASE_COLOR } from './expiryPalette'
+import { buildExpiryPalette, DEFAULT_SERIES_COLORS } from './expiryPalette'
 
 const chain: OptionChain = {
   target_trade_date: '2026-09-17', option_product: 'MO', price_type: 'close',
@@ -17,14 +17,14 @@ const chain: OptionChain = {
   ],
 }
 const xDomain: [number, number] = [7000, 7700]
-const palette = buildExpiryPalette(chain.expiries, DEFAULT_BASE_COLOR)
+const palette = buildExpiryPalette(chain.expiries, DEFAULT_SERIES_COLORS)
 
 function figure(selected: string[]) {
   return buildCombinedPlot(chain, projectCombinedChain(chain, new Set(selected), xDomain), xDomain, palette)
 }
 
 describe('combined Plotly figure', () => {
-  it('keeps complete traces, null gaps and zero while encoding expiry and side separately', () => {
+  it('keeps complete traces, null gaps and zero while encoding sides by color', () => {
     const { data, layout, config } = figure(['2026-09-25', '2026-10-23'])
     expect(data.map((trace) => trace.name)).toEqual([
       '2026-09-25 Call', '2026-09-25 Put', '2026-10-23 Call', '2026-10-23 Put',
@@ -34,8 +34,11 @@ describe('combined Plotly figure', () => {
     expect(data[0].customdata).toEqual(['C1', 'C2', 'C3'])
     expect(data[0].connectgaps).toBe(false)
     expect(data[1].y).toEqual([0])
-    expect(data[0].line?.color).toBe(palette['2026-09-25'])
-    expect(data[1].line?.color).toBe(palette['2026-09-25'])
+    expect(data[0].line?.color).toBe(palette['2026-09-25'].call)
+    expect(data[0].marker?.color).toBe(palette['2026-09-25'].call)
+    expect(data[1].line?.color).toBe(palette['2026-09-25'].put)
+    expect(data[1].marker?.color).toBe(palette['2026-09-25'].put)
+    expect(data[2].line?.color).toBe(palette['2026-10-23'].call)
     expect(data[0].line?.dash).toBe('solid')
     expect(data[1].line?.dash).toBe('dash')
     expect(data[0].marker?.symbol).toBe('circle')
@@ -46,14 +49,20 @@ describe('combined Plotly figure', () => {
     expect(config).toMatchObject({ responsive: true, scrollZoom: false, doubleClick: false, displayModeBar: false })
   })
 
-  it('renders one raw Spot and selected, color-linked Futures references', () => {
+  it('renders one raw Spot below and selected opacity-linked Futures above', () => {
     const { layout } = figure(['2026-09-25', '2026-10-23'])
     expect(layout.shapes?.map((shape) => shape.x0)).toEqual([7312.45, 7560.25, 7600])
-    expect(layout.shapes?.[1].line?.color).toBe(palette['2026-09-25'])
-    expect(layout.shapes?.[2].line?.color).toBe(palette['2026-10-23'])
+    expect(layout.shapes?.[0].line?.color).toBe('#64748b')
+    expect(layout.shapes?.[1].line?.color).toBe(palette['2026-09-25'].futures)
+    expect(layout.shapes?.[2].line?.color).toBe(palette['2026-10-23'].futures)
     expect(layout.annotations?.map((annotation) => annotation.text)).toEqual([
       'Spot 7312.5', 'IM2609.CFE · 7560.3', 'IM2610.CFE · 7600.0',
     ])
+    expect(layout.annotations?.map((annotation) => [annotation.y, annotation.yanchor])).toEqual([
+      [0, 'top'], [1, 'bottom'], [1, 'bottom'],
+    ])
+    expect(layout.annotations?.[1].font?.color).toBe(palette['2026-09-25'].futures)
+    expect(layout.annotations?.[2].font?.color).toBe(palette['2026-10-23'].futures)
     const hidden = figure(['2026-09-25'])
     expect(hidden.data).toHaveLength(2)
     expect(hidden.layout.shapes).toHaveLength(2)

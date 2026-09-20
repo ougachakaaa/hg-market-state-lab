@@ -3,12 +3,13 @@ import type { OptionChain } from './api/moOptionChain'
 import { projectCombinedChain } from './combinedChartData'
 import { buildCombinedPlot } from './combinedPlot'
 import { formatPrice } from './priceDisplay'
+import type { ExpiryColors } from './expiryPalette'
 
 export default function CombinedExpiryChart({ chain, selectedExpiries, xDomain, palette }: {
   chain: OptionChain
   selectedExpiries: ReadonlySet<string>
   xDomain: [number, number]
-  palette: Record<string, string>
+  palette: Record<string, ExpiryColors>
 }) {
   const projection = projectCombinedChain(chain, selectedExpiries, xDomain)
   return (

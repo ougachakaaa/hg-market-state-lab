@@ -3,7 +3,8 @@ import { ChainRequestError, loadMoOptionChain } from './api/moOptionChain'
 import type { ChainErrorKind, ExpiryGroup, OptionChain, OptionPoint } from './api/moOptionChain'
 import CombinedExpiryChart from './CombinedExpiryChart'
 import { missingPriceCount } from './combinedChartData'
-import { buildExpiryPalette, DEFAULT_BASE_COLOR } from './expiryPalette'
+import { buildExpiryPalette, DEFAULT_SERIES_COLORS } from './expiryPalette'
+import type { ExpiryColors } from './expiryPalette'
 import { formatPrice } from './priceDisplay'
 import { MIN_STRIKE_HALF_RANGE_POINTS, STRIKE_HALF_RANGE_STEP, strikeViewport } from './strikeViewport'
 
@@ -47,14 +48,24 @@ function OptionTable({ title, points }: { title: string; points: OptionPoint[] }
   )
 }
 
-function ExpirySummary({ group, color }: {
+function ExpirySwatches({ colors, hasFutures }: { colors: ExpiryColors; hasFutures: boolean }) {
+  return (
+    <span className="expiry-swatches" aria-hidden="true">
+      <span className="expiry-swatch" style={{ backgroundColor: colors.call }} />
+      <span className="expiry-swatch" style={{ backgroundColor: colors.put }} />
+      {hasFutures && <span className="expiry-swatch" style={{ backgroundColor: colors.futures }} />}
+    </span>
+  )
+}
+
+function ExpirySummary({ group, colors }: {
   group: ExpiryGroup
-  color: string
+  colors: ExpiryColors
 }) {
   const missing = missingPriceCount(group)
   return (
     <section className="expiry" aria-label={`${group.expiry_date} 到期日`}>
-      <h3><span className="expiry-swatch" style={{ backgroundColor: color }} aria-hidden="true" />{group.expiry_date}</h3>
+      <h3><ExpirySwatches colors={colors} hasFutures={group.futures !== null} />{group.expiry_date}</h3>
       <p className="expiry-counts">Call {group.calls.length} · Put {group.puts.length}</p>
       <p className="chart-reference">{group.futures === null
         ? '无同到期 IM 合约'
@@ -79,7 +90,7 @@ function App() {
   const [page, setPage] = useState<PageState>({ status: 'idle' })
   const [strikeHalfRangePoints, setStrikeHalfRangePoints] = useState(MIN_STRIKE_HALF_RANGE_POINTS)
   const [selectedExpiries, setSelectedExpiries] = useState<string[]>([])
-  const [baseColor, setBaseColor] = useState(DEFAULT_BASE_COLOR)
+  const [seriesColors, setSeriesColors] = useState(DEFAULT_SERIES_COLORS)
   const request = useRef<AbortController | null>(null)
   const nextRequestId = useRef(0)
 
@@ -128,12 +139,16 @@ function App() {
   const selectedGroups = page.status === 'success'
     ? page.chain.expiries.filter((group) => selectedSet.has(group.expiry_date))
     : []
-  const palette = page.status === 'success' ? buildExpiryPalette(page.chain.expiries, baseColor) : {}
+  const palette = page.status === 'success' ? buildExpiryPalette(page.chain.expiries, seriesColors) : {}
 
   function toggleExpiry(expiryDate: string) {
     setSelectedExpiries((current) => current.includes(expiryDate)
       ? current.length > 1 ? current.filter((date) => date !== expiryDate) : current
       : [...current, expiryDate])
+  }
+
+  function changeSeriesColor(side: keyof typeof DEFAULT_SERIES_COLORS, color: string) {
+    setSeriesColors((current) => ({ ...current, [side]: color }))
   }
 
   return (
@@ -187,18 +202,26 @@ function App() {
                       <input type="checkbox" checked={selectedSet.has(group.expiry_date)}
                         disabled={selectedSet.has(group.expiry_date) && selectedExpiries.length === 1}
                         onChange={() => toggleExpiry(group.expiry_date)} />
-                      <span className="expiry-swatch" style={{ backgroundColor: palette[group.expiry_date] }} aria-hidden="true" />
+                      <ExpirySwatches colors={palette[group.expiry_date]} hasFutures={group.futures !== null} />
                       <span>{group.expiry_date}</span>
                     </label>
                   ))}
                 </div>
               </fieldset>
-              <label className="base-color-control" htmlFor="base-color">到期日基础颜色
-                <input id="base-color" type="color" value={baseColor} onChange={(event) => setBaseColor(event.currentTarget.value)} />
-              </label>
+              <div className="series-color-controls" role="group" aria-label="图表颜色">
+                <label>Call 颜色
+                  <input type="color" value={seriesColors.call} onChange={(event) => changeSeriesColor('call', event.currentTarget.value)} />
+                </label>
+                <label>Put 颜色
+                  <input type="color" value={seriesColors.put} onChange={(event) => changeSeriesColor('put', event.currentTarget.value)} />
+                </label>
+                <label>Futures 颜色
+                  <input type="color" value={seriesColors.futures} onChange={(event) => changeSeriesColor('futures', event.currentTarget.value)} />
+                </label>
+              </div>
               <CombinedExpiryChart chain={page.chain} selectedExpiries={selectedSet} xDomain={xDomain} palette={palette} />
               <h3>所选到期日明细</h3>
-              {selectedGroups.map((group) => <ExpirySummary key={group.expiry_date} group={group} color={palette[group.expiry_date]} />)}
+              {selectedGroups.map((group) => <ExpirySummary key={group.expiry_date} group={group} colors={palette[group.expiry_date]} />)}
             </>
           )}
         </section>

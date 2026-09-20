@@ -77,9 +77,14 @@ describe('MO option chain combined page', () => {
     expect(plot().layout.yaxis.range[1]).toBe(600)
     expect(plot().layout.legend).toMatchObject({ itemclick: false, itemdoubleclick: false })
     expect(plot().useResizeHandler).toBe(true)
+    expect((screen.getByLabelText('Call 颜色') as HTMLInputElement).value).toBe('#2563eb')
+    expect((screen.getByLabelText('Put 颜色') as HTMLInputElement).value).toBe('#ea580c')
+    expect((screen.getByLabelText('Futures 颜色') as HTMLInputElement).value).toBe('#7c3aed')
+    expect(screen.getByRole('checkbox', { name: '2026-09-25' }).closest('label')?.querySelectorAll('.expiry-swatch')).toHaveLength(3)
+    expect(screen.getByRole('checkbox', { name: '2026-11-27' }).closest('label')?.querySelectorAll('.expiry-swatch')).toHaveLength(2)
   })
 
-  it('hides the whole expiry group, keeps Spot and color identity, and blocks the last deselect', async () => {
+  it('hides the whole expiry group, keeps Spot and opacity identity, and blocks the last deselect', async () => {
     await load()
     const before = plot()
     const colorC = before.data.find((trace: { name: string }) => trace.name === '2026-11-27 Call').line.color
@@ -104,14 +109,20 @@ describe('MO option chain combined page', () => {
     expect(screen.getByRole('region', { name: '2026-10-23 到期日' })).toBeTruthy()
   })
 
-  it('changes the shared base color without changing selection, rank or X viewport', async () => {
+  it('changes three series colors independently without changing selection, opacity or X viewport', async () => {
     await load()
     const before = plot()
-    const input = screen.getByLabelText('到期日基础颜色') as HTMLInputElement
-    expect(input.value).toBe('#2563eb')
-    fireEvent.change(input, { target: { value: '#e11d48' } })
-    expect(plot().data[0].line.color).not.toBe(before.data[0].line.color)
-    expect(plot().data[0].line.color).toBe(plot().data[1].line.color)
+    fireEvent.change(screen.getByLabelText('Call 颜色'), { target: { value: '#e11d48' } })
+    expect(plot().data[0].line.color).toContain('225, 29, 72')
+    expect(plot().data[1].line.color).toBe(before.data[1].line.color)
+    expect(plot().layout.shapes[1].line.color).toBe(before.layout.shapes[1].line.color)
+    fireEvent.change(screen.getByLabelText('Put 颜色'), { target: { value: '#00ff00' } })
+    expect(plot().data[1].line.color).toContain('0, 255, 0')
+    expect(plot().data[0].line.color).toContain('225, 29, 72')
+    fireEvent.change(screen.getByLabelText('Futures 颜色'), { target: { value: '#ff00ff' } })
+    expect(plot().layout.shapes[1].line.color).toContain('255, 0, 255')
+    expect(plot().layout.annotations[1].font.color).toBe(plot().layout.shapes[1].line.color)
+    expect(plot().data[2].line.color).toContain('0.575')
     expect(plot().data[0].line.dash).not.toBe(plot().data[1].line.dash)
     expect(plot().data[0].marker.symbol).not.toBe(plot().data[1].marker.symbol)
     expect(plot().layout.xaxis.range).toEqual(before.layout.xaxis.range)
@@ -166,19 +177,19 @@ describe('MO option chain combined page', () => {
     expect(screen.queryByRole('checkbox')).toBeNull()
   })
 
-  it('resets expiry selection on a new successful chain while keeping base color and strike width', async () => {
+  it('resets expiry selection on a new successful chain while keeping series colors and strike width', async () => {
     const fetch = vi.fn().mockResolvedValueOnce(response(chain)).mockResolvedValueOnce(response({ ...chain, target_trade_date: '2026-09-18' }))
     vi.stubGlobal('fetch', fetch)
     render(<App />)
     fireEvent.change(dateInput(), { target: { value: '2026-09-17' } })
     await screen.findByRole('region', { name: '期权链结果' })
     fireEvent.click(screen.getByRole('checkbox', { name: '2026-10-23' }))
-    fireEvent.change(screen.getByLabelText('到期日基础颜色'), { target: { value: '#e11d48' } })
+    fireEvent.change(screen.getByLabelText('Call 颜色'), { target: { value: '#e11d48' } })
     fireEvent.click(screen.getByRole('button', { name: '扩大行权价视窗' }))
     fireEvent.change(dateInput(), { target: { value: '2026-09-18' } })
     await screen.findByText('2026-09-18 · MO')
     expect(screen.getAllByRole<HTMLInputElement>('checkbox').every((checkbox) => checkbox.checked)).toBe(true)
-    expect((screen.getByLabelText('到期日基础颜色') as HTMLInputElement).value).toBe('#e11d48')
+    expect((screen.getByLabelText('Call 颜色') as HTMLInputElement).value).toBe('#e11d48')
     expect(screen.getByText('行权价视窗：±400 点')).toBeTruthy()
     expect(fetch).toHaveBeenCalledTimes(2)
   })

@@ -54,12 +54,14 @@ target_trade_date
 underlying reference price
 strikeHalfRangePoints
 selectedExpiries
-baseColor
+callColor
+putColor
+futuresColor
 ```
 
 其中 underlying reference price 是目标交易日的 CSI1000（000852.SH）underlying 在选定 `price_type` 下的价格，作为横轴上的市场基准点。它使用与 option 相同的 `price_type`（见 `market-snapshot/guides/mo-option-chain-read-contract.md` 第 2 节）。
 
-`selectedExpiries` 与 `baseColor` 是页面级 visualization state / preference，不属于 read query identity；其语义见第 4、5 节。
+`selectedExpiries` 与 `callColor` / `putColor` / `futuresColor` 是页面级 visualization state / preference，不属于 read query identity；其语义见第 4、5 节。
 
 `strikeHalfRangePoints` 是整个页面共享的 strike viewport 半宽，第一版默认值与最小值均为 `300` points，调整步长为 `100` points。合图以原始 shared underlying spot 为严格中心，使用以下核心范围与实际绘图范围：
 
@@ -105,11 +107,11 @@ Y axis = option selected price（默认 price_type = close）
 并且：
 
 * 每个 selected expiry 分别有 Call / Put series，即最多两条 option traces；某一 side 没有可绘制价格时可不生成该 trace。Call / Put 分别按 read contract 的 Strike 顺序以直线连接；`price=null` 的位置断线，不跨过缺价连接，也不在该位置绘制点；`price=0` 是可绘制点；
-* 颜色主要表达 expiry：同一 expiry 的 Call 与 Put 使用相同 expiry color family，Call / Put 以线型和／或 marker 形状正交区分，视觉上必须可辨。`expiryColorScale` 以 response 的完整 `expiry_date ascending` 顺序确定 near → far 的稳定 rank；使用同一 base hue，近端高饱和、远端低饱和。即使隐藏部分 expiry，其余 expiry 的 rank 和颜色也不重新压缩；颜色不表达质量、信心、风险或重要性；
-* `baseColor` 是用户可调整的页面级 visualization preference，默认蓝色系。第一版只允许调整一个 base hue / base color，系统由它与完整 expiry 顺序确定性地生成整套颜色；不提供逐 expiry 自定义颜色或完整 theme editor。具体 HSL 数值、marker 形状与 dash pattern 由实现决定；
-* 整张图只绘制一条目标交易日 CSI1000 Spot reference（与 option 相同的 `price_type`），以原始 underlying price 定位于横轴中心、以 1 位小数标注，并使用中性、非 expiry 颜色；Price 数字刻度放在图最左侧，每 `200` 点标注一次；
-* 对每个 selected expiry，仅在其 `futures` 非 `null` 时显示 IM futures reference（合约 identity 与所选价格），在横轴以与该 expiry 颜色关联、可与 option curves 区分的视觉样式绘制。为 `null` 时仍让用户知晓“无同到期 IM 合约”，不绘制 IM 参考线或标注，也不推断替代合约；隐藏 expiry 时其 reference 一起隐藏；
-* Price 纵轴以 `0` 为刻度起点，每 `100` 点一根灰色虚线网格，其中每 `200` 点显示数字。唯一的 combined Y-domain 只统计 selected expiries 中、实际 `plot_x_range` 内、所选价格非 `null` 的 Call / Put 点：上限为 `ceil(可见最高价 × 1.2 / 100) × 100`，无可见正价时取 `100`；下限包含数值 `0` 并留少量显示余量，若有可见负价也须覆盖。IM 与 Spot 是横轴参考价，不参与 Y-domain 计算。改变 selection 可重新计算 Y-domain，但不改变 X viewport、backend data、expiry identity 或 color identity；
+* 颜色表达要素类型：Call、Put、IM futures 各使用用户选择的独立色系。同一类型跨 expiry 保持同一基色；Call 与 Put 仍以线型和／或 marker 形状辅助区分，视觉上必须可辨。`callColor`、`putColor`、`futuresColor` 是三个页面级 visualization preference，默认分别为蓝色 `#2563eb`、橙色 `#ea580c`、紫色 `#7c3aed`；第一版不提供逐 expiry 自定义颜色或完整 theme editor；
+* `expiryOpacityScale` 表达到期日相对目标交易日的远近。按完整 response 的 `expiry_date ascending` 顺序固定 rank：若有 `N > 1` 个 expiry，第 `i` 项（从 `0` 开始）的不透明度为 `1 − 0.85 × i / (N − 1)`；只有一个时为 `1`。因此最近为 `1`、最远为 `0.15`，中间按序号线性插值，不按实际日历天数插值。即使隐藏部分 expiry，其余 expiry 的 rank 与不透明度也不重新计算；同一 expiry 的 Call / Put 线与点、IM futures 参考线和标注使用同一不透明度。透明度不表达质量、信心、风险或重要性；
+* 整张图只绘制一条目标交易日 CSI1000 Spot reference（与 option 相同的 `price_type`），以原始 underlying price 定位于横轴中心、以 1 位小数标注，并使用中性、完全不透明的颜色。Spot 标注位于绘图区下方，与位于上方的 Futures 标注分开；Price 数字刻度放在图最左侧，每 `200` 点标注一次；
+* 对每个 selected expiry，仅在其 `futures` 非 `null` 时显示 IM futures reference（合约 identity 与所选价格），在横轴以 `futuresColor`、该 expiry 不透明度及与 option curves 可区分的视觉样式绘制，标注位于绘图区上方。为 `null` 时仍让用户知晓“无同到期 IM 合约”，不绘制 IM 参考线或标注，也不推断替代合约；隐藏 expiry 时其 reference 一起隐藏；
+* Price 纵轴以 `0` 为刻度起点，每 `100` 点一根灰色虚线网格，其中每 `200` 点显示数字。唯一的 combined Y-domain 只统计 selected expiries 中、实际 `plot_x_range` 内、所选价格非 `null` 的 Call / Put 点：上限为 `ceil(可见最高价 × 1.2 / 100) × 100`，无可见正价时取 `100`；下限包含数值 `0` 并留少量显示余量，若有可见负价也须覆盖。IM 与 Spot 是横轴参考价，不参与 Y-domain 计算。改变 selection 可重新计算 Y-domain，但不改变 X viewport、backend data、expiry identity 或 opacity identity；
 * underlying reference price 是横轴上的市场基准点；
 * 每个 scatter point 代表一个 MO option contract。
 
@@ -121,7 +123,7 @@ strike
 selected price
 ```
 
-`expiry` 与 `option_type` 由 read contract 的父级 grouping 表达（`expiries[]` 的 `expiry_date`、`calls[]` / `puts[]` 的归属），不要求每个 point 重复携带（见 `market-snapshot/guides/mo-option-chain-read-contract.md` 第 6 节）。颜色仅使用 read contract 已定义的 expiry ordering，不依据价格、volume、OI、liquidity、选中顺序或 legend 交互重新排序。
+`expiry` 与 `option_type` 由 read contract 的父级 grouping 表达（`expiries[]` 的 `expiry_date`、`calls[]` / `puts[]` 的归属），不要求每个 point 重复携带（见 `market-snapshot/guides/mo-option-chain-read-contract.md` 第 6 节）。不透明度仅使用 read contract 已定义的 expiry ordering，不依据价格、volume、OI、liquidity、选中顺序或 legend 交互重新排序。
 
 这里锁定的是**用户可见语义**，不是 HTTP schema。selected price 的 null / zero 语义（`0` 是数据、`null` 是缺价）由 `market-snapshot/guides/mo-option-chain-read-contract.md` 第 3 节定义；`web-ui` 不得自行 fallback、补零或删除 contract。`price=null` 的合约没有可绘制的纵坐标，因此不显示散点，但仍保留在被选中到期日的合约明细中，并在该到期日提示缺价数量；`price=0` 是可绘制的数值。如果某个被选中到期日全部合约缺价，页面显示该到期日无可绘制价格的状态，仍保留该到期日及其合约明细。
 

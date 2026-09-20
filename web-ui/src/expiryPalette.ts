@@ -1,23 +1,32 @@
 import type { ExpiryGroup } from './api/moOptionChain'
 
-export const DEFAULT_BASE_COLOR = '#2563eb'
+export type SeriesColors = { call: string; put: string; futures: string }
+export type ExpiryColors = SeriesColors & { opacity: number }
 
-function hueFromHex(color: string): number {
-  const [red, green, blue] = [1, 3, 5].map((offset) => parseInt(color.slice(offset, offset + 2), 16) / 255)
-  const maximum = Math.max(red, green, blue)
-  const minimum = Math.min(red, green, blue)
-  const chroma = maximum - minimum
-  if (chroma < 0.01) return hueFromHex(DEFAULT_BASE_COLOR) // An achromatic input has no hue.
-  if (maximum === red) return ((green - blue) / chroma + 6) % 6 * 60
-  if (maximum === green) return ((blue - red) / chroma + 2) * 60
-  return ((red - green) / chroma + 4) * 60
+export const DEFAULT_SERIES_COLORS: SeriesColors = {
+  call: '#2563eb',
+  put: '#ea580c',
+  futures: '#7c3aed',
 }
 
-export function buildExpiryPalette(expiries: ExpiryGroup[], baseColor: string): Record<string, string> {
+function withOpacity(color: string, opacity: number): string {
+  const red = parseInt(color.slice(1, 3), 16)
+  const green = parseInt(color.slice(3, 5), 16)
+  const blue = parseInt(color.slice(5, 7), 16)
+  return `rgba(${red}, ${green}, ${blue}, ${opacity})`
+}
+
+export function buildExpiryPalette(expiries: ExpiryGroup[], colors: SeriesColors): Record<string, ExpiryColors> {
   const ordered = [...expiries].sort((a, b) => a.expiry_date.localeCompare(b.expiry_date))
-  const hue = hueFromHex(baseColor)
   return Object.fromEntries(ordered.map((group, rank) => {
-    const saturation = ordered.length === 1 ? 80 : 80 - rank * 45 / (ordered.length - 1)
-    return [group.expiry_date, `hsl(${hue.toFixed(1)} ${saturation.toFixed(1)}% 42%)`]
+    const opacity = ordered.length === 1 ? 1
+      : rank === ordered.length - 1 ? 0.15
+      : 1 - 0.85 * rank / (ordered.length - 1)
+    return [group.expiry_date, {
+      opacity,
+      call: withOpacity(colors.call, opacity),
+      put: withOpacity(colors.put, opacity),
+      futures: withOpacity(colors.futures, opacity),
+    }]
   }))
 }
