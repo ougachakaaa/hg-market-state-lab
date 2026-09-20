@@ -1,10 +1,13 @@
-"""Source Capture ``im_futures_daily``: daily facts over the IM window.
+"""Source Capture ``im_futures_daily``: IM daily facts for two data products.
 
 Source: Tushare ``fut_daily`` (see ``guides/csi1000-5d-analysis-data.md`` 4.5
 and 6.2). The Raw artifact holds the daily facts of the IM ordinary monthly
 contracts whose lifecycle overlaps the collection window, so later Analysis
 Preparation can rebuild the term structure of about 60 trading days up to the
 target date.
+
+The MO Option Chain uses ``capture_target_date`` to collect only target-date
+facts of contracts active on that date.
 
 Development / debugging entrypoint (the Data Service CLI is the canonical user
 interface, see ``guides/data-services.md`` 11):
@@ -39,6 +42,13 @@ def query_fut_daily(
 ) -> pd.DataFrame:
     """Read one futures contract over a calendar window from Tushare ``fut_daily``."""
     return api.fut_daily(ts_code=ts_code, start_date=start_date, end_date=end_date)
+
+
+def query_target_date_fut_daily(
+    api: tushare.TushareApi, ts_code: str, trade_date: str
+) -> pd.DataFrame:
+    """Read only one contract's target-date fact from the same Source endpoint."""
+    return api.fut_daily(ts_code=ts_code, trade_date=trade_date)
 
 
 def window_start_date(target_trade_date: str) -> str:
@@ -172,6 +182,53 @@ def collect_im_futures_daily(
         key=lambda record: (str(record["ts_code"]), record[tushare.TRADE_DATE_FIELD])
     )
     return records
+
+
+def collect_target_date_im_futures_daily(
+    trade_date: str,
+    basic_facts: Sequence[artifacts.RawRecord],
+    daily_query: common.QueryFunc,
+) -> list[artifacts.RawRecord]:
+    """Collect target-date facts for every active ordinary monthly IM contract.
+
+    A missing Source row is preserved as an absence in Raw. Preparation decides
+    whether that contract is needed by an MO expiry and therefore required for
+    a complete read model.
+    """
+    source_date = tushare.to_tushare_date(trade_date)
+    im_futures_basic.require_im_contract_facts(basic_facts)
+    records: list[artifacts.RawRecord] = []
+    for contract in basic_facts:
+        if not im_futures_basic.is_im_contract_member(contract):
+            raise common.CollectionError("IM basic facts include a contract outside the IM scope")
+        list_date, delist_date = require_contract_lifecycle(contract)
+        if not list_date <= trade_date <= delist_date:
+            continue
+        ts_code = str(contract["ts_code"])
+        contract_records = common.to_raw_records(
+            daily_query(ts_code=ts_code, trade_date=source_date)
+        )
+        for record in contract_records:
+            if record.get("ts_code") != ts_code:
+                raise common.CollectionError(
+                    f"Tushare {RAW_ARTIFACT} returned ts_code={record.get('ts_code')!r} "
+                    f"for a request of ts_code={ts_code}."
+                )
+        common.require_target_trade_date(contract_records, trade_date)
+        records.extend(contract_records)
+    records.sort(key=lambda record: (str(record["ts_code"]), record["trade_date"]))
+    return records
+
+
+def capture_target_date(
+    api: tushare.TushareApi, trade_date: str, basic_facts: Sequence[artifacts.RawRecord]
+) -> list[artifacts.RawRecord]:
+    """MO Chain's one-day IM Capture; the historical ``capture`` stays intact."""
+    return collect_target_date_im_futures_daily(
+        trade_date,
+        basic_facts,
+        lambda **kwargs: query_target_date_fut_daily(api, **kwargs),
+    )
 
 
 def capture(

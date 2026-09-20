@@ -20,9 +20,21 @@ presentation / interaction      （web-ui）
 
 当前 `market-snapshot` 的架构定义、第一版 Daily Snapshot 定义与基础开发环境已就绪，已实现 Source Capture（第一版 Daily Snapshot 场景的 `index_daily`、`stock_daily`，以及 CSI1000 分析场景的 CSI1000 历史、MO 期权链与 IM 期货数据）、CSI1000 分析场景的 Analysis Preparation（Raw → analysis-ready `snapshot.json`），以及 Data Service CLI（`market-snapshot/scripts/dms.py`）；第一版 Daily Snapshot 的 Analysis Preparation 尚未实现。
 
+## Development CLI
+
+从仓库根目录检查本地开发状态或启动模块原生开发服务：
+
+```bash
+python dev.py doctor
+python dev.py backend
+python dev.py frontend
+```
+
+职责、状态与失败语义见 [DEVELOPMENT.md](DEVELOPMENT.md)。
+
 ## Data Service（用户入口）
 
-普通用户和 Agent 的日常主入口是 Data Service CLI，无需知道底层有哪些 Source Capture、它们的执行顺序或 Raw 目录结构。第一版只有一个 Data Service：`csi1000-5d-analysis`。
+普通用户和 Agent 的日常主入口是 Data Service CLI，无需知道底层有哪些 Source Capture、它们的执行顺序或 Raw 目录结构。当前 Data Service catalog 声明两项：`csi1000-5d-analysis` 与 `mo-option-chain`，两者均已实现；后者通过 HTTP read contract 服务 `web-ui`，没有 CLI 入口。当前 CLI 用户入口只服务 `csi1000-5d-analysis`。
 
 列出当前支持的 Data Service：
 
@@ -50,6 +62,58 @@ output/
 任一步骤失败时停止执行、返回非零退出码，并在 stderr 报告 `service`、`date`、失败的 stage 与原因；不会跳过失败的 Capture、自动换日期或产出 partial final output。
 
 Data Service / CLI / output 契约以 `market-snapshot/guides/data-services.md` 为准。
+
+## HTTP API（MO Option Chain read contract）
+
+`mo-option-chain` 没有 CLI 入口，它的 delivery surface 是 HTTP read contract（服务对象是 `web-ui` 等 read consumers）。在 `market-snapshot/` 目录内启动最小 delivery adapter：
+
+```bash
+poetry run python scripts/api.py
+```
+
+默认监听 `127.0.0.1:8011`，可用 `--host` / `--port` 覆盖：
+
+```bash
+poetry run python scripts/api.py --host 127.0.0.1 --port 8012
+```
+
+启动后：
+
+* `http://127.0.0.1:8011/openapi.json`：机器可读的 HTTP contract；
+* `http://127.0.0.1:8011/docs`：交互式 API 文档；
+* endpoint：`GET /mo-option-chain?target_trade_date=YYYY-MM-DD&option_product=MO[&price_type=close]`。
+
+端口号只是 launcher 细节，不属于 HTTP contract：endpoint 语义、request/query 参数、success / error response 与 status mapping 全部以 `market-snapshot/guides/mo-option-chain-http-contract.md` 为准；V1 不定义 server deployment、CORS、auth 或 API versioning。
+
+真实 `Capture → Raw → MO Option Chain Preparation → read model` 已接入默认 HTTP provider。成功请求返回完整期权链；不可服务的日期或数据不完整时按 HTTP contract 返回相应 error envelope。`service_not_wired` 只保留作 bootstrap / test compatibility。
+
+## Web UI（MO Option Chain 页面）
+
+`web-ui/` 是独立的 npm frontend project，基于官方 Vite `react-ts` template。需要满足 Vite 要求的 Node.js（当前为 20.19+ 或 22.12+）。在 `web-ui/` 目录内执行：
+
+```bash
+npm install
+npm run dev
+```
+
+浏览器打开 `http://127.0.0.1:5173/`，选择目标日期后立即读取 MO 期权链；每个到期日展示 Call / Put 价格散点图和标的参考线，展开合约明细可查看缺价合约。前端检查：
+
+```bash
+npm run contract:check
+npm run build
+npm run lint
+npm run test
+```
+
+`contract:check` 无需启动 HTTP 服务；它在 `market-snapshot/` 的 Poetry 环境中重新生成 OpenAPI 并与已提交的前端 JSON 比较，再核对由该 JSON 生成的 TypeScript 类型。后端 HTTP 测试也会检查 OpenAPI 与前端 JSON 一致。修改后端 HTTP DTO / OpenAPI 后，在 `web-ui/` 运行 `npm run contract:generate`，提交更新的 JSON 与 TypeScript，再运行上述检查。生成的类型与 OpenAPI JSON 由前端 client 消费，前端不维护独立的 HTTP wire schema。
+
+开发时 Vite 将 frontend origin 的 `/mo-option-chain` 请求转发到默认监听 `http://127.0.0.1:8011` 的 FastAPI，保留路径与 query。先按上一节启动 backend，再访问：
+
+```text
+http://127.0.0.1:5173/mo-option-chain?target_trade_date=2026-09-17&option_product=MO
+```
+
+页面请求走同一条 proxy 路径。返回内容取决于目标日期和 Source 数据；无需为本地开发更改 backend 语义或添加 CORS。当前页面展示摘要、每个到期日的散点图和可展开明细。
 
 ## 基础环境
 
@@ -87,17 +151,20 @@ poetry run mypy .
   * `guides/daily-market-snapshot.md`：第一版 Daily Snapshot 定义（具体 Raw Artifact 契约、Snapshot 结构与执行边界）
   * `guides/csi1000-5d-analysis-data.md`：CSI1000 "未来约 5 个交易日市场状态"分析场景的数据需求与 Source Capture / Raw Artifact 契约 authority（CSI1000 历史、MO 期权链、IM 期货）
   * `guides/csi1000-5d-analysis-snapshot.md`：同一场景的 Analysis Preparation Definition authority（Raw → analysis-ready `snapshot.json` 的组织方式）
+  * `guides/mo-option-chain.md`：MO Option Chain 独立 deterministic data product authority（入口：产品定位 / ownership / query identity / invariants，与 `csi1000-5d-analysis` 并列）
+  * `guides/mo-option-chain-data.md`：MO Option Chain data contract（Source / Raw / universe / completeness）
+  * `guides/mo-option-chain-read-contract.md`：MO Option Chain read contract（price / null / grouping / ordering / response / failure）
   * `guides/data-services.md`：Data Service / CLI / output 契约 authority（用户级调用语义）
   * `config/`：配置
   * `guides/`：DSH 执行任务使用的 Guide
-  * `src/daily_market_snapshot/`：实现代码，按职责分层（`sources/`、`capture/`、`preparation/`、`services/`、`artifacts.py`、`cli.py`）
-  * `scripts/`：极薄 executable shim（`dms.py`），转发到 `src/daily_market_snapshot/cli.py`
+  * `src/daily_market_snapshot/`：实现代码，按职责分层（`sources/`、`capture/`、`preparation/`、`services/`、`api/`、`artifacts.py`、`cli.py`）
+  * `scripts/`：极薄 executable shim（`dms.py` 转发到 `src/daily_market_snapshot/cli.py`；`api.py` 启动 `src/daily_market_snapshot/api/` 的 HTTP delivery adapter，默认 `127.0.0.1:8011`）
   * `data/raw/`：Raw Artifact 输出目录（内部运行产物）
   * `data/snapshots/`：非 Data Service 的 Snapshot 输出目录（运行产物）
   * `output/`：Data Service 的 canonical user-facing output（运行产物）
   * `tests/`：测试
 * `market-modeling/`：结构占位目录（当前无实现）
-* `web-ui/`：第一个 Web vertical slice 为 MO option-chain visualization；模块 authority 见 `ARCHITECTURE.md`，visualization contract 见 `guides/mo-option-chain-visualization.md`（当前无代码实现）
+* `web-ui/`：独立 Vite + React + TypeScript frontend project，已具备 MO option-chain 日期选择、读取状态、每个到期日的散点图与可展开明细。模块 authority 见 `ARCHITECTURE.md`，visualization contract 见 `guides/mo-option-chain-visualization.md`
 
 ## 环境变量
 

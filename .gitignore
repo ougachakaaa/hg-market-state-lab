@@ -10,6 +10,14 @@ __pycache__/
 .mypy_cache/
 .ruff_cache/
 
+# Frontend dependencies and build output
+web-ui/node_modules/
+web-ui/dist/
+web-ui/dist-ssr/
+
+# Local editor settings
+.vscode/
+
 # Local environment / secrets
 .env
 
@@ -24,3 +32,7 @@ market-snapshot/data/snapshots/**
 # Data Service canonical user-facing output (runtime artifacts)
 market-snapshot/output/**
 !market-snapshot/output/.gitkeep
+
+# Temporary Documents
+_temp_docs/**
+!_temp_docs/AGENTS.md

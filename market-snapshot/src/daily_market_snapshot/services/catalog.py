@@ -15,6 +15,15 @@ from pathlib import Path
 from ..sources import tushare
 from . import csi1000_5d_analysis
 
+# ``mo-option-chain`` is the second declared Data Service
+# (``guides/data-services.md`` section 2) but is deliberately absent from this
+# catalog. Its query identity is not ``service_id + target_trade_date``, its
+# result is a request-scoped read model rather than a persisted artifact, and its
+# delivery surface is HTTP delivery (``guides/mo-option-chain-http-contract.md``)
+# rather than ``dms get`` (``guides/data-services.md`` sections 3.2, 4 and 13).
+# Its application boundary therefore lives in its own service module
+# (``services/mo_option_chain.py``), not in this CLI-facing catalog.
+
 # The per-service implementation binding of a catalog entry: it runs the whole
 # Data Service orchestration for one target trade date and returns the path of
 # the canonical user-facing artifact.

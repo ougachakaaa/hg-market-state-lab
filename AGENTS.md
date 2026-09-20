@@ -6,6 +6,8 @@
 
 本仓库的 Python 项目位于 `market-snapshot/`：Poetry、pytest、Ruff 与 mypy 都在该目录内执行。Python 目标版本为 3.13。
 
+独立 frontend project 位于 `web-ui/`：使用 npm 管理依赖，在该目录内运行 `npm install`、`npm run dev`、`npm test`、`npm run build` 和 `npm run lint`。React 使用 Vite + TypeScript；Node.js 需满足当前 Vite 的版本要求（当前为 20.19+ 或 22.12+）。本地开发时 `/mo-option-chain` 由 Vite proxy 转发到默认监听 `127.0.0.1:8011` 的 FastAPI。MO Option Chain 的真实 provider、HTTP endpoint 与按到期日展示的散点图均已实现；具体契约以对应的 authority 和 Guide 为准。
+
 ## Authority 导航
 
 Agent 处理任务时默认先读根 `ARCHITECTURE.md`（仓库级 authority）：它定义整个 repository 的定位、顶层模块（`market-snapshot` / `market-modeling` / `web-ui`）及其职责边界、顶层数据流方向，以及下一步该读哪里。
@@ -44,3 +46,4 @@ relevant web-ui/guides/*
 * 优先采用满足当前 authority 和当前任务要求的最小实现。
 * 不得为了未来可能出现的需求，主动引入当前任务不需要的框架、抽象、基础设施或新的业务概念。
 * 不得实现当前任务显式范围之外的功能。
+* `_temp_docs/` 仅用于临时存放超长设计文档，不属于项目 authority，也不参与 `ARCHITECTURE.md` / `guides/*` 的导航链。除非当前任务显式引用或提到其中某个具体文档，Agent 默认跳过该目录，不读取、不引用、不作为参考依据；其中内容与数据都是服务于某个具体任务的临时材料，可能已过期或与当前 authority 不一致。若需固化为项目事实，必须先与当前 authority 做 reconciliation，并写入对应的 authority / Guide。

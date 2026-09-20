@@ -282,6 +282,23 @@ Analysis Preparation produces Analysis-ready Artifact
 * Source Capture 依赖 Source，不得依赖 Analysis Preparation 的输出结构。
 * Data Service 不重新定义 Source / Source Capture / Analysis Preparation 的语义；其具体内容由 `guides/data-services.md` 与对应 Guide 承载。
 
+### Multiple Data Products（共享 Capture 能力的多个数据产品）
+
+本模块可以在同一套 Source / Source Capture capability 之上，暴露多个**并列**的 deterministic data product / preparation。
+
+当前两个 sibling downstream preparations：
+
+```text
+Shared Source facts / Capture capabilities
+      ├→ CSI1000 5D Analysis Preparation  → analysis-ready artifact
+      └→ MO Option Chain Preparation       → option-chain read model
+```
+
+* MO Option Chain 与 CSI1000 5D Analysis 并列，互不依赖彼此的最终 artifact。MO Option Chain 不依赖 `csi1000-5d-analysis` 的 analysis-ready artifact（`snapshot.json`），也不要求其历史窗口或 CSI1000 分析派生指标；MO Chain 所需的目标日 IM futures reference 由其自身的 goal-scoped Raw 支撑，具体范围见 `guides/mo-option-chain-data.md`。
+* **shared Capture capability ≠ shared goal-scoped Raw Artifact**：Capture 组件语义可复用，但每个 data product 拥有自己的 goal-scoped Raw Artifact，不互相读取对方的 Raw。
+* MO Option Chain 的 `option-chain read model` 是面向 read / visualization 消费方的确定性输出，仍由 Analysis Preparation 从 Raw Artifact 产生，不引入新的通用架构层。
+* 具体字段、分组、排序、价格与失败语义不进入本文件，由 `guides/mo-option-chain.md`（入口）及其子 Guide `guides/mo-option-chain-data.md`、`guides/mo-option-chain-read-contract.md` 承载。
+
 ---
 
 ## 3. Raw Artifact 与 Analysis-ready Artifact 的边界
@@ -542,14 +559,23 @@ market-snapshot/
 │     │  └─ im_futures_daily.py
 │     │
 │     ├─ preparation/
-│     │  └─ csi1000_5d_analysis.py
+│     │  ├─ csi1000_5d_analysis.py
+│     │  └─ mo_option_chain.py
 │     │
-│     └─ services/
-│        ├─ catalog.py
-│        └─ csi1000_5d_analysis.py
+│     ├─ services/
+│     │  ├─ catalog.py
+│     │  ├─ csi1000_5d_analysis.py
+│     │  └─ mo_option_chain.py
+│     │
+│     └─ api/
+│        ├─ app.py
+│        ├─ endpoint.py
+│        ├─ schemas.py
+│        └─ errors.py
 │
 ├─ scripts/
-│  └─ dms.py
+│  ├─ dms.py
+│  └─ api.py
 │
 ├─ guides/
 ├─ config/
@@ -567,16 +593,24 @@ market-snapshot/
 * `src/daily_market_snapshot/preparation/`：Analysis Preparation 实现（确定性的 Raw → analysis-ready 转换）。
 * `src/daily_market_snapshot/services/catalog.py`：显式静态 catalog，不做 dynamic registry / filesystem discovery。
 * `src/daily_market_snapshot/services/csi1000_5d_analysis.py`：Data Service orchestration（Capture 编排、Preparation 调用、失败边界、最终 artifact 发布）。
+* `src/daily_market_snapshot/services/mo_option_chain.py`：Data Service `mo-option-chain` 的 application boundary——read-model 数据结构、query identity 输入、失败类型与真实 Capture → Raw → Preparation 编排；HTTP delivery adapter 只通过它获取 read model，不读 Raw、不调 Source。
+* `src/daily_market_snapshot/api/`：最小 HTTP delivery adapter。它只做 transport，不拥有 market semantics。内部职责：
+  * `app.py`：FastAPI application composition、exception handlers、OpenAPI 发布；
+  * `endpoint.py`：MO Option Chain HTTP endpoint、dependency wiring、read model → transport 映射；
+  * `schemas.py`：Pydantic request / response transport DTO（含 request-shape 校验）；
+  * `errors.py`：error envelope、transport error kind 闭集与 HTTP status mapping。
+  字段级 HTTP contract 不在本文件，见 `guides/mo-option-chain-http-contract.md`。
 * `scripts/dms.py`：极薄 executable shim，转发到 `cli.py`。
+* `scripts/api.py`：极薄 executable shim，启动 HTTP delivery adapter（默认 `127.0.0.1:8011`，可用 `--host` / `--port` 覆盖；bind address 属于 launcher / deployment 细节，不属于 HTTP transport contract）。
 * `guides/`：描述具体数据需求与可执行 workflow。
 * `config/`：非敏感的运行配置。凭据（例如 `TUSHARE_TOKEN`）只从环境变量读取，不进 `config/`，不进版本控制。
 * `data/raw/`：Raw Artifact 输出目录。
-* `output/`：Data Service 的 canonical user-facing output 目录（`output/<service_id>/<target_trade_date>/`）。
+* `output/`：**persisted-artifact Data Service** 的 canonical user-facing output root（`output/<service_id>/<target_trade_date>/`），当前适用于 `csi1000-5d-analysis`。它不是所有 Data Service 的通用规则：`mo-option-chain` 的 result semantics 是 request-scoped read model，经 HTTP delivery 提供结果，V1 不要求把最终 artifact 写入 `output/`（见 `guides/data-services.md` 第 3.2、6 节）。
 * `tests/`：测试。
 
 `data/raw/` 与 `output/` 是运行产物，不进入版本控制。
 
-reconciliation 说明：上述目标结构已于 implementation reconciliation 落地。实现位于 `src/daily_market_snapshot/`（`sources/tushare.py`、`capture/`、`preparation/`、`services/`、`artifacts.py`、`cli.py`），`scripts/dms.py` 只是转发到 `cli.py` 的极薄 executable shim。Python package 当前仍叫 `daily_market_snapshot`（repository 目录名 `market-snapshot` 与 Python package 名 `daily_market_snapshot` 是两个独立事实，本文件不把二者混为一谈）。Poetry 仍为 `package-mode = false`，因此该结构通过 `pytest` 的 `pythonpath` 与 mypy 的 `mypy_path` 指向 `src/`，而不是通过打包安装。
+reconciliation 说明：上述目标结构已于 implementation reconciliation 落地。实现位于 `src/daily_market_snapshot/`（`sources/tushare.py`、`capture/`、`preparation/`、`services/`、`api/`、`artifacts.py`、`cli.py`），`scripts/dms.py` 转发到 `cli.py`、`scripts/api.py` 启动 `api/`，两者都只是极薄 executable shim。Python package 当前仍叫 `daily_market_snapshot`（repository 目录名 `market-snapshot` 与 Python package 名 `daily_market_snapshot` 是两个独立事实，本文件不把二者混为一谈）。Poetry 仍为 `package-mode = false`，因此该结构通过 `pytest` 的 `pythonpath` 与 mypy 的 `mypy_path` 指向 `src/`，而不是通过打包安装。
 
 ---
 
@@ -592,7 +626,6 @@ reconciliation 说明：上述目标结构已于 implementation reconciliation �
 * Plugin / Registry framework；
 * Repository pattern / DDD / Clean Architecture；
 * 第二个 Source；
-* 第二个 Data Service；
 * 复杂 Schema version framework；
 * 通用 ETL 平台。
 
@@ -603,6 +636,10 @@ reconciliation 说明：上述目标结构已于 implementation reconciliation �
 * Capture 的调度、增量更新与自动化编排。
 
 只有当实际需求产生足够复杂度时，才重新评估是否需要这些能力。
+
+reconciliation：`mo-option-chain` 已按其 authority 实现 Preparation、Data Service 与 HTTP delivery；它仍是与 `csi1000-5d-analysis` 并列的第二个 Data Service。
+
+reconciliation：`guides/data-services.md` 第 13 节早先把 `API server` 整体列为 Non-goal，那是指**通用 API platform**。为第一个明确的 Web vertical slice（MO option-chain visualization）已增加**最小 HTTP delivery adapter**（`api/`，FastAPI），其 transport 契约由 `guides/mo-option-chain-http-contract.md` 拥有。通用 API platform（多租户、auth、versioning、schema registry、通用 endpoint 框架）仍然是 Non-goal。
 
 ---
 

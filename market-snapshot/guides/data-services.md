@@ -30,21 +30,16 @@ Workflow engine
 Plugin
 ```
 
-它只是最上层的**用户调用语义单位**。用户和 Agent 不需要知道底层有哪些 Source Capture，只需要指定：
-
-```text
-我要什么数据服务（service_id）
-+
-我要哪个交易日（target_trade_date）
-```
+它只是最上层的**用户调用语义单位**。每个 Data Service 拥有自己的 query identity 与 result semantics，由 catalog 逐项定义，不共用同一个 `service_id + target_trade_date` 模板。用户和 Agent 不需要知道底层有哪些 Source Capture，只需要按该 service 自己定义的 query identity 指定输入。
 
 ## 2. Data Service Catalog
 
-第一版只定义一项 Data Service，不为了丰富 catalog 创造其他服务。
+Catalog 当前声明两项已实现的 Data Service，不为了丰富 catalog 创造其他服务：
 
-| service_id | description | input | output |
-| --- | --- | --- | --- |
-| `csi1000-5d-analysis` | 为外部 analyzer 分析中证1000未来约 5 个交易日市场状态准备的 analysis-ready 数据产品 | `target_trade_date`（CLI 的 `--date`） | `snapshot.json` |
+| service_id | description | input | output | 状态 |
+| --- | --- | --- | --- | --- |
+| `csi1000-5d-analysis` | 为外部 analyzer 分析中证1000未来约 5 个交易日市场状态准备的 analysis-ready 数据产品 | `target_trade_date`（CLI 的 `--date`） | `snapshot.json` | 已实现 |
+| `mo-option-chain` | 目标交易日的完整 MO 中证1000股指期权链 deterministic read model（与 `csi1000-5d-analysis` 并列，不依赖其 output） | `target_trade_date` + `option_product` + `price_type` | option-chain read model（`guides/mo-option-chain.md`） | 已实现，通过 HTTP 提供 |
 
 Catalog 是显式、静态、authority-driven 的，不通过扫描文件系统动态发现。不做：
 
@@ -57,7 +52,9 @@ service lifecycle framework
 
 `index_daily`、`stock_daily` 仍属于 Source Capture / Raw capability，**不**升级为 Data Service。
 
-## 3. service: csi1000-5d-analysis
+## 3. service 语义
+
+### 3.1 service: csi1000-5d-analysis
 
 语义：
 
@@ -81,9 +78,47 @@ deterministic Analysis Preparation（guides/csi1000-5d-analysis-snapshot.md）
 
 Data Service 不重新定义 Source semantics / Source Capture semantics / window semantics / derived formula / Analysis-ready Artifact schema；这些继续由上述 Guide 负责。
 
+### 3.2 service: mo-option-chain
+
+语义：
+
+> 目标交易日的完整 MO 中证1000股指期权链 deterministic read model，是与 `csi1000-5d-analysis` 并列的独立数据产品。
+
+输入（query identity，见 `guides/mo-option-chain.md` 第 3 节）：
+
+```text
+target_trade_date   required
+option_product      required
+price_type          optional（缺省 = close）
+```
+
+它：
+
+```text
+不依赖 csi1000-5d-analysis 的 output（snapshot.json）
+不要求 CSI1000 120 日历史分析窗口 / IM 历史分析窗口 / CSI1000 analysis 派生指标
+需要目标日 CSI1000 underlying fact 与目标日有效 IM 普通月合约 facts
+每个 MO expiry 的 IM futures reference 由 Preparation 按结构性事实条件匹配；无匹配是合法缺席，有唯一匹配时才要求完整目标日价格
+复用共享 Source Capture capability（index_daily / mo_option_basic / mo_option_daily / im_futures_basic / im_futures_daily 的 target-date capability）
+```
+
+完整语义的 authority 落点：
+
+```text
+query identity / product / underlying / invariants     → guides/mo-option-chain.md
+Source / Raw / universe / completeness                 → guides/mo-option-chain-data.md
+price / null / grouping / ordering / response / failure → guides/mo-option-chain-read-contract.md
+```
+
+本 catalog 不重复定义。
+
+result semantics：`mo-option-chain` 通过 Source Capture → goal-scoped Raw → Analysis Preparation 产生 request-scoped read model，并由 HTTP delivery adapter 提供；V1 无 canonical persisted final output（区别于 `csi1000-5d-analysis` 的 `output/<service>/<date>/snapshot.json`）。
+
+delivery surface：`mo-option-chain` 通过 HTTP read contract 面向 `web-ui`，不使用当前 CLI `dms get` 的 `--date` 单参数形态；transport 语义见 `guides/mo-option-chain-http-contract.md`。
+
 ## 4. CLI: dms
 
-用户级 CLI 语义名称为 `dms`。第一版只支持两个命令：`list`、`get`。
+用户级 CLI 语义名称为 `dms`。第一版只支持两个命令：`list`、`get`。CLI 是 delivery surface 之一；当前只服务 persisted-artifact service `csi1000-5d-analysis`，`mo-option-chain` 通过 HTTP 提供（见第 3.2、13 节），不走 `dms get`。
 
 ### 4.1 dms list
 
@@ -188,9 +223,9 @@ Analysis-ready Artifact schema
 
 这些继续由已有 authority 负责。CLI 不应该知道"需要五个 Capture"、"opt_basic 应如何调用"、"Preparation 有哪些 derived fields"、"Capture 执行顺序的业务细节"；这些属于 Data Service orchestration。
 
-## 6. canonical output
+## 6. canonical output（persisted-artifact services）
 
-Data Service 的用户级输出根目录为 `output/`：
+`output/` 是 **persisted-artifact Data Service** 的用户级输出根目录。该约定只适用于以持久化 artifact 为 result semantics 的 service（当前即 `csi1000-5d-analysis`），不是所有 Data Service 的通用规则：
 
 ```text
 output/
@@ -208,13 +243,15 @@ output/
         └── snapshot.json
 ```
 
-因此：
+因此对于 `csi1000-5d-analysis`：
 
 ```text
 service_id + target_trade_date
 ```
 
-唯一确定一次 Data Service 的最终用户输出位置。
+唯一确定一次最终用户输出位置。
+
+`mo-option-chain` 是 request-scoped read model，V1 不要求 canonical persisted final output，不落入上述 `output/<service>/<date>/` 约定（见第 3.2 节）。
 
 ## 7. Raw Artifact / Analysis-ready Artifact / Output 边界与 reconciliation
 
@@ -230,9 +267,9 @@ Data Service 的 orchestration 把 Analysis Preparation 产出的 artifact 发�
 
 本 Goal 不重构无关的第一版 Daily 数据产品；`data/snapshots/YYYY-MM-DD/` 语义保持不变。
 
-## 8. 日粒度语义
+## 8. 日粒度语义（csi1000-5d-analysis）
 
-每次：
+对于 persisted-artifact service `csi1000-5d-analysis`，每次：
 
 ```text
 get <service> --date D
@@ -256,7 +293,7 @@ output/<service_id>/<target_trade_date>/
 
 需要明确：
 
-> “按日”描述的是 Data Service request / output partition，不表示所有内部 Raw Artifact 只能包含一天数据。
+> “按日”描述的是 `csi1000-5d-analysis` 的 request / output partition，不表示所有内部 Raw Artifact 只能包含一天数据，也不推广为所有 Data Service 的通用 result semantics。
 
 例如：
 
@@ -265,7 +302,7 @@ index_daily_history.json
 im_futures_daily.json
 ```
 
-可以包含多个历史交易日。但它们都属于 `target_trade_date = D` 这一次数据准备。
+可以包含多个历史交易日。但它们都属于 `target_trade_date = D` 这一次数据准备。`mo-option-chain` 是 request-scoped read model，不适用本节的按日持久化 partition 语义（见第 3.2 节）。
 
 ## 9. Git boundary
 
@@ -364,11 +401,9 @@ GPT analyzer / trading analysis
 
 ## 13. HTTP delivery boundary
 
-本文档早先把 `API server` 整体列为 Non-goal。那是指**通用 API platform**（多租户、通用 endpoint、auth、版本化、schema registry 等）不是本阶段目标。
+通用 API platform（多租户、通用 endpoint、auth、版本化、schema registry 等）不属于当前范围。
 
-下一阶段已明确第一个 Web vertical slice（MO option-chain visualization，见 `web-ui/guides/mo-option-chain-visualization.md`）需要 Web delivery。因此做最小 reconciliation：
-
-> 通用 API platform 仍然不是目标；但为了明确的 Web vertical slice，可以增加最小 HTTP delivery adapter。
+第一个 Web vertical slice（MO option-chain visualization，见 `web-ui/guides/mo-option-chain-visualization.md`）通过最小 HTTP delivery adapter 读取数据。
 
 HTTP delivery adapter 与 CLI 的关系：
 
@@ -404,19 +439,14 @@ CORS policy
 server deployment
 ```
 
-这些属于下一轮 API contract / implementation design。
+这些属于 HTTP delivery contract / implementation design：`mo-option-chain` 的最小 HTTP transport contract 已落在 `guides/mo-option-chain-http-contract.md`（Stage 2）。
 
-可以记录：
-
-> 下一轮预期采用 FastAPI 实现最小 HTTP delivery adapter。
-
-但不要在本 Goal 开始实现。
+最小 HTTP delivery adapter 采用 FastAPI 实现（`src/daily_market_snapshot/api/`）。
 
 ## 14. Deferred
 
 ```text
 真正 dms console entry point
-最小 HTTP delivery adapter 的 API contract / implementation design
 ```
 
 ## 15. 完成自检

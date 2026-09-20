@@ -51,21 +51,34 @@ human-readable visualization
 
 前端不得为了绘图重新发明金融数据语义，也不得重新计算后端 authority 已拥有的业务派生逻辑。
 
-具体 framework / component / state-management architecture 不在本文件展开。React 可以作为下一轮实现技术选择记录，但不要由此设计大型 frontend architecture。
+独立的 `web-ui/` frontend project 使用 Vite + React + TypeScript；当前已实现 MO option-chain 的日期输入、HTTP 读取、每个到期日的散点图和可展开合约明细。具体 dev 命令与 proxy 地址见根 `README.md` / `DEVELOPMENT.md`。component / state-management 选择不在本文件定义。
+
+分析图表的技术基线是 **Plotly.js + react-plotly.js**，用于支持 2D / 3D、multi-trace、subplots、annotations / reference lines 与交互式 hover / zoom / selection，并为未来 premium、IV、volatility surfaces 留出能力。当前实现使用 Plotly.js + react-plotly.js。本技术选择不定义市场事实、可视化语义或具体 Plotly API；各 vertical slice 的用户可见语义仍由对应 Guide 定义。
 
 ## 4. 数据来源边界
 
 前端需要的数据必须来自明确的 backend / read contract；`web-ui` 不直接理解 Source 或 Raw Artifact。
 
-本模块不决定：
+MO option-chain visualization 的数据来源边界已锁定：
 
 ```text
-前端直接消费现有 analysis-ready snapshot
-还是
-后端产生 option-chain-specific read model
+web-ui
+    ↓ consumes
+MO Option Chain read contract
+（market-snapshot/guides/mo-option-chain-read-contract.md）
 ```
 
-这属于下一轮根据 visualization data requirements 做 reconciliation 后再决定，不在本文件提前创建新 schema。
+`web-ui` 不直接消费：
+
+```text
+csi1000-5d-analysis snapshot.json
+Raw Artifact
+Tushare Source
+```
+
+具体 read contract 的 query identity、字段、分组、排序、价格语义与失败语义由 `market-snapshot/guides/mo-option-chain-read-contract.md` 拥有；产品 identity（`MO → 000852.SH`）与 invariants 见 `market-snapshot/guides/mo-option-chain.md`。`web-ui` 只消费该 read contract，不重新定义或重新推导其业务语义。
+
+Markdown authority 定义语义；backend HTTP DTO 发布的 OpenAPI 是 HTTP wire contract 的可执行表达。`web-ui` 的请求与响应类型及运行时校验消费该契约，不独立维护一份 backend market / transport schema。前端只拥有请求适配、用户交互与展示逻辑；具体 HTTP 规则见 `market-snapshot/guides/mo-option-chain-http-contract.md`。
 
 ## 5. Guide Responsibility
 
@@ -97,7 +110,7 @@ web-ui/guides/mo-option-chain-visualization.md
 ### 不需要更新本文件的变更
 
 * 某个 vertical slice 的具体输入、展示范围、图表字段、空/错误语义变化（属于 `web-ui/guides/*`）；
-* framework / component / state-management 选择（实现细节，不进入本文件）。
+* framework 的版本、component / state-management 选择及开发配置细节（实现细节，不进入本文件）。
 
 ### reconciliation
 

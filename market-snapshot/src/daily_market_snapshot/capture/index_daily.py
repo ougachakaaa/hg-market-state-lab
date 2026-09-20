@@ -32,6 +32,10 @@ INDEX_CODES = (
 )
 
 
+class NoIndexDataError(common.CollectionError):
+    """The requested date has no index observation from the Source."""
+
+
 def query_index_daily(api: tushare.TushareApi, ts_code: str, trade_date: str) -> pd.DataFrame:
     """Read one index for one trade date from Tushare ``index_daily``."""
     return api.index_daily(ts_code=ts_code, trade_date=trade_date)
@@ -52,7 +56,7 @@ def collect_index_daily(
         records.extend(common.to_raw_records(frame))
 
     if not records:
-        raise common.CollectionError(
+        raise NoIndexDataError(
             f"Tushare {RAW_ARTIFACT} returned no data for trade_date={trade_date}."
         )
 

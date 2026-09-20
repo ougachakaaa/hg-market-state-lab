@@ -24,16 +24,19 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 # Raw Artifact output root: ``data/raw/`` (ARCHITECTURE.md 9).
 RAW_DIR = REPO_ROOT / "data" / "raw"
 # Analysis-ready output root of the first-version daily-market-snapshot
-# Definition (``data/snapshots/YYYY-MM-DD/``). A Data Service writes its
-# canonical user-facing output under ``OUTPUT_DIR`` instead.
+# Definition (``data/snapshots/YYYY-MM-DD/``). A persisted-artifact Data Service
+# writes its canonical user-facing output under ``OUTPUT_DIR`` instead.
 SNAPSHOTS_DIR = REPO_ROOT / "data" / "snapshots"
-# Data Service canonical user-facing output root of guides/data-services.md
-# section 6: ``output/<service_id>/<target_trade_date>/``.
+# Canonical user-facing output root of a persisted-artifact Data Service
+# (guides/data-services.md section 6): ``output/<service_id>/<target_trade_date>/``.
+# It is not the result location of every Data Service: a request-scoped read
+# model such as ``mo-option-chain`` has no canonical persisted final output.
 OUTPUT_DIR = REPO_ROOT / "output"
 
 # Data Service id of the CSI1000 analysis scenario, which is also its goal
 # scoped Raw sub directory (guides/data-services.md section 2).
 CSI1000_RAW_SUBDIR = "csi1000-5d-analysis"
+MO_OPTION_CHAIN_RAW_SUBDIR = "mo-option-chain"
 
 # File name of a Data Service analysis-ready artifact. The canonical location is
 # ``output/<service_id>/<target_trade_date>/snapshot.json``
@@ -56,6 +59,11 @@ def csi1000_raw_dir(trade_date: str) -> Path:
     (guides/csi1000-5d-analysis-data.md 7).
     """
     return RAW_DIR / CSI1000_RAW_SUBDIR / trade_date
+
+
+def mo_option_chain_raw_dir(trade_date: str) -> Path:
+    """Return this data product's Raw directory for one target date."""
+    return RAW_DIR / MO_OPTION_CHAIN_RAW_SUBDIR / trade_date
 
 
 def write_raw_artifact(records: Sequence[RawRecord], raw_dir: Path, raw_artifact: str) -> Path:
