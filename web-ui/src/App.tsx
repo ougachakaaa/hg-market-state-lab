@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { ChainRequestError, loadMoOptionChain } from './api/moOptionChain'
 import type { ChainErrorKind, ExpiryGroup, OptionChain, OptionPoint } from './api/moOptionChain'
+import ExpiryChart from './ExpiryChart'
 
 type PageState =
   | { status: 'idle' }
@@ -42,18 +43,20 @@ function OptionTable({ title, points }: { title: string; points: OptionPoint[] }
   )
 }
 
-function ExpirySummary({ group }: { group: ExpiryGroup }) {
+function ExpirySummary({ group, underlying }: { group: ExpiryGroup; underlying: OptionChain['underlying'] }) {
   return (
-    <details className="expiry">
-      <summary>
-        <span>{group.expiry_date}</span>
-        <span>Call {group.calls.length} · Put {group.puts.length}</span>
-      </summary>
-      <div className="expiry-content">
-        <OptionTable title="Calls" points={group.calls} />
-        <OptionTable title="Puts" points={group.puts} />
-      </div>
-    </details>
+    <section className="expiry" aria-label={`${group.expiry_date} 到期日`}>
+      <h3>{group.expiry_date}</h3>
+      <p className="expiry-counts">Call {group.calls.length} · Put {group.puts.length}</p>
+      <ExpiryChart group={group} underlying={underlying} />
+      <details className="contract-details">
+        <summary>合约明细</summary>
+        <div className="expiry-content">
+          <OptionTable title="Calls" points={group.calls} />
+          <OptionTable title="Puts" points={group.puts} />
+        </div>
+      </details>
+    </section>
   )
 }
 
@@ -135,7 +138,7 @@ function App() {
             <div><dt>到期日数量</dt><dd>{page.chain.expiries.length}</dd></div>
           </dl>
           <h3>到期日</h3>
-          {page.chain.expiries.map((group) => <ExpirySummary key={group.expiry_date} group={group} />)}
+          {page.chain.expiries.map((group) => <ExpirySummary key={group.expiry_date} group={group} underlying={page.chain.underlying} />)}
         </section>
       )}
     </main>

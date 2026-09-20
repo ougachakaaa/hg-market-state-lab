@@ -51,7 +51,7 @@ human-readable visualization
 
 前端不得为了绘图重新发明金融数据语义，也不得重新计算后端 authority 已拥有的业务派生逻辑。
 
-独立的 `web-ui/` frontend project 使用 Vite + React + TypeScript；当前已实现 MO option-chain 的日期输入、HTTP 读取和可读结果展示，散点图留待后续阶段。具体 dev 命令与 proxy 地址见根 `README.md` / `DEVELOPMENT.md`。component / state-management 选择不在本文件定义。
+独立的 `web-ui/` frontend project 使用 Vite + React + TypeScript；当前已实现 MO option-chain 的日期输入、HTTP 读取、每个到期日的散点图和可展开合约明细。具体 dev 命令与 proxy 地址见根 `README.md` / `DEVELOPMENT.md`。component / state-management 选择不在本文件定义。
 
 ## 4. 数据来源边界
 

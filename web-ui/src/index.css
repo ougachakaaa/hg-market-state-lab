@@ -19,12 +19,26 @@ input[type="date"] { font: inherit; padding: .5rem; border: 1px solid #94a3b8; b
 .facts div { padding: .75rem; background: #f1f5f9; border-radius: .35rem; }
 dt { color: #475569; font-size: .85rem; }
 dd { margin: .25rem 0 0; font-weight: 600; }
-.expiry { border-top: 1px solid #cbd5e1; padding: .9rem 0; }
-.expiry summary { cursor: pointer; display: list-item; font-weight: 600; }
-.expiry summary span + span { margin-left: 1rem; color: #475569; font-weight: 400; }
+.expiry { border-top: 1px solid #cbd5e1; padding: 1.25rem 0; min-width: 0; }
+.expiry h3 { margin: 0; }
+.expiry-counts { margin: .35rem 0 1rem; color: #475569; }
+.expiry-chart { padding: 1rem; border: 1px solid #cbd5e1; border-radius: .5rem; background: #fff; min-width: 0; }
+.expiry-chart h4 { margin: 0; }
+.chart-reference, .missing-price { margin: .5rem 0; color: #475569; }
+.missing-price { color: #92400e; }
+.chart-frame { width: 100%; height: 360px; min-width: 0; }
+.chart-empty { padding: 2rem 1rem; background: #f1f5f9; border-radius: .35rem; text-align: center; }
+.chart-tooltip { display: grid; gap: .25rem; padding: .65rem; background: #fff; border: 1px solid #94a3b8; border-radius: .35rem; box-shadow: 0 2px 8px #0002; }
+.contract-details { margin-top: 1rem; }
+.contract-details summary { cursor: pointer; font-weight: 600; }
 .expiry-content { display: grid; gap: 1rem; }
 .option-list { min-width: 0; overflow-x: auto; }
 table { width: 100%; border-collapse: collapse; text-align: left; }
 th, td { padding: .5rem; border-bottom: 1px solid #e2e8f0; }
 th { color: #475569; }
-@media (max-width: 600px) { main { padding: 1rem; } }
+@media (max-width: 600px) {
+  main { padding: 1rem; }
+  .results { padding: 1rem; }
+  .expiry-chart { padding: .5rem; }
+  .chart-frame { height: 320px; }
+}
