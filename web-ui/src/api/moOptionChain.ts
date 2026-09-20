@@ -7,6 +7,7 @@ export type OptionPoint = {
 
 export type ExpiryGroup = {
   expiry_date: string
+  futures: { instrument_id: string; price: number }
   calls: OptionPoint[]
   puts: OptionPoint[]
 }
@@ -77,6 +78,9 @@ function isOptionPoint(value: unknown): value is OptionPoint {
 function isExpiryGroup(value: unknown): value is ExpiryGroup {
   return isRecord(value)
     && typeof value.expiry_date === 'string'
+    && isRecord(value.futures)
+    && typeof value.futures.instrument_id === 'string'
+    && isFiniteNumber(value.futures.price)
     && Array.isArray(value.calls)
     && value.calls.every(isOptionPoint)
     && Array.isArray(value.puts)

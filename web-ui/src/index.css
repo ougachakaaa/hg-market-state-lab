@@ -17,6 +17,9 @@ input[type="date"] { font: inherit; padding: .5rem; border: 1px solid #94a3b8; b
 .error { border-color: #dc2626; }
 .facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 1rem; }
 .facts div { padding: .75rem; background: #f1f5f9; border-radius: .35rem; }
+.strike-control { display: flex; align-items: center; flex-wrap: wrap; gap: .6rem; margin: 1.2rem 0; font-weight: 600; }
+.strike-control button { min-width: 2.25rem; min-height: 2.25rem; font: inherit; border: 1px solid #94a3b8; border-radius: .35rem; background: #fff; cursor: pointer; }
+.strike-control button:disabled { opacity: .45; cursor: not-allowed; }
 dt { color: #475569; font-size: .85rem; }
 dd { margin: .25rem 0 0; font-weight: 600; }
 .expiry { border-top: 1px solid #cbd5e1; padding: 1.25rem 0; min-width: 0; }
@@ -24,7 +27,11 @@ dd { margin: .25rem 0 0; font-weight: 600; }
 .expiry-counts { margin: .35rem 0 1rem; color: #475569; }
 .expiry-chart { padding: 1rem; border: 1px solid #cbd5e1; border-radius: .5rem; background: #fff; min-width: 0; }
 .expiry-chart h4 { margin: 0; }
+.chart-references { display: flex; flex-wrap: wrap; gap: .4rem 1.25rem; margin: .5rem 0; }
 .chart-reference, .missing-price { margin: .5rem 0; color: #475569; }
+.chart-references .chart-reference { margin: 0; }
+.spot-reference { border-left: 3px dashed #64748b; padding-left: .5rem; }
+.futures-reference { border-left: 3px dotted #7c3aed; padding-left: .5rem; }
 .missing-price { color: #92400e; }
 .chart-frame { width: 100%; height: 360px; min-width: 0; }
 .chart-empty { padding: 2rem 1rem; background: #f1f5f9; border-radius: .35rem; text-align: center; }

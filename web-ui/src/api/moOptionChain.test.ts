@@ -8,6 +8,7 @@ const chain = {
   underlying: { instrument_id: '000852.SH', price: 7312.45 },
   expiries: [{
     expiry_date: '2026-09-25',
+    futures: { instrument_id: 'IM2609.CFE', price: 7487.6 },
     calls: [{ instrument_id: 'C1', strike: 7000, price: null }],
     puts: [{ instrument_id: 'P1', strike: 7000, price: 0 }],
   }],
@@ -38,6 +39,21 @@ describe('loadMoOptionChain', () => {
     expect(options.signal).toBe(controller.signal)
     expect(result.expiries[0].calls[0].price).toBeNull()
     expect(result.expiries[0].puts[0].price).toBe(0)
+    expect(result.expiries[0].futures).toEqual({ instrument_id: 'IM2609.CFE', price: 7487.6 })
+  })
+
+  it.each([
+    undefined,
+    null,
+    { instrument_id: 'IM2609.CFE', price: null },
+    { instrument_id: 'IM2609.CFE', price: '7487.6' },
+    { instrument_id: 2609, price: 7487.6 },
+  ])('rejects an expiry with invalid futures %j', async (futures) => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(response({
+      ...chain,
+      expiries: [{ ...chain.expiries[0], futures }],
+    })))
+    await expect(loadMoOptionChain('2026-09-17')).rejects.toMatchObject({ kind: 'invalid_response' })
   })
 
   it('returns the contract error kind and detail', async () => {

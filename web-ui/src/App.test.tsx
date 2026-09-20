@@ -7,11 +7,11 @@ vi.mock('recharts', () => ({
   ResponsiveContainer: ({ children }: { children: ReactNode }) => <div>{children}</div>,
   ScatterChart: ({ children }: { children: ReactNode }) => <div>{children}</div>,
   CartesianGrid: () => null,
-  XAxis: ({ domain, type }: { domain: number[]; type: string }) => <div data-testid="x-axis" data-domain={JSON.stringify(domain)} data-type={type} />,
-  YAxis: ({ domain, type }: { domain: number[]; type: string }) => <div data-testid="y-axis" data-domain={JSON.stringify(domain)} data-type={type} />,
+  XAxis: ({ domain, type, tickFormatter }: { domain: number[]; type: string; tickFormatter: (value: number) => string }) => <div data-testid="x-axis" data-domain={JSON.stringify(domain)} data-type={type} data-tick={tickFormatter(7000)} />,
+  YAxis: ({ domain, type, tickFormatter }: { domain: number[]; type: string; tickFormatter: (value: number) => string }) => <div data-testid="y-axis" data-domain={JSON.stringify(domain)} data-type={type} data-tick={tickFormatter(0)} />,
   Tooltip: () => null,
   Legend: () => <div>Calls · Puts</div>,
-  ReferenceLine: ({ x }: { x: number }) => <div data-testid="reference-line" data-x={x} />,
+  ReferenceLine: ({ x, stroke, label }: { x: number; stroke: string; label: { value: string } }) => <div data-testid="reference-line" data-x={x} data-stroke={stroke} data-label={label.value} />,
   Scatter: ({ name, data }: { name: string; data: unknown[] }) => <div data-testid={`${name}-series`} data-points={JSON.stringify(data)} />,
 }))
 
@@ -22,6 +22,7 @@ const chain = {
   underlying: { instrument_id: '000852.SH', price: 7312.45 },
   expiries: [{
     expiry_date: '2026-09-25',
+    futures: { instrument_id: 'IM2609.CFE', price: 7487.6 },
     calls: [{ instrument_id: 'C1', strike: 7000, price: null }],
     puts: [{ instrument_id: 'P1', strike: 7000, price: 0 }],
   }],
@@ -55,7 +56,7 @@ describe('MO option chain page', () => {
 
     const results = await screen.findByRole('region', { name: '期权链结果' })
     expect(within(results).getByText('000852.SH')).toBeTruthy()
-    expect(within(results).getByText('7312.45')).toBeTruthy()
+    expect(within(results).getByText('7312.5')).toBeTruthy()
     expect(within(results).getByText('Call 1 · Put 1')).toBeTruthy()
     expect(within(results).getByText('1')).toBeTruthy()
     const details = within(results).getByText('合约明细').closest('details')
@@ -65,7 +66,8 @@ describe('MO option chain page', () => {
     expect(within(results).getByText('C1')).toBeTruthy()
     expect(within(results).getByText('P1')).toBeTruthy()
     expect(within(results).getByText('—')).toBeTruthy()
-    expect(within(results).getByText('0')).toBeTruthy()
+    expect(within(results).getByText('0.0')).toBeTruthy()
+    expect(within(results).getAllByText('7000.0')).toHaveLength(2)
 
     fireEvent.change(dateInput(), { target: { value: '' } })
     expect(screen.getByRole('status').textContent).toContain('请选择')
@@ -78,11 +80,13 @@ describe('MO option chain page', () => {
       expiries: [
         {
           expiry_date: '2026-09-25',
-          calls: [{ instrument_id: 'arbitrary-a', strike: 7000, price: null }, { instrument_id: 'arbitrary-b', strike: 7100, price: 9 }],
+          futures: { instrument_id: 'IM2609.CFE', price: 7487.6 },
+          calls: [{ instrument_id: 'arbitrary-a', strike: 7000, price: null }, { instrument_id: 'arbitrary-b', strike: 8000, price: 9 }],
           puts: [{ instrument_id: 'arbitrary-c', strike: 7000, price: 0 }],
         },
         {
           expiry_date: '2026-10-23',
+          futures: { instrument_id: 'IM2610.CFE', price: 7560.25 },
           calls: [{ instrument_id: 'arbitrary-d', strike: 7200, price: 12 }],
           puts: [{ instrument_id: 'arbitrary-e', strike: 7300, price: 5 }],
         },
@@ -96,20 +100,41 @@ describe('MO option chain page', () => {
     expect(sections.map((section) => within(section).getByRole('heading', { level: 3 }).textContent))
       .toEqual(['2026-09-25', '2026-10-23'])
     for (const section of sections) {
-      expect(within(section).getByTestId('reference-line').getAttribute('data-x')).toBe('7312.45')
+      expect(within(section).getAllByTestId('reference-line').map((line) => line.getAttribute('data-x'))[0]).toBe('7312.45')
       expect(within(section).getByTestId('x-axis').getAttribute('data-type')).toBe('number')
+      expect(within(section).getByTestId('x-axis').getAttribute('data-domain')).toBe('[7000,7700]')
+      expect(within(section).getByTestId('x-axis').getAttribute('data-tick')).toBe('7000.0')
       expect(within(section).getByTestId('y-axis').getAttribute('data-type')).toBe('number')
+      expect(within(section).getByTestId('y-axis').getAttribute('data-tick')).toBe('0.0')
       expect(within(section).getByText('Calls · Puts')).toBeTruthy()
     }
     const first = sections[0]
+    const second = sections[1]
+    expect(within(first).getAllByTestId('reference-line').map((line) => line.getAttribute('data-x'))).toEqual(['7312.45', '7487.6'])
+    expect(within(second).getAllByTestId('reference-line').map((line) => line.getAttribute('data-x'))).toEqual(['7312.45', '7560.25'])
+    expect(within(first).getByText('Futures：IM2609.CFE · 7487.6')).toBeTruthy()
+    expect(within(second).getByText('Futures：IM2610.CFE · 7560.3')).toBeTruthy()
+    expect(within(first).getAllByTestId('reference-line')[0].getAttribute('data-label')).toBe('Spot 7312.5')
+    expect(within(second).getAllByTestId('reference-line')[1].getAttribute('data-label')).toBe('IM 7560.3')
     const calls = JSON.parse(within(first).getByTestId('Calls-series').getAttribute('data-points')!)
     const puts = JSON.parse(within(first).getByTestId('Puts-series').getAttribute('data-points')!)
-    expect(calls).toEqual([{ instrument_id: 'arbitrary-b', strike: 7100, price: 9, side: 'Call' }])
+    expect(calls).toEqual([{ instrument_id: 'arbitrary-b', strike: 8000, price: 9, side: 'Call' }])
     expect(puts).toEqual([{ instrument_id: 'arbitrary-c', strike: 7000, price: 0, side: 'Put' }])
     expect(within(first).getByText(/1 个合约缺少所选价格/)).toBeTruthy()
-    const [minimum, maximum] = JSON.parse(within(first).getByTestId('x-axis').getAttribute('data-domain')!)
-    expect(minimum).toBeLessThan(7000)
-    expect(maximum).toBeGreaterThan(7312.45)
+    fireEvent.click(within(first).getByText('合约明细'))
+    expect(within(first).getByText('arbitrary-b')).toBeTruthy()
+    expect(within(first).getByText('Call 2 · Put 1')).toBeTruthy()
+
+    const shrink = screen.getByRole('button', { name: '缩小行权价视窗' })
+    expect(shrink.hasAttribute('disabled')).toBe(true)
+    fireEvent.click(screen.getByRole('button', { name: '扩大行权价视窗' }))
+    expect(screen.getByText('行权价视窗：±400 点')).toBeTruthy()
+    for (const section of sections) {
+      expect(within(section).getByTestId('x-axis').getAttribute('data-domain')).toBe('[6900,7800]')
+    }
+    fireEvent.click(shrink)
+    expect(shrink.hasAttribute('disabled')).toBe(true)
+    expect(screen.getByText('行权价视窗：±300 点')).toBeTruthy()
   })
 
   it('shows an all-null expiry without losing contract facts', async () => {
@@ -117,6 +142,7 @@ describe('MO option chain page', () => {
       ...chain,
       expiries: [{
         expiry_date: '2026-09-25',
+        futures: { instrument_id: 'IM2609.CFE', price: 7487.6 },
         calls: [{ instrument_id: 'C1', strike: 7000, price: null }],
         puts: [{ instrument_id: 'P1', strike: 7200, price: null }],
       }],
@@ -132,6 +158,19 @@ describe('MO option chain page', () => {
     expect(within(expiry).getByText('C1')).toBeTruthy()
     expect(within(expiry).getByText('P1')).toBeTruthy()
     expect(within(expiry).getAllByText('—')).toHaveLength(2)
+  })
+
+  it('keeps the shared strike half range when the selected date changes', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(response(chain)))
+    render(<App />)
+    fireEvent.change(dateInput(), { target: { value: '2026-09-17' } })
+    await screen.findByRole('region', { name: '期权链结果' })
+    fireEvent.click(screen.getByRole('button', { name: '扩大行权价视窗' }))
+    fireEvent.change(dateInput(), { target: { value: '2026-09-18' } })
+
+    const results = await screen.findByRole('region', { name: '期权链结果' })
+    expect(within(results).getByText('行权价视窗：±400 点')).toBeTruthy()
+    expect(within(results).getByTestId('x-axis').getAttribute('data-domain')).toBe('[6900,7800]')
   })
 
   it.each([

@@ -15,17 +15,15 @@ function paddedDomain(values: number[]): [number, number] {
   return [minimum - padding, maximum + padding]
 }
 
-export function projectExpiry(group: ExpiryGroup, underlyingPrice: number) {
+export function projectExpiry(group: ExpiryGroup) {
   const calls = drawable(group.calls, 'Call')
   const puts = drawable(group.puts, 'Put')
   const points = [...calls, ...puts]
-  const strikes = [...group.calls, ...group.puts].map((point) => point.strike)
 
   return {
     calls,
     puts,
     missingPriceCount: group.calls.length + group.puts.length - points.length,
-    xDomain: paddedDomain([...strikes, underlyingPrice]),
     yDomain: paddedDomain([0, ...points.map((point) => point.price)]),
   }
 }

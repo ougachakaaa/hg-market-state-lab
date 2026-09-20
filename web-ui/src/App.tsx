@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from 'react'
 import { ChainRequestError, loadMoOptionChain } from './api/moOptionChain'
 import type { ChainErrorKind, ExpiryGroup, OptionChain, OptionPoint } from './api/moOptionChain'
 import ExpiryChart from './ExpiryChart'
+import { formatPrice } from './priceDisplay'
+import { MIN_STRIKE_HALF_RANGE_POINTS, STRIKE_HALF_RANGE_STEP, strikeViewport } from './strikeViewport'
 
 type PageState =
   | { status: 'idle' }
@@ -33,8 +35,8 @@ function OptionTable({ title, points }: { title: string; points: OptionPoint[] }
           {points.map((point) => (
             <tr key={point.instrument_id}>
               <td>{point.instrument_id}</td>
-              <td>{point.strike}</td>
-              <td>{point.price === null ? '—' : point.price}</td>
+              <td>{formatPrice(point.strike)}</td>
+              <td>{formatPrice(point.price)}</td>
             </tr>
           ))}
         </tbody>
@@ -43,12 +45,16 @@ function OptionTable({ title, points }: { title: string; points: OptionPoint[] }
   )
 }
 
-function ExpirySummary({ group, underlying }: { group: ExpiryGroup; underlying: OptionChain['underlying'] }) {
+function ExpirySummary({ group, underlying, xDomain }: {
+  group: ExpiryGroup
+  underlying: OptionChain['underlying']
+  xDomain: [number, number]
+}) {
   return (
     <section className="expiry" aria-label={`${group.expiry_date} 到期日`}>
       <h3>{group.expiry_date}</h3>
       <p className="expiry-counts">Call {group.calls.length} · Put {group.puts.length}</p>
-      <ExpiryChart group={group} underlying={underlying} />
+      <ExpiryChart group={group} underlying={underlying} xDomain={xDomain} />
       <details className="contract-details">
         <summary>合约明细</summary>
         <div className="expiry-content">
@@ -63,6 +69,7 @@ function ExpirySummary({ group, underlying }: { group: ExpiryGroup; underlying: 
 function App() {
   const [selectedDate, setSelectedDate] = useState('')
   const [page, setPage] = useState<PageState>({ status: 'idle' })
+  const [strikeHalfRangePoints, setStrikeHalfRangePoints] = useState(MIN_STRIKE_HALF_RANGE_POINTS)
   const request = useRef<AbortController | null>(null)
   const nextRequestId = useRef(0)
 
@@ -101,6 +108,10 @@ function App() {
     })
   }
 
+  const xDomain = page.status === 'success'
+    ? strikeViewport(page.chain.underlying.price, strikeHalfRangePoints)
+    : null
+
   return (
     <main>
       <header>
@@ -128,17 +139,22 @@ function App() {
           )}
         </section>
       )}
-      {page.status === 'success' && (
+      {page.status === 'success' && xDomain !== null && (
         <section className="results" aria-label="期权链结果">
           <h2>{page.chain.target_trade_date} · {page.chain.option_product}</h2>
           <dl className="facts">
             <div><dt>价格口径</dt><dd>{page.chain.price_type}</dd></div>
             <div><dt>标的指数</dt><dd>{page.chain.underlying.instrument_id}</dd></div>
-            <div><dt>参考价</dt><dd>{page.chain.underlying.price}</dd></div>
+            <div><dt>参考价</dt><dd>{formatPrice(page.chain.underlying.price)}</dd></div>
             <div><dt>到期日数量</dt><dd>{page.chain.expiries.length}</dd></div>
           </dl>
+          <div className="strike-control" role="group" aria-label="行权价视窗半宽">
+            <span>行权价视窗：±{strikeHalfRangePoints} 点</span>
+            <button type="button" aria-label="缩小行权价视窗" disabled={strikeHalfRangePoints === MIN_STRIKE_HALF_RANGE_POINTS} onClick={() => setStrikeHalfRangePoints((value) => Math.max(MIN_STRIKE_HALF_RANGE_POINTS, value - STRIKE_HALF_RANGE_STEP))}>−</button>
+            <button type="button" aria-label="扩大行权价视窗" onClick={() => setStrikeHalfRangePoints((value) => value + STRIKE_HALF_RANGE_STEP)}>+</button>
+          </div>
           <h3>到期日</h3>
-          {page.chain.expiries.map((group) => <ExpirySummary key={group.expiry_date} group={group} underlying={page.chain.underlying} />)}
+          {page.chain.expiries.map((group) => <ExpirySummary key={group.expiry_date} group={group} underlying={page.chain.underlying} xDomain={xDomain} />)}
         </section>
       )}
     </main>
