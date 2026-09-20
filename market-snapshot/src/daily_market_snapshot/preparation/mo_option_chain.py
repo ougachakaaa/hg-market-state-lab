@@ -144,13 +144,7 @@ def futures_references(
     seen: set[str] = set()
     for row in basic_rows:
         identity = required_text(row, "ts_code")
-        symbol = required_text(row, "symbol")
-        if (
-            required_text(row, "exchange") != "CFFEX"
-            or required_text(row, "fut_code") != "IM"
-            or not symbol.startswith("IM")
-            or not symbol[2:].isdigit()
-        ):
+        if required_text(row, "exchange") != "CFFEX" or required_text(row, "fut_code") != "IM":
             raise PreparationError(f"IM basic Raw has an out-of-scope contract {identity}")
         if identity in seen:
             raise PreparationError(f"duplicate IM basic contract {identity}")

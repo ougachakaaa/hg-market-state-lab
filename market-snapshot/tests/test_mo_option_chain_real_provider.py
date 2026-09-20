@@ -296,7 +296,6 @@ def test_preparation_rejects_incomplete_matched_im_reference(
     elif case == "multiple_matches":
         competing = dict(basic[0])
         competing["ts_code"] = "IM2699.CFE"
-        competing["symbol"] = "IM2699"
         basic.append(competing)
     elif case == "outside_lifecycle":
         basic[0]["list_date"] = "2026-09-18"
@@ -313,6 +312,23 @@ def test_preparation_rejects_incomplete_matched_im_reference(
 
     with pytest.raises(preparation.PreparationError):
         preparation.build_chain(TARGET, "close", raw_dir)
+
+
+def test_preparation_does_not_require_im_symbol(test_workdir: Path) -> None:
+    successful_chain(fake_source())
+    raw_dir = raw_directory(test_workdir)
+    basic = artifacts.read_raw_artifact(raw_dir, "im_futures_basic")
+    assert isinstance(basic, list)
+    matched = next(row for row in basic if row["ts_code"] == "IM2609.CFE")
+    matched.pop("symbol")
+    artifacts.write_raw_artifact(basic, raw_dir, "im_futures_basic")
+
+    prepared = preparation.build_chain(TARGET, "close", raw_dir)
+
+    assert prepared["expiries"][0]["futures"] == {
+        "instrument_id": "IM2609.CFE",
+        "price": 7487.6,
+    }
 
 
 def test_unrelated_active_im_without_daily_does_not_affect_chain() -> None:
