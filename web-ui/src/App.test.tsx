@@ -1,19 +1,17 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { cleanup, fireEvent, render, screen, within } from '@testing-library/react'
-import type { ReactNode } from 'react'
+import type { PlotParams } from 'react-plotly.js'
 import App from './App'
 
-vi.mock('recharts', () => ({
-  ResponsiveContainer: ({ children }: { children: ReactNode }) => <div>{children}</div>,
-  ScatterChart: ({ children }: { children: ReactNode }) => <div>{children}</div>,
-  CartesianGrid: () => null,
-  XAxis: ({ domain, type, tickFormatter }: { domain: number[]; type: string; tickFormatter: (value: number) => string }) => <div data-testid="x-axis" data-domain={JSON.stringify(domain)} data-type={type} data-tick={tickFormatter(7000)} />,
-  YAxis: ({ domain, type, tickFormatter }: { domain: number[]; type: string; tickFormatter: (value: number) => string }) => <div data-testid="y-axis" data-domain={JSON.stringify(domain)} data-type={type} data-tick={tickFormatter(0)} />,
-  Tooltip: () => null,
-  Legend: () => <div>Calls · Puts</div>,
-  ReferenceLine: ({ x, stroke, label }: { x: number; stroke: string; label: { value: string } }) => <div data-testid="reference-line" data-x={x} data-stroke={stroke} data-label={label.value} />,
-  Scatter: ({ name, data }: { name: string; data: unknown[] }) => <div data-testid={`${name}-series`} data-points={JSON.stringify(data)} />,
+vi.mock('react-plotly.js', () => ({
+  default: ({ data, layout, config, useResizeHandler, style }: PlotParams) => (
+    <div data-testid="plot" data-plot={JSON.stringify({ data, layout, config, useResizeHandler, style })} />
+  ),
 }))
+
+function plot(section: HTMLElement) {
+  return JSON.parse(within(section).getByTestId('plot').getAttribute('data-plot')!)
+}
 
 const chain = {
   target_trade_date: '2026-09-17',
@@ -100,26 +98,27 @@ describe('MO option chain page', () => {
     expect(sections.map((section) => within(section).getByRole('heading', { level: 3 }).textContent))
       .toEqual(['2026-09-25', '2026-10-23'])
     for (const section of sections) {
-      expect(within(section).getAllByTestId('reference-line').map((line) => line.getAttribute('data-x'))[0]).toBe('7312.45')
-      expect(within(section).getByTestId('x-axis').getAttribute('data-type')).toBe('number')
-      expect(within(section).getByTestId('x-axis').getAttribute('data-domain')).toBe('[7000,7700]')
-      expect(within(section).getByTestId('x-axis').getAttribute('data-tick')).toBe('7000.0')
-      expect(within(section).getByTestId('y-axis').getAttribute('data-type')).toBe('number')
-      expect(within(section).getByTestId('y-axis').getAttribute('data-tick')).toBe('0.0')
-      expect(within(section).getByText('Calls · Puts')).toBeTruthy()
+      expect(plot(section).layout.shapes[0].x0).toBe(7312.45)
+      expect(plot(section).layout.xaxis.range).toEqual([7000, 7700])
+      expect(plot(section).layout.xaxis.fixedrange).toBe(true)
+      expect(plot(section).data.map((trace: { name: string }) => trace.name)).toEqual(['Calls', 'Puts'])
+      expect(plot(section).useResizeHandler).toBe(true)
+      expect(plot(section).style).toEqual({ width: '100%', height: '100%' })
     }
     const first = sections[0]
     const second = sections[1]
-    expect(within(first).getAllByTestId('reference-line').map((line) => line.getAttribute('data-x'))).toEqual(['7312.45', '7487.6'])
-    expect(within(second).getAllByTestId('reference-line').map((line) => line.getAttribute('data-x'))).toEqual(['7312.45', '7560.25'])
+    expect(plot(first).layout.shapes.map((shape: { x0: number }) => shape.x0)).toEqual([7312.45, 7487.6])
+    expect(plot(second).layout.shapes.map((shape: { x0: number }) => shape.x0)).toEqual([7312.45, 7560.25])
     expect(within(first).getByText('Futures：IM2609.CFE · 7487.6')).toBeTruthy()
     expect(within(second).getByText('Futures：IM2610.CFE · 7560.3')).toBeTruthy()
-    expect(within(first).getAllByTestId('reference-line')[0].getAttribute('data-label')).toBe('Spot 7312.5')
-    expect(within(second).getAllByTestId('reference-line')[1].getAttribute('data-label')).toBe('IM 7560.3')
-    const calls = JSON.parse(within(first).getByTestId('Calls-series').getAttribute('data-points')!)
-    const puts = JSON.parse(within(first).getByTestId('Puts-series').getAttribute('data-points')!)
-    expect(calls).toEqual([{ instrument_id: 'arbitrary-b', strike: 8000, price: 9, side: 'Call' }])
-    expect(puts).toEqual([{ instrument_id: 'arbitrary-c', strike: 7000, price: 0, side: 'Put' }])
+    expect(plot(first).layout.annotations[0].text).toBe('Spot 7312.5')
+    expect(plot(second).layout.annotations[1].text).toBe('IM 7560.3')
+    expect(plot(first).data[0].x).toEqual([8000])
+    expect(plot(first).data[0].y).toEqual([9])
+    expect(plot(first).data[0].customdata).toEqual(['arbitrary-b'])
+    expect(plot(first).data[1].x).toEqual([7000])
+    expect(plot(first).data[1].y).toEqual([0])
+    expect(plot(first).data[1].customdata).toEqual(['arbitrary-c'])
     expect(within(first).getByText(/1 个合约缺少所选价格/)).toBeTruthy()
     fireEvent.click(within(first).getByText('合约明细'))
     expect(within(first).getByText('arbitrary-b')).toBeTruthy()
@@ -130,7 +129,7 @@ describe('MO option chain page', () => {
     fireEvent.click(screen.getByRole('button', { name: '扩大行权价视窗' }))
     expect(screen.getByText('行权价视窗：±400 点')).toBeTruthy()
     for (const section of sections) {
-      expect(within(section).getByTestId('x-axis').getAttribute('data-domain')).toBe('[6900,7800]')
+      expect(plot(section).layout.xaxis.range).toEqual([6900, 7800])
     }
     fireEvent.click(shrink)
     expect(shrink.hasAttribute('disabled')).toBe(true)
@@ -154,6 +153,9 @@ describe('MO option chain page', () => {
     expect(within(expiry).getByText('Call 1 · Put 1')).toBeTruthy()
     expect(within(expiry).getByText(/2 个合约缺少所选价格/)).toBeTruthy()
     expect(within(expiry).getByText('该到期日没有可绘制的价格。')).toBeTruthy()
+    expect(within(expiry).getByText('Spot：000852.SH · 7312.5')).toBeTruthy()
+    expect(within(expiry).getByText('Futures：IM2609.CFE · 7487.6')).toBeTruthy()
+    expect(within(expiry).queryByTestId('plot')).toBeNull()
     fireEvent.click(within(expiry).getByText('合约明细'))
     expect(within(expiry).getByText('C1')).toBeTruthy()
     expect(within(expiry).getByText('P1')).toBeTruthy()
@@ -170,7 +172,7 @@ describe('MO option chain page', () => {
 
     const results = await screen.findByRole('region', { name: '期权链结果' })
     expect(within(results).getByText('行权价视窗：±400 点')).toBeTruthy()
-    expect(within(results).getByTestId('x-axis').getAttribute('data-domain')).toBe('[6900,7800]')
+    expect(plot(results).layout.xaxis.range).toEqual([6900, 7800])
   })
 
   it.each([

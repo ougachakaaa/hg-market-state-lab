@@ -53,7 +53,7 @@ human-readable visualization
 
 独立的 `web-ui/` frontend project 使用 Vite + React + TypeScript；当前已实现 MO option-chain 的日期输入、HTTP 读取、每个到期日的散点图和可展开合约明细。具体 dev 命令与 proxy 地址见根 `README.md` / `DEVELOPMENT.md`。component / state-management 选择不在本文件定义。
 
-分析图表的后续技术基线锁定为 **Plotly.js + react-plotly.js**，用于支持 2D / 3D、multi-trace、subplots、annotations / reference lines 与交互式 hover / zoom / selection，并为未来 premium、IV、volatility surfaces 留出能力。当前实现仍使用 Recharts；迁移属于后续 implementation。本技术选择不定义市场事实、可视化语义或具体 Plotly API；各 vertical slice 的用户可见语义仍由对应 Guide 定义。
+分析图表的技术基线是 **Plotly.js + react-plotly.js**，用于支持 2D / 3D、multi-trace、subplots、annotations / reference lines 与交互式 hover / zoom / selection，并为未来 premium、IV、volatility surfaces 留出能力。当前实现使用 Plotly.js + react-plotly.js。本技术选择不定义市场事实、可视化语义或具体 Plotly API；各 vertical slice 的用户可见语义仍由对应 Guide 定义。
 
 ## 4. 数据来源边界
 
