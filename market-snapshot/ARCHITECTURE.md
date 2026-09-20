@@ -559,7 +559,8 @@ market-snapshot/
 │     │  └─ im_futures_daily.py
 │     │
 │     ├─ preparation/
-│     │  └─ csi1000_5d_analysis.py
+│     │  ├─ csi1000_5d_analysis.py
+│     │  └─ mo_option_chain.py
 │     │
 │     ├─ services/
 │     │  ├─ catalog.py
@@ -592,7 +593,7 @@ market-snapshot/
 * `src/daily_market_snapshot/preparation/`：Analysis Preparation 实现（确定性的 Raw → analysis-ready 转换）。
 * `src/daily_market_snapshot/services/catalog.py`：显式静态 catalog，不做 dynamic registry / filesystem discovery。
 * `src/daily_market_snapshot/services/csi1000_5d_analysis.py`：Data Service orchestration（Capture 编排、Preparation 调用、失败边界、最终 artifact 发布）。
-* `src/daily_market_snapshot/services/mo_option_chain.py`：Data Service `mo-option-chain` 的 application boundary——read-model 数据结构、query identity 输入与失败类型；HTTP delivery adapter 只通过它获取 read model，不读 Raw、不调 Source（真实 provider 实现 deferred）。
+* `src/daily_market_snapshot/services/mo_option_chain.py`：Data Service `mo-option-chain` 的 application boundary——read-model 数据结构、query identity 输入、失败类型与真实 Capture → Raw → Preparation 编排；HTTP delivery adapter 只通过它获取 read model，不读 Raw、不调 Source。
 * `src/daily_market_snapshot/api/`：最小 HTTP delivery adapter。它只做 transport，不拥有 market semantics。内部职责：
   * `app.py`：FastAPI application composition、exception handlers、OpenAPI 发布；
   * `endpoint.py`：MO Option Chain HTTP endpoint、dependency wiring、read model → transport 映射；
@@ -636,7 +637,7 @@ reconciliation 说明：上述目标结构已于 implementation reconciliation �
 
 只有当实际需求产生足够复杂度时，才重新评估是否需要这些能力。
 
-reconciliation：`mo-option-chain` 已在 Stage 1 authority 中声明为第二个 Data Service（见 `guides/data-services.md` 与 `guides/mo-option-chain.md`）；其 preparation / delivery 实现属于下一阶段，本阶段不建设，因此“第二个 Data Service”不再列入 Non-goal。
+reconciliation：`mo-option-chain` 已按其 authority 实现 Preparation、Data Service 与 HTTP delivery；它仍是与 `csi1000-5d-analysis` 并列的第二个 Data Service。
 
 reconciliation：`guides/data-services.md` 第 13 节早先把 `API server` 整体列为 Non-goal，那是指**通用 API platform**。为第一个明确的 Web vertical slice（MO option-chain visualization）已增加**最小 HTTP delivery adapter**（`api/`，FastAPI），其 transport 契约由 `guides/mo-option-chain-http-contract.md` 拥有。通用 API platform（多租户、auth、versioning、schema registry、通用 endpoint 框架）仍然是 Non-goal。
 

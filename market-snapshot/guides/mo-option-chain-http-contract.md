@@ -145,7 +145,7 @@ mapping 的输入是 `guides/mo-option-chain-read-contract.md` 第 11 节的 sem
 | `unsupported_query` | 400 | `unsupported option_product`；`unsupported price_type` |
 | `date_not_available` | 404 | `target_trade_date cannot be served by Source`；`non-trading / unavailable date` |
 | `option_chain_unavailable` | 503 | `cannot determine product → underlying`；`cannot determine active contract universe`；`active contract missing target-date daily row`；`duplicate / inconsistent contract identity`；`required structural field missing or malformed`；`underlying selected price unavailable or malformed` |
-| `service_not_wired` | 503 | 非 semantic failure：V1 bootstrap 状态下真实 read model provider 尚未接入（见第 8 节） |
+| `service_not_wired` | 503 | 非 semantic failure：保留的 bootstrap/test compatibility，默认 provider 已接线（见第 8 节） |
 
 **谁产生 `invalid_request`，谁产生 `unsupported_query`：**
 
@@ -221,7 +221,7 @@ web-ui
 
 * HTTP 层通过明确的 service/application boundary 获取 read model；它不读 Raw Artifact，不调用 Source，不理解 Tushare。
 * HTTP 层不依赖 `csi1000-5d-analysis` 的 `snapshot.json`（`guides/mo-option-chain.md` Invariant 10）。
-* 本阶段真实 `Capture → Raw → MO Option Chain Preparation → read model` 实现仍然 deferred，HTTP contract 使用 fake/stub service 完成 contract test；stub 不属于业务语义层，也不进入正式 delivery 语义。
+* 真实 `Capture → Raw → MO Option Chain Preparation → read model` 已接入默认 HTTP provider；HTTP contract tests 仍可注入 fake service 验证 transport，fake 不属于业务语义层。
 * local 启动默认 bind `127.0.0.1:8011`（launcher 细节，可用 `--host` / `--port` 覆盖）。端口号**不属于**本 contract：endpoint 语义始终是 `GET /mo-option-chain`，换端口不改变 request / response / error 契约；V1 不定义 deployment、反向代理、TLS 或 CORS（见第 8 节）。
 
 ## 8. V1 Non-goals
@@ -242,7 +242,7 @@ OpenAPI client 生成
 server deployment / 反向代理 / TLS 配置
 ```
 
-`service_not_wired` 的存在只是 V1 bootstrap 状态：真实 provider 接入后该 kind 不再产生；本阶段保留它，使“尚未接线”与“语义上无法提供完整 chain”在 transport 上可区分，且都不会伪装成成功。
+`service_not_wired` 保留作 bootstrap/test compatibility；默认 runtime provider 已接入真实链路，不再产生该 kind。
 
 ## 9. 完成自检
 

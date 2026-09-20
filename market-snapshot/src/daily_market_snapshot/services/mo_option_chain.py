@@ -10,20 +10,15 @@ What this module owns:
 * the read-model data types of the option-chain read contract;
 * the query identity a caller resolves before any data preparation (section 3 of
   ``guides/mo-option-chain.md``);
-* the failure categories of the read contract (section 11) as Python types, so a
-  delivery surface can present a failure without knowing how the chain is built.
+* the failure categories of the read contract (section 11) as Python types;
+* orchestration of the three Captures, goal-scoped Raw and Preparation.
 
 What this module deliberately does not do:
 
-* it does not implement MO Option Chain Preparation, it does not read Raw
-  Artifacts and it does not call the Tushare Source: the real read-model provider
-  (``Capture -> Raw -> Preparation -> read model``) is still deferred, and only
-  the boundary it will plug into is fixed here;
 * it does not define HTTP semantics: status codes, the error envelope and the
   DTOs belong to the HTTP delivery adapter
   (``guides/mo-option-chain-http-contract.md``);
-* it does not own ``option_product -> underlying`` mapping, universe, fallback or
-  any other market semantics as data: those live in the Guides above.
+* it does not reimplement Capture endpoint queries or Preparation projections.
 """
 
 from __future__ import annotations
@@ -31,6 +26,12 @@ from __future__ import annotations
 from collections.abc import Callable
 from dataclasses import dataclass
 from enum import StrEnum
+from pathlib import Path
+
+from .. import artifacts
+from ..capture import index_daily, mo_option_basic, mo_option_daily
+from ..preparation import mo_option_chain as preparation
+from ..sources import tushare
 
 # The Data Service id, as declared in the static catalog
 # (``guides/data-services.md`` section 2).
@@ -40,6 +41,7 @@ SERVICE_DESCRIPTION = (
     "deterministic read model of the complete MO CSI1000 index option chain "
     "of one target trade date"
 )
+
 
 class OptionProduct(StrEnum):
     """The option products V1 can serve.
@@ -204,8 +206,7 @@ class ChainReadResult:
     """What one read-model provider returns: a chain, or a read failure.
 
     The boundary is a value rather than an exception so a delivery surface maps
-    a failure without a ``try`` / ``except`` chain, and an unwired provider is a
-    value too (:data:`SERVICE_NOT_WIRED_RESULT`).
+    a failure without a ``try`` / ``except`` chain.
     """
 
     chain: OptionChain | None = None
@@ -217,30 +218,22 @@ class ChainReadResult:
 
 
 class ServiceNotWiredError(ChainReadError):
-    """The real MO Option Chain read-model provider is not wired yet.
-
-    This is not a market-semantics failure: the Data Service
-    ``Capture -> Raw -> Preparation -> read model`` implementation is still
-    deferred (``guides/mo-option-chain-http-contract.md`` section 8). It exists so
-    that "not wired yet" stays distinguishable from "the complete chain cannot be
-    produced", and so that neither can masquerade as a successful empty chain.
-    """
+    """Bootstrap/test compatibility failure; the default provider is real."""
 
     kind = "service_not_wired"
 
 
-# The result a provider returns while the real read-model implementation is
-# deferred. The HTTP adapter maps it to its ``service_not_wired`` error kind.
+# Kept for bootstrap/test compatibility; not the default runtime result.
 SERVICE_NOT_WIRED_RESULT = ChainReadResult(
     error=ServiceNotWiredError("the mo-option-chain read model provider is not wired yet")
 )
 
 
 def read_chain_not_wired(_query: ChainQuery) -> ChainReadResult:
-    """The V1 placeholder read-model provider: always reports "not wired yet".
+    """The optional bootstrap provider: always reports "not wired yet".
 
-    It carries no market data and no fallback: until the real provider replaces
-    it, every request fails explicitly instead of inventing a chain.
+    It carries no market data and no fallback. The default runtime provider is
+    :func:`read_chain`; this function remains for isolated compatibility tests.
     """
     return SERVICE_NOT_WIRED_RESULT
 
@@ -248,3 +241,96 @@ def read_chain_not_wired(_query: ChainQuery) -> ChainReadResult:
 #: The application boundary the HTTP delivery adapter depends on: one resolved
 #: query identity in, one :class:`ChainReadResult` out.
 ChainReadProvider = Callable[[ChainQuery], ChainReadResult]
+
+
+def query_error(query: ChainQuery) -> ChainReadError | None:
+    """Validate a resolved application query before Source client creation."""
+    try:
+        tushare.to_tushare_date(query.target_trade_date)
+    except tushare.TushareDateError as exc:
+        return InvalidQueryError(str(exc))
+    if query.option_product is not OptionProduct.MO or not isinstance(query.price_type, PriceType):
+        return UnsupportedQueryError("unsupported option product or price type")
+    return None
+
+
+def to_read_model(query: ChainQuery, prepared: preparation.PreparedChain) -> OptionChain:
+    """Wrap the prepared, already grouped facts in the application boundary types."""
+
+    def points(rows: list[preparation.PreparedPoint]) -> tuple[OptionPoint, ...]:
+        return tuple(OptionPoint(**row) for row in rows)
+
+    return OptionChain(
+        target_trade_date=query.target_trade_date,
+        option_product=query.option_product,
+        price_type=query.price_type,
+        underlying=UnderlyingRef(
+            instrument_id=prepared["underlying_instrument_id"],
+            price=prepared["underlying_price"],
+        ),
+        expiries=tuple(
+            ExpiryGroup(
+                expiry_date=group["expiry_date"],
+                calls=points(group["calls"]),
+                puts=points(group["puts"]),
+            )
+            for group in prepared["expiries"]
+        ),
+    )
+
+
+def read_chain_with_api(
+    api: tushare.TushareApi, query: ChainQuery, raw_root: Path | None = None
+) -> ChainReadResult:
+    """Run the real data path with an injected Source client (also used by tests)."""
+    error = query_error(query)
+    if error is not None:
+        return ChainReadResult(error=error)
+
+    raw_dir = (
+        artifacts.mo_option_chain_raw_dir(query.target_trade_date)
+        if raw_root is None
+        else raw_root / artifacts.MO_OPTION_CHAIN_RAW_SUBDIR / query.target_trade_date
+    )
+    try:
+        index_facts = index_daily.collect_index_daily(
+            query.target_trade_date,
+            lambda **kwargs: index_daily.query_index_daily(api, **kwargs),
+            index_codes=(preparation.UNDERLYING_ID,),
+        )
+    except index_daily.NoIndexDataError as exc:
+        return ChainReadResult(error=DateNotAvailableError(str(exc)))
+    except Exception as exc:
+        # Tushare's client can raise a plain Exception for a Source API error.
+        # Only an empty index observation is evidence for an unavailable date.
+        return ChainReadResult(error=OptionChainUnavailableError(str(exc)))
+
+    try:
+        artifacts.write_raw_artifact(index_facts, raw_dir, index_daily.RAW_ARTIFACT)
+        basic_facts = mo_option_basic.capture(api, query.target_trade_date)
+        artifacts.write_raw_artifact(basic_facts, raw_dir, mo_option_basic.RAW_ARTIFACT)
+        daily_facts = mo_option_daily.capture(api, query.target_trade_date, basic_facts)
+        artifacts.write_raw_artifact(daily_facts, raw_dir, mo_option_daily.RAW_ARTIFACT)
+    except Exception as exc:
+        # The Source SDK raises plain Exception for API failures; no partial
+        # chain can be published when any Capture or Raw write fails.
+        return ChainReadResult(error=OptionChainUnavailableError(str(exc)))
+    try:
+        prepared = preparation.build_chain(query.target_trade_date, query.price_type.value, raw_dir)
+    except preparation.PreparationError as exc:
+        return ChainReadResult(error=OptionChainUnavailableError(str(exc)))
+    return ChainReadResult(chain=to_read_model(query, prepared))
+
+
+def read_chain(query: ChainQuery) -> ChainReadResult:
+    """Production provider: create the configured Source client, then read a chain."""
+    error = query_error(query)
+    if error is not None:
+        return ChainReadResult(error=error)
+    try:
+        api = tushare.create_tushare_api(tushare.get_tushare_token())
+    except Exception as exc:
+        # Client creation failures (including credentials) are service failures,
+        # never evidence that the requested trade date is unavailable.
+        return ChainReadResult(error=OptionChainUnavailableError(str(exc)))
+    return read_chain_with_api(api, query)

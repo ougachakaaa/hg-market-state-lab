@@ -12,8 +12,8 @@ into:
 * the boundary is a resolved query identity in, one result out, and it depends on
   no transport concern;
 * the result carries exactly one of chain / error;
-* until the real provider is wired, a legal query fails explicitly with
-  ``service_not_wired`` rather than returning an invented or empty chain.
+* the retained bootstrap provider reports ``service_not_wired`` rather than
+  returning an invented or empty chain.
 """
 
 from __future__ import annotations
@@ -155,7 +155,7 @@ def test_every_read_failure_has_its_own_category() -> None:
 
 
 def test_the_placeholder_provider_reports_not_wired_without_market_data() -> None:
-    """V1 has no real provider: a legal query fails instead of inventing a chain."""
+    """The retained bootstrap provider fails instead of inventing a chain."""
     result = service.read_chain_not_wired(query())
 
     assert result.chain is None

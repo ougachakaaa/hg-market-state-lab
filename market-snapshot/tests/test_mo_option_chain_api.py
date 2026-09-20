@@ -14,9 +14,9 @@ These tests lock the transport contract the web UI may depend on:
 * the OpenAPI document the front end reads the contract from;
 * the fact that the adapter reimplements no market semantics.
 
-They run the real application against a fake application boundary
-(``support/fake_chain_service.py``) because the real MO Option Chain read model
-is still deferred.
+Most transport tests run the real application against a fake application
+boundary (``support/fake_chain_service.py``); the real-provider path is covered
+separately with a Fake Source.
 """
 
 from __future__ import annotations
@@ -88,7 +88,7 @@ def client(provider: FakeChainReadProvider) -> TestClient:
 
 
 @pytest.fixture
-def unwired_client() -> TestClient:
+def default_client() -> TestClient:
     """The real application exactly as it starts, with no provider override."""
     return TestClient(app_module.create_app())
 
@@ -491,12 +491,15 @@ def test_an_unmapped_read_failure_is_not_reported_as_success(
     assert error_body(response)["kind"] == "option_chain_unavailable"
 
 
-def test_an_unwired_application_reports_service_not_wired(unwired_client: TestClient) -> None:
-    """The app starts on its own; until wired it fails explicitly, never with data."""
-    response = unwired_client.get(QUERY)
+def test_default_application_uses_real_provider(
+    default_client: TestClient, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Without credentials, the real provider fails as unavailable, not unwired."""
+    monkeypatch.delenv("TUSHARE_TOKEN", raising=False)
+    response = default_client.get(QUERY)
 
     assert response.status_code == 503
-    assert error_body(response)["kind"] == "service_not_wired"
+    assert error_body(response)["kind"] == "option_chain_unavailable"
 
 
 def test_an_unknown_path_is_not_a_chain_response(client: TestClient) -> None:

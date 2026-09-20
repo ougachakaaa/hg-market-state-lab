@@ -43,14 +43,8 @@ router = APIRouter()
 
 
 def get_chain_read_provider() -> service.ChainReadProvider:
-    """The application boundary the endpoint reads the chain from.
-
-    This is the seam the next phase wires the real
-    ``Capture -> Raw -> Preparation -> read model`` chain into. Until it is
-    wired, the placeholder provider reports ``service_not_wired`` instead of
-    inventing a chain.
-    """
-    return service.read_chain_not_wired
+    """Return the real application provider used by the default HTTP runtime."""
+    return service.read_chain
 
 
 def resolve_chain_query(

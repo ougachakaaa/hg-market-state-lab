@@ -2,7 +2,7 @@
 
 > 状态：authority（Stage 1）。本文档锁定 `MO Option Chain` 作为与 `csi1000-5d-analysis` 并列的独立 deterministic data product 的**产品定位、ownership、query identity、invariants 与导航**。
 >
-> 本阶段为 authority only：不实现 Python、FastAPI、HTTP endpoint、Pydantic、React、chart、tests。
+> 本文档最初在 authority-only 阶段建立；backend 数据链路和 HTTP endpoint 现已实现，React/chart 仍属后续 Goal。
 >
 > 层级：本文档位于 `market-snapshot/ARCHITECTURE.md` 之下，是 MO Option Chain 的入口 authority。具体 data contract（Source / Raw / universe / completeness）见 `guides/mo-option-chain-data.md`；具体 read contract（price / null / grouping / ordering / response / failure）见 `guides/mo-option-chain-read-contract.md`；HTTP transport（endpoint / DTO / error envelope / status mapping）见 `guides/mo-option-chain-http-contract.md`。本文档只承载稳定边界与导航，不重复子 Guide 的字段细节。
 >
@@ -26,7 +26,7 @@ Preparation                    Preparation
       ↓                              ↓
 analysis-ready artifact        option-chain read model
                                       ↓
-                                HTTP delivery（future）
+                                HTTP delivery
                                       ↓
                                    web-ui
 ```
@@ -270,7 +270,7 @@ error envelope / error kind 闭集
 HTTP status mapping
 ```
 
-仍然 deferred：
+当前已实现：
 
 ```text
 真实 Capture → Raw → MO Option Chain Preparation → read model 实现
@@ -294,7 +294,7 @@ mo-option-chain.md（本文档：产品定位 / ownership / query identity / inv
 * 实现 endpoint / DTO / error envelope / status mapping → 读 `mo-option-chain-http-contract.md`。
 * 以上都需要先读本文档的定位与 invariants。
 
-## 9. Deferred（下一阶段再决定）
+## 9. Implementation Status
 
 ```text
 MO Option Chain Preparation 实现
@@ -302,6 +302,8 @@ Data Service mo-option-chain 实现
 真实 read model provider 接入 HTTP service boundary
 tests（真实数据链路）
 ```
+
+上述链路与 Fake Source 测试均已实现；此处仅记录状态，不改变前述业务语义。
 
 Raw Artifact 组织方式已在本轮锁定（见 `mo-option-chain-data.md`），不再 deferred。
 HTTP contract / FastAPI foundation 已由 `guides/mo-option-chain-http-contract.md` 锁定，不再 deferred。
