@@ -282,4 +282,4 @@ AND list_date <= target_trade_date <= delist_date
 
 Capture 使用 IM 自身的 Source facts 确定这个 **target-date-active IM ordinary monthly universe**，对其中所有合约采集目标日 daily facts；不得先读取或理解 MO expiry groups，再按 expiry、主力、成交量、持仓量、流动性或分析相关性缩小采集范围。Capture 负责 Source-domain scope，Preparation 才负责 `MO expiry_date == IM delist_date` 的跨域匹配（见 `guides/mo-option-chain-read-contract.md` 第 4 节）。
 
-IM Raw acquisition scope 可宽于最终 read model 所需的 futures references。Capture 必须覆盖上述 universe 的目标日 Source 查询并保留实际返回的事实；Source 请求错误不得静默跳过。某个未匹配任何 MO expiry 的 IM 合约缺少目标日 daily row，不自动构成 MO Chain read-model failure；只有匹配合约的唯一 daily row 和 usable selected price 属于成功 chain 的必需事实。不得因无关合约缺价而改选其他 IM 合约，具体完整性与失败语义见 read contract 第 4、10、11 节。
+IM Raw acquisition scope 可宽于最终 read model 所需的 futures references。Capture 必须覆盖上述 universe 的目标日 Source 查询并保留实际返回的事实；Source 请求错误不得静默跳过。Preparation 对某个 MO expiry 找不到结构性匹配的 IM 合约是合法缺席，输出 `futures = null`；多个匹配则失败。某个未匹配任何 MO expiry 的 IM 合约缺少目标日 daily row，不自动构成 MO Chain read-model failure；只有唯一匹配合约的唯一 daily row 和 usable selected price 属于成功 chain 的必需事实。不得因缺席或缺价而改选其他 IM 合约，具体完整性与失败语义见 read contract 第 4、10、11 节。

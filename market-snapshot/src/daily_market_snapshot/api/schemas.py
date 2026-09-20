@@ -102,7 +102,7 @@ class UnderlyingRefDTO(BaseModel):
 
 
 class FuturesRefDTO(BaseModel):
-    """The required IM futures reference of one expiry."""
+    """The IM futures reference when one expiry has a structural match."""
 
     model_config = ConfigDict(extra="forbid")
 
@@ -126,7 +126,10 @@ class ExpiryGroupDTO(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     expiry_date: Annotated[str, Field(description="Expiry date, YYYY-MM-DD.")]
-    futures: FuturesRefDTO
+    futures: Annotated[
+        FuturesRefDTO | None,
+        Field(description="Matched IM reference, or null when no active IM has this expiry."),
+    ]
     calls: list[OptionPointDTO]
     puts: list[OptionPointDTO]
 

@@ -82,7 +82,15 @@
             "type": "string"
           },
           "futures": {
-            "$ref": "#/components/schemas/FuturesRefDTO"
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/FuturesRefDTO"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Matched IM reference, or null when no active IM has this expiry."
           },
           "puts": {
             "items": {
@@ -103,7 +111,7 @@
       },
       "FuturesRefDTO": {
         "additionalProperties": false,
-        "description": "The required IM futures reference of one expiry.",
+        "description": "The IM futures reference when one expiry has a structural match.",
         "properties": {
           "instrument_id": {
             "title": "Instrument Id",

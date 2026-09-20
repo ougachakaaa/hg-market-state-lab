@@ -99,7 +99,7 @@ Y axis = option selected price（默认 price_type = close）
 
 * Call 与 Put 必须可视觉区分；
 * 标记目标交易日的 CSI1000 underlying reference price（与 option 相同的 `price_type`）；
-* 显示该 expiry 对应的 IM futures reference（合约 identity 与所选价格），在图中作为带标识的横轴价格参考；
+* 仅在该 expiry 的 `futures` 非 `null` 时显示 IM futures reference（合约 identity 与所选价格），在图中作为带标识的横轴价格参考；为 `null` 时显示“无同到期 IM 合约”，不绘制 IM 参考线或标注，也不推断替代合约；
 * underlying reference price 是横轴上的市场基准点；
 * 每个 scatter point 代表一个 MO option contract。
 
@@ -169,7 +169,7 @@ active universe、option type、expiry、selected price fallback、contract comp
 
 页面区分未选择日期、加载中、完整结果、失败四种状态。新日期的请求开始时清除上一日期的结果，较早的请求不得覆盖当前选择。失败根据 HTTP contract 的 `error.kind` 展示说明；网络或异常响应作为读取失败展示，不伪造数据。
 
-完整结果展示 response 中的日期、价格口径、underlying 标识和参考价，以及按 response 顺序排列的各到期日 IM futures reference、Call / Put 数量与独立散点图。到期日可展开分别查看 Call 与 Put 的合约标识、行权价、价格；`price=null` 在价格位置显示 `—`，数值 `0` 显示为 `0.0`。不重新组织或解释合约。
+完整结果展示 response 中的日期、价格口径、underlying 标识和参考价，以及按 response 顺序排列的各到期日条件性 IM futures reference、Call / Put 数量与独立散点图。无同到期 IM 时仍正常展示该到期日和 Spot。到期日可展开分别查看 Call 与 Put 的合约标识、行权价、价格；`price=null` 在价格位置显示 `—`，数值 `0` 显示为 `0.0`。不重新组织或解释合约。
 
 现有 HTTP contract 由 `market-snapshot/guides/mo-option-chain-http-contract.md` 锁定：
 

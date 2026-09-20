@@ -74,13 +74,14 @@ export interface components {
              * @description Expiry date, YYYY-MM-DD.
              */
             expiry_date: string;
-            futures: components["schemas"]["FuturesRefDTO"];
+            /** @description Matched IM reference, or null when no active IM has this expiry. */
+            futures: components["schemas"]["FuturesRefDTO"] | null;
             /** Puts */
             puts: components["schemas"]["OptionPointDTO"][];
         };
         /**
          * FuturesRefDTO
-         * @description The required IM futures reference of one expiry.
+         * @description The IM futures reference when one expiry has a structural match.
          */
         FuturesRefDTO: {
             /** Instrument Id */

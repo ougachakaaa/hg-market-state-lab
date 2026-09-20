@@ -136,6 +136,25 @@ describe('MO option chain page', () => {
     expect(screen.getByText('行权价视窗：±300 点')).toBeTruthy()
   })
 
+  it('renders an expiry with no matching IM and keeps its Spot and options', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(response({
+      ...chain,
+      expiries: [{ ...chain.expiries[0], futures: null }],
+    })))
+    render(<App />)
+    fireEvent.change(dateInput(), { target: { value: '2026-09-17' } })
+
+    const section = await screen.findByRole('region', { name: '2026-09-25 到期日' })
+    expect(within(section).getByText('无同到期 IM 合约')).toBeTruthy()
+    expect(within(section).getByText('Spot：000852.SH · 7312.5')).toBeTruthy()
+    expect(within(section).getByText('Call 1 · Put 1')).toBeTruthy()
+    expect(within(section).queryByText(/Futures：/)).toBeNull()
+    expect(plot(section).layout.shapes).toHaveLength(1)
+    expect(plot(section).layout.annotations).toHaveLength(1)
+    expect(plot(section).data.map((trace: { name: string }) => trace.name)).toEqual(['Calls', 'Puts'])
+    expect(within(section).getByRole('group', { name: /无同到期 IM 合约/ })).toBeTruthy()
+  })
+
   it('shows an all-null expiry without losing contract facts', async () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(response({
       ...chain,

@@ -48,7 +48,7 @@ CSI1000 5D derived metrics
 csi1000-5d-analysis snapshot.json
 ```
 
-只依赖构造目标日期 option chain 真正需要的 Source facts，包括每个 expiry 必需的目标日 IM futures reference；具体 Raw 范围见 `guides/mo-option-chain-data.md`。
+只依赖构造目标日期 option chain 真正需要的 Source facts，包括目标日有效 IM 普通月合约事实；每个 expiry 的 IM futures reference 可因无结构性匹配而缺席。具体 Raw 范围见 `guides/mo-option-chain-data.md`。
 
 ## 2. Ownership
 
@@ -192,7 +192,7 @@ active MO option contract 没有对应 daily row → fail；IM futures reference
 
 ### Invariant 7 — Unified price semantics
 
-options、underlying 和每个 expiry 的 IM futures reference 使用相同 resolved `price_type`。
+options、underlying 和每个实际匹配的 expiry IM futures reference 使用相同 resolved `price_type`。
 
 ### Invariant 8 — Deterministic organization
 
@@ -212,7 +212,7 @@ date
 product
 price type
 underlying
-per-expiry IM futures reference
+per-expiry IM futures reference（可为 null）
 ```
 
 ### Invariant 10 — No dependency on CSI1000 5D artifact

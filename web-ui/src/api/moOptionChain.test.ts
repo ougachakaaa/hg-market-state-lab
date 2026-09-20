@@ -45,7 +45,6 @@ describe('loadMoOptionChain', () => {
 
   it.each([
     undefined,
-    null,
     { instrument_id: 'IM2609.CFE', price: null },
     { instrument_id: 'IM2609.CFE', price: '7487.6' },
     { instrument_id: 2609, price: 7487.6 },
@@ -55,6 +54,15 @@ describe('loadMoOptionChain', () => {
       expiries: [{ ...chain.expiries[0], futures }],
     })))
     await expect(loadMoOptionChain('2026-09-17')).rejects.toMatchObject({ kind: 'invalid_response' })
+  })
+
+  it('accepts an explicit null futures reference', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(response({
+      ...chain,
+      expiries: [{ ...chain.expiries[0], futures: null }],
+    })))
+    const result = await loadMoOptionChain('2026-09-17')
+    expect(result.expiries[0].futures).toBeNull()
   })
 
   it.each([

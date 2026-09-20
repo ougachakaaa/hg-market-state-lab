@@ -33,7 +33,7 @@ class PreparedFuturesRef(TypedDict):
 
 class PreparedExpiry(TypedDict):
     expiry_date: str
-    futures: PreparedFuturesRef
+    futures: PreparedFuturesRef | None
     calls: list[PreparedPoint]
     puts: list[PreparedPoint]
 
@@ -138,9 +138,9 @@ def futures_references(
     target_trade_date: str,
     price_type: str,
     expiries: set[str],
-) -> dict[str, PreparedFuturesRef]:
-    """Match each MO expiry to exactly one active IM contract and daily price."""
-    candidates: dict[str, list[str]] = {expiry: [] for expiry in expiries}
+) -> dict[str, PreparedFuturesRef | None]:
+    """Match each MO expiry to zero or one active IM contract and daily price."""
+    candidates: dict[str, list[str]] = {expiry: [] for expiry in sorted(expiries)}
     seen: set[str] = set()
     for row in basic_rows:
         identity = required_text(row, "ts_code")
@@ -158,11 +158,12 @@ def futures_references(
 
     required_codes: dict[str, str] = {}
     for expiry, matches in candidates.items():
-        if len(matches) != 1:
+        if len(matches) > 1:
             raise PreparationError(
-                f"MO expiry {expiry} requires exactly one active IM contract; got {len(matches)}"
+                f"MO expiry {expiry} has multiple active IM contracts; got {len(matches)}"
             )
-        required_codes[expiry] = matches[0]
+        if matches:
+            required_codes[expiry] = matches[0]
 
     required_rows: dict[str, list[RawRecord]] = {code: [] for code in required_codes.values()}
     for row in daily_rows:
@@ -170,7 +171,7 @@ def futures_references(
         if identity in required_rows:
             required_rows[identity].append(row)
 
-    references: dict[str, PreparedFuturesRef] = {}
+    references: dict[str, PreparedFuturesRef | None] = dict.fromkeys(candidates)
     for expiry, identity in required_codes.items():
         rows = required_rows[identity]
         if len(rows) != 1:

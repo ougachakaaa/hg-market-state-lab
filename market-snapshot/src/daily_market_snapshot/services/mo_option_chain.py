@@ -165,7 +165,7 @@ class UnderlyingRef:
 
 @dataclass(frozen=True)
 class FuturesRef:
-    """The required IM futures reference of one MO expiry."""
+    """The IM futures reference when one MO expiry has a structural match."""
 
     instrument_id: str
     price: float
@@ -195,7 +195,7 @@ class ExpiryGroup:
     """One expiry of the chain: its calls and its puts, already ordered."""
 
     expiry_date: str
-    futures: FuturesRef
+    futures: FuturesRef | None
     calls: tuple[OptionPoint, ...]
     puts: tuple[OptionPoint, ...]
 
@@ -286,7 +286,7 @@ def to_read_model(query: ChainQuery, prepared: preparation.PreparedChain) -> Opt
         expiries=tuple(
             ExpiryGroup(
                 expiry_date=group["expiry_date"],
-                futures=FuturesRef(**group["futures"]),
+                futures=FuturesRef(**group["futures"]) if group["futures"] is not None else None,
                 calls=points(group["calls"]),
                 puts=points(group["puts"]),
             )

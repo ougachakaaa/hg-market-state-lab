@@ -59,6 +59,8 @@ GET /mo-option-chain?target_trade_date=2026-09-17&option_product=MO&price_type=h
 
 HTTP 200，body 为单个 JSON object，形状与 `guides/mo-option-chain-read-contract.md` 第 8 节的 semantic response 完全一致；HTTP 层不包裹 envelope、不改名、不增删字段。
 
+当某到期日无结构性匹配的 IM 合约时，该到期日仍在成功响应中，且显式包含 `"futures": null`；有唯一匹配时则为下面示例中的 object。
+
 ```json
 {
   "target_trade_date": "2026-09-17",
@@ -111,8 +113,8 @@ transport 必须保持的语义（全部由 read contract 拥有，本文档只�
 * option point 的 `price` 允许 `null`，且必须序列化为 `null`：不得用 `exclude_none` 之类的方式省略该字段、不得补 `0`、不得删除 contract（read contract 第 3 节）。
 * numeric `0` 是合法 fact，必须原样返回 `0`，不得写成 `null`。
 * `underlying.price` 必须是 usable numeric fact；成功 response 不允许 underlying price 为 `null`（read contract 第 4 节）。
-* 每个 `expiries[]` 项必须包含非 `null` 的 `futures.instrument_id` 与 usable numeric `futures.price`；HTTP 层原样序列化 read model 的 IM reference，不执行匹配、选价或格式化（read contract 第 4 节）。
-* response 是 self-describing 的：`target_trade_date`、`option_product`、resolved `price_type`、`underlying.instrument_id` 与每个 expiry 的 `futures.instrument_id` 必须出现在 body 中，客户端不依赖自己的 local state 才能解释 response（read contract 第 9 节）。`price_type` 回显的是 **resolved** 值（caller 省略时即 `close`），不是省略态。
+* 每个 `expiries[]` 项必须包含 `futures` 字段；无结构性匹配时为 `null`，唯一匹配时为包含非 `null` `instrument_id` 与 usable numeric `price` 的 object。HTTP 层原样序列化 read model，不执行匹配、选价或格式化（read contract 第 4 节）。
+* response 是 self-describing 的：`target_trade_date`、`option_product`、resolved `price_type`、`underlying.instrument_id` 与每个 expiry 的 `futures` 字段必须出现在 body 中，客户端不依赖自己的 local state 才能解释 response（read contract 第 9 节）。`price_type` 回显的是 **resolved** 值（caller 省略时即 `close`），不是省略态。
 * 即使全部 contract 的 `price` 都是 `null`，只要结构完整，仍是 200 success（read contract 第 10 节）。
 
 ## 4. Error Response
@@ -152,7 +154,7 @@ mapping 的输入是 `guides/mo-option-chain-read-contract.md` 第 11 节的 sem
 | `invalid_request` | 400 | `invalid target_trade_date format`；以及 transport 层面拒绝的 request（缺 required 参数、参数取值不在契约允许集合内、携带契约未声明参数） |
 | `unsupported_query` | 400 | `unsupported option_product`；`unsupported price_type` |
 | `date_not_available` | 404 | `target_trade_date cannot be served by Source`；`non-trading / unavailable date` |
-| `option_chain_unavailable` | 503 | `cannot determine product → underlying`；`cannot determine active contract universe`；`active contract missing target-date daily row`；`duplicate / inconsistent contract identity`；`required structural field missing or malformed`；`underlying selected price unavailable or malformed`；expiry 无唯一 IM 普通月合约匹配、对应 IM 目标日 daily row 缺失或重复、所选 IM price 缺失或 malformed |
+| `option_chain_unavailable` | 503 | `cannot determine product → underlying`；`cannot determine active contract universe`；`active contract missing target-date daily row`；`duplicate / inconsistent contract identity`；`required structural field missing or malformed`；`underlying selected price unavailable or malformed`；expiry 有多个 IM 普通月合约匹配，或唯一匹配后 IM 目标日 daily row 缺失或重复、所选 IM price 缺失或 malformed |
 | `service_not_wired` | 503 | 非 semantic failure：保留的 bootstrap/test compatibility，默认 provider 已接线（见第 8 节） |
 
 **谁产生 `invalid_request`，谁产生 `unsupported_query`：**
@@ -165,7 +167,7 @@ mapping 的输入是 `guides/mo-option-chain-read-contract.md` 第 11 节的 sem
 
 * `400`：request 本身不合法或要求了 V1 明确不支持的能力，重试同样的 request 不会成功。
 * `404`：query identity 明确、产品受支持，但该 `target_trade_date` 在 authority 下不可服务（非交易日 / 数据尚未发布 / Source 无该日数据）。不使用 3xx 或 fallback：no-silent-recovery 要求显式失败。
-* `503`：语义上的“当前无法提供完整 chain”属于服务端暂时无法满足一个合法请求（数据不完整、Source fact 缺失、underlying 或 IM futures reference 不可用）。这是失败，不是“chain 为空”的成功；不得降级成 200 + partial chain。
+* `503`：语义上的“当前无法提供完整 chain”属于服务端暂时无法满足一个合法请求（数据不完整、Source fact 缺失、underlying 或唯一匹配的 IM futures reference 不可用）。无匹配 IM 的 `futures = null` 是完整的成功 chain；实际数据缺失不得降级成 200 + partial chain。
 
 其他真实 HTTP 结果（不属于上述 business mapping，由 HTTP 语义本身决定）：
 

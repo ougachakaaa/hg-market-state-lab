@@ -598,6 +598,9 @@ def test_openapi_declares_the_success_schema_as_the_read_contract(client: TestCl
         "expiry_date", "futures", "calls", "puts"
     ]
     assert schemas["FuturesRefDTO"]["required"] == ["instrument_id", "price"]
+    futures_schema = schemas["ExpiryGroupDTO"]["properties"]["futures"]
+    assert {"type": "null"} in futures_schema["anyOf"]
+    assert {"$ref": "#/components/schemas/FuturesRefDTO"} in futures_schema["anyOf"]
     # ``price`` must stay nullable: null is a legal selected-price state.
     price_schema = schemas["OptionPointDTO"]["properties"]["price"]
     assert {"type": "null"} in price_schema["anyOf"]

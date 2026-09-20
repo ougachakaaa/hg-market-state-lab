@@ -59,6 +59,39 @@ def fake_source() -> FakeTushareApi:
     )
 
 
+def asymmetric_source() -> FakeTushareApi:
+    """MO expiry reach exceeds the target-date-active IM monthly universe."""
+    expiries = [
+        ("2609", "20260925"),
+        ("2610", "20261023"),
+        ("2611", "20261120"),
+        ("2612", "20261218"),
+        ("2703", "20270319"),
+        ("2706", "20270618"),
+    ]
+    options = []
+    for month, expiry in expiries:
+        contract = mo_option_contract(
+            f"MO{month}-C-7000.CFE", call_put="C", delist_date=expiry
+        )
+        contract["maturity_date"] = expiry
+        options.append(contract)
+    matched = [expiries[index] for index in (0, 1, 3, 4)]
+    return FakeTushareApi(
+        index_frames={"000852.SH": index_daily_frame("000852.SH", close=100.0)},
+        option_basic=option_basic_frame(options),
+        option_daily=option_daily_frame("20260917", [row["ts_code"] for row in options]),
+        futures_basic=futures_basic_frame([
+            im_contract(f"IM{month}.CFE", list_date="20260817", delist_date=expiry)
+            for month, expiry in matched
+        ]),
+        futures_daily={
+            f"IM{month}.CFE": futures_daily_frame(f"IM{month}.CFE", ["20260917"])
+            for month, _ in matched
+        },
+    )
+
+
 def successful_chain(
     api: FakeTushareApi,
     price: service.PriceType = service.PriceType.CLOSE,
@@ -123,7 +156,9 @@ def test_price_type_is_unified_and_universe_is_stable(
     assert chain.price_type is price_type
     assert chain.underlying.price == index_price
     assert chain.expiries[0].calls[0].price == option_price
-    assert chain.expiries[0].futures.price == 7487.6 + {
+    futures = chain.expiries[0].futures
+    assert futures is not None
+    assert futures.price == 7487.6 + {
         service.PriceType.OPEN: 2.0,
         service.PriceType.HIGH: 3.0,
         service.PriceType.LOW: -3.0,
@@ -138,7 +173,7 @@ def test_group_order_null_and_zero_survive_preparation() -> None:
     chain = successful_chain(fake_source(), service.PriceType.HIGH)
 
     assert [group.expiry_date for group in chain.expiries] == ["2026-09-25", "2026-10-23"]
-    assert [group.futures.instrument_id for group in chain.expiries] == [
+    assert [group.futures.instrument_id if group.futures else None for group in chain.expiries] == [
         "IM2609.CFE", "IM2610.CFE"
     ]
     assert [point.instrument_id for point in chain.expiries[0].calls] == [C1, C2]
@@ -274,9 +309,7 @@ def test_preparation_rejects_malformed_required_facts(
 @pytest.mark.parametrize(
     "case",
     [
-        "no_match",
         "multiple_matches",
-        "outside_lifecycle",
         "missing_daily",
         "duplicate_daily",
         "null_price",
@@ -291,14 +324,10 @@ def test_preparation_rejects_incomplete_matched_im_reference(
     basic = artifacts.read_raw_artifact(raw_dir, "im_futures_basic")
     daily = artifacts.read_raw_artifact(raw_dir, "im_futures_daily")
     assert isinstance(basic, list) and isinstance(daily, list)
-    if case == "no_match":
-        basic[0]["delist_date"] = "2026-09-26"
-    elif case == "multiple_matches":
+    if case == "multiple_matches":
         competing = dict(basic[0])
         competing["ts_code"] = "IM2699.CFE"
         basic.append(competing)
-    elif case == "outside_lifecycle":
-        basic[0]["list_date"] = "2026-09-18"
     elif case == "missing_daily":
         daily = [row for row in daily if row["ts_code"] != "IM2609.CFE"]
     elif case == "duplicate_daily":
@@ -312,6 +341,61 @@ def test_preparation_rejects_incomplete_matched_im_reference(
 
     with pytest.raises(preparation.PreparationError):
         preparation.build_chain(TARGET, "close", raw_dir)
+
+
+@pytest.mark.parametrize("case", ["no_match", "outside_lifecycle"])
+def test_preparation_accepts_absent_active_im_match(test_workdir: Path, case: str) -> None:
+    successful_chain(fake_source())
+    raw_dir = raw_directory(test_workdir)
+    basic = artifacts.read_raw_artifact(raw_dir, "im_futures_basic")
+    assert isinstance(basic, list)
+    if case == "no_match":
+        basic[0]["delist_date"] = "2026-09-26"
+    else:
+        basic[0]["list_date"] = "2026-09-18"
+    artifacts.write_raw_artifact(basic, raw_dir, "im_futures_basic")
+
+    prepared = preparation.build_chain(TARGET, "close", raw_dir)
+
+    assert prepared["expiries"][0]["futures"] is None
+    assert prepared["expiries"][1]["futures"] is not None
+
+
+def test_asymmetric_expiry_universe_succeeds_in_read_model() -> None:
+    chain = successful_chain(asymmetric_source())
+
+    assert [group.expiry_date for group in chain.expiries] == [
+        "2026-09-25", "2026-10-23", "2026-11-20",
+        "2026-12-18", "2027-03-19", "2027-06-18",
+    ]
+    assert [group.futures.instrument_id if group.futures else None for group in chain.expiries] == [
+        "IM2609.CFE", "IM2610.CFE", None, "IM2612.CFE", "IM2703.CFE", None,
+    ]
+    assert all(len(group.calls) == 1 for group in chain.expiries)
+
+
+def test_asymmetric_expiry_universe_succeeds_over_http(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    api = asymmetric_source()
+    monkeypatch.setenv(tushare.TOKEN_ENV_VAR, "fake-token")
+    monkeypatch.setattr(tushare, "create_tushare_api", lambda _token: api)
+
+    response = TestClient(create_app()).get(
+        "/mo-option-chain",
+        params={"target_trade_date": TARGET, "option_product": "MO"},
+    )
+
+    assert response.status_code == 200
+    groups = response.json()["expiries"]
+    assert all("futures" in group for group in groups)
+    assert [
+        group["futures"]["instrument_id"] if group["futures"] else None
+        for group in groups
+    ] == [
+        "IM2609.CFE", "IM2610.CFE", None, "IM2612.CFE", "IM2703.CFE", None,
+    ]
+    assert len(api.fut_daily_calls) == 4
 
 
 def test_preparation_does_not_require_im_symbol(test_workdir: Path) -> None:
@@ -340,7 +424,7 @@ def test_unrelated_active_im_without_daily_does_not_affect_chain() -> None:
 
     chain = successful_chain(api)
 
-    assert [group.futures.instrument_id for group in chain.expiries] == [
+    assert [group.futures.instrument_id if group.futures else None for group in chain.expiries] == [
         "IM2609.CFE", "IM2610.CFE"
     ]
     assert {call["ts_code"] for call in api.fut_daily_calls} == {
@@ -364,7 +448,9 @@ def test_zero_matched_futures_price_is_a_valid_numeric_reference() -> None:
 
     chain = successful_chain(api)
 
-    assert chain.expiries[0].futures.price == 0.0
+    futures = chain.expiries[0].futures
+    assert futures is not None
+    assert futures.price == 0.0
 
 
 def test_default_http_provider_uses_real_path_with_fake_source(
@@ -395,11 +481,20 @@ def test_default_http_provider_uses_real_path_with_fake_source(
     assert raw_directory(test_workdir).exists()
 
 
-def test_real_http_provider_maps_missing_matched_futures_to_503(
-    monkeypatch: pytest.MonkeyPatch,
+@pytest.mark.parametrize("case", ["multiple_matches", "missing_daily", "null_price"])
+def test_real_http_provider_maps_incomplete_matched_futures_to_503(
+    monkeypatch: pytest.MonkeyPatch, case: str,
 ) -> None:
     api = fake_source()
-    api.futures_daily.pop("IM2609.CFE")
+    if case == "multiple_matches":
+        competing = im_contract("IM2699.CFE", list_date="20260817", delist_date="20260925")
+        api.futures_basic = futures_basic_frame(
+            [*api.futures_basic.to_dict(orient="records"), competing]
+        )
+    elif case == "missing_daily":
+        api.futures_daily.pop("IM2609.CFE")
+    else:
+        api.futures_daily["IM2609.CFE"].loc[1, "close"] = None
     monkeypatch.setenv(tushare.TOKEN_ENV_VAR, "fake-token")
     monkeypatch.setattr(tushare, "create_tushare_api", lambda _token: api)
 

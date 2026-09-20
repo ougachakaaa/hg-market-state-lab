@@ -52,7 +52,7 @@ options
 AND
 underlying
 AND
-each expiry's IM futures reference
+each present expiry IM futures reference
 ```
 
 必须使用相同的：
@@ -86,7 +86,7 @@ option close + underlying close + futures settle
 
 这种混合语义。因此整个 response 表示的是：
 
-> 目标交易日在同一种 daily price semantics 下的 option chain、underlying reference 与各到期日 IM futures reference。
+> 目标交易日在同一种 daily price semantics 下的 option chain、underlying reference 与实际存在的各到期日 IM futures reference。
 
 ## 3. Selected Price Null Semantics
 
@@ -202,14 +202,16 @@ Preparation 先从 `guides/mo-option-chain-data.md` 第 8 节定义的 **target-
 ```text
 candidates = target-date-active IM ordinary monthly contracts
              where IM.delist_date == MO.expiry_date
-len(candidates) == 1
+len(candidates) == 0 → futures = null，chain 仍成功
+len(candidates) == 1 → futures 为匹配合约及其目标日价格
+len(candidates) > 1 → 整个 chain 失败
 ```
 
 生命周期不覆盖 `target_trade_date` 的 IM 合约即使 `delist_date` 相同，也不能成为候选。不得解析 `MO2609` / `IM2609` 字符串、按月份猜测、选主力合约或按流动性选择。IM 是该 expiry 的 futures reference，不是 MO 的 underlying；`MO → CSI1000 → 000852.SH` 映射不变。
 
-匹配合约的 `instrument_id` 来自其 Source `ts_code`；`futures.price` 来自该合约目标交易日 `fut_daily` 的 resolved `price_type` 字段。必须存在且为 usable numeric fact，数值 `0` 是合法事实；不能为 `null`、用其他价格字段或其他月份替代。
+唯一匹配合约的 `instrument_id` 来自其 Source `ts_code`；`futures.price` 来自该合约唯一目标交易日 `fut_daily` row 的 resolved `price_type` 字段。该 row 与价格必须存在，价格须为 usable numeric fact，数值 `0` 是合法事实；不能为 `null`、用其他价格字段或其他月份替代。
 
-无匹配合约、多个匹配合约、目标日 daily row 缺失或重复、所选价格缺失或 malformed，均使整个 chain 失败，不得返回 `futures = null` 或隐藏该 reference。
+无匹配合约是有效市场结构，须显式返回 `futures = null`，不得推断替代合约。多个匹配合约，或唯一匹配后的目标日 daily row 缺失或重复、所选价格缺失或 malformed，均使整个 chain 失败。
 
 这里的 daily row / selected price 完整性只针对各 expiry **实际匹配**的 IM 合约。IM Raw 采集覆盖所有目标日有效普通月合约；未匹配任何 MO expiry 的合约缺 daily row 不自动使 MO Chain 失败，也不得因此改选匹配合约。Source 请求错误仍按 data contract 显式失败。
 
@@ -275,9 +277,10 @@ group by option type
 expiries[]
     expiry_date
 
-    futures
+    futures = null | {
         instrument_id
         price
+    }
 
     calls[]
     puts[]
@@ -370,8 +373,9 @@ strike           ← Source exercise_price（numeric）
 expiry_date      ← Source maturity_date（已归一化为 YYYY-MM-DD）
 price            ← Source opt_daily 的 price_type 字段
 underlying.price ← Source index_daily（000852.SH）的 price_type 字段
-futures.instrument_id ← 与 expiry_date 唯一匹配的 IM 普通月合约 ts_code
-futures.price   ← 该 IM 合约目标日 fut_daily 的 price_type 字段
+futures         ← 无匹配 IM 普通月合约时为 null
+futures.instrument_id ← 唯一匹配时该 IM 普通月合约 ts_code
+futures.price   ← 唯一匹配时该 IM 合约目标日 fut_daily 的 price_type 字段
 ```
 
 `call_put → calls[] / puts[]` 的归属是 Preparation 的确定性组织，`web-ui` 不参与该判断。
@@ -396,7 +400,7 @@ target_trade_date
 option_product
 price_type（resolved）
 underlying identity
-每个 expiry 的 IM futures identity 与目标日价格
+每个 expiry 的 futures 字段；有匹配时包含 IM identity 与目标日价格，无匹配时为 null
 ```
 
 不得依赖 React 的 local state 才知道这些信息。
@@ -412,7 +416,7 @@ underlying target-date fact exists
 +
 active option universe can be determined
 +
-every expiry has exactly one matching target-date-active IM ordinary monthly contract
+every expiry has at most one matching target-date-active IM ordinary monthly contract; zero is valid absence
 +
 every matched IM contract has a usable target-date selected price
 +
@@ -478,7 +482,6 @@ required structural field missing or malformed
 
 underlying selected price unavailable or malformed
 
-expiry has no matching target-date-active IM ordinary monthly contract
 expiry has multiple matching target-date-active IM ordinary monthly contracts
 matched IM target-date daily row missing or duplicate
 matched IM selected price missing or malformed
@@ -504,7 +507,7 @@ nearest trade date
 latest available date
 previous close
 settlement substitution
-futures reference omission or substitution
+omission of the futures field or substitution of a missing reference
 zero fill
 contract dropping
 partial chain

@@ -53,4 +53,11 @@ describe('Plotly expiry projection', () => {
     expect(layout.dragmode).toBe(false)
     expect(config).toMatchObject({ responsive: true, scrollZoom: false, doubleClick: false, displayModeBar: false })
   })
+
+  it('keeps option points and Spot without an IM reference', () => {
+    const { data, layout } = buildExpiryPlot({ ...group, futures: null }, underlying, [7000, 7700])
+    expect(data.map((trace) => trace.name)).toEqual(['Calls', 'Puts'])
+    expect(layout.shapes?.map((shape) => shape.x0)).toEqual([7312.45])
+    expect(layout.annotations?.map((annotation) => annotation.text)).toEqual(['Spot 7312.5'])
+  })
 })

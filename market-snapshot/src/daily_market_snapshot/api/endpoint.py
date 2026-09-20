@@ -152,7 +152,7 @@ def to_chain_dto(chain: service.OptionChain) -> OptionChainDTO:
                 futures=FuturesRefDTO(
                     instrument_id=group.futures.instrument_id,
                     price=group.futures.price,
-                ),
+                ) if group.futures is not None else None,
                 calls=[to_point_dto(point) for point in group.calls],
                 puts=[to_point_dto(point) for point in group.puts],
             )
