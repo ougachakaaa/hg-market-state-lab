@@ -6,7 +6,7 @@
 
 本仓库的 Python 项目位于 `market-snapshot/`：Poetry、pytest、Ruff 与 mypy 都在该目录内执行。Python 目标版本为 3.13。
 
-独立 frontend project 位于 `web-ui/`：使用 npm 管理依赖，在该目录内运行 `npm install`、`npm run dev`、`npm test`、`npm run build` 和 `npm run lint`。React 使用 Vite + TypeScript；Node.js 需满足当前 Vite 的版本要求（当前为 20.19+ 或 22.12+）。本地开发时 `/mo-option-chain` 由 Vite proxy 转发到默认监听 `127.0.0.1:8011` 的 FastAPI。MO Option Chain 的真实 provider、HTTP endpoint 与按到期日展示的散点图均已实现；具体契约以对应的 authority 和 Guide 为准。
+独立 frontend project 位于 `web-ui/`：使用 npm 管理依赖，在该目录内运行 `npm install`、`npm run dev`、`npm test`、`npm run build` 和 `npm run lint`。React 使用 Vite + TypeScript；Node.js 需满足当前 Vite 的版本要求（当前为 20.19+ 或 22.12+）。本地开发时 `/mo-option-chain` 由 Vite proxy 转发到默认监听 `127.0.0.1:8011` 的 FastAPI。MO Option Chain 的真实 provider、HTTP endpoint 与合并多到期日分析图均已实现；具体契约以对应的 authority 和 Guide 为准。
 
 ## Authority 导航
 
