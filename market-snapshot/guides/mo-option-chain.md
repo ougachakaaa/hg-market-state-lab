@@ -2,7 +2,7 @@
 
 > 状态：authority（Stage 1）。本文档锁定 `MO Option Chain` 作为与 `csi1000-5d-analysis` 并列的独立 deterministic data product 的**产品定位、ownership、query identity、invariants 与导航**。
 >
-> 本文档最初在 authority-only 阶段建立；backend 数据链路和 HTTP endpoint 现已实现，React/chart 仍属后续 Goal。
+> backend 数据链路、HTTP endpoint 与 React 散点图现已实现；Web 可视化语义见 `web-ui/guides/mo-option-chain-visualization.md`。
 >
 > 层级：本文档位于 `market-snapshot/ARCHITECTURE.md` 之下，是 MO Option Chain 的入口 authority。具体 data contract（Source / Raw / universe / completeness）见 `guides/mo-option-chain-data.md`；具体 read contract（price / null / grouping / ordering / response / failure）见 `guides/mo-option-chain-read-contract.md`；HTTP transport（endpoint / DTO / error envelope / status mapping）见 `guides/mo-option-chain-http-contract.md`。本文档只承载稳定边界与导航，不重复子 Guide 的字段细节。
 >

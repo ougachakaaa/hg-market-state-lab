@@ -24,7 +24,7 @@ GET /mo-option-chain
 ```
 
 * 当前只有一个 endpoint，且只有 V1 这一个 MO Option Chain read surface。
-* 读操作使用 GET：request 不产生任何服务端状态变化，也没有 request body。
+* 读操作使用 GET，没有 request body，也不修改客户端可操作的业务资源。Data Service 在读取 Source 时会按 `guides/mo-option-chain-data.md` 写入 goal-scoped Raw Artifact；这属于数据准备流程，不改变 HTTP read contract。
 * query identity 的三个维度全部通过 query 参数表达（第 2 节）。
 * 路径中不带 date / product：这些是 query identity，不是资源层级。
 * 本阶段不引入 API version 前缀、不提供写操作、不提供第二个 endpoint（见第 8 节）。

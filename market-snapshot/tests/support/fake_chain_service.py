@@ -1,8 +1,8 @@
 """Fake application boundary for the MO Option Chain HTTP contract tests.
 
-The HTTP delivery adapter is tested against this provider instead of the real
-``Capture -> Raw -> Preparation -> read model`` chain, which is still deferred
-(``guides/mo-option-chain-http-contract.md`` section 7).
+The HTTP delivery adapter is tested against this provider independently of the
+real ``Capture -> Raw -> Preparation -> read model`` chain, which is also
+covered by integration tests (``guides/mo-option-chain-http-contract.md`` section 7).
 
 The fake carries test data only. It is never imported by ``src/``: fabricated
 market facts must not live in the business semantics layer.
