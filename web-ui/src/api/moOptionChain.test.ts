@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { ChainRequestError, loadMoOptionChain } from './moOptionChain'
+import type { OptionChain } from './moOptionChain'
 
 const chain = {
   target_trade_date: '2026-09-17',
@@ -12,10 +13,10 @@ const chain = {
     calls: [{ instrument_id: 'C1', strike: 7000, price: null }],
     puts: [{ instrument_id: 'P1', strike: 7000, price: 0 }],
   }],
-}
+} satisfies OptionChain
 
-function response(body: unknown, ok = true): Response {
-  return { ok, json: async () => body } as Response
+function response(body: unknown, status = 200): Response {
+  return { ok: status >= 200 && status < 300, status, json: async () => body } as Response
 }
 
 afterEach(() => vi.unstubAllGlobals())
@@ -56,10 +57,19 @@ describe('loadMoOptionChain', () => {
     await expect(loadMoOptionChain('2026-09-17')).rejects.toMatchObject({ kind: 'invalid_response' })
   })
 
+  it.each([
+    { ...chain, price_type: 'settle' },
+    { ...chain, expiries: [{ ...chain.expiries[0], calls: [{ instrument_id: 'C1', strike: 7000 }] }] },
+    { ...chain, underlying: { instrument_id: '000852.SH', price: null } },
+  ])('rejects a success body outside the generated contract', async (body) => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(response(body)))
+    await expect(loadMoOptionChain('2026-09-17')).rejects.toMatchObject({ kind: 'invalid_response' })
+  })
+
   it('returns the contract error kind and detail', async () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(response({
       error: { kind: 'date_not_available', detail: 'no data', param: 'target_trade_date' },
-    }, false)))
+    }, 404)))
 
     await expect(loadMoOptionChain('2026-09-18')).rejects.toMatchObject({
       kind: 'date_not_available',
@@ -71,13 +81,23 @@ describe('loadMoOptionChain', () => {
   it('classifies malformed success, malformed errors, and transport failures', async () => {
     const fetch = vi.fn()
       .mockResolvedValueOnce(response({ ...chain, expiries: [{ ...chain.expiries[0], calls: [{ instrument_id: 'C1', strike: 7000, price: '0' }] }] }))
-      .mockResolvedValueOnce(response({ error: { kind: 'unexpected', detail: 'no data' } }, false))
+      .mockResolvedValueOnce(response({ error: { kind: 'unexpected', detail: 'no data' } }, 400))
       .mockRejectedValueOnce(new TypeError('connection failed'))
     vi.stubGlobal('fetch', fetch)
 
     await expect(loadMoOptionChain('2026-09-17')).rejects.toMatchObject({ kind: 'invalid_response' })
     await expect(loadMoOptionChain('2026-09-17')).rejects.toMatchObject({ kind: 'invalid_response' })
     await expect(loadMoOptionChain('2026-09-17')).rejects.toMatchObject({ kind: 'network' })
+  })
+
+  it('rejects an invalid error parameter and an undeclared response status', async () => {
+    const fetch = vi.fn()
+      .mockResolvedValueOnce(response({ error: { kind: 'invalid_request', detail: 'bad', param: 'unknown' } }, 400))
+      .mockResolvedValueOnce(response({ error: { kind: 'date_not_available', detail: 'missing' } }, 500))
+    vi.stubGlobal('fetch', fetch)
+
+    await expect(loadMoOptionChain('2026-09-17')).rejects.toMatchObject({ kind: 'invalid_response' })
+    await expect(loadMoOptionChain('2026-09-17')).rejects.toMatchObject({ kind: 'invalid_response' })
   })
 
   it('does not turn an aborted request into a network error', async () => {

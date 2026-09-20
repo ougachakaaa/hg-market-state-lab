@@ -1,37 +1,19 @@
-// These types mirror GET /mo-option-chain; the backend contract owns their meaning.
-export type OptionPoint = {
-  instrument_id: string
-  strike: number
-  price: number | null
-}
+import Ajv2020 from 'ajv/dist/2020.js'
+import openApi from './moOptionChain.openapi.json'
+import type { components, paths } from './moOptionChain.generated'
 
-export type ExpiryGroup = {
-  expiry_date: string
-  futures: { instrument_id: string; price: number }
-  calls: OptionPoint[]
-  puts: OptionPoint[]
-}
+const path = '/mo-option-chain' satisfies keyof paths
+type Operation = paths[typeof path]['get']
+type Query = Operation['parameters']['query']
 
-export type OptionChain = {
-  target_trade_date: string
-  option_product: 'MO'
-  price_type: 'open' | 'high' | 'low' | 'close'
-  underlying: { instrument_id: string; price: number }
-  expiries: ExpiryGroup[]
-}
-
-export type ChainErrorKind =
-  | 'invalid_request'
-  | 'unsupported_query'
-  | 'date_not_available'
-  | 'option_chain_unavailable'
-  | 'service_not_wired'
-
-export type ChainError = {
-  kind: ChainErrorKind
-  detail: string
-  param?: 'target_trade_date' | 'option_product' | 'price_type' | null
-}
+// Public client types are projections of the generated HTTP contract.
+export type OptionChain = Operation['responses'][200]['content']['application/json']
+export type ExpiryGroup = OptionChain['expiries'][number]
+export type OptionPoint = ExpiryGroup['calls'][number]
+export type ChainError = components['schemas']['ChainErrorBody']
+export type ChainErrorKind = ChainError['kind']
+type ErrorStatus = Exclude<keyof Operation['responses'], 200>
+type ChainErrorResponse = Operation['responses'][ErrorStatus]['content']['application/json']
 
 export class ChainRequestError extends Error {
   readonly kind: ChainErrorKind | 'network' | 'invalid_response'
@@ -49,74 +31,35 @@ export class ChainRequestError extends Error {
   }
 }
 
-const errorKinds: readonly ChainErrorKind[] = [
-  'invalid_request',
-  'unsupported_query',
-  'date_not_available',
-  'option_chain_unavailable',
-  'service_not_wired',
-]
+// Validate against the response schemas exported by FastAPI. The front end has
+// no separately maintained field rules or enum lists.
+// "components" is an OpenAPI reference container, not a JSON Schema keyword.
+const ajv = new Ajv2020({ strictSchema: false })
+const responseValidators = new Map(
+  Object.entries(openApi.paths[path].get.responses).map(([status, response]) => [
+    Number(status),
+    ajv.compile({
+      ...response.content['application/json'].schema,
+      components: openApi.components,
+    }),
+  ]),
+)
 
-const errorParams = ['target_trade_date', 'option_product', 'price_type']
-const priceTypes = ['open', 'high', 'low', 'close']
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null && !Array.isArray(value)
-}
-
-function isFiniteNumber(value: unknown): value is number {
-  return typeof value === 'number' && Number.isFinite(value)
-}
-
-function isOptionPoint(value: unknown): value is OptionPoint {
-  return isRecord(value)
-    && typeof value.instrument_id === 'string'
-    && isFiniteNumber(value.strike)
-    && (value.price === null || isFiniteNumber(value.price))
-}
-
-function isExpiryGroup(value: unknown): value is ExpiryGroup {
-  return isRecord(value)
-    && typeof value.expiry_date === 'string'
-    && isRecord(value.futures)
-    && typeof value.futures.instrument_id === 'string'
-    && isFiniteNumber(value.futures.price)
-    && Array.isArray(value.calls)
-    && value.calls.every(isOptionPoint)
-    && Array.isArray(value.puts)
-    && value.puts.every(isOptionPoint)
-}
-
-function isOptionChain(value: unknown): value is OptionChain {
-  return isRecord(value)
-    && typeof value.target_trade_date === 'string'
-    && value.option_product === 'MO'
-    && priceTypes.includes(value.price_type as string)
-    && isRecord(value.underlying)
-    && typeof value.underlying.instrument_id === 'string'
-    && isFiniteNumber(value.underlying.price)
-    && Array.isArray(value.expiries)
-    && value.expiries.every(isExpiryGroup)
-}
-
-function parseError(value: unknown): ChainError | null {
-  if (!isRecord(value) || !isRecord(value.error)) return null
-  const { kind, detail, param } = value.error
-  if (!errorKinds.includes(kind as ChainErrorKind) || typeof detail !== 'string') return null
-  if (param !== undefined && param !== null && !errorParams.includes(param as string)) return null
-  return { kind: kind as ChainErrorKind, detail, param: param as ChainError['param'] }
+function matchesResponse(status: number, body: unknown): boolean {
+  return responseValidators.get(status)?.(body) === true
 }
 
 export async function loadMoOptionChain(targetTradeDate: string, signal?: AbortSignal): Promise<OptionChain> {
-  const query = new URLSearchParams({
+  const parameters = {
     target_trade_date: targetTradeDate,
     option_product: 'MO',
     price_type: 'close',
-  })
+  } satisfies Query
+  const query = new URLSearchParams(parameters)
 
   let response: Response
   try {
-    response = await fetch(`/mo-option-chain?${query}`, { signal })
+    response = await fetch(`${path}?${query}`, { signal })
   } catch (error) {
     if (signal?.aborted) throw error
     throw new ChainRequestError('network', '无法连接数据服务')
@@ -130,11 +73,12 @@ export async function loadMoOptionChain(targetTradeDate: string, signal?: AbortS
     throw new ChainRequestError('invalid_response', '数据服务返回了无法读取的响应')
   }
 
-  if (response.ok) {
-    if (isOptionChain(body)) return body
-  } else {
-    const chainError = parseError(body)
-    if (chainError) throw new ChainRequestError(chainError.kind, chainError.detail, chainError.param)
+  if (response.ok && response.status === 200 && matchesResponse(200, body)) {
+    return body as OptionChain
+  }
+  if (!response.ok && matchesResponse(response.status, body)) {
+    const { error } = body as ChainErrorResponse
+    throw new ChainRequestError(error.kind, error.detail, error.param)
   }
   throw new ChainRequestError('invalid_response', '数据服务返回了不符合契约的响应')
 }

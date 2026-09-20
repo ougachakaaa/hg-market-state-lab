@@ -15,6 +15,8 @@
 >
 > 实现本 Guide 任务的 Agent 先读 `guides/mo-option-chain.md`（query identity / invariants）与 `guides/mo-option-chain-read-contract.md`（response shape / failure categories），再按本文档实现 DTO 与 endpoint。
 
+Markdown authority 拥有 market / read semantics 与本 Guide 的 HTTP transport 语义。后端 Pydantic HTTP DTO 及其发布的 OpenAPI 是 HTTP wire contract 的可执行表达，必须忠实反映这些 authority；OpenAPI 是前端获取机器可读 wire shape 的来源。`web-ui` 消费该契约，不另行人工定义一套与其平行的 backend market / transport schema。仓库验证必须在后端 OpenAPI 与前端消费的契约产物不同步时失败。
+
 ---
 
 ## 1. Endpoint

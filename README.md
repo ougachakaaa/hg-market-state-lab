@@ -99,10 +99,13 @@ npm run dev
 浏览器打开 `http://127.0.0.1:5173/`，选择目标日期后立即读取 MO 期权链；每个到期日展示 Call / Put 价格散点图和标的参考线，展开合约明细可查看缺价合约。前端检查：
 
 ```bash
+npm run contract:check
 npm run build
 npm run lint
 npm run test
 ```
+
+`contract:check` 无需启动 HTTP 服务；它在 `market-snapshot/` 的 Poetry 环境中重新生成 OpenAPI 并与已提交的前端 JSON 比较，再核对由该 JSON 生成的 TypeScript 类型。后端 HTTP 测试也会检查 OpenAPI 与前端 JSON 一致。修改后端 HTTP DTO / OpenAPI 后，在 `web-ui/` 运行 `npm run contract:generate`，提交更新的 JSON 与 TypeScript，再运行上述检查。生成的类型与 OpenAPI JSON 由前端 client 消费，前端不维护独立的 HTTP wire schema。
 
 开发时 Vite 将 frontend origin 的 `/mo-option-chain` 请求转发到默认监听 `http://127.0.0.1:8011` 的 FastAPI，保留路径与 query。先按上一节启动 backend，再访问：
 

@@ -28,8 +28,8 @@ const chain = {
   }],
 }
 
-function response(body: unknown, ok = true): Response {
-  return { ok, json: async () => body } as Response
+function response(body: unknown, status = 200): Response {
+  return { ok: status >= 200 && status < 300, status, json: async () => body } as Response
 }
 
 function dateInput(): HTMLInputElement {
@@ -180,7 +180,8 @@ describe('MO option chain page', () => {
     ['option_chain_unavailable', '当前无法生成完整期权链'],
     ['service_not_wired', '数据服务尚未接线'],
   ])('maps %s without interpreting detail', async (kind, title) => {
-    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(response({ error: { kind, detail: 'backend detail' } }, false)))
+    const status = kind === 'date_not_available' ? 404 : kind === 'invalid_request' || kind === 'unsupported_query' ? 400 : 503
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(response({ error: { kind, detail: 'backend detail' } }, status)))
     render(<App />)
     fireEvent.change(dateInput(), { target: { value: '2026-09-17' } })
 

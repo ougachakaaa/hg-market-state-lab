@@ -1,0 +1,369 @@
+{
+  "components": {
+    "schemas": {
+      "ChainErrorBody": {
+        "additionalProperties": false,
+        "description": "The single error object of every non-2xx response body.",
+        "properties": {
+          "detail": {
+            "description": "Human-readable explanation. Not a stable contract.",
+            "title": "Detail",
+            "type": "string"
+          },
+          "kind": {
+            "$ref": "#/components/schemas/ChainErrorKind",
+            "description": "Closed error kind; branch on this."
+          },
+          "param": {
+            "anyOf": [
+              {
+                "enum": [
+                  "target_trade_date",
+                  "option_product",
+                  "price_type"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Query parameter the failure is attributed to, when applicable.",
+            "title": "Param"
+          }
+        },
+        "required": [
+          "kind",
+          "detail"
+        ],
+        "title": "ChainErrorBody",
+        "type": "object"
+      },
+      "ChainErrorKind": {
+        "description": "Closed set of MO Option Chain error kinds.\n\nAUTHORITY: HTTP transport contract section 5. The set is closed: a delivery\nsurface may not add, merge or reinterpret kinds.",
+        "enum": [
+          "invalid_request",
+          "unsupported_query",
+          "date_not_available",
+          "option_chain_unavailable",
+          "service_not_wired"
+        ],
+        "title": "ChainErrorKind",
+        "type": "string"
+      },
+      "ChainErrorResponse": {
+        "additionalProperties": false,
+        "description": "The error envelope: the full body of every non-2xx response.",
+        "properties": {
+          "error": {
+            "$ref": "#/components/schemas/ChainErrorBody"
+          }
+        },
+        "required": [
+          "error"
+        ],
+        "title": "ChainErrorResponse",
+        "type": "object"
+      },
+      "ExpiryGroupDTO": {
+        "additionalProperties": false,
+        "description": "One expiry of the chain, with its calls and puts already ordered.",
+        "properties": {
+          "calls": {
+            "items": {
+              "$ref": "#/components/schemas/OptionPointDTO"
+            },
+            "title": "Calls",
+            "type": "array"
+          },
+          "expiry_date": {
+            "description": "Expiry date, YYYY-MM-DD.",
+            "title": "Expiry Date",
+            "type": "string"
+          },
+          "futures": {
+            "$ref": "#/components/schemas/FuturesRefDTO"
+          },
+          "puts": {
+            "items": {
+              "$ref": "#/components/schemas/OptionPointDTO"
+            },
+            "title": "Puts",
+            "type": "array"
+          }
+        },
+        "required": [
+          "expiry_date",
+          "futures",
+          "calls",
+          "puts"
+        ],
+        "title": "ExpiryGroupDTO",
+        "type": "object"
+      },
+      "FuturesRefDTO": {
+        "additionalProperties": false,
+        "description": "The required IM futures reference of one expiry.",
+        "properties": {
+          "instrument_id": {
+            "title": "Instrument Id",
+            "type": "string"
+          },
+          "price": {
+            "title": "Price",
+            "type": "number"
+          }
+        },
+        "required": [
+          "instrument_id",
+          "price"
+        ],
+        "title": "FuturesRefDTO",
+        "type": "object"
+      },
+      "OptionChainDTO": {
+        "additionalProperties": false,
+        "description": "The self-describing success response of ``GET /mo-option-chain``.\n\nOrdering, grouping and null semantics of this payload are owned by\n``guides/mo-option-chain-read-contract.md``; this DTO only serializes them.",
+        "properties": {
+          "expiries": {
+            "items": {
+              "$ref": "#/components/schemas/ExpiryGroupDTO"
+            },
+            "title": "Expiries",
+            "type": "array"
+          },
+          "option_product": {
+            "$ref": "#/components/schemas/OptionProduct"
+          },
+          "price_type": {
+            "$ref": "#/components/schemas/PriceType",
+            "description": "Resolved price_type used by every price in this response."
+          },
+          "target_trade_date": {
+            "description": "Explicit target trade date, YYYY-MM-DD.",
+            "title": "Target Trade Date",
+            "type": "string"
+          },
+          "underlying": {
+            "$ref": "#/components/schemas/UnderlyingRefDTO"
+          }
+        },
+        "required": [
+          "target_trade_date",
+          "option_product",
+          "price_type",
+          "underlying",
+          "expiries"
+        ],
+        "title": "OptionChainDTO",
+        "type": "object"
+      },
+      "OptionPointDTO": {
+        "additionalProperties": false,
+        "description": "One option contract (one scatter point) of one expiry group.",
+        "properties": {
+          "instrument_id": {
+            "description": "Stable option instrument identity.",
+            "title": "Instrument Id",
+            "type": "string"
+          },
+          "price": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Selected price of the resolved price_type. null means the daily fact exists but the selected field has no Source fact; the contract is still present. A numeric 0 is data and is never replaced by null.",
+            "title": "Price"
+          },
+          "strike": {
+            "description": "Option exercise price.",
+            "title": "Strike",
+            "type": "number"
+          }
+        },
+        "required": [
+          "instrument_id",
+          "strike",
+          "price"
+        ],
+        "title": "OptionPointDTO",
+        "type": "object"
+      },
+      "OptionProduct": {
+        "description": "The option products V1 can serve.\n\nAuthority: ``guides/mo-option-chain.md`` sections 3 and 4. The single\nexecutable source of truth for the product dimension: the HTTP request, the\nresolved query identity, the read model and the response DTO all use this\ntype, so a future ``IO`` / ``HO`` extends one authoritative type instead of\ntwo that could drift.",
+        "enum": [
+          "MO"
+        ],
+        "title": "OptionProduct",
+        "type": "string"
+      },
+      "PriceType": {
+        "description": "The selected price semantics V1 supports.\n\nAuthority: ``guides/mo-option-chain-read-contract.md`` section 1. ``settle``,\n``pre_close``, ``pre_settle`` and ``volume`` are deliberately absent.",
+        "enum": [
+          "open",
+          "high",
+          "low",
+          "close"
+        ],
+        "title": "PriceType",
+        "type": "string"
+      },
+      "UnderlyingRefDTO": {
+        "additionalProperties": false,
+        "description": "The shared underlying reference of the chain.",
+        "properties": {
+          "instrument_id": {
+            "title": "Instrument Id",
+            "type": "string"
+          },
+          "price": {
+            "description": "Usable numeric underlying price under the same price_type as the options. A successful response never carries a null underlying.",
+            "title": "Price",
+            "type": "number"
+          }
+        },
+        "required": [
+          "instrument_id",
+          "price"
+        ],
+        "title": "UnderlyingRefDTO",
+        "type": "object"
+      },
+      "ValidationError": {
+        "properties": {
+          "ctx": {
+            "title": "Context",
+            "type": "object"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "title": "Location",
+            "type": "array"
+          },
+          "msg": {
+            "title": "Message",
+            "type": "string"
+          },
+          "type": {
+            "title": "Error Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError",
+        "type": "object"
+      }
+    }
+  },
+  "info": {
+    "summary": "Minimal HTTP delivery adapter for the MO Option Chain read contract.",
+    "title": "hg-market-state-lab MO Option Chain API",
+    "version": "0.1.0"
+  },
+  "openapi": "3.1.0",
+  "paths": {
+    "/mo-option-chain": {
+      "get": {
+        "description": "``GET /mo-option-chain`` - the only MO Option Chain read surface of V1.",
+        "operationId": "readMoOptionChain",
+        "parameters": [
+          {
+            "description": "Explicit target trade date, exactly YYYY-MM-DD. Not today / latest / current date; there is no fallback date.",
+            "in": "query",
+            "name": "target_trade_date",
+            "required": true,
+            "schema": {
+              "format": "date",
+              "title": "Target Trade Date",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Option product. V1 supports MO only.",
+            "in": "query",
+            "name": "option_product",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/OptionProduct",
+              "description": "Option product. V1 supports MO only."
+            }
+          },
+          {
+            "description": "Selected price semantics. Defaults to close when omitted.",
+            "in": "query",
+            "name": "price_type",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/PriceType",
+              "default": "close",
+              "description": "Selected price semantics. Defaults to close when omitted."
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OptionChainDTO"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChainErrorResponse"
+                }
+              }
+            },
+            "description": "Invalid or unsupported request."
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChainErrorResponse"
+                }
+              }
+            },
+            "description": "The target trade date cannot be served by the Source."
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChainErrorResponse"
+                }
+              }
+            },
+            "description": "The complete chain cannot currently be produced."
+          }
+        },
+        "summary": "Read the MO CSI1000 option chain of one target trade date"
+      }
+    }
+  }
+}

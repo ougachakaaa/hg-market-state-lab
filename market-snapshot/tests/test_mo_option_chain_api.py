@@ -623,6 +623,15 @@ def test_openapi_does_not_publish_a_validation_error_shape(client: TestClient) -
     assert "HTTPValidationError" not in document["components"]["schemas"]
 
 
+def test_published_openapi_matches_the_frontend_contract_snapshot(client: TestClient) -> None:
+    """A backend wire change fails pytest until the frontend contract is regenerated."""
+    snapshot = (
+        Path(__file__).resolve().parents[2] / "web-ui/src/api/moOptionChain.openapi.json"
+    )
+
+    assert client.get("/openapi.json").json() == json.loads(snapshot.read_text(encoding="utf-8"))
+
+
 # ---------------------------------------------------------------------------
 # Layer boundaries
 # ---------------------------------------------------------------------------
