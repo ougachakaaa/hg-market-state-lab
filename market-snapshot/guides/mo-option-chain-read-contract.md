@@ -197,17 +197,21 @@ request fails
 
 ### Per-expiry IM futures reference
 
-每个 MO `expiry_date` 必须唯一匹配一个 IM 普通月合约，匹配条件只使用 Source 的结构性事实：
+Preparation 先从 `guides/mo-option-chain-data.md` 第 8 节定义的 **target-date-active IM ordinary monthly universe** 建立候选集，再对每个 MO `expiry_date` 应用 Source 结构性事实匹配：
 
 ```text
-MO expiry_date == IM delist_date
+candidates = target-date-active IM ordinary monthly contracts
+             where IM.delist_date == MO.expiry_date
+len(candidates) == 1
 ```
 
-不得解析 `MO2609` / `IM2609` 字符串、按月份猜测、选主力合约或按流动性选择。IM 是该 expiry 的 futures reference，不是 MO 的 underlying；`MO → CSI1000 → 000852.SH` 映射不变。
+生命周期不覆盖 `target_trade_date` 的 IM 合约即使 `delist_date` 相同，也不能成为候选。不得解析 `MO2609` / `IM2609` 字符串、按月份猜测、选主力合约或按流动性选择。IM 是该 expiry 的 futures reference，不是 MO 的 underlying；`MO → CSI1000 → 000852.SH` 映射不变。
 
 匹配合约的 `instrument_id` 来自其 Source `ts_code`；`futures.price` 来自该合约目标交易日 `fut_daily` 的 resolved `price_type` 字段。必须存在且为 usable numeric fact，数值 `0` 是合法事实；不能为 `null`、用其他价格字段或其他月份替代。
 
 无匹配合约、多个匹配合约、目标日 daily row 缺失或重复、所选价格缺失或 malformed，均使整个 chain 失败，不得返回 `futures = null` 或隐藏该 reference。
+
+这里的 daily row / selected price 完整性只针对各 expiry **实际匹配**的 IM 合约。IM Raw 采集覆盖所有目标日有效普通月合约；未匹配任何 MO expiry 的合约缺 daily row 不自动使 MO Chain 失败，也不得因此改选匹配合约。Source 请求错误仍按 data contract 显式失败。
 
 ## 5. Contract Business Identity
 
@@ -408,11 +412,11 @@ underlying target-date fact exists
 +
 active option universe can be determined
 +
-every expiry has exactly one matching IM ordinary monthly contract
+every expiry has exactly one matching target-date-active IM ordinary monthly contract
 +
 every matched IM contract has a usable target-date selected price
 +
-every active contract has its target-date daily row
+every active MO option contract has its target-date daily row
 +
 structural contract facts are complete
 ```
@@ -448,6 +452,8 @@ contracts do not exist
 
 ## 11. Failure Semantics
 
+下列 `active contract` 指 MO option active universe 中的合约；IM daily-row failure 只针对各 expiry 实际匹配的合约（见第 4 节）。
+
 以下属于 failure：
 
 ```text
@@ -472,8 +478,8 @@ required structural field missing or malformed
 
 underlying selected price unavailable or malformed
 
-expiry has no matching IM ordinary monthly contract
-expiry has multiple matching IM ordinary monthly contracts
+expiry has no matching target-date-active IM ordinary monthly contract
+expiry has multiple matching target-date-active IM ordinary monthly contracts
 matched IM target-date daily row missing or duplicate
 matched IM selected price missing or malformed
 ```

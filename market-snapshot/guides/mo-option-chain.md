@@ -182,7 +182,7 @@ selected price 为 null 不允许删除 contract。
 
 ### Invariant 5 — Daily completeness
 
-active contract 没有对应 daily row → fail。
+active MO option contract 没有对应 daily row → fail；IM futures reference 的目标日完整性见 `guides/mo-option-chain-data.md` 第 8 节与 `guides/mo-option-chain-read-contract.md` 第 4 节。
 
 ### Invariant 6 — Zero is data
 

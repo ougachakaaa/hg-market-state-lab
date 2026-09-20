@@ -17,7 +17,7 @@ option contract facts
 option target-date daily facts
 underlying target-date daily fact
 IM ordinary monthly contract facts
-IM target-date daily facts for per-expiry references
+target-date-active IM ordinary monthly daily facts
 ```
 
 对于当前 MO / Tushare 场景，对应：
@@ -42,7 +42,7 @@ technical derived metrics
 ```
 
 underlying 只需要目标交易日**单日**的 `index_daily` fact（open / high / low / close，供 `price_type` 选价），不需要历史窗口。
-IM futures reference 也只需要对应的普通月合约事实与目标交易日**单日**的 `fut_daily` fact（open / high / low / close，供同一 `price_type` 选价）；不得因 CSI1000 5D Analysis 的约 60 日需求引入历史窗口或其 analysis-ready artifact。
+IM futures reference 只需要普通月合约事实与目标交易日**单日**的 `fut_daily` fact（open / high / low / close，供同一 `price_type` 选价）；具体采集范围是第 8 节的 target-date-active IM universe，不由 MO expiry 决定。不得因 CSI1000 5D Analysis 的约 60 日需求引入历史窗口或其 analysis-ready artifact。
 
 ## 2. Raw Artifact boundary & scope
 
@@ -59,13 +59,14 @@ data/raw/mo-option-chain/<target_trade_date>/
   index_daily.json        # 000852.SH 单日 fact（open/high/low/close）
   mo_option_basic.json    # option contract facts（复用 mo_option_basic Capture 语义）
   mo_option_daily.json    # option 目标日 daily facts（复用 mo_option_daily Capture 语义）
-  im_futures_basic.json   # IM 普通月合约事实（复用 im_futures_basic Capture 语义）
-  im_futures_daily.json   # MO expiry references 所需的 IM 目标日 daily facts
+  im_futures_basic.json   # 判断目标日有效生命周期所需的 IM 普通月合约事实
+  im_futures_daily.json   # 目标日有效 IM 普通月合约的目标日 daily facts
 ```
 
 * `<target_trade_date>` 表示该次数据准备的 target_trade_date，不是文件中所有记录共同的 trade_date。
 * `index_daily.json` 是**单日** 000852.SH fact，不是 `index_daily_history.json`（120 日 history）。
-* `im_futures_daily.json` 仅包含本数据产品所需的目标日 IM facts，不包含 CSI1000 5D Analysis 的 IM 历史窗口；`im_futures_basic.json` 保留用于唯一匹配 expiry 的普通月合约 Source facts。
+* `im_futures_basic.json` 保留足以判断第 8 节 IM universe 的普通月合约 Source facts；`im_futures_daily.json` 保存该 universe 在目标日由 Source 返回的 daily rows，而非只保存与 MO expiry 匹配的合约。不存在的 Source row 不得伪造或从其他日期补齐。
+* `im_futures_daily.json` 只存目标日 facts；不得将 CSI1000 5D Analysis 的约 60 日 IM history、现有 400-calendar-day historical Capture path 或 term structure history 作为 MO Chain Raw。MO Chain 不读取其 Raw 或 analysis-ready artifact。共享 Source Capture capability 不等于共享 goal-scoped Raw。
 * 每个 Raw 文件为 JSON array，元素对应一个 Source row，经 `market-snapshot/ARCHITECTURE.md` 第 3 节允许的 minimal normalization 后写入。
 * Raw 不 join basic + daily；不要求 120 日 / 60 日窗口。每个数据产品单独持有自己的 Raw，不读取另一个产品的 Raw。
 * `data/raw/` 是运行产物，不进入版本控制。
@@ -177,6 +178,8 @@ price
 
 ## 5. Contract Universe vs Daily Fact
 
+本节与第 6 节讨论的是第 4 节定义的 MO option active universe；IM target-date Raw 与其 read-model 完整性边界另见第 8 节。
+
 必须区分：
 
 ```text
@@ -219,7 +222,7 @@ complete target-date chain
 
 ## 6. Daily-row Completeness
 
-对 active universe 中的每一个 contract：
+对 MO option active universe 中的每一个 contract：
 
 ```text
 必须存在 target_trade_date 对应的 daily fact row
@@ -268,4 +271,15 @@ daily row exists but selected field is null
 
 ## 8. IM target-date facts
 
-每个 MO expiry 必须有对应 IM 普通月合约的生命周期事实及其目标交易日 daily row。IM reference 是完整 chain 的必需事实，不是可缺省的 UI 附加信息。唯一匹配与价格可用性、失败语义由 `guides/mo-option-chain-read-contract.md` 定义；本节只锁定 Source 与 goal-scoped Raw 的范围。
+MO Chain 的 IM target-date Source Capture scope 是：
+
+```text
+exchange = CFFEX
+AND product = IM
+AND ordinary monthly contract
+AND list_date <= target_trade_date <= delist_date
+```
+
+Capture 使用 IM 自身的 Source facts 确定这个 **target-date-active IM ordinary monthly universe**，对其中所有合约采集目标日 daily facts；不得先读取或理解 MO expiry groups，再按 expiry、主力、成交量、持仓量、流动性或分析相关性缩小采集范围。Capture 负责 Source-domain scope，Preparation 才负责 `MO expiry_date == IM delist_date` 的跨域匹配（见 `guides/mo-option-chain-read-contract.md` 第 4 节）。
+
+IM Raw acquisition scope 可宽于最终 read model 所需的 futures references。Capture 必须覆盖上述 universe 的目标日 Source 查询并保留实际返回的事实；Source 请求错误不得静默跳过。某个未匹配任何 MO expiry 的 IM 合约缺少目标日 daily row，不自动构成 MO Chain read-model failure；只有匹配合约的唯一 daily row 和 usable selected price 属于成功 chain 的必需事实。不得因无关合约缺价而改选其他 IM 合约，具体完整性与失败语义见 read contract 第 4、10、11 节。
