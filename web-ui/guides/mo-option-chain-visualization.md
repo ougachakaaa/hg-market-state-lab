@@ -57,14 +57,15 @@ strikeHalfRangePoints
 
 其中 underlying reference price 是目标交易日的 CSI1000（000852.SH）underlying 在选定 `price_type` 下的价格，作为横轴上的市场基准点。它使用与 option 相同的 `price_type`（见 `market-snapshot/guides/mo-option-chain-read-contract.md` 第 2 节）。
 
-`strikeHalfRangePoints` 是整个页面共享的 strike viewport 半宽，第一版默认值与最小值均为 `300` points，调整步长为 `100` points。所有 expiry 图使用同一个 x-domain，以 shared underlying spot 计算：
+`strikeHalfRangePoints` 是整个页面共享的 strike viewport 半宽，第一版默认值与最小值均为 `300` points，调整步长为 `100` points。所有 expiry 图以原始 shared underlying spot 为严格中心，共享核心范围与实际绘图范围：
 
 ```text
-lower = floor((spot - strikeHalfRangePoints) / 100) * 100
-upper = ceil((spot + strikeHalfRangePoints) / 100) * 100
+core = [spot - strikeHalfRangePoints, spot + strikeHalfRangePoints]
+edge_padding = 2% × core width
+plot_x_range = [core lower - edge_padding, core upper + edge_padding]
 ```
 
-例如 `spot = 7501`、`strikeHalfRangePoints = 300` 时，x-domain 为 `7200 .. 7900`。它至少覆盖 spot 两侧各指定距离，再向外对齐至 100-point visualization grid。`100 points` 只定义图表网格，不定义 MO contract universe。
+例如 `spot = 7501`、`strikeHalfRangePoints = 300` 时，核心范围为 `7201 .. 7801`，左右各留 `12` 点绘图余量，实际 x-range 为 `7189 .. 7813`。Spot 始终位于正中心，余量使边缘圆点完整显示。Strike 网格以 `0` 为刻度起点，每 `200` 点一根灰线；网格不定义 MO contract universe。
 
 这是 chart viewport，不是 contract filter：backend 仍返回完整 active MO chain；视窗外的 contracts 不从 response 或合约明细中删除，Web UI 也不把该范围下推为 Source、Preparation 或 HTTP 过滤规则。
 
@@ -98,8 +99,10 @@ Y axis = option selected price（默认 price_type = close）
 并且：
 
 * Call 与 Put 必须可视觉区分；
-* 标记目标交易日的 CSI1000 underlying reference price（与 option 相同的 `price_type`）；
+* Call 与 Put 分别按 read contract 的 Strike 顺序以直线连接，保留各自颜色与圆点；`price=null` 的位置断线，不跨过缺价连接，也不在该位置绘制圆点；
+* 目标交易日的 CSI1000 underlying reference price（与 option 相同的 `price_type`）位于图中央，以实线标识并保留 Spot 标注；Price 数字刻度放在图最左侧，每 `200` 点标注一次；
 * 仅在该 expiry 的 `futures` 非 `null` 时显示 IM futures reference（合约 identity 与所选价格），在图中作为带标识的横轴价格参考；为 `null` 时显示“无同到期 IM 合约”，不绘制 IM 参考线或标注，也不推断替代合约；
+* Price 纵轴以 `0` 为刻度起点，每 `100` 点一根灰色虚线网格；其中每 `200` 点显示数字。每张图只统计实际 `plot_x_range` 内所选价格非 `null` 的 Call / Put 点：上限为 `ceil(可见最高价 × 1.2 / 100) × 100`，无可见正价时取 `100`；下限为数值 `0` 留出少量显示余量，若有可见负价也须覆盖。IM 与 Spot 参考价不参与这个上限计算；
 * underlying reference price 是横轴上的市场基准点；
 * 每个 scatter point 代表一个 MO option contract。
 

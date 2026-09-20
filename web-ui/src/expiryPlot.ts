@@ -1,17 +1,19 @@
 import type { Config, Layout, ScatterData } from 'plotly.js'
 import type { ExpiryGroup, OptionChain } from './api/moOptionChain'
 import { projectExpiry } from './expiryChartData'
-import type { ChartPoint } from './expiryChartData'
+import type { OptionPoint } from './api/moOptionChain'
 import { formatPrice } from './priceDisplay'
 
-function optionTrace(points: ChartPoint[], side: ChartPoint['side'], color: string): ScatterData {
+function optionTrace(points: OptionPoint[], side: 'Call' | 'Put', color: string): ScatterData {
   return {
     type: 'scatter',
-    mode: 'markers',
+    mode: 'lines+markers',
     name: `${side}s`,
     x: points.map((point) => point.strike),
     y: points.map((point) => point.price),
     customdata: points.map((point) => point.instrument_id),
+    connectgaps: false,
+    line: { color, width: 2, shape: 'linear' },
     marker: { color, size: 8 },
     hovertemplate: `%{customdata}<br>${side} · Strike %{x:.1f} · Price %{y:.1f}<extra></extra>`,
   }
@@ -22,10 +24,10 @@ export function buildExpiryPlot(
   underlying: OptionChain['underlying'],
   xDomain: [number, number],
 ) {
-  const chart = projectExpiry(group)
+  const chart = projectExpiry(group, xDomain)
   const data: ScatterData[] = [
-    optionTrace(chart.calls, 'Call', '#2563eb'),
-    optionTrace(chart.puts, 'Put', '#ea580c'),
+    optionTrace(group.calls, 'Call', '#2563eb'),
+    optionTrace(group.puts, 'Put', '#ea580c'),
   ]
   const futures = group.futures
   const layout: Partial<Layout> = {
@@ -33,11 +35,23 @@ export function buildExpiryPlot(
     dragmode: false,
     hovermode: 'closest',
     margin: { t: 48, r: 24, b: 52, l: 62 },
-    xaxis: { title: { text: 'Strike' }, type: 'linear', range: xDomain, fixedrange: true, tickformat: '.1f', showgrid: true },
-    yaxis: { title: { text: 'Price' }, type: 'linear', range: chart.yDomain, fixedrange: true, tickformat: '.1f', showgrid: true },
+    xaxis: {
+      title: { text: 'Strike' }, type: 'linear', range: xDomain, fixedrange: true,
+      tickformat: '.1f', tick0: 0, dtick: 200, showgrid: true, gridcolor: '#e5e7eb',
+    },
+    yaxis: {
+      title: { text: 'Price' }, type: 'linear', range: chart.yDomain, fixedrange: true,
+      tickformat: '.1f', tick0: 0, dtick: 200, showgrid: true,
+      gridcolor: '#e5e7eb', griddash: 'dash', side: 'left',
+      minor: { tick0: 0, dtick: 100, showgrid: true, gridcolor: '#e5e7eb', griddash: 'dash' },
+    },
     legend: { orientation: 'h', x: 0, y: 1.18 },
     shapes: [
-      { type: 'line', xref: 'x', yref: 'paper', x0: underlying.price, x1: underlying.price, y0: 0, y1: 1, line: { color: '#64748b', dash: 'dash' } },
+      {
+        type: 'line', xref: 'x', yref: 'paper',
+        x0: underlying.price, x1: underlying.price, y0: 0, y1: 1,
+        line: { color: '#64748b', width: 2, dash: 'solid' },
+      },
       ...(futures === null ? [] : [{
         type: 'line' as const, xref: 'x' as const, yref: 'paper' as const,
         x0: futures.price, x1: futures.price, y0: 0, y1: 1,

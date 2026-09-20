@@ -9,7 +9,7 @@ export default function ExpiryChart({ group, underlying, xDomain }: {
   underlying: OptionChain['underlying']
   xDomain: [number, number]
 }) {
-  const chart = projectExpiry(group)
+  const chart = projectExpiry(group, xDomain)
   const hasDrawablePrice = chart.calls.length + chart.puts.length > 0
   const futuresDescription = group.futures === null
     ? '无同到期 IM 合约'

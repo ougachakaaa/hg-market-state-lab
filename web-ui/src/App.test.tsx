@@ -98,8 +98,10 @@ describe('MO option chain page', () => {
     expect(sections.map((section) => within(section).getByRole('heading', { level: 3 }).textContent))
       .toEqual(['2026-09-25', '2026-10-23'])
     for (const section of sections) {
-      expect(plot(section).layout.shapes[0].x0).toBe(7312.45)
-      expect(plot(section).layout.xaxis.range).toEqual([7000, 7700])
+      expect(plot(section).layout.yaxis.side).toBe('left')
+      expect(plot(section).layout.yaxis.dtick).toBe(200)
+      expect(plot(section).layout.yaxis.minor.dtick).toBe(100)
+      expect(plot(section).layout.xaxis.range).toEqual([7000.45, 7624.45])
       expect(plot(section).layout.xaxis.fixedrange).toBe(true)
       expect(plot(section).data.map((trace: { name: string }) => trace.name)).toEqual(['Calls', 'Puts'])
       expect(plot(section).useResizeHandler).toBe(true)
@@ -113,9 +115,9 @@ describe('MO option chain page', () => {
     expect(within(second).getByText('Futures：IM2610.CFE · 7560.3')).toBeTruthy()
     expect(plot(first).layout.annotations[0].text).toBe('Spot 7312.5')
     expect(plot(second).layout.annotations[1].text).toBe('IM 7560.3')
-    expect(plot(first).data[0].x).toEqual([8000])
-    expect(plot(first).data[0].y).toEqual([9])
-    expect(plot(first).data[0].customdata).toEqual(['arbitrary-b'])
+    expect(plot(first).data[0].x).toEqual([7000, 8000])
+    expect(plot(first).data[0].y).toEqual([null, 9])
+    expect(plot(first).data[0].customdata).toEqual(['arbitrary-a', 'arbitrary-b'])
     expect(plot(first).data[1].x).toEqual([7000])
     expect(plot(first).data[1].y).toEqual([0])
     expect(plot(first).data[1].customdata).toEqual(['arbitrary-c'])
@@ -129,7 +131,7 @@ describe('MO option chain page', () => {
     fireEvent.click(screen.getByRole('button', { name: '扩大行权价视窗' }))
     expect(screen.getByText('行权价视窗：±400 点')).toBeTruthy()
     for (const section of sections) {
-      expect(plot(section).layout.xaxis.range).toEqual([6900, 7800])
+      expect(plot(section).layout.xaxis.range).toEqual([6896.45, 7728.45])
     }
     fireEvent.click(shrink)
     expect(shrink.hasAttribute('disabled')).toBe(true)
@@ -153,6 +155,26 @@ describe('MO option chain page', () => {
     expect(plot(section).layout.annotations).toHaveLength(1)
     expect(plot(section).data.map((trace: { name: string }) => trace.name)).toEqual(['Calls', 'Puts'])
     expect(within(section).getByRole('group', { name: /无同到期 IM 合约/ })).toBeTruthy()
+  })
+
+  it('recalculates each expiry price axis when the shared strike viewport expands', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(response({
+      ...chain,
+      expiries: [{
+        ...chain.expiries[0],
+        calls: [{ instrument_id: 'C-near', strike: 7400, price: 20 },
+          { instrument_id: 'C-far', strike: 7700, price: 800 }],
+        puts: [{ instrument_id: 'P-near', strike: 7300, price: 10 }],
+      }],
+    })))
+    render(<App />)
+    fireEvent.change(dateInput(), { target: { value: '2026-09-17' } })
+
+    const expiry = await screen.findByRole('region', { name: '2026-09-25 到期日' })
+    expect(plot(expiry).layout.yaxis.range[1]).toBe(100)
+    fireEvent.click(screen.getByRole('button', { name: '扩大行权价视窗' }))
+    expect(plot(expiry).layout.yaxis.range[1]).toBe(1000)
+    expect(plot(expiry).data[0].x).toEqual([7400, 7700])
   })
 
   it('shows an all-null expiry without losing contract facts', async () => {
@@ -191,7 +213,7 @@ describe('MO option chain page', () => {
 
     const results = await screen.findByRole('region', { name: '期权链结果' })
     expect(within(results).getByText('行权价视窗：±400 点')).toBeTruthy()
-    expect(plot(results).layout.xaxis.range).toEqual([6900, 7800])
+    expect(plot(results).layout.xaxis.range).toEqual([6896.45, 7728.45])
   })
 
   it.each([
