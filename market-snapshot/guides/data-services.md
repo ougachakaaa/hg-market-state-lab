@@ -96,8 +96,10 @@ price_type          optional（缺省 = close）
 
 ```text
 不依赖 csi1000-5d-analysis 的 output（snapshot.json）
-不要求 120 日历史窗口 / IM futures / CSI1000 派生指标
-复用共享 Source Capture capability（mo_option_basic / mo_option_daily / index_daily）
+不要求 CSI1000 120 日历史分析窗口 / IM 历史分析窗口 / CSI1000 analysis 派生指标
+需要目标日 CSI1000 underlying fact 与目标日有效 IM 普通月合约 facts
+每个 MO expiry 需要唯一且可用的目标日 IM futures reference
+复用共享 Source Capture capability（index_daily / mo_option_basic / mo_option_daily / im_futures_basic / im_futures_daily 的 target-date capability）
 ```
 
 完整语义的 authority 落点：

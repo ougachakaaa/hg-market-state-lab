@@ -307,7 +307,5 @@ tests（真实数据链路）
 
 上述链路与 Fake Source 测试均已实现；此处仅记录状态，不改变前述业务语义。
 
-本节记录的是既有 MVP 链路状态；本轮新增的 per-expiry IM reference 及 Web presentation / viewport 语义尚待后续 implementation。
-
 Raw Artifact 组织方式已在本轮锁定（见 `mo-option-chain-data.md`），不再 deferred。
 HTTP contract / FastAPI foundation 已由 `guides/mo-option-chain-http-contract.md` 锁定，不再 deferred。
