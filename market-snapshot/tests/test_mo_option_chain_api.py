@@ -40,6 +40,8 @@ from support.fake_chain_service import (
     CALL_WITH_PRICE,
     CALL_WITH_ZERO_PRICE,
     EXPIRY_DATE,
+    FUTURES_ID,
+    FUTURES_PRICE,
     PUT_WITH_PRICE,
     TARGET_DATE,
     UNDERLYING_ID,
@@ -177,6 +179,7 @@ def test_the_response_is_the_read_contract_semantic_shape(client: TestClient) ->
         "expiries": [
             {
                 "expiry_date": EXPIRY_DATE,
+                "futures": {"instrument_id": FUTURES_ID, "price": FUTURES_PRICE},
                 "calls": [
                     {"instrument_id": CALL_WITH_PRICE, "strike": 7000.0, "price": 356.4},
                     {"instrument_id": CALL_WITH_NULL_PRICE, "strike": 7200.0, "price": None},
@@ -591,6 +594,10 @@ def test_openapi_declares_the_success_schema_as_the_read_contract(client: TestCl
         "expiries",
     ]
     assert set(schemas["OptionPointDTO"]["properties"]) == {"instrument_id", "strike", "price"}
+    assert schemas["ExpiryGroupDTO"]["required"] == [
+        "expiry_date", "futures", "calls", "puts"
+    ]
+    assert schemas["FuturesRefDTO"]["required"] == ["instrument_id", "price"]
     # ``price`` must stay nullable: null is a legal selected-price state.
     price_schema = schemas["OptionPointDTO"]["properties"]["price"]
     assert {"type": "null"} in price_schema["anyOf"]

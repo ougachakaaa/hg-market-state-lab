@@ -167,6 +167,42 @@ def test_records_cover_several_trade_dates_and_only_im_contracts() -> None:
     assert {record["ts_code"] for record in records} == set(WINDOW_CONTRACTS)
 
 
+def test_target_date_capture_queries_only_active_monthly_im_and_keeps_one_day() -> None:
+    api = fake_api(
+        contracts=[*CONTRACTS, IM2512],
+        daily_dates={
+            "IM2609.CFE": ["20260916", "20260917"],
+            "IM2512.CFE": ["20260916", "20260917"],
+        },
+    )
+    basic = im_futures_basic.capture(api, TARGET_DATE)
+
+    records = im_futures_daily.capture_target_date(api, TARGET_DATE, basic)
+
+    assert {row["ts_code"] for row in records} == {"IM2512.CFE", "IM2609.CFE"}
+    assert {row["trade_date"] for row in records} == {TARGET_DATE}
+    assert {call["ts_code"] for call in api.fut_daily_calls} == {
+        "IM2512.CFE", "IM2609.CFE"
+    }
+    assert all(call["trade_date"] == "20260917" for call in api.fut_daily_calls)
+    assert all(call["start_date"] == call["end_date"] == "" for call in api.fut_daily_calls)
+
+
+def test_target_date_capture_keeps_missing_unrelated_daily_as_raw_absence() -> None:
+    api = fake_api(
+        contracts=[*CONTRACTS, IM2512],
+        daily_dates={"IM2609.CFE": ["20260917"]},
+    )
+    basic = im_futures_basic.capture(api, TARGET_DATE)
+
+    records = im_futures_daily.capture_target_date(api, TARGET_DATE, basic)
+
+    assert [row["ts_code"] for row in records] == ["IM2609.CFE"]
+    assert {call["ts_code"] for call in api.fut_daily_calls} == {
+        "IM2512.CFE", "IM2609.CFE"
+    }
+
+
 def test_records_cover_enough_history_for_a_60_trading_day_window() -> None:
     """The Raw artifact keeps the whole collected history, not a 60-day selection."""
     # One contract carries daily facts over its whole effective range, spanning

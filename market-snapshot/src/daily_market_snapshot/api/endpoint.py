@@ -31,6 +31,7 @@ from .errors import (
 )
 from .schemas import (
     ExpiryGroupDTO,
+    FuturesRefDTO,
     IsoDate,
     OptionChainDTO,
     OptionPointDTO,
@@ -148,6 +149,10 @@ def to_chain_dto(chain: service.OptionChain) -> OptionChainDTO:
         expiries=[
             ExpiryGroupDTO(
                 expiry_date=group.expiry_date,
+                futures=FuturesRefDTO(
+                    instrument_id=group.futures.instrument_id,
+                    price=group.futures.price,
+                ),
                 calls=[to_point_dto(point) for point in group.calls],
                 puts=[to_point_dto(point) for point in group.puts],
             )

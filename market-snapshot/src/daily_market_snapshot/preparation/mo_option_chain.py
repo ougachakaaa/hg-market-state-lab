@@ -1,4 +1,4 @@
-"""Deterministic MO option-chain Preparation from this goal's three Raw artifacts.
+"""Deterministic MO option-chain Preparation from this goal's five Raw artifacts.
 
 The output mirrors the read-model shape as plain typed data. The Data Service
 wraps it in its existing application types. No Source access, date fallback, or
@@ -26,8 +26,14 @@ class PreparedPoint(TypedDict):
     price: float | None
 
 
+class PreparedFuturesRef(TypedDict):
+    instrument_id: str
+    price: float
+
+
 class PreparedExpiry(TypedDict):
     expiry_date: str
+    futures: PreparedFuturesRef
     calls: list[PreparedPoint]
     puts: list[PreparedPoint]
 
@@ -126,6 +132,67 @@ def selected_option_price(row: RawRecord, field: str) -> float | None:
     return None if value is None else numeric(value, f"option {field}")
 
 
+def futures_references(
+    basic_rows: Sequence[RawRecord],
+    daily_rows: Sequence[RawRecord],
+    target_trade_date: str,
+    price_type: str,
+    expiries: set[str],
+) -> dict[str, PreparedFuturesRef]:
+    """Match each MO expiry to exactly one active IM contract and daily price."""
+    candidates: dict[str, list[str]] = {expiry: [] for expiry in expiries}
+    seen: set[str] = set()
+    for row in basic_rows:
+        identity = required_text(row, "ts_code")
+        symbol = required_text(row, "symbol")
+        if (
+            required_text(row, "exchange") != "CFFEX"
+            or required_text(row, "fut_code") != "IM"
+            or not symbol.startswith("IM")
+            or not symbol[2:].isdigit()
+        ):
+            raise PreparationError(f"IM basic Raw has an out-of-scope contract {identity}")
+        if identity in seen:
+            raise PreparationError(f"duplicate IM basic contract {identity}")
+        seen.add(identity)
+        listed = required_date(row, "list_date")
+        delisted = required_date(row, "delist_date")
+        if listed > delisted:
+            raise PreparationError(f"IM contract {identity} has inverted lifecycle")
+        if listed <= target_trade_date <= delisted and delisted in candidates:
+            candidates[delisted].append(identity)
+
+    required_codes: dict[str, str] = {}
+    for expiry, matches in candidates.items():
+        if len(matches) != 1:
+            raise PreparationError(
+                f"MO expiry {expiry} requires exactly one active IM contract; got {len(matches)}"
+            )
+        required_codes[expiry] = matches[0]
+
+    required_rows: dict[str, list[RawRecord]] = {code: [] for code in required_codes.values()}
+    for row in daily_rows:
+        identity = required_text(row, "ts_code")
+        if identity in required_rows:
+            required_rows[identity].append(row)
+
+    references: dict[str, PreparedFuturesRef] = {}
+    for expiry, identity in required_codes.items():
+        rows = required_rows[identity]
+        if len(rows) != 1:
+            raise PreparationError(
+                f"matched IM contract {identity} requires one target-date daily row; "
+                f"got {len(rows)}"
+            )
+        if required_date(rows[0], "trade_date") != target_trade_date:
+            raise PreparationError(f"matched IM contract {identity} has a different trade date")
+        references[expiry] = {
+            "instrument_id": identity,
+            "price": numeric(rows[0].get(price_type), f"futures {identity} {price_type}"),
+        }
+    return references
+
+
 def build_chain(target_trade_date: str, price_type: str, raw_dir: Path) -> PreparedChain:
     """Read only the requested date's Raw scope and construct the complete chain."""
     underlying = underlying_price(raw_rows(raw_dir, "index_daily"), target_trade_date, price_type)
@@ -155,9 +222,17 @@ def build_chain(target_trade_date: str, price_type: str, raw_dir: Path) -> Prepa
     def ordered(points: list[PreparedPoint]) -> list[PreparedPoint]:
         return sorted(points, key=lambda point: (point["strike"], point["instrument_id"]))
 
+    references = futures_references(
+        raw_rows(raw_dir, "im_futures_basic"),
+        raw_rows(raw_dir, "im_futures_daily"),
+        target_trade_date,
+        price_type,
+        set(grouped),
+    )
     expiries: list[PreparedExpiry] = [
         {
             "expiry_date": expiry,
+            "futures": references[expiry],
             "calls": ordered(grouped[expiry]["C"]),
             "puts": ordered(grouped[expiry]["P"]),
         }

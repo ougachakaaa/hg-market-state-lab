@@ -11,7 +11,7 @@ What this module owns:
 * the query identity a caller resolves before any data preparation (section 3 of
   ``guides/mo-option-chain.md``);
 * the failure categories of the read contract (section 11) as Python types;
-* orchestration of the three Captures, goal-scoped Raw and Preparation.
+* orchestration of the five Captures, goal-scoped Raw and Preparation.
 
 What this module deliberately does not do:
 
@@ -29,7 +29,13 @@ from enum import StrEnum
 from pathlib import Path
 
 from .. import artifacts
-from ..capture import index_daily, mo_option_basic, mo_option_daily
+from ..capture import (
+    im_futures_basic,
+    im_futures_daily,
+    index_daily,
+    mo_option_basic,
+    mo_option_daily,
+)
 from ..preparation import mo_option_chain as preparation
 from ..sources import tushare
 
@@ -158,6 +164,14 @@ class UnderlyingRef:
 
 
 @dataclass(frozen=True)
+class FuturesRef:
+    """The required IM futures reference of one MO expiry."""
+
+    instrument_id: str
+    price: float
+
+
+@dataclass(frozen=True)
 class OptionPoint:
     """One option contract in one chain.
 
@@ -181,6 +195,7 @@ class ExpiryGroup:
     """One expiry of the chain: its calls and its puts, already ordered."""
 
     expiry_date: str
+    futures: FuturesRef
     calls: tuple[OptionPoint, ...]
     puts: tuple[OptionPoint, ...]
 
@@ -271,6 +286,7 @@ def to_read_model(query: ChainQuery, prepared: preparation.PreparedChain) -> Opt
         expiries=tuple(
             ExpiryGroup(
                 expiry_date=group["expiry_date"],
+                futures=FuturesRef(**group["futures"]),
                 calls=points(group["calls"]),
                 puts=points(group["puts"]),
             )
@@ -311,6 +327,12 @@ def read_chain_with_api(
         artifacts.write_raw_artifact(basic_facts, raw_dir, mo_option_basic.RAW_ARTIFACT)
         daily_facts = mo_option_daily.capture(api, query.target_trade_date, basic_facts)
         artifacts.write_raw_artifact(daily_facts, raw_dir, mo_option_daily.RAW_ARTIFACT)
+        im_basic_facts = im_futures_basic.capture(api, query.target_trade_date)
+        artifacts.write_raw_artifact(im_basic_facts, raw_dir, im_futures_basic.RAW_ARTIFACT)
+        im_daily_facts = im_futures_daily.capture_target_date(
+            api, query.target_trade_date, im_basic_facts
+        )
+        artifacts.write_raw_artifact(im_daily_facts, raw_dir, im_futures_daily.RAW_ARTIFACT)
     except Exception as exc:
         # The Source SDK raises plain Exception for API failures; no partial
         # chain can be published when any Capture or Raw write fails.

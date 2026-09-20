@@ -25,6 +25,7 @@ from ..services.mo_option_chain import OptionProduct, PriceType
 
 __all__ = [
     "ExpiryGroupDTO",
+    "FuturesRefDTO",
     "IsoDate",
     "OptionChainDTO",
     "OptionPointDTO",
@@ -100,6 +101,15 @@ class UnderlyingRefDTO(BaseModel):
     ]
 
 
+class FuturesRefDTO(BaseModel):
+    """The required IM futures reference of one expiry."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    instrument_id: str
+    price: float
+
+
 class OptionPointDTO(BaseModel):
     """One option contract (one scatter point) of one expiry group."""
 
@@ -116,6 +126,7 @@ class ExpiryGroupDTO(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     expiry_date: Annotated[str, Field(description="Expiry date, YYYY-MM-DD.")]
+    futures: FuturesRefDTO
     calls: list[OptionPointDTO]
     puts: list[OptionPointDTO]
 

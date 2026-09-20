@@ -18,6 +18,8 @@ TARGET_DATE = "2026-09-17"
 EXPIRY_DATE = "2026-09-25"
 UNDERLYING_ID = "000852.SH"
 UNDERLYING_PRICE = 7312.45
+FUTURES_ID = "IM2609.CFE"
+FUTURES_PRICE = 7487.6
 
 CALL_WITH_PRICE = "MO2609-C-7000.CFE"
 CALL_WITH_NULL_PRICE = "MO2609-C-7200.CFE"
@@ -41,6 +43,7 @@ def chain_fixture() -> service.OptionChain:
         expiries=(
             service.ExpiryGroup(
                 expiry_date=EXPIRY_DATE,
+                futures=service.FuturesRef(FUTURES_ID, FUTURES_PRICE),
                 calls=(
                     service.OptionPoint(
                         instrument_id=CALL_WITH_PRICE, strike=7000.0, price=356.4
