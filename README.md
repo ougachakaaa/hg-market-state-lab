@@ -34,7 +34,7 @@ python dev.py frontend
 
 ## Data Service（用户入口）
 
-普通用户和 Agent 的日常主入口是 Data Service CLI，无需知道底层有哪些 Source Capture、它们的执行顺序或 Raw 目录结构。当前 Data Service catalog 声明两项：`csi1000-5d-analysis`（已实现）与 `mo-option-chain`（Stage 1 authority，实现 deferred，面向 HTTP read contract）。当前 CLI 用户入口只服务已实现的 `csi1000-5d-analysis`。
+普通用户和 Agent 的日常主入口是 Data Service CLI，无需知道底层有哪些 Source Capture、它们的执行顺序或 Raw 目录结构。当前 Data Service catalog 声明两项：`csi1000-5d-analysis` 与 `mo-option-chain`，两者均已实现；后者通过 HTTP read contract 服务 `web-ui`，没有 CLI 入口。当前 CLI 用户入口只服务 `csi1000-5d-analysis`。
 
 列出当前支持的 Data Service：
 
@@ -85,9 +85,9 @@ poetry run python scripts/api.py --host 127.0.0.1 --port 8012
 
 端口号只是 launcher 细节，不属于 HTTP contract：endpoint 语义、request/query 参数、success / error response 与 status mapping 全部以 `market-snapshot/guides/mo-option-chain-http-contract.md` 为准；V1 不定义 server deployment、CORS、auth 或 API versioning。
 
-当前真实 `Capture → Raw → MO Option Chain Preparation → read model` 尚未接线，因此请求会明确返回 `503 service_not_wired`（`error.kind` 之一）而不是伪造数据；这是 Goal 2 的 bootstrap 状态，不是 HTTP contract 失败。
+真实 `Capture → Raw → MO Option Chain Preparation → read model` 已接入默认 HTTP provider。成功请求返回完整期权链；不可服务的日期或数据不完整时按 HTTP contract 返回相应 error envelope。`service_not_wired` 只保留作 bootstrap / test compatibility。
 
-## Web UI（React Foundation）
+## Web UI（MO Option Chain 页面）
 
 `web-ui/` 是独立的 npm frontend project，基于官方 Vite `react-ts` template。需要满足 Vite 要求的 Node.js（当前为 20.19+ 或 22.12+）。在 `web-ui/` 目录内执行：
 
@@ -96,11 +96,12 @@ npm install
 npm run dev
 ```
 
-浏览器打开 `http://127.0.0.1:5173/` 可查看最小 React shell。production build 与 lint：
+浏览器打开 `http://127.0.0.1:5173/`，选择目标日期后立即读取并展示 MO 期权链摘要；展开到期日可查看 Call / Put 明细。前端检查：
 
 ```bash
 npm run build
 npm run lint
+npm run test
 ```
 
 开发时 Vite 将 frontend origin 的 `/mo-option-chain` 请求转发到默认监听 `http://127.0.0.1:8011` 的 FastAPI，保留路径与 query。先按上一节启动 backend，再访问：
@@ -109,7 +110,7 @@ npm run lint
 http://127.0.0.1:5173/mo-option-chain?target_trade_date=2026-09-17&option_product=MO
 ```
 
-当前返回 `503` 且 `error.kind` 为 `service_not_wired`，即可证明 proxy 到达现有 HTTP endpoint；不为此更改 backend 语义或添加 CORS。本阶段只建立 frontend foundation，尚无日期选择、option-chain 展示或散点图。
+页面请求走同一条 proxy 路径。返回内容取决于目标日期和 Source 数据；无需为本地开发更改 backend 语义或添加 CORS。当前页面展示摘要和可展开明细，散点图留待后续阶段。
 
 ## 基础环境
 
@@ -160,7 +161,7 @@ poetry run mypy .
   * `output/`：Data Service 的 canonical user-facing output（运行产物）
   * `tests/`：测试
 * `market-modeling/`：结构占位目录（当前无实现）
-* `web-ui/`：独立 Vite + React + TypeScript frontend project，目前只有 React shell 与本地 dev proxy；第一个 Web vertical slice 为 MO option-chain visualization，其模块 authority 见 `ARCHITECTURE.md`，visualization contract 见 `guides/mo-option-chain-visualization.md`（业务 UI 尚未实现）
+* `web-ui/`：独立 Vite + React + TypeScript frontend project，已具备 MO option-chain 日期选择、读取状态、摘要与可展开明细；散点图尚未实现。模块 authority 见 `ARCHITECTURE.md`，visualization contract 见 `guides/mo-option-chain-visualization.md`
 
 ## 环境变量
 

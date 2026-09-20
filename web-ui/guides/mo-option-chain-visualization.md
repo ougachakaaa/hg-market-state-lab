@@ -144,18 +144,15 @@ trading recommendation
 
 active universe、option type、expiry、selected price fallback、contract completeness 等业务语义均由 read contract 拥有，`web-ui` 不自行推导（ownership 与 invariants 见 `market-snapshot/guides/mo-option-chain.md` 第 2、5 节）。
 
-## 9. 下一轮实现范围（本 Guide 不实现）
+## 9. Goal 5 页面阶段
 
-下一轮 Coding Agent 可以在不重新发明产品目标的情况下继续做：
+散点图实现前，页面先完成 HTTP 数据读取与可读结果展示：用户显式选择日期后立即加载；日期清空时不请求；不预填今天、不自动寻找或回退交易日。当前页面固定请求 `option_product=MO`、`price_type=close`，不提供这两个参数的选择器。
 
-```text
-HTTP contract
-FastAPI skeleton
-React skeleton
-scatter visualization
-```
+页面区分未选择日期、加载中、完整结果、失败四种状态。新日期的请求开始时清除上一日期的结果，较早的请求不得覆盖当前选择。失败根据 HTTP contract 的 `error.kind` 展示说明；网络或异常响应作为读取失败展示，不伪造数据。
 
-其中 HTTP contract / FastAPI skeleton 已由 `market-snapshot/guides/mo-option-chain-http-contract.md`（Stage 2）锁定：
+完整结果展示 response 中的日期、价格口径、underlying 标识和参考价，以及按 response 顺序排列的各到期日 Call / Put 数量。到期日可展开分别查看 Call 与 Put 的合约标识、行权价、价格；`price=null` 显示缺价，数值 `0` 仍显示为零。此阶段不绘制散点图，不重新组织或解释合约。
+
+现有 HTTP contract 由 `market-snapshot/guides/mo-option-chain-http-contract.md` 锁定：
 
 ```text
 GET /mo-option-chain
@@ -167,7 +164,7 @@ error kind 闭集 + HTTP status mapping
 
 前端只能依赖该 HTTP contract 的字段与 error kind，不得自行推导 universe / underlying / expiry / option type / fallback / completeness（见第 8 节）。
 
-本 Guide 不定义（也不提前创建）：
+散点图仍按第 4、5 节在后续阶段实现。本 Guide 不定义（也不提前创建）：
 
 ```text
 API versioning

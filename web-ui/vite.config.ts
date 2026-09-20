@@ -1,5 +1,5 @@
 import react from '@vitejs/plugin-react'
-import { defineConfig } from 'vite'
+import { defineConfig } from 'vitest/config'
 
 // https://vite.dev/config/
 export default defineConfig({
@@ -9,5 +9,8 @@ export default defineConfig({
     proxy: {
       '/mo-option-chain': 'http://127.0.0.1:8011',
     },
+  },
+  test: {
+    environment: 'jsdom',
   },
 })

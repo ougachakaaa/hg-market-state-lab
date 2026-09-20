@@ -1,15 +1,30 @@
 :root {
   font-family: system-ui, sans-serif;
   color: #1f2937;
-  background: #ffffff;
+  background: #f8fafc;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
 }
 
-body {
-  margin: 0;
-}
-
-main {
-  padding: 2rem;
-}
+body { margin: 0; }
+main { max-width: 960px; margin: 0 auto; padding: 2rem; }
+h1 { margin: .25rem 0; }
+h2, h3, h4 { margin-bottom: .6rem; }
+.eyebrow { color: #475569; font-size: .85rem; margin: 0; }
+.date-field { display: block; font-weight: 600; margin: 2rem 0 .4rem; }
+input[type="date"] { font: inherit; padding: .5rem; border: 1px solid #94a3b8; border-radius: .35rem; }
+.message, .results { margin-top: 1.5rem; padding: 1.25rem; background: white; border: 1px solid #cbd5e1; border-radius: .5rem; }
+.error { border-color: #dc2626; }
+.facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 1rem; }
+.facts div { padding: .75rem; background: #f1f5f9; border-radius: .35rem; }
+dt { color: #475569; font-size: .85rem; }
+dd { margin: .25rem 0 0; font-weight: 600; }
+.expiry { border-top: 1px solid #cbd5e1; padding: .9rem 0; }
+.expiry summary { cursor: pointer; display: list-item; font-weight: 600; }
+.expiry summary span + span { margin-left: 1rem; color: #475569; font-weight: 400; }
+.expiry-content { display: grid; gap: 1rem; }
+.option-list { min-width: 0; overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; text-align: left; }
+th, td { padding: .5rem; border-bottom: 1px solid #e2e8f0; }
+th { color: #475569; }
+@media (max-width: 600px) { main { padding: 1rem; } }
