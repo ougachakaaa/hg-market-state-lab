@@ -16,6 +16,8 @@ MO Option Chain 只需要以下事实能力：
 option contract facts
 option target-date daily facts
 underlying target-date daily fact
+IM ordinary monthly contract facts
+IM target-date daily facts for per-expiry references
 ```
 
 对于当前 MO / Tushare 场景，对应：
@@ -24,19 +26,23 @@ underlying target-date daily fact
 opt_basic     → Source Capture mo_option_basic
 opt_daily     → Source Capture mo_option_daily
 index_daily   → Source Capture index_daily（000852.SH，单日）
+fut_basic     → Source Capture im_futures_basic（IM 普通月合约）
+fut_daily     → Source Capture im_futures_daily（目标日行情）
 ```
 
-现有 Capture capability 应尽量复用。这三个 Capture 的 Source 字段语义继续由 `guides/csi1000-5d-analysis-data.md` 第 4.1、4.2、4.3 节定义；本文档只锁定 MO read model 需要哪些 fact，不重新定义 Source 字段。
+现有 Capture capability 应尽量复用。上述 Capture 的 Source 字段语义继续由 `guides/csi1000-5d-analysis-data.md` 第 4.1–4.5 节定义；本文档只锁定 MO read model 需要哪些 fact，不重新定义 Source 字段。IM 合约与 MO expiry 的匹配及选价语义见 `guides/mo-option-chain-read-contract.md`。
 
 本数据产品**不得**因为历史 CSI1000 analysis 的需求而额外要求：
 
 ```text
 120-day index history
-IM futures
+60-day IM futures history
+IM term structure history
 technical derived metrics
 ```
 
 underlying 只需要目标交易日**单日**的 `index_daily` fact（open / high / low / close，供 `price_type` 选价），不需要历史窗口。
+IM futures reference 也只需要对应的普通月合约事实与目标交易日**单日**的 `fut_daily` fact（open / high / low / close，供同一 `price_type` 选价）；不得因 CSI1000 5D Analysis 的约 60 日需求引入历史窗口或其 analysis-ready artifact。
 
 ## 2. Raw Artifact boundary & scope
 
@@ -53,12 +59,15 @@ data/raw/mo-option-chain/<target_trade_date>/
   index_daily.json        # 000852.SH 单日 fact（open/high/low/close）
   mo_option_basic.json    # option contract facts（复用 mo_option_basic Capture 语义）
   mo_option_daily.json    # option 目标日 daily facts（复用 mo_option_daily Capture 语义）
+  im_futures_basic.json   # IM 普通月合约事实（复用 im_futures_basic Capture 语义）
+  im_futures_daily.json   # MO expiry references 所需的 IM 目标日 daily facts
 ```
 
 * `<target_trade_date>` 表示该次数据准备的 target_trade_date，不是文件中所有记录共同的 trade_date。
 * `index_daily.json` 是**单日** 000852.SH fact，不是 `index_daily_history.json`（120 日 history）。
+* `im_futures_daily.json` 仅包含本数据产品所需的目标日 IM facts，不包含 CSI1000 5D Analysis 的 IM 历史窗口；`im_futures_basic.json` 保留用于唯一匹配 expiry 的普通月合约 Source facts。
 * 每个 Raw 文件为 JSON array，元素对应一个 Source row，经 `market-snapshot/ARCHITECTURE.md` 第 3 节允许的 minimal normalization 后写入。
-* 不 join basic + daily；不要求 120 日 / 60 日窗口。
+* Raw 不 join basic + daily；不要求 120 日 / 60 日窗口。每个数据产品单独持有自己的 Raw，不读取另一个产品的 Raw。
 * `data/raw/` 是运行产物，不进入版本控制。
 
 ## 3. target_trade_date availability & completeness
@@ -256,3 +265,7 @@ daily row exists but selected field is null
 ## 7. Underlying target-date fact
 
 构造 chain 需要 underlying 目标交易日的 `index_daily` fact 存在；其 selected price 的 usable-numeric / 失败语义见 `guides/mo-option-chain-read-contract.md` 第 4 节。
+
+## 8. IM target-date facts
+
+每个 MO expiry 必须有对应 IM 普通月合约的生命周期事实及其目标交易日 daily row。IM reference 是完整 chain 的必需事实，不是可缺省的 UI 附加信息。唯一匹配与价格可用性、失败语义由 `guides/mo-option-chain-read-contract.md` 定义；本节只锁定 Source 与 goal-scoped Raw 的范围。

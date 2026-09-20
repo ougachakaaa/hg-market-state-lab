@@ -52,9 +52,27 @@ date range
 ```text
 target_trade_date
 underlying reference price
+strikeHalfRangePoints
 ```
 
 其中 underlying reference price 是目标交易日的 CSI1000（000852.SH）underlying 在选定 `price_type` 下的价格，作为横轴上的市场基准点。它使用与 option 相同的 `price_type`（见 `market-snapshot/guides/mo-option-chain-read-contract.md` 第 2 节）。
+
+`strikeHalfRangePoints` 是整个页面共享的 strike viewport 半宽，第一版默认值与最小值均为 `300` points，调整步长为 `100` points。所有 expiry 图使用同一个 x-domain，以 shared underlying spot 计算：
+
+```text
+lower = floor((spot - strikeHalfRangePoints) / 100) * 100
+upper = ceil((spot + strikeHalfRangePoints) / 100) * 100
+```
+
+例如 `spot = 7501`、`strikeHalfRangePoints = 300` 时，x-domain 为 `7200 .. 7900`。它至少覆盖 spot 两侧各指定距离，再向外对齐至 100-point visualization grid。`100 points` 只定义图表网格，不定义 MO contract universe。
+
+这是 chart viewport，不是 contract filter：backend 仍返回完整 active MO chain；视窗外的 contracts 不从 response 或合约明细中删除，Web UI 也不把该范围下推为 Source、Preparation 或 HTTP 过滤规则。
+
+### Price display precision
+
+Web UI 中所有用户可见的 price-domain 数值统一显示 **1 位小数**：underlying price、各到期日 IM futures price、option selected price、strike、图表轴刻度、tooltip、reference label 与合约明细均适用。例如 `7312.45 → 7312.5`、`7000 → 7000.0`、`0 → 0.0`、`null → —`。
+
+这是 presentation formatting，不是 data rounding。不得修改 backend / read model / HTTP 的 numeric fact，也不得影响计算、排序、chart coordinate 或 contract identity。
 
 ## 4. Visualization scope
 
@@ -81,6 +99,7 @@ Y axis = option selected price（默认 price_type = close）
 
 * Call 与 Put 必须可视觉区分；
 * 标记目标交易日的 CSI1000 underlying reference price（与 option 相同的 `price_type`）；
+* 显示该 expiry 对应的 IM futures reference（合约 identity 与所选价格），在图中作为带标识的横轴价格参考；
 * underlying reference price 是横轴上的市场基准点；
 * 每个 scatter point 代表一个 MO option contract。
 
@@ -140,7 +159,7 @@ trading recommendation
 
 ## 8. 数据来源语义
 
-本 vertical slice 需要的事实（contract identity、expiry、option_type、strike、selected price、underlying reference price）由 `market-snapshot/guides/mo-option-chain-read-contract.md` 定义的 MO Option Chain read contract 提供；`web-ui` 不直接理解 Source 或 Raw Artifact，也不直接消费 `csi1000-5d-analysis` 的 `snapshot.json`。
+本 vertical slice 需要的事实（contract identity、expiry、option_type、strike、selected price、underlying reference price、per-expiry IM futures reference）由 `market-snapshot/guides/mo-option-chain-read-contract.md` 定义的 MO Option Chain read contract 提供；`web-ui` 不直接理解 Source 或 Raw Artifact，也不直接消费 `csi1000-5d-analysis` 的 `snapshot.json`。
 
 active universe、option type、expiry、selected price fallback、contract completeness 等业务语义均由 read contract 拥有，`web-ui` 不自行推导（ownership 与 invariants 见 `market-snapshot/guides/mo-option-chain.md` 第 2、5 节）。
 
@@ -150,7 +169,7 @@ active universe、option type、expiry、selected price fallback、contract comp
 
 页面区分未选择日期、加载中、完整结果、失败四种状态。新日期的请求开始时清除上一日期的结果，较早的请求不得覆盖当前选择。失败根据 HTTP contract 的 `error.kind` 展示说明；网络或异常响应作为读取失败展示，不伪造数据。
 
-完整结果展示 response 中的日期、价格口径、underlying 标识和参考价，以及按 response 顺序排列的各到期日 Call / Put 数量与独立散点图。到期日可展开分别查看 Call 与 Put 的合约标识、行权价、价格；`price=null` 显示缺价，数值 `0` 仍显示为零。不重新组织或解释合约。
+完整结果展示 response 中的日期、价格口径、underlying 标识和参考价，以及按 response 顺序排列的各到期日 IM futures reference、Call / Put 数量与独立散点图。到期日可展开分别查看 Call 与 Put 的合约标识、行权价、价格；`price=null` 在价格位置显示 `—`，数值 `0` 显示为 `0.0`。不重新组织或解释合约。
 
 现有 HTTP contract 由 `market-snapshot/guides/mo-option-chain-http-contract.md` 锁定：
 

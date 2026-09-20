@@ -72,6 +72,11 @@ HTTP 200，body 为单个 JSON object，形状与 `guides/mo-option-chain-read-c
     {
       "expiry_date": "2026-09-25",
 
+      "futures": {
+        "instrument_id": "IM2609.CFE",
+        "price": 7487.6
+      },
+
       "calls": [
         {
           "instrument_id": "MO2609-C-7000.CFE",
@@ -104,7 +109,8 @@ transport 必须保持的语义（全部由 read contract 拥有，本文档只�
 * option point 的 `price` 允许 `null`，且必须序列化为 `null`：不得用 `exclude_none` 之类的方式省略该字段、不得补 `0`、不得删除 contract（read contract 第 3 节）。
 * numeric `0` 是合法 fact，必须原样返回 `0`，不得写成 `null`。
 * `underlying.price` 必须是 usable numeric fact；成功 response 不允许 underlying price 为 `null`（read contract 第 4 节）。
-* response 是 self-describing 的：`target_trade_date`、`option_product`、resolved `price_type`、`underlying.instrument_id` 必须出现在 body 中，客户端不依赖自己的 local state 才能解释 response（read contract 第 9 节）。`price_type` 回显的是 **resolved** 值（caller 省略时即 `close`），不是省略态。
+* 每个 `expiries[]` 项必须包含非 `null` 的 `futures.instrument_id` 与 usable numeric `futures.price`；HTTP 层原样序列化 read model 的 IM reference，不执行匹配、选价或格式化（read contract 第 4 节）。
+* response 是 self-describing 的：`target_trade_date`、`option_product`、resolved `price_type`、`underlying.instrument_id` 与每个 expiry 的 `futures.instrument_id` 必须出现在 body 中，客户端不依赖自己的 local state 才能解释 response（read contract 第 9 节）。`price_type` 回显的是 **resolved** 值（caller 省略时即 `close`），不是省略态。
 * 即使全部 contract 的 `price` 都是 `null`，只要结构完整，仍是 200 success（read contract 第 10 节）。
 
 ## 4. Error Response
@@ -144,7 +150,7 @@ mapping 的输入是 `guides/mo-option-chain-read-contract.md` 第 11 节的 sem
 | `invalid_request` | 400 | `invalid target_trade_date format`；以及 transport 层面拒绝的 request（缺 required 参数、参数取值不在契约允许集合内、携带契约未声明参数） |
 | `unsupported_query` | 400 | `unsupported option_product`；`unsupported price_type` |
 | `date_not_available` | 404 | `target_trade_date cannot be served by Source`；`non-trading / unavailable date` |
-| `option_chain_unavailable` | 503 | `cannot determine product → underlying`；`cannot determine active contract universe`；`active contract missing target-date daily row`；`duplicate / inconsistent contract identity`；`required structural field missing or malformed`；`underlying selected price unavailable or malformed` |
+| `option_chain_unavailable` | 503 | `cannot determine product → underlying`；`cannot determine active contract universe`；`active contract missing target-date daily row`；`duplicate / inconsistent contract identity`；`required structural field missing or malformed`；`underlying selected price unavailable or malformed`；expiry 无唯一 IM 普通月合约匹配、对应 IM 目标日 daily row 缺失或重复、所选 IM price 缺失或 malformed |
 | `service_not_wired` | 503 | 非 semantic failure：保留的 bootstrap/test compatibility，默认 provider 已接线（见第 8 节） |
 
 **谁产生 `invalid_request`，谁产生 `unsupported_query`：**
@@ -157,7 +163,7 @@ mapping 的输入是 `guides/mo-option-chain-read-contract.md` 第 11 节的 sem
 
 * `400`：request 本身不合法或要求了 V1 明确不支持的能力，重试同样的 request 不会成功。
 * `404`：query identity 明确、产品受支持，但该 `target_trade_date` 在 authority 下不可服务（非交易日 / 数据尚未发布 / Source 无该日数据）。不使用 3xx 或 fallback：no-silent-recovery 要求显式失败。
-* `503`：语义上的“当前无法提供完整 chain”属于服务端暂时无法满足一个合法请求（数据不完整、Source fact 缺失、underlying reference 不可用）。这是失败，不是“chain 为空”的成功；不得降级成 200 + partial chain。
+* `503`：语义上的“当前无法提供完整 chain”属于服务端暂时无法满足一个合法请求（数据不完整、Source fact 缺失、underlying 或 IM futures reference 不可用）。这是失败，不是“chain 为空”的成功；不得降级成 200 + partial chain。
 
 其他真实 HTTP 结果（不属于上述 business mapping，由 HTTP 语义本身决定）：
 
@@ -194,6 +200,7 @@ option product identity
 option product → underlying mapping
 contract universe / lifecycle
 selected price semantics / fallback
+per-expiry IM matching / futures selected price
 null vs zero semantics
 grouping / ordering
 completeness（daily row、structural field）
@@ -203,7 +210,7 @@ market semantics / analysis interpretation
 具体实现约束：
 
 * `price_type` 默认值 `close` 是 authority 的解析规则，不是 HTTP 层的自由选择；HTTP 层只回显 resolved 值。
-* DTO 不得引入 authority 没有的字段（例如 moneyness、volume、open interest、IV、greeks、liquidity 标记），也不得在 point 上重复携带 `expiry_date` / `option_type`。
+* DTO 不得引入 authority 没有的字段（例如 moneyness、volume、open interest、IV、greeks、liquidity 标记），也不得在 point 上重复携带 `expiry_date` / `option_type`；`futures` 只属于父级 expiry group。
 * DTO 不得把 `price` 收紧为 required numeric：`null` 是合法状态。
 * router 不得做 product / underlying / universe / completeness 判断；这些是 Data Service / Preparation 的职责。HTTP 层只做 transport 级校验（参数形态、V1 支持范围）与 envelope 映射。
 

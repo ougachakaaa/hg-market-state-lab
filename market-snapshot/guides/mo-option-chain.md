@@ -43,12 +43,12 @@ shared Capture capability ≠ shared goal-scoped Raw Artifact
 
 ```text
 CSI1000 120-day history completeness
-IM futures completeness
+CSI1000 5D IM history completeness
 CSI1000 5D derived metrics
 csi1000-5d-analysis snapshot.json
 ```
 
-只依赖构造目标日期 option chain 真正需要的 Source facts。
+只依赖构造目标日期 option chain 真正需要的 Source facts，包括每个 expiry 必需的目标日 IM futures reference；具体 Raw 范围见 `guides/mo-option-chain-data.md`。
 
 ## 2. Ownership
 
@@ -68,6 +68,7 @@ expiry
 
 target-date option market facts
 target-date underlying market facts
+target-date per-expiry IM futures reference facts
 
 deterministic grouping
 deterministic ordering
@@ -191,7 +192,7 @@ active contract 没有对应 daily row → fail。
 
 ### Invariant 7 — Unified price semantics
 
-options 和 underlying 使用相同 `price_type`。
+options、underlying 和每个 expiry 的 IM futures reference 使用相同 resolved `price_type`。
 
 ### Invariant 8 — Deterministic organization
 
@@ -211,6 +212,7 @@ date
 product
 price type
 underlying
+per-expiry IM futures reference
 ```
 
 ### Invariant 10 — No dependency on CSI1000 5D artifact
@@ -304,6 +306,8 @@ tests（真实数据链路）
 ```
 
 上述链路与 Fake Source 测试均已实现；此处仅记录状态，不改变前述业务语义。
+
+本节记录的是既有 MVP 链路状态；本轮新增的 per-expiry IM reference 及 Web presentation / viewport 语义尚待后续 implementation。
 
 Raw Artifact 组织方式已在本轮锁定（见 `mo-option-chain-data.md`），不再 deferred。
 HTTP contract / FastAPI foundation 已由 `guides/mo-option-chain-http-contract.md` 锁定，不再 deferred。

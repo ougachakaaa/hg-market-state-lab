@@ -294,7 +294,7 @@ Shared Source facts / Capture capabilities
       └→ MO Option Chain Preparation       → option-chain read model
 ```
 
-* MO Option Chain 与 CSI1000 5D Analysis 并列，互不依赖彼此的最终 artifact。尤其 MO Option Chain 不依赖 `csi1000-5d-analysis` 的 analysis-ready artifact（`snapshot.json`），也不要求 120 日历史窗口、IM futures 或 CSI1000 分析派生指标。
+* MO Option Chain 与 CSI1000 5D Analysis 并列，互不依赖彼此的最终 artifact。MO Option Chain 不依赖 `csi1000-5d-analysis` 的 analysis-ready artifact（`snapshot.json`），也不要求其历史窗口或 CSI1000 分析派生指标；MO Chain 所需的目标日 IM futures reference 由其自身的 goal-scoped Raw 支撑，具体范围见 `guides/mo-option-chain-data.md`。
 * **shared Capture capability ≠ shared goal-scoped Raw Artifact**：Capture 组件语义可复用，但每个 data product 拥有自己的 goal-scoped Raw Artifact，不互相读取对方的 Raw。
 * MO Option Chain 的 `option-chain read model` 是面向 read / visualization 消费方的确定性输出，仍由 Analysis Preparation 从 Raw Artifact 产生，不引入新的通用架构层。
 * 具体字段、分组、排序、价格与失败语义不进入本文件，由 `guides/mo-option-chain.md`（入口）及其子 Guide `guides/mo-option-chain-data.md`、`guides/mo-option-chain-read-contract.md` 承载。
