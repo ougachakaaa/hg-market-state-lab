@@ -9,6 +9,7 @@ type Projection = ReturnType<typeof projectCombinedChain>
 function optionTrace(group: ExpiryGroup, points: OptionPoint[], side: 'Call' | 'Put', color: string): ScatterData {
   return {
     type: 'scatter', mode: 'lines+markers', name: `${group.expiry_date} ${side}`,
+    showlegend: false,
     legendgroup: group.expiry_date,
     x: points.map((point) => point.strike),
     y: points.map((point) => point.price),
@@ -35,7 +36,8 @@ export function buildCombinedPlot(
   const futuresGroups = projection.groups.filter((group) => group.futures !== null)
   const layout: Partial<Layout> = {
     autosize: true, dragmode: false, hovermode: 'closest',
-    margin: { t: 76, r: 24, b: 76, l: 62 },
+    showlegend: false,
+    margin: { t: 24, r: 24, b: 76, l: 62 },
     xaxis: {
       title: { text: 'Strike' }, type: 'linear', range: xDomain, fixedrange: true,
       tickformat: '.1f', tick0: 0, dtick: 200, showgrid: true, gridcolor: '#e5e7eb',
@@ -46,7 +48,6 @@ export function buildCombinedPlot(
       gridcolor: '#e5e7eb', griddash: 'dash', side: 'left',
       minor: { tick0: 0, dtick: 100, showgrid: true, gridcolor: '#e5e7eb', griddash: 'dash' },
     },
-    legend: { orientation: 'h', x: 0, y: 1.13, itemclick: false, itemdoubleclick: false },
     shapes: [
       {
         type: 'line', xref: 'x', yref: 'paper',
@@ -65,12 +66,6 @@ export function buildCombinedPlot(
         text: `Spot ${formatPrice(chain.underlying.price)}`, showarrow: false,
         xanchor: 'right', yanchor: 'top', font: { color: '#475569' },
       },
-      ...futuresGroups.map((group) => ({
-        xref: 'x' as const, yref: 'paper' as const, x: group.futures!.price, y: 1,
-        text: `${group.futures!.instrument_id} · ${formatPrice(group.futures!.price)}`,
-        showarrow: false, xanchor: 'right' as const, yanchor: 'bottom' as const,
-        font: { color: palette[group.expiry_date].futures },
-      })),
     ],
   }
   const config: Partial<Config> = {

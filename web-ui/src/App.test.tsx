@@ -75,8 +75,23 @@ describe('MO option chain combined page', () => {
     expect(plot().layout.shapes.map((shape: { x0: number }) => shape.x0)).toEqual([7312.45, 7487.6, 7560.25])
     expect(plot().layout.xaxis.range).toEqual([7000.45, 7624.45])
     expect(plot().layout.yaxis.range[1]).toBe(600)
-    expect(plot().layout.legend).toMatchObject({ itemclick: false, itemdoubleclick: false })
+    expect(plot().layout.showlegend).toBe(false)
     expect(plot().useResizeHandler).toBe(true)
+    const optionLegend = screen.getByRole('region', { name: 'Call 与 Put 图例' })
+    expect(within(optionLegend).getAllByRole('listitem').map((item) => item.textContent)).toEqual([
+      '2026-09-25 Call', '2026-09-25 Put',
+      '2026-10-23 Call', '2026-10-23 Put',
+      '2026-11-27 Call', '2026-11-27 Put',
+    ])
+    const futuresLegend = screen.getByRole('region', { name: 'Futures 图例' })
+    expect(within(futuresLegend).getAllByRole('listitem').map((item) => item.textContent)).toEqual([
+      'IM2609.CFE · 7487.6', 'IM2610.CFE · 7560.3',
+    ])
+    expect((within(optionLegend).getAllByRole('listitem')[0].querySelector('.chart-legend-symbol') as HTMLElement).style.color)
+      .toBe('rgb(37, 99, 235)')
+    expect((within(futuresLegend).getAllByRole('listitem')[1].querySelector('.chart-legend-symbol') as HTMLElement).style.color)
+      .toBe('rgba(124, 58, 237, 0.575)')
+    expect(within(futuresLegend).queryByText(/2026-11-27/)).toBeNull()
     expect((screen.getByLabelText('Call 颜色') as HTMLInputElement).value).toBe('#2563eb')
     expect((screen.getByLabelText('Put 颜色') as HTMLInputElement).value).toBe('#ea580c')
     expect((screen.getByLabelText('Futures 颜色') as HTMLInputElement).value).toBe('#7c3aed')
@@ -95,7 +110,8 @@ describe('MO option chain combined page', () => {
     ])
     expect(plot().data.find((trace: { name: string }) => trace.name === '2026-11-27 Call').line.color).toBe(colorC)
     expect(plot().layout.shapes.map((shape: { x0: number }) => shape.x0)).toEqual([7312.45, 7487.6])
-    expect(plot().layout.annotations.map((annotation: { text: string }) => annotation.text)).not.toContain('IM2610.CFE · 7560.3')
+    expect(within(screen.getByRole('region', { name: 'Call 与 Put 图例' })).queryByText(/2026-10-23/)).toBeNull()
+    expect(within(screen.getByRole('region', { name: 'Futures 图例' })).queryByText('IM2610.CFE · 7560.3')).toBeNull()
     expect(screen.queryByRole('region', { name: '2026-10-23 到期日' })).toBeNull()
     expect(plot().layout.yaxis.range[1]).toBe(300)
     expect(plot().layout.xaxis.range).toEqual(before.layout.xaxis.range)
@@ -121,7 +137,8 @@ describe('MO option chain combined page', () => {
     expect(plot().data[0].line.color).toContain('225, 29, 72')
     fireEvent.change(screen.getByLabelText('Futures 颜色'), { target: { value: '#ff00ff' } })
     expect(plot().layout.shapes[1].line.color).toContain('255, 0, 255')
-    expect(plot().layout.annotations[1].font.color).toBe(plot().layout.shapes[1].line.color)
+    const futuresItem = within(screen.getByRole('region', { name: 'Futures 图例' })).getByText('IM2609.CFE · 7487.6').closest('li')!
+    expect((futuresItem.querySelector('.chart-legend-symbol') as HTMLElement).style.color).toBe('rgb(255, 0, 255)')
     expect(plot().data[2].line.color).toContain('0.575')
     expect(plot().data[0].line.dash).not.toBe(plot().data[1].line.dash)
     expect(plot().data[0].marker.symbol).not.toBe(plot().data[1].marker.symbol)
@@ -168,6 +185,13 @@ describe('MO option chain combined page', () => {
     expect(within(details).getByText('该到期日没有可绘制的价格。')).toBeTruthy()
     fireEvent.click(within(details).getByText('合约明细'))
     expect(within(details).getByText('C-null')).toBeTruthy()
+  })
+
+  it('omits the Futures legend when the selected expiry has no matching contract', async () => {
+    await load({ ...chain, expiries: [chain.expiries[2]] })
+    expect(screen.queryByRole('region', { name: 'Futures 图例' })).toBeNull()
+    expect(screen.getByRole('region', { name: 'Call 与 Put 图例' })).toBeTruthy()
+    expect(plot().layout.shapes).toHaveLength(1)
   })
 
   it('shows an explicit state for a valid response with no expiries', async () => {

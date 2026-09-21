@@ -43,30 +43,25 @@ describe('combined Plotly figure', () => {
     expect(data[1].line?.dash).toBe('dash')
     expect(data[0].marker?.symbol).toBe('circle')
     expect(data[1].marker?.symbol).toBe('diamond')
+    expect(data.every((trace) => trace.showlegend === false)).toBe(true)
     expect(layout.yaxis?.range).toEqual([-12, 600])
     expect(layout.xaxis?.range).toEqual(xDomain)
-    expect(layout.legend).toMatchObject({ itemclick: false, itemdoubleclick: false })
+    expect(layout.showlegend).toBe(false)
     expect(config).toMatchObject({ responsive: true, scrollZoom: false, doubleClick: false, displayModeBar: false })
   })
 
-  it('renders one raw Spot below and selected opacity-linked Futures above', () => {
+  it('keeps one raw Spot annotation and selected opacity-linked Futures lines', () => {
     const { layout } = figure(['2026-09-25', '2026-10-23'])
     expect(layout.shapes?.map((shape) => shape.x0)).toEqual([7312.45, 7560.25, 7600])
     expect(layout.shapes?.[0].line?.color).toBe('#64748b')
     expect(layout.shapes?.[1].line?.color).toBe(palette['2026-09-25'].futures)
     expect(layout.shapes?.[2].line?.color).toBe(palette['2026-10-23'].futures)
-    expect(layout.annotations?.map((annotation) => annotation.text)).toEqual([
-      'Spot 7312.5', 'IM2609.CFE · 7560.3', 'IM2610.CFE · 7600.0',
-    ])
-    expect(layout.annotations?.map((annotation) => [annotation.y, annotation.yanchor])).toEqual([
-      [0, 'top'], [1, 'bottom'], [1, 'bottom'],
-    ])
-    expect(layout.annotations?.[1].font?.color).toBe(palette['2026-09-25'].futures)
-    expect(layout.annotations?.[2].font?.color).toBe(palette['2026-10-23'].futures)
+    expect(layout.annotations?.map((annotation) => annotation.text)).toEqual(['Spot 7312.5'])
+    expect(layout.annotations?.map((annotation) => [annotation.y, annotation.yanchor])).toEqual([[0, 'top']])
     const hidden = figure(['2026-09-25'])
     expect(hidden.data).toHaveLength(2)
     expect(hidden.layout.shapes).toHaveLength(2)
-    expect(hidden.layout.annotations).toHaveLength(2)
+    expect(hidden.layout.annotations).toHaveLength(1)
   })
 
   it('omits an all-null side and a missing IM reference', () => {
