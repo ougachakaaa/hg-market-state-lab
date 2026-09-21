@@ -96,7 +96,7 @@ npm install
 npm run dev
 ```
 
-浏览器打开 `http://127.0.0.1:5173/`，选择目标日期后立即读取 MO 期权链；每个到期日展示 Call / Put 价格散点图和标的参考线，展开合约明细可查看缺价合约。前端检查：
+浏览器打开 `http://127.0.0.1:5173/`，选择目标日期后立即读取 MO 期权链；一张分析图展示选中到期日的 Call / Put 价格与参考线，展开合约明细可查看缺价合约。前端检查：
 
 ```bash
 npm run contract:check
@@ -113,7 +113,7 @@ npm run test
 http://127.0.0.1:5173/mo-option-chain?target_trade_date=2026-09-17&option_product=MO
 ```
 
-页面请求走同一条 proxy 路径。返回内容取决于目标日期和 Source 数据；无需为本地开发更改 backend 语义或添加 CORS。当前页面展示摘要、每个到期日的散点图和可展开明细。
+页面请求走同一条 proxy 路径。返回内容取决于目标日期和 Source 数据；无需为本地开发更改 backend 语义或添加 CORS。当前页面展示摘要、选中到期日的合并分析图和可展开明细。
 
 ## 基础环境
 
@@ -164,7 +164,7 @@ poetry run mypy .
   * `output/`：Data Service 的 canonical user-facing output（运行产物）
   * `tests/`：测试
 * `market-modeling/`：结构占位目录（当前无实现）
-* `web-ui/`：独立 Vite + React + TypeScript frontend project，已具备 MO option-chain 日期选择、读取状态、每个到期日的散点图与可展开明细。模块 authority 见 `ARCHITECTURE.md`，visualization contract 见 `guides/mo-option-chain-visualization.md`
+* `web-ui/`：独立 Vite + React + TypeScript frontend project，已具备 MO option-chain 日期选择、读取状态、合并多到期日分析图与可展开明细。模块 authority 见 `ARCHITECTURE.md`，visualization contract 见 `guides/mo-option-chain-visualization.md`
 
 ## 环境变量
 
