@@ -2,6 +2,20 @@
 
 仓库根目录的 `dev.py` 是本地开发入口，只负责检查启动条件和转发模块自己的命令。它是 developer orchestration surface 和 repository-level convenience forwarding surface，不是 Data Service、部署工具或新的业务模块。
 
+## Codex managed worktree 环境
+
+Codex 使用仓库内的 Local Environment 创建 managed worktree 时，会自动运行：
+
+```bash
+bash .codex/scripts/setup.sh
+```
+
+运行该脚本的 Bash 环境必须已经提供 `python3.13`、`poetry`、`node` 和 `npm`；脚本不安装或升级这些 machine-level tools。它使用已提交的 lock files 安装 backend 与 frontend 依赖，然后运行 `python3.13 dev.py doctor` 检查 readiness；不会启动服务、运行完整测试或调用 Tushare。
+
+每个 worktree 分别使用自己的 `market-snapshot/.venv` 和 `web-ui/node_modules`，不与其他 worktree 共享依赖目录。Codex managed worktree 会按根目录 `.worktreeinclude` 复制 source checkout 中已忽略的 `market-snapshot/.env`；如果 source checkout 没有该文件，setup 从 `.env.example` 复制一份空模板，不会生成或猜测 secret。
+
+手工执行 `git worktree add` 不会触发 Codex Local Environment，可以在新 worktree 根目录手工运行同一命令完成初始化。
+
 ```bash
 python dev.py doctor
 python dev.py backend

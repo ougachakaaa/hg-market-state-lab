@@ -1,0 +1,5 @@
+version = 1
+name = "hg-market-state-lab"
+
+[setup]
+script = "bash .codex/scripts/setup.sh"
