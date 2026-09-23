@@ -59,14 +59,19 @@ human-readable visualization
 
 前端需要的数据必须来自明确的 backend / read contract；`web-ui` 不直接理解 Source 或 Raw Artifact。
 
-MO option-chain visualization 的数据来源边界已锁定：
+当前已明确两个彼此独立的 backend contract 边界：
 
 ```text
 web-ui
-    ↓ consumes
-MO Option Chain read contract
-（market-snapshot/guides/mo-option-chain-read-contract.md）
+    ├─ consumes MO Option Chain read / HTTP contract
+    │  （market-snapshot/guides/mo-option-chain-read-contract.md）
+    │  （market-snapshot/guides/mo-option-chain-http-contract.md）
+    │
+    └─ may consume MO Premium Plane HTTP contract
+       （market-snapshot/guides/mo-option-premium-http-contract.md）
 ```
+
+MO Option Chain visualization 已实现。MO Premium Plane 当前只锁定 HTTP delivery authority，尚未实现 generated frontend contract、React / Plotly renderer 或 visualization Guide；不得把 authority 状态误写为已实现状态。
 
 `web-ui` 不直接消费：
 
@@ -76,9 +81,9 @@ Raw Artifact
 Tushare Source
 ```
 
-具体 read contract 的 query identity、字段、分组、排序、价格语义与失败语义由 `market-snapshot/guides/mo-option-chain-read-contract.md` 拥有；产品 identity（`MO → 000852.SH`）与 invariants 见 `market-snapshot/guides/mo-option-chain.md`。`web-ui` 只消费该 read contract，不重新定义或重新推导其业务语义。
+MO Option Chain 的 query identity、字段、分组、排序、价格语义与失败语义由 `market-snapshot/guides/mo-option-chain-read-contract.md` 拥有；产品 identity（`MO → 000852.SH`）与 invariants 见 `market-snapshot/guides/mo-option-chain.md`。MO Premium Plane 的产品定位与 transport-facing invariants 见 `market-snapshot/guides/mo-option-premium.md`，HTTP wire semantics 见其 HTTP contract。`web-ui` 只消费对应产品 contract，不跨产品重新推导或计算业务语义。
 
-Markdown authority 定义语义；backend HTTP DTO 发布的 OpenAPI 是 HTTP wire contract 的可执行表达。`web-ui` 的请求与响应类型及运行时校验消费该契约，不独立维护一份 backend market / transport schema。前端只拥有请求适配、用户交互与展示逻辑；具体 HTTP 规则见 `market-snapshot/guides/mo-option-chain-http-contract.md`。
+Markdown authority 定义语义；对应 endpoint 实现后，backend HTTP DTO 发布的 OpenAPI 是 HTTP wire contract 的可执行表达。`web-ui` 的请求与响应类型及运行时校验消费对应产品的契约，不独立维护一份 backend market / transport schema。前端只拥有请求适配、用户交互与展示逻辑；MO Option Chain 与 MO Premium Plane 的具体 HTTP 规则分别见 `market-snapshot/guides/mo-option-chain-http-contract.md`、`market-snapshot/guides/mo-option-premium-http-contract.md`。
 
 ## 5. Guide Responsibility
 

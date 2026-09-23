@@ -299,6 +299,8 @@ Shared Source facts / Capture capabilities
 * MO Option Chain 的 `option-chain read model` 是面向 read / visualization 消费方的确定性输出，仍由 Analysis Preparation 从 Raw Artifact 产生，不引入新的通用架构层。
 * 具体字段、分组、排序、价格与失败语义不进入本文件，由 `guides/mo-option-chain.md`（入口）及其子 Guide `guides/mo-option-chain-data.md`、`guides/mo-option-chain-read-contract.md` 承载。
 
+`MO Premium Plane` 的产品入口与 HTTP delivery contract 已分别落在 `guides/mo-option-premium.md`、`guides/mo-option-premium-http-contract.md`。当前只锁定 authority，不表示其 backend domain、Preparation、Data Service 或 HTTP route 已实现；这些语义必须在后续 authority 中另行建立，不从 HTTP DTO 反推。
+
 ---
 
 ## 3. Raw Artifact 与 Analysis-ready Artifact 的边界
