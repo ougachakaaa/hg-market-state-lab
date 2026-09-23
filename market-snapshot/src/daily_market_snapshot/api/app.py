@@ -1,6 +1,6 @@
 """Minimal FastAPI application of the MO Option Chain HTTP delivery adapter.
 
-Authority: ``guides/mo-option-chain-http-contract.md``. The application is a
+Authority: ``market-snapshot/guides/mo-option-chain/http-contract.md``. The application is a
 delivery surface only: it exposes the HTTP contract, publishes it as OpenAPI and
 turns a read failure into the contract's error envelope. It owns no market
 semantics and it is not a general API platform (no auth, no versioning, no

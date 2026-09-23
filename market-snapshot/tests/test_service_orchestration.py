@@ -1,7 +1,7 @@
 """Tests for the Data Service orchestration and the layer boundaries.
 
 Authority: ``ARCHITECTURE.md`` section 2 (dependency direction),
-``guides/data-services.md`` sections 5 and 6.
+``market-snapshot/guides/data-services.md`` sections 5 and 6.
 
 These tests keep the orchestration owned by the Data Service: the CLI only
 resolves and reports, and the five Captures, their order and the Analysis
@@ -268,7 +268,7 @@ def test_the_cli_reports_a_service_failure_without_knowing_the_stage(
 
 
 def test_the_catalog_is_explicit_and_never_discovered() -> None:
-    """guides/data-services.md 2: no filesystem discovery, no dynamic registry."""
+    """market-snapshot/guides/data-services.md 2: no filesystem discovery, no dynamic registry."""
     source = Path(catalog.__file__).read_text(encoding="utf-8")
 
     assert "CATALOG: tuple[DataService, ...] = (" in source

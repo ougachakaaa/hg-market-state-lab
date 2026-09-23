@@ -1,16 +1,10 @@
-# ARCHITECTURE.md — web-ui 模块架构 authority
+# web-ui 模块架构 authority
 
-本文件定义 `web-ui` 模块的架构层面 authority。
-
-它只描述理解本模块所必需的核心目标、语义与边界。具体的垂直 slice 用户体验 / visualization contract 放在 `web-ui/guides/*` 中，按需读取。
-
-本模块在仓库顶层的定位、职责边界与数据流见根 `ARCHITECTURE.md`。本文件只负责 `web-ui` 内部的稳定边界。
-
----
+本文件定义 `web-ui` 的稳定职责、数据依赖方向与 authority 路由。仓库级定位见 [../ARCHITECTURE.md](../ARCHITECTURE.md)；具体 vertical slice 的用户体验与 visualization contract 位于 `guides/`。
 
 ## 1. Purpose
 
-`web-ui` 负责：
+`web-ui` 是数据产品与市场状态结果的展示、交互层，负责：
 
 ```text
 user interaction
@@ -19,104 +13,40 @@ presentation
 visualization
 ```
 
-它是 project 数据产品与市场状态结果的**展示与交互层**，不重新定义或重新计算业务数据。
-
 ## 2. Responsibility Boundary
 
-`web-ui` 不拥有：
+`web-ui` 不拥有 Source、Source Capture、Raw Artifact、Analysis Preparation formula、market modeling 或业务计算语义，也不产生交易判断。
 
-```text
-Source semantics
-Source Capture
-Raw Artifact semantics
-Analysis Preparation formulas
-market modeling semantics
-business calculation authority
-trading judgment
-```
-
-`web-ui` 只消费已经准备好的、可读的市场数据，并把它呈现为人类可读的可视化。
+前端只消费 backend 明确发布的 read/HTTP contract。它不得为了绘图重新推导产品身份、contract universe、价格 fallback、业务 completeness 或金融指标。
 
 ## 3. 数据依赖方向
 
-核心依赖方向：
-
 ```text
-prepared/readable market data
+backend semantic contract
         ↓
-web-ui
+HTTP wire contract / generated client types
         ↓
-human-readable visualization
+web-ui request adaptation
+        ↓
+interaction and visualization
 ```
 
-前端不得为了绘图重新发明金融数据语义，也不得重新计算后端 authority 已拥有的业务派生逻辑。
+Markdown authority 定义语义；backend OpenAPI 是 HTTP wire contract 的机器可读表达。前端可以消费生成类型与运行时校验，但不得独立维护一份竞争性的 backend schema。
 
-独立的 `web-ui/` frontend project 使用 Vite + React + TypeScript；当前已实现 MO option-chain 的日期输入、HTTP 读取、合并多到期日分析图和可展开合约明细。具体 dev 命令与 proxy 地址见根 `README.md` / `DEVELOPMENT.md`。component / state-management 选择不在本文件定义。
+## 4. Vertical Slice Authority
 
-分析图表的技术基线是 **Plotly.js + react-plotly.js**，用于支持 2D / 3D、multi-trace、subplots、annotations / reference lines 与交互式 hover / zoom / selection，并为未来 premium、IV、volatility surfaces 留出能力。当前实现使用 Plotly.js + react-plotly.js。本技术选择不定义市场事实、可视化语义或具体 Plotly API；各 vertical slice 的用户可见语义仍由对应 Guide 定义。
-
-## 4. 数据来源边界
-
-前端需要的数据必须来自明确的 backend / read contract；`web-ui` 不直接理解 Source 或 Raw Artifact。
-
-当前已明确两个彼此独立的 backend contract 边界：
+`web-ui/guides/*` 只拥有对应 vertical slice 的：
 
 ```text
-web-ui
-    ├─ consumes MO Option Chain read / HTTP contract
-    │  （market-snapshot/guides/mo-option-chain-read-contract.md）
-    │  （market-snapshot/guides/mo-option-chain-http-contract.md）
-    │
-    └─ may consume MO Premium Plane HTTP contract
-       （market-snapshot/guides/mo-option-premium-http-contract.md）
+user input and presentation state
+display scope
+visual encoding
+interaction
+empty and error presentation
 ```
 
-MO Option Chain visualization 已实现。MO Premium Plane 当前只锁定 HTTP delivery authority，尚未实现 generated frontend contract、React / Plotly renderer 或 visualization Guide；不得把 authority 状态误写为已实现状态。
+MO Option Chain vertical slice 的入口是 [guides/mo-option-chain-visualization.md](guides/mo-option-chain-visualization.md)。该 Guide 会按需链接 backend 产品、read 与 HTTP authority；普通前端任务无需读取 Source、Raw 或不相关产品文档。
 
-`web-ui` 不直接消费：
+## 5. 维护边界
 
-```text
-csi1000-5d-analysis snapshot.json
-Raw Artifact
-Tushare Source
-```
-
-MO Option Chain 的 query identity、字段、分组、排序、价格语义与失败语义由 `market-snapshot/guides/mo-option-chain-read-contract.md` 拥有；产品 identity（`MO → 000852.SH`）与 invariants 见 `market-snapshot/guides/mo-option-chain.md`。MO Premium Plane 的产品定位与 transport-facing invariants 见 `market-snapshot/guides/mo-option-premium.md`，HTTP wire semantics 见其 HTTP contract。`web-ui` 只消费对应产品 contract，不跨产品重新推导或计算业务语义。
-
-Markdown authority 定义语义；对应 endpoint 实现后，backend HTTP DTO 发布的 OpenAPI 是 HTTP wire contract 的可执行表达。`web-ui` 的请求与响应类型及运行时校验消费对应产品的契约，不独立维护一份 backend market / transport schema。前端只拥有请求适配、用户交互与展示逻辑；MO Option Chain 与 MO Premium Plane 的具体 HTTP 规则分别见 `market-snapshot/guides/mo-option-chain-http-contract.md`、`market-snapshot/guides/mo-option-premium-http-contract.md`。
-
-## 5. Guide Responsibility
-
-`web-ui/guides/*` 定义具体 Web vertical slice 的用户体验 / visualization contract。
-
-architecture 与 Guide 分工：
-
-| | 本文件 | Guide（`web-ui/guides/`） |
-| --- | --- | --- |
-| 定义 | 稳定边界与依赖方向 | 具体 vertical slice 的输入、展示范围、可视化语义、空/错误语义 |
-| 变化频率 | 低 | 随 vertical slice 需求变化 |
-| 优先级 | 冲突时以本文件为准 | 不得与本文件冲突 |
-
-当前第一个 vertical slice 的 Guide 是：
-
-```text
-web-ui/guides/mo-option-chain-visualization.md
-```
-
-## 6. 文档维护
-
-* 本文件是 `web-ui` 模块的架构层面 authority。
-* 本文件遵循渐进式披露原则：只描述理解本模块所必需的核心目标、语义与边界。更具体的用户体验 / visualization contract 放在对应 Guide 中，按需读取。
-
-### 需要更新本文件的变更
-
-* `web-ui` 的职责边界或依赖方向变化。
-
-### 不需要更新本文件的变更
-
-* 某个 vertical slice 的具体输入、展示范围、图表字段、空/错误语义变化（属于 `web-ui/guides/*`）；
-* framework 的版本、component / state-management 选择及开发配置细节（实现细节，不进入本文件）。
-
-### reconciliation
-
-若实现或下层文档与本文件不一致，应先完成 reconciliation 或明确记录差异，不得静默选择另一套设计。
+只有展示层职责、backend contract 消费边界或数据依赖方向变化时更新本文件。框架版本、图表库、component tree、state-management、具体字段和视觉规则属于实现或 vertical slice Guide。

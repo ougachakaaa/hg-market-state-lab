@@ -1,8 +1,8 @@
 """Data Service ``csi1000-5d-analysis``: orchestration of the whole chain.
 
-Authority: ``guides/data-services.md`` (Data Service catalogue, CLI contract,
-canonical output) over ``guides/csi1000-5d-analysis-data.md`` (Raw Artifacts) and
-``guides/csi1000-5d-analysis-snapshot.md`` (Analysis Preparation Definition).
+Authority: ``market-snapshot/guides/data-services.md`` (Data Service catalogue, CLI contract,
+canonical output) over ``market-snapshot/guides/csi1000-5d-analysis/data.md`` (Raw Artifacts) and
+``market-snapshot/guides/csi1000-5d-analysis/preparation.md`` (Analysis Preparation Definition).
 
 The Data Service owns orchestration only: it runs the required Source Captures in
 order, writes their Raw Artifacts, calls the deterministic Analysis Preparation
@@ -72,7 +72,7 @@ def collect_csi1000_5d_analysis(
 ) -> Path:
     """Run the five CSI1000 analysis Source Captures for one target trade date.
 
-    Authority order (``guides/data-services.md`` section 5):
+    Authority order (``market-snapshot/guides/data-services.md`` section 5):
 
         CSI1000 history -> MO option basic -> MO option daily ->
         IM futures basic -> IM futures daily

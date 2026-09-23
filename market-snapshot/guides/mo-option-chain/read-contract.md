@@ -1,10 +1,6 @@
-# guides/mo-option-chain-read-contract.md — MO Option Chain read contract（price / grouping / ordering / response / failure）authority
+# MO Option Chain read contract authority
 
-> 状态：authority（Stage 1）。本文档锁定 MO Option Chain 的 **selected price 语义、null/zero、grouping、ordering、semantic response shape、success/failure 语义与 no-silent-recovery**。
->
-> 层级：本文档位于 `market-snapshot/ARCHITECTURE.md` 之下，从属于 `guides/mo-option-chain.md`（产品定位 / ownership / query identity / invariants）。Source / Raw / universe / completeness 见 `guides/mo-option-chain-data.md`，不在本文档重复。
->
-> 实现本 Guide 任务的 Agent 先读 `guides/mo-option-chain.md` 的 query identity 与 invariants，再按本文档实现 Preparation 的 read model 与 HTTP serialization 语义。
+本文档从属于 [index.md](index.md)，拥有 selected price、null/zero、grouping、ordering、semantic response shape、success/failure 与 no-silent-recovery。Source、Raw、universe 与 completeness 见 [data.md](data.md)；HTTP transport 见 [http-contract.md](http-contract.md)。
 
 ---
 
@@ -25,7 +21,7 @@ close
 close
 ```
 
-（caller 省略 `price_type` 时的 authority 默认，见 `guides/mo-option-chain.md` 第 3 节。）
+（caller 省略 `price_type` 时的 authority 默认，见 `guides/mo-option-chain/index.md` 第 3 节。）
 
 `volume` 不属于 `price_type`，因为：
 
@@ -197,7 +193,7 @@ request fails
 
 ### Per-expiry IM futures reference
 
-Preparation 先从 `guides/mo-option-chain-data.md` 第 8 节定义的 **target-date-active IM ordinary monthly universe** 建立候选集，再对每个 MO `expiry_date` 应用 Source 结构性事实匹配：
+Preparation 先从 `guides/mo-option-chain/data.md` 第 8 节定义的 **target-date-active IM ordinary monthly universe** 建立候选集，再对每个 MO `expiry_date` 应用 Source 结构性事实匹配：
 
 ```text
 candidates = target-date-active IM ordinary monthly contracts
@@ -363,7 +359,7 @@ HTTP schema implementation
 OpenAPI definition
 ```
 
-这些属于 delivery 层，已由 `guides/mo-option-chain-http-contract.md`（Stage 2）补充；read contract 只锁 semantic shape，不锁其 transport 表达。
+这些属于 delivery 层，由 [http-contract.md](http-contract.md) 拥有；read contract 只锁 semantic shape，不锁其 transport 表达。
 
 字段到 Source 的确定性投影（Preparation 职责，非 web-ui 职责）：
 
@@ -495,7 +491,7 @@ error JSON shape
 exception class
 ```
 
-只锁 semantic categories。semantic category → transport 的映射由 `guides/mo-option-chain-http-contract.md`（Stage 2）锁定的 error envelope / error kind / HTTP status mapping 承担；本文档不重复，也不被其改写。
+这里只锁 semantic categories。semantic category → transport 的映射由 [http-contract.md](http-contract.md) 拥有；本文档不重复，也不被其改写。
 
 ## 12. No Silent Recovery
 

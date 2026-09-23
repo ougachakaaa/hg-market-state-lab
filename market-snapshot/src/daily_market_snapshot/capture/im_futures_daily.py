@@ -1,7 +1,8 @@
 """Source Capture ``im_futures_daily``: IM daily facts for two data products.
 
-Source: Tushare ``fut_daily`` (see ``guides/csi1000-5d-analysis-data.md`` 4.5
-and 6.2). The Raw artifact holds the daily facts of the IM ordinary monthly
+Source: Tushare ``fut_daily`` (see ``market-snapshot/guides/source-captures.md`` section 8;
+the history window is in ``market-snapshot/guides/csi1000-5d-analysis/data.md`` section 5.2).
+The Raw artifact holds the daily facts of the IM ordinary monthly
 contracts whose lifecycle overlaps the collection window, so later Analysis
 Preparation can rebuild the term structure of about 60 trading days up to the
 target date.
@@ -10,7 +11,7 @@ The MO Option Chain uses ``capture_target_date`` to collect only target-date
 facts of contracts active on that date.
 
 Development / debugging entrypoint (the Data Service CLI is the canonical user
-interface, see ``guides/data-services.md`` 11):
+interface, see ``market-snapshot/guides/data-services.md`` section 4):
 
     poetry run python -m daily_market_snapshot.capture.im_futures_daily 2026-09-17
 """

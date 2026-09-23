@@ -1,6 +1,6 @@
 """Application-level invariants of the FastAPI delivery adapter.
 
-Authority: ``guides/mo-option-chain-http-contract.md`` (the only endpoint and the
+Authority: ``market-snapshot/guides/mo-option-chain/http-contract.md`` (the only endpoint and the
 documented statuses) over ``web-ui/ARCHITECTURE.md`` (the web UI depends on a
 stable, machine-readable contract).
 

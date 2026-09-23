@@ -2,7 +2,7 @@
 
 A service runs the required Source Captures, writes Raw Artifacts, calls Analysis
 Preparation and publishes the canonical analysis-ready artifact
-(``ARCHITECTURE.md`` 2, ``guides/data-services.md``).
+(``ARCHITECTURE.md`` 2, ``market-snapshot/guides/data-services.md``).
 """
 
 from __future__ import annotations

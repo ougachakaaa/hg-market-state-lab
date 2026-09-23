@@ -1,19 +1,15 @@
-# guides/mo-option-chain-http-contract.md — MO Option Chain HTTP transport contract authority
+# MO Option Chain HTTP transport contract authority
 
-> 状态：authority（Stage 2）。本文档锁定 MO Option Chain 的**最小 HTTP transport contract**：endpoint URL、HTTP method、request/query 参数、success response、error response 与 HTTP status mapping。
->
-> 层级：本文档位于 `market-snapshot/ARCHITECTURE.md` 之下，从属于 `guides/mo-option-chain.md`（产品定位 / ownership / query identity / invariants）。它只补充 **HTTP-specific** transport authority：
->
-> ```text
-> query identity / product / underlying / invariants   → guides/mo-option-chain.md
-> Source / Raw / universe / completeness              → guides/mo-option-chain-data.md
-> price / null / grouping / ordering / response / failure → guides/mo-option-chain-read-contract.md
-> HTTP transport（endpoint / DTO / error envelope / status） → 本文档
-> ```
->
-> 本文档不重新定义 market semantics，也不得与上述 authority 冲突。`guides/mo-option-chain-read-contract.md` 第 11 节把 `HTTP status code` / `error JSON shape` / `exception class` 明确 deferred 给 Stage 2；本文档即该 Stage 2 的落点，只做 semantic failure category → transport 的映射，不改变 category 本身。
->
-> 实现本 Guide 任务的 Agent 先读 `guides/mo-option-chain.md`（query identity / invariants）与 `guides/mo-option-chain-read-contract.md`（response shape / failure categories），再按本文档实现 DTO 与 endpoint。
+本文档从属于 [index.md](index.md)，只拥有 endpoint、method、query serialization、response projection、error envelope 与 HTTP status mapping。它不重新定义 market semantics：
+
+```text
+query identity / product / underlying / invariants       → index.md
+Source / Raw / universe / completeness                  → data.md
+price / null / grouping / ordering / response / failure → read-contract.md
+HTTP transport                                           → 本文档
+```
+
+本文档只把 [read-contract.md](read-contract.md) 的 semantic failure categories 映射为 transport，不改变 category 本身。
 
 Markdown authority 拥有 market / read semantics 与本 Guide 的 HTTP transport 语义。后端 Pydantic HTTP DTO 及其发布的 OpenAPI 是 HTTP wire contract 的可执行表达，必须忠实反映这些 authority；OpenAPI 是前端获取机器可读 wire shape 的来源。`web-ui` 消费该契约，不另行人工定义一套与其平行的 backend market / transport schema。仓库验证必须在后端 OpenAPI 与前端消费的契约产物不同步时失败。
 
@@ -25,8 +21,8 @@ Markdown authority 拥有 market / read semantics 与本 Guide 的 HTTP transpor
 GET /mo-option-chain
 ```
 
-* 当前只有一个 endpoint，且只有 V1 这一个 MO Option Chain read surface。
-* 读操作使用 GET，没有 request body，也不修改客户端可操作的业务资源。Data Service 在读取 Source 时会按 `guides/mo-option-chain-data.md` 写入 goal-scoped Raw Artifact；这属于数据准备流程，不改变 HTTP read contract。
+* V1 只定义这一个 MO Option Chain read surface。
+* 读操作使用 GET，没有 request body，也不修改客户端可操作的业务资源。Data Service 在读取 Source 时会按 `guides/mo-option-chain/data.md` 写入 goal-scoped Raw Artifact；这属于数据准备流程，不改变 HTTP read contract。
 * query identity 的三个维度全部通过 query 参数表达（第 2 节）。
 * 路径中不带 date / product：这些是 query identity，不是资源层级。
 * 本阶段不引入 API version 前缀、不提供写操作、不提供第二个 endpoint（见第 8 节）。
@@ -48,16 +44,16 @@ GET /mo-option-chain?target_trade_date=2026-09-17&option_product=MO&price_type=h
 
 规则：
 
-* 语义 authority 是 `guides/mo-option-chain.md` 第 3 节；本节只规定它们在 HTTP 上的表达形式。
+* 语义 authority 是 `guides/mo-option-chain/index.md` 第 3 节；本节只规定它们在 HTTP 上的表达形式。
 * `price_type` 省略时由服务端按 authority 固定默认 `close` 解析（不要求 caller 显式给出）。
-* `price_type` 的可用取值是 `open` / `high` / `low` / `close`（`guides/mo-option-chain-read-contract.md` 第 1 节）；`settle` / `pre_close` / `pre_settle` / `volume` 不接受。
-* HTTP 层不接受也没有 underlying 参数：`MO → 000852.SH` 的映射由 data product 拥有，caller 不得同时指定两个可能矛盾的输入（`guides/mo-option-chain.md` 第 4 节）。
+* `price_type` 的可用取值是 `open` / `high` / `low` / `close`（`guides/mo-option-chain/read-contract.md` 第 1 节）；`settle` / `pre_close` / `pre_settle` / `volume` 不接受。
+* HTTP 层不接受也没有 underlying 参数：`MO → 000852.SH` 的映射由 data product 拥有，caller 不得同时指定两个可能矛盾的输入（`guides/mo-option-chain/index.md` 第 4 节）。
 * HTTP 层不接受任何额外查询参数，也没有 `latest` / `date range` / 自动 fallback 形态。
 * HTTP 层不定义“最近交易日”查询、availability 查询或任何日期推断：`target_trade_date` 必须由 caller 显式给出。
 
 ## 3. Success Response
 
-HTTP 200，body 为单个 JSON object，形状与 `guides/mo-option-chain-read-contract.md` 第 8 节的 semantic response 完全一致；HTTP 层不包裹 envelope、不改名、不增删字段。
+HTTP 200，body 为单个 JSON object，形状与 `guides/mo-option-chain/read-contract.md` 第 8 节的 semantic response 完全一致；HTTP 层不包裹 envelope、不改名、不增删字段。
 
 当某到期日无结构性匹配的 IM 合约时，该到期日仍在成功响应中，且显式包含 `"futures": null`；有唯一匹配时则为下面示例中的 object。
 
@@ -147,7 +143,7 @@ transport 必须保持的语义（全部由 read contract 拥有，本文档只�
 
 ## 5. Error Kind → HTTP Status Mapping
 
-mapping 的输入是 `guides/mo-option-chain-read-contract.md` 第 11 节的 semantic failure categories。HTTP 层只做映射，不新增、不合并、不重新解释这些 category：
+mapping 的输入是 `guides/mo-option-chain/read-contract.md` 第 11 节的 semantic failure categories。HTTP 层只做映射，不新增、不合并、不重新解释这些 category：
 
 | error kind | HTTP status | semantic failure category（read-contract 第 11 节） |
 | --- | --- | --- |
@@ -155,7 +151,7 @@ mapping 的输入是 `guides/mo-option-chain-read-contract.md` 第 11 节的 sem
 | `unsupported_query` | 400 | `unsupported option_product`；`unsupported price_type` |
 | `date_not_available` | 404 | `target_trade_date cannot be served by Source`；`non-trading / unavailable date` |
 | `option_chain_unavailable` | 503 | `cannot determine product → underlying`；`cannot determine active contract universe`；`active contract missing target-date daily row`；`duplicate / inconsistent contract identity`；`required structural field missing or malformed`；`underlying selected price unavailable or malformed`；expiry 有多个 IM 普通月合约匹配，或唯一匹配后 IM 目标日 daily row 缺失或重复、所选 IM price 缺失或 malformed |
-| `service_not_wired` | 503 | 非 semantic failure：保留的 bootstrap/test compatibility，默认 provider 已接线（见第 8 节） |
+| `service_not_wired` | 503 | 非 semantic failure：delivery adapter 没有 provider binding；仅保留用于 bootstrap/test compatibility |
 
 **谁产生 `invalid_request`，谁产生 `unsupported_query`：**
 
@@ -188,7 +184,7 @@ unsupported HTTP method        → 405
 
 ## 6. Ownership
 
-HTTP delivery 拥有（`guides/mo-option-chain.md` 第 2 节）：
+HTTP delivery 拥有（`guides/mo-option-chain/index.md` 第 2 节）：
 
 ```text
 transport
@@ -231,8 +227,8 @@ web-ui
 ```
 
 * HTTP 层通过明确的 service/application boundary 获取 read model；它不读 Raw Artifact，不调用 Source，不理解 Tushare。
-* HTTP 层不依赖 `csi1000-5d-analysis` 的 `snapshot.json`（`guides/mo-option-chain.md` Invariant 10）。
-* 真实 `Capture → Raw → MO Option Chain Preparation → read model` 已接入默认 HTTP provider；HTTP contract tests 仍可注入 fake service 验证 transport，fake 不属于业务语义层。
+* HTTP 层不依赖 `csi1000-5d-analysis` 的 `snapshot.json`（`guides/mo-option-chain/index.md` Invariant 10）。
+* HTTP contract tests 可以注入 fake service 验证 transport；fake 不属于业务语义层，也不得定义 market semantics。
 * local 启动默认 bind `127.0.0.1:8011`（launcher 细节，可用 `--host` / `--port` 覆盖）。端口号**不属于**本 contract：endpoint 语义始终是 `GET /mo-option-chain`，换端口不改变 request / response / error 契约；V1 不定义 deployment、反向代理、TLS 或 CORS（见第 8 节）。
 
 ## 8. V1 Non-goals
@@ -253,11 +249,11 @@ OpenAPI client 生成
 server deployment / 反向代理 / TLS 配置
 ```
 
-`service_not_wired` 保留作 bootstrap/test compatibility；默认 runtime provider 已接入真实链路，不再产生该 kind。
+`service_not_wired` 仅保留作 bootstrap/test compatibility；它不属于 market semantic failure。
 
 ## 9. 完成自检
 
-仅阅读本文档与 `guides/mo-option-chain.md` / `guides/mo-option-chain-read-contract.md`，应能唯一回答：
+仅阅读本文档与 `guides/mo-option-chain/index.md` / `guides/mo-option-chain/read-contract.md`，应能唯一回答：
 
 1. endpoint URL 与 method 是什么？
 2. 哪些 query 参数是 required，默认值是什么？

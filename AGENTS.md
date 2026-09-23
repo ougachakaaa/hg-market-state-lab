@@ -1,49 +1,25 @@
 # AGENTS.md
 
-## 项目
+## 适用范围与继承
 
-项目名称：`hg-market-state-lab`。
+本文件定义 `hg-market-state-lab` 的 repository-wide agent execution policy。进入子目录后，必须继续读取路径上最近的 `AGENTS.md`；local rule 在明确专门化本文件时优先。本继承规则只适用于执行政策，不允许下层 semantic authority 覆盖上层 invariant。
 
-本仓库的 Python 项目位于 `market-snapshot/`：Poetry、pytest、Ruff 与 mypy 都在该目录内执行。Python 目标版本为 3.13。
+项目工作目录、启动方式与环境要求见 [README.md](README.md) 和 [DEVELOPMENT.md](DEVELOPMENT.md)。
 
-独立 frontend project 位于 `web-ui/`：使用 npm 管理依赖，在该目录内运行 `npm install`、`npm run dev`、`npm test`、`npm run build` 和 `npm run lint`。React 使用 Vite + TypeScript；Node.js 需满足当前 Vite 的版本要求（当前为 20.19+ 或 22.12+）。本地开发时 `/mo-option-chain` 由 Vite proxy 转发到默认监听 `127.0.0.1:8011` 的 FastAPI。MO Option Chain 的真实 provider、HTTP endpoint 与合并多到期日分析图均已实现；具体契约以对应的 authority 和 Guide 为准。
+## Progressive Disclosure
 
-## Authority 导航
+1. 先读根 [ARCHITECTURE.md](ARCHITECTURE.md)，只确定 owning module 和顶层边界。
+2. 进入 owning module，读取其 local `AGENTS.md` 与 `ARCHITECTURE.md`：当前入口为 [market-snapshot/AGENTS.md](market-snapshot/AGENTS.md) 与 [web-ui/AGENTS.md](web-ui/AGENTS.md)。空的 `market-modeling/` 尚无 local policy 或 module authority。
+3. 按 local catalog 或 architecture 进入相关 bounded-context entry。
+4. 只读取当前任务需要的 specialized authority；不默认加载 sibling product 或其他模块文档。
 
-Agent 处理任务时默认先读根 `ARCHITECTURE.md`（仓库级 authority）：它定义整个 repository 的定位、顶层模块（`market-snapshot` / `market-modeling` / `web-ui`）及其职责边界、顶层数据流方向，以及下一步该读哪里。
+`_temp_docs/` 不属于 repository authority，不参与上述导航链。除非任务明确指定其中某个文件，否则不得读取、引用或把其内容当作项目事实；需要固化的内容必须先与当前 authority reconciliation，再写入正式 authority。
 
-如果任务属于 `market-snapshot/`，并涉及其架构、数据语义或职责边界，再读 `market-snapshot/ARCHITECTURE.md`（market-snapshot 模块 authority）。架构词汇以 `market-snapshot/ARCHITECTURE.md` 第 0 节为准：Source、Source Capture、Raw Artifact、Analysis Preparation、Analysis-ready Artifact、Data Service、CLI。`Dataset` / `Snapshot` 不是通用架构层概念。
+## Repository-wide Rules
 
-只有任务需要具体数据产品时，才继续进入 `market-snapshot/guides/*`（具体 Source Capture / Raw Artifact / Preparation / Data Service 契约）。
-
-如果任务属于 `web-ui/`，并涉及其模块边界或 visualization contract，则按：
-
-```text
-ARCHITECTURE.md
-    ↓
-web-ui/ARCHITECTURE.md
-    ↓
-relevant web-ui/guides/*
-```
-
-顺序读取。普通 Web UI 任务不默认读取整个 `market-snapshot/guides/*`；只有涉及 backend data semantics / contract reconciliation 时，再进入 `market-snapshot` authority。
-
-遵循 Progressive Disclosure：不要求局部任务默认读取整个 repository 的全部 authority。
-
-## 工作规则
-
-* 使用 Poetry 管理 Python 依赖和虚拟环境（在 `market-snapshot/` 目录内执行）。
-* Python 目标版本为 3.13。
-* 使用 pytest 进行测试。
-* 使用 Ruff 进行 lint 检查。
-* 使用 mypy 进行类型检查。
-* 不得提交真实 API Token、密码或其他敏感信息。
-* 执行 `market-snapshot/guides/` 中定义的 workflow 前，先阅读相关 Guide。
-* 当修改涉及数据语义、Source Capture 职责、Analysis Preparation 组织方式或项目结构时，先阅读 `ARCHITECTURE.md`，若属于 `market-snapshot/` 再阅读 `market-snapshot/ARCHITECTURE.md`。
-* 采用设计先行的工作方式：当任务涉及数据含义、输出结构、职责边界或 workflow 语义变化时，应先建立或更新相关 authority，再进行实现。
-* 实现必须遵循当前项目 authority。若实现与 authority 不一致，应明确指出差异并进行 reconciliation，不得静默选择另一套设计。
-* 项目 authority 应遵循渐进式披露（Progressive Disclosure）原则：顶层 authority 只描述理解项目所必需的核心目标、语义和边界；更具体的数据需求、执行规则和实现细节应放在对应的下层文档或 Guide 中，并通过明确引用按需读取。不要要求 Agent 在处理局部任务时默认读取与任务无关的全部 authority。
-* 优先采用满足当前 authority 和当前任务要求的最小实现。
-* 不得为了未来可能出现的需求，主动引入当前任务不需要的框架、抽象、基础设施或新的业务概念。
-* 不得实现当前任务显式范围之外的功能。
-* `_temp_docs/` 仅用于临时存放超长设计文档，不属于项目 authority，也不参与 `ARCHITECTURE.md` / `guides/*` 的导航链。除非当前任务显式引用或提到其中某个具体文档，Agent 默认跳过该目录，不读取、不引用、不作为参考依据；其中内容与数据都是服务于某个具体任务的临时材料，可能已过期或与当前 authority 不一致。若需固化为项目事实，必须先与当前 authority 做 reconciliation，并写入对应的 authority / Guide。
+- 不得提交真实 API Token、密码或其他敏感信息。
+- 涉及数据含义、输出结构、职责边界或 workflow 语义的变更，先更新 narrowest canonical authority，再修改实现。
+- 实现必须遵循当前 authority；发现代码、同级文档或上下层 authority 不一致时，显式 reconciliation，不得静默选择或创建另一套语义。
+- 下层 semantic authority 只能在上层边界内 specialize 或 constrain，不能静默推翻上层 invariant。
+- 优先采用满足当前 authority 与任务要求的最小实现，不为假设需求引入框架、抽象或业务概念。
+- 修改后按受影响模块的 local `AGENTS.md` 验证；跨模块 contract 变更同时执行 producer 与 consumer 的相关检查，并在提交前审阅完整 diff。

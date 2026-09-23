@@ -1,15 +1,15 @@
 """Data Service ``mo-option-chain``: the application boundary of its read model.
 
-Authority: ``guides/mo-option-chain.md`` (product identity, query identity,
-invariants), ``guides/mo-option-chain-data.md`` (Source facts, Raw scope,
-universe, completeness) and ``guides/mo-option-chain-read-contract.md``
+Authority: ``market-snapshot/guides/mo-option-chain/index.md`` (product identity, query identity,
+invariants), ``market-snapshot/guides/mo-option-chain/data.md`` (Source facts, Raw scope,
+universe, completeness) and ``market-snapshot/guides/mo-option-chain/read-contract.md``
 (price / null / grouping / ordering / response / failure).
 
 What this module owns:
 
 * the read-model data types of the option-chain read contract;
 * the query identity a caller resolves before any data preparation (section 3 of
-  ``guides/mo-option-chain.md``);
+  ``market-snapshot/guides/mo-option-chain/index.md``);
 * the failure categories of the read contract (section 11) as Python types;
 * orchestration of the five Captures, goal-scoped Raw and Preparation.
 
@@ -17,7 +17,7 @@ What this module deliberately does not do:
 
 * it does not define HTTP semantics: status codes, the error envelope and the
   DTOs belong to the HTTP delivery adapter
-  (``guides/mo-option-chain-http-contract.md``);
+  (``market-snapshot/guides/mo-option-chain/http-contract.md``);
 * it does not reimplement Capture endpoint queries or Preparation projections.
 """
 
@@ -40,7 +40,7 @@ from ..preparation import mo_option_chain as preparation
 from ..sources import tushare
 
 # The Data Service id, as declared in the static catalog
-# (``guides/data-services.md`` section 2).
+# (``market-snapshot/guides/data-services.md`` section 2).
 SERVICE_ID = "mo-option-chain"
 
 SERVICE_DESCRIPTION = (
@@ -52,7 +52,7 @@ SERVICE_DESCRIPTION = (
 class OptionProduct(StrEnum):
     """The option products V1 can serve.
 
-    Authority: ``guides/mo-option-chain.md`` sections 3 and 4. The single
+    Authority: ``market-snapshot/guides/mo-option-chain/index.md`` sections 3 and 4. The single
     executable source of truth for the product dimension: the HTTP request, the
     resolved query identity, the read model and the response DTO all use this
     type, so a future ``IO`` / ``HO`` extends one authoritative type instead of
@@ -79,7 +79,7 @@ TARGET_TRADE_DATE_FORMAT = "YYYY-MM-DD"
 class PriceType(StrEnum):
     """The selected price semantics V1 supports.
 
-    Authority: ``guides/mo-option-chain-read-contract.md`` section 1. ``settle``,
+    Authority: ``market-snapshot/guides/mo-option-chain/read-contract.md`` section 1. ``settle``,
     ``pre_close``, ``pre_settle`` and ``volume`` are deliberately absent.
     """
 
@@ -146,8 +146,9 @@ class ChainQuery:
     """One resolved read query identity.
 
     ``target_trade_date + option_product + resolved price_type``
-    (``guides/mo-option-chain.md`` section 3). ``price_type`` is always resolved
-    before the query reaches a provider; an omitted value is never carried here.
+    (``market-snapshot/guides/mo-option-chain/index.md`` section 3).
+    ``price_type`` is always resolved before the query reaches a provider; an
+    omitted value is never carried here.
     """
 
     target_trade_date: str
@@ -177,7 +178,7 @@ class OptionPoint:
 
     ``expiry_date`` and the call / put grouping are expressed by the parent
     :class:`ExpiryGroup`; a point does not repeat them
-    (``guides/mo-option-chain-read-contract.md`` section 6).
+    (``market-snapshot/guides/mo-option-chain/read-contract.md`` section 6).
 
     ``price`` is ``None`` when the selected ``price_type`` field has no Source
     fact for this contract. A numeric ``0`` is a legal fact and stays ``0``; it

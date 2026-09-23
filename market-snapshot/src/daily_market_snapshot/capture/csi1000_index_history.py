@@ -1,11 +1,12 @@
 """Source Capture ``index_daily``: the CSI1000 history up to a target trade date.
 
-Source: Tushare ``index_daily`` (see ``guides/csi1000-5d-analysis-data.md`` 4.1
-and 6.1). The Raw artifact is ``index_daily_history.json``; it is not a separate
-Source Capture (see the same Guide, section 8).
+Source: Tushare ``index_daily`` (see ``market-snapshot/guides/source-captures.md`` section 3;
+the CSI1000 history scope is in ``market-snapshot/guides/csi1000-5d-analysis/data.md`` sections
+5.1 and 6). The Raw artifact is ``index_daily_history.json``; it is not a separate
+Source Capture (see the same Guide, section 7).
 
 Development / debugging entrypoint (the Data Service CLI is the canonical user
-interface, see ``guides/data-services.md`` 11):
+interface, see ``market-snapshot/guides/data-services.md`` section 4):
 
     poetry run python -m daily_market_snapshot.capture.csi1000_index_history 2026-09-17
 """

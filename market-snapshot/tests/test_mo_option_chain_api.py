@@ -1,8 +1,8 @@
 """Contract tests of the MO Option Chain HTTP delivery adapter.
 
-Authority: ``guides/mo-option-chain-http-contract.md`` over
-``guides/mo-option-chain-read-contract.md`` (semantic shape) and
-``guides/mo-option-chain.md`` (query identity, invariants).
+Authority: ``market-snapshot/guides/mo-option-chain/http-contract.md`` over
+``market-snapshot/guides/mo-option-chain/read-contract.md`` (semantic shape) and
+``market-snapshot/guides/mo-option-chain/index.md`` (query identity, invariants).
 
 These tests lock the transport contract the web UI may depend on:
 

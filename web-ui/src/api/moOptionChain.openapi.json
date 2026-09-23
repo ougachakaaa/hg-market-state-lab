@@ -131,7 +131,7 @@
       },
       "OptionChainDTO": {
         "additionalProperties": false,
-        "description": "The self-describing success response of ``GET /mo-option-chain``.\n\nOrdering, grouping and null semantics of this payload are owned by\n``guides/mo-option-chain-read-contract.md``; this DTO only serializes them.",
+        "description": "The self-describing success response of ``GET /mo-option-chain``.\n\nOrdering, grouping and null semantics of this payload are owned by\n``market-snapshot/guides/mo-option-chain/read-contract.md``; this DTO only serializes them.",
         "properties": {
           "expiries": {
             "items": {
@@ -202,7 +202,7 @@
         "type": "object"
       },
       "OptionProduct": {
-        "description": "The option products V1 can serve.\n\nAuthority: ``guides/mo-option-chain.md`` sections 3 and 4. The single\nexecutable source of truth for the product dimension: the HTTP request, the\nresolved query identity, the read model and the response DTO all use this\ntype, so a future ``IO`` / ``HO`` extends one authoritative type instead of\ntwo that could drift.",
+        "description": "The option products V1 can serve.\n\nAuthority: ``market-snapshot/guides/mo-option-chain/index.md`` sections 3 and 4. The single\nexecutable source of truth for the product dimension: the HTTP request, the\nresolved query identity, the read model and the response DTO all use this\ntype, so a future ``IO`` / ``HO`` extends one authoritative type instead of\ntwo that could drift.",
         "enum": [
           "MO"
         ],
@@ -210,7 +210,7 @@
         "type": "string"
       },
       "PriceType": {
-        "description": "The selected price semantics V1 supports.\n\nAuthority: ``guides/mo-option-chain-read-contract.md`` section 1. ``settle``,\n``pre_close``, ``pre_settle`` and ``volume`` are deliberately absent.",
+        "description": "The selected price semantics V1 supports.\n\nAuthority: ``market-snapshot/guides/mo-option-chain/read-contract.md`` section 1. ``settle``,\n``pre_close``, ``pre_settle`` and ``volume`` are deliberately absent.",
         "enum": [
           "open",
           "high",

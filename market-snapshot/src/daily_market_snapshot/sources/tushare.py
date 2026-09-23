@@ -130,7 +130,7 @@ def to_tushare_date(trade_date: str) -> str:
 
     The input must be exactly ``YYYY-MM-DD``; ``strptime`` alone would also
     accept forms such as ``2026-9-17``, which are not the project-level format
-    defined in ``guides/daily-market-snapshot.md`` section 3.
+    defined in ``market-snapshot/guides/daily-market-snapshot/index.md`` section 3.
     """
     if not ISO_DATE_PATTERN.fullmatch(trade_date):
         raise TushareDateError(f"trade_date must use YYYY-MM-DD, got {trade_date!r}.")

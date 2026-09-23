@@ -1,7 +1,7 @@
 """The HTTP error envelope, error kinds and status mapping of MO Option Chain.
 
-Authority: ``guides/mo-option-chain-http-contract.md`` sections 4 and 5, which
-maps the semantic failure categories of ``guides/mo-option-chain-read-contract.md``
+Authority: ``market-snapshot/guides/mo-option-chain/http-contract.md`` sections 4 and 5, which
+maps the semantic failure categories of ``market-snapshot/guides/mo-option-chain/read-contract.md``
 section 11 onto transport.
 
 This module owns only the transport representation of a failure: the envelope

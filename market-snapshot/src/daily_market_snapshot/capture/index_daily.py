@@ -1,9 +1,10 @@
 """Source Capture ``index_daily``: one trade date of the index observation universe.
 
-Source: Tushare ``index_daily`` (see ``guides/daily-market-snapshot.md`` 4.1).
+Source: Tushare ``index_daily`` (see ``market-snapshot/guides/source-captures.md`` section 3;
+the product scope is in ``market-snapshot/guides/daily-market-snapshot/index.md`` 4.1).
 
 Development / debugging entrypoint (the Data Service CLI is the canonical user
-interface, see ``guides/data-services.md`` 11):
+interface, see ``market-snapshot/guides/data-services.md`` section 4):
 
     poetry run python -m daily_market_snapshot.capture.index_daily 2026-09-17
 """

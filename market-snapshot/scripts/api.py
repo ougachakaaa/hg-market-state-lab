@@ -4,12 +4,12 @@ The application lives in ``daily_market_snapshot.api.app``; this script only mak
 it runnable without packaging the project, exactly like ``scripts/dms.py`` does
 for the CLI.
 
-Authority: ``guides/mo-option-chain-http-contract.md``.
+Authority: ``market-snapshot/guides/mo-option-chain/http-contract.md``.
 
 The adapter binds ``127.0.0.1:8011`` by default, which the repository README
 documents as the local HTTP API address. The bind address is a launcher detail,
 not part of the HTTP transport contract: it can be overridden with ``--host`` /
-``--port``, and ``guides/mo-option-chain-http-contract.md`` section 8 leaves
+``--port``, and ``market-snapshot/guides/mo-option-chain/http-contract.md`` section 8 leaves
 server deployment to V1 non-goals.
 
     poetry run python scripts/api.py

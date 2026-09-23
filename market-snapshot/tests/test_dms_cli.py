@@ -1,6 +1,6 @@
 """Tests for the Data Service CLI (``scripts/dms.py`` -> ``cli.main``).
 
-Authority: ``guides/data-services.md``.
+Authority: ``market-snapshot/guides/data-services.md``.
 
 The CLI resolves a Data Service from the explicit catalog, validates its own
 input and reports the result; the orchestration it triggers belongs to

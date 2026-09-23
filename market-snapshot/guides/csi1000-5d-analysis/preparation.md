@@ -1,20 +1,6 @@
-# guides/csi1000-5d-analysis-snapshot.md — CSI1000 未来约 5 个交易日市场状态分析场景的 Analysis Preparation Definition authority
+# CSI1000 5D Analysis Preparation authority
 
-> 状态：authority（第一版 Analysis Preparation Definition）。本文档锁定 "Raw Artifact → analysis-ready Artifact" 的准备方式，只落 authority，不实现 Analysis Preparation（`src/daily_market_snapshot/preparation/csi1000_5d_analysis.py`），不执行任何业务分析。
->
-> 层级：本文档位于 `market-snapshot/ARCHITECTURE.md` 之下，与 `guides/csi1000-5d-analysis-data.md`、`guides/daily-market-snapshot.md` 并列。架构层面的稳定边界以 `market-snapshot/ARCHITECTURE.md` 为准（尤其第 1.1 节职责边界、第 2 节核心架构、第 3 节 Raw/Preparation 边界、第 4 节架构边界的执行、第 6 节 Reproducibility、第 8 节 Guide 职责）；本文档不得与其冲突。
->
-> 职责分工：
->
-> ```text
-> guides/csi1000-5d-analysis-data.md
->     → Source / Source Capture / Raw Artifact authority
->
-> guides/csi1000-5d-analysis-snapshot.md（本文档）
->     → Raw Artifact → analysis-ready Artifact authority（Analysis Preparation Definition）
-> ```
->
-> 实现本 Guide 任务的 Agent 应先阅读 `market-snapshot/ARCHITECTURE.md` 第 1.1、2、3、4、6 节与 `guides/csi1000-5d-analysis-data.md`（五个 Raw artifact 的契约），再按本文档执行。
+本文档从属于 [index.md](index.md)，拥有五个 goal-scoped Raw Artifacts 到 analysis-ready `snapshot.json` 的窗口、join、投影、公式、排序、null 与失败语义。输入契约见 [data.md](data.md)；本文档不执行业务分析。
 
 ## 1. 目标与范围
 
@@ -39,7 +25,7 @@ analysis-ready local file（snapshot.json）
 * 哪些数据属于 deterministic transformation；
 * 哪些结论严格属于 external analyzer。
 
-本文档**不**实现，也**不**重新定义 `guides/csi1000-5d-analysis-data.md` 已锁定的 Source / Source Capture / Raw Artifact 契约。任何与 Raw 契约重复的定义以 `guides/csi1000-5d-analysis-data.md` 为准。
+本文档**不**实现，也**不**重新定义 `guides/csi1000-5d-analysis/data.md` 已锁定的 Source / Source Capture / Raw Artifact 契约。任何与 Raw 契约重复的定义以 `guides/csi1000-5d-analysis/data.md` 为准。
 
 ## 2. 职责边界：确定性数据转换 vs 业务分析
 
@@ -182,7 +168,7 @@ underlying:
 ```
 
 * `ts_code`：固定为 `"000852.SH"`。identity 由该字段表达，`history` 内每行不再重复携带 `ts_code`。
-* `history`：上述 120 行，每行保留以下字段，语义与单位沿用 Raw（见 `guides/csi1000-5d-analysis-data.md` 4.1）：
+* `history`：上述 120 行，每行保留以下字段，语义与单位沿用 Raw（见 [Shared Source Capture authority](../source-captures.md)）：
 
 ```text
 trade_date
@@ -289,7 +275,7 @@ RV_N = sample_std(r_{t-N+1}, ..., r_t) * sqrt(252) * 100
 
 ## 7. MO option chain preparation
 
-> 交叉引用：本节定义的是 CSI1000 5D analysis `snapshot.json` 内 `mo_options` 的 preparation，与独立的 MO Option Chain data product（`guides/mo-option-chain.md` 及其子 Guide `guides/mo-option-chain-data.md`、`guides/mo-option-chain-read-contract.md`）是两回事——后者是与本数据产品并列的 read model，不依赖本 `snapshot.json`。本节的 join / 字段 / 排序语义保持不变。
+> 交叉引用：本节定义的是 CSI1000 5D analysis `snapshot.json` 内 `mo_options` 的 preparation，与独立的 MO Option Chain data product（`guides/mo-option-chain/index.md` 及其子 Guide `guides/mo-option-chain/data.md`、`guides/mo-option-chain/read-contract.md`）是两回事——后者是与本数据产品并列的 read model，不依赖本 `snapshot.json`。本节的 join / 字段 / 排序语义保持不变。
 
 ### 7.1 输入与 join
 
@@ -321,7 +307,7 @@ strike      ← exercise_price
 expiry_date ← maturity_date
 ```
 
-`expiry_date` 直接等于 `maturity_date`。Raw 层已按 `market-snapshot/ARCHITECTURE.md` 第 3 节 minimal normalization 将 `maturity_date` 落地为 `YYYY-MM-DD`（与 `list_date` / `delist_date` 一致，见 `guides/csi1000-5d-analysis-data.md` 4.2），因此 Analysis Preparation 只做 analysis-friendly rename `maturity_date → expiry_date`，不再做额外的日期格式归一化。
+`expiry_date` 直接等于 `maturity_date`。Raw 层已按 [Shared Source Capture authority](../source-captures.md) 将 `maturity_date`、`list_date` 与 `delist_date` 统一落地为 `YYYY-MM-DD`，因此 Analysis Preparation 只做 analysis-friendly rename `maturity_date → expiry_date`，不再做额外的日期格式归一化。
 
 其余行情字段（`open` / `high` / `low` / `close` / `settle` / `vol` / `amount` / `oi`）沿用 `mo_option_daily` 的 Source 字段名与语义。
 
@@ -416,7 +402,7 @@ underlying.history 中最后 60 个 trade_date
 
 作为统一的 60 日分析窗口，使 CSI1000 spot 与 IM 的时间窗口天然对齐。**不另建交易日历**。
 
-保留在这些日期中存在的 IM 普通月度合约 daily facts（合约限定来自 Raw Artifact 本身，见 `guides/csi1000-5d-analysis-data.md` 5.2，不在 Preparation 层再做"主力/流动性"判断）。
+保留在这些日期中存在的 IM 普通月度合约 daily facts（合约限定来自 Raw Artifact 本身，见 `guides/csi1000-5d-analysis/data.md` 5.2，不在 Preparation 层再做"主力/流动性"判断）。
 
 `underlying.history` 含 120 个交易日，因此 60 日窗口内每个 IM 观测的 `trade_date` 都能在 `underlying.history` 中找到对应 close。
 
@@ -454,7 +440,7 @@ annualized_basis_pct
 
 #### Raw → Analysis-ready Artifact projection
 
-`im_futures_daily` Raw Artifact 可以包含更多 Source facts，例如 `pre_close`、`pre_settle`、`change1`、`change2`（见 `guides/csi1000-5d-analysis-data.md` 4.5），但第一版 Analysis-ready Artifact 只选择 §8.3 明确列出的字段。
+`im_futures_daily` Raw Artifact 可以包含更多 Source facts，例如 `pre_close`、`pre_settle`、`change1`、`change2`（见 [Shared Source Capture authority](../source-captures.md)），但第一版 Analysis-ready Artifact 只选择 §8.3 明确列出的字段。
 
 因此：
 
@@ -711,28 +697,10 @@ business conclusion schema
 
 ## 14. 与第一版 daily-market-snapshot 场景的关系
 
-* 现有 `guides/daily-market-snapshot.md` 及其 `data/snapshots/YYYY-MM-DD/snapshot.json` 继续独立存在，不被本 Guide 破坏或重定义。
+* 现有 `guides/daily-market-snapshot/index.md` 及其 `data/snapshots/YYYY-MM-DD/snapshot.json` 继续独立存在，不被本 Guide 破坏或重定义。
 * CSI1000 场景使用独立的 `output/csi1000-5d-analysis/YYYY-MM-DD/snapshot.json`（Data Service canonical output，见 `guides/data-services.md`），与第一版 daily-market-snapshot 场景的 Raw 目录、输出目录互不冲突。
 * `000852.SH` 同时出现在两个场景中，但语义不同：第一版 daily-market-snapshot 场景中它是六指数观察 universe 的成员；本场景中它是 `underlying` 的标的。两者复用同一 `index_daily` Source Capture 语义，不复制新 Capture。
 
-## 15. 下一步实现范围
+## 15. 实现约束
 
-本文档是第一版 Analysis Preparation Definition authority。Analysis Preparation 的职责是：读取五个 Raw Artifact，按本文档的窗口选择、join 规则、派生公式、排序与失败条件，产出 analysis-ready Artifact `output/csi1000-5d-analysis/<target_trade_date>/snapshot.json`。
-
-目标 implementation location 以 `market-snapshot/ARCHITECTURE.md` 第 9 节为 authority：Analysis Preparation 实现位于 `preparation/`（当前为 `csi1000_5d_analysis.py`），由 Data Service orchestration 调用。当前实现已位于 `src/daily_market_snapshot/preparation/csi1000_5d_analysis.py`。配套 `tests/` 测试。
-
-Coding agent 不需要自行发明任何业务语义：所有窗口选择、join 规则、派生公式、排序与失败条件均已在本 Guide 锁定。
-
-实现不得超出本 Guide 与 `guides/csi1000-5d-analysis-data.md`、`market-snapshot/ARCHITECTURE.md` 的范围；若实现与本文档不一致，应做 reconciliation，不得静默选择另一套设计。
-
-## 16. Reconciliation state
-
-数据语义层面已与当前实现 reconciliation（不含代码组织结构）。锁定的数据语义 reconciliation 事实：
-
-* Analysis-ready Artifact 的 canonical output 为 `output/csi1000-5d-analysis/<target_trade_date>/snapshot.json`；不再写 `data/snapshots/...`，不维护两份 artifact（见 `guides/data-services.md`）。
-* `mo_option_basic.maturity_date` 由 Source Capture 按 `market-snapshot/ARCHITECTURE.md` 第 3 节 minimal normalization 统一落地为 `YYYY-MM-DD`（与 `list_date` / `delist_date` 一致）。Analysis Preparation 只做 `maturity_date → expiry_date` 的 analysis-friendly rename，不再自行归一化 `YYYYMMDD`（第 7.2 节）。
-* Source legitimate null 与 required derived input 的边界已锁定（第 12 节）：nullable pass-through fact 保留 `null`；required / derived input 缺失或 malformed → 失败；`close` 属于 required derived input，不得走 pass-through null 路径。
-
-代码组织结构 drift 已由 implementation reconciliation 解决：实现位于 `market-snapshot/ARCHITECTURE.md` 第 9 节的 `src/daily_market_snapshot/{sources,capture,preparation,services}`，不再存在扁平 `scripts/` 的重复实现。
-
-本文档不保留已解决的 drift 历史；Git commit 已保存历史。
+实现必须读取 [data.md](data.md) 定义的五个 Raw Artifacts，并严格按本文档的窗口、join、公式、排序、null 与失败条件产出 `output/csi1000-5d-analysis/<target_trade_date>/snapshot.json`。实现不得发明业务语义；与本文档不一致时必须显式 reconciliation。

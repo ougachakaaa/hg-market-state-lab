@@ -1,6 +1,6 @@
 """The explicit, static Data Service catalog.
 
-Authority: ``guides/data-services.md`` section 2. The catalog is written out by
+Authority: ``market-snapshot/guides/data-services.md`` section 2. The catalog is written out by
 hand and is never discovered by scanning the filesystem, and there is no dynamic
 registry, plugin discovery or service lifecycle framework: the first version
 holds exactly one Data Service.
@@ -16,11 +16,11 @@ from ..sources import tushare
 from . import csi1000_5d_analysis
 
 # ``mo-option-chain`` is the second declared Data Service
-# (``guides/data-services.md`` section 2) but is deliberately absent from this
+# (``market-snapshot/guides/data-services.md`` section 2) but is deliberately absent from this
 # catalog. Its query identity is not ``service_id + target_trade_date``, its
 # result is a request-scoped read model rather than a persisted artifact, and its
-# delivery surface is HTTP delivery (``guides/mo-option-chain-http-contract.md``)
-# rather than ``dms get`` (``guides/data-services.md`` sections 3.2, 4 and 13).
+# delivery surface is HTTP delivery (``market-snapshot/guides/mo-option-chain/http-contract.md``)
+# rather than ``dms get`` (``market-snapshot/guides/data-services.md`` sections 3.2, 4 and 10).
 # Its application boundary therefore lives in its own service module
 # (``services/mo_option_chain.py``), not in this CLI-facing catalog.
 

@@ -1,10 +1,6 @@
-# guides/mo-option-premium-http-contract.md — MO Premium Plane HTTP transport contract authority
+# MO Premium Plane HTTP transport contract authority
 
-> 状态：authority（HTTP contract first）。本文档锁定 `MO Premium Plane` 的 HTTP resource、V1 query、success projection、sparse-plane semantics、presentation-state boundary 与 error mapping。
->
-> 层级：本文档从属于 `guides/mo-option-premium.md`，与 `guides/mo-option-premium-backend.md` 并列。它只拥有 HTTP delivery；canonical backend domain model、Point Preparation、金融公式与 PlaneFramer 见 backend authority，frontend renderer 仍不属于本文档。
->
-> 当前尚无 route、DTO 或 OpenAPI 实现。未来 Pydantic DTO 与 OpenAPI 必须忠实表达本文档，frontend 只消费届时发布的 machine-readable wire contract，不平行维护另一份 backend schema。
+本文档从属于 [index.md](index.md)，只拥有 MO Premium Plane 的 HTTP resource、V1 query、success projection、sparse-plane wire semantics、presentation-state boundary 与 error mapping。Canonical Point、Preparation、公式与 PlaneFramer 由 [backend.md](backend.md) 拥有。
 
 ---
 
@@ -50,7 +46,7 @@ GET /mo-option-premium-plane?as_of=2026-09-21&option_product=MO
 GET /mo-option-premium-plane?as_of=2026-09-21&option_product=MO&price_type=high
 ```
 
-`as_of` 是未来更广义 `ObservationAnchor` 的 V1 HTTP 表达；本轮只接受 trade date，不设计 timestamp transport、generic temporal framework、latest 或 date range。
+`as_of` 是更广义 `ObservationAnchor` 的 V1 HTTP 表达；V1 只接受 trade date，不设计 timestamp transport、generic temporal framework、latest 或 date range。
 
 `as_of` 是本产品有意采用的 query 名称。它不修改 MO Option Chain 已有的 `target_trade_date` contract；两个独立产品无需共享 query 字段名。
 
@@ -191,7 +187,7 @@ expiry_date × strike × option_type
 
 每个 Point 的 `expiry_date` 必须恰好匹配一个 `expiries[]` context；`expiries[]` 中的 `expiry_date` 不得重复，同一 `expiry_date × strike × option_type` coordinate 也不得重复。
 
-三个 nullable numeric fields 的合法组合及金融一致性由 `guides/mo-option-premium-backend.md` 决定。HTTP 只保持已准备 facts，不计算、不补值，也不从一个 metric 推导另一个 metric。
+三个 nullable numeric fields 的合法组合及金融一致性由 [backend.md](backend.md) 决定。HTTP 只保持已准备 facts，不计算、不补值，也不从一个 metric 推导另一个 metric。
 
 `annualized_seller_premium_yield` 以 numeric ratio 交付：
 
@@ -376,23 +372,9 @@ generated TypeScript
 React / Plotly renderer
 ```
 
-## 12. Authority Reconciliation
+## 12. Completion Check
 
-| 检查对象 | 结论 | 处理 |
-| --- | --- | --- |
-| MO Option Chain HTTP/read contract | aligned | 新产品保持独立 endpoint、payload 与 unavailable kind；不修改既有 contract |
-| `as_of` 与 `target_trade_date` | aligned | `as_of` 是 ObservationAnchor 的新产品 transport 名称；不反向重命名 Option Chain query |
-| futures completeness | aligned | Premium Plane 允许 nullable expiry reference；不改变 Option Chain 自身 completeness authority |
-| Data Service authority | out of scope | backend semantics 已由 sibling authority 锁定，但 service/provider 尚未设计；本轮不把 Premium Plane 声明为已实现 Data Service |
-| Web UI architecture | missing → reconciled | architecture 增加已锁 contract 的消费边界，同时明确 renderer 尚未实现 |
-| shared error convention | aligned | 复用 envelope 与 400/404/503 分类，使用产品专属 unavailable kind |
-| backend analytical semantics | missing → reconciled | `guides/mo-option-premium-backend.md` 已锁定 Point、OptionMarketBasis、公式、Preparation 与 Framer；HTTP 继续只负责 delivery projection |
-
-未发现需要修改现有 MO Option Chain authority 或 `guides/data-services.md` 的直接冲突。
-
-## 13. Completion Check
-
-仅阅读 `guides/mo-option-premium.md` 与本文档，应能唯一回答：
+仅阅读 [index.md](index.md) 与本文档，应能唯一回答：
 
 1. endpoint、method 与 V1 query 是什么？
 2. response、expiry context 与 sparse Point 分别包含什么？

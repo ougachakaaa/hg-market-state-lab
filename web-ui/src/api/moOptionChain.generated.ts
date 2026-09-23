@@ -94,7 +94,7 @@ export interface components {
          * @description The self-describing success response of ``GET /mo-option-chain``.
          *
          *     Ordering, grouping and null semantics of this payload are owned by
-         *     ``guides/mo-option-chain-read-contract.md``; this DTO only serializes them.
+         *     ``market-snapshot/guides/mo-option-chain/read-contract.md``; this DTO only serializes them.
          */
         OptionChainDTO: {
             /** Expiries */
@@ -134,7 +134,7 @@ export interface components {
          * OptionProduct
          * @description The option products V1 can serve.
          *
-         *     Authority: ``guides/mo-option-chain.md`` sections 3 and 4. The single
+         *     Authority: ``market-snapshot/guides/mo-option-chain/index.md`` sections 3 and 4. The single
          *     executable source of truth for the product dimension: the HTTP request, the
          *     resolved query identity, the read model and the response DTO all use this
          *     type, so a future ``IO`` / ``HO`` extends one authoritative type instead of
@@ -146,7 +146,7 @@ export interface components {
          * PriceType
          * @description The selected price semantics V1 supports.
          *
-         *     Authority: ``guides/mo-option-chain-read-contract.md`` section 1. ``settle``,
+         *     Authority: ``market-snapshot/guides/mo-option-chain/read-contract.md`` section 1. ``settle``,
          *     ``pre_close``, ``pre_settle`` and ``volume`` are deliberately absent.
          * @enum {string}
          */

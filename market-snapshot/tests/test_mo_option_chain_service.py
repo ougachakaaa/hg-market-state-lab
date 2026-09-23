@@ -1,8 +1,8 @@
 """Tests of the MO Option Chain application boundary.
 
-Authority: ``guides/mo-option-chain.md`` (query identity), 
-``guides/mo-option-chain-read-contract.md`` (failure categories) and
-``guides/mo-option-chain-http-contract.md`` (what the transport layer does with
+Authority: ``market-snapshot/guides/mo-option-chain/index.md`` (query identity),
+``market-snapshot/guides/mo-option-chain/read-contract.md`` (failure categories) and
+``market-snapshot/guides/mo-option-chain/http-contract.md`` (what the transport layer does with
 the boundary).
 
 These tests lock the seam the HTTP adapter calls and the next phase wires the real

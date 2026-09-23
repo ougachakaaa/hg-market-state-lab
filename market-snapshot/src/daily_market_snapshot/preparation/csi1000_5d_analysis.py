@@ -1,6 +1,6 @@
 """Analysis Preparation: the CSI1000 5-day analysis analysis-ready artifact.
 
-Definition authority: ``guides/csi1000-5d-analysis-snapshot.md``.
+Definition authority: ``market-snapshot/guides/csi1000-5d-analysis/preparation.md``.
 
 Input (read-only, local Raw artifacts only; no network, no fallback):
 
@@ -86,7 +86,7 @@ IM_PASSTHROUGH_FIELDS = (
     "oi_chg",
 )
 
-# The five Raw artifacts of ``guides/csi1000-5d-analysis-data.md`` section 7.
+# The five Raw artifacts of ``market-snapshot/guides/csi1000-5d-analysis/data.md`` section 6.
 INDEX_HISTORY_RAW_ARTIFACT = "index_daily_history"
 MO_BASIC_RAW_ARTIFACT = "mo_option_basic"
 MO_DAILY_RAW_ARTIFACT = "mo_option_daily"

@@ -2,7 +2,7 @@
 
 Authority: ``market-snapshot/ARCHITECTURE.md`` section 2 (Source Capture owns the
 concrete endpoint call, the query parameters and the Source-domain scope, while
-the Data Service owns orchestration) and ``guides/data-services.md`` section 5
+the Data Service owns orchestration) and ``market-snapshot/guides/data-services.md`` section 5
 (the Data Service stage order).
 
 These tests lock the reconciled runtime contract of one request:
@@ -47,7 +47,7 @@ TARGET_DATE = CSI1000_TARGET_DATE
 SERVICE_ID = "csi1000-5d-analysis"
 
 # The endpoints of the five Captures, in the authority stage order of
-# ``guides/data-services.md`` section 5.
+# ``market-snapshot/guides/data-services.md`` section 5.
 CAPTURES = (
     (csi1000_index_history, "index_daily"),
     (mo_option_basic, "opt_basic"),

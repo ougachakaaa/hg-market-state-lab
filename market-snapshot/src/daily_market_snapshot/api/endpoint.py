@@ -1,6 +1,6 @@
 """The MO Option Chain HTTP endpoint: transport only.
 
-Authority: ``guides/mo-option-chain-http-contract.md``.
+Authority: ``market-snapshot/guides/mo-option-chain/http-contract.md``.
 
 The endpoint resolves the request's query identity, asks the application boundary
 (``services/mo_option_chain.py``) for the read model, converts that read model to
@@ -10,7 +10,8 @@ status.
 It owns no market semantics. It does not decide the option product's underlying,
 the active contract universe, the selected price, the grouping or the ordering,
 and it never fills, drops or substitutes a fact: all of that is owned by
-``guides/mo-option-chain.md`` and ``guides/mo-option-chain-read-contract.md``.
+``market-snapshot/guides/mo-option-chain/index.md`` and
+``market-snapshot/guides/mo-option-chain/read-contract.md``.
 """
 
 from __future__ import annotations

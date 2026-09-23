@@ -1,9 +1,10 @@
 """Source Capture ``stock_daily``: one trade date of the A-share daily quotes.
 
-Source: Tushare ``daily`` (see ``guides/daily-market-snapshot.md`` 4.2).
+Source: Tushare ``daily`` (see ``market-snapshot/guides/source-captures.md`` section 4;
+the product scope is in ``market-snapshot/guides/daily-market-snapshot/index.md`` 4.2).
 
 Development / debugging entrypoint (the Data Service CLI is the canonical user
-interface, see ``guides/data-services.md`` 11):
+interface, see ``market-snapshot/guides/data-services.md`` section 4):
 
     poetry run python -m daily_market_snapshot.capture.stock_daily 2026-09-17
 """

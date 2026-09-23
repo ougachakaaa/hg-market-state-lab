@@ -1,10 +1,6 @@
-# guides/mo-option-premium-backend.md — MO Annualized Premium backend semantic authority
+# MO Annualized Premium backend semantic authority
 
-> 状态：authority（backend semantic core）。本文档锁定 MO Annualized Premium 的 canonical analytical model、market-fact boundary、确定性 Point Preparation、计算语义与可选 PlaneFramer 边界。
->
-> 层级：本文档从属于 `guides/mo-option-premium.md`，与 `guides/mo-option-premium-http-contract.md` 并列。HTTP 文档拥有 transport projection；本文档不重复 endpoint、query、DTO 或 error mapping。
->
-> 本轮是 authority-only：不实现 class、Preparation、Data Service、provider、route、DTO、OpenAPI、generated TypeScript、frontend、persistence 或 cache。
+本文档从属于 [index.md](index.md)，拥有 MO Annualized Premium 的 canonical analytical model、market-fact boundary、确定性 Point Preparation、公式、null/zero/absence 与可选 PlaneFramer。HTTP transport 由 [http-contract.md](http-contract.md) 拥有。
 
 ---
 
@@ -567,25 +563,9 @@ generic analytical framework
 15. 不兼容 analytical contexts 不得静默 framing。
 16. Core model 独立于 HTTP、frontend 与 physical execution optimization。
 
-## 14. Authority Reconciliation
+## 14. Completion Check
 
-| 检查对象 | 分类 | 结论与处理 |
-| --- | --- | --- |
-| `market-snapshot/ARCHITECTURE.md` | aligned | Point Preparation 是 deterministic Analysis Preparation；Core Point 是 analysis-ready analytical fact，不引入新的通用架构层 |
-| MO Option Chain active universe / daily completeness | aligned | 复用真实 active contract 与 daily-row completeness 语义；不从 price availability 反向定义 universe |
-| selected option premium null / zero | aligned | daily row 存在但 selected field 缺失时保留 contract；numeric zero 保留为 zero |
-| product → underlying 与 unified price semantics | aligned | `MO → 000852.SH`，option、underlying 与 present futures 使用相同 resolved price type |
-| futures completeness | aligned product semantics | 无结构性匹配时两产品都允许 `futures = null`；唯一匹配后的 row/price 不完整或多重匹配仍显式失败，不修改 Option Chain contract |
-| sparse structure | aligned | 不要求 expiry 间 strike 对齐，不创建 synthetic coordinate |
-| canonical Point / OptionMarketBasis / formulas / Framer | missing → defined | 本文档补齐 backend semantic core；不从 HTTP DTO 反推 |
-| `as_of` vs `target_trade_date` | aligned | Premium domain 使用 ObservationAnchor / `as_of`；Option Chain query 保持 `target_trade_date` |
-| existing Source Capture / goal-scoped Raw | aligned, implementation deferred | 期望复用 Source-derived facts；是否抽取共享实现留待 implementation，不读取 sibling product final artifact |
-| Data Service / HTTP / frontend / persistence | out of scope | 本轮不实现、不加入 service catalog、不改变 transport 或 Web contract |
-| authority conflicts | none found | 无需修改现有 MO Option Chain authority |
-
-## 15. Completion Check
-
-仅阅读 `guides/mo-option-premium.md` 与本文档，应能唯一回答：
+仅阅读 [index.md](index.md) 与本文档，应能唯一回答：
 
 1. canonical analytical model 是什么，为什么是 Point 而不是 Plane？
 2. Point 如何保持 self-contained，其 identity 与 coordinate 分别是什么？

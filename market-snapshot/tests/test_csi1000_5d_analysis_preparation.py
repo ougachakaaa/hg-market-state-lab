@@ -283,7 +283,7 @@ def test_happy_path_snapshot_is_written_with_the_locked_structure(
 def test_output_path_is_the_canonical_data_service_artifact(
     tmp_path: Path, raw_root: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """guides/data-services.md 6 + 7: one canonical artifact, under ``output/``."""
+    """market-snapshot/guides/data-services.md 6 + 7: one canonical artifact, under ``output/``."""
     patch_dirs(monkeypatch, tmp_path, raw_root)
 
     run_preparation(tmp_path, raw_root)

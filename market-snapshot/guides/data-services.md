@@ -1,8 +1,6 @@
-# guides/data-services.md — Data Service / CLI / output contract authority
+# Data Service / CLI / output authority
 
-> 状态：authority。本文档定义项目最上层的用户调用语义单位 Data Service、用户级 CLI（`dms`）的语义，以及 Data Service 的 canonical user-facing output。
->
-> 层级：本文档位于 `market-snapshot/ARCHITECTURE.md` 之下。架构层面的稳定边界以 `market-snapshot/ARCHITECTURE.md` 为准（尤其第 0 节术语、第 2 节核心架构、第 3 节 Raw/Preparation 边界、第 8 节 Guide 职责、第 9 节项目结构）。本文档定义 Data Service 的清单、调用契约与输出契约；具体 Source Capture / Raw Artifact / Analysis Preparation 语义继续由对应 Guide 负责，不在本文档重复。
+本文档定义 Data Service、用户级 CLI、delivery surface 与 canonical user-facing output。模块分层见 [../ARCHITECTURE.md](../ARCHITECTURE.md)，产品语义从 [../CAPABILITIES.md](../CAPABILITIES.md) 进入对应 canonical owner；本文档不重复 Source、Raw、Preparation 或产品公式。
 
 ## 1. 什么是 Data Service
 
@@ -15,7 +13,7 @@ Data Service
     ↓
 orchestrates existing Source Capture / Analysis Preparation
     ↓
-final dated output
+declared result / delivery
 ```
 
 Data Service 不是：
@@ -30,16 +28,16 @@ Workflow engine
 Plugin
 ```
 
-它只是最上层的**用户调用语义单位**。每个 Data Service 拥有自己的 query identity 与 result semantics，由 catalog 逐项定义，不共用同一个 `service_id + target_trade_date` 模板。用户和 Agent 不需要知道底层有哪些 Source Capture，只需要按该 service 自己定义的 query identity 指定输入。
+它只是最上层的**用户调用语义单位**。每个 Data Service 拥有自己的 query identity 与 result semantics，由对应产品 authority 定义并由 catalog 路由，不共用同一个 `service_id + target_trade_date` 模板。调用方不需要知道底层有哪些 Source Capture，只需要按该 service 自己定义的 query identity 指定输入。
 
 ## 2. Data Service Catalog
 
-Catalog 当前声明两项已实现的 Data Service，不为了丰富 catalog 创造其他服务：
+Data Service catalog 声明以下两个用户可请求能力，不为了丰富 catalog 创造其他服务：
 
-| service_id | description | input | output | 状态 |
-| --- | --- | --- | --- | --- |
-| `csi1000-5d-analysis` | 为外部 analyzer 分析中证1000未来约 5 个交易日市场状态准备的 analysis-ready 数据产品 | `target_trade_date`（CLI 的 `--date`） | `snapshot.json` | 已实现 |
-| `mo-option-chain` | 目标交易日的完整 MO 中证1000股指期权链 deterministic read model（与 `csi1000-5d-analysis` 并列，不依赖其 output） | `target_trade_date` + `option_product` + `price_type` | option-chain read model（`guides/mo-option-chain.md`） | 已实现，通过 HTTP 提供 |
+| service_id | input | result / delivery | 产品 authority |
+| --- | --- | --- | --- |
+| `csi1000-5d-analysis` | `target_trade_date`（CLI 的 `--date`） | persisted `snapshot.json` | [csi1000-5d-analysis/index.md](csi1000-5d-analysis/index.md) |
+| `mo-option-chain` | `target_trade_date + option_product + price_type` | request-scoped read model / HTTP | [mo-option-chain/index.md](mo-option-chain/index.md) |
 
 Catalog 是显式、静态、authority-driven 的，不通过扫描文件系统动态发现。不做：
 
@@ -52,73 +50,21 @@ service lifecycle framework
 
 `index_daily`、`stock_daily` 仍属于 Source Capture / Raw capability，**不**升级为 Data Service。
 
-## 3. service 语义
+## 3. Service integration boundary
 
-### 3.1 service: csi1000-5d-analysis
+### 3.1 `csi1000-5d-analysis`
 
-语义：
+Data Service 拥有该 persisted-artifact service 的 orchestration 与 canonical output publication。产品定位、所需 Capture、Raw scope、窗口、formula 与 `snapshot.json` 内容分别由 [产品入口](csi1000-5d-analysis/index.md)、[data authority](csi1000-5d-analysis/data.md) 与 [Preparation authority](csi1000-5d-analysis/preparation.md) 拥有，不在本文档重新定义。
 
-> 为外部 analyzer 分析中证1000未来约 5 个交易日市场状态准备的 analysis-ready 数据产品。
+### 3.2 `mo-option-chain`
 
-它复用当前已经存在的：
+Data Service 拥有该 request-scoped service 的 orchestration 与 read-model delivery boundary。产品/query identity、Raw scope、read semantics 与 HTTP transport 分别由 [产品入口](mo-option-chain/index.md)、[data authority](mo-option-chain/data.md)、[read contract](mo-option-chain/read-contract.md) 与 [HTTP contract](mo-option-chain/http-contract.md) 拥有。
 
-```text
-CSI1000 history（Source Capture index_daily，000852.SH）
-MO option chain（Source Capture mo_option_basic + mo_option_daily）
-IM futures（Source Capture im_futures_basic + im_futures_daily）
-deterministic Analysis Preparation（guides/csi1000-5d-analysis-snapshot.md）
-```
-
-最终 artifact：`snapshot.json`。
-
-相关 authority：
-
-* Source Capture / Raw Artifact 契约：`guides/csi1000-5d-analysis-data.md`
-* Analysis Preparation Definition（Raw → `snapshot.json`）：`guides/csi1000-5d-analysis-snapshot.md`
-
-Data Service 不重新定义 Source semantics / Source Capture semantics / window semantics / derived formula / Analysis-ready Artifact schema；这些继续由上述 Guide 负责。
-
-### 3.2 service: mo-option-chain
-
-语义：
-
-> 目标交易日的完整 MO 中证1000股指期权链 deterministic read model，是与 `csi1000-5d-analysis` 并列的独立数据产品。
-
-输入（query identity，见 `guides/mo-option-chain.md` 第 3 节）：
-
-```text
-target_trade_date   required
-option_product      required
-price_type          optional（缺省 = close）
-```
-
-它：
-
-```text
-不依赖 csi1000-5d-analysis 的 output（snapshot.json）
-不要求 CSI1000 120 日历史分析窗口 / IM 历史分析窗口 / CSI1000 analysis 派生指标
-需要目标日 CSI1000 underlying fact 与目标日有效 IM 普通月合约 facts
-每个 MO expiry 的 IM futures reference 由 Preparation 按结构性事实条件匹配；无匹配是合法缺席，有唯一匹配时才要求完整目标日价格
-复用共享 Source Capture capability（index_daily / mo_option_basic / mo_option_daily / im_futures_basic / im_futures_daily 的 target-date capability）
-```
-
-完整语义的 authority 落点：
-
-```text
-query identity / product / underlying / invariants     → guides/mo-option-chain.md
-Source / Raw / universe / completeness                 → guides/mo-option-chain-data.md
-price / null / grouping / ordering / response / failure → guides/mo-option-chain-read-contract.md
-```
-
-本 catalog 不重复定义。
-
-result semantics：`mo-option-chain` 通过 Source Capture → goal-scoped Raw → Analysis Preparation 产生 request-scoped read model，并由 HTTP delivery adapter 提供；V1 无 canonical persisted final output（区别于 `csi1000-5d-analysis` 的 `output/<service>/<date>/snapshot.json`）。
-
-delivery surface：`mo-option-chain` 通过 HTTP read contract 面向 `web-ui`，不使用当前 CLI `dms get` 的 `--date` 单参数形态；transport 语义见 `guides/mo-option-chain-http-contract.md`。
+`mo-option-chain` 不使用 `dms get`，V1 也没有 canonical persisted final output；它通过 HTTP delivery adapter 向 read consumer 交付 request-scoped read model。
 
 ## 4. CLI: dms
 
-用户级 CLI 语义名称为 `dms`。第一版只支持两个命令：`list`、`get`。CLI 是 delivery surface 之一；当前只服务 persisted-artifact service `csi1000-5d-analysis`，`mo-option-chain` 通过 HTTP 提供（见第 3.2、13 节），不走 `dms get`。
+用户级 CLI 语义名称为 `dms`。第一版只支持两个命令：`list`、`get`。CLI 是 delivery surface 之一，只服务 persisted-artifact service `csi1000-5d-analysis`；`mo-option-chain` 通过 HTTP 提供（见第 3.2、10 节），不走 `dms get`。
 
 ### 4.1 dms list
 
@@ -253,19 +199,17 @@ service_id + target_trade_date
 
 `mo-option-chain` 是 request-scoped read model，V1 不要求 canonical persisted final output，不落入上述 `output/<service>/<date>/` 约定（见第 3.2 节）。
 
-## 7. Raw Artifact / Analysis-ready Artifact / Output 边界与 reconciliation
+## 7. Raw Artifact / Analysis-ready Artifact / Output 边界
 
-* `data/raw/`：Source Facts / internal runtime artifacts（Raw Artifact）。继续不变，见 `market-snapshot/ARCHITECTURE.md` 第 3、9 节。
+* `data/raw/`：Source Facts / internal runtime artifacts（Raw Artifact）。
 * `data/snapshots/`：非 Data Service 的 Analysis-ready Artifact 输出目录。第一版 Daily 数据产品（`data/snapshots/YYYY-MM-DD/snapshot.json`）不是 Data Service，继续使用 `data/snapshots/`。
 * `output/<service_id>/<target_trade_date>/`：Data Service 的 canonical user-facing output。
 
-reconciliation（当前 CSI1000 Data Service）：
-
 > `output/<service>/<date>/` 是 Data Service 的 canonical user-facing output。
 
-Data Service 的 orchestration 把 Analysis Preparation 产出的 artifact 发布到该位置（`src/daily_market_snapshot/services/csi1000_5d_analysis.py`）；`data/snapshots/csi1000-5d-analysis/<date>/snapshot.json` 不再产生，不维护两份相同 artifact。
+Data Service 的 orchestration 把 Analysis Preparation 产出的 artifact 发布到该位置；`data/snapshots/csi1000-5d-analysis/<date>/snapshot.json` 不属于该 service 的输出，也不得维护两份相同 artifact。
 
-本 Goal 不重构无关的第一版 Daily 数据产品；`data/snapshots/YYYY-MM-DD/` 语义保持不变。
+Daily Market Snapshot 不是 Data Service，继续使用 `data/snapshots/YYYY-MM-DD/`，不与 Data Service output 合并。
 
 ## 8. 日粒度语义（csi1000-5d-analysis）
 
@@ -304,84 +248,7 @@ im_futures_daily.json
 
 可以包含多个历史交易日。但它们都属于 `target_trade_date = D` 这一次数据准备。`mo-option-chain` 是 request-scoped read model，不适用本节的按日持久化 partition 语义（见第 3.2 节）。
 
-## 9. Git boundary
-
-锁定以下均为 runtime artifacts：
-
-```text
-.env
-data/raw/**
-output/**
-```
-
-它们不得进入 Git history。（`data/snapshots/**` 也继续作为运行产物，不进入版本控制。）
-
-仓库只版本化：
-
-```text
-code
-authority / guides
-tests
-configuration templates
-```
-
-不记录每日市场数据产品。
-
-## 10. Agent execution surface
-
-锁定：
-
-> Data Service CLI 是普通用户和 Agent 执行数据任务的 canonical interface。
-
-以后用户要求：
-
-```text
-生成 2026-09-18 的 csi1000-5d-analysis
-```
-
-Agent 应优先执行语义等价于：
-
-```text
-dms get csi1000-5d-analysis --date 2026-09-18
-```
-
-而不是自行逐个寻找 Capture。
-
-底层 Source Capture / Analysis Preparation 可以继续存在，用于：
-
-```text
-development
-debugging
-testing
-reconciliation
-```
-
-但不是普通用户主入口。
-
-## 11. CLI implementation surface
-
-当前仓库仍使用 Poetry `package-mode = false`。本文档只锁定 CLI **语义名称** `dms`，不要求 package 化，不提前要求生成系统级 executable。
-
-第一版 implementation 可以自然落成：
-
-```text
-poetry run python scripts/dms.py list
-```
-
-```text
-poetry run python scripts/dms.py get csi1000-5d-analysis --date 2026-09-18
-```
-
-它们在语义上分别是：
-
-```text
-dms list
-dms get ...
-```
-
-是否增加真正的 `dms` console entry point 保持 deferred。
-
-## 12. Non-goals
+## 9. Non-goals
 
 不要设计：
 
@@ -399,11 +266,11 @@ GPT analyzer / trading analysis
 
 保持第一版极小。
 
-## 13. HTTP delivery boundary
+## 10. HTTP delivery boundary
 
 通用 API platform（多租户、通用 endpoint、auth、版本化、schema registry 等）不属于当前范围。
 
-第一个 Web vertical slice（MO option-chain visualization，见 `web-ui/guides/mo-option-chain-visualization.md`）通过最小 HTTP delivery adapter 读取数据。
+MO Option Chain visualization 通过 HTTP delivery adapter 读取数据；前端语义见 [web-ui visualization authority](../../web-ui/guides/mo-option-chain-visualization.md)。
 
 HTTP delivery adapter 与 CLI 的关系：
 
@@ -439,17 +306,9 @@ CORS policy
 server deployment
 ```
 
-这些属于 HTTP delivery contract / implementation design：`mo-option-chain` 的最小 HTTP transport contract 已落在 `guides/mo-option-chain-http-contract.md`（Stage 2）。
+这些属于具体产品的 HTTP delivery contract 或实现设计。MO Option Chain transport 见 [mo-option-chain/http-contract.md](mo-option-chain/http-contract.md)。
 
-最小 HTTP delivery adapter 采用 FastAPI 实现（`src/daily_market_snapshot/api/`）。
-
-## 14. Deferred
-
-```text
-真正 dms console entry point
-```
-
-## 15. 完成自检
+## 11. 完成自检
 
 仅阅读相关 authority（`market-snapshot/ARCHITECTURE.md`、本文档及本文档引用的 Guide）应能明确回答：
 
@@ -461,9 +320,8 @@ server deployment
 6. `--date` 的语义是什么？
 7. 一次调用最终写到哪里？
 8. `data/raw` 与 `output` 有什么区别？
-9. 哪些文件不进入 Git？
-10. 为什么普通用户/Agent 不需要知道底层 Source Capture？
-11. 现有 `data/snapshots` 与新的 canonical output 如何 reconciliation？
-12. HTTP delivery adapter 与 CLI 是否都是 delivery surfaces，而不是业务语义 owner？
+9. 为什么调用方不需要知道底层 Source Capture？
+10. `data/snapshots` 与 Data Service canonical output 有什么边界？
+11. HTTP delivery adapter 与 CLI 是否都是 delivery surfaces，而不是业务语义 owner？
 
 若这些问题仍需 implementation agent 自行发明，则本 authority 未完成。

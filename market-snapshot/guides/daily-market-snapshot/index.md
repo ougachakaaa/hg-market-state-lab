@@ -1,10 +1,6 @@
-# guides/daily-market-snapshot.md — 第一版 daily-market-snapshot 场景的 Analysis Preparation Definition
+# Daily Market Snapshot 场景 authority
 
-> 状态：当前生效。本文档是第一版 daily-market-snapshot 场景的 Analysis Preparation Definition authority。
->
-> 层级：本文档位于 `market-snapshot/ARCHITECTURE.md` 之下，定义第一版 daily-market-snapshot 场景的具体数据需求、Source Capture 语义、Raw 契约、Analysis-ready Artifact 输出结构与执行边界。架构层面的稳定边界以 `market-snapshot/ARCHITECTURE.md` 为准；本文档不得与其冲突。
->
-> 实现本 Guide 任务的 Agent 应先阅读 `market-snapshot/ARCHITECTURE.md` 第 2、3 节（核心架构与 Raw/Preparation 边界）、第 4 节（架构边界的执行）与第 9 节（项目结构），再按本文档执行。
+本文档是 Daily Market Snapshot 场景的产品入口及完整 Preparation Definition。模块边界见 [../../ARCHITECTURE.md](../../ARCHITECTURE.md)；共享 Source Capture 身份和字段语义见 [../source-captures.md](../source-captures.md)。
 
 ## 1. 第一版目标与范围
 
@@ -37,12 +33,11 @@ Source Capture 名称是本项目语义名称，不要求与 Tushare endpoint �
 * 脚本层输入使用 `YYYY-MM-DD`，传给 Tushare 时转换为 `YYYYMMDD`。
 * 给定日期无数据（非交易日、停市、源无数据）时：属于采集实现需要明确处理的失败/空结果情况。本 Definition 只明确这一边界，不规定具体失败机制；不自动寻找最近交易日，不自动 fallback。
 
-## 4. Source Capture 定义
+## 4. 产品专属 Capture Scope
 
-### 4.1 Source Capture: index_daily
+本场景使用共享 `index_daily` 与 `stock_daily` Capture。以下只定义本产品的 universe 与 query scope；公共字段、单位和 Raw normalization 不在本文档重复。
 
-* 语义名称：`index_daily`
-* Source：Tushare `index_daily`
+### 4.1 `index_daily` scope
 
 #### 指数观察 universe（第一版固定）
 
@@ -61,62 +56,21 @@ Source Capture 名称是本项目语义名称，不要求与 Tushare endpoint �
 
 对目标交易日（传给 Tushare 时为 `YYYYMMDD`），分别取得上述每一个指数在该交易日的 `index_daily` 数据。
 
-#### 核心字段语义
+字段与单位见 [Shared Source Capture authority](../source-captures.md#index_daily)。
 
-| 字段 | 语义 | 单位/说明 |
-| --- | --- | --- |
-| `ts_code` | 指数代码 | 源主键 |
-| `trade_date` | 交易日 | Raw 层统一为 `YYYY-MM-DD` |
-| `open` | 开盘价 | 点 |
-| `high` | 最高价 | 点 |
-| `low` | 最低价 | 点 |
-| `close` | 收盘价 | 点 |
-| `pre_close` | 昨收价 | 点 |
-| `change` | 涨跌额 | 点，源定义 = close − pre_close |
-| `pct_chg` | 涨跌幅 | %（数值 1 表示 1%） |
-| `vol` | 成交量 | 手（保留 Tushare 原始单位） |
-| `amount` | 成交额 | 千元（保留 Tushare 原始单位） |
-
-本阶段不做没有业务需要的额外派生指标。
-
-### 4.2 Source Capture: stock_daily
-
-* 语义名称：`stock_daily`
-* Source：Tushare `daily`（注意与 Source Capture 名称不同名）
+### 4.2 `stock_daily` scope
 
 #### 查询语义
 
 给定目标交易日，以 `trade_date=YYYYMMDD` 取得 Tushare `daily` 返回的该交易日 A 股日线数据。
 
-#### 数据语义注意
-
-Tushare `daily` 是未复权日行情；停牌期间不会返回对应股票数据。
-
-`pre_close` 是昨收价（除权价）：除权除息日按交易所口径给出除权参考价，不是简单的未复权昨收。`pct_chg` 保持为 Tushare Source 提供的涨跌幅事实，不在 Raw 层重算或改写。
-
-因此第一版 Analysis-ready Artifact 中基于该 Source Capture 计算出来的股票数量，应理解为：
+第一版 Analysis-ready Artifact 中基于该 Source Capture 计算出来的股票数量，应理解为：
 
 > 当日 `daily` Source Capture 中实际返回并参与统计的股票数量。
 
 不要把它定义成“全部上市股票数量”。
 
-#### 核心字段语义
-
-| 字段 | 语义 | 单位/说明 |
-| --- | --- | --- |
-| `ts_code` | 股票代码 | 源主键 |
-| `trade_date` | 交易日 | Raw 层统一为 `YYYY-MM-DD` |
-| `open` | 开盘价 | 元（未复权） |
-| `high` | 最高价 | 元（未复权） |
-| `low` | 最低价 | 元（未复权） |
-| `close` | 收盘价 | 元（未复权） |
-| `pre_close` | 昨收价（除权价） | 元；除权除息日为交易所口径的除权参考价 |
-| `change` | 涨跌额 | 元，源定义 = close − pre_close |
-| `pct_chg` | 涨跌幅 | %（数值 1 表示 1%） |
-| `vol` | 成交量 | 手 |
-| `amount` | 成交额 | 千元 |
-
-本阶段 Raw Artifact 保留事实数据，不提前塞入市场判断。
+Tushare `daily` 的未复权、停牌缺行、`pre_close` 与 `pct_chg` 语义及字段单位见 [Shared Source Capture authority](../source-captures.md#stock_daily)。本场景不把实际返回并参与统计的数量解释成全部上市股票数量。
 
 ## 5. Raw Artifact 文件契约
 
@@ -285,7 +239,7 @@ Analysis Preparation 应产生语义一致的结果。
 
 当前不建立 schema version framework、migration framework、registry 或数据库元数据系统。本文档即第一版 Analysis Preparation Definition authority；以后数据需求变化时，先修改对应 authority，再对实现做 reconciliation。
 
-## 9. 下一步实现范围
+## 9. 实现约束
 
 本文档是第一版 daily-market-snapshot 场景的 Analysis Preparation Definition authority。各职责如下：
 
@@ -300,6 +254,4 @@ Analysis Preparation → data/snapshots/YYYY-MM-DD/snapshot.json
 
 Source Capture 职责：调用 Tushare 对应 endpoint、按本文档 universe 选择范围、minimal normalization，写出 Raw Artifact。Analysis Preparation 职责：只消费上述 Raw Artifact，按本文档第 6 节组装 breadth / indices，写出 Analysis-ready Artifact；不得调用 Tushare。
 
-目标 implementation location 以 `market-snapshot/ARCHITECTURE.md` 第 9 节为 authority（Source Capture 位于 `capture/`，Analysis Preparation 位于 `preparation/`）。当前实现已位于 `src/daily_market_snapshot/capture/`（`index_daily.py`、`stock_daily.py`）；第一版 Daily Snapshot 的 Analysis Preparation 尚未实现。配套 `tests/` 测试。
-
-本文档不包含实现细节；实现不得超出本文档与 `market-snapshot/ARCHITECTURE.md` 的范围。
+实现不得超出本文档、[Shared Source Capture authority](../source-captures.md) 与 [模块架构](../../ARCHITECTURE.md) 的范围。实现状态和代码位置不属于本文档的稳定语义。

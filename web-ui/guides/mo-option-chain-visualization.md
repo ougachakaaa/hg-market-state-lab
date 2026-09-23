@@ -1,8 +1,6 @@
-# guides/mo-option-chain-visualization.md — MO option-chain visualization 的用户体验 / visualization contract authority
+# MO Option Chain visualization authority
 
-> 状态：authority。本文档锁定第一个 Web vertical slice 的用户可见语义与可视化契约。
->
-> 层级：本文档位于 `web-ui/ARCHITECTURE.md` 之下。模块级稳定边界（职责、依赖方向、数据来源边界）以 `web-ui/ARCHITECTURE.md` 为准。本文档只锁定这个 vertical slice 的输入、展示范围、散点语义与空/错误语义，不定义 HTTP schema、React implementation 或图表库选择。
+本文档从属于 [../ARCHITECTURE.md](../ARCHITECTURE.md)，只拥有该 vertical slice 的输入、展示范围、散点语义、交互及空/错误呈现，不定义 HTTP schema、React implementation 或图表库选择。
 
 ---
 
@@ -34,7 +32,7 @@ target_trade_date
 
 必须显式选择日期。
 
-完整的 read query identity 是 `target_trade_date + option_product + price_type`，其语义由 `market-snapshot/guides/mo-option-chain.md` 拥有。第一版 visualization 的固定值：`option_product = MO`（唯一支持），`price_type` 默认 `close`。
+完整的 read query identity 由 [MO Option Chain 产品 authority](../../market-snapshot/guides/mo-option-chain/index.md) 拥有。第一版 visualization 固定 `option_product = MO`，`price_type = close`。
 
 第一版不定义：
 
@@ -59,7 +57,7 @@ putColor
 futuresColor
 ```
 
-其中 underlying reference price 是目标交易日的 CSI1000（000852.SH）underlying 在选定 `price_type` 下的价格，作为横轴上的市场基准点。它使用与 option 相同的 `price_type`（见 `market-snapshot/guides/mo-option-chain-read-contract.md` 第 2 节）。
+其中 underlying reference price 是目标交易日的 CSI1000（000852.SH）underlying 在选定 `price_type` 下的价格，作为横轴上的市场基准点。它使用与 option 相同的 `price_type`（见 `market-snapshot/guides/mo-option-chain/read-contract.md` 第 2 节）。
 
 `selectedExpiries` 与 `callColor` / `putColor` / `futuresColor` 是页面级 visualization state / preference，不属于 read query identity；其语义见第 4、5 节。
 
@@ -124,9 +122,9 @@ strike
 selected price
 ```
 
-`expiry` 与 `option_type` 由 read contract 的父级 grouping 表达（`expiries[]` 的 `expiry_date`、`calls[]` / `puts[]` 的归属），不要求每个 point 重复携带（见 `market-snapshot/guides/mo-option-chain-read-contract.md` 第 6 节）。不透明度仅使用 read contract 已定义的 expiry ordering，不依据价格、volume、OI、liquidity、选中顺序或 legend 交互重新排序。
+`expiry` 与 `option_type` 由 read contract 的父级 grouping 表达（`expiries[]` 的 `expiry_date`、`calls[]` / `puts[]` 的归属），不要求每个 point 重复携带（见 `market-snapshot/guides/mo-option-chain/read-contract.md` 第 6 节）。不透明度仅使用 read contract 已定义的 expiry ordering，不依据价格、volume、OI、liquidity、选中顺序或 legend 交互重新排序。
 
-这里锁定的是**用户可见语义**，不是 HTTP schema。selected price 的 null / zero 语义（`0` 是数据、`null` 是缺价）由 `market-snapshot/guides/mo-option-chain-read-contract.md` 第 3 节定义；`web-ui` 不得自行 fallback、补零或删除 contract。`price=null` 的合约没有可绘制的纵坐标，因此不显示散点，但仍保留在被选中到期日的合约明细中，并在该到期日提示缺价数量；`price=0` 是可绘制的数值。如果某个被选中到期日全部合约缺价，页面显示该到期日无可绘制价格的状态，仍保留该到期日及其合约明细。
+这里锁定的是**用户可见语义**，不是 HTTP schema。selected price 的 null / zero 语义（`0` 是数据、`null` 是缺价）由 `market-snapshot/guides/mo-option-chain/read-contract.md` 第 3 节定义；`web-ui` 不得自行 fallback、补零或删除 contract。`price=null` 的合约没有可绘制的纵坐标，因此不显示散点，但仍保留在被选中到期日的合约明细中，并在该到期日提示缺价数量；`price=0` 是可绘制的数值。如果某个被选中到期日全部合约缺价，页面显示该到期日无可绘制价格的状态，仍保留该到期日及其合约明细。
 
 ## 6. 事实展示边界
 
@@ -172,9 +170,9 @@ trading recommendation
 
 ## 8. 数据来源语义
 
-本 vertical slice 需要的事实（contract identity、expiry、option_type、strike、selected price、underlying reference price、per-expiry IM futures reference）由 `market-snapshot/guides/mo-option-chain-read-contract.md` 定义的 MO Option Chain read contract 提供；`web-ui` 不直接理解 Source 或 Raw Artifact，也不直接消费 `csi1000-5d-analysis` 的 `snapshot.json`。
+本 vertical slice 需要的事实由 [MO Option Chain read contract](../../market-snapshot/guides/mo-option-chain/read-contract.md) 提供；`web-ui` 不直接理解 Source 或 Raw Artifact，也不直接消费 `csi1000-5d-analysis` 的 `snapshot.json`。
 
-active universe、option type、expiry、selected price fallback、contract completeness 等业务语义均由 read contract 拥有，`web-ui` 不自行推导（ownership 与 invariants 见 `market-snapshot/guides/mo-option-chain.md` 第 2、5 节）。
+active universe、option type、expiry、selected price fallback、contract completeness 等业务语义均由 backend authority 拥有，`web-ui` 不自行推导。
 
 ## 9. 页面状态与合约明细
 
@@ -184,17 +182,7 @@ active universe、option type、expiry、selected price fallback、contract comp
 
 完整结果展示 response 中的日期、价格口径、underlying 标识和参考价，以及一张包含 selected expiries 的 combined chart 与按 response 顺序排列的 selected expiry 明细。明细保留 expiry identity、条件性 IM futures reference 或缺失状态、Call / Put 合约数量；到期日可展开分别查看 Call 与 Put 的合约标识、行权价、价格。无同到期 IM 时仍正常展示该到期日和共享 Spot；`price=null` 在价格位置显示 `—`，数值 `0` 显示为 `0.0`。不重新组织或解释合约。
 
-现有 HTTP contract 由 `market-snapshot/guides/mo-option-chain-http-contract.md` 锁定：
-
-```text
-GET /mo-option-chain
-query: target_trade_date / option_product / price_type（默认 close）
-success response = read contract 第 8 节 semantic shape
-error envelope: {"error": {"kind", "detail", "param"}}
-error kind 闭集 + HTTP status mapping
-```
-
-前端只能依赖该 HTTP contract 的字段与 error kind，不得自行推导 universe / underlying / expiry / option type / fallback / completeness（见第 8 节）。
+前端请求、response 与 error handling 必须遵循 [MO Option Chain HTTP contract](../../market-snapshot/guides/mo-option-chain/http-contract.md)。本文档不重复 endpoint、query schema、response shape、error kind 或 status mapping；前端也不得从 wire shape 反向定义 backend 业务语义。
 
 散点图遵循第 4、5 节。本 Guide 不定义：
 

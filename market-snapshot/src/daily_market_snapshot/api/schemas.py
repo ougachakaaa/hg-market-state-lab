@@ -1,7 +1,7 @@
 """Pydantic DTOs of the MO Option Chain HTTP contract.
 
-Authority: ``guides/mo-option-chain-http-contract.md`` (transport contract) over
-``guides/mo-option-chain-read-contract.md`` (semantic response shape).
+Authority: ``market-snapshot/guides/mo-option-chain/http-contract.md`` (transport contract) over
+``market-snapshot/guides/mo-option-chain/read-contract.md`` (semantic response shape).
 
 The DTOs are a faithful transport expression of the read model defined in
 ``services/mo_option_chain.py``: same fields, same names, same JSON shape, no
@@ -35,7 +35,7 @@ __all__ = [
 ]
 
 # The canonical target trade date representation of the query identity: exactly
-# ``YYYY-MM-DD`` (``guides/mo-option-chain.md`` section 3). Anything else - a
+# ``YYYY-MM-DD`` (``market-snapshot/guides/mo-option-chain/index.md`` section 3). Anything else - a
 # non-padded date, another separator, a compact date, an impossible date, a
 # timestamp - is a request the contract does not accept.
 ISO_DATE_PATTERN = re.compile(r"\d{4}-\d{2}-\d{2}")
@@ -138,7 +138,7 @@ class OptionChainDTO(BaseModel):
     """The self-describing success response of ``GET /mo-option-chain``.
 
     Ordering, grouping and null semantics of this payload are owned by
-    ``guides/mo-option-chain-read-contract.md``; this DTO only serializes them.
+    ``market-snapshot/guides/mo-option-chain/read-contract.md``; this DTO only serializes them.
     """
 
     model_config = ConfigDict(extra="forbid")

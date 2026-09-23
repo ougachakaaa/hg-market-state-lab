@@ -28,26 +28,26 @@ RAW_DIR = REPO_ROOT / "data" / "raw"
 # writes its canonical user-facing output under ``OUTPUT_DIR`` instead.
 SNAPSHOTS_DIR = REPO_ROOT / "data" / "snapshots"
 # Canonical user-facing output root of a persisted-artifact Data Service
-# (guides/data-services.md section 6): ``output/<service_id>/<target_trade_date>/``.
+# (market-snapshot/guides/data-services.md section 6): ``output/<service_id>/<target_trade_date>/``.
 # It is not the result location of every Data Service: a request-scoped read
 # model such as ``mo-option-chain`` has no canonical persisted final output.
 OUTPUT_DIR = REPO_ROOT / "output"
 
 # Data Service id of the CSI1000 analysis scenario, which is also its goal
-# scoped Raw sub directory (guides/data-services.md section 2).
+# scoped Raw sub directory (market-snapshot/guides/data-services.md section 2).
 CSI1000_RAW_SUBDIR = "csi1000-5d-analysis"
 MO_OPTION_CHAIN_RAW_SUBDIR = "mo-option-chain"
 
 # File name of a Data Service analysis-ready artifact. The canonical location is
 # ``output/<service_id>/<target_trade_date>/snapshot.json``
-# (guides/data-services.md 6); the file name is the artifact's, not the layer's.
+# (market-snapshot/guides/data-services.md 6); the file name is the artifact's, not the layer's.
 ANALYSIS_READY_FILENAME = "snapshot.json"
 
 
 def daily_raw_dir(trade_date: str) -> Path:
     """Return the Raw Artifact directory of the daily scenario for one date.
 
-    ``data/raw/<target_trade_date>/`` (guides/daily-market-snapshot.md 5).
+    ``data/raw/<target_trade_date>/`` (market-snapshot/guides/daily-market-snapshot/index.md 5).
     """
     return RAW_DIR / trade_date
 
@@ -56,7 +56,7 @@ def csi1000_raw_dir(trade_date: str) -> Path:
     """Return the goal-scoped Raw Artifact directory of one target trade date.
 
     ``data/raw/csi1000-5d-analysis/<target_trade_date>/``
-    (guides/csi1000-5d-analysis-data.md 7).
+    (market-snapshot/guides/csi1000-5d-analysis/data.md 7).
     """
     return RAW_DIR / CSI1000_RAW_SUBDIR / trade_date
 
@@ -91,7 +91,7 @@ def write_analysis_ready_artifact(
 
     The canonical Data Service location is
     ``output/<service_id>/<target_trade_date>/snapshot.json``
-    (guides/data-services.md 6).
+    (market-snapshot/guides/data-services.md 6).
     """
     directory = output_dir(output_root, service_id, target_trade_date)
     directory.mkdir(parents=True, exist_ok=True)
