@@ -1,8 +1,8 @@
 # guides/mo-option-premium.md — MO Premium Plane 产品 authority（导航入口）
 
-> 状态：authority（HTTP contract first）。本文档只锁定 `MO Premium Plane` 的产品定位、ownership、transport-facing invariants 与 progressive-disclosure 导航。
+> 状态：authority。本文档锁定 `MO Premium Plane` 的产品定位、ownership、稳定 invariants 与 progressive-disclosure 导航。
 >
-> 层级：本文档位于 `market-snapshot/ARCHITECTURE.md` 之下。HTTP transport 见 `guides/mo-option-premium-http-contract.md`。backend domain authority 尚未建立；金融公式、canonical `AnnualizedPremiumPoint`、Point Preparation 与可选 PlaneFramer 均不由本文档定义。
+> 层级：本文档位于 `market-snapshot/ARCHITECTURE.md` 之下。backend semantic core 见 `guides/mo-option-premium-backend.md`；HTTP transport 见 `guides/mo-option-premium-http-contract.md`。本文档只负责产品级边界，不重复两份 specialized authority。
 >
 > 本轮是 authority-only：没有新增 Data Service、backend domain class、FastAPI route、Pydantic DTO、OpenAPI、generated TypeScript 或 frontend renderer。
 
@@ -30,7 +30,7 @@ MO Premium Plane
 
 ## 2. Ownership
 
-### Backend analytical authority owns（后续 authority）
+### Backend analytical authority owns
 
 ```text
 canonical AnnualizedPremiumPoint
@@ -42,7 +42,7 @@ optional PlaneFramer
 legitimate futures-reference selection
 ```
 
-这些语义尚未在本轮设计。HTTP authority 只能 transport 已准备好的 analytical facts，不得反向塑造 canonical backend domain model。
+具体语义见 `guides/mo-option-premium-backend.md`。HTTP authority 只能 transport 已准备好的 analytical facts，不得反向塑造 canonical backend domain model。
 
 ### HTTP delivery owns
 
@@ -83,9 +83,9 @@ chart rendering and interaction
 9. 两个 premium metrics 随完整 plane 一次交付；Call / Put 与 metric 切换不触发另一次请求。
 10. HTTP 不拥有金融公式，也不暴露 Source、Raw Artifact、Preparation 或 repository 实现结构。
 
-## 4. Deferred Backend Authority
+## 4. Backend Architecture
 
-在实现 HTTP 之前，后续 backend domain authority 必须另行锁定：
+backend domain authority 已锁定：
 
 ```text
 OptionMarketBasis
@@ -97,7 +97,7 @@ Point[]
 optional PlaneFramer
 ```
 
-本图只记录后续 authority 的讨论边界，不定义 class、module、formula、schema、algorithm 或 runtime dependency。
+本图表达 stable semantic direction；Point、formula、null/absence、compatibility 与 dependency invariants 见 `guides/mo-option-premium-backend.md`。它仍不预设具体 class、module、persistence 或 runtime orchestration。
 
 ## 5. Navigation
 
@@ -105,21 +105,21 @@ optional PlaneFramer
 market-snapshot/ARCHITECTURE.md
         ↓
 guides/mo-option-premium.md（本文档）
-        ↓
-guides/mo-option-premium-http-contract.md
+        ├── guides/mo-option-premium-backend.md
+        └── guides/mo-option-premium-http-contract.md
 ```
 
 * 判断产品定位、ownership 或稳定 invariants → 读本文档。
 * 判断 endpoint、query、HTTP DTO projection、null/absence/zero 或 error mapping → 读 HTTP contract。
-* 判断 domain Point、公式、Preparation 或 PlaneFramer → 等待并读取后续 backend domain authority，不得从 HTTP DTO 反推。
+* 判断 domain Point、OptionMarketBasis、公式、Preparation 或 PlaneFramer → 读 backend authority，不得从 HTTP DTO 反推。
 
 ## 6. Implementation Status
 
-当前仅锁定产品入口与 HTTP delivery contract。以下仍未实现且不属于本轮：
+当前已锁定产品入口、backend semantic core 与 HTTP delivery contract。以下仍未实现且不属于本轮：
 
 ```text
-backend domain model
-Preparation / PlaneFramer
+backend domain model implementation
+Preparation / PlaneFramer implementation
 Data Service / provider
 FastAPI route / DTO / OpenAPI
 generated frontend contract
