@@ -1,10 +1,10 @@
 """Source Capture ``mo_option_basic``: the active MO contract facts of one date.
 
-Source: Tushare ``opt_basic`` (see ``market-snapshot/guides/source-captures.md`` section 5;
-the product universe is in ``market-snapshot/guides/csi1000-5d-analysis/data.md`` section 4.1).
+Source: Tushare ``opt_basic`` (see ``capture/ARCHITECTURE.md`` section 5;
+the product universe is in ``products/csi1000_5d_analysis/data.md`` section 4.1).
 
 Development / debugging entrypoint (the Data Service CLI is the canonical user
-interface, see ``market-snapshot/guides/data-services.md`` section 4):
+interface, see ``services/delivery.md`` section 4):
 
     poetry run python -m daily_market_snapshot.capture.mo_option_basic 2026-09-17
 """

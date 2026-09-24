@@ -1,8 +1,8 @@
 """Tests of the MO Option Chain application boundary.
 
-Authority: ``market-snapshot/guides/mo-option-chain/index.md`` (query identity),
-``market-snapshot/guides/mo-option-chain/read-contract.md`` (failure categories) and
-``market-snapshot/guides/mo-option-chain/http-contract.md`` (what the transport layer does with
+Authority: ``products/mo_option_chain/ARCHITECTURE.md`` (query identity),
+``products/mo_option_chain/read-contract.md`` (failure categories) and
+``products/mo_option_chain/http-contract.md`` (what the transport layer does with
 the boundary).
 
 These tests lock the seam the HTTP adapter calls and the next phase wires the real
@@ -23,7 +23,7 @@ from enum import StrEnum
 
 import pytest
 
-from daily_market_snapshot.services import mo_option_chain as service
+from daily_market_snapshot.products.mo_option_chain import service
 from support.fake_chain_service import TARGET_DATE, chain_fixture, chain_result, error_result
 
 

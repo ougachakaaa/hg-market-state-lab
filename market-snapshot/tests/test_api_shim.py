@@ -1,7 +1,7 @@
 """Tests for the HTTP adapter launcher shim ``scripts/api.py``.
 
 Authority: ``README.md`` (the documented local HTTP API address) over
-``market-snapshot/guides/mo-option-chain/http-contract.md`` (the endpoint contract, which leaves
+``products/mo_option_chain/http-contract.md`` (the endpoint contract, which leaves
 the bind address to deployment).
 
 These tests lock the documented startup behaviour of the thin executable shim:
@@ -19,7 +19,7 @@ from typing import Any
 
 import pytest
 
-from daily_market_snapshot.api import app as adapter_app
+from daily_market_snapshot.products.mo_option_chain.api import app as adapter_app
 
 SHIM_PATH = Path(__file__).resolve().parent.parent / "scripts" / "api.py"
 

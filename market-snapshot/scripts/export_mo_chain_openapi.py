@@ -13,11 +13,14 @@ from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 REPOSITORY_ROOT = PROJECT_ROOT.parent
-DEFAULT_OUTPUT = REPOSITORY_ROOT / "web-ui/src/api/moOptionChain.openapi.json"
+DEFAULT_OUTPUT = (
+    REPOSITORY_ROOT
+    / "web-ui/src/features/mo_option_chain/api/moOptionChain.openapi.json"
+)
 
 sys.path.insert(0, str(PROJECT_ROOT / "src"))
 
-from daily_market_snapshot.api.app import create_app  # noqa: E402
+from daily_market_snapshot.products.mo_option_chain.api.app import create_app  # noqa: E402
 
 
 def main(argv: list[str] | None = None) -> int:

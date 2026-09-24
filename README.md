@@ -65,7 +65,7 @@ poetry run python scripts/dms.py list
 poetry run python scripts/dms.py get csi1000-5d-analysis --date 2026-09-18
 ```
 
-CLI、service orchestration 与 output contract 见 [Data Service authority](market-snapshot/guides/data-services.md)。产品数据语义从 [Capability Catalog](market-snapshot/CAPABILITIES.md) 进入。
+CLI、service orchestration 与 output contract 见 [Data Service authority](market-snapshot/src/daily_market_snapshot/services/ARCHITECTURE.md)。产品数据语义从 [Capability Catalog](market-snapshot/CAPABILITIES.md) 进入。
 
 ## HTTP API
 
@@ -76,7 +76,7 @@ poetry run python scripts/api.py
 poetry run python scripts/api.py --host 127.0.0.1 --port 8012
 ```
 
-默认地址为 `127.0.0.1:8011`，OpenAPI 位于 `/openapi.json`，交互文档位于 `/docs`。MO Option Chain 的 endpoint、query、response 与错误契约见 [HTTP authority](market-snapshot/guides/mo-option-chain/http-contract.md)。
+默认地址为 `127.0.0.1:8011`，OpenAPI 位于 `/openapi.json`，交互文档位于 `/docs`。MO Option Chain 的 endpoint、query、response 与错误契约见 [HTTP authority](market-snapshot/src/daily_market_snapshot/products/mo_option_chain/http-contract.md)。
 
 ## Web UI
 
@@ -86,7 +86,7 @@ poetry run python scripts/api.py --host 127.0.0.1 --port 8012
 npm run dev
 ```
 
-默认开发地址为 `http://127.0.0.1:5173/`。Vite 将 `/mo-option-chain` 转发到默认 backend 地址；具体视觉与交互语义见 [MO Option Chain visualization authority](web-ui/guides/mo-option-chain-visualization.md)。
+默认开发地址为 `http://127.0.0.1:5173/`。Vite 将 `/mo-option-chain` 转发到默认 backend 地址；具体视觉与交互语义见 [MO Option Chain visualization authority](web-ui/src/features/mo_option_chain/ARCHITECTURE.md)。
 
 ## 验证命令
 

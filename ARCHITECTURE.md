@@ -52,11 +52,11 @@ ARCHITECTURE.md（本文件）
     │      ↓
     │  market-snapshot/CAPABILITIES.md
     │      ↓
-    │  relevant product / capability authority
+    │  co-located product / capability ARCHITECTURE.md
     │
     └─ web-ui/ARCHITECTURE.md
            ↓
-       relevant visualization authority
+       co-located feature ARCHITECTURE.md
 ```
 
 上层只提供选择下一份文档所需的上下文，不复制下层语义。新增或删除单个产品通常只更新模块 catalog，不改变本文件。

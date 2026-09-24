@@ -1,7 +1,7 @@
 """Source Capture ``mo_option_daily``: daily facts of the active MO universe.
 
-Source: Tushare ``opt_daily`` (see ``market-snapshot/guides/source-captures.md`` section 6;
-the product universe is in ``market-snapshot/guides/csi1000-5d-analysis/data.md`` section 4.1).
+Source: Tushare ``opt_daily`` (see ``capture/ARCHITECTURE.md`` section 6;
+the product universe is in ``products/csi1000_5d_analysis/data.md`` section 4.1).
 ``exchange=CFFEX`` only asks the Source for CFFEX option daily facts;
 the Capture scope is then decided by the active MO universe the
 ``mo_option_basic`` Capture has already collected for the same request, so other
@@ -9,7 +9,7 @@ CFFEX option products (IO, HO) are simply not in scope. Only the daily facts of
 that universe belong to this Raw Artifact.
 
 Development / debugging entrypoint (the Data Service CLI is the canonical user
-interface, see ``market-snapshot/guides/data-services.md`` section 4):
+interface, see ``services/delivery.md`` section 4):
 
     poetry run python -m daily_market_snapshot.capture.mo_option_daily 2026-09-17
 """

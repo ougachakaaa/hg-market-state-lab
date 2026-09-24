@@ -1,15 +1,15 @@
 """Thin executable shim that runs the HTTP delivery adapter.
 
-The application lives in ``daily_market_snapshot.api.app``; this script only makes
-it runnable without packaging the project, exactly like ``scripts/dms.py`` does
-for the CLI.
+The application lives in the co-located MO Option Chain API package. This script
+only makes it runnable without packaging the project, exactly like
+``scripts/dms.py`` does for the CLI.
 
-Authority: ``market-snapshot/guides/mo-option-chain/http-contract.md``.
+Authority: ``products/mo_option_chain/http-contract.md``.
 
 The adapter binds ``127.0.0.1:8011`` by default, which the repository README
 documents as the local HTTP API address. The bind address is a launcher detail,
 not part of the HTTP transport contract: it can be overridden with ``--host`` /
-``--port``, and ``market-snapshot/guides/mo-option-chain/http-contract.md`` section 8 leaves
+``--port``, and ``products/mo_option_chain/http-contract.md`` section 8 leaves
 server deployment to V1 non-goals.
 
     poetry run python scripts/api.py
@@ -26,7 +26,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src"))
 
 import uvicorn  # noqa: E402
 
-from daily_market_snapshot.api import app  # noqa: E402
+from daily_market_snapshot.products.mo_option_chain.api import app  # noqa: E402
 
 
 def main(argv: list[str] | None = None) -> None:

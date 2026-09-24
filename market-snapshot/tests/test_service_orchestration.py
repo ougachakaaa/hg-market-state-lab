@@ -1,7 +1,7 @@
 """Tests for the Data Service orchestration and the layer boundaries.
 
 Authority: ``ARCHITECTURE.md`` section 2 (dependency direction),
-``market-snapshot/guides/data-services.md`` sections 5 and 6.
+``products/csi1000_5d_analysis/ARCHITECTURE.md`` section 4 and ``services/delivery.md`` section 6.
 
 These tests keep the orchestration owned by the Data Service: the CLI only
 resolves and reports, and the five Captures, their order and the Analysis
@@ -20,16 +20,16 @@ import pytest
 from daily_market_snapshot import artifacts, cli
 from daily_market_snapshot.capture import common as capture_common
 from daily_market_snapshot.capture import (
-    csi1000_index_history,
     im_futures_basic,
     im_futures_daily,
-    index_daily,
     mo_option_basic,
     mo_option_daily,
-    stock_daily,
 )
-from daily_market_snapshot.preparation import csi1000_5d_analysis as preparation
-from daily_market_snapshot.services import DataServiceError, catalog, csi1000_5d_analysis
+from daily_market_snapshot.products.csi1000_5d_analysis import capture as csi1000_index_history
+from daily_market_snapshot.products.csi1000_5d_analysis import preparation
+from daily_market_snapshot.products.csi1000_5d_analysis import service as csi1000_5d_analysis
+from daily_market_snapshot.products.daily_market_snapshot import index_daily, stock_daily
+from daily_market_snapshot.services import DataServiceError, catalog
 from daily_market_snapshot.sources import tushare
 from support.fake_source import CSI1000_TARGET_DATE, csi1000_5d_analysis_api
 
@@ -178,7 +178,7 @@ def test_the_cli_does_not_orchestrate_captures_or_preparation() -> None:
 
     for module in ALL_CAPTURE_MODULES:
         assert f"import {module.__name__}" not in source
-    assert "import daily_market_snapshot.preparation" not in source
+    assert "daily_market_snapshot.products" not in source
     # It reports through the catalog, not by reaching into a service stage.
     assert "catalog" in source
 
@@ -191,7 +191,7 @@ def test_the_data_service_owns_the_orchestration() -> None:
         assert module.__name__.rsplit(".", 1)[-1] in source
     assert "build_snapshot" in source
     assert csi1000_5d_analysis.collect_csi1000_5d_analysis.__module__ == (
-        "daily_market_snapshot.services.csi1000_5d_analysis"
+        "daily_market_snapshot.products.csi1000_5d_analysis.service"
     )
 
 
@@ -227,7 +227,7 @@ def test_capture_does_not_depend_on_preparation() -> None:
     """Capture produces Raw Artifacts and knows nothing about the preparation."""
     for module in ALL_CAPTURE_MODULES:
         source = Path(str(module.__file__)).read_text(encoding="utf-8")
-        assert "daily_market_snapshot.preparation" not in source
+        assert "products.csi1000_5d_analysis.preparation" not in source
         assert "SnapshotError" not in source
 
 
@@ -268,7 +268,7 @@ def test_the_cli_reports_a_service_failure_without_knowing_the_stage(
 
 
 def test_the_catalog_is_explicit_and_never_discovered() -> None:
-    """market-snapshot/guides/data-services.md 2: no filesystem discovery, no dynamic registry."""
+    """services/ARCHITECTURE.md 2: no filesystem discovery, no dynamic registry."""
     source = Path(catalog.__file__).read_text(encoding="utf-8")
 
     assert "CATALOG: tuple[DataService, ...] = (" in source

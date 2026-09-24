@@ -7,7 +7,7 @@ requires-python = ">=3.13,<3.14"
 dependencies = [
     "tushare (>=1.4.29,<2.0.0)",
     "python-dotenv (>=1.2.3,<2.0.0)",
-    # The minimal HTTP delivery adapter of market-snapshot/guides/mo-option-chain/http-contract.md.
+    # The minimal HTTP delivery adapter of market-snapshot/src/daily_market_snapshot/products/mo_option_chain/http-contract.md.
     "fastapi (>=0.141.1,<0.142.0)",
     "uvicorn (>=0.53.0,<0.54.0)",
 ]

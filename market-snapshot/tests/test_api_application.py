@@ -1,6 +1,6 @@
 """Application-level invariants of the FastAPI delivery adapter.
 
-Authority: ``market-snapshot/guides/mo-option-chain/http-contract.md`` (the only endpoint and the
+Authority: ``products/mo_option_chain/http-contract.md`` (the only endpoint and the
 documented statuses) over ``web-ui/ARCHITECTURE.md`` (the web UI depends on a
 stable, machine-readable contract).
 
@@ -24,9 +24,11 @@ import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
-from daily_market_snapshot.api import ROUTE_PATH
+from daily_market_snapshot.products.mo_option_chain.api import ROUTE_PATH
 
-app_module: ModuleType = importlib.import_module("daily_market_snapshot.api.app")
+app_module: ModuleType = importlib.import_module(
+    "daily_market_snapshot.products.mo_option_chain.api.app"
+)
 
 # The routes FastAPI registers for itself (all ``include_in_schema=False``).
 FRAMEWORK_ROUTES = ("/openapi.json", "/docs", "/docs/oauth2-redirect", "/redoc")

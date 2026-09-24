@@ -41,7 +41,7 @@ External Analyzer
 
 Data Service 是用户可请求的完整数据能力，负责选择并编排所需 Source Capture 与 Analysis Preparation，再发布产品规定的结果。它不定义 Source API 字段，也不实现 Preparation formula。
 
-Data Service、CLI、delivery surface 与 canonical output 契约见 [guides/data-services.md](guides/data-services.md)。
+Data Service、CLI、delivery surface 与 canonical output 契约见 [Data Service authority](src/daily_market_snapshot/services/ARCHITECTURE.md)。
 
 ### Source
 
@@ -51,7 +51,7 @@ Source 定义外部数据事实与 API 语义，不定义本项目的 Analysis-r
 
 Source Capture 拥有具体 endpoint 调用、query parameters、Source-domain scope selection、minimal normalization 与 Raw Artifact production。
 
-它可以理解 Source-domain fact，例如产品、交易所、合约生命周期和目标交易日；不得根据下游分析偏好筛选合约或生成市场判断。共享 Capture 身份与 Source fact 语义见 [guides/source-captures.md](guides/source-captures.md)。
+它可以理解 Source-domain fact，例如产品、交易所、合约生命周期和目标交易日；不得根据下游分析偏好筛选合约或生成市场判断。共享 Capture 身份与 Source fact 语义见 [Capture authority](src/daily_market_snapshot/capture/ARCHITECTURE.md)。
 
 ### Raw Artifact
 
@@ -129,7 +129,7 @@ ARCHITECTURE.md
     ↓ stable module boundaries
 CAPABILITIES.md
     ↓ navigation only
-product / shared capability entry
+co-located product / shared capability ARCHITECTURE.md
     ↓ bounded-context ownership and routing
 specialized authority
     ↓ fields, formulas, contracts and failure semantics

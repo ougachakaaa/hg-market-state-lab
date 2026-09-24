@@ -1,6 +1,6 @@
 # web-ui 模块架构 authority
 
-本文件定义 `web-ui` 的稳定职责、数据依赖方向与 authority 路由。仓库级定位见 [../ARCHITECTURE.md](../ARCHITECTURE.md)；具体 vertical slice 的用户体验与 visualization contract 位于 `guides/`。
+本文件定义 `web-ui` 的稳定职责、数据依赖方向与 authority 路由。仓库级定位见 [../ARCHITECTURE.md](../ARCHITECTURE.md)；具体 vertical slice 的 authority 与实现共址于 `src/features/`。
 
 ## 1. Purpose
 
@@ -35,7 +35,7 @@ Markdown authority 定义语义；backend OpenAPI 是 HTTP wire contract 的机�
 
 ## 4. Vertical Slice Authority
 
-`web-ui/guides/*` 只拥有对应 vertical slice 的：
+`web-ui/src/features/*` 中的 feature authority 只拥有对应 vertical slice 的：
 
 ```text
 user input and presentation state
@@ -45,7 +45,7 @@ interaction
 empty and error presentation
 ```
 
-MO Option Chain vertical slice 的入口是 [guides/mo-option-chain-visualization.md](guides/mo-option-chain-visualization.md)。该 Guide 会按需链接 backend 产品、read 与 HTTP authority；普通前端任务无需读取 Source、Raw 或不相关产品文档。
+MO Option Chain vertical slice 的入口是 [src/features/mo_option_chain/ARCHITECTURE.md](src/features/mo_option_chain/ARCHITECTURE.md)。该入口会按需链接 backend 产品、read 与 HTTP authority；普通前端任务无需读取 Source、Raw 或不相关产品文档。
 
 ## 5. 维护边界
 
