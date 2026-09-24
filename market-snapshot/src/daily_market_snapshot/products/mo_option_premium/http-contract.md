@@ -331,16 +331,16 @@ strike viewport filtering
 
 V1 closed mapping：
 
-| error kind | HTTP status | 条件 |
+| error kind | HTTP status | Adapter input / owner |
 | --- | --- | --- |
 | `invalid_request` | 400 | 缺少 required 参数；`as_of` 格式无效；query 值不在 HTTP 输入闭集；携带未知 query 参数 |
 | `unsupported_query` | 400 | application/domain boundary 明确报告形态合法但 V1 不支持的 observation/product/price query |
-| `date_not_available` | 404 | query identity 合法且产品受支持，但 requested trade-date observation 本身不可服务 |
-| `premium_plane_unavailable` | 503 | observation 可请求，但 Source/Raw/Basis/Preparation/Framing 无法生成合法完整 Plane，或真实 Point 数为零 |
+| `date_not_available` | 404 | Product service 已按 [service contract](service-contract.md) 分类的同名 failure |
+| `premium_plane_unavailable` | 503 | Product service 已按 [service contract](service-contract.md) 分类的同名 failure |
 
 transport validation 直接拒绝 `option_product != MO` 与不支持的 `price_type`，使用 `invalid_request` 并把 `param` 设为对应字段。`unsupported_query` 只用于 application/domain boundary 显式报告的合法但未支持 query，不由 HTTP adapter 自行发明。
 
-`date_not_available` 与 `premium_plane_unavailable` 的 product semantic classification 由 [service contract](service-contract.md) 决定。HTTP 只做上述 status/envelope mapping，不根据 partial facts 重新分类，也不把 transient Source failure、structural inconsistency 或 required analytical input failure误报为日期不可用。
+`date_not_available` 与 `premium_plane_unavailable` 的 product semantic classification 由 [service contract](service-contract.md) 唯一决定。HTTP 只做上述 status/envelope mapping；它不执行 availability probe，不解释 Source response，不判断 product completeness，也不根据 partial facts 重新分类。
 
 未知 query 参数使用 `invalid_request`，且 `param = null`，由 `detail` 指出未知参数。产品整体不可用时 `param = null`。
 

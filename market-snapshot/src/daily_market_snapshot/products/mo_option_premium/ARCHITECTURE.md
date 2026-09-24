@@ -16,9 +16,9 @@
 | --- | --- |
 | 本文档 | 产品身份、产品间边界、跨子契约 invariant |
 | [Shared Source Capture authority](../../capture/ARCHITECTURE.md) | Capture identity、Source endpoint、公共 Source 字段与 minimal normalization |
-| [Data authority](data.md) | Premium Source requirements、Capture scope、goal-scoped Raw、active universe、Raw completeness 与 observation availability |
+| [Data authority](data.md) | Premium Source requirements、Capture scope、goal-scoped Raw、active universe、Raw completeness 与 canonical observation availability evidence |
 | [Backend authority](backend.md) | `OptionMarketBasis` construction、canonical `AnnualizedPremiumPoint`、ObservationAnchor、公式、单位、Preparation、null/zero/absence 与 PlaneFramer |
-| [Product service authority](service-contract.md) | request orchestration、stage ordering、stage responsibility、semantic failure propagation 与 result boundary |
+| [Product service authority](service-contract.md) | request orchestration、observation admission、semantic failure classification/propagation 与 result boundary |
 | [HTTP contract](http-contract.md) | resource/query、success projection、sparse-plane wire shape、transport null/absence/zero 与 error/status mapping |
 | future web-ui authority | presentation state、Call/Put 与 metric selection、expiry visibility、viewport、formatting、rendering 与 interaction |
 
@@ -30,7 +30,7 @@
 2. Plane 只包含 backend authority 定义的真实 analytical Point；不得由 transport 或 presentation 创建 synthetic contract、cell 或 interpolation。
 3. 不同 expiry 可以拥有不同 strike universe；精确 Point/null/zero/absence 语义由 backend authority 唯一定义，HTTP 只保持其投影。
 4. Underlying、futures reference、premium metrics 与 seller-yield denominator 的 domain 角色由 backend authority 唯一定义，HTTP 和 frontend 不 fallback 或替代。
-5. HTTP Point 是 delivery projection，不是 canonical backend Point；wire identity、ordering 和 error mapping 由 HTTP contract 拥有。
+5. HTTP Point 是 delivery projection，不是 canonical backend Point；wire identity、ordering 和 classified product failure mapping 由 HTTP contract 拥有，availability detection 与 failure classification 不属于 HTTP。
 6. Call/Put、metric、expiry visibility 与 viewport 是 presentation state，不进入 V1 product query。
 7. Premium 拥有自己的 Raw、Basis construction 与 product orchestration，不消费 sibling product 的 Raw、read DTO 或 final artifact。
 8. 成功 product result 是 request-scoped `AnnualizedPremiumPlane`；V1 不要求 canonical persisted final output。

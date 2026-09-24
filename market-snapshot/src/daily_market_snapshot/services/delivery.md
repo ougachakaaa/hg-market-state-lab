@@ -28,11 +28,11 @@ Workflow engine
 Plugin
 ```
 
-它只是最上层的**用户调用语义单位**。每个 Data Service 拥有自己的 query identity 与 result semantics，由对应产品 authority 定义并由 catalog 路由，不共用同一个 `service_id + target_trade_date` 模板。调用方不需要知道底层有哪些 Source Capture，只需要按该 service 自己定义的 query identity 指定输入。
+它只是最上层的**用户调用语义单位**。每个 Data Service 拥有自己的 query identity 与 result semantics，由对应产品 authority 定义，并从 repository [Capability Catalog](../../../CAPABILITIES.md) 路由，不共用同一个 `service_id + target_trade_date` 模板。调用方不需要知道底层有哪些 Source Capture，只需要按该 service 自己定义的 query identity 指定输入。
 
-## 2. Data Service Catalog
+## 2. Repository Data Service Semantic Catalog
 
-Data Service catalog 声明以下三个用户可请求能力，不为了丰富 catalog 创造其他服务：
+Repository authority 声明以下三个用户可请求的 Data Service semantic identities，不为了丰富 catalog 创造其他服务：
 
 | service_id | input | result / delivery | 产品 authority |
 | --- | --- | --- | --- |
@@ -40,7 +40,9 @@ Data Service catalog 声明以下三个用户可请求能力，不为了丰富 c
 | `mo-option-chain` | `target_trade_date + option_product + price_type` | request-scoped read model / HTTP | [product authority](../products/mo_option_chain/ARCHITECTURE.md) |
 | `mo-option-premium-plane` | `as_of + option_product + price_type` | request-scoped `AnnualizedPremiumPlane` / HTTP | [product authority](../products/mo_option_premium/ARCHITECTURE.md) |
 
-Catalog 是显式、静态、authority-driven 的，不通过扫描文件系统动态发现。不做：
+本表是 authority-level semantic catalog：它说明 service identity、input、result/delivery 与 canonical product owner，不是 `services/catalog.py` 的 executable binding table。Repository-wide product/capability discovery 仍从 [Capability Catalog](../../../CAPABILITIES.md) 进入。
+
+Semantic catalog 是显式、静态、authority-driven 的，不通过扫描文件系统动态发现。不做：
 
 ```text
 dynamic registry
@@ -50,6 +52,8 @@ service lifecycle framework
 ```
 
 `index_daily`、`stock_daily` 仍属于 Source Capture / Raw capability，**不**升级为 Data Service。
+
+`services/catalog.py` 是另一个更窄的概念：它只保存 `dms` 可执行的 persisted-service bindings。一个 HTTP request-scoped Data Service 不需要进入该 Python catalog，也不需要适配当前返回 artifact `Path` 的 execution binding。
 
 ## 3. Service integration boundary
 
@@ -71,7 +75,7 @@ MO Premium Plane product service 拥有该 request-scoped analytical service 的
 
 ## 4. CLI: dms
 
-用户级 CLI 语义名称为 `dms`。第一版只支持两个命令：`list`、`get`。CLI 是 delivery surface 之一，只服务 persisted-artifact service `csi1000-5d-analysis`；`mo-option-chain` 与 `mo-option-premium-plane` 通过 HTTP 提供（见第 3.2、3.3、10 节），不走 `dms get`。
+用户级 CLI 语义名称为 `dms`。第一版只支持两个命令：`list`、`get`。CLI 是 delivery surface 之一，只寻址 CLI executable catalog 中的 persisted-artifact service；当前为 `csi1000-5d-analysis`。`mo-option-chain` 与 `mo-option-premium-plane` 通过 HTTP 提供（见第 3.2、3.3、10 节），不走 `dms get`。
 
 ### 4.1 dms list
 
@@ -83,9 +87,9 @@ dms list
 
 作用：
 
-> 列出当前仓库支持的 Data Service。
+> 列出当前 CLI-addressable Data Services，即 `dms get` 可以 resolve 的 executable entries。
 
-第一版至少输出每项 Data Service 的：
+第一版至少输出每个 CLI executable entry 的：
 
 ```text
 service_id
@@ -96,11 +100,9 @@ description
 
 ```text
 csi1000-5d-analysis
-mo-option-chain
-mo-option-premium-plane
 ```
 
-Catalog 不通过扫描文件系统动态发现。
+V1 `dms list` 不列出 HTTP-only 的 `mo-option-chain` 或 `mo-option-premium-plane`；所有 repository products/capabilities 从 [Capability Catalog](../../../CAPABILITIES.md) 发现。CLI executable catalog 不通过扫描文件系统动态发现。
 
 ### 4.2 dms get
 
@@ -140,7 +142,7 @@ yesterday
 
 ## 5. CLI 与 product orchestration 边界
 
-CLI 只解析参数、校验 CLI-level 输入、resolve Data Service、调用并报告结果或错误。它不编排 Capture，也不重新定义：
+CLI 只解析参数、校验 CLI-level 输入、从 executable catalog resolve CLI-addressable Data Service、调用并报告结果或错误。当前 executable binding 面向返回 persisted artifact `Path` 的 service；HTTP-only request-scoped services 不需要使用或模拟这个 binding。CLI 不编排 Capture，也不重新定义：
 
 ```text
 Source semantics
@@ -296,15 +298,17 @@ server deployment
 仅阅读相关 authority（`market-snapshot/ARCHITECTURE.md`、本文档及本文档引用的 Guide）应能明确回答：
 
 1. 什么是 Data Service？
-2. 当前有哪些 Data Service？
+2. 当前有哪些 semantic Data Services，从哪里发现？
 3. `csi1000-5d-analysis` 表示什么？
-4. 如何列出 service？
-5. 如何请求 service？
-6. `--date` 的语义是什么？
-7. 一次调用最终写到哪里？
-8. `data/raw` 与 `output` 有什么区别？
-9. 为什么调用方不需要知道底层 Source Capture？
-10. `data/snapshots` 与 Data Service canonical output 有什么边界？
-11. HTTP delivery adapter 与 CLI 是否都是 delivery surfaces，而不是业务语义 owner？
+4. `dms list` 列出全部 repository products，还是仅 CLI-addressable services？
+5. CLI executable catalog 与 Data Service semantic catalog 有什么区别？
+6. 如何通过 `dms get` 请求 persisted service？
+7. `--date` 的语义是什么？
+8. 一次调用最终写到哪里？
+9. `data/raw` 与 `output` 有什么区别？
+10. 为什么调用方不需要知道底层 Source Capture？
+11. `data/snapshots` 与 Data Service canonical output 有什么边界？
+12. HTTP-only Data Service 是否必须进入 Path-returning CLI binding？
+13. HTTP delivery adapter 与 CLI 是否都是 delivery surfaces，而不是业务语义 owner？
 
 若这些问题仍需 implementation agent 自行发明，则本 authority 未完成。

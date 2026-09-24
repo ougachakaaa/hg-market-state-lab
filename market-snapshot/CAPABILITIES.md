@@ -2,6 +2,8 @@
 
 本文件是 `market-snapshot` 的导航 catalog，不定义字段、公式、DTO、失败语义或实现状态。先阅读 [ARCHITECTURE.md](ARCHITECTURE.md) 确认模块边界，再从本页选择任务所需的最小 authority 路径。
 
+本 catalog 用于发现 repository products/capabilities，不等同于 `dms list` 或 CLI executable catalog。HTTP-only request-scoped products 仍在此列出，但不因此获得 `dms get` binding。
+
 ## 产品与场景
 
 | Capability / Product | 定位 | 入口 authority |

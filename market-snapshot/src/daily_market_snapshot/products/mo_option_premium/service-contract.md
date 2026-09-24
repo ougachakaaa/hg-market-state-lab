@@ -30,10 +30,18 @@ V1 final Plane 可以只存在于内存中，不要求 canonical persisted final
 normalized query
 (as_of + option_product + resolved price_type)
         ↓
-run required shared Source Captures
+run canonical observation availability Capture
+(index_daily: 000852.SH + as_of)
+and write index_daily.json
+        ↓
+explicit no-observation → date_not_available
+observation exists      → admit observation
+indeterminate failure   → premium_plane_unavailable
+        ↓ admitted observation only
+run remaining required shared Source Captures
 with Premium-owned product scopes
         ↓
-write Premium goal-scoped Raw
+write remaining Premium goal-scoped Raw
         ↓
 construct OptionMarketBasis
         ↓
@@ -58,13 +66,13 @@ im_futures_basic
 im_futures_daily
 ```
 
-Capture 的实际调用可以按 Source API 约束调度，但不得改变上图的 semantic dependency：Basis 只能消费完整 Premium Raw，Point Preparation 只能消费合法 Basis，Framer 只能消费 prepared Points，HTTP 只能消费完整 product result。
+availability probe 复用 `index_daily` Capture，并把其 result 写入 Premium-owned `index_daily.json`；不得为 probe 创建另一套 Capture identity、临时 semantic source 或替代 observation。Source response 成功但该 Raw write 失败时，probe 未成功完成，分类为 `premium_plane_unavailable`。probe admission 后，其他 Capture 的实际调用可以按 Source API 约束调度，但不得改变上图的 semantic dependency：Basis 只能消费完整 Premium Raw，Point Preparation 只能消费合法 Basis，Framer 只能消费 prepared Points，HTTP 只能消费完整 product result。
 
 ## 3. Stage Ownership
 
 | Stage | Owns | Must not own |
 | --- | --- | --- |
-| Product service | request orchestration、stage ordering、semantic failure propagation、result boundary | Source fields、financial formulas、HTTP DTO |
+| Product service | request orchestration、availability-result admission、semantic failure classification/propagation、result boundary | Source fields、financial formulas、HTTP DTO |
 | Source Capture | Source calls、product-declared Source-domain scope、minimal normalization、Premium Raw production | Basis join、analysis formulas、Plane framing |
 | Basis construction | deterministic joins、domain vocabulary normalization、unified price projection、legitimate futures matching | DTE、annualization、seller yield、HTTP projection |
 | Point Preparation | DTE、annualized premium points、seller yield、self-contained Points | Capture、transport、presentation |
@@ -79,30 +87,33 @@ Service 必须按已知 data/domain condition 分类 failure；不得把所有�
 
 ### 4.1 `date_not_available`
 
-表示：
+只表示：
 
 ```text
 query shape valid
 AND product/query supported
-AND requested trade-date observation itself is not serviceable
+AND canonical availability probe completed successfully
+AND exact 000852.SH + as_of observation count = 0
 ```
 
-包括 Source 能明确表明 requested date 是非交易 observation，或该日期所需 market observation 尚未发布/不可用。不得 fallback 到 nearest、previous、latest 或其他日期，也不得返回替代 observation。
+这是 requested trade-date observation 本身不可服务的唯一 V1 evidence。不得用 generic missing data、Source/Capture exception、incomplete product facts 或 analytical failure 产生此 kind。不得 fallback 到 nearest、previous、latest 或其他日期，也不得返回替代 observation。
 
 ### 4.2 `premium_plane_unavailable`
 
-表示 requested observation 本身可请求，但无法构造合法、完整、非空的 analytical Plane，包括：
+表示 canonical probe 没有明确证明 observation 不可服务，或 observation admitted 后无法构造合法、完整、非空的 analytical Plane，包括：
 
 ```text
+availability probe Source/transport exception or indeterminate response
+Capture or Raw write failure
 cannot determine active MO universe
 active MO contract missing or duplicate daily row
 malformed selected option premium
 duplicate or inconsistent structural facts
-required underlying missing, duplicate, malformed, zero or negative
+admitted underlying later missing from Raw/Basis
+underlying duplicate row or selected price null, malformed, zero or negative
 multiple legitimate IM matches
 matched IM daily row missing or duplicate
 matched IM selected price unavailable or malformed
-Source/Capture failure not establishing date_not_available
 OptionMarketBasis incompatible or incomplete
 Point Preparation consistency failure
 Plane framing compatibility failure
@@ -110,6 +121,24 @@ zero real analytical Points
 ```
 
 合法的 option selected premium null 不属于 failure；它产生 premium 与 derived metrics 为 null 的真实 Point。无 legitimate IM match 也不属于 failure；它产生 `futures = null`。两者与上述 required-fact failures 不得混淆。
+
+observation 一旦 admitted，任何 downstream failure 都不得重新降级为 `date_not_available`。
+
+### 4.3 Decision Table
+
+| Condition | Product result |
+| --- | --- |
+| query invalid or unsupported | transport/application input rejection；不进入 availability decision |
+| canonical probe 成功且精确匹配 observation 为零 | `date_not_available` |
+| availability probe 发生 generic Source/transport/Capture/Raw-write failure，或 response indeterminate | `premium_plane_unavailable` |
+| observation exists but underlying row duplicate，或 selected price null/malformed/zero/negative | `premium_plane_unavailable` |
+| observation admitted 后 underlying row 在 Raw/Basis 缺失 | `premium_plane_unavailable` |
+| active MO daily row missing or duplicate | `premium_plane_unavailable` |
+| active MO row 存在且 selected option premium 为 null | success Point with `premium = null` and null derived metrics |
+| no legitimate IM expiry match | success with `futures = null` |
+| legitimate matched IM daily fact missing/duplicate，或 selected price null/malformed | `premium_plane_unavailable` |
+| Basis、Point Preparation 或 Framer fails | `premium_plane_unavailable` |
+| complete non-empty Plane | success `AnnualizedPremiumPlane` |
 
 ## 5. Atomic Result and Delivery Handoff
 
@@ -123,7 +152,7 @@ OR
 classified product semantic failure
 ```
 
-HTTP status 与 error envelope 由 [HTTP contract](http-contract.md) 映射。HTTP adapter 不重试或修复 analytical facts，不直接调用 Source，也不重建 Basis、Point 或 Plane。
+HTTP status 与 error envelope 由 [HTTP contract](http-contract.md) 映射。HTTP adapter 不重试或修复 analytical facts，不直接调用 Source，也不重建 Basis、Point 或 Plane；它不得重新执行 availability detection 或改变 product service 已分类的 failure kind。
 
 ## 6. Non-goals
 
@@ -146,6 +175,8 @@ FastAPI route or DTO
 1. 谁按什么顺序编排 Capture、Basis、Point、Framer 与 delivery？
 2. 每个 stage 拥有和禁止拥有什么？
 3. service 成功时向 HTTP 交付什么，final Plane 是否必须持久化？
-4. `date_not_available` 与 `premium_plane_unavailable` 如何区分？
-5. null option premium 与 null futures 为什么不是 product failure？
-6. 失败时是否允许 partial Plane、fallback date 或 HTTP repair？
+4. 哪一个 exact fact 是 observation availability probe，什么结果才是 `date_not_available`？
+5. generic Source exception 与 observation admission 后的 failure 如何分类？
+6. missing underlying observation 与 invalid underlying analytical fact 如何区分？
+7. null option premium 与 null futures 为什么不是 product failure？
+8. 失败时是否允许 partial Plane、fallback date、HTTP repair 或 reclassification？

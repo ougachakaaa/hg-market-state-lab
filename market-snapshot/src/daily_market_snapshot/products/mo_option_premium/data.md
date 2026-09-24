@@ -111,16 +111,36 @@ Plane grouping or ordering
 
 ## 3. Observation Availability Boundary
 
-成功 preparation 的 `as_of` 必须是可服务的 trade-date observation。以下条件表示 query shape 合法且产品/query 受支持，但 requested observation 本身不可服务：
+V1 使用现有 `index_daily` Capture 对以下精确 Source observation 执行 canonical availability probe：
 
 ```text
-non-trading observation
-required market observation not published or unavailable
+instrument = 000852.SH
+observation = requested as_of
 ```
 
-这类条件形成 `date_not_available`。不得 fallback 到 previous、nearest、latest 或其他日期。
+该 probe 只回答：
 
-一旦 observation 已被判定可服务，后续 universe 无法确定、Source facts 缺失/重复/不一致或 required analytical input 不合法，均是产品完整性失败，而不是日期替换理由；其 product failure 见 [service contract](service-contract.md)。
+```text
+Does 000852.SH have an observation for as_of?
+```
+
+它不验证 selected price 是否可用于 seller-yield calculation，也不判断 MO/IM completeness。probe result 是以下闭集：
+
+| Probe evidence | Availability meaning |
+| --- | --- |
+| Source 请求与 `index_daily.json` Raw write 均成功，精确匹配 `000852.SH + as_of` 的 row 数为 `0` | explicit no-observation；requested observation 不可服务 |
+| Source 请求与 Raw write 均成功，精确匹配 row 数为 `1` 或更多 | observation exists；admit observation，row uniqueness 与 analytical validity 随后验证 |
+| Source/transport exception、timeout、malformed 或无法解释的 response、Capture failure、Raw write failure | indeterminate；没有证明 observation 不可服务 |
+
+只有第一种完整 probe 的 explicit no-observation evidence 可以支持 product service 分类为 `date_not_available`。它覆盖 non-trading date、market observation 尚未发布或 Source 明确返回该日无 `000852.SH` observation 的情况。不得 fallback 到 previous、nearest、latest 或其他日期。
+
+generic Source/Capture failure 不能自动解释为 unavailable date：
+
+```text
+SourceException != explicit no-observation
+```
+
+一旦至少一个精确匹配 row 使 observation 被 admitted，后续 row duplication、selected price validity、Raw completeness 与所有 product construction failure 都不得重新解释为 observation unavailable。product failure classification 由 [service contract](service-contract.md) 唯一拥有。
 
 ## 4. Active MO Contract Universe
 
@@ -175,7 +195,7 @@ null/missing selected premium 不删除 contract；它将在 Basis 和 Point 中
 
 ## 6. Underlying Fact Contract
 
-成功构造 Premium analytical facts 必须有恰好一条：
+observation admission 后，成功构造 Premium analytical facts 必须有恰好一条：
 
 ```text
 instrument = 000852.SH
@@ -183,7 +203,9 @@ observation = as_of
 price semantics = resolved price_type
 ```
 
-selected underlying price 必须 present、numeric 且 strictly positive。缺失、重复、malformed、zero 或 negative 都是 required analytical input failure。
+若 availability probe 已明确返回零个 matching rows，请使用第 3 节的 no-observation evidence，不进入 analytical construction。observation admitted 后，duplicate row，或后续 Raw/Basis 中缺失 admitted row，都是 required analytical input failure。
+
+唯一 row 的 selected underlying price 必须 present、numeric 且 strictly positive。null/missing、malformed、zero 或 negative 都是 required analytical input failure，不是 observation absence。
 
 不得使用 futures、strike、previous close、其他日期或其他 price field 作为 fallback。
 
@@ -214,4 +236,5 @@ IM Raw acquisition scope 可以宽于最终 Plane 使用的 futures references�
 4. active contract 缺 row、重复 row、selected premium null 与 zero 分别如何处理？
 5. underlying 的 identity、observation、price 与失败条件是什么？
 6. IM Capture scope 如何确定，何时 daily completeness 才影响 analytical result？
-7. observation 不可服务与 observation 内部 facts 不完整有何区别？
+7. canonical availability probe 的三个结果分别是什么，哪些 evidence 可以证明 observation 不可服务？
+8. underlying observation absence、duplicate row 与 invalid selected price 有何区别？
