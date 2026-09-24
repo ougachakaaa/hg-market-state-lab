@@ -19,7 +19,7 @@ from typing import Any
 
 import pytest
 
-from daily_market_snapshot.products.mo_option_chain.api import app as adapter_app
+from daily_market_snapshot.api import app as adapter_app
 
 SHIM_PATH = Path(__file__).resolve().parent.parent / "scripts" / "api.py"
 

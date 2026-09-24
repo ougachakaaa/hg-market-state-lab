@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import ast
 import re
 from collections import deque
 from pathlib import Path
@@ -120,16 +121,34 @@ def test_product_packages_do_not_import_sibling_products() -> None:
     for product in products_root.iterdir():
         if not product.is_dir():
             continue
-        sibling_prefixes = {
-            f"daily_market_snapshot.products.{sibling.name}"
+        sibling_names = {
+            sibling.name
             for sibling in products_root.iterdir()
             if sibling.is_dir() and sibling != product
         }
         for source in product.rglob("*.py"):
-            text = source.read_text(encoding="utf-8")
-            for prefix in sibling_prefixes:
-                if prefix in text:
-                    violations.append(f"{source.relative_to(REPOSITORY_ROOT)} -> {prefix}")
+            tree = ast.parse(source.read_text(encoding="utf-8"))
+            imported_modules = [
+                name
+                for node in ast.walk(tree)
+                for name in (
+                    [alias.name for alias in node.names]
+                    if isinstance(node, ast.Import)
+                    else [node.module]
+                    if isinstance(node, ast.ImportFrom) and node.module is not None
+                    else []
+                )
+            ]
+            for sibling in sibling_names:
+                absolute = f"daily_market_snapshot.products.{sibling}"
+                if any(
+                    imported == sibling
+                    or imported.startswith(f"{sibling}.")
+                    or imported == absolute
+                    or imported.startswith(f"{absolute}.")
+                    for imported in imported_modules
+                ):
+                    violations.append(f"{source.relative_to(REPOSITORY_ROOT)} -> {sibling}")
     assert not violations, "sibling product imports:\n" + "\n".join(violations)
 
 

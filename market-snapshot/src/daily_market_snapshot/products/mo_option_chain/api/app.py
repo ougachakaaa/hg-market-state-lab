@@ -1,15 +1,9 @@
-"""FastAPI application and runtime composition for market-snapshot products.
+"""Minimal FastAPI application of the MO Option Chain HTTP adapter.
 
 Authority: ``products/mo_option_chain/http-contract.md``. The application is a
 delivery surface only: it exposes the HTTP contract, publishes it as OpenAPI and
-turns a read failure into the contract's error envelope. The default runtime
-also composes the independent MO Premium Plane adapter. It owns no market
-semantics and is not a general API platform (no auth, versioning or registry).
-
-Run it (the repository stays Poetry ``package-mode = false``, so the executable
-shim supplies ``src/`` on the import path):
-
-    poetry run python scripts/api.py
+turns a read failure into the contract's error envelope. It owns no market
+semantics and does not compose sibling products.
 """
 
 from __future__ import annotations
@@ -22,21 +16,6 @@ from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
-from ...mo_option_premium.api.endpoint import ROUTE_PATH as PREMIUM_ROUTE_PATH
-from ...mo_option_premium.api.endpoint import router as premium_router
-from ...mo_option_premium.api.errors import (
-    CONTRACT_QUERY_PARAMS as PREMIUM_CONTRACT_QUERY_PARAMS,
-)
-from ...mo_option_premium.api.errors import (
-    QUERY_PARAM_AS_OF,
-    PremiumApiError,
-    PremiumErrorBody,
-    PremiumErrorKind,
-    PremiumErrorResponse,
-)
-from ...mo_option_premium.api.errors import (
-    REQUIRED_QUERY_PARAMS as PREMIUM_REQUIRED_QUERY_PARAMS,
-)
 from .endpoint import ROUTE_PATH, router
 from .errors import (
     CONTRACT_QUERY_PARAMS,
@@ -65,25 +44,9 @@ VALIDATION_PARAMS: dict[str, str] = {
 }
 
 
-def contract_params(request: Request) -> tuple[frozenset[str], tuple[str, ...], dict[str, str]]:
-    """Return the closed query contract for the request's product route."""
-    if request.url.path == PREMIUM_ROUTE_PATH:
-        return (
-            PREMIUM_CONTRACT_QUERY_PARAMS,
-            PREMIUM_REQUIRED_QUERY_PARAMS,
-            {
-                QUERY_PARAM_AS_OF: QUERY_PARAM_AS_OF,
-                QUERY_PARAM_OPTION_PRODUCT: QUERY_PARAM_OPTION_PRODUCT,
-                QUERY_PARAM_PRICE_TYPE: QUERY_PARAM_PRICE_TYPE,
-            },
-        )
-    return CONTRACT_QUERY_PARAMS, REQUIRED_QUERY_PARAMS, VALIDATION_PARAMS
-
-
 def missing_param(request: Request) -> str | None:
     """The first required query parameter the request omitted."""
-    _, required, _ = contract_params(request)
-    for param in required:
+    for param in REQUIRED_QUERY_PARAMS:
         if param not in request.query_params:
             return param
     return None
@@ -95,9 +58,8 @@ def unexpected_param(request: Request) -> str | None:
     A parameter the contract does not declare has no ``error.param`` field to be
     attributed to, so it is reported by ``error.detail`` instead.
     """
-    accepted, _, _ = contract_params(request)
     for name in request.query_params:
-        if name not in accepted:
+        if name not in CONTRACT_QUERY_PARAMS:
             return name
     return None
 
@@ -122,11 +84,10 @@ def validation_param(request: Request, errors: list[dict[str, object]]) -> str |
     unexpected = unexpected_param(request)
     if unexpected is not None:
         return None
-    _, _, parameters = contract_params(request)
     for error in errors:
         for part in reversed(error_location(error)):
-            if part in parameters:
-                return parameters[part]
+            if part in VALIDATION_PARAMS:
+                return VALIDATION_PARAMS[part]
     return None
 
 
@@ -153,13 +114,6 @@ def error_response(error: ChainApiError) -> JSONResponse:
     return JSONResponse(status_code=error.status_code, content=body.model_dump(mode="json"))
 
 
-def premium_error_response(error: PremiumApiError) -> JSONResponse:
-    body = PremiumErrorResponse(
-        error=PremiumErrorBody(kind=error.kind, detail=error.detail, param=error.param)
-    )
-    return JSONResponse(status_code=error.status_code, content=body.model_dump(mode="json"))
-
-
 def contract_openapi(application: FastAPI) -> Callable[[], dict[str, Any]]:
     """Build the OpenAPI generator that publishes exactly the contract.
 
@@ -179,9 +133,8 @@ def contract_openapi(application: FastAPI) -> Callable[[], dict[str, Any]]:
 
     def openapi() -> dict[str, Any]:
         document: dict[str, Any] = deepcopy(build_openapi())
-        for path in document["paths"].values():
-            for operation in path.values():
-                operation["responses"].pop(VALIDATION_STATUS, None)
+        operation = document["paths"][ROUTE_PATH]["get"]
+        operation["responses"].pop(VALIDATION_STATUS, None)
         schemas = document["components"]["schemas"]
         if "HTTPValidationError" in schemas and not any(
             VALIDATION_STATUS in entry["responses"]
@@ -194,28 +147,18 @@ def contract_openapi(application: FastAPI) -> Callable[[], dict[str, Any]]:
     return openapi
 
 
-def create_app(*, include_premium: bool = False) -> FastAPI:
-    """Build the chain contract app, optionally composing the backend runtime."""
+def create_app() -> FastAPI:
+    """Build the isolated MO Option Chain delivery application."""
     application = FastAPI(
-        title="hg-market-state-lab Market Snapshot API" if include_premium else TITLE,
+        title=TITLE,
         version=VERSION,
-        summary=(
-            "HTTP delivery runtime for market-snapshot products."
-            if include_premium
-            else "Minimal HTTP delivery adapter for the MO Option Chain read contract."
-        ),
+        summary="Minimal HTTP delivery adapter for the MO Option Chain read contract.",
     )
     application.openapi = contract_openapi(application)  # type: ignore[method-assign]
 
     @application.exception_handler(ChainApiError)
     async def handle_chain_api_error(_request: Request, exc: ChainApiError) -> JSONResponse:
         return error_response(exc)
-
-    @application.exception_handler(PremiumApiError)
-    async def handle_premium_api_error(
-        _request: Request, exc: PremiumApiError
-    ) -> JSONResponse:
-        return premium_error_response(exc)
 
     @application.exception_handler(RequestValidationError)
     async def handle_request_validation_error(
@@ -229,30 +172,18 @@ def create_app(*, include_premium: bool = False) -> FastAPI:
         FastAPI's own 422 error shape.
         """
         errors = [dict(error) for error in exc.errors()]
-        detail = validation_detail(request, errors)
-        param = validation_param(request, errors)
-        if request.url.path == PREMIUM_ROUTE_PATH:
-            return premium_error_response(
-                PremiumApiError(
-                    PremiumErrorKind.INVALID_REQUEST,
-                    detail,
-                    param,  # type: ignore[arg-type]
-                )
-            )
         return error_response(
             ChainApiError(
                 ChainErrorKind.INVALID_REQUEST,
-                detail,
-                param,  # type: ignore[arg-type]
+                validation_detail(request, errors),
+                validation_param(request, errors),  # type: ignore[arg-type]
             )
         )
 
     application.include_router(router)
-    if include_premium:
-        application.include_router(premium_router)
     return application
 
 
-app = create_app(include_premium=True)
+app = create_app()
 
 __all__ = ["ROUTE_PATH", "app", "create_app"]

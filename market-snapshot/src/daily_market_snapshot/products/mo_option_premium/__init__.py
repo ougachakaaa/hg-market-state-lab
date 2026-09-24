@@ -1,1 +1,1 @@
-"""Planned MO Option Premium product context; no implementation yet."""
+"""MO Premium Plane bounded context."""

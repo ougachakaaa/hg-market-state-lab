@@ -67,6 +67,12 @@ def collect_index_observation(
     records = common.to_raw_records(frame)
     if records:
         common.require_target_trade_date(records, trade_date)
+        for record in records:
+            if record.get("ts_code") != index_code:
+                raise common.CollectionError(
+                    f"source returned ts_code={record.get('ts_code')!r} "
+                    f"for requested index_code={index_code}."
+                )
     return records
 
 

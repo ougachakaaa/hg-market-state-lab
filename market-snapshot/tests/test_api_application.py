@@ -25,10 +25,14 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
 from daily_market_snapshot.products.mo_option_chain.api import ROUTE_PATH
+from daily_market_snapshot.products.mo_option_premium.api import (
+    ROUTE_PATH as PREMIUM_ROUTE_PATH,
+)
 
 app_module: ModuleType = importlib.import_module(
     "daily_market_snapshot.products.mo_option_chain.api.app"
 )
+runtime_module: ModuleType = importlib.import_module("daily_market_snapshot.api.app")
 
 # The routes FastAPI registers for itself (all ``include_in_schema=False``).
 FRAMEWORK_ROUTES = ("/openapi.json", "/docs", "/docs/oauth2-redirect", "/redoc")
@@ -112,3 +116,28 @@ def test_the_published_contract_is_stable_across_builds(application: FastAPI) ->
     second = TestClient(app_module.create_app()).get("/openapi.json").json()
 
     assert first == second
+
+
+def test_neutral_runtime_composes_each_product_route_once() -> None:
+    runtime = runtime_module.create_app()
+
+    assert route_paths(runtime).count(ROUTE_PATH) == 1
+    assert route_paths(runtime).count(PREMIUM_ROUTE_PATH) == 1
+    assert all(route_paths(runtime).count(path) == 1 for path in FRAMEWORK_ROUTES)
+
+
+@pytest.mark.parametrize(
+    ("path", "params", "missing_param"),
+    [
+        (ROUTE_PATH, {"option_product": "MO"}, "target_trade_date"),
+        (PREMIUM_ROUTE_PATH, {"option_product": "MO"}, "as_of"),
+    ],
+)
+def test_neutral_runtime_preserves_each_product_validation_envelope(
+    path: str, params: dict[str, str], missing_param: str
+) -> None:
+    response = TestClient(runtime_module.create_app()).get(path, params=params)
+
+    assert response.status_code == 400
+    assert response.json()["error"]["kind"] == "invalid_request"
+    assert response.json()["error"]["param"] == missing_param

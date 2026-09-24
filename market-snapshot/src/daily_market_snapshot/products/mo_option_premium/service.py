@@ -93,12 +93,9 @@ def read_premium_plane_with_api(
         artifacts.write_raw_artifact(index_facts, raw_dir, index_daily.RAW_ARTIFACT)
     except Exception as exc:
         return PremiumPlaneResult(error=PremiumPlaneUnavailableError(str(exc)))
-    exact_observations = [
-        row
-        for row in index_facts
-        if row.get("ts_code") == basis.UNDERLYING_ID and row.get("trade_date") == query.as_of
-    ]
-    if not exact_observations:
+    # A non-empty successful Capture is exact by the shared Capture contract.
+    # Only the successfully persisted empty result proves explicit absence.
+    if not index_facts:
         return PremiumPlaneResult(
             error=DateNotAvailableError(
                 f"no {basis.UNDERLYING_ID} observation for as_of={query.as_of}"

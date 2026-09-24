@@ -1,9 +1,8 @@
-"""Thin executable shim that runs the composed backend HTTP adapters.
+"""Thin executable shim that runs the neutral backend HTTP runtime.
 
-The runtime composition currently lives beside the original MO Option Chain
-adapter and includes the independent MO Premium Plane route. This script only
-makes it runnable without packaging the project, exactly like ``scripts/dms.py``
-does for the CLI.
+The neutral composition root includes the independent MO Option Chain and MO
+Premium Plane adapters. This script only makes it runnable without packaging
+the project, exactly like ``scripts/dms.py`` does for the CLI.
 
 Authority: ``products/mo_option_chain/http-contract.md`` and
 ``products/mo_option_premium/http-contract.md``.
@@ -28,7 +27,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src"))
 
 import uvicorn  # noqa: E402
 
-from daily_market_snapshot.products.mo_option_chain.api import app  # noqa: E402
+from daily_market_snapshot.api import app  # noqa: E402
 
 
 def main(argv: list[str] | None = None) -> None:

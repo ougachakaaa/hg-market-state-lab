@@ -1,8 +1,7 @@
-"""FastAPI delivery adapter and composed market-snapshot runtime.
+"""FastAPI delivery adapter for the MO Option Chain product.
 
-``create_app`` builds the isolated MO Option Chain contract application; the
-exported runtime ``app`` additionally composes the independent MO Premium Plane
-route. Both remain delivery surfaces and never reinterpret market semantics.
+The exported application contains only the product-local HTTP contract. The
+repository runtime composes product adapters from ``daily_market_snapshot.api``.
 """
 
 from __future__ import annotations

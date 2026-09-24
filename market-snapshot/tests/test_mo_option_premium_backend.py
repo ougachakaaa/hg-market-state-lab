@@ -7,11 +7,13 @@ from dataclasses import replace
 from pathlib import Path
 from typing import Any
 
+import pandas as pd
 import pytest
 from fastapi.testclient import TestClient
 
-from daily_market_snapshot.products.mo_option_chain.api.app import app as runtime_app
-from daily_market_snapshot.products.mo_option_chain.api.app import create_app
+from daily_market_snapshot import artifacts
+from daily_market_snapshot.api import app as runtime_app
+from daily_market_snapshot.api import create_app
 from daily_market_snapshot.products.mo_option_premium import framing, preparation, service
 from daily_market_snapshot.products.mo_option_premium.api import endpoint
 from daily_market_snapshot.products.mo_option_premium.models import (
@@ -137,6 +139,11 @@ def test_framer_orders_sparse_points_and_rejects_incompatible_context() -> None:
         framing.frame_plane((points[0], incompatible))
 
 
+def test_framer_rejects_an_empty_point_collection() -> None:
+    with pytest.raises(framing.PlaneFramingError, match="at least one real Point"):
+        framing.frame_plane(())
+
+
 def test_real_service_runs_five_captures_and_writes_only_premium_raw(
     test_workdir: Path,
 ) -> None:
@@ -160,6 +167,57 @@ def test_real_service_runs_five_captures_and_writes_only_premium_raw(
         "im_futures_daily.json",
     }
     assert not (test_workdir / "raw" / "mo-option-chain").exists()
+
+
+@pytest.mark.parametrize(
+    ("price_type", "underlying_price", "call_premium", "put_premium", "futures_price"),
+    [
+        (PriceType.OPEN, 7101.0, 11.0, 12.0, 7100.0),
+        (PriceType.HIGH, 7201.0, 21.0, 22.0, 7200.0),
+        (PriceType.LOW, 7001.0, 31.0, 32.0, 7000.0),
+        (PriceType.CLOSE, 7301.0, 41.0, 42.0, 7300.0),
+    ],
+)
+def test_service_projects_one_price_type_across_all_market_facts(
+    price_type: PriceType,
+    underlying_price: float,
+    call_premium: float,
+    put_premium: float,
+    futures_price: float,
+) -> None:
+    api = premium_source()
+    api.index_frames["000852.SH"].loc[0, price_type.value] = underlying_price
+    api.option_daily.loc[api.option_daily["ts_code"] == CALL, price_type.value] = call_premium
+    api.option_daily.loc[api.option_daily["ts_code"] == PUT, price_type.value] = put_premium
+    api.futures_daily["IM2609.CFE"].loc[0, price_type.value] = futures_price
+    query = replace(QUERY, price_type=price_type)
+
+    result = service.read_premium_plane_with_api(api, query)
+
+    assert result.error is None, result.error
+    assert result.plane is not None
+    plane = result.plane
+    assert plane.price_type is price_type
+    assert plane.underlying.price == underlying_price
+    assert [point.premium for point in plane.points] == [call_premium, put_premium]
+    assert {point.futures for point in plane.points} == {
+        FuturesReference("IM2609.CFE", futures_price)
+    }
+    expected_annualized = call_premium * 365 / 9
+    assert plane.points[0].annualized_premium_points == pytest.approx(expected_annualized)
+    assert plane.points[0].annualized_seller_premium_yield == pytest.approx(
+        expected_annualized / underlying_price
+    )
+
+
+def test_empty_prepared_points_are_product_unavailable(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(preparation, "prepare_points", lambda _basis: ())
+
+    result = service.read_premium_plane_with_api(premium_source(), QUERY)
+
+    assert isinstance(result.error, service.PremiumPlaneUnavailableError)
 
 
 def test_explicit_empty_probe_is_persisted_and_classified_as_date_not_available(
@@ -192,9 +250,63 @@ def test_probe_exception_is_not_misclassified_as_date_unavailable(
     assert isinstance(result.error, service.PremiumPlaneUnavailableError)
 
 
-def test_admitted_invalid_underlying_is_product_unavailable() -> None:
+@pytest.mark.parametrize("response_kind", ["wrong_instrument", "missing_instrument"])
+def test_malformed_probe_response_is_product_unavailable(response_kind: str) -> None:
     api = premium_source()
-    api.index_frames["000852.SH"].loc[0, "close"] = 0.0
+    if response_kind == "wrong_instrument":
+        frame = index_daily_frame("000300.SH", close=7300.0)
+    else:
+        frame = index_daily_frame("000852.SH", close=7300.0).drop(columns=["ts_code"])
+    api.index_frames["000852.SH"] = frame
+
+    result = service.read_premium_plane_with_api(api, QUERY)
+
+    assert isinstance(result.error, service.PremiumPlaneUnavailableError)
+    assert [name for name, _ in api.calls] == ["index_daily"]
+
+
+def test_probe_raw_write_failure_is_product_unavailable(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    api = premium_source()
+
+    def fail_write(*_args: Any, **_kwargs: Any) -> None:
+        raise OSError("disk unavailable")
+
+    monkeypatch.setattr(artifacts, "write_raw_artifact", fail_write)
+
+    result = service.read_premium_plane_with_api(api, QUERY)
+
+    assert isinstance(result.error, service.PremiumPlaneUnavailableError)
+    assert [name for name, _ in api.calls] == ["index_daily"]
+
+
+def test_duplicate_underlying_is_admitted_then_product_unavailable() -> None:
+    api = premium_source()
+    observation = api.index_frames["000852.SH"]
+    api.index_frames["000852.SH"] = pd.concat(
+        [observation, observation], ignore_index=True
+    )
+
+    result = service.read_premium_plane_with_api(api, QUERY)
+
+    assert isinstance(result.error, service.PremiumPlaneUnavailableError)
+    assert [name for name, _ in api.calls] == [
+        "index_daily",
+        "opt_basic",
+        "opt_daily",
+        "fut_basic",
+        "fut_daily",
+    ]
+
+
+@pytest.mark.parametrize("value", [None, "bad", 0.0, -1.0])
+def test_admitted_invalid_underlying_is_product_unavailable(value: object) -> None:
+    api = premium_source()
+    api.index_frames["000852.SH"]["close"] = api.index_frames["000852.SH"][
+        "close"
+    ].astype(object)
+    api.index_frames["000852.SH"].loc[0, "close"] = value
 
     result = service.read_premium_plane_with_api(api, QUERY)
 
@@ -204,6 +316,26 @@ def test_admitted_invalid_underlying_is_product_unavailable() -> None:
 def test_missing_active_option_daily_row_is_product_unavailable() -> None:
     api = premium_source()
     api.option_daily = option_daily_frame("20260917", [CALL])
+
+    result = service.read_premium_plane_with_api(api, QUERY)
+
+    assert isinstance(result.error, service.PremiumPlaneUnavailableError)
+
+
+def test_duplicate_active_option_daily_row_is_product_unavailable() -> None:
+    api = premium_source()
+    duplicate = api.option_daily.loc[api.option_daily["ts_code"] == CALL]
+    api.option_daily = pd.concat([api.option_daily, duplicate], ignore_index=True)
+
+    result = service.read_premium_plane_with_api(api, QUERY)
+
+    assert isinstance(result.error, service.PremiumPlaneUnavailableError)
+
+
+def test_malformed_selected_option_premium_is_product_unavailable() -> None:
+    api = premium_source()
+    api.option_daily["close"] = api.option_daily["close"].astype(object)
+    api.option_daily.loc[api.option_daily["ts_code"] == CALL, "close"] = "bad"
 
     result = service.read_premium_plane_with_api(api, QUERY)
 
@@ -231,6 +363,41 @@ def test_matched_futures_missing_daily_row_is_product_unavailable() -> None:
     assert isinstance(result.error, service.PremiumPlaneUnavailableError)
 
 
+def test_matched_futures_duplicate_daily_row_is_product_unavailable() -> None:
+    api = premium_source()
+    daily = api.futures_daily["IM2609.CFE"]
+    api.futures_daily["IM2609.CFE"] = pd.concat([daily, daily], ignore_index=True)
+
+    result = service.read_premium_plane_with_api(api, QUERY)
+
+    assert isinstance(result.error, service.PremiumPlaneUnavailableError)
+
+
+@pytest.mark.parametrize("value", [None, "bad"])
+def test_matched_futures_invalid_selected_price_is_product_unavailable(
+    value: object,
+) -> None:
+    api = premium_source()
+    daily = api.futures_daily["IM2609.CFE"]
+    daily["close"] = daily["close"].astype(object)
+    daily.loc[0, "close"] = value
+
+    result = service.read_premium_plane_with_api(api, QUERY)
+
+    assert isinstance(result.error, service.PremiumPlaneUnavailableError)
+
+
+def test_matched_futures_zero_selected_price_is_a_usable_fact() -> None:
+    api = premium_source()
+    api.futures_daily["IM2609.CFE"].loc[0, "close"] = 0.0
+
+    plane = successful_plane(api)
+
+    assert {point.futures for point in plane.points} == {
+        FuturesReference("IM2609.CFE", 0.0)
+    }
+
+
 def test_multiple_structural_futures_matches_are_product_unavailable() -> None:
     api = premium_source()
     api.futures_basic = futures_basic_frame(
@@ -251,7 +418,7 @@ def test_multiple_structural_futures_matches_are_product_unavailable() -> None:
 
 @pytest.fixture
 def http_client() -> TestClient:
-    application = create_app(include_premium=True)
+    application = create_app()
     application.dependency_overrides[endpoint.get_premium_plane_provider] = lambda: (
         lambda query: service.read_premium_plane_with_api(premium_source(), query)
     )
@@ -349,7 +516,7 @@ def test_http_rejects_a_noncanonical_as_of_before_calling_the_provider(
 def test_http_maps_classified_product_failures_without_partial_plane(
     failure: service.PremiumPlaneError, status: int, kind: str
 ) -> None:
-    application = create_app(include_premium=True)
+    application = create_app()
     application.dependency_overrides[endpoint.get_premium_plane_provider] = lambda: (
         lambda _query: service.PremiumPlaneResult(error=failure)
     )
