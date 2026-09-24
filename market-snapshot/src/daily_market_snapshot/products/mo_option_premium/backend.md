@@ -1,6 +1,6 @@
 # MO Annualized Premium backend semantic authority
 
-本文档从属于 [ARCHITECTURE.md](ARCHITECTURE.md)，拥有 MO Annualized Premium 的 canonical analytical model、market-fact boundary、确定性 Point Preparation、公式、null/zero/absence 与可选 PlaneFramer。HTTP transport 由 [http-contract.md](http-contract.md) 拥有。
+本文档从属于 [ARCHITECTURE.md](ARCHITECTURE.md)，拥有 MO Annualized Premium 的 `OptionMarketBasis` construction、canonical analytical model、确定性 Point Preparation、公式、null/zero/absence 与 PlaneFramer。Source requirements、Raw、universe 与 Raw completeness 由 [data.md](data.md) 拥有，product orchestration 由 [service-contract.md](service-contract.md) 拥有，HTTP transport 由 [http-contract.md](http-contract.md) 拥有。
 
 ---
 
@@ -26,7 +26,7 @@ AnnualizedPremiumPoint[]
         ├── modeling / feature preparation
         ├── future backtest workflows
         │
-        └── optional PremiumPlaneFramer
+        └── PremiumPlaneFramer for Plane product delivery
                 ↓
         AnnualizedPremiumPlane
 ```
@@ -41,7 +41,7 @@ OptionMarketBasis → React / Web state
 Point Preparation → HTTP transport details
 ```
 
-`AnnualizedPremiumPlane` 是可选的 downstream organization，不是 backend capability 的 canonical fact owner。
+`AnnualizedPremiumPlane` 是 downstream organization，不是 backend capability 的 canonical fact owner。Direct Point consumers 不必 framing；[Premium product service](service-contract.md) 则必须调用 `PremiumPlaneFramer` 形成其 Plane result。
 
 ## 2. Observation Semantics
 
@@ -65,35 +65,109 @@ Premium HTTP 使用 `as_of`；MO Option Chain 继续使用 `target_trade_date`�
 
 ## 3. OptionMarketBasis
 
-`OptionMarketBasis` 是薄的、可复用的 option-domain market-fact boundary。它的目的为：
+`OptionMarketBasis` 是薄的、可复用的 option-domain market-fact boundary。Premium 使用自己的 goal-scoped Raw 构造它；其目的为：
 
 > 收集并归一 downstream option analytics 所需的 Source-derived option-market facts，使每个 analytics 不必重复理解 Raw / Source-specific representation。
 
-它概念上提供：
+V1 Basis 至少提供：
 
 ```text
-observation
+observation:
+    as_of
 option_product
 resolved price_type
 
-underlying observation
+underlying:
+    instrument_id
+    price
 
-option contract identity
-option_type
-expiry_date
-strike
-premium
+option observations:
+    instrument_id
+    option_type
+    expiry_date
+    strike
+    premium
 
-expiry futures reference
+expiry futures reference:
+    null
+    OR
+    instrument_id
+    price
 ```
 
 `OptionMarketBasis`：
 
-* 可以由现有 Source Capture capability 与 goal-scoped Raw facts 构造；
-* 可以被 MO Option Chain Preparation 与 Annualized Premium Point Preparation 分别消费；
+* 由 [Premium-owned Raw](data.md) 的 Source-derived facts 确定性构造；
+* 可以被 Annualized Premium Point Preparation 消费，也允许 future option product 复用同一 semantic boundary；
 * 不等同于、也不消费 `/mo-option-chain` HTTP response、HTTP DTO、frontend DTO 或 Web projection；
 * 不计算 DTE、annualized premium 或 seller yield；
-* 不预设 Python class layout、module layout、持久化 artifact 或 runtime orchestration。
+* 不预设 Python class layout、module layout 或持久化 artifact。
+
+### 3.1 Deterministic construction
+
+Basis construction 输入是 [data authority](data.md) 定义的完整 Premium Raw 与 normalized query。它按以下顺序形成 domain facts：
+
+```text
+determine active MO contracts from contract lifecycle facts
+        ↓
+join each active contract to exactly one as_of daily row by Source identity
+        ↓
+normalize Source fields into option-domain vocabulary
+        ↓
+project the resolved price_type
+        ↓
+attach the required underlying observation
+        ↓
+match nullable expiry futures references
+```
+
+允许的 deterministic analytical normalization 包括：
+
+```text
+ts_code        → instrument_id
+call_put       → call | put
+exercise_price → strike
+maturity_date  → expiry_date
+resolved price field → premium / underlying.price / futures.price
+basic + daily join
+legitimate expiry-futures structural matching
+```
+
+Source identity、date、lifecycle、option side 或 numeric facts 缺失、重复、malformed 或相互矛盾，且不属于已明确的合法 nullable premium/futures absence 时，不能形成合法 Basis。Basis 必须完整覆盖 active MO universe；不得删除无法 join 的 contract 或返回 partial Basis。
+
+option selected premium 可以是 numeric（包括 `0`）或 Source 的 null/missing fact；后者归一为 `premium = null`。underlying 必须满足 [data authority](data.md) 的 positive price contract。futures 的唯一匹配价格必须 numeric，`0` 是合法事实。
+
+### 3.2 Expiry futures matching
+
+对 Basis 中每个 MO `expiry_date`，从 data authority 定义的 `as_of`-active IM ordinary-monthly universe 建立候选集：
+
+```text
+candidates = as_of-active IM ordinary-monthly contracts
+             where IM.delist_date == MO.expiry_date
+
+0 candidates  → futures = null
+1 candidate   → use that contract
+>1 candidates → explicit failure
+```
+
+唯一匹配的 IM contract 必须有恰好一条 `as_of` daily row，且 resolved selected price 必须是 usable numeric fact。row 缺失/重复，或 price 为 null/missing/malformed，均显式失败，不得转为 `futures = null`。
+
+禁止 nearest-expiry、main-contract、liquidity-based、symbol/month guessing 或其他 price/date fallback。未匹配任何 MO expiry 的 IM contract 缺 daily row 不影响 Basis analytical completeness。
+
+### 3.3 Calculation boundary
+
+Basis construction 不得计算：
+
+```text
+DTE
+annualized premium points
+annualized seller premium yield
+market judgment
+HTTP projection
+frontend grouping
+```
+
+前三项只属于 `AnnualizedPremiumPoint Preparation`。
 
 它不是 `GenericBasisFramework`、analysis registry、pipeline engine、plugin system、DAG framework 或项目级抽象层级。
 
@@ -105,11 +179,11 @@ Source-derived option-market facts
       OptionMarketBasis
         ┌────┴──────────────┐
         ↓                   ↓
-MO Option Chain       Annualized Premium
+future option         Annualized Premium
 Preparation           Point Preparation
 ```
 
-这是期望的 semantic boundary；本 authority 不实施从现有 Option Chain Preparation 中提取共享代码，也不改变各产品的 goal-scoped Raw ownership。
+这是可复用的 semantic boundary，不是 sibling product 的当前 implementation prerequisite：本 authority 不要求从现有 Option Chain Preparation 提取共享代码，也不改变各产品的 goal-scoped Raw ownership。Premium implementation 只需从自己的 Raw 构造满足本文档的 Basis。
 
 ## 4. Canonical AnnualizedPremiumPoint
 
@@ -359,10 +433,10 @@ underlying 是 seller-yield 的 analytical input，不只是 visualization metad
 
 ### 8.2 Futures
 
-futures 表示与 Point expiry 关联的 analytical futures reference。当前合法结构性匹配沿用 MO Option Chain 已锁定的事实条件：
+futures 表示与 Point expiry 关联的 analytical futures reference。Premium 的合法结构性匹配条件是：
 
 ```text
-candidates = target-date-active IM ordinary monthly contracts
+candidates = as_of-active IM ordinary monthly contracts
              where IM.delist_date == MO.expiry_date
 
 len(candidates) == 0 → futures = null
@@ -420,11 +494,11 @@ AnnualizedPremiumPoint with premium = null
 
 前者表示没有真实 contract observation；后者表示真实 contract observation 存在，但 selected premium fact 不可用。
 
-active contract 缺少整个 target-date daily row 是 market-fact completeness failure，不得静默解释为无 Point。daily row 存在但 selected premium field 缺失，才使用 nullable premium 语义。
+active contract 缺少整个 `as_of` daily row 是 market-fact completeness failure，不得静默解释为无 Point。daily row 存在但 selected premium field 缺失，才使用 nullable premium 语义。
 
 `AnnualizedPremiumPoint[]` 是真实 observation 的 sparse collection，不是 rectangular matrix。不同 expiry 可以有不同 strike universe；禁止创建 `expiry × all strikes` Cartesian product、synthetic null Point、synthetic contract、interpolation 或 nearest-strike substitution。
 
-## 10. Optional PremiumPlaneFramer
+## 10. PremiumPlaneFramer
 
 可选 downstream organizer：
 
@@ -482,6 +556,8 @@ Plane = deterministic organization of compatible Points
 
 Plane 不拥有解释 child Point 所必需的唯一 calculation context。
 
+Framer 对 direct Point consumers 是 optional downstream organizer；对 [MO Premium Plane product service](service-contract.md) 是形成成功 `AnnualizedPremiumPlane` result 的 required stage。
+
 ## 11. Consumers, HTTP Projection and Physical Representation
 
 合法 downstream consumers 包括：
@@ -523,11 +599,12 @@ Parquet format
 historical corpus storage
 materialized analytical tables
 concrete Python class or module layout
-Data Service / provider orchestration
 FastAPI route / Pydantic DTO / OpenAPI
 generated TypeScript
 React / Plotly
 ```
+
+Product service orchestration 与 request-scoped result boundary 已由 [service-contract.md](service-contract.md) 定义；本文档不重复其 workflow。
 
 V1 可以完全 request-scoped + in-memory；这不是 persistence architecture 的承诺。
 
@@ -549,7 +626,7 @@ generic analytical framework
 1. `AnnualizedPremiumPoint` 是最小 canonical analytical unit。
 2. Point 自包含，不依赖 Plane、HTTP 或 frontend context 才可解释。
 3. `OptionMarketBasis` 是薄的 reusable option-market fact boundary。
-4. Premium 不消费 `/mo-option-chain` response 或 DTO。
+4. Premium 从自己的 goal-scoped Raw 构造 Basis，不消费 sibling Raw、`/mo-option-chain` response 或 DTO。
 5. Point Preparation 唯一拥有 DTE 与两个 premium metrics 的计算。
 6. DTE 使用 inclusive calendar days；expiry day 为 1。
 7. annualization basis 为 365 days。
@@ -562,6 +639,7 @@ generic analytical framework
 14. PlaneFramer 组织但不计算或合成 analytical facts。
 15. 不兼容 analytical contexts 不得静默 framing。
 16. Core model 独立于 HTTP、frontend 与 physical execution optimization。
+17. Basis construction 只做 deterministic domain normalization；所有 premium derived calculations 只属于 Point Preparation。
 
 ## 14. Completion Check
 
@@ -569,7 +647,7 @@ generic analytical framework
 
 1. canonical analytical model 是什么，为什么是 Point 而不是 Plane？
 2. Point 如何保持 self-contained，其 identity 与 coordinate 分别是什么？
-3. `OptionMarketBasis` 提供什么、不负责什么？
+3. Premium Raw 如何确定性构造 `OptionMarketBasis`，允许和禁止哪些 normalization？
 4. Premium 为什么不依赖 Option Chain HTTP DTO？
 5. DTE、annualized premium points 与 seller yield 在哪里、如何计算？
 6. underlying 与 futures 分别扮演什么角色？
@@ -578,4 +656,4 @@ generic analytical framework
 9. PlaneFramer 可以和不可以做什么，哪些 Points 可以共同 framing？
 10. HTTP projection 为什么可以去重，却不能改变 Core semantics？
 11. future backtest 是否可以使用其他 physical representation？
-12. 哪些 implementation、operational 与 analytical decisions 被明确 deferred？
+12. 哪些 implementation、operational 与 analytical decisions 被明确 deferred，orchestration authority 在哪里？

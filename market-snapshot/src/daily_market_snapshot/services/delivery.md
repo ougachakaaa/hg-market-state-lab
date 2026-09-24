@@ -32,12 +32,13 @@ Plugin
 
 ## 2. Data Service Catalog
 
-Data Service catalog 声明以下两个用户可请求能力，不为了丰富 catalog 创造其他服务：
+Data Service catalog 声明以下三个用户可请求能力，不为了丰富 catalog 创造其他服务：
 
 | service_id | input | result / delivery | 产品 authority |
 | --- | --- | --- | --- |
 | `csi1000-5d-analysis` | `target_trade_date`（CLI 的 `--date`） | persisted `snapshot.json` | [product authority](../products/csi1000_5d_analysis/ARCHITECTURE.md) |
 | `mo-option-chain` | `target_trade_date + option_product + price_type` | request-scoped read model / HTTP | [product authority](../products/mo_option_chain/ARCHITECTURE.md) |
+| `mo-option-premium-plane` | `as_of + option_product + price_type` | request-scoped `AnnualizedPremiumPlane` / HTTP | [product authority](../products/mo_option_premium/ARCHITECTURE.md) |
 
 Catalog 是显式、静态、authority-driven 的，不通过扫描文件系统动态发现。不做：
 
@@ -62,9 +63,15 @@ Data Service 拥有该 request-scoped service 的 orchestration 与 read-model d
 
 `mo-option-chain` 不使用 `dms get`，V1 也没有 canonical persisted final output；它通过 HTTP delivery adapter 向 read consumer 交付 request-scoped read model。
 
+### 3.3 `mo-option-premium-plane`
+
+MO Premium Plane product service 拥有该 request-scoped analytical service 的 orchestration 与 result boundary。产品定位与 ownership、Source/Raw scope、Basis/Point/Plane semantics、product orchestration 与 HTTP transport 分别由 [产品入口](../products/mo_option_premium/ARCHITECTURE.md)、[data authority](../products/mo_option_premium/data.md)、[backend authority](../products/mo_option_premium/backend.md)、[service contract](../products/mo_option_premium/service-contract.md) 与 [HTTP contract](../products/mo_option_premium/http-contract.md) 拥有。
+
+`mo-option-premium-plane` 不使用 `dms get`，V1 不要求 canonical persisted final output；它通过 HTTP delivery adapter 交付 request-scoped `AnnualizedPremiumPlane`。共享 Data Service authority 不复制其 Capture ordering、financial formulas 或 product failure semantics。
+
 ## 4. CLI: dms
 
-用户级 CLI 语义名称为 `dms`。第一版只支持两个命令：`list`、`get`。CLI 是 delivery surface 之一，只服务 persisted-artifact service `csi1000-5d-analysis`；`mo-option-chain` 通过 HTTP 提供（见第 3.2、10 节），不走 `dms get`。
+用户级 CLI 语义名称为 `dms`。第一版只支持两个命令：`list`、`get`。CLI 是 delivery surface 之一，只服务 persisted-artifact service `csi1000-5d-analysis`；`mo-option-chain` 与 `mo-option-premium-plane` 通过 HTTP 提供（见第 3.2、3.3、10 节），不走 `dms get`。
 
 ### 4.1 dms list
 
@@ -89,6 +96,8 @@ description
 
 ```text
 csi1000-5d-analysis
+mo-option-chain
+mo-option-premium-plane
 ```
 
 Catalog 不通过扫描文件系统动态发现。
@@ -171,15 +180,15 @@ service_id + target_trade_date
 
 唯一确定一次最终用户输出位置。
 
-`mo-option-chain` 是 request-scoped read model，V1 不要求 canonical persisted final output，不落入上述 `output/<service>/<date>/` 约定（见第 3.2 节）。
+`mo-option-chain` 与 `mo-option-premium-plane` 是 request-scoped results，V1 不要求 canonical persisted final output，不落入上述 `output/<service>/<date>/` 约定（见第 3.2、3.3 节）。
 
 ## 7. Raw Artifact / Analysis-ready Artifact / Output 边界
 
 * `data/raw/`：Source Facts / internal runtime artifacts（Raw Artifact）。
 * `data/snapshots/`：非 Data Service 的 Analysis-ready Artifact 输出目录。第一版 Daily 数据产品（`data/snapshots/YYYY-MM-DD/snapshot.json`）不是 Data Service，继续使用 `data/snapshots/`。
-* `output/<service_id>/<target_trade_date>/`：Data Service 的 canonical user-facing output。
+* `output/<service_id>/<target_trade_date>/`：persisted-artifact Data Service 的 canonical user-facing output。
 
-> `output/<service>/<date>/` 是 Data Service 的 canonical user-facing output。
+> `output/<service>/<date>/` 是 persisted-artifact Data Service 的 canonical user-facing output，不适用于 request-scoped HTTP results。
 
 Data Service 的 orchestration 把 Analysis Preparation 产出的 artifact 发布到该位置；`data/snapshots/csi1000-5d-analysis/<date>/snapshot.json` 不属于该 service 的输出，也不得维护两份相同 artifact。
 
@@ -220,7 +229,7 @@ index_daily_history.json
 im_futures_daily.json
 ```
 
-可以包含多个历史交易日。但它们都属于 `target_trade_date = D` 这一次数据准备。`mo-option-chain` 是 request-scoped read model，不适用本节的按日持久化 partition 语义（见第 3.2 节）。
+可以包含多个历史交易日。但它们都属于 `target_trade_date = D` 这一次数据准备。`mo-option-chain` 与 `mo-option-premium-plane` 是 request-scoped results，不适用本节的按日持久化 partition 语义（见第 3.2、3.3 节）。
 
 ## 9. Non-goals
 
@@ -244,7 +253,7 @@ GPT analyzer / trading analysis
 
 通用 API platform（多租户、通用 endpoint、auth、版本化、schema registry 等）不属于当前范围。
 
-MO Option Chain visualization 通过 HTTP delivery adapter 读取数据；前端语义见 [web-ui visualization authority](../../../../web-ui/src/features/mo_option_chain/ARCHITECTURE.md)。
+MO Option Chain 与 MO Premium Plane 通过各自的 HTTP delivery adapter 读取数据；Option Chain 前端语义见 [web-ui visualization authority](../../../../web-ui/src/features/mo_option_chain/ARCHITECTURE.md)，Premium transport 见其 product HTTP contract。
 
 HTTP delivery adapter 与 CLI 的关系：
 
@@ -280,7 +289,7 @@ CORS policy
 server deployment
 ```
 
-这些属于具体产品的 HTTP delivery contract 或实现设计。MO Option Chain transport 见 [HTTP contract](../products/mo_option_chain/http-contract.md)。
+这些属于具体产品的 HTTP delivery contract 或实现设计。MO Option Chain transport 见其 [HTTP contract](../products/mo_option_chain/http-contract.md)，MO Premium Plane transport 见其 [HTTP contract](../products/mo_option_premium/http-contract.md)。
 
 ## 11. 完成自检
 

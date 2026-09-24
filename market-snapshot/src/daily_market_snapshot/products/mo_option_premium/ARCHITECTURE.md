@@ -1,6 +1,6 @@
 # MO Premium Plane 产品 authority
 
-本文档是 MO Premium Plane 的 planned bounded-context 入口，只拥有产品定位、ownership、跨 backend/HTTP/presentation 的稳定 invariant 与 authority 路由。模块边界见 [market-snapshot architecture](../../../../ARCHITECTURE.md)。当前没有 runtime implementation；未来实现必须落在本目录并遵循本 authority。
+本文档是 MO Premium Plane 的 bounded-context 入口，只拥有产品定位、ownership、跨 data/backend/service/HTTP/presentation 的稳定 invariant 与 authority 路由。模块边界见 [market-snapshot architecture](../../../../ARCHITECTURE.md)。
 
 ## 1. 产品定位
 
@@ -15,11 +15,14 @@
 | Owner | Canonical knowledge |
 | --- | --- |
 | 本文档 | 产品身份、产品间边界、跨子契约 invariant |
-| [Backend authority](backend.md) | `OptionMarketBasis`、canonical `AnnualizedPremiumPoint`、ObservationAnchor、公式、单位、Preparation、Point completeness、null/zero/absence 与可选 PlaneFramer |
+| [Shared Source Capture authority](../../capture/ARCHITECTURE.md) | Capture identity、Source endpoint、公共 Source 字段与 minimal normalization |
+| [Data authority](data.md) | Premium Source requirements、Capture scope、goal-scoped Raw、active universe、Raw completeness 与 observation availability |
+| [Backend authority](backend.md) | `OptionMarketBasis` construction、canonical `AnnualizedPremiumPoint`、ObservationAnchor、公式、单位、Preparation、null/zero/absence 与 PlaneFramer |
+| [Product service authority](service-contract.md) | request orchestration、stage ordering、stage responsibility、semantic failure propagation 与 result boundary |
 | [HTTP contract](http-contract.md) | resource/query、success projection、sparse-plane wire shape、transport null/absence/zero 与 error/status mapping |
 | future web-ui authority | presentation state、Call/Put 与 metric selection、expiry visibility、viewport、formatting、rendering 与 interaction |
 
-HTTP 只能投影 backend 已准备的 analytical facts，不得从 DTO 反向塑造 canonical Point。Frontend 只拥有 presentation，不重新计算 premium metrics。
+共享 Capture capability 不等于共享 goal-scoped Raw Artifact。Product service 只编排各 canonical stage；HTTP 只能投影完整 service result，不得从 DTO 反向塑造 canonical Point。Frontend 只拥有 presentation，不重新计算 premium metrics。
 
 ## 3. Stable Product Invariants
 
@@ -29,11 +32,44 @@ HTTP 只能投影 backend 已准备的 analytical facts，不得从 DTO 反向�
 4. Underlying、futures reference、premium metrics 与 seller-yield denominator 的 domain 角色由 backend authority 唯一定义，HTTP 和 frontend 不 fallback 或替代。
 5. HTTP Point 是 delivery projection，不是 canonical backend Point；wire identity、ordering 和 error mapping 由 HTTP contract 拥有。
 6. Call/Put、metric、expiry visibility 与 viewport 是 presentation state，不进入 V1 product query。
+7. Premium 拥有自己的 Raw、Basis construction 与 product orchestration，不消费 sibling product 的 Raw、read DTO 或 final artifact。
+8. 成功 product result 是 request-scoped `AnnualizedPremiumPlane`；V1 不要求 canonical persisted final output。
 
 ## 4. Navigation
 
-- 修改 domain Point、ObservationAnchor、market-fact boundary、formula、unit、Preparation、null/zero/absence 或 PlaneFramer → [Backend authority](backend.md)
+- 修改共享 Source fact 或 Capture identity → [Shared Source Capture authority](../../capture/ARCHITECTURE.md)
+- 修改 Premium Source requirements、Capture scope、Raw、universe、daily completeness 或 observation availability → [Data authority](data.md)
+- 修改 Basis construction、domain Point、ObservationAnchor、formula、unit、Preparation、null/zero/absence 或 PlaneFramer → [Backend authority](backend.md)
+- 修改 request orchestration、stage responsibility、product result 或 semantic failure propagation → [Product service authority](service-contract.md)
 - 修改 endpoint、query、HTTP DTO projection、wire ordering、transport absence 或 error/status mapping → [HTTP contract](http-contract.md)
-- 判断产品独立性、ownership 或 backend/HTTP/presentation 边界 → 本文档
+- 判断产品独立性、ownership 或跨 data/backend/service/HTTP/presentation 边界 → 本文档
 
-Backend 实现只需本文档与 backend authority；HTTP 实现先读本文档与 HTTP contract，并仅沿其显式引用读取所需 backend semantics。
+只读取当前任务所需分支。Backend implementation 从本文档进入 data/backend/service authority；HTTP implementation 从本文档进入 service 与 HTTP contract，并仅沿显式引用读取所需 semantics。
+
+## 5. Authority Chain
+
+```text
+Tushare Source
+        ↓
+shared Source Capture
+        ↓
+Premium-owned goal-scoped Raw
+        ↓
+OptionMarketBasis construction
+        ↓
+AnnualizedPremiumPoint Preparation
+        ↓
+AnnualizedPremiumPoint[]
+        ↓
+PremiumPlaneFramer
+        ↓
+request-scoped AnnualizedPremiumPlane
+        ↓
+Premium product service result
+        ↓
+HTTP delivery adapter
+        ↓
+GET /mo-option-premium-plane
+```
+
+依赖方向只能向下；HTTP、presentation 或 sibling product 不得反向定义 Source scope、Raw、Basis、Point 或 Plane semantics。

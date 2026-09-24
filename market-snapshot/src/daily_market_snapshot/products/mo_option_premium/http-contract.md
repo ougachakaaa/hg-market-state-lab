@@ -1,6 +1,6 @@
 # MO Premium Plane HTTP transport contract authority
 
-本文档从属于 [ARCHITECTURE.md](ARCHITECTURE.md)，只拥有 MO Premium Plane 的 HTTP resource、V1 query、success projection、sparse-plane wire semantics、presentation-state boundary 与 error mapping。Canonical Point、Preparation、公式与 PlaneFramer 由 [backend.md](backend.md) 拥有。
+本文档从属于 [ARCHITECTURE.md](ARCHITECTURE.md)，只拥有 MO Premium Plane 的 HTTP resource、V1 query、success projection、sparse-plane wire semantics、presentation-state boundary 与 error mapping。Source/Raw/universe 由 [data.md](data.md) 拥有，Canonical Point、Preparation、公式与 PlaneFramer 由 [backend.md](backend.md) 拥有，product orchestration、result 与 semantic failures 由 [service-contract.md](service-contract.md) 拥有。
 
 ---
 
@@ -277,6 +277,8 @@ Tushare schema
 internal cache
 ```
 
+HTTP adapter 从 [product service](service-contract.md) 接受完整的 request-scoped `AnnualizedPremiumPlane` 或 classified product semantic failure。它不得直接调用 Source、构造 Raw/Basis、计算 DTE 或 premium metrics，也不得修复 incomplete Point/Plane。
+
 ## 7. Ordering and Identity
 
 deterministic serialization order：
@@ -333,10 +335,12 @@ V1 closed mapping：
 | --- | --- | --- |
 | `invalid_request` | 400 | 缺少 required 参数；`as_of` 格式无效；query 值不在 HTTP 输入闭集；携带未知 query 参数 |
 | `unsupported_query` | 400 | application/domain boundary 明确报告形态合法但 V1 不支持的 observation/product/price query |
-| `date_not_available` | 404 | query identity 合法且产品受支持，但该 trade-date observation 不可服务 |
-| `premium_plane_unavailable` | 503 | 缺少必要 underlying、无法生成完整 Premium Plane、必要 prepared facts 不足或真实 Point 数为零 |
+| `date_not_available` | 404 | query identity 合法且产品受支持，但 requested trade-date observation 本身不可服务 |
+| `premium_plane_unavailable` | 503 | observation 可请求，但 Source/Raw/Basis/Preparation/Framing 无法生成合法完整 Plane，或真实 Point 数为零 |
 
 transport validation 直接拒绝 `option_product != MO` 与不支持的 `price_type`，使用 `invalid_request` 并把 `param` 设为对应字段。`unsupported_query` 只用于 application/domain boundary 显式报告的合法但未支持 query，不由 HTTP adapter 自行发明。
+
+`date_not_available` 与 `premium_plane_unavailable` 的 product semantic classification 由 [service contract](service-contract.md) 决定。HTTP 只做上述 status/envelope mapping，不根据 partial facts 重新分类，也不把 transient Source failure、structural inconsistency 或 required analytical input failure误报为日期不可用。
 
 未知 query 参数使用 `invalid_request`，且 `param = null`，由 `detail` 指出未知参数。产品整体不可用时 `param = null`。
 
