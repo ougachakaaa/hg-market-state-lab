@@ -48,3 +48,34 @@ def collect_index_daily(
 
     common.require_target_trade_date(records, trade_date)
     return records
+
+
+def collect_index_observation(
+    trade_date: str,
+    query: common.QueryFunc,
+    index_code: str,
+) -> list[artifacts.RawRecord]:
+    """Return one index observation, preserving an explicit empty response.
+
+    This is the canonical availability-probe variant of ``index_daily``.  A
+    successful empty Source response is returned as an empty Raw row set so the
+    product can persist and classify that evidence. Source and normalization
+    failures still propagate and therefore cannot be mistaken for absence.
+    """
+    source_date = tushare.to_tushare_date(trade_date)
+    frame = query(ts_code=index_code, trade_date=source_date)
+    records = common.to_raw_records(frame)
+    if records:
+        common.require_target_trade_date(records, trade_date)
+    return records
+
+
+def capture_observation(
+    api: tushare.TushareApi, trade_date: str, index_code: str
+) -> list[artifacts.RawRecord]:
+    """Run the exact-date ``index_daily`` availability Capture."""
+    return collect_index_observation(
+        trade_date,
+        lambda **kwargs: query_index_daily(api, **kwargs),
+        index_code,
+    )

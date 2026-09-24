@@ -1,9 +1,8 @@
-"""Minimal HTTP delivery adapter of ``market-snapshot`` (FastAPI).
+"""FastAPI delivery adapter and composed market-snapshot runtime.
 
-The adapter exposes the MO Option Chain HTTP contract
-(``products/mo_option_chain/http-contract.md``) and nothing else. It is a delivery
-surface, not a business layer: it reads the chain through the Data Service
-application boundary and never reinterprets market semantics.
+``create_app`` builds the isolated MO Option Chain contract application; the
+exported runtime ``app`` additionally composes the independent MO Premium Plane
+route. Both remain delivery surfaces and never reinterpret market semantics.
 """
 
 from __future__ import annotations

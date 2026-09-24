@@ -76,7 +76,7 @@ poetry run python scripts/api.py
 poetry run python scripts/api.py --host 127.0.0.1 --port 8012
 ```
 
-默认地址为 `127.0.0.1:8011`，OpenAPI 位于 `/openapi.json`，交互文档位于 `/docs`。MO Option Chain 的 endpoint、query、response 与错误契约见 [HTTP authority](market-snapshot/src/daily_market_snapshot/products/mo_option_chain/http-contract.md)。
+默认地址为 `127.0.0.1:8011`，OpenAPI 位于 `/openapi.json`，交互文档位于 `/docs`。MO Option Chain 的 HTTP 契约见 [Option Chain authority](market-snapshot/src/daily_market_snapshot/products/mo_option_chain/http-contract.md)；MO Premium Plane 的 HTTP 契约见 [Premium Plane authority](market-snapshot/src/daily_market_snapshot/products/mo_option_premium/http-contract.md)。
 
 ## Web UI
 

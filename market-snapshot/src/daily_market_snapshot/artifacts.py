@@ -37,6 +37,7 @@ OUTPUT_DIR = REPO_ROOT / "output"
 # scoped Raw sub directory (services/delivery.md section 2).
 CSI1000_RAW_SUBDIR = "csi1000-5d-analysis"
 MO_OPTION_CHAIN_RAW_SUBDIR = "mo-option-chain"
+MO_OPTION_PREMIUM_RAW_SUBDIR = "mo-option-premium"
 
 # File name of a Data Service analysis-ready artifact. The canonical location is
 # ``output/<service_id>/<target_trade_date>/snapshot.json``
@@ -64,6 +65,11 @@ def csi1000_raw_dir(trade_date: str) -> Path:
 def mo_option_chain_raw_dir(trade_date: str) -> Path:
     """Return this data product's Raw directory for one target date."""
     return RAW_DIR / MO_OPTION_CHAIN_RAW_SUBDIR / trade_date
+
+
+def mo_option_premium_raw_dir(as_of: str) -> Path:
+    """Return MO Premium Plane's goal-scoped Raw directory."""
+    return RAW_DIR / MO_OPTION_PREMIUM_RAW_SUBDIR / as_of
 
 
 def write_raw_artifact(records: Sequence[RawRecord], raw_dir: Path, raw_artifact: str) -> Path:
