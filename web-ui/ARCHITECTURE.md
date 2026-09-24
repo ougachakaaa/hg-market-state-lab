@@ -45,8 +45,8 @@ interaction
 empty and error presentation
 ```
 
-MO Option Chain vertical slice 的入口是 [src/features/mo_option_chain/ARCHITECTURE.md](src/features/mo_option_chain/ARCHITECTURE.md)。该入口会按需链接 backend 产品、read 与 HTTP authority；普通前端任务无需读取 Source、Raw 或不相关产品文档。
+正式 frontend vertical slices 及其 canonical authority entry 由 [FEATURES.md](FEATURES.md) 导航。feature entry 会按需链接对应 backend product 与 HTTP authority；普通前端任务无需读取 Source、Raw 或不相关产品文档。
 
 ## 5. 维护边界
 
-只有展示层职责、backend contract 消费边界或数据依赖方向变化时更新本文件。框架版本、图表库、component tree、state-management、具体字段和视觉规则属于实现或 vertical slice Guide。
+只有展示层职责、backend contract 消费边界、数据依赖方向或 feature-authority routing 变化时更新本文件。单个 feature 的增删更新 `FEATURES.md`；框架版本、图表库、component tree、state-management、具体字段和视觉规则属于实现或 vertical slice Guide。

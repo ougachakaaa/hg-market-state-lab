@@ -20,7 +20,7 @@
 | [Backend authority](backend.md) | `OptionMarketBasis` construction、canonical `AnnualizedPremiumPoint`、ObservationAnchor、公式、单位、Preparation、null/zero/absence 与 PlaneFramer |
 | [Product service authority](service-contract.md) | request orchestration、observation admission、semantic failure classification/propagation 与 result boundary |
 | [HTTP contract](http-contract.md) | resource/query、success projection、sparse-plane wire shape、transport null/absence/zero 与 error/status mapping |
-| future web-ui authority | presentation state、Call/Put 与 metric selection、expiry visibility、viewport、formatting、rendering 与 interaction |
+| [Web visualization authority](../../../../../web-ui/src/features/mo_option_premium/ARCHITECTURE.md) | presentation state、Call/Put 与 metric selection、expiry visibility、viewport、formatting、rendering 与 interaction |
 
 共享 Capture capability 不等于共享 goal-scoped Raw Artifact。Product service 只编排各 canonical stage；HTTP 只能投影完整 service result，不得从 DTO 反向塑造 canonical Point。Frontend 只拥有 presentation，不重新计算 premium metrics。
 
@@ -42,6 +42,7 @@
 - 修改 Basis construction、domain Point、ObservationAnchor、formula、unit、Preparation、null/zero/absence 或 PlaneFramer → [Backend authority](backend.md)
 - 修改 request orchestration、stage responsibility、product result 或 semantic failure propagation → [Product service authority](service-contract.md)
 - 修改 endpoint、query、HTTP DTO projection、wire ordering、transport absence 或 error/status mapping → [HTTP contract](http-contract.md)
+- 修改用户可见展示或交互 → [Web visualization authority](../../../../../web-ui/src/features/mo_option_premium/ARCHITECTURE.md)
 - 判断产品独立性、ownership 或跨 data/backend/service/HTTP/presentation 边界 → 本文档
 
 只读取当前任务所需分支。Backend implementation 从本文档进入 data/backend/service authority；HTTP implementation 从本文档进入 service 与 HTTP contract，并仅沿显式引用读取所需 semantics。

@@ -7,7 +7,7 @@
 ## 最小 Authority 路径
 
 1. 先读 [ARCHITECTURE.md](ARCHITECTURE.md)，确认 presentation ownership 与 backend contract 依赖方向。
-2. 进入与任务对应的 co-located feature authority；当前入口是 [MO Option Chain feature](src/features/mo_option_chain/ARCHITECTURE.md)。
+2. 从 [frontend feature catalog](FEATURES.md) 选择任务所属的 vertical slice，再进入其 co-located feature authority。
 3. 只有 Guide 明确依赖某项 backend semantics 或 HTTP transport 时，才读取对应 product entry、read/backend authority 或 HTTP contract。
 
 普通 frontend 任务不读取 Source Capture、Raw Artifact、Analysis Preparation internals、CSI1000 5D 或其他无关产品 authority。
