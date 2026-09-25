@@ -182,7 +182,7 @@ active universe、option type、expiry、selected price fallback、contract comp
 
 完整结果展示 response 中的日期、价格口径、underlying 标识和参考价，以及一张包含 selected expiries 的 combined chart 与按 response 顺序排列的 selected expiry 明细。明细保留 expiry identity、条件性 IM futures reference 或缺失状态、Call / Put 合约数量；到期日可展开分别查看 Call 与 Put 的合约标识、行权价、价格。无同到期 IM 时仍正常展示该到期日和共享 Spot；`price=null` 在价格位置显示 `—`，数值 `0` 显示为 `0.0`。不重新组织或解释合约。
 
-前端请求、response 与 error handling 必须遵循 [MO Option Chain HTTP contract](../../../../market-snapshot/src/daily_market_snapshot/products/mo_option_chain/http-contract.md)。本文档不重复 endpoint、query schema、response shape、error kind 或 status mapping；前端也不得从 wire shape 反向定义 backend 业务语义。
+前端请求、response 与 error handling 必须遵循 [MO Option Chain HTTP contract](../../../../backend-api/products/mo_option_chain/http-contract.md)。本文档不重复 endpoint、query schema、response shape、error kind 或 status mapping；前端也不得从 wire shape 反向定义 backend 业务语义。
 
 散点图遵循第 4、5 节。本 Guide 不定义：
 

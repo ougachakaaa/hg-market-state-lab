@@ -9,7 +9,7 @@
 ## Progressive Disclosure
 
 1. 先读根 [ARCHITECTURE.md](ARCHITECTURE.md)，只确定 owning module 和顶层边界。
-2. 进入 owning module，读取其 local `AGENTS.md` 与 `ARCHITECTURE.md`：当前入口为 [market-snapshot/AGENTS.md](market-snapshot/AGENTS.md) 与 [web-ui/AGENTS.md](web-ui/AGENTS.md)。空的 `market-modeling/` 尚无 local policy 或 module authority。
+2. 进入 owning module，读取其 local `AGENTS.md` 与 `ARCHITECTURE.md`：当前入口为 [market-snapshot/AGENTS.md](market-snapshot/AGENTS.md)、[backend-api/AGENTS.md](backend-api/AGENTS.md) 与 [web-ui/AGENTS.md](web-ui/AGENTS.md)。空的 `market-modeling/` 尚无 local policy 或 module authority。
 3. 按 local catalog 或 architecture 进入相关 bounded-context entry。
 4. 只读取当前任务需要的 specialized authority；不默认加载 sibling product 或其他模块文档。
 

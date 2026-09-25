@@ -1,6 +1,6 @@
 # MO Premium Plane visualization authority
 
-本文档从属于 [feature architecture](ARCHITECTURE.md)，只拥有该 frontend slice 的 V1 用户输入、presentation state、numeric sparse-plane projection、formatting、interaction 与用户可见状态。HTTP schema 与 backend analytical semantics 由 [Premium HTTP contract](../../../../market-snapshot/src/daily_market_snapshot/products/mo_option_premium/http-contract.md) 及其上游 authority 拥有。
+本文档从属于 [feature architecture](ARCHITECTURE.md)，只拥有该 frontend slice 的 V1 用户输入、presentation state、numeric sparse-plane projection、formatting、interaction 与用户可见状态。HTTP schema 与 backend analytical semantics 由 [Premium HTTP contract](../../../../backend-api/products/mo_option_premium/http-contract.md) 及其上游 authority 拥有。
 
 ## 1. V1 Experience
 
@@ -40,7 +40,7 @@ price_type = open | high | low | close
 
 `as_of` 必须由用户显式选择；日期清空时不请求。`price_type` 默认 `close`，`option_product` 在本 slice 固定为 `MO`。V1 不定义 `today`、`latest`、automatic fallback date 或 date range。
 
-只有 `as_of`、`option_product` 或 `price_type` 的 resolved value 改变才产生新 query。请求必须遵循 backend [HTTP contract](../../../../market-snapshot/src/daily_market_snapshot/products/mo_option_premium/http-contract.md)，不得增加 presentation filters。
+只有 `as_of`、`option_product` 或 `price_type` 的 resolved value 改变才产生新 query。请求必须遵循 [backend-api HTTP contract](../../../../backend-api/products/mo_option_premium/http-contract.md)，不得增加 presentation filters。
 
 ## 3. Presentation State
 

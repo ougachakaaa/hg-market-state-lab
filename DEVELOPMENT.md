@@ -1,6 +1,6 @@
 # Repository Development CLI
 
-本文档只描述本地开发编排与操作方式，不是架构、产品或 HTTP 语义 authority。仓库级路由见 [ARCHITECTURE.md](ARCHITECTURE.md)，产品契约从 [market-snapshot/CAPABILITIES.md](market-snapshot/CAPABILITIES.md) 进入并与对应源码 bounded context 共址。
+本文档只描述本地开发编排与操作方式，不是架构、产品或 HTTP 语义 authority。仓库级路由见 [ARCHITECTURE.md](ARCHITECTURE.md)，产品语义从 [market-snapshot/CAPABILITIES.md](market-snapshot/CAPABILITIES.md) 进入，HTTP transport contract 从 [backend-api HTTP catalog](backend-api/HTTP_PRODUCTS.md) 进入。
 
 仓库根目录的 `dev.py` 是本地开发入口，只负责检查启动条件和转发模块自己的命令。它是 developer orchestration surface 和 repository-level convenience forwarding surface，不是 Data Service、部署工具或新的业务模块。
 
@@ -32,7 +32,7 @@ python dev.py data csi1000-5d-analysis --date 2026-09-18
 
 `doctor` 在必要的仓库结构、backend launcher、Poetry 或 Python 3.13 条件不满足时非零退出；frontend 已初始化但 Node/npm 不可用时也非零退出。frontend 尚未初始化和服务停止本身不使 `doctor` 失败。检查只读，不创建虚拟环境、不安装依赖，也不调用 Tushare 或运行 pytest、Ruff、mypy。
 
-`backend` 在 `market-snapshot/` 前台执行 `poetry run python scripts/api.py`。`frontend` 在 `web-ui/` 前台执行 `npm run dev`；首次启动前需在 `web-ui/` 自行执行 `npm install`。两个命令继承标准输入输出、传递子进程退出码，Ctrl+C 结束前台进程。缺少启动前提时明确报错，不自动修复环境。
+`backend` 在 `market-snapshot/` 前台执行 `poetry run python scripts/api.py`。这是当前 implementation location，不是 canonical module ownership；本次 authority decision 不提供尚不存在的 `backend-api` launcher。`frontend` 在 `web-ui/` 前台执行 `npm run dev`；首次启动前需在 `web-ui/` 自行执行 `npm install`。两个命令继承标准输入输出、传递子进程退出码，Ctrl+C 结束前台进程。缺少启动前提时明确报错，不自动修复环境。
 
 `data` 是 repository-level Data Service convenience command：
 
@@ -56,6 +56,6 @@ poetry run python scripts/dms.py get <service_id> --date <resolved-date>
 
 ## Ownership
 
-`dev.py` 只拥有 CLI parsing、命令分发、仓库路径解析、开发前提检查、Data Service `service_id` 转发、convenience default date resolution、进程调用、exit-code propagation 和人类可读状态。backend 的 bind 配置与 HTTP contract 仍由 backend 自身拥有；frontend 的 React/Vite 配置与开发脚本由 `web-ui` 拥有。`dev.py` 不导入模块内部代码，不拥有 Source Capture orchestration、Analysis Preparation、Data Service business semantics、dataset schema 或 trading-calendar resolution；端口仅用于本地开发诊断，不构成业务契约。
+`dev.py` 只拥有 CLI parsing、命令分发、仓库路径解析、开发前提检查、Data Service `service_id` 转发、convenience default date resolution、进程调用、exit-code propagation 和人类可读状态。HTTP bind/runtime composition 与 contract 的 canonical owner 是 `backend-api`；当前 `dev.py` 仍转发 `market-snapshot/scripts/api.py`，只反映尚未迁移的 implementation location。Frontend 的 React/Vite 配置与开发脚本由 `web-ui` 拥有。`dev.py` 不导入模块内部代码，不拥有 Source Capture orchestration、Analysis Preparation、Data Service business semantics、dataset schema 或 trading-calendar resolution；端口仅用于本地开发诊断，不构成业务契约。
 
 V1 不提供组合启动、后台进程、PID、日志、停止或重启、端口分配、配置框架、环境变量管理、依赖安装、测试运行或部署功能。`dev.py` 的 frontend 诊断地址与 Vite 显式绑定的 `127.0.0.1:5173` 一致。

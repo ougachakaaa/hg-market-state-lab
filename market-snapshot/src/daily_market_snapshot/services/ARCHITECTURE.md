@@ -4,7 +4,7 @@
 
 ## Ownership
 
-本 context 只拥有 shared delivery boundary、CLI executable catalog/request/dispatch、公共失败边界与 persisted output delivery。Repository product/capability discovery 由 [Capability Catalog](../../../CAPABILITIES.md) 拥有；每个 Data Service 的 semantic identity、query/result、Capture orchestration、Preparation、read model 和 HTTP projection 由对应产品 authority 拥有。
+本 context 只拥有 shared application boundary、CLI executable catalog/request/dispatch、公共失败边界与 persisted output delivery。Repository product/capability discovery 由 [Capability Catalog](../../../CAPABILITIES.md) 拥有；每个 Data Service 的 semantic identity、application request/result、Capture orchestration、Preparation、read model 与 classified semantic failure 由对应产品 authority 拥有。HTTP projection 由 [backend-api](../../../../backend-api/ARCHITECTURE.md) 拥有。
 
 必须区分：
 
@@ -14,7 +14,7 @@ Data Service semantic identity          → product authority
 CLI executable catalog                  → catalog.py / dms
 ```
 
-HTTP-only request-scoped service 仍是 Data Service，但不因此成为 `dms get`-compatible persisted service。
+通过 HTTP 暴露的 request-scoped service 仍是 Data Service/application product service，但不因此成为 `dms get`-compatible persisted service；其 HTTP transport 不是本 context 的职责。
 
 ## Navigation
 

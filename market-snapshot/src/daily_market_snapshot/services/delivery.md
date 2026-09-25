@@ -1,6 +1,6 @@
 # Data Service / CLI / output authority
 
-本文档定义 Data Service、用户级 CLI、delivery surface 与 canonical user-facing output。模块分层见 [market-snapshot architecture](../../../ARCHITECTURE.md)，产品语义从 [Capability Catalog](../../../CAPABILITIES.md) 进入对应 canonical owner；本文档不重复 Source、Raw、Preparation 或产品公式。
+本文档定义 Data Service application boundary、用户级 CLI 与 canonical user-facing persisted output。模块分层见 [market-snapshot architecture](../../../ARCHITECTURE.md)，产品语义从 [Capability Catalog](../../../CAPABILITIES.md) 进入对应 canonical owner；HTTP inbound delivery 由 [backend-api](../../../../backend-api/ARCHITECTURE.md) 拥有。本文档不重复 Source、Raw、Preparation、产品公式或 HTTP transport。
 
 ## 1. 什么是 Data Service
 
@@ -37,8 +37,8 @@ Repository authority 声明以下三个用户可请求的 Data Service semantic 
 | service_id | input | result / delivery | 产品 authority |
 | --- | --- | --- | --- |
 | `csi1000-5d-analysis` | `target_trade_date`（CLI 的 `--date`） | persisted `snapshot.json` | [product authority](../products/csi1000_5d_analysis/ARCHITECTURE.md) |
-| `mo-option-chain` | `target_trade_date + option_product + price_type` | request-scoped read model / HTTP | [product authority](../products/mo_option_chain/ARCHITECTURE.md) |
-| `mo-option-premium-plane` | `as_of + option_product + price_type` | request-scoped `PremiumPlane` / HTTP | [product authority](../products/mo_option_premium/ARCHITECTURE.md) |
+| `mo-option-chain` | `target_trade_date + option_product + price_type` | request-scoped read model | [product authority](../products/mo_option_chain/ARCHITECTURE.md) |
+| `mo-option-premium-plane` | `as_of + option_product + price_type` | request-scoped `PremiumPlane` | [product authority](../products/mo_option_premium/ARCHITECTURE.md) |
 
 本表是 authority-level semantic catalog：它说明 service identity、input、result/delivery 与 canonical product owner，不是 `services/catalog.py` 的 executable binding table。Repository-wide product/capability discovery 仍从 [Capability Catalog](../../../CAPABILITIES.md) 进入。
 
@@ -63,19 +63,19 @@ Data Service 拥有该 persisted-artifact service 的 orchestration 与 canonica
 
 ### 3.2 `mo-option-chain`
 
-Data Service 拥有该 request-scoped service 的 orchestration 与 read-model delivery boundary。产品/query identity、Raw scope、read semantics 与 HTTP transport 分别由 [产品入口](../products/mo_option_chain/ARCHITECTURE.md)、[data authority](../products/mo_option_chain/data.md)、[read contract](../products/mo_option_chain/read-contract.md) 与 [HTTP contract](../products/mo_option_chain/http-contract.md) 拥有。
+Data Service 拥有该 request-scoped service 的 application request、orchestration、read-model result 与 classified semantic failure。产品/query identity、Raw scope 与 read semantics 分别由 [产品入口](../products/mo_option_chain/ARCHITECTURE.md)、[data authority](../products/mo_option_chain/data.md) 与 [read contract](../products/mo_option_chain/read-contract.md) 拥有；HTTP projection 由 [backend-api HTTP contract](../../../../backend-api/products/mo_option_chain/http-contract.md) 拥有。
 
-`mo-option-chain` 不使用 `dms get`，V1 也没有 canonical persisted final output；它通过 HTTP delivery adapter 向 read consumer 交付 request-scoped read model。
+`mo-option-chain` 不使用 `dms get`，V1 也没有 canonical persisted final output；它向 delivery adapter 交付 request-scoped read model 或 classified semantic failure。
 
 ### 3.3 `mo-option-premium-plane`
 
-MO Premium Plane product service 拥有该 request-scoped analytical service 的 orchestration 与 result boundary。产品定位与 ownership、Source/Raw scope、Basis/Point/Plane semantics、product orchestration 与 HTTP transport 分别由 [产品入口](../products/mo_option_premium/ARCHITECTURE.md)、[data authority](../products/mo_option_premium/data.md)、[backend authority](../products/mo_option_premium/backend.md)、[service contract](../products/mo_option_premium/service-contract.md) 与 [HTTP contract](../products/mo_option_premium/http-contract.md) 拥有。
+MO Premium Plane product service 拥有该 request-scoped analytical service 的 application request、orchestration、semantic failure classification 与 result boundary。产品定位与 ownership、Source/Raw scope、Basis/Point/Plane semantics、product orchestration 分别由 [产品入口](../products/mo_option_premium/ARCHITECTURE.md)、[data authority](../products/mo_option_premium/data.md)、[backend authority](../products/mo_option_premium/backend.md) 与 [service contract](../products/mo_option_premium/service-contract.md) 拥有；HTTP projection 由 [backend-api HTTP contract](../../../../backend-api/products/mo_option_premium/http-contract.md) 拥有。
 
-`mo-option-premium-plane` 不使用 `dms get`，V1 不要求 canonical persisted final output；它通过 HTTP delivery adapter 交付 request-scoped `PremiumPlane`。共享 Data Service authority 不复制其 Capture ordering、financial formulas 或 product failure semantics。
+`mo-option-premium-plane` 不使用 `dms get`，V1 不要求 canonical persisted final output；它向 delivery adapter 交付 request-scoped `PremiumPlane` 或 classified semantic failure。共享 Data Service authority 不复制其 Capture ordering、financial formulas 或 product failure semantics。
 
 ## 4. CLI: dms
 
-用户级 CLI 语义名称为 `dms`。第一版只支持两个命令：`list`、`get`。CLI 是 delivery surface 之一，只寻址 CLI executable catalog 中的 persisted-artifact service；当前为 `csi1000-5d-analysis`。`mo-option-chain` 与 `mo-option-premium-plane` 通过 HTTP 提供（见第 3.2、3.3、10 节），不走 `dms get`。
+用户级 CLI 语义名称为 `dms`。第一版只支持两个命令：`list`、`get`。CLI 是 delivery surface 之一，只寻址 CLI executable catalog 中的 persisted-artifact service；当前为 `csi1000-5d-analysis`。`mo-option-chain` 与 `mo-option-premium-plane` 是通过 HTTP 暴露的 request-scoped Data Services（见第 3.2、3.3、10 节），不走 `dms get`。
 
 ### 4.1 dms list
 
@@ -102,7 +102,7 @@ description
 csi1000-5d-analysis
 ```
 
-V1 `dms list` 不列出 HTTP-only 的 `mo-option-chain` 或 `mo-option-premium-plane`；所有 repository products/capabilities 从 [Capability Catalog](../../../CAPABILITIES.md) 发现。CLI executable catalog 不通过扫描文件系统动态发现。
+V1 `dms list` 不列出通过 HTTP 暴露的 request-scoped `mo-option-chain` 或 `mo-option-premium-plane`；所有 repository products/capabilities 从 [Capability Catalog](../../../CAPABILITIES.md) 发现。CLI executable catalog 不通过扫描文件系统动态发现。
 
 ### 4.2 dms get
 
@@ -142,7 +142,7 @@ yesterday
 
 ## 5. CLI 与 product orchestration 边界
 
-CLI 只解析参数、校验 CLI-level 输入、从 executable catalog resolve CLI-addressable Data Service、调用并报告结果或错误。当前 executable binding 面向返回 persisted artifact `Path` 的 service；HTTP-only request-scoped services 不需要使用或模拟这个 binding。CLI 不编排 Capture，也不重新定义：
+CLI 只解析参数、校验 CLI-level 输入、从 executable catalog resolve CLI-addressable Data Service、调用并报告结果或错误。当前 executable binding 面向返回 persisted artifact `Path` 的 service；通过 HTTP 暴露的 request-scoped services 不需要使用或模拟这个 binding。CLI 不编排 Capture，也不重新定义：
 
 ```text
 Source semantics
@@ -253,7 +253,7 @@ GPT analyzer / trading analysis
 
 ## 10. HTTP delivery boundary
 
-通用 API platform（多租户、通用 endpoint、auth、版本化、schema registry 等）不属于当前范围。
+HTTP inbound delivery 的 canonical owner 是 [backend-api](../../../../backend-api/ARCHITECTURE.md)。通用 API platform（多租户、通用 endpoint、auth、版本化、schema registry 等）不属于当前范围。
 
 MO Option Chain 与 MO Premium Plane 通过各自的 HTTP delivery adapter 读取数据；Option Chain 前端语义见 [web-ui visualization authority](../../../../web-ui/src/features/mo_option_chain/ARCHITECTURE.md)，Premium transport 见其 product HTTP contract。
 
@@ -291,7 +291,7 @@ CORS policy
 server deployment
 ```
 
-这些属于具体产品的 HTTP delivery contract 或实现设计。MO Option Chain transport 见其 [HTTP contract](../products/mo_option_chain/http-contract.md)，MO Premium Plane transport 见其 [HTTP contract](../products/mo_option_premium/http-contract.md)。
+这些属于具体产品的 HTTP delivery contract 或实现设计。MO Option Chain transport 见 [backend-api HTTP contract](../../../../backend-api/products/mo_option_chain/http-contract.md)，MO Premium Plane transport 见 [backend-api HTTP contract](../../../../backend-api/products/mo_option_premium/http-contract.md)。
 
 ## 11. 完成自检
 
@@ -308,7 +308,7 @@ server deployment
 9. `data/raw` 与 `output` 有什么区别？
 10. 为什么调用方不需要知道底层 Source Capture？
 11. `data/snapshots` 与 Data Service canonical output 有什么边界？
-12. HTTP-only Data Service 是否必须进入 Path-returning CLI binding？
+12. 通过 HTTP 暴露的 request-scoped Data Service 是否必须进入 Path-returning CLI binding？
 13. HTTP delivery adapter 与 CLI 是否都是 delivery surfaces，而不是业务语义 owner？
 
 若这些问题仍需 implementation agent 自行发明，则本 authority 未完成。

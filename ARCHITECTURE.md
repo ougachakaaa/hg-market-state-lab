@@ -20,11 +20,19 @@
 
 该模块尚未形成独立 authority；在出现明确需求前，不预先设计模型框架、状态 schema、信号系统、训练框架、回测或策略抽象。
 
+### `backend-api`
+
+Repository-wide inbound HTTP delivery adapter 与 HTTP composition root，负责把各 owning module 的 application/product boundary 暴露为 HTTP。
+
+它拥有 FastAPI application/route composition、request parsing、transport validation、HTTP DTO projection、serialization、HTTP error/status mapping、OpenAPI publication 与 HTTP runtime concerns；不拥有业务 query/command/result、semantic failure classification、产品可用性、市场语义或建模语义。模块内部边界见 [backend-api/ARCHITECTURE.md](backend-api/ARCHITECTURE.md)。
+
 ### `web-ui`
 
 展示并允许用户交互仓库产生的数据产品与市场状态结果。它不拥有 Source、Capture、业务计算或 market-modeling 语义。模块内部边界见 [web-ui/ARCHITECTURE.md](web-ui/ARCHITECTURE.md)。
 
-## 3. 顶层数据流
+## 3. 顶层 Flow 与 HTTP Topology
+
+### 业务 / analytical flow
 
 ```text
 External Market Sources
@@ -36,11 +44,21 @@ Analysis-ready Artifacts
 market-modeling
         ↓
 Market-state Outputs
-        ↓
-web-ui
 ```
 
-该图表达职责与数据流方向，不强制 runtime deployment topology 或 package import dependency。`market-snapshot` 的产物也可以被仓库外的 analyzer 直接消费。
+该图表达业务职责与 analytical data flow，不强制 runtime deployment topology 或 package import dependency。`market-snapshot` 的产物也可以被仓库外的 analyzer 直接消费。
+
+### HTTP delivery topology
+
+```text
+market-snapshot ─────┐
+                     │
+market-modeling ─────┼──→ backend-api ───→ web-ui
+                     │
+future modules ──────┘
+```
+
+`backend-api` 是 inbound delivery boundary，不是 `market-snapshot → market-modeling` analytical pipeline stage。稳定依赖方向是 `backend-api` 依赖 owning module 的 public application/product boundary；`market-snapshot` 与 `market-modeling` 不得依赖 `backend-api`，也不得用 FastAPI、HTTP DTO/status/error envelope、OpenAPI 或 frontend types 定义自己的 semantic model。
 
 ## 4. Authority 导航
 
@@ -53,6 +71,11 @@ ARCHITECTURE.md（本文件）
     │  market-snapshot/CAPABILITIES.md
     │      ↓
     │  co-located product / capability ARCHITECTURE.md
+    ├─ backend-api/ARCHITECTURE.md
+    │      ↓
+    │  backend-api/HTTP_PRODUCTS.md
+    │      ↓
+    │  HTTP product contract
     │
     └─ web-ui/ARCHITECTURE.md
            ├─ web-ui/application.md

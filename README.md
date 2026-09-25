@@ -5,6 +5,7 @@
 ```text
 market-snapshot  → market state data preparation
 market-modeling  → market state modeling
+backend-api      → repository-wide HTTP inbound delivery and composition
 web-ui           → presentation and interaction
 ```
 
@@ -15,6 +16,7 @@ README 是人类开发入口，不是架构或业务语义 authority。
 - 仓库架构与模块路由：[ARCHITECTURE.md](ARCHITECTURE.md)
 - `market-snapshot` 稳定分层：[market-snapshot/ARCHITECTURE.md](market-snapshot/ARCHITECTURE.md)
 - `market-snapshot` capability/product catalog：[market-snapshot/CAPABILITIES.md](market-snapshot/CAPABILITIES.md)
+- `backend-api` HTTP boundary 与 product catalog：[backend-api/ARCHITECTURE.md](backend-api/ARCHITECTURE.md)
 - `web-ui` 边界与 visualization 路由：[web-ui/ARCHITECTURE.md](web-ui/ARCHITECTURE.md)
 - 根开发命令与 managed worktree 说明：[DEVELOPMENT.md](DEVELOPMENT.md)
 
@@ -28,6 +30,8 @@ Backend 需要 Python 3.13 与 Poetry：
 cd market-snapshot
 poetry install
 ```
+
+`market-snapshot` 的 canonical Python namespace 是 `market_snapshot`；当前代码仍位于 `market-snapshot/src/daily_market_snapshot/`，在后续 implementation migration 前安装与运行方式保持不变。
 
 Frontend 需要满足当前 Vite 要求的 Node.js 与 npm：
 
@@ -69,14 +73,14 @@ CLI、service orchestration 与 output contract 见 [Data Service authority](mar
 
 ## HTTP API
 
-在 `market-snapshot/` 目录启动本地 backend：
+HTTP transport 的 canonical owner 是 [`backend-api`](backend-api/ARCHITECTURE.md)。当前 implementation 尚未迁移，仍需在 `market-snapshot/` 目录启动本地 backend：
 
 ```bash
 poetry run python scripts/api.py
 poetry run python scripts/api.py --host 127.0.0.1 --port 8012
 ```
 
-默认地址为 `127.0.0.1:8011`，OpenAPI 位于 `/openapi.json`，交互文档位于 `/docs`。MO Option Chain 的 HTTP 契约见 [Option Chain authority](market-snapshot/src/daily_market_snapshot/products/mo_option_chain/http-contract.md)；MO Premium Plane 的 HTTP 契约见 [Premium Plane authority](market-snapshot/src/daily_market_snapshot/products/mo_option_premium/http-contract.md)。
+默认地址为 `127.0.0.1:8011`，OpenAPI 位于 `/openapi.json`，交互文档位于 `/docs`。MO Option Chain 的 HTTP 契约见 [Option Chain authority](backend-api/products/mo_option_chain/http-contract.md)；MO Premium Plane 的 HTTP 契约见 [Premium Plane authority](backend-api/products/mo_option_premium/http-contract.md)。当前 launcher、FastAPI code、routers、DTO 与 dependencies 仍位于 `market-snapshot`，这是后续 implementation migration 的输入，不改变 canonical ownership。
 
 ## Web UI
 
@@ -107,4 +111,4 @@ npm run build
 npm run lint
 ```
 
-修改 backend HTTP DTO/OpenAPI 后，在 `web-ui/` 运行 `npm run contract:generate` 并提交更新后的 OpenAPI JSON 与生成类型，再执行上述检查。
+修改 `backend-api` HTTP DTO/OpenAPI 后，在 `web-ui/` 运行 `npm run contract:generate` 并提交更新后的 OpenAPI JSON 与生成类型，再执行上述检查。当前 generation tooling 仍连接 `market-snapshot` runtime，直至后续 implementation migration。
