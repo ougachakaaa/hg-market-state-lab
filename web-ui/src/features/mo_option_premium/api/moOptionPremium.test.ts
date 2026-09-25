@@ -24,13 +24,20 @@ afterEach(() => vi.unstubAllGlobals())
 
 describe('loadMoOptionPremiumPlane', () => {
   it('validates and returns the complete structured response unchanged', async () => {
-    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(response(plane)))
+    const fetch = vi.fn().mockResolvedValue(response(plane))
+    vi.stubGlobal('fetch', fetch)
 
-    const result = await loadMoOptionPremiumPlane('2026-09-21', 'close')
+    const controller = new AbortController()
+    const result = await loadMoOptionPremiumPlane('2026-09-21', 'close', controller.signal)
 
     expect(result.plane.points[0].metrics.underlying_spot.time_value.unannualized.points).toBe(-1)
     expect(result.plane.points[0].metrics.expiry_futures.time_value.annualized.yield).toBeNull()
     expect(result.rawPayload).toBe(plane)
+    const [url, options] = fetch.mock.calls[0] as [string, RequestInit]
+    expect([...new URL(url, 'http://localhost').searchParams.entries()]).toEqual([
+      ['as_of', '2026-09-21'], ['option_product', 'MO'], ['price_type', 'close'],
+    ])
+    expect(options.signal).toBe(controller.signal)
   })
 
   it('rejects a response missing a structured metric leaf', async () => {
@@ -47,5 +54,28 @@ describe('loadMoOptionPremiumPlane', () => {
 
     await expect(loadMoOptionPremiumPlane('2026-09-21', 'close'))
       .rejects.toMatchObject({ kind: 'premium_plane_unavailable' })
+  })
+
+  it('classifies malformed JSON, invalid statuses, and network failures', async () => {
+    const malformedJson = { ok: true, status: 200, json: async () => { throw new SyntaxError('bad json') } } as unknown as Response
+    const fetch = vi.fn()
+      .mockResolvedValueOnce(malformedJson)
+      .mockResolvedValueOnce(response({ error: { kind: 'date_not_available', detail: 'missing' } }))
+      .mockRejectedValueOnce(new TypeError('offline'))
+    vi.stubGlobal('fetch', fetch)
+
+    await expect(loadMoOptionPremiumPlane('2026-09-21', 'close')).rejects.toMatchObject({ kind: 'invalid_response' })
+    await expect(loadMoOptionPremiumPlane('2026-09-21', 'close')).rejects.toMatchObject({ kind: 'invalid_response' })
+    await expect(loadMoOptionPremiumPlane('2026-09-21', 'close')).rejects.toMatchObject({ kind: 'network' })
+  })
+
+  it('does not adapt an aborted request into a transport error', async () => {
+    const controller = new AbortController()
+    controller.abort()
+    const abortError = new DOMException('aborted', 'AbortError')
+    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(abortError))
+
+    await expect(loadMoOptionPremiumPlane('2026-09-21', 'close', controller.signal)).rejects.toBe(abortError)
+    expect(abortError).not.toBeInstanceOf(PremiumRequestError)
   })
 })

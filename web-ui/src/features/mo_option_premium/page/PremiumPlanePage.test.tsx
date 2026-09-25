@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { cleanup, fireEvent, render, screen, within } from '@testing-library/react'
-import type { PremiumPlane } from './api/moOptionPremium'
-import App from './App'
+import type { PremiumPlane } from '../api/moOptionPremium'
+import PremiumPlanePage from './PremiumPlanePage'
 
 function leaf(points: number | null, yieldValue: number | null) {
   return { points, yield: yieldValue }
@@ -37,7 +37,7 @@ function response(body: unknown): Response {
 async function load() {
   const fetch = vi.fn().mockResolvedValue(response(plane))
   vi.stubGlobal('fetch', fetch)
-  render(<App />)
+  render(<PremiumPlanePage />)
   fireEvent.change(screen.getByLabelText('Observation 日期'), { target: { value: '2026-09-21' } })
   const results = await screen.findByRole('region', { name: 'Premium plane results' })
   return { fetch, results }

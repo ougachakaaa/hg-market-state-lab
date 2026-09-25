@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { cleanup, fireEvent, render, screen, within } from '@testing-library/react'
 import type { PlotParams } from 'react-plotly.js'
-import App from './App'
+import OptionChainPage from './OptionChainPage'
 
 vi.mock('react-plotly.js', () => ({
   default: ({ data, layout, config, useResizeHandler, style }: PlotParams) => (
@@ -39,7 +39,7 @@ function dateInput(): HTMLInputElement {
 
 async function load(body: unknown = chain) {
   vi.stubGlobal('fetch', vi.fn().mockResolvedValue(response(body)))
-  render(<App />)
+  render(<OptionChainPage />)
   fireEvent.change(dateInput(), { target: { value: '2026-09-17' } })
   return screen.findByRole('region', { name: '期权链结果' })
 }
@@ -53,7 +53,7 @@ describe('MO option chain combined page', () => {
   it('starts idle and does not request a chain until a date is selected', () => {
     const fetch = vi.fn()
     vi.stubGlobal('fetch', fetch)
-    render(<App />)
+    render(<OptionChainPage />)
     expect(screen.getByRole('status').textContent).toContain('请选择目标交易日')
     expect(fetch).not.toHaveBeenCalled()
     fireEvent.change(dateInput(), { target: { value: '' } })
@@ -204,7 +204,7 @@ describe('MO option chain combined page', () => {
   it('resets expiry selection on a new successful chain while keeping series colors and strike width', async () => {
     const fetch = vi.fn().mockResolvedValueOnce(response(chain)).mockResolvedValueOnce(response({ ...chain, target_trade_date: '2026-09-18' }))
     vi.stubGlobal('fetch', fetch)
-    render(<App />)
+    render(<OptionChainPage />)
     fireEvent.change(dateInput(), { target: { value: '2026-09-17' } })
     await screen.findByRole('region', { name: '期权链结果' })
     fireEvent.click(screen.getByRole('checkbox', { name: '2026-10-23' }))
@@ -221,7 +221,7 @@ describe('MO option chain combined page', () => {
   it('maps a backend error and removes the previous result', async () => {
     const fetch = vi.fn().mockResolvedValueOnce(response(chain)).mockResolvedValueOnce(response({ error: { kind: 'date_not_available', detail: 'backend detail' } }, 404))
     vi.stubGlobal('fetch', fetch)
-    render(<App />)
+    render(<OptionChainPage />)
     fireEvent.change(dateInput(), { target: { value: '2026-09-17' } })
     await screen.findByRole('region', { name: '期权链结果' })
     fireEvent.change(dateInput(), { target: { value: '2026-09-18' } })
@@ -238,7 +238,7 @@ describe('MO option chain combined page', () => {
   ])('maps %s without interpreting backend detail', async (kind, title) => {
     const status = kind === 'date_not_available' ? 404 : kind === 'invalid_request' || kind === 'unsupported_query' ? 400 : 503
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(response({ error: { kind, detail: 'backend detail' } }, status)))
-    render(<App />)
+    render(<OptionChainPage />)
     fireEvent.change(dateInput(), { target: { value: '2026-09-17' } })
     const alert = await screen.findByRole('alert')
     expect(within(alert).getByText(title)).toBeTruthy()
@@ -250,7 +250,7 @@ describe('MO option chain combined page', () => {
     vi.stubGlobal('fetch', vi.fn().mockImplementation((_url: string, options: RequestInit) => (
       new Promise<Response>((resolve) => pending.push({ signal: options.signal!, finish: resolve }))
     )))
-    render(<App />)
+    render(<OptionChainPage />)
     fireEvent.change(dateInput(), { target: { value: '2026-09-17' } })
     fireEvent.change(dateInput(), { target: { value: '2026-09-18' } })
     expect(pending[0].signal.aborted).toBe(true)
@@ -265,7 +265,7 @@ describe('MO option chain combined page', () => {
   it('shows a transport failure without a stale result', async () => {
     const fetch = vi.fn().mockResolvedValueOnce(response(chain)).mockRejectedValueOnce(new TypeError('offline'))
     vi.stubGlobal('fetch', fetch)
-    render(<App />)
+    render(<OptionChainPage />)
     fireEvent.change(dateInput(), { target: { value: '2026-09-17' } })
     await screen.findByRole('region', { name: '期权链结果' })
     fireEvent.change(dateInput(), { target: { value: '2026-09-18' } })

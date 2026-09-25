@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import type { PremiumPlane } from './api/moOptionPremium'
+import type { PremiumPlane } from '../api/moOptionPremium'
 import {
   classifyStrikeRelativeToReference,
   formatMetric,

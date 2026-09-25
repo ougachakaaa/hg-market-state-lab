@@ -8,6 +8,10 @@
 .premium-metric-controls { display: grid; gap: .6rem; }
 .premium-metric-controls strong { display: block; color: #334155; font-size: .9rem; }
 .premium-expiry-selector { margin-top: 1rem; }
+.premium-page .expiry-selector { border: 1px solid #cbd5e1; border-radius: .35rem; }
+.premium-page .expiry-selector legend { font-weight: 600; }
+.premium-page .expiry-choices { display: flex; flex-wrap: wrap; gap: .6rem 1rem; }
+.premium-page .expiry-choice { display: inline-flex; align-items: center; gap: .4rem; white-space: nowrap; }
 .premium-table-wrap { overflow-x: auto; border: 1px solid #cbd5e1; border-radius: .35rem; }
 .premium-table { min-width: 720px; background: white; }
 .premium-table th, .premium-table td { min-width: 9rem; text-align: right; }
@@ -32,4 +36,5 @@
 @media (max-width: 600px) {
   .premium-query { display: grid; }
   .premium-query input, .premium-query select { width: 100%; box-sizing: border-box; }
+  .premium-page .expiry-choice { white-space: normal; }
 }

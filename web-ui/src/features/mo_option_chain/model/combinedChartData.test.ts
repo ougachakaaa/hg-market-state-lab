@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import type { OptionChain } from './api/moOptionChain'
+import type { OptionChain } from '../api/moOptionChain'
 import { missingPriceCount, projectCombinedChain } from './combinedChartData'
 
 const chain: OptionChain = {

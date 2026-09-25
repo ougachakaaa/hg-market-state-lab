@@ -1,6 +1,7 @@
 import { useState } from 'react'
-import OptionChainApp from './features/mo_option_chain/App'
-import PremiumPlaneApp from './features/mo_option_premium/App'
+import OptionChainPage from '../features/mo_option_chain'
+import PremiumPlanePage from '../features/mo_option_premium'
+import './application.css'
 
 type Feature = 'option-chain' | 'premium-plane'
 
@@ -17,7 +18,7 @@ function App() {
           MO Premium Plane
         </button>
       </nav>
-      {feature === 'option-chain' ? <OptionChainApp /> : <PremiumPlaneApp />}
+      {feature === 'option-chain' ? <OptionChainPage /> : <PremiumPlanePage />}
     </div>
   )
 }

@@ -1,8 +1,8 @@
 import Plot from 'react-plotly.js'
-import type { OptionChain } from './api/moOptionChain'
-import { projectCombinedChain } from './combinedChartData'
+import type { OptionChain } from '../api/moOptionChain'
+import { projectCombinedChain } from '../model/combinedChartData'
 import { buildCombinedPlot } from './combinedPlot'
-import { formatPrice } from './priceDisplay'
+import { formatPrice } from '../model/priceDisplay'
 import type { ExpiryColors } from './expiryPalette'
 
 type Projection = ReturnType<typeof projectCombinedChain>

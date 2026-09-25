@@ -1,13 +1,7 @@
-import type { ExpiryGroup } from './api/moOptionChain'
+import type { ExpiryGroup } from '../api/moOptionChain'
+import type { SeriesColors } from '../model/presentationState'
 
-export type SeriesColors = { call: string; put: string; futures: string }
 export type ExpiryColors = SeriesColors & { opacity: number }
-
-export const DEFAULT_SERIES_COLORS: SeriesColors = {
-  call: '#2563eb',
-  put: '#ea580c',
-  futures: '#7c3aed',
-}
 
 function withOpacity(color: string, opacity: number): string {
   const red = parseInt(color.slice(1, 3), 16)
