@@ -558,15 +558,44 @@ def test_http_request_traverses_the_real_backend_and_projects_the_sparse_plane(
     ]
     assert [point["instrument_id"] for point in payload["points"]] == [CALL, PUT]
     assert payload["points"][1]["premium"] is None
-    assert payload["points"][1]["annualized_premium_points"] is None
-    assert payload["points"][0]["annualized_time_value_points"] == pytest.approx(
+    metrics = payload["points"][0]["metrics"]
+    assert set(metrics) == {"underlying_spot", "expiry_futures"}
+    assert set(metrics["underlying_spot"]) == {"total", "time_value"}
+    assert set(metrics["underlying_spot"]["total"]) == {"unannualized", "annualized"}
+    assert metrics["underlying_spot"]["total"]["unannualized"]["points"] == (
+        payload["points"][0]["premium"]
+    )
+    assert metrics["underlying_spot"]["time_value"]["annualized"]["points"] == pytest.approx(
         (payload["points"][0]["premium"] - 300.0) * 365 / 9
     )
-    assert payload["points"][1]["annualized_time_value_points"] is None
-    assert payload["points"][0]["annualized_time_value_yield"] == pytest.approx(
+    assert metrics["underlying_spot"]["time_value"]["annualized"]["yield"] == pytest.approx(
         ((payload["points"][0]["premium"] - 300.0) * 365 / 9) / 7300
     )
-    assert payload["points"][1]["annualized_time_value_yield"] is None
+    assert metrics["expiry_futures"]["total"]["unannualized"]["yield"] == pytest.approx(
+        payload["points"][0]["premium"] / 7290.0
+    )
+    missing_metrics = payload["points"][1]["metrics"]
+    assert missing_metrics["underlying_spot"]["total"]["annualized"]["points"] is None
+    assert missing_metrics["expiry_futures"]["time_value"]["annualized"]["points"] is None
+
+
+def test_http_projection_preserves_futures_unavailability_without_fallback() -> None:
+    api = premium_source()
+    api.futures_basic = futures_basic_frame(
+        [im_contract("IM2610.CFE", list_date="20260801", delist_date="20261023")]
+    )
+    api.futures_daily = {}
+
+    payload = endpoint.project_plane(successful_plane(api)).model_dump(by_alias=True)
+    metrics = payload["points"][0]["metrics"]["expiry_futures"]
+
+    assert payload["expiries"][0]["futures"] is None
+    assert metrics["total"]["unannualized"]["points"] == payload["points"][0]["premium"]
+    assert metrics["total"]["annualized"]["points"] == pytest.approx(
+        payload["points"][0]["premium"] * 365 / 9
+    )
+    assert metrics["total"]["unannualized"]["yield"] is None
+    assert metrics["time_value"]["unannualized"]["points"] is None
 
 
 @pytest.mark.parametrize(

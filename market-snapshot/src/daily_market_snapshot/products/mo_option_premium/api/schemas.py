@@ -6,7 +6,7 @@ import re
 from datetime import date
 from typing import Annotated, Literal
 
-from pydantic import BaseModel, ConfigDict, PlainValidator, WithJsonSchema
+from pydantic import AliasChoices, BaseModel, ConfigDict, Field, PlainValidator, WithJsonSchema
 
 from ..models import OptionProduct, OptionType, PriceType
 
@@ -58,6 +58,37 @@ class ExpiryDTO(BaseModel):
     futures: FuturesDTO | None
 
 
+class MetricDTO(BaseModel):
+    model_config = ConfigDict(extra="forbid", populate_by_name=True)
+
+    points: float | None
+    yield_: float | None = Field(
+        validation_alias=AliasChoices("yield", "yield_"),
+        serialization_alias="yield",
+    )
+
+
+class TimeNormalizedMetricsDTO(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    unannualized: MetricDTO
+    annualized: MetricDTO
+
+
+class ValueMetricsDTO(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    total: TimeNormalizedMetricsDTO
+    time_value: TimeNormalizedMetricsDTO
+
+
+class PremiumMetricsDTO(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    underlying_spot: ValueMetricsDTO
+    expiry_futures: ValueMetricsDTO
+
+
 class PremiumPointDTO(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -66,10 +97,7 @@ class PremiumPointDTO(BaseModel):
     option_type: OptionType
     strike: float
     premium: float | None
-    annualized_premium_points: float | None
-    annualized_time_value_points: float | None
-    annualized_seller_premium_yield: float | None
-    annualized_time_value_yield: float | None
+    metrics: PremiumMetricsDTO
 
 
 class PremiumPlaneResponse(BaseModel):

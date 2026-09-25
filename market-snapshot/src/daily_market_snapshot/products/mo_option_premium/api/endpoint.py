@@ -7,7 +7,13 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, Query, Request
 
 from .. import service
-from ..models import PremiumPlane
+from ..models import (
+    MetricValues,
+    PremiumMetrics,
+    PremiumPlane,
+    TimeNormalizedMetrics,
+    ValueMetrics,
+)
 from .errors import (
     CONTRACT_QUERY_PARAMS,
     QUERY_PARAM_AS_OF,
@@ -19,10 +25,14 @@ from .schemas import (
     ExpiryDTO,
     FuturesDTO,
     IsoDate,
+    MetricDTO,
     ObservationDTO,
+    PremiumMetricsDTO,
     PremiumPlaneResponse,
     PremiumPointDTO,
+    TimeNormalizedMetricsDTO,
     UnderlyingDTO,
+    ValueMetricsDTO,
 )
 
 ROUTE_PATH = "/mo-option-premium-plane"
@@ -92,14 +102,38 @@ def project_plane(plane: PremiumPlane) -> PremiumPlaneResponse:
                 option_type=point.option_type,
                 strike=point.strike,
                 premium=point.premium,
-                annualized_premium_points=point.metrics.underlying_spot.total.annualized.points,
-                annualized_time_value_points=point.metrics.underlying_spot.time_value.annualized.points,
-                annualized_seller_premium_yield=point.metrics.underlying_spot.total.annualized.yield_,
-                annualized_time_value_yield=point.metrics.underlying_spot.time_value.annualized.yield_,
+                metrics=_project_metrics(point.metrics),
             )
             for point in plane.points
         ],
     )
+
+
+def _project_metrics(metrics: PremiumMetrics) -> PremiumMetricsDTO:
+    return PremiumMetricsDTO(
+        underlying_spot=_project_value_metrics(metrics.underlying_spot),
+        expiry_futures=_project_value_metrics(metrics.expiry_futures),
+    )
+
+
+def _project_value_metrics(metrics: ValueMetrics) -> ValueMetricsDTO:
+    return ValueMetricsDTO(
+        total=_project_time_normalized_metrics(metrics.total),
+        time_value=_project_time_normalized_metrics(metrics.time_value),
+    )
+
+
+def _project_time_normalized_metrics(
+    metrics: TimeNormalizedMetrics,
+) -> TimeNormalizedMetricsDTO:
+    return TimeNormalizedMetricsDTO(
+        unannualized=_project_metric(metrics.unannualized),
+        annualized=_project_metric(metrics.annualized),
+    )
+
+
+def _project_metric(metric: MetricValues) -> MetricDTO:
+    return MetricDTO(points=metric.points, yield_=metric.yield_)
 
 
 async def read_plane(
