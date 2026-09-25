@@ -11,8 +11,10 @@ Application Shell
         ↓
 Feature Page
         ↓
-Feature API / State / Model
-        ↓
+Feature Hooks
+       ↙     ↘
+Feature API  Feature Model
+       ↘     ↙
 Feature Components + Feature Charts
         ↓
 Shared Presentation Infrastructure
@@ -27,12 +29,25 @@ backend-api HTTP contract / OpenAPI
         ↓
 feature API adaptation and validation
         ↓
-feature state / model / projection
+feature hooks orchestration
+        ↓
+feature model / projection
         ↓
 feature presentation
 ```
 
-Allowed dependency direction 是 `app → feature page → feature internals → shared infrastructure`。Application 可以组合 feature public entry；feature 可以依赖 `shared`；`shared` 不得依赖任何 feature。Sibling features 不相互依赖，也不通过 application shell 或 `shared` 交换 semantic state、DTO、projection 或 visualization logic。
+Stable ownership direction 是 `app → feature page → feature hooks → feature API / model → presentation consumers → shared infrastructure`。这不是要求所有 runtime call 都形成单链，而是锁定以下依赖 invariant：
+
+```text
+shared     → never depends on a feature
+feature A  → never depends on feature B semantic internals
+api        → never depends on React presentation
+model      → never depends on React lifecycle or hooks
+hooks      → may integrate feature API + feature model for React
+page       → composes feature-facing React surfaces
+```
+
+Application 可以组合 feature public entry；feature internals 可以依赖 `shared`。Sibling features 不通过 application shell 或 `shared` 交换 semantic state、DTO、projection、hook 或 visualization logic。
 
 以下目录表达 canonical ownership zone，不要求每次变更都建立完整目录树，也不授权 authority-only 变更移动现有实现：
 
@@ -42,7 +57,8 @@ web-ui/src/
     features/<feature>/
         page/               vertical-slice composition root
         api/                generated contracts, request adaptation and validation
-        model/              server state, presentation state and projections
+        hooks/              React lifecycle and feature-state orchestration
+        model/              pure deterministic presentation logic
         components/         feature-specific non-chart UI
         charts/             feature-specific chart semantics and visual encoding
     shared/
@@ -67,13 +83,28 @@ feature composition
 
 它不拥有 backend product semantics、feature query logic、feature presentation state、financial projection、chart series construction 或 feature-specific formatting。MO Option Chain 与 MO Premium Plane 保持独立 bounded contexts；不得为当前两个 surface 引入 generic plugin framework 或 generalized feature runtime。
 
-Feature Page 是单个 frontend vertical slice 的 composition root。它可以协调 query/model state，并组合 feature controls、components、charts，以及 loading、error、empty presentation。Page 应主要表达 presentation composition，不应直接累积大量 HTTP lifecycle mechanics、runtime response validation、projection algorithms、Plotly trace/layout construction、generic formatting helper 或 domain-neutral reusable UI implementation。
+Feature Page 是单个 frontend vertical slice 的 composition root。它通过 feature hooks 取得 state 与 actions，并组合 feature controls、components、charts，以及 loading、error、empty、success presentation。Page 应主要表达 presentation composition，不应直接累积大量 HTTP lifecycle mechanics、`AbortController` coordination、stale-response logic、projection algorithms、Plotly trace/layout construction、generic formatting helper 或 domain-neutral reusable UI implementation。
 
-## 3. Feature API、Server State 与 Presentation State
+该边界不禁止 Page 使用简单 React hook，也不要求为每个 local boolean 创建独立 hook；可复用或 substantial 的 feature lifecycle / state orchestration 必须进入 `feature/hooks`。
+
+## 3. Feature API、Hooks 与 State Categories
 
 Feature `api/` 拥有 generated OpenAPI / TypeScript contract、transport adaptation 与 runtime response validation。Generated contracts 继续按 `contracts.md` 由 consuming feature 自身拥有；backend DTO 不得移动到 `shared`。
 
-Feature `model/` 拥有 query/server-state lifecycle、local presentation state 及 presentation projection。Backend/server state 与 local presentation state 是不同 ownership category：
+Feature `hooks/` 是 React integration boundary，负责把 React lifecycle 与 interaction 转换为 feature state。它可以拥有：
+
+```text
+useState / useReducer
+useEffect / useMemo / useCallback / useRef
+request and query lifecycle orchestration
+cancellation and stale-response coordination
+local presentation-state orchestration
+composition of API results with pure model functions
+```
+
+Feature hooks 可以依赖本 feature 的 `api/`、`model/` 与 generic shared infrastructure，但不得成为 business、projection 或 visualization rule 的第二 semantic owner。
+
+Backend/server state 与 local presentation state 仍是不同 architecture-level ownership category；二者的 React lifecycle / orchestration 主要由 feature hooks 承载：
 
 ```text
 server/query state                 presentation state
@@ -88,11 +119,13 @@ backend response lifecycle         other local visualization controls
 
 Presentation state 只控制已取得 facts 的本地展示。改变 presentation state 不得隐式改变 HTTP query identity、触发 backend recomputation 或成为 transport parameter，除非 owning feature authority 明确将其定义为 query input。
 
-Server-state 与 presentation-state mechanism 可以由 feature-local hook 或其他实现承载。Architecture 不依赖 TanStack Query 或任何具体 state-management/query library。
+Pure transformations derived from server state 或 presentation state 属于 feature model。Architecture 不依赖 TanStack Query 或任何具体 state-management/query library。
 
 ## 4. Feature Model、Components 与 Charts
 
-Feature model / projection 把经过验证的 backend facts 转换为 presentation-ready structure，例如 selected-expiry、table、chart projection，viewport derivation、display classification 与 presentation-oriented formatting。Projection 必须保持 backend identity、ordering、null/zero/absence 等既有语义，不得发明 feature authority 禁止的 market fact、重新计算 backend-owned financial semantics，或依赖 sibling feature data。可以保持为 pure logic 时，不得引入 React rendering concern 或 Plotly rendering detail。
+Feature `model/` 拥有 pure selector、projection、view-model construction、classification、viewport derivation、table/chart projection、presentation-oriented calculation 与 feature-specific deterministic formatting。它把经过验证的 backend facts 转换为 presentation-ready structure，并且必须保持 backend identity、ordering、null/zero/absence 等既有语义，不得发明 feature authority 禁止的 market fact、重新计算 backend-owned financial semantics，或依赖 sibling feature data。
+
+Model 必须在可行范围内脱离 React、JSX、hooks、DOM lifecycle、Plotly renderer lifecycle 与 HTTP request lifecycle，保持可独立测试。它不拥有 `useState`、`useEffect`、`useRef`、request cancellation lifecycle 或 component mounting semantics。
 
 `feature/components` 拥有非 chart 的 feature-specific React presentation。`shared/ui` 只拥有 domain-neutral reusable UI infrastructure；不得因为两个控件当前结构相似，就把 MO、option-chain、premium-plane、expiry、strike、premium metric 或 product DTO 语义提升为 shared ownership。
 
@@ -112,6 +145,8 @@ Plotly rendering
 
 Feature `charts` 拥有 series identity、reference line、axis meaning、trace grouping、feature-specific hover information、visual encoding，以及这些语义对应的 Plotly trace/layout construction。`shared/charts` 只能拥有 React / Plotly integration、responsive rendering、common chart defaults、shared visual theme 与 generic chart-frame behavior 等 domain-neutral concern。
 
+Feature hooks 可以选择或协调影响 chart projection 的 presentation state，但不拥有 series identity、axis meaning、reference-line semantics 或 feature-specific visual encoding；这些仍属于 feature model / charts。
+
 Plotly 是当前 chart stack。Plotly-specific implementation 不得扩散到 application shell、Feature Page orchestration、feature API 或 ordinary feature component；同时不得仅为隐藏 Plotly 而创建 generic chart DSL。目标是 containment，不是 abstraction for its own sake。Exact Plotly package、version 与 library API usage 属于实现细节。
 
 ## 5. Shared Infrastructure
@@ -130,6 +165,8 @@ feature-specific formatting
 
 Shared infrastructure 不能成为 application 或 feature authority 之外的第二 semantic owner，也不能通过 generic abstraction 耦合 sibling vertical slices。
 
+Feature-specific hooks 必须留在 owning feature，不得因复用 React mechanism 而进入 shared。只有语义确实 domain-neutral、对多个 feature invariant 的 React / DOM integration mechanism 才可以共享；React reuse 本身不是 shared ownership 的依据，也不要求创建 `shared/hooks` 目录。
+
 ## 6. 实现选择边界
 
-本 authority 锁定 ownership boundary、dependency direction、server-state 与 presentation-state category、Page composition boundary、feature/shared boundary 与 chart containment boundary。具体 React component tree、state/query library、routing mechanism、CSS structure、Plotly package/version 和 incidental filename 仍是实现选择，但这些选择不得违反本 authority。
+本 authority 锁定 ownership boundary、dependency direction、server-state 与 presentation-state category、React hooks integration boundary、Page composition boundary、feature/shared boundary 与 chart containment boundary。具体 hook 名称、React component tree、state/query library、routing mechanism、CSS structure、Plotly package/version 和 incidental filename 仍是实现选择，但这些选择不得违反本 authority。
