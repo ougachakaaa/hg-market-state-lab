@@ -1,31 +1,5 @@
-:root {
-  font-family: system-ui, sans-serif;
-  color: #1f2937;
-  background: #f8fafc;
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-}
-
-body { margin: 0; }
-main { max-width: 1400px; margin: 0 auto; padding: 2rem; min-width: 0; }
-h1 { margin: .25rem 0; }
-h2, h3, h4 { margin-bottom: .6rem; }
-.eyebrow { color: #475569; font-size: .85rem; margin: 0; }
 .date-field { display: block; font-weight: 600; margin: 2rem 0 .4rem; }
 input[type="date"] { font: inherit; padding: .5rem; border: 1px solid #94a3b8; border-radius: .35rem; }
-.message, .results { margin-top: 1.5rem; padding: 1.25rem; background: white; border: 1px solid #cbd5e1; border-radius: .5rem; }
-.error { border-color: #dc2626; }
-.facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 1rem; }
-.facts div { padding: .75rem; background: #f1f5f9; border-radius: .35rem; }
-.strike-control { display: flex; align-items: center; flex-wrap: wrap; gap: .6rem; margin: 1.2rem 0; font-weight: 600; }
-.strike-control button { min-width: 2.25rem; min-height: 2.25rem; font: inherit; border: 1px solid #94a3b8; border-radius: .35rem; background: #fff; cursor: pointer; }
-.strike-control button:disabled { opacity: .45; cursor: not-allowed; }
-dt { color: #475569; font-size: .85rem; }
-dd { margin: .25rem 0 0; font-weight: 600; }
-.expiry-selector { margin: 1rem 0; border: 1px solid #cbd5e1; border-radius: .35rem; }
-.expiry-selector legend { font-weight: 600; }
-.expiry-choices { display: flex; flex-wrap: wrap; gap: .6rem 1rem; }
-.expiry-choice { display: inline-flex; align-items: center; gap: .4rem; white-space: nowrap; }
 .expiry-swatches { display: inline-flex; align-items: center; gap: .18rem; margin-right: .4rem; flex: none; }
 .expiry-swatch { display: inline-block; width: .55rem; height: .8rem; border-radius: .15rem; flex: none; }
 .series-color-controls { display: flex; flex-wrap: wrap; gap: .75rem 1.5rem; margin: 1rem 0; }
@@ -57,16 +31,10 @@ dd { margin: .25rem 0 0; font-weight: 600; }
 .contract-details summary { cursor: pointer; font-weight: 600; }
 .expiry-content { display: grid; gap: 1rem; }
 .option-list { min-width: 0; overflow-x: auto; }
-table { width: 100%; border-collapse: collapse; text-align: left; }
-th, td { padding: .5rem; border-bottom: 1px solid #e2e8f0; }
-th { color: #475569; }
 @media (max-width: 600px) {
-  main { padding: 1rem; }
-  .results { padding: 1rem; }
   .combined-chart { padding: .5rem; }
   .chart-legends { grid-template-columns: minmax(0, 1fr); gap: .75rem; }
   .chart-futures-legend { justify-self: start; text-align: left; }
   .chart-futures-legend .chart-legend-items { align-items: flex-start; }
   .chart-frame { height: 380px; }
-  .expiry-choice { white-space: normal; }
 }

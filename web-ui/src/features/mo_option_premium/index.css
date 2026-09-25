@@ -1,0 +1,23 @@
+.premium-query { display: flex; flex-wrap: wrap; gap: 1rem; margin-top: 2rem; }
+.premium-query label { display: grid; gap: .4rem; font-weight: 600; }
+.premium-query input, .premium-query select { min-width: 12rem; font: inherit; padding: .5rem; border: 1px solid #94a3b8; border-radius: .35rem; background: white; }
+.premium-controls { display: flex; flex-wrap: wrap; gap: 1rem; margin-top: 1.2rem; }
+.premium-controls fieldset { flex: 1 1 19rem; border: 1px solid #cbd5e1; border-radius: .35rem; }
+.premium-controls legend { font-weight: 600; }
+.premium-controls label { display: inline-flex; align-items: center; gap: .35rem; margin: .25rem 1rem .25rem 0; }
+.premium-expiry-selector { margin-top: 1rem; }
+.premium-table-wrap { overflow-x: auto; border: 1px solid #cbd5e1; border-radius: .35rem; }
+.premium-table { min-width: 720px; background: white; }
+.premium-table th, .premium-table td { min-width: 9rem; text-align: right; }
+.premium-table th:first-child { min-width: 7rem; position: sticky; left: 0; background: white; z-index: 1; }
+.premium-table thead th { vertical-align: top; background: #f8fafc; }
+.premium-table thead th:first-child { background: #f8fafc; z-index: 2; }
+.premium-table th span, .premium-table th small { display: block; }
+.premium-table th small { margin-top: .2rem; color: #64748b; font-weight: 400; }
+.plane-empty { padding: 2rem 1rem; background: #f1f5f9; border-radius: .35rem; text-align: center; }
+.plane-legend { color: #475569; font-size: .9rem; }
+
+@media (max-width: 600px) {
+  .premium-query { display: grid; }
+  .premium-query input, .premium-query select { width: 100%; box-sizing: border-box; }
+}
