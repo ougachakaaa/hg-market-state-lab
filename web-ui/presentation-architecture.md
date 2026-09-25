@@ -1,6 +1,6 @@
 # web-ui 内部展示架构 authority
 
-本文档从属于 [web-ui architecture](ARCHITECTURE.md)，拥有 frontend 内部 presentation architecture 的职责分层、依赖方向、状态边界与共享规则。Application 当前组合哪些 surface 由 [application authority](application.md) 定义；generated contract ownership 由 [contract feedback-loop authority](contracts.md) 定义；产品展示与 visualization 语义仍由 [feature catalog](FEATURES.md) 导航到各 feature authority。
+本文档从属于 [web-ui architecture](ARCHITECTURE.md)，拥有 frontend 内部 presentation architecture 的职责分层、依赖方向、状态边界与共享规则。Application 当前组合哪些 surface 由 [application authority](application.md) 定义；ordinary UI、theme 与 CSS policy 由 [UI system authority](ui-system.md) 定义；generated contract ownership 由 [contract feedback-loop authority](contracts.md) 定义；产品展示与 visualization 语义仍由 [feature catalog](FEATURES.md) 导航到各 feature authority。
 
 ## 1. 分层与依赖方向
 
@@ -127,7 +127,7 @@ Feature `model/` 拥有 pure selector、projection、view-model construction、c
 
 Model 必须在可行范围内脱离 React、JSX、hooks、DOM lifecycle、Plotly renderer lifecycle 与 HTTP request lifecycle，保持可独立测试。它不拥有 `useState`、`useEffect`、`useRef`、request cancellation lifecycle 或 component mounting semantics。
 
-`feature/components` 拥有非 chart 的 feature-specific React presentation。`shared/ui` 只拥有 domain-neutral reusable UI infrastructure；不得因为两个控件当前结构相似，就把 MO、option-chain、premium-plane、expiry、strike、premium metric 或 product DTO 语义提升为 shared ownership。
+`feature/components` 拥有非 chart 的 feature-specific React presentation，并可以直接组合 Ant Design components；generic library behavior 与 visual design 不改变 feature 对 meaning 的 ownership，也不要求 project-owned wrapper。`shared/ui` 只拥有 domain-neutral reusable UI infrastructure 与 application theme；不得因为两个控件当前结构相似，就把 MO、option-chain、premium-plane、expiry、strike、premium metric 或 product DTO 语义提升为 shared ownership。Ordinary UI、wrapper justification 与 custom CSS exception 进一步遵循 [UI system authority](ui-system.md)。
 
 Chart 数据流固定为：
 
@@ -143,7 +143,7 @@ shared chart infrastructure
 Plotly rendering
 ```
 
-Feature `charts` 拥有 series identity、reference line、axis meaning、trace grouping、feature-specific hover information、visual encoding，以及这些语义对应的 Plotly trace/layout construction。`shared/charts` 只能拥有 React / Plotly integration、responsive rendering、common chart defaults、shared visual theme 与 generic chart-frame behavior 等 domain-neutral concern。
+Feature `charts` 拥有 series identity、reference line、axis meaning、trace grouping、feature-specific hover information、visual encoding，以及这些语义对应的 Plotly trace/layout construction。`shared/charts` 只能拥有 React / Plotly integration、responsive rendering、common chart defaults 与 generic chart-frame behavior 等 domain-neutral concern；feature semantic colors 与 analytical classification 不得进入 application UI theme 或由 shared chart infrastructure 重新定义。
 
 Feature hooks 可以选择或协调影响 chart projection 的 presentation state，但不拥有 series identity、axis meaning、reference-line semantics 或 feature-specific visual encoding；这些仍属于 feature model / charts。
 
@@ -151,7 +151,7 @@ Plotly 是当前 chart stack。Plotly-specific implementation 不得扩散到 ap
 
 ## 5. Shared Infrastructure
 
-`shared/ui`、`shared/charts`、`shared/http` 与 `shared/format` 只有在行为对多个 feature 确实 invariant 且不携带 domain semantics 时才成立。代码相似本身不是共享依据。
+`shared/ui`、`shared/charts`、`shared/http` 与 `shared/format` 只有在行为对多个 feature 确实 invariant 且不携带 domain semantics 时才成立。代码相似本身不是共享依据。`shared/ui` 不得仅为隐藏 Ant Design 而包装每个 generic component；repository 自身具有稳定的 domain-neutral behavior 或 policy 时才建立 abstraction。
 
 以下 ownership 必须留在 owning feature bounded context：
 
@@ -169,4 +169,4 @@ Feature-specific hooks 必须留在 owning feature，不得因复用 React mecha
 
 ## 6. 实现选择边界
 
-本 authority 锁定 ownership boundary、dependency direction、server-state 与 presentation-state category、React hooks integration boundary、Page composition boundary、feature/shared boundary 与 chart containment boundary。具体 hook 名称、React component tree、state/query library、routing mechanism、CSS structure、Plotly package/version 和 incidental filename 仍是实现选择，但这些选择不得违反本 authority。
+本 authority 锁定 ownership boundary、dependency direction、server-state 与 presentation-state category、React hooks integration boundary、Page composition boundary、feature/shared boundary 与 chart containment boundary。[UI system authority](ui-system.md) 进一步锁定 Ant Design / Plotly 职责分工、application theme ownership 与 CSS exception policy。具体 hook 名称、React component tree、state/query library、routing mechanism、library version、component/prop selection、token value、CSS filename/structure 和 incidental filename 仍是实现选择，但这些选择不得违反对应 authority。
