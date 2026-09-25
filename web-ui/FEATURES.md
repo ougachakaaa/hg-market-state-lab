@@ -1,6 +1,6 @@
 # web-ui frontend feature catalog
 
-本文件是 `web-ui` 正式 vertical slices 的 navigation-only catalog。模块稳定边界见 [ARCHITECTURE.md](ARCHITECTURE.md)；具体展示与交互语义由各 feature 的 co-located authority 拥有。
+本文件是 `web-ui` 正式 vertical slices 的 navigation-only catalog。Application entry、feature navigation 与 composition boundary 见 [application authority](application.md)；具体展示与交互语义由各 feature 的 co-located authority 拥有。
 
 | Frontend slice | 用途 | Canonical authority entry |
 | --- | --- | --- |

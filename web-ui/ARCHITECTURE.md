@@ -33,7 +33,13 @@ interaction and visualization
 
 Markdown authority 定义语义；backend OpenAPI 是 HTTP wire contract 的机器可读表达。前端可以消费生成类型与运行时校验，但不得独立维护一份竞争性的 backend schema。
 
-## 4. Vertical Slice Authority
+## 4. Authority Routing
+
+Application entry、feature discovery/navigation 与 composition boundary 由 [application authority](application.md) 拥有；它通过 [frontend feature catalog](FEATURES.md) 导航到各 vertical slice，但不拥有 feature-local 语义。
+
+Frontend-consumed HTTP products 的 generated OpenAPI / TypeScript ownership、generation obligation 与 freshness feedback loop 由 [contract feedback-loop authority](contracts.md) 拥有。
+
+### Vertical Slice Authority
 
 `web-ui/src/features/*` 中的 feature authority 只拥有对应 vertical slice 的：
 
@@ -45,8 +51,8 @@ interaction
 empty and error presentation
 ```
 
-正式 frontend vertical slices 及其 canonical authority entry 由 [FEATURES.md](FEATURES.md) 导航。feature entry 会按需链接对应 backend product 与 HTTP authority；普通前端任务无需读取 Source、Raw 或不相关产品文档。
+正式 frontend vertical slices 及其 canonical authority entry 由 application authority 下游的 `FEATURES.md` 导航。feature entry 会按需链接对应 backend product 与 HTTP authority；普通前端任务无需读取 Source、Raw 或不相关产品文档。
 
 ## 5. 维护边界
 
-只有展示层职责、backend contract 消费边界、数据依赖方向或 feature-authority routing 变化时更新本文件。单个 feature 的增删更新 `FEATURES.md`；框架版本、图表库、component tree、state-management、具体字段和视觉规则属于实现或 vertical slice Guide。
+只有展示层职责、backend contract 消费边界、数据依赖方向或下层 authority routing 变化时更新本文件。Application composition 更新 `application.md`，单个 feature 的增删更新 `FEATURES.md`，generated contract feedback loop 更新 `contracts.md`；框架版本、图表库、component tree、state-management、具体字段和视觉规则属于实现或 vertical slice Guide。

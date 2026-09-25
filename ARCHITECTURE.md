@@ -55,12 +55,17 @@ ARCHITECTURE.md（本文件）
     │  co-located product / capability ARCHITECTURE.md
     │
     └─ web-ui/ARCHITECTURE.md
-           ↓
-       co-located feature ARCHITECTURE.md
+           ├─ web-ui/application.md
+           │      ↓
+           │  web-ui/FEATURES.md
+           │      ↓
+           │  co-located feature ARCHITECTURE.md
+           │
+           └─ web-ui/contracts.md
 ```
 
 上层只提供选择下一份文档所需的上下文，不复制下层语义。新增或删除单个产品通常只更新模块 catalog，不改变本文件。
 
 ## 5. 维护边界
 
-仅在顶层模块、模块职责边界或顶层数据流变化时更新本文件。模块内部架构、产品契约、字段、公式、HTTP 行为和 UI 语义由对应下层 authority 拥有。
+仅在顶层模块、模块职责边界、顶层数据流或下层 authority 入口变化时更新本文件。模块内部架构、产品契约、字段、公式、HTTP 行为和 UI 语义由对应下层 authority 拥有。

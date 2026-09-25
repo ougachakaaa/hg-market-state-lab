@@ -6,9 +6,10 @@
 
 ## 最小 Authority 路径
 
-1. 先读 [ARCHITECTURE.md](ARCHITECTURE.md)，确认 presentation ownership 与 backend contract 依赖方向。
-2. 从 [frontend feature catalog](FEATURES.md) 选择任务所属的 vertical slice，再进入其 co-located feature authority。
-3. 只有 Guide 明确依赖某项 backend semantics 或 HTTP transport 时，才读取对应 product entry、read/backend authority 或 HTTP contract。
+1. 先读 [ARCHITECTURE.md](ARCHITECTURE.md)，确认 presentation ownership、backend contract 依赖方向与下层 authority 路由。
+2. 读取 [application authority](application.md)，区分 application-level 与 feature-level responsibility；feature 任务再从其链接的 [frontend feature catalog](FEATURES.md) 进入相关 co-located authority。
+3. Generated OpenAPI / TypeScript 或 contract freshness 任务还读取 [contract feedback-loop authority](contracts.md)，再进入 owning feature。
+4. 只有 feature authority 明确依赖某项 backend semantics 或 HTTP transport 时，才读取对应 product entry、read/backend authority 或 HTTP contract。
 
 普通 frontend 任务不读取 Source Capture、Raw Artifact、Analysis Preparation internals、CSI1000 5D 或其他无关产品 authority。
 
@@ -18,7 +19,8 @@
 - frontend 只拥有 request adaptation、presentation state、visual encoding、interaction 与用户可见的 empty/error presentation。
 - 不在 frontend 重新推导 product identity、contract universe、price fallback、completeness、financial formula 或 backend null/zero semantics。
 - Markdown authority 定义语义，backend OpenAPI 是 wire contract 的机器可读表达；不得手工维护竞争性的 response schema。
-- backend HTTP DTO/OpenAPI 改动后运行 `npm run contract:generate` 并提交生成的 JSON 与 TypeScript；其他变更不得无故重写生成 contract。
+- 任一 frontend-consumed product 的 generated artifact 缺失、相对 backend contract 已 stale，或 backend HTTP DTO/OpenAPI 改动时，运行 `npm run contract:generate` 并提交该 product 的 OpenAPI JSON 与 generated TypeScript；其他变更不得无故重写 generated contract。
+- Repository-level `npm run contract:check` 必须检查所有 frontend-consumed HTTP products 的 committed OpenAPI representation 与 generated TypeScript freshness。
 
 ## 验证
 
