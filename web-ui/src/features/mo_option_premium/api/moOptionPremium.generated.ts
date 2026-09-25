@@ -40,6 +40,13 @@ export interface components {
             /** Price */
             price: number;
         };
+        /** MetricDTO */
+        MetricDTO: {
+            /** Points */
+            points: number | null;
+            /** Yield */
+            yield: number | null;
+        };
         /** ObservationDTO */
         ObservationDTO: {
             /**
@@ -78,6 +85,11 @@ export interface components {
         PremiumErrorResponse: {
             error: components["schemas"]["PremiumErrorBody"];
         };
+        /** PremiumMetricsDTO */
+        PremiumMetricsDTO: {
+            expiry_futures: components["schemas"]["ValueMetricsDTO"];
+            underlying_spot: components["schemas"]["ValueMetricsDTO"];
+        };
         /** PremiumPlaneResponse */
         PremiumPlaneResponse: {
             /** Expiries */
@@ -91,18 +103,11 @@ export interface components {
         };
         /** PremiumPointDTO */
         PremiumPointDTO: {
-            /** Annualized Premium Points */
-            annualized_premium_points: number | null;
-            /** Annualized Seller Premium Yield */
-            annualized_seller_premium_yield: number | null;
-            /** Annualized Time Value Points */
-            annualized_time_value_points: number | null;
-            /** Annualized Time Value Yield */
-            annualized_time_value_yield: number | null;
             /** Expiry Date */
             expiry_date: string;
             /** Instrument Id */
             instrument_id: string;
+            metrics: components["schemas"]["PremiumMetricsDTO"];
             option_type: components["schemas"]["OptionType"];
             /** Premium */
             premium: number | null;
@@ -114,6 +119,11 @@ export interface components {
          * @enum {string}
          */
         PriceType: "open" | "high" | "low" | "close";
+        /** TimeNormalizedMetricsDTO */
+        TimeNormalizedMetricsDTO: {
+            annualized: components["schemas"]["MetricDTO"];
+            unannualized: components["schemas"]["MetricDTO"];
+        };
         /** UnderlyingDTO */
         UnderlyingDTO: {
             /** Instrument Id */
@@ -133,6 +143,11 @@ export interface components {
             msg: string;
             /** Error Type */
             type: string;
+        };
+        /** ValueMetricsDTO */
+        ValueMetricsDTO: {
+            time_value: components["schemas"]["TimeNormalizedMetricsDTO"];
+            total: components["schemas"]["TimeNormalizedMetricsDTO"];
         };
     };
     responses: never;

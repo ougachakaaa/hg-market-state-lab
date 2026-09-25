@@ -5,6 +5,8 @@
 .premium-controls fieldset { flex: 1 1 19rem; border: 1px solid #cbd5e1; border-radius: .35rem; }
 .premium-controls legend { font-weight: 600; }
 .premium-controls label { display: inline-flex; align-items: center; gap: .35rem; margin: .25rem 1rem .25rem 0; }
+.premium-metric-controls { display: grid; gap: .6rem; }
+.premium-metric-controls strong { display: block; color: #334155; font-size: .9rem; }
 .premium-expiry-selector { margin-top: 1rem; }
 .premium-table-wrap { overflow-x: auto; border: 1px solid #cbd5e1; border-radius: .35rem; }
 .premium-table { min-width: 720px; background: white; }

@@ -1,13 +1,10 @@
 import type { PremiumExpiry, PremiumPlane, PremiumPoint } from './api/moOptionPremium'
 
 export type SelectedOptionType = PremiumPoint['option_type']
+export type SelectedReferenceBasis = 'underlying_spot' | 'expiry_futures'
 export type SelectedValueBasis = 'total' | 'time_value'
+export type SelectedTimeNormalization = 'unannualized' | 'annualized'
 export type SelectedRepresentation = 'points' | 'yield'
-type PremiumMetricField =
-  | 'annualized_premium_points'
-  | 'annualized_time_value_points'
-  | 'annualized_seller_premium_yield'
-  | 'annualized_time_value_yield'
 export type StrikeReferencePosition =
   | 'below-reference'
   | 'at-reference'
@@ -45,17 +42,13 @@ export function formatPlaneNumber(value: number): string {
 }
 
 export function resolveMetric(
+  point: PremiumPoint,
+  referenceBasis: SelectedReferenceBasis,
   valueBasis: SelectedValueBasis,
+  timeNormalization: SelectedTimeNormalization,
   representation: SelectedRepresentation,
-): PremiumMetricField {
-  if (valueBasis === 'total') {
-    return representation === 'points'
-      ? 'annualized_premium_points'
-      : 'annualized_seller_premium_yield'
-  }
-  return representation === 'points'
-    ? 'annualized_time_value_points'
-    : 'annualized_time_value_yield'
+): number | null {
+  return point.metrics[referenceBasis][valueBasis][timeNormalization][representation]
 }
 
 export function formatMetric(value: number, representation: SelectedRepresentation): string {
@@ -77,11 +70,12 @@ export function classifyStrikeRelativeToReference(
 export function projectPremiumPlane(
   plane: PremiumPlane,
   optionType: SelectedOptionType,
+  referenceBasis: SelectedReferenceBasis,
   valueBasis: SelectedValueBasis,
+  timeNormalization: SelectedTimeNormalization,
   representation: SelectedRepresentation,
   selectedExpiries: ReadonlySet<string>,
 ): PremiumPlaneProjection {
-  const metric = resolveMetric(valueBasis, representation)
   const expiries = plane.expiries.filter((expiry) => selectedExpiries.has(expiry.expiry_date))
   const visibleExpiryDates = new Set(expiries.map((expiry) => expiry.expiry_date))
   const points = plane.points.filter((point) => (
@@ -100,7 +94,13 @@ export function projectPremiumPlane(
       cells: expiries.map((expiry): PremiumCell => {
         const point = pointByCoordinate.get(`${expiry.expiry_date}\u0000${strike}`)
         if (point === undefined) return { kind: 'absent' }
-        const value = point[metric]
+        const value = resolveMetric(
+          point,
+          referenceBasis,
+          valueBasis,
+          timeNormalization,
+          representation,
+        )
         return value === null ? { kind: 'unavailable' } : { kind: 'value', value }
       }),
     })),

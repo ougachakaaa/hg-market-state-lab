@@ -50,6 +50,39 @@
         "title": "FuturesDTO",
         "type": "object"
       },
+      "MetricDTO": {
+        "additionalProperties": false,
+        "properties": {
+          "points": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Points"
+          },
+          "yield": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Yield"
+          }
+        },
+        "required": [
+          "points",
+          "yield"
+        ],
+        "title": "MetricDTO",
+        "type": "object"
+      },
       "ObservationDTO": {
         "additionalProperties": false,
         "properties": {
@@ -142,6 +175,23 @@
         "title": "PremiumErrorResponse",
         "type": "object"
       },
+      "PremiumMetricsDTO": {
+        "additionalProperties": false,
+        "properties": {
+          "expiry_futures": {
+            "$ref": "#/components/schemas/ValueMetricsDTO"
+          },
+          "underlying_spot": {
+            "$ref": "#/components/schemas/ValueMetricsDTO"
+          }
+        },
+        "required": [
+          "underlying_spot",
+          "expiry_futures"
+        ],
+        "title": "PremiumMetricsDTO",
+        "type": "object"
+      },
       "PremiumPlaneResponse": {
         "additionalProperties": false,
         "properties": {
@@ -186,50 +236,6 @@
       "PremiumPointDTO": {
         "additionalProperties": false,
         "properties": {
-          "annualized_premium_points": {
-            "anyOf": [
-              {
-                "type": "number"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Annualized Premium Points"
-          },
-          "annualized_seller_premium_yield": {
-            "anyOf": [
-              {
-                "type": "number"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Annualized Seller Premium Yield"
-          },
-          "annualized_time_value_points": {
-            "anyOf": [
-              {
-                "type": "number"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Annualized Time Value Points"
-          },
-          "annualized_time_value_yield": {
-            "anyOf": [
-              {
-                "type": "number"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Annualized Time Value Yield"
-          },
           "expiry_date": {
             "title": "Expiry Date",
             "type": "string"
@@ -237,6 +243,9 @@
           "instrument_id": {
             "title": "Instrument Id",
             "type": "string"
+          },
+          "metrics": {
+            "$ref": "#/components/schemas/PremiumMetricsDTO"
           },
           "option_type": {
             "$ref": "#/components/schemas/OptionType"
@@ -263,10 +272,7 @@
           "option_type",
           "strike",
           "premium",
-          "annualized_premium_points",
-          "annualized_time_value_points",
-          "annualized_seller_premium_yield",
-          "annualized_time_value_yield"
+          "metrics"
         ],
         "title": "PremiumPointDTO",
         "type": "object"
@@ -280,6 +286,23 @@
         ],
         "title": "PriceType",
         "type": "string"
+      },
+      "TimeNormalizedMetricsDTO": {
+        "additionalProperties": false,
+        "properties": {
+          "annualized": {
+            "$ref": "#/components/schemas/MetricDTO"
+          },
+          "unannualized": {
+            "$ref": "#/components/schemas/MetricDTO"
+          }
+        },
+        "required": [
+          "unannualized",
+          "annualized"
+        ],
+        "title": "TimeNormalizedMetricsDTO",
+        "type": "object"
       },
       "UnderlyingDTO": {
         "additionalProperties": false,
@@ -338,6 +361,23 @@
           "type"
         ],
         "title": "ValidationError",
+        "type": "object"
+      },
+      "ValueMetricsDTO": {
+        "additionalProperties": false,
+        "properties": {
+          "time_value": {
+            "$ref": "#/components/schemas/TimeNormalizedMetricsDTO"
+          },
+          "total": {
+            "$ref": "#/components/schemas/TimeNormalizedMetricsDTO"
+          }
+        },
+        "required": [
+          "total",
+          "time_value"
+        ],
+        "title": "ValueMetricsDTO",
         "type": "object"
       }
     }
