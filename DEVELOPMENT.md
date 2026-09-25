@@ -1,8 +1,8 @@
 # Repository Development CLI
 
-本文档只描述本地开发编排与操作方式，不是架构、产品或 HTTP 语义 authority。仓库级路由见 [ARCHITECTURE.md](ARCHITECTURE.md)，产品契约从 [market-snapshot/CAPABILITIES.md](market-snapshot/CAPABILITIES.md) 进入并与对应源码 bounded context 共址。
+本文档只描述本地开发编排与操作方式，不是架构、产品或 HTTP 语义 authority。仓库级路由见 [ARCHITECTURE.md](ARCHITECTURE.md)，产品契约从 [market-snapshot/CAPABILITIES.md](market-snapshot/CAPABILITIES.md) 进入，HTTP contract 从 [backend-api/HTTP_PRODUCTS.md](backend-api/HTTP_PRODUCTS.md) 进入。
 
-仓库根目录的 `dev.py` 是本地开发入口，只负责检查启动条件和转发模块自己的命令。它是 developer orchestration surface 和 repository-level convenience forwarding surface，不是 Data Service、部署工具或新的业务模块。
+仓库根目录的 `dev.py` 是本地开发入口，只负责检查启动条件和转发模块自己的命令。它是 developer orchestration surface 和 repository-level convenience forwarding surface，不是 Data Service、部署工具或新的业务模块。Canonical HTTP owner 已是 `backend-api`，但当前 FastAPI implementation 与 launcher 仍在 `market-snapshot` 中；本文档只如实记录这个尚未迁移的 runtime layout。
 
 ## Codex managed worktree 环境
 
@@ -56,6 +56,6 @@ poetry run python scripts/dms.py get <service_id> --date <resolved-date>
 
 ## Ownership
 
-`dev.py` 只拥有 CLI parsing、命令分发、仓库路径解析、开发前提检查、Data Service `service_id` 转发、convenience default date resolution、进程调用、exit-code propagation 和人类可读状态。backend 的 bind 配置与 HTTP contract 仍由 backend 自身拥有；frontend 的 React/Vite 配置与开发脚本由 `web-ui` 拥有。`dev.py` 不导入模块内部代码，不拥有 Source Capture orchestration、Analysis Preparation、Data Service business semantics、dataset schema 或 trading-calendar resolution；端口仅用于本地开发诊断，不构成业务契约。
+`dev.py` 只拥有 CLI parsing、命令分发、仓库路径解析、开发前提检查、Data Service `service_id` 转发、convenience default date resolution、进程调用、exit-code propagation 和人类可读状态。HTTP bind/runtime composition 与 contract 的 canonical owner 是 `backend-api`；当前 `dev.py` 仍转发历史位置 `market-snapshot/scripts/api.py`。Frontend 的 React/Vite 配置与开发脚本由 `web-ui` 拥有。`dev.py` 不导入模块内部代码，不拥有 Source Capture orchestration、Analysis Preparation、Data Service business semantics、dataset schema 或 trading-calendar resolution；端口仅用于本地开发诊断，不构成业务契约。
 
 V1 不提供组合启动、后台进程、PID、日志、停止或重启、端口分配、配置框架、环境变量管理、依赖安装、测试运行或部署功能。`dev.py` 的 frontend 诊断地址与 Vite 显式绑定的 `127.0.0.1:5173` 一致。
