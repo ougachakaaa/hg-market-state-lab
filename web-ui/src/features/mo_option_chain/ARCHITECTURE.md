@@ -1,6 +1,6 @@
 # MO Option Chain visualization bounded-context authority
 
-本文件是该 frontend vertical slice 的入口，并 specialize [web-ui architecture](../../../ARCHITECTURE.md)。
+本文件是该 frontend vertical slice 的入口，并在 [web-ui architecture](../../../ARCHITECTURE.md) 边界内 specialize [presentation architecture](../../../presentation-architecture.md)。
 
 ## Ownership
 

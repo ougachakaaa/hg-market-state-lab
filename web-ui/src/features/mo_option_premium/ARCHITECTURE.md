@@ -1,6 +1,6 @@
 # MO Premium Plane frontend bounded-context authority
 
-本文件是 MO Premium Plane frontend vertical slice 的入口，并 specialize [web-ui architecture](../../../ARCHITECTURE.md)。它与 `mo_option_chain` 是 sibling frontend slices，不共享产品 identity 或 visualization semantics。
+本文件是 MO Premium Plane frontend vertical slice 的入口，并在 [web-ui architecture](../../../ARCHITECTURE.md) 边界内 specialize [presentation architecture](../../../presentation-architecture.md)。它与 `mo_option_chain` 是 sibling frontend slices，不共享产品 identity 或 visualization semantics。
 
 ## 1. Identity and Dependency
 

@@ -39,6 +39,8 @@ Owning module Markdown authority 定义业务语义；[backend-api](../backend-a
 
 Application entry、feature discovery/navigation 与 composition boundary 由 [application authority](application.md) 拥有；它通过 [frontend feature catalog](FEATURES.md) 导航到各 vertical slice，但不拥有 feature-local 语义。
 
+Frontend 内部 application、Page、API/state/model、component、chart 与 shared infrastructure 的 ownership、依赖方向和状态边界由 [presentation architecture](presentation-architecture.md) 拥有。具体 feature 的产品展示与 visualization 语义仍由 co-located feature authority 拥有。
+
 Frontend-consumed HTTP products 的 generated OpenAPI / TypeScript ownership、generation obligation 与 freshness feedback loop 由 [contract feedback-loop authority](contracts.md) 拥有。
 
 ### Vertical Slice Authority
@@ -57,4 +59,6 @@ empty and error presentation
 
 ## 5. 维护边界
 
-只有展示层职责、backend contract 消费边界、数据依赖方向或下层 authority routing 变化时更新本文件。Application composition 更新 `application.md`，单个 feature 的增删更新 `FEATURES.md`，generated contract feedback loop 更新 `contracts.md`；框架版本、图表库、component tree、state-management、具体字段和视觉规则属于实现或 vertical slice Guide。
+只有展示层职责、backend contract 消费边界、数据依赖方向或下层 authority routing 变化时更新本文件。Application composition 更新 `application.md`，frontend 内部分层与共享边界更新 `presentation-architecture.md`，单个 feature 的增删更新 `FEATURES.md`，generated contract feedback loop 更新 `contracts.md`。
+
+Ownership、dependency direction、server-state 与 presentation-state category、Page composition、feature/shared boundary 与 chart containment 属于 architecture authority；具体框架或图表库版本、incidental component tree、state-management library、字段与 feature visual rule 属于实现或 vertical slice authority。实现选择不得推翻前述 architecture boundary。

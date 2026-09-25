@@ -7,9 +7,10 @@
 ## 最小 Authority 路径
 
 1. 先读 [ARCHITECTURE.md](ARCHITECTURE.md)，确认 presentation ownership、backend contract 依赖方向与下层 authority 路由。
-2. 读取 [application authority](application.md)，区分 application-level 与 feature-level responsibility；feature 任务再从其链接的 [frontend feature catalog](FEATURES.md) 进入相关 co-located authority。
-3. Generated OpenAPI / TypeScript 或 contract freshness 任务还读取 [contract feedback-loop authority](contracts.md)，再进入 owning feature。
-4. 只有 feature authority 明确依赖某项 business semantics 或 HTTP transport 时，才读取对应 owning product entry/read/backend authority，或从 [backend-api HTTP catalog](../backend-api/HTTP_PRODUCTS.md) 进入 HTTP contract。
+2. Frontend implementation、placement、state ownership、projection、component、chart 或 shared infrastructure 任务读取 [presentation architecture](presentation-architecture.md)。
+3. Application entry、navigation、layout 或 feature composition 任务再读取 [application authority](application.md)；feature 任务从 [frontend feature catalog](FEATURES.md) 进入相关 co-located authority。
+4. Generated OpenAPI / TypeScript 或 contract freshness 任务还读取 [contract feedback-loop authority](contracts.md)，再进入 owning feature。
+5. 只有 feature authority 明确依赖某项 business semantics 或 HTTP transport 时，才读取对应 owning product entry/read/backend authority，或从 [backend-api HTTP catalog](../backend-api/HTTP_PRODUCTS.md) 进入 HTTP contract。
 
 普通 frontend 任务不读取 Source Capture、Raw Artifact、Analysis Preparation internals、CSI1000 5D 或其他无关产品 authority。
 

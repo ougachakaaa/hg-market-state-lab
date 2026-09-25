@@ -1,6 +1,6 @@
 # web-ui application integration authority
 
-本文档从属于 [web-ui architecture](ARCHITECTURE.md)，只拥有 Web application 的 entry、feature discovery/navigation 与 composition boundary。正式 frontend surfaces 由 [feature catalog](FEATURES.md) 导航；各 surface 的产品与 visualization 语义仍由其 co-located feature authority 拥有。
+本文档从属于 [web-ui architecture](ARCHITECTURE.md)，并遵循 [presentation architecture](presentation-architecture.md) 定义的内部 ownership boundary；它只拥有 Web application 的 entry、feature discovery/navigation、layout/shell 与 composition boundary。正式 frontend surfaces 由 [feature catalog](FEATURES.md) 导航；各 surface 的产品与 visualization 语义仍由其 co-located feature authority 拥有。
 
 ## 1. Application Surfaces
 
@@ -23,6 +23,7 @@ Application shell 只拥有：
 ```text
 application entry
 feature discovery and navigation
+application layout / shell
 feature composition boundary
 ```
 
