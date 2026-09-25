@@ -161,7 +161,6 @@ premium availability
 volume or OI
 liquidity
 expiry preference
-frontend viewport
 selected expiries
 ```
 

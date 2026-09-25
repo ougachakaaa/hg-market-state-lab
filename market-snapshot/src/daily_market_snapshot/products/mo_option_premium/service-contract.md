@@ -75,7 +75,7 @@ availability probe 复用 `index_daily` Capture，并把其 result 写入 Premiu
 | Product service | request orchestration、availability-result admission、semantic failure classification/propagation、result boundary | Source fields、financial formulas、HTTP DTO |
 | Source Capture | Source calls、product-declared Source-domain scope、minimal normalization、Premium Raw production | Basis join、analysis formulas、Plane framing |
 | Basis construction | deterministic joins、domain vocabulary normalization、unified price projection、legitimate futures matching | DTE、annualization、seller yield、HTTP projection |
-| Point Preparation | DTE、annualized premium points、seller yield、self-contained Points | Capture、transport、presentation |
+| Point Preparation | DTE、annualized premium points、annualized time-value points、seller yield、self-contained Points | Capture、transport、presentation |
 | PremiumPlaneFramer | compatibility validation、sparse organization、deterministic framing | recalculation、interpolation、synthetic facts |
 | HTTP adapter | query serialization/transport validation、product result projection、status/envelope mapping | Source calls、Raw construction、domain repair or calculation |
 

@@ -56,7 +56,7 @@ HTTP query 是闭集。以下均不是 query 参数：
 selected expiries
 side / Call / Put selection
 selected metric
-strike_min / strike_max / viewport
+server-side strike filtering
 chart size
 color / theme
 visibility state
@@ -102,6 +102,7 @@ HTTP 200 返回一个无外层 envelope 的 `PremiumPlaneResponse` JSON object�
       "strike": 7000.0,
       "premium": 52.4,
       "annualized_premium_points": 3825.2,
+      "annualized_time_value_points": -18987.3,
       "annualized_seller_premium_yield": 0.5231
     },
     {
@@ -111,6 +112,7 @@ HTTP 200 返回一个无外层 envelope 的 `PremiumPlaneResponse` JSON object�
       "strike": 7050.0,
       "premium": null,
       "annualized_premium_points": null,
+      "annualized_time_value_points": null,
       "annualized_seller_premium_yield": null
     }
   ]
@@ -161,7 +163,7 @@ OR
 }
 ```
 
-无 legitimate futures reference 时使用 `null`。不得使用 nearest-expiry、main-contract、liquidity-based substitution 或 fallback price。futures 不是 underlying、seller-yield denominator 或 premium source。
+无 legitimate futures reference 时使用 `null`。不得使用 nearest-expiry、main-contract、liquidity-based substitution 或 fallback price。futures 不是 underlying、intrinsic-value reference、seller-yield denominator 或 premium source。
 
 ### 3.3 Sparse Point projection
 
@@ -174,6 +176,7 @@ option_type: call | put
 strike: number
 premium: number | null
 annualized_premium_points: number | null
+annualized_time_value_points: number | null
 annualized_seller_premium_yield: number | null
 ```
 
@@ -187,7 +190,7 @@ expiry_date × strike × option_type
 
 每个 Point 的 `expiry_date` 必须恰好匹配一个 `expiries[]` context；`expiries[]` 中的 `expiry_date` 不得重复，同一 `expiry_date × strike × option_type` coordinate 也不得重复。
 
-三个 nullable numeric fields 的合法组合及金融一致性由 [backend.md](backend.md) 决定。HTTP 只保持已准备 facts，不计算、不补值，也不从一个 metric 推导另一个 metric。
+四个 nullable numeric fields 的合法组合及金融一致性由 [backend.md](backend.md) 决定。HTTP 只保持已准备 facts，不计算、不补值，也不从一个 metric 推导另一个 metric。尤其不得在 delivery adapter 中计算 intrinsic value、time value 或 annualization；`annualized_time_value_points` 只能投影 canonical Point 已准备的值。
 
 `annualized_seller_premium_yield` 以 numeric ratio 交付：
 
@@ -277,7 +280,7 @@ Tushare schema
 internal cache
 ```
 
-HTTP adapter 从 [product service](service-contract.md) 接受完整的 request-scoped `AnnualizedPremiumPlane` 或 classified product semantic failure。它不得直接调用 Source、构造 Raw/Basis、计算 DTE 或 premium metrics，也不得修复 incomplete Point/Plane。
+HTTP adapter 从 [product service](service-contract.md) 接受完整的 request-scoped `AnnualizedPremiumPlane` 或 classified product semantic failure。它不得直接调用 Source、构造 Raw/Basis、计算 DTE、intrinsic value、time value、annualization 或 premium metrics，也不得修复 incomplete Point/Plane。
 
 ## 7. Ordering and Identity
 
@@ -298,13 +301,12 @@ ordering 是 transport convenience，不是 analytical identity。consumer 必�
 
 ## 8. Presentation-state Boundary
 
-一次成功 response 同时交付 Call / Put 与两个 premium metrics 的完整 sparse projection。以下交互不得触发 backend recomputation 或新的 HTTP request：
+一次成功 response 同时交付 Call / Put、全部 expiries 与三种 premium metrics 的完整 sparse projection。以下交互不得触发 backend recomputation 或新的 HTTP request：
 
 ```text
 Call / Put toggle
-annualized premium points / seller yield toggle
+annualized premium points / annualized time-value points / seller yield toggle
 expiry visibility
-strike viewport filtering
 ```
 
 本文档不规定 Plotly trace、CSS、marker、color、tooltip、layout、component hierarchy 或 formatting precision；这些属于未来 frontend visualization authority。

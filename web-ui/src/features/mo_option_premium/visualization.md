@@ -19,8 +19,6 @@ select displayed metric
     ↓
 select visible expiries
     ↓
-adjust strike viewport
-    ↓
 inspect numeric premium plane
 ```
 
@@ -44,9 +42,9 @@ price_type = open | high | low | close
 selectedOptionType: call | put
 selectedMetric:
   annualized_premium_points
+  | annualized_time_value_points
   | annualized_seller_premium_yield
 selectedExpiries: response expiry identities
-strikeHalfRangePoints: number
 ```
 
 每个新完整 response 的默认值是：
@@ -55,19 +53,9 @@ strikeHalfRangePoints: number
 selectedOptionType = call
 selectedMetric = annualized_premium_points
 selectedExpiries = all response expiries
-strikeHalfRangePoints = 300
 ```
 
-`strikeHalfRangePoints` 的 minimum 是 `300`、调整 step 是 `100`。viewport 严格使用未舍入的 backend underlying spot：
-
-```text
-[
-  underlying.price - strikeHalfRangePoints,
-  underlying.price + strikeHalfRangePoints
-]
-```
-
-边界包含等于 lower/upper bound 的 strike。显示舍入不得参与 viewport 判断。改变上述任一 presentation state 只重新投影已加载的完整 response，不发起请求、不改变 response，也不触发 backend recomputation。
+改变上述任一 presentation state 只重新投影已加载的完整 response，不发起请求、不改变 response，也不触发 backend recomputation。
 
 `selectedExpiries` 默认保持 backend response 的全部 expiry identities。隐藏 expiry 只隐藏对应 column；完整 response 保留，其他 expiry 的 identity 和顺序不变，并且只要 response 含有 expiry 就至少保持一个 visible expiry。
 
@@ -81,7 +69,7 @@ rows    = strikes
 cell    = selected metric of the real Point
 ```
 
-Column 必须保持 backend `expiry_date ascending` identity，不按用户选择顺序重新排序。Rows 从 `selectedOptionType + selectedExpiries` 中真实存在的 Point strikes 取 union，再以未舍入的 strike 应用当前 viewport，并按 numeric strike ascending 展示。
+Column 必须保持 backend `expiry_date ascending` identity，不按用户选择顺序重新排序。Rows 唯一定义为 `selectedOptionType + selectedExpiries` 中所有真实 Points 的 strike union，并按 raw numeric strike ascending 展示。Frontend 不因 strike 相对 reference price 的位置或任何显示范围删除真实 Point。
 
 对每个 expiry × strike presentation coordinate：
 
@@ -92,7 +80,7 @@ Column 必须保持 backend `expiry_date ascending` identity，不按用户选�
 
 Table 附带简短图例，明确“空白 = 无 Point；`—` = Point 存在但 metric unavailable”。不得为规则矩阵生成 analytical Point、synthetic contract 或 synthetic null fact，也不得 interpolation、nearest-strike substitution、forward fill 或 backfill。
 
-如果当前 selected side、selected expiries 与 viewport 投影后没有 row，页面显示“当前选择与行权价范围内无 analytical observation”这一合法视图空状态，并保留 response context 与所有控件。它不是 backend failure，不得创建 placeholder Point 或转成 partial/empty success。
+如果当前 selected side 与 selected expiries 没有任何真实 Point，页面显示“当前选择下无 analytical observation”这一合法视图空状态，并保留 response context 与所有控件。它不是 backend failure，不得创建 placeholder Point 或转成 partial/empty success。
 
 ## 5. Context and Formatting
 
@@ -116,12 +104,33 @@ V1 formatting：
 | underlying price | 1 decimal |
 | futures price | 1 decimal |
 | annualized premium points | 1 decimal |
+| annualized time-value points | 1 decimal |
 | annualized seller premium yield | percentage, 2 decimals |
 | DTE | integer |
 
-例如 `7312.45 → 7312.5`、`3825.24 → 3825.2`、`0.0998 → 9.98%`、points zero `→ 0.0`、yield zero `→ 0.00%`。Formatting 只影响 display，不改变排序、viewport、identity、request 或 backend numeric facts。
+例如 `7312.45 → 7312.5`、`3825.24 → 3825.2`、`-12.34 → -12.3`、`0.0998 → 9.98%`、points zero `→ 0.0`、yield zero `→ 0.00%`。Formatting 只影响 display，不改变排序、reference comparison、identity、request 或 backend numeric facts。
 
-## 6. Loading, Complete and Failure States
+## 6. Strike Relative-to-Reference Coloring
+
+Reference coloring 是 frontend-only visual encoding，不是 financial analytical metric。分类只使用 backend raw numeric facts，禁止使用 formatted、rounded 或 display string：
+
+```text
+strike < reference → below-reference
+strike > reference → above-reference
+strike = reference → at-reference
+```
+
+左侧 strike column 的 `reference` 固定为 response-level `underlying.price`。每个 expiry column 的 `reference` 固定为该 expiry 的 `futures.price`；当 `futures = null` 时，该 column 的所有 row coordinates 使用 `neutral`，不得寻找或推断替代 futures contract。
+
+分类适用于每个展示 row strike 与 column reference 的关系，与该 coordinate 是否存在真实 Point、metric 是否为 null 无关。无 Point cell 可以具有 reference-region presentation，但仍必须保持空白，且不得因此成为 synthetic Point、null fact 或 analytical observation。
+
+颜色只表达：
+
+> strike position relative to the relevant reference price.
+
+不得将 `below-reference`、`above-reference`、`at-reference` 或 `neutral` 解释或标记为 cheap / expensive、bullish / bearish、good / bad、recommended、probability、signal、ITM 或 OTM。Call 与 Put 的 intrinsic-value direction 相反，因此不得为两个区域提供全局 ITM / OTM 标签。具体 CSS colors 属于 implementation choice。
+
+## 7. Loading, Complete and Failure States
 
 页面至少区分：
 
@@ -141,7 +150,7 @@ failure
 
 任何失败都不得 fallback date、把 stale response 作为当前结果、构造 partial plane，或静默转成 empty table。合法的 presentation projection 空状态只允许发生在已成功加载的完整 response 上，并与 failure 明确区分。
 
-## 7. V1 Non-goals
+## 8. V1 Non-goals
 
 本 authority 不设计：
 
