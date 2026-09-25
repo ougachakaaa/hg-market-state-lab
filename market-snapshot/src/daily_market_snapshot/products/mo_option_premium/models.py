@@ -22,6 +22,26 @@ class OptionType(StrEnum):
     PUT = "put"
 
 
+class ReferenceBasis(StrEnum):
+    UNDERLYING_SPOT = "underlying_spot"
+    EXPIRY_FUTURES = "expiry_futures"
+
+
+class ValueBasis(StrEnum):
+    TOTAL = "total"
+    TIME_VALUE = "time_value"
+
+
+class TimeNormalization(StrEnum):
+    UNANNUALIZED = "unannualized"
+    ANNUALIZED = "annualized"
+
+
+class MetricRepresentation(StrEnum):
+    POINTS = "points"
+    YIELD = "yield"
+
+
 DEFAULT_PRICE_TYPE = PriceType.CLOSE
 
 
@@ -65,12 +85,36 @@ class OptionMarketBasis:
 class CalculationBasis:
     dte_basis: str = "inclusive_calendar_days"
     annualization_days: int = 365
-    seller_yield_denominator: str = "underlying_spot_notional"
+    yield_denominator: str = "selected_reference_notional"
     contract_multiplier: float = 200.0
 
 
 @dataclass(frozen=True)
-class AnnualizedPremiumPoint:
+class MetricValues:
+    points: float | None
+    yield_: float | None
+
+
+@dataclass(frozen=True)
+class TimeNormalizedMetrics:
+    unannualized: MetricValues
+    annualized: MetricValues
+
+
+@dataclass(frozen=True)
+class ValueMetrics:
+    total: TimeNormalizedMetrics
+    time_value: TimeNormalizedMetrics
+
+
+@dataclass(frozen=True)
+class PremiumMetrics:
+    underlying_spot: ValueMetrics
+    expiry_futures: ValueMetrics
+
+
+@dataclass(frozen=True)
+class PremiumPoint:
     observation: ObservationAnchor
     instrument_id: str
     option_product: OptionProduct
@@ -83,17 +127,14 @@ class AnnualizedPremiumPoint:
     futures: FuturesReference | None
     calculation_basis: CalculationBasis
     dte: int
-    annualized_premium_points: float | None
-    annualized_time_value_points: float | None
-    annualized_seller_premium_yield: float | None
-    annualized_time_value_yield: float | None
+    metrics: PremiumMetrics
 
 
 @dataclass(frozen=True)
-class AnnualizedPremiumPlane:
+class PremiumPlane:
     observation: ObservationAnchor
     option_product: OptionProduct
     price_type: PriceType
     underlying: UnderlyingReference
     calculation_basis: CalculationBasis
-    points: tuple[AnnualizedPremiumPoint, ...]
+    points: tuple[PremiumPoint, ...]

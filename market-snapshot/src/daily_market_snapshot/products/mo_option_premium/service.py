@@ -16,7 +16,7 @@ from ...capture import (
 )
 from ...sources import tushare
 from . import basis, framing, preparation
-from .models import DEFAULT_PRICE_TYPE, AnnualizedPremiumPlane, OptionProduct, PriceType
+from .models import DEFAULT_PRICE_TYPE, OptionProduct, PremiumPlane, PriceType
 
 
 class PremiumPlaneError(Exception):
@@ -50,7 +50,7 @@ class PremiumPlaneQuery:
 
 @dataclass(frozen=True)
 class PremiumPlaneResult:
-    plane: AnnualizedPremiumPlane | None = None
+    plane: PremiumPlane | None = None
     error: PremiumPlaneError | None = None
 
     def __post_init__(self) -> None:

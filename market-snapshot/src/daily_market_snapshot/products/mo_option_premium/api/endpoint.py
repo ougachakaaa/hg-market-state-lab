@@ -7,7 +7,7 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, Query, Request
 
 from .. import service
-from ..models import AnnualizedPremiumPlane
+from ..models import PremiumPlane
 from .errors import (
     CONTRACT_QUERY_PARAMS,
     QUERY_PARAM_AS_OF,
@@ -62,7 +62,7 @@ ERROR_KINDS: dict[type[service.PremiumPlaneError], PremiumErrorKind] = {
 }
 
 
-def project_plane(plane: AnnualizedPremiumPlane) -> PremiumPlaneResponse:
+def project_plane(plane: PremiumPlane) -> PremiumPlaneResponse:
     """Losslessly normalize repeated Point context into the wire shape."""
     expiry_context: dict[str, ExpiryDTO] = {}
     for point in plane.points:
@@ -92,10 +92,10 @@ def project_plane(plane: AnnualizedPremiumPlane) -> PremiumPlaneResponse:
                 option_type=point.option_type,
                 strike=point.strike,
                 premium=point.premium,
-                annualized_premium_points=point.annualized_premium_points,
-                annualized_time_value_points=point.annualized_time_value_points,
-                annualized_seller_premium_yield=point.annualized_seller_premium_yield,
-                annualized_time_value_yield=point.annualized_time_value_yield,
+                annualized_premium_points=point.metrics.underlying_spot.total.annualized.points,
+                annualized_time_value_points=point.metrics.underlying_spot.time_value.annualized.points,
+                annualized_seller_premium_yield=point.metrics.underlying_spot.total.annualized.yield_,
+                annualized_time_value_yield=point.metrics.underlying_spot.time_value.annualized.yield_,
             )
             for point in plane.points
         ],

@@ -1,17 +1,17 @@
-"""Compatibility validation and sparse framing of Annualized Premium Points."""
+"""Compatibility validation and sparse framing of Premium Points."""
 
 from __future__ import annotations
 
 from collections.abc import Sequence
 
-from .models import AnnualizedPremiumPlane, AnnualizedPremiumPoint, OptionType
+from .models import OptionType, PremiumPlane, PremiumPoint
 
 
 class PlaneFramingError(Exception):
     """Points cannot form one complete, compatible sparse Plane."""
 
 
-def frame_plane(points: Sequence[AnnualizedPremiumPoint]) -> AnnualizedPremiumPlane:
+def frame_plane(points: Sequence[PremiumPoint]) -> PremiumPlane:
     """Frame compatible real Points without recalculation or synthesis."""
     if not points:
         raise PlaneFramingError("a Premium Plane requires at least one real Point")
@@ -60,7 +60,7 @@ def frame_plane(points: Sequence[AnnualizedPremiumPoint]) -> AnnualizedPremiumPl
             ),
         )
     )
-    return AnnualizedPremiumPlane(
+    return PremiumPlane(
         observation=first.observation,
         option_product=first.option_product,
         price_type=first.price_type,

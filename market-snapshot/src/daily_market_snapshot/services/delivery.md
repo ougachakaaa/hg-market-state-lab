@@ -38,7 +38,7 @@ Repository authority 声明以下三个用户可请求的 Data Service semantic 
 | --- | --- | --- | --- |
 | `csi1000-5d-analysis` | `target_trade_date`（CLI 的 `--date`） | persisted `snapshot.json` | [product authority](../products/csi1000_5d_analysis/ARCHITECTURE.md) |
 | `mo-option-chain` | `target_trade_date + option_product + price_type` | request-scoped read model / HTTP | [product authority](../products/mo_option_chain/ARCHITECTURE.md) |
-| `mo-option-premium-plane` | `as_of + option_product + price_type` | request-scoped `AnnualizedPremiumPlane` / HTTP | [product authority](../products/mo_option_premium/ARCHITECTURE.md) |
+| `mo-option-premium-plane` | `as_of + option_product + price_type` | request-scoped `PremiumPlane` / HTTP | [product authority](../products/mo_option_premium/ARCHITECTURE.md) |
 
 本表是 authority-level semantic catalog：它说明 service identity、input、result/delivery 与 canonical product owner，不是 `services/catalog.py` 的 executable binding table。Repository-wide product/capability discovery 仍从 [Capability Catalog](../../../CAPABILITIES.md) 进入。
 
@@ -71,7 +71,7 @@ Data Service 拥有该 request-scoped service 的 orchestration 与 read-model d
 
 MO Premium Plane product service 拥有该 request-scoped analytical service 的 orchestration 与 result boundary。产品定位与 ownership、Source/Raw scope、Basis/Point/Plane semantics、product orchestration 与 HTTP transport 分别由 [产品入口](../products/mo_option_premium/ARCHITECTURE.md)、[data authority](../products/mo_option_premium/data.md)、[backend authority](../products/mo_option_premium/backend.md)、[service contract](../products/mo_option_premium/service-contract.md) 与 [HTTP contract](../products/mo_option_premium/http-contract.md) 拥有。
 
-`mo-option-premium-plane` 不使用 `dms get`，V1 不要求 canonical persisted final output；它通过 HTTP delivery adapter 交付 request-scoped `AnnualizedPremiumPlane`。共享 Data Service authority 不复制其 Capture ordering、financial formulas 或 product failure semantics。
+`mo-option-premium-plane` 不使用 `dms get`，V1 不要求 canonical persisted final output；它通过 HTTP delivery adapter 交付 request-scoped `PremiumPlane`。共享 Data Service authority 不复制其 Capture ordering、financial formulas 或 product failure semantics。
 
 ## 4. CLI: dms
 

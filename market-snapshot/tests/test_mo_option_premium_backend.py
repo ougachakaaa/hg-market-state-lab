@@ -93,18 +93,18 @@ def successful_plane(api: FakeTushareApi | None = None):
 
 def test_point_preparation_uses_inclusive_calendar_days_and_authority_formulas() -> None:
     point = preparation.prepare_points(market_basis(90.0))[0]
+    metrics = point.metrics.underlying_spot
 
     assert point.dte == 9
-    assert point.annualized_premium_points == pytest.approx(90.0 * 365 / 9)
-    assert point.annualized_time_value_points == pytest.approx((90.0 - 300.0) * 365 / 9)
-    assert point.annualized_seller_premium_yield == pytest.approx((90.0 * 365 / 9) / 7300)
-    assert point.annualized_time_value_yield == pytest.approx(
-        ((90.0 - 300.0) * 365 / 9) / 7300
-    )
+    assert metrics.total.unannualized.points == pytest.approx(90.0)
+    assert metrics.total.annualized.points == pytest.approx(90.0 * 365 / 9)
+    assert metrics.time_value.annualized.points == pytest.approx((90.0 - 300.0) * 365 / 9)
+    assert metrics.total.annualized.yield_ == pytest.approx((90.0 * 365 / 9) / 7300)
+    assert metrics.time_value.annualized.yield_ == pytest.approx(((90.0 - 300.0) * 365 / 9) / 7300)
     assert point.calculation_basis == CalculationBasis(
         dte_basis="inclusive_calendar_days",
         annualization_days=365,
-        seller_yield_denominator="underlying_spot_notional",
+        yield_denominator="selected_reference_notional",
         contract_multiplier=200.0,
     )
 
@@ -118,7 +118,7 @@ def test_point_preparation_uses_inclusive_calendar_days_and_authority_formulas()
         (OptionType.PUT, 7000.0, 25.0, 0.0),
     ],
 )
-def test_time_value_uses_call_put_intrinsic_value_and_spot_only(
+def test_time_value_uses_call_put_reference_relative_decomposition(
     option_type: OptionType,
     strike: float,
     premium: float,
@@ -133,10 +133,10 @@ def test_time_value_uses_call_put_intrinsic_value_and_spot_only(
 
     point = preparation.prepare_points(replace(market_basis(), options=(option,)))[0]
 
-    assert point.annualized_time_value_points == pytest.approx(
+    assert point.metrics.underlying_spot.time_value.annualized.points == pytest.approx(
         (premium - intrinsic_value) * 365 / 9
     )
-    assert point.annualized_time_value_yield == pytest.approx(
+    assert point.metrics.underlying_spot.time_value.annualized.yield_ == pytest.approx(
         ((premium - intrinsic_value) * 365 / 9) / 7300
     )
 
@@ -148,27 +148,71 @@ def test_time_value_uses_call_put_intrinsic_value_and_spot_only(
 def test_negative_and_zero_time_value_are_preserved(premium: float, expected: float) -> None:
     point = preparation.prepare_points(market_basis(premium))[0]
 
-    assert point.annualized_time_value_points == pytest.approx(expected)
-    assert point.annualized_time_value_yield == pytest.approx(expected / 7300)
+    assert point.metrics.underlying_spot.time_value.annualized.points == pytest.approx(expected)
+    assert point.metrics.underlying_spot.time_value.annualized.yield_ == pytest.approx(
+        expected / 7300
+    )
 
 
 def test_zero_and_null_premium_remain_distinct_real_points() -> None:
     zero, missing = preparation.prepare_points(market_basis(0.0, None))
 
-    assert (zero.premium, zero.annualized_premium_points, zero.annualized_seller_premium_yield) == (
+    assert (
+        zero.premium,
+        zero.metrics.underlying_spot.total.annualized.points,
+        zero.metrics.underlying_spot.total.annualized.yield_,
+    ) == (
         0.0,
         0.0,
         0.0,
     )
-    assert zero.annualized_time_value_points == pytest.approx(-300.0 * 365 / 9)
-    assert zero.annualized_time_value_yield == pytest.approx((-300.0 * 365 / 9) / 7300)
+    assert zero.metrics.underlying_spot.time_value.annualized.points == pytest.approx(
+        -300.0 * 365 / 9
+    )
+    assert zero.metrics.underlying_spot.time_value.annualized.yield_ == pytest.approx(
+        (-300.0 * 365 / 9) / 7300
+    )
     assert (
         missing.premium,
-        missing.annualized_premium_points,
-        missing.annualized_time_value_points,
-        missing.annualized_seller_premium_yield,
-        missing.annualized_time_value_yield,
+        missing.metrics.underlying_spot.total.annualized.points,
+        missing.metrics.underlying_spot.time_value.annualized.points,
+        missing.metrics.underlying_spot.total.annualized.yield_,
+        missing.metrics.underlying_spot.time_value.annualized.yield_,
     ) == (None, None, None, None, None)
+
+
+def test_futures_metrics_use_same_expiry_reference_and_do_not_fallback() -> None:
+    point = preparation.prepare_points(market_basis(90.0))[0]
+    futures = point.metrics.expiry_futures
+
+    assert futures.total.unannualized.points == pytest.approx(90.0)
+    assert futures.total.unannualized.yield_ == pytest.approx(90.0 / 7290.0)
+    assert futures.time_value.unannualized.points == pytest.approx(90.0 - 290.0)
+    assert futures.time_value.annualized.yield_ == pytest.approx(
+        ((90.0 - 290.0) * 365 / 9) / 7290.0
+    )
+
+    without_futures = replace(market_basis(90.0).options[0], futures=None)
+    missing_reference = preparation.prepare_points(
+        replace(market_basis(), options=(without_futures,))
+    )[0].metrics.expiry_futures
+    assert missing_reference.total.unannualized.points == 90.0
+    assert missing_reference.total.annualized.points == pytest.approx(90.0 * 365 / 9)
+    assert missing_reference.total.unannualized.yield_ is None
+    assert missing_reference.time_value.unannualized.points is None
+    assert missing_reference.time_value.annualized.yield_ is None
+
+
+def test_zero_futures_price_preserves_points_but_makes_yields_unavailable() -> None:
+    option = replace(market_basis(90.0).options[0], futures=FuturesReference("IM2609.CFE", 0.0))
+    metrics = preparation.prepare_points(replace(market_basis(), options=(option,)))[
+        0
+    ].metrics.expiry_futures
+
+    assert metrics.total.unannualized.points == 90.0
+    assert metrics.time_value.unannualized.points == 90.0
+    assert metrics.total.annualized.yield_ is None
+    assert metrics.time_value.annualized.yield_ is None
 
 
 def test_expiry_day_has_dte_one_and_post_expiry_is_rejected() -> None:
@@ -255,13 +299,17 @@ def test_service_projects_one_price_type_across_all_market_facts(
         FuturesReference("IM2609.CFE", futures_price)
     }
     expected_annualized = call_premium * 365 / 9
-    assert plane.points[0].annualized_premium_points == pytest.approx(expected_annualized)
+    assert plane.points[0].metrics.underlying_spot.total.annualized.points == pytest.approx(
+        expected_annualized
+    )
     expected_time_value = (call_premium - max(underlying_price - 7000.0, 0.0)) * 365 / 9
-    assert plane.points[0].annualized_time_value_points == pytest.approx(expected_time_value)
-    assert plane.points[0].annualized_seller_premium_yield == pytest.approx(
+    assert plane.points[0].metrics.underlying_spot.time_value.annualized.points == pytest.approx(
+        expected_time_value
+    )
+    assert plane.points[0].metrics.underlying_spot.total.annualized.yield_ == pytest.approx(
         expected_annualized / underlying_price
     )
-    assert plane.points[0].annualized_time_value_yield == pytest.approx(
+    assert plane.points[0].metrics.underlying_spot.time_value.annualized.yield_ == pytest.approx(
         expected_time_value / underlying_price
     )
 
