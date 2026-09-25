@@ -1,13 +1,13 @@
 # web-ui generated contract feedback-loop authority
 
-本文档从属于 [web-ui architecture](ARCHITECTURE.md)，拥有 frontend-consumed HTTP products 的 generated contract ownership、generation obligation 与 freshness feedback loop。Backend product authority 定义语义，backend HTTP contract 定义 wire contract；本文件不创建竞争性的 schema。
+本文档从属于 [web-ui architecture](ARCHITECTURE.md)，拥有 frontend-consumed HTTP products 的 generated contract ownership、generation obligation 与 freshness feedback loop。Owning product authority 定义业务语义，[backend-api HTTP authority](../backend-api/ARCHITECTURE.md) 定义 wire contract；本文件不创建竞争性的 schema。
 
 ## 1. Feedback-loop Invariant
 
 每个 frontend-consumed HTTP product 必须遵循同一依赖方向：
 
 ```text
-backend HTTP contract
+backend-api HTTP contract
         ↓
 committed generated OpenAPI representation
         ↓
@@ -18,7 +18,7 @@ frontend request adaptation
 contract freshness check
 ```
 
-OpenAPI 与 TypeScript artifacts 是 backend HTTP contract 的生成表示，不是独立 semantic authority。Frontend 不得手工维护与 backend 竞争的 response schema，也不得从 generated artifacts 反向定义 backend semantics。
+OpenAPI 与 TypeScript artifacts 是 `backend-api` HTTP contract 的生成表示，不是独立 semantic authority。Frontend 不得手工维护与 backend 竞争的 response schema，也不得从 generated artifacts 反向定义 owning product semantics。
 
 ## 2. Per-product Ownership
 
@@ -26,8 +26,8 @@ OpenAPI 与 TypeScript artifacts 是 backend HTTP contract 的生成表示，不
 
 | Frontend feature | Backend HTTP contract | Generated contract owner |
 | --- | --- | --- |
-| MO Option Chain | `GET /mo-option-chain` | `mo_option_chain` frontend bounded context |
-| MO Premium Plane | `GET /mo-option-premium-plane` | `mo_option_premium` frontend bounded context |
+| MO Option Chain | [`GET /mo-option-chain`](../backend-api/products/mo_option_chain/http-contract.md) | `mo_option_chain` frontend bounded context |
+| MO Premium Plane | [`GET /mo-option-premium-plane`](../backend-api/products/mo_option_premium/http-contract.md) | `mo_option_premium` frontend bounded context |
 
 两个 generated contract boundaries 平级且独立。Backend runtime 可以组合多个 product routes，但 runtime composition 不得把 sibling frontend features 强制耦合进共享业务 schema、共享 DTO ownership 或共享 feature-local contract boundary。
 

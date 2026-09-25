@@ -1,7 +1,0 @@
-.feature-navigation { max-width: 1400px; margin: 0 auto; padding: 1rem 2rem 0; display: flex; flex-wrap: wrap; gap: .5rem; }
-.feature-navigation button { padding: .6rem .9rem; border: 1px solid #94a3b8; border-radius: .35rem; background: white; color: #334155; font: inherit; font-weight: 600; cursor: pointer; }
-.feature-navigation button[aria-pressed="true"] { border-color: #1d4ed8; background: #dbeafe; color: #1e3a8a; }
-
-@media (max-width: 600px) {
-  .feature-navigation { padding: 1rem 1rem 0; }
-}

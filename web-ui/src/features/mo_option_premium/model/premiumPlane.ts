@@ -1,4 +1,4 @@
-import type { PremiumExpiry, PremiumPlane, PremiumPoint } from './api/moOptionPremium'
+import type { PremiumExpiry, PremiumPlane, PremiumPoint } from '../api/moOptionPremium'
 
 export type SelectedOptionType = PremiumPoint['option_type']
 export type SelectedReferenceBasis = 'underlying_spot' | 'expiry_futures'

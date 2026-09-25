@@ -17,6 +17,12 @@
 
 `Dataset`、`Snapshot`、`Snapshot Assembly` 和 `Snapshot Definition` 不是通用架构层。它们可以作为具体产品或文件名称存在，但不得替代上述术语。
 
+### Canonical Python namespace
+
+`market-snapshot` 的 canonical Python package namespace 是 `market_snapshot`。Daily cadence 不是 module-level invariant，因此 daily observations、request-scoped products、intraday observations 与其他 snapshot products 都可在该 namespace 下并存。
+
+当前 `src/daily_market_snapshot/` 及其 imports/tests 是待后续 migration 处理的 implementation drift，不是 canonical namespace。这个 package 决策不改名 `Daily Market Snapshot` 产品，也不改写 daily bar、daily Capture 或 trade-date 语义。
+
 ## 2. Purpose 与职责终点
 
 ```text
@@ -41,7 +47,7 @@ External Analyzer
 
 Data Service 是用户可请求的完整数据能力，负责选择并编排所需 Source Capture 与 Analysis Preparation，再发布产品规定的结果。它不定义 Source API 字段，也不实现 Preparation formula。
 
-Data Service、CLI、delivery surface 与 canonical output 契约见 [Data Service authority](src/daily_market_snapshot/services/ARCHITECTURE.md)。
+Data Service、CLI 与 canonical persisted output 契约见 [Data Service authority](src/daily_market_snapshot/services/ARCHITECTURE.md)。HTTP delivery 由 [backend-api](../backend-api/ARCHITECTURE.md) 拥有。
 
 ### Source
 
@@ -94,7 +100,7 @@ Analysis Preparation produces Analysis-ready Artifact
 - Source Capture 不得依赖 Preparation 输出结构。
 - Data Service 不重新定义 Capture 或 Preparation 语义。
 - 共享 Capture capability 不等于共享 goal-scoped Raw Artifact；产品不得读取 sibling product 的 Raw 或最终产物，除非产品 authority 明确规定。
-- HTTP 等 delivery adapter 只能投影 Data Service 或 Preparation 已准备的事实，不反向塑造 domain semantics。
+- HTTP delivery adapter 由 `backend-api` 拥有，只能投影 Data Service 或 Preparation 已准备的事实，不反向塑造 domain semantics。`market-snapshot` 不依赖 FastAPI、HTTP DTO/status/error envelope、OpenAPI 或 frontend types 定义产品语义。
 
 ## 5. Raw 与 Analysis-ready 的边界
 

@@ -1,8 +1,8 @@
 import type { Config, Layout, ScatterData } from 'plotly.js'
-import type { ExpiryGroup, OptionChain, OptionPoint } from './api/moOptionChain'
-import type { projectCombinedChain } from './combinedChartData'
+import type { ExpiryGroup, OptionChain, OptionPoint } from '../api/moOptionChain'
+import type { projectCombinedChain } from '../model/combinedChartData'
 import type { ExpiryColors } from './expiryPalette'
-import { formatPrice } from './priceDisplay'
+import { formatPrice } from '../model/priceDisplay'
 
 type Projection = ReturnType<typeof projectCombinedChain>
 

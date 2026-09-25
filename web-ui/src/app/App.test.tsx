@@ -26,14 +26,14 @@ describe('web application shell', () => {
   })
 
   it('keeps feature-local state out of the shell', () => {
-    vi.stubGlobal('fetch', vi.fn())
+    vi.stubGlobal('fetch', vi.fn(() => new Promise(() => {})))
     render(<App />)
     fireEvent.click(screen.getByRole('button', { name: 'MO Premium Plane' }))
-    fireEvent.change(screen.getByLabelText('价格口径'), { target: { value: 'high' } })
-    expect((screen.getByLabelText('价格口径') as HTMLSelectElement).value).toBe('high')
+    fireEvent.change(screen.getByLabelText('Observation 日期'), { target: { value: '2026-09-21' } })
+    expect((screen.getByLabelText('Observation 日期') as HTMLInputElement).value).toBe('2026-09-21')
 
     fireEvent.click(screen.getByRole('button', { name: 'MO Option Chain' }))
     fireEvent.click(screen.getByRole('button', { name: 'MO Premium Plane' }))
-    expect((screen.getByLabelText('价格口径') as HTMLSelectElement).value).toBe('close')
+    expect((screen.getByLabelText('Observation 日期') as HTMLInputElement).value).toBe('')
   })
 })

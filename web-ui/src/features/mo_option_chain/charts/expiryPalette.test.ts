@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
-import type { ExpiryGroup } from './api/moOptionChain'
-import { buildExpiryPalette, DEFAULT_SERIES_COLORS } from './expiryPalette'
+import type { ExpiryGroup } from '../api/moOptionChain'
+import { DEFAULT_SERIES_COLORS } from '../model/presentationState'
+import { buildExpiryPalette } from './expiryPalette'
 
 const expiries = ['2026-09-25', '2026-10-23', '2026-11-27', '2026-12-25']
   .map((expiry_date) => ({ expiry_date, futures: null, calls: [], puts: [] })) satisfies ExpiryGroup[]

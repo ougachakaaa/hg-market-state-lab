@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { cleanup, fireEvent, render, screen, within } from '@testing-library/react'
 import type { PlotParams } from 'react-plotly.js'
-import App from './App'
+import OptionChainPage from './OptionChainPage'
 
 vi.mock('react-plotly.js', () => ({
   default: ({ data, layout, config, useResizeHandler, style }: PlotParams) => (
@@ -37,9 +37,17 @@ function dateInput(): HTMLInputElement {
   return screen.getByLabelText('目标交易日') as HTMLInputElement
 }
 
+function changeSeriesColor(label: string, color: string) {
+  fireEvent.click(screen.getByRole('button', { name: label }))
+  const inputs = document.querySelectorAll<HTMLInputElement>('.ant-color-picker-hex-input input')
+  const input = inputs.item(inputs.length - 1)
+  expect(input).not.toBeNull()
+  fireEvent.change(input!, { target: { value: color.replace('#', '') } })
+}
+
 async function load(body: unknown = chain) {
   vi.stubGlobal('fetch', vi.fn().mockResolvedValue(response(body)))
-  render(<App />)
+  render(<OptionChainPage />)
   fireEvent.change(dateInput(), { target: { value: '2026-09-17' } })
   return screen.findByRole('region', { name: '期权链结果' })
 }
@@ -53,7 +61,7 @@ describe('MO option chain combined page', () => {
   it('starts idle and does not request a chain until a date is selected', () => {
     const fetch = vi.fn()
     vi.stubGlobal('fetch', fetch)
-    render(<App />)
+    render(<OptionChainPage />)
     expect(screen.getByRole('status').textContent).toContain('请选择目标交易日')
     expect(fetch).not.toHaveBeenCalled()
     fireEvent.change(dateInput(), { target: { value: '' } })
@@ -92,9 +100,9 @@ describe('MO option chain combined page', () => {
     expect((within(futuresLegend).getAllByRole('listitem')[1].querySelector('.chart-legend-symbol') as HTMLElement).style.color)
       .toBe('rgba(124, 58, 237, 0.575)')
     expect(within(futuresLegend).queryByText(/2026-11-27/)).toBeNull()
-    expect((screen.getByLabelText('Call 颜色') as HTMLInputElement).value).toBe('#2563eb')
-    expect((screen.getByLabelText('Put 颜色') as HTMLInputElement).value).toBe('#ea580c')
-    expect((screen.getByLabelText('Futures 颜色') as HTMLInputElement).value).toBe('#7c3aed')
+    expect(screen.getByRole('button', { name: 'Call 颜色' }).textContent).toContain('#2563eb')
+    expect(screen.getByRole('button', { name: 'Put 颜色' }).textContent).toContain('#ea580c')
+    expect(screen.getByRole('button', { name: 'Futures 颜色' }).textContent).toContain('#7c3aed')
     expect(screen.getByRole('checkbox', { name: '2026-09-25' }).closest('label')?.querySelectorAll('.expiry-swatch')).toHaveLength(3)
     expect(screen.getByRole('checkbox', { name: '2026-11-27' }).closest('label')?.querySelectorAll('.expiry-swatch')).toHaveLength(2)
   })
@@ -128,14 +136,14 @@ describe('MO option chain combined page', () => {
   it('changes three series colors independently without changing selection, opacity or X viewport', async () => {
     await load()
     const before = plot()
-    fireEvent.change(screen.getByLabelText('Call 颜色'), { target: { value: '#e11d48' } })
+    changeSeriesColor('Call 颜色', '#e11d48')
     expect(plot().data[0].line.color).toContain('225, 29, 72')
     expect(plot().data[1].line.color).toBe(before.data[1].line.color)
     expect(plot().layout.shapes[1].line.color).toBe(before.layout.shapes[1].line.color)
-    fireEvent.change(screen.getByLabelText('Put 颜色'), { target: { value: '#00ff00' } })
+    changeSeriesColor('Put 颜色', '#00ff00')
     expect(plot().data[1].line.color).toContain('0, 255, 0')
     expect(plot().data[0].line.color).toContain('225, 29, 72')
-    fireEvent.change(screen.getByLabelText('Futures 颜色'), { target: { value: '#ff00ff' } })
+    changeSeriesColor('Futures 颜色', '#ff00ff')
     expect(plot().layout.shapes[1].line.color).toContain('255, 0, 255')
     const futuresItem = within(screen.getByRole('region', { name: 'Futures 图例' })).getByText('IM2609.CFE · 7487.6').closest('li')!
     expect((futuresItem.querySelector('.chart-legend-symbol') as HTMLElement).style.color).toBe('rgb(255, 0, 255)')
@@ -204,16 +212,16 @@ describe('MO option chain combined page', () => {
   it('resets expiry selection on a new successful chain while keeping series colors and strike width', async () => {
     const fetch = vi.fn().mockResolvedValueOnce(response(chain)).mockResolvedValueOnce(response({ ...chain, target_trade_date: '2026-09-18' }))
     vi.stubGlobal('fetch', fetch)
-    render(<App />)
+    render(<OptionChainPage />)
     fireEvent.change(dateInput(), { target: { value: '2026-09-17' } })
     await screen.findByRole('region', { name: '期权链结果' })
     fireEvent.click(screen.getByRole('checkbox', { name: '2026-10-23' }))
-    fireEvent.change(screen.getByLabelText('Call 颜色'), { target: { value: '#e11d48' } })
+    changeSeriesColor('Call 颜色', '#e11d48')
     fireEvent.click(screen.getByRole('button', { name: '扩大行权价视窗' }))
     fireEvent.change(dateInput(), { target: { value: '2026-09-18' } })
     await screen.findByText('2026-09-18 · MO')
     expect(screen.getAllByRole<HTMLInputElement>('checkbox').every((checkbox) => checkbox.checked)).toBe(true)
-    expect((screen.getByLabelText('Call 颜色') as HTMLInputElement).value).toBe('#e11d48')
+    expect(screen.getByRole('button', { name: 'Call 颜色' }).textContent).toContain('#e11d48')
     expect(screen.getByText('行权价视窗：±400 点')).toBeTruthy()
     expect(fetch).toHaveBeenCalledTimes(2)
   })
@@ -221,7 +229,7 @@ describe('MO option chain combined page', () => {
   it('maps a backend error and removes the previous result', async () => {
     const fetch = vi.fn().mockResolvedValueOnce(response(chain)).mockResolvedValueOnce(response({ error: { kind: 'date_not_available', detail: 'backend detail' } }, 404))
     vi.stubGlobal('fetch', fetch)
-    render(<App />)
+    render(<OptionChainPage />)
     fireEvent.change(dateInput(), { target: { value: '2026-09-17' } })
     await screen.findByRole('region', { name: '期权链结果' })
     fireEvent.change(dateInput(), { target: { value: '2026-09-18' } })
@@ -238,7 +246,7 @@ describe('MO option chain combined page', () => {
   ])('maps %s without interpreting backend detail', async (kind, title) => {
     const status = kind === 'date_not_available' ? 404 : kind === 'invalid_request' || kind === 'unsupported_query' ? 400 : 503
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(response({ error: { kind, detail: 'backend detail' } }, status)))
-    render(<App />)
+    render(<OptionChainPage />)
     fireEvent.change(dateInput(), { target: { value: '2026-09-17' } })
     const alert = await screen.findByRole('alert')
     expect(within(alert).getByText(title)).toBeTruthy()
@@ -250,7 +258,7 @@ describe('MO option chain combined page', () => {
     vi.stubGlobal('fetch', vi.fn().mockImplementation((_url: string, options: RequestInit) => (
       new Promise<Response>((resolve) => pending.push({ signal: options.signal!, finish: resolve }))
     )))
-    render(<App />)
+    render(<OptionChainPage />)
     fireEvent.change(dateInput(), { target: { value: '2026-09-17' } })
     fireEvent.change(dateInput(), { target: { value: '2026-09-18' } })
     expect(pending[0].signal.aborted).toBe(true)
@@ -265,7 +273,7 @@ describe('MO option chain combined page', () => {
   it('shows a transport failure without a stale result', async () => {
     const fetch = vi.fn().mockResolvedValueOnce(response(chain)).mockRejectedValueOnce(new TypeError('offline'))
     vi.stubGlobal('fetch', fetch)
-    render(<App />)
+    render(<OptionChainPage />)
     fireEvent.change(dateInput(), { target: { value: '2026-09-17' } })
     await screen.findByRole('region', { name: '期权链结果' })
     fireEvent.change(dateInput(), { target: { value: '2026-09-18' } })

@@ -1,6 +1,6 @@
 # MO Option Chain visualization bounded-context authority
 
-本文件是该 frontend vertical slice 的入口，并 specialize [web-ui architecture](../../../ARCHITECTURE.md)。
+本文件是该 frontend vertical slice 的入口，并在 [web-ui architecture](../../../ARCHITECTURE.md) 边界内 specialize [presentation architecture](../../../presentation-architecture.md)。
 
 ## Ownership
 
@@ -10,4 +10,4 @@
 
 - 用户体验、combined chart、viewport、颜色、精度与状态：[visualization.md](visualization.md)
 - Backend product identity/read semantics：[MO Option Chain authority](../../../../market-snapshot/src/daily_market_snapshot/products/mo_option_chain/ARCHITECTURE.md)
-- HTTP wire contract：[HTTP authority](../../../../market-snapshot/src/daily_market_snapshot/products/mo_option_chain/http-contract.md)
+- HTTP wire contract：[backend-api HTTP authority](../../../../backend-api/products/mo_option_chain/http-contract.md)

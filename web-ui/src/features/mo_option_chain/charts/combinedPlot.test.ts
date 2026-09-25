@@ -1,8 +1,9 @@
 import { describe, expect, it } from 'vitest'
-import type { OptionChain } from './api/moOptionChain'
-import { projectCombinedChain } from './combinedChartData'
+import type { OptionChain } from '../api/moOptionChain'
+import { projectCombinedChain } from '../model/combinedChartData'
+import { DEFAULT_SERIES_COLORS } from '../model/presentationState'
 import { buildCombinedPlot } from './combinedPlot'
-import { buildExpiryPalette, DEFAULT_SERIES_COLORS } from './expiryPalette'
+import { buildExpiryPalette } from './expiryPalette'
 
 const chain: OptionChain = {
   target_trade_date: '2026-09-17', option_product: 'MO', price_type: 'close',

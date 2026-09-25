@@ -1,6 +1,6 @@
 # web-ui application integration authority
 
-本文档从属于 [web-ui architecture](ARCHITECTURE.md)，只拥有 Web application 的 entry、feature discovery/navigation 与 composition boundary。正式 frontend surfaces 由 [feature catalog](FEATURES.md) 导航；各 surface 的产品与 visualization 语义仍由其 co-located feature authority 拥有。
+本文档从属于 [web-ui architecture](ARCHITECTURE.md)，并遵循 [presentation architecture](presentation-architecture.md) 定义的内部 ownership boundary；它只拥有 Web application 的 entry、feature discovery/navigation、layout/shell 与 composition boundary。Ordinary UI、application-level theme 与 CSS policy 遵循 [UI system authority](ui-system.md)。正式 frontend surfaces 由 [feature catalog](FEATURES.md) 导航；各 surface 的产品与 visualization 语义仍由其 co-located feature authority 拥有。
 
 ## 1. Application Surfaces
 
@@ -23,6 +23,7 @@ Application shell 只拥有：
 ```text
 application entry
 feature discovery and navigation
+application layout / shell
 feature composition boundary
 ```
 
@@ -47,4 +48,4 @@ Application composition 不改变两者的 backend dependencies，也不表示�
 
 ## 4. Implementation Boundary
 
-本 authority 不规定 React Router、navigation control 形态、URL scheme、component tree、mounting strategy、CSS、state-management library 或 generic feature framework。实现只需满足默认 entry、显式 navigation、两个 surface 可访问及 bounded-context independence，不为假设中的未来 feature 引入 plugin 或 routing abstraction。
+本 authority 不规定 React Router、navigation control 的精确 component/props、URL scheme、component tree、mounting strategy、CSS filename、state-management library 或 generic feature framework；这些实现选择仍须遵循 `ui-system.md` 规定的 Ant Design、theme 与 custom CSS boundary。实现只需满足默认 entry、显式 navigation、两个 surface 可访问及 bounded-context independence，不为假设中的未来 feature 引入 plugin 或 routing abstraction。

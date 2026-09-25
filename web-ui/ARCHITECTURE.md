@@ -17,25 +17,31 @@ visualization
 
 `web-ui` 不拥有 Source、Source Capture、Raw Artifact、Analysis Preparation formula、market modeling 或业务计算语义，也不产生交易判断。
 
-前端只消费 backend 明确发布的 read/HTTP contract。它不得为了绘图重新推导产品身份、contract universe、价格 fallback、业务 completeness 或金融指标。
+前端只消费 owning module 已定义、并由 `backend-api` 发布的 read/HTTP contract。它不得为了绘图重新推导产品身份、contract universe、价格 fallback、业务 completeness 或金融指标。
 
 ## 3. 数据依赖方向
 
 ```text
-backend semantic contract
+owning module semantic contract
         ↓
-HTTP wire contract / generated client types
+backend-api HTTP contract / OpenAPI
+        ↓
+committed OpenAPI / generated client types
         ↓
 web-ui request adaptation
         ↓
 interaction and visualization
 ```
 
-Markdown authority 定义语义；backend OpenAPI 是 HTTP wire contract 的机器可读表达。前端可以消费生成类型与运行时校验，但不得独立维护一份竞争性的 backend schema。
+Owning module Markdown authority 定义业务语义；[backend-api](../backend-api/ARCHITECTURE.md) 拥有 HTTP wire contract，并以 OpenAPI 发布其机器可读表达。前端可以消费生成类型与运行时校验，但不得独立维护一份竞争性的 backend schema。
 
 ## 4. Authority Routing
 
 Application entry、feature discovery/navigation 与 composition boundary 由 [application authority](application.md) 拥有；它通过 [frontend feature catalog](FEATURES.md) 导航到各 vertical slice，但不拥有 feature-local 语义。
+
+Frontend 内部 application、Page、API、React hooks、pure model、component、chart 与 shared infrastructure 的 ownership、依赖方向和状态边界由 [presentation architecture](presentation-architecture.md) 拥有。具体 feature 的产品展示与 visualization 语义仍由 co-located feature authority 拥有。
+
+Ordinary application UI、Ant Design、application-level theme、generic UI composition 与 custom CSS exception boundary 由 [UI system authority](ui-system.md) 拥有。Analytical visualization 仍由 feature semantics 与 Plotly chart boundary 拥有。
 
 Frontend-consumed HTTP products 的 generated OpenAPI / TypeScript ownership、generation obligation 与 freshness feedback loop 由 [contract feedback-loop authority](contracts.md) 拥有。
 
@@ -51,8 +57,10 @@ interaction
 empty and error presentation
 ```
 
-正式 frontend vertical slices 及其 canonical authority entry 由 application authority 下游的 `FEATURES.md` 导航。feature entry 会按需链接对应 backend product 与 HTTP authority；普通前端任务无需读取 Source、Raw 或不相关产品文档。
+正式 frontend vertical slices 及其 canonical authority entry 由 application authority 下游的 `FEATURES.md` 导航。feature entry 会按需链接对应 owning product 与 `backend-api` HTTP authority；普通前端任务无需读取 Source、Raw 或不相关产品文档。
 
 ## 5. 维护边界
 
-只有展示层职责、backend contract 消费边界、数据依赖方向或下层 authority routing 变化时更新本文件。Application composition 更新 `application.md`，单个 feature 的增删更新 `FEATURES.md`，generated contract feedback loop 更新 `contracts.md`；框架版本、图表库、component tree、state-management、具体字段和视觉规则属于实现或 vertical slice Guide。
+只有展示层职责、backend contract 消费边界、数据依赖方向或下层 authority routing 变化时更新本文件。Application composition 更新 `application.md`，frontend 内部分层与共享边界更新 `presentation-architecture.md`，ordinary UI system 与 CSS policy 更新 `ui-system.md`，单个 feature 的增删更新 `FEATURES.md`，generated contract feedback loop 更新 `contracts.md`。
+
+Ownership、dependency direction、server-state 与 presentation-state category、React hooks boundary、Page composition、feature/shared boundary、Ant Design / Plotly 职责分工、theme ownership、CSS exception policy 与 chart containment 属于 architecture authority；具体 library version、component/prop selection、token value、incidental component tree、CSS filename、state-management library、字段与 feature visual rule 属于实现或 vertical slice authority。实现选择不得推翻前述 architecture boundary。
