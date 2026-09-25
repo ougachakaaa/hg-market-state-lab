@@ -80,7 +80,7 @@ function App() {
         priceType: requestedPriceType,
         error: error instanceof PremiumRequestError
           ? error
-          : new PremiumRequestError('network', '无法连接数据服务'),
+          : new PremiumRequestError('invalid_response', '页面无法处理数据服务响应'),
       })
     })
   }
