@@ -1,24 +1,7 @@
-.option-chain-page .date-field { display: block; font-weight: 600; margin: 2rem 0 .4rem; }
-.option-chain-page input[type="date"] { font: inherit; padding: .5rem; border: 1px solid #94a3b8; border-radius: .35rem; }
-.option-chain-page .strike-control { display: flex; align-items: center; flex-wrap: wrap; gap: .6rem; margin: 1.2rem 0; font-weight: 600; }
-.option-chain-page .strike-control button { min-width: 2.25rem; min-height: 2.25rem; font: inherit; border: 1px solid #94a3b8; border-radius: .35rem; background: #fff; cursor: pointer; }
-.option-chain-page .strike-control button:disabled { opacity: .45; cursor: not-allowed; }
-.option-chain-page .expiry-selector { margin: 1rem 0; border: 1px solid #cbd5e1; border-radius: .35rem; }
-.option-chain-page .expiry-selector legend { font-weight: 600; }
-.option-chain-page .expiry-choices { display: flex; flex-wrap: wrap; gap: .6rem 1rem; }
-.option-chain-page .expiry-choice { display: inline-flex; align-items: center; gap: .4rem; white-space: nowrap; }
 .option-chain-page .expiry-swatches { display: inline-flex; align-items: center; gap: .18rem; margin-right: .4rem; flex: none; }
 .option-chain-page .expiry-swatch { display: inline-block; width: .55rem; height: .8rem; border-radius: .15rem; flex: none; }
-.option-chain-page .series-color-controls { display: flex; flex-wrap: wrap; gap: .75rem 1.5rem; margin: 1rem 0; }
-.option-chain-page .series-color-controls label { display: inline-flex; align-items: center; gap: .5rem; font-weight: 600; }
-.option-chain-page .combined-chart { padding: 1rem; border: 1px solid #cbd5e1; border-radius: .5rem; background: #fff; min-width: 0; }
-.option-chain-page .combined-chart h3 { margin: 0; }
-.option-chain-page .expiry { border-top: 1px solid #cbd5e1; padding: 1.25rem 0; min-width: 0; }
-.option-chain-page .expiry h3 { display: flex; align-items: center; margin: 0; }
-.option-chain-page .expiry-counts { margin: .35rem 0 1rem; color: #475569; }
-.option-chain-page .chart-reference, .option-chain-page .missing-price { margin: .5rem 0; color: #475569; }
+.option-chain-page .series-color-swatch { display: inline-block; width: .75rem; height: .75rem; border-radius: 50%; }
 .option-chain-page .spot-reference { border-left: 3px dashed #64748b; padding-left: .5rem; }
-.option-chain-page .missing-price { color: #92400e; }
 .option-chain-page .chart-legends { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: start; gap: 1rem 2rem; margin: 1rem 0 .25rem; }
 .option-chain-page .chart-legend { min-width: 0; }
 .option-chain-page .chart-legend h4 { margin: 0 0 .4rem; font-size: .85rem; color: #475569; }
@@ -33,14 +16,8 @@
 .option-chain-page .chart-legend-marker { position: absolute; top: 50%; left: 50%; width: .45rem; height: .45rem; background: currentColor; border-radius: 50%; transform: translate(-50%, -50%); }
 .option-chain-page .chart-legend-symbol-put .chart-legend-marker { border-radius: 0; transform: translate(-50%, -50%) rotate(45deg); }
 .option-chain-page .chart-frame { width: 100%; height: 640px; min-width: 0; }
-.option-chain-page .chart-empty { padding: 2rem 1rem; background: #f1f5f9; border-radius: .35rem; text-align: center; }
-.option-chain-page .contract-details { margin-top: 1rem; }
-.option-chain-page .contract-details summary { cursor: pointer; font-weight: 600; }
-.option-chain-page .expiry-content { display: grid; gap: 1rem; }
-.option-chain-page .option-list { min-width: 0; overflow-x: auto; }
+
 @media (max-width: 600px) {
-  .option-chain-page .expiry-choice { white-space: normal; }
-  .option-chain-page .combined-chart { padding: .5rem; }
   .option-chain-page .chart-legends { grid-template-columns: minmax(0, 1fr); gap: .75rem; }
   .option-chain-page .chart-futures-legend { justify-self: start; text-align: left; }
   .option-chain-page .chart-futures-legend .chart-legend-items { align-items: flex-start; }

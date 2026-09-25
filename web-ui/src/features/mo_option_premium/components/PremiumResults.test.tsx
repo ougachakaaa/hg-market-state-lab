@@ -17,6 +17,7 @@ describe('RawResponseInspector', () => {
     const payload = { complete: true, nested: { value: 0 } }
     render(<RawResponseInspector payload={payload} />)
 
+    fireEvent.click(screen.getByRole('button', { name: 'View raw response' }))
     fireEvent.click(screen.getByRole('button', { name: 'Copy JSON' }))
 
     expect((await screen.findByRole('status')).textContent).toBe(feedback)

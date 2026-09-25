@@ -18,12 +18,13 @@ export function OptionChainVisualization({ chain, selectedExpiries, selectedSet,
 }) {
   const palette = buildExpiryPalette(chain.expiries, seriesColors)
   return (
-    <>
+    <Space orientation="vertical" size="middle" style={{ display: 'flex' }}>
       <ExpirySelector expiries={chain.expiries} selectedExpiries={selectedExpiries}
         palette={palette} toggleExpiry={toggleExpiry} />
       <SeriesColorControls colors={seriesColors} changeColor={changeSeriesColor} />
       <CombinedExpiryChart chain={chain} selectedExpiries={selectedSet} xDomain={xDomain} palette={palette} />
       <ExpiryDetails groups={selectedGroups} palette={palette} />
-    </>
+    </Space>
   )
 }
+import { Space } from 'antd'

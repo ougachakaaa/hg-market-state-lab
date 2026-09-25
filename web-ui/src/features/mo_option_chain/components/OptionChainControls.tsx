@@ -1,3 +1,4 @@
+import { Button, Card, Checkbox, ColorPicker, Flex, Form, Input, Space, Typography } from 'antd'
 import type { ExpiryGroup } from '../api/moOptionChain'
 import type { ExpiryColors } from '../charts/expiryPalette'
 import type { SeriesColors } from '../model/presentationState'
@@ -8,11 +9,12 @@ export function OptionChainQueryControl({ selectedDate, selectDate }: {
   selectDate: (date: string) => void
 }) {
   return (
-    <>
-      <label className="date-field" htmlFor="target-date">目标交易日</label>
-      <input id="target-date" type="date" value={selectedDate}
-        onChange={(event) => selectDate(event.currentTarget.value)} />
-    </>
+    <Form layout="vertical">
+      <Form.Item label="目标交易日" htmlFor="target-date" style={{ marginBottom: 0 }}>
+        <Input id="target-date" type="date" value={selectedDate}
+          onChange={(event) => selectDate(event.currentTarget.value)} style={{ maxWidth: 240 }} />
+      </Form.Item>
+    </Form>
   )
 }
 
@@ -32,12 +34,14 @@ export function StrikeViewportControl({ halfRangePoints, shrink, expand }: {
   expand: () => void
 }) {
   return (
-    <div className="strike-control" role="group" aria-label="行权价视窗半宽">
-      <span>行权价视窗：±{halfRangePoints} 点</span>
-      <button type="button" aria-label="缩小行权价视窗"
-        disabled={halfRangePoints === MIN_STRIKE_HALF_RANGE_POINTS} onClick={shrink}>−</button>
-      <button type="button" aria-label="扩大行权价视窗" onClick={expand}>+</button>
-    </div>
+    <Flex align="center" gap="small" wrap role="group" aria-label="行权价视窗半宽">
+      <Typography.Text strong>行权价视窗：±{halfRangePoints} 点</Typography.Text>
+      <Space.Compact>
+        <Button aria-label="缩小行权价视窗" disabled={halfRangePoints === MIN_STRIKE_HALF_RANGE_POINTS}
+          onClick={shrink}>−</Button>
+        <Button aria-label="扩大行权价视窗" onClick={expand}>+</Button>
+      </Space.Compact>
+    </Flex>
   )
 }
 
@@ -49,20 +53,18 @@ export function ExpirySelector({ expiries, selectedExpiries, palette, toggleExpi
 }) {
   const selectedSet = new Set(selectedExpiries)
   return (
-    <fieldset className="expiry-selector">
-      <legend>显示到期日</legend>
-      <div className="expiry-choices">
+    <Card size="small" title="显示到期日">
+      <Flex gap="small" wrap>
         {expiries.map((group) => (
-          <label key={group.expiry_date} className="expiry-choice">
-            <input type="checkbox" checked={selectedSet.has(group.expiry_date)}
+          <Checkbox key={group.expiry_date} checked={selectedSet.has(group.expiry_date)}
               disabled={selectedSet.has(group.expiry_date) && selectedExpiries.length === 1}
-              onChange={() => toggleExpiry(group.expiry_date)} />
+              onChange={() => toggleExpiry(group.expiry_date)}>
             <ExpirySwatches colors={palette[group.expiry_date]} hasFutures={group.futures !== null} />
             <span>{group.expiry_date}</span>
-          </label>
+          </Checkbox>
         ))}
-      </div>
-    </fieldset>
+      </Flex>
+    </Card>
   )
 }
 
@@ -71,16 +73,20 @@ export function SeriesColorControls({ colors, changeColor }: {
   changeColor: (side: keyof SeriesColors, color: string) => void
 }) {
   return (
-    <div className="series-color-controls" role="group" aria-label="图表颜色">
-      <label>Call 颜色
-        <input type="color" value={colors.call} onChange={(event) => changeColor('call', event.currentTarget.value)} />
-      </label>
-      <label>Put 颜色
-        <input type="color" value={colors.put} onChange={(event) => changeColor('put', event.currentTarget.value)} />
-      </label>
-      <label>Futures 颜色
-        <input type="color" value={colors.futures} onChange={(event) => changeColor('futures', event.currentTarget.value)} />
-      </label>
-    </div>
+    <Card size="small" title="图表颜色">
+      <Space size="large" wrap role="group" aria-label="图表颜色">
+        {(['call', 'put', 'futures'] as const).map((side) => (
+          <Flex key={side} align="center" gap="small">
+            <Typography.Text strong>{side === 'call' ? 'Call' : side === 'put' ? 'Put' : 'Futures'}</Typography.Text>
+            <ColorPicker value={colors[side]} onChangeComplete={(color) => changeColor(side, color.toHexString())}>
+              <Button aria-label={`${side === 'call' ? 'Call' : side === 'put' ? 'Put' : 'Futures'} 颜色`}>
+                <span className="series-color-swatch" style={{ backgroundColor: colors[side] }} aria-hidden="true" />
+                {colors[side]}
+              </Button>
+            </ColorPicker>
+          </Flex>
+        ))}
+      </Space>
+    </Card>
   )
 }

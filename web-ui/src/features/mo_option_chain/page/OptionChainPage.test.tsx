@@ -37,6 +37,14 @@ function dateInput(): HTMLInputElement {
   return screen.getByLabelText('目标交易日') as HTMLInputElement
 }
 
+function changeSeriesColor(label: string, color: string) {
+  fireEvent.click(screen.getByRole('button', { name: label }))
+  const inputs = document.querySelectorAll<HTMLInputElement>('.ant-color-picker-hex-input input')
+  const input = inputs.item(inputs.length - 1)
+  expect(input).not.toBeNull()
+  fireEvent.change(input!, { target: { value: color.replace('#', '') } })
+}
+
 async function load(body: unknown = chain) {
   vi.stubGlobal('fetch', vi.fn().mockResolvedValue(response(body)))
   render(<OptionChainPage />)
@@ -92,9 +100,9 @@ describe('MO option chain combined page', () => {
     expect((within(futuresLegend).getAllByRole('listitem')[1].querySelector('.chart-legend-symbol') as HTMLElement).style.color)
       .toBe('rgba(124, 58, 237, 0.575)')
     expect(within(futuresLegend).queryByText(/2026-11-27/)).toBeNull()
-    expect((screen.getByLabelText('Call 颜色') as HTMLInputElement).value).toBe('#2563eb')
-    expect((screen.getByLabelText('Put 颜色') as HTMLInputElement).value).toBe('#ea580c')
-    expect((screen.getByLabelText('Futures 颜色') as HTMLInputElement).value).toBe('#7c3aed')
+    expect(screen.getByRole('button', { name: 'Call 颜色' }).textContent).toContain('#2563eb')
+    expect(screen.getByRole('button', { name: 'Put 颜色' }).textContent).toContain('#ea580c')
+    expect(screen.getByRole('button', { name: 'Futures 颜色' }).textContent).toContain('#7c3aed')
     expect(screen.getByRole('checkbox', { name: '2026-09-25' }).closest('label')?.querySelectorAll('.expiry-swatch')).toHaveLength(3)
     expect(screen.getByRole('checkbox', { name: '2026-11-27' }).closest('label')?.querySelectorAll('.expiry-swatch')).toHaveLength(2)
   })
@@ -128,14 +136,14 @@ describe('MO option chain combined page', () => {
   it('changes three series colors independently without changing selection, opacity or X viewport', async () => {
     await load()
     const before = plot()
-    fireEvent.change(screen.getByLabelText('Call 颜色'), { target: { value: '#e11d48' } })
+    changeSeriesColor('Call 颜色', '#e11d48')
     expect(plot().data[0].line.color).toContain('225, 29, 72')
     expect(plot().data[1].line.color).toBe(before.data[1].line.color)
     expect(plot().layout.shapes[1].line.color).toBe(before.layout.shapes[1].line.color)
-    fireEvent.change(screen.getByLabelText('Put 颜色'), { target: { value: '#00ff00' } })
+    changeSeriesColor('Put 颜色', '#00ff00')
     expect(plot().data[1].line.color).toContain('0, 255, 0')
     expect(plot().data[0].line.color).toContain('225, 29, 72')
-    fireEvent.change(screen.getByLabelText('Futures 颜色'), { target: { value: '#ff00ff' } })
+    changeSeriesColor('Futures 颜色', '#ff00ff')
     expect(plot().layout.shapes[1].line.color).toContain('255, 0, 255')
     const futuresItem = within(screen.getByRole('region', { name: 'Futures 图例' })).getByText('IM2609.CFE · 7487.6').closest('li')!
     expect((futuresItem.querySelector('.chart-legend-symbol') as HTMLElement).style.color).toBe('rgb(255, 0, 255)')
@@ -208,12 +216,12 @@ describe('MO option chain combined page', () => {
     fireEvent.change(dateInput(), { target: { value: '2026-09-17' } })
     await screen.findByRole('region', { name: '期权链结果' })
     fireEvent.click(screen.getByRole('checkbox', { name: '2026-10-23' }))
-    fireEvent.change(screen.getByLabelText('Call 颜色'), { target: { value: '#e11d48' } })
+    changeSeriesColor('Call 颜色', '#e11d48')
     fireEvent.click(screen.getByRole('button', { name: '扩大行权价视窗' }))
     fireEvent.change(dateInput(), { target: { value: '2026-09-18' } })
     await screen.findByText('2026-09-18 · MO')
     expect(screen.getAllByRole<HTMLInputElement>('checkbox').every((checkbox) => checkbox.checked)).toBe(true)
-    expect((screen.getByLabelText('Call 颜色') as HTMLInputElement).value).toBe('#e11d48')
+    expect(screen.getByRole('button', { name: 'Call 颜色' }).textContent).toContain('#e11d48')
     expect(screen.getByText('行权价视窗：±400 点')).toBeTruthy()
     expect(fetch).toHaveBeenCalledTimes(2)
   })
