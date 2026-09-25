@@ -84,6 +84,7 @@ class AnnualizedPremiumPoint:
     calculation_basis: CalculationBasis
     dte: int
     annualized_premium_points: float | None
+    annualized_time_value_points: float | None
     annualized_seller_premium_yield: float | None
 
 

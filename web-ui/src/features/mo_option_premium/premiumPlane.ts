@@ -1,10 +1,15 @@
 import type { PremiumExpiry, PremiumPlane, PremiumPoint } from './api/moOptionPremium'
 
-export const MIN_STRIKE_HALF_RANGE_POINTS = 300
-export const STRIKE_HALF_RANGE_STEP = 100
-
 export type SelectedOptionType = PremiumPoint['option_type']
-export type SelectedMetric = 'annualized_premium_points' | 'annualized_seller_premium_yield'
+export type SelectedMetric =
+  | 'annualized_premium_points'
+  | 'annualized_time_value_points'
+  | 'annualized_seller_premium_yield'
+export type StrikeReferencePosition =
+  | 'below-reference'
+  | 'at-reference'
+  | 'above-reference'
+  | 'neutral'
 
 export type PremiumCell =
   | { kind: 'absent' }
@@ -42,22 +47,27 @@ export function formatMetric(value: number, metric: SelectedMetric): string {
     : oneDecimal.format(value)
 }
 
+export function classifyStrikeRelativeToReference(
+  strike: number,
+  reference: number | null,
+): StrikeReferencePosition {
+  if (reference === null) return 'neutral'
+  if (strike < reference) return 'below-reference'
+  if (strike > reference) return 'above-reference'
+  return 'at-reference'
+}
+
 export function projectPremiumPlane(
   plane: PremiumPlane,
   optionType: SelectedOptionType,
   metric: SelectedMetric,
   selectedExpiries: ReadonlySet<string>,
-  strikeHalfRangePoints: number,
 ): PremiumPlaneProjection {
   const expiries = plane.expiries.filter((expiry) => selectedExpiries.has(expiry.expiry_date))
   const visibleExpiryDates = new Set(expiries.map((expiry) => expiry.expiry_date))
-  const lower = plane.underlying.price - strikeHalfRangePoints
-  const upper = plane.underlying.price + strikeHalfRangePoints
   const points = plane.points.filter((point) => (
     point.option_type === optionType
     && visibleExpiryDates.has(point.expiry_date)
-    && point.strike >= lower
-    && point.strike <= upper
   ))
   const strikes = [...new Set(points.map((point) => point.strike))].sort((left, right) => left - right)
   const pointByCoordinate = new Map(

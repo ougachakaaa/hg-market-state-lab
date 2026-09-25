@@ -11,12 +11,12 @@ const plane = {
     { expiry_date: '2026-10-23', dte: 33, futures: null },
   ],
   points: [
-    { instrument_id: 'A', expiry_date: '2026-09-25', option_type: 'call', strike: 7012.45, premium: 1, annualized_premium_points: 0, annualized_seller_premium_yield: 0 },
-    { instrument_id: 'B', expiry_date: '2026-09-25', option_type: 'call', strike: 7200, premium: null, annualized_premium_points: null, annualized_seller_premium_yield: null },
-    { instrument_id: 'C', expiry_date: '2026-10-23', option_type: 'call', strike: 7300, premium: 1, annualized_premium_points: 12.34, annualized_seller_premium_yield: 0.0998 },
-    { instrument_id: 'D', expiry_date: '2026-10-23', option_type: 'call', strike: 7612.45, premium: 1, annualized_premium_points: 9, annualized_seller_premium_yield: 0.1 },
-    { instrument_id: 'E', expiry_date: '2026-09-25', option_type: 'put', strike: 7300, premium: 1, annualized_premium_points: 20, annualized_seller_premium_yield: 0.2 },
-    { instrument_id: 'F', expiry_date: '2026-09-25', option_type: 'call', strike: 7700, premium: 1, annualized_premium_points: 30, annualized_seller_premium_yield: 0.3 },
+    { instrument_id: 'A', expiry_date: '2026-09-25', option_type: 'call', strike: 7012.45, premium: 1, annualized_premium_points: 0, annualized_time_value_points: 0, annualized_seller_premium_yield: 0 },
+    { instrument_id: 'B', expiry_date: '2026-09-25', option_type: 'call', strike: 7200, premium: null, annualized_premium_points: null, annualized_time_value_points: null, annualized_seller_premium_yield: null },
+    { instrument_id: 'C', expiry_date: '2026-10-23', option_type: 'call', strike: 7305, premium: 1, annualized_premium_points: 12.34, annualized_time_value_points: -12.34, annualized_seller_premium_yield: 0.0998 },
+    { instrument_id: 'D', expiry_date: '2026-10-23', option_type: 'call', strike: 7612.45, premium: 1, annualized_premium_points: 9, annualized_time_value_points: 9, annualized_seller_premium_yield: 0.1 },
+    { instrument_id: 'E', expiry_date: '2026-09-25', option_type: 'put', strike: 7300, premium: 1, annualized_premium_points: 20, annualized_time_value_points: 20, annualized_seller_premium_yield: 0.2 },
+    { instrument_id: 'F', expiry_date: '2026-09-25', option_type: 'call', strike: 7700, premium: 1, annualized_premium_points: 30, annualized_time_value_points: 30, annualized_seller_premium_yield: 0.3 },
   ],
 } satisfies PremiumPlane
 
@@ -68,10 +68,20 @@ describe('MO Premium Plane page', () => {
     expect(within(results).getAllByRole('cell', { name: '2026-10-23 无 Point' })[0].textContent).toBe('')
     expect(within(results).getByRole('cell', { name: '2026-09-25 metric unavailable' }).textContent).toBe('—')
     expect(within(results).getByText('0.0')).toBeTruthy()
+    expect(within(results).getByRole('rowheader', { name: '7700.0' })).toBeTruthy()
+
+    const referenceRow = within(results).getByRole('rowheader', { name: '7305.0' }).closest('tr')!
+    expect(within(referenceRow).getByRole('rowheader').classList.contains('below-reference')).toBe(true)
+    expect(within(referenceRow).getByRole('cell', { name: '2026-09-25 无 Point' }).classList.contains('above-reference')).toBe(true)
+    expect(within(referenceRow).getByText('12.3').classList.contains('neutral')).toBe(true)
   })
 
-  it('keeps side, metric, expiry and viewport interactions local', async () => {
+  it('keeps side, all three metrics and expiry interactions local', async () => {
     const { fetch, results } = await load()
+
+    fireEvent.click(within(results).getByRole('radio', { name: '年化时间价值点数' }))
+    expect(within(results).getByText('-12.3')).toBeTruthy()
+    expect(within(results).getByText('0.0')).toBeTruthy()
 
     fireEvent.click(within(results).getByRole('radio', { name: '卖方年化权利金收益率' }))
     expect(within(results).getByText('9.98%')).toBeTruthy()
@@ -85,8 +95,6 @@ describe('MO Premium Plane page', () => {
     fireEvent.click(last)
     expect(last.checked).toBe(true)
 
-    fireEvent.click(within(results).getByRole('button', { name: '扩大 Premium 行权价视窗' }))
-    expect(within(results).getByText('行权价视窗：±400 点')).toBeTruthy()
     expect(fetch).toHaveBeenCalledTimes(1)
   })
 
@@ -112,7 +120,7 @@ describe('MO Premium Plane page', () => {
     const { results } = await load(onlyCall)
     fireEvent.click(within(results).getByRole('radio', { name: 'Put' }))
 
-    expect(within(results).getByText('当前选择与行权价范围内无 analytical observation。')).toBeTruthy()
+    expect(within(results).getByText('当前选择下无 analytical observation。')).toBeTruthy()
     expect(within(results).getByText('Observation')).toBeTruthy()
     expect(screen.queryByRole('alert')).toBeNull()
   })

@@ -96,6 +96,7 @@ def test_point_preparation_uses_inclusive_calendar_days_and_authority_formulas()
 
     assert point.dte == 9
     assert point.annualized_premium_points == pytest.approx(90.0 * 365 / 9)
+    assert point.annualized_time_value_points == pytest.approx((90.0 - 300.0) * 365 / 9)
     assert point.annualized_seller_premium_yield == pytest.approx((90.0 * 365 / 9) / 7300)
     assert point.calculation_basis == CalculationBasis(
         dte_basis="inclusive_calendar_days",
@@ -103,6 +104,45 @@ def test_point_preparation_uses_inclusive_calendar_days_and_authority_formulas()
         seller_yield_denominator="underlying_spot_notional",
         contract_multiplier=200.0,
     )
+
+
+@pytest.mark.parametrize(
+    ("option_type", "strike", "premium", "intrinsic_value"),
+    [
+        (OptionType.CALL, 7000.0, 350.0, 300.0),
+        (OptionType.PUT, 7400.0, 150.0, 100.0),
+        (OptionType.CALL, 7400.0, 25.0, 0.0),
+        (OptionType.PUT, 7000.0, 25.0, 0.0),
+    ],
+)
+def test_time_value_uses_call_put_intrinsic_value_and_spot_only(
+    option_type: OptionType,
+    strike: float,
+    premium: float,
+    intrinsic_value: float,
+) -> None:
+    option = replace(
+        market_basis(premium).options[0],
+        option_type=option_type,
+        strike=strike,
+        futures=None,
+    )
+
+    point = preparation.prepare_points(replace(market_basis(), options=(option,)))[0]
+
+    assert point.annualized_time_value_points == pytest.approx(
+        (premium - intrinsic_value) * 365 / 9
+    )
+
+
+@pytest.mark.parametrize(
+    ("premium", "expected"),
+    [(100.0, -200.0 * 365 / 9), (300.0, 0.0)],
+)
+def test_negative_and_zero_time_value_are_preserved(premium: float, expected: float) -> None:
+    point = preparation.prepare_points(market_basis(premium))[0]
+
+    assert point.annualized_time_value_points == pytest.approx(expected)
 
 
 def test_zero_and_null_premium_remain_distinct_real_points() -> None:
@@ -113,11 +153,13 @@ def test_zero_and_null_premium_remain_distinct_real_points() -> None:
         0.0,
         0.0,
     )
+    assert zero.annualized_time_value_points == pytest.approx(-300.0 * 365 / 9)
     assert (
         missing.premium,
         missing.annualized_premium_points,
+        missing.annualized_time_value_points,
         missing.annualized_seller_premium_yield,
-    ) == (None, None, None)
+    ) == (None, None, None, None)
 
 
 def test_expiry_day_has_dte_one_and_post_expiry_is_rejected() -> None:
@@ -205,6 +247,8 @@ def test_service_projects_one_price_type_across_all_market_facts(
     }
     expected_annualized = call_premium * 365 / 9
     assert plane.points[0].annualized_premium_points == pytest.approx(expected_annualized)
+    expected_time_value = (call_premium - max(underlying_price - 7000.0, 0.0)) * 365 / 9
+    assert plane.points[0].annualized_time_value_points == pytest.approx(expected_time_value)
     assert plane.points[0].annualized_seller_premium_yield == pytest.approx(
         expected_annualized / underlying_price
     )
@@ -455,6 +499,10 @@ def test_http_request_traverses_the_real_backend_and_projects_the_sparse_plane(
     assert [point["instrument_id"] for point in payload["points"]] == [CALL, PUT]
     assert payload["points"][1]["premium"] is None
     assert payload["points"][1]["annualized_premium_points"] is None
+    assert payload["points"][0]["annualized_time_value_points"] == pytest.approx(
+        (payload["points"][0]["premium"] - 300.0) * 365 / 9
+    )
+    assert payload["points"][1]["annualized_time_value_points"] is None
 
 
 @pytest.mark.parametrize(

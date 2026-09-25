@@ -67,6 +67,7 @@ class PremiumPointDTO(BaseModel):
     strike: float
     premium: float | None
     annualized_premium_points: float | None
+    annualized_time_value_points: float | None
     annualized_seller_premium_yield: float | None
 
 

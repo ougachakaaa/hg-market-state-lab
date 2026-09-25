@@ -95,6 +95,8 @@ export interface components {
             annualized_premium_points: number | null;
             /** Annualized Seller Premium Yield */
             annualized_seller_premium_yield: number | null;
+            /** Annualized Time Value Points */
+            annualized_time_value_points: number | null;
             /** Expiry Date */
             expiry_date: string;
             /** Instrument Id */

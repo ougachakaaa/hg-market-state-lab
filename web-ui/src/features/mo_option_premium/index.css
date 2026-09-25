@@ -14,6 +14,10 @@
 .premium-table thead th:first-child { background: #f8fafc; z-index: 2; }
 .premium-table th span, .premium-table th small { display: block; }
 .premium-table th small { margin-top: .2rem; color: #64748b; font-weight: 400; }
+.premium-table tbody .below-reference { background: #eff6ff; }
+.premium-table tbody .at-reference { background: #f1f5f9; box-shadow: inset 3px 0 #64748b; }
+.premium-table tbody .above-reference { background: #fff7ed; }
+.premium-table tbody .neutral { background: transparent; }
 .plane-empty { padding: 2rem 1rem; background: #f1f5f9; border-radius: .35rem; text-align: center; }
 .plane-legend { color: #475569; font-size: .9rem; }
 

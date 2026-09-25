@@ -13,7 +13,8 @@ const plane = {
   points: [
     {
       instrument_id: 'MO2609-C-7000.CFE', expiry_date: '2026-09-25', option_type: 'call', strike: 7000,
-      premium: 0, annualized_premium_points: 0, annualized_seller_premium_yield: null,
+      premium: 0, annualized_premium_points: 0, annualized_time_value_points: -1,
+      annualized_seller_premium_yield: null,
     },
   ],
 } satisfies PremiumPlane
@@ -41,6 +42,7 @@ describe('loadMoOptionPremiumPlane', () => {
     ])
     expect(options.signal).toBe(controller.signal)
     expect(result.points[0].annualized_premium_points).toBe(0)
+    expect(result.points[0].annualized_time_value_points).toBe(-1)
     expect(result.points[0].annualized_seller_premium_yield).toBeNull()
   })
 

@@ -2,11 +2,10 @@ import { useEffect, useRef, useState } from 'react'
 import { loadMoOptionPremiumPlane, PremiumRequestError } from './api/moOptionPremium'
 import type { PremiumErrorKind, PremiumPlane, PremiumPriceType } from './api/moOptionPremium'
 import {
+  classifyStrikeRelativeToReference,
   formatMetric,
   formatPlaneNumber,
-  MIN_STRIKE_HALF_RANGE_POINTS,
   projectPremiumPlane,
-  STRIKE_HALF_RANGE_STEP,
 } from './premiumPlane'
 import type { SelectedMetric, SelectedOptionType } from './premiumPlane'
 
@@ -36,7 +35,6 @@ function App() {
   const [selectedOptionType, setSelectedOptionType] = useState<SelectedOptionType>('call')
   const [selectedMetric, setSelectedMetric] = useState<SelectedMetric>('annualized_premium_points')
   const [selectedExpiries, setSelectedExpiries] = useState<string[]>([])
-  const [strikeHalfRangePoints, setStrikeHalfRangePoints] = useState(MIN_STRIKE_HALF_RANGE_POINTS)
   const request = useRef<AbortController | null>(null)
   const nextRequestId = useRef(0)
 
@@ -49,7 +47,6 @@ function App() {
     setSelectedOptionType('call')
     setSelectedMetric('annualized_premium_points')
     setSelectedExpiries([])
-    setStrikeHalfRangePoints(MIN_STRIKE_HALF_RANGE_POINTS)
   }
 
   function load(asOf: string, requestedPriceType: PremiumPriceType) {
@@ -108,7 +105,6 @@ function App() {
       selectedOptionType,
       selectedMetric,
       selectedExpirySet,
-      strikeHalfRangePoints,
     )
     : null
 
@@ -166,6 +162,7 @@ function App() {
             <fieldset>
               <legend>展示指标</legend>
               <label><input type="radio" name="premium-metric" value="annualized_premium_points" checked={selectedMetric === 'annualized_premium_points'} onChange={() => setSelectedMetric('annualized_premium_points')} />年化权利金点数</label>
+              <label><input type="radio" name="premium-metric" value="annualized_time_value_points" checked={selectedMetric === 'annualized_time_value_points'} onChange={() => setSelectedMetric('annualized_time_value_points')} />年化时间价值点数</label>
               <label><input type="radio" name="premium-metric" value="annualized_seller_premium_yield" checked={selectedMetric === 'annualized_seller_premium_yield'} onChange={() => setSelectedMetric('annualized_seller_premium_yield')} />卖方年化权利金收益率</label>
             </fieldset>
           </div>
@@ -184,14 +181,8 @@ function App() {
             </div>
           </fieldset>
 
-          <div className="strike-control" role="group" aria-label="Premium 行权价视窗半宽">
-            <span>行权价视窗：±{strikeHalfRangePoints} 点</span>
-            <button type="button" aria-label="缩小 Premium 行权价视窗" disabled={strikeHalfRangePoints === MIN_STRIKE_HALF_RANGE_POINTS} onClick={() => setStrikeHalfRangePoints((value) => Math.max(MIN_STRIKE_HALF_RANGE_POINTS, value - STRIKE_HALF_RANGE_STEP))}>−</button>
-            <button type="button" aria-label="扩大 Premium 行权价视窗" onClick={() => setStrikeHalfRangePoints((value) => value + STRIKE_HALF_RANGE_STEP)}>+</button>
-          </div>
-
           {projection.rows.length === 0 ? (
-            <p className="plane-empty">当前选择与行权价范围内无 analytical observation。</p>
+            <p className="plane-empty">当前选择下无 analytical observation。</p>
           ) : (
             <div className="premium-table-wrap">
               <table className="premium-table">
@@ -212,12 +203,23 @@ function App() {
                 <tbody>
                   {projection.rows.map((row) => (
                     <tr key={row.strike}>
-                      <th scope="row">{formatPlaneNumber(row.strike)}</th>
+                      <th
+                        scope="row"
+                        className={classifyStrikeRelativeToReference(
+                          row.strike,
+                          page.plane.underlying.price,
+                        )}
+                      >{formatPlaneNumber(row.strike)}</th>
                       {row.cells.map((cell, index) => {
-                        const expiryDate = projection.expiries[index].expiry_date
-                        if (cell.kind === 'absent') return <td key={expiryDate} aria-label={`${expiryDate} 无 Point`} />
-                        if (cell.kind === 'unavailable') return <td key={expiryDate} aria-label={`${expiryDate} metric unavailable`}>—</td>
-                        return <td key={expiryDate}>{formatMetric(cell.value, selectedMetric)}</td>
+                        const expiry = projection.expiries[index]
+                        const expiryDate = expiry.expiry_date
+                        const referenceClass = classifyStrikeRelativeToReference(
+                          row.strike,
+                          expiry.futures?.price ?? null,
+                        )
+                        if (cell.kind === 'absent') return <td className={referenceClass} key={expiryDate} aria-label={`${expiryDate} 无 Point`} />
+                        if (cell.kind === 'unavailable') return <td className={referenceClass} key={expiryDate} aria-label={`${expiryDate} metric unavailable`}>—</td>
+                        return <td className={referenceClass} key={expiryDate}>{formatMetric(cell.value, selectedMetric)}</td>
                       })}
                     </tr>
                   ))}
