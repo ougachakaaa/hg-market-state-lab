@@ -105,7 +105,7 @@ Raw 保持 Source fact semantics。Raw 不做：
 basic + daily join
 Source field → analytical vocabulary rename
 DTE or annualization calculation
-seller-yield calculation
+Premium metric calculation
 Plane grouping or ordering
 ```
 
@@ -124,7 +124,7 @@ observation = requested as_of
 Does 000852.SH have an observation for as_of?
 ```
 
-它不验证 selected price 是否可用于 seller-yield calculation，也不判断 MO/IM completeness。probe result 是以下闭集：
+它不验证 selected price 是否可用于 reference-relative decomposition 或 selected-reference-notional calculation，也不判断 MO/IM completeness。probe result 是以下闭集：
 
 | Probe evidence | Availability meaning |
 | --- | --- |

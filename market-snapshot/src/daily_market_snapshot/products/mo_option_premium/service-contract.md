@@ -17,7 +17,7 @@ resolved price_type = open | high | low | close
 省略 `price_type` 时在进入 orchestration 前解析为 `close`。产品成功结果是：
 
 ```text
-request-scoped AnnualizedPremiumPlane
+request-scoped PremiumPlane
 ```
 
 V1 final Plane 可以只存在于内存中，不要求 canonical persisted final output、database、cache、Parquet 或 materialized Point corpus。Premium-owned Raw 仍按 [data authority](data.md) 持久化，以形成 Capture 与 deterministic Preparation 之间的契约。
@@ -45,13 +45,13 @@ write remaining Premium goal-scoped Raw
         ↓
 construct OptionMarketBasis
         ↓
-AnnualizedPremiumPoint Preparation
+PremiumPoint Preparation
         ↓
-AnnualizedPremiumPoint[]
+PremiumPoint[]
         ↓
 PremiumPlaneFramer
         ↓
-AnnualizedPremiumPlane
+PremiumPlane
         ↓
 return product result to HTTP delivery adapter
 ```
@@ -74,8 +74,8 @@ availability probe 复用 `index_daily` Capture，并把其 result 写入 Premiu
 | --- | --- | --- |
 | Product service | request orchestration、availability-result admission、semantic failure classification/propagation、result boundary | Source fields、financial formulas、HTTP DTO |
 | Source Capture | Source calls、product-declared Source-domain scope、minimal normalization、Premium Raw production | Basis join、analysis formulas、Plane framing |
-| Basis construction | deterministic joins、domain vocabulary normalization、unified price projection、legitimate futures matching | DTE、annualization、seller yield、HTTP projection |
-| Point Preparation | DTE、annualized premium points、annualized time-value points、seller yield、self-contained Points | Capture、transport、presentation |
+| Basis construction | deterministic joins、domain vocabulary normalization、unified price projection、legitimate futures matching | DTE、reference-relative decomposition、annualization、yield、HTTP projection |
+| Point Preparation | DTE、完整四维 Premium metric space、self-contained Points | Capture、transport、presentation |
 | PremiumPlaneFramer | compatibility validation、sparse organization、deterministic framing | recalculation、interpolation、synthetic facts |
 | HTTP adapter | query serialization/transport validation、product result projection、status/envelope mapping | Source calls、Raw construction、domain repair or calculation |
 
@@ -120,7 +120,7 @@ Plane framing compatibility failure
 zero real analytical Points
 ```
 
-合法的 option selected premium null 不属于 failure；它产生 premium 与 derived metrics 为 null 的真实 Point。无 legitimate IM match 也不属于 failure；它产生 `futures = null`。两者与上述 required-fact failures 不得混淆。
+合法的 option selected premium null 不属于 failure；它产生 premium 与 value-derived metrics 为 null 的真实 Point。无 legitimate IM match 也不属于 failure；它产生 `futures = null`。合法 matched futures 的 selected price 为 `0` 也不属于 failure；reference-relative points 正常产生，该 reference 下的 yields 为 `null`。这些状态与上述 required-fact failures 不得混淆。
 
 observation 一旦 admitted，任何 downstream failure 都不得重新降级为 `date_not_available`。
 
@@ -137,8 +137,9 @@ observation 一旦 admitted，任何 downstream failure 都不得重新降级为
 | active MO row 存在且 selected option premium 为 null | success Point with `premium = null` and null derived metrics |
 | no legitimate IM expiry match | success with `futures = null` |
 | legitimate matched IM daily fact missing/duplicate，或 selected price null/malformed | `premium_plane_unavailable` |
+| legitimate matched IM selected price 为 `0` | success；futures-reference points 按公式计算，futures-reference yields 为 `null` |
 | Basis、Point Preparation 或 Framer fails | `premium_plane_unavailable` |
-| complete non-empty Plane | success `AnnualizedPremiumPlane` |
+| complete non-empty Plane | success `PremiumPlane` |
 
 ## 5. Atomic Result and Delivery Handoff
 
@@ -147,7 +148,7 @@ observation 一旦 admitted，任何 downstream failure 都不得重新降级为
 HTTP adapter 的输入只能是二者之一：
 
 ```text
-complete request-scoped AnnualizedPremiumPlane
+complete request-scoped PremiumPlane
 OR
 classified product semantic failure
 ```

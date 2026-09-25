@@ -15,7 +15,11 @@ load complete PremiumPlaneResponse
     ↓
 select Call / Put
     ↓
+select Reference Basis: underlying spot / same-expiry futures
+    ↓
 select Value Basis: total / time value
+    ↓
+select Time Normalization: unannualized / annualized
     ↓
 select Representation: points / yield
     ↓
@@ -42,7 +46,9 @@ price_type = open | high | low | close
 
 ```text
 selectedOptionType: call | put
+selectedReferenceBasis: underlying_spot | expiry_futures
 selectedValueBasis: total | time_value
+selectedTimeNormalization: unannualized | annualized
 selectedRepresentation: points | yield
 selectedExpiries: response expiry identities
 ```
@@ -51,23 +57,39 @@ selectedExpiries: response expiry identities
 
 ```text
 selectedOptionType = call
+selectedReferenceBasis = underlying_spot
 selectedValueBasis = total
+selectedTimeNormalization = annualized
 selectedRepresentation = points
 selectedExpiries = all response expiries
 ```
 
 改变上述任一 presentation state 只重新投影已加载的完整 response，不发起请求、不改变 response，也不触发 backend recomputation。
 
-两个 metric axes 构成固定 mapping：
+四个 metric selections 唯一定位 backend 已准备的 leaf：
 
-| Value Basis | Representation | Backend fact |
-| --- | --- | --- |
-| total | points | `annualized_premium_points` |
-| time_value | points | `annualized_time_value_points` |
-| total | yield | `annualized_seller_premium_yield` |
-| time_value | yield | `annualized_time_value_yield` |
+```text
+point.metrics
+    [selectedReferenceBasis]
+    [selectedValueBasis]
+    [selectedTimeNormalization]
+    [selectedRepresentation]
+```
 
-Frontend mapping 只选择 backend fact，不计算 financial value。控件必须把两个 axes 表达为两个独立选择，例如“价值口径：总价值 / 时间价值”与“表示方式：点数 / 收益率”；不得把四个 coordinate 建模为 flat four-way metric selector。
+Frontend mapping 只选择 backend fact，不计算 financial value，也不得把 coordinates 建模为 flat metric selector。四个 selectors 必须作为一个 cohesive “指标设置” control group 展示，并按以下语义组织：
+
+```text
+指标设置
+    标的
+        现货标的 / 同到期期货
+    计算口径
+        价值口径: 总价值 / 时间价值
+        时间标准: 未年化 / 年化
+    表示方式
+        点数 / 收益率
+```
+
+Call/Put 属于独立“期权类型” control；expiry visibility 属于独立“显示到期日” control。不得把二者并入指标设置。
 
 `selectedExpiries` 默认保持 backend response 的全部 expiry identities。隐藏 expiry 只隐藏对应 column；完整 response 保留，其他 expiry 的 identity 和顺序不变，并且只要 response 含有 expiry 就至少保持一个 visible expiry。
 
@@ -115,10 +137,8 @@ V1 formatting：
 | strike | 1 decimal |
 | underlying price | 1 decimal |
 | futures price | 1 decimal |
-| annualized premium points | 1 decimal |
-| annualized time-value points | 1 decimal |
-| annualized seller premium yield | percentage, 2 decimals |
-| annualized time-value yield | percentage, 2 decimals |
+| any selected points leaf | 1 decimal |
+| any selected yield leaf | percentage, 2 decimals |
 | DTE | integer |
 
 Representation 唯一决定 metric formatting：points 使用 1 decimal，yield 使用 percentage 2 decimals。negative yield 保留负号，zero 按 `0.0` 或 `0.00%` 显示，null 显示 `—`。例如 `7312.45 → 7312.5`、`3825.24 → 3825.2`、`-12.34 → -12.3`、`0.0998 → 9.98%`。Formatting 只影响 display，不改变排序、reference comparison、identity、request 或 backend numeric facts。
@@ -139,7 +159,7 @@ strike = reference → at-reference
 
 分类适用于每个展示 row strike 与 column reference 的关系，与该 coordinate 是否存在真实 Point、metric 是否为 null 无关。无 Point cell 可以具有 reference-region presentation，但仍必须保持空白，且不得因此成为 synthetic Point、null fact 或 analytical observation。
 
-颜色只表达：
+该 coloring reference 固定由 table location 决定，与 `selectedReferenceBasis` 无关；切换 metric reference 不改变颜色分类。颜色只表达：
 
 > strike position relative to the relevant reference price.
 
@@ -149,7 +169,7 @@ strike = reference → at-reference
 
 成功 UI 必须提供一个默认折叠、低干扰的 Raw HTTP Response Inspector。它展示并复制当前成功 Premium HTTP request 实际收到的完整 JSON response payload，供用户直接粘贴给 GPT 或其他分析工具。
 
-它不是 Source Raw、Tushare Raw、Premium-owned Raw Artifact、`OptionMarketBasis`、canonical Point 或 frontend table projection。Call/Put、Value Basis、Representation 与 expiry visibility 的变化不得修改 Inspector 内容。
+它不是 Source Raw、Tushare Raw、Premium-owned Raw Artifact、`OptionMarketBasis`、canonical Point 或 frontend table projection。Call/Put、四个 metric selections 与 expiry visibility 的变化不得修改 Inspector 内容。
 
 API request lifecycle 必须从同一次 HTTP response 保留：
 

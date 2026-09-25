@@ -4,7 +4,7 @@
 
 ## 1. 产品定位
 
-`MO Premium Plane` 表示一个 observation anchor 下，由真实 MO 合约 analytical Point 构成的稀疏年化权利金分析平面。
+`MO Premium Plane` 表示一个 observation anchor 下，由真实 MO 合约 analytical Point 构成的稀疏多维权利金分析平面。
 
 它是独立于 MO Option Chain 的 analytical read product。两者可以复用 backend market facts，但产品语义与 HTTP contract 独立：Premium metrics 不追加到 `/mo-option-chain`，frontend 也不从 Option Chain DTO 自行计算这些 metrics。
 
@@ -17,7 +17,7 @@
 | 本文档 | 产品身份、产品间边界、跨子契约 invariant |
 | [Shared Source Capture authority](../../capture/ARCHITECTURE.md) | Capture identity、Source endpoint、公共 Source 字段与 minimal normalization |
 | [Data authority](data.md) | Premium Source requirements、Capture scope、goal-scoped Raw、active universe、Raw completeness 与 canonical observation availability evidence |
-| [Backend authority](backend.md) | `OptionMarketBasis` construction、canonical `AnnualizedPremiumPoint`、ObservationAnchor、公式、单位、Preparation、null/zero/absence 与 PlaneFramer |
+| [Backend authority](backend.md) | `OptionMarketBasis` construction、canonical `PremiumPoint`、ObservationAnchor、四维 metric space、公式、单位、Preparation、null/zero/absence 与 PlaneFramer |
 | [Product service authority](service-contract.md) | request orchestration、observation admission、semantic failure classification/propagation 与 result boundary |
 | [HTTP contract](http-contract.md) | resource/query、success projection、sparse-plane wire shape、transport null/absence/zero 与 error/status mapping |
 | [Web visualization authority](../../../../../web-ui/src/features/mo_option_premium/ARCHITECTURE.md) | presentation state、Call/Put 与 metric selection、expiry visibility、full-strike table projection、reference-relative coloring、formatting、rendering 与 interaction |
@@ -29,11 +29,11 @@
 1. Premium Plane 与 MO Option Chain 是两个独立产品和 HTTP contracts。
 2. Plane 只包含 backend authority 定义的真实 analytical Point；不得由 transport 或 presentation 创建 synthetic contract、cell 或 interpolation。
 3. 不同 expiry 可以拥有不同 strike universe；精确 Point/null/zero/absence 语义由 backend authority 唯一定义，HTTP 只保持其投影。
-4. Underlying、futures reference、`total | time_value × points | yield` 四种 premium metrics 与共享 underlying-spot-notional yield denominator 的 domain 角色由 backend authority 唯一定义；HTTP 只投影、frontend 只选择与展示，不计算、fallback、修复或替代。
+4. Premium metrics 是 `reference_basis × value_basis × time_normalization × representation` 四维固定空间；underlying spot、same-expiry futures、reference-relative decomposition 与 selected-reference-notional yield denominator 的 domain 角色由 backend authority 唯一定义。HTTP 只投影、frontend 只选择与展示，不计算、fallback、修复或替代。
 5. HTTP Point 是 delivery projection，不是 canonical backend Point；wire identity、ordering 和 classified product failure mapping 由 HTTP contract 拥有，availability detection 与 failure classification 不属于 HTTP。
-6. Call/Put、`Value Basis`、`Representation` 与 expiry visibility 是 presentation state，不进入 V1 product query；其中两个 metric axes 共同选择 backend 已准备的一个 fact，不构成 frontend calculation。table rows 展示所选 side 与 expiries 下全部真实 Point strikes，不拥有 strike display range。
+6. Call/Put、四个 metric selections 与 expiry visibility 是 presentation state，不进入 V1 product query；四个 metric axes 共同选择 backend 已准备的一个 coordinate，不构成 frontend calculation。table rows 展示所选 side 与 expiries 下全部真实 Point strikes，不拥有 strike display range。
 7. Premium 拥有自己的 Raw、Basis construction 与 product orchestration，不消费 sibling product 的 Raw、read DTO 或 final artifact。
-8. 成功 product result 是 request-scoped `AnnualizedPremiumPlane`；V1 不要求 canonical persisted final output。
+8. 成功 product result 是 request-scoped `PremiumPlane`；V1 不要求 canonical persisted final output。`annualized` 只是 time-normalization value，不定义 Point 或 Plane identity。
 
 ## 4. Navigation
 
@@ -58,13 +58,13 @@ Premium-owned goal-scoped Raw
         ↓
 OptionMarketBasis construction
         ↓
-AnnualizedPremiumPoint Preparation
+PremiumPoint Preparation
         ↓
-AnnualizedPremiumPoint[]
+PremiumPoint[]
         ↓
 PremiumPlaneFramer
         ↓
-request-scoped AnnualizedPremiumPlane
+request-scoped PremiumPlane
         ↓
 Premium product service result
         ↓
@@ -79,9 +79,12 @@ GET /mo-option-premium-plane
 
 本次跨 backend、HTTP 与 frontend authority reconciliation 已确认：
 
-1. `AnnualizedPremiumPoint Preparation` 唯一拥有 `total | time_value × points | yield` 2 × 2 premium metric space；其中 `annualized_time_value_yield = annualized_time_value_points / underlying.price`，与 total yield 共享 underlying spot notional denominator，并原样保留 negative、zero、null。HTTP 只投影 prepared facts，frontend 只通过 generated contract 选择并展示。
+1. `PremiumPoint Preparation` 唯一拥有 `reference_basis × value_basis × time_normalization × representation` 四维 metric space；reference-relative time value 不 clamp，yield 使用 coordinate 所选 reference notional，并原样保留 negative、zero、null。HTTP 只投影 prepared facts，frontend 只通过 generated contract 选择并展示。
 2. Premium table rows 覆盖 selected side 与 selected expiries 下全部真实 Point strikes，同时保持 sparse Point absence、nullable metric 与 numeric zero 的区别。
 3. Strike relative-to-reference coloring 只属于 frontend presentation，使用 raw spot / nullable expiry futures facts，不改变 analytical semantics。
 4. Premium endpoint、query、generated-contract ownership、request lifecycle 与 Option Chain product/viewport authority 均未改变。
+5. `underlying_spot` 与 `expiry_futures` 的 decomposition 和 denominator 角色已分离；futures decomposition 不冒充传统 intrinsic value，futures 缺失时不 fallback，reference-invariant total points 仍保留真实 premium fact。
+6. unannualized/annualized 与 points/yield 均为独立 axes；inclusive-calendar DTE、365、contract multiplier、sparse Point、failure classification、reference coloring 和 Raw Inspector 语义保持不变。
+7. HTTP 采用完整 structured metric projection，frontend 的四个 metric selectors 全部是 local presentation state，并组织为“标的 / 计算口径 / 表示方式”；Call/Put 与 expiry visibility 保持独立。
 
-`MO Premium Plane 2x2 metric and raw-response authority is implementation-ready.`
+`MO Premium Plane multidimensional metric authority is implementation-ready.`
