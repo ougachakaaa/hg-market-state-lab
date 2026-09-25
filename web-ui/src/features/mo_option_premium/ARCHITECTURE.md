@@ -39,7 +39,7 @@ user-visible empty, loading and error presentation
 它不得：
 
 - 从 Option Chain DTO 或其他 frontend state 重新计算 Premium Plane；
-- 重新计算 DTE、annualized premium points、annualized time-value points 或 seller premium yield，尤其不得从 premium、strike、underlying 或 futures 推导 time-value metric；
+- 重新计算 DTE 或任一 2 × 2 premium metric，尤其不得从 points、premium、strike、underlying 或 futures 推导 yield 或 time-value metric；
 - fallback underlying 或 futures，插值或替代 strike，或生成 synthetic analytical Point、contract、cell/null fact；
 - 合并 Point absence、Point 中的 null fact 与 numeric zero；
 - 推断 cheap/expensive、推荐 strike、市场判断、交易信号或 decision semantics。
@@ -47,12 +47,14 @@ user-visible empty, loading and error presentation
 ## 3. Stable Invariants
 
 1. 一个成功 response 是当前 query 的完整 backend sparse plane；frontend 只做可逆的 presentation projection。
-2. HTTP query identity 与 local presentation state 分离；Call/Put、metric 与 expiry visibility 不触发 backend recomputation 或新请求。
+2. HTTP query identity 与 local presentation state 分离；Call/Put、`Value Basis`、`Representation` 与 expiry visibility 不触发 backend recomputation 或新请求。
 3. Table coordinate 必须对应真实 Point 才拥有 analytical observation；frontend grid 本身不创造事实。
 4. Backend ordering、identity、null/zero/absence 与 reference availability 必须保留；formatting 不改变 numeric facts。
 5. 新 query 的旧 response 不得作为当前 observation 展示，较早请求不得覆盖较新 query 的结果。
 6. Table rows 是 selected side 与 selected expiries 下全部真实 Point strikes 的 numeric union；frontend 不按 reference price 或显示范围删除真实 Point。
 7. Strike relative-to-reference coloring 只属于 presentation，不创建 analytical metric、Point 或市场判断。
+8. Raw HTTP Response Inspector 只展示当前成功 Premium request 实际收到且通过 runtime validation 的完整 JSON payload；它不是 Source Raw、Premium Raw Artifact、canonical Point 或 table projection，也不受 local presentation state 影响。
+9. query identity 改变后，旧 raw payload 与旧 validated response 同时退出 current-result 状态；idle、loading 与 failure 均不得把上一笔成功 payload 标记为当前原始响应。
 
 ## 4. Navigation
 

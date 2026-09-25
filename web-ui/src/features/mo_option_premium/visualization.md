@@ -15,7 +15,9 @@ load complete PremiumPlaneResponse
     ↓
 select Call / Put
     ↓
-select displayed metric
+select Value Basis: total / time value
+    ↓
+select Representation: points / yield
     ↓
 select visible expiries
     ↓
@@ -40,10 +42,8 @@ price_type = open | high | low | close
 
 ```text
 selectedOptionType: call | put
-selectedMetric:
-  annualized_premium_points
-  | annualized_time_value_points
-  | annualized_seller_premium_yield
+selectedValueBasis: total | time_value
+selectedRepresentation: points | yield
 selectedExpiries: response expiry identities
 ```
 
@@ -51,11 +51,23 @@ selectedExpiries: response expiry identities
 
 ```text
 selectedOptionType = call
-selectedMetric = annualized_premium_points
+selectedValueBasis = total
+selectedRepresentation = points
 selectedExpiries = all response expiries
 ```
 
 改变上述任一 presentation state 只重新投影已加载的完整 response，不发起请求、不改变 response，也不触发 backend recomputation。
+
+两个 metric axes 构成固定 mapping：
+
+| Value Basis | Representation | Backend fact |
+| --- | --- | --- |
+| total | points | `annualized_premium_points` |
+| time_value | points | `annualized_time_value_points` |
+| total | yield | `annualized_seller_premium_yield` |
+| time_value | yield | `annualized_time_value_yield` |
+
+Frontend mapping 只选择 backend fact，不计算 financial value。控件必须把两个 axes 表达为两个独立选择，例如“价值口径：总价值 / 时间价值”与“表示方式：点数 / 收益率”；不得把四个 coordinate 建模为 flat four-way metric selector。
 
 `selectedExpiries` 默认保持 backend response 的全部 expiry identities。隐藏 expiry 只隐藏对应 column；完整 response 保留，其他 expiry 的 identity 和顺序不变，并且只要 response 含有 expiry 就至少保持一个 visible expiry。
 
@@ -73,7 +85,7 @@ Column 必须保持 backend `expiry_date ascending` identity，不按用户选�
 
 对每个 expiry × strike presentation coordinate：
 
-- 存在该 selected side 的真实 Point 时，cell 展示该 Point 的 `selectedMetric`；
+- 存在该 selected side 的真实 Point 时，cell 展示两个 axes 映射到的 backend fact；
 - coordinate 不存在 Point 时，cell 留空，表示没有 analytical observation；
 - Point 存在但 selected metric 为 `null` 时，cell 显示 `—`，表示真实 Point 的该 metric unavailable；
 - metric 为 `0` 时按合法 numeric value 显示，不得视为 missing。
@@ -106,9 +118,12 @@ V1 formatting：
 | annualized premium points | 1 decimal |
 | annualized time-value points | 1 decimal |
 | annualized seller premium yield | percentage, 2 decimals |
+| annualized time-value yield | percentage, 2 decimals |
 | DTE | integer |
 
-例如 `7312.45 → 7312.5`、`3825.24 → 3825.2`、`-12.34 → -12.3`、`0.0998 → 9.98%`、points zero `→ 0.0`、yield zero `→ 0.00%`。Formatting 只影响 display，不改变排序、reference comparison、identity、request 或 backend numeric facts。
+Representation 唯一决定 metric formatting：points 使用 1 decimal，yield 使用 percentage 2 decimals。negative yield 保留负号，zero 按 `0.0` 或 `0.00%` 显示，null 显示 `—`。例如 `7312.45 → 7312.5`、`3825.24 → 3825.2`、`-12.34 → -12.3`、`0.0998 → 9.98%`。Formatting 只影响 display，不改变排序、reference comparison、identity、request 或 backend numeric facts。
+
+Premium table 最左侧 strike header 同时显示 `response.underlying.price`，语义为“行权价 / 标的现价 · {formatted price}”。它复用上述 underlying price formatting，只是 presentation context，不重新请求或计算 market fact。
 
 ## 6. Strike Relative-to-Reference Coloring
 
@@ -130,7 +145,31 @@ strike = reference → at-reference
 
 不得将 `below-reference`、`above-reference`、`at-reference` 或 `neutral` 解释或标记为 cheap / expensive、bullish / bearish、good / bad、recommended、probability、signal、ITM 或 OTM。Call 与 Put 的 intrinsic-value direction 相反，因此不得为两个区域提供全局 ITM / OTM 标签。具体 CSS colors 属于 implementation choice。
 
-## 7. Loading, Complete and Failure States
+## 7. Raw HTTP Response Inspector
+
+成功 UI 必须提供一个默认折叠、低干扰的 Raw HTTP Response Inspector。它展示并复制当前成功 Premium HTTP request 实际收到的完整 JSON response payload，供用户直接粘贴给 GPT 或其他分析工具。
+
+它不是 Source Raw、Tushare Raw、Premium-owned Raw Artifact、`OptionMarketBasis`、canonical Point 或 frontend table projection。Call/Put、Value Basis、Representation 与 expiry visibility 的变化不得修改 Inspector 内容。
+
+API request lifecycle 必须从同一次 HTTP response 保留：
+
+```text
+HTTP JSON payload
+        ↓
+retain raw payload
+        ↓
+runtime contract validation
+        ↓
+validated PremiumPlane
+```
+
+只有 validation 成功时，validated plane 与其对应 raw payload 才共同进入 complete-result state。contract-invalid payload 继续进入既有 invalid-response failure path，不得作为 Inspector success data。无需为 byte-identical HTTP body 引入复杂度；`JSON.stringify(payload, null, 2)` 形式的完整 payload 即满足边界。
+
+Inspector 展开后使用可读的 pretty JSON，并提供明确的“复制 JSON”能力与轻量可见反馈。复制内容必须是完整 payload，不是 filtered expiries、selected side、selected metric、formatted number 或其他 derived presentation。
+
+Raw payload 的 current identity 与 `as_of + resolved price_type` query identity 一致。新 query 开始时，旧 validated response 与旧 raw payload 必须同时退出 current-result state；idle、loading 或 failure 不显示上一笔 payload 为当前响应。V1 不要求展示 backend error body、历史 payload 或发起第二次请求获取 raw data。
+
+## 8. Loading, Complete and Failure States
 
 页面至少区分：
 
@@ -150,7 +189,7 @@ failure
 
 任何失败都不得 fallback date、把 stale response 作为当前结果、构造 partial plane，或静默转成 empty table。合法的 presentation projection 空状态只允许发生在已成功加载的完整 response 上，并与 failure 明确区分。
 
-## 8. V1 Non-goals
+## 9. V1 Non-goals
 
 本 authority 不设计：
 
@@ -163,6 +202,7 @@ backend or OpenAPI changes
 contract generation implementation
 cache, auth or deployment
 generic Option Chain / Premium visualization framework
+generic JSON debugging framework or historical raw-response storage
 market interpretation, Premium Edge, forecast or decision system
 ```
 

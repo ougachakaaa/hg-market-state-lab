@@ -163,12 +163,13 @@ DTE
 annualized premium points
 annualized time-value points
 annualized seller premium yield
+annualized time-value yield
 market judgment
 HTTP projection
 frontend grouping
 ```
 
-前四项只属于 `AnnualizedPremiumPoint Preparation`。
+前五项只属于 `AnnualizedPremiumPoint Preparation`。
 
 它不是 `GenericBasisFramework`、analysis registry、pipeline engine、plugin system、DAG framework 或项目级抽象层级。
 
@@ -245,6 +246,7 @@ derived analytics
     annualized_premium_points
     annualized_time_value_points
     annualized_seller_premium_yield
+    annualized_time_value_yield
 ```
 
 这不是强制的 Python class、nesting 或 serialization layout。它是 canonical semantic contract。
@@ -262,7 +264,7 @@ Call 还是 Put？
 哪个 underlying observation？
 哪个 nullable expiry futures reference？
 使用什么 calculation basis？
-DTE 与三个 annualized metrics 是什么？
+DTE 与四个 annualized metrics 是什么？
 ```
 
 Point 的最小解释身份是：
@@ -323,7 +325,7 @@ Preparation owns：
 * DTE calculation；
 * annualized premium points calculation；
 * intrinsic value、time value 与 annualized time-value points calculation；
-* annualized seller premium yield calculation；
+* annualized seller premium yield 与 annualized time-value yield calculation；
 * self-contained Point construction；
 * calculation input 与 derived metric consistency validation。
 
@@ -371,7 +373,24 @@ DTE = 1
 
 它不是 trading-day count、252-day basis、fractional year 或 hours-to-expiry。
 
-### 7.2 Annualized premium points
+### 7.2 Premium metric space
+
+四个 premium analytical facts 由两个正交 semantic dimensions 组成，不是四个彼此无关的 feature：
+
+```text
+                         Representation
+                    points                         yield
+
+Value Basis
+total               annualized_premium_points      annualized_seller_premium_yield
+time_value          annualized_time_value_points   annualized_time_value_yield
+```
+
+`Value Basis` 选择 total 或 time value；`Representation` 选择 points 或 yield。四个 coordinate 都由 `AnnualizedPremiumPoint Preparation` 计算并写入 canonical Point。HTTP 只投影，frontend 只选择与展示；二者都不得从其他 coordinate 推导目标 metric。
+
+本结构只定义当前产品的固定 2 × 2 semantics，不引入 generic metric framework、dynamic registry 或 analytical DSL。
+
+### 7.3 Annualized premium points
 
 `annualization_days` 固定为：
 
@@ -388,7 +407,7 @@ annualized_premium_points
 
 语义是 `time-normalized premium points`。它不是 investment return、ROE、expected return、probability 或 trading signal。
 
-### 7.3 Annualized time-value points
+### 7.4 Annualized time-value points
 
 Intrinsic value 的唯一 calculation reference 是 Point 自包含的 underlying spot observation：
 
@@ -407,9 +426,9 @@ annualized_time_value_points
 
 `time_value` 不做 zero clamp。由供应的 market facts 计算出的 negative、zero 或 positive result 都是合法 analytical output，Preparation 必须原样保留；不得 repair、replace 或 reinterpret。
 
-`intrinsic_value` 与 raw `time_value` 是上述确定性公式的中间量，不增加为 canonical Point fact。Point 已包含 `option_type`、`strike`、`premium`、`underlying.price`、`DTE` 与 `annualization_days`，足以独立解释并确定性复算该 metric。V1 只增加 canonical derived fact `annualized_time_value_points`。
+`intrinsic_value` 与 raw `time_value` 是上述确定性公式的中间量，不增加为 canonical Point fact。Point 已包含 `option_type`、`strike`、`premium`、`underlying.price`、`DTE` 与 `annualization_days`，足以独立解释并确定性复算该 metric。
 
-### 7.4 Annualized seller premium yield
+### 7.5 Annualized yields
 
 seller-yield denominator 固定为：
 
@@ -431,11 +450,17 @@ underlying spot notional
 annualized_seller_premium_yield
 = annualized premium cash / underlying spot notional
 = annualized_premium_points / underlying.price
+
+annualized_time_value_yield
+= annualized time-value cash / underlying spot notional
+= annualized_time_value_points / underlying.price
 ```
 
-multiplier 虽然在比率中数学抵消，仍属于经济计算语义，必须保留在 Point calculation basis。
+两种 yield 共享唯一 denominator semantic：`underlying spot notional`。multiplier 虽然在比率中数学抵消，仍属于经济计算语义，必须保留在 Point calculation basis。
 
-denominator 不得改为 futures price、strike、exchange margin、strategy margin、portfolio capital 或 cash balance。未来若需要 margin return 或 capital ROE，必须增加新的 analytical metric，不得重定义本 metric。
+denominator 不得改为 futures price、strike、exchange margin、strategy margin、portfolio capital 或 cash balance。未来若需要 margin return 或 capital ROE，必须增加新的 analytical metric，不得重定义这两个 yield metrics。
+
+`annualized_time_value_yield` 保留 `annualized_time_value_points` 的符号：negative、zero 与 positive 都是合法 analytical output，不得 clamp、repair 或 reinterpret。
 
 ## 8. Underlying and Futures References
 
@@ -499,7 +524,7 @@ annualized_premium_points = 0
 annualized_seller_premium_yield = 0
 ```
 
-`annualized_time_value_points` 仍由 intrinsic value 公式决定：当 intrinsic value 为 `0` 时结果为 `0`；当 intrinsic value 为正时结果可以为负，不得因 `premium = 0` 而覆盖为 `0`。
+`annualized_time_value_points` 仍由 intrinsic value 公式决定：当 intrinsic value 为 `0` 时结果为 `0`；当 intrinsic value 为正时结果可以为负，不得因 `premium = 0` 而覆盖为 `0`。`annualized_time_value_yield` 必须由该 points value 除以 positive `underlying.price` 得到，并保留相同符号与真实 numeric zero。
 
 真实 contract observation 且 selected premium unavailable：
 
@@ -508,6 +533,7 @@ premium = null
 annualized_premium_points = null
 annualized_time_value_points = null
 annualized_seller_premium_yield = null
+annualized_time_value_yield = null
 ```
 
 该 Point 仍然存在。不得 fill zero、interpolate、fallback 到其他 price field/date 或删除 contract。
@@ -655,15 +681,15 @@ generic analytical framework
 2. Point 自包含，不依赖 Plane、HTTP 或 frontend context 才可解释。
 3. `OptionMarketBasis` 是薄的 reusable option-market fact boundary。
 4. Premium 从自己的 goal-scoped Raw 构造 Basis，不消费 sibling Raw、`/mo-option-chain` response 或 DTO。
-5. Point Preparation 唯一拥有 DTE 与三个 premium metrics 的计算，包括 intrinsic value 与 time value 中间计算。
+5. Point Preparation 唯一拥有 DTE 与 2 × 2 四个 premium metrics 的计算，包括 intrinsic value 与 time value 中间计算。
 6. DTE 使用 inclusive calendar days；expiry day 为 1。
 7. annualization basis 为 365 days。
 8. underlying spot 是 intrinsic-value reference；Call / Put 分别使用明确的 spot intrinsic 公式。
 9. time value 不 clamp；negative、zero 与 positive result 都是合法 analytical output。
-10. seller yield denominator 是 underlying spot notional。
+10. total yield 与 time-value yield 共享 underlying spot notional denominator。
 11. futures 是 nullable expiry reference，不是 intrinsic-value reference 或 denominator。
 12. zero、null 与 absence 是不同 domain states。
-13. 真实 contract + missing selected premium 仍产生 Point，三个 derived metrics 均为 null。
+13. 真实 contract + missing selected premium 仍产生 Point，四个 derived metrics 均为 null。
 14. active contract 缺 daily row 是 completeness failure，不是 nullable premium。
 15. Point collection sparse，不要求跨 expiry strike alignment。
 16. PlaneFramer 组织但不计算或合成 analytical facts。
@@ -679,7 +705,7 @@ generic analytical framework
 2. Point 如何保持 self-contained，其 identity 与 coordinate 分别是什么？
 3. Premium Raw 如何确定性构造 `OptionMarketBasis`，允许和禁止哪些 normalization？
 4. Premium 为什么不依赖 Option Chain HTTP DTO？
-5. DTE、annualized premium points、annualized time-value points 与 seller yield 在哪里、如何计算？
+5. DTE 与 2 × 2 四个 premium metrics 在哪里、如何计算，两个 yield 为什么共享 denominator？
 6. underlying 与 futures 分别扮演什么角色，为什么 futures 不参与 intrinsic value？
 7. premium 为 zero、null，time value 为 negative，以及没有 Point 时分别表示什么？
 8. strike 是否必须跨 expiry 对齐？

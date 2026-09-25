@@ -103,7 +103,8 @@ HTTP 200 返回一个无外层 envelope 的 `PremiumPlaneResponse` JSON object�
       "premium": 52.4,
       "annualized_premium_points": 3825.2,
       "annualized_time_value_points": -18987.3,
-      "annualized_seller_premium_yield": 0.5231
+      "annualized_seller_premium_yield": 0.5231,
+      "annualized_time_value_yield": -2.5966
     },
     {
       "instrument_id": "MO2610-P-7050.CFE",
@@ -113,7 +114,8 @@ HTTP 200 返回一个无外层 envelope 的 `PremiumPlaneResponse` JSON object�
       "premium": null,
       "annualized_premium_points": null,
       "annualized_time_value_points": null,
-      "annualized_seller_premium_yield": null
+      "annualized_seller_premium_yield": null,
+      "annualized_time_value_yield": null
     }
   ]
 }
@@ -178,6 +180,7 @@ premium: number | null
 annualized_premium_points: number | null
 annualized_time_value_points: number | null
 annualized_seller_premium_yield: number | null
+annualized_time_value_yield: number | null
 ```
 
 Point coordinate 是：
@@ -190,9 +193,9 @@ expiry_date × strike × option_type
 
 每个 Point 的 `expiry_date` 必须恰好匹配一个 `expiries[]` context；`expiries[]` 中的 `expiry_date` 不得重复，同一 `expiry_date × strike × option_type` coordinate 也不得重复。
 
-四个 nullable numeric fields 的合法组合及金融一致性由 [backend.md](backend.md) 决定。HTTP 只保持已准备 facts，不计算、不补值，也不从一个 metric 推导另一个 metric。尤其不得在 delivery adapter 中计算 intrinsic value、time value 或 annualization；`annualized_time_value_points` 只能投影 canonical Point 已准备的值。
+五个 nullable numeric fields 的合法组合及金融一致性由 [backend.md](backend.md) 决定。HTTP 只保持已准备 facts，不计算、不补值，也不从一个 metric 推导另一个 metric。尤其不得在 delivery adapter 中计算 intrinsic value、time value、annualization 或任一 yield；两个 time-value facts 只能投影 canonical Point 已准备的值。
 
-`annualized_seller_premium_yield` 以 numeric ratio 交付：
+`annualized_seller_premium_yield` 与 `annualized_time_value_yield` 均以 numeric ratio 交付：
 
 ```text
 0.0998 = 9.98%
@@ -301,11 +304,12 @@ ordering 是 transport convenience，不是 analytical identity。consumer 必�
 
 ## 8. Presentation-state Boundary
 
-一次成功 response 同时交付 Call / Put、全部 expiries 与三种 premium metrics 的完整 sparse projection。以下交互不得触发 backend recomputation 或新的 HTTP request：
+一次成功 response 同时交付 Call / Put、全部 expiries 与完整 2 × 2 premium metric space 的 sparse projection。以下交互不得触发 backend recomputation 或新的 HTTP request：
 
 ```text
 Call / Put toggle
-annualized premium points / annualized time-value points / seller yield toggle
+total / time value selection
+points / yield selection
 expiry visibility
 ```
 
@@ -386,7 +390,7 @@ React / Plotly renderer
 2. response、expiry context 与 sparse Point 分别包含什么？
 3. 为什么它不是矩阵，非对齐 strike 如何表达？
 4. Point 缺席、nullable fact 与 zero 有何区别？
-5. seller yield 的 wire unit 是什么？
+5. 两个 yield metrics 的 wire unit 是什么？
 6. 哪些状态属于 frontend presentation，不进入 query？
 7. HTTP 是否可以插值、补 cell、fallback underlying/futures 或返回 partial plane？
 8. HTTP Point 是否等同 canonical backend Point？
