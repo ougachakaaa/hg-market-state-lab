@@ -1,8 +1,9 @@
 """Fake application boundary for the MO Option Chain HTTP contract tests.
 
 The HTTP delivery adapter is tested against this provider independently of the
-real ``Capture -> Raw -> Preparation -> read model`` chain, which is also
-covered by integration tests (``guides/mo-option-chain-http-contract.md`` section 7).
+real ``Capture -> Raw -> Preparation -> read model`` chain, which is also covered
+by integration tests
+(``products/mo_option_chain/http-contract.md`` section 7).
 
 The fake carries test data only. It is never imported by ``src/``: fabricated
 market facts must not live in the business semantics layer.
@@ -12,7 +13,7 @@ from __future__ import annotations
 
 from dataclasses import replace
 
-from daily_market_snapshot.services import mo_option_chain as service
+from daily_market_snapshot.products.mo_option_chain import service
 
 TARGET_DATE = "2026-09-17"
 EXPIRY_DATE = "2026-09-25"

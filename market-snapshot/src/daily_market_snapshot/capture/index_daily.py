@@ -1,17 +1,12 @@
-"""Source Capture ``index_daily``: one trade date of the index observation universe.
+"""Shared Tushare ``index_daily`` Source Capture.
 
-Source: Tushare ``index_daily`` (see ``guides/daily-market-snapshot.md`` 4.1).
-
-Development / debugging entrypoint (the Data Service CLI is the canonical user
-interface, see ``guides/data-services.md`` 11):
-
-    poetry run python -m daily_market_snapshot.capture.index_daily 2026-09-17
+Source: Tushare ``index_daily`` (see ``capture/ARCHITECTURE.md`` section 3;
+Product contexts pass their own explicit index universe; this shared Capture
+owns only the Source endpoint, normalization and target-date validation.
 """
 
 from __future__ import annotations
 
-import argparse
-import sys
 from collections.abc import Sequence
 
 import pandas as pd
@@ -21,15 +16,6 @@ from ..sources import tushare
 from . import common
 
 RAW_ARTIFACT = "index_daily"
-# The fixed Phase 1 index observation universe (Guide 4.1).
-INDEX_CODES = (
-    "000016.SH",
-    "000300.SH",
-    "000905.SH",
-    "000852.SH",
-    "399006.SZ",
-    "000688.SH",
-)
 
 
 class NoIndexDataError(common.CollectionError):
@@ -44,7 +30,7 @@ def query_index_daily(api: tushare.TushareApi, ts_code: str, trade_date: str) ->
 def collect_index_daily(
     trade_date: str,
     query: common.QueryFunc,
-    index_codes: Sequence[str] = INDEX_CODES,
+    index_codes: Sequence[str],
 ) -> list[artifacts.RawRecord]:
     """Return the ``index_daily`` records for every index in the universe."""
     tushare_date = tushare.to_tushare_date(trade_date)
@@ -64,27 +50,38 @@ def collect_index_daily(
     return records
 
 
-def main(argv: Sequence[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(description=f"Collect the {RAW_ARTIFACT} Raw artifact.")
-    parser.add_argument("trade_date", help="Target trade date in YYYY-MM-DD form.")
-    args = parser.parse_args(argv)
+def collect_index_observation(
+    trade_date: str,
+    query: common.QueryFunc,
+    index_code: str,
+) -> list[artifacts.RawRecord]:
+    """Return one index observation, preserving an explicit empty response.
 
-    try:
-        api = tushare.create_tushare_api(tushare.get_tushare_token())
-        records = collect_index_daily(
-            args.trade_date,
-            lambda **kwargs: query_index_daily(api, **kwargs),
-        )
-    except common.CAPTURE_FAILURE_TYPES as exc:
-        print(f"error: {exc}", file=sys.stderr)
-        return 1
+    This is the canonical availability-probe variant of ``index_daily``.  A
+    successful empty Source response is returned as an empty Raw row set so the
+    product can persist and classify that evidence. Source and normalization
+    failures still propagate and therefore cannot be mistaken for absence.
+    """
+    source_date = tushare.to_tushare_date(trade_date)
+    frame = query(ts_code=index_code, trade_date=source_date)
+    records = common.to_raw_records(frame)
+    if records:
+        common.require_target_trade_date(records, trade_date)
+        for record in records:
+            if record.get("ts_code") != index_code:
+                raise common.CollectionError(
+                    f"source returned ts_code={record.get('ts_code')!r} "
+                    f"for requested index_code={index_code}."
+                )
+    return records
 
-    path = artifacts.write_raw_artifact(
-        records, artifacts.daily_raw_dir(args.trade_date), RAW_ARTIFACT
+
+def capture_observation(
+    api: tushare.TushareApi, trade_date: str, index_code: str
+) -> list[artifacts.RawRecord]:
+    """Run the exact-date ``index_daily`` availability Capture."""
+    return collect_index_observation(
+        trade_date,
+        lambda **kwargs: query_index_daily(api, **kwargs),
+        index_code,
     )
-    print(f"wrote {len(records)} records to {path}")
-    return 0
-
-
-if __name__ == "__main__":
-    raise SystemExit(main())

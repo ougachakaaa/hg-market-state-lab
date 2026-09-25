@@ -1,8 +1,8 @@
 """Contract tests of the MO Option Chain HTTP delivery adapter.
 
-Authority: ``guides/mo-option-chain-http-contract.md`` over
-``guides/mo-option-chain-read-contract.md`` (semantic shape) and
-``guides/mo-option-chain.md`` (query identity, invariants).
+Authority: ``products/mo_option_chain/http-contract.md`` over
+``products/mo_option_chain/read-contract.md`` (semantic shape) and
+``products/mo_option_chain/ARCHITECTURE.md`` (query identity, invariants).
 
 These tests lock the transport contract the web UI may depend on:
 
@@ -31,10 +31,10 @@ from typing import Any
 import pytest
 from fastapi.testclient import TestClient
 
-from daily_market_snapshot.api import endpoint
-from daily_market_snapshot.api import errors as api_errors
-from daily_market_snapshot.api import schemas as api_schemas
-from daily_market_snapshot.services import mo_option_chain as service
+from daily_market_snapshot.products.mo_option_chain import service
+from daily_market_snapshot.products.mo_option_chain.api import endpoint
+from daily_market_snapshot.products.mo_option_chain.api import errors as api_errors
+from daily_market_snapshot.products.mo_option_chain.api import schemas as api_schemas
 from support.fake_chain_service import (
     CALL_WITH_NULL_PRICE,
     CALL_WITH_PRICE,
@@ -50,16 +50,18 @@ from support.fake_chain_service import (
     error_result,
 )
 
-# ``daily_market_snapshot.api`` exports the FastAPI instance as ``app``, so the
+# The co-located API package exports the FastAPI instance as ``app``, so the
 # application module is imported by name to keep the module itself available.
-app_module: ModuleType = importlib.import_module("daily_market_snapshot.api.app")
+app_module: ModuleType = importlib.import_module(
+    "daily_market_snapshot.products.mo_option_chain.api.app"
+)
 
 # Modules the delivery layer must never import: it reads the chain through the
 # Data Service application boundary, not from Raw Artifacts or the Source.
 FORBIDDEN_IMPORT_PREFIXES = (
     "daily_market_snapshot.artifacts",
     "daily_market_snapshot.capture",
-    "daily_market_snapshot.preparation",
+    "daily_market_snapshot.products.mo_option_chain.preparation",
     "daily_market_snapshot.sources",
 )
 
@@ -629,7 +631,8 @@ def test_openapi_does_not_publish_a_validation_error_shape(client: TestClient) -
 def test_published_openapi_matches_the_frontend_contract_snapshot(client: TestClient) -> None:
     """A backend wire change fails pytest until the frontend contract is regenerated."""
     snapshot = (
-        Path(__file__).resolve().parents[2] / "web-ui/src/api/moOptionChain.openapi.json"
+        Path(__file__).resolve().parents[2]
+        / "web-ui/src/features/mo_option_chain/api/moOptionChain.openapi.json"
     )
 
     assert client.get("/openapi.json").json() == json.loads(snapshot.read_text(encoding="utf-8"))
@@ -660,7 +663,7 @@ def test_the_delivery_layer_depends_only_on_the_application_boundary() -> None:
     """The adapter reads the chain from the Data Service, not from a data layer."""
     imports = imported_modules(endpoint)
 
-    assert any(name.startswith("daily_market_snapshot.services") for name in imports)
+    assert "daily_market_snapshot.products.mo_option_chain" in imports
     assert not any(
         name.startswith(FORBIDDEN_IMPORT_PREFIXES) for name in imports
     )

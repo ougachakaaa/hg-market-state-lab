@@ -1,6 +1,6 @@
 """CLI over the Data Service catalog (semantic name ``dms``).
 
-Authority: ``guides/data-services.md`` sections 4 and 5.
+Authority: ``services/delivery.md`` sections 4 and 5.
 
 Semantics:
 

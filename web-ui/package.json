@@ -6,8 +6,8 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
-    "contract:generate": "poetry -C ../market-snapshot run python scripts/export_mo_chain_openapi.py && openapi-typescript src/api/moOptionChain.openapi.json -o src/api/moOptionChain.generated.ts",
-    "contract:check": "poetry -C ../market-snapshot run python scripts/export_mo_chain_openapi.py --check && openapi-typescript src/api/moOptionChain.openapi.json -o src/api/moOptionChain.generated.ts --check",
+    "contract:generate": "poetry -C ../market-snapshot run python ../web-ui/scripts/export_contracts.py && node scripts/contract_types.mjs",
+    "contract:check": "poetry -C ../market-snapshot run python ../web-ui/scripts/export_contracts.py --check && node scripts/contract_types.mjs --check",
     "lint": "oxlint",
     "test": "vitest run",
     "preview": "vite preview"

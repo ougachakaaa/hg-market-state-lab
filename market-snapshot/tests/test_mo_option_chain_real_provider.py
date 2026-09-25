@@ -10,9 +10,8 @@ import pytest
 from fastapi.testclient import TestClient
 
 from daily_market_snapshot import artifacts
-from daily_market_snapshot.api.app import create_app
-from daily_market_snapshot.preparation import mo_option_chain as preparation
-from daily_market_snapshot.services import mo_option_chain as service
+from daily_market_snapshot.products.mo_option_chain import preparation, service
+from daily_market_snapshot.products.mo_option_chain.api.app import create_app
 from daily_market_snapshot.sources import tushare
 from support.fake_source import (
     FakeTushareApi,

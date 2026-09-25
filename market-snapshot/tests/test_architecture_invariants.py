@@ -2,7 +2,7 @@
 
 Authority: ``market-snapshot/ARCHITECTURE.md`` section 2 (Source Capture owns the
 concrete endpoint call, the query parameters and the Source-domain scope, while
-the Data Service owns orchestration) and ``guides/data-services.md`` section 5
+the Data Service owns orchestration) and ``products/csi1000_5d_analysis/ARCHITECTURE.md`` section 4
 (the Data Service stage order).
 
 These tests lock the reconciled runtime contract of one request:
@@ -29,13 +29,14 @@ import pytest
 
 from daily_market_snapshot import artifacts, cli
 from daily_market_snapshot.capture import (
-    csi1000_index_history,
     im_futures_basic,
     im_futures_daily,
     mo_option_basic,
     mo_option_daily,
 )
-from daily_market_snapshot.services import DataServiceError, csi1000_5d_analysis
+from daily_market_snapshot.products.csi1000_5d_analysis import capture as csi1000_index_history
+from daily_market_snapshot.products.csi1000_5d_analysis import service as csi1000_5d_analysis
+from daily_market_snapshot.services import DataServiceError
 from support.fake_source import (
     CSI1000_IM_CONTRACTS,
     CSI1000_TARGET_DATE,
@@ -47,7 +48,7 @@ TARGET_DATE = CSI1000_TARGET_DATE
 SERVICE_ID = "csi1000-5d-analysis"
 
 # The endpoints of the five Captures, in the authority stage order of
-# ``guides/data-services.md`` section 5.
+# ``products/csi1000_5d_analysis/ARCHITECTURE.md`` section 4.
 CAPTURES = (
     (csi1000_index_history, "index_daily"),
     (mo_option_basic, "opt_basic"),

@@ -1,5 +1,7 @@
 # Repository Development CLI
 
+本文档只描述本地开发编排与操作方式，不是架构、产品或 HTTP 语义 authority。仓库级路由见 [ARCHITECTURE.md](ARCHITECTURE.md)，产品契约从 [market-snapshot/CAPABILITIES.md](market-snapshot/CAPABILITIES.md) 进入并与对应源码 bounded context 共址。
+
 仓库根目录的 `dev.py` 是本地开发入口，只负责检查启动条件和转发模块自己的命令。它是 developer orchestration surface 和 repository-level convenience forwarding surface，不是 Data Service、部署工具或新的业务模块。
 
 ## Codex managed worktree 环境

@@ -1,15 +1,8 @@
-"""Minimal FastAPI application of the MO Option Chain HTTP delivery adapter.
+"""Neutral FastAPI composition root for market-snapshot product adapters.
 
-Authority: ``guides/mo-option-chain-http-contract.md``. The application is a
-delivery surface only: it exposes the HTTP contract, publishes it as OpenAPI and
-turns a read failure into the contract's error envelope. It owns no market
-semantics and it is not a general API platform (no auth, no versioning, no
-schema registry, no second endpoint family).
-
-Run it (the repository stays Poetry ``package-mode = false``, so the executable
-shim supplies ``src/`` on the import path):
-
-    poetry run python scripts/api.py
+This module composes the independent MO Option Chain and MO Premium Plane HTTP
+adapters. It owns runtime wiring only; each product-local bounded context keeps
+ownership of its router, query contract, DTOs and error envelope.
 """
 
 from __future__ import annotations
@@ -22,56 +15,76 @@ from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
-from .endpoint import ROUTE_PATH, router
-from .errors import (
-    CONTRACT_QUERY_PARAMS,
+from ..products.mo_option_chain.api.endpoint import router as chain_router
+from ..products.mo_option_chain.api.errors import (
+    CONTRACT_QUERY_PARAMS as CHAIN_CONTRACT_QUERY_PARAMS,
+)
+from ..products.mo_option_chain.api.errors import (
     QUERY_PARAM_OPTION_PRODUCT,
     QUERY_PARAM_PRICE_TYPE,
     QUERY_PARAM_TARGET_TRADE_DATE,
-    REQUIRED_QUERY_PARAMS,
     ChainApiError,
     ChainErrorBody,
     ChainErrorKind,
     ChainErrorResponse,
 )
+from ..products.mo_option_chain.api.errors import (
+    REQUIRED_QUERY_PARAMS as CHAIN_REQUIRED_QUERY_PARAMS,
+)
+from ..products.mo_option_premium.api.endpoint import ROUTE_PATH as PREMIUM_ROUTE_PATH
+from ..products.mo_option_premium.api.endpoint import router as premium_router
+from ..products.mo_option_premium.api.errors import (
+    CONTRACT_QUERY_PARAMS as PREMIUM_CONTRACT_QUERY_PARAMS,
+)
+from ..products.mo_option_premium.api.errors import (
+    QUERY_PARAM_AS_OF,
+    PremiumApiError,
+    PremiumErrorBody,
+    PremiumErrorKind,
+    PremiumErrorResponse,
+)
+from ..products.mo_option_premium.api.errors import (
+    REQUIRED_QUERY_PARAMS as PREMIUM_REQUIRED_QUERY_PARAMS,
+)
 
-TITLE = "hg-market-state-lab MO Option Chain API"
+TITLE = "hg-market-state-lab Market Snapshot API"
 VERSION = "0.1.0"
-
-# The status FastAPI documents by convention for a rejected request, and which
-# this adapter answers with its own 400 error envelope instead.
 VALIDATION_STATUS = "422"
 
-# Request-validation locations that name a query parameter of the contract.
-VALIDATION_PARAMS: dict[str, str] = {
+CHAIN_VALIDATION_PARAMS: dict[str, str] = {
     QUERY_PARAM_TARGET_TRADE_DATE: QUERY_PARAM_TARGET_TRADE_DATE,
+    QUERY_PARAM_OPTION_PRODUCT: QUERY_PARAM_OPTION_PRODUCT,
+    QUERY_PARAM_PRICE_TYPE: QUERY_PARAM_PRICE_TYPE,
+}
+PREMIUM_VALIDATION_PARAMS: dict[str, str] = {
+    QUERY_PARAM_AS_OF: QUERY_PARAM_AS_OF,
     QUERY_PARAM_OPTION_PRODUCT: QUERY_PARAM_OPTION_PRODUCT,
     QUERY_PARAM_PRICE_TYPE: QUERY_PARAM_PRICE_TYPE,
 }
 
 
+def contract_params(request: Request) -> tuple[frozenset[str], tuple[str, ...], dict[str, str]]:
+    """Return the product-owned closed query contract for one composed route."""
+    if request.url.path == PREMIUM_ROUTE_PATH:
+        return (
+            PREMIUM_CONTRACT_QUERY_PARAMS,
+            PREMIUM_REQUIRED_QUERY_PARAMS,
+            PREMIUM_VALIDATION_PARAMS,
+        )
+    return CHAIN_CONTRACT_QUERY_PARAMS, CHAIN_REQUIRED_QUERY_PARAMS, CHAIN_VALIDATION_PARAMS
+
+
 def missing_param(request: Request) -> str | None:
-    """The first required query parameter the request omitted."""
-    for param in REQUIRED_QUERY_PARAMS:
-        if param not in request.query_params:
-            return param
-    return None
+    _, required, _ = contract_params(request)
+    return next((param for param in required if param not in request.query_params), None)
 
 
 def unexpected_param(request: Request) -> str | None:
-    """The first query parameter the contract does not accept, if any.
-
-    A parameter the contract does not declare has no ``error.param`` field to be
-    attributed to, so it is reported by ``error.detail`` instead.
-    """
-    for name in request.query_params:
-        if name not in CONTRACT_QUERY_PARAMS:
-            return name
-    return None
+    accepted, _, _ = contract_params(request)
+    return next((name for name in request.query_params if name not in accepted), None)
 
 
 def error_location(error: dict[str, object]) -> tuple[str, ...]:
-    """The normalized ``loc`` of one request-validation error."""
     location = error.get("loc")
     if isinstance(location, list | tuple):
         return tuple(str(part) for part in location)
@@ -79,26 +92,20 @@ def error_location(error: dict[str, object]) -> tuple[str, ...]:
 
 
 def validation_param(request: Request, errors: list[dict[str, object]]) -> str | None:
-    """The query parameter a request-validation error is about.
-
-    Only a parameter the contract declares can be named here: a parameter the
-    contract does not accept has no contract field to attribute the failure to.
-    """
     missing = missing_param(request)
     if missing is not None:
         return missing
-    unexpected = unexpected_param(request)
-    if unexpected is not None:
+    if unexpected_param(request) is not None:
         return None
+    _, _, parameters = contract_params(request)
     for error in errors:
         for part in reversed(error_location(error)):
-            if part in VALIDATION_PARAMS:
-                return VALIDATION_PARAMS[part]
+            if part in parameters:
+                return parameters[part]
     return None
 
 
 def validation_detail(request: Request, errors: list[dict[str, object]]) -> str:
-    """A short human-readable summary of what made the request invalid."""
     missing = missing_param(request)
     if missing is not None:
         return f"missing required query parameter {missing}"
@@ -112,35 +119,29 @@ def validation_detail(request: Request, errors: list[dict[str, object]]) -> str:
     return f"invalid value for {name}: {errors[0].get('msg', 'invalid request')}"
 
 
-def error_response(error: ChainApiError) -> JSONResponse:
-    """Serialize one transport failure as the contract's error envelope."""
+def chain_error_response(error: ChainApiError) -> JSONResponse:
     body = ChainErrorResponse(
         error=ChainErrorBody(kind=error.kind, detail=error.detail, param=error.param)
     )
     return JSONResponse(status_code=error.status_code, content=body.model_dump(mode="json"))
 
 
+def premium_error_response(error: PremiumApiError) -> JSONResponse:
+    body = PremiumErrorResponse(
+        error=PremiumErrorBody(kind=error.kind, detail=error.detail, param=error.param)
+    )
+    return JSONResponse(status_code=error.status_code, content=body.model_dump(mode="json"))
+
+
 def contract_openapi(application: FastAPI) -> Callable[[], dict[str, Any]]:
-    """Build the OpenAPI generator that publishes exactly the contract.
-
-    FastAPI documents a request-validation response (HTTP 422) for every
-    operation with parameters. This adapter never produces it: a rejected request
-    answers with the contract's own ``invalid_request`` envelope (HTTP 400). The
-    published contract therefore drops that one entry, so the web UI sees the
-    statuses the adapter can actually return and no second error shape.
-
-    ``FastAPI.openapi`` is replaced, so the schema builder is captured before the
-    replacement to avoid calling the override recursively. The application is
-    already set up by ``FastAPI.__init__``; calling ``setup()`` again here would
-    register the framework's own routes (``/openapi.json``, ``/docs``,
-    ``/docs/oauth2-redirect``, ``/redoc``) a second time.
-    """
+    """Remove FastAPI's unused 422 response from every product operation."""
     build_openapi = application.openapi
 
     def openapi() -> dict[str, Any]:
         document: dict[str, Any] = deepcopy(build_openapi())
-        operation = document["paths"][ROUTE_PATH]["get"]
-        operation["responses"].pop(VALIDATION_STATUS, None)
+        for path in document["paths"].values():
+            for operation in path.values():
+                operation["responses"].pop(VALIDATION_STATUS, None)
         schemas = document["components"]["schemas"]
         if "HTTPValidationError" in schemas and not any(
             VALIDATION_STATUS in entry["responses"]
@@ -154,42 +155,52 @@ def contract_openapi(application: FastAPI) -> Callable[[], dict[str, Any]]:
 
 
 def create_app() -> FastAPI:
-    """Build the delivery adapter application."""
+    """Build the repository runtime with both independent product adapters."""
     application = FastAPI(
         title=TITLE,
         version=VERSION,
-        summary="Minimal HTTP delivery adapter for the MO Option Chain read contract.",
+        summary="HTTP delivery runtime for market-snapshot products.",
     )
     application.openapi = contract_openapi(application)  # type: ignore[method-assign]
 
     @application.exception_handler(ChainApiError)
     async def handle_chain_api_error(_request: Request, exc: ChainApiError) -> JSONResponse:
-        return error_response(exc)
+        return chain_error_response(exc)
+
+    @application.exception_handler(PremiumApiError)
+    async def handle_premium_api_error(
+        _request: Request, exc: PremiumApiError
+    ) -> JSONResponse:
+        return premium_error_response(exc)
 
     @application.exception_handler(RequestValidationError)
     async def handle_request_validation_error(
         request: Request, exc: RequestValidationError
     ) -> JSONResponse:
-        """Report a rejected request as ``invalid_request`` (HTTP 400).
-
-        The contract defines 400 for an invalid request and accepts exactly three
-        query parameters, so an omitted required parameter, an unparsable value
-        and an unknown parameter are all normalized here rather than exposed as
-        FastAPI's own 422 error shape.
-        """
         errors = [dict(error) for error in exc.errors()]
-        return error_response(
+        detail = validation_detail(request, errors)
+        param = validation_param(request, errors)
+        if request.url.path == PREMIUM_ROUTE_PATH:
+            return premium_error_response(
+                PremiumApiError(
+                    PremiumErrorKind.INVALID_REQUEST,
+                    detail,
+                    param,  # type: ignore[arg-type]
+                )
+            )
+        return chain_error_response(
             ChainApiError(
                 ChainErrorKind.INVALID_REQUEST,
-                validation_detail(request, errors),
-                validation_param(request, errors),  # type: ignore[arg-type]
+                detail,
+                param,  # type: ignore[arg-type]
             )
         )
 
-    application.include_router(router)
+    application.include_router(chain_router)
+    application.include_router(premium_router)
     return application
 
 
 app = create_app()
 
-__all__ = ["ROUTE_PATH", "app", "create_app"]
+__all__ = ["app", "create_app"]

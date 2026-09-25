@@ -5,7 +5,8 @@ from pathlib import Path
 import pytest
 
 from daily_market_snapshot import artifacts
-from daily_market_snapshot.capture import common, csi1000_index_history
+from daily_market_snapshot.capture import common
+from daily_market_snapshot.products.csi1000_5d_analysis import capture as csi1000_index_history
 from daily_market_snapshot.sources import tushare
 from support.fake_source import FakeTushareApi, business_days, index_history_frame
 

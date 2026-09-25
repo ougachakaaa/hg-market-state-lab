@@ -1,11 +1,12 @@
 """Source Capture ``im_futures_basic``: the IM ordinary monthly contract facts.
 
-Source: Tushare ``fut_basic`` (see ``guides/csi1000-5d-analysis-data.md`` 4.4
-and 5.2). The Capture scope holds the ordinary monthly IM contracts, not the
+Source: Tushare ``fut_basic`` (see ``capture/ARCHITECTURE.md`` section 7;
+the product universe is in ``products/csi1000_5d_analysis/data.md`` section 4.2).
+The Capture scope holds the ordinary monthly IM contracts, not the
 main / continuous contracts and not any other CFFEX product.
 
 Development / debugging entrypoint (the Data Service CLI is the canonical user
-interface, see ``guides/data-services.md`` 11):
+interface, see ``services/delivery.md`` section 4):
 
     poetry run python -m daily_market_snapshot.capture.im_futures_basic 2026-09-17
 """

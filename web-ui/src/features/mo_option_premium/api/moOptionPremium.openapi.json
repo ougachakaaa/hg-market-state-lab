@@ -1,0 +1,475 @@
+{
+  "components": {
+    "schemas": {
+      "ExpiryDTO": {
+        "additionalProperties": false,
+        "properties": {
+          "dte": {
+            "title": "Dte",
+            "type": "integer"
+          },
+          "expiry_date": {
+            "title": "Expiry Date",
+            "type": "string"
+          },
+          "futures": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/FuturesDTO"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "expiry_date",
+          "dte",
+          "futures"
+        ],
+        "title": "ExpiryDTO",
+        "type": "object"
+      },
+      "FuturesDTO": {
+        "additionalProperties": false,
+        "properties": {
+          "instrument_id": {
+            "title": "Instrument Id",
+            "type": "string"
+          },
+          "price": {
+            "title": "Price",
+            "type": "number"
+          }
+        },
+        "required": [
+          "instrument_id",
+          "price"
+        ],
+        "title": "FuturesDTO",
+        "type": "object"
+      },
+      "MetricDTO": {
+        "additionalProperties": false,
+        "properties": {
+          "points": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Points"
+          },
+          "yield": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Yield"
+          }
+        },
+        "required": [
+          "points",
+          "yield"
+        ],
+        "title": "MetricDTO",
+        "type": "object"
+      },
+      "ObservationDTO": {
+        "additionalProperties": false,
+        "properties": {
+          "kind": {
+            "const": "trade_date",
+            "default": "trade_date",
+            "title": "Kind",
+            "type": "string"
+          },
+          "value": {
+            "title": "Value",
+            "type": "string"
+          }
+        },
+        "required": [
+          "value"
+        ],
+        "title": "ObservationDTO",
+        "type": "object"
+      },
+      "OptionProduct": {
+        "enum": [
+          "MO"
+        ],
+        "title": "OptionProduct",
+        "type": "string"
+      },
+      "OptionType": {
+        "enum": [
+          "call",
+          "put"
+        ],
+        "title": "OptionType",
+        "type": "string"
+      },
+      "PremiumErrorBody": {
+        "additionalProperties": false,
+        "properties": {
+          "detail": {
+            "title": "Detail",
+            "type": "string"
+          },
+          "kind": {
+            "$ref": "#/components/schemas/PremiumErrorKind"
+          },
+          "param": {
+            "anyOf": [
+              {
+                "enum": [
+                  "as_of",
+                  "option_product",
+                  "price_type"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Param"
+          }
+        },
+        "required": [
+          "kind",
+          "detail"
+        ],
+        "title": "PremiumErrorBody",
+        "type": "object"
+      },
+      "PremiumErrorKind": {
+        "enum": [
+          "invalid_request",
+          "unsupported_query",
+          "date_not_available",
+          "premium_plane_unavailable"
+        ],
+        "title": "PremiumErrorKind",
+        "type": "string"
+      },
+      "PremiumErrorResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "error": {
+            "$ref": "#/components/schemas/PremiumErrorBody"
+          }
+        },
+        "required": [
+          "error"
+        ],
+        "title": "PremiumErrorResponse",
+        "type": "object"
+      },
+      "PremiumMetricsDTO": {
+        "additionalProperties": false,
+        "properties": {
+          "expiry_futures": {
+            "$ref": "#/components/schemas/ValueMetricsDTO"
+          },
+          "underlying_spot": {
+            "$ref": "#/components/schemas/ValueMetricsDTO"
+          }
+        },
+        "required": [
+          "underlying_spot",
+          "expiry_futures"
+        ],
+        "title": "PremiumMetricsDTO",
+        "type": "object"
+      },
+      "PremiumPlaneResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "expiries": {
+            "items": {
+              "$ref": "#/components/schemas/ExpiryDTO"
+            },
+            "title": "Expiries",
+            "type": "array"
+          },
+          "observation": {
+            "$ref": "#/components/schemas/ObservationDTO"
+          },
+          "option_product": {
+            "$ref": "#/components/schemas/OptionProduct"
+          },
+          "points": {
+            "items": {
+              "$ref": "#/components/schemas/PremiumPointDTO"
+            },
+            "title": "Points",
+            "type": "array"
+          },
+          "price_type": {
+            "$ref": "#/components/schemas/PriceType"
+          },
+          "underlying": {
+            "$ref": "#/components/schemas/UnderlyingDTO"
+          }
+        },
+        "required": [
+          "observation",
+          "option_product",
+          "price_type",
+          "underlying",
+          "expiries",
+          "points"
+        ],
+        "title": "PremiumPlaneResponse",
+        "type": "object"
+      },
+      "PremiumPointDTO": {
+        "additionalProperties": false,
+        "properties": {
+          "expiry_date": {
+            "title": "Expiry Date",
+            "type": "string"
+          },
+          "instrument_id": {
+            "title": "Instrument Id",
+            "type": "string"
+          },
+          "metrics": {
+            "$ref": "#/components/schemas/PremiumMetricsDTO"
+          },
+          "option_type": {
+            "$ref": "#/components/schemas/OptionType"
+          },
+          "premium": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Premium"
+          },
+          "strike": {
+            "title": "Strike",
+            "type": "number"
+          }
+        },
+        "required": [
+          "instrument_id",
+          "expiry_date",
+          "option_type",
+          "strike",
+          "premium",
+          "metrics"
+        ],
+        "title": "PremiumPointDTO",
+        "type": "object"
+      },
+      "PriceType": {
+        "enum": [
+          "open",
+          "high",
+          "low",
+          "close"
+        ],
+        "title": "PriceType",
+        "type": "string"
+      },
+      "TimeNormalizedMetricsDTO": {
+        "additionalProperties": false,
+        "properties": {
+          "annualized": {
+            "$ref": "#/components/schemas/MetricDTO"
+          },
+          "unannualized": {
+            "$ref": "#/components/schemas/MetricDTO"
+          }
+        },
+        "required": [
+          "unannualized",
+          "annualized"
+        ],
+        "title": "TimeNormalizedMetricsDTO",
+        "type": "object"
+      },
+      "UnderlyingDTO": {
+        "additionalProperties": false,
+        "properties": {
+          "instrument_id": {
+            "title": "Instrument Id",
+            "type": "string"
+          },
+          "price": {
+            "title": "Price",
+            "type": "number"
+          }
+        },
+        "required": [
+          "instrument_id",
+          "price"
+        ],
+        "title": "UnderlyingDTO",
+        "type": "object"
+      },
+      "ValidationError": {
+        "properties": {
+          "ctx": {
+            "title": "Context",
+            "type": "object"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "title": "Location",
+            "type": "array"
+          },
+          "msg": {
+            "title": "Message",
+            "type": "string"
+          },
+          "type": {
+            "title": "Error Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError",
+        "type": "object"
+      },
+      "ValueMetricsDTO": {
+        "additionalProperties": false,
+        "properties": {
+          "time_value": {
+            "$ref": "#/components/schemas/TimeNormalizedMetricsDTO"
+          },
+          "total": {
+            "$ref": "#/components/schemas/TimeNormalizedMetricsDTO"
+          }
+        },
+        "required": [
+          "total",
+          "time_value"
+        ],
+        "title": "ValueMetricsDTO",
+        "type": "object"
+      }
+    }
+  },
+  "info": {
+    "summary": "Minimal HTTP delivery adapter for the MO Premium Plane contract.",
+    "title": "hg-market-state-lab MO Premium Plane API",
+    "version": "0.1.0"
+  },
+  "openapi": "3.1.0",
+  "paths": {
+    "/mo-option-premium-plane": {
+      "get": {
+        "operationId": "readMoOptionPremiumPlane",
+        "parameters": [
+          {
+            "description": "Trade-date observation, YYYY-MM-DD.",
+            "in": "query",
+            "name": "as_of",
+            "required": true,
+            "schema": {
+              "format": "date",
+              "title": "As Of",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Option product; V1 supports MO only.",
+            "in": "query",
+            "name": "option_product",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/OptionProduct",
+              "description": "Option product; V1 supports MO only."
+            }
+          },
+          {
+            "description": "Unified selected price semantics.",
+            "in": "query",
+            "name": "price_type",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/PriceType",
+              "default": "close",
+              "description": "Unified selected price semantics."
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PremiumPlaneResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PremiumErrorResponse"
+                }
+              }
+            },
+            "description": "Invalid or unsupported request."
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PremiumErrorResponse"
+                }
+              }
+            },
+            "description": "Observation is unavailable."
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PremiumErrorResponse"
+                }
+              }
+            },
+            "description": "Plane cannot be produced."
+          }
+        },
+        "summary": "Read Mo Option Premium Plane"
+      }
+    }
+  }
+}
