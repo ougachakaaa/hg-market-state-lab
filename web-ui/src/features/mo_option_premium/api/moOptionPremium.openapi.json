@@ -219,6 +219,17 @@
             ],
             "title": "Annualized Time Value Points"
           },
+          "annualized_time_value_yield": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Annualized Time Value Yield"
+          },
           "expiry_date": {
             "title": "Expiry Date",
             "type": "string"
@@ -254,7 +265,8 @@
           "premium",
           "annualized_premium_points",
           "annualized_time_value_points",
-          "annualized_seller_premium_yield"
+          "annualized_seller_premium_yield",
+          "annualized_time_value_yield"
         ],
         "title": "PremiumPointDTO",
         "type": "object"

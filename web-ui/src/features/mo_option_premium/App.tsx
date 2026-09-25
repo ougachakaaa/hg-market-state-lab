@@ -7,12 +7,16 @@ import {
   formatPlaneNumber,
   projectPremiumPlane,
 } from './premiumPlane'
-import type { SelectedMetric, SelectedOptionType } from './premiumPlane'
+import type {
+  SelectedOptionType,
+  SelectedRepresentation,
+  SelectedValueBasis,
+} from './premiumPlane'
 
 type PageState =
   | { status: 'idle' }
   | { status: 'loading'; asOf: string; priceType: PremiumPriceType }
-  | { status: 'success'; plane: PremiumPlane }
+  | { status: 'success'; plane: PremiumPlane; rawPayload: unknown }
   | { status: 'error'; asOf: string; priceType: PremiumPriceType; error: PremiumRequestError }
 
 const errorTitles: Record<PremiumErrorKind, string> = {
@@ -28,12 +32,39 @@ function errorTitle(error: PremiumRequestError): string {
   return errorTitles[error.kind]
 }
 
+function RawResponseInspector({ payload }: { payload: unknown }) {
+  const [copyFeedback, setCopyFeedback] = useState('')
+  const prettyJson = JSON.stringify(payload, null, 2)
+
+  async function copyJson() {
+    try {
+      await navigator.clipboard.writeText(prettyJson)
+      setCopyFeedback('已复制')
+    } catch {
+      setCopyFeedback('复制失败')
+    }
+  }
+
+  return (
+    <details className="raw-response-inspector">
+      <summary>查看原始响应</summary>
+      <div className="raw-response-toolbar">
+        <strong>Raw backend response</strong>
+        <button type="button" onClick={() => void copyJson()}>复制 JSON</button>
+        {copyFeedback && <span role="status">{copyFeedback}</span>}
+      </div>
+      <pre>{prettyJson}</pre>
+    </details>
+  )
+}
+
 function App() {
   const [selectedDate, setSelectedDate] = useState('')
   const [priceType, setPriceType] = useState<PremiumPriceType>('close')
   const [page, setPage] = useState<PageState>({ status: 'idle' })
   const [selectedOptionType, setSelectedOptionType] = useState<SelectedOptionType>('call')
-  const [selectedMetric, setSelectedMetric] = useState<SelectedMetric>('annualized_premium_points')
+  const [selectedValueBasis, setSelectedValueBasis] = useState<SelectedValueBasis>('total')
+  const [selectedRepresentation, setSelectedRepresentation] = useState<SelectedRepresentation>('points')
   const [selectedExpiries, setSelectedExpiries] = useState<string[]>([])
   const request = useRef<AbortController | null>(null)
   const nextRequestId = useRef(0)
@@ -45,7 +76,8 @@ function App() {
 
   function resetPresentation() {
     setSelectedOptionType('call')
-    setSelectedMetric('annualized_premium_points')
+    setSelectedValueBasis('total')
+    setSelectedRepresentation('points')
     setSelectedExpiries([])
   }
 
@@ -64,10 +96,10 @@ function App() {
     request.current = controller
     setPage({ status: 'loading', asOf, priceType: requestedPriceType })
     resetPresentation()
-    void loadMoOptionPremiumPlane(asOf, requestedPriceType, controller.signal).then((plane) => {
+    void loadMoOptionPremiumPlane(asOf, requestedPriceType, controller.signal).then((result) => {
       if (nextRequestId.current === id && !controller.signal.aborted) {
-        setSelectedExpiries(plane.expiries.map((expiry) => expiry.expiry_date))
-        setPage({ status: 'success', plane })
+        setSelectedExpiries(result.plane.expiries.map((expiry) => expiry.expiry_date))
+        setPage({ status: 'success', plane: result.plane, rawPayload: result.rawPayload })
       }
     }).catch((error: unknown) => {
       if (nextRequestId.current !== id || controller.signal.aborted) return
@@ -103,7 +135,8 @@ function App() {
     ? projectPremiumPlane(
       page.plane,
       selectedOptionType,
-      selectedMetric,
+      selectedValueBasis,
+      selectedRepresentation,
       selectedExpirySet,
     )
     : null
@@ -160,10 +193,14 @@ function App() {
               <label><input type="radio" name="premium-side" value="put" checked={selectedOptionType === 'put'} onChange={() => setSelectedOptionType('put')} />Put</label>
             </fieldset>
             <fieldset>
-              <legend>展示指标</legend>
-              <label><input type="radio" name="premium-metric" value="annualized_premium_points" checked={selectedMetric === 'annualized_premium_points'} onChange={() => setSelectedMetric('annualized_premium_points')} />年化权利金点数</label>
-              <label><input type="radio" name="premium-metric" value="annualized_time_value_points" checked={selectedMetric === 'annualized_time_value_points'} onChange={() => setSelectedMetric('annualized_time_value_points')} />年化时间价值点数</label>
-              <label><input type="radio" name="premium-metric" value="annualized_seller_premium_yield" checked={selectedMetric === 'annualized_seller_premium_yield'} onChange={() => setSelectedMetric('annualized_seller_premium_yield')} />卖方年化权利金收益率</label>
+              <legend>价值口径</legend>
+              <label><input type="radio" name="premium-value-basis" value="total" checked={selectedValueBasis === 'total'} onChange={() => setSelectedValueBasis('total')} />总价值</label>
+              <label><input type="radio" name="premium-value-basis" value="time_value" checked={selectedValueBasis === 'time_value'} onChange={() => setSelectedValueBasis('time_value')} />时间价值</label>
+            </fieldset>
+            <fieldset>
+              <legend>表示方式</legend>
+              <label><input type="radio" name="premium-representation" value="points" checked={selectedRepresentation === 'points'} onChange={() => setSelectedRepresentation('points')} />点数</label>
+              <label><input type="radio" name="premium-representation" value="yield" checked={selectedRepresentation === 'yield'} onChange={() => setSelectedRepresentation('yield')} />收益率</label>
             </fieldset>
           </div>
 
@@ -188,7 +225,10 @@ function App() {
               <table className="premium-table">
                 <thead>
                   <tr>
-                    <th scope="col">行权价</th>
+                    <th scope="col">
+                      <span>行权价</span>
+                      <small>标的现价 · {formatPlaneNumber(page.plane.underlying.price)}</small>
+                    </th>
                     {projection.expiries.map((expiry) => (
                       <th scope="col" key={expiry.expiry_date}>
                         <span>{expiry.expiry_date}</span>
@@ -219,7 +259,7 @@ function App() {
                         )
                         if (cell.kind === 'absent') return <td className={referenceClass} key={expiryDate} aria-label={`${expiryDate} 无 Point`} />
                         if (cell.kind === 'unavailable') return <td className={referenceClass} key={expiryDate} aria-label={`${expiryDate} metric unavailable`}>—</td>
-                        return <td className={referenceClass} key={expiryDate}>{formatMetric(cell.value, selectedMetric)}</td>
+                        return <td className={referenceClass} key={expiryDate}>{formatMetric(cell.value, selectedRepresentation)}</td>
                       })}
                     </tr>
                   ))}
@@ -228,6 +268,10 @@ function App() {
             </div>
           )}
           <p className="plane-legend">空白 = 无 Point；— = Point 存在但 metric unavailable。</p>
+          <RawResponseInspector
+            key={`${page.plane.observation.value}-${page.plane.price_type}`}
+            payload={page.rawPayload}
+          />
         </section>
       )}
     </main>

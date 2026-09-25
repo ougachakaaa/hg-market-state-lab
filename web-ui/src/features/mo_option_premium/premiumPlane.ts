@@ -1,10 +1,13 @@
 import type { PremiumExpiry, PremiumPlane, PremiumPoint } from './api/moOptionPremium'
 
 export type SelectedOptionType = PremiumPoint['option_type']
-export type SelectedMetric =
+export type SelectedValueBasis = 'total' | 'time_value'
+export type SelectedRepresentation = 'points' | 'yield'
+type PremiumMetricField =
   | 'annualized_premium_points'
   | 'annualized_time_value_points'
   | 'annualized_seller_premium_yield'
+  | 'annualized_time_value_yield'
 export type StrikeReferencePosition =
   | 'below-reference'
   | 'at-reference'
@@ -41,8 +44,22 @@ export function formatPlaneNumber(value: number): string {
   return oneDecimal.format(value)
 }
 
-export function formatMetric(value: number, metric: SelectedMetric): string {
-  return metric === 'annualized_seller_premium_yield'
+export function resolveMetric(
+  valueBasis: SelectedValueBasis,
+  representation: SelectedRepresentation,
+): PremiumMetricField {
+  if (valueBasis === 'total') {
+    return representation === 'points'
+      ? 'annualized_premium_points'
+      : 'annualized_seller_premium_yield'
+  }
+  return representation === 'points'
+    ? 'annualized_time_value_points'
+    : 'annualized_time_value_yield'
+}
+
+export function formatMetric(value: number, representation: SelectedRepresentation): string {
+  return representation === 'yield'
     ? `${twoDecimals.format(value * 100)}%`
     : oneDecimal.format(value)
 }
@@ -60,9 +77,11 @@ export function classifyStrikeRelativeToReference(
 export function projectPremiumPlane(
   plane: PremiumPlane,
   optionType: SelectedOptionType,
-  metric: SelectedMetric,
+  valueBasis: SelectedValueBasis,
+  representation: SelectedRepresentation,
   selectedExpiries: ReadonlySet<string>,
 ): PremiumPlaneProjection {
+  const metric = resolveMetric(valueBasis, representation)
   const expiries = plane.expiries.filter((expiry) => selectedExpiries.has(expiry.expiry_date))
   const visibleExpiryDates = new Set(expiries.map((expiry) => expiry.expiry_date))
   const points = plane.points.filter((point) => (

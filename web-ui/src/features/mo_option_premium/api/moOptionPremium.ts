@@ -12,6 +12,10 @@ export type PremiumPoint = PremiumPlane['points'][number]
 export type PremiumPriceType = NonNullable<Query['price_type']>
 export type PremiumError = components['schemas']['PremiumErrorBody']
 export type PremiumErrorKind = PremiumError['kind']
+export interface PremiumPlaneResult {
+  plane: PremiumPlane
+  rawPayload: unknown
+}
 type ErrorStatus = Exclude<keyof Operation['responses'], 200>
 type PremiumErrorResponse = Operation['responses'][ErrorStatus]['content']['application/json']
 
@@ -50,7 +54,7 @@ export async function loadMoOptionPremiumPlane(
   asOf: string,
   priceType: PremiumPriceType,
   signal?: AbortSignal,
-): Promise<PremiumPlane> {
+): Promise<PremiumPlaneResult> {
   const parameters = {
     as_of: asOf,
     option_product: 'MO',
@@ -75,7 +79,7 @@ export async function loadMoOptionPremiumPlane(
   }
 
   if (response.ok && response.status === 200 && matchesResponse(200, body)) {
-    return body as PremiumPlane
+    return { plane: body as PremiumPlane, rawPayload: body }
   }
   if (!response.ok && matchesResponse(response.status, body)) {
     const { error } = body as PremiumErrorResponse

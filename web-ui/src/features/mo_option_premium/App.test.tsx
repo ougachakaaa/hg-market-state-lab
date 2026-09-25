@@ -11,12 +11,12 @@ const plane = {
     { expiry_date: '2026-10-23', dte: 33, futures: null },
   ],
   points: [
-    { instrument_id: 'A', expiry_date: '2026-09-25', option_type: 'call', strike: 7012.45, premium: 1, annualized_premium_points: 0, annualized_time_value_points: 0, annualized_seller_premium_yield: 0 },
-    { instrument_id: 'B', expiry_date: '2026-09-25', option_type: 'call', strike: 7200, premium: null, annualized_premium_points: null, annualized_time_value_points: null, annualized_seller_premium_yield: null },
-    { instrument_id: 'C', expiry_date: '2026-10-23', option_type: 'call', strike: 7305, premium: 1, annualized_premium_points: 12.34, annualized_time_value_points: -12.34, annualized_seller_premium_yield: 0.0998 },
-    { instrument_id: 'D', expiry_date: '2026-10-23', option_type: 'call', strike: 7612.45, premium: 1, annualized_premium_points: 9, annualized_time_value_points: 9, annualized_seller_premium_yield: 0.1 },
-    { instrument_id: 'E', expiry_date: '2026-09-25', option_type: 'put', strike: 7300, premium: 1, annualized_premium_points: 20, annualized_time_value_points: 20, annualized_seller_premium_yield: 0.2 },
-    { instrument_id: 'F', expiry_date: '2026-09-25', option_type: 'call', strike: 7700, premium: 1, annualized_premium_points: 30, annualized_time_value_points: 30, annualized_seller_premium_yield: 0.3 },
+    { instrument_id: 'A', expiry_date: '2026-09-25', option_type: 'call', strike: 7012.45, premium: 1, annualized_premium_points: 0, annualized_time_value_points: 0, annualized_seller_premium_yield: 0, annualized_time_value_yield: 0 },
+    { instrument_id: 'B', expiry_date: '2026-09-25', option_type: 'call', strike: 7200, premium: null, annualized_premium_points: null, annualized_time_value_points: null, annualized_seller_premium_yield: null, annualized_time_value_yield: null },
+    { instrument_id: 'C', expiry_date: '2026-10-23', option_type: 'call', strike: 7305, premium: 1, annualized_premium_points: 12.34, annualized_time_value_points: -12.34, annualized_seller_premium_yield: 0.0998, annualized_time_value_yield: -0.0123 },
+    { instrument_id: 'D', expiry_date: '2026-10-23', option_type: 'call', strike: 7612.45, premium: 1, annualized_premium_points: 9, annualized_time_value_points: 9, annualized_seller_premium_yield: 0.1, annualized_time_value_yield: 0.01 },
+    { instrument_id: 'E', expiry_date: '2026-09-25', option_type: 'put', strike: 7300, premium: 1, annualized_premium_points: 20, annualized_time_value_points: 20, annualized_seller_premium_yield: 0.2, annualized_time_value_yield: 0.02 },
+    { instrument_id: 'F', expiry_date: '2026-09-25', option_type: 'call', strike: 7700, premium: 1, annualized_premium_points: 30, annualized_time_value_points: 30, annualized_seller_premium_yield: 0.3, annualized_time_value_yield: 0.03 },
   ],
 } satisfies PremiumPlane
 
@@ -63,6 +63,7 @@ describe('MO Premium Plane page', () => {
     expect(fetch).toHaveBeenCalledTimes(1)
     expect(fetch.mock.calls[0][0]).toContain('as_of=2026-09-21&option_product=MO&price_type=close')
     expect(within(results).getByText('7312.5')).toBeTruthy()
+    expect(within(results).getByText('标的现价 · 7312.5')).toBeTruthy()
     expect(within(results).getByText(/IM2609\.CFE · 7301\.6/)).toBeTruthy()
     expect(within(results).getByText('无合法 futures reference')).toBeTruthy()
     expect(within(results).getAllByRole('cell', { name: '2026-10-23 无 Point' })[0].textContent).toBe('')
@@ -76,14 +77,21 @@ describe('MO Premium Plane page', () => {
     expect(within(referenceRow).getByText('12.3').classList.contains('neutral')).toBe(true)
   })
 
-  it('keeps side, all three metrics and expiry interactions local', async () => {
+  it('maps both metric axes and keeps all presentation interactions local', async () => {
     const { fetch, results } = await load()
 
-    fireEvent.click(within(results).getByRole('radio', { name: '年化时间价值点数' }))
+    expect(within(results).getByRole<HTMLInputElement>('radio', { name: '总价值' }).checked).toBe(true)
+    expect(within(results).getByRole<HTMLInputElement>('radio', { name: '点数' }).checked).toBe(true)
+
+    fireEvent.click(within(results).getByRole('radio', { name: '时间价值' }))
     expect(within(results).getByText('-12.3')).toBeTruthy()
     expect(within(results).getByText('0.0')).toBeTruthy()
 
-    fireEvent.click(within(results).getByRole('radio', { name: '卖方年化权利金收益率' }))
+    fireEvent.click(within(results).getByRole('radio', { name: '收益率' }))
+    expect(within(results).getByText('-1.23%')).toBeTruthy()
+    expect(within(results).getByText('0.00%')).toBeTruthy()
+
+    fireEvent.click(within(results).getByRole('radio', { name: '总价值' }))
     expect(within(results).getByText('9.98%')).toBeTruthy()
     expect(within(results).getByText('0.00%')).toBeTruthy()
 
@@ -98,12 +106,36 @@ describe('MO Premium Plane page', () => {
     expect(fetch).toHaveBeenCalledTimes(1)
   })
 
+  it('shows and copies the complete raw payload independently of presentation state', async () => {
+    const writeText = vi.fn().mockResolvedValue(undefined)
+    Object.defineProperty(navigator, 'clipboard', {
+      configurable: true,
+      value: { writeText },
+    })
+    const { fetch, results } = await load()
+
+    fireEvent.click(within(results).getByText('查看原始响应'))
+    const raw = JSON.stringify(plane, null, 2)
+    expect(results.querySelector('pre')?.textContent).toBe(raw)
+    fireEvent.click(within(results).getByRole('button', { name: '复制 JSON' }))
+    expect((await within(results).findByRole('status')).textContent).toContain('已复制')
+    expect(writeText).toHaveBeenCalledWith(raw)
+
+    fireEvent.click(within(results).getByRole('radio', { name: '时间价值' }))
+    fireEvent.click(within(results).getByRole('radio', { name: '收益率' }))
+    fireEvent.click(within(results).getByRole('radio', { name: 'Put' }))
+    fireEvent.click(within(results).getByRole('checkbox', { name: '2026-10-23' }))
+    expect(results.querySelector('pre')?.textContent).toBe(raw)
+    expect(fetch).toHaveBeenCalledTimes(1)
+  })
+
   it('requests on query changes, clears stale results and resets presentation defaults', async () => {
     const { fetch } = await load()
     fireEvent.click(screen.getByRole('radio', { name: 'Put' }))
     fireEvent.change(screen.getByLabelText('价格口径'), { target: { value: 'high' } })
 
     expect(screen.queryByRole('region', { name: '权利金平面结果' })).toBeNull()
+    expect(screen.queryByText('查看原始响应')).toBeNull()
     expect(screen.getByRole('status').textContent).toContain('2026-09-21 · high')
     await screen.findByRole('region', { name: '权利金平面结果' })
     expect(fetch).toHaveBeenCalledTimes(2)
@@ -113,6 +145,28 @@ describe('MO Premium Plane page', () => {
     fireEvent.change(dateInput(), { target: { value: '' } })
     expect(screen.getByRole('status').textContent).toContain('请选择 Observation 日期')
     expect(fetch).toHaveBeenCalledTimes(2)
+  })
+
+  it('replaces the raw payload only after the new query succeeds', async () => {
+    const nextResponse = deferred<Response>()
+    const nextPlane = { ...plane, price_type: 'high' as const }
+    const fetch = vi.fn()
+      .mockResolvedValueOnce(response(plane))
+      .mockReturnValueOnce(nextResponse.promise)
+    vi.stubGlobal('fetch', fetch)
+    render(<App />)
+    fireEvent.change(dateInput(), { target: { value: '2026-09-21' } })
+    const firstResults = await screen.findByRole('region', { name: '权利金平面结果' })
+    fireEvent.click(within(firstResults).getByText('查看原始响应'))
+    expect(firstResults.querySelector('pre')?.textContent).toBe(JSON.stringify(plane, null, 2))
+
+    fireEvent.change(screen.getByLabelText('价格口径'), { target: { value: 'high' } })
+    expect(screen.queryByText('查看原始响应')).toBeNull()
+    nextResponse.resolve(response(nextPlane))
+
+    const nextResults = await screen.findByRole('region', { name: '权利金平面结果' })
+    fireEvent.click(within(nextResults).getByText('查看原始响应'))
+    expect(nextResults.querySelector('pre')?.textContent).toBe(JSON.stringify(nextPlane, null, 2))
   })
 
   it('shows a projection empty state without treating it as a backend failure', async () => {
@@ -141,6 +195,7 @@ describe('MO Premium Plane page', () => {
     expect(within(alert).getByText('当前无法生成权利金平面')).toBeTruthy()
     expect(within(alert).getByText('incomplete plane')).toBeTruthy()
     expect(screen.queryByRole('region', { name: '权利金平面结果' })).toBeNull()
+    expect(screen.queryByText('查看原始响应')).toBeNull()
   })
 
   it('does not let an older request overwrite a newer query', async () => {
