@@ -69,6 +69,7 @@ class PremiumPointDTO(BaseModel):
     annualized_premium_points: float | None
     annualized_time_value_points: float | None
     annualized_seller_premium_yield: float | None
+    annualized_time_value_yield: float | None
 
 
 class PremiumPlaneResponse(BaseModel):

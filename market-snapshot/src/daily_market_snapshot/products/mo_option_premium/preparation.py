@@ -13,7 +13,7 @@ class PointPreparationError(Exception):
 
 
 def prepare_points(basis: OptionMarketBasis) -> tuple[AnnualizedPremiumPoint, ...]:
-    """Calculate DTE and the three authority-defined annualized premium metrics."""
+    """Calculate DTE and the authority-defined 2 x 2 premium metrics."""
     if not math.isfinite(basis.underlying.price) or basis.underlying.price <= 0:
         raise PointPreparationError("underlying selected price must be strictly positive")
     try:
@@ -46,7 +46,7 @@ def prepare_points(basis: OptionMarketBasis) -> tuple[AnnualizedPremiumPoint, ..
         dte = (expiry - observation_date).days + 1
         if dte <= 0:
             raise PointPreparationError(f"post-expiry option {option.instrument_id}")
-        annualized = (
+        total_points = (
             None
             if option.premium is None
             else option.premium * calculation_basis.annualization_days / dte
@@ -55,17 +55,29 @@ def prepare_points(basis: OptionMarketBasis) -> tuple[AnnualizedPremiumPoint, ..
             intrinsic_value = max(basis.underlying.price - option.strike, 0.0)
         else:
             intrinsic_value = max(option.strike - basis.underlying.price, 0.0)
-        annualized_time_value = (
+        time_value_points = (
             None
             if option.premium is None
             else (option.premium - intrinsic_value)
             * calculation_basis.annualization_days
             / dte
         )
-        seller_yield = None if annualized is None else annualized / basis.underlying.price
+        total_yield = (
+            None if total_points is None else total_points / basis.underlying.price
+        )
+        time_value_yield = (
+            None
+            if time_value_points is None
+            else time_value_points / basis.underlying.price
+        )
         if any(
             metric is not None and not math.isfinite(metric)
-            for metric in (annualized, annualized_time_value, seller_yield)
+            for metric in (
+                total_points,
+                time_value_points,
+                total_yield,
+                time_value_yield,
+            )
         ):
             raise PointPreparationError(
                 f"option {option.instrument_id} produces non-finite derived metrics"
@@ -84,9 +96,10 @@ def prepare_points(basis: OptionMarketBasis) -> tuple[AnnualizedPremiumPoint, ..
                 futures=option.futures,
                 calculation_basis=calculation_basis,
                 dte=dte,
-                annualized_premium_points=annualized,
-                annualized_time_value_points=annualized_time_value,
-                annualized_seller_premium_yield=seller_yield,
+                annualized_premium_points=total_points,
+                annualized_time_value_points=time_value_points,
+                annualized_seller_premium_yield=total_yield,
+                annualized_time_value_yield=time_value_yield,
             )
         )
     return tuple(points)

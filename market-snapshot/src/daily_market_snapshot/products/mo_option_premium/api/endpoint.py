@@ -95,6 +95,7 @@ def project_plane(plane: AnnualizedPremiumPlane) -> PremiumPlaneResponse:
                 annualized_premium_points=point.annualized_premium_points,
                 annualized_time_value_points=point.annualized_time_value_points,
                 annualized_seller_premium_yield=point.annualized_seller_premium_yield,
+                annualized_time_value_yield=point.annualized_time_value_yield,
             )
             for point in plane.points
         ],
