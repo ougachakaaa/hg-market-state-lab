@@ -11,7 +11,7 @@
 3. Ordinary UI、styling、theme、component selection、layout 或 custom CSS 任务还读取 [UI system authority](ui-system.md)。
 4. Application entry、navigation、layout 或 feature composition 任务再读取 [application authority](application.md)；feature 任务从 [frontend feature catalog](FEATURES.md) 进入相关 co-located authority。
 5. Generated OpenAPI / TypeScript 或 contract freshness 任务还读取 [contract feedback-loop authority](contracts.md)，再进入 owning feature。
-6. 只有 feature authority 明确依赖某项 business semantics 或 HTTP transport 时，才读取对应 owning product entry/read/backend authority，或从 [backend-api HTTP catalog](../backend-api/HTTP_PRODUCTS.md) 进入 HTTP contract。
+6. 只有 feature authority 明确依赖某项 backend semantics 或 HTTP transport 时，才读取对应 product entry、read/backend authority 或 HTTP contract。
 
 普通 frontend 任务不读取 Source Capture、Raw Artifact、Analysis Preparation internals、CSI1000 5D 或其他无关产品 authority。
 
@@ -20,8 +20,8 @@
 - `web-ui/` 是独立 npm project；依赖、测试、构建和 lint 均在本目录执行。
 - frontend 只拥有 request adaptation、presentation state、visual encoding、interaction 与用户可见的 empty/error presentation。
 - 不在 frontend 重新推导 product identity、contract universe、price fallback、completeness、financial formula 或 backend null/zero semantics。
-- Owning module authority 定义业务语义，`backend-api` HTTP contract 定义 transport，其 OpenAPI 是 wire contract 的机器可读表达；不得手工维护竞争性的 response schema。
-- 任一 frontend-consumed product 的 generated artifact 缺失、相对 `backend-api` contract 已 stale，或 HTTP DTO/OpenAPI 改动时，运行 `npm run contract:generate` 并提交该 product 的 OpenAPI JSON 与 generated TypeScript；其他变更不得无故重写 generated contract。
+- Markdown authority 定义语义，backend OpenAPI 是 wire contract 的机器可读表达；不得手工维护竞争性的 response schema。
+- 任一 frontend-consumed product 的 generated artifact 缺失、相对 backend contract 已 stale，或 backend HTTP DTO/OpenAPI 改动时，运行 `npm run contract:generate` 并提交该 product 的 OpenAPI JSON 与 generated TypeScript；其他变更不得无故重写 generated contract。
 - Repository-level `npm run contract:check` 必须检查所有 frontend-consumed HTTP products 的 committed OpenAPI representation 与 generated TypeScript freshness。
 
 ## 验证

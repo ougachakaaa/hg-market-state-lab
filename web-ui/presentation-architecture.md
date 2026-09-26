@@ -25,7 +25,7 @@ Backend facts 的展示数据流进一步约束为：
 ```text
 owning module semantic contract
         ↓
-backend-api HTTP contract / OpenAPI
+backend HTTP contract / OpenAPI
         ↓
 feature API adaptation and validation
         ↓

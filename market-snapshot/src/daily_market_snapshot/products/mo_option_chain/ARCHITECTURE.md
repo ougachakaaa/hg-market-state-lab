@@ -20,7 +20,7 @@ shared Capture capability != shared goal-scoped Raw Artifact
 | [Shared Source Capture authority](../../capture/ARCHITECTURE.md) | Capture identity、Source endpoint、公共 Source 字段与 minimal normalization |
 | [Data authority](data.md) | 产品 Source scope、goal-scoped Raw、active universe、daily completeness |
 | [Read contract](read-contract.md) | selected price、null/zero、reference、grouping、ordering、semantic response 与 failure |
-| [backend-api HTTP contract](../../../../../backend-api/products/mo_option_chain/http-contract.md) | endpoint、query serialization、DTO projection、error envelope 与 status mapping |
+| [HTTP contract](http-contract.md) | endpoint、query serialization、DTO projection、error envelope 与 status mapping |
 | [Web visualization authority](../../../../../web-ui/src/features/mo_option_chain/ARCHITECTURE.md) | presentation state、visual encoding、interaction 与用户可见状态 |
 
 Transport 与 presentation 只能消费本产品准备的 facts，不得反向定义 universe、price、completeness、grouping 或 failure semantics。
@@ -73,7 +73,7 @@ V1 不包含 IO/HO、IV、Greeks、moneyness、liquidity judgment、recommended 
 - 修改共享 Source fact 或 Capture identity → [Shared Source Capture authority](../../capture/ARCHITECTURE.md)
 - 修改产品 Raw scope、universe 或 completeness → [Data authority](data.md)
 - 修改 Preparation/read model、price、null、grouping、ordering 或 failure → [Read contract](read-contract.md)
-- 修改 endpoint、DTO 或 transport error mapping → [backend-api HTTP contract](../../../../../backend-api/products/mo_option_chain/http-contract.md)
+- 修改 endpoint、DTO 或 transport error mapping → [HTTP contract](http-contract.md)
 - 修改用户可见展示或交互 → [Web visualization authority](../../../../../web-ui/src/features/mo_option_chain/ARCHITECTURE.md)
 
 只读取当前任务所需的分支；backend 任务不默认读取 visualization authority，frontend 任务不读取 Source Capture 或 Raw internals。

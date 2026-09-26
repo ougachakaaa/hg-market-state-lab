@@ -12,8 +12,8 @@
    - 共享 Capture identity 或 Source fact → `src/daily_market_snapshot/capture/ARCHITECTURE.md`；
    - 产品 Source scope、Raw、universe 或 completeness → 产品 `data.md`；
    - formula、read model、Point、null/zero、grouping 或 ordering → 产品 preparation/read/backend authority；
-   - endpoint、DTO projection 或 HTTP error/status → [backend-api authority](../backend-api/ARCHITECTURE.md) 与其 HTTP product catalog；
-   - Data Service、CLI 或 persisted output → `src/daily_market_snapshot/services/ARCHITECTURE.md`。
+   - endpoint、DTO projection 或 HTTP error/status → 产品 HTTP contract；
+   - Data Service、CLI、delivery 或 persisted output → `src/daily_market_snapshot/services/ARCHITECTURE.md`。
 
 不要为了局部任务读取 sibling product authority。只有处理跨模块 contract 或 presentation reconciliation 时才进入 `web-ui/` authority；backend Source Capture 任务不需要 frontend Guide。
 
@@ -24,7 +24,6 @@
 - 普通用户或 Agent 请求生成 persisted Data Service 结果时，使用 [Data Service authority](src/daily_market_snapshot/services/ARCHITECTURE.md) 定义的 `dms` CLI surface，不自行逐个编排 Capture。底层入口只用于 development、debugging、testing 或 reconciliation。
 - 不读取 sibling product 的 Raw Artifact 或最终产物，除非对应产品 authority 明确声明该依赖。
 - 不在 Source Capture 中实现 analyzer-specific filtering、join、formula 或市场判断；不在 delivery adapter 中重算 domain semantics。
-- Canonical Python package namespace 是 `market_snapshot`；当前 authority 与实现仍位于 `src/daily_market_snapshot/` 是已知 drift，不得在未经明确 migration 时做半套 rename。
 - `.env`、`data/raw/**`、`data/snapshots/**` 与 `output/**` 是本地 runtime artifacts，不得提交；只保留仓库已跟踪的 placeholder。
 
 ## 验证
@@ -37,4 +36,4 @@ poetry run ruff check .
 poetry run mypy .
 ```
 
-若 `backend-api` HTTP DTO 或 OpenAPI 发生变化，还必须按 [../backend-api/AGENTS.md](../backend-api/AGENTS.md) 与 [../web-ui/AGENTS.md](../web-ui/AGENTS.md) 执行跨模块 contract 检查。
+若 backend HTTP DTO 或 OpenAPI 发生变化，还必须按 [../web-ui/AGENTS.md](../web-ui/AGENTS.md) 执行 frontend contract 检查。

@@ -5,7 +5,6 @@
 ```text
 market-snapshot  → market state data preparation
 market-modeling  → market state modeling
-backend-api      → repository-wide inbound HTTP delivery
 web-ui           → presentation and interaction
 ```
 
@@ -16,7 +15,6 @@ README 是人类开发入口，不是架构或业务语义 authority。
 - 仓库架构与模块路由：[ARCHITECTURE.md](ARCHITECTURE.md)
 - `market-snapshot` 稳定分层：[market-snapshot/ARCHITECTURE.md](market-snapshot/ARCHITECTURE.md)
 - `market-snapshot` capability/product catalog：[market-snapshot/CAPABILITIES.md](market-snapshot/CAPABILITIES.md)
-- `backend-api` HTTP composition 与 product catalog：[backend-api/ARCHITECTURE.md](backend-api/ARCHITECTURE.md)
 - `web-ui` 边界与 visualization 路由：[web-ui/ARCHITECTURE.md](web-ui/ARCHITECTURE.md)
 - 根开发命令与 managed worktree 说明：[DEVELOPMENT.md](DEVELOPMENT.md)
 
@@ -24,7 +22,7 @@ README 是人类开发入口，不是架构或业务语义 authority。
 
 ## 环境准备
 
-当前 backend implementation 仍位于 `market-snapshot/`，需要 Python 3.13 与 Poetry：
+Backend 需要 Python 3.13 与 Poetry：
 
 ```bash
 cd market-snapshot
@@ -67,18 +65,18 @@ poetry run python scripts/dms.py list
 poetry run python scripts/dms.py get csi1000-5d-analysis --date 2026-09-18
 ```
 
-CLI、service orchestration 与 output contract 见 [Data Service authority](market-snapshot/src/daily_market_snapshot/services/ARCHITECTURE.md)。产品数据语义从 [Capability Catalog](market-snapshot/CAPABILITIES.md) 进入。`market_snapshot` 是 canonical Python namespace；这些仍含 `daily_market_snapshot` 的路径反映尚未迁移的当前 implementation。
+CLI、service orchestration 与 output contract 见 [Data Service authority](market-snapshot/src/daily_market_snapshot/services/ARCHITECTURE.md)。产品数据语义从 [Capability Catalog](market-snapshot/CAPABILITIES.md) 进入。
 
 ## HTTP API
 
-Canonical HTTP owner 是 [`backend-api`](backend-api/ARCHITECTURE.md)，但当前 runtime migration 尚未执行；仍在 `market-snapshot/` 目录使用现有 launcher 启动本地 backend：
+在 `market-snapshot/` 目录启动本地 backend：
 
 ```bash
 poetry run python scripts/api.py
 poetry run python scripts/api.py --host 127.0.0.1 --port 8012
 ```
 
-默认地址为 `127.0.0.1:8011`，OpenAPI 位于 `/openapi.json`，交互文档位于 `/docs`。MO Option Chain 的 HTTP 契约见 [Option Chain authority](backend-api/products/mo_option_chain/http-contract.md)；MO Premium Plane 的 HTTP 契约见 [Premium Plane authority](backend-api/products/mo_option_premium/http-contract.md)。
+默认地址为 `127.0.0.1:8011`，OpenAPI 位于 `/openapi.json`，交互文档位于 `/docs`。MO Option Chain 的 HTTP 契约见 [Option Chain authority](market-snapshot/src/daily_market_snapshot/products/mo_option_chain/http-contract.md)；MO Premium Plane 的 HTTP 契约见 [Premium Plane authority](market-snapshot/src/daily_market_snapshot/products/mo_option_premium/http-contract.md)。
 
 ## Web UI
 

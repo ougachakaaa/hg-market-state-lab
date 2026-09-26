@@ -1,6 +1,6 @@
 # MO Premium Plane product service authority
 
-本文档从属于 [ARCHITECTURE.md](ARCHITECTURE.md)，拥有 MO Premium Plane 的 request/application orchestration、stage ordering、stage responsibility、semantic failure propagation 与 product result boundary。Source/Raw/universe 见 [data authority](data.md)，domain normalization、financial calculation 与 framing 见 [backend authority](backend.md)，transport 见 [backend-api HTTP contract](../../../../../backend-api/products/mo_option_premium/http-contract.md)。
+本文档从属于 [ARCHITECTURE.md](ARCHITECTURE.md)，拥有 MO Premium Plane 的 request/application orchestration、stage ordering、stage responsibility、semantic failure propagation 与 product result boundary。Source/Raw/universe 见 [data authority](data.md)，domain normalization、financial calculation 与 framing 见 [backend authority](backend.md)，transport 见 [HTTP contract](http-contract.md)。
 
 ---
 
@@ -153,7 +153,7 @@ OR
 classified product semantic failure
 ```
 
-HTTP status 与 error envelope 由 [backend-api HTTP contract](../../../../../backend-api/products/mo_option_premium/http-contract.md) 映射。HTTP adapter 不重试或修复 analytical facts，不直接调用 Source，也不重建 Basis、Point 或 Plane；它不得重新执行 availability detection 或改变 product service 已分类的 failure kind。
+HTTP status 与 error envelope 由 [HTTP contract](http-contract.md) 映射。HTTP adapter 不重试或修复 analytical facts，不直接调用 Source，也不重建 Basis、Point 或 Plane；它不得重新执行 availability detection 或改变 product service 已分类的 failure kind。
 
 ## 6. Non-goals
 

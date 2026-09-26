@@ -1,6 +1,6 @@
 # MO Premium backend semantic authority
 
-本文档从属于 [ARCHITECTURE.md](ARCHITECTURE.md)，拥有 MO Premium 的 `OptionMarketBasis` construction、canonical analytical model、确定性 Point Preparation、公式、null/zero/absence 与 PlaneFramer。Source requirements、Raw、universe 与 Raw completeness 由 [data.md](data.md) 拥有，product orchestration 由 [service-contract.md](service-contract.md) 拥有，HTTP transport 由 [backend-api contract](../../../../../backend-api/products/mo_option_premium/http-contract.md) 拥有。
+本文档从属于 [ARCHITECTURE.md](ARCHITECTURE.md)，拥有 MO Premium 的 `OptionMarketBasis` construction、canonical analytical model、确定性 Point Preparation、公式、null/zero/absence 与 PlaneFramer。Source requirements、Raw、universe 与 Raw completeness 由 [data.md](data.md) 拥有，product orchestration 由 [service-contract.md](service-contract.md) 拥有，HTTP transport 由 [http-contract.md](http-contract.md) 拥有。
 
 ---
 

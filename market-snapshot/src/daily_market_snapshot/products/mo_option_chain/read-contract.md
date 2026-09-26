@@ -1,6 +1,6 @@
 # MO Option Chain read contract authority
 
-本文档从属于 [ARCHITECTURE.md](ARCHITECTURE.md)，拥有 selected price、null/zero、grouping、ordering、semantic response shape、success/failure 与 no-silent-recovery。Source、Raw、universe 与 completeness 见 [data.md](data.md)；HTTP transport 见 [backend-api contract](../../../../../backend-api/products/mo_option_chain/http-contract.md)。
+本文档从属于 [ARCHITECTURE.md](ARCHITECTURE.md)，拥有 selected price、null/zero、grouping、ordering、semantic response shape、success/failure 与 no-silent-recovery。Source、Raw、universe 与 completeness 见 [data.md](data.md)；HTTP transport 见 [http-contract.md](http-contract.md)。
 
 ---
 
@@ -359,7 +359,7 @@ HTTP schema implementation
 OpenAPI definition
 ```
 
-这些属于 delivery 层，由 [backend-api HTTP contract](../../../../../backend-api/products/mo_option_chain/http-contract.md) 拥有；read contract 只锁 semantic shape，不锁其 transport 表达。
+这些属于 delivery 层，由 [http-contract.md](http-contract.md) 拥有；read contract 只锁 semantic shape，不锁其 transport 表达。
 
 字段到 Source 的确定性投影（Preparation 职责，非 web-ui 职责）：
 
@@ -491,7 +491,7 @@ error JSON shape
 exception class
 ```
 
-这里只锁 semantic categories。semantic category → transport 的映射由 [backend-api HTTP contract](../../../../../backend-api/products/mo_option_chain/http-contract.md) 拥有；本文档不重复，也不被其改写。
+这里只锁 semantic categories。semantic category → transport 的映射由 [http-contract.md](http-contract.md) 拥有；本文档不重复，也不被其改写。
 
 ## 12. No Silent Recovery
 
