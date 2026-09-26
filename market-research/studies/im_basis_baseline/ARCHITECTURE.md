@@ -2,6 +2,8 @@
 
 本文档是 `IM Annualized Basis Baseline` 的 retained-study authority。Research 边界与 retained-study identity 见 [market-research architecture](../../ARCHITECTURE.md)；共用 predictor 与 quantile convention 见 [IM Basis Research Semantics](../../shared/im_basis/ARCHITECTURE.md)；输入产品见 [CSI1000 IM Basis History](../../../market-snapshot/src/market_snapshot/products/csi1000_im_basis_history/ARCHITECTURE.md)。
 
+对应 executable implementation 位于 [im_basis_baseline package](../../src/market_research/studies/im_basis_baseline/__init__.py)；其 public Study ID 为 `im-basis-baseline`。本文件保有 Study 语义与 retained evidence 的 canonical ownership。
+
 ## Question
 
 > 历史上，不同 IM term-structure slot 的 annualized basis 通常处于什么水平，其分布、稳定性和期限结构有何特征？

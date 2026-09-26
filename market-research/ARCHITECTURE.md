@@ -113,7 +113,9 @@ Results
 Limitations
 ```
 
-Study-specific input selection、method、plots、findings 与 limitations 与该 study 共置，不进入本模块 architecture。Retained study 是 evidence record，不因被保留而成为 Snapshot、Modeling 或 production output 的 semantic authority。
+Study-specific input selection、method、plots、findings 与 limitations 留在对应 Study authority，不进入本模块 architecture。Retained study 是 evidence record，不因被保留而成为 Snapshot、Modeling 或 production output 的 semantic authority。
+
+Retained Study 是可保留的研究知识与 evidence record，不等同于长期 software capability。`market-research/studies/<study_package>/` 拥有该 Study 的 Question、Inputs、Method、Results、Limitations、semantic authority 与 retained evidence；`market-research/src/market_research/studies/<study_package>/` 拥有可重写或替换的 executable implementation。两侧以同名 `study_package` 对应，public Study ID 按 [Research UI authority](ui/ARCHITECTURE.md) 从 package 名映射。这种分离是有意的长期边界，不要求将 Study authority 迁入 `src`，也不机械复制 `market-snapshot` 的 co-located product authority layout。若研究对象未来形成稳定输入/输出契约、长期 runtime dependency 与 lifecycle，并演化为 production/reusable capability，须先作新的 semantic decision 与 canonical authority update。
 
 Retained Study 可以同时保留 machine-readable result 与 human-readable visualization，例如：
 

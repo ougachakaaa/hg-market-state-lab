@@ -1,6 +1,6 @@
 # Research UI authority
 
-本文档定义 retained Study 的 human-facing execution convention 与窄义共享 Research UI 支撑。模块 identity、Research result 与 Snapshot 消费原则见 [market-research architecture](../ARCHITECTURE.md)；配置 schema 与 resolution 见 [configuration authority](CONFIGURATION.md)；具体命令与参数与对应 retained Study authority 共置。
+本文档定义 retained Study 的 human-facing execution convention 与窄义共享 Research UI 支撑。模块 identity、Research result 与 Snapshot 消费原则见 [market-research architecture](../ARCHITECTURE.md)；配置 schema 与 resolution 见 [configuration authority](CONFIGURATION.md)；具体命令与参数由 `../studies/<study_package>/ARCHITECTURE.md` 中对应的 canonical Study authority 记录。
 
 ## 1. Interaction boundary
 
@@ -44,7 +44,7 @@ python -m market_research.studies.<study_package>.cli [study-specific args...]
 
 请求的 package 不存在是 unknown Study；package 存在但没有有效 `cli.py` 是 non-executable Study；路径逃逸、symlink 或非法命名是 malformed Study。Root CLI 不拥有 short description、argument schema 或 execution adapter。
 
-新增 runnable retained Study 只需增加符合本 convention 的 study package/CLI、共置 Study authority 和对应 tests；不修改 root CLI。该 convention 不是 Study Registry、Experiment Engine、plugin system、Research Repository 或通用 lifecycle framework。
+新增 runnable retained Study 只需增加符合本 convention 的 study package/CLI、`market-research/studies/<study_package>/` 下的 canonical Study authority 和对应 tests；不修改 root CLI。该 convention 不是 Study Registry、Experiment Engine、plugin system、Research Repository 或通用 lifecycle framework。
 
 ## 3. Shared configuration and output placement
 

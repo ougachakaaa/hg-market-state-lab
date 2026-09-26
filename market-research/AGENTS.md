@@ -10,17 +10,17 @@
 2. 再读本模块 [ARCHITECTURE.md](ARCHITECTURE.md)，确认 Research identity、UI 与 visualization ownership、Snapshot 消费边界以及 scratch / retained-study distinction。
 3. 涉及 study-local CLI convention、Research configuration 或 run-directory placement 时，进入 [Research UI authority](ui/ARCHITECTURE.md)；配置 schema 与 resolution 再进入其链接的 specialized authority，具体参数与用法只读对应 Study authority。
 4. 只有任务需要消费 Snapshot data 时，才进入 [market-snapshot architecture](../market-snapshot/ARCHITECTURE.md) 与 [Capability Catalog](../market-snapshot/CAPABILITIES.md)，选择对应 product/application authority；不默认读取 sibling products。
-5. 处理 retained study 语义或 artifact 内容时，只读取该 study 的 Question、Inputs、Method、Results、Limitations 及其明确链接的最小 authority。
+5. 处理 retained Study 时，从 `studies/<study_package>/ARCHITECTURE.md` 进入 canonical Study authority，并沿其 implementation 链接定位 `src/market_research/studies/<study_package>/`；从 implementation 进入时，先读 package `__init__.py` 文档字符串指向的 canonical authority。Study 语义或 artifact 内容只读取该 Study 的 Question、Inputs、Method、Results、Limitations 及其明确链接的最小 authority。
 
 ## 执行规则
 
 - Python dependency installation、resolution 与 tooling 必须从 repository root 使用唯一 Poetry environment；进入本目录只切换 semantic authority，不创建 module-local Python project、lock 或 virtual environment。
 - Research 只消费 Snapshot 明确支持的 public application/product result。不得导入 Source Capture、Raw Artifact、product-private Preparation 或 persistence internals，也不得通过 `backend-api`、FastAPI 或 HTTP DTO 获取内部业务语义。
 - Scratch 可以快速、低约束和 disposable，但不构成 semantic authority、稳定接口或 production dependency。
-- Retained study 至少记录 Question、Inputs、Method、Results 与 Limitations；study-specific 细节与该 study 共置，不上提到 module architecture。
+- Retained study 至少记录 Question、Inputs、Method、Results 与 Limitations；study-specific 细节留在对应 Study authority，不上提到 module architecture。
 - 当前 Research visualization 由 `market-research` 拥有，默认通过 Python study output 生成并优先保留静态图片；具体图形形式由真实 Study 的研究问题决定。
 - Repository `dev.py research` 是 Research 的统一人类操作入口，只发现并转发到 study-local CLI；参数、Snapshot public-boundary composition、Study invocation、artifact 与 result semantics 由具体 Study 拥有。
-- 新增 runnable retained Study 时，必须同步提供稳定 CLI study ID、符合 [Research UI authority](ui/ARCHITECTURE.md) 的 study-local `cli.py`、共置用法与 CLI/output tests；不得创建中央 catalog/registry、reflection、entry-point plugin 或动态 registration framework。
+- 新增 runnable retained Study 时，必须同步提供稳定 CLI study ID、符合 [Research UI authority](ui/ARCHITECTURE.md) 的 study-local `cli.py`、记录用法的 canonical Study authority 与 CLI/output tests；不得创建中央 catalog/registry、reflection、entry-point plugin 或动态 registration framework。
 - Python static visualization 是阶段性但正式有效的默认策略。除非多个真实 Study 已形成稳定、重复的 visualization pattern，且新的 canonical authority 已明确重新划分责任，否则不得自行迁移至 `backend-api`、`web-ui` 或 Research Viewer。
 - Research finding 是 evidence。未经 human/agent semantic decision 与 canonical authority update，不得把 finding 当作 Modeling semantics、production contract、forecast、decision、signal 或 recommendation。
 - 不为假设需求创建 Experiment Engine、Study Registry、Research Repository、promotion framework、backtest framework、research API、Research Chart API、generic chart DTO、dashboard / visualization framework 或通用 data interface。
