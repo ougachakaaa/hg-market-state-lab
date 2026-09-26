@@ -85,6 +85,10 @@ output/... persistence layout
 backend-api / FastAPI / HTTP DTO
 ```
 
+该 public boundary 必须提供由本 Snapshot 产品拥有的 production-ready execution/composition entry。调用方只提供 `CSI1000IMBasisHistoryRequest` 语义请求并接收 `CSI1000IMBasisHistoryResult` 或已分类 application failure；entry 自行完成现有 Snapshot Source boundary 规定的 credential loading、Tushare client 创建与 service composition。Research CLI 不得知道或接收 `TUSHARE_TOKEN`、`TushareApi` 或 Capture implementation。
+
+具体 Python factory/function 名称留给实现阶段，但必须从 product-owned public module 暴露；不得要求 Research 通过 `market_snapshot.sources` 构造 client，也不得借此建立 generic service container、dependency-injection framework 或跨产品 composition framework。Credential 与 Source-client creation failure 必须在本产品 application boundary 转换为可供 consumer 呈现的 classified application failure。
+
 V1 result 可以完全 request-scoped + in-memory，不要求 persisted final artifact、Data Service CLI binding 或 HTTP endpoint。
 
 ## 6. Success and failure

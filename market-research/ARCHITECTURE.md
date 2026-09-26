@@ -15,9 +15,33 @@
 
 Research 可以在开始时不知道最终需要的全部数据或输出形式，也不要求先存在稳定的 production contract。Research result 可以包含 structured observations、summary statistics、tables、research findings 与 visualizations；其职责终点是 evidence / finding，不是 production market-state output、forecast、decision、signal、recommendation 或 trading strategy。
 
-本模块不拥有 production modeling、model evaluation、forecasting、decision system、backtesting framework、research service/API 或 UI。
+本模块不拥有 production modeling、model evaluation、forecasting、decision system、backtesting framework、research service/API 或 production Web UI。它拥有面向人类运行 retained Study 的本地 Research CLI；该 CLI 是 inbound interaction boundary，不是 production application UI。
 
-## 2. Research Result 与 Visualization
+## 2. Research UI
+
+当前 Research UI 是一个窄义、本地、human-facing CLI：
+
+```text
+User
+    ↓
+Research CLI
+    ↓
+Study selection + request parsing
+    ↓
+market-snapshot public application boundary
+    ↓
+Retained Study
+    ↓
+configured output location
+    ↓
+result / report / visualization
+```
+
+Research CLI 拥有 study discovery、command parsing、用户输入校验、Research UI configuration loading、dependency composition、Study invocation、run-directory placement 与 success/failure presentation。它只把用户意图映射到既有 Study application behavior，不拥有 Snapshot Source/Capture、basis formula、Research statistics、Study method、Modeling、Forecasting、Decision、HTTP API 或 Web UI。
+
+CLI identity、command families、stable Study ID、Study exposure rule 与 output placement 见 [Research UI authority](ui/ARCHITECTURE.md)；配置 schema 与路径解析见 [Research UI configuration](ui/CONFIGURATION.md)；当前用户命令入口见 [Research command manual](COMMANDS.md)。
+
+## 3. Research Result 与 Visualization
 
 Research 的最终消费者首先是人。Visualization 是 Research Result 的 human-facing representation，用于帮助人观察、比较、发现 pattern 并形成下一步 hypothesis；它不是 market state、forecast、decision output 或 production UI contract。
 
@@ -41,7 +65,7 @@ Research visualization 由 `market-research` 拥有，并默认以 Python 生成
 
 当多个真实 Study 持续出现稳定、重复的 visualization pattern 时，可以通过新的 semantic decision 与 authority update，重新评估是否将部分通用交互式展示能力提升到 `backend-api` 与 `web-ui`。未来即使发生该迁移，Research backend / module 也应输出 `BasisAssociationResult`、`CorrelationResult`、`QuantileStatistics`、`TimeSeriesObservations` 等 research semantics，由 Frontend 决定如何交互式呈现；Plotly config、ECharts option、React chart props 或其他 frontend-library configuration 不得成为 canonical Research Result。
 
-## 3. Snapshot 消费边界
+## 4. Snapshot 消费边界
 
 稳定依赖方向是：
 
@@ -65,9 +89,9 @@ Research 必须优先消费 `market-snapshot` 明确支持的 application/produc
 
 Snapshot 仍拥有从 Source fact 到 Analysis-ready Artifact 的确定性准备。Research 可以为具体研究执行 arbitrary slicing、joining、grouping、reshaping、statistics 与 plotting；只有真实 Research consumer 暴露出可复用且属于 deterministic data preparation 的缺口时，才通过对应 Snapshot canonical authority 做显式 reconciliation。
 
-当前 Snapshot 已有 product-owned Data Service / application boundaries，但没有为 Research 承诺统一的公共 Python facade。首个 vertical slice 必须从真实研究问题出发，选择一个现有受支持的 product/application result，并对缺少的窄 public boundary 做 reconciliation；不得为本模块预先设计通用 research data interface，也不得以读取 Snapshot internals 或 persistence layout 代替该边界。
+当前 Snapshot 已有 product-owned Data Service / application boundaries，但没有为 Research 承诺统一的公共 Python facade。Research CLI 只调用对应产品拥有的 production-ready public application composition entry；它不得创建 Source client、读取 credential 或进入 Snapshot internals。真实 Research consumer 暴露的窄 public-boundary 缺口必须与对应 Snapshot owner reconciliation，不得借此设计通用 research data interface。
 
-## 4. Scratch 与 Retained Studies
+## 5. Scratch 与 Retained Studies
 
 ### `scratch`
 
@@ -114,7 +138,7 @@ results/
 
 本模块不预设 Experiment Engine、Study Registry、Research Repository、plugin system、统一 lifecycle 或通用 study schema。只有真实 retained study 需要时才建立最小文件结构。
 
-## 5. Research 与 Modeling
+## 6. Research 与 Modeling
 
 ```text
 market-research != market-modeling
@@ -138,12 +162,15 @@ Modeling
 
 其中 semantic decision 与 authority update 是必要的边界；Research result 不会自动晋升为 production contract 或 Modeling semantics。
 
-## 6. Authority 与维护边界
+## 7. Authority 与维护边界
 
 ```text
 repository ARCHITECTURE.md
         ↓
 market-research/ARCHITECTURE.md
+        ├── Research UI authority
+        │       ├── configuration contract
+        │       └── user command manual
         ├── scratch exploration
         ├── narrow shared Research semantics
         └── retained study materials
@@ -151,6 +178,6 @@ market-research/ARCHITECTURE.md
         required market-snapshot product authority
 ```
 
-本文件只拥有 Research 的稳定 identity、职责边界、Research visualization ownership、依赖方向、scratch / retained-study distinction 与下层 authority 导航。两个或更多真实 Study 共用的窄 Research semantic 可以有独立 canonical owner，但不得借此建立通用 feature、statistics 或 visualization framework。具体研究问题、输入、方法、结果与限制由对应 retained study 记录；Snapshot 产品语义继续由 [market-snapshot capability catalog](../market-snapshot/CAPABILITIES.md) 所链接的 canonical owner 定义。
+本文件只拥有 Research 的稳定 identity、职责边界、Research UI 与 visualization ownership、依赖方向、scratch / retained-study distinction 与下层 authority 导航。两个或更多真实 Study 共用的窄 Research semantic 可以有独立 canonical owner，但不得借此建立通用 feature、statistics 或 visualization framework。具体研究问题、输入、方法、结果与限制由对应 retained study 记录；Snapshot 产品语义继续由 [market-snapshot capability catalog](../market-snapshot/CAPABILITIES.md) 所链接的 canonical owner 定义。
 
-只有在 Research 模块定位、visualization ownership、跨模块依赖、Snapshot 消费原则或 scratch/studies 边界变化时更新本文件。不得把 study-specific 细节堆入 module-level architecture，也不得复制 Snapshot product authority。
+只有在 Research 模块定位、UI/visualization ownership、跨模块依赖、Snapshot 消费原则或 scratch/studies 边界变化时更新本文件。CLI/config/output 细节进入 UI specialized authority；不得把 study-specific 细节堆入 module-level architecture，也不得复制 Snapshot product authority。

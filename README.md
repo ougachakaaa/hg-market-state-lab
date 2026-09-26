@@ -18,6 +18,7 @@ README 是人类开发入口，不是架构或业务语义 authority。
 - `market-snapshot` 稳定分层：[market-snapshot/ARCHITECTURE.md](market-snapshot/ARCHITECTURE.md)
 - `market-snapshot` capability/product catalog：[market-snapshot/CAPABILITIES.md](market-snapshot/CAPABILITIES.md)
 - `market-research` exploratory/statistical research 边界：[market-research/ARCHITECTURE.md](market-research/ARCHITECTURE.md)
+- Research CLI 命令与当前可运行 Study：[market-research/COMMANDS.md](market-research/COMMANDS.md)
 - `backend-api` HTTP boundary 与 product catalog：[backend-api/ARCHITECTURE.md](backend-api/ARCHITECTURE.md)
 - `web-ui` 边界与 visualization 路由：[web-ui/ARCHITECTURE.md](web-ui/ARCHITECTURE.md)
 - 根开发命令与 managed worktree 说明：[DEVELOPMENT.md](DEVELOPMENT.md)
