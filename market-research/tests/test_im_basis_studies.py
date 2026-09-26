@@ -12,7 +12,7 @@ import pandas as pd
 import pytest
 
 from market_research.shared.im_basis import daily_im_basis, linear_quantile
-from market_research.studies.im_annualized_basis_baseline import study as baseline
+from market_research.studies.im_basis_baseline import study as baseline
 from market_research.studies.im_basis_forward_return_association import study as association
 from market_snapshot.products.csi1000_im_basis_history import (
     CSI1000IMBasisHistoryRequest,
@@ -255,8 +255,8 @@ def test_research_imports_only_snapshot_public_product_boundary() -> None:
         assert forbidden not in source
 
 
-def test_studies_do_not_depend_on_research_ui() -> None:
+def test_study_computation_does_not_depend_on_research_ui() -> None:
     studies_root = Path(__file__).resolve().parents[1] / "src" / "market_research" / "studies"
-    source = "\n".join(path.read_text(encoding="utf-8") for path in studies_root.rglob("*.py"))
+    source = "\n".join(path.read_text(encoding="utf-8") for path in studies_root.rglob("study.py"))
     assert "market_research.ui" not in source
     assert "...ui" not in source

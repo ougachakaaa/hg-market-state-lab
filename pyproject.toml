@@ -11,9 +11,6 @@ dependencies = [
     "matplotlib (>=3.10.0,<4.0.0)",
 ]
 
-[project.scripts]
-market-research = "market_research.ui.cli:main"
-
 [tool.poetry]
 packages = [
     { include = "market_snapshot", from = "market-snapshot/src" },
@@ -32,7 +29,7 @@ requires = ["poetry-core>=2.0.0"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.pytest.ini_options]
-testpaths = ["market-snapshot/tests", "market-research/tests", "backend-api/tests"]
+testpaths = ["tests", "market-snapshot/tests", "market-research/tests", "backend-api/tests"]
 pythonpath = [
     "market-snapshot/src",
     "market-research/src",
@@ -51,6 +48,7 @@ src = [
     "backend-api/scripts",
     "market-research/src",
     "market-research/tests",
+    "tests",
 ]
 
 [tool.ruff.lint]
@@ -62,6 +60,8 @@ known-first-party = ["backend_api", "market_research", "market_snapshot"]
 [tool.mypy]
 python_version = "3.13"
 files = [
+    "dev.py",
+    "tests",
     "market-snapshot/src",
     "market-snapshot/tests",
     "market-snapshot/scripts",

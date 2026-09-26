@@ -1,14 +1,16 @@
-"""CLI-level coverage of both retained Research vertical slices."""
+"""Study-local CLI coverage for retained Research vertical slices."""
 
 from __future__ import annotations
 
 from datetime import date, timedelta
 from pathlib import Path
+from types import ModuleType
 
 import pytest
 
-from market_research.ui import catalog, cli, configuration
-from market_research.ui.catalog import StudyEntry
+from market_research.studies.im_basis_baseline import cli as baseline_cli
+from market_research.studies.im_basis_forward_return_association import cli as association_cli
+from market_research.ui import configuration
 from market_research.ui.execution import (
     ResearchOutputError,
     canonical_run_directory,
@@ -21,7 +23,14 @@ from market_snapshot.products.csi1000_im_basis_history import (
     IMBasisObservation,
 )
 
-STUDY_IDS = ("im-basis-baseline", "im-basis-forward-return-association")
+RUNNERS = (
+    (baseline_cli, "im-basis-baseline", "baseline.png"),
+    (
+        association_cli,
+        "im-basis-forward-return-association",
+        "correlation_by_horizon.png",
+    ),
+)
 
 
 def weekdays(start: str, count: int) -> list[str]:
@@ -75,81 +84,39 @@ def patch_config(
     return config_path, output_root
 
 
-def test_catalog_is_explicit_and_dispatchable() -> None:
-    assert tuple(entry.study_id for entry in catalog.CATALOG) == STUDY_IDS
-    assert all(callable(entry.execute) for entry in catalog.CATALOG)
-    resolved = [catalog.find_study(study_id) for study_id in STUDY_IDS]
-    assert all(entry is not None for entry in resolved)
-    assert [entry.study_id for entry in resolved if entry is not None] == list(STUDY_IDS)
-
-
-def test_list_is_local_catalog_inspection_only(
-    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+@pytest.mark.parametrize(("runner", "study_id", "_plot_name"), RUNNERS)
+def test_help_is_study_local_and_does_not_load_config_or_snapshot(
+    runner: ModuleType,
+    study_id: str,
+    _plot_name: str,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
 ) -> None:
-    monkeypatch.setattr(
-        catalog.snapshot_product,
-        "run_csi1000_im_basis_history",
-        lambda _request: (_ for _ in ()).throw(AssertionError("Snapshot must not run")),
-    )
     monkeypatch.setattr(
         configuration,
         "load_config",
         lambda: (_ for _ in ()).throw(AssertionError("config must not load")),
     )
+    monkeypatch.setattr(
+        runner.snapshot_product,
+        "run_csi1000_im_basis_history",
+        lambda _request: (_ for _ in ()).throw(AssertionError("Snapshot must not run")),
+    )
 
-    assert cli.main(["list"]) == 0
-
+    with pytest.raises(SystemExit, match="0"):
+        runner.main(["--help"])
     output = capsys.readouterr().out
-    assert all(study_id in output for study_id in STUDY_IDS)
+    assert f"dev.py research run {study_id}" in output
+    assert "--start" in output
+    assert "--end" in output
 
 
-def test_config_reports_only_source_and_resolved_output(
-    tmp_path: Path,
-    monkeypatch: pytest.MonkeyPatch,
-    capsys: pytest.CaptureFixture[str],
-) -> None:
-    config_path, output_root = patch_config(tmp_path, monkeypatch)
-    monkeypatch.setenv("TUSHARE_TOKEN", "must-not-be-printed")
-
-    assert cli.main(["config"]) == 0
-
-    captured = capsys.readouterr()
-    assert str(config_path.resolve()) in captured.out
-    assert str(output_root.resolve()) in captured.out
-    assert "must-not-be-printed" not in captured.out
-    assert captured.err == ""
-
-
-def test_config_failure_is_presented_without_traceback(
-    tmp_path: Path,
-    monkeypatch: pytest.MonkeyPatch,
-    capsys: pytest.CaptureFixture[str],
-) -> None:
-    config_path = tmp_path / "market-research" / "research.toml"
-    config_path.parent.mkdir(parents=True)
-    config_path.write_text("invalid toml =", encoding="utf-8")
-    monkeypatch.setattr(configuration, "REPOSITORY_ROOT", tmp_path)
-    monkeypatch.setattr(configuration, "CANONICAL_CONFIG_PATH", config_path)
-
-    assert cli.main(["config"]) == 3
-
-    captured = capsys.readouterr()
-    assert captured.out == ""
-    assert captured.err.startswith("Configuration error:")
-    assert "Traceback" not in captured.err
-
-
-@pytest.mark.parametrize(
-    ("study_id", "plot_name"),
-    [
-        ("im-basis-baseline", "baseline.png"),
-        ("im-basis-forward-return-association", "correlation_by_horizon.png"),
-    ],
-)
+@pytest.mark.parametrize(("runner", "study_id", "plot_name"), RUNNERS)
 def test_run_completes_each_vertical_slice_and_reports_artifacts(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
     capsys: pytest.CaptureFixture[str],
+    runner: ModuleType,
     study_id: str,
     plot_name: str,
 ) -> None:
@@ -161,13 +128,11 @@ def test_run_completes_each_vertical_slice_and_reports_artifacts(
         requests.append(request)
         return snapshot
 
-    monkeypatch.setattr(catalog.snapshot_product, "run_csi1000_im_basis_history", execute)
+    monkeypatch.setattr(runner.snapshot_product, "run_csi1000_im_basis_history", execute)
 
     assert (
-        cli.main(
+        runner.main(
             [
-                "run",
-                study_id,
                 "--start",
                 snapshot.start_trade_date,
                 "--end",
@@ -181,9 +146,7 @@ def test_run_completes_each_vertical_slice_and_reports_artifacts(
         f"{snapshot.start_trade_date}__{snapshot.end_trade_date}"
     )
     assert requests == [
-        CSI1000IMBasisHistoryRequest(
-            snapshot.start_trade_date, snapshot.end_trade_date
-        )
+        CSI1000IMBasisHistoryRequest(snapshot.start_trade_date, snapshot.end_trade_date)
     ]
     assert sorted(path.name for path in run_dir.iterdir()) == [
         plot_name,
@@ -199,12 +162,11 @@ def test_run_completes_each_vertical_slice_and_reports_artifacts(
 @pytest.mark.parametrize(
     "argv",
     [
-        ["run", "unknown", "--start", "2025-01-01", "--end", "2025-02-01"],
-        ["run", STUDY_IDS[0], "--start", "20250101", "--end", "2025-02-01"],
-        ["run", STUDY_IDS[0], "--start", "2025-02-01", "--end", "2025-01-01"],
+        ["--start", "20250101", "--end", "2025-02-01"],
+        ["--start", "2025-02-01", "--end", "2025-01-01"],
     ],
 )
-def test_invalid_run_input_fails_before_config_or_snapshot(
+def test_invalid_input_fails_before_config_or_snapshot(
     monkeypatch: pytest.MonkeyPatch,
     capsys: pytest.CaptureFixture[str],
     argv: list[str],
@@ -215,7 +177,7 @@ def test_invalid_run_input_fails_before_config_or_snapshot(
         lambda: (_ for _ in ()).throw(AssertionError("config must not load")),
     )
 
-    assert cli.main(argv) == 2
+    assert baseline_cli.main(argv) == 2
     assert "Input error" in capsys.readouterr().err
 
 
@@ -223,10 +185,27 @@ def test_missing_required_arguments_are_parser_input_error(
     capsys: pytest.CaptureFixture[str],
 ) -> None:
     with pytest.raises(SystemExit) as excinfo:
-        cli.main(["run", STUDY_IDS[0]])
+        baseline_cli.main([])
 
     assert excinfo.value.code == 2
     assert "Input error" in capsys.readouterr().err
+
+
+def test_config_failure_is_presented_without_traceback(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    config_path = tmp_path / "market-research" / "research.toml"
+    config_path.parent.mkdir(parents=True)
+    config_path.write_text("invalid toml =", encoding="utf-8")
+    monkeypatch.setattr(configuration, "REPOSITORY_ROOT", tmp_path)
+    monkeypatch.setattr(configuration, "CANONICAL_CONFIG_PATH", config_path)
+
+    assert baseline_cli.main(["--start", "2025-01-01", "--end", "2025-02-01"]) == 3
+    captured = capsys.readouterr()
+    assert captured.err.startswith("Configuration error:")
+    assert "Traceback" not in captured.err
 
 
 def test_existing_run_fails_before_snapshot_without_overwrite(
@@ -235,63 +214,18 @@ def test_existing_run_fails_before_snapshot_without_overwrite(
     capsys: pytest.CaptureFixture[str],
 ) -> None:
     _config_path, output_root = patch_config(tmp_path, monkeypatch)
-    run_dir = output_root / STUDY_IDS[0] / "2025-01-01__2025-02-01"
+    run_dir = output_root / baseline_cli.STUDY_ID / "2025-01-01__2025-02-01"
     run_dir.mkdir(parents=True)
     (run_dir / "old.txt").write_text("old", encoding="utf-8")
     monkeypatch.setattr(
-        catalog.snapshot_product,
+        baseline_cli.snapshot_product,
         "run_csi1000_im_basis_history",
         lambda _request: (_ for _ in ()).throw(AssertionError("Snapshot must not run")),
     )
 
-    assert (
-        cli.main(
-            [
-                "run",
-                STUDY_IDS[0],
-                "--start",
-                "2025-01-01",
-                "--end",
-                "2025-02-01",
-            ]
-        )
-        == 6
-    )
+    assert baseline_cli.main(["--start", "2025-01-01", "--end", "2025-02-01"]) == 6
     assert (run_dir / "old.txt").read_text(encoding="utf-8") == "old"
     assert "Output error" in capsys.readouterr().err
-
-
-def test_non_directory_run_path_fails_before_snapshot_even_with_overwrite(
-    tmp_path: Path,
-    monkeypatch: pytest.MonkeyPatch,
-    capsys: pytest.CaptureFixture[str],
-) -> None:
-    _config_path, output_root = patch_config(tmp_path, monkeypatch)
-    run_path = output_root / STUDY_IDS[0] / "2025-01-01__2025-02-01"
-    run_path.parent.mkdir(parents=True)
-    run_path.write_text("not a run directory", encoding="utf-8")
-    monkeypatch.setattr(
-        catalog.snapshot_product,
-        "run_csi1000_im_basis_history",
-        lambda _request: (_ for _ in ()).throw(AssertionError("Snapshot must not run")),
-    )
-
-    assert (
-        cli.main(
-            [
-                "run",
-                STUDY_IDS[0],
-                "--start",
-                "2025-01-01",
-                "--end",
-                "2025-02-01",
-                "--overwrite",
-            ]
-        )
-        == 6
-    )
-    assert run_path.read_text(encoding="utf-8") == "not a run directory"
-    assert "not a directory" in capsys.readouterr().err
 
 
 def test_overwrite_replaces_whole_run_without_stale_artifacts(
@@ -299,20 +233,20 @@ def test_overwrite_replaces_whole_run_without_stale_artifacts(
 ) -> None:
     _config_path, output_root = patch_config(tmp_path, monkeypatch)
     snapshot = snapshot_result()
-    run_dir = output_root / STUDY_IDS[0] / (
+    run_dir = output_root / baseline_cli.STUDY_ID / (
         f"{snapshot.start_trade_date}__{snapshot.end_trade_date}"
     )
     run_dir.mkdir(parents=True)
     (run_dir / "stale.txt").write_text("stale", encoding="utf-8")
     monkeypatch.setattr(
-        catalog.snapshot_product, "run_csi1000_im_basis_history", lambda _request: snapshot
+        baseline_cli.snapshot_product,
+        "run_csi1000_im_basis_history",
+        lambda _request: snapshot,
     )
 
     assert (
-        cli.main(
+        baseline_cli.main(
             [
-                "run",
-                STUDY_IDS[0],
                 "--start",
                 snapshot.start_trade_date,
                 "--end",
@@ -333,22 +267,20 @@ def test_failed_overwrite_preserves_prior_evidence_and_cleans_staging(
 ) -> None:
     _config_path, output_root = patch_config(tmp_path, monkeypatch)
     short_snapshot = snapshot_result(1)
-    run_dir = output_root / STUDY_IDS[0] / (
+    run_dir = output_root / baseline_cli.STUDY_ID / (
         f"{short_snapshot.start_trade_date}__{short_snapshot.end_trade_date}"
     )
     run_dir.mkdir(parents=True)
     (run_dir / "old.txt").write_text("preserve me", encoding="utf-8")
     monkeypatch.setattr(
-        catalog.snapshot_product,
+        baseline_cli.snapshot_product,
         "run_csi1000_im_basis_history",
         lambda _request: short_snapshot,
     )
 
     assert (
-        cli.main(
+        baseline_cli.main(
             [
-                "run",
-                STUDY_IDS[0],
                 "--start",
                 short_snapshot.start_trade_date,
                 "--end",
@@ -369,19 +301,19 @@ def test_snapshot_failure_is_classified_and_preserves_prior_evidence(
     capsys: pytest.CaptureFixture[str],
 ) -> None:
     _config_path, output_root = patch_config(tmp_path, monkeypatch)
-    run_dir = output_root / STUDY_IDS[0] / "2025-01-01__2025-02-01"
+    run_dir = output_root / baseline_cli.STUDY_ID / "2025-01-01__2025-02-01"
     run_dir.mkdir(parents=True)
     (run_dir / "old.txt").write_text("preserve me", encoding="utf-8")
 
     def fail(_request: CSI1000IMBasisHistoryRequest) -> CSI1000IMBasisHistoryResult:
         raise CSI1000IMBasisHistoryError("source unavailable")
 
-    monkeypatch.setattr(catalog.snapshot_product, "run_csi1000_im_basis_history", fail)
+    monkeypatch.setattr(
+        baseline_cli.snapshot_product, "run_csi1000_im_basis_history", fail
+    )
     assert (
-        cli.main(
+        baseline_cli.main(
             [
-                "run",
-                STUDY_IDS[0],
                 "--start",
                 "2025-01-01",
                 "--end",
@@ -399,18 +331,16 @@ def test_publication_failure_restores_previous_run(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     run_dir = canonical_run_directory(
-        tmp_path, STUDY_IDS[0], "2025-01-01", "2025-02-01"
+        tmp_path, baseline_cli.STUDY_ID, "2025-01-01", "2025-02-01"
     )
     run_dir.mkdir(parents=True)
     (run_dir / "old.txt").write_text("preserve me", encoding="utf-8")
 
-    def adapter(_request: CSI1000IMBasisHistoryRequest, output: Path) -> tuple[Path, ...]:
+    def execute(output: Path) -> tuple[Path, ...]:
         artifact = output / "new.txt"
         artifact.write_text("new", encoding="utf-8")
         return (artifact,)
 
-    entry = StudyEntry(STUDY_IDS[0], "test", adapter)
-    request = CSI1000IMBasisHistoryRequest("2025-01-01", "2025-02-01")
     original_rename = Path.rename
     calls = 0
 
@@ -424,14 +354,20 @@ def test_publication_failure_restores_previous_run(
     monkeypatch.setattr(Path, "rename", fail_publish)
 
     with pytest.raises(ResearchOutputError, match="simulated publish failure"):
-        execute_run(entry, request, run_dir, overwrite=True)
+        execute_run(execute, run_dir, overwrite=True)
 
     assert (run_dir / "old.txt").read_text(encoding="utf-8") == "preserve me"
 
 
-def test_research_ui_does_not_import_snapshot_source_or_capture() -> None:
-    ui_root = Path(__file__).resolve().parents[1] / "src" / "market_research" / "ui"
-    source = "\n".join(path.read_text(encoding="utf-8") for path in ui_root.rglob("*.py"))
+def test_research_ui_and_study_clis_do_not_import_snapshot_internals() -> None:
+    research_root = Path(__file__).resolve().parents[1] / "src" / "market_research"
+    sources = [
+        research_root / "ui" / "configuration.py",
+        research_root / "ui" / "execution.py",
+        Path(baseline_cli.__file__),
+        Path(association_cli.__file__),
+    ]
+    source = "\n".join(path.read_text(encoding="utf-8") for path in sources)
     for forbidden in (
         "market_snapshot.sources",
         "market_snapshot.capture",

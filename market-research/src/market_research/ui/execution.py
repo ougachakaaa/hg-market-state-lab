@@ -4,11 +4,10 @@ from __future__ import annotations
 
 import shutil
 import tempfile
+from collections.abc import Callable
 from pathlib import Path
 
-from market_snapshot.products.csi1000_im_basis_history import CSI1000IMBasisHistoryRequest
-
-from .catalog import StudyEntry
+ExecutionAdapter = Callable[[Path], tuple[Path, ...]]
 
 
 class ResearchOutputError(OSError):
@@ -33,8 +32,7 @@ def _validate_existing_run(path: Path) -> None:
 
 
 def execute_run(
-    entry: StudyEntry,
-    request: CSI1000IMBasisHistoryRequest,
+    execute: ExecutionAdapter,
     run_directory: Path,
     *,
     overwrite: bool,
@@ -55,7 +53,7 @@ def execute_run(
                 prefix=f".{run_directory.name}.staging-", dir=run_directory.parent
             )
         )
-        artifacts = entry.execute(request, staging)
+        artifacts = execute(staging)
 
         _validate_existing_run(run_directory)
         if _present(run_directory):

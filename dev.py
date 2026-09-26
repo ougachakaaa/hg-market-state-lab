@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import shutil
 import socket
 import subprocess
@@ -17,6 +18,7 @@ ROOT = Path(__file__).resolve().parent
 MARKET_SNAPSHOT = ROOT / "market-snapshot"
 BACKEND_API = ROOT / "backend-api"
 FRONTEND = ROOT / "web-ui"
+RESEARCH_STUDIES = ROOT / "market-research" / "src" / "market_research" / "studies"
 BACKEND_HOST = "127.0.0.1"
 BACKEND_PORT = 8011
 FRONTEND_PORT = 5173
@@ -24,6 +26,12 @@ COMMAND_TIMEOUT = 10
 HTTP_TIMEOUT = 2
 CHINA_MARKET_TIMEZONE = timezone(timedelta(hours=8), name="Asia/Shanghai")
 CLI_DATA_SERVICES = ("csi1000-5d-analysis",)
+STUDY_ID = re.compile(r"[a-z][a-z0-9]*(?:-[a-z0-9]+)*")
+STUDY_PACKAGE = re.compile(r"[a-z][a-z0-9]*(?:_[a-z0-9]+)*")
+
+
+class ResearchStudyError(ValueError):
+    """A retained Study cannot be safely discovered or executed."""
 
 
 def _tool_version(name: str) -> tuple[str | None, str | None]:
@@ -249,6 +257,95 @@ def data(service_id: str, target_trade_date: str | None = None) -> int:
     )
 
 
+def _is_regular_file(path: Path) -> bool:
+    return path.is_file() and not path.is_symlink()
+
+
+def _study_id(package_name: str) -> str:
+    return package_name.replace("_", "-")
+
+
+def _study_package(study_id: str) -> str:
+    return study_id.replace("-", "_")
+
+
+def _validate_runner(package_dir: Path) -> None:
+    if package_dir.is_symlink() or not package_dir.is_dir():
+        raise ResearchStudyError(f"malformed Study package: {package_dir.name!r}")
+    if STUDY_PACKAGE.fullmatch(package_dir.name) is None:
+        raise ResearchStudyError(f"malformed Study package name: {package_dir.name!r}")
+    initializer = package_dir / "__init__.py"
+    runner = package_dir / "cli.py"
+    if not _is_regular_file(initializer):
+        raise ResearchStudyError(
+            f"malformed Study {_study_id(package_dir.name)!r}: __init__.py is not a regular file"
+        )
+    if not _is_regular_file(runner):
+        raise ResearchStudyError(
+            f"malformed Study {_study_id(package_dir.name)!r}: cli.py is not a regular file"
+        )
+
+
+def discover_research_studies() -> tuple[str, ...]:
+    """Discover runnable retained Studies without importing Research code."""
+    if RESEARCH_STUDIES.is_symlink() or not RESEARCH_STUDIES.is_dir():
+        raise ResearchStudyError(f"Research studies root is unavailable: {RESEARCH_STUDIES}")
+
+    study_ids: list[str] = []
+    for candidate in RESEARCH_STUDIES.iterdir():
+        if candidate.is_symlink():
+            raise ResearchStudyError(f"malformed Study package symlink: {candidate.name!r}")
+        if not candidate.is_dir():
+            continue
+        runner = candidate / "cli.py"
+        if not runner.exists() and not runner.is_symlink():
+            continue
+        _validate_runner(candidate)
+        study_ids.append(_study_id(candidate.name))
+    return tuple(sorted(study_ids))
+
+
+def research_list() -> int:
+    try:
+        study_ids = discover_research_studies()
+    except (OSError, ResearchStudyError) as error:
+        print(f"research discovery error: {error}", file=sys.stderr)
+        return 1
+    for study_id in study_ids:
+        print(study_id)
+    return 0
+
+
+def research_run(study_id: str, study_args: Sequence[str]) -> int:
+    if STUDY_ID.fullmatch(study_id) is None:
+        print(f"malformed Study ID: {study_id!r}", file=sys.stderr)
+        return 2
+
+    package_name = _study_package(study_id)
+    package_dir = RESEARCH_STUDIES / package_name
+    if package_dir.is_symlink():
+        print(f"malformed Study {study_id!r}: package must not be a symlink", file=sys.stderr)
+        return 2
+    if not package_dir.exists():
+        print(f"unknown Study: {study_id!r}", file=sys.stderr)
+        return 2
+    if not package_dir.is_dir():
+        print(f"malformed Study {study_id!r}: package path is not a directory", file=sys.stderr)
+        return 2
+    runner = package_dir / "cli.py"
+    if not runner.exists() and not runner.is_symlink():
+        print(f"non-executable Study: {study_id!r} has no cli.py", file=sys.stderr)
+        return 2
+    try:
+        _validate_runner(package_dir)
+    except ResearchStudyError as error:
+        print(str(error), file=sys.stderr)
+        return 2
+
+    module = f"market_research.studies.{package_name}.cli"
+    return _run_foreground([sys.executable, "-m", module, *study_args], ROOT)
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Repository development commands")
     subparsers = parser.add_subparsers(dest="command", required=True)
@@ -271,6 +368,21 @@ def build_parser() -> argparse.ArgumentParser:
         metavar="YYYY-MM-DD",
         help="Target trade date; defaults to today's Asia/Shanghai calendar date.",
     )
+
+    research_parser = subparsers.add_parser(
+        "research", help="Discover and run retained Research Studies."
+    )
+    research_subparsers = research_parser.add_subparsers(
+        dest="research_command", required=True
+    )
+    research_subparsers.add_parser("list", help="List runnable retained Studies.")
+    research_run_parser = research_subparsers.add_parser(
+        "run",
+        add_help=False,
+        help="Forward execution to a study-local CLI.",
+    )
+    research_run_parser.add_argument("study_id", help="Stable retained Study ID.")
+    research_run_parser.add_argument("study_args", nargs=argparse.REMAINDER)
     return parser
 
 
@@ -278,6 +390,10 @@ def main(argv: Sequence[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
     if args.command == "data":
         return data(args.service_id, args.target_trade_date)
+    if args.command == "research":
+        if args.research_command == "list":
+            return research_list()
+        return research_run(args.study_id, args.study_args)
     return {"doctor": doctor, "backend": backend, "frontend": frontend}[args.command]()
 
 
