@@ -1,6 +1,6 @@
 """Thin executable shim of the Data Service CLI (semantic name ``dms``).
 
-The CLI implementation lives in ``daily_market_snapshot.cli``; this script only
+The CLI implementation lives in ``market_snapshot.cli``; this script only
 makes it runnable without packaging the project.
 
 Authority: ``services/delivery.md`` section 4.
@@ -16,7 +16,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src"))
 
-from daily_market_snapshot.cli import main  # noqa: E402
+from market_snapshot.cli import main  # noqa: E402
 
 if __name__ == "__main__":
     raise SystemExit(main())

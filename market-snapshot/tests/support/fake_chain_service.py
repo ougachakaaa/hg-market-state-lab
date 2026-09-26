@@ -13,7 +13,7 @@ from __future__ import annotations
 
 from dataclasses import replace
 
-from daily_market_snapshot.products.mo_option_chain import service
+from market_snapshot.products.mo_option_chain import service
 
 TARGET_DATE = "2026-09-17"
 EXPIRY_DATE = "2026-09-25"

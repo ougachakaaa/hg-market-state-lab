@@ -9,7 +9,7 @@ price / null / grouping / ordering / response / failure → market-snapshot read
 HTTP transport                                           → 本文档
 ```
 
-本文档只把 [market-snapshot read contract](../../../market-snapshot/src/daily_market_snapshot/products/mo_option_chain/read-contract.md) 的 semantic failure categories 映射为 transport，不改变 category 本身。
+本文档只把 [market-snapshot read contract](../../../market-snapshot/src/market_snapshot/products/mo_option_chain/read-contract.md) 的 semantic failure categories 映射为 transport，不改变 category 本身。
 
 Markdown authority 拥有 market / read semantics 与本 Guide 的 HTTP transport 语义。后端 Pydantic HTTP DTO 及其发布的 OpenAPI 是 HTTP wire contract 的可执行表达，必须忠实反映这些 authority；OpenAPI 是前端获取机器可读 wire shape 的来源。`web-ui` 消费该契约，不另行人工定义一套与其平行的 backend market / transport schema。仓库验证必须在后端 OpenAPI 与前端消费的契约产物不同步时失败。
 
@@ -22,7 +22,7 @@ GET /mo-option-chain
 ```
 
 * V1 只定义这一个 MO Option Chain read surface。
-* 读操作使用 GET，没有 request body，也不修改客户端可操作的业务资源。Data Service 在读取 Source 时会按 [data authority](../../../market-snapshot/src/daily_market_snapshot/products/mo_option_chain/data.md) 写入 goal-scoped Raw Artifact；这属于数据准备流程，不改变 HTTP read contract。
+* 读操作使用 GET，没有 request body，也不修改客户端可操作的业务资源。Data Service 在读取 Source 时会按 [data authority](../../../market-snapshot/src/market_snapshot/products/mo_option_chain/data.md) 写入 goal-scoped Raw Artifact；这属于数据准备流程，不改变 HTTP read contract。
 * query identity 的三个维度全部通过 query 参数表达（第 2 节）。
 * 路径中不带 date / product：这些是 query identity，不是资源层级。
 * 本阶段不引入 API version 前缀、不提供写操作、不提供第二个 endpoint（见第 8 节）。
@@ -44,16 +44,16 @@ GET /mo-option-chain?target_trade_date=2026-09-17&option_product=MO&price_type=h
 
 规则：
 
-* 语义 authority 是 [MO Option Chain product authority](../../../market-snapshot/src/daily_market_snapshot/products/mo_option_chain/ARCHITECTURE.md) 第 3 节；本节只规定它们在 HTTP 上的表达形式。
+* 语义 authority 是 [MO Option Chain product authority](../../../market-snapshot/src/market_snapshot/products/mo_option_chain/ARCHITECTURE.md) 第 3 节；本节只规定它们在 HTTP 上的表达形式。
 * `price_type` 省略时由服务端按 authority 固定默认 `close` 解析（不要求 caller 显式给出）。
-* `price_type` 的可用取值是 `open` / `high` / `low` / `close`（[read contract](../../../market-snapshot/src/daily_market_snapshot/products/mo_option_chain/read-contract.md) 第 1 节）；`settle` / `pre_close` / `pre_settle` / `volume` 不接受。
-* HTTP 层不接受也没有 underlying 参数：`MO → 000852.SH` 的映射由 data product 拥有，caller 不得同时指定两个可能矛盾的输入（[product authority](../../../market-snapshot/src/daily_market_snapshot/products/mo_option_chain/ARCHITECTURE.md) 第 4 节）。
+* `price_type` 的可用取值是 `open` / `high` / `low` / `close`（[read contract](../../../market-snapshot/src/market_snapshot/products/mo_option_chain/read-contract.md) 第 1 节）；`settle` / `pre_close` / `pre_settle` / `volume` 不接受。
+* HTTP 层不接受也没有 underlying 参数：`MO → 000852.SH` 的映射由 data product 拥有，caller 不得同时指定两个可能矛盾的输入（[product authority](../../../market-snapshot/src/market_snapshot/products/mo_option_chain/ARCHITECTURE.md) 第 4 节）。
 * HTTP 层不接受任何额外查询参数，也没有 `latest` / `date range` / 自动 fallback 形态。
 * HTTP 层不定义“最近交易日”查询、availability 查询或任何日期推断：`target_trade_date` 必须由 caller 显式给出。
 
 ## 3. Success Response
 
-HTTP 200，body 为单个 JSON object，形状与 [read contract](../../../market-snapshot/src/daily_market_snapshot/products/mo_option_chain/read-contract.md) 第 8 节的 semantic response 完全一致；HTTP 层不包裹 envelope、不改名、不增删字段。
+HTTP 200，body 为单个 JSON object，形状与 [read contract](../../../market-snapshot/src/market_snapshot/products/mo_option_chain/read-contract.md) 第 8 节的 semantic response 完全一致；HTTP 层不包裹 envelope、不改名、不增删字段。
 
 当某到期日无结构性匹配的 IM 合约时，该到期日仍在成功响应中，且显式包含 `"futures": null`；有唯一匹配时则为下面示例中的 object。
 
@@ -143,7 +143,7 @@ transport 必须保持的语义（全部由 read contract 拥有，本文档只�
 
 ## 5. Error Kind → HTTP Status Mapping
 
-mapping 的输入是 [read contract](../../../market-snapshot/src/daily_market_snapshot/products/mo_option_chain/read-contract.md) 第 11 节的 semantic failure categories。HTTP 层只做映射，不新增、不合并、不重新解释这些 category：
+mapping 的输入是 [read contract](../../../market-snapshot/src/market_snapshot/products/mo_option_chain/read-contract.md) 第 11 节的 semantic failure categories。HTTP 层只做映射，不新增、不合并、不重新解释这些 category：
 
 | error kind | HTTP status | semantic failure category（read-contract 第 11 节） |
 | --- | --- | --- |
@@ -227,7 +227,7 @@ web-ui
 ```
 
 * HTTP 层通过明确的 service/application boundary 获取 read model；它不读 Raw Artifact，不调用 Source，不理解 Tushare。
-* HTTP 层不依赖 `csi1000-5d-analysis` 的 `snapshot.json`（见 [product authority](../../../market-snapshot/src/daily_market_snapshot/products/mo_option_chain/ARCHITECTURE.md) Stable Product Invariant 1）。
+* HTTP 层不依赖 `csi1000-5d-analysis` 的 `snapshot.json`（见 [product authority](../../../market-snapshot/src/market_snapshot/products/mo_option_chain/ARCHITECTURE.md) Stable Product Invariant 1）。
 * HTTP contract tests 可以注入 fake service 验证 transport；fake 不属于业务语义层，也不得定义 market semantics。
 * local 启动默认 bind `127.0.0.1:8011`（launcher 细节，可用 `--host` / `--port` 覆盖）。端口号**不属于**本 contract：endpoint 语义始终是 `GET /mo-option-chain`，换端口不改变 request / response / error 契约；V1 不定义 deployment、反向代理、TLS 或 CORS（见第 8 节）。
 
@@ -253,7 +253,7 @@ server deployment / 反向代理 / TLS 配置
 
 ## 9. 完成自检
 
-仅阅读本文档与 [product authority](../../../market-snapshot/src/daily_market_snapshot/products/mo_option_chain/ARCHITECTURE.md) / [read contract](../../../market-snapshot/src/daily_market_snapshot/products/mo_option_chain/read-contract.md)，应能唯一回答：
+仅阅读本文档与 [product authority](../../../market-snapshot/src/market_snapshot/products/mo_option_chain/ARCHITECTURE.md) / [read contract](../../../market-snapshot/src/market_snapshot/products/mo_option_chain/read-contract.md)，应能唯一回答：
 
 1. endpoint URL 与 method 是什么？
 2. 哪些 query 参数是 required，默认值是什么？

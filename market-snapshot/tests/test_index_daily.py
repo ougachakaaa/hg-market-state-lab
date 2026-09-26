@@ -3,8 +3,8 @@ from pathlib import Path
 
 import pytest
 
-from daily_market_snapshot.products.daily_market_snapshot import index_daily
-from daily_market_snapshot.sources import tushare
+from market_snapshot.products.daily_market_snapshot import index_daily
+from market_snapshot.sources import tushare
 from support.fake_source import FakeTushareApi, index_daily_frame, index_frames_for_all
 
 

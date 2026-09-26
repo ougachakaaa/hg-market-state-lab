@@ -49,6 +49,16 @@ def patch_child(
     return invocation
 
 
+def test_backend_uses_the_backend_api_launcher(monkeypatch: pytest.MonkeyPatch) -> None:
+    invocation = patch_child(monkeypatch, 0)
+
+    assert dev.main(["backend"]) == 0
+    assert invocation == {
+        "command": [POETRY, "run", "python", "scripts/api.py"],
+        "cwd": dev.BACKEND_API,
+    }
+
+
 def test_data_requires_service_id() -> None:
     with pytest.raises(SystemExit) as excinfo:
         dev.main(["data"])
@@ -89,7 +99,7 @@ def test_explicit_date_forms_dms_command_and_propagates_child_exit_code(
             "--date",
             TARGET_DATE,
         ],
-        "cwd": dev.BACKEND,
+        "cwd": dev.MARKET_SNAPSHOT,
     }
 
 

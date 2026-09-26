@@ -14,8 +14,8 @@ from typing import Any
 
 import pytest
 
-from daily_market_snapshot import artifacts
-from daily_market_snapshot.sources import tushare
+from market_snapshot import artifacts
+from market_snapshot.sources import tushare
 
 TESTS_DIR = Path(__file__).resolve().parent
 REPO_ROOT = TESTS_DIR.parent

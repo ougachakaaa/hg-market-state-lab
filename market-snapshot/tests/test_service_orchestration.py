@@ -17,20 +17,20 @@ from typing import Any
 
 import pytest
 
-from daily_market_snapshot import artifacts, cli
-from daily_market_snapshot.capture import common as capture_common
-from daily_market_snapshot.capture import (
+from market_snapshot import artifacts, cli
+from market_snapshot.capture import common as capture_common
+from market_snapshot.capture import (
     im_futures_basic,
     im_futures_daily,
     mo_option_basic,
     mo_option_daily,
 )
-from daily_market_snapshot.products.csi1000_5d_analysis import capture as csi1000_index_history
-from daily_market_snapshot.products.csi1000_5d_analysis import preparation
-from daily_market_snapshot.products.csi1000_5d_analysis import service as csi1000_5d_analysis
-from daily_market_snapshot.products.daily_market_snapshot import index_daily, stock_daily
-from daily_market_snapshot.services import DataServiceError, catalog
-from daily_market_snapshot.sources import tushare
+from market_snapshot.products.csi1000_5d_analysis import capture as csi1000_index_history
+from market_snapshot.products.csi1000_5d_analysis import preparation
+from market_snapshot.products.csi1000_5d_analysis import service as csi1000_5d_analysis
+from market_snapshot.products.daily_market_snapshot import index_daily, stock_daily
+from market_snapshot.services import DataServiceError, catalog
+from market_snapshot.sources import tushare
 from support.fake_source import CSI1000_TARGET_DATE, csi1000_5d_analysis_api
 
 SERVICE_ID = "csi1000-5d-analysis"
@@ -172,13 +172,13 @@ def imported_modules(module: ModuleType) -> set[str]:
 
 def test_the_cli_does_not_orchestrate_captures_or_preparation() -> None:
     """The CLI resolves a Data Service; it never names a Capture or a formula."""
-    import daily_market_snapshot.cli as cli_module
+    import market_snapshot.cli as cli_module
 
     source = Path(str(cli_module.__file__)).read_text(encoding="utf-8")
 
     for module in ALL_CAPTURE_MODULES:
         assert f"import {module.__name__}" not in source
-    assert "daily_market_snapshot.products" not in source
+    assert "market_snapshot.products" not in source
     # It reports through the catalog, not by reaching into a service stage.
     assert "catalog" in source
 
@@ -191,7 +191,7 @@ def test_the_data_service_owns_the_orchestration() -> None:
         assert module.__name__.rsplit(".", 1)[-1] in source
     assert "build_snapshot" in source
     assert csi1000_5d_analysis.collect_csi1000_5d_analysis.__module__ == (
-        "daily_market_snapshot.products.csi1000_5d_analysis.service"
+        "market_snapshot.products.csi1000_5d_analysis.service"
     )
 
 
@@ -236,7 +236,7 @@ def test_the_cli_shim_has_no_business_logic() -> None:
     shim = Path(__file__).resolve().parent.parent / "scripts" / "dms.py"
     source = shim.read_text(encoding="utf-8")
 
-    assert "from daily_market_snapshot.cli import main" in source
+    assert "from market_snapshot.cli import main" in source
     for module in ALL_CAPTURE_MODULES:
         assert f"import {module.__name__}" not in source
     assert "build_snapshot" not in source

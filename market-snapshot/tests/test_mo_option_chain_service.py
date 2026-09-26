@@ -23,7 +23,7 @@ from enum import StrEnum
 
 import pytest
 
-from daily_market_snapshot.products.mo_option_chain import service
+from market_snapshot.products.mo_option_chain import service
 from support.fake_chain_service import TARGET_DATE, chain_fixture, chain_result, error_result
 
 

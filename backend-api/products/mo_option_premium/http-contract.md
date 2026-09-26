@@ -1,6 +1,6 @@
 # MO Premium Plane HTTP transport contract authority
 
-本文档从属于 [backend-api HTTP product catalog](../../HTTP_PRODUCTS.md)，只拥有 MO Premium Plane 的 HTTP resource、V1 query、success projection、sparse-plane wire semantics、presentation-state boundary 与 error mapping。Source/Raw/universe 由 [market-snapshot data authority](../../../market-snapshot/src/daily_market_snapshot/products/mo_option_premium/data.md) 拥有，Canonical Point、Preparation、公式与 PlaneFramer 由 [market-snapshot backend authority](../../../market-snapshot/src/daily_market_snapshot/products/mo_option_premium/backend.md) 拥有，product orchestration、result 与 semantic failures 由 [market-snapshot product service authority](../../../market-snapshot/src/daily_market_snapshot/products/mo_option_premium/service-contract.md) 拥有。
+本文档从属于 [backend-api HTTP product catalog](../../HTTP_PRODUCTS.md)，只拥有 MO Premium Plane 的 HTTP resource、V1 query、success projection、sparse-plane wire semantics、presentation-state boundary 与 error mapping。Source/Raw/universe 由 [market-snapshot data authority](../../../market-snapshot/src/market_snapshot/products/mo_option_premium/data.md) 拥有，Canonical Point、Preparation、公式与 PlaneFramer 由 [market-snapshot backend authority](../../../market-snapshot/src/market_snapshot/products/mo_option_premium/backend.md) 拥有，product orchestration、result 与 semantic failures 由 [market-snapshot product service authority](../../../market-snapshot/src/market_snapshot/products/mo_option_premium/service-contract.md) 拥有。
 
 ---
 
@@ -220,7 +220,7 @@ reference_basis
             → representation
 ```
 
-这是 frontend-supported coordinates 的唯一 wire projection；不得并行保留 `raw_total_underlying_points`、`annualized_time_value_futures_yield` 或既有 annualized flat fields 等长期竞争性 contract。所有 metric leaves 均显式存在且为 `number | null`，其合法组合及金融一致性由 [backend authority](../../../market-snapshot/src/daily_market_snapshot/products/mo_option_premium/backend.md) 决定。
+这是 frontend-supported coordinates 的唯一 wire projection；不得并行保留 `raw_total_underlying_points`、`annualized_time_value_futures_yield` 或既有 annualized flat fields 等长期竞争性 contract。所有 metric leaves 均显式存在且为 `number | null`，其合法组合及金融一致性由 [backend authority](../../../market-snapshot/src/market_snapshot/products/mo_option_premium/backend.md) 决定。
 
 HTTP 只保持已准备 facts，不计算、不补值，也不从一个 coordinate 推导另一个 coordinate。尤其不得在 delivery adapter 中计算 reference-relative component、time value、annualization 或任一 yield。
 
@@ -314,7 +314,7 @@ Tushare schema
 internal cache
 ```
 
-HTTP adapter 从 [product service](../../../market-snapshot/src/daily_market_snapshot/products/mo_option_premium/service-contract.md) 接受完整的 request-scoped `PremiumPlane` 或 classified product semantic failure。它不得直接调用 Source、构造 Raw/Basis、计算 DTE、reference-relative decomposition、time value、annualization 或 premium metrics，也不得修复 incomplete Point/Plane。
+HTTP adapter 从 [product service](../../../market-snapshot/src/market_snapshot/products/mo_option_premium/service-contract.md) 接受完整的 request-scoped `PremiumPlane` 或 classified product semantic failure。它不得直接调用 Source、构造 Raw/Basis、计算 DTE、reference-relative decomposition、time value、annualization 或 premium metrics，也不得修复 incomplete Point/Plane。
 
 ## 7. Ordering and Identity
 
@@ -374,12 +374,12 @@ V1 closed mapping：
 | --- | --- | --- |
 | `invalid_request` | 400 | 缺少 required 参数；`as_of` 格式无效；query 值不在 HTTP 输入闭集；携带未知 query 参数 |
 | `unsupported_query` | 400 | application/domain boundary 明确报告形态合法但 V1 不支持的 observation/product/price query |
-| `date_not_available` | 404 | Product service 已按 [service contract](../../../market-snapshot/src/daily_market_snapshot/products/mo_option_premium/service-contract.md) 分类的同名 failure |
-| `premium_plane_unavailable` | 503 | Product service 已按 [service contract](../../../market-snapshot/src/daily_market_snapshot/products/mo_option_premium/service-contract.md) 分类的同名 failure |
+| `date_not_available` | 404 | Product service 已按 [service contract](../../../market-snapshot/src/market_snapshot/products/mo_option_premium/service-contract.md) 分类的同名 failure |
+| `premium_plane_unavailable` | 503 | Product service 已按 [service contract](../../../market-snapshot/src/market_snapshot/products/mo_option_premium/service-contract.md) 分类的同名 failure |
 
 transport validation 直接拒绝 `option_product != MO` 与不支持的 `price_type`，使用 `invalid_request` 并把 `param` 设为对应字段。`unsupported_query` 只用于 application/domain boundary 显式报告的合法但未支持 query，不由 HTTP adapter 自行发明。
 
-`date_not_available` 与 `premium_plane_unavailable` 的 product semantic classification 由 [service contract](../../../market-snapshot/src/daily_market_snapshot/products/mo_option_premium/service-contract.md) 唯一决定。HTTP 只做上述 status/envelope mapping；它不执行 availability probe，不解释 Source response，不判断 product completeness，也不根据 partial facts 重新分类。
+`date_not_available` 与 `premium_plane_unavailable` 的 product semantic classification 由 [service contract](../../../market-snapshot/src/market_snapshot/products/mo_option_premium/service-contract.md) 唯一决定。HTTP 只做上述 status/envelope mapping；它不执行 availability probe，不解释 Source response，不判断 product completeness，也不根据 partial facts 重新分类。
 
 未知 query 参数使用 `invalid_request`，且 `param = null`，由 `detail` 指出未知参数。产品整体不可用时 `param = null`。
 
@@ -417,7 +417,7 @@ React / Plotly renderer
 
 ## 12. Completion Check
 
-仅阅读 [MO Premium Plane product authority](../../../market-snapshot/src/daily_market_snapshot/products/mo_option_premium/ARCHITECTURE.md) 与本文档，应能唯一回答：
+仅阅读 [MO Premium Plane product authority](../../../market-snapshot/src/market_snapshot/products/mo_option_premium/ARCHITECTURE.md) 与本文档，应能唯一回答：
 
 1. endpoint、method 与 V1 query 是什么？
 2. response、expiry context 与 sparse Point 分别包含什么？

@@ -6,9 +6,9 @@ from typing import Any
 import pandas as pd
 import pytest
 
-from daily_market_snapshot import artifacts
-from daily_market_snapshot.capture import common, im_futures_basic, im_futures_daily
-from daily_market_snapshot.sources import tushare
+from market_snapshot import artifacts
+from market_snapshot.capture import common, im_futures_basic, im_futures_daily
+from market_snapshot.sources import tushare
 from support.fake_source import (
     FakeTushareApi,
     futures_basic_frame,

@@ -41,7 +41,7 @@ External Analyzer
 
 Data Service 是用户可请求的完整数据能力，负责选择并编排所需 Source Capture 与 Analysis Preparation，再发布产品规定的结果。它不定义 Source API 字段，也不实现 Preparation formula。
 
-Data Service/application request、orchestration、result、semantic failure、CLI 与 canonical persisted output 契约见 [Data Service authority](src/daily_market_snapshot/services/ARCHITECTURE.md)。HTTP inbound delivery 由 [backend-api](../backend-api/ARCHITECTURE.md) 拥有。
+Data Service/application request、orchestration、result、semantic failure、CLI 与 canonical persisted output 契约见 [Data Service authority](src/market_snapshot/services/ARCHITECTURE.md)。HTTP inbound delivery 由 [backend-api](../backend-api/ARCHITECTURE.md) 拥有。
 
 ### Source
 
@@ -51,7 +51,7 @@ Source 定义外部数据事实与 API 语义，不定义本项目的 Analysis-r
 
 Source Capture 拥有具体 endpoint 调用、query parameters、Source-domain scope selection、minimal normalization 与 Raw Artifact production。
 
-它可以理解 Source-domain fact，例如产品、交易所、合约生命周期和目标交易日；不得根据下游分析偏好筛选合约或生成市场判断。共享 Capture 身份与 Source fact 语义见 [Capture authority](src/daily_market_snapshot/capture/ARCHITECTURE.md)。
+它可以理解 Source-domain fact，例如产品、交易所、合约生命周期和目标交易日；不得根据下游分析偏好筛选合约或生成市场判断。共享 Capture 身份与 Source fact 语义见 [Capture authority](src/market_snapshot/capture/ARCHITECTURE.md)。
 
 ### Raw Artifact
 
@@ -160,4 +160,4 @@ market_snapshot
 
 `market-snapshot` 是通用 market data preparation / market snapshot bounded context；daily cadence 不是 module-level invariant。Daily observations、request-scoped products、intraday observations 与其他 snapshot products 均可位于 `market_snapshot` namespace 下。
 
-当前 `src/daily_market_snapshot/` 是尚待后续 implementation migration 的明确 drift；本决定不重命名目录、Python import 或具体产品。语义仍然是 daily snapshot 的 `Daily Market Snapshot` 产品，以及 `daily bar`、daily Capture、Source field 与 trade-date 术语，均不因 package namespace 决定而改名。
+实现统一位于 `src/market_snapshot/`，Python import 使用 `market_snapshot`。语义仍然是 daily snapshot 的 `Daily Market Snapshot` 产品，以及 `daily bar`、daily Capture、Source field 与 trade-date 术语，均不因 package namespace 决定而改名。

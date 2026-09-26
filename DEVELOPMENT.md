@@ -14,7 +14,7 @@ bash .codex/scripts/setup.sh
 
 运行该脚本的 Bash 环境必须已经提供 `python3.13`、`poetry`、`node` 和 `npm`；脚本不安装或升级这些 machine-level tools。它使用已提交的 lock files 安装 backend 与 frontend 依赖，然后运行 `python3.13 dev.py doctor` 检查 readiness；不会启动服务、运行完整测试或调用 Tushare。
 
-每个 worktree 分别使用自己的 `market-snapshot/.venv` 和 `web-ui/node_modules`，不与其他 worktree 共享依赖目录。Codex managed worktree 会按根目录 `.worktreeinclude` 复制 source checkout 中已忽略的 `market-snapshot/.env`；如果 source checkout 没有该文件，setup 从 `.env.example` 复制一份空模板，不会生成或猜测 secret。
+每个 worktree 分别使用自己的 `market-snapshot/.venv`、`backend-api/.venv` 和 `web-ui/node_modules`，不与其他 worktree 共享依赖目录。Codex managed worktree 会按根目录 `.worktreeinclude` 复制 source checkout 中已忽略的 `market-snapshot/.env`；如果 source checkout 没有该文件，setup 从 `.env.example` 复制一份空模板，不会生成或猜测 secret。
 
 手工执行 `git worktree add` 不会触发 Codex Local Environment，可以在新 worktree 根目录手工运行同一命令完成初始化。
 
@@ -28,11 +28,11 @@ python dev.py data csi1000-5d-analysis --date 2026-09-18
 
 ## 命令与状态
 
-`doctor` 检查仓库结构、backend launcher、Poetry 虚拟环境中的 Python 3.13，以及 Node 和 npm。它报告默认本地地址 `127.0.0.1:8011` 的 backend 状态：未监听为 `stopped`，监听且 `/openapi.json` 有效为 `running / healthy`，否则为 `port occupied / unhealthy`。服务未启动是正常状态。若 `web-ui/package.json` 不存在，frontend 报告 `not initialized`；存在后检查默认 `127.0.0.1:5173` 是否监听，不要求专用 health endpoint。
+`doctor` 检查仓库结构、backend launcher、两个 Poetry 虚拟环境中的 Python 3.13，以及 Node 和 npm。它报告默认本地地址 `127.0.0.1:8011` 的 backend 状态：未监听为 `stopped`，监听且 `/openapi.json` 有效为 `running / healthy`，否则为 `port occupied / unhealthy`。服务未启动是正常状态。若 `web-ui/package.json` 不存在，frontend 报告 `not initialized`；存在后检查默认 `127.0.0.1:5173` 是否监听，不要求专用 health endpoint。
 
 `doctor` 在必要的仓库结构、backend launcher、Poetry 或 Python 3.13 条件不满足时非零退出；frontend 已初始化但 Node/npm 不可用时也非零退出。frontend 尚未初始化和服务停止本身不使 `doctor` 失败。检查只读，不创建虚拟环境、不安装依赖，也不调用 Tushare 或运行 pytest、Ruff、mypy。
 
-`backend` 在 `market-snapshot/` 前台执行 `poetry run python scripts/api.py`。这是当前 implementation location，不是 canonical module ownership；本次 authority decision 不提供尚不存在的 `backend-api` launcher。`frontend` 在 `web-ui/` 前台执行 `npm run dev`；首次启动前需在 `web-ui/` 自行执行 `npm install`。两个命令继承标准输入输出、传递子进程退出码，Ctrl+C 结束前台进程。缺少启动前提时明确报错，不自动修复环境。
+`backend` 在 `backend-api/` 前台执行 `poetry run python scripts/api.py`。`frontend` 在 `web-ui/` 前台执行 `npm run dev`；首次启动前需在 `web-ui/` 自行执行 `npm install`。两个命令继承标准输入输出、传递子进程退出码，Ctrl+C 结束前台进程。缺少启动前提时明确报错，不自动修复环境。
 
 `data` 是 repository-level Data Service convenience command：
 
@@ -56,6 +56,6 @@ poetry run python scripts/dms.py get <service_id> --date <resolved-date>
 
 ## Ownership
 
-`dev.py` 只拥有 CLI parsing、命令分发、仓库路径解析、开发前提检查、Data Service `service_id` 转发、convenience default date resolution、进程调用、exit-code propagation 和人类可读状态。HTTP bind/runtime composition 与 contract 的 canonical owner 是 `backend-api`；当前 `dev.py` 仍转发 `market-snapshot/scripts/api.py`，只反映尚未迁移的 implementation location。Frontend 的 React/Vite 配置与开发脚本由 `web-ui` 拥有。`dev.py` 不导入模块内部代码，不拥有 Source Capture orchestration、Analysis Preparation、Data Service business semantics、dataset schema 或 trading-calendar resolution；端口仅用于本地开发诊断，不构成业务契约。
+`dev.py` 只拥有 CLI parsing、命令分发、仓库路径解析、开发前提检查、Data Service `service_id` 转发、convenience default date resolution、进程调用、exit-code propagation 和人类可读状态。HTTP bind/runtime composition 与 contract 的 owner 是 `backend-api`；Data Service CLI 仍由 `market-snapshot` 拥有。Frontend 的 React/Vite 配置与开发脚本由 `web-ui` 拥有。`dev.py` 不导入模块内部代码，不拥有 Source Capture orchestration、Analysis Preparation、Data Service business semantics、dataset schema 或 trading-calendar resolution；端口仅用于本地开发诊断，不构成业务契约。
 
 V1 不提供组合启动、后台进程、PID、日志、停止或重启、端口分配、配置框架、环境变量管理、依赖安装、测试运行或部署功能。`dev.py` 的 frontend 诊断地址与 Vite 显式绑定的 `127.0.0.1:5173` 一致。

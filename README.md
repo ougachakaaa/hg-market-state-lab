@@ -24,14 +24,17 @@ README 是人类开发入口，不是架构或业务语义 authority。
 
 ## 环境准备
 
-Backend 需要 Python 3.13 与 Poetry：
+两个 Python module 都需要 Python 3.13 与 Poetry：
 
 ```bash
 cd market-snapshot
 poetry install
+
+cd ../backend-api
+poetry install
 ```
 
-`market-snapshot` 的 canonical Python namespace 是 `market_snapshot`；当前代码仍位于 `market-snapshot/src/daily_market_snapshot/`，在后续 implementation migration 前安装与运行方式保持不变。
+`market-snapshot` 的 canonical Python namespace 是 `market_snapshot`。`backend-api` 通过 editable path dependency 消费该 package，并独立拥有 FastAPI runtime。
 
 Frontend 需要满足当前 Vite 要求的 Node.js 与 npm：
 
@@ -69,18 +72,19 @@ poetry run python scripts/dms.py list
 poetry run python scripts/dms.py get csi1000-5d-analysis --date 2026-09-18
 ```
 
-CLI、service orchestration 与 output contract 见 [Data Service authority](market-snapshot/src/daily_market_snapshot/services/ARCHITECTURE.md)。产品数据语义从 [Capability Catalog](market-snapshot/CAPABILITIES.md) 进入。
+CLI、service orchestration 与 output contract 见 [Data Service authority](market-snapshot/src/market_snapshot/services/ARCHITECTURE.md)。产品数据语义从 [Capability Catalog](market-snapshot/CAPABILITIES.md) 进入。
 
 ## HTTP API
 
-HTTP transport 的 canonical owner 是 [`backend-api`](backend-api/ARCHITECTURE.md)。当前 implementation 尚未迁移，仍需在 `market-snapshot/` 目录启动本地 backend：
+HTTP transport 的 canonical owner 和 implementation owner 都是 [`backend-api`](backend-api/ARCHITECTURE.md)。在该目录启动本地 backend：
 
 ```bash
+cd backend-api
 poetry run python scripts/api.py
 poetry run python scripts/api.py --host 127.0.0.1 --port 8012
 ```
 
-默认地址为 `127.0.0.1:8011`，OpenAPI 位于 `/openapi.json`，交互文档位于 `/docs`。MO Option Chain 的 HTTP 契约见 [Option Chain authority](backend-api/products/mo_option_chain/http-contract.md)；MO Premium Plane 的 HTTP 契约见 [Premium Plane authority](backend-api/products/mo_option_premium/http-contract.md)。当前 launcher、FastAPI code、routers、DTO 与 dependencies 仍位于 `market-snapshot`，这是后续 implementation migration 的输入，不改变 canonical ownership。
+默认地址为 `127.0.0.1:8011`，OpenAPI 位于 `/openapi.json`，交互文档位于 `/docs`。MO Option Chain 的 HTTP 契约见 [Option Chain authority](backend-api/products/mo_option_chain/http-contract.md)；MO Premium Plane 的 HTTP 契约见 [Premium Plane authority](backend-api/products/mo_option_premium/http-contract.md)。
 
 ## Web UI
 
@@ -94,7 +98,7 @@ npm run dev
 
 ## 验证命令
 
-Backend（在 `market-snapshot/`）：
+Market Snapshot（在 `market-snapshot/`）：
 
 ```bash
 poetry run pytest
@@ -102,7 +106,15 @@ poetry run ruff check .
 poetry run mypy .
 ```
 
-Frontend（在 `web-ui/`）：
+Backend API（在 `backend-api/`）：
+
+```bash
+poetry run pytest
+poetry run ruff check .
+poetry run mypy .
+```
+
+Frontend（后续 contract tooling reconciliation 完成后，在 `web-ui/`）：
 
 ```bash
 npm run contract:check
@@ -111,4 +123,4 @@ npm run build
 npm run lint
 ```
 
-修改 `backend-api` HTTP DTO/OpenAPI 后，在 `web-ui/` 运行 `npm run contract:generate` 并提交更新后的 OpenAPI JSON 与生成类型，再执行上述检查。当前 generation tooling 仍连接 `market-snapshot` runtime，直至后续 implementation migration。
+当前 frontend contract generation tooling 仍连接已移除的旧 runtime，暂不随本次 backend/namespace migration 调整；在后续 frontend reconciliation 完成前，`contract:generate` 与 `contract:check` 不可用。现有 committed OpenAPI artifacts 仍由 backend contract tests 只读校验，以防本次迁移改变 wire contract。
