@@ -340,4 +340,12 @@ def test_root_cli_is_the_only_research_executable_surface() -> None:
     manifest = tomllib.loads(
         (REPOSITORY_ROOT / "pyproject.toml").read_text(encoding="utf-8")
     )
-    assert "scripts" not in manifest["project"]
+    scripts = manifest["project"].get("scripts", {})
+
+    assert "market-research" not in scripts
+    assert scripts.get("market-research") != "market_research.ui.cli:main"
+    assert not any(
+        entry_point.split(":", maxsplit=1)[0] == "market_research"
+        or entry_point.split(":", maxsplit=1)[0].startswith("market_research.")
+        for entry_point in scripts.values()
+    )

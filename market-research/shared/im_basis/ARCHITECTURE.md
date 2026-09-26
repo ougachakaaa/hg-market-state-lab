@@ -33,7 +33,7 @@ non_front_mean_basis_T
 
 当前 consumers：
 
-- [IM Annualized Basis Baseline](../../studies/im_annualized_basis_baseline/ARCHITECTURE.md)
+- [IM Annualized Basis Baseline](../../studies/im_basis_baseline/ARCHITECTURE.md)
 - [IM Basis Forward Return Association](../../studies/im_basis_forward_return_association/ARCHITECTURE.md)
 
 这两个 Study 都直接消费 Snapshot public semantic result；后者不依赖前者的 persisted result。`non_front_mean_basis` 只是当前 Research 中的共用 predictor，不因多个 Research consumer 而成为 Snapshot field、production feature、forecast、signal 或 Modeling contract。

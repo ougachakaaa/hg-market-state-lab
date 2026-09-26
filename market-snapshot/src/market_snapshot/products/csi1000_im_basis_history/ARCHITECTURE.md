@@ -69,6 +69,6 @@ future-return / predictive analysis
 - 修改 Source scope、observation dates 或 Source completeness → [data authority](data.md)
 - 修改 result shape、Preparation projection、public boundary 或 product failure → [read/application contract](read-contract.md)
 - 修改 IM slot、remaining days、basis formula 或 shared ordering → [shared IM basis authority](../../preparation/im_basis/ARCHITECTURE.md)
-- 修改 retained study method → [IM Annualized Basis Baseline study](../../../../../market-research/studies/im_annualized_basis_baseline/ARCHITECTURE.md)
+- 修改 retained study method → [IM Annualized Basis Baseline study](../../../../../market-research/studies/im_basis_baseline/ARCHITECTURE.md)
 
 只读取当前任务需要的分支；本产品不依赖 sibling product authority 或产物。
