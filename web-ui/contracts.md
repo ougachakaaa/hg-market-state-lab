@@ -1,13 +1,17 @@
 # web-ui generated contract feedback-loop authority
 
-本文档从属于 [web-ui architecture](ARCHITECTURE.md)，拥有 frontend-consumed HTTP products 的 generated contract ownership、generation obligation 与 freshness feedback loop。Backend product authority 定义语义，backend HTTP contract 定义 wire contract；本文件不创建竞争性的 schema。
+本文档从属于 [web-ui architecture](ARCHITECTURE.md)，拥有 frontend-consumed HTTP products 的 generated contract ownership、generation obligation 与 freshness feedback loop。Owning business module authority 定义产品语义，[backend-api](../backend-api/ARCHITECTURE.md) HTTP contract 定义 wire contract；本文件不创建竞争性的 schema。
 
 ## 1. Feedback-loop Invariant
 
 每个 frontend-consumed HTTP product 必须遵循同一依赖方向：
 
 ```text
-backend HTTP contract
+owning module semantic authority
+        ↓
+backend-api HTTP contract
+        ↓
+backend-api published OpenAPI
         ↓
 committed generated OpenAPI representation
         ↓
@@ -26,8 +30,8 @@ OpenAPI 与 TypeScript artifacts 是 backend HTTP contract 的生成表示，不
 
 | Frontend feature | Backend HTTP contract | Generated contract owner |
 | --- | --- | --- |
-| MO Option Chain | `GET /mo-option-chain` | `mo_option_chain` frontend bounded context |
-| MO Premium Plane | `GET /mo-option-premium-plane` | `mo_option_premium` frontend bounded context |
+| MO Option Chain | [`GET /mo-option-chain`](../backend-api/products/mo_option_chain/http-contract.md) | `mo_option_chain` frontend bounded context |
+| MO Premium Plane | [`GET /mo-option-premium-plane`](../backend-api/products/mo_option_premium/http-contract.md) | `mo_option_premium` frontend bounded context |
 
 两个 generated contract boundaries 平级且独立。Backend runtime 可以组合多个 product routes，但 runtime composition 不得把 sibling frontend features 强制耦合进共享业务 schema、共享 DTO ownership 或共享 feature-local contract boundary。
 

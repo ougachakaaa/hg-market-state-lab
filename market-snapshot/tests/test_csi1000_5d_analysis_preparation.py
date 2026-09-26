@@ -16,11 +16,11 @@ from typing import Any
 
 import pytest
 
-from daily_market_snapshot import artifacts
-from daily_market_snapshot.products.csi1000_5d_analysis import preparation as analysis
-from daily_market_snapshot.products.csi1000_5d_analysis import service
-from daily_market_snapshot.products.csi1000_5d_analysis.preparation import SnapshotError
-from daily_market_snapshot.sources import tushare
+from market_snapshot import artifacts
+from market_snapshot.products.csi1000_5d_analysis import preparation as analysis
+from market_snapshot.products.csi1000_5d_analysis import service
+from market_snapshot.products.csi1000_5d_analysis.preparation import SnapshotError
+from market_snapshot.sources import tushare
 
 TARGET_DATE = "2026-09-17"
 TARGET = date.fromisoformat(TARGET_DATE)

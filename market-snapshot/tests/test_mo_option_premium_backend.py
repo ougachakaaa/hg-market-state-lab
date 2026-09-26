@@ -1,4 +1,4 @@
-"""Backend, orchestration and HTTP contract tests for MO Premium Plane."""
+"""Business models, preparation and orchestration tests for MO Premium Plane."""
 
 from __future__ import annotations
 
@@ -9,14 +9,10 @@ from typing import Any
 
 import pandas as pd
 import pytest
-from fastapi.testclient import TestClient
 
-from daily_market_snapshot import artifacts
-from daily_market_snapshot.api import app as runtime_app
-from daily_market_snapshot.api import create_app
-from daily_market_snapshot.products.mo_option_premium import framing, preparation, service
-from daily_market_snapshot.products.mo_option_premium.api import endpoint
-from daily_market_snapshot.products.mo_option_premium.models import (
+from market_snapshot import artifacts
+from market_snapshot.products.mo_option_premium import framing, preparation, service
+from market_snapshot.products.mo_option_premium.models import (
     CalculationBasis,
     FuturesReference,
     ObservationAnchor,
@@ -518,161 +514,3 @@ def test_multiple_structural_futures_matches_are_product_unavailable() -> None:
     result = service.read_premium_plane_with_api(api, QUERY)
 
     assert isinstance(result.error, service.PremiumPlaneUnavailableError)
-
-
-@pytest.fixture
-def http_client() -> TestClient:
-    application = create_app()
-    application.dependency_overrides[endpoint.get_premium_plane_provider] = lambda: (
-        lambda query: service.read_premium_plane_with_api(premium_source(), query)
-    )
-    return TestClient(application)
-
-
-def error(response: Any) -> dict[str, Any]:
-    payload = response.json()
-    assert set(payload) == {"error"}
-    return payload["error"]
-
-
-def test_http_request_traverses_the_real_backend_and_projects_the_sparse_plane(
-    http_client: TestClient,
-) -> None:
-    response = http_client.get(
-        "/mo-option-premium-plane",
-        params={"as_of": AS_OF, "option_product": "MO"},
-    )
-
-    assert response.status_code == 200
-    payload = response.json()
-    assert payload["observation"] == {"kind": "trade_date", "value": AS_OF}
-    assert payload["option_product"] == "MO"
-    assert payload["price_type"] == "close"
-    assert payload["underlying"] == {"instrument_id": "000852.SH", "price": 7300.0}
-    assert payload["expiries"] == [
-        {
-            "expiry_date": EXPIRY,
-            "dte": 9,
-            "futures": {"instrument_id": "IM2609.CFE", "price": 7290.0},
-        }
-    ]
-    assert [point["instrument_id"] for point in payload["points"]] == [CALL, PUT]
-    assert payload["points"][1]["premium"] is None
-    metrics = payload["points"][0]["metrics"]
-    assert set(metrics) == {"underlying_spot", "expiry_futures"}
-    assert set(metrics["underlying_spot"]) == {"total", "time_value"}
-    assert set(metrics["underlying_spot"]["total"]) == {"unannualized", "annualized"}
-    assert metrics["underlying_spot"]["total"]["unannualized"]["points"] == (
-        payload["points"][0]["premium"]
-    )
-    assert metrics["underlying_spot"]["time_value"]["annualized"]["points"] == pytest.approx(
-        (payload["points"][0]["premium"] - 300.0) * 365 / 9
-    )
-    assert metrics["underlying_spot"]["time_value"]["annualized"]["yield"] == pytest.approx(
-        ((payload["points"][0]["premium"] - 300.0) * 365 / 9) / 7300
-    )
-    assert metrics["expiry_futures"]["total"]["unannualized"]["yield"] == pytest.approx(
-        payload["points"][0]["premium"] / 7290.0
-    )
-    missing_metrics = payload["points"][1]["metrics"]
-    assert missing_metrics["underlying_spot"]["total"]["annualized"]["points"] is None
-    assert missing_metrics["expiry_futures"]["time_value"]["annualized"]["points"] is None
-
-
-def test_http_projection_preserves_futures_unavailability_without_fallback() -> None:
-    api = premium_source()
-    api.futures_basic = futures_basic_frame(
-        [im_contract("IM2610.CFE", list_date="20260801", delist_date="20261023")]
-    )
-    api.futures_daily = {}
-
-    payload = endpoint.project_plane(successful_plane(api)).model_dump(by_alias=True)
-    metrics = payload["points"][0]["metrics"]["expiry_futures"]
-
-    assert payload["expiries"][0]["futures"] is None
-    assert metrics["total"]["unannualized"]["points"] == payload["points"][0]["premium"]
-    assert metrics["total"]["annualized"]["points"] == pytest.approx(
-        payload["points"][0]["premium"] * 365 / 9
-    )
-    assert metrics["total"]["unannualized"]["yield"] is None
-    assert metrics["time_value"]["unannualized"]["points"] is None
-
-
-@pytest.mark.parametrize(
-    ("params", "param"),
-    [
-        ({"option_product": "MO"}, "as_of"),
-        ({"as_of": AS_OF}, "option_product"),
-        ({"as_of": AS_OF, "option_product": "IO"}, "option_product"),
-        ({"as_of": AS_OF, "option_product": "MO", "price_type": "settle"}, "price_type"),
-    ],
-)
-def test_http_invalid_requests_use_the_contract_envelope(
-    http_client: TestClient, params: dict[str, str], param: str
-) -> None:
-    response = http_client.get("/mo-option-premium-plane", params=params)
-
-    assert response.status_code == 400
-    assert error(response)["kind"] == "invalid_request"
-    assert error(response)["param"] == param
-
-
-def test_http_unknown_query_is_invalid_without_parameter_attribution(
-    http_client: TestClient,
-) -> None:
-    response = http_client.get(
-        "/mo-option-premium-plane",
-        params={"as_of": AS_OF, "option_product": "MO", "side": "call"},
-    )
-
-    assert response.status_code == 400
-    assert error(response)["kind"] == "invalid_request"
-    assert error(response)["param"] is None
-
-
-def test_http_rejects_a_noncanonical_as_of_before_calling_the_provider(
-    http_client: TestClient,
-) -> None:
-    response = http_client.get(
-        "/mo-option-premium-plane",
-        params={"as_of": "2026-9-17", "option_product": "MO"},
-    )
-
-    assert response.status_code == 400
-    assert error(response)["kind"] == "invalid_request"
-    assert error(response)["param"] == "as_of"
-
-
-@pytest.mark.parametrize(
-    ("failure", "status", "kind"),
-    [
-        (service.DateNotAvailableError("none"), 404, "date_not_available"),
-        (
-            service.PremiumPlaneUnavailableError("incomplete"),
-            503,
-            "premium_plane_unavailable",
-        ),
-    ],
-)
-def test_http_maps_classified_product_failures_without_partial_plane(
-    failure: service.PremiumPlaneError, status: int, kind: str
-) -> None:
-    application = create_app()
-    application.dependency_overrides[endpoint.get_premium_plane_provider] = lambda: (
-        lambda _query: service.PremiumPlaneResult(error=failure)
-    )
-    response = TestClient(application).get(
-        "/mo-option-premium-plane", params={"as_of": AS_OF, "option_product": "MO"}
-    )
-
-    assert response.status_code == status
-    assert error(response)["kind"] == kind
-    assert set(response.json()) == {"error"}
-
-
-def test_runtime_openapi_publishes_both_independent_products_without_422() -> None:
-    document = TestClient(runtime_app).get("/openapi.json").json()
-
-    assert set(document["paths"]) == {"/mo-option-chain", "/mo-option-premium-plane"}
-    responses = document["paths"]["/mo-option-premium-plane"]["get"]["responses"]
-    assert set(responses) == {"200", "400", "404", "503"}

@@ -4,13 +4,13 @@ from typing import Any
 
 import pytest
 
-from daily_market_snapshot import artifacts
-from daily_market_snapshot.capture import im_futures_basic as futures_basic
-from daily_market_snapshot.capture import im_futures_daily as futures_daily
-from daily_market_snapshot.capture import mo_option_basic as option_basic
-from daily_market_snapshot.capture import mo_option_daily as option_daily
-from daily_market_snapshot.products.csi1000_5d_analysis import capture as index_history
-from daily_market_snapshot.sources import tushare
+from market_snapshot import artifacts
+from market_snapshot.capture import im_futures_basic as futures_basic
+from market_snapshot.capture import im_futures_daily as futures_daily
+from market_snapshot.capture import mo_option_basic as option_basic
+from market_snapshot.capture import mo_option_daily as option_daily
+from market_snapshot.products.csi1000_5d_analysis import capture as index_history
+from market_snapshot.sources import tushare
 from support.fake_source import (
     FakeTushareApi,
     business_days,

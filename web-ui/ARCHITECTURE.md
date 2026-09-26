@@ -17,21 +17,23 @@ visualization
 
 `web-ui` 不拥有 Source、Source Capture、Raw Artifact、Analysis Preparation formula、market modeling 或业务计算语义，也不产生交易判断。
 
-前端只消费 backend 明确发布的 read/HTTP contract。它不得为了绘图重新推导产品身份、contract universe、价格 fallback、业务 completeness 或金融指标。
+前端只消费 owning module 明确发布的 application/product result 与 `backend-api` HTTP contract。它不得为了绘图重新推导产品身份、contract universe、价格 fallback、业务 completeness 或金融指标。
 
 ## 3. 数据依赖方向
 
 ```text
-backend semantic contract
+owning module semantic contract
         ↓
-HTTP wire contract / generated client types
+backend-api HTTP contract / OpenAPI
+        ↓
+generated client types
         ↓
 web-ui request adaptation
         ↓
 interaction and visualization
 ```
 
-Markdown authority 定义语义；backend OpenAPI 是 HTTP wire contract 的机器可读表达。前端可以消费生成类型与运行时校验，但不得独立维护一份竞争性的 backend schema。
+Owning module Markdown authority 定义业务语义，`backend-api` authority 定义 HTTP transport；published OpenAPI 是 HTTP wire contract 的机器可读表达。前端可以消费生成类型与运行时校验，但不得独立维护一份竞争性的 backend schema。
 
 ## 4. Authority Routing
 
@@ -55,7 +57,7 @@ interaction
 empty and error presentation
 ```
 
-正式 frontend vertical slices 及其 canonical authority entry 由 application authority 下游的 `FEATURES.md` 导航。feature entry 会按需链接对应 backend product 与 HTTP authority；普通前端任务无需读取 Source、Raw 或不相关产品文档。
+正式 frontend vertical slices 及其 canonical authority entry 由 application authority 下游的 `FEATURES.md` 导航。feature entry 会按需分别链接 owning product 与 `backend-api` HTTP authority；普通前端任务无需读取 Source、Raw 或不相关产品文档。
 
 ## 5. 维护边界
 

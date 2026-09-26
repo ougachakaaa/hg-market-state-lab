@@ -15,9 +15,9 @@ GET /mo-option-premium-plane
 依赖方向固定为：
 
 ```text
-Premium backend semantic contract
+market-snapshot Premium semantic contract
         ↓
-Premium HTTP contract / generated client types
+backend-api Premium HTTP contract / generated client types
         ↓
 frontend request adaptation
         ↓
@@ -59,7 +59,7 @@ user-visible empty, loading and error presentation
 ## 4. Navigation
 
 - V1 用户流程、query/presentation state、numeric plane、formatting、interaction 与用户可见状态：[visualization.md](visualization.md)
-- Backend product identity 与跨层 invariant：[MO Premium Plane product authority](../../../../market-snapshot/src/daily_market_snapshot/products/mo_option_premium/ARCHITECTURE.md)
-- HTTP resource、wire projection、ordering 与 error mapping：[HTTP contract](../../../../market-snapshot/src/daily_market_snapshot/products/mo_option_premium/http-contract.md)
+- Backend product identity 与跨层 invariant：[MO Premium Plane product authority](../../../../market-snapshot/src/market_snapshot/products/mo_option_premium/ARCHITECTURE.md)
+- HTTP resource、wire projection、ordering 与 error mapping：[backend-api HTTP contract](../../../../backend-api/products/mo_option_premium/http-contract.md)
 
 只沿当前任务需要的分支继续读取。Frontend implementation 不需要读取 backend Source、Raw、formula、Preparation 或 orchestration authority。

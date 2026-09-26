@@ -27,16 +27,16 @@ from typing import Any
 
 import pytest
 
-from daily_market_snapshot import artifacts, cli
-from daily_market_snapshot.capture import (
+from market_snapshot import artifacts, cli
+from market_snapshot.capture import (
     im_futures_basic,
     im_futures_daily,
     mo_option_basic,
     mo_option_daily,
 )
-from daily_market_snapshot.products.csi1000_5d_analysis import capture as csi1000_index_history
-from daily_market_snapshot.products.csi1000_5d_analysis import service as csi1000_5d_analysis
-from daily_market_snapshot.services import DataServiceError
+from market_snapshot.products.csi1000_5d_analysis import capture as csi1000_index_history
+from market_snapshot.products.csi1000_5d_analysis import service as csi1000_5d_analysis
+from market_snapshot.services import DataServiceError
 from support.fake_source import (
     CSI1000_IM_CONTRACTS,
     CSI1000_TARGET_DATE,

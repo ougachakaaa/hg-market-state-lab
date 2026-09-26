@@ -41,7 +41,7 @@ External Analyzer
 
 Data Service 是用户可请求的完整数据能力，负责选择并编排所需 Source Capture 与 Analysis Preparation，再发布产品规定的结果。它不定义 Source API 字段，也不实现 Preparation formula。
 
-Data Service、CLI、delivery surface 与 canonical output 契约见 [Data Service authority](src/daily_market_snapshot/services/ARCHITECTURE.md)。
+Data Service/application request、orchestration、result、semantic failure、CLI 与 canonical persisted output 契约见 [Data Service authority](src/market_snapshot/services/ARCHITECTURE.md)。HTTP inbound delivery 由 [backend-api](../backend-api/ARCHITECTURE.md) 拥有。
 
 ### Source
 
@@ -51,7 +51,7 @@ Source 定义外部数据事实与 API 语义，不定义本项目的 Analysis-r
 
 Source Capture 拥有具体 endpoint 调用、query parameters、Source-domain scope selection、minimal normalization 与 Raw Artifact production。
 
-它可以理解 Source-domain fact，例如产品、交易所、合约生命周期和目标交易日；不得根据下游分析偏好筛选合约或生成市场判断。共享 Capture 身份与 Source fact 语义见 [Capture authority](src/daily_market_snapshot/capture/ARCHITECTURE.md)。
+它可以理解 Source-domain fact，例如产品、交易所、合约生命周期和目标交易日；不得根据下游分析偏好筛选合约或生成市场判断。共享 Capture 身份与 Source fact 语义见 [Capture authority](src/market_snapshot/capture/ARCHITECTURE.md)。
 
 ### Raw Artifact
 
@@ -90,11 +90,21 @@ Analysis Preparation consumes Raw Artifact
 Analysis Preparation produces Analysis-ready Artifact
 ```
 
+对 HTTP consumer 的跨模块边界固定为：
+
+```text
+market-snapshot product/application service
+        ↓
+public application boundary
+        ↓
+backend-api HTTP adapter
+```
+
 - Analysis Preparation 不得依赖 Source 或发起采集。
 - Source Capture 不得依赖 Preparation 输出结构。
 - Data Service 不重新定义 Capture 或 Preparation 语义。
 - 共享 Capture capability 不等于共享 goal-scoped Raw Artifact；产品不得读取 sibling product 的 Raw 或最终产物，除非产品 authority 明确规定。
-- HTTP 等 delivery adapter 只能投影 Data Service 或 Preparation 已准备的事实，不反向塑造 domain semantics。
+- HTTP adapter 由 `backend-api` 拥有，只能投影 Data Service 或 Preparation 已准备的事实，不反向塑造 domain semantics，也不得重新分类 semantic failure。
 
 ## 5. Raw 与 Analysis-ready 的边界
 
@@ -131,11 +141,23 @@ CAPABILITIES.md
     ↓ navigation only
 co-located product / shared capability ARCHITECTURE.md
     ↓ bounded-context ownership and routing
-specialized authority
-    ↓ fields, formulas, contracts and failure semantics
+specialized business authority
+    ↓ fields, formulas, application contracts and failure semantics
 implementation
 ```
 
-本文件只在术语、架构层职责、依赖方向或 Raw/Preparation 所有权变化时更新。新增产品、Source Capture、字段、公式、DTO 或 UI 行为不直接修改本文件，应进入 [CAPABILITIES.md](CAPABILITIES.md) 所指向的 canonical owner。
+本文件只在术语、架构层职责、依赖方向或 Raw/Preparation 所有权变化时更新。新增产品、Source Capture、字段或公式不直接修改本文件，应进入 [CAPABILITIES.md](CAPABILITIES.md) 所指向的 canonical owner；HTTP DTO 进入 `backend-api`，UI 行为进入 `web-ui`。
 
 出现冲突时不得通过上层摘要覆盖下层契约；应确定正确 owner 并完成显式 reconciliation。
+
+## 8. Canonical Python Namespace
+
+本模块的 canonical Python package namespace 是：
+
+```text
+market_snapshot
+```
+
+`market-snapshot` 是通用 market data preparation / market snapshot bounded context；daily cadence 不是 module-level invariant。Daily observations、request-scoped products、intraday observations 与其他 snapshot products 均可位于 `market_snapshot` namespace 下。
+
+实现统一位于 `src/market_snapshot/`，Python import 使用 `market_snapshot`。语义仍然是 daily snapshot 的 `Daily Market Snapshot` 产品，以及 `daily bar`、daily Capture、Source field 与 trade-date 术语，均不因 package namespace 决定而改名。

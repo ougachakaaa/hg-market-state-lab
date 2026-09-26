@@ -4,7 +4,7 @@ set -euo pipefail
 
 script_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)"
 repo_root="$(cd -- "${script_dir}/../.." && pwd -P)"
-backend_dir="${repo_root}/market-snapshot"
+market_snapshot_dir="${repo_root}/market-snapshot"
 frontend_dir="${repo_root}/web-ui"
 
 missing_tools=()
@@ -32,9 +32,10 @@ if [[ "${python_version}" != "3.13" ]]; then
 fi
 
 required_files=(
-    "${backend_dir}/pyproject.toml"
-    "${backend_dir}/poetry.lock"
-    "${backend_dir}/.env.example"
+    "${repo_root}/pyproject.toml"
+    "${repo_root}/poetry.lock"
+    "${repo_root}/poetry.toml"
+    "${market_snapshot_dir}/.env.example"
     "${frontend_dir}/package.json"
     "${frontend_dir}/package-lock.json"
 )
@@ -45,42 +46,42 @@ for required_file in "${required_files[@]}"; do
     fi
 done
 
-if [[ ! -e "${backend_dir}/.env" ]]; then
-    cp -- "${backend_dir}/.env.example" "${backend_dir}/.env"
+if [[ ! -e "${market_snapshot_dir}/.env" ]]; then
+    cp -- "${market_snapshot_dir}/.env.example" "${market_snapshot_dir}/.env"
     printf 'Created market-snapshot/.env from .env.example.\n'
 else
     printf 'Using existing market-snapshot/.env.\n'
 fi
 
-printf 'Installing backend dependencies into market-snapshot/.venv...\n'
+printf 'Installing repository Python dependencies into .venv...\n'
 (
-    cd -- "${backend_dir}"
+    cd -- "${repo_root}"
     POETRY_VIRTUALENVS_IN_PROJECT=true poetry env use "${python313}"
     POETRY_VIRTUALENVS_IN_PROJECT=true poetry install --sync --no-interaction
 )
 
 poetry_env_path="$({
-    cd -- "${backend_dir}"
+    cd -- "${repo_root}"
     POETRY_VIRTUALENVS_IN_PROJECT=true poetry env info --path
 })"
 if [[ "${poetry_env_path}" = /* ]]; then
     poetry_env_candidate="${poetry_env_path}"
 else
-    poetry_env_candidate="${backend_dir}/${poetry_env_path}"
+    poetry_env_candidate="${repo_root}/${poetry_env_path}"
 fi
 if [[ ! -d "${poetry_env_candidate}" ]]; then
     printf 'error: Poetry reported an environment that does not exist: %s\n' \
         "${poetry_env_candidate}" >&2
     exit 1
 fi
-if [[ ! -d "${backend_dir}/.venv" ]]; then
+if [[ ! -d "${repo_root}/.venv" ]]; then
     printf 'error: Poetry did not create the required worktree-local environment: %s\n' \
-        "${backend_dir}/.venv" >&2
+        "${repo_root}/.venv" >&2
     exit 1
 fi
 
 poetry_env_resolved="$(cd -- "${poetry_env_candidate}" && pwd -P)"
-expected_venv_resolved="$(cd -- "${backend_dir}/.venv" && pwd -P)"
+expected_venv_resolved="$(cd -- "${repo_root}/.venv" && pwd -P)"
 if [[ "${poetry_env_resolved}" != "${expected_venv_resolved}" ]]; then
     printf 'error: Poetry environment is not worktree-local.\n' >&2
     printf 'expected: %s\nactual:   %s\n' \
@@ -96,4 +97,4 @@ printf 'Installing frontend dependencies into web-ui/node_modules...\n'
 
 printf 'Verifying development environment readiness...\n'
 cd -- "${repo_root}"
-python3.13 dev.py doctor
+poetry run python dev.py doctor

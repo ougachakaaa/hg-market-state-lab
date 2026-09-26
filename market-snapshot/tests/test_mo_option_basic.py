@@ -4,9 +4,9 @@ from typing import Any
 
 import pytest
 
-from daily_market_snapshot import artifacts
-from daily_market_snapshot.capture import common, mo_option_basic
-from daily_market_snapshot.sources import tushare
+from market_snapshot import artifacts
+from market_snapshot.capture import common, mo_option_basic
+from market_snapshot.sources import tushare
 from support.fake_source import FakeTushareApi, mo_option_contract, option_basic_frame
 
 TARGET_DATE = "2026-09-17"

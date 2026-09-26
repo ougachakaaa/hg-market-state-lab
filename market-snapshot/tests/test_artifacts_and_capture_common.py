@@ -1,18 +1,18 @@
 """Tests for the shared artifact and Source Capture helper layers.
 
-The artifact filesystem capability lives in ``daily_market_snapshot.artifacts``
-and the Tushare Source boundary in ``daily_market_snapshot.sources.tushare``; the
+The artifact filesystem capability lives in ``market_snapshot.artifacts``
+and the Tushare Source boundary in ``market_snapshot.sources.tushare``; the
 generic Raw-record helpers the captures share live in
-``daily_market_snapshot.capture.common``.
+``market_snapshot.capture.common``.
 """
 
 from pathlib import Path
 
 import pytest
 
-from daily_market_snapshot import artifacts
-from daily_market_snapshot.capture import common
-from daily_market_snapshot.sources import tushare
+from market_snapshot import artifacts
+from market_snapshot.capture import common
+from market_snapshot.sources import tushare
 
 
 def test_to_tushare_date_converts_iso_to_source_form() -> None:

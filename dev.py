@@ -14,7 +14,8 @@ from pathlib import Path
 from urllib.request import urlopen
 
 ROOT = Path(__file__).resolve().parent
-BACKEND = ROOT / "market-snapshot"
+MARKET_SNAPSHOT = ROOT / "market-snapshot"
+BACKEND_API = ROOT / "backend-api"
 FRONTEND = ROOT / "web-ui"
 BACKEND_HOST = "127.0.0.1"
 BACKEND_PORT = 8011
@@ -45,11 +46,11 @@ def _tool_version(name: str) -> tuple[str | None, str | None]:
 
 
 def _poetry_python(poetry: str) -> tuple[Path | None, str | None]:
-    """Inspect an existing Poetry environment without creating one."""
+    """Inspect the existing repository Poetry environment without creating one."""
     try:
         result = subprocess.run(
-            [poetry, "env", "info", "--executable"],
-            cwd=BACKEND,
+            [poetry, "env", "info", "--path"],
+            cwd=ROOT,
             capture_output=True,
             text=True,
             timeout=COMMAND_TIMEOUT,
@@ -57,7 +58,10 @@ def _poetry_python(poetry: str) -> tuple[Path | None, str | None]:
         )
         if result.returncode != 0:
             return None, None
-        executable = Path(result.stdout.strip())
+        environment = Path(result.stdout.strip())
+        if not environment.is_absolute():
+            environment = ROOT / environment
+        executable = environment / "bin" / "python"
         if not executable.is_file():
             return None, None
         version = subprocess.run(
@@ -105,24 +109,30 @@ def doctor() -> int:
     print("hg-market-state-lab doctor\n")
     print("repository")
     for label, path, is_dir in (
-        ("market-snapshot", BACKEND, True),
+        ("market-snapshot", MARKET_SNAPSHOT, True),
+        ("market-modeling", ROOT / "market-modeling", True),
+        ("market-research", ROOT / "market-research", True),
+        ("backend-api", BACKEND_API, True),
         ("web-ui", FRONTEND, True),
-        ("pyproject.toml", BACKEND / "pyproject.toml", False),
+        ("root pyproject", ROOT / "pyproject.toml", False),
+        ("root lockfile", ROOT / "poetry.lock", False),
     ):
         exists = path.is_dir() if is_dir else path.is_file()
         print(f"  {label:<20} {'OK' if exists else 'FAIL (missing)'}")
         failed |= not exists
 
-    print("\nbackend")
+    print("\nPython runtime")
     poetry, poetry_version = _tool_version("poetry")
     poetry_status = f"OK ({poetry_version})" if poetry_version else "FAIL (unavailable)"
     print(f"  {'Poetry':<20} {poetry_status}")
     failed |= poetry_version is None
 
-    if poetry_version and BACKEND.is_dir():
+    if poetry_version and poetry is not None:
         python, version = _poetry_python(poetry)
         if python is None:
             python_status = "FAIL (Poetry environment missing)"
+        elif python.parent.parent.resolve() != (ROOT / ".venv").resolve():
+            python_status = "FAIL (Poetry environment is not root .venv)"
         elif version is None:
             python_status = "FAIL (unable to read version)"
         elif version.split(".")[:2] == ["3", "13"]:
@@ -131,10 +141,10 @@ def doctor() -> int:
             python_status = f"FAIL (expected 3.13, found {version})"
     else:
         python_status = "FAIL (unavailable)"
-    print(f"  {'Python 3.13':<20} {python_status}")
+    print(f"  {'root Python 3.13':<20} {python_status}")
     failed |= not python_status.startswith("OK")
 
-    launcher = BACKEND / "scripts" / "api.py"
+    launcher = BACKEND_API / "scripts" / "api.py"
     launcher_exists = launcher.is_file()
     print(f"  {'launcher':<20} {'OK' if launcher_exists else 'FAIL (missing)'}")
     failed |= not launcher_exists
@@ -179,17 +189,19 @@ def _run_foreground(command: list[str], cwd: Path) -> int:
 
 
 def backend() -> int:
-    if not BACKEND.is_dir() or not (BACKEND / "pyproject.toml").is_file():
-        print("backend prerequisites missing: market-snapshot/pyproject.toml", file=sys.stderr)
+    if not (ROOT / "pyproject.toml").is_file() or not (ROOT / "poetry.lock").is_file():
+        print("backend prerequisites missing: root pyproject.toml or poetry.lock", file=sys.stderr)
         return 1
-    if not (BACKEND / "scripts" / "api.py").is_file():
-        print("backend launcher missing: market-snapshot/scripts/api.py", file=sys.stderr)
+    if not (BACKEND_API / "scripts" / "api.py").is_file():
+        print("backend launcher missing: backend-api/scripts/api.py", file=sys.stderr)
         return 1
     poetry = shutil.which("poetry")
     if poetry is None:
         print("backend prerequisite missing: Poetry", file=sys.stderr)
         return 1
-    return _run_foreground([poetry, "run", "python", "scripts/api.py"], BACKEND)
+    return _run_foreground(
+        [poetry, "run", "python", "backend-api/scripts/api.py"], ROOT
+    )
 
 
 def frontend() -> int:
@@ -210,10 +222,10 @@ def _china_market_today() -> str:
 
 def data(service_id: str, target_trade_date: str | None = None) -> int:
     """Forward one persisted-artifact Data Service request to the canonical CLI."""
-    if not BACKEND.is_dir() or not (BACKEND / "pyproject.toml").is_file():
-        print("data prerequisites missing: market-snapshot/pyproject.toml", file=sys.stderr)
+    if not (ROOT / "pyproject.toml").is_file() or not (ROOT / "poetry.lock").is_file():
+        print("data prerequisites missing: root pyproject.toml or poetry.lock", file=sys.stderr)
         return 1
-    if not (BACKEND / "scripts" / "dms.py").is_file():
+    if not (MARKET_SNAPSHOT / "scripts" / "dms.py").is_file():
         print("data launcher missing: market-snapshot/scripts/dms.py", file=sys.stderr)
         return 1
     poetry = shutil.which("poetry")
@@ -227,13 +239,13 @@ def data(service_id: str, target_trade_date: str | None = None) -> int:
             poetry,
             "run",
             "python",
-            "scripts/dms.py",
+            "market-snapshot/scripts/dms.py",
             "get",
             service_id,
             "--date",
             resolved_date,
         ],
-        BACKEND,
+        ROOT,
     )
 
 

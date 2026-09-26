@@ -11,22 +11,22 @@ REPOSITORY_ROOT = Path(__file__).resolve().parents[2]
 MARKDOWN_LINK = re.compile(r"\[[^]]+\]\(([^)]+)\)")
 
 CONTEXT_ENTRIES = {
-    Path("market-snapshot/src/daily_market_snapshot/capture/ARCHITECTURE.md"),
-    Path("market-snapshot/src/daily_market_snapshot/services/ARCHITECTURE.md"),
+    Path("market-snapshot/src/market_snapshot/capture/ARCHITECTURE.md"),
+    Path("market-snapshot/src/market_snapshot/services/ARCHITECTURE.md"),
     Path(
-        "market-snapshot/src/daily_market_snapshot/products/"
+        "market-snapshot/src/market_snapshot/products/"
         "daily_market_snapshot/ARCHITECTURE.md"
     ),
     Path(
-        "market-snapshot/src/daily_market_snapshot/products/"
+        "market-snapshot/src/market_snapshot/products/"
         "csi1000_5d_analysis/ARCHITECTURE.md"
     ),
     Path(
-        "market-snapshot/src/daily_market_snapshot/products/"
+        "market-snapshot/src/market_snapshot/products/"
         "mo_option_chain/ARCHITECTURE.md"
     ),
     Path(
-        "market-snapshot/src/daily_market_snapshot/products/"
+        "market-snapshot/src/market_snapshot/products/"
         "mo_option_premium/ARCHITECTURE.md"
     ),
     Path("web-ui/src/features/mo_option_chain/ARCHITECTURE.md"),
@@ -97,6 +97,7 @@ def test_central_guides_do_not_return() -> None:
         if path.is_file()
         and "_temp_docs" not in path.parts
         and "node_modules" not in path.parts
+        and ".venv" not in path.parts
         and "__pycache__" not in path.parts
         and path.suffix in text_suffixes
         and obsolete_fragment in path.read_text(encoding="utf-8", errors="ignore")
@@ -115,7 +116,7 @@ def test_capability_catalog_is_navigation_only() -> None:
 
 def test_product_packages_do_not_import_sibling_products() -> None:
     products_root = (
-        REPOSITORY_ROOT / "market-snapshot/src/daily_market_snapshot/products"
+        REPOSITORY_ROOT / "market-snapshot/src/market_snapshot/products"
     )
     violations: list[str] = []
     for product in products_root.iterdir():
@@ -140,7 +141,7 @@ def test_product_packages_do_not_import_sibling_products() -> None:
                 )
             ]
             for sibling in sibling_names:
-                absolute = f"daily_market_snapshot.products.{sibling}"
+                absolute = f"market_snapshot.products.{sibling}"
                 if any(
                     imported == sibling
                     or imported.startswith(f"{sibling}.")
@@ -153,11 +154,66 @@ def test_product_packages_do_not_import_sibling_products() -> None:
 
 
 def test_shared_capture_does_not_import_product_contexts() -> None:
-    capture_root = REPOSITORY_ROOT / "market-snapshot/src/daily_market_snapshot/capture"
+    capture_root = REPOSITORY_ROOT / "market-snapshot/src/market_snapshot/capture"
     offenders = [
         str(source.relative_to(REPOSITORY_ROOT))
         for source in capture_root.glob("*.py")
-        if "daily_market_snapshot.products" in source.read_text(encoding="utf-8")
+        if "market_snapshot.products" in source.read_text(encoding="utf-8")
         or "..products" in source.read_text(encoding="utf-8")
     ]
     assert not offenders, f"shared Capture imports product contexts: {offenders}"
+
+
+def test_canonical_python_namespace_replaces_the_legacy_namespace() -> None:
+    source_root = REPOSITORY_ROOT / "market-snapshot/src"
+
+    assert (source_root / "market_snapshot/__init__.py").is_file()
+    assert not (source_root / "daily_market_snapshot").exists()
+
+    offenders: list[str] = []
+    for root in (REPOSITORY_ROOT / "market-snapshot", REPOSITORY_ROOT / "backend-api"):
+        for path in root.rglob("*.py"):
+            if ".venv" in path.parts:
+                continue
+            tree = ast.parse(path.read_text(encoding="utf-8"))
+            imported = [
+                name
+                for node in ast.walk(tree)
+                for name in (
+                    [alias.name for alias in node.names]
+                    if isinstance(node, ast.Import)
+                    else [node.module]
+                    if isinstance(node, ast.ImportFrom) and node.module is not None
+                    else []
+                )
+            ]
+            if any(
+                name == "daily_market_snapshot"
+                or name.startswith("daily_market_snapshot.")
+                for name in imported
+            ):
+                offenders.append(str(path.relative_to(REPOSITORY_ROOT)))
+    assert not offenders, f"legacy namespace references: {offenders}"
+
+
+def test_market_snapshot_production_owns_no_http_runtime() -> None:
+    source_root = REPOSITORY_ROOT / "market-snapshot/src/market_snapshot"
+    forbidden = ("fastapi", "starlette", "uvicorn", "backend_api")
+    offenders: list[str] = []
+    for source in source_root.rglob("*.py"):
+        tree = ast.parse(source.read_text(encoding="utf-8"))
+        imported = [
+            name
+            for node in ast.walk(tree)
+            for name in (
+                [alias.name for alias in node.names]
+                if isinstance(node, ast.Import)
+                else [node.module]
+                if isinstance(node, ast.ImportFrom) and node.module is not None
+                else []
+            )
+        ]
+        if any(name.startswith(forbidden) for name in imported):
+            offenders.append(str(source.relative_to(REPOSITORY_ROOT)))
+
+    assert not offenders, f"HTTP runtime imports in market-snapshot: {offenders}"

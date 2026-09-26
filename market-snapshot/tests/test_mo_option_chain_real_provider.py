@@ -7,12 +7,10 @@ from pathlib import Path
 from typing import Any
 
 import pytest
-from fastapi.testclient import TestClient
 
-from daily_market_snapshot import artifacts
-from daily_market_snapshot.products.mo_option_chain import preparation, service
-from daily_market_snapshot.products.mo_option_chain.api.app import create_app
-from daily_market_snapshot.sources import tushare
+from market_snapshot import artifacts
+from market_snapshot.products.mo_option_chain import preparation, service
+from market_snapshot.sources import tushare
 from support.fake_source import (
     FakeTushareApi,
     futures_basic_frame,
@@ -373,30 +371,6 @@ def test_asymmetric_expiry_universe_succeeds_in_read_model() -> None:
     assert all(len(group.calls) == 1 for group in chain.expiries)
 
 
-def test_asymmetric_expiry_universe_succeeds_over_http(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    api = asymmetric_source()
-    monkeypatch.setenv(tushare.TOKEN_ENV_VAR, "fake-token")
-    monkeypatch.setattr(tushare, "create_tushare_api", lambda _token: api)
-
-    response = TestClient(create_app()).get(
-        "/mo-option-chain",
-        params={"target_trade_date": TARGET, "option_product": "MO"},
-    )
-
-    assert response.status_code == 200
-    groups = response.json()["expiries"]
-    assert all("futures" in group for group in groups)
-    assert [
-        group["futures"]["instrument_id"] if group["futures"] else None
-        for group in groups
-    ] == [
-        "IM2609.CFE", "IM2610.CFE", None, "IM2612.CFE", "IM2703.CFE", None,
-    ]
-    assert len(api.fut_daily_calls) == 4
-
-
 def test_preparation_does_not_require_im_symbol(test_workdir: Path) -> None:
     successful_chain(fake_source())
     raw_dir = raw_directory(test_workdir)
@@ -450,57 +424,3 @@ def test_zero_matched_futures_price_is_a_valid_numeric_reference() -> None:
     futures = chain.expiries[0].futures
     assert futures is not None
     assert futures.price == 0.0
-
-
-def test_default_http_provider_uses_real_path_with_fake_source(
-    monkeypatch: pytest.MonkeyPatch, test_workdir: Path
-) -> None:
-    api = fake_source()
-    monkeypatch.setenv(tushare.TOKEN_ENV_VAR, "fake-token")
-    monkeypatch.setattr(tushare, "create_tushare_api", lambda _token: api)
-    client = TestClient(create_app())
-
-    response = client.get(
-        "/mo-option-chain",
-        params={"target_trade_date": TARGET, "option_product": "MO", "price_type": "high"},
-    )
-
-    assert response.status_code == 200
-    payload = response.json()
-    assert payload["price_type"] == "high"
-    assert payload["underlying"] == {"instrument_id": "000852.SH", "price": 102.0}
-    assert payload["expiries"][0]["futures"] == {
-        "instrument_id": "IM2609.CFE", "price": 7490.6
-    }
-    assert payload["expiries"][0]["calls"] == [
-        {"instrument_id": C1, "strike": 7000.0, "price": 103.0},
-        {"instrument_id": C2, "strike": 7000.0, "price": None},
-    ]
-    assert payload["expiries"][1]["puts"] == [{"instrument_id": P1, "strike": 7000.0, "price": 0.0}]
-    assert raw_directory(test_workdir).exists()
-
-
-@pytest.mark.parametrize("case", ["multiple_matches", "missing_daily", "null_price"])
-def test_real_http_provider_maps_incomplete_matched_futures_to_503(
-    monkeypatch: pytest.MonkeyPatch, case: str,
-) -> None:
-    api = fake_source()
-    if case == "multiple_matches":
-        competing = im_contract("IM2699.CFE", list_date="20260817", delist_date="20260925")
-        api.futures_basic = futures_basic_frame(
-            [*api.futures_basic.to_dict(orient="records"), competing]
-        )
-    elif case == "missing_daily":
-        api.futures_daily.pop("IM2609.CFE")
-    else:
-        api.futures_daily["IM2609.CFE"].loc[1, "close"] = None
-    monkeypatch.setenv(tushare.TOKEN_ENV_VAR, "fake-token")
-    monkeypatch.setattr(tushare, "create_tushare_api", lambda _token: api)
-
-    response = TestClient(create_app()).get(
-        "/mo-option-chain",
-        params={"target_trade_date": TARGET, "option_product": "MO"},
-    )
-
-    assert response.status_code == 503
-    assert response.json()["error"]["kind"] == "option_chain_unavailable"

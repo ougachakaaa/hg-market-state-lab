@@ -1,0 +1,65 @@
+[project]
+name = "hg-market-state-lab"
+version = "0.1.0"
+description = "Prepare, model, and present reproducible market-state data products."
+requires-python = ">=3.13,<3.14"
+dependencies = [
+    "tushare (>=1.4.29,<2.0.0)",
+    "python-dotenv (>=1.2.3,<2.0.0)",
+    "fastapi (>=0.141.1,<0.142.0)",
+    "uvicorn (>=0.53.0,<0.54.0)",
+]
+
+[tool.poetry]
+packages = [
+    { include = "market_snapshot", from = "market-snapshot/src" },
+    { include = "backend_api", from = "backend-api/src" },
+]
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.3.0"
+ruff = "^0.9.0"
+mypy = "^1.14.0"
+httpx = "^0.28.1"
+
+[build-system]
+requires = ["poetry-core>=2.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.pytest.ini_options]
+testpaths = ["market-snapshot/tests", "backend-api/tests"]
+pythonpath = ["market-snapshot/src", "backend-api/src"]
+
+[tool.ruff]
+target-version = "py313"
+line-length = 100
+src = [
+    "market-snapshot/src",
+    "market-snapshot/tests",
+    "market-snapshot/scripts",
+    "backend-api/src",
+    "backend-api/tests",
+    "backend-api/scripts",
+]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["backend_api", "market_snapshot"]
+
+[tool.mypy]
+python_version = "3.13"
+files = [
+    "market-snapshot/src",
+    "market-snapshot/tests",
+    "market-snapshot/scripts",
+    "backend-api/src",
+    "backend-api/tests",
+    "backend-api/scripts",
+]
+mypy_path = ["market-snapshot/src", "backend-api/src"]
+
+[[tool.mypy.overrides]]
+module = ["tushare", "tushare.*", "pandas", "pandas.*"]
+ignore_missing_imports = true
