@@ -12,7 +12,7 @@ V1 目标是打通完整研究链路并获得简单、可解释的 association b
 
 ## Inputs
 
-Research UI execution adapter 必须以显式、含端点的 `start_trade_date` 与 `end_trade_date` 调用 `CSI1000 IM Basis History` public Python application boundary，再把完整 semantic result 交给 Study。Study 不组合 Snapshot dependency；请求不使用 implicit latest/today 或 query-range fallback。
+Study-local CLI 必须以显式、含端点的 `start_trade_date` 与 `end_trade_date` 调用 `CSI1000 IM Basis History` public Python application boundary，再把完整 semantic result 交给 Study。Study computation 不组合 Snapshot dependency；请求不使用 implicit latest/today 或 query-range fallback。
 
 Research 仅使用 Snapshot result 提供的：
 
@@ -125,6 +125,20 @@ positive_return_rate
 ### Run validity
 
 必须有足够 observation dates 形成包含 20D target 的 common sample。如果 common sample 太小、predictor 或任一 horizon outcome 无方差、阈值 ties 导致任一 quintile 为空，或任何必需统计量不可定义，整次 retained run 必须显式报告样本或变异不足并失败。不输出部分 evidence、空统计值、推测值或缩短后的 horizon set。
+
+## Execution
+
+Stable Study ID 为 `im-basis-forward-return-association`。从 repository root 通过统一 CLI 运行：
+
+```bash
+poetry run python dev.py research run im-basis-forward-return-association --start 2024-01-01 --end 2026-01-01
+```
+
+`--start` 与 `--end` 为 required inclusive `YYYY-MM-DD` dates，不使用 today/latest/default。同一日期区间的 canonical run directory 已存在时默认失败；显式 `--overwrite` 才允许事务性替换。完整参数帮助由以下命令生成：
+
+```bash
+poetry run python dev.py research run im-basis-forward-return-association --help
+```
 
 ## Results
 

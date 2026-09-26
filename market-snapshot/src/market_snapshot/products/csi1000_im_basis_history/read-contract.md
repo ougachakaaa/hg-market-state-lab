@@ -85,7 +85,7 @@ output/... persistence layout
 backend-api / FastAPI / HTTP DTO
 ```
 
-该 public boundary 必须提供由本 Snapshot 产品拥有的 production-ready execution/composition entry。调用方只提供 `CSI1000IMBasisHistoryRequest` 语义请求并接收 `CSI1000IMBasisHistoryResult` 或已分类 application failure；entry 自行完成现有 Snapshot Source boundary 规定的 credential loading、Tushare client 创建与 service composition。Research CLI 不得知道或接收 `TUSHARE_TOKEN`、`TushareApi` 或 Capture implementation。
+该 public boundary 必须提供由本 Snapshot 产品拥有的 production-ready execution/composition entry。调用方只提供 `CSI1000IMBasisHistoryRequest` 语义请求并接收 `CSI1000IMBasisHistoryResult` 或已分类 application failure；entry 自行完成现有 Snapshot Source boundary 规定的 credential loading、Tushare client 创建与 service composition。Research study-local CLI 不得知道或接收 `TUSHARE_TOKEN`、`TushareApi` 或 Capture implementation。
 
 Production-ready entry 从 product-owned public module 暴露为：
 

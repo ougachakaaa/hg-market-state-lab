@@ -10,7 +10,7 @@
 
 ## Inputs
 
-Research UI execution adapter 必须以显式 `start_trade_date` 与 `end_trade_date` 调用 `CSI1000 IM Basis History` 的 public Python application boundary，再把完整 semantic result 交给 Study。Study 不组合 Snapshot dependency；Study run 必须记录 result 携带的实际 query bounds。
+Study-local CLI 必须以显式 `start_trade_date` 与 `end_trade_date` 调用 `CSI1000 IM Basis History` 的 public Python application boundary，再把完整 semantic result 交给 Study。Study computation 不组合 Snapshot dependency；Study run 必须记录 result 携带的实际 query bounds。
 
 Research 直接使用 Snapshot 提供的：
 
@@ -66,6 +66,20 @@ Canonical statistical conventions：
 ### Allowed retained outputs
 
 除统计表外，Study 可以保留 per-series time-series plot、histogram / empirical distribution 和 term-structure comparison plots。图形仅呈现 descriptive evidence，不增加交易阈值、signal zone 或 directional label。
+
+## Execution
+
+Stable Study ID 为 `im-basis-baseline`。从 repository root 通过统一 CLI 运行：
+
+```bash
+poetry run python dev.py research run im-basis-baseline --start 2024-01-01 --end 2026-01-01
+```
+
+`--start` 与 `--end` 为 required inclusive `YYYY-MM-DD` dates，不使用 today/latest/default。同一日期区间的 canonical run directory 已存在时默认失败；显式 `--overwrite` 才允许事务性替换。完整参数帮助由以下命令生成：
+
+```bash
+poetry run python dev.py research run im-basis-baseline --help
+```
 
 ## Results
 

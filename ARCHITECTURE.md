@@ -109,6 +109,8 @@ future modules ──────┘
 
 ## 5. Authority 导航
 
+Repository root 的 `dev.py` 是统一的 human/developer CLI surface。它只负责 command parsing、分层 help、repository path resolution、developer orchestration、command forwarding、process execution、exit-code propagation 与人类可读的 operational error。它不是新业务模块，也不拥有 Snapshot、Research、HTTP 或 frontend 语义。具体命令与本地操作方式见 [DEVELOPMENT.md](DEVELOPMENT.md)。
+
 ```text
 AGENTS.md
     ↓

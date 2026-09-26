@@ -15,7 +15,7 @@
 
 Research 可以在开始时不知道最终需要的全部数据或输出形式，也不要求先存在稳定的 production contract。Research result 可以包含 structured observations、summary statistics、tables、research findings 与 visualizations；其职责终点是 evidence / finding，不是 production market-state output、forecast、decision、signal、recommendation 或 trading strategy。
 
-本模块不拥有 production modeling、model evaluation、forecasting、decision system、backtesting framework、research service/API 或 production Web UI。它拥有面向人类运行 retained Study 的本地 Research CLI；该 CLI 是 inbound interaction boundary，不是 production application UI。
+本模块不拥有 production modeling、model evaluation、forecasting、decision system、backtesting framework、research service/API 或 production Web UI。Repository `dev.py research` 是统一发现/转发入口；本模块拥有具体 retained Study 的 study-local CLI 与执行语义。这些 CLI 是本地 inbound interaction boundary，不是 production application UI。
 
 ## 2. Research UI
 
@@ -24,9 +24,9 @@ Research 可以在开始时不知道最终需要的全部数据或输出形式�
 ```text
 User
     ↓
-Research CLI
+Repository CLI discovery / forwarding
     ↓
-Study selection + request parsing
+Study-local CLI request parsing
     ↓
 market-snapshot public application boundary
     ↓
@@ -37,9 +37,9 @@ configured output location
 result / report / visualization
 ```
 
-Research CLI 拥有 study discovery、command parsing、用户输入校验、Research UI configuration loading、dependency composition、Study invocation、run-directory placement 与 success/failure presentation。它只把用户意图映射到既有 Study application behavior，不拥有 Snapshot Source/Capture、basis formula、Research statistics、Study method、Modeling、Forecasting、Decision、HTTP API 或 Web UI。
+Repository CLI 拥有跨 Study 的 discovery、路径/layout 校验、进程调用与 exit-code propagation；它不 import Research implementation 或维护 Study catalog。每个 study-local CLI 拥有自己的 command parsing、用户输入校验、Research UI configuration loading、Snapshot public-boundary composition、Study invocation 与 success/failure presentation。它不拥有 Snapshot Source/Capture、其他 Study method、Modeling、Forecasting、Decision、HTTP API 或 Web UI。
 
-CLI identity、command families、stable Study ID、Study exposure rule 与 output placement 见 [Research UI authority](ui/ARCHITECTURE.md)；配置 schema 与路径解析见 [Research UI configuration](ui/CONFIGURATION.md)；当前用户命令入口见 [Research command manual](COMMANDS.md)。
+CLI convention、stable Study ID derivation 与 shared output placement 见 [Research UI authority](ui/ARCHITECTURE.md)；配置 schema 与路径解析见 [Research UI configuration](ui/CONFIGURATION.md)；具体参数、用法、Method 与 result semantics 与对应 retained Study authority 共置。
 
 ## 3. Research Result 与 Visualization
 
@@ -89,7 +89,7 @@ Research 必须优先消费 `market-snapshot` 明确支持的 application/produc
 
 Snapshot 仍拥有从 Source fact 到 Analysis-ready Artifact 的确定性准备。Research 可以为具体研究执行 arbitrary slicing、joining、grouping、reshaping、statistics 与 plotting；只有真实 Research consumer 暴露出可复用且属于 deterministic data preparation 的缺口时，才通过对应 Snapshot canonical authority 做显式 reconciliation。
 
-当前 Snapshot 已有 product-owned Data Service / application boundaries，但没有为 Research 承诺统一的公共 Python facade。Research CLI 只调用对应产品拥有的 production-ready public application composition entry；它不得创建 Source client、读取 credential 或进入 Snapshot internals。真实 Research consumer 暴露的窄 public-boundary 缺口必须与对应 Snapshot owner reconciliation，不得借此设计通用 research data interface。
+当前 Snapshot 已有 product-owned Data Service / application boundaries，但没有为 Research 承诺统一的公共 Python facade。Study-local CLI 只调用对应产品拥有的 production-ready public application composition entry；它不得创建 Source client、读取 credential 或进入 Snapshot internals。真实 Research consumer 暴露的窄 public-boundary 缺口必须与对应 Snapshot owner reconciliation，不得借此设计通用 research data interface。
 
 ## 5. Scratch 与 Retained Studies
 

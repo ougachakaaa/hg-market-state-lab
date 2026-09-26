@@ -1,86 +1,54 @@
 # Research UI authority
 
-本文档定义 `market-research` 的 human-facing inbound interaction boundary：Research CLI。模块 identity、Research result 与 Snapshot 消费原则见 [market-research architecture](../ARCHITECTURE.md)；配置 schema 与 resolution 见 [configuration authority](CONFIGURATION.md)；面向用户的命令与 Study 目录见 [command manual](../COMMANDS.md)。
+本文档定义 retained Study 的 human-facing execution convention 与窄义共享 Research UI 支撑。模块 identity、Research result 与 Snapshot 消费原则见 [market-research architecture](../ARCHITECTURE.md)；配置 schema 与 resolution 见 [configuration authority](CONFIGURATION.md)；具体命令与参数与对应 retained Study authority 共置。
 
-## 1. Identity 与职责
+## 1. Interaction boundary
 
-Research CLI 的 canonical namespace 是：
-
-```text
-poetry run market-research ...
-```
-
-它负责 study discovery、command parsing、user input validation、configuration loading、dependency composition、Study invocation、output-directory resolution 与 success/failure presentation。它只把用户意图映射到已有 retained Study application behavior，不拥有：
+Canonical human namespace 是 repository CLI：
 
 ```text
-Snapshot Source/Capture semantics
-basis formulas or Research statistics
-Study Method or artifact contents
-Modeling / Forecasting / Decision
-HTTP API or production Web UI
+poetry run python dev.py research list
+poetry run python dev.py research run <study-id> [study-specific args...]
 ```
 
-Research visualization 继续由 Study 以 Python static output 产生；CLI 只报告生成文件的位置，不拥有 chart semantics，也不提供 plot/PNG configuration options。
+Repository CLI 只拥有 runnable Study discovery、layout 校验、进程执行、参数透明转发、operational error 与 exit-code propagation。它不 import `market_research`，不解析 study-specific arguments，不组合 Snapshot dependency，不拥有 Study method、artifact 或 result semantics。
 
-## 2. V1 commands
+每个 runnable Study 拥有自己的 CLI module。该 module 拥有其 command parsing、input validation、Snapshot public application composition、Study invocation、failure presentation 和 success presentation。`research run <study-id> --help` 必须由该 study-local parser 生成，不由 root CLI 复制参数说明。
 
-V1 只有一个 executable namespace，不为每个 Study 创建独立 executable：
+## 2. Runnable Study convention
+
+Runnable Study 是以下 source root 下的直接 Python package：
 
 ```text
-market-research list
-market-research config
-market-research run <study-id> --start YYYY-MM-DD --end YYYY-MM-DD [--overwrite]
+market-research/src/market_research/studies/
+    <study_package>/
+        __init__.py
+        cli.py
+        ... Study implementation
 ```
 
-- `list` 只输出所有 runnable retained Study 的 stable ID 与 short description，不读取 Source，也不执行 Study。
-- `config` 只输出实际加载的 config source 与 resolved absolute output root；不得输出 credential、token 或 Source configuration。
-- `run` 选择一个显式 Study，校验 required `--start` 与 `--end`，调用 Snapshot public application boundary，再执行并保留 Study output。
-
-`start` 与 `end` 是含端点的显式 ISO `YYYY-MM-DD` date。CLI 不从 Research config、当前日期、`latest` 或隐藏默认值推导日期；无效格式或 `start > end` 在 Source 调用前失败。
-
-V1 不定义 interactive prompt、wizard、TUI、Web UI、background execution、scheduler 或 debug/traceback mode。
-
-## 3. Stable Study IDs 与 explicit catalog
-
-V1 runnable catalog 固定为：
-
-| Study ID | Short description | Retained Study authority |
-| --- | --- | --- |
-| `im-basis-baseline` | 描述 IM 各期限槽及非近月整体年化基差的历史分布 | [IM Annualized Basis Baseline](../studies/im_annualized_basis_baseline/ARCHITECTURE.md) |
-| `im-basis-forward-return-association` | 评估非近月整体年化基差与 CSI1000 后续收益的探索性关联 | [IM Basis Forward Return Association](../studies/im_basis_forward_return_association/ARCHITECTURE.md) |
-
-Study ID 是稳定的 public UI routing identity，不替代 Study semantic name、Python module name、result type 或 authority identity；implementation class/function rename 不得顺带改变 ID。
-
-实现拥有仅含 `study-id + short description + execution adapter` 的窄义显式 catalog。该 catalog 是 `list` 与 `run` dispatch 的唯一 implementation source，但不是 semantic source of truth、Study/Experiment Registry、Research Repository 或 plugin architecture。V1 禁止 filesystem scanning、reflection、entry-point plugin 或动态 registry 自动发现 Study。
-
-新增 runnable retained Study 必须在同一 change 中具备：
-
-1. retained Study authority；
-2. executable Study implementation；
-3. stable CLI study ID；
-4. explicit CLI dispatch entry；
-5. `COMMANDS.md` entry；
-6. CLI/output tests。
-
-只有多个真实 Study 证明动态 registration 必要后，才可通过新的 authority decision 重设该策略。
-
-## 4. Snapshot composition boundary
-
-CLI 为 Study 组合依赖，但不得自行组合 Snapshot Source internals：
+`study_package` 必须是小写 snake_case Python identifier。Stable public Study ID 只允许小写 ASCII 字母、数字与单个连字符分隔的 segment，并通过 `_` 到 `-` 的一对一映射从 package 名确定性得到。例如：
 
 ```text
-Research CLI
-    ↓ semantic request
-CSI1000 IM Basis History production-ready public application entry
-    ↓ semantic result or classified application failure
-Retained Study
+im_basis_baseline
+    ↔ im-basis-baseline
 ```
 
-`TUSHARE_TOKEN`、`.env`、Tushare client 创建、Capture 与 Preparation composition 均由 Snapshot boundary 拥有。Research UI 不得导入 `market_snapshot.sources`、重复读取 credential，或要求用户在 Research config 中提供 token。对应 Snapshot contract 见 [CSI1000 IM Basis History read/application contract](../../market-snapshot/src/market_snapshot/products/csi1000_im_basis_history/read-contract.md)。
+`research list` 只发现具有普通、非 symlink `__init__.py` 和 `cli.py` 的直接 package，按 public Study ID 排序输出。它不 import package、不读取 Source、不执行 Study，也不从中央文件读取 catalog。非法命名、symlink、非普通文件或无法安全映射的 runner layout 必须以人类可读的 malformed-study 错误失败，不得静默加载。
 
-## 5. Output placement 与 ownership
+`research run` 只允许上述 public ID format，确定性映射回直接 package，并使用当前 Python interpreter 执行：
 
-Research UI configuration 只提供 `output.root`。CLI 为每次 run 确定：
+```text
+python -m market_research.studies.<study_package>.cli [study-specific args...]
+```
+
+请求的 package 不存在是 unknown Study；package 存在但没有有效 `cli.py` 是 non-executable Study；路径逃逸、symlink 或非法命名是 malformed Study。Root CLI 不拥有 short description、argument schema 或 execution adapter。
+
+新增 runnable retained Study 只需增加符合本 convention 的 study package/CLI、共置 Study authority 和对应 tests；不修改 root CLI。该 convention 不是 Study Registry、Experiment Engine、plugin system、Research Repository 或通用 lifecycle framework。
+
+## 3. Shared configuration and output placement
+
+Research UI configuration 只提供 `output.root`。Study-local CLI 为每次 run 确定：
 
 ```text
 <output-root>/
@@ -88,49 +56,26 @@ Research UI configuration 只提供 `output.root`。CLI 为每次 run 确定：
     └── <start_trade_date>__<end_trade_date>/
 ```
 
-同一个 `study-id + start + end` 永远映射到同一个 canonical run directory。CLI 把该目录作为 `output_dir` 交给 Study；Study 继续独占目录内 artifact filenames、contents、result/report/plot semantics。
+同一 `study-id + start + end` 始终映射到同一 canonical run directory。共享 UI support 可以提供 configuration loading 与事务性的整目录 staging/replacement，但不得定义 Study arguments、Snapshot request、artifact filenames/contents、statistics 或 result semantics。
 
-若 canonical run directory 已存在，默认在调用 Snapshot 或 Study 前清晰失败，不修改已有 evidence。只有显式 `--overwrite` 才允许替换；replacement 以整个 canonical run directory 为单位，不与旧文件 merge。Study 必须先在 canonical run directory 同级的 staging directory 完整成功，再发布到 canonical location；覆盖时旧目录在发布阶段临时保留为 backup，发布失败恢复旧 evidence，发布成功后才移除 backup。输出目录创建、替换或写入失败属于 output filesystem failure。
+若 canonical run directory 已存在，默认在调用 Snapshot 或 Study 前失败并保留原 evidence。只有 Study 显式提供并接收 `--overwrite` 时才允许替换；replacement 以整个 run directory 为单位，先在同级 staging directory 完成，发布失败恢复原 evidence。
 
-## 6. Presentation 与 failure
+Configuration 是 runner 内部支撑，repository CLI 不公开 `research config` command。
 
-成功的 `run` 至少报告：
+## 4. Snapshot boundary and failure presentation
 
-```text
-Study completed
-Study ID
-requested inclusive date range
-resolved absolute output directory
-main generated artifacts
-```
+Study-local CLI 只能调用对应 Snapshot product 拥有的 production-ready public application entry，不得导入 Source/Capture internals、构造 Source client、读取 credential 或依赖 persistence layout。
 
-完整统计结果保留在 Study 的 machine-readable result、`report.md` 与 visualization 中，不要求全部打印到 terminal。
+正常用户错误必须由 study-local CLI 转换为简洁消息与 non-zero exit code，且不得要求用户阅读 Python traceback 才能识别 command/input、configuration、Snapshot/data、Study/sample 或 output filesystem failure。V1 不锁定跨 Study 的具体 exit-code number。
 
-正常用户错误必须转换为简洁消息与 non-zero exit code，概念上区分：
+## 5. Strict non-goals
 
 ```text
-command/input failure
-configuration failure
-Snapshot/data acquisition failure
-Study/sample failure
-output filesystem failure
-```
-
-V1 不锁定各类别的具体 exit-code number，但不得要求用户阅读 Python traceback 才能识别失败类别。
-
-## 7. Root development CLI boundary
-
-Root `dev.py` 继续只拥有 repository local-development convenience commands，例如 `doctor`、`backend`、`frontend` 与 `data`。Research Study 的 canonical UI 是 `poetry run market-research ...`。
-
-V1 不增加 `dev.py research`。未来若增加，它只能原样 forward 到 canonical Research CLI，不得拥有独立 Study catalog、configuration rule、output placement 或 Study semantics。
-
-## 8. Strict non-goals
-
-```text
+central Study catalog / registry / dispatch table
+entry-point plugin or dynamic registration
+generic Study argument or data interface
 Web Research Viewer / TUI / interactive wizard
 HTTP Research API or generic UI framework
-dynamic Study plugin system
-generic repository configuration framework
 database / queue / background execution / scheduler
 run registry / artifact registry / result browser
 ```
