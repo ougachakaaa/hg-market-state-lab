@@ -12,7 +12,9 @@ from market_snapshot.products.csi1000_im_basis_history import (
     CSI1000IMBasisHistoryError,
     CSI1000IMBasisHistoryRequest,
     CSI1000IMBasisHistoryService,
+    run_csi1000_im_basis_history,
 )
+from market_snapshot.sources import tushare
 from support.fake_source import (
     FakeTushareApi,
     futures_basic_frame,
@@ -151,3 +153,59 @@ def test_slot_mapping_rejects_duplicate_or_malformed_month_structure() -> None:
     }
     with pytest.raises(IMBasisError, match="quarter IM months"):
         assign_contract_slots("2025-12-01", contracts)
+
+
+def test_production_entry_owns_credential_and_client_composition(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    dates = weekdays("2025-12-01", 2)
+    api = api_for_dates(dates)
+    seen: list[str] = []
+    monkeypatch.setattr(tushare, "get_tushare_token", lambda: "configured-token")
+
+    def create_api(token: str) -> FakeTushareApi:
+        seen.append(token)
+        return api
+
+    monkeypatch.setattr(tushare, "create_tushare_api", create_api)
+
+    result = run_csi1000_im_basis_history(request_for(dates))
+
+    assert seen == ["configured-token"]
+    assert len(result.observations) == 8
+
+
+def test_production_entry_validates_before_loading_credentials(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    def unreachable() -> str:
+        raise AssertionError("invalid input must fail before credential loading")
+
+    monkeypatch.setattr(tushare, "get_tushare_token", unreachable)
+    with pytest.raises(CSI1000IMBasisHistoryError, match="YYYY-MM-DD"):
+        run_csi1000_im_basis_history(
+            CSI1000IMBasisHistoryRequest("2025-12-1", "2025-12-02")
+        )
+
+
+@pytest.mark.parametrize("stage", ["credential", "client"])
+def test_production_entry_classifies_composition_failures(
+    monkeypatch: pytest.MonkeyPatch, stage: str
+) -> None:
+    dates = weekdays("2025-12-01", 2)
+    if stage == "credential":
+        monkeypatch.setattr(
+            tushare,
+            "get_tushare_token",
+            lambda: (_ for _ in ()).throw(tushare.TushareCredentialError("missing token")),
+        )
+    else:
+        monkeypatch.setattr(tushare, "get_tushare_token", lambda: "configured-token")
+        monkeypatch.setattr(
+            tushare,
+            "create_tushare_api",
+            lambda _token: (_ for _ in ()).throw(RuntimeError("client unavailable")),
+        )
+
+    with pytest.raises(CSI1000IMBasisHistoryError):
+        run_csi1000_im_basis_history(request_for(dates))

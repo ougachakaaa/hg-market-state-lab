@@ -225,9 +225,10 @@ def test_end_to_end_fake_source_retains_machine_human_and_static_outputs(
     service, dates = full_service(30)
     study_request = request(dates)
 
-    baseline_result = baseline.run_and_retain(service, study_request, tmp_path / "baseline")
+    snapshot = service.run(study_request)
+    baseline_result = baseline.run_and_retain(snapshot, tmp_path / "baseline")
     association_result = association.run_and_retain(
-        service, study_request, tmp_path / "association"
+        snapshot, tmp_path / "association"
     )
 
     assert baseline_result.statistics["M0"].count == 30
@@ -245,9 +246,17 @@ def test_research_imports_only_snapshot_public_product_boundary() -> None:
     research_root = Path(__file__).resolve().parents[1] / "src" / "market_research"
     source = "\n".join(path.read_text(encoding="utf-8") for path in research_root.rglob("*.py"))
     for forbidden in (
+        "market_snapshot.sources",
         "market_snapshot.capture",
         "market_snapshot.preparation",
         "market_snapshot.artifacts",
         "backend_api",
     ):
         assert forbidden not in source
+
+
+def test_studies_do_not_depend_on_research_ui() -> None:
+    studies_root = Path(__file__).resolve().parents[1] / "src" / "market_research" / "studies"
+    source = "\n".join(path.read_text(encoding="utf-8") for path in studies_root.rglob("*.py"))
+    assert "market_research.ui" not in source
+    assert "...ui" not in source

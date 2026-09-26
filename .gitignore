@@ -33,6 +33,10 @@ market-snapshot/data/snapshots/**
 market-snapshot/output/**
 !market-snapshot/output/.gitkeep
 
+# Research retained outputs (runtime artifacts)
+market-research/output/**
+!market-research/output/.gitkeep
+
 # Temporary Documents
 _temp_docs/**
 !_temp_docs/AGENTS.md

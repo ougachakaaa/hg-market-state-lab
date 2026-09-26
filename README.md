@@ -73,6 +73,19 @@ poetry run python market-snapshot/scripts/dms.py get csi1000-5d-analysis --date 
 
 CLI、service orchestration 与 output contract 见 [Data Service authority](market-snapshot/src/market_snapshot/services/ARCHITECTURE.md)。产品数据语义从 [Capability Catalog](market-snapshot/CAPABILITIES.md) 进入。
 
+## Research CLI
+
+在 repository root 发现、检查配置并运行 retained Study：
+
+```bash
+poetry run market-research list
+poetry run market-research config
+poetry run market-research run im-basis-baseline --start 2024-01-01 --end 2026-01-01
+poetry run market-research run im-basis-forward-return-association --start 2024-01-01 --end 2026-01-01
+```
+
+命令、输出目录与 overwrite 行为见 [Research CLI command manual](market-research/COMMANDS.md)。真实运行所需的 Tushare credential 仍由 `market-snapshot` 拥有。
+
 ## HTTP API
 
 HTTP transport 的 canonical owner 和 implementation owner 都是 [`backend-api`](backend-api/ARCHITECTURE.md)。在仓库根目录启动本地 backend：

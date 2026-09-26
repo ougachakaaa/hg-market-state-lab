@@ -2,7 +2,7 @@
 
 本文档是“当前有哪些 runnable retained Study、命令如何调用”的用户入口。CLI ownership、routing 与 output placement 见 [Research UI authority](ui/ARCHITECTURE.md)；配置见 [Research UI configuration](ui/CONFIGURATION.md)。Study method 与统计语义只由对应 retained Study authority 定义，不在此复制。
 
-> Implementation status：本轮只锁定 authority、configuration contract 与 command manual；当前 commit 尚未提供 `market-research` executable 或 config loader。以下命令是下一轮实现必须提供的 canonical V1 surface，不应在该实现完成前被视为已经可执行。
+`market-research` executable、configuration loader 与以下两个 Study adapter 已通过 repository root 的统一 Poetry environment 提供。以下命令是当前可执行的 canonical V1 surface。
 
 ## Invocation
 
@@ -42,7 +42,7 @@ Required arguments：
 - `--start`：inclusive `YYYY-MM-DD` start trade date；
 - `--end`：inclusive `YYYY-MM-DD` end trade date。
 
-日期没有 today/latest/default。若同一 Study 与日期区间的 canonical run directory 已存在，命令默认失败并保留原 evidence；显式增加 `--overwrite` 才会整体替换该目录：
+日期没有 today/latest/default。若同一 Study 与日期区间的 canonical run directory 已存在，命令默认在请求 Source 前失败并保留原 evidence；显式增加 `--overwrite` 才会以 staging + replacement 方式整体替换该目录。Source、Study 或发布失败时原 evidence 保持可用：
 
 ```text
 poetry run market-research run <study-id> --start YYYY-MM-DD --end YYYY-MM-DD --overwrite

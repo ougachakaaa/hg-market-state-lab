@@ -5,7 +5,11 @@ from .models import (
     CSI1000IMBasisHistoryResult,
     IMBasisObservation,
 )
-from .service import CSI1000IMBasisHistoryError, CSI1000IMBasisHistoryService
+from .service import (
+    CSI1000IMBasisHistoryError,
+    CSI1000IMBasisHistoryService,
+    run_csi1000_im_basis_history,
+)
 
 __all__ = [
     "CSI1000IMBasisHistoryError",
@@ -13,4 +17,5 @@ __all__ = [
     "CSI1000IMBasisHistoryResult",
     "CSI1000IMBasisHistoryService",
     "IMBasisObservation",
+    "run_csi1000_im_basis_history",
 ]

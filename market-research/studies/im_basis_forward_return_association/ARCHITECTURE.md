@@ -12,7 +12,7 @@ V1 目标是打通完整研究链路并获得简单、可解释的 association b
 
 ## Inputs
 
-Study 必须以显式、含端点的 `start_trade_date` 与 `end_trade_date` 调用 `CSI1000 IM Basis History` public Python application boundary，并消费完整 semantic result。请求不使用 implicit latest/today 或 query-range fallback。
+Research UI execution adapter 必须以显式、含端点的 `start_trade_date` 与 `end_trade_date` 调用 `CSI1000 IM Basis History` public Python application boundary，再把完整 semantic result 交给 Study。Study 不组合 Snapshot dependency；请求不使用 implicit latest/today 或 query-range fallback。
 
 Research 仅使用 Snapshot result 提供的：
 
@@ -192,7 +192,6 @@ retained Research Evidence
 ## Strict non-goals
 
 ```text
-implementation or real-data execution
 HAC / Newey-West or bootstrap
 p-value / significance framework
 out-of-sample testing or rolling regression

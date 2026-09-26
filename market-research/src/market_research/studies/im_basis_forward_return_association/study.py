@@ -8,9 +8,7 @@ from dataclasses import asdict, dataclass
 from pathlib import Path
 
 from market_snapshot.products.csi1000_im_basis_history import (
-    CSI1000IMBasisHistoryRequest,
     CSI1000IMBasisHistoryResult,
-    CSI1000IMBasisHistoryService,
 )
 
 from ...shared.im_basis import daily_im_basis, linear_quantile
@@ -218,10 +216,9 @@ def retain(result: AssociationResult, output_dir: Path) -> tuple[Path, Path, Pat
 
 
 def run_and_retain(
-    service: CSI1000IMBasisHistoryService,
-    request: CSI1000IMBasisHistoryRequest,
+    snapshot: CSI1000IMBasisHistoryResult,
     output_dir: Path,
 ) -> AssociationResult:
-    result = compute(service.run(request))
+    result = compute(snapshot)
     retain(result, output_dir)
     return result

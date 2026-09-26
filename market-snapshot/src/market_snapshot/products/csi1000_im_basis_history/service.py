@@ -25,15 +25,7 @@ class CSI1000IMBasisHistoryService:
         self._api = api
 
     def run(self, request: CSI1000IMBasisHistoryRequest) -> CSI1000IMBasisHistoryResult:
-        try:
-            tushare.to_tushare_date(request.start_trade_date)
-            tushare.to_tushare_date(request.end_trade_date)
-        except tushare.TushareSourceError as exc:
-            raise CSI1000IMBasisHistoryError(str(exc)) from exc
-        if request.start_trade_date > request.end_trade_date:
-            raise CSI1000IMBasisHistoryError(
-                "start_trade_date must be on or before end_trade_date."
-            )
+        _validate_request(request)
         try:
             index_facts = index_daily.capture_range(
                 self._api,
@@ -57,3 +49,28 @@ class CSI1000IMBasisHistoryService:
             )
         except APPLICATION_FAILURES as exc:
             raise CSI1000IMBasisHistoryError(str(exc)) from exc
+
+
+def _validate_request(request: CSI1000IMBasisHistoryRequest) -> None:
+    try:
+        tushare.to_tushare_date(request.start_trade_date)
+        tushare.to_tushare_date(request.end_trade_date)
+    except tushare.TushareSourceError as exc:
+        raise CSI1000IMBasisHistoryError(str(exc)) from exc
+    if request.start_trade_date > request.end_trade_date:
+        raise CSI1000IMBasisHistoryError(
+            "start_trade_date must be on or before end_trade_date."
+        )
+
+
+def run_csi1000_im_basis_history(
+    request: CSI1000IMBasisHistoryRequest,
+) -> CSI1000IMBasisHistoryResult:
+    """Execute one request using Snapshot-owned production composition."""
+    _validate_request(request)
+    try:
+        token = tushare.get_tushare_token()
+        api = tushare.create_tushare_api(token)
+    except Exception as exc:
+        raise CSI1000IMBasisHistoryError(str(exc)) from exc
+    return CSI1000IMBasisHistoryService(api).run(request)

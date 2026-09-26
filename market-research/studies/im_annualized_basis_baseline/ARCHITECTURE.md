@@ -10,7 +10,7 @@
 
 ## Inputs
 
-Study 必须以显式 `start_trade_date` 与 `end_trade_date` 调用 `CSI1000 IM Basis History` 的 public Python application boundary，消费完整 semantic result。Study run 必须记录实际 query bounds。
+Research UI execution adapter 必须以显式 `start_trade_date` 与 `end_trade_date` 调用 `CSI1000 IM Basis History` 的 public Python application boundary，再把完整 semantic result 交给 Study。Study 不组合 Snapshot dependency；Study run 必须记录 result 携带的实际 query bounds。
 
 Research 直接使用 Snapshot 提供的：
 

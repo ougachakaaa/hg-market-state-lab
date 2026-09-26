@@ -51,7 +51,7 @@ V1 runnable catalog 固定为：
 
 Study ID 是稳定的 public UI routing identity，不替代 Study semantic name、Python module name、result type 或 authority identity；implementation class/function rename 不得顺带改变 ID。
 
-实现可以拥有仅含 `study-id + short description + execution adapter` 的窄义显式 catalog。该 catalog 不是 semantic source of truth、Study/Experiment Registry、Research Repository 或 plugin architecture。V1 禁止 filesystem scanning、reflection、entry-point plugin 或动态 registry 自动发现 Study。
+实现拥有仅含 `study-id + short description + execution adapter` 的窄义显式 catalog。该 catalog 是 `list` 与 `run` dispatch 的唯一 implementation source，但不是 semantic source of truth、Study/Experiment Registry、Research Repository 或 plugin architecture。V1 禁止 filesystem scanning、reflection、entry-point plugin 或动态 registry 自动发现 Study。
 
 新增 runnable retained Study 必须在同一 change 中具备：
 
@@ -90,7 +90,7 @@ Research UI configuration 只提供 `output.root`。CLI 为每次 run 确定：
 
 同一个 `study-id + start + end` 永远映射到同一个 canonical run directory。CLI 把该目录作为 `output_dir` 交给 Study；Study 继续独占目录内 artifact filenames、contents、result/report/plot semantics。
 
-若 canonical run directory 已存在，默认在调用 Snapshot 或 Study 前清晰失败，不修改已有 evidence。只有显式 `--overwrite` 才允许替换；replacement 以整个 canonical run directory 为单位，先移除旧目录再创建新目录，不与旧文件 merge，避免 stale artifact。输出目录创建、替换或写入失败属于 output filesystem failure。
+若 canonical run directory 已存在，默认在调用 Snapshot 或 Study 前清晰失败，不修改已有 evidence。只有显式 `--overwrite` 才允许替换；replacement 以整个 canonical run directory 为单位，不与旧文件 merge。Study 必须先在 canonical run directory 同级的 staging directory 完整成功，再发布到 canonical location；覆盖时旧目录在发布阶段临时保留为 backup，发布失败恢复旧 evidence，发布成功后才移除 backup。输出目录创建、替换或写入失败属于 output filesystem failure。
 
 ## 6. Presentation 与 failure
 
@@ -127,7 +127,6 @@ V1 不增加 `dev.py research`。未来若增加，它只能原样 forward 到 c
 ## 8. Strict non-goals
 
 ```text
-CLI implementation or config loader implementation in this authority change
 Web Research Viewer / TUI / interactive wizard
 HTTP Research API or generic UI framework
 dynamic Study plugin system

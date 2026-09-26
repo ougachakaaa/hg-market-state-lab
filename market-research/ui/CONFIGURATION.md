@@ -46,7 +46,7 @@ artifact filenames or visualization options
 
 ## 4. Loader contract 与 failure
 
-未来 loader 属于 `market_research.ui` 或语义等价的 Research-owned package location，负责 locate canonical config、使用 Python 3.13 标准库 `tomllib` 解析 TOML、验证完整 schema、解析 output root，并返回 typed immutable Research UI config。不得仅为 TOML parsing 增加第三方 dependency。
+Loader 位于 `market_research.ui`，负责 locate canonical config、使用 Python 3.13 标准库 `tomllib` 解析 TOML、验证完整 schema、解析 output root，并返回 typed immutable Research UI config。不得仅为 TOML parsing 增加第三方 dependency。
 
 以下情况必须成为 user-facing configuration failure，不得静默 fallback、猜测或修复：
 
