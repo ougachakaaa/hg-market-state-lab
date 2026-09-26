@@ -1,6 +1,6 @@
 # hg-market-state-lab 仓库架构 authority
 
-本文件是 repository-level architecture authority，只定义仓库定位、顶层模块、模块职责边界、顶层数据流及下层 authority 入口。产品契约、公式、HTTP DTO、workflow 与实现状态不属于本文件。
+本文件是 repository-level architecture authority，只定义仓库定位、顶层模块、模块职责边界、repository-level Python runtime ownership、顶层数据流及下层 authority 入口。产品契约、公式、HTTP DTO、workflow 与实现状态不属于本文件。
 
 ## 1. 仓库定位
 
@@ -20,6 +20,12 @@
 
 该模块尚未形成独立 authority；在出现明确需求前，不预先设计模型框架、状态 schema、信号系统、训练框架、回测或策略抽象。
 
+### `market-research`
+
+未来独立的 exploratory / statistical research bounded module。
+
+该模块尚未形成独立 authority；在出现明确需求前，不预先设计 research framework、experiment model、contracts、内部结构或它在 analytical flow 中的位置。
+
 ### `backend-api`
 
 Repository-wide inbound HTTP delivery adapter 与 HTTP composition root，负责把各 owning module 的 application/product boundary 暴露为 HTTP。
@@ -30,7 +36,33 @@ Repository-wide inbound HTTP delivery adapter 与 HTTP composition root，负责
 
 展示并允许用户交互仓库产生的数据产品与市场状态结果。它不拥有 Source、Capture、业务计算或 market-modeling 语义。模块内部边界见 [web-ui/ARCHITECTURE.md](web-ui/ARCHITECTURE.md)。
 
-## 3. 顶层 Flow 与 HTTP Topology
+## 3. Python Runtime 与 Module Boundary
+
+Python runtime ownership is repository-level; semantic and package ownership remains module-level.
+
+仓库只拥有一个 canonical Python project/toolchain、一个 dependency graph 与一个 dependency-resolution boundary。目标状态固定为：
+
+```text
+Repository
+    pyproject.toml
+    poetry.lock
+    .venv/                 # worktree-local
+
+    market-snapshot/       # market_snapshot
+    market-modeling/       # market_modeling
+    market-research/       # market_research
+    backend-api/           # backend_api
+```
+
+根 `pyproject.toml`、根 `poetry.lock` 与每个 worktree 的根 `.venv` 是唯一 canonical Python runtime surface。Module-local `pyproject.toml`、module-local `poetry.lock`、module-local `.venv`、Poetry editable/path dependency，以及分别进入 Python module 目录执行 Poetry workflow 均不属于目标 architecture。
+
+Runtime unification 不合并模块、不改变源码目录 ownership，也不把所有 Python source 移入统一 `src/`。`market_snapshot`、`market_modeling`、`market_research` 与 `backend_api` 是独立 namespace，由各自 semantic module 拥有。
+
+共享 dependency graph 或 `.venv` 不构成 cross-module import permission。模块依赖方向必须由 repository/module authority、被依赖模块发布的 public boundary 与 architecture tests 共同约束；不得因为 package 在同一环境中可 import 就绕过这些边界。
+
+这里的 Python runtime/toolchain ownership 不改变 `backend-api` 对 HTTP application/launcher/runtime composition 的所有权，也不改变任何现有 analytical flow、Data Service、product contract 或 presentation responsibility。
+
+## 4. 顶层 Flow 与 HTTP Topology
 
 ### 业务 / analytical flow
 
@@ -60,12 +92,15 @@ future modules ──────┘
 
 `backend-api` 是 inbound delivery boundary，不是 `market-snapshot → market-modeling` analytical pipeline stage。稳定依赖方向是 `backend-api` 依赖 owning module 的 public application/product boundary；`market-snapshot` 与 `market-modeling` 不得依赖 `backend-api`，也不得用 FastAPI、HTTP DTO/status/error envelope、OpenAPI 或 frontend types 定义自己的 semantic model。
 
-## 4. Authority 导航
+## 5. Authority 导航
 
 ```text
 AGENTS.md
     ↓
 ARCHITECTURE.md（本文件）
+    ├─ Python runtime/toolchain invariant
+    │      ↓
+    │  DEVELOPMENT.md
     ├─ market-snapshot/ARCHITECTURE.md
     │      ↓
     │  market-snapshot/CAPABILITIES.md
@@ -87,8 +122,10 @@ ARCHITECTURE.md（本文件）
            └─ web-ui/contracts.md
 ```
 
-上层只提供选择下一份文档所需的上下文，不复制下层语义。新增或删除单个产品通常只更新模块 catalog，不改变本文件。
+Python runtime、dependency resolution 与 repository-root tooling 从本文档进入 `DEVELOPMENT.md`；业务语义仍进入对应 owning module。`market-modeling` 与 `market-research` 当前没有下层 authority，不得从 runtime layout 推导其内部设计。
 
-## 5. 维护边界
+上层只提供选择下一份文档所需的上下文，不复制下层语义。新增或删除单个产品通常只更新模块 catalog，不改变本文档。
 
-仅在顶层模块、模块职责边界、顶层数据流或下层 authority 入口变化时更新本文件。模块内部架构、产品契约、字段、公式、HTTP 行为和 UI 语义由对应下层 authority 拥有。
+## 6. 维护边界
+
+仅在顶层模块、模块职责边界、repository-level Python runtime ownership、顶层数据流或下层 authority 入口变化时更新本文件。模块内部架构、产品契约、字段、公式、HTTP 行为和 UI 语义由对应下层 authority 拥有。

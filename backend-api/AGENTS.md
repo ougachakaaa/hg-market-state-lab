@@ -21,12 +21,12 @@
 
 ## 验证
 
-在 `backend-api/` 中按影响范围运行，提交前完整验证默认为：
+Poetry environment 与 dependency graph 由 repository root 统一拥有。在 repository root 按影响范围运行，提交前本模块完整验证默认为：
 
 ```bash
-poetry run pytest
-poetry run ruff check .
-poetry run mypy .
+poetry run pytest backend-api/tests
+poetry run ruff check backend-api
+poetry run mypy backend-api
 ```
 
 同时检查根 authority 能经本模块 architecture 与 catalog 到达所有 HTTP contracts，并检查所有 Markdown 相对链接、旧 canonical contract 路径与重复 authority。若 wire contract 未改变，不生成 OpenAPI 或 TypeScript；若 HTTP DTO 或 OpenAPI 改变，还必须按 [web-ui rules](../web-ui/AGENTS.md) 运行 generated-contract feedback loop。提交前运行 `git diff --check` 并审阅完整 diff。

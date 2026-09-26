@@ -5,6 +5,7 @@
 ```text
 market-snapshot  → market state data preparation
 market-modeling  → market state modeling
+market-research  → exploratory and statistical research
 backend-api      → repository-wide HTTP inbound delivery and composition
 web-ui           → presentation and interaction
 ```
@@ -13,7 +14,7 @@ web-ui           → presentation and interaction
 
 README 是人类开发入口，不是架构或业务语义 authority。
 
-- 仓库架构与模块路由：[ARCHITECTURE.md](ARCHITECTURE.md)
+- 仓库架构、Python runtime invariant 与模块路由：[ARCHITECTURE.md](ARCHITECTURE.md)
 - `market-snapshot` 稳定分层：[market-snapshot/ARCHITECTURE.md](market-snapshot/ARCHITECTURE.md)
 - `market-snapshot` capability/product catalog：[market-snapshot/CAPABILITIES.md](market-snapshot/CAPABILITIES.md)
 - `backend-api` HTTP boundary 与 product catalog：[backend-api/ARCHITECTURE.md](backend-api/ARCHITECTURE.md)
@@ -24,17 +25,13 @@ README 是人类开发入口，不是架构或业务语义 authority。
 
 ## 环境准备
 
-两个 Python module 都需要 Python 3.13 与 Poetry：
+所有 Python packages 使用根目录唯一的 project、dependency graph、lock 与 worktree-local `.venv`。需要 Python 3.13 与 Poetry，并在仓库根目录执行：
 
 ```bash
-cd market-snapshot
-poetry install
-
-cd ../backend-api
 poetry install
 ```
 
-`market-snapshot` 的 canonical Python namespace 是 `market_snapshot`。`backend-api` 通过 editable path dependency 消费该 package，并独立拥有 FastAPI runtime。
+Python package namespaces 保持独立，包括 `market_snapshot`、`market_modeling`、`market_research` 与 `backend_api`。共享环境不改变 module ownership 或 cross-module dependency rules。
 
 Frontend 需要满足当前 Vite 要求的 Node.js 与 npm：
 
@@ -56,32 +53,31 @@ TUSHARE_TOKEN=<your-token>
 在仓库根目录执行：
 
 ```bash
-python dev.py doctor
-python dev.py backend
-python dev.py frontend
+poetry run python dev.py doctor
+poetry run python dev.py backend
+poetry run python dev.py frontend
 ```
 
 命令转发、readiness 和失败行为见 [DEVELOPMENT.md](DEVELOPMENT.md)。
 
 ## Data Service CLI
 
-在 `market-snapshot/` 目录执行：
+在仓库根目录执行：
 
 ```bash
-poetry run python scripts/dms.py list
-poetry run python scripts/dms.py get csi1000-5d-analysis --date 2026-09-18
+poetry run python market-snapshot/scripts/dms.py list
+poetry run python market-snapshot/scripts/dms.py get csi1000-5d-analysis --date 2026-09-18
 ```
 
 CLI、service orchestration 与 output contract 见 [Data Service authority](market-snapshot/src/market_snapshot/services/ARCHITECTURE.md)。产品数据语义从 [Capability Catalog](market-snapshot/CAPABILITIES.md) 进入。
 
 ## HTTP API
 
-HTTP transport 的 canonical owner 和 implementation owner 都是 [`backend-api`](backend-api/ARCHITECTURE.md)。在该目录启动本地 backend：
+HTTP transport 的 canonical owner 和 implementation owner 都是 [`backend-api`](backend-api/ARCHITECTURE.md)。在仓库根目录启动本地 backend：
 
 ```bash
-cd backend-api
-poetry run python scripts/api.py
-poetry run python scripts/api.py --host 127.0.0.1 --port 8012
+poetry run python backend-api/scripts/api.py
+poetry run python backend-api/scripts/api.py --host 127.0.0.1 --port 8012
 ```
 
 默认地址为 `127.0.0.1:8011`，OpenAPI 位于 `/openapi.json`，交互文档位于 `/docs`。MO Option Chain 的 HTTP 契约见 [Option Chain authority](backend-api/products/mo_option_chain/http-contract.md)；MO Premium Plane 的 HTTP 契约见 [Premium Plane authority](backend-api/products/mo_option_premium/http-contract.md)。
@@ -98,20 +94,20 @@ npm run dev
 
 ## 验证命令
 
-Market Snapshot（在 `market-snapshot/`）：
+Market Snapshot（在 repository root）：
 
 ```bash
-poetry run pytest
-poetry run ruff check .
-poetry run mypy .
+poetry run pytest market-snapshot/tests
+poetry run ruff check market-snapshot
+poetry run mypy market-snapshot
 ```
 
-Backend API（在 `backend-api/`）：
+Backend API（在 repository root）：
 
 ```bash
-poetry run pytest
-poetry run ruff check .
-poetry run mypy .
+poetry run pytest backend-api/tests
+poetry run ruff check backend-api
+poetry run mypy backend-api
 ```
 
 Frontend（在 `web-ui/`）：

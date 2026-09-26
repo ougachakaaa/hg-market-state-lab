@@ -19,7 +19,7 @@
 
 ## 执行规则
 
-- Python 项目以 3.13 为目标版本；Poetry、pytest、Ruff 与 mypy 均在本目录执行。
+- Python 以 3.13 为目标版本；Poetry environment 与 dependency graph 由 repository root 统一拥有。所有 Python tooling 从仓库根目录执行，并以 `market-snapshot/` 路径限定本模块范围。
 - 业务语义变更先修改 narrowest canonical authority；共享 Source fact 与产品 scope 必须分别落在其 owning authority，不能在实现注释或 catalog 中创建平行定义。
 - 普通用户或 Agent 请求生成 persisted Data Service 结果时，使用 [Data Service authority](src/market_snapshot/services/ARCHITECTURE.md) 定义的 `dms` CLI surface，不自行逐个编排 Capture。底层入口只用于 development、debugging、testing 或 reconciliation。
 - 不读取 sibling product 的 Raw Artifact 或最终产物，除非对应产品 authority 明确声明该依赖。
@@ -28,12 +28,12 @@
 
 ## 验证
 
-在 `market-snapshot/` 中按影响范围运行，提交前完整验证默认为：
+在 repository root 按影响范围运行，提交前本模块完整验证默认为：
 
 ```bash
-poetry run pytest
-poetry run ruff check .
-poetry run mypy .
+poetry run pytest market-snapshot/tests
+poetry run ruff check market-snapshot
+poetry run mypy market-snapshot
 ```
 
 若 `backend-api` HTTP DTO 或 OpenAPI 发生变化，还必须按 [../backend-api/AGENTS.md](../backend-api/AGENTS.md) 与 [../web-ui/AGENTS.md](../web-ui/AGENTS.md) 执行 transport/frontend contract 检查。
