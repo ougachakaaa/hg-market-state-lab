@@ -66,14 +66,18 @@ OPTIONS = [
 NEAR_EXPIRY_DATE = "2026-09-25"
 FAR_EXPIRY_DATE = "2026-10-23"
 
-# (contract, delist_date, futures close), covering three delist dates of the
-# target-date curve.
+# Rolling ordinary-month contracts that form exactly M0/M1/Q1/Q2 throughout
+# the 60-observation window.
 IM_CONTRACTS = [
-    ("IM2609.CFE", "2026-09-18", 6000.0),
-    ("IM2610.CFE", "2026-10-16", 6150.0),
-    ("IM2612.CFE", "2026-12-18", 6200.0),
+    ("IM2606.CFE", "2026-01-01", "2026-06-26", 5900.0),
+    ("IM2607.CFE", "2026-01-01", "2026-07-17", 5925.0),
+    ("IM2608.CFE", "2026-06-27", "2026-08-21", 5950.0),
+    ("IM2609.CFE", "2026-01-01", "2026-09-18", 6000.0),
+    ("IM2610.CFE", "2026-08-22", "2026-10-16", 6150.0),
+    ("IM2612.CFE", "2026-01-01", "2026-12-18", 6200.0),
+    ("IM2703.CFE", "2026-07-18", "2027-03-19", 6250.0),
 ]
-# Guide 8.4: days_to_delist == 0 is the one defined null annualization.
+# Shared IM basis authority keeps DTE zero and uses one annualization day.
 ZERO_DAY_CONTRACT = "IM2609.CFE"
 ZERO_DAY_TRADE_DATE = "2026-09-17"
 
@@ -148,21 +152,24 @@ def im_basic_rows() -> list[dict[str, Any]]:
             "ts_code": ts_code,
             "exchange": "CFFEX",
             "fut_code": "IM",
-            "list_date": "2026-02-16",
+            "list_date": list_date,
             "delist_date": delist_date,
         }
-        for ts_code, delist_date, _ in IM_CONTRACTS
+        for ts_code, list_date, delist_date, _ in IM_CONTRACTS
     ]
 
 
 def im_daily_rows() -> list[dict[str, Any]]:
     rows: list[dict[str, Any]] = []
-    for ts_code, _, futures_close in IM_CONTRACTS:
+    for ts_code, list_date, delist_date, futures_close in IM_CONTRACTS:
         for offset in range(60):
+            trade_date = im_date(offset)
+            if not list_date <= trade_date <= delist_date:
+                continue
             rows.append(
                 {
                     "ts_code": ts_code,
-                    "trade_date": im_date(offset),
+                    "trade_date": trade_date,
                     "pre_close": futures_close - 1.0,
                     "pre_settle": futures_close - 0.5,
                     "open": futures_close - 2.0,
@@ -543,15 +550,17 @@ def test_im_history_uses_the_last_60_underlying_trade_dates(
     im_futures = run_preparation(tmp_path, raw_root)["im_futures"]
     history = im_futures["history"]
 
-    # Three contracts over 60 trade dates, sorted by trade_date then ts_code.
-    assert len(history) == 180
+    # Four canonical slots over 60 trade dates.
+    assert len(history) == 240
     assert sorted({row["trade_date"] for row in history}) == ALL_DATES[TARGET_INDEX - 59 :]
     assert history[0]["trade_date"] == IM_START
-    assert history[0]["ts_code"] == "IM2609.CFE"
+    assert history[0]["ts_code"] == "IM2606.CFE"
     assert history[-1]["trade_date"] == TARGET_DATE
-    assert history[-1]["ts_code"] == "IM2612.CFE"
-    assert [(row["trade_date"], row["ts_code"]) for row in history] == sorted(
-        (row["trade_date"], row["ts_code"]) for row in history
+    assert history[-1]["ts_code"] == "IM2703.CFE"
+    assert all(
+        [row["contract_slot"] for row in history[index : index + 4]]
+        == ["M0", "M1", "Q1", "Q2"]
+        for index in range(0, len(history), 4)
     )
 
 
@@ -568,11 +577,13 @@ def test_im_basis_fields_match_the_locked_formulas(
         "IM2609.CFE",
         "IM2610.CFE",
         "IM2612.CFE",
+        "IM2703.CFE",
     ]
     assert [row["delist_date"] for row in curve] == [
         "2026-09-18",
         "2026-10-16",
         "2026-12-18",
+        "2027-03-19",
     ]
     assert all(row["trade_date"] == TARGET_DATE for row in curve)
 
@@ -581,8 +592,10 @@ def test_im_basis_fields_match_the_locked_formulas(
     assert list(first) == [
         "ts_code",
         "trade_date",
+        "contract_slot",
         "delist_date",
         "days_to_delist",
+        "annualization_days",
         "open",
         "high",
         "low",
@@ -612,7 +625,7 @@ def test_im_basis_fields_match_the_locked_formulas(
     )
 
 
-def test_im_contract_delisting_on_the_target_date_has_a_null_annualization(
+def test_im_contract_delisting_on_the_target_date_uses_one_annualization_day(
     tmp_path: Path, raw_root: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     patch_dirs(monkeypatch, tmp_path, raw_root)
@@ -626,8 +639,8 @@ def test_im_contract_delisting_on_the_target_date_has_a_null_annualization(
     zero_day = next(row for row in curve if row["ts_code"] == ZERO_DAY_CONTRACT)
 
     assert zero_day["days_to_delist"] == 0
-    assert zero_day["annualized_basis_pct"] is None
-    assert zero_day["basis_pct"] is not None
+    assert zero_day["annualization_days"] == 1
+    assert zero_day["annualized_basis_pct"] == pytest.approx(zero_day["basis_pct"] * 365)
 
 
 def test_im_window_drops_observations_before_it(
@@ -1029,7 +1042,7 @@ def test_empty_im_history_fails(
     raw["im_futures_daily"] = []
     write_raw(raw_root, raw)
 
-    with pytest.raises(SnapshotError, match="no observation inside"):
+    with pytest.raises(SnapshotError, match="has no row for active"):
         analysis.build_snapshot(TARGET_DATE)
 
 
@@ -1043,7 +1056,7 @@ def test_empty_target_date_curve_fails(
     ]
     write_raw(raw_root, raw)
 
-    with pytest.raises(SnapshotError, match="target-date futures curve"):
+    with pytest.raises(SnapshotError, match="has no row for active"):
         analysis.build_snapshot(TARGET_DATE)
 
 
@@ -1150,6 +1163,8 @@ def test_no_analysis_fields_leak_into_the_snapshot(
         "pct_chg",
         "delist_date",
         "days_to_delist",
+        "contract_slot",
+        "annualization_days",
         "oi_chg",
         "basis_points",
         "basis_pct",

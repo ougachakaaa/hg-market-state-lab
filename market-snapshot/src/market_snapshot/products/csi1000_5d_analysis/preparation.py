@@ -39,6 +39,12 @@ from typing import Any
 
 from ... import artifacts
 from ...artifacts import RawRecord
+from ...preparation.im_basis import (
+    IMBasisError,
+    assign_contract_slots,
+    basis_values,
+    observation_sort_key,
+)
 from ...sources import tushare
 
 # Guide 4/5: the CSI1000 identity of the ``underlying`` section.
@@ -52,9 +58,6 @@ IM_WINDOW_DAYS = 60
 ATR_WINDOW = 14
 # Guide 6.5: trading days per year used to annualize realized volatility.
 TRADING_DAYS_PER_YEAR = 252
-# Guide 8.4: calendar days per year used to annualize the futures basis.
-CALENDAR_DAYS_PER_YEAR = 365
-
 # Guide 5.2: Raw Fact fields of the underlying history copy, in output order.
 UNDERLYING_HISTORY_FIELDS = (
     "trade_date",
@@ -377,7 +380,7 @@ def load_im_futures(
     window_dates = {str(record["trade_date"]) for record in underlying[-IM_WINDOW_DAYS:]}
     underlying_close_by_date = {str(record["trade_date"]): record["close"] for record in underlying}
 
-    history: list[RawRecord] = []
+    daily_by_key: dict[tuple[str, str], RawRecord] = {}
     for daily in dailies:
         ts_code = require_text(daily, "ts_code")
         trade_date = require_date(daily, "trade_date")
@@ -389,44 +392,74 @@ def load_im_futures(
                 f"{IM_DAILY_RAW_ARTIFACT} holds ts_code={ts_code} on trade_date={trade_date}, "
                 f"which maps to no known contract in {IM_BASIC_RAW_ARTIFACT}."
             )
+        list_date = require_date(contract, "list_date")
         delist_date = require_date(contract, "delist_date")
+        if not list_date <= trade_date <= delist_date:
+            raise SnapshotError(
+                f"{IM_DAILY_RAW_ARTIFACT} holds {ts_code} on {trade_date} outside its lifecycle."
+            )
+        key = trade_date, ts_code
+        if key in daily_by_key:
+            raise SnapshotError(
+                f"{IM_DAILY_RAW_ARTIFACT} holds duplicate rows for {ts_code} on {trade_date}."
+            )
+        daily_by_key[key] = daily
+
+    history: list[RawRecord] = []
+    for trade_date in sorted(window_dates):
+        active = [
+            contract
+            for contract in basic_by_code.values()
+            if require_date(contract, "list_date")
+            <= trade_date
+            <= require_date(contract, "delist_date")
+        ]
+        try:
+            slots = assign_contract_slots(trade_date, active)
+        except IMBasisError as exc:
+            raise SnapshotError(str(exc)) from exc
+        unexpected = sorted(
+            code
+            for observed_date, code in daily_by_key
+            if observed_date == trade_date and code not in slots
+        )
+        if unexpected:
+            raise SnapshotError(
+                f"{IM_DAILY_RAW_ARTIFACT} holds inactive contract(s) on {trade_date}: "
+                f"{', '.join(unexpected)}."
+            )
         underlying_close = underlying_close_by_date.get(trade_date)
         if underlying_close is None:
-            raise SnapshotError(
-                f"{IM_DAILY_RAW_ARTIFACT} holds trade_date={trade_date}, which has no matching "
-                f"CSI1000 close in the underlying history."
-            )
-        days_to_delist = (date.fromisoformat(delist_date) - date.fromisoformat(trade_date)).days
-        if days_to_delist < 0:
-            raise SnapshotError(
-                f"{IM_DAILY_RAW_ARTIFACT} holds trade_date={trade_date} after delist_date="
-                f"{delist_date} of contract {ts_code}."
-            )
-        close = require_number(daily, "close")
-
-        row: RawRecord = {
-            "ts_code": ts_code,
-            "trade_date": trade_date,
-            "delist_date": delist_date,
-            "days_to_delist": days_to_delist,
-        }
-        # Guide 8.3 output order lists the quote fields as open, high, low,
-        # close, settle, vol, amount, oi, oi_chg: the nullable pass-through
-        # groups sit around the required close, which is read once above.
-        row.update(passthrough_fields(daily, IM_PASSTHROUGH_FIELDS[:3]))
-        row["close"] = close
-        row.update(passthrough_fields(daily, IM_PASSTHROUGH_FIELDS[3:]))
-        row["underlying_close"] = underlying_close
-        row["basis_points"] = close - underlying_close
-        row["basis_pct"] = percent_change(close, underlying_close)
-        # Guide 8.4: the one defined null is a contract that delists on the
-        # observation date, where the linear annualization is undefined.
-        row["annualized_basis_pct"] = (
-            None
-            if days_to_delist == 0
-            else row["basis_pct"] * CALENDAR_DAYS_PER_YEAR / days_to_delist
-        )
-        history.append(row)
+            raise SnapshotError(f"no CSI1000 close on {trade_date}.")
+        for ts_code, slot in slots.items():
+            daily_fact = daily_by_key.get((trade_date, ts_code))
+            if daily_fact is None:
+                raise SnapshotError(
+                    f"{IM_DAILY_RAW_ARTIFACT} has no row for active {ts_code} on {trade_date}."
+                )
+            contract = basic_by_code[ts_code]
+            delist_date = require_date(contract, "delist_date")
+            close = require_number(daily_fact, "close")
+            try:
+                calculated = basis_values(trade_date, delist_date, underlying_close, close)
+            except IMBasisError as exc:
+                raise SnapshotError(str(exc)) from exc
+            row: RawRecord = {
+                "ts_code": ts_code,
+                "trade_date": trade_date,
+                "contract_slot": slot,
+                "delist_date": delist_date,
+                "days_to_delist": calculated["days_to_delist"],
+                "annualization_days": calculated["annualization_days"],
+            }
+            row.update(passthrough_fields(daily_fact, IM_PASSTHROUGH_FIELDS[:3]))
+            row["close"] = close
+            row.update(passthrough_fields(daily_fact, IM_PASSTHROUGH_FIELDS[3:]))
+            row["underlying_close"] = underlying_close
+            row["basis_points"] = calculated["basis_points"]
+            row["basis_pct"] = calculated["basis_pct"]
+            row["annualized_basis_pct"] = calculated["annualized_basis_pct"]
+            history.append(row)
 
     if not history:
         raise SnapshotError(
@@ -434,14 +467,14 @@ def load_im_futures(
             f"trade dates up to {target_trade_date}."
         )
 
-    history.sort(key=lambda row: (row["trade_date"], row["ts_code"]))
+    history.sort(key=observation_sort_key)
     curve = [row for row in history if row["trade_date"] == target_trade_date]
     if not curve:
         raise SnapshotError(
             f"{IM_DAILY_RAW_ARTIFACT} holds no observation for trade_date={target_trade_date}, "
             f"so the target-date futures curve would be empty."
         )
-    curve.sort(key=lambda row: row["delist_date"])
+    curve.sort(key=observation_sort_key)
     return {"history": history, "target_date_curve": curve}
 
 

@@ -54,6 +54,7 @@ def test_root_project_installs_the_independent_package_namespaces() -> None:
     assert manifest["tool"]["poetry"]["packages"] == [
         {"include": "market_snapshot", "from": "market-snapshot/src"},
         {"include": "backend_api", "from": "backend-api/src"},
+        {"include": "market_research", "from": "market-research/src"},
     ]
     assert not any(
         "path" in dependency or "develop" in dependency

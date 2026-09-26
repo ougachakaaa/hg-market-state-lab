@@ -64,9 +64,14 @@ CAPTURE_STAGE_NAMES = (
     "im_futures_basic",
     "im_futures_daily",
 )
-# Endpoints the scenario reads once (the fake Source holds one IM contract, so
-# the IM daily Capture reads one contract over one range).
-EXPECTED_SOURCE_CALLS = ("index_daily", "opt_basic", "opt_daily", "fut_basic", "fut_daily")
+# Each active-window IM contract owns one range request.
+EXPECTED_SOURCE_CALLS = (
+    "index_daily",
+    "opt_basic",
+    "opt_daily",
+    "fut_basic",
+    *("fut_daily",) * len(CSI1000_IM_CONTRACTS),
+)
 
 
 def run_request(api: FakeTushareApi) -> Path:

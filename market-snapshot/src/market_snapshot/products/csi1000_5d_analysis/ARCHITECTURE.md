@@ -32,6 +32,7 @@ external Analyzer
 4. 相同 Raw Artifacts 与 Preparation Definition 必须得到语义一致的输出。
 5. 必需事实或派生输入缺失时显式失败；Source 合法 null 按 preparation authority 保留，不补零或估算。
 6. 输出是 analysis-ready data，不包含市场判断或交易结论。
+7. IM active universe、contract slot、remaining days 与 basis formula 统一引用 [shared IM basis authority](../../preparation/im_basis/ARCHITECTURE.md)，本产品不维护平行定义。
 
 ## 4. Service Orchestration
 
@@ -52,6 +53,7 @@ Service 可以复用同一请求已取得的 basic contract facts；它不拥有
 ## 5. Navigation
 
 - Source Capture 共享身份与公共字段语义：[Capture authority](../../capture/ARCHITECTURE.md)
+- 共享 IM slot、remaining days 与 basis 语义：[IM basis authority](../../preparation/im_basis/ARCHITECTURE.md)
 - 本产品所需 Source、Raw、universe、历史窗口与 completeness：[data.md](data.md)
 - Raw → `snapshot.json` 的结构、join、公式、null 与失败语义：[preparation-contract.md](preparation-contract.md)
 - Data Service、CLI 与 canonical output：[Data Service authority](../../services/ARCHITECTURE.md)

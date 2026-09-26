@@ -1,6 +1,6 @@
 # CSI1000 5D Analysis Preparation authority
 
-本文档从属于 [ARCHITECTURE.md](ARCHITECTURE.md)，拥有五个 goal-scoped Raw Artifacts 到 analysis-ready `snapshot.json` 的窗口、join、投影、公式、排序、null 与失败语义。输入契约见 [data.md](data.md)；本文档不执行业务分析。
+本文档从属于 [ARCHITECTURE.md](ARCHITECTURE.md)，拥有五个 goal-scoped Raw Artifacts 到 analysis-ready `snapshot.json` 的窗口、join、产品投影、产品专属公式、排序、null 与失败语义。输入契约见 [data.md](data.md)；IM slot、remaining days 与 basis 公式见 [shared IM basis authority](../../preparation/im_basis/ARCHITECTURE.md)。本文档不执行业务分析。
 
 ## 1. 目标与范围
 
@@ -402,7 +402,7 @@ underlying.history 中最后 60 个 trade_date
 
 作为统一的 60 日分析窗口，使 CSI1000 spot 与 IM 的时间窗口天然对齐。**不另建交易日历**。
 
-保留在这些日期中存在的 IM 普通月度合约 daily facts（合约限定来自 Raw Artifact 本身，见 `data.md` 5.2，不在 Preparation 层再做"主力/流动性"判断）。
+对这些日期逐日应用 [shared IM basis authority](../../preparation/im_basis/ARCHITECTURE.md) 的 active universe 与四槽结构。每个交易日必须保留全部 active IM 普通月度合约，不做主力或流动性判断；任一 active contract 的 daily fact 缺失或重复，均显式失败。
 
 `underlying.history` 含 120 个交易日，因此 60 日窗口内每个 IM 观测的 `trade_date` 都能在 `underlying.history` 中找到对应 close。
 
@@ -411,8 +411,10 @@ underlying.history 中最后 60 个 trade_date
 ```text
 ts_code
 trade_date
+contract_slot
 delist_date
 days_to_delist
+annualization_days
 
 open
 high
@@ -434,7 +436,7 @@ annualized_basis_pct
 
 字段分类（见第 12 节的三种状态）：
 
-* Structural / required：`ts_code`、`trade_date`、`delist_date`、`days_to_delist`。
+* Structural / required：`ts_code`、`trade_date`、`contract_slot`、`delist_date`、`days_to_delist`、`annualization_days`。
 * Derived-required numeric：`close`、`underlying_close`。其中 `underlying_close` 来自 underlying history；`close` 进入 `basis_points` / `basis_pct` / `annualized_basis_pct`，因此 `close` 缺失或 `null` → 失败。
 * Nullable pass-through：`open`、`high`、`low`、`settle`、`vol`、`amount`、`oi`、`oi_chg`。Source 合法 null → Analysis-ready Artifact null；例如 `oi_chg == null` 表达首个可观察交易日 Source 没有该变化事实。
 
@@ -454,14 +456,9 @@ Analysis-ready Artifact 是 deterministic analysis-ready projection，不是 Raw
 
 ### 8.4 派生字段
 
-| 字段 | 公式 | 单位 |
-| --- | --- | --- |
-| `days_to_delist` | `delist_date - trade_date` | calendar days（整数） |
-| `basis_points` | `futures_close - underlying_close` | index points |
-| `basis_pct` | `(futures_close / underlying_close - 1) * 100` | percentage points |
-| `annualized_basis_pct` | `days_to_delist > 0`：`basis_pct * 365 / days_to_delist`；`days_to_delist == 0`：`null` | percentage points annualized |
+`contract_slot`、`days_to_delist`、`annualization_days`、`basis_points`、`basis_pct` 与 `annualized_basis_pct` 全部按 [shared IM basis authority](../../preparation/im_basis/ARCHITECTURE.md) 计算和解释，本产品不重新定义公式。
 
-观测只存在于合约上市至退市的区间内，故 `days_to_delist >= 0`。这是简单线性年化。**不要**把它解释成看多 / 看空、贴水值得交易、滚仓信号等。
+交割日 observation 必须保留客观 calendar fact `days_to_delist = 0`，同时使用 `annualization_days = 1`；`annualized_basis_pct` 是 usable numeric derived fact，不是因除零产生的 `null`。这些字段不得被解释成看多/看空、贴水值得交易或滚仓信号。
 
 ### 8.5 排序
 
@@ -469,10 +466,11 @@ IM `history` 按以下 key 升序排列（确定性顺序）：
 
 ```text
 trade_date
+contract_slot order: M0, M1, Q1, Q2
 ts_code
 ```
 
-（`ts_code` 在同一 `trade_date` 内唯一，故该顺序是确定的；按到期日组织的便捷视图见第 9 节。）
+该顺序与 shared canonical ordering 一致；`ts_code` 只是稳定 tie-breaker。
 
 ## 9. IM target-date curve
 
@@ -488,10 +486,11 @@ im_futures.target_date_curve
 history 中 trade_date == target_trade_date 的投影
 ```
 
-按：
+按 shared slot order：
 
 ```text
-delist_date ascending
+contract_slot: M0, M1, Q1, Q2
+ts_code ascending
 ```
 
 排序。字段沿用第 8.3 节。
@@ -565,9 +564,11 @@ delist_date ascending
     "history": [
       {
         "ts_code": "IM2609.CFE",
-        "trade_date": "2026-06-19",
+        "trade_date": "2026-09-17",
+        "contract_slot": "M0",
         "delist_date": "2026-09-18",
-        "days_to_delist": 0,
+        "days_to_delist": 1,
+        "annualization_days": 1,
         "open": 0,
         "high": 0,
         "low": 0,
@@ -593,7 +594,7 @@ delist_date ascending
 * `underlying.history` 恰好 120 行；上面只示意 1 行。
 * `underlying.derived` 为单层标量对象。
 * `mo_options.chain` 按 `expiry_date, strike, option_type` 升序；`mo_options.underlying_close` 等于 `underlying.history` 末行 close。
-* `im_futures.history` 只含第 8.2 节 60 日窗口内的观测，按 `trade_date, ts_code` 升序；`target_date_curve` 是 `trade_date == target_trade_date` 的投影，按 `delist_date` 升序。
+* `im_futures.history` 只含第 8.2 节 60 日窗口内的完整观测，按 `trade_date, contract_slot, ts_code` 的 shared canonical order 排序；`target_date_curve` 是 `trade_date == target_trade_date` 的投影，按 `contract_slot, ts_code` 的 shared order 排序。
 
 ## 11. Reproducibility
 
@@ -612,7 +613,7 @@ Analysis Preparation 必须只依赖第 3.1 节列出的输入。
 
 同一组 Raw + 同一 Definition 必须产生语义一致的 Analysis-ready Artifact（结构一致、字段一致、数值一致）。
 
-Analysis-ready Artifact 内不得出现无法回溯到 Raw Artifact 的"只存在于 Analysis-ready Artifact 中的数据事实"。所有派生字段都可按本文档公式从 Raw 确定性重算。
+Analysis-ready Artifact 内不得出现无法回溯到 Raw Artifact 的"只存在于 Analysis-ready Artifact 中的数据事实"。所有派生字段都可按本文档或其明确引用的 shared authority 从 Raw 确定性重算。
 
 ## 12. Completeness failure
 
@@ -648,11 +649,7 @@ null
 Source 没有这个事实
 ```
 
-不是 `0`，也不是未知值的估算。字段非 null 但 malformed（string、NaN、infinity、invalid numeric representation）仍然 → fail。
-
-### C. Derived field explicitly defines null
-
-`annualized_basis_pct` 在 `days_to_delist == 0` 时 authority 已定义为 `null`（第 8.4 节）。这是 derived semantic null，与 Source pass-through null 是不同原因；保持现有语义。
+不是 `0`，也不是未知值的估算。字段非 null 但 malformed（string、NaN、infinity、invalid numeric representation）仍然 → fail。Derived-required fields 不定义 semantic null；特别是交割日 `annualized_basis_pct` 仍按 shared authority 产生 numeric value。
 
 失败条件（任一成立则 Analysis Preparation 失败）：
 
@@ -664,6 +661,8 @@ underlying target_trade_date missing → fail
 MO basic/daily cannot one-to-one join → fail
 
 IM daily cannot map to known IM contract → fail
+
+any 60-day observation date lacks a complete unique M0/M1/Q1/Q2 IM panel → fail
 
 required structural / derived input missing / null / malformed → fail
 

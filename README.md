@@ -1,6 +1,6 @@
 # hg-market-state-lab
 
-`hg-market-state-lab` 是用于市场状态数据准备、市场状态建模与结果展示的实验性仓库。
+`hg-market-state-lab` 是用于市场状态数据准备、探索研究、市场状态建模与结果展示的实验性仓库。
 
 ```text
 market-snapshot  → market state data preparation
@@ -17,6 +17,7 @@ README 是人类开发入口，不是架构或业务语义 authority。
 - 仓库架构、Python runtime invariant 与模块路由：[ARCHITECTURE.md](ARCHITECTURE.md)
 - `market-snapshot` 稳定分层：[market-snapshot/ARCHITECTURE.md](market-snapshot/ARCHITECTURE.md)
 - `market-snapshot` capability/product catalog：[market-snapshot/CAPABILITIES.md](market-snapshot/CAPABILITIES.md)
+- `market-research` exploratory/statistical research 边界：[market-research/ARCHITECTURE.md](market-research/ARCHITECTURE.md)
 - `backend-api` HTTP boundary 与 product catalog：[backend-api/ARCHITECTURE.md](backend-api/ARCHITECTURE.md)
 - `web-ui` 边界与 visualization 路由：[web-ui/ARCHITECTURE.md](web-ui/ARCHITECTURE.md)
 - 根开发命令与 managed worktree 说明：[DEVELOPMENT.md](DEVELOPMENT.md)
@@ -56,6 +57,7 @@ TUSHARE_TOKEN=<your-token>
 poetry run python dev.py doctor
 poetry run python dev.py backend
 poetry run python dev.py frontend
+poetry run python dev.py research list
 ```
 
 命令转发、readiness 和失败行为见 [DEVELOPMENT.md](DEVELOPMENT.md)。
@@ -70,6 +72,17 @@ poetry run python market-snapshot/scripts/dms.py get csi1000-5d-analysis --date 
 ```
 
 CLI、service orchestration 与 output contract 见 [Data Service authority](market-snapshot/src/market_snapshot/services/ARCHITECTURE.md)。产品数据语义从 [Capability Catalog](market-snapshot/CAPABILITIES.md) 进入。
+
+## Research CLI
+
+在 repository root 发现并运行 retained Study：
+
+```bash
+poetry run python dev.py research list
+poetry run python dev.py research run im-basis-baseline --help
+```
+
+统一 CLI 的 discovery 与 forwarding 行为见 [DEVELOPMENT.md](DEVELOPMENT.md)。Study-specific 参数和用法与对应 retained Study authority 共置，并由 `<study-id> --help` 展示。真实运行所需的 Tushare credential 仍由 `market-snapshot` 拥有。
 
 ## HTTP API
 

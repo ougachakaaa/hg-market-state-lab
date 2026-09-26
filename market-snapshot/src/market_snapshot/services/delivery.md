@@ -32,11 +32,12 @@ Plugin
 
 ## 2. Repository Data Service Semantic Catalog
 
-Repository authority 声明以下三个用户可请求的 Data Service semantic identities，不为了丰富 catalog 创造其他服务：
+Repository authority 声明以下四个用户可请求的 Data Service semantic identities，不为了丰富 catalog 创造其他服务：
 
 | service_id | input | result / delivery | 产品 authority |
 | --- | --- | --- | --- |
 | `csi1000-5d-analysis` | `target_trade_date`（CLI 的 `--date`） | persisted `snapshot.json` | [product authority](../products/csi1000_5d_analysis/ARCHITECTURE.md) |
+| `csi1000-im-basis-history` | `start_trade_date + end_trade_date` | request-scoped `CSI1000IMBasisHistoryResult` | [product authority](../products/csi1000_im_basis_history/ARCHITECTURE.md) |
 | `mo-option-chain` | `target_trade_date + option_product + price_type` | request-scoped read model | [product authority](../products/mo_option_chain/ARCHITECTURE.md) |
 | `mo-option-premium-plane` | `as_of + option_product + price_type` | request-scoped `PremiumPlane` | [product authority](../products/mo_option_premium/ARCHITECTURE.md) |
 
@@ -53,7 +54,7 @@ service lifecycle framework
 
 `index_daily`、`stock_daily` 仍属于 Source Capture / Raw capability，**不**升级为 Data Service。
 
-`services/catalog.py` 是另一个更窄的概念：它只保存 `dms` 可执行的 persisted-service bindings。一个 HTTP request-scoped Data Service 不需要进入该 Python catalog，也不需要适配当前返回 artifact `Path` 的 execution binding。
+`services/catalog.py` 是另一个更窄的概念：它只保存 `dms` 可执行的 persisted-service bindings。一个 request-scoped Data Service 不需要进入该 Python catalog，也不需要适配当前返回 artifact `Path` 的 execution binding。
 
 ## 3. Service integration boundary
 
@@ -73,9 +74,15 @@ MO Premium Plane product service 拥有该 request-scoped analytical service 的
 
 `mo-option-premium-plane` 不使用 `dms get`，V1 不要求 canonical persisted final output；它向 delivery adapter 交付 request-scoped `PremiumPlane` 或 classified semantic failure。共享 Data Service authority 不复制其 Capture ordering、financial formulas 或 product failure semantics。
 
+### 3.4 `csi1000-im-basis-history`
+
+CSI1000 IM Basis History product service 拥有显式日期区间 request、Capture/Preparation orchestration、classified semantic failure 与 request-scoped result boundary。产品定位、Source scope、shared IM basis semantics 与 read/application contract 分别由 [产品入口](../products/csi1000_im_basis_history/ARCHITECTURE.md)、[data authority](../products/csi1000_im_basis_history/data.md)、[shared IM basis authority](../preparation/im_basis/ARCHITECTURE.md) 与 [read/application contract](../products/csi1000_im_basis_history/read-contract.md) 拥有。
+
+`csi1000-im-basis-history` 只向 Python consumer 交付 request-scoped `CSI1000IMBasisHistoryResult` 或 classified semantic failure。V1 不使用 `dms get`、不持久化 final result，也没有 HTTP delivery adapter。
+
 ## 4. CLI: dms
 
-用户级 CLI 语义名称为 `dms`。第一版只支持两个命令：`list`、`get`。CLI 是 delivery surface 之一，只寻址 CLI executable catalog 中的 persisted-artifact service；当前为 `csi1000-5d-analysis`。`mo-option-chain` 与 `mo-option-premium-plane` 是通过 HTTP 暴露的 request-scoped Data Services（见第 3.2、3.3、10 节），不走 `dms get`。
+用户级 CLI 语义名称为 `dms`。第一版只支持两个命令：`list`、`get`。CLI 是 delivery surface 之一，只寻址 CLI executable catalog 中的 persisted-artifact service；当前为 `csi1000-5d-analysis`。`mo-option-chain` 与 `mo-option-premium-plane` 通过 HTTP 暴露，`csi1000-im-basis-history` 通过 public Python boundary 交付；这三个 request-scoped Data Services 都不走 `dms get`（见第 3.2–3.4 节）。
 
 ### 4.1 dms list
 
@@ -102,7 +109,7 @@ description
 csi1000-5d-analysis
 ```
 
-V1 `dms list` 不列出通过 HTTP 暴露的 request-scoped `mo-option-chain` 或 `mo-option-premium-plane`；所有 repository products/capabilities 从 [Capability Catalog](../../../CAPABILITIES.md) 发现。CLI executable catalog 不通过扫描文件系统动态发现。
+V1 `dms list` 不列出 request-scoped `csi1000-im-basis-history`、`mo-option-chain` 或 `mo-option-premium-plane`；所有 repository products/capabilities 从 [Capability Catalog](../../../CAPABILITIES.md) 发现。CLI executable catalog 不通过扫描文件系统动态发现。
 
 ### 4.2 dms get
 
@@ -142,7 +149,7 @@ yesterday
 
 ## 5. CLI 与 product orchestration 边界
 
-CLI 只解析参数、校验 CLI-level 输入、从 executable catalog resolve CLI-addressable Data Service、调用并报告结果或错误。当前 executable binding 面向返回 persisted artifact `Path` 的 service；通过 HTTP 暴露的 request-scoped services 不需要使用或模拟这个 binding。CLI 不编排 Capture，也不重新定义：
+CLI 只解析参数、校验 CLI-level 输入、从 executable catalog resolve CLI-addressable Data Service、调用并报告结果或错误。当前 executable binding 面向返回 persisted artifact `Path` 的 service；request-scoped services 不需要使用或模拟这个 binding。CLI 不编排 Capture，也不重新定义：
 
 ```text
 Source semantics
@@ -182,7 +189,7 @@ service_id + target_trade_date
 
 唯一确定一次最终用户输出位置。
 
-`mo-option-chain` 与 `mo-option-premium-plane` 是 request-scoped results，V1 不要求 canonical persisted final output，不落入上述 `output/<service>/<date>/` 约定（见第 3.2、3.3 节）。
+`csi1000-im-basis-history`、`mo-option-chain` 与 `mo-option-premium-plane` 是 request-scoped results，V1 不要求 canonical persisted final output，不落入上述 `output/<service>/<date>/` 约定（见第 3.2–3.4 节）。
 
 ## 7. Raw Artifact / Analysis-ready Artifact / Output 边界
 
@@ -190,7 +197,7 @@ service_id + target_trade_date
 * `data/snapshots/`：非 Data Service 的 Analysis-ready Artifact 输出目录。第一版 Daily 数据产品（`data/snapshots/YYYY-MM-DD/snapshot.json`）不是 Data Service，继续使用 `data/snapshots/`。
 * `output/<service_id>/<target_trade_date>/`：persisted-artifact Data Service 的 canonical user-facing output。
 
-> `output/<service>/<date>/` 是 persisted-artifact Data Service 的 canonical user-facing output，不适用于 request-scoped HTTP results。
+> `output/<service>/<date>/` 是 persisted-artifact Data Service 的 canonical user-facing output，不适用于 request-scoped results。
 
 Data Service 的 orchestration 把 Analysis Preparation 产出的 artifact 发布到该位置；`data/snapshots/csi1000-5d-analysis/<date>/snapshot.json` 不属于该 service 的输出，也不得维护两份相同 artifact。
 
@@ -231,7 +238,7 @@ index_daily_history.json
 im_futures_daily.json
 ```
 
-可以包含多个历史交易日。但它们都属于 `target_trade_date = D` 这一次数据准备。`mo-option-chain` 与 `mo-option-premium-plane` 是 request-scoped results，不适用本节的按日持久化 partition 语义（见第 3.2、3.3 节）。
+可以包含多个历史交易日。但它们都属于 `target_trade_date = D` 这一次数据准备。`csi1000-im-basis-history`、`mo-option-chain` 与 `mo-option-premium-plane` 是 request-scoped results，不适用本节的按日持久化 partition 语义（见第 3.2–3.4 节）。
 
 ## 9. Non-goals
 
@@ -299,7 +306,7 @@ server deployment
 
 1. 什么是 Data Service？
 2. 当前有哪些 semantic Data Services，从哪里发现？
-3. `csi1000-5d-analysis` 表示什么？
+3. `csi1000-5d-analysis` 与 `csi1000-im-basis-history` 分别表示什么？
 4. `dms list` 列出全部 repository products，还是仅 CLI-addressable services？
 5. CLI executable catalog 与 Data Service semantic catalog 有什么区别？
 6. 如何通过 `dms get` 请求 persisted service？
@@ -308,7 +315,7 @@ server deployment
 9. `data/raw` 与 `output` 有什么区别？
 10. 为什么调用方不需要知道底层 Source Capture？
 11. `data/snapshots` 与 Data Service canonical output 有什么边界？
-12. 通过 HTTP 暴露的 request-scoped Data Service 是否必须进入 Path-returning CLI binding？
-13. HTTP delivery adapter 与 CLI 是否都是 delivery surfaces，而不是业务语义 owner？
+12. Request-scoped Data Service 是否必须进入 Path-returning CLI binding？
+13. Public Python boundary、HTTP delivery adapter 与 CLI 如何保持各自边界，而不成为产品语义 owner？
 
 若这些问题仍需 implementation agent 自行发明，则本 authority 未完成。

@@ -217,3 +217,13 @@ def test_market_snapshot_production_owns_no_http_runtime() -> None:
             offenders.append(str(source.relative_to(REPOSITORY_ROOT)))
 
     assert not offenders, f"HTTP runtime imports in market-snapshot: {offenders}"
+
+
+def test_market_snapshot_does_not_depend_on_market_research() -> None:
+    source_root = REPOSITORY_ROOT / "market-snapshot/src/market_snapshot"
+    offenders = [
+        str(source.relative_to(REPOSITORY_ROOT))
+        for source in source_root.rglob("*.py")
+        if "market_research" in source.read_text(encoding="utf-8")
+    ]
+    assert not offenders, f"market-snapshot imports market-research: {offenders}"

@@ -8,12 +8,14 @@ dependencies = [
     "python-dotenv (>=1.2.3,<2.0.0)",
     "fastapi (>=0.141.1,<0.142.0)",
     "uvicorn (>=0.53.0,<0.54.0)",
+    "matplotlib (>=3.10.0,<4.0.0)",
 ]
 
 [tool.poetry]
 packages = [
     { include = "market_snapshot", from = "market-snapshot/src" },
     { include = "backend_api", from = "backend-api/src" },
+    { include = "market_research", from = "market-research/src" },
 ]
 
 [tool.poetry.group.dev.dependencies]
@@ -27,8 +29,12 @@ requires = ["poetry-core>=2.0.0"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.pytest.ini_options]
-testpaths = ["market-snapshot/tests", "backend-api/tests"]
-pythonpath = ["market-snapshot/src", "backend-api/src"]
+testpaths = ["tests", "market-snapshot/tests", "market-research/tests", "backend-api/tests"]
+pythonpath = [
+    "market-snapshot/src",
+    "market-research/src",
+    "backend-api/src",
+]
 
 [tool.ruff]
 target-version = "py313"
@@ -40,26 +46,37 @@ src = [
     "backend-api/src",
     "backend-api/tests",
     "backend-api/scripts",
+    "market-research/src",
+    "market-research/tests",
+    "tests",
 ]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B"]
 
 [tool.ruff.lint.isort]
-known-first-party = ["backend_api", "market_snapshot"]
+known-first-party = ["backend_api", "market_research", "market_snapshot"]
 
 [tool.mypy]
 python_version = "3.13"
 files = [
+    "dev.py",
+    "tests",
     "market-snapshot/src",
     "market-snapshot/tests",
     "market-snapshot/scripts",
     "backend-api/src",
     "backend-api/tests",
     "backend-api/scripts",
+    "market-research/src",
+    "market-research/tests",
 ]
-mypy_path = ["market-snapshot/src", "backend-api/src"]
+mypy_path = [
+    "market-snapshot/src",
+    "market-research/src",
+    "backend-api/src",
+]
 
 [[tool.mypy.overrides]]
-module = ["tushare", "tushare.*", "pandas", "pandas.*"]
+module = ["tushare", "tushare.*", "pandas", "pandas.*", "matplotlib", "matplotlib.*"]
 ignore_missing_imports = true

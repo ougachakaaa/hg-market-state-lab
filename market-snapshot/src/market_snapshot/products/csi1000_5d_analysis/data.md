@@ -92,7 +92,7 @@ analysis-ready
 
 ### 4.2 IM universe
 
-"主要可交易合约 / 有意义"这类业务解释性措辞不用于 Source Capture。IM universe 的确定性定义：
+"主要可交易合约 / 有意义"这类业务解释性措辞不用于 Source Capture。IM active universe 与 contract slot 由 [shared IM basis authority](../../preparation/im_basis/ARCHITECTURE.md) 定义；本产品的 Capture scope 为：
 
 > 对目标分析窗口，采集属于 IM 产品且在相关交易日处于有效生命周期内的普通月度合约。
 

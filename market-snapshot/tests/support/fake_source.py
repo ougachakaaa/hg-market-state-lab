@@ -527,10 +527,23 @@ CSI1000_MO_CONTRACTS = [
 ]
 CSI1000_MO_CODES = [str(contract["ts_code"]) for contract in CSI1000_MO_CONTRACTS]
 CSI1000_IM_CONTRACTS = [
-    im_contract("IM2609.CFE", list_date="20260817", delist_date="20260918"),
+    im_contract("IM2606.CFE", list_date="20260101", delist_date="20260626"),
+    im_contract("IM2607.CFE", list_date="20260101", delist_date="20260717"),
+    im_contract("IM2608.CFE", list_date="20260627", delist_date="20260821"),
+    im_contract("IM2609.CFE", list_date="20260101", delist_date="20260918"),
+    im_contract("IM2610.CFE", list_date="20260822", delist_date="20261016"),
+    im_contract("IM2612.CFE", list_date="20260101", delist_date="20261218"),
+    im_contract("IM2703.CFE", list_date="20260718", delist_date="20270319"),
 ]
 CSI1000_IM_DAILY_DATES = {
-    "IM2609.CFE": business_days("2026-08-17", CSI1000_TARGET_DATE),
+    str(contract["ts_code"]): business_days(
+        pd.Timestamp(str(contract["list_date"])).strftime("%Y-%m-%d"),
+        min(
+            pd.Timestamp(str(contract["delist_date"])).strftime("%Y-%m-%d"),
+            CSI1000_TARGET_DATE,
+        ),
+    )
+    for contract in CSI1000_IM_CONTRACTS
 }
 
 

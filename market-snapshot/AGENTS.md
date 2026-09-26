@@ -11,7 +11,7 @@
 3. 从 bounded context 的 `ARCHITECTURE.md` 进入当前任务所需的 specialized authority：
    - 共享 Capture identity 或 Source fact → `src/market_snapshot/capture/ARCHITECTURE.md`；
    - 产品 Source scope、Raw、universe 或 completeness → 产品 `data.md`；
-   - formula、read model、Point、null/zero、grouping 或 ordering → 产品 preparation/read/backend authority；
+   - 产品专属 formula、read model、Point、null/zero、grouping 或 ordering → 产品 preparation/read/backend authority；已在 catalog 登记的共享 Preparation semantic → 该 shared capability authority；
    - application request/result、semantic failure、Data Service、CLI 或 persisted output → `src/market_snapshot/services/ARCHITECTURE.md` 及对应产品 authority；
    - endpoint、DTO projection、HTTP error/status 或 OpenAPI → [backend-api authority](../backend-api/ARCHITECTURE.md)。
 
