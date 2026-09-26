@@ -1,6 +1,6 @@
 # hg-market-state-lab
 
-`hg-market-state-lab` 是用于市场状态数据准备、市场状态建模与结果展示的实验性仓库。
+`hg-market-state-lab` 是用于市场状态数据准备、探索研究、市场状态建模与结果展示的实验性仓库。
 
 ```text
 market-snapshot  → market state data preparation
@@ -17,6 +17,7 @@ README 是人类开发入口，不是架构或业务语义 authority。
 - 仓库架构、Python runtime invariant 与模块路由：[ARCHITECTURE.md](ARCHITECTURE.md)
 - `market-snapshot` 稳定分层：[market-snapshot/ARCHITECTURE.md](market-snapshot/ARCHITECTURE.md)
 - `market-snapshot` capability/product catalog：[market-snapshot/CAPABILITIES.md](market-snapshot/CAPABILITIES.md)
+- `market-research` exploratory/statistical research 边界：[market-research/ARCHITECTURE.md](market-research/ARCHITECTURE.md)
 - `backend-api` HTTP boundary 与 product catalog：[backend-api/ARCHITECTURE.md](backend-api/ARCHITECTURE.md)
 - `web-ui` 边界与 visualization 路由：[web-ui/ARCHITECTURE.md](web-ui/ARCHITECTURE.md)
 - 根开发命令与 managed worktree 说明：[DEVELOPMENT.md](DEVELOPMENT.md)

@@ -1,0 +1,108 @@
+# market-research 模块架构 authority
+
+本文件定义 `market-research` 的稳定语义、职责边界、依赖方向与内部用途。仓库级模块关系、Python runtime ownership 与顶层 analytical flow 见 [repository architecture](../ARCHITECTURE.md)；`market-snapshot` 的确定性数据准备边界见 [market-snapshot architecture](../market-snapshot/ARCHITECTURE.md)。
+
+## 1. Purpose 与职责终点
+
+`market-research` 是独立的 exploratory / statistical research bounded module。它用于：
+
+- 开放探索市场数据；
+- descriptive / conditional statistics；
+- research-specific slicing、joining、grouping 与 reshaping；
+- exploratory visualization；
+- hypothesis discovery 与 study-specific evaluation；
+- 快速判断哪些现象值得进一步研究或进入 Modeling 的语义决策。
+
+Research 可以在开始时不知道最终需要的全部数据或输出形式，也不要求先存在稳定的 production contract。Research result 的职责终点是 evidence / finding；它不是 production market-state output、forecast、decision、signal、recommendation 或 trading strategy。
+
+本模块不拥有 production modeling、model evaluation、forecasting、decision system、backtesting framework、research service/API 或 UI。
+
+## 2. Snapshot 消费边界
+
+稳定依赖方向是：
+
+```text
+market-research
+        ↓
+market-snapshot public application / product boundary
+        ↓
+analysis-ready result
+```
+
+Research 必须优先消费 `market-snapshot` 明确支持的 application/product result，不得进入或依赖：
+
+- Source implementation 或 Source Capture internals；
+- Raw Artifact internals；
+- product-private Analysis Preparation implementation；
+- persistence layout；
+- `backend-api`、FastAPI、HTTP DTO/status/error envelope、OpenAPI 或 frontend types。
+
+共享 repository Python runtime 不构成跨模块自由 import permission。`market-snapshot` 不得依赖 `market-research`；Research 也不得把开放统计、hypothesis semantics、市场判断或 study-specific transformation 推回 Snapshot。
+
+Snapshot 仍拥有从 Source fact 到 Analysis-ready Artifact 的确定性准备。Research 可以为具体研究执行 arbitrary slicing、joining、grouping、reshaping、statistics 与 plotting；只有真实 Research consumer 暴露出可复用且属于 deterministic data preparation 的缺口时，才通过对应 Snapshot canonical authority 做显式 reconciliation。
+
+当前 Snapshot 已有 product-owned Data Service / application boundaries，但没有为 Research 承诺统一的公共 Python facade。首个 vertical slice 必须从真实研究问题出发，选择一个现有受支持的 product/application result，并对缺少的窄 public boundary 做 reconciliation；不得为本模块预先设计通用 research data interface，也不得以读取 Snapshot internals 或 persistence layout 代替该边界。
+
+## 3. Scratch 与 Retained Studies
+
+### `scratch`
+
+`scratch` 用于快速、低约束、可能一次性的探索，可以包含临时 Python script、notebook、dataframe operation、任意绘图与 disposable analysis。
+
+Scratch 不构成 repository semantic authority，不得成为 production dependency，也不得被其他模块视为稳定接口、数据契约或可复用业务实现。
+
+### `studies`
+
+`studies` 用于值得保留、复查或继续推进的研究。每个 retained study 至少清楚记录：
+
+```text
+Question
+Inputs
+Method
+Results
+Limitations
+```
+
+Study-specific input selection、method、plots、findings 与 limitations 与该 study 共置，不进入本模块 architecture。Retained study 是 evidence record，不因被保留而成为 Snapshot、Modeling 或 production output 的 semantic authority。
+
+本模块不预设 Experiment Engine、Study Registry、Research Repository、plugin system、统一 lifecycle 或通用 study schema。只有真实 retained study 需要时才建立最小文件结构。
+
+## 4. Research 与 Modeling
+
+```text
+market-research != market-modeling
+```
+
+Research 不要求以 Model 为中心，`market-research` 与 `market-modeling` 是独立的 sibling analytical modules。Research implementation 不成为 Modeling 的 runtime dependency，当前也不定义 `market-modeling` 的内部结构、model research、model evaluation 或 production promotion 机制。
+
+Research finding 可以通过以下过程促进未来 Modeling：
+
+```text
+Research
+    ↓
+Evidence
+    ↓
+Human / Agent Semantic Decision
+    ↓
+Authority Update
+    ↓
+Modeling
+```
+
+其中 semantic decision 与 authority update 是必要的边界；Research result 不会自动晋升为 production contract 或 Modeling semantics。
+
+## 5. Authority 与维护边界
+
+```text
+repository ARCHITECTURE.md
+        ↓
+market-research/ARCHITECTURE.md
+        ├── scratch exploration
+        └── retained study materials
+                ↓
+        required market-snapshot product authority
+```
+
+本文件只拥有 Research 的稳定 identity、职责边界、依赖方向以及 scratch / retained-study distinction。具体研究问题、输入、方法、结果与限制由对应 retained study 记录；Snapshot 产品语义继续由 [market-snapshot capability catalog](../market-snapshot/CAPABILITIES.md) 所链接的 canonical owner 定义。
+
+只有在 Research 模块定位、跨模块依赖、Snapshot 消费原则或 scratch/studies 边界变化时更新本文件。不得把 study-specific 细节堆入 module-level architecture，也不得复制 Snapshot product authority。

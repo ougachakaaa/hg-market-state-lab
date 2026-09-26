@@ -4,7 +4,7 @@
 
 ## 1. 仓库定位
 
-`hg-market-state-lab` 是用于市场状态数据准备、市场状态建模与结果展示的实验性系统。
+`hg-market-state-lab` 是用于市场状态数据准备、探索研究、市场状态建模与结果展示的实验性系统。
 
 ## 2. 顶层模块
 
@@ -22,9 +22,9 @@
 
 ### `market-research`
 
-未来独立的 exploratory / statistical research bounded module。
+独立的 exploratory / statistical research bounded module，消费 analysis-ready market artifacts，负责开放探索、统计分析、可视化、假设发现与值得保留的研究。
 
-该模块尚未形成独立 authority；在出现明确需求前，不预先设计 research framework、experiment model、contracts、内部结构或它在 analytical flow 中的位置。
+Research result 是 evidence / finding，不是 production market-state output。模块内部边界见 [market-research/ARCHITECTURE.md](market-research/ARCHITECTURE.md)。
 
 ### `backend-api`
 
@@ -72,13 +72,28 @@ External Market Sources
 market-snapshot
         ↓
 Analysis-ready Artifacts
-        ↓
-market-modeling
-        ↓
-Market-state Outputs
+        ├──→ market-research ───→ Exploratory Studies / Evidence
+        │
+        └──→ market-modeling ───→ Market-state Outputs
 ```
 
-该图表达业务职责与 analytical data flow，不强制 runtime deployment topology 或 package import dependency。`market-snapshot` 的产物也可以被仓库外的 analyzer 直接消费。
+该图表达业务职责与 analytical data flow，不强制 runtime deployment topology 或 package import dependency。`market-research` 与 `market-modeling` 是 sibling analytical modules；Research 不是 Modeling pipeline 的强制 stage。`market-snapshot` 的产物也可以被仓库外的 analyzer 直接消费。
+
+`market-research` 只通过 `market-snapshot` 明确支持的 public application/product boundary 消费 analysis-ready result，不依赖 Source Capture、Raw Artifact、product-private Preparation、persistence layout、`backend-api`、FastAPI 或 HTTP DTO。`market-snapshot` 与 `market-modeling` 不得依赖 `market-research`。
+
+Research finding 可以经以下语义决策路径促进未来 Modeling，但该路径不是 runtime dependency，也不定义 promotion framework：
+
+```text
+Research
+    ↓
+Evidence
+    ↓
+Human / Agent Semantic Decision
+    ↓
+Authority Update
+    ↓
+Modeling
+```
 
 ### HTTP delivery topology
 
@@ -90,7 +105,7 @@ market-modeling ─────┼──→ backend-api ───→ web-ui
 future modules ──────┘
 ```
 
-`backend-api` 是 inbound delivery boundary，不是 `market-snapshot → market-modeling` analytical pipeline stage。稳定依赖方向是 `backend-api` 依赖 owning module 的 public application/product boundary；`market-snapshot` 与 `market-modeling` 不得依赖 `backend-api`，也不得用 FastAPI、HTTP DTO/status/error envelope、OpenAPI 或 frontend types 定义自己的 semantic model。
+`backend-api` 是 inbound delivery boundary，不是 analytical pipeline stage。稳定依赖方向是 `backend-api` 依赖 owning module 的 public application/product boundary；`market-snapshot`、`market-research` 与 `market-modeling` 不得依赖 `backend-api`，也不得用 FastAPI、HTTP DTO/status/error envelope、OpenAPI 或 frontend types 定义自己的 semantic model。当前 `market-research` 不提供 research service/API。
 
 ## 5. Authority 导航
 
@@ -106,6 +121,7 @@ ARCHITECTURE.md（本文件）
     │  market-snapshot/CAPABILITIES.md
     │      ↓
     │  co-located product / capability ARCHITECTURE.md
+    ├─ market-research/ARCHITECTURE.md
     ├─ backend-api/ARCHITECTURE.md
     │      ↓
     │  backend-api/HTTP_PRODUCTS.md
@@ -122,7 +138,7 @@ ARCHITECTURE.md（本文件）
            └─ web-ui/contracts.md
 ```
 
-Python runtime、dependency resolution 与 repository-root tooling 从本文档进入 `DEVELOPMENT.md`；业务语义仍进入对应 owning module。`market-modeling` 与 `market-research` 当前没有下层 authority，不得从 runtime layout 推导其内部设计。
+Python runtime、dependency resolution 与 repository-root tooling 从本文档进入 `DEVELOPMENT.md`；业务语义仍进入对应 owning module。`market-modeling` 当前没有下层 authority，不得从 runtime layout 或 Research authority 推导其内部设计。
 
 上层只提供选择下一份文档所需的上下文，不复制下层语义。新增或删除单个产品通常只更新模块 catalog，不改变本文档。
 
