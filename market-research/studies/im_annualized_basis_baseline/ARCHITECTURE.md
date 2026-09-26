@@ -1,12 +1,12 @@
 # IM Annualized Basis Baseline retained study authority
 
-本文档是 `IM Annualized Basis Baseline` 的 retained-study authority。Research 边界与 retained-study identity 见 [market-research architecture](../../ARCHITECTURE.md)；输入产品见 [CSI1000 IM Basis History](../../../market-snapshot/src/market_snapshot/products/csi1000_im_basis_history/ARCHITECTURE.md)。
+本文档是 `IM Annualized Basis Baseline` 的 retained-study authority。Research 边界与 retained-study identity 见 [market-research architecture](../../ARCHITECTURE.md)；共用 predictor 与 quantile convention 见 [IM Basis Research Semantics](../../shared/im_basis/ARCHITECTURE.md)；输入产品见 [CSI1000 IM Basis History](../../../market-snapshot/src/market_snapshot/products/csi1000_im_basis_history/ARCHITECTURE.md)。
 
 ## Question
 
 > 历史上，不同 IM term-structure slot 的 annualized basis 通常处于什么水平，其分布、稳定性和期限结构有何特征？
 
-该问题是未来 `IM basis → CSI1000 forward return predictability` 研究的 descriptive baseline，但本 Study 不研究未来收益或预测能力。
+该问题为 sibling `IM Basis Forward Return Association` Study 建立 predictor distribution understanding，但本 Study 不研究未来收益或预测能力，也不向后者提供 persisted result dependency。
 
 ## Inputs
 
@@ -30,20 +30,9 @@ annualized_basis_pct
 
 输入 product 已保证每个 observation date 四槽完整且唯一。Study 不定义缺槽填补、partial-date retention 或基于 liquidity 的二次筛选；若 consumer 看到缺槽或重复 slot，应作为 upstream contract violation 失败。
 
-### Study-specific aggregate
+### Shared Research aggregate
 
-对每个交易日计算：
-
-```text
-non_front_mean_basis
-= arithmetic mean(
-    M1 annualized_basis_pct,
-    Q1 annualized_basis_pct,
-    Q2 annualized_basis_pct
-  )
-```
-
-该 aggregate 是不加权算术平均，严格排除 `M0`。它只属于本 Study，不是 Snapshot field、shared feature 或 Modeling semantic。
+对每个交易日计算 [shared Research authority](../../shared/im_basis/ARCHITECTURE.md) 定义的 `non_front_mean_basis`。本 Study 不重新定义公式、slot 选择或单位。
 
 ### Baseline statistics
 
@@ -70,8 +59,8 @@ max
 Canonical statistical conventions：
 
 - `standard_deviation` 使用 sample standard deviation（`ddof = 1`）；当 `count < 2` 时该 run 不足以产生完整 baseline，应显式失败，不输出猜测值。
-- `Pxx` 使用排序样本上的 linear interpolation quantile。
-- `median` 与 `P50` 都保留；两者使用同一 quantile convention，其数值必须一致。
+- `Pxx` 使用 [shared Research authority](../../shared/im_basis/ARCHITECTURE.md) 定义的 linear-interpolation empirical quantile convention。
+- `median` 与 `P50` 都保留；两者使用该共享 convention，其数值必须一致。
 - 所有值保持 Snapshot `annualized_basis_pct` 的 percentage points annualized 单位。
 
 ### Allowed retained outputs

@@ -65,9 +65,14 @@ Limitations
 
 Study-specific input selection、method、plots、findings 与 limitations 与该 study 共置，不进入本模块 architecture。Retained study 是 evidence record，不因被保留而成为 Snapshot、Modeling 或 production output 的 semantic authority。
 
+当前由多个真实 retained study 共同使用的窄 Research semantic：
+
+- [IM Basis Research Semantics](shared/im_basis/ARCHITECTURE.md)
+
 当前 retained study 入口：
 
 - [IM Annualized Basis Baseline](studies/im_annualized_basis_baseline/ARCHITECTURE.md)
+- [IM Basis Forward Return Association](studies/im_basis_forward_return_association/ARCHITECTURE.md)
 
 本模块不预设 Experiment Engine、Study Registry、Research Repository、plugin system、统一 lifecycle 或通用 study schema。只有真实 retained study 需要时才建立最小文件结构。
 
@@ -102,11 +107,12 @@ repository ARCHITECTURE.md
         ↓
 market-research/ARCHITECTURE.md
         ├── scratch exploration
+        ├── narrow shared Research semantics
         └── retained study materials
                 ↓
         required market-snapshot product authority
 ```
 
-本文件只拥有 Research 的稳定 identity、职责边界、依赖方向以及 scratch / retained-study distinction。具体研究问题、输入、方法、结果与限制由对应 retained study 记录；Snapshot 产品语义继续由 [market-snapshot capability catalog](../market-snapshot/CAPABILITIES.md) 所链接的 canonical owner 定义。
+本文件只拥有 Research 的稳定 identity、职责边界、依赖方向、scratch / retained-study distinction 与下层 authority 导航。两个或更多真实 Study 共用的窄 Research semantic 可以有独立 canonical owner，但不得借此建立通用 feature 或 statistics framework。具体研究问题、输入、方法、结果与限制由对应 retained study 记录；Snapshot 产品语义继续由 [market-snapshot capability catalog](../market-snapshot/CAPABILITIES.md) 所链接的 canonical owner 定义。
 
 只有在 Research 模块定位、跨模块依赖、Snapshot 消费原则或 scratch/studies 边界变化时更新本文件。不得把 study-specific 细节堆入 module-level architecture，也不得复制 Snapshot product authority。
