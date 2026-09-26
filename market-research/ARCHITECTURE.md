@@ -65,6 +65,10 @@ Limitations
 
 Study-specific input selection、method、plots、findings 与 limitations 与该 study 共置，不进入本模块 architecture。Retained study 是 evidence record，不因被保留而成为 Snapshot、Modeling 或 production output 的 semantic authority。
 
+当前 retained study 入口：
+
+- [IM Annualized Basis Baseline](studies/im_annualized_basis_baseline/ARCHITECTURE.md)
+
 本模块不预设 Experiment Engine、Study Registry、Research Repository、plugin system、统一 lifecycle 或通用 study schema。只有真实 retained study 需要时才建立最小文件结构。
 
 ## 4. Research 与 Modeling
