@@ -221,6 +221,71 @@ def collect_target_date_im_futures_daily(
     return records
 
 
+def collect_im_futures_daily_range(
+    start_trade_date: str,
+    end_trade_date: str,
+    basic_facts: Sequence[artifacts.RawRecord],
+    daily_query: common.QueryFunc,
+) -> list[artifacts.RawRecord]:
+    """Collect daily facts for every IM lifecycle intersecting an explicit range."""
+    tushare.to_tushare_date(start_trade_date)
+    tushare.to_tushare_date(end_trade_date)
+    im_futures_basic.require_im_contract_facts(basic_facts)
+    records: list[artifacts.RawRecord] = []
+    selected = 0
+    for contract in basic_facts:
+        list_date, delist_date = require_contract_lifecycle(contract)
+        if list_date > end_trade_date or delist_date < start_trade_date:
+            continue
+        selected += 1
+        ts_code = str(contract["ts_code"])
+        effective_start = max(start_trade_date, list_date)
+        effective_end = min(end_trade_date, delist_date)
+        contract_records = common.to_raw_records(
+            daily_query(
+                ts_code=ts_code,
+                start_date=tushare.to_tushare_date(effective_start),
+                end_date=tushare.to_tushare_date(effective_end),
+            )
+        )
+        for record in contract_records:
+            if record.get("ts_code") != ts_code:
+                raise common.CollectionError(
+                    f"Tushare {RAW_ARTIFACT} returned ts_code={record.get('ts_code')!r} "
+                    f"for a request of ts_code={ts_code}."
+                )
+            if not common.in_date_range(
+                record, tushare.TRADE_DATE_FIELD, effective_start, effective_end
+            ):
+                raise common.CollectionError(
+                    f"Tushare {RAW_ARTIFACT} returned trade_date="
+                    f"{record.get('trade_date')!r} for {ts_code} outside "
+                    f"{effective_start}..{effective_end}."
+                )
+        records.extend(contract_records)
+    if not selected:
+        raise common.CollectionError(
+            f"no {PRODUCT} contract lifecycle intersects {start_trade_date}..{end_trade_date}."
+        )
+    records.sort(key=lambda record: (str(record["ts_code"]), str(record["trade_date"])))
+    return records
+
+
+def capture_range(
+    api: tushare.TushareApi,
+    start_trade_date: str,
+    end_trade_date: str,
+    basic_facts: Sequence[artifacts.RawRecord],
+) -> list[artifacts.RawRecord]:
+    """Run the explicit-range ``fut_daily`` Capture."""
+    return collect_im_futures_daily_range(
+        start_trade_date,
+        end_trade_date,
+        basic_facts,
+        lambda **kwargs: query_fut_daily(api, **kwargs),
+    )
+
+
 def capture_target_date(
     api: tushare.TushareApi, trade_date: str, basic_facts: Sequence[artifacts.RawRecord]
 ) -> list[artifacts.RawRecord]:
