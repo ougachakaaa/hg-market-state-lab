@@ -18,7 +18,7 @@ Output: the analysis-ready payload the Data Service publishes as
 This module performs the deterministic preparation only: it never calls Tushare,
 never accesses the network and never publishes to the output root. Running the
 Data Service CLI is the canonical way to produce the artifact
-(``poetry run python scripts/dms.py get csi1000-5d-analysis --date ...``).
+(``poetry run python market-snapshot/scripts/dms.py get csi1000-5d-analysis --date ...``).
 
 Missing Source facts: a quote field that only gets copied onto the artifact and
 feeds no derived formula (``open`` / ``high`` / ``low`` of a contract that did

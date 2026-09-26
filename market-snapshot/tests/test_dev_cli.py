@@ -54,8 +54,8 @@ def test_backend_uses_the_backend_api_launcher(monkeypatch: pytest.MonkeyPatch) 
 
     assert dev.main(["backend"]) == 0
     assert invocation == {
-        "command": [POETRY, "run", "python", "scripts/api.py"],
-        "cwd": dev.BACKEND_API,
+        "command": [POETRY, "run", "python", "backend-api/scripts/api.py"],
+        "cwd": dev.ROOT,
     }
 
 
@@ -93,13 +93,13 @@ def test_explicit_date_forms_dms_command_and_propagates_child_exit_code(
             POETRY,
             "run",
             "python",
-            "scripts/dms.py",
+            "market-snapshot/scripts/dms.py",
             "get",
             SERVICE_ID,
             "--date",
             TARGET_DATE,
         ],
-        "cwd": dev.MARKET_SNAPSHOT,
+        "cwd": dev.ROOT,
     }
 
 
@@ -119,3 +119,24 @@ def test_default_date_uses_asia_shanghai_calendar_day_without_fallback(
 
     assert dev.main(["data", SERVICE_ID]) == 0
     assert invocation["command"][-2:] == ["--date", "2026-09-20"]
+
+
+def test_doctor_inspects_one_root_poetry_environment(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    poetry_calls: list[str] = []
+
+    def fake_tool_version(name: str) -> tuple[str, str]:
+        return f"/tools/{name}", f"{name} test version"
+
+    def fake_poetry_python(poetry: str) -> tuple[Path, str]:
+        poetry_calls.append(poetry)
+        return dev.ROOT / ".venv/bin/python", "3.13.15"
+
+    monkeypatch.setattr(dev, "_tool_version", fake_tool_version)
+    monkeypatch.setattr(dev, "_poetry_python", fake_poetry_python)
+    monkeypatch.setattr(dev, "_backend_status", lambda: "stopped")
+    monkeypatch.setattr(dev, "_port_listening", lambda port: False)
+
+    assert dev.doctor() == 0
+    assert poetry_calls == ["/tools/poetry"]

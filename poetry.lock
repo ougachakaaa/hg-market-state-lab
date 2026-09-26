@@ -751,24 +751,6 @@ html5 = ["html5lib"]
 htmlsoup = ["BeautifulSoup4"]
 
 [[package]]
-name = "market-snapshot"
-version = "0.1.0"
-description = "Prepare reproducible market data products and analysis-ready artifacts."
-optional = false
-python-versions = ">=3.13,<3.14"
-groups = ["main"]
-files = []
-develop = true
-
-[package.dependencies]
-python-dotenv = ">=1.2.3,<2.0.0"
-tushare = ">=1.4.29,<2.0.0"
-
-[package.source]
-type = "directory"
-url = "../market-snapshot"
-
-[[package]]
 name = "mypy"
 version = "1.20.2"
 description = "Optional static typing for Python"
@@ -1627,4 +1609,4 @@ test = ["pytest", "websockets"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.13,<3.14"
-content-hash = "ce3c65cbdd1b0fbf3e09f2213d8792ea509f9ef0279ea0e8f4bee57c9b3a007b"
+content-hash = "e0d7b2449df0070fd1369b16dba47af2c4964d9fd6f49cb86f5ea426d63f6d11"

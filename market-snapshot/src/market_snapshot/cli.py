@@ -12,10 +12,10 @@ and reports its result or error. Which Captures a service needs, in what order
 they run, which Source endpoint each one calls and what the Analysis Preparation
 derives are all owned by the Data Service (``ARCHITECTURE.md`` 2).
 
-Implementation surface (the repository stays Poetry ``package-mode = false``):
+Implementation surface (run from the repository root Poetry project):
 
-    poetry run python scripts/dms.py list
-    poetry run python scripts/dms.py get csi1000-5d-analysis --date 2026-09-18
+    poetry run python market-snapshot/scripts/dms.py list
+    poetry run python market-snapshot/scripts/dms.py get csi1000-5d-analysis --date 2026-09-18
 """
 
 from __future__ import annotations

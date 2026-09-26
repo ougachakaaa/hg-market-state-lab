@@ -13,8 +13,8 @@ not part of the HTTP transport contract: it can be overridden with ``--host`` /
 ``--port``, and ``products/mo_option_chain/http-contract.md`` section 8 leaves
 server deployment to V1 non-goals.
 
-    poetry run python scripts/api.py
-    poetry run python scripts/api.py --host 127.0.0.1 --port 8011
+    poetry run python backend-api/scripts/api.py
+    poetry run python backend-api/scripts/api.py --host 127.0.0.1 --port 8011
 """
 
 from __future__ import annotations

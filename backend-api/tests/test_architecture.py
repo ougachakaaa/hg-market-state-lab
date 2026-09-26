@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import ast
+import tomllib
 from pathlib import Path
 
 REPOSITORY_ROOT = Path(__file__).resolve().parents[2]
@@ -25,10 +26,47 @@ def imported_modules(path: Path) -> list[str]:
     ]
 
 
-def test_backend_declares_market_snapshot_as_a_path_dependency() -> None:
-    manifest = (REPOSITORY_ROOT / "backend-api/pyproject.toml").read_text(encoding="utf-8")
+def test_repository_owns_one_python_project_and_lockfile() -> None:
+    manifests = sorted(
+        path.relative_to(REPOSITORY_ROOT)
+        for path in REPOSITORY_ROOT.rglob("pyproject.toml")
+        if ".venv" not in path.parts
+        and "node_modules" not in path.parts
+        and "_temp_docs" not in path.parts
+    )
+    lockfiles = sorted(
+        path.relative_to(REPOSITORY_ROOT)
+        for path in REPOSITORY_ROOT.rglob("poetry.lock")
+        if ".venv" not in path.parts
+        and "node_modules" not in path.parts
+        and "_temp_docs" not in path.parts
+    )
 
-    assert 'market-snapshot = { path = "../market-snapshot", develop = true }' in manifest
+    assert manifests == [Path("pyproject.toml")]
+    assert lockfiles == [Path("poetry.lock")]
+
+
+def test_root_project_installs_the_independent_package_namespaces() -> None:
+    manifest = tomllib.loads(
+        (REPOSITORY_ROOT / "pyproject.toml").read_text(encoding="utf-8")
+    )
+
+    assert manifest["tool"]["poetry"]["packages"] == [
+        {"include": "market_snapshot", "from": "market-snapshot/src"},
+        {"include": "backend_api", "from": "backend-api/src"},
+    ]
+    assert not any(
+        "path" in dependency or "develop" in dependency
+        for dependency in manifest["project"]["dependencies"]
+    )
+
+
+def test_repository_poetry_config_requires_a_root_local_environment() -> None:
+    config = tomllib.loads(
+        (REPOSITORY_ROOT / "poetry.toml").read_text(encoding="utf-8")
+    )
+
+    assert config["virtualenvs"]["in-project"] is True
 
 
 def test_backend_uses_only_public_product_service_boundaries() -> None:

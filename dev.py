@@ -45,12 +45,12 @@ def _tool_version(name: str) -> tuple[str | None, str | None]:
     return executable, result.stdout.strip() or result.stderr.strip()
 
 
-def _poetry_python(poetry: str, project: Path) -> tuple[Path | None, str | None]:
-    """Inspect an existing Poetry environment without creating one."""
+def _poetry_python(poetry: str) -> tuple[Path | None, str | None]:
+    """Inspect the existing repository Poetry environment without creating one."""
     try:
         result = subprocess.run(
-            [poetry, "env", "info", "--executable"],
-            cwd=project,
+            [poetry, "env", "info", "--path"],
+            cwd=ROOT,
             capture_output=True,
             text=True,
             timeout=COMMAND_TIMEOUT,
@@ -58,7 +58,10 @@ def _poetry_python(poetry: str, project: Path) -> tuple[Path | None, str | None]
         )
         if result.returncode != 0:
             return None, None
-        executable = Path(result.stdout.strip())
+        environment = Path(result.stdout.strip())
+        if not environment.is_absolute():
+            environment = ROOT / environment
+        executable = environment / "bin" / "python"
         if not executable.is_file():
             return None, None
         version = subprocess.run(
@@ -107,39 +110,39 @@ def doctor() -> int:
     print("repository")
     for label, path, is_dir in (
         ("market-snapshot", MARKET_SNAPSHOT, True),
+        ("market-modeling", ROOT / "market-modeling", True),
+        ("market-research", ROOT / "market-research", True),
         ("backend-api", BACKEND_API, True),
         ("web-ui", FRONTEND, True),
-        ("market pyproject", MARKET_SNAPSHOT / "pyproject.toml", False),
-        ("backend pyproject", BACKEND_API / "pyproject.toml", False),
+        ("root pyproject", ROOT / "pyproject.toml", False),
+        ("root lockfile", ROOT / "poetry.lock", False),
     ):
         exists = path.is_dir() if is_dir else path.is_file()
         print(f"  {label:<20} {'OK' if exists else 'FAIL (missing)'}")
         failed |= not exists
 
-    print("\nbackend")
+    print("\nPython runtime")
     poetry, poetry_version = _tool_version("poetry")
     poetry_status = f"OK ({poetry_version})" if poetry_version else "FAIL (unavailable)"
     print(f"  {'Poetry':<20} {poetry_status}")
     failed |= poetry_version is None
 
-    for label, project in (
-        ("market Python 3.13", MARKET_SNAPSHOT),
-        ("backend Python 3.13", BACKEND_API),
-    ):
-        if poetry_version and project.is_dir():
-            python, version = _poetry_python(poetry, project)
-            if python is None:
-                python_status = "FAIL (Poetry environment missing)"
-            elif version is None:
-                python_status = "FAIL (unable to read version)"
-            elif version.split(".")[:2] == ["3", "13"]:
-                python_status = f"OK ({version})"
-            else:
-                python_status = f"FAIL (expected 3.13, found {version})"
+    if poetry_version and poetry is not None:
+        python, version = _poetry_python(poetry)
+        if python is None:
+            python_status = "FAIL (Poetry environment missing)"
+        elif python.parent.parent.resolve() != (ROOT / ".venv").resolve():
+            python_status = "FAIL (Poetry environment is not root .venv)"
+        elif version is None:
+            python_status = "FAIL (unable to read version)"
+        elif version.split(".")[:2] == ["3", "13"]:
+            python_status = f"OK ({version})"
         else:
-            python_status = "FAIL (unavailable)"
-        print(f"  {label:<20} {python_status}")
-        failed |= not python_status.startswith("OK")
+            python_status = f"FAIL (expected 3.13, found {version})"
+    else:
+        python_status = "FAIL (unavailable)"
+    print(f"  {'root Python 3.13':<20} {python_status}")
+    failed |= not python_status.startswith("OK")
 
     launcher = BACKEND_API / "scripts" / "api.py"
     launcher_exists = launcher.is_file()
@@ -186,8 +189,8 @@ def _run_foreground(command: list[str], cwd: Path) -> int:
 
 
 def backend() -> int:
-    if not BACKEND_API.is_dir() or not (BACKEND_API / "pyproject.toml").is_file():
-        print("backend prerequisites missing: backend-api/pyproject.toml", file=sys.stderr)
+    if not (ROOT / "pyproject.toml").is_file() or not (ROOT / "poetry.lock").is_file():
+        print("backend prerequisites missing: root pyproject.toml or poetry.lock", file=sys.stderr)
         return 1
     if not (BACKEND_API / "scripts" / "api.py").is_file():
         print("backend launcher missing: backend-api/scripts/api.py", file=sys.stderr)
@@ -196,7 +199,9 @@ def backend() -> int:
     if poetry is None:
         print("backend prerequisite missing: Poetry", file=sys.stderr)
         return 1
-    return _run_foreground([poetry, "run", "python", "scripts/api.py"], BACKEND_API)
+    return _run_foreground(
+        [poetry, "run", "python", "backend-api/scripts/api.py"], ROOT
+    )
 
 
 def frontend() -> int:
@@ -217,8 +222,8 @@ def _china_market_today() -> str:
 
 def data(service_id: str, target_trade_date: str | None = None) -> int:
     """Forward one persisted-artifact Data Service request to the canonical CLI."""
-    if not MARKET_SNAPSHOT.is_dir() or not (MARKET_SNAPSHOT / "pyproject.toml").is_file():
-        print("data prerequisites missing: market-snapshot/pyproject.toml", file=sys.stderr)
+    if not (ROOT / "pyproject.toml").is_file() or not (ROOT / "poetry.lock").is_file():
+        print("data prerequisites missing: root pyproject.toml or poetry.lock", file=sys.stderr)
         return 1
     if not (MARKET_SNAPSHOT / "scripts" / "dms.py").is_file():
         print("data launcher missing: market-snapshot/scripts/dms.py", file=sys.stderr)
@@ -234,13 +239,13 @@ def data(service_id: str, target_trade_date: str | None = None) -> int:
             poetry,
             "run",
             "python",
-            "scripts/dms.py",
+            "market-snapshot/scripts/dms.py",
             "get",
             service_id,
             "--date",
             resolved_date,
         ],
-        MARKET_SNAPSHOT,
+        ROOT,
     )
 
 

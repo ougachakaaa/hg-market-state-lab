@@ -6,8 +6,8 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
-    "contract:generate": "poetry -C ../backend-api run python ../web-ui/scripts/export_contracts.py && node scripts/contract_types.mjs",
-    "contract:check": "poetry -C ../backend-api run python ../web-ui/scripts/export_contracts.py --check && node scripts/contract_types.mjs --check",
+    "contract:generate": "poetry --directory .. run python web-ui/scripts/export_contracts.py && node scripts/contract_types.mjs",
+    "contract:check": "poetry --directory .. run python web-ui/scripts/export_contracts.py --check && node scripts/contract_types.mjs --check",
     "lint": "oxlint",
     "test": "vitest run",
     "preview": "vite preview"

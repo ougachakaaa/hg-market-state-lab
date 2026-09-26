@@ -5,8 +5,8 @@ makes it runnable without packaging the project.
 
 Authority: ``services/delivery.md`` section 4.
 
-    poetry run python scripts/dms.py list
-    poetry run python scripts/dms.py get csi1000-5d-analysis --date 2026-09-18
+    poetry run python market-snapshot/scripts/dms.py list
+    poetry run python market-snapshot/scripts/dms.py get csi1000-5d-analysis --date 2026-09-18
 """
 
 from __future__ import annotations
