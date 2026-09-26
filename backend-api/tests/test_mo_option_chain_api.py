@@ -497,10 +497,13 @@ def test_an_unmapped_read_failure_is_not_reported_as_success(
 
 
 def test_default_application_uses_real_provider(
-    default_client: TestClient, monkeypatch: pytest.MonkeyPatch
+    default_client: TestClient,
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
 ) -> None:
     """Without credentials, the real provider fails as unavailable, not unwired."""
     monkeypatch.delenv("TUSHARE_TOKEN", raising=False)
+    monkeypatch.setattr(service.tushare, "ENV_FILE", tmp_path / ".env")
     response = default_client.get(QUERY)
 
     assert response.status_code == 503

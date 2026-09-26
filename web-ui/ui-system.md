@@ -64,18 +64,16 @@ Custom CSS 是 exception path，不是 ordinary UI 的默认机制。当前四�
 
 Domain-neutral chart defaults 可以位于 `shared/charts`，但 `below-reference` / `at-reference` / `above-reference`、Call / Put / Futures identity、expiry opacity 等 semantic encoding 不得进入 generic application theme 或由 shared infrastructure 重新定义。
 
-## 4. Current CSS Reconciliation
+## 4. CSS Exception Review
 
-当前 CSS 是未来 migration 的 implementation input，而不是本 authority 固化的 selector contract：
+Custom CSS 必须按 ownership 而不是按当前 selector 或文件名审查：
 
-| Current location | Classification | Expected ownership after migration |
-| --- | --- | --- |
-| `src/index.css` | font、background、text hierarchy、spacing 与 radius 是 global/theme concern；message/result、facts、ordinary table、heading 与 responsive page spacing 是 ordinary UI；最小 browser reset 可继续存在 | shared theme/tokens 与 Ant Design；只保留必要的 global reset exception |
-| `src/app/application.css` | navigation layout、button chrome 与 selected state 是 ordinary UI；手写 generic navigation styling 在 migration 后 obsolete | application shell composition + Ant Design |
-| `src/features/mo_option_chain/index.css` | date/button/checkbox/fieldset/card/collapse/empty/loading 是 ordinary UI；expiry swatches、chart legends 与 Call/Put/Futures encoding 是 analytical visualization；chart frame、legend geometry 与 horizontal overflow 是 specialized layout | ordinary UI 迁移至 Ant Design；semantic styling 保留 feature-local；specialized layout 逐项判断 |
-| `src/features/mo_option_premium/index.css` | query controls/selectors/fieldset/ordinary table chrome/empty/collapse/button/status 是 ordinary UI；below/at/above-reference coloring 是 analytical visualization；sticky/scrolling table geometry 与 raw JSON code presentation 是 specialized layout | ordinary UI 迁移至 Ant Design；semantic styling 保留 feature-local；specialized layout 逐项判断 |
+- application-global CSS 只保留无法由 provider、theme 或 component configuration 表达的最小 browser reset；
+- feature-local CSS 可以表达 analytical color、identity、highlighting、legend mark 与其他 visual encoding，但不得接管 ordinary control chrome；
+- chart frame、legend geometry、overflow、sticky/scrolling analytical table 与 raw response code presentation 等 specialized presentation，可以在 Ant Design 不拥有该 concern 时保留；
+- 一旦规则只是在复制 generic control、card、table、navigation、spacing 或 typography behavior，就属于 implementation drift，必须回到 Ant Design 或 shared theme。
 
-重复实现 generic controls、borders、typography、spacing、card 或 ordinary table chrome 的规则属于 implementation drift，并在 UI-library migration 完成后 obsolete。本次 authority reconciliation 不修改或删除这些规则。
+审查结果只决定该 concern 应由 UI system、feature semantics 还是 specialized presentation 拥有；不得把 incidental selector、CSS filename 或当前 component tree 固化为 authority。
 
 ## 5. Implementation and Maintenance Boundary
 
@@ -91,6 +89,6 @@ custom CSS is an exception path
 analytical visual semantics remain feature-owned
 ```
 
-Exact Ant Design version、component selection、prop choice、token value、provider filename、component tree、CSS filename、migration sequence 与 individual specialized-layout decision 属于 implementation choice，但不得违反上述 boundary。
+Exact Ant Design version、component selection、prop choice、token value、provider filename、component tree、CSS filename 与 individual specialized-layout decision 属于 implementation choice，但不得违反上述 boundary。
 
-UI-system migration 不改变 Page / Hooks / API / Model / Components / Charts ownership，不改变 MO Option Chain 或 MO Premium Plane semantics，也不改变 test ownership。现有 colocated `*.test.ts` 与 `*.test.tsx` 保持有效。
+UI-system changes 不改变 Page / Hooks / API / Model / Components / Charts ownership，不改变 MO Option Chain 或 MO Premium Plane semantics，也不改变 test ownership。

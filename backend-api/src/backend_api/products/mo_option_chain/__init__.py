@@ -6,7 +6,6 @@ repository runtime composes product adapters from ``backend_api.app``.
 
 from __future__ import annotations
 
-from .app import app, create_app
-from .endpoint import ROUTE_PATH
-
-__all__ = ["ROUTE_PATH", "app", "create_app"]
+from .app import app as app
+from .app import create_app as create_app
+from .endpoint import ROUTE_PATH as ROUTE_PATH

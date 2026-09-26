@@ -114,7 +114,7 @@ poetry run ruff check .
 poetry run mypy .
 ```
 
-Frontend（后续 contract tooling reconciliation 完成后，在 `web-ui/`）：
+Frontend（在 `web-ui/`）：
 
 ```bash
 npm run contract:check
@@ -123,4 +123,4 @@ npm run build
 npm run lint
 ```
 
-当前 frontend contract generation tooling 仍连接已移除的旧 runtime，暂不随本次 backend/namespace migration 调整；在后续 frontend reconciliation 完成前，`contract:generate` 与 `contract:check` 不可用。现有 committed OpenAPI artifacts 仍由 backend contract tests 只读校验，以防本次迁移改变 wire contract。
+`npm run contract:generate` 从 `backend-api` 发布的 product OpenAPI 生成各 consuming feature 自己提交的 OpenAPI representation 与 TypeScript contract；`npm run contract:check` 检查所有 frontend-consumed products 的 committed artifacts 是否可确定性重现。只有 generated artifact 缺失、stale 或 backend HTTP DTO/OpenAPI 改变时才提交生成结果。

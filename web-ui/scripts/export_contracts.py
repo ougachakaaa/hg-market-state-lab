@@ -12,29 +12,16 @@ from fastapi import FastAPI
 
 REPOSITORY_ROOT = Path(__file__).resolve().parents[2]
 WEB_UI_ROOT = REPOSITORY_ROOT / "web-ui"
-MARKET_SNAPSHOT_ROOT = REPOSITORY_ROOT / "market-snapshot"
+BACKEND_API_ROOT = REPOSITORY_ROOT / "backend-api"
 
-sys.path.insert(0, str(MARKET_SNAPSHOT_ROOT / "src"))
+sys.path.insert(0, str(BACKEND_API_ROOT / "src"))
 
-from daily_market_snapshot.api.app import contract_openapi  # noqa: E402
-from daily_market_snapshot.products.mo_option_chain.api.app import (  # noqa: E402
+from backend_api.products.mo_option_chain.app import (  # noqa: E402
     create_app as create_chain_app,
 )
-from daily_market_snapshot.products.mo_option_premium.api.endpoint import (  # noqa: E402
-    router as premium_router,
+from backend_api.products.mo_option_premium.app import (  # noqa: E402
+    create_app as create_premium_app,
 )
-
-
-def create_premium_app() -> FastAPI:
-    """Build an OpenAPI-only application around the backend-owned Premium router."""
-    application = FastAPI(
-        title="hg-market-state-lab MO Premium Plane API",
-        version="0.1.0",
-        summary="Minimal HTTP delivery adapter for the MO Premium Plane contract.",
-    )
-    application.openapi = contract_openapi(application)  # type: ignore[method-assign]
-    application.include_router(premium_router)
-    return application
 
 
 CONTRACTS: tuple[tuple[str, Callable[[], FastAPI], Path], ...] = (

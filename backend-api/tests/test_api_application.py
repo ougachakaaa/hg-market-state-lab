@@ -24,6 +24,9 @@ import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
+import backend_api
+import backend_api.products.mo_option_chain as chain_api
+import backend_api.products.mo_option_premium as premium_api
 from backend_api.products.mo_option_chain import ROUTE_PATH
 from backend_api.products.mo_option_premium import (
     ROUTE_PATH as PREMIUM_ROUTE_PATH,
@@ -32,10 +35,28 @@ from backend_api.products.mo_option_premium import (
 app_module: ModuleType = importlib.import_module(
     "backend_api.products.mo_option_chain.app"
 )
+premium_app_module: ModuleType = importlib.import_module(
+    "backend_api.products.mo_option_premium.app"
+)
+premium_endpoint_module: ModuleType = importlib.import_module(
+    "backend_api.products.mo_option_premium.endpoint"
+)
 runtime_module: ModuleType = importlib.import_module("backend_api.app")
 
 # The routes FastAPI registers for itself (all ``include_in_schema=False``).
 FRAMEWORK_ROUTES = ("/openapi.json", "/docs", "/docs/oauth2-redirect", "/redoc")
+
+
+def test_package_facades_publish_the_runtime_and_product_attributes() -> None:
+    assert backend_api.app is runtime_module.app
+    assert backend_api.create_app is runtime_module.create_app
+    assert chain_api.app is app_module.app
+    assert chain_api.create_app is app_module.create_app
+    assert chain_api.ROUTE_PATH == ROUTE_PATH
+    assert premium_api.app is premium_app_module.app
+    assert premium_api.create_app is premium_app_module.create_app
+    assert premium_api.ROUTE_PATH == PREMIUM_ROUTE_PATH
+    assert premium_api.router is premium_endpoint_module.router
 
 
 @pytest.fixture
