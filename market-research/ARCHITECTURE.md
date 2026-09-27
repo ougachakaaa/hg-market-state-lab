@@ -131,6 +131,7 @@ results/
 
 当前由多个真实 retained study 共同使用的窄 Research semantic：
 
+- [Empirical Distribution Research Semantics](shared/distribution/ARCHITECTURE.md)
 - [IM Basis Research Semantics](shared/im_basis/ARCHITECTURE.md)
 
 当前 retained study 入口：
