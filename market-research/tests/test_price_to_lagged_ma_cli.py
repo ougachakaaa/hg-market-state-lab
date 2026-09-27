@@ -66,6 +66,7 @@ def test_cli_flags_create_canonical_request_and_equivalent_identity() -> None:
     ]))
     assert first == equivalent
     assert study.run_key(first) == study.run_key(equivalent)
+    assert study.run_key(first).startswith("000852.SH__sma2__20260903-20260904__g0.05__")
     assert study.canonical_request(first) == {
         "instrument": "000852.SH",
         "reference_window": 2,
@@ -82,6 +83,7 @@ def test_cli_flags_create_canonical_request_and_equivalent_identity() -> None:
     ["--window", "0"], ["--window", "1.5"], ["--granularity", "NaN"],
     ["--percentiles", "0.5,0.50"], ["--percentiles", "0.5,"],
     ["--start", "2026-09-31"],
+    ["--instrument", "../outside"],
 ])
 def test_invalid_semantic_input_fails_before_configuration(
     monkeypatch: pytest.MonkeyPatch,
@@ -126,12 +128,17 @@ def test_success_uses_public_snapshot_entry_and_retains_complete_matching_eviden
     assert calls == [IndexDailyHistoryRequest("000852.SH", "2026-09-03", "2026-09-04", 2)]
     assert {path.name for path in run_dir.iterdir()} == ARTIFACTS
     assert (run_dir / "distribution.png").read_bytes().startswith(b"\x89PNG\r\n\x1a\n")
-    assert "Study completed" in capsys.readouterr().out
+    output = capsys.readouterr().out
+    assert "Study completed" in output
+    assert str(run_dir) in output
 
     expected = study.compute(request, supplied)
     retained_request = json.loads((run_dir / "request.json").read_text(encoding="utf-8"))
     assert retained_request["study_id"] == cli.STUDY_ID
     assert retained_request["run_key"] == expected.run_key
+    assert retained_request["semantic_digest"] == study.semantic_digest(request)
+    assert len(retained_request["semantic_digest"]) == 64
+    assert retained_request["run_key"].endswith(retained_request["semantic_digest"][:12])
     assert retained_request["semantic_request"] == study.canonical_request(request)
     assert retained_request["snapshot"] == {
         "requested_start_trade_date": "2026-09-03",

@@ -113,7 +113,11 @@ Retained summary 使用共享的 `sample_count`、`mean`、`median`、`sample_st
 
 Study-owned run key 包含 Inputs 列出的全部字段。先验证 request，再将日期规范为 `YYYY-MM-DD`，method 使用上述 canonical token，method parameters 规范为 V1 的空对象，将所有 finite decimal-ratio 数值规范为无指数、无无意义尾零的十进制字符串（负零规范为 `0`），并将 percentile probabilities 按数值升序排列。不从 CLI 原始 argv 派生 identity。
 
-`instrument` 使用 Study request 校验后的 `ts_code` 原值；Snapshot product 仍拥有是否支持该 identity 的最终判定。上述规范化在调用 Snapshot 前完成，以遵守 Research UI 的 collision-before-Snapshot 规则。对包含全部字段、字段名按字典序排列的规范对象，生成 UTF-8、无多余空白的 JSON；run key 为其 SHA-256 digest 的完整小写十六进制字符串。等价的 CLI 数值拼写或 percentile 输入顺序得到相同 key；任何 evidence-affecting semantic parameter 都参与 key。当前时间、随机值、输出路径和执行顺序不参与 identity。Study-local CLI 将该 key 作为不透明目录名交给 Research UI，placement 与 collision/overwrite 行为遵循其 authority。
+`instrument` 使用 Study request 校验后的 `ts_code` 原值，不改变大小写或使用别名；Snapshot product 仍拥有是否支持该 identity 的最终判定。Study 必须显式拒绝不适合作为单个 filesystem-safe 目录组成部分的 instrument，不静默改写 identity。上述规范化在调用 Snapshot 前完成，以遵守 Research UI 的 collision-before-Snapshot 规则。
+
+对包含全部 Inputs 字段、字段名按字典序排列的规范对象，生成 UTF-8、无多余空白的 JSON，并计算完整的小写十六进制 SHA-256 semantic digest。Study-owned run key 为 `<instrument>__<reference_method><reference_window>__<YYYYMMDD>-<YYYYMMDD>__g<distribution_granularity>__<semantic_digest 前 12 位>`；日期取自规范 sample bounds，granularity 使用上述无指数、无无意义尾零的表示。例如 `000852.SH__sma60__20250101-20260925__g0.005__a13f8c2d4b71`，volume-weighted method 使用 `volume_weighted60`。V1 不将空的 method parameters 或 percentile 列表写入可读前缀；它们仍参与完整 semantic digest。不得对可读 run key 再做 hash。
+
+等价的 CLI 数值拼写或 percentile 输入顺序得到相同 key；任何 evidence-affecting semantic parameter 都参与完整 digest。12 位后缀是紧凑目录标识，存在非零 hash-prefix collision 风险；完整 digest 与规范 request 必须在 `request.json` 中保留。当前时间、随机值、输出路径和执行顺序不参与 identity。Study-local CLI 将 key 作为不透明目录名交给 Research UI，placement 与 collision/overwrite 行为遵循其 authority。既有完整 SHA-256 命名目录无需迁移或按 request 查找；新规则仅用于新执行。
 
 ## Results 与 retained evidence
 
@@ -121,7 +125,7 @@ Study-owned run key 包含 Inputs 列出的全部字段。先验证 request，�
 
 | Artifact | Study-owned content |
 | --- | --- |
-| `request.json` | public Study ID、Study-owned run key、完整规范 semantic request、Snapshot result 中实际请求 bounds 与 warm-up/sample counts |
+| `request.json` | public Study ID、Study-owned run key、完整 SHA-256 semantic digest、完整规范 semantic request、Snapshot result 中实际请求 bounds 与 warm-up/sample counts |
 | `observations.csv` | 每个 sample day 的 `trade_date,instrument,close,reference_ma,deviation`；按日期升序，`deviation` 使用 decimal ratio，`close` 与 `reference_ma` 保持价格单位 |
 | `distribution.csv` | 每个连续 fixed-width bin 的 numeric `lower_bound,upper_bound,count,frequency`，包括 zero-count bins |
 | `percentiles.csv` | 按 probability 升序排列的 numeric `probability,value` |

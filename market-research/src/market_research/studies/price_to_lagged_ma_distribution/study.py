@@ -6,6 +6,7 @@ import csv
 import hashlib
 import json
 import math
+import ntpath
 import re
 from collections.abc import Mapping
 from dataclasses import asdict, dataclass
@@ -84,8 +85,14 @@ class PriceToLaggedMARequest:
             or not code
             or code != code.strip()
             or any(char.isspace() or char == "," for char in code)
+            or code in {".", ".."}
+            or code.endswith(".")
+            or any(char in '<>:"/\\|?*' or ord(char) < 32 for char in code)
+            or ntpath.isreserved(code)
         ):
-            raise PriceToLaggedMAStudyError("instrument must identify one nonblank index.")
+            raise PriceToLaggedMAStudyError(
+                "instrument must identify one filesystem-safe index without changing its spelling."
+            )
         if type(self.reference_window) is not int or self.reference_window <= 0:
             raise PriceToLaggedMAStudyError("reference_window must be a positive integer.")
         if self.reference_method not in ("sma", "volume_weighted"):
@@ -170,12 +177,25 @@ def canonical_request(request: PriceToLaggedMARequest) -> dict[str, object]:
     }
 
 
-def run_key(request: PriceToLaggedMARequest) -> str:
+def semantic_digest(request: PriceToLaggedMARequest) -> str:
     """Hash the complete, normalized Study semantic request."""
     payload = json.dumps(
         canonical_request(request), sort_keys=True, separators=(",", ":"), ensure_ascii=False
     )
     return hashlib.sha256(payload.encode("utf-8")).hexdigest()
+
+
+def run_key(request: PriceToLaggedMARequest) -> str:
+    """Name one Study run using readable fields and a compact semantic digest."""
+    dates = (
+        f"{request.sample_start_trade_date.replace('-', '')}-"
+        f"{request.sample_end_trade_date.replace('-', '')}"
+    )
+    return (
+        f"{request.instrument}__{request.reference_method}{request.reference_window}"
+        f"__{dates}__g{_decimal_text(request.distribution_granularity)}"
+        f"__{semantic_digest(request)[:12]}"
+    )
 
 
 def derive_snapshot_request(request: PriceToLaggedMARequest) -> IndexDailyHistoryRequest:
@@ -341,6 +361,7 @@ def retain(
     request_record = {
         "study_id": "price-to-lagged-ma-distribution",
         "run_key": result.run_key,
+        "semantic_digest": semantic_digest(result.request),
         "semantic_request": canonical_request(result.request),
         "snapshot": {
             "requested_start_trade_date": snapshot.requested_start_trade_date,

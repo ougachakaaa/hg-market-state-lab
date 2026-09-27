@@ -5,6 +5,7 @@ from __future__ import annotations
 import hashlib
 import json
 import math
+import re
 from dataclasses import replace
 from decimal import Decimal
 
@@ -16,6 +17,10 @@ from market_research.studies.price_to_lagged_ma_distribution import (
     compute,
     derive_snapshot_request,
     run_key,
+)
+from market_research.studies.price_to_lagged_ma_distribution.study import (
+    canonical_request,
+    semantic_digest,
 )
 from market_snapshot.products.index_daily_history import (
     IndexDailyHistoryRequest,
@@ -195,8 +200,9 @@ def test_request_normalization_run_identity_and_snapshot_derivation() -> None:
     assert str(equivalent.distribution_granularity) == "0.01"
     assert tuple(map(str, equivalent.percentile_probabilities)) == ("0.25", "0.5")
     assert run_key(original) == run_key(equivalent)
-    assert len(run_key(original)) == 64
-    assert run_key(original) == run_key(original).lower()
+    assert re.fullmatch(
+        r"000852\.SH__sma2__20260903-20260904__g0\.01__[0-9a-f]{12}", run_key(original)
+    )
     canonical = {
         "instrument": "000852.SH",
         "reference_window": 2,
@@ -208,7 +214,11 @@ def test_request_normalization_run_identity_and_snapshot_derivation() -> None:
         "percentile_probabilities": ["0.25", "0.5"],
     }
     payload = json.dumps(canonical, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
-    assert run_key(original) == hashlib.sha256(payload.encode("utf-8")).hexdigest()
+    assert canonical_request(original) == canonical
+    assert semantic_digest(original) == hashlib.sha256(payload.encode("utf-8")).hexdigest()
+    assert len(semantic_digest(original)) == 64
+    assert semantic_digest(original) == semantic_digest(equivalent)
+    assert run_key(original).endswith(semantic_digest(original)[:12])
     assert derive_snapshot_request(original) == IndexDailyHistoryRequest(
         ts_code="000852.SH",
         start_trade_date="2026-09-03",
@@ -235,10 +245,58 @@ def test_evidence_affecting_change_changes_run_key(change: dict[str, object]) ->
     assert run_key(request(**change)) != run_key(request())
 
 
+def test_readable_prefix_changes_only_for_its_own_fields() -> None:
+    baseline = request(
+        reference_window=60,
+        sample_start_trade_date="2025-01-01",
+        sample_end_trade_date="2026-09-25",
+        distribution_granularity="0.005",
+    )
+    prefix, suffix = run_key(baseline).rsplit("__", 1)
+    assert prefix == "000852.SH__sma60__20250101-20260925__g0.005"
+    assert re.fullmatch(r"[0-9a-f]{12}", suffix)
+    assert run_key(baseline) == run_key(
+        request(
+            reference_window=60,
+            sample_start_trade_date="2025-01-01",
+            sample_end_trade_date="2026-09-25",
+            distribution_granularity="0.0050",
+            percentile_probabilities=("0.50", "0.250"),
+        )
+    )
+    changed_percentiles = request(
+        reference_window=60,
+        sample_start_trade_date="2025-01-01",
+        sample_end_trade_date="2026-09-25",
+        distribution_granularity="0.005",
+        percentile_probabilities=("0.1", "0.9"),
+    )
+    changed_prefix, changed_suffix = run_key(changed_percentiles).rsplit("__", 1)
+    assert changed_prefix == prefix
+    assert changed_suffix != suffix
+    assert run_key(request(reference_method="volume_weighted")).startswith(
+        "000852.SH__volume_weighted2__"
+    )
+    assert run_key(request(instrument="000001.SH")).startswith("000001.SH__sma2__")
+    assert "__sma3__" in run_key(request(reference_window=3))
+    assert "__20260902-20260904__" in run_key(
+        request(sample_start_trade_date="2026-09-02")
+    )
+    assert "__20260903-20260905__" in run_key(
+        request(sample_end_trade_date="2026-09-05")
+    )
+    assert "__g0.02__" in run_key(request(distribution_granularity="0.02"))
+
+
 @pytest.mark.parametrize(
     "change",
     [
         {"instrument": " "},
+        {"instrument": "../outside"},
+        {"instrument": r"nested\path"},
+        {"instrument": "CON"},
+        {"instrument": "index:"},
+        {"instrument": "index."},
         {"reference_window": 0},
         {"reference_window": True},
         {"reference_method": "decay_weighted"},
