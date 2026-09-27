@@ -1,5 +1,3 @@
-import json
-from pathlib import Path
 from typing import Any
 
 import pytest
@@ -145,36 +143,3 @@ def test_non_iso_trade_date_is_an_error_before_the_source_call() -> None:
         )
 
     assert api.fut_basic_calls == []
-
-
-def test_main_writes_raw_dataset_file(
-    test_workdir: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
-) -> None:
-    monkeypatch.setenv(tushare.TOKEN_ENV_VAR, "local-token")
-    api = fake_api()
-    monkeypatch.setattr(tushare, "create_tushare_api", lambda token: api)
-
-    exit_code = im_futures_basic.main([TARGET_DATE])
-
-    assert exit_code == 0
-    raw_path = (
-        test_workdir / "raw" / artifacts.CSI1000_RAW_SUBDIR / TARGET_DATE / "im_futures_basic.json"
-    )
-    records = json.loads(raw_path.read_text(encoding="utf-8"))
-    assert [record["ts_code"] for record in records] == [
-        "IM2601.CFE",
-        "IM2609.CFE",
-        "IM2612.CFE",
-    ]
-    assert "im_futures_basic.json" in capsys.readouterr().out
-
-
-def test_main_fails_without_token(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.delenv(tushare.TOKEN_ENV_VAR, raising=False)
-
-    def unreachable_api(token: str) -> tushare.TushareApi:
-        raise AssertionError("no credential must mean no Source client")
-
-    monkeypatch.setattr(tushare, "create_tushare_api", unreachable_api)
-
-    assert im_futures_basic.main([TARGET_DATE]) == 1

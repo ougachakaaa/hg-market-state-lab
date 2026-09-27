@@ -12,15 +12,13 @@ MARKDOWN_LINK = re.compile(r"\[[^]]+\]\(([^)]+)\)")
 
 CONTEXT_ENTRIES = {
     Path("market-snapshot/src/market_snapshot/capture/ARCHITECTURE.md"),
-    Path("market-snapshot/src/market_snapshot/services/ARCHITECTURE.md"),
+    Path("market-snapshot/src/market_snapshot/preparation/im_basis/ARCHITECTURE.md"),
     Path(
         "market-snapshot/src/market_snapshot/products/"
         "daily_market_snapshot/ARCHITECTURE.md"
     ),
-    Path(
-        "market-snapshot/src/market_snapshot/products/"
-        "csi1000_5d_analysis/ARCHITECTURE.md"
-    ),
+    Path("market-snapshot/src/market_snapshot/products/csi1000_im_basis_history/ARCHITECTURE.md"),
+    Path("market-snapshot/src/market_snapshot/products/index_daily_history/ARCHITECTURE.md"),
     Path(
         "market-snapshot/src/market_snapshot/products/"
         "mo_option_chain/ARCHITECTURE.md"
@@ -80,6 +78,19 @@ def test_context_authority_is_reachable_from_the_root_entry() -> None:
         path for path in CONTEXT_ENTRIES if (REPOSITORY_ROOT / path).resolve() not in visited
     }
     assert not missing, f"context authority is unreachable: {sorted(map(str, missing))}"
+
+
+def test_retired_snapshot_implementation_is_absent() -> None:
+    snapshot_root = REPOSITORY_ROOT / "market-snapshot"
+    package_root = snapshot_root / "src/market_snapshot"
+    retired_paths = (
+        snapshot_root / "scripts/dms.py",
+        package_root / "cli.py",
+        snapshot_root / "output/.gitkeep",
+    )
+    assert not any(path.exists() for path in retired_paths)
+    assert not list((package_root / "services").glob("*.py"))
+    assert not list((package_root / "products/csi1000_5d_analysis").glob("*.py"))
 
 
 def test_central_guides_do_not_return() -> None:

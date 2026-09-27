@@ -3,7 +3,7 @@
 Authority: ``products/mo_option_chain/http-contract.md``.
 
 The endpoint resolves the request's query identity, asks the application boundary
-(``services/mo_option_chain.py``) for the read model, converts that read model to
+(``market_snapshot.products.mo_option_chain.service``) for the read model, converts it to
 the response DTO and maps a read failure to the error envelope plus its HTTP
 status.
 

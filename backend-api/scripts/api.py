@@ -2,7 +2,7 @@
 
 The neutral composition root includes the independent MO Option Chain and MO
 Premium Plane adapters. This script only makes it runnable without packaging
-the project, exactly like ``scripts/dms.py`` does for the CLI.
+the project without packaging another executable.
 
 Authority: ``products/mo_option_chain/http-contract.md`` and
 ``products/mo_option_premium/http-contract.md``.

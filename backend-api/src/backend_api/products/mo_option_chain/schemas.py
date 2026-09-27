@@ -4,7 +4,7 @@ Authority: ``products/mo_option_chain/http-contract.md`` (transport contract) ov
 ``products/mo_option_chain/read-contract.md`` (semantic response shape).
 
 The DTOs are a faithful transport expression of the read model defined in
-``services/mo_option_chain.py``: same fields, same names, same JSON shape, no
+``market_snapshot.products.mo_option_chain.service``: same fields, same names, same JSON shape, no
 envelope and no extra field. They exist so the wire contract is code-generated,
 validated and published as OpenAPI; they own no market semantics.
 

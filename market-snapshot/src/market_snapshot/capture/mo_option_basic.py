@@ -1,18 +1,12 @@
 """Source Capture ``mo_option_basic``: the active MO contract facts of one date.
 
-Source: Tushare ``opt_basic`` (see ``capture/ARCHITECTURE.md`` section 5;
-the product universe is in ``products/csi1000_5d_analysis/data.md`` section 4.1).
+Source: Tushare ``opt_basic``; shared Source facts are defined by
+``capture/mo-option-contract.md``.
 
-Development / debugging entrypoint (the Data Service CLI is the canonical user
-interface, see ``services/delivery.md`` section 4):
-
-    poetry run python -m market_snapshot.capture.mo_option_basic 2026-09-17
 """
 
 from __future__ import annotations
 
-import argparse
-import sys
 from collections.abc import Sequence
 
 import pandas as pd
@@ -22,13 +16,13 @@ from ..sources import tushare
 from . import common
 
 RAW_ARTIFACT = "mo_option_basic"
-# Capture scope of the MO chain (Guide 5.1). These limits select the Capture
+# Capture scope of the MO universe. These limits select the Capture
 # scope, not an analysis subset.
 EXCHANGE = "CFFEX"
 PRODUCT = "MO"
 # ``opt_basic.opt_code`` is the underlying index of the option in Source form
 # (``OP`` + index code), not the exchange product code: the CSI1000 MO options
-# carry ``OP000852.SH`` (000852.SH, the CSI1000 index of this scenario), while
+# carry ``OP000852.SH`` (000852.SH, the CSI1000 index), while
 # the other CFFEX products carry their own index (``OP000300.SH`` for IO,
 # ``OP000016.SH`` for HO).
 MO_OPTIONS_CODE = "OP000852.SH"
@@ -132,33 +126,9 @@ def capture(api: tushare.TushareApi, trade_date: str) -> list[artifacts.RawRecor
     """Run this Source Capture for one target trade date against a Source api.
 
     ``opt_basic`` has no product parameter, so the product limit is applied to
-    the returned Source facts inside this module; a caller (the Data Service or
-    the development entrypoint) only asks for the Capture
-    (``ARCHITECTURE.md`` 2).
+    the returned Source facts inside this module; active Products ask for the
+    Capture.
     """
     return collect_mo_option_basic(
         trade_date, lambda **kwargs: query_opt_basic(api, **kwargs)
     )
-
-
-def main(argv: Sequence[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(description=f"Collect the {RAW_ARTIFACT} Raw artifact.")
-    parser.add_argument("trade_date", help="Target trade date in YYYY-MM-DD form.")
-    args = parser.parse_args(argv)
-
-    try:
-        api = tushare.create_tushare_api(tushare.get_tushare_token())
-        records = capture(api, args.trade_date)
-    except common.CAPTURE_FAILURE_TYPES as exc:
-        print(f"error: {exc}", file=sys.stderr)
-        return 1
-
-    path = artifacts.write_raw_artifact(
-        records, artifacts.csi1000_raw_dir(args.trade_date), RAW_ARTIFACT
-    )
-    print(f"wrote {len(records)} records to {path}")
-    return 0
-
-
-if __name__ == "__main__":
-    raise SystemExit(main())

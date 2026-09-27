@@ -39,8 +39,7 @@ from ...capture import (
 from ...sources import tushare
 from . import preparation
 
-# The Data Service id, as declared in the static catalog
-# (``services/delivery.md`` section 2).
+# Product identifier for its own request-scoped Raw artifacts.
 SERVICE_ID = "mo-option-chain"
 
 SERVICE_DESCRIPTION = (

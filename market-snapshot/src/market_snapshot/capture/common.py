@@ -38,7 +38,7 @@ CAPTURE_FAILURE_TYPES: tuple[type[Exception], ...] = (tushare.TushareSourceError
 
 
 class CollectionError(tushare.TushareSourceError):
-    """Raised when a Raw Artifact cannot be collected as its Guide requires.
+    """Raised when Source facts violate a Capture contract.
 
     It is a ``TushareSourceError`` as well, so a caller that only knows about the
     Source boundary still sees a Source-side failure.

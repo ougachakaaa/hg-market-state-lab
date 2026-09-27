@@ -44,7 +44,7 @@ Capture 的逻辑输出是 Source Facts / Raw Data。Product 可以在内存中�
 - `market-snapshot` 拥有自己发布的 Product public contract；`market-research` 拥有所需的数据要求。Research 只通过受支持的 Product request/result/failure/execution surface 消费 Snapshot，不复制其 DTO/result authority，也不依赖 Source client、Capture、私有 Preparation、Raw 或 persistence layout。Snapshot 不依赖 Research。
 - `backend-api` 依赖 Product public application boundary 并拥有 HTTP delivery；HTTP DTO 不反向定义 Product semantics。
 
-## 5. Authority 导航与 implementation migration
+## 5. Authority 导航与 implementation layout
 
 ```text
 ARCHITECTURE.md
@@ -53,15 +53,14 @@ ARCHITECTURE.md
         → shared capability ARCHITECTURE.md → shared specialized authority
 ```
 
-上层只定义稳定边界与导航，不复制产品字段、公式或失败契约。当前目录结构是待 reconciliation 的 implementation layout，不是另一套 semantic topology。下一轮 implementation migration 按以下方向处理，本轮不移动 Python 文件：
+上层只定义稳定边界与导航，不复制产品字段、公式或失败契约。Implementation layout 遵循上述 semantic topology；本次 retirement 不移动活跃 Product 的 Python 文件：
 
-| 当前区域 | 未来 reconciliation 方向 |
+| 当前区域 | ownership |
 | --- | --- |
-| `products/<product>/` | 保留活跃 Product-local Source scope、Preparation、Application Service 与 public contract；移除已退役 Product 的实现 |
+| `products/<product>/` | 保留活跃 Product-local Source scope、Preparation、Application Service 与 public contract |
 | `sources/`、`capture/` | 保留共享 provider adapter、Source facts、normalization 与 Capture mechanics；产品专属 scope 下沉 Product |
 | `preparation/im_basis/` | 保留 CSI1000 IM Basis History 仍消费的 IM basis semantics；不扩展为通用 Preparation layer |
-| `services/` | 移除已退役的 CLI catalog/dispatch 与 persisted delivery 实现；产品 orchestration 和 contract 留在 Product |
-| `artifacts.py` | 分离通用 filesystem/JSON mechanics 与产品专属路径、名称 |
+| `artifacts.py` | 保留活跃 Product 使用的 filesystem/JSON mechanics 与 Raw 路径 |
 | 其他外层 `preparation/` | 仅保留经多个真实 Product 证明的共享语义 |
 
 不因本 authority 重命名为 `shared/`、迁移代码或引入 pipeline、plugin、registry、workflow engine。实施时先按 owning authority reconcile，发现上下层或同级冲突须显式解决。

@@ -10,7 +10,6 @@ import socket
 import subprocess
 import sys
 from collections.abc import Sequence
-from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from urllib.request import urlopen
 
@@ -24,8 +23,6 @@ BACKEND_PORT = 8011
 FRONTEND_PORT = 5173
 COMMAND_TIMEOUT = 10
 HTTP_TIMEOUT = 2
-CHINA_MARKET_TIMEZONE = timezone(timedelta(hours=8), name="Asia/Shanghai")
-CLI_DATA_SERVICES = ("csi1000-5d-analysis",)
 STUDY_ID = re.compile(r"[a-z][a-z0-9]*(?:-[a-z0-9]+)*")
 STUDY_PACKAGE = re.compile(r"[a-z][a-z0-9]*(?:_[a-z0-9]+)*")
 
@@ -223,40 +220,6 @@ def frontend() -> int:
     return _run_foreground([npm, "run", "dev"], FRONTEND)
 
 
-def _china_market_today() -> str:
-    """Return today's calendar date in UTC+8, without trading-day adjustment."""
-    return datetime.now(CHINA_MARKET_TIMEZONE).date().isoformat()
-
-
-def data(service_id: str, target_trade_date: str | None = None) -> int:
-    """Forward one persisted-artifact Data Service request to the canonical CLI."""
-    if not (ROOT / "pyproject.toml").is_file() or not (ROOT / "poetry.lock").is_file():
-        print("data prerequisites missing: root pyproject.toml or poetry.lock", file=sys.stderr)
-        return 1
-    if not (MARKET_SNAPSHOT / "scripts" / "dms.py").is_file():
-        print("data launcher missing: market-snapshot/scripts/dms.py", file=sys.stderr)
-        return 1
-    poetry = shutil.which("poetry")
-    if poetry is None:
-        print("data prerequisite missing: Poetry", file=sys.stderr)
-        return 1
-
-    resolved_date = target_trade_date if target_trade_date is not None else _china_market_today()
-    return _run_foreground(
-        [
-            poetry,
-            "run",
-            "python",
-            "market-snapshot/scripts/dms.py",
-            "get",
-            service_id,
-            "--date",
-            resolved_date,
-        ],
-        ROOT,
-    )
-
-
 def _is_regular_file(path: Path) -> bool:
     return path.is_file() and not path.is_symlink()
 
@@ -354,21 +317,6 @@ def build_parser() -> argparse.ArgumentParser:
     subparsers.add_parser("backend", help="Run the backend development server.")
     subparsers.add_parser("frontend", help="Run the frontend development server.")
 
-    data_parser = subparsers.add_parser(
-        "data", help="Forward a persisted-artifact Data Service request to dms."
-    )
-    data_parser.add_argument(
-        "service_id",
-        choices=CLI_DATA_SERVICES,
-        help="CLI-supported persisted-artifact Data Service id.",
-    )
-    data_parser.add_argument(
-        "--date",
-        dest="target_trade_date",
-        metavar="YYYY-MM-DD",
-        help="Target trade date; defaults to today's Asia/Shanghai calendar date.",
-    )
-
     research_parser = subparsers.add_parser(
         "research", help="Discover and run retained Research Studies."
     )
@@ -388,8 +336,6 @@ def build_parser() -> argparse.ArgumentParser:
 
 def main(argv: Sequence[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
-    if args.command == "data":
-        return data(args.service_id, args.target_trade_date)
     if args.command == "research":
         if args.research_command == "list":
             return research_list()

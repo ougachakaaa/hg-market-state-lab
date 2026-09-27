@@ -1,7 +1,7 @@
 """Shared test setup.
 
-Capture and Data Service tests never touch the network or the repository's real
-``data/raw`` / ``data/snapshots`` / ``output`` directories.
+Capture and Product tests never touch the network or the repository's real
+``data/raw`` directory.
 """
 
 from __future__ import annotations
@@ -25,10 +25,10 @@ REPO_ROOT = TESTS_DIR.parent
 def test_workdir() -> Iterator[Path]:
     """A scratch directory for one test, removed afterwards.
 
-    Layout previews and Raw Artifact files are written here instead of into the
-    repository's real output directories.
+    Raw Artifact files are written here instead of into the repository's real
+    data directory.
     """
-    path = Path(tempfile.mkdtemp(prefix="dms-test-", dir=REPO_ROOT))
+    path = Path(tempfile.mkdtemp(prefix="snapshot-test-", dir=REPO_ROOT))
     try:
         yield path
     finally:
@@ -41,22 +41,6 @@ def raw_dir_in_test_workdir(
 ) -> None:
     """Keep Capture output out of the repository's real ``data/raw``."""
     monkeypatch.setattr(artifacts, "RAW_DIR", test_workdir / "raw")
-
-
-@pytest.fixture(autouse=True)
-def snapshots_dir_in_test_workdir(
-    test_workdir: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    """Keep snapshot output out of the repository's real ``data/snapshots``."""
-    monkeypatch.setattr(artifacts, "SNAPSHOTS_DIR", test_workdir / "snapshots")
-
-
-@pytest.fixture(autouse=True)
-def output_dir_in_test_workdir(
-    test_workdir: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    """Keep Data Service output out of the repository's real ``output/``."""
-    monkeypatch.setattr(artifacts, "OUTPUT_DIR", test_workdir / "output")
 
 
 @pytest.fixture(autouse=True)

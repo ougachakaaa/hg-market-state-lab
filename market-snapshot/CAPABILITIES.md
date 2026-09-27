@@ -28,4 +28,4 @@
 - 修改 CSI1000 IM Basis History 消费的 IM slot、remaining days 或 basis formula 时进入 IM basis authority；产品 query、result 与 completeness 不上提到该 capability。
 - HTTP 实现从 [backend-api catalog](../backend-api/HTTP_PRODUCTS.md) 进入对应 contract，再沿其链接读取 owning product 的最小 semantic authority；不默认读取 sibling product。
 - 前端任务先走 `web-ui` authority；只有需要 backend 语义或 transport reconciliation 时才进入这里所列的对应产品文档。
-- 外层 `capture/`、`preparation/`、`services/` 是当前 implementation 目录，不要求所有 Product 的同名执行角色迁入。能力须由活跃 Product 的实际需求支撑；迁移方向见 [module architecture](ARCHITECTURE.md)。
+- 外层 `capture/` 与 `preparation/` 承载活跃共享能力，不要求所有 Product 的同名执行角色迁入。能力须由活跃 Product 的实际需求支撑；ownership 见 [module architecture](ARCHITECTURE.md)。

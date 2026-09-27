@@ -1,20 +1,14 @@
 """Source Capture ``im_futures_basic``: the IM ordinary monthly contract facts.
 
-Source: Tushare ``fut_basic`` (see ``capture/ARCHITECTURE.md`` section 7;
-the product universe is in ``products/csi1000_5d_analysis/data.md`` section 4.2).
+Source: Tushare ``fut_basic``; shared Source facts are defined by
+``capture/im-futures-contract.md``.
 The Capture scope holds the ordinary monthly IM contracts, not the
 main / continuous contracts and not any other CFFEX product.
 
-Development / debugging entrypoint (the Data Service CLI is the canonical user
-interface, see ``services/delivery.md`` section 4):
-
-    poetry run python -m market_snapshot.capture.im_futures_basic 2026-09-17
 """
 
 from __future__ import annotations
 
-import argparse
-import sys
 from collections.abc import Sequence
 
 import pandas as pd
@@ -24,7 +18,7 @@ from ..sources import tushare
 from . import common
 
 RAW_ARTIFACT = "im_futures_basic"
-# Capture scope of the IM universe (Guide 5.2): the Source parameters below
+# Capture scope of the IM universe: the Source parameters below
 # already limit the response to ordinary monthly IM contracts.
 EXCHANGE = "CFFEX"
 FUTURES_TYPE_ORDINARY = "1"
@@ -143,32 +137,8 @@ def capture(api: tushare.TushareApi, trade_date: str) -> list[artifacts.RawRecor
     """Run this Source Capture for one target trade date against a Source api.
 
     The endpoint and its query parameters (``exchange`` / ``fut_type`` /
-    ``fut_code``) stay in this module; a caller (the Data Service or the
-    development entrypoint) only asks for the Capture (``ARCHITECTURE.md`` 2).
+    ``fut_code``) stay in this module; an active Product asks for the Capture.
     """
     return collect_im_futures_basic(
         trade_date, lambda **kwargs: query_fut_basic(api, **kwargs)
     )
-
-
-def main(argv: Sequence[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(description=f"Collect the {RAW_ARTIFACT} Raw artifact.")
-    parser.add_argument("trade_date", help="Target trade date in YYYY-MM-DD form.")
-    args = parser.parse_args(argv)
-
-    try:
-        api = tushare.create_tushare_api(tushare.get_tushare_token())
-        records = capture(api, args.trade_date)
-    except common.CAPTURE_FAILURE_TYPES as exc:
-        print(f"error: {exc}", file=sys.stderr)
-        return 1
-
-    path = artifacts.write_raw_artifact(
-        records, artifacts.csi1000_raw_dir(args.trade_date), RAW_ARTIFACT
-    )
-    print(f"wrote {len(records)} records to {path}")
-    return 0
-
-
-if __name__ == "__main__":
-    raise SystemExit(main())

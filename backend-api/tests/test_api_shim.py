@@ -30,7 +30,7 @@ DOCUMENTED_PORT = 8011
 
 def load_shim() -> Any:
     """Load ``scripts/api.py`` without executing its ``__main__`` block."""
-    spec = importlib.util.spec_from_file_location("dms_api_shim", SHIM_PATH)
+    spec = importlib.util.spec_from_file_location("backend_api_shim", SHIM_PATH)
     assert spec is not None and spec.loader is not None
     module = importlib.util.module_from_spec(spec)
     sys.modules[spec.name] = module

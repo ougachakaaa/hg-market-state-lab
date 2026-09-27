@@ -133,7 +133,6 @@ def test_real_provider_call_order_and_goal_scoped_raw(test_workdir: Path) -> Non
     assert {row["ts_code"] for row in im_rows} == {"IM2609.CFE", "IM2610.CFE"}
     assert all(call["trade_date"] == "20260917" for call in api.fut_daily_calls)
     assert all(call["start_date"] == call["end_date"] == "" for call in api.fut_daily_calls)
-    assert not (test_workdir / "raw" / "csi1000-5d-analysis").exists()
 
 
 @pytest.mark.parametrize(

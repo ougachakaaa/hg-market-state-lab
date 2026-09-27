@@ -25,13 +25,9 @@ web-ui/dist-ssr/
 market-snapshot/data/raw/**
 !market-snapshot/data/raw/.gitkeep
 
-# Non-Data-Service Snapshot output (runtime artifacts)
+# Daily Market Snapshot output (runtime artifacts)
 market-snapshot/data/snapshots/**
 !market-snapshot/data/snapshots/.gitkeep
-
-# Data Service canonical user-facing output (runtime artifacts)
-market-snapshot/output/**
-!market-snapshot/output/.gitkeep
 
 # Research retained outputs (runtime artifacts)
 market-research/output/**

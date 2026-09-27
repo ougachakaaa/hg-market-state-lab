@@ -12,7 +12,7 @@ shared Capture capability != shared goal-scoped Raw Artifact
 
 本产品发布 market-chain facts，不计算 MO Premium Plane 指标，也不产生市场判断或交易建议。
 
-本产品选择 persisted goal-scoped Raw 作为 Capture/Preparation 契约；其 request-scoped final read model 不要求持久化。产品内的 Application Service 拥有 orchestration、public result 与 classified failure，外层 `services/` 不拥有这些语义。
+本产品选择 persisted goal-scoped Raw 作为 Capture/Preparation 契约；其 request-scoped final read model 不要求持久化。产品内的 Application Service 拥有 orchestration、public result 与 classified failure。
 
 ## 2. Ownership
 

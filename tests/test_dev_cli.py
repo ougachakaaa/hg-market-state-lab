@@ -7,7 +7,6 @@ import importlib.util
 import subprocess
 import sys
 import tomllib
-from datetime import UTC, datetime
 from pathlib import Path
 from types import ModuleType
 from typing import Any
@@ -18,8 +17,6 @@ REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
 DEV_PATH = REPOSITORY_ROOT / "dev.py"
 POETRY = str(REPOSITORY_ROOT / "tools" / "poetry")
 NPM = "/tools/npm"
-SERVICE_ID = "csi1000-5d-analysis"
-TARGET_DATE = "2026-09-18"
 STUDY_IDS = (
     "im-basis-baseline",
     "im-basis-forward-return-association",
@@ -72,8 +69,9 @@ def test_root_and_research_help_are_layered(capsys: pytest.CaptureFixture[str]) 
     with pytest.raises(SystemExit, match="0"):
         dev.main(["--help"])
     root_help = capsys.readouterr().out
-    assert all(command in root_help for command in ("doctor", "backend", "frontend", "data"))
+    assert all(command in root_help for command in ("doctor", "backend", "frontend"))
     assert "research" in root_help
+    assert "data" not in root_help
 
     with pytest.raises(SystemExit, match="0"):
         dev.main(["research", "--help"])
@@ -248,66 +246,10 @@ def test_frontend_uses_the_web_ui_launcher(monkeypatch: pytest.MonkeyPatch) -> N
     assert invocation == {"command": [NPM, "run", "dev"], "cwd": dev.FRONTEND}
 
 
-def test_data_requires_service_id() -> None:
+def test_data_command_is_retired() -> None:
     with pytest.raises(SystemExit) as excinfo:
         dev.main(["data"])
-
     assert excinfo.value.code == 2
-
-
-@pytest.mark.parametrize("service_id", ["mo-option-chain", "no-such-service"])
-def test_data_rejects_non_cli_and_unknown_services_before_process_start(
-    monkeypatch: pytest.MonkeyPatch, service_id: str
-) -> None:
-    def unreachable(*args: Any, **kwargs: Any) -> Any:
-        raise AssertionError("unsupported services must fail before process invocation")
-
-    monkeypatch.setattr(dev.subprocess, "Popen", unreachable)
-
-    with pytest.raises(SystemExit) as excinfo:
-        dev.main(["data", service_id, "--date", TARGET_DATE])
-
-    assert excinfo.value.code == 2
-
-
-@pytest.mark.parametrize("exit_code", [0, 23])
-def test_explicit_date_forms_dms_command_and_propagates_child_exit_code(
-    monkeypatch: pytest.MonkeyPatch, exit_code: int
-) -> None:
-    invocation = patch_child(monkeypatch, exit_code)
-
-    assert dev.main(["data", SERVICE_ID, "--date", TARGET_DATE]) == exit_code
-    assert invocation == {
-        "command": [
-            POETRY,
-            "run",
-            "python",
-            "market-snapshot/scripts/dms.py",
-            "get",
-            SERVICE_ID,
-            "--date",
-            TARGET_DATE,
-        ],
-        "cwd": dev.ROOT,
-    }
-
-
-def test_default_date_uses_asia_shanghai_calendar_day_without_fallback(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    utc_instant = datetime(2026, 9, 19, 16, 30, tzinfo=UTC)
-
-    class FixedDateTime:
-        @classmethod
-        def now(cls, tz: Any = None) -> datetime:
-            assert tz is dev.CHINA_MARKET_TIMEZONE
-            return utc_instant.astimezone(tz)
-
-    monkeypatch.setattr(dev, "datetime", FixedDateTime)
-    invocation = patch_child(monkeypatch, 0)
-
-    assert dev.main(["data", SERVICE_ID]) == 0
-    assert invocation["command"][-2:] == ["--date", "2026-09-20"]
 
 
 def test_doctor_inspects_one_root_poetry_environment(

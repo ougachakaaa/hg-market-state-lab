@@ -1,5 +1,3 @@
-import json
-from pathlib import Path
 from typing import Any
 
 import pandas as pd
@@ -7,7 +5,6 @@ import pytest
 
 from market_snapshot import artifacts
 from market_snapshot.capture import common, mo_option_basic, mo_option_daily
-from market_snapshot.sources import tushare
 from support.fake_source import (
     FakeTushareApi,
     mo_option_contract,
@@ -177,45 +174,3 @@ def test_static_contract_facts_are_not_joined_into_daily_raw() -> None:
         "vega",
         "theta",
     } & set(records[0])
-
-
-def test_main_writes_raw_dataset_file(
-    test_workdir: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
-) -> None:
-    monkeypatch.setenv(tushare.TOKEN_ENV_VAR, "local-token")
-    api = fake_api()
-    monkeypatch.setattr(tushare, "create_tushare_api", lambda token: api)
-
-    exit_code = mo_option_daily.main([TARGET_DATE])
-
-    assert exit_code == 0
-    assert api.opt_basic_calls == [{"exchange": "CFFEX", "list_date": ""}]
-    raw_path = (
-        test_workdir / "raw" / artifacts.CSI1000_RAW_SUBDIR / TARGET_DATE / "mo_option_daily.json"
-    )
-    records = json.loads(raw_path.read_text(encoding="utf-8"))
-    assert len(records) == len(ACTIVE_CONTRACTS)
-    assert {record["trade_date"] for record in records} == {TARGET_DATE}
-    assert "mo_option_daily.json" in capsys.readouterr().out
-
-
-def test_main_fails_without_token(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.delenv(tushare.TOKEN_ENV_VAR, raising=False)
-
-    def unreachable_api(token: str) -> tushare.TushareApi:
-        raise AssertionError("no credential must mean no Source client")
-
-    monkeypatch.setattr(tushare, "create_tushare_api", unreachable_api)
-
-    assert mo_option_daily.main([TARGET_DATE]) == 1
-
-
-def test_main_rejects_non_iso_trade_date(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setenv(tushare.TOKEN_ENV_VAR, "local-token")
-    api = fake_api()
-    monkeypatch.setattr(tushare, "create_tushare_api", lambda token: api)
-
-    exit_code = mo_option_daily.main(["20260917"])
-
-    assert exit_code == 1
-    assert api.opt_daily_calls == []

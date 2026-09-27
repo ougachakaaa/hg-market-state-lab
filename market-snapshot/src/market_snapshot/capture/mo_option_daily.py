@@ -1,23 +1,17 @@
 """Source Capture ``mo_option_daily``: daily facts of the active MO universe.
 
-Source: Tushare ``opt_daily`` (see ``capture/ARCHITECTURE.md`` section 6;
-the product universe is in ``products/csi1000_5d_analysis/data.md`` section 4.1).
+Source: Tushare ``opt_daily``; shared Source facts are defined by
+``capture/mo-option-contract.md``.
 ``exchange=CFFEX`` only asks the Source for CFFEX option daily facts;
 the Capture scope is then decided by the active MO universe the
 ``mo_option_basic`` Capture has already collected for the same request, so other
 CFFEX option products (IO, HO) are simply not in scope. Only the daily facts of
 that universe belong to this Raw Artifact.
 
-Development / debugging entrypoint (the Data Service CLI is the canonical user
-interface, see ``services/delivery.md`` section 4):
-
-    poetry run python -m market_snapshot.capture.mo_option_daily 2026-09-17
 """
 
 from __future__ import annotations
 
-import argparse
-import sys
 from collections.abc import Sequence
 
 import pandas as pd
@@ -106,27 +100,3 @@ def capture(
     return collect_mo_option_daily(
         trade_date, basic_facts, lambda **kwargs: query_opt_daily(api, **kwargs)
     )
-
-
-def main(argv: Sequence[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(description=f"Collect the {RAW_ARTIFACT} Raw artifact.")
-    parser.add_argument("trade_date", help="Target trade date in YYYY-MM-DD form.")
-    args = parser.parse_args(argv)
-
-    try:
-        api = tushare.create_tushare_api(tushare.get_tushare_token())
-        basic_facts = mo_option_basic.capture(api, args.trade_date)
-        records = capture(api, args.trade_date, basic_facts)
-    except common.CAPTURE_FAILURE_TYPES as exc:
-        print(f"error: {exc}", file=sys.stderr)
-        return 1
-
-    path = artifacts.write_raw_artifact(
-        records, artifacts.csi1000_raw_dir(args.trade_date), RAW_ARTIFACT
-    )
-    print(f"wrote {len(records)} records to {path}")
-    return 0
-
-
-if __name__ == "__main__":
-    raise SystemExit(main())

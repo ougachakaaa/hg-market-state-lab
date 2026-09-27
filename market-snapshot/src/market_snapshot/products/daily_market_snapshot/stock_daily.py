@@ -3,8 +3,7 @@
 Source: Tushare ``daily`` (see ``capture/ARCHITECTURE.md`` section 4;
 the product scope is in ``products/daily_market_snapshot/data.md`` 4.2).
 
-Development / debugging entrypoint (the Data Service CLI is the canonical user
-interface, see ``services/delivery.md`` section 4):
+Product-local development / debugging entrypoint for its Raw path:
 
     poetry run python -m market_snapshot.products.daily_market_snapshot.stock_daily 2026-09-17
 """
