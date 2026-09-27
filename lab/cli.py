@@ -50,39 +50,6 @@ def _tool_version(name: str) -> tuple[str | None, str | None]:
     return executable, result.stdout.strip() or result.stderr.strip()
 
 
-def _poetry_python(poetry: str) -> tuple[Path | None, str | None]:
-    """Inspect the existing repository Poetry environment without creating one."""
-    try:
-        result = subprocess.run(
-            [poetry, "env", "info", "--path"],
-            cwd=ROOT,
-            capture_output=True,
-            text=True,
-            timeout=COMMAND_TIMEOUT,
-            check=False,
-        )
-        if result.returncode != 0:
-            return None, None
-        environment = Path(result.stdout.strip())
-        if not environment.is_absolute():
-            environment = ROOT / environment
-        executable = environment / "bin" / "python"
-        if not executable.is_file():
-            return None, None
-        version = subprocess.run(
-            [str(executable), "-c", "import sys; print('.'.join(map(str, sys.version_info[:3])))"],
-            capture_output=True,
-            text=True,
-            timeout=COMMAND_TIMEOUT,
-            check=False,
-        )
-    except (OSError, subprocess.TimeoutExpired):
-        return None, None
-    if version.returncode != 0:
-        return executable, None
-    return executable, version.stdout.strip()
-
-
 def _port_listening(port: int) -> bool:
     try:
         with socket.create_connection((BACKEND_HOST, port), timeout=0.5):
@@ -127,25 +94,18 @@ def doctor() -> int:
         failed |= not exists
 
     print("\nPython runtime")
-    poetry, poetry_version = _tool_version("poetry")
+    _, poetry_version = _tool_version("poetry")
     poetry_status = f"OK ({poetry_version})" if poetry_version else "FAIL (unavailable)"
     print(f"  {'Poetry':<20} {poetry_status}")
     failed |= poetry_version is None
 
-    if poetry_version and poetry is not None:
-        python, version = _poetry_python(poetry)
-        if python is None:
-            python_status = "FAIL (Poetry environment missing)"
-        elif python.parent.parent.resolve() != (ROOT / ".venv").resolve():
-            python_status = "FAIL (Poetry environment is not root .venv)"
-        elif version is None:
-            python_status = "FAIL (unable to read version)"
-        elif version.split(".")[:2] == ["3", "13"]:
-            python_status = f"OK ({version})"
-        else:
-            python_status = f"FAIL (expected 3.13, found {version})"
+    python_version = ".".join(map(str, sys.version_info[:3]))
+    if Path(sys.prefix).resolve() != (ROOT / ".venv").resolve():
+        python_status = "FAIL (current Python is not root .venv)"
+    elif sys.version_info[:2] == (3, 13):
+        python_status = f"OK ({python_version})"
     else:
-        python_status = "FAIL (unavailable)"
+        python_status = f"FAIL (expected 3.13, found {python_version})"
     print(f"  {'root Python 3.13':<20} {python_status}")
     failed |= not python_status.startswith("OK")
 
@@ -200,13 +160,7 @@ def backend() -> int:
     if not (BACKEND_API / "scripts" / "api.py").is_file():
         print("backend launcher missing: backend-api/scripts/api.py", file=sys.stderr)
         return 1
-    poetry = shutil.which("poetry")
-    if poetry is None:
-        print("backend prerequisite missing: Poetry", file=sys.stderr)
-        return 1
-    return _run_foreground(
-        [poetry, "run", "python", "backend-api/scripts/api.py"], ROOT
-    )
+    return _run_foreground([sys.executable, "backend-api/scripts/api.py"], ROOT)
 
 
 def frontend() -> int:

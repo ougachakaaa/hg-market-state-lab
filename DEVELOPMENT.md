@@ -14,9 +14,17 @@ bash .codex/scripts/setup.sh
 
 运行该脚本的 Bash 环境必须已经提供 `python3.13`、`poetry`、`node` 和 `npm`；脚本不安装或升级这些 machine-level tools。初始化流程必须从仓库根目录使用唯一的 `pyproject.toml` 与 `poetry.lock` 执行 `poetry install`，安装 frontend 依赖，然后运行 `poetry run lab doctor` 检查 readiness；不会启动服务、运行完整测试或调用 Tushare。
 
+Windows native 手工初始化从仓库根目录运行：
+
+```powershell
+.\.codex\scripts\setup.ps1
+```
+
+PowerShell 脚本使用 Python 3.13、Poetry、Node 与 npm 达到相同终态。Codex Local Environment 仍调用上面的 Bash 脚本；WSL 使用 Bash 入口。两个脚本只负责 bootstrap，正式操作均使用 `lab`。
+
 每个 worktree 分别使用自己的根 `.venv` 与 `web-ui/node_modules`，不与其他 worktree 共享依赖目录。所有 repository Python packages 与 Python tools 共用该根 `.venv`；module directory 不拥有独立 Poetry environment。Codex managed worktree 会按根目录 `.worktreeinclude` 复制 source checkout 中已忽略的 `market-snapshot/.env`；如果 source checkout 没有该文件，setup 从 `.env.example` 复制一份空模板，不会生成或猜测 secret。
 
-手工执行 `git worktree add` 不会触发 Codex Local Environment，可以在新 worktree 根目录手工运行同一命令完成初始化。
+手工执行 `git worktree add` 不会触发 Codex Local Environment，可以在新 worktree 根目录运行对应平台的 bootstrap 命令。
 
 ## 当前可运行命令
 
@@ -32,11 +40,11 @@ poetry run lab research run <study-id> --help
 
 ## 当前命令与状态
 
-`doctor` 检查仓库结构、backend launcher、根 Poetry 虚拟环境中的 Python 3.13，以及 Node 和 npm。它报告默认本地地址 `127.0.0.1:8011` 的 backend 状态：未监听为 `stopped`，监听且 `/openapi.json` 有效为 `running / healthy`，否则为 `port occupied / unhealthy`。服务未启动是正常状态。若 `web-ui/package.json` 不存在，frontend 报告 `not initialized`；存在后检查默认 `127.0.0.1:5173` 是否监听，不要求专用 health endpoint。
+`doctor` 检查仓库结构、backend launcher、当前 Python 3.13 runtime 是否位于根 `.venv`，以及 Node 和 npm。它报告默认本地地址 `127.0.0.1:8011` 的 backend 状态：未监听为 `stopped`，监听且 `/openapi.json` 有效为 `running / healthy`，否则为 `port occupied / unhealthy`。服务未启动是正常状态。若 `web-ui/package.json` 不存在，frontend 报告 `not initialized`；存在后检查默认 `127.0.0.1:5173` 是否监听，不要求专用 health endpoint。
 
 `doctor` 在必要的仓库结构、backend launcher、Poetry 或 Python 3.13 条件不满足时非零退出；frontend 已初始化但 Node/npm 不可用时也非零退出。frontend 尚未初始化和服务停止本身不使 `doctor` 失败。检查只读，不创建虚拟环境、不安装依赖，也不调用 Tushare 或运行 pytest、Ruff、mypy。
 
-`lab serve backend` 从 repository root 前台执行 `poetry run python backend-api/scripts/api.py`。`lab serve frontend` 在 `web-ui/` 前台执行 `npm run dev`；首次启动前需在 `web-ui/` 自行执行 `npm install`。两个命令继承标准输入输出、传递子进程退出码，Ctrl+C 结束前台进程。缺少启动前提时明确报错，不自动修复环境。
+`lab serve backend` 从 repository root 使用当前 Python interpreter 前台执行 `backend-api/scripts/api.py`。`lab serve frontend` 在 `web-ui/` 前台执行系统解析到的 npm `run dev`；首次启动前需在 `web-ui/` 自行执行 `npm install`。两个命令继承标准输入输出、传递子进程退出码，Ctrl+C 结束前台进程。缺少启动前提时明确报错，不自动修复环境。
 
 `lab research list` 列出可运行的 retained Study；`lab research run <study-id> --help` 转发到对应 Study 的帮助。Study ID、runner layout 与转发规则见 [Research UI authority](market-research/ui/ARCHITECTURE.md)，具体参数见对应 retained Study authority。
 

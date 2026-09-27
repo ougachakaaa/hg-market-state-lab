@@ -29,6 +29,20 @@ README 是人类开发入口，不是架构或业务语义 authority。
 
 所有 Python packages 使用根目录唯一的 project、dependency graph、lock 与 worktree-local `.venv`。需要 Python 3.13 与 Poetry，并在仓库根目录执行：
 
+Linux 或 WSL：
+
+```bash
+bash .codex/scripts/setup.sh
+```
+
+Windows native PowerShell：
+
+```powershell
+.\.codex\scripts\setup.ps1
+```
+
+两个 bootstrap 都安装根 Python project 与 frontend 依赖，并运行 `lab doctor`。若只需手工安装 Python project，可在仓库根目录执行：
+
 ```bash
 poetry install
 ```

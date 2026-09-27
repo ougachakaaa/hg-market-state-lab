@@ -5,18 +5,18 @@ from __future__ import annotations
 import ast
 import importlib
 import importlib.metadata
+import shutil
 import subprocess
 import sys
 import tomllib
 from pathlib import Path
+from types import SimpleNamespace
 from typing import Any
 
 import pytest
 
-REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
+REPOSITORY_ROOT = Path(__file__).resolve().parents[2]
 CLI_PATH = REPOSITORY_ROOT / "lab" / "cli.py"
-POETRY = str(REPOSITORY_ROOT / "tools" / "poetry")
-NPM = "/tools/npm"
 STUDY_IDS = (
     "im-basis-baseline",
     "im-basis-forward-return-association",
@@ -42,7 +42,6 @@ def patch_child(
         invocation["cwd"] = cwd
         return FakeChild()
 
-    monkeypatch.setattr(lab.shutil, "which", lambda name: POETRY if name == "poetry" else None)
     monkeypatch.setattr(lab.subprocess, "Popen", fake_popen)
     return invocation
 
@@ -226,29 +225,52 @@ def test_backend_uses_the_backend_api_launcher(
 
     assert lab.main(["serve", "backend"]) == exit_code
     assert invocation == {
-        "command": [POETRY, "run", "python", "backend-api/scripts/api.py"],
+        "command": [sys.executable, "backend-api/scripts/api.py"],
         "cwd": lab.ROOT,
     }
 
 
-def test_frontend_uses_the_web_ui_launcher(monkeypatch: pytest.MonkeyPatch) -> None:
+@pytest.mark.parametrize("resolved_npm", ["/tools/npm", "C:/Tools/npm.cmd", "C:/Tools/npm.exe"])
+@pytest.mark.parametrize("exit_code", [0, 23])
+def test_frontend_uses_the_resolved_launcher(
+    monkeypatch: pytest.MonkeyPatch, resolved_npm: str, exit_code: int
+) -> None:
     invocation: dict[str, Any] = {}
 
     class FakeChild:
         def wait(self, timeout: int | None = None) -> int:
             assert timeout is None
-            return 0
+            return exit_code
 
     def fake_popen(command: list[str], *, cwd: Path) -> FakeChild:
         invocation["command"] = command
         invocation["cwd"] = cwd
         return FakeChild()
 
-    monkeypatch.setattr(lab.shutil, "which", lambda name: NPM if name == "npm" else None)
+    monkeypatch.setattr(lab.shutil, "which", lambda name: resolved_npm if name == "npm" else None)
     monkeypatch.setattr(lab.subprocess, "Popen", fake_popen)
 
-    assert lab.main(["serve", "frontend"]) == 0
-    assert invocation == {"command": [NPM, "run", "dev"], "cwd": lab.FRONTEND}
+    assert lab.main(["serve", "frontend"]) == exit_code
+    assert invocation == {"command": [resolved_npm, "run", "dev"], "cwd": lab.FRONTEND}
+
+
+@pytest.mark.parametrize("resolved_tool", ["/tools/npm", "C:/Tools/npm.cmd", "C:/Tools/npm.exe"])
+def test_tool_version_uses_platform_resolved_executable(
+    monkeypatch: pytest.MonkeyPatch, resolved_tool: str
+) -> None:
+    invocation: dict[str, Any] = {}
+
+    def fake_run(command: list[str], **kwargs: Any) -> SimpleNamespace:
+        invocation["command"] = command
+        invocation["kwargs"] = kwargs
+        return SimpleNamespace(returncode=0, stdout="test version", stderr="")
+
+    monkeypatch.setattr(lab.shutil, "which", lambda name: resolved_tool if name == "npm" else None)
+    monkeypatch.setattr(lab.subprocess, "run", fake_run)
+
+    assert lab._tool_version("npm") == (resolved_tool, "test version")
+    assert invocation["command"] == [resolved_tool, "--version"]
+    assert "shell" not in invocation["kwargs"]
 
 
 def test_data_command_is_retired() -> None:
@@ -272,25 +294,34 @@ def test_foreground_interrupt_reaps_child(monkeypatch: pytest.MonkeyPatch) -> No
     assert waits == [None, 2]
 
 
-def test_doctor_inspects_one_root_poetry_environment(
+def test_doctor_inspects_current_root_python_environment(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    poetry_calls: list[str] = []
-
     def fake_tool_version(name: str) -> tuple[str, str]:
         return f"/tools/{name}", f"{name} test version"
 
-    def fake_poetry_python(poetry: str) -> tuple[Path, str]:
-        poetry_calls.append(poetry)
-        return lab.ROOT / ".venv/bin/python", "3.13.15"
-
     monkeypatch.setattr(lab, "_tool_version", fake_tool_version)
-    monkeypatch.setattr(lab, "_poetry_python", fake_poetry_python)
+    monkeypatch.setattr(
+        lab, "sys", SimpleNamespace(prefix=str(lab.ROOT / ".venv"), version_info=(3, 13, 15))
+    )
     monkeypatch.setattr(lab, "_backend_status", lambda: "stopped")
     monkeypatch.setattr(lab, "_port_listening", lambda port: False)
 
     assert lab.doctor() == 0
-    assert poetry_calls == ["/tools/poetry"]
+
+
+def test_doctor_rejects_another_python_environment(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    monkeypatch.setattr(lab, "_tool_version", lambda name: (name, "test version"))
+    monkeypatch.setattr(
+        lab, "sys", SimpleNamespace(prefix=str(lab.ROOT / "other-venv"), version_info=(3, 13, 15))
+    )
+    monkeypatch.setattr(lab, "_backend_status", lambda: "stopped")
+    monkeypatch.setattr(lab, "_port_listening", lambda port: False)
+
+    assert lab.doctor() == 1
+    assert "current Python is not root .venv" in capsys.readouterr().out
 
 
 def test_repository_cli_does_not_import_owning_module_implementation() -> None:
@@ -315,9 +346,25 @@ def test_root_cli_is_the_only_repository_executable_surface() -> None:
     scripts = manifest["project"].get("scripts", {})
 
     assert scripts == {"lab": "lab.cli:main"}
+    assert manifest["tool"]["pytest"]["ini_options"]["testpaths"][0] == "lab/tests"
+    assert not (REPOSITORY_ROOT / "tests").exists()
     installed_scripts = importlib.metadata.distribution("hg-market-state-lab").entry_points
     assert [(script.name, script.value) for script in installed_scripts] == [
         ("lab", "lab.cli:main")
     ]
-    assert (Path(sys.executable).parent / "lab").is_file()
     assert not (REPOSITORY_ROOT / "dev.py").exists()
+
+
+@pytest.mark.parametrize("arguments", [["--help"], ["research", "list"]])
+def test_installed_cli_runs_through_canonical_command(arguments: list[str]) -> None:
+    poetry = shutil.which("poetry")
+    assert poetry is not None
+    result = subprocess.run(
+        [poetry, "run", "lab", *arguments],
+        cwd=REPOSITORY_ROOT,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert result.returncode == 0, result.stderr
+    assert result.stdout.strip()

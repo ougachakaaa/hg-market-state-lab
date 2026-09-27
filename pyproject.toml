@@ -33,7 +33,7 @@ requires = ["poetry-core>=2.0.0"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.pytest.ini_options]
-testpaths = ["tests", "market-snapshot/tests", "market-research/tests", "backend-api/tests"]
+testpaths = ["lab/tests", "market-snapshot/tests", "market-research/tests", "backend-api/tests"]
 pythonpath = [
     "market-snapshot/src",
     "market-research/src",
@@ -45,6 +45,7 @@ target-version = "py313"
 line-length = 100
 src = [
     "lab",
+    "lab/tests",
     "market-snapshot/src",
     "market-snapshot/tests",
     "market-snapshot/scripts",
@@ -53,7 +54,6 @@ src = [
     "backend-api/scripts",
     "market-research/src",
     "market-research/tests",
-    "tests",
 ]
 
 [tool.ruff.lint]
@@ -66,7 +66,6 @@ known-first-party = ["backend_api", "lab", "market_research", "market_snapshot"]
 python_version = "3.13"
 files = [
     "lab",
-    "tests",
     "market-snapshot/src",
     "market-snapshot/tests",
     "market-snapshot/scripts",
