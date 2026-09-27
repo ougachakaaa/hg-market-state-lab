@@ -18,14 +18,36 @@ Canonical daily quantity 为 `D_T = Close_T / Reference_{T-1} - 1`。本 Study �
 instrument                       index_daily 支持的一个 index ts_code
 reference_window                 正整数 N；prior actual observation count
 reference_method                 sma | volume_weighted
-reference_method_parameters      V1 必须为空的 method-specific parameter set
+reference_method_parameters      V1 固定为 {}，无 method-specific parameters
 sample_start_trade_date          YYYY-MM-DD，含端点
 sample_end_trade_date            YYYY-MM-DD，含端点
 distribution_granularity         finite 且 > 0 的 decimal ratio
 percentile_probabilities         非空、finite、互异且各自在 [0, 1] 的 decimal ratios
 ```
 
-日期必须有效，且 start 不晚于 end。`instrument` 不固定为 CSI1000，例如可以是受产品支持的 `000852.SH`；V1 不定义股票、ETF、期货或 generic instrument routing。CLI 的具体参数拼写留给未来 Study-local parser，但不得有改变研究语义的 hidden default。`market-research/research.toml` 仅拥有 `output.root`，不保存上述 Study 参数。
+日期必须有效，且 start 不晚于 end。`instrument` 不固定为 CSI1000，例如可以是受产品支持的 `000852.SH`；V1 不定义股票、ETF、期货或 generic instrument routing。`market-research/research.toml` 仅拥有 `output.root`，不保存上述 Study 参数。
+
+### Canonical Study CLI
+
+V1 唯一 human-facing invocation 使用 repository CLI 的透明转发与本 Study 的 study-local parser：
+
+```bash
+poetry run python dev.py research run \
+    price-to-lagged-ma-distribution \
+    --instrument 000852.SH \
+    --window 60 \
+    --method sma \
+    --start 2015-01-01 \
+    --end 2026-09-01 \
+    --granularity 0.005 \
+    --percentiles 0.01,0.05,0.10,0.20,0.50,0.80,0.90,0.95,0.99
+```
+
+这七个 study-specific flags 均为 required，没有 hidden default；可另加 `--overwrite`，默认 false，只表示允许替换已存在的完整 run directory，placement 与 collision 语义遵循 Research UI authority。`--instrument` 是 index `ts_code`；`--window` 是正整数、此前实际 observation 条数；`--method` 只接受 `sma` 或 `volume_weighted`；`--start` 与 `--end` 是有效的 `YYYY-MM-DD`、含端点 calendar bounds，且 start 不晚于 end；`--granularity` 是 finite 且大于零的 decimal ratio；`--percentiles` 是一个逗号分隔的非空 decimal-probability 参数，每项 finite、在 `[0, 1]` 内且按数值不得重复。
+
+`--granularity 0.005` 表示 0.5%；`--percentiles 0.01,0.05,0.95,0.99` 表示 P1、P5、P95、P99。V1 CLI 不接受百分号输入，也不提供 `--method-param`、`--decay`、`--half-life`、`--lambda` 等 method-specific flags。百分号只可用于 human-facing report / visualization；CLI 与 machine-readable result 使用 decimal ratios。
+
+CLI 仅是 inbound representation；study-local parser 将 `--instrument`、`--window`、`--method`、`--start`、`--end`、`--granularity`、`--percentiles` 依次映射为上述 semantic request 的 `instrument`、`reference_window`、`reference_method`、`sample_start_trade_date`、`sample_end_trade_date`、`distribution_granularity`、`percentile_probabilities`，并设置 `reference_method_parameters = {}`。Percentiles 必须解析、校验、对重复数值报错而非静默去重，再按数值升序规范化；等价 numeric spelling 得到相同 semantic request 与 run identity，不使用 raw argv 生成 run key。
 
 Study-local composition 通过 Index Daily History 的 production-ready public Python entry 提交：
 
@@ -63,7 +85,7 @@ Reference = sum(close_i * volume_i) / sum(volume_i)
 
 SMA 所需的每个 `close` 必须可用；其正值与 finite 约束由 Snapshot product contract 保证，Study 遇到违反 contract 的结果仍须显式失败。Volume-weighted method 要求每个所需 `volume` 非 null、finite 且 `>= 0`，并要求 `sum(volume_i) > 0`；否则整个 run 失败，不填值、不回退 SMA、不删除日期。任一 method 的最终 reference 必须 finite 且严格大于零，计算出的 deviation 也必须 finite；失败不得变成 NaN、infinity、除零或静默跳过。
 
-V1 只正式定义 `sma` 与 `volume_weighted`，两者的 `reference_method_parameters` 均为空。未来新增 decay 或其他加权方法，须先在本 Study authority 中定义新 method 名、专属参数与确定性公式；不能以含糊的 `weighted`、`decay` 或 `custom` 名称代替公式。当前 reference 与 deviation 仅由本 Study 拥有，不提升为 shared MA、reference 或 feature framework。
+V1 只正式定义 `sma` 与 `volume_weighted`，两者的 `reference_method_parameters = {}`。`decay_weighted` 明确 deferred：当前尚未锁定 weight function、decay parameter semantic、normalization rule 与 age direction，Implementation Agent 不得自行发明 decay formula。未来新增 decay 或其他加权方法，须先在本 Study authority 中定义 canonical method token、method-specific parameters、deterministic weighting formula 与 validation/failure semantics；不能以含糊的 `weighted`、`decay` 或 `custom` 名称代替公式。当前 reference 与 deviation 仅由本 Study 拥有，不提升为 shared MA、reference 或 feature framework。
 
 ### Daily observations 与 eligible sample
 
@@ -73,8 +95,8 @@ V1 只正式定义 `sma` 与 `volume_weighted`，两者的 `reference_method_par
 trade_date
 instrument
 close
-reference_value              Reference_{T-1}
-deviation                    close / reference_value - 1
+reference_ma                 Reference_{T-1}
+deviation                    close / reference_ma - 1
 ```
 
 `deviation`、granularity、bins 和 percentile values 均使用 decimal ratio unit：`0.05` 表示 `+5%`，不在 canonical numeric result 中写成 `5`。成功 run 的 `deviations[]` 与 Snapshot sample observations 一一对应，`deviation_count = sample_observation_count`。V1 不做 outlier removal、winsorization、clipping、regime filtering 或 null-reference row dropping；任一 sample day 无法计算即整个 run 失败。
@@ -83,7 +105,7 @@ deviation                    close / reference_value - 1
 
 Study 将完整 `deviations[]` 交给 shared distribution capability。`percentile_probabilities` 在验证互异后按数值升序成为 canonical request 与输出顺序；quantile interpolation 采用共享 convention。`distribution_granularity` 与 deviation 使用同一 decimal-ratio unit；zero-anchored、左闭右开、连续 fixed-width bins 及其 count/frequency 采用共享 authority，不在 Study 中重定义 bucket 算法。
 
-Retained summary 使用共享的 `sample_count`、`mean`、`median`、`sample_standard_deviation`、`min`、`max`。因为该 summary 必须包含 sample standard deviation，少于两条 sample observations 的 run 显式失败，不伪造结果。Study 不添加 skewness、kurtosis、normality test、KDE 或 parametric fit。
+Retained summary 使用共享的 `sample_count`、`mean`、`median`、`sample_standard_deviation`、`min`、`max`。任意非空且有效的 deviation sample 均可成功；`sample_count = 1` 时，daily observation、fixed-width distribution、empirical percentiles、mean、median、min 与 max 仍有定义，`sample_standard_deviation = null`，不使整个 Study 失败，也不伪造 `0`、NaN 或 infinity。`sample_count >= 2` 时使用 `ddof = 1` 的 sample standard deviation。Study 不添加 skewness、kurtosis、normality test、KDE 或 parametric fit。
 
 ## Execution identity
 
@@ -100,10 +122,10 @@ Study-owned run key 包含 Inputs 列出的全部字段。先验证 request，�
 | Artifact | Study-owned content |
 | --- | --- |
 | `request.json` | public Study ID、Study-owned run key、完整规范 semantic request、Snapshot result 中实际请求 bounds 与 warm-up/sample counts |
-| `observations.csv` | 每个 sample day 的 `trade_date,instrument,close,reference_value,deviation`；按日期升序，`deviation` 使用 decimal ratio，`close` 与 `reference_value` 保持价格单位 |
+| `observations.csv` | 每个 sample day 的 `trade_date,instrument,close,reference_ma,deviation`；按日期升序，`deviation` 使用 decimal ratio，`close` 与 `reference_ma` 保持价格单位 |
 | `distribution.csv` | 每个连续 fixed-width bin 的 numeric `lower_bound,upper_bound,count,frequency`，包括 zero-count bins |
 | `percentiles.csv` | 按 probability 升序排列的 numeric `probability,value` |
-| `summary.json` | `sample_count,mean,median,sample_standard_deviation,min,max` |
+| `summary.json` | `sample_count,mean,median,sample_standard_deviation,min,max`；仅当 `sample_count < 2` 时 `sample_standard_deviation` 为 JSON `null` |
 | `report.md` | Question、Inputs、reference definition、sample、distribution result 与 Limitations 的简洁人类可读说明 |
 | `distribution.png` | 每个成功 run 必须保留的 Python-generated static empirical-distribution 图 |
 

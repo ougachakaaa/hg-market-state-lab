@@ -43,6 +43,6 @@ zero-count bin 的 `frequency` 为 `0`。display label、percentage formatting �
 
 ## Narrow descriptive summary
 
-与 empirical distribution 直接相关的最小 summary 为 `sample_count`、`mean`、`median`、`sample_standard_deviation`、`min` 和 `max`。`sample_count` 是 eligible sample 的 observation 数量，`mean` 是其算术平均值，`median` 使用本文的 quantile convention；`sample_standard_deviation` 使用 `ddof = 1`。当 sample size 小于两个而调用方请求 sample standard deviation 时，必须显式失败，不伪造数值。
+与 empirical distribution 直接相关的最小 summary 为 `sample_count`、`mean`、`median`、`sample_standard_deviation`、`min` 和 `max`。非空 finite numeric sample 即可产生完整 summary；`sample_count` 是 eligible sample 的 observation 数量，`mean` 是其算术平均值，`median` 使用本文的 quantile convention。当 `sample_count >= 2` 时，`sample_standard_deviation` 使用 `ddof = 1`；当 `sample_count < 2` 时，其值为 `null`，表示该 sample statistic 在数学上未定义，不是 failure，也不得用 `0`、NaN 或 infinity 代替。空 sample、NaN、infinity 或 malformed numeric value 仍按 Input 与 ownership 的约定失败；granularity 与 probability 的既有校验同样不变。调用 Study 可因自身研究含义规定更严格的最小样本量。
 
 本 authority 不定义 skewness、kurtosis、regression、correlation、rolling statistics、normality test、confidence interval、parametric distribution fitting 或 kernel density estimation。Study-specific method、output 与 failure condition 仍由对应 retained Study authority 拥有。
