@@ -48,15 +48,19 @@ python -m market_research.studies.<study_package>.cli [study-specific args...]
 
 ## 3. Shared configuration and output placement
 
-Research UI configuration 只提供 `output.root`。Study-local CLI 为每次 run 确定：
+Research UI configuration 只提供 `output.root`。每个 Study 从自身完整的 semantic request 确定 deterministic run key：语义相同的请求必须得到相同的 key，任何会改变 retained evidence 含义的 Study 参数变化都必须得到不同的 key。当前时间、随机 UUID、进程身份、临时路径或运行顺序不得成为 canonical semantic identity。key 的表示形式（包括是否使用 hash 或编码）由 Study 决定；共享 Research UI 不定义统一 request schema、参数列表或 key 算法。
+
+Study-local CLI 将 Study-owned run key 交给共享 Research UI，canonical placement 为：
 
 ```text
 <output-root>/
 └── <study-id>/
-    └── <start_trade_date>__<end_trade_date>/
+    └── <study-owned-run-key>/
 ```
 
-同一 `study-id + start + end` 始终映射到同一 canonical run directory。共享 UI support 可以提供 configuration loading 与事务性的整目录 staging/replacement，但不得定义 Study arguments、Snapshot request、artifact filenames/contents、statistics 或 result semantics。
+共享 Research UI 只将 key 作为不透明的单个目录名使用，并负责校验其 filesystem safety，防止绝对路径、路径逃逸或其他不安全的目录映射；它不解释 key 的 Study 语义。同一 `study-id + study-owned-run-key` 始终映射到同一 canonical run directory。共享 UI support 可以提供 configuration loading、canonical placement、collision detection 与事务性的整目录 staging/replacement，但不得定义 Study arguments、Snapshot request、artifact filenames/contents、statistics 或 result semantics。
+
+现有 `im-basis-baseline` 与 `im-basis-forward-return-association` 的 run identity 由各自显式日期区间决定，可以继续使用 `<start_trade_date>__<end_trade_date>` 作为各自的 deterministic run key；该泛化不要求迁移既有 output directory 或改变这两个 Study 的语义。
 
 若 canonical run directory 已存在，默认在调用 Snapshot 或 Study 前失败并保留原 evidence。只有 Study 显式提供并接收 `--overwrite` 时才允许替换；replacement 以整个 run directory 为单位，先在同级 staging directory 完成，发布失败恢复原 evidence。
 

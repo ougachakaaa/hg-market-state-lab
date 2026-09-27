@@ -21,5 +21,6 @@ CLI executable catalog                  → catalog.py / dms
 - Data Service semantic inventory、CLI executable catalog、canonical persisted output 与 delivery 规则：[delivery.md](delivery.md)
 - `csi1000-5d-analysis` orchestration：[CSI1000 product](../products/csi1000_5d_analysis/ARCHITECTURE.md)
 - CSI1000 IM Basis History public Python application service：[IM basis history product](../products/csi1000_im_basis_history/ARCHITECTURE.md)
+- Index Daily History public Python application service：[Index daily history product](../products/index_daily_history/ARCHITECTURE.md)
 - MO Option Chain request-scoped read service：[MO Option Chain product](../products/mo_option_chain/ARCHITECTURE.md)
 - MO Premium Plane request-scoped analytical service：[MO Premium Plane product](../products/mo_option_premium/ARCHITECTURE.md)

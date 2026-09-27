@@ -11,7 +11,8 @@ from typing import cast
 import pandas as pd
 import pytest
 
-from market_research.shared.im_basis import daily_im_basis, linear_quantile
+from market_research.shared.distribution import linear_quantile
+from market_research.shared.im_basis import daily_im_basis
 from market_research.studies.im_basis_baseline import study as baseline
 from market_research.studies.im_basis_forward_return_association import study as association
 from market_snapshot.products.csi1000_im_basis_history import (

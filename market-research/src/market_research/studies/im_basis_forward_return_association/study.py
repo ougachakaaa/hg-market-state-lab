@@ -11,7 +11,8 @@ from market_snapshot.products.csi1000_im_basis_history import (
     CSI1000IMBasisHistoryResult,
 )
 
-from ...shared.im_basis import daily_im_basis, linear_quantile
+from ...shared.distribution import linear_quantile
+from ...shared.im_basis import daily_im_basis
 
 HORIZONS = (1, 3, 5, 10, 15, 20)
 

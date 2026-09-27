@@ -12,7 +12,8 @@ from market_snapshot.products.csi1000_im_basis_history import (
     CSI1000IMBasisHistoryResult,
 )
 
-from ...shared.im_basis import daily_im_basis, linear_quantile
+from ...shared.distribution import linear_quantile
+from ...shared.im_basis import daily_im_basis
 
 SERIES = ("M0", "M1", "Q1", "Q2", "non_front_mean_basis")
 PERCENTILES = (5, 10, 25, 50, 75, 90, 95)

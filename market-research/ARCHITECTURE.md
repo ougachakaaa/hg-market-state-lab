@@ -131,12 +131,14 @@ results/
 
 当前由多个真实 retained study 共同使用的窄 Research semantic：
 
+- [Empirical Distribution Research Semantics](shared/distribution/ARCHITECTURE.md)
 - [IM Basis Research Semantics](shared/im_basis/ARCHITECTURE.md)
 
 当前 retained study 入口：
 
 - [IM Annualized Basis Baseline](studies/im_basis_baseline/ARCHITECTURE.md)
 - [IM Basis Forward Return Association](studies/im_basis_forward_return_association/ARCHITECTURE.md)
+- [Price-to-Lagged-MA Distribution](studies/price_to_lagged_ma_distribution/ARCHITECTURE.md)
 
 本模块不预设 Experiment Engine、Study Registry、Research Repository、plugin system、统一 lifecycle 或通用 study schema。只有真实 retained study 需要时才建立最小文件结构。
 

@@ -1,6 +1,6 @@
 # IM Basis Forward Return Association retained study authority
 
-本文档是 `IM Basis Forward Return Association` 的 retained-study authority。Research 边界与 retained-study identity 见 [market-research architecture](../../ARCHITECTURE.md)；predictor 与 quantile convention 见 [IM Basis Research Semantics](../../shared/im_basis/ARCHITECTURE.md)；输入产品见 [CSI1000 IM Basis History](../../../market-snapshot/src/market_snapshot/products/csi1000_im_basis_history/ARCHITECTURE.md)。
+本文档是 `IM Basis Forward Return Association` 的 retained-study authority。Research 边界与 retained-study identity 见 [market-research architecture](../../ARCHITECTURE.md)；predictor 见 [IM Basis Research Semantics](../../shared/im_basis/ARCHITECTURE.md)；quantile convention 见 [Empirical Distribution Research Semantics](../../shared/distribution/ARCHITECTURE.md)；输入产品见 [CSI1000 IM Basis History](../../../market-snapshot/src/market_snapshot/products/csi1000_im_basis_history/ARCHITECTURE.md)。
 
 对应 executable implementation 位于 [im_basis_forward_return_association package](../../src/market_research/studies/im_basis_forward_return_association/__init__.py)；其 public Study ID 为 `im-basis-forward-return-association`。本文件保有 Study 语义与 retained evidence 的 canonical ownership。
 
@@ -98,7 +98,7 @@ forward_return_h_pct
 
 ### Basis-quintile conditional statistics
 
-在完整 common eligible predictor sample 上，按 [shared linear-interpolation convention](../../shared/im_basis/ARCHITECTURE.md) 计算 `non_front_mean_basis` 的 P20、P40、P60、P80。同一组 breakpoints 应用于所有 horizon，并按数值阈值分组：
+在完整 common eligible predictor sample 上，按 [shared linear-interpolation convention](../../shared/distribution/ARCHITECTURE.md) 计算 `non_front_mean_basis` 的 P20、P40、P60、P80。同一组 breakpoints 应用于所有 horizon，并按数值阈值分组：
 
 ```text
 Q1: x <= P20                         deepest discount / lowest basis

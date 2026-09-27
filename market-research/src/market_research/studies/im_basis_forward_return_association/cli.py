@@ -16,6 +16,7 @@ from market_snapshot.products.csi1000_im_basis_history import (
     CSI1000IMBasisHistoryRequest,
 )
 
+from ...shared.distribution import DistributionInputError
 from ...shared.im_basis import ResearchInputError
 from ...ui import configuration
 from ...ui.execution import ResearchOutputError, canonical_run_directory, execute_run
@@ -67,18 +68,17 @@ def run(start: str, end: str, *, overwrite: bool) -> int:
         return _failure("Configuration error", str(error), 3)
 
     request = CSI1000IMBasisHistoryRequest(start_trade_date=start, end_trade_date=end)
-    run_directory = canonical_run_directory(
-        research_config.output_root, STUDY_ID, start, end
-    )
+    run_key = f"{start}__{end}"
 
     def execute(output_dir: Path) -> tuple[Path, ...]:
         return _execute(request, output_dir)
 
     try:
+        run_directory = canonical_run_directory(research_config.output_root, STUDY_ID, run_key)
         artifacts = execute_run(execute, run_directory, overwrite=overwrite)
     except CSI1000IMBasisHistoryError as error:
         return _failure("Snapshot/data error", str(error), 4)
-    except (ResearchInputError, AssociationStudyError) as error:
+    except (ResearchInputError, DistributionInputError, AssociationStudyError) as error:
         return _failure("Study/sample error", str(error), 5)
     except ResearchOutputError as error:
         return _failure("Output error", str(error), 6)
