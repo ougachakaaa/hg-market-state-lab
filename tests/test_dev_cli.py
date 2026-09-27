@@ -20,7 +20,11 @@ POETRY = str(REPOSITORY_ROOT / "tools" / "poetry")
 NPM = "/tools/npm"
 SERVICE_ID = "csi1000-5d-analysis"
 TARGET_DATE = "2026-09-18"
-STUDY_IDS = ("im-basis-baseline", "im-basis-forward-return-association")
+STUDY_IDS = (
+    "im-basis-baseline",
+    "im-basis-forward-return-association",
+    "price-to-lagged-ma-distribution",
+)
 
 
 def load_dev_module() -> Any:

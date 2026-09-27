@@ -2,14 +2,16 @@
 
 from __future__ import annotations
 
+import csv
 import hashlib
 import json
 import math
 import re
 from collections.abc import Mapping
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 from datetime import date
 from decimal import Decimal, InvalidOperation
+from pathlib import Path
 from types import MappingProxyType
 
 from market_snapshot.products.index_daily_history import (
@@ -152,9 +154,9 @@ class PriceToLaggedMAResult:
     summary: DescriptiveSummary
 
 
-def run_key(request: PriceToLaggedMARequest) -> str:
-    """Hash the complete, normalized Study semantic request."""
-    canonical = {
+def canonical_request(request: PriceToLaggedMARequest) -> dict[str, object]:
+    """Represent the validated request with its canonical decimal spellings."""
+    return {
         "instrument": request.instrument,
         "reference_window": request.reference_window,
         "reference_method": request.reference_method,
@@ -166,7 +168,13 @@ def run_key(request: PriceToLaggedMARequest) -> str:
             _decimal_text(value) for value in request.percentile_probabilities
         ],
     }
-    payload = json.dumps(canonical, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
+
+
+def run_key(request: PriceToLaggedMARequest) -> str:
+    """Hash the complete, normalized Study semantic request."""
+    payload = json.dumps(
+        canonical_request(request), sort_keys=True, separators=(",", ":"), ensure_ascii=False
+    )
     return hashlib.sha256(payload.encode("utf-8")).hexdigest()
 
 
@@ -259,7 +267,10 @@ def compute(
     for row in snapshot.sample_observations:
         window = tuple(history[-request.reference_window :])
         reference = _reference(window, request.reference_method)
-        deviation = row.close / reference - 1
+        try:
+            deviation = float(Decimal(str(row.close)) / Decimal(str(reference)) - 1)
+        except (OverflowError, ValueError) as exc:
+            raise PriceToLaggedMAStudyError("deviation must be finite.") from exc
         if not math.isfinite(deviation):
             raise PriceToLaggedMAStudyError("deviation must be finite.")
         daily.append(
@@ -288,4 +299,131 @@ def compute(
             for probability in probabilities
         ),
         summary=descriptive_summary(deviations),
+    )
+
+
+def _write_plot(result: PriceToLaggedMAResult, path: Path) -> None:
+    import matplotlib
+
+    matplotlib.use("Agg")
+    from matplotlib import pyplot as plt
+
+    figure, axis = plt.subplots(figsize=(9, 5))
+    axis.bar(
+        [row.lower_bound for row in result.distribution_bins],
+        [row.frequency for row in result.distribution_bins],
+        width=float(result.request.distribution_granularity),
+        align="edge",
+        edgecolor="black",
+        linewidth=0.5,
+    )
+    axis.axvline(0, color="black", linewidth=0.8)
+    axis.set_xlabel("Close / prior moving reference - 1 (ratio)")
+    axis.set_ylabel("Empirical frequency")
+    axis.set_title("Price-to-lagged-MA distribution")
+    figure.tight_layout()
+    figure.savefig(path, dpi=150)
+    plt.close(figure)
+
+
+def retain(
+    result: PriceToLaggedMAResult, snapshot: IndexDailyHistoryResult, output_dir: Path
+) -> tuple[Path, ...]:
+    """Write the Study's complete machine and human evidence into staging."""
+    request_path = output_dir / "request.json"
+    observations_path = output_dir / "observations.csv"
+    distribution_path = output_dir / "distribution.csv"
+    percentiles_path = output_dir / "percentiles.csv"
+    summary_path = output_dir / "summary.json"
+    report_path = output_dir / "report.md"
+    plot_path = output_dir / "distribution.png"
+
+    request_record = {
+        "study_id": "price-to-lagged-ma-distribution",
+        "run_key": result.run_key,
+        "semantic_request": canonical_request(result.request),
+        "snapshot": {
+            "requested_start_trade_date": snapshot.requested_start_trade_date,
+            "requested_end_trade_date": snapshot.requested_end_trade_date,
+            "requested_pre_start_observation_count": snapshot.requested_pre_start_observation_count,
+            "warmup_observation_count": len(snapshot.warmup_observations),
+            "sample_observation_count": len(snapshot.sample_observations),
+        },
+    }
+    request_path.write_text(
+        json.dumps(request_record, ensure_ascii=False, indent=2, sort_keys=True, allow_nan=False)
+        + "\n",
+        encoding="utf-8",
+    )
+    with observations_path.open("w", encoding="utf-8", newline="") as stream:
+        writer = csv.writer(stream)
+        writer.writerow(("trade_date", "instrument", "close", "reference_ma", "deviation"))
+        writer.writerows(
+            (row.trade_date, row.instrument, row.close, row.reference_ma, row.deviation)
+            for row in result.daily_observations
+        )
+    with distribution_path.open("w", encoding="utf-8", newline="") as stream:
+        writer = csv.writer(stream)
+        writer.writerow(("lower_bound", "upper_bound", "count", "frequency"))
+        writer.writerows(
+            (row.lower_bound, row.upper_bound, row.count, row.frequency)
+            for row in result.distribution_bins
+        )
+    with percentiles_path.open("w", encoding="utf-8", newline="") as stream:
+        writer = csv.writer(stream)
+        writer.writerow(("probability", "value"))
+        writer.writerows((row.probability, row.value) for row in result.percentiles)
+    summary_path.write_text(
+        json.dumps(asdict(result.summary), indent=2, sort_keys=True, allow_nan=False) + "\n",
+        encoding="utf-8",
+    )
+    study_request = result.request
+    report_path.write_text(
+        "\n".join(
+            (
+                "# Price-to-Lagged-MA Distribution",
+                "",
+                "## Question",
+                "How are daily closes distributed relative to the prior moving reference?",
+                "",
+                "## Inputs",
+                f"Instrument: {study_request.instrument}; sample calendar bounds: "
+                f"{study_request.sample_start_trade_date} through "
+                f"{study_request.sample_end_trade_date} (inclusive).",
+                f"Reference: {study_request.reference_method} over "
+                f"{study_request.reference_window} prior actual observations.",
+                f"Distribution width: {study_request.distribution_granularity} (ratio); "
+                "percentiles: "
+                + ", ".join(str(p) for p in study_request.percentile_probabilities) + ".",
+                "",
+                "## Method and sample",
+                "Each sample day uses Close_T / Reference_(T-1) - 1; the current close "
+                "does not enter its reference.",
+                f"{len(snapshot.warmup_observations)} warm-up observations and "
+                f"{result.summary.sample_count} sample observations; one deviation per sample day.",
+                "",
+                "## Distribution result",
+                f"{len(result.distribution_bins)} zero-anchored, left-closed, "
+                "right-open fixed-width bins; see distribution.csv and distribution.png.",
+                f"Mean: {result.summary.mean:.8g}; median: {result.summary.median:.8g}; "
+                f"min: {result.summary.min:.8g}; max: {result.summary.max:.8g} (ratios).",
+                "See percentiles.csv and summary.json for complete numeric results.",
+                "",
+                "## Limitations",
+                "This in-sample description does not establish future returns, "
+                "mean reversion, mispricing, or a trading signal.",
+                "",
+            )
+        ),
+        encoding="utf-8",
+    )
+    _write_plot(result, plot_path)
+    return (
+        request_path,
+        observations_path,
+        distribution_path,
+        percentiles_path,
+        summary_path,
+        report_path,
+        plot_path,
     )

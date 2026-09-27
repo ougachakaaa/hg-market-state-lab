@@ -266,3 +266,20 @@ def test_negative_zero_and_exponent_spelling_share_run_identity() -> None:
     assert run_key(request(distribution_granularity="1e-2")) == run_key(
         request(distribution_granularity="0.0100")
     )
+
+
+def test_exact_positive_and_negative_deviation_boundaries_keep_canonical_bins() -> None:
+    for close, expected in ((95.0, -0.05), (105.0, 0.05)):
+        boundary_snapshot = replace(
+            snapshot(),
+            warmup_observations=(
+                IndexDailyObservation("2026-09-01", 100.0, 1.0),
+                IndexDailyObservation("2026-09-02", 100.0, 1.0),
+            ),
+            sample_observations=(IndexDailyObservation("2026-09-03", close, 1.0),),
+        )
+        result = compute(request(distribution_granularity="0.05"), boundary_snapshot)
+        assert result.daily_observations[0].deviation == expected
+        assert [(row.lower_bound, row.count) for row in result.distribution_bins] == [
+            (expected, 1)
+        ]
