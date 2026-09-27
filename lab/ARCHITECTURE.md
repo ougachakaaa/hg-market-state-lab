@@ -10,6 +10,8 @@
 
 原则：`lab` orchestrates；owning modules define semantics and execute domain behavior。`lab` 不重新实现或复制下层业务逻辑。
 
+Console entry 只组合 command topology、help 与 dispatch；readiness diagnostics、service delegation、Research discovery/forwarding 与共享 process mechanics 在 `lab` 内按职责分离。这是内部实现边界，不改变 `lab` 的唯一 public interface 或 owning module semantics。
+
 ## Supported platforms 与 installation
 
 V1 使用同一 `lab` namespace 支持 Windows native 与 Linux；WSL 按 Linux execution environment 处理。macOS 不被实现主动排除，但本阶段未声明为 verified platform。根 canonical Python project 的 `[project.scripts] lab = "lab.cli:main"` 是唯一正式 CLI installation mechanism；操作系统生成的 launcher 文件名与后缀不是 repository semantic contract。OS-specific bootstrap 只准备环境，不定义平行 CLI interface。
