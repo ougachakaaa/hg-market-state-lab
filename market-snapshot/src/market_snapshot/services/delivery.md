@@ -32,12 +32,13 @@ Plugin
 
 ## 2. Repository Data Service Semantic Catalog
 
-Repository authority 声明以下四个用户可请求的 Data Service semantic identities，不为了丰富 catalog 创造其他服务：
+Repository authority 声明以下五个用户可请求的 Data Service semantic identities，不为了丰富 catalog 创造其他服务：
 
 | service_id | input | result / delivery | 产品 authority |
 | --- | --- | --- | --- |
 | `csi1000-5d-analysis` | `target_trade_date`（CLI 的 `--date`） | persisted `snapshot.json` | [product authority](../products/csi1000_5d_analysis/ARCHITECTURE.md) |
 | `csi1000-im-basis-history` | `start_trade_date + end_trade_date` | request-scoped `CSI1000IMBasisHistoryResult` | [product authority](../products/csi1000_im_basis_history/ARCHITECTURE.md) |
+| `index-daily-history` | `ts_code + start_trade_date + end_trade_date + pre_start_observation_count` | request-scoped `IndexDailyHistoryResult` | [product authority](../products/index_daily_history/ARCHITECTURE.md) |
 | `mo-option-chain` | `target_trade_date + option_product + price_type` | request-scoped read model | [product authority](../products/mo_option_chain/ARCHITECTURE.md) |
 | `mo-option-premium-plane` | `as_of + option_product + price_type` | request-scoped `PremiumPlane` | [product authority](../products/mo_option_premium/ARCHITECTURE.md) |
 
@@ -52,7 +53,7 @@ schema registry
 service lifecycle framework
 ```
 
-`index_daily`、`stock_daily` 仍属于 Source Capture / Raw capability，**不**升级为 Data Service。
+`index_daily`、`stock_daily` 仍属于 Source Capture / Raw capability，**不**升级为 Data Service；`index-daily-history` 是复用 `index_daily` 的独立产品语义，不是 Capture 的别名。
 
 `services/catalog.py` 是另一个更窄的概念：它只保存 `dms` 可执行的 persisted-service bindings。一个 request-scoped Data Service 不需要进入该 Python catalog，也不需要适配当前返回 artifact `Path` 的 execution binding。
 
@@ -80,9 +81,15 @@ CSI1000 IM Basis History product service 拥有显式日期区间 request、Capt
 
 `csi1000-im-basis-history` 只向 Python consumer 交付 request-scoped `CSI1000IMBasisHistoryResult` 或 classified semantic failure。V1 不使用 `dms get`、不持久化 final result，也没有 HTTP delivery adapter。
 
+### 3.5 `index-daily-history`
+
+Index Daily History product service 拥有指定指数及显式区间的 request、Capture/Preparation orchestration、classified semantic failure 与 request-scoped result boundary。产品身份、Source scope/completeness 与 read/application contract 分别从 [产品入口](../products/index_daily_history/ARCHITECTURE.md)、[data authority](../products/index_daily_history/data.md) 和 [read/application contract](../products/index_daily_history/read-contract.md) 进入。
+
+`index-daily-history` 只向 Python consumer 交付 request-scoped `IndexDailyHistoryResult` 或 classified semantic failure；V1 不使用 `dms get`、不持久化 final result，也没有 HTTP delivery adapter。
+
 ## 4. CLI: dms
 
-用户级 CLI 语义名称为 `dms`。第一版只支持两个命令：`list`、`get`。CLI 是 delivery surface 之一，只寻址 CLI executable catalog 中的 persisted-artifact service；当前为 `csi1000-5d-analysis`。`mo-option-chain` 与 `mo-option-premium-plane` 通过 HTTP 暴露，`csi1000-im-basis-history` 通过 public Python boundary 交付；这三个 request-scoped Data Services 都不走 `dms get`（见第 3.2–3.4 节）。
+用户级 CLI 语义名称为 `dms`。第一版只支持两个命令：`list`、`get`。CLI 是 delivery surface 之一，只寻址 CLI executable catalog 中的 persisted-artifact service；当前为 `csi1000-5d-analysis`。`mo-option-chain` 与 `mo-option-premium-plane` 通过 HTTP 暴露，`csi1000-im-basis-history` 与 `index-daily-history` 通过 public Python boundary 交付；这四个 request-scoped Data Services 都不走 `dms get`（见第 3.2–3.5 节）。
 
 ### 4.1 dms list
 
@@ -109,7 +116,7 @@ description
 csi1000-5d-analysis
 ```
 
-V1 `dms list` 不列出 request-scoped `csi1000-im-basis-history`、`mo-option-chain` 或 `mo-option-premium-plane`；所有 repository products/capabilities 从 [Capability Catalog](../../../CAPABILITIES.md) 发现。CLI executable catalog 不通过扫描文件系统动态发现。
+V1 `dms list` 不列出 request-scoped `csi1000-im-basis-history`、`index-daily-history`、`mo-option-chain` 或 `mo-option-premium-plane`；所有 repository products/capabilities 从 [Capability Catalog](../../../CAPABILITIES.md) 发现。CLI executable catalog 不通过扫描文件系统动态发现。
 
 ### 4.2 dms get
 
@@ -189,7 +196,7 @@ service_id + target_trade_date
 
 唯一确定一次最终用户输出位置。
 
-`csi1000-im-basis-history`、`mo-option-chain` 与 `mo-option-premium-plane` 是 request-scoped results，V1 不要求 canonical persisted final output，不落入上述 `output/<service>/<date>/` 约定（见第 3.2–3.4 节）。
+`csi1000-im-basis-history`、`index-daily-history`、`mo-option-chain` 与 `mo-option-premium-plane` 是 request-scoped results，V1 不要求 canonical persisted final output，不落入上述 `output/<service>/<date>/` 约定（见第 3.2–3.5 节）。
 
 ## 7. Raw Artifact / Analysis-ready Artifact / Output 边界
 
@@ -238,7 +245,7 @@ index_daily_history.json
 im_futures_daily.json
 ```
 
-可以包含多个历史交易日。但它们都属于 `target_trade_date = D` 这一次数据准备。`csi1000-im-basis-history`、`mo-option-chain` 与 `mo-option-premium-plane` 是 request-scoped results，不适用本节的按日持久化 partition 语义（见第 3.2–3.4 节）。
+可以包含多个历史交易日。但它们都属于 `target_trade_date = D` 这一次数据准备。`csi1000-im-basis-history`、`index-daily-history`、`mo-option-chain` 与 `mo-option-premium-plane` 是 request-scoped results，不适用本节的按日持久化 partition 语义（见第 3.2–3.5 节）。
 
 ## 9. Non-goals
 
@@ -306,7 +313,7 @@ server deployment
 
 1. 什么是 Data Service？
 2. 当前有哪些 semantic Data Services，从哪里发现？
-3. `csi1000-5d-analysis` 与 `csi1000-im-basis-history` 分别表示什么？
+3. `csi1000-5d-analysis`、`csi1000-im-basis-history` 与 `index-daily-history` 分别表示什么？
 4. `dms list` 列出全部 repository products，还是仅 CLI-addressable services？
 5. CLI executable catalog 与 Data Service semantic catalog 有什么区别？
 6. 如何通过 `dms get` 请求 persisted service？

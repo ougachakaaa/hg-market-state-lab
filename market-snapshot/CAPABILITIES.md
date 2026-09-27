@@ -2,7 +2,7 @@
 
 本文件是 `market-snapshot` 的导航 catalog，不定义字段、公式、DTO、失败语义或实现状态。先阅读 [ARCHITECTURE.md](ARCHITECTURE.md) 确认模块边界，再从本页选择任务所需的最小 authority 路径。
 
-本 catalog 用于发现 `market-snapshot` products/capabilities，不等同于 `dms list`、CLI executable catalog 或 repository HTTP catalog。Request-scoped products 仍在此列出，但不因此获得 `dms get` binding；其 HTTP transport 从 [backend-api catalog](../backend-api/HTTP_PRODUCTS.md) 进入。
+本 catalog 用于发现 `market-snapshot` products/capabilities，不等同于 `dms list`、CLI executable catalog 或 repository HTTP catalog。Request-scoped products 仍在此列出，但不因此获得 `dms get` binding；若有 HTTP transport，则从 [backend-api catalog](../backend-api/HTTP_PRODUCTS.md) 进入。
 
 ## 产品与场景
 
@@ -11,6 +11,7 @@
 | Daily Market Snapshot | 以最小日行情数据验证 Source → Raw → Preparation 路径的独立场景 | [product authority](src/market_snapshot/products/daily_market_snapshot/ARCHITECTURE.md) |
 | CSI1000 5D Analysis | 为外部 analyzer 准备中证1000未来约五个交易日分析所需的确定性数据 | [product authority](src/market_snapshot/products/csi1000_5d_analysis/ARCHITECTURE.md) |
 | CSI1000 IM Basis History | 为 Research 提供显式日期区间内完整的 CSI1000 / IM 年化基差历史 panel | [product authority](src/market_snapshot/products/csi1000_im_basis_history/ARCHITECTURE.md) |
+| Index Daily History | 为 Research 提供指定指数、显式日期区间及精确观测条数 warm-up 的日线历史 | [product authority](src/market_snapshot/products/index_daily_history/ARCHITECTURE.md) |
 | MO Option Chain | 面向读取与可视化消费方的完整 MO 期权链 deterministic data product | [product authority](src/market_snapshot/products/mo_option_chain/ARCHITECTURE.md) |
 | MO Premium Plane | 由真实 MO 合约分析 Point 构成的稀疏年化权利金分析产品 | [product authority](src/market_snapshot/products/mo_option_premium/ARCHITECTURE.md) |
 
