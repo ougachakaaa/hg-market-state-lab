@@ -32,7 +32,7 @@ percentile_probabilities         非空、finite、互异且各自在 [0, 1] 的
 V1 唯一 human-facing invocation 使用 repository CLI 的透明转发与本 Study 的 study-local parser：
 
 ```bash
-poetry run python dev.py research run \
+lab research run \
     price-to-lagged-ma-distribution \
     --instrument 000852.SH \
     --window 60 \

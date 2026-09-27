@@ -15,6 +15,7 @@ web-ui           → presentation and interaction
 README 是人类开发入口，不是架构或业务语义 authority。
 
 - 仓库架构、Python runtime invariant 与模块路由：[ARCHITECTURE.md](ARCHITECTURE.md)
+- Canonical repository CLI 与委托边界：[lab/ARCHITECTURE.md](lab/ARCHITECTURE.md)
 - `market-snapshot` 稳定分层：[market-snapshot/ARCHITECTURE.md](market-snapshot/ARCHITECTURE.md)
 - `market-snapshot` capability/product catalog：[market-snapshot/CAPABILITIES.md](market-snapshot/CAPABILITIES.md)
 - `market-research` exploratory/statistical research 边界：[market-research/ARCHITECTURE.md](market-research/ARCHITECTURE.md)
@@ -49,9 +50,9 @@ TUSHARE_TOKEN=<your-token>
 
 `.env` 与运行产生的市场数据不进入版本控制。
 
-## 根开发入口
+## 当前根开发命令
 
-在仓库根目录执行：
+目标 CLI 是 `lab`；console-script wiring 尚未实施。当前在仓库根目录执行：
 
 ```bash
 poetry run python dev.py doctor
@@ -60,7 +61,7 @@ poetry run python dev.py frontend
 poetry run python dev.py research list
 ```
 
-命令转发、readiness 和失败行为见 [DEVELOPMENT.md](DEVELOPMENT.md)。
+目标命令层级见 [lab CLI authority](lab/ARCHITECTURE.md)；当前操作和 readiness 见 [DEVELOPMENT.md](DEVELOPMENT.md)。
 
 ## Research CLI
 
@@ -71,7 +72,7 @@ poetry run python dev.py research list
 poetry run python dev.py research run im-basis-baseline --help
 ```
 
-统一 CLI 的 discovery 与 forwarding 行为见 [DEVELOPMENT.md](DEVELOPMENT.md)。Study-specific 参数和用法与对应 retained Study authority 共置，并由 `<study-id> --help` 展示。真实运行所需的 Tushare credential 仍由 `market-snapshot` 拥有。
+目标 `lab research` 的 discovery 与 forwarding 行为见 [lab CLI authority](lab/ARCHITECTURE.md) 和 [Research UI authority](market-research/ui/ARCHITECTURE.md)。上面的 `dev.py` 示例仍是当前可运行方式。Study-specific 参数和用法与对应 retained Study authority 共置，并由 `<study-id> --help` 展示。真实运行所需的 Tushare credential 仍由 `market-snapshot` 拥有。
 
 ## HTTP API
 
