@@ -3,18 +3,18 @@
 from __future__ import annotations
 
 import ast
-import importlib.util
+import importlib
+import importlib.metadata
 import subprocess
 import sys
 import tomllib
 from pathlib import Path
-from types import ModuleType
 from typing import Any
 
 import pytest
 
 REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
-DEV_PATH = REPOSITORY_ROOT / "dev.py"
+CLI_PATH = REPOSITORY_ROOT / "lab" / "cli.py"
 POETRY = str(REPOSITORY_ROOT / "tools" / "poetry")
 NPM = "/tools/npm"
 STUDY_IDS = (
@@ -24,16 +24,7 @@ STUDY_IDS = (
 )
 
 
-def load_dev_module() -> Any:
-    spec = importlib.util.spec_from_file_location("repository_dev", DEV_PATH)
-    assert spec is not None
-    assert spec.loader is not None
-    module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
-    return module
-
-
-dev: ModuleType | Any = load_dev_module()
+lab = importlib.import_module("lab.cli")
 
 
 def patch_child(
@@ -51,8 +42,8 @@ def patch_child(
         invocation["cwd"] = cwd
         return FakeChild()
 
-    monkeypatch.setattr(dev.shutil, "which", lambda name: POETRY if name == "poetry" else None)
-    monkeypatch.setattr(dev.subprocess, "Popen", fake_popen)
+    monkeypatch.setattr(lab.shutil, "which", lambda name: POETRY if name == "poetry" else None)
+    monkeypatch.setattr(lab.subprocess, "Popen", fake_popen)
     return invocation
 
 
@@ -67,29 +58,40 @@ def create_study_package(root: Path, package_name: str, *, runner: bool = True) 
 
 def test_root_and_research_help_are_layered(capsys: pytest.CaptureFixture[str]) -> None:
     with pytest.raises(SystemExit, match="0"):
-        dev.main(["--help"])
+        lab.main(["--help"])
     root_help = capsys.readouterr().out
-    assert all(command in root_help for command in ("doctor", "backend", "frontend"))
+    assert "{doctor,serve,research}" in root_help
     assert "research" in root_help
+
+    with pytest.raises(SystemExit, match="0"):
+        lab.main(["serve", "--help"])
+    assert "{backend,frontend}" in capsys.readouterr().out
     assert "data" not in root_help
 
     with pytest.raises(SystemExit, match="0"):
-        dev.main(["research", "--help"])
+        lab.main(["research", "--help"])
     research_help = capsys.readouterr().out
     assert "{list,run}" in research_help
+
+
+@pytest.mark.parametrize("command", ["backend", "frontend"])
+def test_old_flat_service_commands_are_not_exposed(command: str) -> None:
+    with pytest.raises(SystemExit) as excinfo:
+        lab.main([command])
+    assert excinfo.value.code == 2
 
 
 @pytest.mark.parametrize("study_id", STUDY_IDS)
 def test_real_study_help_is_owned_by_the_study(study_id: str) -> None:
     result = subprocess.run(
-        [sys.executable, str(DEV_PATH), "research", "run", study_id, "--help"],
+        [sys.executable, "-m", "lab.cli", "research", "run", study_id, "--help"],
         cwd=REPOSITORY_ROOT,
         capture_output=True,
         text=True,
         check=False,
     )
     assert result.returncode == 0
-    assert f"dev.py research run {study_id}" in result.stdout
+    assert f"lab research run {study_id}" in result.stdout
     assert "--start" in result.stdout
     assert "--end" in result.stdout
 
@@ -103,9 +105,9 @@ def test_research_list_discovers_sorted_runnable_studies_without_importing_them(
     create_study_package(studies, "zeta_study")
     create_study_package(studies, "alpha_study")
     create_study_package(studies, "not_executable", runner=False)
-    monkeypatch.setattr(dev, "RESEARCH_STUDIES", studies)
+    monkeypatch.setattr(lab, "RESEARCH_STUDIES", studies)
 
-    assert dev.main(["research", "list"]) == 0
+    assert lab.main(["research", "list"]) == 0
     assert capsys.readouterr().out.splitlines() == ["alpha-study", "zeta-study"]
 
 
@@ -126,9 +128,9 @@ def test_research_run_rejects_unknown_or_malformed_ids(
 ) -> None:
     studies = tmp_path / "studies"
     studies.mkdir()
-    monkeypatch.setattr(dev, "RESEARCH_STUDIES", studies)
+    monkeypatch.setattr(lab, "RESEARCH_STUDIES", studies)
 
-    assert dev.main(["research", "run", study_id]) == 2
+    assert lab.main(["research", "run", study_id]) == 2
     assert message in capsys.readouterr().err
 
 
@@ -139,9 +141,9 @@ def test_research_run_reports_a_non_executable_study(
 ) -> None:
     studies = tmp_path / "studies"
     create_study_package(studies, "not_executable", runner=False)
-    monkeypatch.setattr(dev, "RESEARCH_STUDIES", studies)
+    monkeypatch.setattr(lab, "RESEARCH_STUDIES", studies)
 
-    assert dev.main(["research", "run", "not-executable"]) == 2
+    assert lab.main(["research", "run", "not-executable"]) == 2
     assert "non-executable Study" in capsys.readouterr().err
 
 
@@ -153,9 +155,9 @@ def test_research_discovery_rejects_a_malformed_runner(
     studies = tmp_path / "studies"
     package = create_study_package(studies, "valid_study", runner=False)
     (package / "cli.py").mkdir()
-    monkeypatch.setattr(dev, "RESEARCH_STUDIES", studies)
+    monkeypatch.setattr(lab, "RESEARCH_STUDIES", studies)
 
-    assert dev.main(["research", "list"]) == 1
+    assert lab.main(["research", "list"]) == 1
     assert "malformed Study" in capsys.readouterr().err
 
 
@@ -173,9 +175,9 @@ def test_research_discovery_rejects_a_package_symlink(
         if getattr(exc, "winerror", None) != 1314:
             raise
         pytest.skip(f"symlink creation unavailable: {exc}")
-    monkeypatch.setattr(dev, "RESEARCH_STUDIES", studies)
+    monkeypatch.setattr(lab, "RESEARCH_STUDIES", studies)
 
-    assert dev.main(["research", "list"]) == 1
+    assert lab.main(["research", "list"]) == 1
     assert "symlink" in capsys.readouterr().err
 
 
@@ -187,11 +189,11 @@ def test_research_run_forwards_arguments_and_exit_code(
 ) -> None:
     studies = tmp_path / "studies"
     create_study_package(studies, "example_study")
-    monkeypatch.setattr(dev, "RESEARCH_STUDIES", studies)
+    monkeypatch.setattr(lab, "RESEARCH_STUDIES", studies)
     invocation = patch_child(monkeypatch, exit_code)
 
     assert (
-        dev.main(
+        lab.main(
             [
                 "research",
                 "run",
@@ -212,17 +214,20 @@ def test_research_run_forwards_arguments_and_exit_code(
             "--study-option",
             "value",
         ],
-        "cwd": dev.ROOT,
+        "cwd": lab.ROOT,
     }
 
 
-def test_backend_uses_the_backend_api_launcher(monkeypatch: pytest.MonkeyPatch) -> None:
-    invocation = patch_child(monkeypatch, 0)
+@pytest.mark.parametrize("exit_code", [0, 23])
+def test_backend_uses_the_backend_api_launcher(
+    monkeypatch: pytest.MonkeyPatch, exit_code: int
+) -> None:
+    invocation = patch_child(monkeypatch, exit_code)
 
-    assert dev.main(["backend"]) == 0
+    assert lab.main(["serve", "backend"]) == exit_code
     assert invocation == {
         "command": [POETRY, "run", "python", "backend-api/scripts/api.py"],
-        "cwd": dev.ROOT,
+        "cwd": lab.ROOT,
     }
 
 
@@ -239,17 +244,32 @@ def test_frontend_uses_the_web_ui_launcher(monkeypatch: pytest.MonkeyPatch) -> N
         invocation["cwd"] = cwd
         return FakeChild()
 
-    monkeypatch.setattr(dev.shutil, "which", lambda name: NPM if name == "npm" else None)
-    monkeypatch.setattr(dev.subprocess, "Popen", fake_popen)
+    monkeypatch.setattr(lab.shutil, "which", lambda name: NPM if name == "npm" else None)
+    monkeypatch.setattr(lab.subprocess, "Popen", fake_popen)
 
-    assert dev.main(["frontend"]) == 0
-    assert invocation == {"command": [NPM, "run", "dev"], "cwd": dev.FRONTEND}
+    assert lab.main(["serve", "frontend"]) == 0
+    assert invocation == {"command": [NPM, "run", "dev"], "cwd": lab.FRONTEND}
 
 
 def test_data_command_is_retired() -> None:
     with pytest.raises(SystemExit) as excinfo:
-        dev.main(["data"])
+        lab.main(["data"])
     assert excinfo.value.code == 2
+
+
+def test_foreground_interrupt_reaps_child(monkeypatch: pytest.MonkeyPatch) -> None:
+    waits: list[int | None] = []
+
+    class FakeChild:
+        def wait(self, timeout: int | None = None) -> int:
+            waits.append(timeout)
+            if timeout is None:
+                raise KeyboardInterrupt
+            return 130
+
+    monkeypatch.setattr(lab.subprocess, "Popen", lambda command, *, cwd: FakeChild())
+    assert lab._run_foreground(["command"], lab.ROOT) == 130
+    assert waits == [None, 2]
 
 
 def test_doctor_inspects_one_root_poetry_environment(
@@ -262,19 +282,19 @@ def test_doctor_inspects_one_root_poetry_environment(
 
     def fake_poetry_python(poetry: str) -> tuple[Path, str]:
         poetry_calls.append(poetry)
-        return dev.ROOT / ".venv/bin/python", "3.13.15"
+        return lab.ROOT / ".venv/bin/python", "3.13.15"
 
-    monkeypatch.setattr(dev, "_tool_version", fake_tool_version)
-    monkeypatch.setattr(dev, "_poetry_python", fake_poetry_python)
-    monkeypatch.setattr(dev, "_backend_status", lambda: "stopped")
-    monkeypatch.setattr(dev, "_port_listening", lambda port: False)
+    monkeypatch.setattr(lab, "_tool_version", fake_tool_version)
+    monkeypatch.setattr(lab, "_poetry_python", fake_poetry_python)
+    monkeypatch.setattr(lab, "_backend_status", lambda: "stopped")
+    monkeypatch.setattr(lab, "_port_listening", lambda port: False)
 
-    assert dev.doctor() == 0
+    assert lab.doctor() == 0
     assert poetry_calls == ["/tools/poetry"]
 
 
-def test_repository_cli_does_not_import_research_implementation() -> None:
-    tree = ast.parse(DEV_PATH.read_text(encoding="utf-8"))
+def test_repository_cli_does_not_import_owning_module_implementation() -> None:
+    tree = ast.parse(CLI_PATH.read_text(encoding="utf-8"))
     imported: list[str] = []
     for node in ast.walk(tree):
         if isinstance(node, ast.Import):
@@ -282,21 +302,22 @@ def test_repository_cli_does_not_import_research_implementation() -> None:
         elif isinstance(node, ast.ImportFrom) and node.module is not None:
             imported.append(node.module)
     assert not any(
-        name == "market_research" or name.startswith("market_research.")
+        name.split(".", maxsplit=1)[0]
+        in {"market_research", "market_snapshot", "backend_api"}
         for name in imported
     )
 
 
-def test_root_cli_is_the_only_research_executable_surface() -> None:
+def test_root_cli_is_the_only_repository_executable_surface() -> None:
     manifest = tomllib.loads(
         (REPOSITORY_ROOT / "pyproject.toml").read_text(encoding="utf-8")
     )
     scripts = manifest["project"].get("scripts", {})
 
-    assert "market-research" not in scripts
-    assert scripts.get("market-research") != "market_research.ui.cli:main"
-    assert not any(
-        entry_point.split(":", maxsplit=1)[0] == "market_research"
-        or entry_point.split(":", maxsplit=1)[0].startswith("market_research.")
-        for entry_point in scripts.values()
-    )
+    assert scripts == {"lab": "lab.cli:main"}
+    installed_scripts = importlib.metadata.distribution("hg-market-state-lab").entry_points
+    assert [(script.name, script.value) for script in installed_scripts] == [
+        ("lab", "lab.cli:main")
+    ]
+    assert (Path(sys.executable).parent / "lab").is_file()
+    assert not (REPOSITORY_ROOT / "dev.py").exists()

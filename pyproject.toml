@@ -11,8 +11,12 @@ dependencies = [
     "matplotlib (>=3.10.0,<4.0.0)",
 ]
 
+[project.scripts]
+lab = "lab.cli:main"
+
 [tool.poetry]
 packages = [
+    { include = "lab" },
     { include = "market_snapshot", from = "market-snapshot/src" },
     { include = "backend_api", from = "backend-api/src" },
     { include = "market_research", from = "market-research/src" },
@@ -40,6 +44,7 @@ pythonpath = [
 target-version = "py313"
 line-length = 100
 src = [
+    "lab",
     "market-snapshot/src",
     "market-snapshot/tests",
     "market-snapshot/scripts",
@@ -55,12 +60,12 @@ src = [
 select = ["E", "F", "I", "UP", "B"]
 
 [tool.ruff.lint.isort]
-known-first-party = ["backend_api", "market_research", "market_snapshot"]
+known-first-party = ["backend_api", "lab", "market_research", "market_snapshot"]
 
 [tool.mypy]
 python_version = "3.13"
 files = [
-    "dev.py",
+    "lab",
     "tests",
     "market-snapshot/src",
     "market-snapshot/tests",

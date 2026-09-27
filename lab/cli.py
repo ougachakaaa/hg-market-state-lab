@@ -1,4 +1,4 @@
-"""Small repository-level entry point for local development."""
+"""Repository-level command routing and process delegation."""
 
 from __future__ import annotations
 
@@ -13,7 +13,7 @@ from collections.abc import Sequence
 from pathlib import Path
 from urllib.request import urlopen
 
-ROOT = Path(__file__).resolve().parent
+ROOT = Path(__file__).resolve().parents[1]
 MARKET_SNAPSHOT = ROOT / "market-snapshot"
 BACKEND_API = ROOT / "backend-api"
 FRONTEND = ROOT / "web-ui"
@@ -310,12 +310,14 @@ def research_run(study_id: str, study_args: Sequence[str]) -> int:
 
 
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(description="Repository development commands")
+    parser = argparse.ArgumentParser(prog="lab", description="Repository operator commands")
     subparsers = parser.add_subparsers(dest="command", required=True)
 
     subparsers.add_parser("doctor", help="Check local development prerequisites.")
-    subparsers.add_parser("backend", help="Run the backend development server.")
-    subparsers.add_parser("frontend", help="Run the frontend development server.")
+    serve_parser = subparsers.add_parser("serve", help="Run a development server.")
+    serve_subparsers = serve_parser.add_subparsers(dest="service", required=True)
+    serve_subparsers.add_parser("backend", help="Run the backend development server.")
+    serve_subparsers.add_parser("frontend", help="Run the frontend development server.")
 
     research_parser = subparsers.add_parser(
         "research", help="Discover and run retained Research Studies."
@@ -340,7 +342,9 @@ def main(argv: Sequence[str] | None = None) -> int:
         if args.research_command == "list":
             return research_list()
         return research_run(args.study_id, args.study_args)
-    return {"doctor": doctor, "backend": backend, "frontend": frontend}[args.command]()
+    if args.command == "serve":
+        return {"backend": backend, "frontend": frontend}[args.service]()
+    return doctor()
 
 
 if __name__ == "__main__":

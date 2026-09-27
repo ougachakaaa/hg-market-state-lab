@@ -1,6 +1,6 @@
 # lab repository CLI authority
 
-本文档定义 `hg-market-state-lab` 的 canonical repository-level CLI。仓库身份、唯一 Python runtime 与模块边界见 [repository architecture](../ARCHITECTURE.md)；当前可运行命令及环境准备见 [DEVELOPMENT.md](../DEVELOPMENT.md)。本文件描述目标 interface；console-script wiring 与 `dev.py` 迁移尚待 implementation reconciliation。
+本文档定义 `hg-market-state-lab` 的 canonical repository-level CLI。仓库身份、唯一 Python runtime 与模块边界见 [repository architecture](../ARCHITECTURE.md)；当前可运行命令及环境准备见 [DEVELOPMENT.md](../DEVELOPMENT.md)。
 
 ## Identity 与 ownership
 

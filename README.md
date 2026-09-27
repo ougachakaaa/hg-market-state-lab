@@ -52,27 +52,27 @@ TUSHARE_TOKEN=<your-token>
 
 ## 当前根开发命令
 
-目标 CLI 是 `lab`；console-script wiring 尚未实施。当前在仓库根目录执行：
+正式 CLI 由根 canonical Python project 安装。在仓库根目录执行：
 
 ```bash
-poetry run python dev.py doctor
-poetry run python dev.py backend
-poetry run python dev.py frontend
-poetry run python dev.py research list
+poetry run lab doctor
+poetry run lab serve backend
+poetry run lab serve frontend
+poetry run lab research list
 ```
 
-目标命令层级见 [lab CLI authority](lab/ARCHITECTURE.md)；当前操作和 readiness 见 [DEVELOPMENT.md](DEVELOPMENT.md)。
+命令层级见 [lab CLI authority](lab/ARCHITECTURE.md)；当前操作和 readiness 见 [DEVELOPMENT.md](DEVELOPMENT.md)。
 
 ## Research CLI
 
 在 repository root 发现并运行 retained Study：
 
 ```bash
-poetry run python dev.py research list
-poetry run python dev.py research run im-basis-baseline --help
+poetry run lab research list
+poetry run lab research run im-basis-baseline --help
 ```
 
-目标 `lab research` 的 discovery 与 forwarding 行为见 [lab CLI authority](lab/ARCHITECTURE.md) 和 [Research UI authority](market-research/ui/ARCHITECTURE.md)。上面的 `dev.py` 示例仍是当前可运行方式。Study-specific 参数和用法与对应 retained Study authority 共置，并由 `<study-id> --help` 展示。真实运行所需的 Tushare credential 仍由 `market-snapshot` 拥有。
+`lab research` 的 discovery 与 forwarding 行为见 [lab CLI authority](lab/ARCHITECTURE.md) 和 [Research UI authority](market-research/ui/ARCHITECTURE.md)。Study-specific 参数和用法与对应 retained Study authority 共置，并由 `<study-id> --help` 展示。真实运行所需的 Tushare credential 仍由 `market-snapshot` 拥有。
 
 ## HTTP API
 
