@@ -1,8 +1,8 @@
-# IM Basis Preparation Semantics authority
+# CSI1000 IM Basis History basis semantics authority
 
-本文档是 `market-snapshot` 内 IM 期限位置、剩余日历天数与 CSI1000 基差计算的唯一 canonical semantic owner。Product ownership 与 execution roles 见 [market-snapshot architecture](../../../../ARCHITECTURE.md)；Source 字段事实见 [IM futures Source contract](../../capture/im-futures-contract.md)。
+本文档是 `CSI1000 IM Basis History` 产品内 IM 期限位置、剩余日历天数与 CSI1000 基差计算的唯一 canonical semantic owner。Product identity 与 execution roles 见 [product authority](ARCHITECTURE.md)；Source 字段事实见 [IM futures Source contract](../../capture/im-futures-contract.md)。
 
-本 context 的既有 IM basis 语义仍由 CSI1000 IM Basis History 消费，并保持该产品依赖的 canonical owner。它只提供窄义 deterministic Preparation semantics，不是全局 Preparation ownership layer、通用 feature framework、Preparation engine 或 Research interface。产品自己的 query、Source scope、Source Facts / Raw Artifact、result shape、completeness 和 delivery 继续由产品 authority 拥有。
+这些规则是本产品的 deterministic Preparation semantics，不是共享 IM Basis capability、通用 Preparation layer、feature framework、Preparation engine 或 Research interface。产品 query、Source scope、Source Facts / Raw Artifact、result shape、completeness 和 delivery 由本产品的其他 authority 拥有。
 
 ## 1. Required facts
 
@@ -105,7 +105,7 @@ V1 使用 simple linear annualization，不定义 log 或 continuously compounde
 
 ## 6. Canonical observation order
 
-使用本语义的 flat observation panel 默认按以下 key ascending：
+本产品的 flat observation panel 按以下 key ascending：
 
 ```text
 trade_date
@@ -115,8 +115,6 @@ ts_code
 
 `ts_code` 是稳定 tie-breaker，不参与 slot 判定。
 
-## 7. Consumers and maintenance
+## 7. Ownership and maintenance
 
-当前 consumer：[CSI1000 IM Basis History](../../products/csi1000_im_basis_history/ARCHITECTURE.md)。
-
-该 Product 引用本 authority，不复制公式或创建产品私有的 slot 定义。只有 IM slot、calendar distance 或 basis formula 本身改变时才修改本文档；产品 query、result 或 Research method 变更应进入其各自 authority。
+本 Product 是这些规则的唯一当前 owner。只有 IM slot、calendar distance、basis formula 或 canonical ordering 改变时才修改本文档；产品 query、result 或 Research method 变更应进入各自 authority。未来若第二个真实 Product 需要完全相同的语义，须另作显式提升决策。

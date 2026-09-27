@@ -26,6 +26,8 @@
 
 Premium-owned persisted Raw 是本产品选择的 Capture/Preparation 契约，request-scoped final Plane 无须持久化。Product service 即本产品的 Application Service；其 request、orchestration、result 与 classified failure 由本产品拥有。
 
+本产品拥有 `mo-option-premium` Raw 命名空间及 `data/raw/mo-option-premium/<as_of>/` 的按目标组织路径语义；具体 Raw 文件与 completeness 仍由 [data authority](data.md) 定义。共享 artifact 基础设施仅提供通用 Raw root、文件系统与 JSON 读写机制，不定义本产品的 Raw 身份或路径。
+
 ## 3. Stable Product Invariants
 
 1. Premium Plane 与 MO Option Chain 是两个独立产品和 HTTP contracts。

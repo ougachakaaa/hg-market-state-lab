@@ -14,6 +14,8 @@ shared Capture capability != shared goal-scoped Raw Artifact
 
 本产品选择 persisted goal-scoped Raw 作为 Capture/Preparation 契约；其 request-scoped final read model 不要求持久化。产品内的 Application Service 拥有 orchestration、public result 与 classified failure。
 
+本产品拥有 `mo-option-chain` Raw 命名空间及 `data/raw/mo-option-chain/<target_trade_date>/` 的按目标组织路径语义；具体 Raw 文件与 completeness 仍由 [data authority](data.md) 定义。共享 artifact 基础设施仅提供通用 Raw root、文件系统与 JSON 读写机制，不定义本产品的 Raw 身份或路径。
+
 ## 2. Ownership
 
 | Owner | Canonical knowledge |

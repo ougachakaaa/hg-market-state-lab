@@ -8,7 +8,7 @@ Product 是一个具有明确数据需求、query identity、invariants 和 anal
 
 Product 不是横向 Source → Capture → Preparation → Service pipeline 中的一层。产品专属 `preparation.py` 或 `service.py` 留在 `products/<product>/` 是正常的 ownership；外层同名目录不要求迁移产品代码。具体产品从 [catalog](CAPABILITIES.md) 进入，其 specialized authority 是产品契约的 canonical owner。
 
-Product 外的能力须由活跃 Product 的实际需求支撑，而非为未来假设需求建立通用 framework。判断时应问：删除某一个 Product 后，其他 Product 是否仍合法需要此能力？当前实例包括 Source adapter / Capture facts 与 mechanics、CSI1000 IM Basis History 仍消费的 IM basis preparation semantics，以及通用 artifact filesystem mechanics。共享代码和单一 Python runtime 不授予跨 Product 读取私有 Raw 或 result 的权限。
+Product 外的能力须由多个活跃 Product 的实际需求证明，而非为未来可能复用建立通用 framework。Product-local semantic 归 Product；经真实跨 Product 需求证明的 semantic 或 mechanic 才可共享。未来出现第二个真实 consumer 时，须重新作显式 semantic decision。当前共享能力包括 Source adapter / Capture facts 与通用 artifact filesystem/JSON mechanics。CSI1000/IM basis preparation semantics 只由 CSI1000 IM Basis History 拥有。共享代码和单一 Python runtime 不授予跨 Product 读取私有 Raw 或 result 的权限。
 
 ## 2. Product execution 的角色
 
@@ -34,7 +34,7 @@ Capture 的逻辑输出是 Source Facts / Raw Data。Product 可以在内存中�
 
 无论是否持久化，Raw 都保留 Source 字段、单位、合法 null 与事实缺席的区别；required input 缺失、数值零和合法 null 不得静默合并。Minimal normalization 只为稳定表达 Source fact，必须确定且可逆或语义等价，不创造分析语义。日期格式、表格行到 record 与 Source scalar 的稳定表示可以属于 Raw；join、窗口、分析命名、派生公式、分组和排序属于 Preparation。不得自动换日期、猜测事实、补零或静默删除必需记录。
 
-同一 Product 的相同 Source facts、query 与 Preparation Definition 必须产生语义一致的结果；对于已声明 persisted Raw 的 Product，相同 Raw Artifact 与 Definition 也必须如此。Preparation 不依赖当前时间、网络、随机性或本地缓存残留。具体 Raw 文件、字段、输出结构和失败条件由 Product authority 定义，不能由本模块的通用描述覆盖。
+同一 Product 的相同 Source facts、query 与 Preparation Definition 必须产生语义一致的结果；对于已声明 persisted Raw 的 Product，相同 Raw Artifact 与 Definition 也必须如此。Preparation 不依赖当前时间、网络、随机性或本地缓存残留。具体 Raw 文件、身份、命名空间、按目标组织的路径、字段、输出结构和失败条件由 Product authority 定义，不能由本模块的通用描述覆盖。共享 artifact 能力可以提供通用 Raw root、文件系统与 JSON 读写 helper；调用这些 helper 不转移 Product Raw 路径的语义所有权。
 
 ## 4. 依赖与发布边界
 
@@ -59,8 +59,8 @@ ARCHITECTURE.md
 | --- | --- |
 | `products/<product>/` | 保留活跃 Product-local Source scope、Preparation、Application Service 与 public contract |
 | `sources/`、`capture/` | 保留共享 provider adapter、Source facts、normalization 与 Capture mechanics；产品专属 scope 下沉 Product |
-| `preparation/im_basis/` | 保留 CSI1000 IM Basis History 仍消费的 IM basis semantics；不扩展为通用 Preparation layer |
-| `artifacts.py` | 保留活跃 Product 使用的 filesystem/JSON mechanics 与 Raw 路径 |
+| `preparation/im_basis/` | 当前仅为待实施迁移的旧共享代码位置；IM basis 语义已由 CSI1000 IM Basis History 拥有 |
+| `artifacts.py` | 目标仅保留通用 Raw root、filesystem/JSON mechanics；现有 Product-specific Raw 路径函数待实施迁移至各 Product |
 | 其他外层 `preparation/` | 仅保留经多个真实 Product 证明的共享语义 |
 
 不因本 authority 重命名为 `shared/`、迁移代码或引入 pipeline、plugin、registry、workflow engine。实施时先按 owning authority reconcile，发现上下层或同级冲突须显式解决。

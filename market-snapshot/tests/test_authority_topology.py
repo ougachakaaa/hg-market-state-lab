@@ -12,7 +12,6 @@ MARKDOWN_LINK = re.compile(r"\[[^]]+\]\(([^)]+)\)")
 
 CONTEXT_ENTRIES = {
     Path("market-snapshot/src/market_snapshot/capture/ARCHITECTURE.md"),
-    Path("market-snapshot/src/market_snapshot/preparation/im_basis/ARCHITECTURE.md"),
     Path(
         "market-snapshot/src/market_snapshot/products/"
         "daily_market_snapshot/ARCHITECTURE.md"

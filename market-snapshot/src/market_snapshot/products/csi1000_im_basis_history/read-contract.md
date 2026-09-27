@@ -1,6 +1,6 @@
 # CSI1000 IM Basis History read/application contract
 
-本文档从属于 [product authority](ARCHITECTURE.md)，拥有 historical Preparation projection、semantic result、public Python application boundary 与 product failure。Source scope 和 completeness 见 [data authority](data.md)；slot、remaining days、basis formula 与 shared ordering 见 [shared IM basis authority](../../preparation/im_basis/ARCHITECTURE.md)。
+本文档从属于 [product authority](ARCHITECTURE.md)，拥有 historical Preparation projection、semantic result、public Python application boundary 与 product failure。Source scope 和 completeness 见 [data authority](data.md)；slot、remaining days、basis formula 与 canonical ordering 见 [产品内 basis authority](im-basis-semantics.md)。
 
 ## 1. Application request
 
@@ -19,9 +19,9 @@ end_trade_date
 
 1. 以 `trade_date` 对齐该日唯一 CSI1000 close。
 2. 以 `ts_code` 将每条 IM daily fact 与唯一 active basic fact join。
-3. 应用 shared IM basis authority 的四槽 validation、slot mapping、calendar distance 和 basis preparation。
+3. 应用产品内 basis authority 的四槽 validation、slot mapping、calendar distance 和 basis preparation。
 4. 只投影第 3 节锁定的 analysis-ready fields。
-5. 完整 panel 验证通过后，再按 shared canonical ordering 产生 result。
+5. 完整 panel 验证通过后，再按产品内 canonical ordering 产生 result。
 
 Preparation 不访问网络、当前时间、Research code、HTTP DTO 或 sibling product artifact。
 
@@ -61,7 +61,7 @@ CSI1000IMBasisHistoryResult
     observations[]
 ```
 
-`observations` 是第 3 节定义的 flat records，按 shared canonical order 排序。成功 result 自身可以回答 query bounds、underlying identity、所有 observation dates 与完整期限结构，不依赖 caller local state 或某个文件路径补充语义。
+`observations` 是第 3 节定义的 flat records，按产品内 canonical order 排序。成功 result 自身可以回答 query bounds、underlying identity、所有 observation dates 与完整期限结构，不依赖 caller local state 或某个文件路径补充语义。
 
 ## 5. Public Python boundary
 

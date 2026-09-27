@@ -1,6 +1,6 @@
 # CSI1000 IM Basis History data authority
 
-本文档从属于 [product authority](ARCHITECTURE.md)，拥有本产品的 Source requirements、query-scoped Capture scope、observation dates 与 Source completeness。Source endpoint 与公共字段事实由 [Shared Source Capture authority](../../capture/ARCHITECTURE.md) 拥有；IM slot 与 basis 语义由 [shared IM basis authority](../../preparation/im_basis/ARCHITECTURE.md) 拥有。
+本文档从属于 [product authority](ARCHITECTURE.md)，拥有本产品的 Source requirements、query-scoped Capture scope、observation dates 与 Source completeness。Source endpoint 与公共字段事实由 [Shared Source Capture authority](../../capture/ARCHITECTURE.md) 拥有；IM slot 与 basis 语义由 [产品内 basis authority](im-basis-semantics.md) 拥有。
 
 ## 1. Required Source capabilities
 
@@ -38,7 +38,7 @@ AND
 delist_date >= start_trade_date
 ```
 
-这只是 Capture scope；每日 active universe 继续由 [shared IM basis authority](../../preparation/im_basis/ARCHITECTURE.md) 按完整生命周期事实确定。
+这只是 Capture scope；每日 active universe 继续由 [产品内 basis authority](im-basis-semantics.md) 按完整生命周期事实确定。
 
 对每个与 query interval 相交的合约，`im_futures_daily` 采集区间裁切为：
 
