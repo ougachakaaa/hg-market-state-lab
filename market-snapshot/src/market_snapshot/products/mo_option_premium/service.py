@@ -33,6 +33,8 @@ from .models import (
     ValueMetrics,
 )
 
+RAW_SUBDIR = "mo-option-premium"
+
 
 class PremiumPlaneError(Exception):
     """A Premium Plane request cannot be served as requested."""
@@ -95,11 +97,7 @@ def read_premium_plane_with_api(
     error = query_error(query)
     if error is not None:
         return PremiumPlaneResult(error=error)
-    raw_dir = (
-        artifacts.mo_option_premium_raw_dir(query.as_of)
-        if raw_root is None
-        else raw_root / artifacts.MO_OPTION_PREMIUM_RAW_SUBDIR / query.as_of
-    )
+    raw_dir = (artifacts.RAW_DIR if raw_root is None else raw_root) / RAW_SUBDIR / query.as_of
 
     # This one Capture is the complete observation admission probe: only a
     # successful Raw write followed by zero exact rows means date unavailable.

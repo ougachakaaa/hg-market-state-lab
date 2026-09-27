@@ -12,6 +12,7 @@ from ... import artifacts
 from ...capture import common
 from ...capture import index_daily as shared
 from ...sources import tushare
+from .raw import raw_dir
 
 RAW_ARTIFACT = shared.RAW_ARTIFACT
 NoIndexDataError = shared.NoIndexDataError
@@ -53,7 +54,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         print(f"error: {exc}", file=sys.stderr)
         return 1
     path = artifacts.write_raw_artifact(
-        records, artifacts.daily_raw_dir(args.trade_date), RAW_ARTIFACT
+        records, raw_dir(args.trade_date), RAW_ARTIFACT
     )
     print(f"wrote {len(records)} records to {path}")
     return 0

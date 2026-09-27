@@ -53,17 +53,16 @@ ARCHITECTURE.md
         → shared capability ARCHITECTURE.md → shared specialized authority
 ```
 
-上层只定义稳定边界与导航，不复制产品字段、公式或失败契约。Implementation layout 遵循上述 semantic topology；本次 retirement 不移动活跃 Product 的 Python 文件：
+上层只定义稳定边界与导航，不复制产品字段、公式或失败契约。Implementation layout 遵循上述 semantic topology；活跃 Product 的 Python 实现保留在各自 context：
 
 | 当前区域 | ownership |
 | --- | --- |
 | `products/<product>/` | 保留活跃 Product-local Source scope、Preparation、Application Service 与 public contract |
 | `sources/`、`capture/` | 保留共享 provider adapter、Source facts、normalization 与 Capture mechanics；产品专属 scope 下沉 Product |
-| `preparation/im_basis/` | 当前仅为待实施迁移的旧共享代码位置；IM basis 语义已由 CSI1000 IM Basis History 拥有 |
-| `artifacts.py` | 目标仅保留通用 Raw root、filesystem/JSON mechanics；现有 Product-specific Raw 路径函数待实施迁移至各 Product |
-| 其他外层 `preparation/` | 仅保留经多个真实 Product 证明的共享语义 |
+| `products/csi1000_im_basis_history/` | 拥有 IM basis slot、calendar distance、formula 与 ordering 实现 |
+| `artifacts.py` | 仅保留通用 Raw root、filesystem/JSON mechanics；Product-specific Raw 路径由各 Product 构造 |
 
-不因本 authority 重命名为 `shared/`、迁移代码或引入 pipeline、plugin、registry、workflow engine。实施时先按 owning authority reconcile，发现上下层或同级冲突须显式解决。
+不因本 authority 重命名为 `shared/` 或引入 pipeline、plugin、registry、workflow engine。实施时先按 owning authority reconcile，发现上下层或同级冲突须显式解决。
 
 ## 6. Canonical Python namespace
 

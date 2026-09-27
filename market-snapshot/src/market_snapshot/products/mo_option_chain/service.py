@@ -41,6 +41,7 @@ from . import preparation
 
 # Product identifier for its own request-scoped Raw artifacts.
 SERVICE_ID = "mo-option-chain"
+RAW_SUBDIR = "mo-option-chain"
 
 SERVICE_DESCRIPTION = (
     "deterministic read model of the complete MO CSI1000 index option chain "
@@ -304,9 +305,9 @@ def read_chain_with_api(
         return ChainReadResult(error=error)
 
     raw_dir = (
-        artifacts.mo_option_chain_raw_dir(query.target_trade_date)
-        if raw_root is None
-        else raw_root / artifacts.MO_OPTION_CHAIN_RAW_SUBDIR / query.target_trade_date
+        (artifacts.RAW_DIR if raw_root is None else raw_root)
+        / RAW_SUBDIR
+        / query.target_trade_date
     )
     try:
         index_facts = index_daily.collect_index_daily(

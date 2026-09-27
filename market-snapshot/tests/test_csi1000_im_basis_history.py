@@ -7,12 +7,15 @@ from datetime import date, timedelta
 import pandas as pd
 import pytest
 
-from market_snapshot.preparation.im_basis import IMBasisError, assign_contract_slots
 from market_snapshot.products.csi1000_im_basis_history import (
     CSI1000IMBasisHistoryError,
     CSI1000IMBasisHistoryRequest,
     CSI1000IMBasisHistoryService,
     run_csi1000_im_basis_history,
+)
+from market_snapshot.products.csi1000_im_basis_history.basis_semantics import (
+    IMBasisError,
+    assign_contract_slots,
 )
 from market_snapshot.sources import tushare
 from support.fake_source import (

@@ -7,7 +7,7 @@ from collections.abc import Mapping, Sequence
 from typing import Any
 
 from ...artifacts import RawRecord
-from ...preparation.im_basis import (
+from .basis_semantics import (
     IMBasisError,
     assign_contract_slots,
     basis_values,

@@ -1,9 +1,4 @@
-"""Shared IM slot, calendar-distance, and basis semantics.
-
-The semantic authority is co-located in ``ARCHITECTURE.md``.  This module is
-deliberately narrow: products still own their input scope, completeness, and
-result shape.
-"""
+"""CSI1000 IM Basis History slot, calendar-distance, and basis semantics."""
 
 from __future__ import annotations
 
@@ -162,7 +157,7 @@ def basis_values(
 
 
 def observation_sort_key(observation: Mapping[str, Any]) -> tuple[str, int, str]:
-    """Return the shared canonical flat-panel ordering key."""
+    """Return this product's canonical flat-panel ordering key."""
     slot = observation.get("contract_slot")
     if slot not in SLOT_ORDER:
         raise IMBasisError(f"unknown contract_slot={slot!r}.")

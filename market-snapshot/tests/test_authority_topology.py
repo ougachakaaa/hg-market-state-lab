@@ -92,6 +92,45 @@ def test_retired_snapshot_implementation_is_absent() -> None:
     assert not list((package_root / "products/csi1000_5d_analysis").glob("*.py"))
 
 
+def test_im_basis_semantics_are_product_local() -> None:
+    package_root = REPOSITORY_ROOT / "market-snapshot/src/market_snapshot"
+    product_root = package_root / "products/csi1000_im_basis_history"
+    assert (product_root / "basis_semantics.py").is_file()
+    assert not (package_root / "preparation/im_basis").exists()
+    for source in product_root.glob("*.py"):
+        tree = ast.parse(source.read_text(encoding="utf-8"))
+        assert not any(
+            isinstance(node, ast.ImportFrom)
+            and node.module is not None
+            and "preparation.im_basis" in node.module
+            for node in ast.walk(tree)
+        ), source
+
+
+def test_shared_artifacts_do_not_define_product_raw_paths() -> None:
+    source = REPOSITORY_ROOT / "market-snapshot/src/market_snapshot/artifacts.py"
+    tree = ast.parse(source.read_text(encoding="utf-8"))
+    product_path_names = {
+        "daily_raw_dir",
+        "mo_option_chain_raw_dir",
+        "mo_option_premium_raw_dir",
+        "MO_OPTION_CHAIN_RAW_SUBDIR",
+        "MO_OPTION_PREMIUM_RAW_SUBDIR",
+    }
+    defined_names = {
+        node.name
+        for node in tree.body
+        if isinstance(node, ast.FunctionDef)
+    } | {
+        target.id
+        for node in tree.body
+        if isinstance(node, ast.Assign)
+        for target in node.targets
+        if isinstance(target, ast.Name)
+    }
+    assert not product_path_names & defined_names
+
+
 def test_central_guides_do_not_return() -> None:
     forbidden_directories = (
         REPOSITORY_ROOT / "market-snapshot/guides",

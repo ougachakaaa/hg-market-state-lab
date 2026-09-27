@@ -19,6 +19,7 @@ import pandas as pd
 from ... import artifacts
 from ...capture import common
 from ...sources import tushare
+from .raw import raw_dir
 
 RAW_ARTIFACT = "stock_daily"
 
@@ -58,7 +59,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         return 1
 
     path = artifacts.write_raw_artifact(
-        records, artifacts.daily_raw_dir(args.trade_date), RAW_ARTIFACT
+        records, raw_dir(args.trade_date), RAW_ARTIFACT
     )
     print(f"wrote {len(records)} records to {path}")
     return 0

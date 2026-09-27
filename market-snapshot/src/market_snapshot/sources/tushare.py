@@ -138,7 +138,7 @@ def to_tushare_date(trade_date: str) -> str:
         parsed = datetime.strptime(trade_date, TRADE_DATE_ISO_FORMAT)
     except ValueError as exc:
         raise TushareDateError(f"trade_date is not a valid date: {trade_date!r}.") from exc
-    return parsed.strftime(TRADE_DATE_TUSHARE_FORMAT)
+    return parsed.date().isoformat().replace("-", "")
 
 
 def to_iso_date(trade_date: str) -> str:
@@ -158,7 +158,7 @@ def to_iso_date(trade_date: str) -> str:
         raise TushareDateError(
             f"source {TRADE_DATE_FIELD} must use YYYYMMDD, got {trade_date!r}."
         ) from exc
-    return parsed.strftime(TRADE_DATE_ISO_FORMAT)
+    return parsed.date().isoformat()
 
 
 def is_iso_date(value: object) -> bool:
