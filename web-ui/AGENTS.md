@@ -13,7 +13,7 @@
 5. Generated OpenAPI / TypeScript 或 contract freshness 任务还读取 [contract feedback-loop authority](contracts.md)，再进入 owning feature。
 6. 只有 feature authority 明确依赖某项 backend semantics 或 HTTP transport 时，才读取对应 product entry、read/backend authority 或 HTTP contract。
 
-普通 frontend 任务不读取 Source Capture、Raw Artifact、Analysis Preparation internals、CSI1000 5D 或其他无关产品 authority。
+普通 frontend 任务不读取 Source Capture、Raw Artifact、Analysis Preparation internals 或其他无关产品 authority。
 
 ## 执行规则
 

@@ -58,7 +58,6 @@ MO option data
 volume/OI-based filtering or interpretation
 main-contract selection
 persisted final artifact
-dms CLI binding
 HTTP endpoint
 database or cache
 generic historical query API

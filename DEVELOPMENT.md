@@ -22,8 +22,6 @@ bash .codex/scripts/setup.sh
 poetry run python dev.py doctor
 poetry run python dev.py backend
 poetry run python dev.py frontend
-poetry run python dev.py data csi1000-5d-analysis
-poetry run python dev.py data csi1000-5d-analysis --date 2026-09-18
 poetry run python dev.py research list
 poetry run python dev.py research run <study-id> --help
 ```
@@ -35,24 +33,6 @@ poetry run python dev.py research run <study-id> --help
 `doctor` 在必要的仓库结构、backend launcher、Poetry 或 Python 3.13 条件不满足时非零退出；frontend 已初始化但 Node/npm 不可用时也非零退出。frontend 尚未初始化和服务停止本身不使 `doctor` 失败。检查只读，不创建虚拟环境、不安装依赖，也不调用 Tushare 或运行 pytest、Ruff、mypy。
 
 `backend` 从 repository root 前台执行 `poetry run python backend-api/scripts/api.py`。`frontend` 在 `web-ui/` 前台执行 `npm run dev`；首次启动前需在 `web-ui/` 自行执行 `npm install`。两个命令继承标准输入输出、传递子进程退出码，Ctrl+C 结束前台进程。缺少启动前提时明确报错，不自动修复环境。
-
-`data` 是 repository-level Data Service convenience command：
-
-```text
-poetry run python dev.py data <service_id> [--date YYYY-MM-DD]
-```
-
-`service_id` 必须显式提供，当前只接受 CLI-supported persisted-artifact Data Service `csi1000-5d-analysis`；`mo-option-chain` 的 canonical delivery surface 是 HTTP，不由此命令暴露。显式提供 `--date` 时，值原样作为 `target_trade_date` 转发。未提供时，使用 UTC+8 / `Asia/Shanghai` 的当天自然日，格式为 `YYYY-MM-DD`。
-
-该默认值只属于 repository convenience CLI，并且 `today != latest trading day`：`dev.py` 不查询交易日历、不寻找最近交易日，也不在周末、节假日或数据未就绪时 fallback。上述情况保持底层 Data Service 的失败语义。
-
-`data` 从 repository root 前台执行：
-
-```text
-poetry run python market-snapshot/scripts/dms.py get <service_id> --date <resolved-date>
-```
-
-它继承标准输入输出并传递子进程退出码。`dms get <service_id> --date YYYY-MM-DD` 仍是 canonical Data Service interface，其 `--date` 仍必须显式提供；`dev.py` 只在调用前解析 convenience default，不成为 Data Service semantic owner。
 
 `research` 是 retained Study 的 repository-level discovery 与 forwarding command group：
 
@@ -72,6 +52,6 @@ Root CLI 不 import Research implementation，不保持 Study catalog/registry�
 
 ## Ownership
 
-`dev.py` 只拥有 CLI parsing、命令分发、仓库路径解析、开发前提检查、Data Service `service_id` 转发、convenience default date resolution、Research runner discovery/forwarding、进程调用、exit-code propagation 和人类可读状态。HTTP bind/runtime composition 与 contract 的 owner 是 `backend-api`；Data Service CLI 仍由 `market-snapshot` 拥有。Retained Study 的请求、输入、方法、输出与结果语义仍由 `market-research` 中的具体 Study 拥有。Frontend 的 React/Vite 配置与开发脚本由 `web-ui` 拥有。`dev.py` 不导入模块内部代码，不拥有 Source Capture orchestration、Analysis Preparation、Data Service/Research business semantics、dataset schema 或 trading-calendar resolution；端口仅用于本地开发诊断，不构成业务契约。
+`dev.py` 只拥有 CLI parsing、命令分发、仓库路径解析、开发前提检查、Research runner discovery/forwarding、进程调用、exit-code propagation 和人类可读状态。HTTP bind/runtime composition 与 contract 的 owner 是 `backend-api`。Retained Study 的请求、输入、方法、输出与结果语义仍由 `market-research` 中的具体 Study 拥有。Frontend 的 React/Vite 配置与开发脚本由 `web-ui` 拥有。`dev.py` 不导入模块内部代码，不拥有 Source Capture orchestration、Analysis Preparation、Product/Research business semantics、dataset schema 或 trading-calendar resolution；端口仅用于本地开发诊断，不构成业务契约。
 
 V1 不提供组合启动、后台进程、PID、日志、停止或重启、端口分配、配置框架、环境变量管理、依赖安装、测试运行或部署功能。`dev.py` 的 frontend 诊断地址与 Vite 显式绑定的 `127.0.0.1:5173` 一致。

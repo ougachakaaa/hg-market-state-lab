@@ -2,7 +2,7 @@
 
 本文档是 `market-snapshot` 内 IM 期限位置、剩余日历天数与 CSI1000 基差计算的唯一 canonical semantic owner。Product ownership 与 execution roles 见 [market-snapshot architecture](../../../../ARCHITECTURE.md)；Source 字段事实见 [IM futures Source contract](../../capture/im-futures-contract.md)。
 
-本 context 因 CSI1000 5D Analysis 与 CSI1000 IM Basis History 均实际复用这些语义而位于 Product 外。它只提供窄义 deterministic Preparation semantics，不是全局 Preparation ownership layer、通用 feature framework、Preparation engine 或 Research interface。产品自己的 query、Source scope、Source Facts / Raw Artifact、result shape、completeness 和 delivery 继续由各产品 authority 拥有。
+本 context 的既有 IM basis 语义仍由 CSI1000 IM Basis History 消费，并保持该产品依赖的 canonical owner。它只提供窄义 deterministic Preparation semantics，不是全局 Preparation ownership layer、通用 feature framework、Preparation engine 或 Research interface。产品自己的 query、Source scope、Source Facts / Raw Artifact、result shape、completeness 和 delivery 继续由产品 authority 拥有。
 
 ## 1. Required facts
 
@@ -117,9 +117,6 @@ ts_code
 
 ## 7. Consumers and maintenance
 
-当前 consumers：
+当前 consumer：[CSI1000 IM Basis History](../../products/csi1000_im_basis_history/ARCHITECTURE.md)。
 
-- [CSI1000 5D Analysis](../../products/csi1000_5d_analysis/ARCHITECTURE.md)
-- [CSI1000 IM Basis History](../../products/csi1000_im_basis_history/ARCHITECTURE.md)
-
-Consumers 引用本 authority，不复制公式或创建产品私有的 slot 定义。只有 IM slot、calendar distance 或 basis formula 本身改变时才修改本文档；产品 query、result 或 Research method 变更应进入其各自 authority。
+该 Product 引用本 authority，不复制公式或创建产品私有的 slot 定义。只有 IM slot、calendar distance 或 basis formula 本身改变时才修改本文档；产品 query、result 或 Research method 变更应进入其各自 authority。

@@ -62,17 +62,6 @@ poetry run python dev.py research list
 
 命令转发、readiness 和失败行为见 [DEVELOPMENT.md](DEVELOPMENT.md)。
 
-## Data Service CLI
-
-在仓库根目录执行：
-
-```bash
-poetry run python market-snapshot/scripts/dms.py list
-poetry run python market-snapshot/scripts/dms.py get csi1000-5d-analysis --date 2026-09-18
-```
-
-CLI、service orchestration 与 output contract 见 [Data Service authority](market-snapshot/src/market_snapshot/services/ARCHITECTURE.md)。产品数据语义从 [Capability Catalog](market-snapshot/CAPABILITIES.md) 进入。
-
 ## Research CLI
 
 在 repository root 发现并运行 retained Study：

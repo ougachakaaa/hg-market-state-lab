@@ -12,4 +12,4 @@
 - Raw → analysis-ready structure、formula 与 failure：[preparation.md](preparation.md)
 - 共享 Capture facts：[Capture authority](../../capture/ARCHITECTURE.md)
 
-该场景目前保留 development Capture adapters；它不是 `dms` catalog 中的 persisted Data Service。
+该场景目前保留 development Capture adapters；其 persisted output 契约仅由本产品 authority 定义。

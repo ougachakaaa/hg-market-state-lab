@@ -58,10 +58,9 @@ close
 V1 不要求也不得从 sibling product 引入：
 
 ```text
-120-day index history
-60-day IM history
+index history
+IM history
 term structure history
-CSI1000 5D Analysis artifact
 ```
 
 ## 2. Premium-owned Raw Artifact
@@ -95,7 +94,6 @@ Premium 不读取：
 
 ```text
 data/raw/mo-option-chain/**
-data/raw/csi1000-5d-analysis/**
 sibling product final/read DTO or artifact
 ```
 

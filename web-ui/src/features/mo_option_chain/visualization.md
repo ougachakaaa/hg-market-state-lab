@@ -170,7 +170,7 @@ trading recommendation
 
 ## 8. 数据来源语义
 
-本 vertical slice 需要的事实由 [MO Option Chain read contract](../../../../market-snapshot/src/market_snapshot/products/mo_option_chain/read-contract.md) 提供；`web-ui` 不直接理解 Source 或 Raw Artifact，也不直接消费 `csi1000-5d-analysis` 的 `snapshot.json`。
+本 vertical slice 需要的事实由 [MO Option Chain read contract](../../../../market-snapshot/src/market_snapshot/products/mo_option_chain/read-contract.md) 提供；`web-ui` 不直接理解 Source 或 Raw Artifact，也不直接消费其他 Product 的最终产物。
 
 active universe、option type、expiry、selected price fallback、contract completeness 等业务语义均由 backend authority 拥有，`web-ui` 不自行推导。
 

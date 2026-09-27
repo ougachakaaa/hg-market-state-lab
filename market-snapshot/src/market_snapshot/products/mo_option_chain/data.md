@@ -38,7 +38,7 @@ technical derived metrics
 ```
 
 underlying 只需要目标交易日**单日**的 `index_daily` fact（open / high / low / close，供 `price_type` 选价），不需要历史窗口。
-IM futures reference 只需要普通月合约事实与目标交易日**单日**的 `fut_daily` fact（open / high / low / close，供同一 `price_type` 选价）；具体采集范围是第 8 节的 target-date-active IM universe，不由 MO expiry 决定。不得因 CSI1000 5D Analysis 的约 60 日需求引入历史窗口或其 analysis-ready artifact。
+IM futures reference 只需要普通月合约事实与目标交易日**单日**的 `fut_daily` fact（open / high / low / close，供同一 `price_type` 选价）；具体采集范围是第 8 节的 target-date-active IM universe，不由 MO expiry 决定。不引入历史窗口或其他 Product 的 analysis-ready artifact。
 
 ## 2. Raw Artifact boundary & scope
 
@@ -46,7 +46,7 @@ IM futures reference 只需要普通月合约事实与目标交易日**单日**�
 shared Capture capability ≠ shared goal-scoped Raw Artifact
 ```
 
-Capture 组件语义可复用；MO Option Chain 选择持久化自己的 goal-scoped Raw Artifact，且不读取 `data/raw/csi1000-5d-analysis/`。其他 Product 是否持久化由其自身 authority 决定。
+Capture 组件语义可复用；MO Option Chain 选择持久化自己的 goal-scoped Raw Artifact，不读取 sibling Product 的 Raw。其他 Product 是否持久化由其自身 authority 决定。
 
 MO Chain 的最小 Raw scope：
 
@@ -60,11 +60,11 @@ data/raw/mo-option-chain/<target_trade_date>/
 ```
 
 * `<target_trade_date>` 表示该次数据准备的 target_trade_date，不是文件中所有记录共同的 trade_date。
-* `index_daily.json` 是**单日** 000852.SH fact，不是 `index_daily_history.json`（120 日 history）。
+* `index_daily.json` 是**单日** 000852.SH fact。
 * `im_futures_basic.json` 保留足以判断第 8 节 IM universe 的普通月合约 Source facts；`im_futures_daily.json` 保存该 universe 在目标日由 Source 返回的 daily rows，而非只保存与 MO expiry 匹配的合约。不存在的 Source row 不得伪造或从其他日期补齐。
-* `im_futures_daily.json` 只存目标日 facts；不得将 CSI1000 5D Analysis 的约 60 日 IM history、现有 400-calendar-day historical Capture path 或 term structure history 作为 MO Chain Raw。MO Chain 不读取其 Raw 或 analysis-ready artifact。共享 Source Capture capability 不等于共享 goal-scoped Raw。
+* `im_futures_daily.json` 只存目标日 facts，不引入 IM history 或 term structure history。MO Chain 不读取 sibling Product 的 Raw 或 analysis-ready artifact。共享 Source Capture capability 不等于共享 goal-scoped Raw。
 * 每个 Raw 文件为 JSON array，元素对应一个 Source row，经 [模块架构](../../../../ARCHITECTURE.md) 允许的 minimal normalization 后写入。
-* Raw 不 join basic + daily；不要求 120 日 / 60 日窗口。本产品持有自己的 Raw，不读取另一个产品的 Raw。
+* Raw 不 join basic + daily；本产品持有自己的 Raw，不读取另一个产品的 Raw。
 * `data/raw/` 是运行产物，不进入版本控制。
 
 ## 3. target_trade_date availability & completeness

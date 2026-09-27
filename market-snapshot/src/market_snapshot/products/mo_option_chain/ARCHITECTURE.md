@@ -4,13 +4,13 @@
 
 ## 1. 产品定位
 
-`MO Option Chain` 是目标交易日完整 MO 中证1000股指期权链的 deterministic data product。它与 CSI1000 5D Analysis、MO Premium Plane 并列，允许复用共享 Source Capture capability，但拥有自己的 goal-scoped Raw Artifact、Preparation 与 read model。
+`MO Option Chain` 是目标交易日完整 MO 中证1000股指期权链的 deterministic data product。它允许复用共享 Source Capture capability，但拥有自己的 goal-scoped Raw Artifact、Preparation 与 read model。
 
 ```text
 shared Capture capability != shared goal-scoped Raw Artifact
 ```
 
-本产品不依赖 CSI1000 5D Analysis 的历史窗口、派生指标或最终 `snapshot.json`。它发布 market-chain facts，不计算 MO Premium Plane 指标，也不产生市场判断或交易建议。
+本产品发布 market-chain facts，不计算 MO Premium Plane 指标，也不产生市场判断或交易建议。
 
 本产品选择 persisted goal-scoped Raw 作为 Capture/Preparation 契约；其 request-scoped final read model 不要求持久化。产品内的 Application Service 拥有 orchestration、public result 与 classified failure，外层 `services/` 不拥有这些语义。
 
@@ -59,7 +59,7 @@ MO -> CSI1000 -> 000852.SH
 
 ## 5. Stable Product Invariants
 
-1. 本产品独立于 CSI1000 5D Analysis 与 MO Premium Plane 的最终产物。
+1. 本产品不读取 sibling Product 的最终产物。
 2. `price_type` 变化不得改变 [data authority](data.md) 定义的 contract universe。
 3. Option、underlying 与实际存在的 expiry futures reference 使用同一 resolved `price_type`；具体 fallback 与 absence 由 [read contract](read-contract.md) 唯一定义。
 4. 缺价不得造成 contract 静默删除；null、zero、missing daily row 与合法 reference absence 的区别由 data/read authority 唯一定义。

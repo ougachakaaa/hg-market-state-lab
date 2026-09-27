@@ -14,7 +14,7 @@ shared index_daily Source Capture
     → market-research
 ```
 
-本产品是独立的 request-scoped analysis-ready product，不读取 sibling product 的 Raw 或 final artifact。`csi1000-5d-analysis` 使用的 `index_daily_history.json` 是其私有 Raw artifact 名称，不是本产品的结果或可复用边界。
+本产品是独立的 request-scoped analysis-ready product，不读取 sibling product 的 Raw 或 final artifact。它的 public result 由本产品契约定义。
 
 本产品拥有自己的 Application Service 与 public Python request/result/failure/execution contract。Capture 可以在内存中把 query-scoped Source Facts 交给 Preparation；persisted Raw Artifact 不是本产品的成功前提。
 
@@ -36,4 +36,4 @@ Caller 显式指定 `ts_code + start_trade_date + end_trade_date + pre_start_obs
 | [Data authority](data.md) | 产品 Source scope、观测集合、warm-up 与 completeness |
 | [Read/application contract](read-contract.md) | semantic request、Preparation projection、result、public Python boundary 与 failure |
 
-V1 的 result 可完全 request-scoped、in-memory；不要求 persisted final artifact、`dms` CLI binding、HTTP endpoint、database 或 cache。
+V1 的 result 可完全 request-scoped、in-memory；不要求 persisted final artifact、HTTP endpoint、database 或 cache。

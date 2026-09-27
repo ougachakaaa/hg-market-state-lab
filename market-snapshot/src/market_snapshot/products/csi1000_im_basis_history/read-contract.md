@@ -97,7 +97,7 @@ run_csi1000_im_basis_history(
 
 不得要求 Research 通过 `market_snapshot.sources` 构造 client，也不得借此建立 generic service container、dependency-injection framework 或跨产品 composition framework。Credential 与 Source-client creation failure 必须在本产品 application boundary 转换为 `CSI1000IMBasisHistoryError`，供 consumer 呈现为 classified application failure。
 
-V1 result 可以完全 request-scoped + in-memory，不要求 persisted final artifact、Data Service CLI binding 或 HTTP endpoint。
+V1 result 可以完全 request-scoped + in-memory，不要求 persisted final artifact 或 HTTP endpoint。
 
 ## 6. Success and failure
 

@@ -55,7 +55,7 @@ run_index_daily_history(
 ) -> IndexDailyHistoryResult
 ```
 
-调用方只提供 semantic request。该 entry 在 Snapshot 边界内完成 credential loading、Source client 创建、Capture orchestration 与 Preparation，并返回完整结果或 `IndexDailyHistoryError`。Research study-local CLI 不创建 Tushare client、Capture adapter，不读取 credential、Raw、product-private Preparation 或 persistence internals，也不经过 `backend-api` / HTTP DTO。V1 结果可完全 request-scoped、in-memory，不要求 persisted final artifact、`dms` binding 或 HTTP endpoint。
+调用方只提供 semantic request。该 entry 在 Snapshot 边界内完成 credential loading、Source client 创建、Capture orchestration 与 Preparation，并返回完整结果或 `IndexDailyHistoryError`。Research study-local CLI 不创建 Tushare client、Capture adapter，不读取 credential、Raw、product-private Preparation 或 persistence internals，也不经过 `backend-api` / HTTP DTO。V1 结果可完全 request-scoped、in-memory，不要求 persisted final artifact 或 HTTP endpoint。
 
 ## Success and failure
 

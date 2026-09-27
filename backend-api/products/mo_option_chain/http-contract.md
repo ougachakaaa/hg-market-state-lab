@@ -227,7 +227,7 @@ web-ui
 ```
 
 * HTTP 层通过明确的 service/application boundary 获取 read model；它不读 Raw Artifact，不调用 Source，不理解 Tushare。
-* HTTP 层不依赖 `csi1000-5d-analysis` 的 `snapshot.json`（见 [product authority](../../../market-snapshot/src/market_snapshot/products/mo_option_chain/ARCHITECTURE.md) Stable Product Invariant 1）。
+* HTTP 层不读取其他 Product 的最终产物（见 [product authority](../../../market-snapshot/src/market_snapshot/products/mo_option_chain/ARCHITECTURE.md) Stable Product Invariant 1）。
 * HTTP contract tests 可以注入 fake service 验证 transport；fake 不属于业务语义层，也不得定义 market semantics。
 * local 启动默认 bind `127.0.0.1:8011`（launcher 细节，可用 `--host` / `--port` 覆盖）。端口号**不属于**本 contract：endpoint 语义始终是 `GET /mo-option-chain`，换端口不改变 request / response / error 契约；V1 不定义 deployment、反向代理、TLS 或 CORS（见第 8 节）。
 

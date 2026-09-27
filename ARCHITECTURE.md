@@ -60,7 +60,7 @@ Runtime unification 不合并模块、不改变源码目录 ownership，也不�
 
 共享 dependency graph 或 `.venv` 不构成 cross-module import permission。模块依赖方向必须由 repository/module authority、被依赖模块发布的 public boundary 与 architecture tests 共同约束；不得因为 package 在同一环境中可 import 就绕过这些边界。
 
-这里的 Python runtime/toolchain ownership 不改变 `backend-api` 对 HTTP application/launcher/runtime composition 的所有权，也不改变任何现有 analytical flow、Data Service、product contract 或 presentation responsibility。
+这里的 Python runtime/toolchain ownership 不改变 `backend-api` 对 HTTP application/launcher/runtime composition 的所有权，也不改变任何现有 analytical flow、Product contract 或 presentation responsibility。
 
 ## 4. 顶层 Flow 与 HTTP Topology
 

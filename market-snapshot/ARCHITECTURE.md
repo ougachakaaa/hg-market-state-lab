@@ -8,7 +8,7 @@ Product 是一个具有明确数据需求、query identity、invariants 和 anal
 
 Product 不是横向 Source → Capture → Preparation → Service pipeline 中的一层。产品专属 `preparation.py` 或 `service.py` 留在 `products/<product>/` 是正常的 ownership；外层同名目录不要求迁移产品代码。具体产品从 [catalog](CAPABILITIES.md) 进入，其 specialized authority 是产品契约的 canonical owner。
 
-只有被多个真实 Product 稳定复用、且语义不属于其中任一 Product 的能力，才位于 Product 外。判断时应问：删除某一个 Product 后，其他 Product 是否仍合法需要此能力？当前共享实例包括 Source adapter / Capture facts 与 mechanics、被两个 Product 使用的 IM basis preparation semantics、通用 artifact filesystem mechanics，以及 CLI delivery infrastructure。共享代码和单一 Python runtime 不授予跨 Product 读取私有 Raw 或 result 的权限；不为未来假设需求建立通用 framework。
+Product 外的能力须由活跃 Product 的实际需求支撑，而非为未来假设需求建立通用 framework。判断时应问：删除某一个 Product 后，其他 Product 是否仍合法需要此能力？当前实例包括 Source adapter / Capture facts 与 mechanics、CSI1000 IM Basis History 仍消费的 IM basis preparation semantics，以及通用 artifact filesystem mechanics。共享代码和单一 Python runtime 不授予跨 Product 读取私有 Raw 或 result 的权限。
 
 ## 2. Product execution 的角色
 
@@ -24,7 +24,7 @@ semantic request
 
 上图描述一次 Product execution 的职责，不规定 repository 必须按这些角色划分横向 package。Application Service 是 Product 内部执行一次 semantic request 的 orchestrator：按产品契约组织 Capture 与 Preparation，分类失败并发布结果；它不重定义 Source facts 或公式。既有 “Data Service” 仅表示可被请求的 Product application-service capability，不是与 Product 平级或凌驾于 Product 之上的业务实体，也不是独立 framework。
 
-Public Application Boundary 是 Product 发布给 consumer 的 semantic request、result、classified failure 与 execution entry。Delivery 是 CLI、HTTP 等入站表示：CLI 的可执行 binding 与 persisted output 支持见 [delivery authority](src/market_snapshot/services/ARCHITECTURE.md)；HTTP parsing、DTO 与 status mapping 由 [backend-api](../backend-api/ARCHITECTURE.md) 拥有。Delivery 不能拥有或重新计算 Product semantics。
+Public Application Boundary 是 Product 发布给 consumer 的 semantic request、result、classified failure 与 execution entry。Product authority 决定所支持的 public Python boundary 与结果是否持久化；HTTP parsing、DTO 与 status mapping 由 [backend-api](../backend-api/ARCHITECTURE.md) 拥有。Delivery 不能拥有或重新计算 Product semantics。
 
 Source 是项目外的数据提供方。Capture 获取 Source facts，处理 Source endpoint/query 与 minimal normalization；产品选择自己的 Source scope、universe、窗口及 completeness。Capture 可以理解 Source-domain facts，但不能因下游分析偏好筛选事实或生成市场判断。Preparation 对已取得的 Source facts 做确定性的 selection、join、projection、rename、restructure 和已定义公式计算，不自行采集或产生市场判断。Analysis-ready result 可以是持久化 artifact，也可以是 request-scoped read model，由 Product authority 决定。`Dataset`、`Snapshot`、`Snapshot Assembly` 与 `Snapshot Definition` 可以是产品名称，不是额外的通用架构层。
 
@@ -57,10 +57,10 @@ ARCHITECTURE.md
 
 | 当前区域 | 未来 reconciliation 方向 |
 | --- | --- |
-| `products/<product>/` | 保留 Product-local Source scope、Preparation、Application Service 与 public contract |
+| `products/<product>/` | 保留活跃 Product-local Source scope、Preparation、Application Service 与 public contract；移除已退役 Product 的实现 |
 | `sources/`、`capture/` | 保留共享 provider adapter、Source facts、normalization 与 Capture mechanics；产品专属 scope 下沉 Product |
-| `preparation/im_basis/` | 保留两个 Product 复用的 IM basis semantics；不扩展为通用 Preparation layer |
-| `services/` | 保留共享 CLI catalog/dispatch 与 persisted delivery；产品 orchestration 和 contract 留在 Product |
+| `preparation/im_basis/` | 保留 CSI1000 IM Basis History 仍消费的 IM basis semantics；不扩展为通用 Preparation layer |
+| `services/` | 移除已退役的 CLI catalog/dispatch 与 persisted delivery 实现；产品 orchestration 和 contract 留在 Product |
 | `artifacts.py` | 分离通用 filesystem/JSON mechanics 与产品专属路径、名称 |
 | 其他外层 `preparation/` | 仅保留经多个真实 Product 证明的共享语义 |
 
