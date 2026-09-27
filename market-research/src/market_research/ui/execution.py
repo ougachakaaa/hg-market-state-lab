@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import ntpath
+import re
 import shutil
 import tempfile
 from collections.abc import Callable
@@ -14,12 +16,25 @@ class ResearchOutputError(OSError):
     """A canonical Research run could not be safely written or replaced."""
 
 
-def canonical_run_directory(
-    output_root: Path, study_id: str, start_trade_date: str, end_trade_date: str
-) -> Path:
-    return (output_root / study_id / f"{start_trade_date}__{end_trade_date}").resolve(
-        strict=False
-    )
+def canonical_run_directory(output_root: Path, study_id: str, run_key: str) -> Path:
+    if re.fullmatch(r"[a-z0-9]+(?:-[a-z0-9]+)*", study_id) is None:
+        raise ResearchOutputError(f"unsafe study ID: {study_id!r}.")
+    if (
+        not isinstance(run_key, str)
+        or not run_key
+        or run_key in {".", ".."}
+        or run_key[-1] in {" ", "."}
+        or any(char in run_key for char in '<>:"/\\|?*')
+        or any(ord(char) < 32 for char in run_key)
+        or ntpath.isreserved(run_key)
+    ):
+        raise ResearchOutputError(f"unsafe run key: {run_key!r}.")
+    root = output_root.resolve(strict=False)
+    study_directory = root / study_id
+    run_directory = study_directory / run_key
+    if study_directory.is_symlink() or run_directory.is_symlink():
+        raise ResearchOutputError("canonical Research output path must not be a symlink.")
+    return run_directory
 
 
 def _present(path: Path) -> bool:
@@ -27,6 +42,8 @@ def _present(path: Path) -> bool:
 
 
 def _validate_existing_run(path: Path) -> None:
+    if path.parent.is_symlink():
+        raise ResearchOutputError(f"study output path is a symlink: {path.parent}.")
     if _present(path) and (path.is_symlink() or not path.is_dir()):
         raise ResearchOutputError(f"canonical run path is not a directory: {path}.")
 

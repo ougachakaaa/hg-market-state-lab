@@ -1,9 +1,8 @@
-"""Shared IM-basis predictor and empirical quantile semantics."""
+"""Shared IM-basis predictor semantics."""
 
 from __future__ import annotations
 
 import math
-from collections.abc import Sequence
 from dataclasses import dataclass
 
 from market_snapshot.products.csi1000_im_basis_history import (
@@ -25,22 +24,6 @@ class DailyIMBasis:
     underlying_close: float
     annualized_basis_by_slot: dict[str, float]
     non_front_mean_basis: float
-
-
-def linear_quantile(values: Sequence[float], probability: float) -> float:
-    """Empirical quantile with linear interpolation (NumPy method='linear')."""
-    if not values:
-        raise ResearchInputError("an empirical quantile needs a non-empty sample.")
-    if not 0 <= probability <= 1:
-        raise ValueError("probability must be between 0 and 1.")
-    ordered = sorted(values)
-    position = (len(ordered) - 1) * probability
-    lower = math.floor(position)
-    upper = math.ceil(position)
-    if lower == upper:
-        return ordered[lower]
-    weight = position - lower
-    return ordered[lower] + (ordered[upper] - ordered[lower]) * weight
 
 
 def daily_im_basis(result: CSI1000IMBasisHistoryResult) -> tuple[DailyIMBasis, ...]:

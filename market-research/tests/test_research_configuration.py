@@ -35,7 +35,7 @@ def test_absolute_output_root_is_normalized(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     absolute = tmp_path / "somewhere" / ".." / "retained"
-    configure_location(monkeypatch, tmp_path, f'[output]\nroot = "{absolute}"\n')
+    configure_location(monkeypatch, tmp_path, f"[output]\nroot = '{absolute}'\n")
 
     assert configuration.load_config().output_root == absolute.resolve()
 

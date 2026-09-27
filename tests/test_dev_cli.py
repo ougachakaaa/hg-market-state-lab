@@ -165,7 +165,12 @@ def test_research_discovery_rejects_a_package_symlink(
     studies = tmp_path / "studies"
     real_package = create_study_package(tmp_path / "outside", "linked_study")
     studies.mkdir()
-    (studies / "linked_study").symlink_to(real_package, target_is_directory=True)
+    try:
+        (studies / "linked_study").symlink_to(real_package, target_is_directory=True)
+    except OSError as exc:
+        if getattr(exc, "winerror", None) != 1314:
+            raise
+        pytest.skip(f"symlink creation unavailable: {exc}")
     monkeypatch.setattr(dev, "RESEARCH_STUDIES", studies)
 
     assert dev.main(["research", "list"]) == 1
