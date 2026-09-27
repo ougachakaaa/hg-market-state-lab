@@ -24,6 +24,8 @@
 
 共享 Capture capability 不等于共享 goal-scoped Raw Artifact。Product service 只编排各 canonical stage；HTTP 只能投影完整 service result，不得从 DTO 反向塑造 canonical Point。Frontend 只拥有 presentation，不重新计算 premium metrics。
 
+Premium-owned persisted Raw 是本产品选择的 Capture/Preparation 契约，request-scoped final Plane 无须持久化。Product service 即本产品的 Application Service；其 request、orchestration、result 与 classified failure 由本产品拥有，外层 `services/` 不构成上级业务 owner。
+
 ## 3. Stable Product Invariants
 
 1. Premium Plane 与 MO Option Chain 是两个独立产品和 HTTP contracts。

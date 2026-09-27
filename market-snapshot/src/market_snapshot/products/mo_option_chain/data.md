@@ -46,7 +46,7 @@ IM futures reference 只需要普通月合约事实与目标交易日**单日**�
 shared Capture capability ≠ shared goal-scoped Raw Artifact
 ```
 
-Capture 组件语义可复用，但每个 data product 拥有自己的 goal-scoped Raw Artifact。MO Option Chain 不读取 `data/raw/csi1000-5d-analysis/`。
+Capture 组件语义可复用；MO Option Chain 选择持久化自己的 goal-scoped Raw Artifact，且不读取 `data/raw/csi1000-5d-analysis/`。其他 Product 是否持久化由其自身 authority 决定。
 
 MO Chain 的最小 Raw scope：
 
@@ -64,7 +64,7 @@ data/raw/mo-option-chain/<target_trade_date>/
 * `im_futures_basic.json` 保留足以判断第 8 节 IM universe 的普通月合约 Source facts；`im_futures_daily.json` 保存该 universe 在目标日由 Source 返回的 daily rows，而非只保存与 MO expiry 匹配的合约。不存在的 Source row 不得伪造或从其他日期补齐。
 * `im_futures_daily.json` 只存目标日 facts；不得将 CSI1000 5D Analysis 的约 60 日 IM history、现有 400-calendar-day historical Capture path 或 term structure history 作为 MO Chain Raw。MO Chain 不读取其 Raw 或 analysis-ready artifact。共享 Source Capture capability 不等于共享 goal-scoped Raw。
 * 每个 Raw 文件为 JSON array，元素对应一个 Source row，经 [模块架构](../../../../ARCHITECTURE.md) 允许的 minimal normalization 后写入。
-* Raw 不 join basic + daily；不要求 120 日 / 60 日窗口。每个数据产品单独持有自己的 Raw，不读取另一个产品的 Raw。
+* Raw 不 join basic + daily；不要求 120 日 / 60 日窗口。本产品持有自己的 Raw，不读取另一个产品的 Raw。
 * `data/raw/` 是运行产物，不进入版本控制。
 
 ## 3. target_trade_date availability & completeness

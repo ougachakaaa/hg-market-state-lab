@@ -1,10 +1,10 @@
 # Shared Source Capture authority
 
-本文件是共享 Source Capture bounded context 的入口。模块分层与依赖方向以 [market-snapshot 架构](../../../ARCHITECTURE.md) 为准；产品自己的 universe、窗口、Raw scope 与 completeness 必须由对应产品 authority 拥有。
+本文件是跨 Product 复用的 Source adapter、Source fact 与 Capture mechanics 入口。Product ownership 与执行角色以 [market-snapshot 架构](../../../ARCHITECTURE.md) 为准；产品自己的 universe、窗口、Raw scope 与 completeness 必须由对应产品 authority 拥有。
 
 ## Ownership
 
-本 context 拥有外部 Source endpoint 调用、Source query 参数、共享 Capture 身份、公共 Source 字段事实与 minimal normalization。它不拥有产品编排、analysis formula、read model、HTTP 或展示语义。
+本 context 拥有外部 Source endpoint 调用、Source query 参数、共享 Capture 身份、公共 Source 字段事实与 minimal normalization。Capture 产出逻辑 Source Facts；产品决定是否持久化为自己的 Raw Artifact。本 context 不拥有产品编排、产品专属 Capture scope、analysis formula、read model、HTTP 或展示语义。外层 `capture/` 不是所有 Product Capture 实现的强制归属目录。
 
 ## Capture catalog
 

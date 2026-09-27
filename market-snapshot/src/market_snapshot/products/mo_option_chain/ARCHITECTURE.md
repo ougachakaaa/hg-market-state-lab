@@ -12,6 +12,8 @@ shared Capture capability != shared goal-scoped Raw Artifact
 
 本产品不依赖 CSI1000 5D Analysis 的历史窗口、派生指标或最终 `snapshot.json`。它发布 market-chain facts，不计算 MO Premium Plane 指标，也不产生市场判断或交易建议。
 
+本产品选择 persisted goal-scoped Raw 作为 Capture/Preparation 契约；其 request-scoped final read model 不要求持久化。产品内的 Application Service 拥有 orchestration、public result 与 classified failure，外层 `services/` 不拥有这些语义。
+
 ## 2. Ownership
 
 | Owner | Canonical knowledge |

@@ -1,8 +1,8 @@
 # IM Basis Preparation Semantics authority
 
-本文档是 `market-snapshot` 内 IM 期限位置、剩余日历天数与 CSI1000 基差计算的唯一 canonical semantic owner。模块分层见 [market-snapshot architecture](../../../../ARCHITECTURE.md)；Source 字段事实见 [IM futures Source contract](../../capture/im-futures-contract.md)。
+本文档是 `market-snapshot` 内 IM 期限位置、剩余日历天数与 CSI1000 基差计算的唯一 canonical semantic owner。Product ownership 与 execution roles 见 [market-snapshot architecture](../../../../ARCHITECTURE.md)；Source 字段事实见 [IM futures Source contract](../../capture/im-futures-contract.md)。
 
-本 context 只提供被多个 Snapshot 产品复用的窄义 deterministic Preparation semantics，不是通用 feature framework、Preparation engine 或 Research interface。产品自己的 query、Source scope、Raw Artifact、result shape、completeness 和 delivery 继续由各产品 authority 拥有。
+本 context 因 CSI1000 5D Analysis 与 CSI1000 IM Basis History 均实际复用这些语义而位于 Product 外。它只提供窄义 deterministic Preparation semantics，不是全局 Preparation ownership layer、通用 feature framework、Preparation engine 或 Research interface。产品自己的 query、Source scope、Source Facts / Raw Artifact、result shape、completeness 和 delivery 继续由各产品 authority 拥有。
 
 ## 1. Required facts
 

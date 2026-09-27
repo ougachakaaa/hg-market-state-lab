@@ -22,7 +22,7 @@ analysis-ready snapshot.json
 external Analyzer
 ```
 
-该产品可以复用共享 Capture capability，但拥有自己的 Raw scope、历史窗口和最终 artifact；它不定义 MO Option Chain 或 MO Premium Plane 的产品语义。
+该产品可以复用共享 Capture capability，但拥有自己的 Raw scope、历史窗口和最终 artifact；它不定义 MO Option Chain 或 MO Premium Plane 的产品语义。上述 goal-scoped Raw Artifacts 是本产品选择的 persisted Capture/Preparation 契约。Application Service、执行顺序、结果发布与失败语义归本产品所有；外层 `services/` 只提供共享 CLI binding 与 persisted delivery 约定。
 
 ## 3. Stable Invariants
 
@@ -56,6 +56,6 @@ Service 可以复用同一请求已取得的 basic contract facts；它不拥有
 - 共享 IM slot、remaining days 与 basis 语义：[IM basis authority](../../preparation/im_basis/ARCHITECTURE.md)
 - 本产品所需 Source、Raw、universe、历史窗口与 completeness：[data.md](data.md)
 - Raw → `snapshot.json` 的结构、join、公式、null 与失败语义：[preparation-contract.md](preparation-contract.md)
-- Data Service、CLI 与 canonical output：[Data Service authority](../../services/ARCHITECTURE.md)
+- 本产品 Application Service 的 orchestration 与 result publication：本文档和 [Preparation authority](preparation-contract.md)；共享 CLI binding 与 persisted output convention：[delivery authority](../../services/ARCHITECTURE.md)
 
 只实现 Capture 或 Raw scope 时无需读取 Preparation 的全部公式；只实现 Preparation 时需要本文档、`data.md` 与 `preparation-contract.md`，无需读取其他产品 authority。

@@ -1,6 +1,6 @@
 # Daily Market Snapshot bounded-context authority
 
-本 context 是验证 Source → Raw → deterministic preparation 路径的独立场景。它不定义共享 Tushare Source facts，也不拥有其他产品语义。
+本 Product 是验证 Source → persisted Raw → deterministic Preparation 路径的独立场景。persisted Raw 是本产品选择的 Capture/Preparation 契约，不是所有 Product 的必经形式。它不定义共享 Tushare Source facts，也不拥有其他产品语义。
 
 ## Ownership
 

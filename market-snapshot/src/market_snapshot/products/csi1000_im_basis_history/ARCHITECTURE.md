@@ -20,6 +20,8 @@ market-research
 
 本产品不需要 MO option data，不输出统计 finding、future return、prediction、regime、signal 或 recommendation。
 
+本产品拥有自己的 Application Service 与 public Python request/result/failure/execution contract。Capture 可以在内存中把 query-scoped Source Facts 交给 Preparation；persisted Raw Artifact 不是本产品的成功前提，若使用则只能是本产品自己的 artifact。
+
 ## 2. Query identity
 
 Caller 必须显式提供：
