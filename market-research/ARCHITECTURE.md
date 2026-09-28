@@ -103,19 +103,11 @@ Scratch 可以自由生成图片，但其 artifact 仍是 disposable output，�
 
 ### `studies`
 
-`studies` 用于值得保留、复查或继续推进的研究。每个 retained study 至少清楚记录：
+`studies` 用于值得保留、复查或继续推进的研究。新建或实质更新 retained Study authority 时，按 [Study Authority Authoring](studies/AUTHORING.md) 中的固定 schema 与 semantic-decision workflow，将 Study Intention 转为独立的 canonical authority。具体必需 section 与 authoring 状态仅由该 contract 定义。
 
-```text
-Question
-Inputs
-Method
-Results
-Limitations
-```
+Study-specific input selection、method、plots、findings、limitations 与 acceptance 留在对应 Study authority，不进入本模块 architecture。Retained study 是 evidence record，不因被保留而成为 Snapshot、Modeling 或 production output 的 semantic authority。
 
-Study-specific input selection、method、plots、findings 与 limitations 留在对应 Study authority，不进入本模块 architecture。Retained study 是 evidence record，不因被保留而成为 Snapshot、Modeling 或 production output 的 semantic authority。
-
-Retained Study 是可保留的研究知识与 evidence record，不等同于长期 software capability。`market-research/studies/<study_package>/` 拥有该 Study 的 Question、Inputs、Method、Results、Limitations、semantic authority 与 retained evidence；`market-research/src/market_research/studies/<study_package>/` 拥有可重写或替换的 executable implementation。两侧以同名 `study_package` 对应，public Study ID 按 [Research UI authority](ui/ARCHITECTURE.md) 从 package 名映射。这种分离是有意的长期边界，不要求将 Study authority 迁入 `src`，也不机械复制 `market-snapshot` 的 co-located product authority layout。若研究对象未来形成稳定输入/输出契约、长期 runtime dependency 与 lifecycle，并演化为 production/reusable capability，须先作新的 semantic decision 与 canonical authority update。
+Retained Study 是可保留的研究知识与 evidence record，不等同于长期 software capability。`market-research/studies/<study_package>/` 拥有该 Study 的研究语义、验收与 retained evidence；`market-research/src/market_research/studies/<study_package>/` 拥有可重写或替换的 executable implementation。两侧以同名 `study_package` 对应，public Study ID 按 [Research UI authority](ui/ARCHITECTURE.md) 从 package 名映射。这种分离是有意的长期边界，不要求将 Study authority 迁入 `src`，也不机械复制 `market-snapshot` 的 co-located product authority layout。若研究对象未来形成稳定输入/输出契约、长期 runtime dependency 与 lifecycle，并演化为 production/reusable capability，须先作新的 semantic decision 与 canonical authority update。
 
 Retained Study 可以同时保留 machine-readable result 与 human-readable visualization，例如：
 
@@ -140,7 +132,7 @@ results/
 - [IM Basis Forward Return Association](studies/im_basis_forward_return_association/ARCHITECTURE.md)
 - [Price-to-Lagged-MA Distribution](studies/price_to_lagged_ma_distribution/ARCHITECTURE.md)
 
-本模块不预设 Experiment Engine、Study Registry、Research Repository、plugin system、统一 lifecycle 或通用 study schema。只有真实 retained study 需要时才建立最小文件结构。
+本模块不预设 Experiment Engine、Study Registry、Research Repository、plugin system、统一 execution/data/artifact schema 或通用 lifecycle。固定 Study authority schema 只定义每个研究必须回答的 product / research semantic 问题；只有真实 retained study 需要时才建立最小文件结构。
 
 ## 6. Research 与 Modeling
 
@@ -177,11 +169,13 @@ market-research/ARCHITECTURE.md
         │       └── user command manual
         ├── scratch exploration
         ├── narrow shared Research semantics
-        └── retained study materials
+        └── Study Authority Authoring
+                ↓
+            retained Study canonical authority
                 ↓
         required market-snapshot product authority
 ```
 
-本文件只拥有 Research 的稳定 identity、职责边界、Research UI 与 visualization ownership、依赖方向、scratch / retained-study distinction 与下层 authority 导航。两个或更多真实 Study 共用的窄 Research semantic 可以有独立 canonical owner，但不得借此建立通用 feature、statistics 或 visualization framework。具体研究问题、输入、方法、结果与限制由对应 retained study 记录；Snapshot 产品语义继续由 [market-snapshot capability catalog](../market-snapshot/CAPABILITIES.md) 所链接的 canonical owner 定义。
+本文件只拥有 Research 的稳定 identity、职责边界、Research UI 与 visualization ownership、依赖方向、scratch / retained-study distinction 与下层 authority 导航。Study schema 与 authoring workflow 由 linked authoring contract 拥有；两个或更多真实 Study 共用的窄 Research semantic 可以有独立 canonical owner，但不得借此建立通用 feature、statistics 或 visualization framework。具体研究问题、输入、方法、结果、限制与验收由对应 retained study 记录；Snapshot 产品语义继续由 [market-snapshot capability catalog](../market-snapshot/CAPABILITIES.md) 所链接的 canonical owner 定义。
 
 只有在 Research 模块定位、UI/visualization ownership、跨模块依赖、Snapshot 消费原则或 scratch/studies 边界变化时更新本文件。CLI/config/output 细节进入 UI specialized authority；不得把 study-specific 细节堆入 module-level architecture，也不得复制 Snapshot product authority。
