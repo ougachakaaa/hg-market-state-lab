@@ -89,7 +89,7 @@ Canonical statistical conventions：
 
 ## Results
 
-成功 retained baseline 的统计表覆盖 `M0`、`M1`、`Q1`、`Q2` 与 `non_front_mean_basis` 五个 daily series，逐 series 保留 Method 列出的 count、summary、percentiles 与 min/max，单位为 percentage points annualized。尚未运行真实研究，当前无统计结果、plot 或 finding；本节不使用 placeholder 数值。未来首次 retained run 必须与 query bounds、方法版本和输出共置，并在结果变成项目语义之前继续作为 Research evidence。
+成功 retained baseline 的统计表覆盖 `M0`、`M1`、`Q1`、`Q2` 与 `non_front_mean_basis` 五个 daily series，逐 series 保留 Method 列出的 count、summary、percentiles 与 min/max，单位为 percentage points annualized。尚未运行真实研究，当前无统计结果、plot 或 finding；本节不使用 placeholder 数值。未来首次 retained run 必须与实际 query bounds 和统计输出共置，并在结果变成项目语义之前继续作为 Research evidence。
 
 ## Limitations
 
@@ -118,4 +118,4 @@ recommendation
 
 - 显式且有效的含端点日期区间通过 Snapshot public boundary 产生完整四槽 panel；缺槽、重复 slot 或无法计算的共用 predictor 必须失败，不填补或删除 observation date。
 - 对四个 slot 与 `non_front_mean_basis` 五个 daily series 使用已明确的统计量和 shared quantile convention；每个 series 的 `count >= 2`，`standard_deviation` 使用 `ddof = 1`，`median` 与 `P50` 一致，数值保留 percentage points annualized 单位。
-- Retained baseline 与实际 query bounds、方法版本和统计表共置；任何图形只展示 descriptive evidence。当前没有真实统计数值或 finding，不能将未来结果预写成预测或交易结论。
+- Retained baseline 与实际 query bounds 和统计表共置；任何图形只展示 descriptive evidence。当前没有真实统计数值或 finding，不能将未来结果预写成预测或交易结论。
