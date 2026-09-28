@@ -12,6 +12,10 @@ REPOSITORY_ROOT = Path(__file__).resolve().parents[2]
 MARKDOWN_LINK = re.compile(r"\[[^]]+\]\(([^)]+)\)")
 
 CONTEXT_ENTRIES = {
+    Path("market-research/studies/AUTHORING.md"),
+    Path("market-research/studies/SCHEMA.md"),
+    Path("market-research/studies/REVIEW.md"),
+    Path("market-research/studies/COMPATIBILITY.md"),
     Path("market-research/shared/price_to_lagged_reference/ARCHITECTURE.md"),
     Path("market-snapshot/src/market_snapshot/capture/ARCHITECTURE.md"),
     Path(
