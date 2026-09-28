@@ -103,7 +103,7 @@ Scratch 可以自由生成图片，但其 artifact 仍是 disposable output，�
 
 ### `studies`
 
-`studies` 用于值得保留、复查或继续推进的研究。新建或实质更新 retained Study authority 时，按 [Study Authority Authoring](studies/AUTHORING.md) 中的固定 schema 与 semantic-decision workflow，将 Study Intention 转为独立的 canonical authority。具体必需 section 与 authoring 状态仅由该 contract 定义。
+`studies` 用于值得保留、复查或继续推进的研究。新建或实质更新 retained Study authority 时，按 [Study Authority Authoring](studies/AUTHORING.md) 中的固定 schema 与 semantic-decision workflow，将 Study Intention 经显式结构化整理转为独立的 canonical authority。具体必需 section、authoring 状态与 authority dependency rule 仅由该 contract 定义。
 
 Study-specific input selection、method、plots、findings、limitations 与 acceptance 留在对应 Study authority，不进入本模块 architecture。Retained study 是 evidence record，不因被保留而成为 Snapshot、Modeling 或 production output 的 semantic authority。
 
@@ -177,6 +177,6 @@ market-research/ARCHITECTURE.md
         required market-snapshot product authority
 ```
 
-本文件只拥有 Research 的稳定 identity、职责边界、Research UI 与 visualization ownership、依赖方向、scratch / retained-study distinction 与下层 authority 导航。Study schema 与 authoring workflow 由 linked authoring contract 拥有；两个或更多真实 Study 共用的窄 Research semantic 可以有独立 canonical owner，但不得借此建立通用 feature、statistics 或 visualization framework。具体研究问题、输入、方法、结果、限制与验收由对应 retained study 记录；Snapshot 产品语义继续由 [market-snapshot capability catalog](../market-snapshot/CAPABILITIES.md) 所链接的 canonical owner 定义。
+本文件只拥有 Research 的稳定 identity、职责边界、Research UI 与 visualization ownership、依赖方向、scratch / retained-study distinction 与下层 authority 导航。Study schema、authoring workflow 与 sibling Study dependency rule 由 linked authoring contract 拥有；两个或更多真实 Study 共用的窄 Research semantic 须经独立 semantic decision 才能拥有 shared canonical owner，不能默认为 sibling Study 所有，也不得借此建立通用 feature、statistics 或 visualization framework。具体研究问题、输入、方法、结果、限制与验收由对应 retained study 记录；Snapshot 产品语义继续由 [market-snapshot capability catalog](../market-snapshot/CAPABILITIES.md) 所链接的 canonical owner 定义。
 
 只有在 Research 模块定位、UI/visualization ownership、跨模块依赖、Snapshot 消费原则或 scratch/studies 边界变化时更新本文件。CLI/config/output 细节进入 UI specialized authority；不得把 study-specific 细节堆入 module-level architecture，也不得复制 Snapshot product authority。
