@@ -6,7 +6,7 @@
 
 输入是由调用 Study 构造的、非空且每个 observation 都是 finite numeric value 的完整 eligible sample。shared distribution 不解释数值代表 basis、price deviation、return、volatility、instrument 或 strategy，也不决定 eligibility、缺失值处理或单位转换。`NaN`、infinity、malformed value 与空 sample 必须显式失败，不自动丢弃 observation。
 
-Study 拥有 Snapshot public result 的获取、交易日与 instrument 选择、warm-up、moving average、reference 与 deviation 计算，以及后续的证据解释、保留和可视化。shared distribution 只消费 Study 交付的 numeric observations；它不拥有 Snapshot access、CLI、run identity、artifact 命名或展示格式。
+调用 Study 拥有 Snapshot public result 的获取、交易日与 instrument 选择、eligible sample，以及后续证据的解释、保留和可视化。两个 price-to-lagged-MA Study 共用的 warm-up 计算要求、moving reference 与 deviation 语义由 [Price-to-Lagged-Reference Research Semantics](../price_to_lagged_reference/ARCHITECTURE.md) 拥有。shared distribution 只消费 Study 交付的 numeric observations；它不拥有 Snapshot access、CLI、run identity、artifact 命名或展示格式。
 
 ## Empirical quantile
 

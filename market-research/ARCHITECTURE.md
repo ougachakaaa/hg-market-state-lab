@@ -125,6 +125,7 @@ results/
 
 - [Empirical Distribution Research Semantics](shared/distribution/ARCHITECTURE.md)
 - [IM Basis Research Semantics](shared/im_basis/ARCHITECTURE.md)
+- [Price-to-Lagged-Reference Research Semantics](shared/price_to_lagged_reference/ARCHITECTURE.md)
 
 当前 retained study 入口：
 

@@ -1,6 +1,6 @@
 # Price-to-Lagged-MA Short-Horizon Reversion retained Study authority
 
-本文档是本 retained Study 的独立 canonical authority。Stable public Study ID 为 `price-to-lagged-ma-short-horizon-reversion`，对应的 runnable package 名为 `price_to_lagged_ma_short_horizon_reversion`。Authoring 遵循 [Study Authority Authoring](../AUTHORING.md)；Research 边界见 [market-research architecture](../../ARCHITECTURE.md)，Study-local CLI、配置、run placement 与 collision/overwrite 规则见 [Research UI authority](../../ui/ARCHITECTURE.md)。Lagged reference 与 deviation 引用 [Price-to-Lagged-MA Distribution](../price_to_lagged_ma_distribution/ARCHITECTURE.md)，empirical quantile 引用 [Empirical Distribution Research Semantics](../../shared/distribution/ARCHITECTURE.md)；输入事实只来自 [Index Daily History product](../../../market-snapshot/src/market_snapshot/products/index_daily_history/ARCHITECTURE.md) 的 [public read/application contract](../../../market-snapshot/src/market_snapshot/products/index_daily_history/read-contract.md)。
+本文档是本 retained Study 的独立 canonical authority。Stable public Study ID 为 `price-to-lagged-ma-short-horizon-reversion`，对应的 runnable package 名为 `price_to_lagged_ma_short_horizon_reversion`。Authoring 遵循 [Study Authority Authoring](../AUTHORING.md)；Research 边界见 [market-research architecture](../../ARCHITECTURE.md)，Study-local CLI、配置、run placement 与 collision/overwrite 规则见 [Research UI authority](../../ui/ARCHITECTURE.md)。Lagged reference 与 deviation 引用 [Price-to-Lagged-Reference Research Semantics](../../shared/price_to_lagged_reference/ARCHITECTURE.md)，empirical quantile 引用 [Empirical Distribution Research Semantics](../../shared/distribution/ARCHITECTURE.md)；输入事实只来自 [Index Daily History product](../../../market-snapshot/src/market_snapshot/products/index_daily_history/ARCHITECTURE.md) 的 [public read/application contract](../../../market-snapshot/src/market_snapshot/products/index_daily_history/read-contract.md)。
 
 ## Question
 
@@ -19,7 +19,7 @@
 | `instrument` | `--instrument <ts_code>` | 必填，无默认 | 非空、无首尾空白的单个指数 identity；是否受 Index Daily History 支持由该产品判定，不改写大小写或使用别名。 |
 | `sample_start_trade_date` | `--start YYYY-MM-DD` | 必填，无默认 | 有效日期，且不晚于 end。 |
 | `sample_end_trade_date` | `--end YYYY-MM-DD` | 必填，无默认 | 有效日期，且不早于 start。 |
-| `reference_method` | `--method sma` 或 `--method volume_weighted` | 可选，默认 `sma` | 只接受 Distribution Study 当前正式定义的两个 method token；其计算和失败语义由该 Study 拥有。 |
+| `reference_method` | `--method sma` 或 `--method volume_weighted` | 可选，默认 `sma` | 只接受 shared lagged-reference authority 当前正式定义的两个 method token；其计算和失败语义由该 shared authority 拥有。 |
 | `reference_window` | `--window <N>` | 可选，默认 `60` | 正整数，表示每个 sample date 之前紧邻的实际 observation 条数。 |
 | `percentile_bucket_edges` | `--bucket-edges <p0,p1,...,pk>` | 可选，默认 `0,0.05,0.10,0.20,0.80,0.90,0.95,1` | 至少两个 finite decimal ratios；首项为 0、末项为 1，其余严格递增且均在 `[0,1]`。相邻两项构成一个 bucket；CLI 不接受百分号。 |
 | `forward_horizons` | `--horizons <h1,h2,...>` | 可选，默认 `1,3,5` | 非空、互异的正整数集合，以后续实际交易 observations 计数；重复值报错，输入顺序不改变语义。 |
@@ -42,7 +42,7 @@ Study-local CLI 通过 Index Daily History 的 production-ready public Python en
 
 ### 状态、经验 percentile 与归桶
 
-对每个 sample observation `T`，直接沿用 Distribution Study 拥有的 `D_T = Close_T / Reference_{T-1} - 1`：reference 使用此前 `reference_window` 条实际 observations，`Close_T` 不进入自己的 reference。`sma`、`volume_weighted`、当前无 method-specific parameters、warm-up 完整性和 reference/deviation 的有效性及失败规则均以该 canonical authority 为准；不能因某日不可计算而缩小样本或静默删行。
+对每个 sample observation `T`，使用 shared lagged-reference authority 定义的 `D_T = Close_T / Reference_{T-1} - 1`。此前 `reference_window` 条实际 observations、`Close_T` 不进入自身 reference、`sma`、`volume_weighted`、当前无 method-specific parameters、warm-up 完整性及计算失败规则均以该 shared authority 为准；不能因某日不可计算而缩小样本或静默删行。
 
 将**完整 sample** 的所有有效 `D_T` 作为 empirical quantile 的 numeric sample，按 shared convention 求每个配置 percentile edge 的 deviation 阈值。`D_T = 0` 和后来因 forward 数据不足而不能进入方向性统计的日期仍参与阈值计算。各 bucket 按相邻阈值形成左闭右开区间；共同阈值上的观察归较高 bucket，最后一个 bucket 包含最大值。相同 `D_T` 总归同一 bucket；阈值重合可使 bucket 为空，不按日期或排序位置拆分相同状态。
 
@@ -56,7 +56,7 @@ Study-local CLI 通过 Index Daily History 的 production-ready public Python en
 
 ### Retained run identity
 
-Run identity 包含 `instrument`、两端 sample dates、`reference_method`、`reference_window`、`percentile_bucket_edges` 和 `forward_horizons` 的**有效 semantic values**，包括省略 flag 后采用的默认值；由 Distribution Study 定义且目前固定为空对象的 `reference_method_parameters = {}` 也记录在规范请求中。先验证请求，再把日期规范为 `YYYY-MM-DD`、method 规范为 canonical token、window 和 horizons 规范为十进制整数；finite decimal edges 规范为无指数、无无意义尾零的十进制字符串（负零为 `0`），并保持严格递增的 edge 顺序。Horizon 集合按数值升序规范化；不同输入顺序得到相同请求和 key。`instrument` 使用经输入校验的 `ts_code` identity，不发明指数别名或大小写折叠。
+Run identity 包含 `instrument`、两端 sample dates、`reference_method`、`reference_window`、`percentile_bucket_edges` 和 `forward_horizons` 的**有效 semantic values**，包括省略 flag 后采用的默认值；由 shared lagged-reference authority 定义且目前固定为空对象的 `reference_method_parameters = {}` 也记录在规范请求中。先验证请求，再把日期规范为 `YYYY-MM-DD`、method 规范为 canonical token、window 和 horizons 规范为十进制整数；finite decimal edges 规范为无指数、无无意义尾零的十进制字符串（负零为 `0`），并保持严格递增的 edge 顺序。Horizon 集合按数值升序规范化；不同输入顺序得到相同请求和 key。`instrument` 使用经输入校验的 `ts_code` identity，不发明指数别名或大小写折叠。
 
 规范对象用上述 semantic 字段名作为 JSON keys：instrument、method 与日期为字符串，window 与 horizon 数组成员为 JSON 整数，edge 数组成员为规范十进制字符串，method parameters 为空对象。以 keys 按字典序排列、无多余空白的 UTF-8 JSON 计算 SHA-256；完整小写十六进制 digest 就是 Study-owned run key。语义相同的默认/显式输入、等价 decimal 拼写或 horizon 顺序产生相同 key；任何这些 semantic values 的变化必须改变 identity。原始 argv、`--overwrite`、output root、执行时间、随机值和运行顺序均不参与。Study-local CLI 在调用 Snapshot 前完成 key 和 Research UI 的 collision 检查，并将 key 作为不透明目录名交给 Research UI；已有 run 的替换语义由后者拥有。
 
@@ -87,7 +87,7 @@ Run identity 包含 `instrument`、两端 sample dates、`reference_method`、`r
 ## Acceptance
 
 - Study request 的 public ID、每项 CLI 表达、必填性、默认值和校验必须与 Inputs 一致；省略/显式等价值产生相同规范请求与 run key，改变任何 semantic input 产生不同 identity。Run placement、collision 和 `--overwrite` 遵循 Research UI authority。
-- 每个 sample date 的 lagged reference/deviation 与 Distribution Study 一致；完整 deviation sample 按 shared quantile convention 生成可配置阈值，相同值不拆桶，零偏离和 forward 不足日期仍参与阈值。默认 60 SMA、默认 buckets 与 1/3/5 horizons 对应 Question 的核心检验；其他有效配置作为探索性结果标示。
+- 每个 sample date 的 lagged reference/deviation 符合 shared lagged-reference authority；完整 deviation sample 按 shared quantile convention 生成可配置阈值，相同值不拆桶，零偏离和 forward 不足日期仍参与阈值。默认 60 SMA、默认 buckets 与 1/3/5 horizons 对应 Question 的核心检验；其他有效配置作为探索性结果标示。
 - 每个配置 horizon 与固定 5D 的 forward return 只使用 sample 内的实际交易 observations；上下尾按同一正向 MR 解释，5D MFE 捕捉窗口内最强有利移动，且与固定 5D MR 使用同一有效日期。无有效 5D 观察时失败，不发布成功 evidence。
 - 每个 bucket × evaluation horizon 均有 MR count/mean/median/positive rate，5D MFE 有 count/mean/median；空组保留、统计为 `null`。Bucket 总数、互斥零偏离/forward 不足排除数与有效数能够逐组对账；规范请求、实际样本与 Snapshot provenance 足以复核结果。
 - 成功 run 同时提供 machine-readable evidence、每 bucket 主表、报告及配置 horizon 的静态主图；报告比较固定 5D MR 与 MFE，并保持 Limitations 的非因果、非交易结论边界。任何 finding 只有实际执行并获得 evidence 后才能陈述，核心假设不得预写为已成立。
