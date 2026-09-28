@@ -166,12 +166,16 @@ class MRStatistics:
     bucket_index: int
     horizon: int
     configured_horizon: bool
-    sample_count: int
+    eligible_sample_count: int
     zero_deviation_excluded_count: int
     insufficient_forward_excluded_count: int
-    mean: float | None
-    median: float | None
-    positive_rate: float | None
+    reversal_count: int
+    reversal_probability: float | None
+    conditional_reversal_magnitude_sample_count: int
+    conditional_reversal_magnitude_mean: float | None
+    conditional_reversal_magnitude_median: float | None
+    unconditional_mr_mean: float | None
+    unconditional_mr_median: float | None
 
 
 @dataclass(frozen=True)
@@ -274,17 +278,27 @@ def compute(request: ReversionRequest, snapshot: IndexDailyHistoryResult) -> Rev
                             )
                         )
             count = len(mr_values)
+            reversals = [value for value in mr_values if value > 0]
+            reversal_count = len(reversals)
             mr_rows.append(
                 MRStatistics(
                     bucket_index=bucket.bucket_index,
                     horizon=horizon,
                     configured_horizon=horizon in request.forward_horizons,
-                    sample_count=count,
+                    eligible_sample_count=count,
                     zero_deviation_excluded_count=zero_count,
                     insufficient_forward_excluded_count=insufficient_count,
-                    mean=_mean(mr_values),
-                    median=linear_quantile(mr_values, 0.5) if mr_values else None,
-                    positive_rate=sum(value > 0 for value in mr_values) / count if count else None,
+                    reversal_count=reversal_count,
+                    reversal_probability=reversal_count / count if count else None,
+                    conditional_reversal_magnitude_sample_count=reversal_count,
+                    conditional_reversal_magnitude_mean=_mean(reversals),
+                    conditional_reversal_magnitude_median=(
+                        linear_quantile(reversals, 0.5) if reversals else None
+                    ),
+                    unconditional_mr_mean=_mean(mr_values),
+                    unconditional_mr_median=(
+                        linear_quantile(mr_values, 0.5) if mr_values else None
+                    ),
                 )
             )
             if horizon == 5:
@@ -310,17 +324,42 @@ def compute(request: ReversionRequest, snapshot: IndexDailyHistoryResult) -> Rev
     )
 
 
-def _value(value: float | None) -> str:
-    return "—" if value is None else f"{value:.6g}"
+def _percent(value: float | None) -> str:
+    return "—" if value is None else f"{value:.2%}"
 
 
-def _write_chart(result: ReversionResult, path: Path) -> None:
+def _signed_percent(value: float) -> str:
+    return f"{value:+.2%}" if value else "0.00%"
+
+
+def _deviation_labels(buckets: tuple[Bucket, ...]) -> tuple[str, ...]:
+    labels: list[str] = []
+    for index, bucket in enumerate(buckets):
+        if len(buckets) == 1:
+            labels.append(
+                f"[{_signed_percent(bucket.deviation_lower_threshold)}, "
+                f"{_signed_percent(bucket.deviation_upper_threshold)}]"
+            )
+        elif index == 0:
+            labels.append(f"< {_signed_percent(bucket.deviation_upper_threshold)}")
+        elif index == len(buckets) - 1:
+            labels.append(f"≥ {_signed_percent(bucket.deviation_lower_threshold)}")
+        else:
+            labels.append(
+                f"[{_signed_percent(bucket.deviation_lower_threshold)}, "
+                f"{_signed_percent(bucket.deviation_upper_threshold)})"
+            )
+    return tuple(labels)
+
+
+def _write_chart(result: ReversionResult, path: Path, *, probability: bool) -> None:
     import matplotlib
 
     matplotlib.use("Agg")
     from matplotlib import pyplot as plt
+    from matplotlib.ticker import PercentFormatter
 
-    figure, axis = plt.subplots(figsize=(10, 5))
+    figure, axis = plt.subplots(figsize=(max(10, len(result.buckets) * 1.7), 5.5))
     horizons = result.request.forward_horizons
     width = 0.8 / len(horizons)
     for position, horizon in enumerate(horizons):
@@ -330,23 +369,36 @@ def _write_chart(result: ReversionResult, path: Path) -> None:
         ]
         axis.bar(
             x_values,
-            [float("nan") if row.mean is None else row.mean for row in rows],
+            [
+                float("nan")
+                if (value := (
+                    row.reversal_probability
+                    if probability
+                    else row.conditional_reversal_magnitude_median
+                )) is None
+                else value
+                for row in rows
+            ],
             width=width,
             label=f"{horizon}D",
         )
-    axis.axhline(0, color="black", linewidth=0.7)
+    if probability:
+        axis.axhline(0.5, color="black", linestyle="--", linewidth=0.9, label="50% reference")
+        axis.set_ylim(0, 1)
+    else:
+        axis.axhline(0, color="black", linewidth=0.7)
     axis.set_xticks([bucket.bucket_index for bucket in result.buckets])
-    axis.set_xticklabels(
-        [
-            f"{bucket.percentile_lower_edge:g}–{bucket.percentile_upper_edge:g}"
-            for bucket in result.buckets
-        ],
-        rotation=30,
-        ha="right",
+    axis.set_xticklabels(_deviation_labels(result.buckets), rotation=30, ha="right")
+    axis.set_xlabel("Price deviation from lagged reference (observed bucket range)")
+    axis.yaxis.set_major_formatter(PercentFormatter(1))
+    axis.set_ylabel(
+        "Reversal probability" if probability else "Median magnitude when reversal occurs"
     )
-    axis.set_xlabel("Full-sample deviation percentile bucket")
-    axis.set_ylabel("Mean direction-adjusted return (ratio)")
-    axis.set_title("Historical short-horizon mean reversion by bucket")
+    axis.set_title(
+        "Reversal probability by deviation range"
+        if probability
+        else "Conditional reversal magnitude by deviation range"
+    )
     axis.legend(title="Configured horizon")
     figure.tight_layout()
     figure.savefig(path, dpi=150)
@@ -361,7 +413,8 @@ def retain(
     observations_path = output_dir / "observations.csv"
     table_path = output_dir / "table.md"
     report_path = output_dir / "report.md"
-    chart_path = output_dir / "mr_by_bucket.png"
+    probability_chart = output_dir / "reversal_probability_by_deviation.png"
+    magnitude_chart = output_dir / "conditional_reversal_magnitude_by_deviation.png"
     payload = {
         "study_id": STUDY_ID,
         "run_key": result.run_key,
@@ -403,47 +456,67 @@ def retain(
             )
         )
 
-    header = ["Bucket", "Count", "Thresholds"]
+    labels = _deviation_labels(result.buckets)
+    rows_by_key = {(row.bucket_index, row.horizon): row for row in result.mr_statistics}
+    header = ["Deviation range", "Percentile range", "Bucket count"]
     for horizon in result.request.forward_horizons:
         header += [
-            f"{horizon}D MR n",
-            f"{horizon}D mean",
-            f"{horizon}D median",
-            f"{horizon}D positive",
+            f"{horizon}D reversal probability",
+            f"{horizon}D reversal magnitude median",
         ]
-    if 5 not in result.request.forward_horizons:
-        header += ["5D MR n", "5D MR mean", "5D MR median", "5D MR positive"]
-    header += ["5D MFE n", "5D MFE mean", "5D MFE median"]
     lines = [
-        "# Price-to-Lagged-MA Short-Horizon Reversion — main table",
+        "# Reversal probability and conditional magnitude by deviation range",
+        "",
+        "Probability denominator: all eligible MR observations at that bucket and horizon. "
+        "Magnitude uses only observations with MR > 0; its median is the typical reversal size. "
+        "— means undefined, including when no reversal occurred. "
+        "Values below are displayed as percentages; deviation labels are rounded to two "
+        "decimal places, and exact bucket thresholds are in result.json.",
         "",
         "| " + " | ".join(header) + " |",
         "| " + " | ".join("---" for _ in header) + " |",
     ]
     for bucket in result.buckets:
         cells = [
-            f"{bucket.percentile_lower_edge:g}–{bucket.percentile_upper_edge:g}",
+            labels[bucket.bucket_index],
+            f"{bucket.percentile_lower_edge:.0%}–{bucket.percentile_upper_edge:.0%}",
             str(bucket.bucket_observation_count),
-            f"{bucket.deviation_lower_threshold:.6g}–{bucket.deviation_upper_threshold:.6g}",
         ]
-        shown = list(result.request.forward_horizons)
-        if 5 not in shown:
-            shown.append(5)
-        for horizon in shown:
-            row = next(
-                row
-                for row in result.mr_statistics
-                if row.bucket_index == bucket.bucket_index and row.horizon == horizon
-            )
+        for horizon in result.request.forward_horizons:
+            row = rows_by_key[bucket.bucket_index, horizon]
             cells += [
-                str(row.sample_count),
-                _value(row.mean),
-                _value(row.median),
-                _value(row.positive_rate),
+                _percent(row.reversal_probability),
+                _percent(row.conditional_reversal_magnitude_median),
             ]
-        mfe = result.mfe_statistics[bucket.bucket_index]
-        cells += [str(mfe.sample_count), _value(mfe.mean), _value(mfe.median)]
         lines.append("| " + " | ".join(cells) + " |")
+    lines += [
+        "",
+        "## Supporting statistics and exclusions",
+        "",
+        "Unconditional MR combines reversals, zero moves, and continued moves. "
+        "Fixed 5D MFE is path-level evidence on the same eligible dates as 5D MR.",
+        "",
+        "| Deviation range | Horizon | Eligible MR n | Reversal / conditional n | "
+        "Conditional mean | Unconditional MR mean | Unconditional MR median | "
+        "Zero deviation excluded | Insufficient forward excluded | "
+        "5D MFE n | 5D MFE mean | 5D MFE median |",
+        "| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |",
+    ]
+    for row in result.mr_statistics:
+        mfe = result.mfe_statistics[row.bucket_index] if row.horizon == 5 else None
+        lines.append(
+            f"| {labels[row.bucket_index]} | {row.horizon}D"
+            f"{' (auxiliary)' if not row.configured_horizon else ''} | "
+            f"{row.eligible_sample_count} | {row.reversal_count} | "
+            f"{_percent(row.conditional_reversal_magnitude_mean)} | "
+            f"{_percent(row.unconditional_mr_mean)} | "
+            f"{_percent(row.unconditional_mr_median)} | "
+            f"{row.zero_deviation_excluded_count} | "
+            f"{row.insufficient_forward_excluded_count} | "
+            f"{mfe.sample_count if mfe else '—'} | "
+            f"{_percent(mfe.mean) if mfe else '—'} | "
+            f"{_percent(mfe.median) if mfe else '—'} |"
+        )
     table_path.write_text("\n".join((*lines, "")), encoding="utf-8")
     zero_exclusions = sum(row.zero_deviation_excluded_count for row in result.mr_statistics)
     forward_exclusions = sum(
@@ -453,8 +526,11 @@ def retain(
         "# Price-to-Lagged-MA Short-Horizon Reversion",
         "",
         "## Question",
-        "How strong was subsequent opposite-direction price movement at each historical "
-        "deviation percentile bucket?",
+        "How does the observed price deviation range relate to the probability and, "
+        "when it occurs, typical magnitude of subsequent opposite-direction movement?",
+        "Reversal probability is reversal count divided by all eligible MR observations. "
+        "Conditional magnitude uses only MR > 0 observations; MR = 0 remains in the "
+        "probability denominator and is not a reversal.",
         "The default 60-observation SMA / 1–5D relationship is a hypothesis to examine, "
         "not a finding.",
         "",
@@ -484,19 +560,63 @@ def retain(
         f"Across bucket × evaluation-horizon groups: {zero_exclusions} zero-deviation "
         f"and {forward_exclusions} insufficient-forward exclusions.",
         "",
-        "| Bucket | Horizon | Zero deviation | Insufficient forward | Valid |",
-        "| --- | ---: | ---: | ---: | ---: |",
+        "| Deviation range | Horizon | Zero deviation | Insufficient forward | "
+        "Eligible MR | Reversal |",
+        "| --- | ---: | ---: | ---: | ---: | ---: |",
     ]
     report_lines.extend(
-        f"| {row.bucket_index} | {row.horizon} | {row.zero_deviation_excluded_count} | "
-        f"{row.insufficient_forward_excluded_count} | {row.sample_count} |"
+        f"| {labels[row.bucket_index]} | {row.horizon} | "
+        f"{row.zero_deviation_excluded_count} | "
+        f"{row.insufficient_forward_excluded_count} | {row.eligible_sample_count} | "
+        f"{row.reversal_count} |"
         for row in result.mr_statistics
     )
-    report_lines += ["", "## Bucket thresholds and main table", *lines, ""]
+    report_lines += ["", "## Observed relationship", ""]
+    for horizon in result.request.forward_horizons:
+        eligible_rows = [
+            row
+            for row in result.mr_statistics
+            if row.horizon == horizon and row.reversal_probability is not None
+        ]
+        if not eligible_rows:
+            report_lines.append(f"{horizon}D: no eligible MR observations.")
+            continue
+        peak = max(eligible_rows, key=lambda row: row.reversal_probability or 0)
+        report_lines.append(
+            f"{horizon}D: highest observed reversal probability was "
+            f"{_percent(peak.reversal_probability)} at deviation {labels[peak.bucket_index]}; "
+            f"conditional median there was "
+            f"{_percent(peak.conditional_reversal_magnitude_median)}."
+        )
+        reversal_rows = [
+            row for row in eligible_rows if row.conditional_reversal_magnitude_median is not None
+        ]
+        if reversal_rows:
+            largest = max(
+                reversal_rows,
+                key=lambda row: row.conditional_reversal_magnitude_median or 0,
+            )
+            report_lines.append(
+                f"{horizon}D: highest conditional reversal median was "
+                f"{_percent(largest.conditional_reversal_magnitude_median)} at deviation "
+                f"{labels[largest.bucket_index]}; reversal probability there was "
+                f"{_percent(largest.reversal_probability)}."
+            )
+        else:
+            report_lines.append(f"{horizon}D: no reversal occurred in eligible observations.")
+    report_lines += [
+        "",
+        "## Deviation ranges and results",
+        *(
+            line.replace("## Supporting statistics", "### Supporting statistics")
+            for line in lines[2:]
+        ),
+        "",
+    ]
     report_lines += [
         "## Fixed 5D MR and MFE",
-        "The main table compares 5D endpoint MR with the strongest favorable movement "
-        "through T+5 on exactly the same eligible dates.",
+        "The supporting table compares 5D endpoint MR with the strongest favorable movement "
+        "through T+5 on exactly the same eligible dates. These are secondary evidence.",
         "",
         "## Limitations",
         "These are conditional historical descriptions of the selected index, reference, "
@@ -507,5 +627,13 @@ def retain(
         "",
     ]
     report_path.write_text("\n".join(report_lines), encoding="utf-8")
-    _write_chart(result, chart_path)
-    return result_path, observations_path, table_path, report_path, chart_path
+    _write_chart(result, probability_chart, probability=True)
+    _write_chart(result, magnitude_chart, probability=False)
+    return (
+        result_path,
+        observations_path,
+        table_path,
+        report_path,
+        probability_chart,
+        magnitude_chart,
+    )

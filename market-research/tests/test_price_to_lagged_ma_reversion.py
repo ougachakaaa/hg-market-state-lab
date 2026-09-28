@@ -6,6 +6,7 @@ import csv
 import hashlib
 import json
 import re
+from collections.abc import Sequence
 from dataclasses import replace
 from datetime import date, timedelta
 from pathlib import Path
@@ -174,20 +175,25 @@ def test_lagged_reference_buckets_horizons_and_mfe() -> None:
         row for row in result.mr_statistics if row.bucket_index == first_bucket and row.horizon == 5
     )
     mfe5 = result.mfe_statistics[first_bucket]
-    assert mr5.sample_count == mfe5.sample_count
-    assert mr5.mean == pytest.approx(100 / 90 - 1)
+    assert mr5.eligible_sample_count == mfe5.sample_count
+    assert mr5.unconditional_mr_mean == pytest.approx(100 / 90 - 1)
     assert mfe5.mean == pytest.approx(110 / 90 - 1)
     assert {row.horizon for row in result.mr_statistics} == {1, 3, 5}
-    assert sum(row.sample_count for row in result.mr_statistics if row.horizon == 1) > sum(
-        row.sample_count for row in result.mr_statistics if row.horizon == 5
+    assert sum(row.eligible_sample_count for row in result.mr_statistics if row.horizon == 1) > sum(
+        row.eligible_sample_count for row in result.mr_statistics if row.horizon == 5
     )
     for bucket in result.buckets:
         for row in (row for row in result.mr_statistics if row.bucket_index == bucket.bucket_index):
             assert bucket.bucket_observation_count == (
                 row.zero_deviation_excluded_count
                 + row.insufficient_forward_excluded_count
-                + row.sample_count
+                + row.eligible_sample_count
             )
+            assert row.conditional_reversal_magnitude_sample_count == row.reversal_count
+            if row.eligible_sample_count:
+                assert row.reversal_probability == pytest.approx(
+                    row.reversal_count / row.eligible_sample_count
+                )
 
 
 def test_configurable_horizons_fixed_five_and_empty_groups() -> None:
@@ -201,10 +207,18 @@ def test_configurable_horizons_fixed_five_and_empty_groups() -> None:
     assert {row.horizon for row in result.mr_statistics} == {2, 5, 7}
     assert all(not row.configured_horizon for row in result.mr_statistics if row.horizon == 5)
     assert len(result.mfe_statistics) == len(result.buckets)
-    assert sum(row.sample_count for row in result.mr_statistics if row.horizon == 7) == 2
-    empty = [row for row in result.mr_statistics if row.sample_count == 0]
+    assert sum(row.eligible_sample_count for row in result.mr_statistics if row.horizon == 7) == 2
+    empty = [row for row in result.mr_statistics if row.eligible_sample_count == 0]
     assert empty
-    assert all(row.mean is row.median is row.positive_rate is None for row in empty)
+    assert all(
+        row.reversal_count == row.conditional_reversal_magnitude_sample_count == 0
+        and row.reversal_probability is None
+        and row.conditional_reversal_magnitude_mean is None
+        and row.conditional_reversal_magnitude_median is None
+        and row.unconditional_mr_mean is None
+        and row.unconditional_mr_median is None
+        for row in empty
+    )
     assert all(
         row.mean is row.median is None for row in result.mfe_statistics if row.sample_count == 0
     )
@@ -217,7 +231,7 @@ def test_coincident_thresholds_keep_tied_states_in_one_bucket() -> None:
     assert set(result.observation_bucket_indices) == {3}
     assert [bucket.bucket_observation_count for bucket in result.buckets] == [0, 0, 0, 6]
     assert all(
-        row.sample_count == 0 and row.mean is None
+        row.eligible_sample_count == 0 and row.unconditional_mr_mean is None
         for row in result.mr_statistics
         if row.bucket_index != 3
     )
@@ -241,7 +255,7 @@ def test_zero_deviation_is_in_population_but_excluded_and_no_5d_fails() -> None:
         study.compute(request(), snapshot(prices=(90.0, 100.0, 100.0, 100.0, 110.0)))
 
 
-def test_no_favorable_price_move_gives_zero_mfe() -> None:
+def test_no_favorable_price_move_gives_zero_mfe(tmp_path: Path) -> None:
     rising = snapshot(prices=(110.0, 120.0, 130.0, 140.0, 150.0, 160.0))
     result = study.compute(request(), rising)
     bucket_index = result.observation_bucket_indices[0]
@@ -249,10 +263,36 @@ def test_no_favorable_price_move_gives_zero_mfe() -> None:
         row for row in result.mr_statistics if row.bucket_index == bucket_index and row.horizon == 5
     )
     mfe5 = result.mfe_statistics[bucket_index]
-    assert mr5.sample_count == mfe5.sample_count == 1
-    assert mr5.mean == pytest.approx(-(160 / 110 - 1))
-    assert mr5.positive_rate == 0
+    assert mr5.eligible_sample_count == mfe5.sample_count == 1
+    assert mr5.unconditional_mr_mean == pytest.approx(-(160 / 110 - 1))
+    assert mr5.reversal_count == mr5.conditional_reversal_magnitude_sample_count == 0
+    assert mr5.reversal_probability == 0
+    assert mr5.conditional_reversal_magnitude_mean is None
+    assert mr5.conditional_reversal_magnitude_median is None
     assert mfe5.mean == mfe5.median == 0
+    study.retain(result, rising, tmp_path)
+    assert "no reversal occurred" in (tmp_path / "report.md").read_text(encoding="utf-8")
+    assert "0.00% | —" in (tmp_path / "table.md").read_text(encoding="utf-8")
+
+
+def test_mixed_reversal_zero_move_and_conditional_denominator() -> None:
+    prices = (90.0, 100.0, 100.0, 80.0, 100.0, 110.0, 100.0)
+    result = study.compute(
+        request(percentile_bucket_edges=("0", "1"), forward_horizons=(1, 5)),
+        snapshot(prices=prices),
+    )
+    row = next(row for row in result.mr_statistics if row.horizon == 1)
+    reversals = [100 / 90 - 1, 100 / 80 - 1, -(100 / 110 - 1)]
+    assert row.eligible_sample_count == 5  # Zero deviation is excluded; zero MR remains.
+    assert row.reversal_count == row.conditional_reversal_magnitude_sample_count == 3
+    assert row.reversal_probability == pytest.approx(3 / 5)
+    assert row.conditional_reversal_magnitude_mean == pytest.approx(sum(reversals) / 3)
+    assert row.conditional_reversal_magnitude_median == pytest.approx(sorted(reversals)[1])
+    assert row.unconditional_mr_mean != pytest.approx(row.conditional_reversal_magnitude_mean)
+    row5 = next(row for row in result.mr_statistics if row.horizon == 5)
+    assert row5.eligible_sample_count == 2
+    assert row5.reversal_count == 1
+    assert row5.reversal_probability == pytest.approx(0.5)
 
 
 def test_volume_weighted_uses_prior_volumes_and_rejects_missing_volume() -> None:
@@ -268,6 +308,18 @@ def test_cli_public_boundary_evidence_collision_and_overwrite(
     root = configure(tmp_path, monkeypatch)
     args = [*BASE_ARGS, "--window", "1", "--bucket-edges", "0,0.25,0.5,0.75,1"]
     calls: list[IndexDailyHistoryRequest] = []
+    chart_labels: list[tuple[str, ...]] = []
+    from matplotlib.axes import Axes
+
+    original_set_xticklabels = Axes.set_xticklabels
+
+    def capture_labels(
+        self: Axes, labels: Sequence[str], *args: object, **kwargs: object
+    ) -> object:
+        chart_labels.append(tuple(str(label) for label in labels))
+        return original_set_xticklabels(self, labels, *args, **kwargs)  # type: ignore[arg-type]
+
+    monkeypatch.setattr(Axes, "set_xticklabels", capture_labels)
 
     def run_snapshot(value: IndexDailyHistoryRequest) -> IndexDailyHistoryResult:
         calls.append(value)
@@ -283,7 +335,8 @@ def test_cli_public_boundary_evidence_collision_and_overwrite(
         "observations.csv",
         "table.md",
         "report.md",
-        "mr_by_bucket.png",
+        "reversal_probability_by_deviation.png",
+        "conditional_reversal_magnitude_by_deviation.png",
     }
     payload = json.loads((run_dir / "result.json").read_text(encoding="utf-8"))
     assert payload["study_id"] == cli.STUDY_ID
@@ -299,22 +352,46 @@ def test_cli_public_boundary_evidence_collision_and_overwrite(
     assert len(list(csv.DictReader((run_dir / "observations.csv").open(encoding="utf-8")))) == 9
     assert len(payload["mr_statistics"]) == len(payload["buckets"]) * 3
     assert len(payload["mfe_5d_statistics"]) == len(payload["buckets"])
+    assert chart_labels[0] == chart_labels[1]
+    assert chart_labels[0][0].startswith("< ")
+    assert chart_labels[0][-1].startswith("≥ ")
+    assert all("%" in label for label in chart_labels[0])
     for row in payload["mr_statistics"]:
         bucket = payload["buckets"][row["bucket_index"]]
         assert bucket["bucket_observation_count"] == (
             row["zero_deviation_excluded_count"]
             + row["insufficient_forward_excluded_count"]
-            + row["sample_count"]
+            + row["eligible_sample_count"]
         )
-        if row["sample_count"] == 0:
-            assert row["mean"] is row["median"] is row["positive_rate"] is None
-    assert "5D MR n" in (run_dir / "table.md").read_text(encoding="utf-8")
-    assert (run_dir / "mr_by_bucket.png").read_bytes().startswith(b"\x89PNG\r\n\x1a\n")
+        assert row["conditional_reversal_magnitude_sample_count"] == row["reversal_count"]
+        if row["eligible_sample_count"]:
+            assert row["reversal_probability"] == pytest.approx(
+                row["reversal_count"] / row["eligible_sample_count"]
+            )
+        else:
+            assert row["reversal_probability"] is None
+        if row["reversal_count"] == 0:
+            assert row["conditional_reversal_magnitude_mean"] is None
+            assert row["conditional_reversal_magnitude_median"] is None
+    table = (run_dir / "table.md").read_text(encoding="utf-8")
+    assert "Deviation range | Percentile range | Bucket count" in table
+    assert "1D reversal probability | 1D reversal magnitude median" in table
+    assert "5D MFE n" in table
+    assert chart_labels[0][0] in table
+    assert "highest conditional reversal median" in (
+        run_dir / "report.md"
+    ).read_text(encoding="utf-8")
+    for chart in (
+        "reversal_probability_by_deviation.png",
+        "conditional_reversal_magnitude_by_deviation.png",
+    ):
+        assert (run_dir / chart).read_bytes().startswith(b"\x89PNG\r\n\x1a\n")
     for heading in (
         "Question",
         "Inputs",
         "Sample and exclusions",
-        "Bucket thresholds",
+        "Deviation ranges and results",
+        "Observed relationship",
         "Fixed 5D MR and MFE",
         "Limitations",
     ):
