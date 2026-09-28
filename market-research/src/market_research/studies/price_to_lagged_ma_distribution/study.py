@@ -18,7 +18,6 @@ from types import MappingProxyType
 from market_snapshot.products.index_daily_history import (
     IndexDailyHistoryRequest,
     IndexDailyHistoryResult,
-    IndexDailyObservation,
 )
 
 from ...shared.distribution import (
@@ -27,6 +26,13 @@ from ...shared.distribution import (
     descriptive_summary,
     fixed_width_distribution,
     linear_quantile,
+)
+from ...shared.price_to_lagged_reference import (
+    LaggedReferenceError,
+    PriceToLaggedMAObservation,
+)
+from ...shared.price_to_lagged_reference import (
+    compute_daily_observations as _compute_daily_observations,
 )
 
 _ISO_DATE = re.compile(r"[0-9]{4}-[0-9]{2}-[0-9]{2}\Z")
@@ -137,15 +143,6 @@ class PriceToLaggedMARequest:
 
 
 @dataclass(frozen=True)
-class PriceToLaggedMAObservation:
-    trade_date: str
-    instrument: str
-    close: float
-    reference_ma: float
-    deviation: float
-
-
-@dataclass(frozen=True)
 class RequestedPercentile:
     probability: float
     value: float
@@ -208,101 +205,40 @@ def derive_snapshot_request(request: PriceToLaggedMARequest) -> IndexDailyHistor
     )
 
 
-def _finite_fact(value: object, name: str, *, positive: bool) -> float:
-    if isinstance(value, bool) or not isinstance(value, int | float):
-        raise PriceToLaggedMAStudyError(f"Snapshot {name} must be finite numeric.")
+def compute_daily_observations(
+    instrument: str,
+    start_trade_date: str,
+    end_trade_date: str,
+    reference_window: int,
+    reference_method: str,
+    snapshot: IndexDailyHistoryResult,
+) -> tuple[PriceToLaggedMAObservation, ...]:
+    """Preserve the Study entry point and its Study-level failure type."""
     try:
-        number = float(value)
-    except (OverflowError, ValueError) as exc:
-        raise PriceToLaggedMAStudyError(f"Snapshot {name} must be finite numeric.") from exc
-    if not math.isfinite(number) or (number <= 0 if positive else number < 0):
-        raise PriceToLaggedMAStudyError(f"Snapshot {name} violates its numeric contract.")
-    return number
-
-
-def _validate_snapshot(request: PriceToLaggedMARequest, snapshot: IndexDailyHistoryResult) -> None:
-    if (
-        snapshot.ts_code != request.instrument
-        or snapshot.requested_start_trade_date != request.sample_start_trade_date
-        or snapshot.requested_end_trade_date != request.sample_end_trade_date
-        or snapshot.requested_pre_start_observation_count != request.reference_window
-    ):
-        raise PriceToLaggedMAStudyError("Snapshot result does not match the Study request.")
-    warmup = snapshot.warmup_observations
-    sample = snapshot.sample_observations
-    if len(warmup) != request.reference_window or not sample:
-        raise PriceToLaggedMAStudyError("Snapshot result has incomplete warm-up or sample.")
-    previous: str | None = None
-    for row in (*warmup, *sample):
-        trade_date = _date(row.trade_date, "Snapshot trade_date")
-        if previous is not None and trade_date <= previous:
-            raise PriceToLaggedMAStudyError("Snapshot observations must be unique and ascending.")
-        previous = trade_date
-        _finite_fact(row.close, "close", positive=True)
-        if row.volume is not None:
-            _finite_fact(row.volume, "volume", positive=False)
-    if warmup[-1].trade_date >= request.sample_start_trade_date:
-        raise PriceToLaggedMAStudyError("Snapshot warm-up must precede the sample bounds.")
-    if (
-        sample[0].trade_date < request.sample_start_trade_date
-        or sample[-1].trade_date > request.sample_end_trade_date
-    ):
-        raise PriceToLaggedMAStudyError("Snapshot sample is outside requested bounds.")
-
-
-def _reference(window: tuple[IndexDailyObservation, ...], method: str) -> float:
-    try:
-        if method == "sma":
-            value = math.fsum(row.close / len(window) for row in window)
-        else:
-            volumes = [row.volume for row in window]
-            if any(volume is None for volume in volumes):
-                raise PriceToLaggedMAStudyError("volume_weighted requires every prior volume.")
-            usable = [volume for volume in volumes if volume is not None]
-            largest = max(usable)
-            if largest <= 0:
-                raise PriceToLaggedMAStudyError("volume_weighted requires positive total volume.")
-            scaled = [volume / largest for volume in usable]
-            total = math.fsum(scaled)
-            value = math.fsum(
-                row.close * (weight / total)
-                for row, weight in zip(window, scaled, strict=True)
-            )
-    except PriceToLaggedMAStudyError:
-        raise
-    except (OverflowError, ValueError, ZeroDivisionError) as exc:
-        raise PriceToLaggedMAStudyError("reference_ma cannot be calculated.") from exc
-    if not math.isfinite(value) or value <= 0:
-        raise PriceToLaggedMAStudyError("reference_ma must be finite and positive.")
-    return value
+        return _compute_daily_observations(
+            instrument,
+            start_trade_date,
+            end_trade_date,
+            reference_window,
+            reference_method,
+            snapshot,
+        )
+    except LaggedReferenceError as exc:
+        raise PriceToLaggedMAStudyError(str(exc)) from exc
 
 
 def compute(
     request: PriceToLaggedMARequest, snapshot: IndexDailyHistoryResult
 ) -> PriceToLaggedMAResult:
     """Compute one lagged deviation per Snapshot sample observation."""
-    _validate_snapshot(request, snapshot)
-    history = list(snapshot.warmup_observations)
-    daily: list[PriceToLaggedMAObservation] = []
-    for row in snapshot.sample_observations:
-        window = tuple(history[-request.reference_window :])
-        reference = _reference(window, request.reference_method)
-        try:
-            deviation = float(Decimal(str(row.close)) / Decimal(str(reference)) - 1)
-        except (OverflowError, ValueError) as exc:
-            raise PriceToLaggedMAStudyError("deviation must be finite.") from exc
-        if not math.isfinite(deviation):
-            raise PriceToLaggedMAStudyError("deviation must be finite.")
-        daily.append(
-            PriceToLaggedMAObservation(
-                trade_date=row.trade_date,
-                instrument=request.instrument,
-                close=row.close,
-                reference_ma=reference,
-                deviation=deviation,
-            )
-        )
-        history.append(row)
+    daily = compute_daily_observations(
+        request.instrument,
+        request.sample_start_trade_date,
+        request.sample_end_trade_date,
+        request.reference_window,
+        request.reference_method,
+        snapshot,
+    )
 
     deviations = tuple(row.deviation for row in daily)
     granularity = float(request.distribution_granularity)
@@ -312,7 +248,7 @@ def compute(
     return PriceToLaggedMAResult(
         request=request,
         run_key=run_key(request),
-        daily_observations=tuple(daily),
+        daily_observations=daily,
         distribution_bins=fixed_width_distribution(deviations, granularity),
         percentiles=tuple(
             RequestedPercentile(probability, linear_quantile(deviations, probability))

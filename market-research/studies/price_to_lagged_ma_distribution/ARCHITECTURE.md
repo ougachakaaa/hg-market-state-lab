@@ -1,14 +1,14 @@
 # Price-to-Lagged-MA Distribution retained study authority
 
-本文档是 `Price-to-Lagged-MA Distribution`（Study 01）的唯一 canonical retained Study authority。Research 边界与 retained Study 约定见 [market-research architecture](../../ARCHITECTURE.md)；run placement 与 Study-local CLI 职责见 [Research UI authority](../../ui/ARCHITECTURE.md)；quantile、fixed-width bins 与 summary 的算法见 [Empirical Distribution Research Semantics](../../shared/distribution/ARCHITECTURE.md)；输入产品与 public boundary 分别见 [Index Daily History product](../../../market-snapshot/src/market_snapshot/products/index_daily_history/ARCHITECTURE.md) 和 [read/application contract](../../../market-snapshot/src/market_snapshot/products/index_daily_history/read-contract.md)。
+本文档是 `Price-to-Lagged-MA Distribution`（Study 01）的独立 canonical retained Study authority。Research 边界与 retained Study 约定见 [market-research architecture](../../ARCHITECTURE.md)；run placement 与 Study-local CLI 职责见 [Research UI authority](../../ui/ARCHITECTURE.md)；lagged reference 与 deviation 见 [Price-to-Lagged-Reference Research Semantics](../../shared/price_to_lagged_reference/ARCHITECTURE.md)；quantile、fixed-width bins 与 summary 的算法见 [Empirical Distribution Research Semantics](../../shared/distribution/ARCHITECTURE.md)；输入产品与 public boundary 分别见 [Index Daily History product](../../../market-snapshot/src/market_snapshot/products/index_daily_history/ARCHITECTURE.md) 和 [read/application contract](../../../market-snapshot/src/market_snapshot/products/index_daily_history/read-contract.md)。
 
-Stable public Study ID 是 `price-to-lagged-ma-distribution`；未来对应的 executable package 是 `market-research/src/market_research/studies/price_to_lagged_ma_distribution/`。本 Study 拥有下述研究语义与 retained evidence，不拥有 Snapshot Source facts 或 shared distribution 算法。
+Stable public Study ID 是 `price-to-lagged-ma-distribution`；对应的 executable package 是 `market-research/src/market_research/studies/price_to_lagged_ma_distribution/`。本 Study 拥有下述研究语义与 retained evidence，不拥有 Snapshot Source facts、shared lagged-reference/deviation 或 shared distribution 算法。
 
 ## Question
 
 > 对指定指数，在给定历史 sample interval 和 lagged moving-reference definition 下，每日收盘价相对前一时点 reference 的偏离幅度如何经验分布？
 
-Canonical daily quantity 为 `D_T = Close_T / Reference_{T-1} - 1`。本 Study 只描述所选历史样本中的分布，不从偏离推断未来涨跌、均值回归、真正市场中心或交易行为。
+研究的 daily quantity 为 shared authority 定义的 `D_T = Close_T / Reference_{T-1} - 1`。本 Study 只描述所选历史样本中的分布，不从偏离推断未来涨跌、均值回归、真正市场中心或交易行为。
 
 ## Inputs
 
@@ -66,26 +66,7 @@ Study 消费完整 `IndexDailyHistoryResult` 中分开的 `warmup_observations[]
 
 ### Lagged reference 与 warm-up
 
-对每个 sample observation `T`，`reference_window = N` 指该指数在 `T` **之前紧邻的 N 条实际 observations**，不是 N 个日历日。按 `trade_date` 升序连接 warm-up 和 sample observations，计算：
-
-```text
-Reference_{T-1} = reference_method(observations T-N ... T-1)
-D_T             = Close_T / Reference_{T-1} - 1
-```
-
-`Close_T` 绝不参与自己的 `Reference_{T-1}`。第一条 sample observation `T0` 使用恰好 N 条 pre-start warm-up observations 形成 reference，并进入 deviation sample；后续 sample rows 可以成为更晚日期的 lagged reference 输入。Warm-up rows 只用于 reference，不进入最终统计样本。产品不能提供完整 warm-up 时整个请求失败，Study 不缩短窗口或丢弃样本起点。
-
-### V1 reference methods
-
-`sma` 对 prior N 条 `close` 取算术平均。`volume_weighted` 对同一 prior N 条计算：
-
-```text
-Reference = sum(close_i * volume_i) / sum(volume_i)
-```
-
-SMA 所需的每个 `close` 必须可用；其正值与 finite 约束由 Snapshot product contract 保证，Study 遇到违反 contract 的结果仍须显式失败。Volume-weighted method 要求每个所需 `volume` 非 null、finite 且 `>= 0`，并要求 `sum(volume_i) > 0`；否则整个 run 失败，不填值、不回退 SMA、不删除日期。任一 method 的最终 reference 必须 finite 且严格大于零，计算出的 deviation 也必须 finite；失败不得变成 NaN、infinity、除零或静默跳过。
-
-V1 只正式定义 `sma` 与 `volume_weighted`，两者的 `reference_method_parameters = {}`。`decay_weighted` 明确 deferred：当前尚未锁定 weight function、decay parameter semantic、normalization rule 与 age direction，Implementation Agent 不得自行发明 decay formula。未来新增 decay 或其他加权方法，须先在本 Study authority 中定义 canonical method token、method-specific parameters、deterministic weighting formula 与 validation/failure semantics；不能以含糊的 `weighted`、`decay` 或 `custom` 名称代替公式。当前 reference 与 deviation 仅由本 Study 拥有，不提升为 shared MA、reference 或 feature framework。
+每个 sample observation 的 reference、deviation、正式 method、输入有效性与失败规则均由 [shared lagged-reference authority](../../shared/price_to_lagged_reference/ARCHITECTURE.md) 定义。第一条 sample observation 使用完整 pre-start warm-up 形成 reference 并进入本 Study 的 deviation sample；warm-up rows 不进入最终分布统计。调用产品时要求 `pre_start_observation_count = reference_window`，产品不能提供完整 warm-up 时整个请求失败。
 
 ### Daily observations 与 eligible sample
 
@@ -107,7 +88,7 @@ Study 将完整 `deviations[]` 交给 shared distribution capability。`percenti
 
 Retained summary 使用共享的 `sample_count`、`mean`、`median`、`sample_standard_deviation`、`min`、`max`。任意非空且有效的 deviation sample 均可成功；`sample_count = 1` 时，daily observation、fixed-width distribution、empirical percentiles、mean、median、min 与 max 仍有定义，`sample_standard_deviation = null`，不使整个 Study 失败，也不伪造 `0`、NaN 或 infinity。`sample_count >= 2` 时使用 `ddof = 1` 的 sample standard deviation。Study 不添加 skewness、kurtosis、normality test、KDE 或 parametric fit。
 
-## Execution identity
+### Execution identity
 
 一次 retained run 只表示一个完整 semantic request，不自动 sweep 多个 window 或 method。重复运行不同参数可构成后续人工比较，但本 Study 不定义 Experiment Engine。
 
@@ -119,7 +100,7 @@ Study-owned run key 包含 Inputs 列出的全部字段。先验证 request，�
 
 等价的 CLI 数值拼写或 percentile 输入顺序得到相同 key；任何 evidence-affecting semantic parameter 都参与完整 digest。12 位后缀是紧凑目录标识，存在非零 hash-prefix collision 风险；完整 digest 与规范 request 必须在 `request.json` 中保留。当前时间、随机值、输出路径和执行顺序不参与 identity。Study-local CLI 将 key 作为不透明目录名交给 Research UI，placement 与 collision/overwrite 行为遵循其 authority。既有完整 SHA-256 命名目录无需迁移或按 request 查找；新规则仅用于新执行。
 
-## Results 与 retained evidence
+## Results
 
 成功 run 在 canonical run directory 中至少保留：
 
@@ -135,8 +116,15 @@ Study-owned run key 包含 Inputs 列出的全部字段。先验证 request，�
 
 机器可读结果的数值保留上述 canonical unit；百分号仅属于报告或图形标注。图形帮助观察分布，不增加 signal zone、forecast 或 trading recommendation。本 Study 尚未运行真实研究，因此当前没有统计数值、plot 或 finding；首次真实 run 才产生上述 evidence。
 
-## Limitations 与后续研究
+## Limitations
 
 结果只描述指定指数、日期边界、reference definition 与完整历史 sample 下的经验分布；更换任一项会改变研究问题。偏离零较远不自动意味着 mispricing、overbought/oversold 或均值回归机会。Volume-weighted reference 使用 Snapshot 提供的成交量事实，其权重不表示可交易性或未来价格影响。
 
-Future return、forward path、mean-reversion testing、best/optimal MA、true market center、center migration、regime detection、basis、volatility/valuation conditioning、signal generation、position sizing、portfolio decision、forecasting、modeling 与 backtesting 均不属于本 Study。未来 Study 若真正复用 lagged reference/deviation semantic，须先作新的 semantic decision，才考虑将其提升为 shared Research semantic；本 Study 不预建该抽象。
+Future return、forward path、mean-reversion testing、best/optimal MA、true market center、center migration、regime detection、basis、volatility/valuation conditioning、signal generation、position sizing、portfolio decision、forecasting、modeling 与 backtesting 均不属于本 Study。两个现有 Study 共用的 lagged reference/deviation 已由独立 shared authority 拥有；这不将本 Study 的分布问题或产物提升为共享语义。
+
+## Acceptance
+
+- Study request 的七个 study-specific flags 均必填，校验、规范化、run identity 与 `--overwrite` 行为符合 Inputs、Method 和 Research UI authority；等价数值拼写或 percentile 顺序产生相同 identity，改变任一 evidence-affecting 输入改变完整 semantic digest。
+- Index Daily History 提供完整 warm-up 与非空 sample；每条 sample observation 均按 shared lagged-reference/deviation 语义得到一条有效 daily observation，不能计算时整个 run 失败，不以删行取得成功。
+- 所有有效 deviations 形成完整的 empirical distribution、按数值升序的配置 percentiles 和 descriptive summary；单条 sample 的 `sample_standard_deviation` 为 `null`，不是失败。
+- 成功 run 保留 Results 列出的 machine-readable artifacts、报告和静态分布图；规范请求、实际请求 bounds、warm-up/sample counts 与逐日 observation 足以复核研究结果。未执行真实研究前不陈述统计数值或 finding。

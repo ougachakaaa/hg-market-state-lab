@@ -27,6 +27,20 @@ annualized_basis_pct
 
 Study 不读取 Snapshot Raw，不调用 Capture 或 Preparation internals，不依赖 persistence path，不通过 backend-api / HTTP 获取内部业务数据，也不重算 Snapshot 拥有的 slot、basis 或 annualization semantics。当前 public result 已足够支撑 V1，不需要新 Snapshot product、field 或 Source requirement。
 
+### Study-local invocation
+
+Stable Study ID 为 `im-basis-forward-return-association`。从 repository root 通过统一 CLI 运行：
+
+```bash
+lab research run im-basis-forward-return-association --start 2024-01-01 --end 2026-01-01
+```
+
+`--start` 与 `--end` 为 required inclusive `YYYY-MM-DD` dates，不使用 today/latest/default。同一日期区间的 canonical run directory 已存在时默认失败；显式 `--overwrite` 才允许事务性替换。`--start` 映射为 `start_trade_date`，`--end` 映射为 `end_trade_date`；两者须为有效日历日期且 start 不晚于 end。省略、无效或逆序日期必须失败，不能由 implementation 选择默认区间。完整参数帮助由以下命令生成：
+
+```bash
+lab research run im-basis-forward-return-association --help
+```
+
 ## Method
 
 ### Daily predictor
@@ -128,19 +142,9 @@ positive_return_rate
 
 必须有足够 observation dates 形成包含 20D target 的 common sample。如果 common sample 太小、predictor 或任一 horizon outcome 无方差、阈值 ties 导致任一 quintile 为空，或任何必需统计量不可定义，整次 retained run 必须显式报告样本或变异不足并失败。不输出部分 evidence、空统计值、推测值或缩短后的 horizon set。
 
-## Execution
+### Retained run identity
 
-Stable Study ID 为 `im-basis-forward-return-association`。从 repository root 通过统一 CLI 运行：
-
-```bash
-lab research run im-basis-forward-return-association --start 2024-01-01 --end 2026-01-01
-```
-
-`--start` 与 `--end` 为 required inclusive `YYYY-MM-DD` dates，不使用 today/latest/default。同一日期区间的 canonical run directory 已存在时默认失败；显式 `--overwrite` 才允许事务性替换。完整参数帮助由以下命令生成：
-
-```bash
-lab research run im-basis-forward-return-association --help
-```
+本 Study 的 semantic request 由显式 start/end dates 决定；相同规范日期区间使用 [Research UI authority](../../ui/ARCHITECTURE.md) 已记录的 `<start_trade_date>__<end_trade_date>` deterministic run key。`--overwrite` 不改变 semantic request；collision 与 output placement 遵循 Research UI authority。
 
 ## Results
 
@@ -189,7 +193,7 @@ Retained result 仍是 exploratory Research Evidence，不得直接输出 foreca
 
 Future statistical improvements 可以包括 HAC / Newey-West inference、bootstrap、robustness tests、out-of-sample evaluation、rolling regression、alternative predictors 与 nonlinear methods，但全部不属于 V1。
 
-## Research / Modeling boundary
+### Research / Modeling boundary
 
 ```text
 CSI1000 IM Basis History
@@ -205,7 +209,7 @@ retained Research Evidence
 
 本 Study 定位为 association / predictive-association research，不是 production forecast model。如果未来 evidence 显示 basis 具有稳定预测价值，仍必须经过 `Evidence → Semantic Decision → Modeling Authority`；本 Study 不建立 Research 到 Modeling 的 runtime dependency 或自动 promotion。
 
-## Strict non-goals
+### Strict non-goals
 
 ```text
 HAC / Newey-West or bootstrap
@@ -219,3 +223,9 @@ HTTP endpoint or frontend
 generic statistics or feature framework
 database or cache
 ```
+
+## Acceptance
+
+- 显式且有效的含端点日期区间通过 Snapshot public boundary 产生完整四槽 panel；`non_front_mean_basis` 由 shared IM-basis authority 定义，不消费 Baseline Study 的 retained result。
+- 六个 horizon 共用满足 20 条后续实际 observations 的 predictor sample；每个 horizon 的 forward return、Pearson、带截距 OLS 与 quintile 条件统计符合 Method。样本、方差或 quintile 不足以定义必需统计量时整次 run 失败，不保留部分 evidence。
+- 成功结果至少保留 Results 已列的 sample summary、association summary table 与 quintile table；实际 query bounds、有效 predictor 范围、共同 sample count 与 predictor identity 足以解释表格。允许的图形只展示 exploratory association，不作显著性、因果、预测或交易结论。

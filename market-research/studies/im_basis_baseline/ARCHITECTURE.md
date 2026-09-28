@@ -24,6 +24,20 @@ annualized_basis_pct
 
 并可在 diagnostic 输出中保留其他 result facts。Research 不重新定义 slot、days-to-delist 或 basis formula，不读取 Snapshot Capture、Raw、Preparation internals、persistence layout 或 HTTP DTO。
 
+### Study-local invocation
+
+Stable Study ID 为 `im-basis-baseline`。从 repository root 通过统一 CLI 运行：
+
+```bash
+lab research run im-basis-baseline --start 2024-01-01 --end 2026-01-01
+```
+
+`--start` 与 `--end` 为 required inclusive `YYYY-MM-DD` dates，不使用 today/latest/default。同一日期区间的 canonical run directory 已存在时默认失败；显式 `--overwrite` 才允许事务性替换。`--start` 映射为 `start_trade_date`，`--end` 映射为 `end_trade_date`；两者须为有效日历日期且 start 不晚于 end。省略、无效或逆序日期必须失败，不能由 implementation 选择默认区间。完整参数帮助由以下命令生成：
+
+```bash
+lab research run im-basis-baseline --help
+```
+
 ## Method
 
 ### Daily series
@@ -69,23 +83,13 @@ Canonical statistical conventions：
 
 除统计表外，Study 可以保留 per-series time-series plot、histogram / empirical distribution 和 term-structure comparison plots。图形仅呈现 descriptive evidence，不增加交易阈值、signal zone 或 directional label。
 
-## Execution
+### Retained run identity
 
-Stable Study ID 为 `im-basis-baseline`。从 repository root 通过统一 CLI 运行：
-
-```bash
-lab research run im-basis-baseline --start 2024-01-01 --end 2026-01-01
-```
-
-`--start` 与 `--end` 为 required inclusive `YYYY-MM-DD` dates，不使用 today/latest/default。同一日期区间的 canonical run directory 已存在时默认失败；显式 `--overwrite` 才允许事务性替换。完整参数帮助由以下命令生成：
-
-```bash
-lab research run im-basis-baseline --help
-```
+本 Study 的 semantic request 由显式 start/end dates 决定；相同规范日期区间使用 [Research UI authority](../../ui/ARCHITECTURE.md) 已记录的 `<start_trade_date>__<end_trade_date>` deterministic run key。`--overwrite` 不改变 semantic request；collision 与 output placement 遵循 Research UI authority。
 
 ## Results
 
-尚未运行真实研究，当前无统计结果、plot 或 finding。本节不使用 placeholder 数值。未来首次 retained run 必须与 query bounds、方法版本和输出共置，并在结果变成项目语义之前继续作为 Research evidence。
+成功 retained baseline 的统计表覆盖 `M0`、`M1`、`Q1`、`Q2` 与 `non_front_mean_basis` 五个 daily series，逐 series 保留 Method 列出的 count、summary、percentiles 与 min/max，单位为 percentage points annualized。尚未运行真实研究，当前无统计结果、plot 或 finding；本节不使用 placeholder 数值。未来首次 retained run 必须与实际 query bounds 和统计输出共置，并在结果变成项目语义之前继续作为 Research evidence。
 
 ## Limitations
 
@@ -94,7 +98,7 @@ lab research run im-basis-baseline --help
 - 样本区间由每次 run 的显式 query bounds 决定，不代表所有市场环境。
 - Baseline 是 descriptive / exploratory evidence，不证明 causal relation、tradability 或 predictive power。
 
-## Strict non-goals
+### Strict non-goals
 
 ```text
 future return
@@ -109,3 +113,9 @@ recommendation
 ```
 
 即使 `M0` 呈现 convergence anomaly，本 Study 也只能把它保留为 finding 或 future research question，不得自动提升为套利规则、Modeling semantic 或 production decision。
+
+## Acceptance
+
+- 显式且有效的含端点日期区间通过 Snapshot public boundary 产生完整四槽 panel；缺槽、重复 slot 或无法计算的共用 predictor 必须失败，不填补或删除 observation date。
+- 对四个 slot 与 `non_front_mean_basis` 五个 daily series 使用已明确的统计量和 shared quantile convention；每个 series 的 `count >= 2`，`standard_deviation` 使用 `ddof = 1`，`median` 与 `P50` 一致，数值保留 percentage points annualized 单位。
+- Retained baseline 与实际 query bounds 和统计表共置；任何图形只展示 descriptive evidence。当前没有真实统计数值或 finding，不能将未来结果预写成预测或交易结论。
