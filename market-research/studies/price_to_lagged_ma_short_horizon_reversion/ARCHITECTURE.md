@@ -38,31 +38,51 @@ lab research run price-to-lagged-ma-short-horizon-reversion \
 
 Study-local CLI 通过 Index Daily History 的 production-ready public Python entry 提交 `ts_code = instrument`、上述起止日期，以及 `pre_start_observation_count = reference_window`。消费分开的 `warmup_observations[]` 与 `sample_observations[]`：warm-up 只形成 lagged reference，不进入 percentile population 或 forward outcome。产品提供精确 warm-up、有效 close 和有序 sample 的成功/失败契约；本 Study 不读取 Source、Capture、Raw、私有 Preparation、credential 或 HTTP DTO，不填补不存在的交易日，也不为 sample end 之后的 forward outcome 补取数据。
 
-## Method
-
-### 状态、经验 percentile 与归桶
-
-对每个 sample observation `T`，使用 shared lagged-reference authority 定义的 `D_T = Close_T / Reference_{T-1} - 1`。此前 `reference_window` 条实际 observations、`Close_T` 不进入自身 reference、`sma`、`volume_weighted`、当前无 method-specific parameters、warm-up 完整性及计算失败规则均以该 shared authority 为准；不能因某日不可计算而缩小样本或静默删行。
-
-将**完整 sample** 的所有有效 `D_T` 作为 empirical quantile 的 numeric sample，按 shared convention 求每个配置 percentile edge 的 deviation 阈值。`D_T = 0` 和后来因 forward 数据不足而不能进入方向性统计的日期仍参与阈值计算。各 bucket 按相邻阈值形成左闭右开区间；共同阈值上的观察归较高 bucket，最后一个 bucket 包含最大值。相同 `D_T` 总归同一 bucket；阈值重合可使 bucket 为空，不按日期或排序位置拆分相同状态。
-
-### Forward outcome 与有效观察
-
-对正整数 horizon `h`，`R_{T,h} = Close_{T+h} / Close_T - 1`，其中 `T+h` 是 sample 内第 `h` 条后续实际交易 observation，不是日历日。`D_T < 0` 时 `MR_{T,h} = R_{T,h}`；`D_T > 0` 时 `MR_{T,h} = -R_{T,h}`。`MR > 0` 表示未来价格朝当日 reference 的方向移动，`MR < 0` 表示继续远离；只衡量未来价格回报方向，不把未来 deviation 缩小当作主要 outcome。`D_T = 0` 无反向方向，从所有 MR/MFE 统计排除。
-
-除配置的 horizons 外，固定计算 5D MR，保证所有配置均能与 5D MFE 比较；若配置已含 5，只计算和保留同一个 5D MR 结果。5D mean-reversion MFE 为 `max(0, MR_{T,1}, MR_{T,2}, MR_{T,3}, MR_{T,4}, MR_{T,5})`，表示从 `Close_T` 出发、`T+1` 至 `T+5` 内达到的最强有利方向价格移动；全程无有利移动时为零。MFE 与 5D MR 使用完全相同的有效日期，并属于固定 horizon MR 的次要补充。
-
-每个 bucket 与 evaluation horizon（配置的 horizons 加固定 5）的有效观察必须同时满足 `D_T != 0`、归属该 bucket、sample 内有完整的第 `h` 条后续 observation。各 horizon 独立筛选，绝不跨越 sample end；更长 horizon 可以有更少有效观察。反向运动定义为严格 `MR_{T,h} > 0`；`MR = 0` 留在有效样本中，但不计为 reversal。主结果拆为 `reversal_probability = reversal_count / eligible_sample_count`，以及只对 reversal observations 计算的 conditional reversal magnitude mean 与 median（median 是主要典型幅度）。无 reversal 时条件样本数为零，条件 mean/median 未定义；无有效 MR 时概率也未定义。全部有效 MR 的 mean 与 median 作为合并反向和非反向结果的辅助 evidence 保留；mean 为算术平均，median 用 shared empirical quantile `p=0.5`。5D MFE mean 与 median 基于相同的 5D 有效观察，仍为 path-level 辅助 evidence。若全体 bucket 合计没有一条有效的 5D MR/MFE 观察，run 失败，不发布完整结果。
-
-### Retained run identity
+### Retained request identity
 
 Run identity 包含 `instrument`、两端 sample dates、`reference_method`、`reference_window`、`percentile_bucket_edges` 和 `forward_horizons` 的**有效 semantic values**，包括省略 flag 后采用的默认值；由 shared lagged-reference authority 定义且目前固定为空对象的 `reference_method_parameters = {}` 也记录在规范请求中。先验证请求，再把日期规范为 `YYYY-MM-DD`、method 规范为 canonical token、window 和 horizons 规范为十进制整数；finite decimal edges 规范为无指数、无无意义尾零的十进制字符串（负零为 `0`），并保持严格递增的 edge 顺序。Horizon 集合按数值升序规范化；不同输入顺序得到相同请求和 key。`instrument` 使用经输入校验的 `ts_code` identity，不发明指数别名或大小写折叠。
 
 规范对象用上述 semantic 字段名作为 JSON keys：instrument、method 与日期为字符串，window 与 horizon 数组成员为 JSON 整数，edge 数组成员为规范十进制字符串，method parameters 为空对象。以 keys 按字典序排列、无多余空白的 UTF-8 JSON 计算 SHA-256；完整小写十六进制 digest 就是 Study-owned run key。语义相同的默认/显式输入、等价 decimal 拼写或 horizon 顺序产生相同 key；任何这些 semantic values 的变化必须改变 identity。原始 argv、`--overwrite`、output root、执行时间、随机值和运行顺序均不参与。Study-local CLI 在调用 Snapshot 前完成 key 和 Research UI 的 collision 检查，并将 key 作为不透明目录名交给 Research UI；已有 run 的替换语义由后者拥有。
 
+## Method
+
+### Method Context 与参数 ownership
+
+本 Method 的共同上下文是同一 `instrument` 和含端点 sample bounds 对应的有序 Index Daily History observations；这三个值由 Study 请求选择研究 population，不因被两个 Observation 共用而变成 Method-level analytical parameters。`percentile_bucket_edges` 定义两个 Analysis 共同使用的分组语义；固定 5D 比较窗口也同时用于期末 MR 与路径 MFE，二者属于 Method-level shared context，后者不是额外 CLI 参数。`reference_method`、`reference_window` 属于 Deviation State Observation；`forward_horizons` 属于 Conditional Reversal Analysis。两个 Analysis 均消费两个具名 Observation，但各自拥有独立 evidential purpose。
+
+### Observation: Deviation State
+
+对每个 sample observation `T`，使用 shared lagged-reference authority 定义的 `D_T = Close_T / Reference_{T-1} - 1`。此前 `reference_window` 条实际 observations、`Close_T` 不进入自身 reference、`sma`、`volume_weighted`、当前无 method-specific parameters、warm-up 完整性及计算失败规则均以该 shared authority 为准；不能因某日不可计算而缩小样本或静默删行。
+
+该具名 Observation 的语义输出是每个 sample date 对应的有效 deviation `D_T`；完整 sample 均属其 population，包括 `D_T = 0` 与后来没有足够 forward observations 的日期。它不按未来 outcome 筛选，也不由后续 Analysis 的统计目标反向定义。
+
+### Observation: Forward Close Path
+
+该具名 Observation 从同一 Index Daily History sample 取得按交易日期排序的 `Close_T` 和后续 sample 内的实际 close 路径。它不消费 Deviation State，也没有自身可配置参数；其语义输出是每个 sample date 可在 sample end 前观察到的后续价格路径。路径长度不足某个 horizon 时仍保留该 sample date，由消费它的 Analysis 按目标 horizon 判定有效性，不填补样本结束后的数据。
+
+### Analysis: Conditional Reversal
+
+本 Analysis 消费 Deviation State 与 Forward Close Path，回答每个 deviation bucket × 配置 horizon 的反向运动概率及发生反向运动后的典型幅度，并提供固定 5D 期末 MR 供窗口内路径比较。它使用 Method-level `percentile_bucket_edges` 分组，由本 Analysis 拥有的 `forward_horizons` 定义配置的比较窗口；固定 5D MR 是现有研究方法的补充，不改变用户配置的 horizon set。
+
+将**完整 sample** 的所有有效 `D_T` 作为 empirical quantile 的 numeric sample，按 shared convention 求每个配置 percentile edge 的 deviation 阈值。`D_T = 0` 和后来因 forward 数据不足而不能进入方向性统计的日期仍参与阈值计算。各 bucket 按相邻阈值形成左闭右开区间；共同阈值上的观察归较高 bucket，最后一个 bucket 包含最大值。相同 `D_T` 总归同一 bucket；阈值重合可使 bucket 为空，不按日期或排序位置拆分相同状态。
+
+对正整数 horizon `h`，`R_{T,h} = Close_{T+h} / Close_T - 1`，其中 `T+h` 是 sample 内第 `h` 条后续实际交易 observation，不是日历日。`D_T < 0` 时 `MR_{T,h} = R_{T,h}`；`D_T > 0` 时 `MR_{T,h} = -R_{T,h}`。`MR > 0` 表示未来价格朝当日 reference 的方向移动，`MR < 0` 表示继续远离；只衡量未来价格回报方向，不把未来 deviation 缩小当作主要 outcome。`D_T = 0` 无反向方向，从所有 MR/MFE 统计排除。
+
+除配置的 horizons 外，固定计算 5D MR，保证所有配置均能与 5D MFE 比较；若配置已含 5，只计算和保留同一个 5D MR 结果。
+
+每个 bucket 与 evaluation horizon（配置的 horizons 加固定 5）的有效观察必须同时满足 `D_T != 0`、归属该 bucket、sample 内有完整的第 `h` 条后续 observation。各 horizon 独立筛选，绝不跨越 sample end；更长 horizon 可以有更少有效观察。反向运动定义为严格 `MR_{T,h} > 0`；`MR = 0` 留在有效样本中，但不计为 reversal。主结果拆为 `reversal_probability = reversal_count / eligible_sample_count`，以及只对 reversal observations 计算的 conditional reversal magnitude mean 与 median（median 是主要典型幅度）。无 reversal 时条件样本数为零，条件 mean/median 未定义；无有效 MR 时概率也未定义。全部有效 MR 的 mean 与 median 作为合并反向和非反向结果的辅助 evidence 保留；mean 为算术平均，median 用 shared empirical quantile `p=0.5`。
+
+### Analysis: Fixed 5D Path Comparison
+
+本 Analysis 同样消费 Deviation State 与 Forward Close Path，使用相同的 `percentile_bucket_edges` 分组语义和固定 5D 窗口，回答 5D 窗口内是否曾暂时朝 reference 方向移动，以及该最强有利移动与 5D 期末 MR 有何区别。5D mean-reversion MFE 为 `max(0, MR_{T,1}, MR_{T,2}, MR_{T,3}, MR_{T,4}, MR_{T,5})`，表示从 `Close_T` 出发、`T+1` 至 `T+5` 内达到的最强有利方向价格移动；全程无有利移动时为零。MFE 与 5D MR 使用完全相同的有效日期，并属于固定 horizon MR 的次要补充。5D MFE mean 与 median 基于相同的 5D 有效观察，仍为 path-level 辅助 evidence；mean 为算术平均，median 用 shared empirical quantile `p=0.5`。若全体 bucket 合计没有一条有效的 5D MR/MFE 观察，run 失败，不发布完整结果。
+
+两个 Analysis 都直接从具名 Observations 定义证据；它们共享 5D MR 与分桶计算语义，但没有 Analysis → Analysis semantic dependency。当前 Study 只按 Results 保留整次 run 的证据，不要求 Deviation State、Forward Close Path 或任一 Analysis 独立物化为组件 Artifact。
+
+主要证据链为：Question 中的尾部/中部、上下尾及 horizon 条件关系 → Deviation State + Forward Close Path → Conditional Reversal → 每 bucket × horizon 的概率、条件幅度与对照表/主图；Question 中的暂时反弹与 5D 期末回报差异 → 相同两个 Observations → Fixed 5D Path Comparison → 5D MFE、5D MR 对照与报告。全部保留的核心统计均由上述 Analysis 定义。
+
 ## Results
 
-每个成功 run 必须保留可复核的 machine-readable evidence。最低语义结构如下；具体文件名与编码格式不是本 Study 的稳定语义契约：
+每个成功 run 必须保留可复核的 machine-readable evidence。Deviation State 与 Forward Close Path 的逐日值用于计算本次证据；现有逐日明细只随整次 run 发布与替换，不具有独立的 Observation Artifact identity。两个 Analysis 的统计证据也随整次 run 一起保留，不要求独立的 Analysis Artifacts。最低语义结构如下；具体文件名与编码格式不是本 Study 的稳定语义契约：
 
 | 内容 | 必须保留的字段与解释 |
 | --- | --- |
