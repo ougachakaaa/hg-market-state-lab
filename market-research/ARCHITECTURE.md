@@ -129,6 +129,7 @@ results/
 
 当前 retained study 入口：
 
+- [CFFEX Equity Index Basis Environment × Forward Return Association](studies/cffex_basis_forward_return_association/ARCHITECTURE.md)
 - [IM Annualized Basis Baseline](studies/im_basis_baseline/ARCHITECTURE.md)
 - [IM Basis Forward Return Association](studies/im_basis_forward_return_association/ARCHITECTURE.md)
 - [Price-to-Lagged-MA Distribution](studies/price_to_lagged_ma_distribution/ARCHITECTURE.md)
