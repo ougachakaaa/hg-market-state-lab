@@ -23,13 +23,13 @@ Record 可以对上述每项标记 semantic source（如 `human decision` / `can
 
 ## 2. 固定 Study authority schema
 
-每个新建或实质更新的 retained Study authority 使用下表六个顶层 section，按表中顺序书写。可以增加 Study 自己的子节和执行说明；不能省略、改名或用其他文档代替必需 section。一个 Study 围绕一个 bounded research question / small hypothesis，组织一个或多个具名 Observation 与一个或多个具名 Analysis，从所需的不同视角建立 evidence；它不是一个单独的 statistics job。Study-specific 数值、公式、对象、方法、产物名称及取舍只写在该 Study authority 或其明确链接的 narrow canonical owner，不写进本模板；不得以 sibling retained Study 充当可复用研究语义的 canonical owner。
+每个新建 retained Study authority 使用下表六个顶层 section，按表中顺序书写；旧 Study 仅在第 4 节触发 reconciliation 时按相关范围适用，不因此机械重排全文。可以增加 Study 自己的子节和执行说明；新 Study 不能省略、改名或用其他文档代替必需 section。一个 Study 围绕一个 bounded research question / small hypothesis，组织一个或多个具名 Observation 与一个或多个具名 Analysis，从所需的不同视角建立 evidence；它不是一个单独的 statistics job。新 Study 的 Study-specific 数值、公式、对象、方法、产物名称及取舍写在该 Study authority，不写进本模板；上游市场事实及非 Research-semantic 机制仍由各自的 canonical owner 定义。
 
 | 必需 section | 必须回答的 product / research semantic 问题 |
 | --- | --- |
 | `Question` | 研究目标、hypothesis 与可辨识的研究问题是什么；研究希望产生哪类 evidence，其适用的配置范围是什么？ |
 | `Inputs` | 哪些外部事实、数据选择与 configurable values 跨越 Study boundary 进入研究请求，其 canonical 来源、目标 population、样本选择与范围是什么？每项参数的 semantic owner 是 Study / Method、哪个具名 Observation 或哪个具名 Analysis？若 Study 预期 runnable，stable public Study ID、Study-specific semantic inputs、必填/可选项、默认值及每项的用户可见表达和 CLI 映射是什么？影响 retained execution 的 Study-owned option（如允许覆盖既有结果）如何提供？若保留 evidence，整次请求的 semantic input、等价输入 canonicalization、必须区分的变化与 Study-owned deterministic run-key rule 是什么？ |
-| `Method` | Study-local analytical graph 的共同上下文、具名 Observations 与具名 Analyses 是什么；各自观察或分析什么、消费什么、产生什么，哪些选择改变其含义？已有适用的 narrow shared 或其他非 sibling canonical authority 明确拥有这些分析语义时可以直接引用。 |
+| `Method` | Study-local analytical graph 的共同上下文、具名 Observations 与具名 Analyses 是什么；各自观察或分析什么、消费什么、产生什么，哪些选择改变其含义？新 Study 在自身边界内定义这些 Research semantics。 |
 | `Results` | 哪些已产生的 evidence products 必须保留，人和机器如何消费并复核？是否独立保留 Observation / Analysis Artifacts，哪些 Analysis / statistical evidence、machine-readable structure、table、plot、report 或其他 visualization 必需？empty bucket、missing statistic、excluded observation 等边界状态如何表达？哪些 metadata、exclusion counts 与 provenance 是复核所必需的？artifact filename/format 只有构成稳定 Study contract 时才须锁定；已有 evidence 与尚未执行的状态分别是什么？ |
 | `Limitations` | 研究边界、解释限制及不得从结果推出的结论是什么？ |
 | `Acceptance` | 什么条件表明研究设计和预期产物已完整、可复核；该 Study 的结果有效性条件在哪里明确？ |
@@ -74,11 +74,17 @@ Runnable Study 的 public ID 映射、调用入口、共享配置与 output plac
 
 所有六节必须具有足够的实质内容，不能用 `TBD`、空节、模糊的“采用合适方法”等文字掩盖会改变研究含义的缺失决定。非语义性的命名、排版与实现细节可以由 Agent 整理，不进入 human semantic-decision loop。
 
-### Retained Study authority dependency
+### Study Creation Isolation Rule 与 dependency boundary
 
-每个 retained Study 独立拥有自己的研究语义，不得将 sibling retained Study 作为可复用研究语义的 canonical owner 或必须依赖的 semantic contract。可以引用 sibling Study 的 research finding、历史 evidence、related work 或导航信息；这些引用不授予其共享语义的 ownership。相似设计也不能直接成为新 Study 的默认语义。
+**新建 Study 必须 Research-semantic self-contained。**研究问题、population、predictor、target、regime、grouping、Observation、Analysis、统计解释及 evidence contract 中定义“这个研究的 evidence 是什么意思”的语义，均由当前 Study 本地拥有。创建时不得将 sibling Study semantics、其 retained artifact 作为语义输入，或将 `market-research/shared/*` 的既有 Research Method / Observation / Analysis 语义作为新 Study 的定义；即使定义完全相同，也应在新 Study 内明确写出。Sibling Study 可以作为 related work、历史 evidence 或导航被引用，但这些引用不成为研究语义的 owner 或 semantic dependency。
 
-若两个或更多真实 Study 需要共享同一稳定研究语义，须先经过独立 semantic decision，再将其提升为 narrow shared Research authority。在 shared semantic 正式建立前，各 Study 暂时保留 Study-local semantics；不得建立隐式 Study → Study contract dependency。相似的 Observation 或 Analysis 做法本身不触发 shared Observation / Analysis framework 或 shared capability 抽取。
+Study 创建阶段允许有意重复分析语义、公式、分组逻辑和 Study-local analytical code。相似性本身不是 defect，不触发 shared authority 抽取、generic Research framework、sibling Study 修改、现有 shared authority 修改或跨 Study refactor。新 Study 优先满足创建吞吐量、本地可理解性、明确 ownership 与低耦合，而非 DRY 或复用数量。
+
+Semantic isolation 不要求 mechanical isolation。Study 可以使用 repository runtime、Research UI、配置加载、输出位置、filesystem / serialization mechanics，以及外部 numeric、dataframe、plotting libraries；也可以通过 `market-snapshot` 支持的 public application/product boundary 消费其 canonical deterministic market facts，例如 market close、contract 或 index identity、basis fact 与 trading observation。上游事实的定义由 Snapshot 拥有；Study 如何选择、变换和解释这些事实以形成 evidence，仍由本 Study 拥有。不得为本地化研究语义而重定义上游事实，也不得因共用运行机制而共享研究语义。
+
+新 Study 的 progressive-disclosure 路径是 Study Intention → 本 authoring schema → 当前 Study authority → 必需的上游 canonical data / mechanics authority。创建时不主动搜索现有 Studies、`market-research/shared/*` 或 implementation 以寻找可复用的 Research semantic / helper。若偶然发现明显重复，只可在 authoring review 中非 canonical、advisory 地记录为 future consolidation candidate；它不阻止当前 Study 完成，不创建 dependency，也不触发修改 sibling Study、shared authority 或实现。只有 human 明确发起独立的 consolidation / reuse 任务，才比较多个成熟 Study、决定是否提升真正稳定的 shared Research semantics，并按需 reconciliation consumers 或抽取 shared code。Shared Research semantics 是后续 consolidation 的产物，不是新 Study 的默认 authoring-time dependency。
+
+标准新 Study creation 的默认 write scope 是当前 Study authority 与必要的最小 Study 导航条目。所需 Snapshot public capability 尚不存在时，应在 Study authority 中明确所需上游 contract 和 dependency gap；Study-owned 语义仍可完成，随后另行与 upstream owner reconciliation。不得在创建任务中顺手修改 sibling Study、既有 shared Research semantics、无关 Study implementation 或 generic Research framework。
 
 ## 3. Authoring 状态模型
 
@@ -87,13 +93,13 @@ Runnable Study 的 public ID 映射、调用入口、共享配置与 output plac
 | `Study Intention` | Human 给出研究意图，不要求符合完整 schema | 提取已给出的研究决定与明确待决项，区分事实引用和研究选择 | 进入 `Structured Study Intention` | 将沉默视为默认研究决定 |
 | `Structured Study Intention` | 已提取 human 意图 | 形成上述显式 Record，标明已知 semantic source 和 resolution state | Record 足以区分已决定与未决定的语义，进入 `Template Filling` | 将未决项隐式补全，或将 Record 当作最终 authority |
 | `Template Filling` | 已形成 Structured Study Intention Record，或收到待决项的 human 决定并更新该 Record | 将已确定语义放入六节；保留其 canonical 来源和未决项；草稿不冒充完整 authority | 六节形成可供语义审查的草稿 | 猜测缺失的输入、总体、方法、结果含义或边界 |
-| `Semantic Review` | 六节草稿可逐项审查 | 核对语义来源、section 完整性、内部一致性、authority dependency 及模块边界；执行下述 mandatory Study Authority Completeness Gate | Gate 全部通过则进入 `Authority Complete`；有实质语义缺口则进入 `Semantic Decision Required` | 用措辞修补、实现选择或其他 Study 的惯例替代缺失决定 |
+| `Semantic Review` | 六节草稿可逐项审查 | 核对语义来源、section 完整性、内部一致性、authority dependency 及模块边界；执行下述 mandatory Study Authority Completeness Gate | Gate 全部通过则进入 `Authority Complete`；有实质语义缺口则进入 `Semantic Decision Required` | 用措辞修补、实现选择或其他 Study 的惯例替代缺失决定；因重复而提前抽取 shared Research semantics |
 | `Semantic Decision Required` | 审查发现至少一个未解决的实质 Study/product 语义选择 | 按下述 decision record 向 human 呈现问题；收到明确决定后更新 Structured Study Intention Record | Human 决定已明确，返回 `Template Filling` 并再经 `Semantic Review` | 自行选定建议项，或将未决语义发布为完整 authority |
 | `Authority Complete` | 六节满足 schema，所有实质语义决定均有明确来源，Study Authority Completeness Gate 已通过 | 将独立 Study authority 确认为 canonical，并维护导航链接 | 本 authoring workflow 终止 | 将 Gate 通过解释为 repository capability 已齐备，或跳过后续需要的 dependency reconciliation |
 
 ### Study Authority Completeness Gate
 
-`Semantic Review` 必须逐项确认下列条件。Gate 只判断 Study-owned research / product / execution / retained-result semantics 是否完整到后续 Implementation Agent 无需重新发明业务语义；不判断 repository 是否已经具备实现该 Study 的全部 capability：
+`Semantic Review` 必须逐项确认下列条件。Gate 只判断 Study-owned research / product / execution / retained-result semantics 是否完整到后续 Implementation Agent 无需重新发明业务语义；不判断 repository 是否已经具备实现该 Study 的全部 capability。新增的 creation isolation 检查适用于新 Study；对旧 Study 仅按第 4 节显式 reconciliation 的相关范围适用，不得据此追溯宣布历史 Study invalid：
 
 | 检查面 | 通过条件 |
 | --- | --- |
@@ -103,11 +109,16 @@ Runnable Study 的 public ID 映射、调用入口、共享配置与 output plac
 | Question-to-evidence traceability | 每个重要 Question aspect 至少有一条 Observation → Analysis → retained evidence chain；每个 retained Analysis 都说明 evidential purpose，不附带无研究目的的统计；Analysis 声称必需的 evidence 在 Results 中有可复核表达，Results 的核心 statistic / evidence 都有 Method 定义的语义。 |
 | Runnable contract completeness（仅预期 runnable 的 Study） | `Inputs` 已确定 stable public Study ID、每个 Study-specific semantic input 的用户可见表达、CLI 映射、必填性和默认值，以及适用的 Study-owned execution option。若保留 evidence，`Inputs` 已确定或明确引用整次请求的 run identity 参与输入、等价输入 canonicalization、必须区分的变化与 deterministic run-key rule；调用与 output placement 能依 Research UI authority 落地。 |
 | Result contract completeness | 是否独立保留 Observation / Analysis Artifacts、必须保留的 Analysis evidence、machine-readable result 的最低语义结构及 table/chart/report/visualization 等 human-readable product 的必需性已明确；边界状态、复核必需的 metadata、exclusion counts 与 provenance 均有确定表达；只有 filename/format 本身是稳定契约时才要求固定。 |
-| Internal consistency | Question/hypothesis 与 Inputs 的研究空间一致；具体 default configuration 与核心 hypothesis 的关系明确；所有 configurable inputs 的允许范围均适用于 Question、Method、Results、Limitations 和 Acceptance；必填性、可选性与默认值无矛盾；Acceptance 对应前述研究；Study-local semantics 不重定义或冲突于允许引用的 canonical authority，也不依赖 sibling Study 拥有的可复用语义。 |
+| Study semantic isolation（新 Study） | 所有 Research-specific semantics 由当前 Study 本地拥有；未把 sibling Study、其 retained artifact 或既有 shared Research analytical semantics 用作定义或语义输入。 |
+| No premature abstraction（新 Study） | 未因研究逻辑重复而创建 shared Research semantic、修改 shared authority / sibling Study，或抽象 generic Research framework。 |
+| Dependency distinction | 所需上游 canonical fact / capability 及其 owner 与 Study-owned evidence semantics 分开表达；缺失 Snapshot public Product 等 capability 已记录为 dependency gap，不被误判为 Study semantic incompleteness。 |
+| Internal consistency | Question/hypothesis 与 Inputs 的研究空间一致；具体 default configuration 与核心 hypothesis 的关系明确；所有 configurable inputs 的允许范围均适用于 Question、Method、Results、Limitations 和 Acceptance；必填性、可选性与默认值无矛盾；Acceptance 对应前述研究；Study-local semantics 不重定义或冲突于所依赖的上游 canonical facts。 |
 
 若 hypothesis 固定某个配置而 Inputs 允许更广范围，必须由 human 明确该配置是 default / primary hypothesis、hypothesis 适用于全部允许配置，还是输入范围需要收窄；Agent 不得自行选择解释。Gate 发现会改变 Study/product 语义的缺口时，进入 `Semantic Decision Required`；class/function 命名、代码拆分和测试布局等纯实现细节不阻止通过。
 
-`Authority Complete` 不表示 Snapshot 已有全部所需 public capability、shared Research capability 已存在、当前 implementation 可以立即完成，或 dependency reconciliation 已完成。允许在 authority 完成后发现 capability / dependency gap，再与对应 canonical owner reconciliation，随后进入 implementation。
+**Study Authority Complete** 表示六节和 Gate 已确定 Study-owned Research semantics，包括 question、population、inputs、Observation / Analysis、evidence contract、limitations 与 acceptance；Implementation Agent 无需重新决定这些研究语义。**Dependency Reconciled** 表示所需上游 canonical capabilities（如 Snapshot public Product、public application boundary 或其他外部确定性事实 owner）已经存在，且 ownership boundary 无冲突。**Implementation Ready** 仅在 Study Authority Complete 与 Dependency Reconciled 均成立时成立；Implementation Agent 不必发明 Study 或上游 Product 语义即可实现。三者是 authoring / dependency contract distinction，不是新的 persisted status、registry 或 lifecycle engine。
+
+工作顺序是 `CREATE → RECONCILE → IMPLEMENT`；`CONSOLIDATE` 仅是日后显式触发的可选独立工作。Study Authority Complete 可以先于上游 capability readiness；缺失 Snapshot Product 不迫使完整的 Study-owned semantics 保持 incomplete。将所需上游 contract 和 gap 记录清楚后，再由对应 canonical owner 处理 dependency reconciliation，不以假设的 shared Research capability 填补缺口。
 
 `Semantic Decision Required` 的每个未决项必须按以下结构表达；有实际区分价值时才列 alternatives，建议方案只供 human 决定，不构成默认授权：
 
@@ -123,6 +134,8 @@ Runnable Study 的 public ID 映射、调用入口、共享配置与 output plac
 
 ## 4. 现有 authority reconciliation
 
-三个早于本 schema 的 retained Study authority（`im_basis_baseline`、`im_basis_forward_return_association`、`price_to_lagged_ma_distribution`）均已有六个顶层 section，但仍按研究步骤而非具名 Observation / Analysis 组织 Method，尚未逐项标注参数 owner 与组件消费关系；其中 `im_basis_baseline` 还在 Method 描述允许保留的输出。这些是历史 schema drift，不使现有 authority 失效，也不触发机械重写、重跑或改变现有研究结果。`price_to_lagged_ma_short_horizon_reversion` 是本轮按当前 schema 复核的真实 Study。
+**Schema evolution is non-retroactive by default.** 已有 retained Study 继续依照其成立时的 canonical authority 工作；新版 creation isolation 或 Completeness Gate 不自动使其失效。现有对 `market-research/shared/*` 的合法 Research semantic dependency 保持有效，不能因本 schema 更新而强制拆除、重新物化 Observation / Analysis、修改 artifact、重跑研究或改变研究含义。
 
-以后实质修改某个 Study authority 时，先从该 Study 已明确的研究语义整理出具名组件、参数 ownership、证据链及适用的组件 artifact identity，再按新 schema 完成 Semantic Review；真正缺失的研究决定走 human decision loop，不从现有实现或 sibling Study 猜测。只有为消除当前 authority 自相矛盾所必需时才即时修改具体 Study。本轮不要求现有 runner 具备组件分段执行或 artifact reuse；这些 implementation / migration gaps 留待对应 Study 的后续工作。
+仅在 human 明确要求升级该 Study、发生 substantial semantic modification、authority 存在真实内部矛盾或 ownership conflict、implementation change 必须新增尚未定义的 Study semantic，或专门执行 Research Semantic Consolidation / migration 时，才对相关旧 Study 考虑 reconciliation。只处理触发事项所涉及的语义与真实冲突，默认保留原有研究含义；旧 Study 已有 shared dependency 不因创建规则而迁移。进入 reconciliation 后，真正缺失的研究决定仍走 human decision loop，不能从现有实现或 sibling Study 猜测，也不为新版 schema 风格机械重排整份旧 authority。
+
+三个早于本 schema 的 retained Study authority（`im_basis_baseline`、`im_basis_forward_return_association`、`price_to_lagged_ma_distribution`）均已有六个顶层 section，但仍按研究步骤而非具名 Observation / Analysis 组织 Method，尚未逐项标注参数 owner 与组件消费关系；其中 `im_basis_baseline` 还在 Method 描述允许保留的输出。这些历史 schema drift 不触发批量改写。`price_to_lagged_ma_short_horizon_reversion` 曾按此前 schema 复核；本次不重新审查或迁移任何既有 Study，也不要求现有 runner 具备组件分段执行或 artifact reuse。
