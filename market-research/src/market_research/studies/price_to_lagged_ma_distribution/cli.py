@@ -98,7 +98,7 @@ def run(request: PriceToLaggedMARequest, *, overwrite: bool) -> int:
 
 def build_parser() -> argparse.ArgumentParser:
     parser = StudyArgumentParser(
-        prog=f"dev.py research run {STUDY_ID}",
+        prog=f"lab research run {STUDY_ID}",
         description="Run and retain the Price-to-Lagged-MA Distribution Study.",
     )
     parser.add_argument("--instrument", required=True, metavar="TS_CODE")

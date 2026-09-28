@@ -97,7 +97,7 @@ def run(start: str, end: str, *, overwrite: bool) -> int:
 
 def build_parser() -> argparse.ArgumentParser:
     parser = StudyArgumentParser(
-        prog=f"dev.py research run {STUDY_ID}",
+        prog=f"lab research run {STUDY_ID}",
         description="Run and retain the IM basis/forward-return association Study.",
     )
     parser.add_argument("--start", required=True, metavar="YYYY-MM-DD")

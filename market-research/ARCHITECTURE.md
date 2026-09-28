@@ -15,7 +15,7 @@
 
 Research 可以在开始时不知道最终需要的全部数据或输出形式，也不要求先存在稳定的 production contract。Research result 可以包含 structured observations、summary statistics、tables、research findings 与 visualizations；其职责终点是 evidence / finding，不是 production market-state output、forecast、decision、signal、recommendation 或 trading strategy。
 
-本模块不拥有 production modeling、model evaluation、forecasting、decision system、backtesting framework、research service/API 或 production Web UI。Repository `dev.py research` 是统一发现/转发入口；本模块拥有具体 retained Study 的 study-local CLI 与执行语义。这些 CLI 是本地 inbound interaction boundary，不是 production application UI。
+本模块不拥有 production modeling、model evaluation、forecasting、decision system、backtesting framework、research service/API 或 production Web UI。Repository `lab research` 是 canonical 发现/转发入口；本模块拥有具体 retained Study 的 study-local CLI 与执行语义。这些 CLI 是本地 inbound interaction boundary，不是 production application UI。
 
 ## 2. Research UI
 

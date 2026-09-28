@@ -74,13 +74,13 @@ Canonical statistical conventions：
 Stable Study ID 为 `im-basis-baseline`。从 repository root 通过统一 CLI 运行：
 
 ```bash
-poetry run python dev.py research run im-basis-baseline --start 2024-01-01 --end 2026-01-01
+lab research run im-basis-baseline --start 2024-01-01 --end 2026-01-01
 ```
 
 `--start` 与 `--end` 为 required inclusive `YYYY-MM-DD` dates，不使用 today/latest/default。同一日期区间的 canonical run directory 已存在时默认失败；显式 `--overwrite` 才允许事务性替换。完整参数帮助由以下命令生成：
 
 ```bash
-poetry run python dev.py research run im-basis-baseline --help
+lab research run im-basis-baseline --help
 ```
 
 ## Results

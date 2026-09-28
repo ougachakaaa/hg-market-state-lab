@@ -106,7 +106,7 @@ def test_help_is_study_local_and_does_not_load_config_or_snapshot(
     with pytest.raises(SystemExit, match="0"):
         runner.main(["--help"])
     output = capsys.readouterr().out
-    assert f"dev.py research run {study_id}" in output
+    assert f"lab research run {study_id}" in output
     assert "--start" in output
     assert "--end" in output
 

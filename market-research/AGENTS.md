@@ -19,7 +19,7 @@
 - Scratch 可以快速、低约束和 disposable，但不构成 semantic authority、稳定接口或 production dependency。
 - Retained study 至少记录 Question、Inputs、Method、Results 与 Limitations；study-specific 细节留在对应 Study authority，不上提到 module architecture。
 - 当前 Research visualization 由 `market-research` 拥有，默认通过 Python study output 生成并优先保留静态图片；具体图形形式由真实 Study 的研究问题决定。
-- Repository `dev.py research` 是 Research 的统一人类操作入口，只发现并转发到 study-local CLI；参数、Snapshot public-boundary composition、Study invocation、artifact 与 result semantics 由具体 Study 拥有。
+- Repository `lab research` 是 Research 的 canonical 人类操作入口，只发现并转发到 study-local CLI；参数、Snapshot public-boundary composition、Study invocation、artifact 与 result semantics 由具体 Study 拥有。当前可运行入口见根 [DEVELOPMENT.md](../DEVELOPMENT.md)。
 - 新增 runnable retained Study 时，必须同步提供稳定 CLI study ID、符合 [Research UI authority](ui/ARCHITECTURE.md) 的 study-local `cli.py`、记录用法的 canonical Study authority 与 CLI/output tests；不得创建中央 catalog/registry、reflection、entry-point plugin 或动态 registration framework。
 - Python static visualization 是阶段性但正式有效的默认策略。除非多个真实 Study 已形成稳定、重复的 visualization pattern，且新的 canonical authority 已明确重新划分责任，否则不得自行迁移至 `backend-api`、`web-ui` 或 Research Viewer。
 - Research finding 是 evidence。未经 human/agent semantic decision 与 canonical authority update，不得把 finding 当作 Modeling semantics、production contract、forecast、decision、signal 或 recommendation。

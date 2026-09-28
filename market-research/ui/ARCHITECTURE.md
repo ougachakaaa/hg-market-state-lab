@@ -7,8 +7,8 @@
 Canonical human namespace 是 repository CLI：
 
 ```text
-poetry run python dev.py research list
-poetry run python dev.py research run <study-id> [study-specific args...]
+lab research list
+lab research run <study-id> [study-specific args...]
 ```
 
 Repository CLI 只拥有 runnable Study discovery、layout 校验、进程执行、参数透明转发、operational error 与 exit-code propagation。它不 import `market_research`，不解析 study-specific arguments，不组合 Snapshot dependency，不拥有 Study method、artifact 或 result semantics。

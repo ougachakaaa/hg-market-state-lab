@@ -105,7 +105,7 @@ def test_help_is_study_local_and_requires_no_configuration(
         cli.main(["--help"])
     assert caught.value.code == 0
     output = capsys.readouterr().out
-    assert "dev.py research run price-to-lagged-ma-distribution" in output
+    assert "lab research run price-to-lagged-ma-distribution" in output
     for flag in ("--instrument", "--window", "--method", "--granularity", "--percentiles"):
         assert flag in output
 

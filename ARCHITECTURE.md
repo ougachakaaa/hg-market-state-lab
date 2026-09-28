@@ -109,7 +109,7 @@ future modules ──────┘
 
 ## 5. Authority 导航
 
-Repository root 的 `dev.py` 是统一的 human/developer CLI surface。它只负责 command parsing、分层 help、repository path resolution、developer orchestration、command forwarding、process execution、exit-code propagation 与人类可读的 operational error。它不是新业务模块，也不拥有 Snapshot、Research、HTTP 或 frontend 语义。具体命令与本地操作方式见 [DEVELOPMENT.md](DEVELOPMENT.md)。
+`hg-market-state-lab` 是 repository / system identity；`lab` 是安装于根 canonical Python project 的正式 repository-level CLI/operator interface。它只负责 repository-level command routing、orchestration 与 delegation，不是业务模块，也不拥有 Snapshot、Research、Modeling、HTTP product 或 frontend 语义。其命令与转发边界见 [lab CLI authority](lab/ARCHITECTURE.md)；当前本地操作方式见 [DEVELOPMENT.md](DEVELOPMENT.md)。
 
 ```text
 AGENTS.md
@@ -118,6 +118,7 @@ ARCHITECTURE.md（本文件）
     ├─ Python runtime/toolchain invariant
     │      ↓
     │  DEVELOPMENT.md
+    ├─ lab/ARCHITECTURE.md
     ├─ market-snapshot/ARCHITECTURE.md
     │      ↓
     │  market-snapshot/CAPABILITIES.md
@@ -140,10 +141,10 @@ ARCHITECTURE.md（本文件）
            └─ web-ui/contracts.md
 ```
 
-Python runtime、dependency resolution 与 repository-root tooling 从本文档进入 `DEVELOPMENT.md`；业务语义仍进入对应 owning module。`market-modeling` 当前没有下层 authority，不得从 runtime layout 或 Research authority 推导其内部设计。
+CLI 语义从本文档进入 `lab/ARCHITECTURE.md`；Python dependency resolution 与当前本地操作进入 `DEVELOPMENT.md`；业务语义仍进入对应 owning module。`market-modeling` 当前没有下层 authority，不得从 runtime layout 或 Research authority 推导其内部设计。
 
 上层只提供选择下一份文档所需的上下文，不复制下层语义。新增或删除单个产品通常只更新模块 catalog，不改变本文档。
 
 ## 6. 维护边界
 
-仅在顶层模块、模块职责边界、repository-level Python runtime ownership、顶层数据流或下层 authority 入口变化时更新本文件。模块内部架构、产品契约、字段、公式、HTTP 行为和 UI 语义由对应下层 authority 拥有。
+仅在顶层模块、模块职责边界、repository-level Python runtime/CLI ownership、顶层数据流或下层 authority 入口变化时更新本文件。CLI 命令细节由 `lab/ARCHITECTURE.md` 拥有；模块内部架构、产品契约、字段、公式、HTTP 行为和 UI 语义由对应下层 authority 拥有。

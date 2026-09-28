@@ -97,4 +97,4 @@ printf 'Installing frontend dependencies into web-ui/node_modules...\n'
 
 printf 'Verifying development environment readiness...\n'
 cd -- "${repo_root}"
-poetry run python dev.py doctor
+poetry run lab doctor
