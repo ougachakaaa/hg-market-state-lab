@@ -131,6 +131,7 @@ results/
 - [IM Annualized Basis Baseline](studies/im_basis_baseline/ARCHITECTURE.md)
 - [IM Basis Forward Return Association](studies/im_basis_forward_return_association/ARCHITECTURE.md)
 - [Price-to-Lagged-MA Distribution](studies/price_to_lagged_ma_distribution/ARCHITECTURE.md)
+- [Price-to-Lagged-MA Short-Horizon Reversion](studies/price_to_lagged_ma_short_horizon_reversion/ARCHITECTURE.md)
 
 本模块不预设 Experiment Engine、Study Registry、Research Repository、plugin system、统一 execution/data/artifact schema 或通用 lifecycle。固定 Study authority schema 只定义每个研究必须回答的 product / research semantic 问题；只有真实 retained study 需要时才建立最小文件结构。
 
