@@ -41,78 +41,72 @@ lab research run im-basis-forward-return-association --start 2024-01-01 --end 20
 lab research run im-basis-forward-return-association --help
 ```
 
+`start_trade_date` 与 `end_trade_date` 是本 Study 的 request / population bounds，由 Study-local CLI 传给 Snapshot public request；两项日期限定 `daily_basis_predictor`、`forward_return_panel` 及两个 Analysis，并参与整次 run identity。`--overwrite` 仅是 execution option，不改变研究语义或 run identity。Predictor identity、horizons、minimum common sample rule 与 quintile probabilities 是固定 Method semantics，不是 CLI configurable inputs。
+
 ## Method
 
-### Daily predictor
+### Method Context
 
-每个 candidate trade date `T` 使用 [shared Research authority](../../shared/im_basis/ARCHITECTURE.md) 定义的：
+Canonical horizons `H = {1, 3, 5, 10, 15, 20}`；maximum horizon 是 20 条实际 CSI1000 trading observations。两个 Analysis 使用同一组具有完整 20D future support 的 common eligible predictor dates，成功 retained run 必须满足 `common_sample_count >= 5`。`daily_basis_predictor` 的 predictor 固定为 `non_front_mean_basis`；`forward_return_panel` 使用固定 horizons；共同样本规则约束两个 Analysis。`basis_quintile_forward_returns` 的 quintile probabilities 固定为 `{0.2, 0.4, 0.6, 0.8}`。
+
+```text
+CSI1000 IM Basis History public result
+        ↓
+daily_basis_predictor + forward_return_panel
+        ↓
+linear_association + basis_quintile_forward_returns
+        ↓
+retained Research Evidence
+```
+
+### Observation: `daily_basis_predictor`
+
+本 Observation 为输入区间内每个实际 CSI1000 trade date 形成 basis predictor observation。它消费 Snapshot public result 中该日期完整且唯一的 M0/M1/Q1/Q2 panel，以及同一 result 的 `underlying_close`；使用 [shared Research authority](../../shared/im_basis/ARCHITECTURE.md) 定义的：
 
 ```text
 non_front_mean_basis_T
 = mean(M1, Q1, Q2 annualized_basis_pct)
 ```
 
-`M0` 严格排除于 V1 predictor。M0 convergence 或 near-delivery behavior 是未来独立 Research，不属于本 Study。
+其 semantic output 至少是 `trade_date`、`underlying_close` 与 finite `non_front_mean_basis`。`M0` 严格排除于 V1 predictor。每个日期的四槽 panel 必须完整且唯一，basis 与 close 必须可定义；同一日期四槽的 `underlying_close` 必须唯一且一致。发现缺槽、重复、冲突或不可计算值是 upstream contract violation，整次 run 失败；Research 不删行、填补或重新选择合约。输入尾部不进入共同 predictor sample 的合法日期仍可作为 Observation 存在并提供 future support。M0 convergence 或 near-delivery behavior 是未来独立 Research，不属于本 Study。
 
-### CSI1000 forward-return targets
+### Observation: `forward_return_panel`
 
-Canonical horizons：
-
-```text
-H = {1, 3, 5, 10, 15, 20}
-```
-
-全部 horizon 表示输入 result 中的 CSI1000 subsequent trading observations，不是 calendar days。对 observation date `T`，`T+h` 是 result 中 `T` 之后第 `h` 个 CSI1000 observation trade date。
-
-V1 target 是 simple forward return：
+本 Observation 从同一 Snapshot result 的 CSI1000 实际交易 observation path 构造 future-return outcomes。对每个 `h ∈ H` 与存在相应后续 observation 的日期 `T`：
 
 ```text
 forward_return_h_pct
 = (underlying_close[T+h] / underlying_close[T] - 1) * 100
 ```
 
-单位是 percentage points，不使用 log return。每个 trade date 在四槽 observation 中的 `underlying_close` 必须唯一且一致；否则作为 upstream contract violation 失败。Forward return 是本 Study 的 outcome definition，不上提为 Snapshot field。
+`T+h` 是同一输入 result 中 `T` 之后第 `h` 条实际 CSI1000 trading observation，不是 calendar day。结果单位是 percentage points，不使用 log return，不访问 requested end 之外的数据。Forward return 是本 Study 的 outcome definition，不上提为 Snapshot field。
 
-### Common eligible sample
+Semantic output 至少以 `trade_date` 关联可定义的 `forward_return_1_pct`、`forward_return_3_pct`、`forward_return_5_pct`、`forward_return_10_pct`、`forward_return_15_pct` 与 `forward_return_20_pct`。尾部日期缺少某些 horizon outcome 时，不制造收益值；这些日期仍可支持更早日期的 forward return。只有拥有完整 20D outcome 的 `T` 才能进入两个 Analysis 的共同 predictor sample。输入 observation path 或 underlying close 违反 Snapshot public contract 时整次失败，不在 Research 内删行或填补。
 
-一个 trade date `T` 当且仅当满足以下条件时进入 predictor sample：
+### Analysis: `linear_association`
+
+本 Analysis 显式消费 `daily_basis_predictor` 和 `forward_return_panel`，回答 predictor 与各 horizon subsequent return 的 descriptive linear association。其 population 是输入区间内具有完整 20D future support 的 common eligible predictor dates：
 
 ```text
 T exists in the input result
-+ M0/M1/Q1/Q2 complete upstream panel exists
-+ non_front_mean_basis_T can be computed
-+ at least 20 subsequent CSI1000 observation dates exist
-   inside the same input result
++ complete M0/M1/Q1/Q2 upstream panel and finite predictor exist
++ 20 subsequent CSI1000 observation dates exist in the same result
 ```
 
-因此六个 horizon 使用完全相同的 `T` sample。输入尾部最多 20 个 observation dates 可以仅作为 future-return support dates，不是 predictor observations。Study 不把 calendar day 当作 trading observation，不自动到 requested bounds 之外获取 future data，也不缩短 horizon。
-
-### Pearson correlation
-
-对每个 `h ∈ H` 计算：
+所有 horizon 使用完全相同的 `T` sample，`common_sample_count >= 5`。对每个 `h ∈ H` 计算：
 
 ```text
 PearsonCorr(non_front_mean_basis_T, forward_return_h_pct)
-```
 
-每行至少表达 `horizon`、common `sample_count` 和 `pearson_correlation`。Pearson 只表达 linear association，不表达 causality 或可交易预测能力。
-
-### Simple OLS
-
-对每个 horizon 独立拟合带截距的：
-
-```text
 forward_return_h_pct
-= alpha_h
-+ beta_h * non_front_mean_basis_T
-+ error
+= alpha_h + beta_h * non_front_mean_basis_T + error
 ```
 
-每行至少表达 `horizon`、common `sample_count`、`alpha`、`beta` 和 `r_squared`。V1 不报告 p-value、t-statistic、confidence interval 或未校正的 significance claim；OLS 只用于描述 direction、linear magnitude 与 simple explanatory power。
+每个 horizon 的 evidence row 至少表达 `horizon`、`sample_count`、`pearson_correlation`、`ols_alpha`、`ols_beta` 与 `ols_r_squared`。Pearson 与带截距 simple OLS 仅描述 direction、linear magnitude 与 simple explanatory power，不表达 causality、statistical significance、trading edge 或 forecast model。V1 不报告 p-value、t-statistic、confidence interval 或未校正的 significance claim。
 
-### Basis-quintile conditional statistics
+### Analysis: `basis_quintile_forward_returns`
 
-在完整 common eligible predictor sample 上，按 [shared linear-interpolation convention](../../shared/distribution/ARCHITECTURE.md) 计算 `non_front_mean_basis` 的 P20、P40、P60、P80。同一组 breakpoints 应用于所有 horizon，并按数值阈值分组：
+本 Analysis 显式消费 `daily_basis_predictor` 和 `forward_return_panel`，使用与 `linear_association` 完全相同的 common predictor sample，观察不同 basis state 的 subsequent-return distribution、monotonic pattern 与可能的非线性。在该完整 sample 上，按 [shared linear-interpolation convention](../../shared/distribution/ARCHITECTURE.md) 计算 `non_front_mean_basis` 的 P20、P40、P60、P80。同一组 numeric breakpoints 应用于所有 horizon，并按数值阈值分组：
 
 ```text
 Q1: x <= P20                         deepest discount / lowest basis
@@ -136,31 +130,39 @@ positive_return_rate
 = count(forward_return_h_pct > 0) / sample_count
 ```
 
-零收益不计为 positive。Quintile analysis 只用于观察 monotonic pattern、可能的非线性，以及不同 basis state 的 subsequent-return distribution；不将 quintile 命名为 buy/sell zone、bullish/bearish 或 cheap/expensive。
+零收益进入 denominator，但不计为 positive。`positive_return_rate` 是本 sample 的 historical empirical conditional rate，不是 forward-looking forecast probability。阈值 ties 若导致任一 quintile empty，整次 run 失败。Quintile 不命名为 buy/sell zone、bullish/bearish 或 cheap/expensive。
 
 ### Run validity
 
-必须有足够 observation dates 形成包含 20D target 的 common sample。如果 common sample 太小、predictor 或任一 horizon outcome 无方差、阈值 ties 导致任一 quintile 为空，或任何必需统计量不可定义，整次 retained run 必须显式报告样本或变异不足并失败。不输出部分 evidence、空统计值、推测值或缩短后的 horizon set。
+必须有足够 observation dates 形成完整 20D target，且 `common_sample_count >= 5`。若 predictor 或任一 horizon outcome 无方差、阈值 ties 导致任一 quintile 为空、任何必需统计量不可定义，或存在 upstream Snapshot contract violation，整次 retained run 必须显式报告相应失败。不输出部分 evidence、空统计值、推测值或缩短后的 horizon set。
 
 ### Retained run identity
 
-本 Study 的 semantic request 由显式 start/end dates 决定；相同规范日期区间使用 [Research UI authority](../../ui/ARCHITECTURE.md) 已记录的 `<start_trade_date>__<end_trade_date>` deterministic run key。`--overwrite` 不改变 semantic request；collision 与 output placement 遵循 Research UI authority。
+本 Study 的 semantic request 由显式 start/end dates 决定；predictor、horizons、quintiles 与 Analyses 均为固定 canonical Method，不是 invocation parameters。相同规范日期区间使用 [Research UI authority](../../ui/ARCHITECTURE.md) 已记录的 `<start_trade_date>__<end_trade_date>` deterministic run key。`--overwrite` 不改变 semantic request 或 run identity；collision 与 output placement 遵循 Research UI authority。
 
 ## Results
 
 尚未运行真实研究，当前无统计结果、plot 或 finding，本节不使用 placeholder 数值。
 
-未来每次成功 retained run 至少保留：
+两个 named Observations 与两个 named Analyses 是 Study-local semantic components，V1 不要求独立 materialized 或 retained component Artifacts。整次成功 run 至少保留 machine-readable result、human-readable report/table 与 static visualization，并包含以下可复核 evidence；具体 filename 与 serialization 不构成稳定语义契约：
 
 ```text
 Sample summary
-    requested start_trade_date
-    requested end_trade_date
-    effective predictor start_trade_date
-    effective predictor end_trade_date
-    common sample_count
+    requested_start_trade_date
+    requested_end_trade_date
+    effective_predictor_start_trade_date
+    effective_predictor_end_trade_date
+    source_observation_count
+    common_sample_count
+    future_support_only_count = 20
     horizons = 1, 3, 5, 10, 15, 20 trading observations
     predictor identity = non_front_mean_basis
+
+Quintile breakpoint evidence
+    P20
+    P40
+    P60
+    P80
 
 Association summary table
     horizon
@@ -179,9 +181,11 @@ Quintile table
     positive_return_rate
 ```
 
-允许保留 predictor-vs-forward-return scatter 与 simple OLS line、correlation-by-horizon 及 quintile forward-return comparison。Plot 是 Research evidence presentation，不是 production UI。
+`source_observation_count` 是完整 Snapshot result 中的实际 CSI1000 observation dates 数；`future_support_only_count` 是输入尾部只提供 future support、未进入 common predictor sample 的日期数。在 Snapshot result 的完整连续实际 observation sequence 与成功 run 的固定 20D maximum horizon 下，`source_observation_count = common_sample_count + future_support_only_count = common_sample_count + 20`。Retained evidence 必须能复核这一路径及当次 Q1–Q5 的实际 numeric boundaries，不能仅有 quintile label。
 
-Retained result 仍是 exploratory Research Evidence，不得直接输出 forecast、expected-return signal、probability、confidence、model score 或 trading action。
+Static visualization 可展示 predictor-vs-forward-return scatter 与 simple OLS line、correlation-by-horizon 或 quintile forward-return comparison。Plot 是 Research evidence presentation，不是 production UI。
+
+Retained result 仍是 exploratory Research Evidence。`positive_return_rate` 必须作为 historical empirical rate 保留，不得呈现为 forecast probability；结果不得直接输出 forecast、expected-return signal、forward-looking probability、confidence、model score 或 trading action。
 
 ## Limitations
 
@@ -227,5 +231,5 @@ database or cache
 ## Acceptance
 
 - 显式且有效的含端点日期区间通过 Snapshot public boundary 产生完整四槽 panel；`non_front_mean_basis` 由 shared IM-basis authority 定义，不消费 Baseline Study 的 retained result。
-- 六个 horizon 共用满足 20 条后续实际 observations 的 predictor sample；每个 horizon 的 forward return、Pearson、带截距 OLS 与 quintile 条件统计符合 Method。样本、方差或 quintile 不足以定义必需统计量时整次 run 失败，不保留部分 evidence。
-- 成功结果至少保留 Results 已列的 sample summary、association summary table 与 quintile table；实际 query bounds、有效 predictor 范围、共同 sample count 与 predictor identity 足以解释表格。允许的图形只展示 exploratory association，不作显著性、因果、预测或交易结论。
+- `daily_basis_predictor` 与 `forward_return_panel` 供两个 named Analyses 消费；六个 horizon 共用满足 20 条后续实际 observations 且 `common_sample_count >= 5` 的 predictor sample。每个 horizon 的 forward return、Pearson、带截距 OLS 与 quintile 条件统计符合 Method。样本、方差、quintile、必需统计量或 Snapshot contract 不满足时整次 run 失败，不保留部分 evidence。
+- 成功结果至少保留 Results 已列的 sample / provenance summary、numeric quintile breakpoints、association summary table、quintile table、human-readable evidence 与 static visualization；输入 observation 数、共同样本及尾部 support 数可相互复核。`positive_return_rate` 只作为 historical empirical rate 呈现；图形和文字不作显著性、因果、预测或交易结论。
