@@ -16,6 +16,7 @@ STUDY_IDS = (
     "im-basis-baseline",
     "im-basis-forward-return-association",
     "price-to-lagged-ma-distribution",
+    "price-to-lagged-ma-short-horizon-reversion",
 )
 
 

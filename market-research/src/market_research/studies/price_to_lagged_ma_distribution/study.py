@@ -220,17 +220,23 @@ def _finite_fact(value: object, name: str, *, positive: bool) -> float:
     return number
 
 
-def _validate_snapshot(request: PriceToLaggedMARequest, snapshot: IndexDailyHistoryResult) -> None:
+def _validate_snapshot(
+    instrument: str,
+    start_trade_date: str,
+    end_trade_date: str,
+    reference_window: int,
+    snapshot: IndexDailyHistoryResult,
+) -> None:
     if (
-        snapshot.ts_code != request.instrument
-        or snapshot.requested_start_trade_date != request.sample_start_trade_date
-        or snapshot.requested_end_trade_date != request.sample_end_trade_date
-        or snapshot.requested_pre_start_observation_count != request.reference_window
+        snapshot.ts_code != instrument
+        or snapshot.requested_start_trade_date != start_trade_date
+        or snapshot.requested_end_trade_date != end_trade_date
+        or snapshot.requested_pre_start_observation_count != reference_window
     ):
         raise PriceToLaggedMAStudyError("Snapshot result does not match the Study request.")
     warmup = snapshot.warmup_observations
     sample = snapshot.sample_observations
-    if len(warmup) != request.reference_window or not sample:
+    if len(warmup) != reference_window or not sample:
         raise PriceToLaggedMAStudyError("Snapshot result has incomplete warm-up or sample.")
     previous: str | None = None
     for row in (*warmup, *sample):
@@ -241,11 +247,11 @@ def _validate_snapshot(request: PriceToLaggedMARequest, snapshot: IndexDailyHist
         _finite_fact(row.close, "close", positive=True)
         if row.volume is not None:
             _finite_fact(row.volume, "volume", positive=False)
-    if warmup[-1].trade_date >= request.sample_start_trade_date:
+    if warmup[-1].trade_date >= start_trade_date:
         raise PriceToLaggedMAStudyError("Snapshot warm-up must precede the sample bounds.")
     if (
-        sample[0].trade_date < request.sample_start_trade_date
-        or sample[-1].trade_date > request.sample_end_trade_date
+        sample[0].trade_date < start_trade_date
+        or sample[-1].trade_date > end_trade_date
     ):
         raise PriceToLaggedMAStudyError("Snapshot sample is outside requested bounds.")
 
@@ -277,16 +283,21 @@ def _reference(window: tuple[IndexDailyObservation, ...], method: str) -> float:
     return value
 
 
-def compute(
-    request: PriceToLaggedMARequest, snapshot: IndexDailyHistoryResult
-) -> PriceToLaggedMAResult:
-    """Compute one lagged deviation per Snapshot sample observation."""
-    _validate_snapshot(request, snapshot)
+def compute_daily_observations(
+    instrument: str,
+    start_trade_date: str,
+    end_trade_date: str,
+    reference_window: int,
+    reference_method: str,
+    snapshot: IndexDailyHistoryResult,
+) -> tuple[PriceToLaggedMAObservation, ...]:
+    """Calculate the Distribution Study's lagged reference and deviation rows."""
+    _validate_snapshot(instrument, start_trade_date, end_trade_date, reference_window, snapshot)
     history = list(snapshot.warmup_observations)
     daily: list[PriceToLaggedMAObservation] = []
     for row in snapshot.sample_observations:
-        window = tuple(history[-request.reference_window :])
-        reference = _reference(window, request.reference_method)
+        window = tuple(history[-reference_window:])
+        reference = _reference(window, reference_method)
         try:
             deviation = float(Decimal(str(row.close)) / Decimal(str(reference)) - 1)
         except (OverflowError, ValueError) as exc:
@@ -296,13 +307,28 @@ def compute(
         daily.append(
             PriceToLaggedMAObservation(
                 trade_date=row.trade_date,
-                instrument=request.instrument,
+                instrument=instrument,
                 close=row.close,
                 reference_ma=reference,
                 deviation=deviation,
             )
         )
         history.append(row)
+    return tuple(daily)
+
+
+def compute(
+    request: PriceToLaggedMARequest, snapshot: IndexDailyHistoryResult
+) -> PriceToLaggedMAResult:
+    """Compute one lagged deviation per Snapshot sample observation."""
+    daily = compute_daily_observations(
+        request.instrument,
+        request.sample_start_trade_date,
+        request.sample_end_trade_date,
+        request.reference_window,
+        request.reference_method,
+        snapshot,
+    )
 
     deviations = tuple(row.deviation for row in daily)
     granularity = float(request.distribution_granularity)
@@ -312,7 +338,7 @@ def compute(
     return PriceToLaggedMAResult(
         request=request,
         run_key=run_key(request),
-        daily_observations=tuple(daily),
+        daily_observations=daily,
         distribution_bins=fixed_width_distribution(deviations, granularity),
         percentiles=tuple(
             RequestedPercentile(probability, linear_quantile(deviations, probability))
