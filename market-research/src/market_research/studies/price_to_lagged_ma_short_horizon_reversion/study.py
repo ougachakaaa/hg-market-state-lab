@@ -19,9 +19,9 @@ from market_snapshot.products.index_daily_history import (
 )
 
 from ...shared.distribution import linear_quantile
-from ..price_to_lagged_ma_distribution import (
+from ...shared.price_to_lagged_reference import (
+    LaggedReferenceError,
     PriceToLaggedMAObservation,
-    PriceToLaggedMAStudyError,
     compute_daily_observations,
 )
 
@@ -226,7 +226,7 @@ def compute(request: ReversionRequest, snapshot: IndexDailyHistoryResult) -> Rev
             request.reference_method,
             snapshot,
         )
-    except PriceToLaggedMAStudyError as exc:
+    except LaggedReferenceError as exc:
         raise ReversionStudyError(str(exc)) from exc
     deviations = tuple(row.deviation for row in daily)
     thresholds = tuple(

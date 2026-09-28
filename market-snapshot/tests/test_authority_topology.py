@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import ast
+import importlib.util
 import re
 from collections import deque
 from pathlib import Path
@@ -201,6 +202,53 @@ def test_product_packages_do_not_import_sibling_products() -> None:
                 ):
                     violations.append(f"{source.relative_to(REPOSITORY_ROOT)} -> {sibling}")
     assert not violations, "sibling product imports:\n" + "\n".join(violations)
+
+
+def test_price_to_lagged_studies_depend_on_shared_semantics_not_each_other() -> None:
+    research_root = REPOSITORY_ROOT / "market-research/src/market_research"
+    studies_root = research_root / "studies"
+    study_names = (
+        "price_to_lagged_ma_distribution",
+        "price_to_lagged_ma_short_horizon_reversion",
+    )
+    shared_name = "market_research.shared.price_to_lagged_reference"
+
+    def imports(source: Path, package: str) -> set[str]:
+        tree = ast.parse(source.read_text(encoding="utf-8"))
+        names: set[str] = set()
+        for node in ast.walk(tree):
+            if isinstance(node, ast.Import):
+                names.update(alias.name for alias in node.names)
+            elif isinstance(node, ast.ImportFrom):
+                base = importlib.util.resolve_name(
+                    "." * node.level + (node.module or ""), package
+                ) if node.level else node.module
+                if base is not None:
+                    names.add(base)
+                    names.update(f"{base}.{alias.name}" for alias in node.names)
+        return names
+
+    violations: list[str] = []
+    for study_name in study_names:
+        package_root = studies_root / study_name
+        package = f"market_research.studies.{study_name}"
+        sibling = next(name for name in study_names if name != study_name)
+        forbidden = f"market_research.studies.{sibling}"
+        for source in package_root.rglob("*.py"):
+            if any(
+                name == forbidden or name.startswith(f"{forbidden}.")
+                for name in imports(source, package)
+            ):
+                violations.append(f"{source.relative_to(REPOSITORY_ROOT)} -> {sibling}")
+        assert shared_name in imports(package_root / "study.py", package)
+
+    shared_source = research_root / "shared/price_to_lagged_reference.py"
+    assert shared_source.is_file()
+    assert not any(
+        name == "market_research.studies" or name.startswith("market_research.studies.")
+        for name in imports(shared_source, "market_research.shared")
+    )
+    assert not violations, "sibling Study imports:\n" + "\n".join(violations)
 
 
 def test_shared_capture_does_not_import_product_contexts() -> None:
