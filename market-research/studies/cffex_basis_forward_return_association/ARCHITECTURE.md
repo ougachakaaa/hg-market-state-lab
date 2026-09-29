@@ -1,6 +1,6 @@
 # CFFEX Equity Index Basis Environment × Forward Return Association retained Study authority
 
-本文档是本 retained Study 的稳定 canonical 入口。Stable public Study ID 为 `cffex-basis-forward-return-association`，对应未来 runnable package `cffex_basis_forward_return_association`。Authoring 遵循 [Study Authority Authoring](../AUTHORING.md)；Research 边界见 [market-research architecture](../../ARCHITECTURE.md)，CLI 转发、输出位置及覆盖规则见 [Research UI authority](../../ui/ARCHITECTURE.md)。[Method](METHOD.md) 拥有本 Study 的研究统计语义和三个 Observation / 四个 Analysis；[Results](RESULTS.md) 拥有 retained evidence contract。市场确定性事实与执行入口来自 [CFFEX Equity Index Futures Basis History](../../../market-snapshot/src/market_snapshot/products/cffex_equity_index_basis_history/ARCHITECTURE.md)，其共用合约语义见 [Snapshot CFFEX basis authority](../../../market-snapshot/src/market_snapshot/cffex_equity_index_basis/ARCHITECTURE.md)。
+本文档是本 retained Study 的稳定 canonical 入口。Stable public Study ID 为 `cffex-basis-forward-return-association`，对应 runnable package `cffex_basis_forward_return_association`。Authoring 遵循 [Study Authority Authoring](../AUTHORING.md)；Research 边界见 [market-research architecture](../../ARCHITECTURE.md)，CLI 转发、输出位置及覆盖规则见 [Research UI authority](../../ui/ARCHITECTURE.md)。[Method](METHOD.md) 拥有本 Study 的研究统计语义和三个 Observation / 四个 Analysis；[Results](RESULTS.md) 拥有 retained evidence contract。市场确定性事实与执行入口来自 [CFFEX Equity Index Futures Basis History](../../../market-snapshot/src/market_snapshot/products/cffex_equity_index_basis_history/ARCHITECTURE.md)，其共用合约语义见 [Snapshot CFFEX basis authority](../../../market-snapshot/src/market_snapshot/cffex_equity_index_basis/ARCHITECTURE.md)。
 
 ## Question
 
@@ -29,7 +29,7 @@ lab research run cffex-basis-forward-return-association \
 
 ### Upstream public Product
 
-本 Study 对 `IF`、`IH`、`IC`、`IM` 各调用一次 [CFFEX Equity Index Futures Basis History](../../../market-snapshot/src/market_snapshot/products/cffex_equity_index_basis_history/ARCHITECTURE.md) 的 production execution entry，每次仅提供 family 和同一显式起止日期。Snapshot Product 拥有 family/underlying/listing facts、active universe、四槽、同日 close、合约级 basis、完整性、分类失败与 public result。本 Study 只消费该 Product 的 analysis-ready result，不接触 Tushare credential、Source client、Capture、Raw、私有 Preparation 或 HTTP DTO。上游 Product authority 已闭环；Python 实现属于后续任务。
+本 Study 对 `IF`、`IH`、`IC`、`IM` 各调用一次 [CFFEX Equity Index Futures Basis History](../../../market-snapshot/src/market_snapshot/products/cffex_equity_index_basis_history/ARCHITECTURE.md) 的 production execution entry，每次仅提供 family 和同一显式起止日期。Snapshot Product 拥有 family/underlying/listing facts、active universe、四槽、同日 close、合约级 basis、完整性、分类失败与 public result。本 Study 只消费该 Product 的 analysis-ready result，不接触 Tushare credential、Source client、Capture、Raw、私有 Preparation 或 HTTP DTO。上游 Product public execution entry 已实现。
 
 ### Retained request identity
 

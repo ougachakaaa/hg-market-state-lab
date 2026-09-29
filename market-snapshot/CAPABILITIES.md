@@ -29,4 +29,4 @@
 - 修改共用 CFFEX family、slot、remaining days、basis formula 或 ordering 时，进入 [共享 CFFEX basis authority](src/market_snapshot/cffex_equity_index_basis/ARCHITECTURE.md)，再核对两个 Product 的专属 contract。
 - HTTP 实现从 [backend-api catalog](../backend-api/HTTP_PRODUCTS.md) 进入对应 contract，再沿其链接读取 owning product 的最小 semantic authority；不默认读取 sibling product。
 - 前端任务先走 `web-ui` authority；只有需要 backend 语义或 transport reconciliation 时才进入这里所列的对应产品文档。
-- 外层 `capture/` 承载活跃共享 Source 能力；旧 IM basis 实现目前仍位于 CSI1000 IM Basis History 产品内，后续实现须遵循新共享语义 owner。能力须由多个真实活跃 Product 的需求支撑；ownership 见 [module architecture](ARCHITECTURE.md)。
+- 外层 `capture/` 承载活跃共享 Source 能力；两个 CFFEX basis Product 共用 `cffex_equity_index_basis` 的确定性语义实现，旧 IM 产品保留兼容导入。能力须由多个真实活跃 Product 的需求支撑；ownership 见 [module architecture](ARCHITECTURE.md)。

@@ -1,6 +1,6 @@
 # CFFEX equity-index futures Source contract
 
-本文档从属于 [Capture architecture](ARCHITECTURE.md)，拥有 Tushare `fut_basic` 与 `fut_daily` 对 CFFEX IF/IH/IC/IM 普通月度股指期货的共享 Source facts、endpoint query 和 minimal normalization。当前 Python Capture 仅实现 IM；后续实现可做最小 family 参数化，既有 IM Capture caller 与结果保持兼容。产品自己决定 family scope、日期区间、active universe、完整性、slot 和 Preparation；本文件不定义这些产品语义。
+本文档从属于 [Capture architecture](ARCHITECTURE.md)，拥有 Tushare `fut_basic` 与 `fut_daily` 对 CFFEX IF/IH/IC/IM 普通月度股指期货的共享 Source facts、endpoint query 和 minimal normalization。Python Capture 已做最小 family 参数化，既有 IM Capture caller 与结果保持兼容。产品自己决定 family scope、日期区间、active universe、完整性、slot 和 Preparation；本文件不定义这些产品语义。
 
 ## `fut_basic` Source facts
 

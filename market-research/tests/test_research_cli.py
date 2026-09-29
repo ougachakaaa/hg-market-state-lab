@@ -8,6 +8,8 @@ from types import ModuleType
 
 import pytest
 
+from market_research.studies.cffex_basis_forward_return_association import cli as cffex_cli
+from market_research.studies.cffex_basis_forward_return_association import study as cffex_study
 from market_research.studies.im_basis_baseline import cli as baseline_cli
 from market_research.studies.im_basis_forward_return_association import cli as association_cli
 from market_research.ui import configuration
@@ -454,6 +456,8 @@ def test_research_ui_and_study_clis_do_not_import_snapshot_internals() -> None:
         research_root / "ui" / "execution.py",
         Path(baseline_cli.__file__),
         Path(association_cli.__file__),
+        Path(cffex_cli.__file__),
+        Path(cffex_study.__file__),
     ]
     source = "\n".join(path.read_text(encoding="utf-8") for path in sources)
     for forbidden in (

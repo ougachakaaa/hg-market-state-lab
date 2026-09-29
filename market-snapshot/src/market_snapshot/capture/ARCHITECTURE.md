@@ -13,6 +13,6 @@
 | Common normalization | `common.py` | [Common contract](common-contract.md) |
 | Index / stock daily | `index_daily.py` and product adapter | [Index and stock contract](index-stock-contract.md) |
 | MO option basic / daily | `mo_option_basic.py`, `mo_option_daily.py` | [MO option contract](mo-option-contract.md) |
-| CFFEX equity-index futures basic / daily | 当前 IM Capture `im_futures_basic.py`, `im_futures_daily.py`；后续实现扩至 IF/IH/IC/IM | [CFFEX futures Source contract](im-futures-contract.md) |
+| CFFEX equity-index futures basic / daily | `im_futures_basic.py`, `im_futures_daily.py` 的 IF/IH/IC/IM family 参数化 Capture；保留 IM caller | [CFFEX futures Source contract](im-futures-contract.md) |
 
 Daily Market Snapshot 的六指数范围与 stock scope、CSI1000 history，以及各产品 completeness 均从 [Capability Catalog](../../../CAPABILITIES.md) 进入对应产品，不在本入口重复定义。
