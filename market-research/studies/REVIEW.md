@@ -9,6 +9,7 @@
 | 检查面 | 通过条件 |
 | --- | --- |
 | Research completeness | 核对 [Schema](SCHEMA.md) 的六个 semantic areas 在 canonical authority graph 中均有实质内容和唯一 owner，且无未解决的 research semantic decision。 |
+| Authority navigation | 核对稳定 `ARCHITECTURE.md` entry 存在，六个 semantic areas 可从 entry 定位，所有 specialized canonical owner 均可沿 entry 的链接到达，且没有 orphan semantic owner；不检查标题拼写、顺序或文件数量。 |
 | Input ownership | 逐项核对外部 input、parameter ownership / consumers / semantic role、execution-only options 与 run identity 符合 Schema 的 Inputs 和 parameter contracts；检查实际消费与声明一致。 |
 | Method graph completeness | 逐项核对具名 Observation / Analysis、Method Context、消费关系、语义输出及按条件定义的 component Artifact identity 符合 Schema 的 Method contracts；检查引用的组件与上游事实均存在，且依赖方向合法。 |
 | Question-to-evidence traceability | 验证每个重要 Question aspect 均可沿实际 local references 追踪至 Observation → Analysis → retained Evidence Product，每个 material Analysis 均可追踪至 retained evidence；检查引用的对象存在、指向一致，无游离统计。 |

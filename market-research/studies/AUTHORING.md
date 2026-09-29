@@ -1,6 +1,6 @@
 # Research Study Authority Authoring
 
-本文件是新建 retained Study 的稳定入口，拥有 Study Intention 到 Canonical Study Authority 的 authoring workflow。Research 模块边界与现有 Study 入口见 [market-research architecture](../ARCHITECTURE.md)；runnable Study 的共享调用与输出约定见 [Research UI authority](../ui/ARCHITECTURE.md)。Study 的必需语义见 [Schema](SCHEMA.md)，完整性判定见 [Review](REVIEW.md)；Agent 不得自行发明未给出的研究语义。
+本文件是新建 retained Study 的稳定入口，拥有 Study Intention 到 Canonical Study Authority 的 authoring workflow。Research 模块边界与现有 Study 入口见 [market-research architecture](../ARCHITECTURE.md)；runnable Study 的共享调用与输出约定见 [Research UI authority](../ui/ARCHITECTURE.md)。Study 的必需语义见 [Schema](SCHEMA.md)，逻辑呈现与 authority 布局见 [Skeleton](SKELETON.md)，完整性判定见 [Review](REVIEW.md)；Agent 不得自行发明未给出的研究语义。
 
 ## Study identity 与完成范围
 
@@ -15,10 +15,11 @@
 | 当前任务 | 下一份 authority |
 | --- | --- |
 | 确定 Study 必需语义及组件关系 | [Schema](SCHEMA.md) |
+| 实例化新 Study 的逻辑顺序与阅读布局 | [Skeleton](SKELETON.md) |
 | 审查已形成的 Study authority | [Review](REVIEW.md) |
 | 对既有 Study 做 reconciliation、migration 或 consolidation | [Compatibility](COMPATIBILITY.md) |
 
-创建路径为 repository / module entry → 本文件 → Schema → 新 Study `ARCHITECTURE.md` → 仅所需 specialized authority → 必需的上游 authority。Review 在 authoring / reconciliation 需要验证时进入；Compatibility、历史 Study 与 shared Research semantics 不在默认创建路径中。
+创建路径为 repository / module entry → 本文件 → Schema → Skeleton → 新 Study `ARCHITECTURE.md` → 仅所需 specialized authority → 必需的上游 authority。Review 在 authoring / reconciliation 需要验证时进入；Compatibility、历史 Study 与 shared Research semantics 不在默认创建路径中。
 
 ## Structured Study Intention Record
 
@@ -45,7 +46,7 @@ Record 可以对上述每项标记 semantic source（如 `human decision` / `can
 | --- | --- | --- | --- | --- |
 | `Study Intention` | Human 给出研究意图，不要求符合完整 schema | 提取已给出的研究决定与明确待决项，区分事实引用和研究选择 | 进入 `Structured Study Intention` | 将沉默视为默认研究决定 |
 | `Structured Study Intention` | 已提取 human 意图 | 形成上述显式 Record，标明已知 semantic source 和 resolution state | Record 足以区分已决定与未决定的语义，进入 `Template Filling` | 将未决项隐式补全，或将 Record 当作最终 authority |
-| `Template Filling` | 已形成 Structured Study Intention Record，或收到待决项的 human 决定并更新该 Record | 将已确定语义放入六个 semantic areas；保留其 canonical 来源和未决项；草稿不冒充完整 authority | 六个 semantic areas 形成可供语义审查的草稿 | 猜测缺失的输入、总体、方法、结果含义或边界 |
+| `Template Filling` | 已形成 Structured Study Intention Record，或收到待决项的 human 决定并更新该 Record | 按 [Skeleton](SKELETON.md) 实例化逻辑顺序，填入六个 semantic areas 的已确定语义；保留其 canonical 来源和未决项，仅在 disclosure boundary 成立时拆分 specialized authority；草稿不冒充完整 authority | 六个 semantic areas 形成可供语义审查的草稿 | 猜测缺失的输入、总体、方法、结果含义或边界 |
 | `Semantic Review` | 六个 semantic areas 的草稿可逐项审查 | 依 [Review](REVIEW.md) 执行 Study Authority Completeness Gate | Gate 全部通过则进入 `Authority Complete`；有实质语义缺口则进入 `Semantic Decision Required` | 用措辞修补、实现选择或其他 Study 的惯例替代缺失决定；因重复而提前抽取 shared Research semantics |
 | `Semantic Decision Required` | Review 返回至少一个未解决的实质 Study/product 语义 finding | 按下述 decision record 向 human 呈现问题；收到明确决定后更新 Structured Study Intention Record | Human 决定已明确，返回 `Template Filling` 并再经 `Semantic Review` | 自行选定建议项，或将未决语义发布为完整 authority |
 | `Authority Complete` | [Review](REVIEW.md) 判定 Study Authority Complete | 将独立 Study authority 确认为 canonical，并维护导航链接 | 本 authoring workflow 终止 | 将 Gate 通过解释为 repository capability 已齐备，或跳过后续需要的 dependency reconciliation |
@@ -72,8 +73,4 @@ Record 可以对上述每项标记 semantic source（如 `human decision` / `can
 
 ## Study authority topology
 
-Study 是一个 semantic authority unit，不等于一个 physical Markdown file。`studies/<study_package>/ARCHITECTURE.md` 作为稳定 canonical entry：概述 Study identity、bounded Question / hypothesis、scope、stable public ID（若适用）、主要 Inputs / population、named Observations 与 Analyses 及显式消费关系、主要 retained evidence、核心 Limitations / Acceptance、upstream dependencies / gaps、implementation location，并导航到详细语义。概述不复制 specialized contract。
-
-六个 semantic areas 可自然分配。例如 entry 拥有 Question、scope、核心 Limitations 与导航；`INPUTS.md` 拥有 input / population / parameter ownership / run identity；`METHOD.md` 拥有 Method Context 与组件图；`RESULTS.md` 拥有 retained evidence、详细结果有效性与相关 Acceptance。其他 grouping 也允许，但每条语义规则只有一个 canonical owner，且所有 owner 从 entry 可达。简单 Study 保持单文件；不要按 heading 数量拆分或产生只有几行内容的小文件。
-
-创建复杂 Study 时，在设计阶段判断 disclosure boundary。若有多个独立 Observation / Analysis、多组参数 owner、独立组件 Artifact 或复杂结果契约，应考虑从一开始建立 entry → specialized authority。Method 复杂到实现单个 Analysis 仍需加载无关 Analysis 细节时，可由 Method 入口列出组件及显式 Observation → Analysis 消费关系，再把相关 Observation / Analysis 下沉为 Study-local authority；不要求每个组件各建一个文件。实现单个 Analysis 时，只读该 Analysis、其明确消费的 Observation 和必需的上游 contract。拆分不创建跨 Study 组件接口、DAG executor、Artifact Registry 或 plugin framework。
+Study 是一个 semantic authority unit，不等于一个 physical Markdown file。新 Study 的呈现顺序、稳定 entry 应保留的概述和 disclosure signals 由 [Skeleton](SKELETON.md) 定义。Template Filling 先建立该逻辑结构，再填入 Structured Study Intention Record 中已确定的语义；复杂内容仅在阅读边界需要时下沉，且从 entry 导航至唯一 canonical owner。实现单个 Analysis 时，只读该 Analysis、其明确消费的 Observation 和必需的上游 contract。拆分不创建跨 Study 组件接口、DAG executor、Artifact Registry 或 plugin framework。
