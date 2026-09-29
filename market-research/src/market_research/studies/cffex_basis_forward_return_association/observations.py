@@ -67,7 +67,6 @@ def build(snapshots: dict[str, CFFEXEquityIndexBasisHistoryResult]) -> dict[str,
     term: list[dict[str, Any]] = []
     daily_basis: list[dict[str, Any]] = []
     returns: list[dict[str, Any]] = []
-    by_family: dict[str, dict[str, Any]] = {}
     for family in FAMILIES:
         snapshot = snapshots[family]
         by_date: dict[str, dict[str, Any]] = {}
@@ -83,9 +82,6 @@ def build(snapshots: dict[str, CFFEXEquityIndexBasisHistoryResult]) -> dict[str,
             day[observation.contract_slot] = observation
         if not by_date:
             raise CFFEXStudyError(f"{family} has no basis history.")
-        basis_rows: list[dict[str, Any]] = []
-        return_rows: list[dict[str, Any]] = []
-        term_rows: list[dict[str, Any]] = []
         dates = sorted(by_date)
         closes: list[float] = []
         for trade_date in dates:
@@ -103,7 +99,6 @@ def build(snapshots: dict[str, CFFEXEquityIndexBasisHistoryResult]) -> dict[str,
                 _finite(contract_row.annualized_basis_pct, "annualized basis")
                 term_row = {"family": family, **asdict(contract_row)}
                 term.append(term_row)
-                term_rows.append(term_row)
             component = {
                 slot: _finite(slots[slot].annualized_basis_pct, "annualized basis")
                 for slot in ("M1", "Q1", "Q2")
@@ -115,7 +110,6 @@ def build(snapshots: dict[str, CFFEXEquityIndexBasisHistoryResult]) -> dict[str,
                 "daily_non_front_basis": predictor,
                 **{f"{slot.lower()}_annualized_basis_pct": component[slot] for slot in component},
             }
-            basis_rows.append(basis_row)
             daily_basis.append(basis_row)
         for index, trade_date in enumerate(dates):
             row: dict[str, Any] = {
@@ -129,14 +123,11 @@ def build(snapshots: dict[str, CFFEXEquityIndexBasisHistoryResult]) -> dict[str,
                     if index + horizon < len(dates)
                     else None
                 )
-            return_rows.append(row)
             returns.append(row)
-        by_family[family] = {"term": term_rows, "basis": basis_rows, "returns": return_rows}
     return {
         "basis_term_structure": term,
         "daily_basis_environment": daily_basis,
         "underlying_forward_returns": returns,
-        "by_family": by_family,
         "identities": {
             name: _artifact_identity(name, snapshots)
             for name in (

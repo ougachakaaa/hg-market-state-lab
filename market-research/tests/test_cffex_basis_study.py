@@ -8,7 +8,13 @@ from pathlib import Path
 
 import pytest
 
-from market_research.studies.cffex_basis_forward_return_association import cli, statistics, study
+from market_research.studies.cffex_basis_forward_return_association import (
+    analyses,
+    cli,
+    observations,
+    statistics,
+    study,
+)
 from market_research.studies.cffex_basis_forward_return_association.context import (
     FAMILIES,
     HORIZONS,
@@ -131,6 +137,32 @@ def test_observations_populations_and_thresholds() -> None:
             )
 
 
+def test_named_observations_drive_analyses_without_snapshot_metadata() -> None:
+    source = snapshots()
+    observed = observations.build({item.futures_family: item for item in source})
+    names = {
+        "basis_term_structure",
+        "daily_basis_environment",
+        "underlying_forward_returns",
+    }
+    assert set(observed) == names | {"identities"}
+    named = {name: observed[name] for name in names}
+    analyzed = analyses.run(named)
+    assert analyzed == analyses.run(
+        {**named, "underlying_forward_returns": list(reversed(named["underlying_forward_returns"]))}
+    )
+    assert analyzed["_sample_evidence"]["common_period"]["date_count"] == 10
+    assert [row["predictor_date_count"] for row in analyzed["_sample_evidence"]["families"]] == [
+        15,
+        10,
+        10,
+        10,
+    ]
+    assert [(row["family"], row["horizon"]) for row in analyzed["linear_association"]["table"]] == [
+        (family, horizon) for family in FAMILIES for horizon in HORIZONS
+    ]
+
+
 def test_ties_empty_quintiles_and_null_statistics() -> None:
     result = study.compute(snapshots(flat_basis=True, flat_close=True))
     rows = result["basis_regime_forward_returns"]["table"]
@@ -153,16 +185,13 @@ def test_ties_empty_quintiles_and_null_statistics() -> None:
 def test_empirical_quantile_and_ols_null_rules() -> None:
     assert statistics._quantile([1, 2, 3, 4], 0.2) == pytest.approx(1.6)
     assert statistics._quantile([], 0.2) is None
-    eligible = [{"daily_non_front_basis": x, "forward_return_1d_pct": 0.0} for x in (1.0, 2.0, 3.0)]
-    row = statistics._association(eligible, "IF", 1)
+    row = statistics._linear_association([1.0, 2.0, 3.0], [0.0, 0.0, 0.0])
     assert row["ols_alpha"] == 0
     assert row["ols_beta"] == 0
     assert row["ols_r_squared"] is None
     assert row["null_reasons"]["ols_r_squared"] == "zero_outcome_variance"
 
-    single = statistics._association(
-        [{"daily_non_front_basis": 1.0, "forward_return_1d_pct": 2.0}], "IF", 1
-    )
+    single = statistics._linear_association([1.0], [2.0])
     assert single["pearson_correlation"] is None
     assert single["ols_alpha"] is None
     assert single["null_reasons"]["ols_beta"] == "sample_count_below_two"

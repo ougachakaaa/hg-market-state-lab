@@ -57,9 +57,7 @@ def _distribution(values: list[float]) -> dict[str, Any]:
     }
 
 
-def _association(eligible: list[dict[str, Any]], family: str, horizon: int) -> dict[str, Any]:
-    x = [row["daily_non_front_basis"] for row in eligible]
-    y = [row[f"forward_return_{horizon}d_pct"] for row in eligible]
+def _linear_association(x: list[float], y: list[float]) -> dict[str, Any]:
     n = len(x)
     x_mean, y_mean = _mean(x), _mean(y)
     ss_x = math.fsum((v - x_mean) ** 2 for v in x)
@@ -93,9 +91,6 @@ def _association(eligible: list[dict[str, Any]], family: str, horizon: int) -> d
             )
             r_squared = _finite(1 - residual / ss_y, "OLS R squared")
     return {
-        "family": family,
-        "horizon": horizon,
-        "sample_count": n,
         "pearson_correlation": correlation,
         "ols_alpha": alpha,
         "ols_beta": beta,

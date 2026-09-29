@@ -5,12 +5,15 @@ from __future__ import annotations
 import math
 from typing import Any
 
-from market_snapshot.products.cffex_equity_index_basis_history import (
-    CFFEXEquityIndexBasisHistoryResult,
-)
-
 from .context import FAMILIES, HORIZONS, PERCENTILES, SLOTS, CFFEXStudyError
-from .statistics import _association, _distribution, _finite, _mean, _quantile
+from .statistics import _distribution, _finite, _linear_association, _mean, _quantile
+
+
+def _by_family(rows: list[dict[str, Any]]) -> dict[str, list[dict[str, Any]]]:
+    grouped: dict[str, list[dict[str, Any]]] = {family: [] for family in FAMILIES}
+    for row in rows:
+        grouped[row["family"]].append(row)
+    return grouped
 
 
 def _regime(
@@ -115,42 +118,39 @@ def _historical_basis_context(
     return summary, series
 
 
-def run(
-    observations: dict[str, Any],
-    snapshots: dict[str, CFFEXEquityIndexBasisHistoryResult],
-    start: str,
-    end: str,
-) -> dict[str, Any]:
+def run(observations: dict[str, Any]) -> dict[str, Any]:
     """Run historical context, full-history regime/linear and common-period analyses."""
+    terms = _by_family(observations["basis_term_structure"])
+    bases = _by_family(observations["daily_basis_environment"])
+    returns = _by_family(observations["underlying_forward_returns"])
     historical_series: list[dict[str, Any]] = []
     historical_summary: list[dict[str, Any]] = []
-    samples: list[dict[str, Any]] = []
+    sample_evidence: list[dict[str, Any]] = []
     eligible_by_family: dict[str, list[dict[str, Any]]] = {}
     for family in FAMILIES:
-        rows = observations["by_family"][family]
-        basis_rows = rows["basis"]
-        return_rows = rows["returns"]
+        basis_rows = sorted(bases[family], key=lambda row: row["trade_date"])
+        returns_by_date = {row["trade_date"]: row for row in returns[family]}
+        basis_dates = [row["trade_date"] for row in basis_rows]
+        if set(basis_dates) != set(returns_by_date):
+            raise CFFEXStudyError(f"{family} basis and forward-return dates do not match.")
+        return_rows = [returns_by_date[trade_date] for trade_date in basis_dates]
         eligible = _eligible_sample(basis_rows, return_rows)
         if not eligible:
             raise CFFEXStudyError(f"{family} has no complete 20D predictor observation.")
         eligible_by_family[family] = eligible
-        summary, series = _historical_basis_context(family, rows["term"], basis_rows, return_rows)
+        summary, series = _historical_basis_context(family, terms[family], basis_rows, return_rows)
         historical_summary.append(summary)
         historical_series.extend(series)
-        dates = [row["trade_date"] for row in basis_rows]
-        samples.append(
+        sample_evidence.append(
             {
                 "family": family,
-                "requested_start_trade_date": start,
-                "requested_end_trade_date": end,
-                "family_listing_date": snapshots[family].family_listing_date,
-                "first_basis_date": dates[0],
-                "last_basis_date": dates[-1],
-                "basis_date_count": len(dates),
+                "first_basis_date": basis_dates[0],
+                "last_basis_date": basis_dates[-1],
+                "basis_date_count": len(basis_dates),
                 "first_predictor_date": eligible[0]["trade_date"],
                 "last_predictor_date": eligible[-1]["trade_date"],
                 "predictor_date_count": len(eligible),
-                "future_insufficient_exclusion_count": len(dates) - len(eligible),
+                "future_insufficient_exclusion_count": len(basis_dates) - len(eligible),
             }
         )
     common_dates = set.intersection(
@@ -168,14 +168,21 @@ def run(
         thresholds, table = _regime(eligible, family, "full_history_20d_predictor")
         full_breakpoints.append(thresholds)
         full_regime.extend(table)
-        linear.extend(_association(eligible, family, horizon) for horizon in HORIZONS)
+        for horizon in HORIZONS:
+            mechanics = _linear_association(
+                [row["daily_non_front_basis"] for row in eligible],
+                [row[f"forward_return_{horizon}d_pct"] for row in eligible],
+            )
+            linear.append(
+                {"family": family, "horizon": horizon, "sample_count": len(eligible), **mechanics}
+            )
         common = [row for row in eligible if row["trade_date"] in common_dates]
         thresholds, table = _regime(common, family, "common_period")
         common_breakpoints.append(thresholds)
         common_regime.extend(table)
     return {
-        "sample_summary": {
-            "families": samples,
+        "_sample_evidence": {
+            "families": sample_evidence,
             "common_period": {
                 "population": "common_period",
                 "first_date": min(common_dates),

@@ -21,6 +21,8 @@ def assemble(
     observations: dict[str, Any],
     analyses: dict[str, Any],
 ) -> dict[str, Any]:
+    sample_evidence = analyses["_sample_evidence"]
+    sample_by_family = {row["family"]: row for row in sample_evidence["families"]}
     return {
         "provenance": {
             "study_id": STUDY_ID,
@@ -54,7 +56,25 @@ def assemble(
                 "underlying_forward_returns",
             )
         },
-        **analyses,
+        "sample_summary": {
+            "families": [
+                {
+                    "family": family,
+                    "requested_start_trade_date": start,
+                    "requested_end_trade_date": end,
+                    "family_listing_date": snapshots[family].family_listing_date,
+                    **sample_by_family[family],
+                }
+                for family in FAMILIES
+            ],
+            "common_period": sample_evidence["common_period"],
+        },
+        "historical_basis_context": analyses["historical_basis_context"],
+        "basis_regime_forward_returns": analyses["basis_regime_forward_returns"],
+        "linear_association": analyses["linear_association"],
+        "common_period_cross_family_comparison": analyses[
+            "common_period_cross_family_comparison"
+        ],
     }
 
 

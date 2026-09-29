@@ -45,7 +45,7 @@ def compute(snapshots_input: list[CFFEXEquityIndexBasisHistoryResult]) -> dict[s
         raise CFFEXStudyError("Snapshot request bounds do not match across families.")
 
     observed = observations.build(snapshots)
-    analyzed = analyses.run(observed, snapshots, start, end)
+    analyzed = analyses.run(observed)
     return results.assemble(snapshots, start, end, observed, analyzed)
 
 
