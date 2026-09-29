@@ -8,7 +8,13 @@ from pathlib import Path
 
 import pytest
 
-from market_research.studies.cffex_basis_forward_return_association import cli, study
+from market_research.studies.cffex_basis_forward_return_association import cli, statistics, study
+from market_research.studies.cffex_basis_forward_return_association.context import (
+    FAMILIES,
+    HORIZONS,
+    SLOTS,
+    STUDY_ID,
+)
 from market_research.ui import configuration
 from market_snapshot.products.cffex_equity_index_basis_history import (
     CFFEXEquityIndexBasisHistoryResult,
@@ -38,13 +44,13 @@ def snapshots(
 ) -> list[CFFEXEquityIndexBasisHistoryResult]:
     dates = weekdays("2025-12-01", 35)
     result = []
-    for family_index, family in enumerate(study.FAMILIES):
+    for family_index, family in enumerate(FAMILIES):
         family_dates = dates if family == "IF" else dates[5:]
         observations = []
         for day, trade_date in enumerate(family_dates):
             close = 100.0 if flat_close else 100 + day * (family_index + 1) + day**2 * 0.01
             predictor = 1.0 if flat_basis else day * 0.1 + family_index * 0.3
-            for slot_index, slot in enumerate(study.SLOTS):
+            for slot_index, slot in enumerate(SLOTS):
                 basis = predictor + slot_index
                 observations.append(
                     CFFEXEquityIndexBasisObservation(
@@ -102,11 +108,11 @@ def test_observations_populations_and_thresholds() -> None:
     full = result["basis_regime_forward_returns"]["breakpoints"]
     common = result["common_period_cross_family_comparison"]["breakpoints"]
     assert full[0]["p20"] != common[0]["p20"]
-    for family in study.FAMILIES:
+    for family in FAMILIES:
         count = next(
             row["predictor_date_count"] for row in summary["families"] if row["family"] == family
         )
-        for horizon in study.HORIZONS:
+        for horizon in HORIZONS:
             assert (
                 sum(
                     row["sample_count"]
@@ -145,16 +151,16 @@ def test_ties_empty_quintiles_and_null_statistics() -> None:
 
 
 def test_empirical_quantile_and_ols_null_rules() -> None:
-    assert study._quantile([1, 2, 3, 4], 0.2) == pytest.approx(1.6)
-    assert study._quantile([], 0.2) is None
+    assert statistics._quantile([1, 2, 3, 4], 0.2) == pytest.approx(1.6)
+    assert statistics._quantile([], 0.2) is None
     eligible = [{"daily_non_front_basis": x, "forward_return_1d_pct": 0.0} for x in (1.0, 2.0, 3.0)]
-    row = study._association(eligible, "IF", 1)
+    row = statistics._association(eligible, "IF", 1)
     assert row["ols_alpha"] == 0
     assert row["ols_beta"] == 0
     assert row["ols_r_squared"] is None
     assert row["null_reasons"]["ols_r_squared"] == "zero_outcome_variance"
 
-    single = study._association(
+    single = statistics._association(
         [{"daily_non_front_basis": 1.0, "forward_return_1d_pct": 2.0}], "IF", 1
     )
     assert single["pearson_correlation"] is None
@@ -183,7 +189,7 @@ def test_common_period_uses_actual_dates_with_an_internal_gap() -> None:
     source[1] = CFFEXEquityIndexBasisHistoryResult(**{**ih.__dict__, "observations": kept})
     result = study.compute(source)
     assert result["sample_summary"]["common_period"]["date_count"] == 9
-    for horizon in study.HORIZONS:
+    for horizon in HORIZONS:
         assert (
             sum(
                 row["sample_count"]
@@ -240,8 +246,8 @@ def test_retained_artifacts_and_cli_overwrite(
     monkeypatch.setattr(cli.snapshot_product, "run_cffex_equity_index_basis_history", run_product)
     start, end = source[0].start_trade_date, source[0].end_trade_date
     assert cli.main(["--start", start, "--end", end]) == 0
-    assert calls == list(study.FAMILIES)
-    run_dir = output_root / study.STUDY_ID / f"{start}__{end}"
+    assert calls == list(FAMILIES)
+    run_dir = output_root / STUDY_ID / f"{start}__{end}"
     assert (run_dir / "result.json").exists()
     calls.clear()
     assert cli.main(["--start", start, "--end", end]) == 6

@@ -2,6 +2,8 @@
 
 本文档是本 retained Study 的稳定 canonical 入口。Stable public Study ID 为 `cffex-basis-forward-return-association`，对应 runnable package `cffex_basis_forward_return_association`。Authoring 遵循 [Study Authority Authoring](../AUTHORING.md)；Research 边界见 [market-research architecture](../../ARCHITECTURE.md)，CLI 转发、输出位置及覆盖规则见 [Research UI authority](../../ui/ARCHITECTURE.md)。[Method](METHOD.md) 拥有本 Study 的研究统计语义和三个 Observation / 四个 Analysis；[Results](RESULTS.md) 拥有 retained evidence contract。市场确定性事实与执行入口来自 [CFFEX Equity Index Futures Basis History](../../../market-snapshot/src/market_snapshot/products/cffex_equity_index_basis_history/ARCHITECTURE.md)，其共用合约语义见 [Snapshot CFFEX basis authority](../../../market-snapshot/src/market_snapshot/cffex_equity_index_basis/ARCHITECTURE.md)。
 
+Executable [Study package](../../src/market_research/studies/cffex_basis_forward_return_association/) 以 `study.py` 为 orchestration entry；`observations.py` 对应三个具名 Observation，`analyses.py` 对应四个具名 Analysis，`statistics.py` 保存本 Study 的统计 mechanics，`results.py` 对应 retained Results / presentation。共享 Study 常量与错误类型留在 `context.py`。这些是 implementation navigation，不改变 Method 或 Results 语义。
+
 ## Question
 
 研究 CFFEX IF、IH、IC、IM 四类股指期货自各自上市以来的历史基差环境，以及该环境与对应标的指数随后 1、3、5、10、20 条实际交易观测收益之间是否存在可观察、跨 family 相似的历史关联。具体回答：各 family 的基差与标的指数经历过怎样的历史变化；该 family 自身较低到较高的基差环境之后，指数收益分布有何差异；相同市场时期内四个 family 的关系是否具有相似方向。
