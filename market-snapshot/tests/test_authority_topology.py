@@ -12,6 +12,10 @@ REPOSITORY_ROOT = Path(__file__).resolve().parents[2]
 MARKDOWN_LINK = re.compile(r"\[[^]]+\]\(([^)]+)\)")
 
 CONTEXT_ENTRIES = {
+    Path("market-research/studies/AUTHORING.md"),
+    Path("market-research/studies/SCHEMA.md"),
+    Path("market-research/studies/REVIEW.md"),
+    Path("market-research/studies/COMPATIBILITY.md"),
     Path("market-research/shared/price_to_lagged_reference/ARCHITECTURE.md"),
     Path("market-snapshot/src/market_snapshot/capture/ARCHITECTURE.md"),
     Path(
@@ -19,6 +23,12 @@ CONTEXT_ENTRIES = {
         "daily_market_snapshot/ARCHITECTURE.md"
     ),
     Path("market-snapshot/src/market_snapshot/products/csi1000_im_basis_history/ARCHITECTURE.md"),
+    Path("market-snapshot/src/market_snapshot/cffex_equity_index_basis/ARCHITECTURE.md"),
+    Path(
+        "market-snapshot/src/market_snapshot/products/"
+        "cffex_equity_index_basis_history/ARCHITECTURE.md"
+    ),
+    Path("market-research/studies/cffex_basis_forward_return_association/ARCHITECTURE.md"),
     Path("market-snapshot/src/market_snapshot/products/index_daily_history/ARCHITECTURE.md"),
     Path(
         "market-snapshot/src/market_snapshot/products/"
@@ -94,10 +104,14 @@ def test_retired_snapshot_implementation_is_absent() -> None:
     assert not list((package_root / "products/csi1000_5d_analysis").glob("*.py"))
 
 
-def test_im_basis_semantics_are_product_local() -> None:
+def test_cffex_basis_semantics_have_one_shared_implementation() -> None:
     package_root = REPOSITORY_ROOT / "market-snapshot/src/market_snapshot"
     product_root = package_root / "products/csi1000_im_basis_history"
+    assert (package_root / "cffex_equity_index_basis/semantics.py").is_file()
     assert (product_root / "basis_semantics.py").is_file()
+    compatibility_source = (product_root / "basis_semantics.py").read_text(encoding="utf-8")
+    assert "from ...cffex_equity_index_basis.semantics import" in compatibility_source
+    assert "def assign_contract_slots" not in compatibility_source
     assert not (package_root / "preparation/im_basis").exists()
     for source in product_root.glob("*.py"):
         tree = ast.parse(source.read_text(encoding="utf-8"))

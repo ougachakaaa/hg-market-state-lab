@@ -15,7 +15,10 @@ from __future__ import annotations
 
 import os
 import re
+import time
+from collections.abc import Callable
 from datetime import datetime
+from threading import Lock
 from typing import Protocol
 
 import pandas as pd
@@ -31,14 +34,19 @@ TRADE_DATE_FIELD = "trade_date"
 TRADE_DATE_ISO_FORMAT = "%Y-%m-%d"
 TRADE_DATE_TUSHARE_FORMAT = "%Y%m%d"
 ISO_DATE_PATTERN = re.compile(r"\d{4}-\d{2}-\d{2}")
+FUT_DAILY_MIN_INTERVAL_SECONDS = 0.25
+FUT_DAILY_RATE_LIMIT_RETRY_SECONDS = 60.0
+_fut_daily_lock = Lock()
+_last_fut_daily_start: float | None = None
+_monotonic = time.monotonic
+_sleep = time.sleep
 
 
 class TushareSourceError(Exception):
     """Raised when the Tushare Source boundary is not usable as required.
 
-    This is the Source-level failure the Capture layer translates into its own
-    ``CollectionError``, so a Capture never leaks a Source-specific exception to
-    its callers.
+    Capture and Product callers use this project-level failure to classify a
+    provider request failure without handling a provider-library exception.
     """
 
 
@@ -98,6 +106,50 @@ class TushareApi(Protocol):
         start_date: str | None = ...,
         end_date: str | None = ...,
     ) -> pd.DataFrame: ...
+
+
+def call_provider(endpoint: str, call: Callable[[], pd.DataFrame]) -> pd.DataFrame:
+    """Keep provider-library failures inside the Tushare Source boundary."""
+    try:
+        return call()
+    except TushareSourceError:
+        raise
+    except Exception as exc:
+        raise TushareSourceError(f"Tushare {endpoint} request failed: {exc}") from exc
+
+
+def _pace_fut_daily() -> None:
+    """Reserve a request start while the caller holds the process-local lock."""
+    global _last_fut_daily_start
+    now = _monotonic()
+    if _last_fut_daily_start is not None:
+        remaining = FUT_DAILY_MIN_INTERVAL_SECONDS - (now - _last_fut_daily_start)
+        if remaining > 0:
+            _sleep(remaining)
+    _last_fut_daily_start = _monotonic()
+
+
+def _is_fut_daily_rate_limit(exc: Exception) -> bool:
+    message = str(exc).lower()
+    return "fut_daily" in message and (
+        "频率超限" in message or "rate limit" in message
+    )
+
+
+def call_fut_daily(call: Callable[[], pd.DataFrame]) -> pd.DataFrame:
+    """Pace every attempt and retry one explicit endpoint rate-limit response."""
+    def request_once() -> pd.DataFrame:
+        with _fut_daily_lock:
+            _pace_fut_daily()
+            return call_provider("fut_daily", call)
+
+    try:
+        return request_once()
+    except TushareSourceError as exc:
+        if not _is_fut_daily_rate_limit(exc):
+            raise
+    _sleep(FUT_DAILY_RATE_LIMIT_RETRY_SECONDS)
+    return request_once()
 
 
 def get_tushare_token() -> str:

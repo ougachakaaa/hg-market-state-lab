@@ -22,6 +22,12 @@ REPO_ROOT = TESTS_DIR.parent
 
 
 @pytest.fixture(autouse=True)
+def no_real_fut_daily_wait(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Ordinary fake-Source tests exercise data behavior without wall-clock pacing."""
+    monkeypatch.setattr(tushare, "_pace_fut_daily", lambda: None)
+
+
+@pytest.fixture(autouse=True)
 def test_workdir() -> Iterator[Path]:
     """A scratch directory for one test, removed afterwards.
 

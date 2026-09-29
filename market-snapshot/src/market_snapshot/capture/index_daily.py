@@ -24,14 +24,19 @@ class NoIndexDataError(common.CollectionError):
 
 def query_index_daily(api: tushare.TushareApi, ts_code: str, trade_date: str) -> pd.DataFrame:
     """Read one index for one trade date from Tushare ``index_daily``."""
-    return api.index_daily(ts_code=ts_code, trade_date=trade_date)
+    return tushare.call_provider(
+        "index_daily", lambda: api.index_daily(ts_code=ts_code, trade_date=trade_date)
+    )
 
 
 def query_index_daily_range(
     api: tushare.TushareApi, ts_code: str, start_date: str, end_date: str
 ) -> pd.DataFrame:
     """Read one index over an explicit inclusive range from ``index_daily``."""
-    return api.index_daily(ts_code=ts_code, start_date=start_date, end_date=end_date)
+    return tushare.call_provider(
+        "index_daily",
+        lambda: api.index_daily(ts_code=ts_code, start_date=start_date, end_date=end_date),
+    )
 
 
 def collect_index_daily(

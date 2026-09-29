@@ -1,4 +1,4 @@
-"""Shared IM futures daily Capture for target-date and explicit-range Products."""
+"""CFFEX equity-index futures daily Capture for target-date and range Products."""
 
 from __future__ import annotations
 
@@ -18,17 +18,21 @@ def query_fut_daily(
     api: tushare.TushareApi, ts_code: str, start_date: str, end_date: str
 ) -> pd.DataFrame:
     """Read one futures contract over a calendar window from Tushare ``fut_daily``."""
-    return api.fut_daily(ts_code=ts_code, start_date=start_date, end_date=end_date)
+    return tushare.call_fut_daily(
+        lambda: api.fut_daily(ts_code=ts_code, start_date=start_date, end_date=end_date)
+    )
 
 
 def query_target_date_fut_daily(
     api: tushare.TushareApi, ts_code: str, trade_date: str
 ) -> pd.DataFrame:
     """Read only one contract's target-date fact from the same Source endpoint."""
-    return api.fut_daily(ts_code=ts_code, trade_date=trade_date)
+    return tushare.call_fut_daily(lambda: api.fut_daily(ts_code=ts_code, trade_date=trade_date))
 
 
-def require_contract_lifecycle(record: artifacts.RawRecord) -> tuple[str, str]:
+def require_contract_lifecycle(
+    record: artifacts.RawRecord, family: str = PRODUCT
+) -> tuple[str, str]:
     """Return the ``(list_date, delist_date)`` an IM contract needs.
 
     A member contract without usable lifecycle facts cannot be placed in the
@@ -38,12 +42,12 @@ def require_contract_lifecycle(record: artifacts.RawRecord) -> tuple[str, str]:
     delist_date = tushare.to_iso_date_or_none(record.get("delist_date"))
     if list_date is None or delist_date is None:
         raise common.CollectionError(
-            f"{PRODUCT} contract {record.get('ts_code')} has no usable lifecycle facts "
+            f"{family} contract {record.get('ts_code')} has no usable lifecycle facts "
             f"in the collected basic records."
         )
     if delist_date < list_date:
         raise common.CollectionError(
-            f"{PRODUCT} contract {record.get('ts_code')} has delist_date={delist_date} "
+            f"{family} contract {record.get('ts_code')} has delist_date={delist_date} "
             f"before list_date={list_date}."
         )
     return list_date, delist_date
@@ -53,6 +57,7 @@ def collect_target_date_im_futures_daily(
     trade_date: str,
     basic_facts: Sequence[artifacts.RawRecord],
     daily_query: common.QueryFunc,
+    family: str = PRODUCT,
 ) -> list[artifacts.RawRecord]:
     """Collect target-date facts for every active ordinary monthly IM contract.
 
@@ -61,12 +66,12 @@ def collect_target_date_im_futures_daily(
     a complete read model.
     """
     source_date = tushare.to_tushare_date(trade_date)
-    im_futures_basic.require_im_contract_facts(basic_facts)
+    im_futures_basic.require_im_contract_facts(basic_facts, family)
     records: list[artifacts.RawRecord] = []
     for contract in basic_facts:
-        if not im_futures_basic.is_im_contract_member(contract):
-            raise common.CollectionError("IM basic facts include a contract outside the IM scope")
-        list_date, delist_date = require_contract_lifecycle(contract)
+        if not im_futures_basic.is_im_contract_member(contract, family):
+            raise common.CollectionError(f"{family} basic facts include a contract outside scope")
+        list_date, delist_date = require_contract_lifecycle(contract, family)
         if not list_date <= trade_date <= delist_date:
             continue
         ts_code = str(contract["ts_code"])
@@ -90,15 +95,18 @@ def collect_im_futures_daily_range(
     end_trade_date: str,
     basic_facts: Sequence[artifacts.RawRecord],
     daily_query: common.QueryFunc,
+    family: str = PRODUCT,
 ) -> list[artifacts.RawRecord]:
     """Collect daily facts for every IM lifecycle intersecting an explicit range."""
     tushare.to_tushare_date(start_trade_date)
     tushare.to_tushare_date(end_trade_date)
-    im_futures_basic.require_im_contract_facts(basic_facts)
+    im_futures_basic.require_im_contract_facts(basic_facts, family)
     records: list[artifacts.RawRecord] = []
     selected = 0
     for contract in basic_facts:
-        list_date, delist_date = require_contract_lifecycle(contract)
+        if not im_futures_basic.is_im_contract_member(contract, family):
+            raise common.CollectionError(f"{family} basic facts include a contract outside scope")
+        list_date, delist_date = require_contract_lifecycle(contract, family)
         if list_date > end_trade_date or delist_date < start_trade_date:
             continue
         selected += 1
@@ -129,7 +137,7 @@ def collect_im_futures_daily_range(
         records.extend(contract_records)
     if not selected:
         raise common.CollectionError(
-            f"no {PRODUCT} contract lifecycle intersects {start_trade_date}..{end_trade_date}."
+            f"no {family} contract lifecycle intersects {start_trade_date}..{end_trade_date}."
         )
     records.sort(key=lambda record: (str(record["ts_code"]), str(record["trade_date"])))
     return records
@@ -140,6 +148,7 @@ def capture_range(
     start_trade_date: str,
     end_trade_date: str,
     basic_facts: Sequence[artifacts.RawRecord],
+    family: str = PRODUCT,
 ) -> list[artifacts.RawRecord]:
     """Run the explicit-range ``fut_daily`` Capture."""
     return collect_im_futures_daily_range(
@@ -147,15 +156,20 @@ def capture_range(
         end_trade_date,
         basic_facts,
         lambda **kwargs: query_fut_daily(api, **kwargs),
+        family,
     )
 
 
 def capture_target_date(
-    api: tushare.TushareApi, trade_date: str, basic_facts: Sequence[artifacts.RawRecord]
+    api: tushare.TushareApi,
+    trade_date: str,
+    basic_facts: Sequence[artifacts.RawRecord],
+    family: str = PRODUCT,
 ) -> list[artifacts.RawRecord]:
     """Capture one day's IM facts for active Products."""
     return collect_target_date_im_futures_daily(
         trade_date,
         basic_facts,
         lambda **kwargs: query_target_date_fut_daily(api, **kwargs),
+        family,
     )

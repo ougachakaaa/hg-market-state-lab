@@ -8,6 +8,8 @@ from types import ModuleType
 
 import pytest
 
+from market_research.studies.cffex_basis_forward_return_association import cli as cffex_cli
+from market_research.studies.cffex_basis_forward_return_association import study as cffex_study
 from market_research.studies.im_basis_baseline import cli as baseline_cli
 from market_research.studies.im_basis_forward_return_association import cli as association_cli
 from market_research.ui import configuration
@@ -327,6 +329,41 @@ def test_snapshot_failure_is_classified_and_preserves_prior_evidence(
     assert "Snapshot/data error" in capsys.readouterr().err
 
 
+def test_association_failed_overwrite_preserves_evidence_and_cleans_staging(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    _config_path, output_root = patch_config(tmp_path, monkeypatch)
+    short_snapshot = snapshot_result(24)
+    run_dir = output_root / association_cli.STUDY_ID / (
+        f"{short_snapshot.start_trade_date}__{short_snapshot.end_trade_date}"
+    )
+    run_dir.mkdir(parents=True)
+    (run_dir / "old.txt").write_text("preserve me", encoding="utf-8")
+    monkeypatch.setattr(
+        association_cli.snapshot_product,
+        "run_csi1000_im_basis_history",
+        lambda _request: short_snapshot,
+    )
+
+    assert (
+        association_cli.main(
+            [
+                "--start",
+                short_snapshot.start_trade_date,
+                "--end",
+                short_snapshot.end_trade_date,
+                "--overwrite",
+            ]
+        )
+        == 5
+    )
+    assert (run_dir / "old.txt").read_text(encoding="utf-8") == "preserve me"
+    assert not list(run_dir.parent.glob(".*.staging-*"))
+    assert "Study/sample error" in capsys.readouterr().err
+
+
 def test_publication_failure_restores_previous_run(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
@@ -419,6 +456,8 @@ def test_research_ui_and_study_clis_do_not_import_snapshot_internals() -> None:
         research_root / "ui" / "execution.py",
         Path(baseline_cli.__file__),
         Path(association_cli.__file__),
+        Path(cffex_cli.__file__),
+        Path(cffex_study.__file__),
     ]
     source = "\n".join(path.read_text(encoding="utf-8") for path in sources)
     for forbidden in (

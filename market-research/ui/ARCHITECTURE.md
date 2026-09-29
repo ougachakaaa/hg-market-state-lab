@@ -50,7 +50,7 @@ python -m market_research.studies.<study_package>.cli [study-specific args...]
 
 Research UI configuration 只提供 `output.root`。每个 Study 从自身完整的 semantic request 确定 deterministic run key：语义相同的请求必须得到相同的 key，任何会改变 retained evidence 含义的 Study 参数变化都必须得到不同的 key。当前时间、随机 UUID、进程身份、临时路径或运行顺序不得成为 canonical semantic identity。key 的表示形式（包括是否使用 hash 或编码）由 Study 决定；共享 Research UI 不定义统一 request schema、参数列表或 key 算法。
 
-该 run key 标识整次 Study 请求并用于共享 output placement。Study 内如需独立物化 Observation / Analysis Artifact，其更细粒度 semantic identity 由 [Study Authority Authoring](../studies/AUTHORING.md) 约束、由具体 Study 定义；共享 Research UI 不解释或管理组件 artifact identity，也不因组件可复用而提供新的分段执行或发布协议。
+该 run key 标识整次 Study 请求并用于共享 output placement。Study 内如需独立物化 Observation / Analysis Artifact，其更细粒度 semantic identity 由 [Study Schema](../studies/SCHEMA.md) 约束、由具体 Study 定义；共享 Research UI 不解释或管理组件 artifact identity，也不因组件可复用而提供新的分段执行或发布协议。
 
 Study-local CLI 将 Study-owned run key 交给共享 Research UI，canonical placement 为：
 

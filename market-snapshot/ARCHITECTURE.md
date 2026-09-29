@@ -8,7 +8,7 @@ Product 是一个具有明确数据需求、query identity、invariants 和 anal
 
 Product 不是横向 Source → Capture → Preparation → Service pipeline 中的一层。产品专属 `preparation.py` 或 `service.py` 留在 `products/<product>/` 是正常的 ownership；外层同名目录不要求迁移产品代码。具体产品从 [catalog](CAPABILITIES.md) 进入，其 specialized authority 是产品契约的 canonical owner。
 
-Product 外的能力须由多个活跃 Product 的实际需求证明，而非为未来可能复用建立通用 framework。Product-local semantic 归 Product；经真实跨 Product 需求证明的 semantic 或 mechanic 才可共享。未来出现第二个真实 consumer 时，须重新作显式 semantic decision。当前共享能力包括 Source adapter / Capture facts 与通用 artifact filesystem/JSON mechanics。CSI1000/IM basis preparation semantics 只由 CSI1000 IM Basis History 拥有。共享代码和单一 Python runtime 不授予跨 Product 读取私有 Raw 或 result 的权限。
+Product 外的能力须由多个活跃 Product 的实际需求证明，而非为未来可能复用建立通用 framework。Product-local semantic 归 Product；经真实跨 Product 需求证明的 semantic 或 mechanic 才可共享。当前共享能力包括 Source adapter / Capture facts、通用 artifact filesystem/JSON mechanics，以及由 CSI1000 IM Basis History 与 CFFEX Equity Index Futures Basis History 共同消费的窄 CFFEX 股指期货期限结构与基差语义。两个 Product 各自拥有 Source scope、完整性、request/result/failure/execution contract；共享代码和单一 Python runtime 不授予跨 Product 读取私有 Raw 或 result 的权限。
 
 ## 2. Product execution 的角色
 
@@ -59,7 +59,8 @@ ARCHITECTURE.md
 | --- | --- |
 | `products/<product>/` | 保留活跃 Product-local Source scope、Preparation、Application Service 与 public contract |
 | `sources/`、`capture/` | 保留共享 provider adapter、Source facts、normalization 与 Capture mechanics；产品专属 scope 下沉 Product |
-| `products/csi1000_im_basis_history/` | 拥有 IM basis slot、calendar distance、formula 与 ordering 实现 |
+| `cffex_equity_index_basis/` | 两个真实 Product 共用的 CFFEX family、slot、calendar distance、formula 与 ordering 语义 owner；实现迁移属于后续 implementation |
+| `products/csi1000_im_basis_history/` | 保留旧 IM Product public contract、scope 与当前实现；共用语义以共享 authority 为准 |
 | `artifacts.py` | 仅保留通用 Raw root、filesystem/JSON mechanics；Product-specific Raw 路径由各 Product 构造 |
 
 不因本 authority 重命名为 `shared/` 或引入 pipeline、plugin、registry、workflow engine。实施时先按 owning authority reconcile，发现上下层或同级冲突须显式解决。
