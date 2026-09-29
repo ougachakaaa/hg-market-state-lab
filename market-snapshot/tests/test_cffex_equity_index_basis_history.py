@@ -12,6 +12,7 @@ from market_snapshot.cffex_equity_index_basis.semantics import (
     FAMILY_FACTS,
     CFFEXBasisError,
     assign_contract_slots,
+    contract_month,
 )
 from market_snapshot.products.cffex_equity_index_basis_history import (
     CFFEXEquityIndexBasisHistoryError,
@@ -42,7 +43,7 @@ def weekdays(start: str, count: int) -> list[str]:
 
 
 def api_for(family: str, dates: list[str]) -> FakeTushareApi:
-    codes = [f"{family}2601.CFE", f"{family}2602.CFE", f"{family}2603.CFE", f"{family}2606.CFE"]
+    codes = [f"{family}2601.CFX", f"{family}2602.CFX", f"{family}2603.CFX", f"{family}2606.CFX"]
     delist = ["20260130", "20260227", "20260327", "20260626"]
     basics = [
         im_contract(code, fut_code=family, list_date="20250101", delist_date=last)
@@ -74,10 +75,10 @@ def test_four_family_capture_and_public_panel(family: str) -> None:
     )
     assert api.fut_basic_calls == [{"exchange": "CFFEX", "fut_type": "1", "fut_code": family}]
     assert {call["ts_code"] for call in api.fut_daily_calls} == {
-        f"{family}2601.CFE",
-        f"{family}2602.CFE",
-        f"{family}2603.CFE",
-        f"{family}2606.CFE",
+        f"{family}2601.CFX",
+        f"{family}2602.CFX",
+        f"{family}2603.CFX",
+        f"{family}2606.CFX",
     }
 
 
@@ -100,18 +101,18 @@ def test_contract_filter_and_lifecycle_intersection() -> None:
     api = api_for(family, dates)
     basics = api.futures_basic.to_dict(orient="records")
     basics.append(
-        im_contract("IF.CFE", fut_code=family, list_date="20250101", delist_date="20260130")
+        im_contract("IF.CFX", fut_code=family, list_date="20250101", delist_date="20260130")
     )
     basics.append(
-        im_contract("IF2609.CFE", fut_code=family, list_date="20260801", delist_date="20260930")
+        im_contract("IF2609.CFX", fut_code=family, list_date="20260801", delist_date="20260930")
     )
     api.futures_basic = futures_basic_frame(basics)
     records = im_futures_basic.capture(api, "2025-12-02", family)
-    assert "IF.CFE" not in {row["ts_code"] for row in records}
+    assert "IF.CFX" not in {row["ts_code"] for row in records}
     CFFEXEquityIndexBasisHistoryService(api).run(
         CFFEXEquityIndexBasisHistoryRequest(family, "2025-12-01", "2025-12-02")
     )
-    assert "IF2609.CFE" not in {call["ts_code"] for call in api.fut_daily_calls}
+    assert "IF2609.CFX" not in {call["ts_code"] for call in api.fut_daily_calls}
 
 
 def test_slot_and_delivery_day_rules() -> None:
@@ -122,7 +123,12 @@ def test_slot_and_delivery_day_rules() -> None:
     assert result.observations[0].days_to_delist == 0
     assert result.observations[0].annualization_days == 1
     contracts = [
-        {"ts_code": f"IF{month}.CFE", "list_date": "2025-01-01", "delist_date": end}
+        {
+            "ts_code": f"IF{month}.CFX",
+            "symbol": f"IF{month}",
+            "list_date": "2025-01-01",
+            "delist_date": end,
+        }
         for month, end in (
             ("2601", "2026-01-30"),
             ("2602", "2026-02-27"),
@@ -134,13 +140,37 @@ def test_slot_and_delivery_day_rules() -> None:
         assign_contract_slots("2026-01-30", contracts, "IF")
 
 
+def test_real_tushare_contract_identity_uses_symbol_and_delist_month() -> None:
+    contract = {"symbol": "IF1005", "ts_code": "IF1005.CFX", "delist_date": "2010-05-21"}
+    assert contract_month(contract, "IF") == (2010, 5)
+    assert contract_month({**contract, "ts_code": "IF1005.CFE"}, "IF") == (2010, 5)
+
+
 @pytest.mark.parametrize(
-    "defect", ["missing", "duplicate", "invalid_close", "bad_month", "bad_lifecycle"]
+    ("change", "message"),
+    [
+        ({"symbol": "IF1006"}, "conflicts with symbol"),
+        ({"symbol": "IH1005"}, "does not express a IF delivery month"),
+        ({"symbol": "IF1099", "ts_code": "IF1099.CFX"}, "invalid delivery month"),
+        ({"delist_date": "2010-06-21"}, "conflicts with delist_date"),
+        ({"ts_code": "IF1005"}, "conflicts with symbol"),
+        ({"ts_code": "IF1005.CFX "}, "conflicts with symbol"),
+        ({"symbol": None}, "symbol must be a non-empty string"),
+    ],
+)
+def test_contract_identity_defects_fail_explicitly(change: dict[str, object], message: str) -> None:
+    contract = {"symbol": "IF1005", "ts_code": "IF1005.CFX", "delist_date": "2010-05-21"}
+    with pytest.raises(CFFEXBasisError, match=message):
+        contract_month({**contract, **change}, "IF")
+
+
+@pytest.mark.parametrize(
+    "defect", ["missing", "duplicate", "invalid_close", "bad_month", "bad_symbol", "bad_lifecycle"]
 )
 def test_incomplete_panel_is_classified(defect: str) -> None:
     dates = weekdays("2025-12-01", 2)
     api = api_for("IH", dates)
-    code = "IH2603.CFE"
+    code = "IH2603.CFX"
     if defect == "missing":
         api.futures_daily[code] = api.futures_daily[code].iloc[:1]
     elif defect == "duplicate":
@@ -150,6 +180,8 @@ def test_incomplete_panel_is_classified(defect: str) -> None:
         api.futures_daily[code]["close"] = pd.Series([float("nan")] * len(dates))
     elif defect == "bad_month":
         api.futures_basic.loc[api.futures_basic["ts_code"] == code, "delist_date"] = "20260427"
+    elif defect == "bad_symbol":
+        api.futures_basic.loc[api.futures_basic["ts_code"] == code, "symbol"] = "IH2604"
     else:
         api.futures_basic.loc[api.futures_basic["ts_code"] == code, "list_date"] = None
     with pytest.raises(CFFEXEquityIndexBasisHistoryError) as caught:

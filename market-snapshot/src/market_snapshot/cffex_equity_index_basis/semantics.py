@@ -71,18 +71,21 @@ def _quarter_months_after(value: tuple[int, int]) -> list[tuple[int, int]]:
 def contract_month(record: Mapping[str, Any], family: str = "IM") -> tuple[int, int]:
     """Return a contract's verified maturity month."""
     ts_code = _required_text(record, "ts_code")
+    symbol = _required_text(record, "symbol")
     delist = _required_date(record, "delist_date")
     if family not in FAMILY_FACTS:
         raise CFFEXBasisError(f"unsupported futures family {family!r}.")
-    match = re.fullmatch(rf"{family}(?P<year>\d{{2}})(?P<month>\d{{2}})\.CFE", ts_code)
+    match = re.fullmatch(rf"{family}(?P<year>\d{{2}})(?P<month>\d{{2}})", symbol)
     if match is None:
-        raise CFFEXBasisError(f"ts_code={ts_code!r} does not express a {family} delivery month.")
+        raise CFFEXBasisError(f"symbol={symbol!r} does not express a {family} delivery month.")
+    if re.fullmatch(rf"{re.escape(symbol)}\.[^.\s]+", ts_code) is None:
+        raise CFFEXBasisError(f"ts_code={ts_code!r} conflicts with symbol={symbol!r}.")
     identity = (int(match.group("year")), int(match.group("month")))
     if not 1 <= identity[1] <= 12:
-        raise CFFEXBasisError(f"ts_code={ts_code!r} has an invalid delivery month.")
+        raise CFFEXBasisError(f"symbol={symbol!r} has an invalid delivery month.")
     if identity != (delist.year % 100, delist.month):
         raise CFFEXBasisError(
-            f"ts_code={ts_code!r} conflicts with delist_date={delist.isoformat()}."
+            f"symbol={symbol!r} conflicts with delist_date={delist.isoformat()}."
         )
     return delist.year, delist.month
 

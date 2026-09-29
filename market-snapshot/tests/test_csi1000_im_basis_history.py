@@ -27,10 +27,10 @@ from support.fake_source import (
 )
 
 CONTRACTS = (
-    ("IM2601.CFE", "2025-01-01", "2026-01-30", 102.0),
-    ("IM2602.CFE", "2025-02-01", "2026-02-27", 103.0),
-    ("IM2603.CFE", "2025-03-01", "2026-03-27", 104.0),
-    ("IM2606.CFE", "2025-06-01", "2026-06-26", 105.0),
+    ("IM2601.CFX", "2025-01-01", "2026-01-30", 102.0),
+    ("IM2602.CFX", "2025-02-01", "2026-02-27", 103.0),
+    ("IM2603.CFX", "2025-03-01", "2026-03-27", 104.0),
+    ("IM2606.CFX", "2025-06-01", "2026-06-26", 105.0),
 )
 
 
@@ -108,7 +108,7 @@ def test_delivery_day_keeps_zero_calendar_days_and_uses_one_for_annualization() 
 def test_missing_active_daily_fact_fails_without_partial_result() -> None:
     dates = weekdays("2025-12-01", 2)
     api = api_for_dates(dates)
-    api.futures_daily["IM2603.CFE"] = api.futures_daily["IM2603.CFE"].iloc[:1]
+    api.futures_daily["IM2603.CFX"] = api.futures_daily["IM2603.CFX"].iloc[:1]
 
     with pytest.raises(CSI1000IMBasisHistoryError, match="missing IM daily row"):
         CSI1000IMBasisHistoryService(api).run(request_for(dates))
@@ -117,8 +117,8 @@ def test_missing_active_daily_fact_fails_without_partial_result() -> None:
 def test_duplicate_source_fact_fails_without_partial_result() -> None:
     dates = weekdays("2025-12-01", 2)
     api = api_for_dates(dates)
-    frame = api.futures_daily["IM2603.CFE"]
-    api.futures_daily["IM2603.CFE"] = pd.concat([frame, frame.iloc[[0]]])
+    frame = api.futures_daily["IM2603.CFX"]
+    api.futures_daily["IM2603.CFX"] = pd.concat([frame, frame.iloc[[0]]])
 
     with pytest.raises(CSI1000IMBasisHistoryError, match="duplicate IM daily row"):
         CSI1000IMBasisHistoryService(api).run(request_for(dates))
@@ -144,13 +144,15 @@ def test_slot_mapping_rejects_duplicate_or_malformed_month_structure() -> None:
     contracts = [
         {
             "ts_code": code,
+            "symbol": code.split(".")[0],
             "list_date": listed,
             "delist_date": delisted,
         }
         for code, listed, delisted, _ in CONTRACTS
     ]
     contracts[-1] = {
-        "ts_code": "IM2609.CFE",
+        "ts_code": "IM2609.CFX",
+        "symbol": "IM2609",
         "list_date": "2025-06-01",
         "delist_date": "2026-09-25",
     }
