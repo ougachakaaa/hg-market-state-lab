@@ -18,14 +18,16 @@ def query_fut_daily(
     api: tushare.TushareApi, ts_code: str, start_date: str, end_date: str
 ) -> pd.DataFrame:
     """Read one futures contract over a calendar window from Tushare ``fut_daily``."""
-    return api.fut_daily(ts_code=ts_code, start_date=start_date, end_date=end_date)
+    return tushare.call_fut_daily(
+        lambda: api.fut_daily(ts_code=ts_code, start_date=start_date, end_date=end_date)
+    )
 
 
 def query_target_date_fut_daily(
     api: tushare.TushareApi, ts_code: str, trade_date: str
 ) -> pd.DataFrame:
     """Read only one contract's target-date fact from the same Source endpoint."""
-    return api.fut_daily(ts_code=ts_code, trade_date=trade_date)
+    return tushare.call_fut_daily(lambda: api.fut_daily(ts_code=ts_code, trade_date=trade_date))
 
 
 def require_contract_lifecycle(

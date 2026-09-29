@@ -35,7 +35,9 @@ def query_fut_basic(
     api: tushare.TushareApi, exchange: str, fut_type: str, fut_code: str
 ) -> pd.DataFrame:
     """Read ordinary CFFEX futures contracts of one product from ``fut_basic``."""
-    return api.fut_basic(exchange=exchange, fut_type=fut_type, fut_code=fut_code)
+    return tushare.call_provider(
+        "fut_basic", lambda: api.fut_basic(exchange=exchange, fut_type=fut_type, fut_code=fut_code)
+    )
 
 
 def is_ordinary_monthly_contract(record: artifacts.RawRecord, family: str = PRODUCT) -> bool:

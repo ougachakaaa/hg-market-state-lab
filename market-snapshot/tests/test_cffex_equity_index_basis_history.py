@@ -232,6 +232,55 @@ def test_source_failure_and_empty_underlying_are_distinct() -> None:
     assert empty.value.reason == "no_observations"
 
 
+def test_exhausted_provider_rate_limit_classifies_product_failure(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    api = api_for("IF", weekdays("2025-12-01", 2))
+    calls = 0
+    waits: list[float] = []
+
+    def rate_limited(**_kwargs):
+        nonlocal calls
+        calls += 1
+        raise Exception("抱歉，您访问接口(fut_daily)频率超限(300次/分钟)")
+
+    monkeypatch.setattr(api, "fut_daily", rate_limited)
+    monkeypatch.setattr(tushare, "_sleep", waits.append)
+    with pytest.raises(CFFEXEquityIndexBasisHistoryError) as caught:
+        CFFEXEquityIndexBasisHistoryService(api).run(
+            CFFEXEquityIndexBasisHistoryRequest("IF", "2025-12-01", "2025-12-02")
+        )
+    assert caught.value.reason == "source_failure"
+    assert calls == 2
+    assert waits == [tushare.FUT_DAILY_RATE_LIMIT_RETRY_SECONDS]
+
+
+def test_cli_classifies_raw_fut_daily_provider_failure(
+    tmp_path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    from market_research.studies.cffex_basis_forward_return_association import cli
+    from market_research.ui import configuration
+
+    api = api_for("IF", weekdays("2025-12-01", 2))
+
+    def broken(**_kwargs):
+        raise RuntimeError("network unavailable")
+
+    monkeypatch.setattr(api, "fut_daily", broken)
+    monkeypatch.setattr(tushare, "get_tushare_token", lambda: "fake-token")
+    monkeypatch.setattr(tushare, "create_tushare_api", lambda _token: api)
+    config_path = tmp_path / "research.toml"
+    config_path.write_text(f"[output]\nroot = '{tmp_path / 'output'}'\n", encoding="utf-8")
+    monkeypatch.setattr(configuration, "REPOSITORY_ROOT", tmp_path)
+    monkeypatch.setattr(configuration, "CANONICAL_CONFIG_PATH", config_path)
+
+    assert cli.main(["--start", "2025-12-01", "--end", "2025-12-02"]) == 4
+    error = capsys.readouterr().err
+    assert "Snapshot/data error (source_failure)" in error
+    assert "network unavailable" in error
+    assert "Traceback" not in error
+
+
 def test_cli_to_four_public_products_and_retained_evidence(
     tmp_path, monkeypatch: pytest.MonkeyPatch
 ) -> None:

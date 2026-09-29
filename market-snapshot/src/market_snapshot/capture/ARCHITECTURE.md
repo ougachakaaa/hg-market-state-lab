@@ -6,6 +6,8 @@
 
 本 context 拥有外部 Source endpoint 调用、Source query 参数、共享 Capture 身份、公共 Source 字段事实与 minimal normalization。Capture 产出逻辑 Source Facts；产品决定是否持久化为自己的 Raw Artifact。本 context 不拥有产品编排、产品专属 Capture scope、analysis formula、read model、HTTP 或展示语义。外层 `capture/` 不是所有 Product Capture 实现的强制归属目录。
 
+有效的产品请求若自然展开为多个 Source endpoint 调用，Source/Capture execution 必须遵守 provider 的请求频率限制。Provider library 抛出的调用异常须在 Source 边界归一化为项目 Source error，不得以原始异常穿透到 Capture 或 Product。
+
 ## Capture catalog
 
 | Capture | Implementation | Specialized authority |
