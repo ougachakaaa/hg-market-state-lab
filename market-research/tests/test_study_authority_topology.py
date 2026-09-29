@@ -67,8 +67,12 @@ def test_single_and_specialized_study_navigation(tmp_path: Path) -> None:
 
 
 def test_creation_entry_does_not_link_to_legacy_shared_semantics() -> None:
-    entry = (STUDIES_ROOT / "AUTHORING.md").read_text(encoding="utf-8")
+    authoring = STUDIES_ROOT / "AUTHORING.md"
+    entry = authoring.read_text(encoding="utf-8")
     assert "(SCHEMA.md)" in entry
     assert "(REVIEW.md)" in entry
     assert "(COMPATIBILITY.md)" in entry
     assert "../shared/" not in entry
+    skeleton = STUDIES_ROOT / "SKELETON.md"
+    assert skeleton.is_file()
+    assert skeleton.resolve() in local_study_links(authoring, STUDIES_ROOT)
