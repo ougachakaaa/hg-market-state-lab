@@ -32,7 +32,7 @@ Study [1]
 | `Inputs` | 拥有跨 Study boundary 的请求输入与整次请求的 identity 规则，不因此接管每个值的研究含义。 | 外部事实及 canonical 来源、目标 population、样本选择与范围、数据选择及 configurable values；逐项记录 material parameter 的 owner、consumers、semantic role 和适用的取值契约。Runnable 时定义 Study-specific semantic input 的必填/可选、默认值、用户可见表达与 CLI 映射，并区分 Study-owned execution-only option。保留 evidence 时定义整次请求的 identity 参与输入、等价输入 canonicalization、必须区分的变化、排除项与 Study-owned deterministic run-key rule。 |
 | `Method` | 拥有当前 Study 的 analytical graph：what is observed / analyzed and what it means。 | 显式定义共享上下文（若存在）、`1..N` 个具名 Observation、`1..N` 个具名 Analysis 及其消费关系；各组件的选择、输入与输出足以确定研究含义。 |
 | `Results` | 拥有 produced evidence 的保留与 human / machine consumption、presentation；Analysis 拥有比较、计算与证据含义。 | 定义 `1..N` 类预期保留的 `Evidence Product`、必须保留的 Analysis / statistical evidence、是否独立保留组件 Artifacts，以及哪些 human / machine forms 必需。明确已有 evidence 与尚未执行的状态；无 evidence 时不填占位数值、finding 或推测结论。Filename / format 仅在构成稳定 Study contract 时锁定。 |
-| `Evidence Product` | Results 下的预期保留产物；其证据含义来自 Method 中的 Analysis，不另定义计算或统计语义。 | 逐项给出稳定的 Study-local name、定义其证据含义的 `1..N` 个具名 Analysis，以及所表达的 evidence、所需 machine-readable structure、table、plot、report 或其他 visualization；说明适用的 empty bucket、missing statistic、excluded observation 等边界状态和复核必需的 metadata、exclusion counts、provenance。 |
+| `Evidence Product` | Results 下的预期保留产物；其证据含义来自 Method 中的 Analysis，不另定义计算或统计语义。 | 逐项给出稳定的 Study-local name，并以 `defined_by` 关系显式引用定义其证据含义的 `1..N` 个具名 Analysis；明确所表达的 evidence、所需 machine-readable structure、table、plot、report 或其他 visualization，以及适用的 empty bucket、missing statistic、excluded observation 等边界状态和复核必需的 metadata、exclusion counts、provenance。 |
 | `Limitations` | 拥有证据的解释边界。 | 研究边界、解释限制与不得从结果推出的结论。 |
 | `Acceptance` | 拥有研究设计与预期产物的验收语义。 | 设计与产物完整、可复核的条件，以及该 Study 的结果有效性与失败条件；不设全模块统一统计阈值、运行规则或 artifact schema。 |
 
@@ -66,10 +66,10 @@ Study [1]
 | `parameters` | 自身 parameters。 | 自身 parameters。 |
 | `semantics` | Observation semantics / derived variables。 | Grouping / comparison / statistical semantics。 |
 | `validity / exclusion` | 适用的 eligibility / exclusion / validity 规则。 | — |
-| `produces` | 供后续消费的语义输出。 | 产生的 evidence 语义及对应 retained Evidence Product 的 Study-local name。 |
+| `produces` | 供后续消费的语义输出。 | 产生的 evidence 语义；不重复维护 retained Evidence Product 的 Study-local name。 |
 | `artifact identity` | 仅需独立物化、保留或复用时定义。 | 仅需独立物化、保留或复用时定义。 |
 
-`consumes` 与 `produces` 是 Study-local semantic references：组件关系须由 stable local name 指向实际定义的对象，不能留待 prose 或实现推断。Analysis 的 `purpose` 指向其回答的 Question aspect；该 Analysis 所消费的 Observations 和所对应的 retained Evidence Products 形成可扫描的 Question aspect → Observation → Analysis → Evidence Product 链。一个 Evidence Product 可以汇总多个 Analyses；每个 material Analysis 都须有可追踪的 retained evidence。Evidence Product 的 local name 标识证据语义，不是表格、图形、报告的格式、filename 或 path；这些表示选择不构成依赖边。纯 request/provenance metadata 可随 evidence 保留，不因此成为独立的 Evidence Product。Local name 不采用 repository-global ID 或强制 `O-*` / `A-*` / `R-*` 前缀。
+Analysis 的 `consumes` 以 stable local name 引用具名 Observation；`produces` 只定义 Analysis 自身的 evidence semantics。`Results` 下的 Evidence Product 唯一拥有 retained Analysis → Evidence Product mapping：每个 Evidence Product 从自身单向引用 defining Analyses，Analysis 不重复列出 Evidence Product local names。Analysis 的 `purpose` 指向其回答的 Question aspect；沿 Analysis 的 Observation 引用与 Evidence Product 的 Analysis 引用，须能恢复 Question aspect → Observation → Analysis → Evidence Product 链。一个 Evidence Product 可以汇总多个 Analyses；每个 material Analysis 都须能经 Results 中的映射追踪到 retained evidence。Evidence Product 的 local name 标识证据语义，不是表格、图形、报告的格式、filename 或 path；这些表示选择不构成依赖边。纯 request/provenance metadata 可随 evidence 保留，不因此成为独立的 Evidence Product。Local name 不采用 repository-global ID 或强制 `O-*` / `A-*` / `R-*` 前缀。
 
 ### Method dependencies and component Artifact identity
 
@@ -79,9 +79,9 @@ Study [1]
 | Forbidden semantic dependencies | Analysis → Observation 不合法；默认不建立 Observation → Observation semantic contract；Observation 的定义不得依赖某个 Analysis 的目标或已得结果；sibling Study → sibling Study research-semantic dependency 不合法。复用 dataframe、helper、internal function 或中间计算，以及 filesystem layout，都不创建 semantic dependency。 |
 | Conditional Artifact identity | 仅当 Observation / Analysis 需要独立物化、保留或复用时，当前 Study 才定义其 component Artifact identity；不要求每个组件都有持久化 artifact。已物化的 Observation Artifact 可由语义 identity 匹配的 Analysis 复用。 |
 | Observation Artifact identity | 明列 Observation identity、相关 Method Context parameters、Observation-owned semantic parameters 及相关 source / input identity。只纳入影响该 Observation 语义的输入。 |
-| Analysis Artifact identity | 明列 Analysis identity、实际消费的 Observation semantic identities（已物化时使用相应 Observation Artifact identities）、相关 Method Context parameters 及 Analysis-owned semantic parameters。只纳入影响该 Analysis 语义的输入。 |
+| Analysis Artifact identity | 明列 Analysis identity、实际消费的每个 Observation 在当前 Study request 下的完整 semantic identity、相关 Method Context parameters 及 Analysis-owned semantic parameters。对已独立物化的 Observation，使用其 Artifact identity；对未物化的 Observation，纳入其 stable local identity 及全部 identity-determining semantic inputs，包括相关 Method Context / Observation-owned parameters 与 source / Study input identity。只纳入影响该 Analysis 语义的输入。 |
 
-Component Artifact identity 由上述语义输入决定，不依赖运行时间、随机 UUID、偶然路径或意外的迭代顺序；它与 filesystem filename、path、serialization representation 不同。Study 可按参数构造易读文件名，具体 hash、serialization、文件名或 artifact 格式只在构成稳定 Study contract 时锁定。新增或重跑 Analysis 在语义上不要求重做未变化的 Observation；这不要求实现提供分段执行、通用 DAG executor、全局 Artifact Registry、cache framework 或 shared execution protocol。
+未物化 Observation 的 stable local name 本身不足以确定 Analysis Artifact identity；同一 Observation 的 window、source 或其他 identity-changing semantic input 不同，消费它的 Analysis Artifact identity 必须可区分。Component Artifact identity 由上述语义输入决定，不依赖运行时间、随机 UUID、偶然路径或意外的迭代顺序；它与 filesystem filename、path、serialization representation 不同。Study 可按参数构造易读文件名，具体 hash、serialization、文件名或 artifact 格式只在构成稳定 Study contract 时锁定。新增或重跑 Analysis 在语义上不要求重做未变化的 Observation；这不要求实现提供分段执行、通用 DAG executor、全局 Artifact Registry、cache framework 或 shared execution protocol。
 
 六个 semantic areas 必须有实质内容；`TBD`、空节或“采用合适方法”不能掩盖会改变研究含义的缺失决定。非语义性的命名、排版与实现细节可由 Agent 整理，不进入 human semantic-decision loop。
 
