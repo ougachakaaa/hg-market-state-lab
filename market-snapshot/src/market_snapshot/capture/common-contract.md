@@ -10,8 +10,8 @@
 | `stock_daily` | `daily` | A 股未复权日行情 |
 | `mo_option_basic` | `opt_basic` | MO 期权合约静态与生命周期事实 |
 | `mo_option_daily` | `opt_daily` | MO 期权合约日行情事实 |
-| `im_futures_basic` | `fut_basic` | IM 期货合约静态与生命周期事实 |
-| `im_futures_daily` | `fut_daily` | IM 期货合约日行情事实 |
+| CFFEX equity-index futures basic（当前实现为 `im_futures_basic`） | `fut_basic` | IF/IH/IC/IM 普通月度合约静态与生命周期 Source facts |
+| CFFEX equity-index futures daily（当前实现为 `im_futures_daily`） | `fut_daily` | IF/IH/IC/IM 合约日行情 Source facts |
 
 相同 Capture 名称表示相同 Source fact 语义，但不同产品可以有不同采集范围并写入各自的 goal-scoped Raw Artifact。
 
