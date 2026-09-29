@@ -18,6 +18,8 @@
 - Research 只消费 Snapshot 明确支持的 public application/product result。不得导入 Source Capture、Raw Artifact、product-private Preparation 或 persistence internals，也不得通过 `backend-api`、FastAPI 或 HTTP DTO 获取内部业务语义。
 - Scratch 可以快速、低约束和 disposable，但不构成 semantic authority、稳定接口或 production dependency。
 - 新建 retained Study authority 遵循 Authoring → Schema → 当前 Study 的最小阅读路径；语义审查与未决事项按 Review 处理，既有 Study 的触发式 reconciliation 按 Compatibility 处理。Study-specific 细节留在对应 Study authority，不上提到 module architecture。
+- 将每个 retained Study implementation directory 视为小型 bounded module，按 [Study schema](studies/SCHEMA.md) 的 semantic graph 组织实现；不默认把所有逻辑放入 `study.py`。简单 Study 可使用单个 module；复杂 Study 主动检查 semantic cohesion，优先 Study-local decomposition，并保留易读的 orchestration / composition entry。不机械地为每个 Observation / Analysis 建文件，不按行数拆分，也不因 helper 相似而修改 sibling Studies、shared authority 或创建 generic framework。
+- Implementation topology review 应能从 Study authority 清晰定位主要 Observation、Analysis、Results 与 orchestration 责任。若修改一个 material component 必须阅读大量无关 Study implementation，应在当前 Study 内 reconciliation；检查不引入固定目录模板或 LOC 限制。
 - 当前 Research visualization 由 `market-research` 拥有，默认通过 Python study output 生成并优先保留静态图片；具体图形形式由真实 Study 的研究问题决定。
 - Repository `lab research` 是 Research 的 canonical 人类操作入口，只发现并转发到 study-local CLI；参数、Snapshot public-boundary composition、Study invocation、artifact 与 result semantics 由具体 Study 拥有。当前可运行入口见根 [DEVELOPMENT.md](../DEVELOPMENT.md)。
 - 新增 runnable retained Study 时，必须同步提供稳定 CLI study ID、符合 [Research UI authority](ui/ARCHITECTURE.md) 的 study-local `cli.py`、记录用法的 canonical Study authority 与 CLI/output tests；不得创建中央 catalog/registry、reflection、entry-point plugin 或动态 registration framework。
