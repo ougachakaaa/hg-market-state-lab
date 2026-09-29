@@ -1,6 +1,6 @@
 # Research Study Semantic Schema
 
-本文件是 retained Study semantic structure 的唯一通用 canonical definition；创建入口见 [Authoring](AUTHORING.md)，完整性与决策流程见 [Review](REVIEW.md)，既有 Study 的适用规则见 [Compatibility](COMPATIBILITY.md)，runnable Study 的共享调用与输出约定见 [Research UI authority](../ui/ARCHITECTURE.md)。本文定义 semantic objects 与完整性，不规定文件布局，也不拥有具体 Study 语义。
+本文件是 retained Study semantic structure 的唯一通用 canonical definition；创建流程与 authority 布局见 [Authoring](AUTHORING.md)，完整性验证见 [Review](REVIEW.md)，既有 Study 的适用规则见 [Compatibility](COMPATIBILITY.md)，runnable Study 的共享调用与输出约定见 [Research UI authority](../ui/ARCHITECTURE.md)。本文定义 semantic objects 与必需语义，不规定文件布局、authoring workflow 或 implementation decomposition，也不拥有具体 Study 语义。
 
 ## Canonical Study semantic object model
 
@@ -22,7 +22,7 @@ Study [1]
 
 `Identity` 是 Study 的必备 structural information，不是第七个 research semantic area；`Semantic Areas` 只是分组标签。`Question`、`Inputs`、`Method`、`Results`、`Limitations`、`Acceptance` 仍是 Authoring 与 Review 所指的六个必答 areas。`Inputs [1]` 表示该 area 必须定义；具体输入值由 Study 确定，不要求另建 `Input` object 或统一 cardinality。`Results [1]` 必须定义 `1..N` 类预期保留的 `Evidence Product`；执行前实际产物可以是 `0`。
 
-除 Study、具名 Observation / Analysis 和按条件定义的 component Artifact 外，本 schema 不要求其他 structural area 另有独立 ID；retained Evidence Product 须有供关系引用的 Study-local name。每个 area 与每条语义规则须有唯一 canonical owner，并能从该 Study 的 `ARCHITECTURE.md` 导航到。各 object 是语义层次，不对应固定 Markdown 或 Python 文件。
+除 Study、具名 Observation / Analysis 和按条件定义的 component Artifact 外，本 schema 不要求其他 structural area 另有独立 ID；retained Evidence Product 须有供关系引用的 Study-local name。各 object 是语义层次，不对应固定 Markdown 或 Python 文件。
 
 | Element | Role / ownership boundary | Required semantic fields and validity |
 | --- | --- | --- |
@@ -83,22 +83,4 @@ Analysis 的 `consumes` 以 stable local name 引用具名 Observation；`produc
 
 未物化 Observation 的 stable local name 本身不足以确定 Analysis Artifact identity；同一 Observation 的 window、source 或其他 identity-changing semantic input 不同，消费它的 Analysis Artifact identity 必须可区分。Component Artifact identity 由上述语义输入决定，不依赖运行时间、随机 UUID、偶然路径或意外的迭代顺序；它与 filesystem filename、path、serialization representation 不同。Study 可按参数构造易读文件名，具体 hash、serialization、文件名或 artifact 格式只在构成稳定 Study contract 时锁定。新增或重跑 Analysis 在语义上不要求重做未变化的 Observation；这不要求实现提供分段执行、通用 DAG executor、全局 Artifact Registry、cache framework 或 shared execution protocol。
 
-六个 semantic areas 必须有实质内容；`TBD`、空节或“采用合适方法”不能掩盖会改变研究含义的缺失决定。非语义性的命名、排版与实现细节可由 Agent 整理，不进入 human semantic-decision loop。
-
-## Study authority topology
-
-Study 是一个 semantic authority unit，不等于一个 physical Markdown file。`studies/<study_package>/ARCHITECTURE.md` 始终是稳定 canonical entry：概述 Study identity、bounded Question / hypothesis、scope、stable public ID（若适用）、主要 Inputs / population、named Observations 与 Analyses 及显式消费关系、主要 retained evidence、核心 Limitations / Acceptance、upstream dependencies / gaps、implementation location，并导航到详细语义。概述不复制 specialized contract。
-
-六个 semantic areas 可自然分配。例如 entry 拥有 Question、scope、核心 Limitations 与导航；`INPUTS.md` 拥有 input / population / parameter ownership / run identity；`METHOD.md` 拥有 Method Context 与组件图；`RESULTS.md` 拥有 retained evidence、详细结果有效性与相关 Acceptance。其他 grouping 也允许，但每条语义规则只有一个 canonical owner，且所有 owner 从 entry 可达。简单 Study 保持单文件；不要按 heading 数量拆分或产生只有几行内容的小文件。
-
-创建复杂 Study 时，在设计阶段判断 disclosure boundary。若有多个独立 Observation / Analysis、多组参数 owner、独立组件 Artifact 或复杂结果契约，应考虑从一开始建立 entry → specialized authority。Method 复杂到实现单个 Analysis 仍需加载无关 Analysis 细节时，可由 Method 入口列出组件及显式 Observation → Analysis 消费关系，再把相关 Observation / Analysis 下沉为 Study-local authority；不要求每个组件各建一个文件。实现单个 Analysis 时，只读该 Analysis、其明确消费的 Observation 和必需的上游 contract。拆分不创建跨 Study 组件接口、DAG executor、Artifact Registry 或 plugin framework。
-
-## Study implementation topology
-
-一个 retained Study 是独立的 semantic authority unit；同名 executable implementation directory 也应作为小型 bounded module 组织。Study 不等于一个容纳全部逻辑的 `study.py`：简单 Study 可以使用单个 implementation module，复杂 Study 可以使用多个 Study-local modules/packages。拆分依据是 semantic responsibility 与阅读边界，而非文件数量或行数。
-
-Study-local implementation SHOULD 足够贴近上述 Method graph，使 material Method Context、Observation construction、Analysis execution、Results / presentation 与 orchestration 的职责都能独立理解和定位。典型分解可以是 `study.py` 负责 orchestration / composition，`observations.py` 构造 Observations，`analyses.py` 执行 Analyses，`results.py` 组装、保留和呈现 evidence，`statistics.py` 保存 Study-local mathematical mechanics。这只是 decomposition pattern，不是固定目录模板；semantic boundaries 是候选拆分点，不要求每个 Observation 或 Analysis 对应一个文件，也不要求每个 Study 都有上述所有文件。Authority file 与 Python file 无须一一对应，要求的是 authority component 能追踪到易定位的 implementation responsibility。
-
-复杂 Study 的 `study.py` 宜作为可读的 orchestration / composition entry：从 Study-level request validation，经 Observation construction、Analysis execution、canonical result assembly 到 Results retention，打开该入口应能快速理解 pipeline，而不必先阅读统计、绘图或持久化细节。若有多个具名 Observations / Analyses、独立的组件职责、大量 retained result / presentation、独立 artifact identity 或 mathematical mechanics，或 CLI、分析、绘图、持久化混于一处，应显式评估 Study-local decomposition。修改一个 material component 必须阅读大量无关实现，或单文件已无法呈现语义图，也是拆分信号；不设 LOC 阈值。
-
-Implementation progressive disclosure 沿 `Study ARCHITECTURE.md → relevant METHOD authority → relevant Study-local module → related tests`。修改一个具名 Analysis 时，应尽可能无需理解无关 Analyses、plotting、report、retention、artifact hashing 或无关 Observation mechanics。优先在当前 Study package 内拆分；相似 helper 不构成提升至 `market_research/shared/*`、修改 sibling Studies 或创建 generic Observation / Analysis / statistics / pipeline framework 的理由。跨 Study consolidation 仍须按既有 human-triggered policy 单独进行。
+六个 semantic areas 必须有实质内容；`TBD`、空节或“采用合适方法”不能掩盖会改变研究含义的缺失决定。
