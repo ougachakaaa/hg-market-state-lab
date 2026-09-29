@@ -6,38 +6,52 @@
 
 ```text
 Study [1]
-├── Identity [1]
-├── Question [1]
-├── Inputs [1]
-├── Method [1]
-│   ├── Method Context [0..1]
-│   ├── Observations [1..N]
-│   └── Analyses [1..N]
-├── Results / Evidence Products [1]
-├── Limitations [1]
-└── Acceptance [1]
+├── Identity [1] (structural information)
+└── Semantic Areas
+    ├── Question [1]
+    ├── Inputs [1]
+    ├── Method [1]
+    │   ├── Method Context [0..1]
+    │   ├── Observation [1..N]
+    │   └── Analysis [1..N]
+    ├── Results [1]
+    │   └── Evidence Product [1..N expected]
+    ├── Limitations [1]
+    └── Acceptance [1]
 ```
 
-`Identity` 是 Study 的必备身份信息；`Question`、`Inputs`、`Method`、`Results`、`Limitations`、`Acceptance` 仍是 Authoring 与 Review 所指的六个必答 semantic areas。`Results [1]` 须定义 `1..N` 类预期保留的 evidence product；执行前实际产物可以是 `0`。除 Study、具名 Observation / Analysis 和按条件定义的 component Artifact 外，本 schema 不要求其他 object 另有独立 ID。每个 area 与每条语义规则须有唯一 canonical owner，并能从该 Study 的 `ARCHITECTURE.md` 导航到。各 object 是语义层次，不对应固定 Markdown 或 Python 文件。
+`Identity` 是 Study 的必备 structural information，不是第七个 research semantic area；`Semantic Areas` 只是分组标签。`Question`、`Inputs`、`Method`、`Results`、`Limitations`、`Acceptance` 仍是 Authoring 与 Review 所指的六个必答 areas。`Inputs [1]` 表示该 area 必须定义；具体输入值由 Study 确定，不要求另建 `Input` object 或统一 cardinality。`Results [1]` 必须定义 `1..N` 类预期保留的 `Evidence Product`；执行前实际产物可以是 `0`。
 
-| Object | Role / ownership boundary | Required semantic fields and validity |
+除 Study、具名 Observation / Analysis 和按条件定义的 component Artifact 外，本 schema 不要求其他 object 另有独立 ID。每个 area 与每条语义规则须有唯一 canonical owner，并能从该 Study 的 `ARCHITECTURE.md` 导航到。各 object 是语义层次，不对应固定 Markdown 或 Python 文件。
+
+| Element | Role / ownership boundary | Required semantic fields and validity |
 | --- | --- | --- |
 | `Study` | 一个 bounded research question / small hypothesis 的本地 semantic authority unit，不是单独的 statistics job；上游事实及非 Research-semantic 机制仍由其 canonical owner 定义。 | 拥有 scope、六个必答 semantic areas 与 retained evidence。Study-specific 数值、公式、对象、方法和产物取舍由当前 Study authority 定义。 |
-| `Identity` | 标识当前 Study，并提供稳定的 authority 入口。 | 稳定的 `study_package` identity 与 `studies/<study_package>/ARCHITECTURE.md` 入口；预期 runnable 时有 stable public Study ID。 |
+| `Identity` | Study 的 structural information，标识当前 Study 并提供稳定的 authority 入口。 | 稳定的 `study_package` identity 与 `studies/<study_package>/ARCHITECTURE.md` 入口；预期 runnable 时有 stable public Study ID。 |
 | `Question` | 拥有研究意图与证据目标。 | 研究目标、hypothesis、可辨识的问题、希望产生的 evidence 类别及其适用配置范围。 |
 | `Inputs` | 拥有跨 Study boundary 的请求输入与整次请求的 identity 规则，不因此接管每个值的研究含义。 | 外部事实及 canonical 来源、目标 population、样本选择与范围、数据选择及 configurable values；每项参数的 semantic owner、允许值和适用组件。Runnable 时定义 Study-specific semantic input 的必填/可选、默认值、用户可见表达与 CLI 映射，以及影响 retained execution 的 Study-owned option。保留 evidence 时定义整次请求的 semantic input、等价输入 canonicalization、必须区分的变化与 Study-owned deterministic run-key rule。 |
 | `Method` | 拥有当前 Study 的 analytical graph：what is observed / analyzed and what it means。 | 显式定义共享上下文（若存在）、`1..N` 个具名 Observation、`1..N` 个具名 Analysis 及其消费关系；各组件的选择、输入与输出足以确定研究含义。 |
-| `Results` / `Evidence Products` | 拥有 produced evidence 的保留与 human / machine consumption、presentation；Analysis 拥有比较、计算与证据含义。 | 必须保留的 Analysis / statistical evidence 与是否独立保留组件 Artifacts；所需 machine-readable structure、table、plot、report 或其他 visualization；empty bucket、missing statistic、excluded observation 等边界状态，以及复核必需的 metadata、exclusion counts 与 provenance。明确已有 evidence 与尚未执行的状态；无 evidence 时不填占位数值、finding 或推测结论。Filename / format 仅在构成稳定 Study contract 时锁定。 |
+| `Results` | 拥有 produced evidence 的保留与 human / machine consumption、presentation；Analysis 拥有比较、计算与证据含义。 | 定义 `1..N` 类预期保留的 `Evidence Product`、必须保留的 Analysis / statistical evidence、是否独立保留组件 Artifacts，以及哪些 human / machine forms 必需。明确已有 evidence 与尚未执行的状态；无 evidence 时不填占位数值、finding 或推测结论。Filename / format 仅在构成稳定 Study contract 时锁定。 |
+| `Evidence Product` | Results 下的预期保留产物；其证据含义来自 Method，不另定义计算或统计语义。 | 逐项明确所表达的 evidence、所需 machine-readable structure、table、plot、report 或其他 visualization，以及适用的 empty bucket、missing statistic、excluded observation 等边界状态和复核必需的 metadata、exclusion counts、provenance。 |
 | `Limitations` | 拥有证据的解释边界。 | 研究边界、解释限制与不得从结果推出的结论。 |
 | `Acceptance` | 拥有研究设计与预期产物的验收语义。 | 设计与产物完整、可复核的条件，以及该 Study 的结果有效性与失败条件；不设全模块统一统计阈值、运行规则或 artifact schema。 |
 
 ### Method component contracts
 
-| Object | Identity / ownership | Required semantic fields and completeness |
+`Method Context [0..1]` 由当前 Study 拥有；仅在多个 Observation / Analysis 真正共享研究语义时定义共同上下文与 method-level parameters，并说明各参数影响哪些组件。没有共享语义时不造空 Context，也不为减少重复而接管组件参数。
+
+`Observation [1..N]` 与 `Analysis [1..N]` 均由当前 Study 本地拥有；每个具名组件有独立语义。其 contract 可按字段扫描：
+
+| Field | Observation | Analysis |
 | --- | --- | --- |
-| `Method Context [0..1]` | 当前 Study 拥有；仅在多个 Observation / Analysis 真正共享研究语义时存在，不为减少重复而接管组件参数。 | 共同研究上下文与 method-level parameters；每项共享参数影响哪些组件。没有共享语义时不造空 Context。 |
-| `Observation [1..N]` | 当前 Study 本地拥有；每个都有 stable local name / identity 和独立语义。 | 所观察的市场现象、依赖的 Study / Method inputs、自身 parameters、observation semantics / derived variables、适用的 eligibility / exclusion / validity 规则、供后续消费的语义输出。 |
-| `Analysis [1..N]` | 当前 Study 本地拥有；每个都有 stable local name / identity 和独立证据目的。 | 要回答的 Question aspect、显式消费的 `1..N` 个具名 Observation、自身 parameters、grouping / comparison / statistical semantics、产生的 evidence 语义。 |
+| `identity` | Stable local name / identity。 | Stable local name / identity。 |
+| `purpose` | 所观察的市场现象。 | 要回答的 Question aspect / evidential purpose。 |
+| `consumes` | 依赖的 Study / Method inputs 与 upstream data。 | 显式消费的 `1..N` 个具名 Observation。 |
+| `parameters` | 自身 parameters。 | 自身 parameters。 |
+| `semantics` | Observation semantics / derived variables。 | Grouping / comparison / statistical semantics。 |
+| `validity / exclusion` | 适用的 eligibility / exclusion / validity 规则。 | — |
+| `produces` | 供后续消费的语义输出。 | 产生的 evidence 语义。 |
+| `artifact identity` | 仅需独立物化、保留或复用时定义。 | 仅需独立物化、保留或复用时定义。 |
 
 `Inputs` 中的每项值都须可追踪到 semantic owner、允许值与适用组件；同一值可由 CLI 提供而由具名 Observation 或 Analysis 定义其研究含义。Study / Method 只拥有真正定义多个组件共同研究语义的参数。Observation 与 Analysis 是 Study-local semantic objects，不是跨 Study 的通用组件接口。Runnable Study 的 public ID 映射、调用入口、共享配置、output placement、collision 与 publication boundary 沿用 Research UI authority；本 schema 不规定统一 CLI 参数名、参数 schema 或 run-key 算法。Study authority 须把每个 semantic input 连接到可实现的用户提供方式。
 
