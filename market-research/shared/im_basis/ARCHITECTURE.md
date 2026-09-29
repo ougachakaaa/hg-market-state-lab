@@ -19,7 +19,7 @@ non_front_mean_basis_T
 
 该 predictor 是不加权算术平均，严格排除 `M0`。不使用 volume、open interest、liquidity、main-contract designation 或 days-to-delist weighting，也不使用其他 slot selection。
 
-`annualized_basis_pct` 沿用 Snapshot 的 percentage points annualized 单位。本 authority 不重新定义 `M0/M1/Q1/Q2`、remaining days、basis 或 annualization formula；这些语义由 Snapshot 的 [CSI1000 IM Basis History 产品内 basis authority](../../../market-snapshot/src/market_snapshot/products/csi1000_im_basis_history/im-basis-semantics.md) 拥有。Research 只消费该产品的公开 application result。
+`annualized_basis_pct` 沿用 Snapshot 的 percentage points annualized 单位。本 authority 不重新定义 `M0/M1/Q1/Q2`、remaining days、basis 或 annualization formula；这些共同语义由 Snapshot 的 [共享 CFFEX basis authority](../../../market-snapshot/src/market_snapshot/cffex_equity_index_basis/ARCHITECTURE.md) 拥有。[CSI1000 IM Basis History 产品内兼容 authority](../../../market-snapshot/src/market_snapshot/products/csi1000_im_basis_history/im-basis-semantics.md) 保留 IM-only 使用与旧 public contract 兼容边界。Research 只消费该产品的公开 application result。
 
 输入产品已保证每个 observation date 四槽完整且唯一。Consumer 看到缺槽、重复 slot、不可计算值或 partial date 时，必须将其视为 upstream contract violation 并失败，不填补、删除或重新选择合约。
 

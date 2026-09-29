@@ -182,16 +182,27 @@ def test_association_uses_one_common_sample_and_all_canonical_horizons() -> None
     result = association.compute(service.run(request(dates)))
 
     assert result.common_sample_count == 10
+    assert result.source_observation_count == 30
+    assert result.future_support_only_count == 20
+    assert result.effective_predictor_start_trade_date == date.fromisoformat(dates[0]).isoformat()
+    assert result.effective_predictor_end_trade_date == date.fromisoformat(dates[9]).isoformat()
     assert result.horizons == (1, 3, 5, 10, 15, 20)
     assert {row.sample_count for row in result.association} == {10}
     assert len(result.quintiles) == 5 * 6
     assert {row.sample_count for row in result.quintiles if row.horizon == 20} == {2}
+    for horizon in result.horizons:
+        rows = [row for row in result.quintiles if row.horizon == horizon]
+        assert sum(row.sample_count for row in rows) == result.common_sample_count
+        assert {row.basis_quintile for row in rows} == {"Q1", "Q2", "Q3", "Q4", "Q5"}
 
     daily = daily_im_basis(service.run(request(dates)))
     first_bucket = next(
         row for row in result.quintiles if row.horizon == 1 and row.basis_quintile == "Q1"
     )
     p20 = result.quintile_breakpoints["P20"]
+    assert p20 == pytest.approx(
+        linear_quantile([row.non_front_mean_basis for row in daily[:10]], 0.2)
+    )
     expected = [
         (daily[index + 1].underlying_close / daily[index].underlying_close - 1) * 100
         for index in range(result.common_sample_count)
@@ -206,6 +217,35 @@ def test_zero_outcome_variance_fails_the_whole_association_run() -> None:
     flat = tuple(replace(row, underlying_close=100.0) for row in snapshot.observations)
     with pytest.raises(association.AssociationStudyError, match="zero variance"):
         association.compute(replace(snapshot, observations=flat))
+
+
+def test_non_finite_forward_return_fails_the_whole_association_run() -> None:
+    service, dates = full_service(30)
+    snapshot = service.run(request(dates))
+    first_date = snapshot.observations[0].trade_date
+    flat = tuple(
+        replace(row, underlying_close=1e-308) if row.trade_date == first_date else row
+        for row in snapshot.observations
+    )
+    with pytest.raises(association.AssociationStudyError, match="non-finite forward return"):
+        association.compute(replace(snapshot, observations=flat))
+
+
+def test_overflowing_finite_predictor_fails_as_study_error() -> None:
+    service, dates = full_service(30)
+    snapshot = service.run(request(dates))
+    flat = tuple(replace(row, annualized_basis_pct=1e308) for row in snapshot.observations)
+    with pytest.raises(association.AssociationStudyError, match="basis predictor"):
+        association.compute(replace(snapshot, observations=flat))
+
+
+def test_association_rejects_unordered_snapshot_public_result() -> None:
+    service, dates = full_service(30)
+    snapshot = service.run(request(dates))
+    observations = list(snapshot.observations)
+    observations[0], observations[1] = observations[1], observations[0]
+    with pytest.raises(association.AssociationStudyError, match="canonically ordered"):
+        association.compute(replace(snapshot, observations=tuple(observations)))
 
 
 def test_association_rejects_insufficient_sample_and_empty_tied_quintiles() -> None:
@@ -234,6 +274,29 @@ def test_end_to_end_fake_source_retains_machine_human_and_static_outputs(
 
     assert baseline_result.statistics["M0"].count == 30
     assert association_result.common_sample_count == 10
+    association_dir = tmp_path / "association"
+    machine = json.loads((association_dir / "result.json").read_text(encoding="utf-8"))
+    assert machine["source_observation_count"] == 30
+    assert machine["future_support_only_count"] == 20
+    assert (
+        machine["common_sample_count"] + machine["future_support_only_count"]
+        == machine["source_observation_count"]
+    )
+    assert set(machine["quintile_breakpoints"]) == {"P20", "P40", "P60", "P80"}
+    assert len(machine["association"]) == 6
+    assert len(machine["quintiles"]) == 30
+    report = (association_dir / "report.md").read_text(encoding="utf-8")
+    for required in (
+        "Effective predictor dates",
+        "future support only: 20 observations",
+        "annualized percentage points",
+        "trading observations",
+        "OLS beta",
+        "| P20 |",
+        "| Q5 | 20 |",
+        "historical empirical conditional rate",
+    ):
+        assert required in report
     for directory, plot in (
         (tmp_path / "baseline", "baseline.png"),
         (tmp_path / "association", "correlation_by_horizon.png"),
