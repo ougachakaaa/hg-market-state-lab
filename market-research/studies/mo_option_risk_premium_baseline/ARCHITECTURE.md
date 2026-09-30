@@ -41,7 +41,7 @@ Dependency Reconciled：现有 Index Daily History 公开结果提供历史窗�
 ## Acceptance
 
 - 六个 semantic areas、Study identity、参数 owner／consumer、CLI 契约、run identity、Observation → Analysis → Evidence Product 路径均在当前 Study authority graph 中有唯一 canonical owner；不依赖 sibling Study 的研究语义。
-- `moneyness_targets >= 0`，负值为 CLI／Study input failure；每个 expiry × target DTE × type × target moneyness 至多一个有效 observation。最近日期及合约的 tie-break 确定，target、actual 与误差均保留；有效 observation 必须满足 `abs(dte_error) <= 5` calendar days 和 `abs(moneyness_error) <= 0.025`，超限以具名 reason 排除。
+- `moneyness_target >= 0`，负值为 CLI／Study input failure；contract-selection candidate 要求 `otm_distance >= 0`，有效 observation 要求 `actual_moneyness >= 0`。V1 target 和所选合约只覆盖 ATM／OTM，ITM 合约不进入候选集。每个 expiry × target DTE × type × target moneyness 至多一个有效 observation；最近日期及合约的 tie-break 确定，target、actual 与误差均保留；有效 observation 必须满足 `abs(dte_error) <= 5` calendar days 和 `abs(moneyness_error) <= 0.025`，超限以具名 reason 排除。
 - 可从 panel 逐行复核 high／low entry proxy、expiry close payoff proxy 和三种 compensation；缺失、无效或不一致的事实有可计数原因，不改选次近候选、不插值、不伪造。
 - 两个 Analysis 均只消费具名 Observation，跨 expiry 等权；每个 cell 报 sample 与 unique expiry counts、coverage、空值、分位数和尾部最小值；CALL／PUT 不混合，重复合约及同 expiry 的多个 cell 不宣称独立。
 - 1 个 retained Observation Artifact 与 2 个 retained Evidence Products 保留请求与上游 provenance、逐 cell 审计、可追踪的统计／图示及解释限制。整次零有效样本失败；尚无真实 evidence 时不预写结果。
