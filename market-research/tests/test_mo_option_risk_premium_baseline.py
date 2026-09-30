@@ -10,7 +10,14 @@ from pathlib import Path
 
 import pytest
 
-from market_research.studies.mo_option_risk_premium_baseline import cli, evidence, study
+from market_research.studies.mo_option_risk_premium_baseline import (
+    analyses,
+    cli,
+    evidence,
+    observations,
+    provenance,
+    study,
+)
 from market_research.ui import configuration
 from market_snapshot.products.index_daily_history import (
     IndexDailyHistoryError,
@@ -317,7 +324,7 @@ def test_exact_tolerance_boundaries_zero_price_and_no_second_strike() -> None:
 
 def test_invalid_underlying_and_option_order_exclude_selected_cell() -> None:
     high, low = chains()[ENTRY]
-    invalid_underlying = study._selected_cell(
+    invalid_underlying = observations._selected_cell(
         EXPIRY,
         10,
         "CALL",
@@ -330,7 +337,7 @@ def test_invalid_underlying_and_option_order_exclude_selected_cell() -> None:
     assert invalid_underlying.exclusion_reasons == ("invalid_entry_underlying",)
     high_calls = (chain_product.OptionPoint("C100", 100, 2),)
     low_calls = (chain_product.OptionPoint("C100", 100, 3),)
-    invalid_option = study._selected_cell(
+    invalid_option = observations._selected_cell(
         EXPIRY,
         10,
         "CALL",
@@ -347,7 +354,7 @@ def test_no_eligible_entry_date_is_explicit_when_expiry_only_is_observed() -> No
     req = request(money=(Decimal("0"),))
     with pytest.raises(study.MOOptionRiskPremiumStudyError, match="zero valid"):
         study.compute(req, history(req, (EXPIRY,), closes=(103,)), chains((EXPIRY,)))
-    cell = study._selected_cell(EXPIRY, 10, "CALL", Decimal("0"), None, None, None, 103)
+    cell = observations._selected_cell(EXPIRY, 10, "CALL", Decimal("0"), None, None, None, 103)
     assert cell.exclusion_reasons == ("no_eligible_entry_date",)
 
 
@@ -358,10 +365,12 @@ def test_dte_tolerance_and_exact_expiry_close() -> None:
     assert all(c.exclusion_reasons == ("dte_out_of_tolerance",) for c in far)
     assert all(c.actual_dte == 10 and c.dte_error == -10 for c in far)
     high, low = chains((ENTRY,))[ENTRY]
-    missing_close = study._selected_cell(EXPIRY, 10, "CALL", Decimal("0"), ENTRY, high, low, None)
+    missing_close = observations._selected_cell(
+        EXPIRY, 10, "CALL", Decimal("0"), ENTRY, high, low, None
+    )
     assert missing_close.exclusion_reasons == ("missing_expiry_close",)
-    within = study._selected_cell(EXPIRY, 15, "CALL", Decimal("0"), ENTRY, high, low, 103)
-    outside = study._selected_cell(EXPIRY, 16, "CALL", Decimal("0"), ENTRY, high, low, 103)
+    within = observations._selected_cell(EXPIRY, 15, "CALL", Decimal("0"), ENTRY, high, low, 103)
+    outside = observations._selected_cell(EXPIRY, 16, "CALL", Decimal("0"), ENTRY, high, low, 103)
     assert within.exclusion_reasons == ()
     assert outside.exclusion_reasons == ("dte_out_of_tolerance",)
 
@@ -406,10 +415,125 @@ def test_statistics_and_provenance_fingerprints_are_deterministic() -> None:
         )
         for cell, value in zip(first.cells, (1.0, -2.0, 0.0, 3.0), strict=True)
     )
-    groups = study._summarize(cells, req, 1)
+    groups = analyses._summarize(cells, req, 1)
     assert sum(g["sample_count"] for g in groups) == 4
-    assert study._quantile((1.0, 2.0, 5.0, 10.0), 0.5) == 3.5
-    assert study._quantile((1.0, 2.0, 5.0, 10.0), 0.05) == pytest.approx(1.15)
+    assert analyses._quantile((1.0, 2.0, 5.0, 10.0), 0.5) == 3.5
+    assert analyses._quantile((1.0, 2.0, 5.0, 10.0), 0.05) == pytest.approx(1.15)
+
+
+def test_unselected_source_changes_only_full_provenance() -> None:
+    req = request(money=(Decimal("0"),))
+    index = history(req)
+    facts = chains()
+    baseline = study.compute(req, index, facts)
+
+    high, low = facts[ENTRY]
+    changed_calls = tuple(
+        replace(point, price=99.0) if point.instrument_id == "C105" else point
+        for point in high.expiries[0].calls
+    )
+    facts[ENTRY] = replace(high, expiries=(replace(high.expiries[0], calls=changed_calls),)), low
+    unselected_change = study.compute(req, index, facts)
+    assert unselected_change.cells == baseline.cells
+    assert unselected_change.summary == baseline.summary
+    assert (
+        unselected_change.provenance["observation_artifact_sha256"]
+        == baseline.provenance["observation_artifact_sha256"]
+    )
+    assert (
+        unselected_change.provenance["mo_option_chain"]["content_sha256"]
+        != baseline.provenance["mo_option_chain"]["content_sha256"]
+    )
+
+    high, low = chains()[ENTRY]
+    future = chain_product.FuturesRef("IM2609", 97.0)
+    facts = chains()
+    facts[ENTRY] = (
+        replace(high, expiries=(replace(high.expiries[0], futures=future),)),
+        replace(low, expiries=(replace(low.expiries[0], futures=future),)),
+    )
+    reference_change = study.compute(req, index, facts)
+    assert reference_change.cells == baseline.cells
+    assert (
+        reference_change.provenance["observation_artifact_sha256"]
+        == baseline.provenance["observation_artifact_sha256"]
+    )
+    assert (
+        reference_change.provenance["mo_option_chain"]["content_sha256"]
+        != baseline.provenance["mo_option_chain"]["content_sha256"]
+    )
+
+    changed_index = replace(
+        index,
+        sample_observations=(
+            replace(index.sample_observations[0], volume=100.0),
+            *index.sample_observations[1:],
+        ),
+    )
+    volume_change = study.compute(req, changed_index, chains())
+    assert volume_change.cells == baseline.cells
+    assert (
+        volume_change.provenance["observation_artifact_sha256"]
+        == baseline.provenance["observation_artifact_sha256"]
+    )
+    assert (
+        volume_change.provenance["index_daily_history"]["content_sha256"]
+        != baseline.provenance["index_daily_history"]["content_sha256"]
+    )
+
+
+def test_material_cell_changes_alter_observation_identity() -> None:
+    req = request()
+    baseline = study.compute(req, history(req), chains())
+    original_identity = baseline.provenance["observation_artifact_sha256"]
+    facts = chains()
+    high, low = facts[ENTRY]
+    changed_calls = tuple(
+        replace(point, price=6.0) if point.instrument_id == "C100" else point
+        for point in high.expiries[0].calls
+    )
+    facts[ENTRY] = replace(high, expiries=(replace(high.expiries[0], calls=changed_calls),)), low
+    selected_price = study.compute(req, history(req), facts)
+
+    facts = chains()
+    high, low = facts[ENTRY]
+    facts[ENTRY] = replace(high, underlying=replace(high.underlying, price=102.0)), low
+    underlying = study.compute(req, history(req), facts)
+    close = study.compute(req, history(req, closes=(100.0, 104.0)), chains())
+    moved_entry = study.compute(
+        req,
+        history(req, ("2026-09-07", EXPIRY)),
+        chains(("2026-09-07", EXPIRY)),
+    )
+
+    facts = chains()
+    high, low = facts[ENTRY]
+    missing_calls = tuple(
+        replace(point, price=None) if point.instrument_id == "C100" else point
+        for point in high.expiries[0].calls
+    )
+    facts[ENTRY] = replace(high, expiries=(replace(high.expiries[0], calls=missing_calls),)), low
+    excluded = study.compute(req, history(req), facts)
+    assert any(cell.exclusion_reasons for cell in excluded.cells)
+
+    for changed in (selected_price, underlying, close, moved_entry, excluded):
+        assert changed.provenance["observation_artifact_sha256"] != original_identity
+
+
+def test_observation_identity_ignores_cell_and_reason_order() -> None:
+    req = request()
+    index = history(req)
+    facts = chains()
+    cells = study.compute(req, index, facts).cells
+    first = replace(
+        cells[0], exclusion_reasons=("missing_expiry_close", "invalid_selected_option_price")
+    )
+    second = replace(
+        cells[0], exclusion_reasons=("invalid_selected_option_price", "missing_expiry_close")
+    )
+    one = provenance.build_provenance(req, index, facts, (first, *cells[1:]))
+    reordered = provenance.build_provenance(req, index, facts, (*reversed(cells[1:]), second))
+    assert one["observation_artifact_sha256"] == reordered["observation_artifact_sha256"]
 
 
 def test_group_statistics_equal_expiry_weight_signs_and_overlapping_reasons() -> None:
@@ -432,7 +556,7 @@ def test_group_statistics_equal_expiry_weight_signs_and_overlapping_reasons() ->
         expiry_date="2026-09-22",
         exclusion_reasons=("missing_expiry_close", "invalid_selected_option_price"),
     )
-    call_group = study._summarize((*valid, excluded), req, 5)[0]
+    call_group = analyses._summarize((*valid, excluded), req, 5)[0]
     assert call_group["sample_count"] == 4
     assert call_group["unique_expiry_count"] == 4
     assert call_group["expected_expiry_count"] == 5

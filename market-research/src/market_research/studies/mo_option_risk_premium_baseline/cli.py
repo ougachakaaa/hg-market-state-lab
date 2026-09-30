@@ -16,7 +16,7 @@ from market_snapshot.products.mo_option_chain import service as chain_product
 
 from ...ui import configuration
 from ...ui.execution import ResearchOutputError, canonical_run_directory, execute_run
-from . import evidence, study
+from . import evidence, observations, study
 from .study import MOOptionRiskPremiumRequest, MOOptionRiskPremiumStudyError, SnapshotContractError
 
 STUDY_ID = study.STUDY_ID
@@ -68,7 +68,7 @@ def _request(args: argparse.Namespace) -> MOOptionRiskPremiumRequest:
 def _execute(request: MOOptionRiskPremiumRequest, output_dir: Path) -> tuple[Path, ...]:
     index_query = study.index_request(request)
     index = index_product.run_index_daily_history(index_query)
-    study._validate_index(index_query, index)
+    observations._validate_index(index_query, index)
     chains: dict[str, tuple[chain_product.OptionChain, chain_product.OptionChain]] = {}
     for row in index.sample_observations:
         pair: list[chain_product.OptionChain] = []

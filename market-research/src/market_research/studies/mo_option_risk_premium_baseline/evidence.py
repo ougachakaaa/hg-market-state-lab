@@ -8,7 +8,8 @@ from dataclasses import asdict
 from pathlib import Path
 from typing import Any
 
-from .study import STUDY_ID, StudyResult, canonical_request, decimal_text
+from .inputs import STUDY_ID, canonical_request, decimal_text
+from .study import StudyResult
 
 
 def _write_json(path: Path, value: object) -> None:

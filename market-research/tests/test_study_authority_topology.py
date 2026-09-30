@@ -33,7 +33,7 @@ LEGACY_STUDIES = frozenset(
     }
 )
 # These executable packages existed before the implementation package contract.
-LEGACY_IMPLEMENTATIONS = LEGACY_STUDIES | {"mo_option_risk_premium_baseline"}
+LEGACY_IMPLEMENTATIONS = LEGACY_STUDIES
 
 
 def local_study_links(path: Path, study_root: Path) -> set[Path]:
@@ -82,9 +82,9 @@ def assert_new_runnable_package(implementation_root: Path, authority_root: Path)
     authority = authority_root / "ARCHITECTURE.md"
     assert authority.is_file(), authority
     init = ast.parse((implementation_root / "__init__.py").read_text(encoding="utf-8"))
-    assert f"studies/{authority_root.name}/ARCHITECTURE.md" in (
-        ast.get_docstring(init) or ""
-    ), implementation_root
+    assert f"studies/{authority_root.name}/ARCHITECTURE.md" in (ast.get_docstring(init) or ""), (
+        implementation_root
+    )
 
 
 def test_each_study_entry_reaches_its_specialized_authority() -> None:

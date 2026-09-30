@@ -26,7 +26,7 @@ annualized_compensation_ratio = seller_compensation_ratio * 365 / actual_dte
 
 Index Daily History 或任一单日 high／low MO Chain 的公开请求失败（包括 public chain 不允许缺失的 underlying selected price）、上游结果违反其公开契约，或同一日期的 high／low chain 在日期、expiry universe、CALL／PUT 归属、合约 identity／strike 等全局结构上矛盾时，整次 Study 失败；不将这类失败伪装成 cell exclusion 或未发现 expiry。合法的 selected option price `null` 不属于结构矛盾，按所选 cell 的价格排除处理。
 
-**Observation Artifact identity。** `option_outcome_panel` 独立保留该 Observation；其语义 identity 包含 `ExpiryDteOptionOutcome`、规范化的四个 Study inputs，以及所消费的 Snapshot product／query identities 与实际返回的公共事实内容 identity。若上游未提供稳定的结果 identity，Study 以所消费事实的确定性内容指纹区分同一查询下的数据变化；文件名、格式、运行时间或临时路径不参与语义 identity。
+**Observation Artifact identity。** `option_outcome_panel` 独立保留该 Observation；其语义 identity 由 `ExpiryDteOptionOutcome`、规范化的四个 Study inputs、Index Daily History query identity、MO Option Chain 的产品／high／low query identity，以及完整预期 cell 的语义内容确定。Cell 内容包括选择到的日期和合约、实际值、proxy、outcome 与 exclusion；按 `expiry_date × target_dte × option_type × moneyness_target` 排序，exclusion reasons 作为无序集合规范化。选中 entry date 已由 cell 记录，只有这些日期的 high／low chain query identity 进入组件 identity；其他 discovery query 和未影响 cell 的上游事实变化不改变该 identity。完整 public query 列表与返回事实内容指纹另作为 provenance 保留，以供审计同一请求下的上游变化；它们不直接进入 Observation Artifact identity。文件名、格式、运行时间或临时路径均不参与语义 identity。
 
 ### Analyses
 

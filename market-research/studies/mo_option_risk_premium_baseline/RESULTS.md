@@ -4,7 +4,7 @@
 
 ## Results
 
-预期保留 1 个 Observation Artifact 与 2 个 Evidence Products；目前没有真实运行、数值、图形或 finding。成功 run 应与规范化请求、实际上游 product／query identity、返回结果 provenance、计数及排除原因共置，供人工复核。结果 provenance 应足以区分相同请求在上游事实变化前后的证据；运行时间或输出路径不能替代它。
+预期保留 1 个 Observation Artifact 与 2 个 Evidence Products；目前没有真实运行、数值、图形或 finding。成功 run 应与规范化请求、实际上游 product／query identity、返回结果 provenance、计数及排除原因共置，供人工复核。完整上游事实指纹属于 provenance，须能区分相同请求在上游事实变化前后的运行；Observation Artifact identity 只覆盖 [Method](METHOD.md) 定义的相关查询和逐 cell 语义，未影响 panel 的上游变化不改变它。运行时间或输出路径不能替代两者。
 
 `option_outcome_panel` 是 independently retained Observation Artifact，由 `ExpiryDteOptionOutcome` 定义逐 cell 语义，供两个 Analyses 消费及逐 cell audit。它以 machine-readable 形式保留有效 observation 的日期、合约、high／low proxy、terminal close、payoff、compensation、target／actual／error；对每个无效预期 cell 保留 cell key、exclusion reasons（包括 `no_atm_or_otm_contract`），以及已选到候选时可取得的日期／合约 identity 与 target／actual／error，供复核 selection、tolerance 和排除。它不是 Analysis-defined Evidence Product；其 semantic identity 见 [Method](METHOD.md)。
 
