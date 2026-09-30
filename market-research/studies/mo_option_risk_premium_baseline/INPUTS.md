@@ -29,7 +29,7 @@ lab research run mo-option-risk-premium-baseline \
   --moneyness-targets 0,0.05,0.10,0.15,0.20
 ```
 
-当前没有 Study-local CLI；上述是预期调用契约，不表示命令已经可运行。共享 output placement、目录冲突与事务性覆盖沿用 [Research UI authority](../../ui/ARCHITECTURE.md)。
+上述命令由 Study-local CLI 执行。共享 output placement、目录冲突与事务性覆盖沿用 [Research UI authority](../../ui/ARCHITECTURE.md)。
 
 ## Canonical upstream facts and dependency reconciliation
 

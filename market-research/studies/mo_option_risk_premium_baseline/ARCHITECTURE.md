@@ -2,7 +2,7 @@
 
 ## Identity
 
-本文件是 `mo_option_risk_premium_baseline` 的 canonical Study entry；stable public Study ID 为 `mo-option-risk-premium-baseline`。本 Study 预期成为 runnable retained Study，未来 executable package 位于 `market-research/src/market_research/studies/mo_option_risk_premium_baseline/`。当前仅有研究设计，尚无 executable implementation 或真实 retained evidence。
+本文件是 `mo_option_risk_premium_baseline` 的 canonical Study entry；stable public Study ID 为 `mo-option-risk-premium-baseline`。本 Study 是 runnable retained Study，executable package 位于 `market-research/src/market_research/studies/mo_option_risk_premium_baseline/`。当前尚无真实 retained evidence。
 
 创建与审查遵循 [Study Authority Authoring](../AUTHORING.md)、[Study Schema](../SCHEMA.md) 与 [Study Review](../REVIEW.md)；Research 边界见 [market-research architecture](../../ARCHITECTURE.md)，CLI、配置及 output placement 见 [Research UI authority](../../ui/ARCHITECTURE.md)。
 
