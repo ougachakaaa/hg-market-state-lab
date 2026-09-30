@@ -1,6 +1,6 @@
 # Research Study Authority Authoring
 
-本文件是新建 retained Study 的稳定入口，拥有 Study Intention 到 Canonical Study Authority 的 authoring workflow。Research 模块边界与现有 Study 入口见 [market-research architecture](../ARCHITECTURE.md)；runnable Study 的共享调用与输出约定见 [Research UI authority](../ui/ARCHITECTURE.md)。Study 的必需语义见 [Schema](SCHEMA.md)，逻辑呈现与 authority 布局见 [Skeleton](SKELETON.md)，完整性判定见 [Review](REVIEW.md)；Agent 不得自行发明未给出的研究语义。
+本文件是新建 retained Study 的稳定入口，拥有 Study Intention 到 Canonical Study Authority 的 authoring workflow。Research 模块边界与现有 Study 入口见 [market-research architecture](../ARCHITECTURE.md)；runnable Study 的共享调用与输出约定见 [Research UI authority](../ui/ARCHITECTURE.md)。Study 的必需语义见 [Schema](SCHEMA.md)，逻辑呈现与 authority 布局见 [Skeleton](SKELETON.md)，runnable implementation topology 见 [Implementation Package Contract](IMPLEMENTATION.md)，完整性与 implementation topology 判定见 [Review](REVIEW.md)；Agent 不得自行发明未给出的研究语义。
 
 ## Study identity 与完成范围
 
@@ -16,6 +16,7 @@
 | --- | --- |
 | 确定 Study 必需语义及组件关系 | [Schema](SCHEMA.md) |
 | 实例化新 Study 的逻辑顺序与阅读布局 | [Skeleton](SKELETON.md) |
+| 实现 runnable Study 的 Python package | [Implementation Package Contract](IMPLEMENTATION.md) |
 | 审查已形成的 Study authority | [Review](REVIEW.md) |
 | 对既有 Study 做 reconciliation、migration 或 consolidation | [Compatibility](COMPATIBILITY.md) |
 
@@ -69,7 +70,7 @@ Record 可以对上述每项标记 semantic source（如 `human decision` / `can
 
 ## Authority publication 与后续交接
 
-[Review](REVIEW.md) 判定 Study Authority Complete 后，将当前 Study authority 及其导航确认为 canonical。该判定可以先于上游 capability readiness；缺失 Snapshot Product 不迫使完整的 Study-owned semantics 保持 incomplete。将所需上游 contract 与 gap 记录清楚后，由对应 canonical owner 核对 required upstream capability 与 ownership boundary。**Dependency Reconciled** 表示这些能力已存在且边界无冲突；**Implementation Ready** 仅在 Study Authority Complete 与 Dependency Reconciled 均成立时成立。工作顺序为 `CREATE → RECONCILE → IMPLEMENT`；这里的 dependency reconciliation 不等于 [Compatibility](COMPATIBILITY.md) 拥有的 existing Study reconciliation，后者也拥有 `CONSOLIDATE` 的显式触发与历史兼容规则。这些名称只表达 authoring / dependency contract distinction，不是 persisted status、registry 或 lifecycle engine。不得以假设的 shared Research capability 填补上游缺口。
+[Review](REVIEW.md) 判定 Study Authority Complete 后，将当前 Study authority 及其导航确认为 canonical。该判定可以先于上游 capability readiness；缺失 Snapshot Product 不迫使完整的 Study-owned semantics 保持 incomplete。将所需上游 contract 与 gap 记录清楚后，由对应 canonical owner 核对 required upstream capability 与 ownership boundary。**Dependency Reconciled** 表示这些能力已存在且边界无冲突；**Implementation Ready** 仅在 Study Authority Complete 与 Dependency Reconciled 均成立时成立。工作顺序为 `CREATE → RECONCILE → IMPLEMENT`；进入 `IMPLEMENT` 时遵循 [Implementation Package Contract](IMPLEMENTATION.md)，完成后按 Review 的独立 implementation topology check 验证。这里的 dependency reconciliation 不等于 [Compatibility](COMPATIBILITY.md) 拥有的 existing Study reconciliation，后者也拥有 `CONSOLIDATE` 的显式触发与历史兼容规则。这些名称只表达 authoring / dependency contract distinction，不是 persisted status、registry 或 lifecycle engine。不得以假设的 shared Research capability 填补上游缺口。
 
 ## Study authority topology
 

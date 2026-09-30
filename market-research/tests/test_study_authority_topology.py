@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import ast
 import re
 from collections import deque
 from pathlib import Path
@@ -10,8 +11,17 @@ import pytest
 
 RESEARCH_ROOT = Path(__file__).resolve().parents[1]
 STUDIES_ROOT = RESEARCH_ROOT / "studies"
+IMPLEMENTATIONS_ROOT = RESEARCH_ROOT / "src/market_research/studies"
 MARKDOWN_LINK = re.compile(r"\[[^]]+\]\(([^)]+)\)")
 REQUIRED_TOP_LEVEL = ("ARCHITECTURE.md", "INPUTS.md", "METHOD.md", "RESULTS.md")
+REQUIRED_IMPLEMENTATION = (
+    "__init__.py",
+    "cli.py",
+    "study.py",
+    "observations.py",
+    "analyses.py",
+    "evidence.py",
+)
 # These authorities predate the fixed top-level layout; new Study directories must use it.
 LEGACY_STUDIES = frozenset(
     {
@@ -22,6 +32,8 @@ LEGACY_STUDIES = frozenset(
         "price_to_lagged_ma_short_horizon_reversion",
     }
 )
+# These executable packages existed before the implementation package contract.
+LEGACY_IMPLEMENTATIONS = LEGACY_STUDIES | {"mo_option_risk_premium_baseline"}
 
 
 def local_study_links(path: Path, study_root: Path) -> set[Path]:
@@ -62,6 +74,19 @@ def assert_new_study_topology(study_root: Path) -> None:
     assert authority_files <= reached_authorities(entry, study_root), study_root
 
 
+def assert_new_runnable_package(implementation_root: Path, authority_root: Path) -> None:
+    assert not implementation_root.with_suffix(".py").exists(), implementation_root
+    assert implementation_root.is_dir(), implementation_root
+    for name in REQUIRED_IMPLEMENTATION:
+        assert (implementation_root / name).is_file(), implementation_root / name
+    authority = authority_root / "ARCHITECTURE.md"
+    assert authority.is_file(), authority
+    init = ast.parse((implementation_root / "__init__.py").read_text(encoding="utf-8"))
+    assert f"studies/{authority_root.name}/ARCHITECTURE.md" in (
+        ast.get_docstring(init) or ""
+    ), implementation_root
+
+
 def test_each_study_entry_reaches_its_specialized_authority() -> None:
     for study_root in STUDIES_ROOT.iterdir():
         if not study_root.is_dir():
@@ -72,6 +97,18 @@ def test_each_study_entry_reaches_its_specialized_authority() -> None:
         assert authority_files <= reached_authorities(entry, study_root), study_root
         if study_root.name not in LEGACY_STUDIES:
             assert_new_study_topology(study_root)
+
+
+def test_new_runnable_studies_have_semantic_package_boundaries() -> None:
+    candidates = {
+        path.name
+        for path in IMPLEMENTATIONS_ROOT.iterdir()
+        if path.is_dir() and path.name != "__pycache__"
+    } | {path.stem for path in IMPLEMENTATIONS_ROOT.glob("*.py") if path.name != "__init__.py"}
+    for study_package in candidates - LEGACY_IMPLEMENTATIONS:
+        assert_new_runnable_package(
+            IMPLEMENTATIONS_ROOT / study_package, STUDIES_ROOT / study_package
+        )
 
 
 def test_mo_option_risk_premium_authority_links_resolve() -> None:
@@ -164,3 +201,58 @@ def test_creation_entry_does_not_link_to_legacy_shared_semantics() -> None:
     assert all(f"`{name}`" in entry for name in REQUIRED_TOP_LEVEL)
     review = STUDIES_ROOT / "REVIEW.md"
     assert skeleton.resolve() in local_study_links(review, STUDIES_ROOT)
+
+
+def test_implementation_contract_is_reachable_from_authoring_and_review() -> None:
+    contract = STUDIES_ROOT / "IMPLEMENTATION.md"
+    assert contract.is_file()
+    for entry in (
+        RESEARCH_ROOT / "ARCHITECTURE.md",
+        RESEARCH_ROOT / "AGENTS.md",
+        STUDIES_ROOT / "AUTHORING.md",
+        STUDIES_ROOT / "REVIEW.md",
+    ):
+        assert contract.resolve() in local_study_links(entry, RESEARCH_ROOT), entry
+
+
+def test_new_runnable_package_requires_modules_and_authority_pointer(tmp_path: Path) -> None:
+    implementation_root = tmp_path / "src/example_study"
+    authority_root = tmp_path / "studies/example_study"
+    implementation_root.mkdir(parents=True)
+    authority_root.mkdir(parents=True)
+    (authority_root / "ARCHITECTURE.md").write_text("# Example\n", encoding="utf-8")
+    for name in REQUIRED_IMPLEMENTATION:
+        (implementation_root / name).write_text("", encoding="utf-8")
+    (implementation_root / "__init__.py").write_text(
+        '"""Canonical authority: studies/example_study/ARCHITECTURE.md."""\n',
+        encoding="utf-8",
+    )
+    assert_new_runnable_package(implementation_root, authority_root)
+
+    (implementation_root / "analyses.py").unlink()
+    with pytest.raises(AssertionError):
+        assert_new_runnable_package(implementation_root, authority_root)
+    (implementation_root / "analyses.py").write_text("", encoding="utf-8")
+
+    (implementation_root / "__init__.py").write_text('"""Example Study."""\n', encoding="utf-8")
+    with pytest.raises(AssertionError):
+        assert_new_runnable_package(implementation_root, authority_root)
+
+    (implementation_root / "__init__.py").write_text(
+        '"""Canonical authority: studies/example_study/ARCHITECTURE.md."""\n',
+        encoding="utf-8",
+    )
+    (implementation_root.with_suffix(".py")).write_text("", encoding="utf-8")
+    with pytest.raises(AssertionError):
+        assert_new_runnable_package(implementation_root, authority_root)
+
+
+def test_new_runnable_study_cannot_be_a_single_script(tmp_path: Path) -> None:
+    implementation_root = tmp_path / "src/example_study"
+    authority_root = tmp_path / "studies/example_study"
+    implementation_root.parent.mkdir()
+    authority_root.mkdir(parents=True)
+    (authority_root / "ARCHITECTURE.md").write_text("# Example\n", encoding="utf-8")
+    implementation_root.with_suffix(".py").write_text("", encoding="utf-8")
+    with pytest.raises(AssertionError):
+        assert_new_runnable_package(implementation_root, authority_root)
