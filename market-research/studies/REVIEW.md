@@ -4,12 +4,13 @@
 
 ## Study Authority Completeness Gate
 
-`Semantic Review` 必须逐项确认下列条件。Gate 检查当前 Study authority 是否满足 Schema，以及跨对象关系是否一致；它不重新定义 Schema contract，也不判断 repository 是否已经具备实现该 Study 的全部 capability。对旧 Study 仅按 [Compatibility](COMPATIBILITY.md) 中显式 reconciliation 的相关范围适用，不得据此追溯宣布历史 Study invalid：
+`Semantic Review` 必须逐项确认下列条件。Gate 检查当前 Study authority 是否满足 Schema，以及跨对象关系是否一致；新 Study 的呈现拓扑由 [Skeleton](SKELETON.md) 定义。它不重新定义 Schema contract，也不判断 repository 是否已经具备实现该 Study 的全部 capability。对旧 Study 仅按 [Compatibility](COMPATIBILITY.md) 中显式 reconciliation 的相关范围适用，不得据此追溯宣布历史 Study invalid：
 
 | 检查面 | 通过条件 |
 | --- | --- |
 | Research completeness | 核对 [Schema](SCHEMA.md) 的六个 semantic areas 在 canonical authority graph 中均有实质内容和唯一 owner，且无未解决的 research semantic decision。 |
-| Authority navigation | 核对稳定 `ARCHITECTURE.md` entry 存在，六个 semantic areas 可从 entry 定位，所有 specialized canonical owner 均可沿 entry 的链接到达，且没有 orphan semantic owner；不检查标题拼写、顺序或文件数量。 |
+| New Study authority topology（仅新建 Study） | 核对 [Skeleton](SKELETON.md) 规定的四个顶层文件均存在且各有实质内容；`ARCHITECTURE.md` 直接链接其他三个顶层 owner，详细语义位于相应文件而非重复堆在 entry。单文件 authority 或空占位文件不能通过。 |
+| Authority navigation | 核对稳定 `ARCHITECTURE.md` entry 存在，六个 semantic areas 可从 entry 定位，所有更深层 specialized canonical owner 均可沿链接到达，且没有 orphan semantic owner；不检查标题拼写或确切措辞。 |
 | Input ownership | 逐项核对外部 input、parameter ownership / consumers / semantic role、execution-only options 与 run identity 符合 Schema 的 Inputs 和 parameter contracts；检查实际消费与声明一致。 |
 | Method graph completeness | 逐项核对具名 Observation / Analysis、Method Context、消费关系、语义输出及按条件定义的 component Artifact identity 符合 Schema 的 Method contracts；检查引用的组件与上游事实均存在，且依赖方向合法。 |
 | Question-to-evidence traceability | 验证每个重要 Question aspect 均可沿实际 local references 追踪至 Observation → Analysis → retained Evidence Product，每个 material Analysis 均可追踪至 retained evidence；检查引用的对象存在、指向一致，无游离统计。 |

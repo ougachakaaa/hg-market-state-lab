@@ -4,7 +4,7 @@
 
 ## Study identity 与完成范围
 
-新 Study 的 canonical authority 必须回答 [Schema](SCHEMA.md) 中 Question、Inputs、Method、Results、Limitations、Acceptance 六个 semantic areas。Study 可以由单个或多个 Markdown 文件构成；`studies/<study_package>/ARCHITECTURE.md` 始终是稳定入口。独立的 implementation 位置是同名 `src/market_research/studies/<study_package>/`；完成 authority 不自动启动 implementation 或 Study execution。
+新 Study 的 canonical authority 必须回答 [Schema](SCHEMA.md) 中 Question、Inputs、Method、Results、Limitations、Acceptance 六个 semantic areas，并按 [Skeleton](SKELETON.md) 实例化固定的四文件顶层 authority；`studies/<study_package>/ARCHITECTURE.md` 始终是稳定入口。四个文件都须拥有其实质职责，不能以单个 entry 或空占位文件宣布完成。独立的 implementation 位置是同名 `src/market_research/studies/<study_package>/`；完成 authority 不自动启动 implementation 或 Study execution。
 
 ## 创建隔离与导航
 
@@ -19,7 +19,7 @@
 | 审查已形成的 Study authority | [Review](REVIEW.md) |
 | 对既有 Study 做 reconciliation、migration 或 consolidation | [Compatibility](COMPATIBILITY.md) |
 
-创建路径为 repository / module entry → 本文件 → Schema → Skeleton → 新 Study `ARCHITECTURE.md` → 仅所需 specialized authority → 必需的上游 authority。Review 在 authoring / reconciliation 需要验证时进入；Compatibility、历史 Study 与 shared Research semantics 不在默认创建路径中。
+创建路径为 repository / module entry → 本文件 → Schema → Skeleton → 新 Study 四个顶层 authority 文件 → 仅所需更深层 specialized authority → 必需的上游 authority。Review 在 authoring / reconciliation 需要验证时进入；Compatibility、历史 Study 与 shared Research semantics 不在默认创建路径中。
 
 ## Structured Study Intention Record
 
@@ -46,7 +46,7 @@ Record 可以对上述每项标记 semantic source（如 `human decision` / `can
 | --- | --- | --- | --- | --- |
 | `Study Intention` | Human 给出研究意图，不要求符合完整 schema | 提取已给出的研究决定与明确待决项，区分事实引用和研究选择 | 进入 `Structured Study Intention` | 将沉默视为默认研究决定 |
 | `Structured Study Intention` | 已提取 human 意图 | 形成上述显式 Record，标明已知 semantic source 和 resolution state | Record 足以区分已决定与未决定的语义，进入 `Template Filling` | 将未决项隐式补全，或将 Record 当作最终 authority |
-| `Template Filling` | 已形成 Structured Study Intention Record，或收到待决项的 human 决定并更新该 Record | 按 [Skeleton](SKELETON.md) 实例化逻辑顺序，填入六个 semantic areas 的已确定语义；保留其 canonical 来源和未决项，仅在 disclosure boundary 成立时拆分 specialized authority；草稿不冒充完整 authority | 六个 semantic areas 形成可供语义审查的草稿 | 猜测缺失的输入、总体、方法、结果含义或边界 |
+| `Template Filling` | 已形成 Structured Study Intention Record，或收到待决项的 human 决定并更新该 Record | 按 [Skeleton](SKELETON.md) 建立 `ARCHITECTURE.md`、`INPUTS.md`、`METHOD.md`、`RESULTS.md`，把六个 semantic areas 中已确定的语义填入各自 canonical owner；保留来源和未决项，仅在需要时增加更深层 authority；草稿不冒充完整 authority | 四个顶层文件及六个 semantic areas 形成可供语义审查的草稿 | 猜测缺失的输入、总体、方法、结果含义或边界；把完整 authority 压缩进 entry |
 | `Semantic Review` | 六个 semantic areas 的草稿可逐项审查 | 依 [Review](REVIEW.md) 执行 Study Authority Completeness Gate | Gate 全部通过则进入 `Authority Complete`；有实质语义缺口则进入 `Semantic Decision Required` | 用措辞修补、实现选择或其他 Study 的惯例替代缺失决定；因重复而提前抽取 shared Research semantics |
 | `Semantic Decision Required` | Review 返回至少一个未解决的实质 Study/product 语义 finding | 按下述 decision record 向 human 呈现问题；收到明确决定后更新 Structured Study Intention Record | Human 决定已明确，返回 `Template Filling` 并再经 `Semantic Review` | 自行选定建议项，或将未决语义发布为完整 authority |
 | `Authority Complete` | [Review](REVIEW.md) 判定 Study Authority Complete | 将独立 Study authority 确认为 canonical，并维护导航链接 | 本 authoring workflow 终止 | 将 Gate 通过解释为 repository capability 已齐备，或跳过后续需要的 dependency reconciliation |
@@ -73,4 +73,4 @@ Record 可以对上述每项标记 semantic source（如 `human decision` / `can
 
 ## Study authority topology
 
-Study 是一个 semantic authority unit，不等于一个 physical Markdown file。新 Study 的呈现顺序、稳定 entry 应保留的概述和 disclosure signals 由 [Skeleton](SKELETON.md) 定义。Template Filling 先建立该逻辑结构，再填入 Structured Study Intention Record 中已确定的语义；复杂内容仅在阅读边界需要时下沉，且从 entry 导航至唯一 canonical owner。实现单个 Analysis 时，只读该 Analysis、其明确消费的 Observation 和必需的上游 contract。拆分不创建跨 Study 组件接口、DAG executor、Artifact Registry 或 plugin framework。
+Study 是一个 semantic authority unit，不等于一个 physical Markdown file。新 Study 的固定顶层布局、entry 概览与更深层 disclosure boundary 由 [Skeleton](SKELETON.md) 定义。Template Filling 在 Structured Study Intention 后先实例化该布局，再把已确定语义填入唯一 canonical owner；复杂度只决定是否继续下沉 specialized authority。四个顶层文件均有实质内容、entry 导航完整并通过 [Review](REVIEW.md) 后，才能进入 `Authority Complete`。实现单个 Analysis 时，只读该 Analysis、其明确消费的 Observation 和必需的上游 contract。更深层拆分不创建跨 Study 组件接口、DAG executor、Artifact Registry 或 plugin framework。
