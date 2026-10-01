@@ -22,10 +22,10 @@ DataSet 是独立的数据与 persistence ownership boundary；canonical Dataset
 
 DataSet 内部以 Scope + transient Window 确定希望覆盖的 FetchUnits；FetchUnit 拥有 Records 与 coverage state，Source adapter 获取外部事实，Repository 管理 owned SQLite。公共领域与 persistence 细节由 [DOMAIN_MODEL.md](DOMAIN_MODEL.md) 拥有。
 
-DataSet 对外发布 public Python Application Service，consumer 通过 semantic request/result/view 使用 `coverage`、`ensure`、`export`；详细 operation contract 由 [APPLICATION.md](APPLICATION.md) 拥有。稳定依赖方向为：
+DataSet 对外发布 transport-neutral Public Application Service，作为唯一 canonical consumer boundary；Python consumer 直接通过 semantic request/result/view 使用 `coverage`、`ensure`、`export`，CLI / HTTP 只是 adapter，不拥有 Dataset 业务语义。详细公共 operation contract 由 [APPLICATION.md](APPLICATION.md) 拥有。稳定依赖方向为：
 
 ```text
-Consumers (lab CLI / future Research / future Snapshot / future consumers)
+Consumers (lab CLI / future HTTP API / Research / Snapshot-Preparation / Python consumers)
     ↓
 DataSet public Application Service
     ├─ Source Adapter → external API
@@ -42,13 +42,14 @@ Canonical Python namespace 为 `data_lake`，源码 ownership 位于 `data-lake/
 | --- | --- |
 | Domain / persistence / Scope / Window / FetchUnit / Records / mutation flow | [DOMAIN_MODEL.md](DOMAIN_MODEL.md) |
 | Application Service / coverage / ensure / export / public result / runtime 调用约束 | [APPLICATION.md](APPLICATION.md) |
-| 具体 Dataset 的 Source、identity、fields、completeness、request/view 或 CLI semantic arguments | [DATASETS.md](DATASETS.md) → owning Dataset authority |
+| 具体 Dataset 的 Source、identity、fields、completeness | [DATASETS.md](DATASETS.md) → owning Dataset ARCHITECTURE.md |
+| Dataset-specific consumer request/result/view、public Python surface | [DATASETS.md](DATASETS.md) → owning Dataset ARCHITECTURE.md → SERVICE.md |
 | CLI topology / delegation / serialization / file delivery | [lab authority](../lab/ARCHITECTURE.md) |
 
 Dataset authority 只能在模块边界及相关公共 domain/application invariant 内 specialize 或 constrain；catalog 只提供导航，不拥有 schema。具体 Dataset 任务读取与任务有关的公共 authority 和 owning Dataset authority，不默认加载 sibling Dataset。
 
 ## 5. Deferred design
 
-本次变更仅编码 authority，不实现 Python、SQLite DDL、migration、Tushare client、CLI 或 HTTP。后续 implementation 必须实现已声明的 public contract；内部文件、具体存储类型、key serialization、canonicalization/hash、事务机制、失败恢复与 adapter batching 留给 implementation design，不得重新决定已固定的 semantic request、结果计数或 export contract。Research/Snapshot integration 须独立设计。
+本次 authority reconciliation 不实现 Dataset service、SQLite DDL、migration、Tushare client、CLI 或 HTTP；已有 core infrastructure 不等于 Dataset capability 已实现。后续 implementation 必须实现已声明的 public contract；内部文件、具体存储类型、key serialization、canonicalization/hash、事务机制、失败恢复与 adapter batching 留给 implementation design，不得重新决定已固定的 semantic request、结果计数或 export contract。Research/Snapshot integration 须独立设计。
 
 Refresh / force / invalidation policy、TTL、stale state、多维 Window、Dataset dependency graph、cross-Dataset query engine、Source request audit table、plugin framework 与 generic workflow engine 均不在本轮设计范围内。

@@ -50,7 +50,27 @@ lab
 
 `lab datalake` 只负责 command topology、Dataset selection、CLI parsing、semantic request construction、public service invocation、human-readable summary、exit-code mapping 与 export JSON file delivery。Window semantics、FetchUnit generation、coverage calculation、Source batching、completeness、export view fields、SQLite persistence 与 Tushare semantics 均由 DataLake / owning Dataset 拥有。
 
-`list` 只列当前正式支持的 canonical Dataset IDs，第一版仅 `tushare_trade_calendar`；不访问 Source 或缓存，不通过 filesystem scanning 推导支持范围。使用 explicit wiring，不引入 generic plugin / dynamic registry framework。Dataset navigation 见 [DataLake catalog](../data-lake/DATASETS.md)；Dataset-specific arguments、日期 parsing 与 semantic view contract 见 [calendar authority](../data-lake/datasets/tushare_trade_calendar/ARCHITECTURE.md)，不在 lab 复制字段模型。
+`list` 只列目标 contract 正式支持的 canonical Dataset IDs，第一版仅 `tushare_trade_calendar`；不访问 Source 或缓存，不通过 filesystem scanning 推导支持范围。使用 explicit wiring，不引入 generic plugin / dynamic registry framework。Dataset navigation 见 [DataLake catalog](../data-lake/DATASETS.md)；public semantic request/view 见 [calendar SERVICE.md](../data-lake/datasets/tushare_trade_calendar/SERVICE.md)，CLI arguments 与 parsing 由本文件拥有，不复制 Dataset 字段模型。
+
+### Calendar CLI parsing
+
+`lab datalake coverage/ensure/export tushare_trade_calendar` 共享以下 CLI arguments：
+
+| CLI argument | Parsing / request construction |
+| --- | --- |
+| --exchange | 必填，传入 TradeCalendarRange.exchange |
+| --start-date | 必填，严格 YYYY-MM-DD 字符串，解析为 date |
+| --end-date | 必填，严格 YYYY-MM-DD 字符串，解析为 date |
+
+CLI 从 `data_lake.datasets.tushare_trade_calendar` 创建 service 并构造 `TradeCalendarRange`，不传 raw date strings 或 argparse namespace；service 仍负责 semantic validation。CLI 不构造 Scope / FetchUnits、不重算 completeness。Export 必填 `--output` 只属于 delivery，不进入 range；V1 不增加 view selector 或 is_open filter。
+
+```bash
+lab datalake coverage tushare_trade_calendar --exchange SSE --start-date 2024-01-01 --end-date 2024-12-31
+lab datalake ensure tushare_trade_calendar --exchange SSE --start-date 2024-01-01 --end-date 2024-12-31
+lab datalake export tushare_trade_calendar --exchange SSE --start-date 2024-01-01 --end-date 2024-12-31 --output calendar.json
+```
+
+这些是目标 CLI contract，不声明 runtime 已实现。
 
 ### Operation behavior 与 exit codes
 
@@ -61,8 +81,8 @@ lab
 | ensure complete = true | 0 | Human-readable EnsureResult summary |
 | ensure 执行完成但 complete = false | 1 | EnsureResult summary 与逐 unit failure summary，明确目标未完成 |
 | export view 成功生成并写入，包括 incomplete coverage | 0 | Output path、exported record count、coverage summary |
-| CLI parsing / 无效参数 / 未知 Dataset ID / semantic request validation failure | 2 | Human-readable error |
-| Dataset 无法读取、operation 无法执行、view 无法生成或 output file 无法写入 | 1 | Human-readable execution / delivery error |
+| CLI parsing / 无效参数 / 未知 Dataset ID / InvalidRequestError | 2 | Human-readable error |
+| OperationError 或 output file 无法写入 | 1 | Human-readable execution / delivery error |
 
 Summary 展示 service 返回的计数与 complete，不根据 records 数量重算 coverage。ensure failures 使用 service 返回的 FetchUnit semantic identity 与 reason，不泄露内部 IDs 或 provider transport response。可恢复的 unit failure 由 service 编码为 EnsureResult，不因一批 Source request 成功而显示目标完成。
 

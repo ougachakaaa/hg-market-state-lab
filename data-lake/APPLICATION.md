@@ -4,7 +4,7 @@
 
 ## 1. Application Service 与公共 operation family
 
-DataSet Application Service 是 DataSet 对外发布的 public Python semantic boundary。它接受 Dataset-specific semantic request，根据 Scope + Window 生成目标 FetchUnit identities，查询 coverage、编排 ensure、生成 Dataset-owned export view，并返回稳定 semantic result。
+DataSet Application Service 是 transport-neutral canonical consumer boundary，公开 Python semantic request/result/view。它在内部将 Dataset-specific request 解释为 Scope + Window 和目标 FetchUnit identities，查询 coverage、编排 ensure、生成 Dataset-owned export view；caller 不需要理解 persistence mechanics。Dataset-specific consumer contract 经 catalog、Dataset ARCHITECTURE.md 进入 SERVICE.md。
 
 Consumer → public Application Service → internal Source Adapter / Repository 的依赖方向继承 [模块架构](ARCHITECTURE.md)。
 
@@ -44,6 +44,8 @@ complete = successful_units == requested_units
 
 `complete = false` 是合法查询结果，不是 operation failure。Coverage 查询不得为了统计 missing 而创建 rows。
 
+`coverage.complete` 只表达 cache completeness，不表达 provider-current freshness；success 的历史取得含义由公共 domain authority 拥有。
+
 ### ensure
 
 `ensure(request) → EnsureResult` 尽可能使所有目标 FetchUnits 达到 success。默认 selection 与成功 unit 的跳过规则继承 [DOMAIN_MODEL.md](DOMAIN_MODEL.md)。公共字段为：
@@ -81,12 +83,29 @@ coverage
 
 `dataset` 是 canonical Dataset identity；`view` 是 Dataset authority 定义的 semantic view identity；`export_schema_version` 是 export contract version，不等于 SQLite schema_version；scope/window 表达此次 view 的目标，coverage 为同一目标的 CoverageResult。Payload 名称、shape、字段与 ordering 由 Dataset authority 定义，不加入 SQLite path、internal unit/record IDs 或 provider transport metadata。
 
-Coverage 不完整时仍可返回当前可用 view，准确声明 coverage.complete = false。Payload 只能包含目标范围内成功 FetchUnits 的合法 cached facts，不能把 failed / pending units 的不完整 Records 当作成功数据；无可用事实时返回 Dataset 定义的空 payload。Coverage 与 payload 必须描述同一缓存状态，不得产生互相矛盾的完整性声明。
+Coverage 不完整时仍可返回当前可用 view，准确声明 coverage.complete = false。Payload 只能包含目标范围内成功 FetchUnits 的合法 cached facts，不能把 failed / pending units 的不完整 Records 当作成功数据；无可用事实时返回 Dataset 定义的空 payload。
 
-Dataset owns export semantics；lab owns JSON serialization 与 file delivery。未来 consumer 可以直接消费返回的 view，无需先写 JSON 再读取。只有出现真实第二个 view 时再扩展 selection mechanism，不预建 generic view registry。
+**Export consistency invariant**：返回的 coverage 与 payload 必须来自同一个逻辑 committed cache snapshot。不能因并发 ensure 或其他 committed mutation 而将不同缓存状态拼接为一个 view；不存在缓存时也必须一致表达 missing 与空 payload。此处只定义 semantic invariant，不指定 SQLite transaction implementation。
+
+Dataset owns export semantics；CLI / HTTP adapter owns serialization 与 delivery，lab 的 file delivery 见其 authority。Python consumer 直接消费 semantic view，无需先写 JSON 再读取。Service types 与 wire representation 分离：例如 Python date / None 对应 JSON 日期字符串 / null；Dataset 可规定稳定 wire meaning，序列化动作不属于 service。只有出现真实第二个 view 时再扩展 selection mechanism，不预建 generic view registry。
+
+### Application failure taxonomy
+
+公共稳定 failure categories 为：
+
+| Failure | Semantic boundary |
+| --- | --- |
+| InvalidRequestError | caller-side semantic validation failure：无效日期范围、空 / 非法输入或错误 request types |
+| OperationError | Dataset 无法读取、persistence integrity / execution failure、required credential 缺失、Source operation 无法执行或无法生成合法 view |
+
+可恢复的单 FetchUnit failure 进入 `EnsureResult.failures`，不抛整个 operation exception；可恢复的批请求失败按所尝试 units 编码。无法执行整个 operation 时抛 OperationError，不能伪装成正常 incomplete result。OperationError 不保证回滚此前已成功提交的其他 units；重试按既有成功缓存跳过规则进行。Provider response、SQLite exception 或 internal object 不构成 public error contract。
+
+具体 public exception placement 与内部 exception translation 留给 implementation，caller 必须能从 public boundary 识别这两类 failure。现有 core 的 ApplicationFailure 尚未完成此分类，不能据此削弱目标 contract。DataLake 不定义 CLI exit code 或 HTTP status code；adapter 分别映射 request failure 与 execution failure。
 
 ## 2. Runtime configuration 与调用边界
 
 Source credential 属于 runtime/provider configuration，不是 Dataset semantic argument；只有需要 Source I/O 时解析凭据。需要 fetch 但 credential 缺失时，在 Source request 前明确失败；全部 success 的 ensure 不需要 credential。不得增加 `--token` 或第二套 secret convention，也不因此授权 import Snapshot 私有 Source client 或 artifact helper。具体 provider credential convention 由 owning Dataset authority 声明。
+
+普通 consumer 创建 Dataset service 不要求提供 SQLite path、Repository、Source Adapter、database connection 或 token；configuration/composition 属于 DataLake internal ownership。Coverage / export 与 factory 不要求 Source credential，ensure 仅在实际 Source I/O 必要时解析。Missing required credential 属于 OperationError。
 
 SQLite location 由 DataLake runtime 自行解析，不接受 semantic request 中的 path 或 CLI `--db`。具体 filesystem root / filename resolution 留给 implementation design；本 authority 不固定 storage-root / filename，也不创建跨模块 config framework。现有本地凭据操作见 [README](../README.md) 与 [DEVELOPMENT](../DEVELOPMENT.md)。

@@ -47,6 +47,8 @@ unit does not exist OR unit.status != success
 
 已有 `success` unit 默认不重新 fetch。不引入 stale、dirty、TTL 或其他 refresh state。
 
+`success` 表示 FetchUnit 曾在 `succeeded_at` 时成功取得并原子保存了一份完整合法的 Source Fact set，满足 owning Dataset completeness；不声明当前 provider 事实仍与缓存一致。Freshness policy 继续 deferred，不因 future-dated facts 建立特例。
+
 `content_hash` 描述当前 FetchUnit 所拥有的 canonical Record set 的内容 hash，属于 FetchUnit metadata，不属于单条 Record；`record_count` 表达该 unit 所拥有的 Record 数量。Hash 算法与 canonical serialization 留给 implementation design。
 
 FetchUnit 只有在其 Records 成功提交后才能进入 `success`。成功写入必须原子地替换该 unit 拥有的 Records 并更新成功 metadata，使 Records、`content_hash`、`record_count` 与成功状态语义一致；不得在 Records 未成功提交时留下 `success`。事务机制与失败恢复的实现细节留给后续设计。
@@ -89,6 +91,8 @@ valid_to
 ## 2. Scope、Window 与 Source Request
 
 Scope 由具体 Dataset authority 定义，用于确定该次 operation 所针对的 Source fact 范围。Window 是 transient operation input，描述希望 Dataset 覆盖的范围，第一版只设计一维 Window。
+
+Canonical Scope shape 是否需要多个，由 target model 是否能完整寻址 Dataset fact space 决定，不由 provider API 数量或 transport batching 方式决定；这不引入 generic Scope registry。
 
 Window 不持久化，因为它表达一次操作的目标范围，而非数据库当前 coverage；coverage state 由各 FetchUnit 拥有。Window 负责在 Dataset 与 Scope 下确定目标 FetchUnit 集合：
 
