@@ -129,6 +129,8 @@ ARCHITECTURE.md（本文件）
     │  DEVELOPMENT.md
     ├─ lab/ARCHITECTURE.md
     ├─ data-lake/ARCHITECTURE.md
+    │      ├─ data-lake/DOMAIN_MODEL.md
+    │      ├─ data-lake/APPLICATION.md
     │      ↓
     │  data-lake/DATASETS.md
     │      ↓
