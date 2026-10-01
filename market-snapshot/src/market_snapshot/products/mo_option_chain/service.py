@@ -23,10 +23,11 @@ What this module deliberately does not do:
 
 from __future__ import annotations
 
-from collections.abc import Callable
+from collections.abc import Callable, Sequence
 from dataclasses import dataclass
 from enum import StrEnum
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 from ... import artifacts
 from ...capture import (
@@ -38,6 +39,10 @@ from ...capture import (
 )
 from ...sources import tushare
 from . import preparation
+
+if TYPE_CHECKING:
+    from .session import ChainSession
+
 
 # Product identifier for its own request-scoped Raw artifacts.
 SERVICE_ID = "mo-option-chain"
@@ -305,9 +310,7 @@ def read_chain_with_api(
         return ChainReadResult(error=error)
 
     raw_dir = (
-        (artifacts.RAW_DIR if raw_root is None else raw_root)
-        / RAW_SUBDIR
-        / query.target_trade_date
+        (artifacts.RAW_DIR if raw_root is None else raw_root) / RAW_SUBDIR / query.target_trade_date
     )
     try:
         index_facts = index_daily.collect_index_daily(
@@ -357,3 +360,14 @@ def read_chain(query: ChainQuery) -> ChainReadResult:
         # never evidence that the requested trade date is unavailable.
         return ChainReadResult(error=OptionChainUnavailableError(str(exc)))
     return read_chain_with_api(api, query)
+
+
+def open_chain_session(
+    dates: Sequence[str],
+    *,
+    resume: bool = False,
+) -> ChainSession:
+    """Open a product-owned historical acquisition context (read-contract section 13)."""
+    from .session import ChainSession
+
+    return ChainSession(dates, resume=resume)

@@ -12,6 +12,8 @@ shared Capture capability != shared goal-scoped Raw Artifact
 
 本产品发布 market-chain facts，不计算 MO Premium Plane 指标，也不产生市场判断或交易建议。
 
+本产品同时提供单日读取和显式日期集合的 historical acquisition session；后者的公开执行、限流与 checkpoint 恢复契约见 [read contract 第 13 节](read-contract.md#13-public-historical-acquisition-session)。
+
 本产品选择 persisted goal-scoped Raw 作为 Capture/Preparation 契约；其 request-scoped final read model 不要求持久化。产品内的 Application Service 拥有 orchestration、public result 与 classified failure。
 
 本产品拥有 `mo-option-chain` Raw 命名空间及 `data/raw/mo-option-chain/<target_trade_date>/` 的按目标组织路径语义；具体 Raw 文件与 completeness 仍由 [data authority](data.md) 定义。共享 artifact 基础设施仅提供通用 Raw root、文件系统与 JSON 读写机制，不定义本产品的 Raw 身份或路径。
@@ -70,7 +72,7 @@ MO -> CSI1000 -> 000852.SH
 
 ## 6. V1 Non-goals
 
-V1 不包含 IO/HO、IV、Greeks、moneyness、liquidity judgment、recommended strike、market interpretation、trading signal、volume/OI visualization、settlement-price mode、date range、latest/fallback、database、cache、auth 或 websocket。
+V1 不包含 IO/HO、IV、Greeks、moneyness、liquidity judgment、recommended strike、market interpretation、trading signal、volume/OI visualization、settlement-price mode、date range、latest/fallback、database、通用 cache、auth 或 websocket。Explicit historical session 的 date-set orchestration 与已验证 checkpoint resume 是当前受支持的执行边界，不是隐式日期范围产品或通用 cache。
 
 ## 7. Navigation
 

@@ -1,6 +1,6 @@
 # Research UI authority
 
-本文档定义 retained Study 的 human-facing execution convention 与窄义共享 Research UI 支撑。模块 identity、Research result 与 Snapshot 消费原则见 [market-research architecture](../ARCHITECTURE.md)；配置 schema 与 resolution 见 [configuration authority](CONFIGURATION.md)；具体命令与参数由 `../studies/<study_package>/ARCHITECTURE.md` 中对应的 canonical Study authority 记录。
+本文档定义 retained Study 的 human-facing execution convention 与窄义共享 Research UI 支撑。模块 identity、Research result 与 Snapshot 消费原则见 [market-research architecture](../ARCHITECTURE.md)；配置 schema 与 resolution 见 [configuration authority](CONFIGURATION.md)；具体命令与参数由对应的 canonical Study authority 拥有，从 `../studies/<study_package>/ARCHITECTURE.md` 进入。新建 Study 的详细输入与 CLI 映射位于该 entry 链接的 `INPUTS.md`，见 [Study Skeleton](../studies/SKELETON.md)。
 
 ## 1. Interaction boundary
 

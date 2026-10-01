@@ -42,3 +42,12 @@ Source 中其他表达合约到期或交割时间的字段可以保留；Raw 层
 | `amount` | 成交额 |
 | `oi` | 持仓量 |
 | `oi_chg` | 持仓量变化 |
+
+## MO session bulk target-date specialization
+
+MO session Capture supports `fut_daily(trade_date=..., exchange="CFFEX")`.
+Validate the entire response date and unique contract identities; reject a
+response of 2,000 or more rows as potentially truncated. Filter to the complete
+active ordinary IM universe determined from basic facts, retaining absent rows
+as absence. Preparation continues to decide which matched IM facts are required.
+This does not change other products' per-contract/range execution contracts.

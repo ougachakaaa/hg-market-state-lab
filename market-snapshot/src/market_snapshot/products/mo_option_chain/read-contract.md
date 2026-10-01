@@ -509,3 +509,41 @@ contract dropping
 partial chain
 fabricated instrument
 ```
+
+## 13. Public historical acquisition session
+
+`service.open_chain_session(dates, *, resume=False)` is a context-managed public
+Python execution boundary. Dates are a non-empty, deduplicated, sorted set of
+explicit ISO trading dates supplied by the consumer, not a calendar discovery
+API. `read_date(date, price_types)` returns existing `ChainReadResult` values
+indexed by resolved `PriceType`; `iter_dates(price_types, workers=4)` yields
+`(date, results)` in date order. Requests outside the declared dates fail.
+All requested prices use one captured OHLC fact set per date; a requested price
+failure fails the whole date and never commits a completed checkpoint.
+The session exposes snapshots through `metrics()` and `provenance()`;
+these contain safe counts, durations, reused/fetched dates and fact digests,
+not credentials, HTTP bodies or authenticated proxy URLs.
+
+The session obtains complete MO and ordinary IM basic facts once, then retains
+all existing date-specific lifecycle, option completeness, selected-price and
+matched-futures checks. It captures CFFEX futures daily once per date, filters
+the full active IM universe, and never falls back to per-contract requests.
+The original single-date `read_chain` signature and execution remain supported.
+A four-worker rolling window uses independent provider clients, ordered delivery
+and a process-shared Source session budget. The first failed date stops new
+scheduling; outstanding calls finish before the context releases its lock.
+
+Checkpoint identity is SHA-256 of the canonical product, sorted dates and
+acquisition-definition version (v1). Product-owned storage is
+`data/raw/mo-option-chain/sessions/<identity>/`, separate from legacy date Raw.
+A cross-platform OS lock excludes duplicate sessions with the same identity and
+releases automatically after process death. Fresh execution resets its own
+checkpoint under the lock. Explicit resume requires an existing matching
+manifest and verified basic-fact digests; mismatched identity/version or broken
+basic facts fail. Each date is staged privately, validated for high/low, and
+committed by an atomic completed-date manifest containing file digests.
+Incomplete/corrupt daily facts are fetched again; existing legacy Raw is never
+imported automatically. A resumed run uses the original basic snapshot and
+reports reuse/refetch and digests in provenance. Completion of Raw files does
+not imply a successful Research result. Output paths and elapsed time do not
+alter product query or Research artifact semantic identity.

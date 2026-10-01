@@ -1,15 +1,16 @@
 # Research Study Authority Review
 
-本文件拥有 Study Authority Completeness Gate、semantic consistency / traceability checks、validation findings 与 `Study Authority Complete` 的判定。必需语义由 [Schema](SCHEMA.md) 定义；[Authoring](AUTHORING.md) 处理 Study Intention、authoring 状态及 human semantic-decision loop。
+本文件拥有 Study Authority Completeness Gate、semantic consistency / traceability checks、implementation topology review、validation findings 与 `Study Authority Complete` 的判定。必需语义由 [Schema](SCHEMA.md) 定义，Python implementation topology 由 [Implementation Package Contract](IMPLEMENTATION.md) 定义；[Authoring](AUTHORING.md) 处理 Study Intention、authoring 状态及 human semantic-decision loop。
 
 ## Study Authority Completeness Gate
 
-`Semantic Review` 必须逐项确认下列条件。Gate 检查当前 Study authority 是否满足 Schema，以及跨对象关系是否一致；它不重新定义 Schema contract，也不判断 repository 是否已经具备实现该 Study 的全部 capability。对旧 Study 仅按 [Compatibility](COMPATIBILITY.md) 中显式 reconciliation 的相关范围适用，不得据此追溯宣布历史 Study invalid：
+`Semantic Review` 必须逐项确认下列条件。Gate 检查当前 Study authority 是否满足 Schema，以及跨对象关系是否一致；新 Study 的呈现拓扑由 [Skeleton](SKELETON.md) 定义。它不重新定义 Schema contract，也不判断 repository 是否已经具备实现该 Study 的全部 capability。对旧 Study 仅按 [Compatibility](COMPATIBILITY.md) 中显式 reconciliation 的相关范围适用，不得据此追溯宣布历史 Study invalid：
 
 | 检查面 | 通过条件 |
 | --- | --- |
 | Research completeness | 核对 [Schema](SCHEMA.md) 的六个 semantic areas 在 canonical authority graph 中均有实质内容和唯一 owner，且无未解决的 research semantic decision。 |
-| Authority navigation | 核对稳定 `ARCHITECTURE.md` entry 存在，六个 semantic areas 可从 entry 定位，所有 specialized canonical owner 均可沿 entry 的链接到达，且没有 orphan semantic owner；不检查标题拼写、顺序或文件数量。 |
+| New Study authority topology（仅新建 Study） | 核对 [Skeleton](SKELETON.md) 规定的四个顶层文件均存在且各有实质内容；`ARCHITECTURE.md` 直接链接其他三个顶层 owner，详细语义位于相应文件而非重复堆在 entry。单文件 authority 或空占位文件不能通过。 |
+| Authority navigation | 核对稳定 `ARCHITECTURE.md` entry 存在，六个 semantic areas 可从 entry 定位，所有更深层 specialized canonical owner 均可沿链接到达，且没有 orphan semantic owner；不检查标题拼写或确切措辞。 |
 | Input ownership | 逐项核对外部 input、parameter ownership / consumers / semantic role、execution-only options 与 run identity 符合 Schema 的 Inputs 和 parameter contracts；检查实际消费与声明一致。 |
 | Method graph completeness | 逐项核对具名 Observation / Analysis、Method Context、消费关系、语义输出及按条件定义的 component Artifact identity 符合 Schema 的 Method contracts；检查引用的组件与上游事实均存在，且依赖方向合法。 |
 | Question-to-evidence traceability | 验证每个重要 Question aspect 均可沿实际 local references 追踪至 Observation → Analysis → retained Evidence Product，每个 material Analysis 均可追踪至 retained evidence；检查引用的对象存在、指向一致，无游离统计。 |
@@ -28,3 +29,18 @@
 Gate 全部通过时，判定 **Study Authority Complete**：六个 semantic areas 与跨对象关系已确定 Study-owned Research semantics，后续 Implementation Agent 无需重新决定这些语义。该判定不表示上游 capability 已备齐；后续 dependency reconciliation 与 implementation handoff 由 [Authoring](AUTHORING.md) 处理。
 
 Gate 未通过时，返回未解决或不一致的字段、引用和依赖作为 validation findings，不将它们写成既定 Study 语义；Authoring 决定是否进入 `Semantic Decision Required`、更新草稿并重新提交完整 Review。
+
+## Runnable Study implementation topology review
+
+本审查在新 runnable Study implementation 形成后执行，与上方的 Study Authority Completeness Gate 分开；实现拓扑不决定 Study semantic authority 是否 complete。既有实现仅按 [Compatibility](COMPATIBILITY.md) 的触发范围审查，不追溯宣布历史实现 invalid。逐项核对：
+
+| 检查面 | 不通过条件 |
+| --- | --- |
+| Package 与入口 | 新 runnable Study 被实现为 `<study_package>.py`、缺少 [Implementation Package Contract](IMPLEMENTATION.md) 的必需 package-level 边界，或 `__init__.py` 不指向当前 Study canonical authority。 |
+| Orchestration | `study.py` 含有 material Observation construction 与 Analysis execution，或隐藏大块 selection、statistics、plotting、retention、复杂 provenance 逻辑，使 pipeline 不能直接辨认。 |
+| Semantic component traceability | Authority 中具名 Observation / Analysis 无法映射到清晰的 Study-local implementation responsibility，或 Evidence Product 与定义它的 Analysis 在实现中难以追踪。 |
+| Focused reading | 修改一个 material Analysis 必须阅读无关 CLI、evidence formatting、其他 Analysis 或无关 Observation mechanics，才能理解其实现。 |
+| Mixed responsibility | 单一 module 同时拥有 input canonicalization、Observation construction、Analysis execution、evidence retention 等多个可独立理解的 substantial responsibility，且无清晰内聚性依据。 |
+| Authority drift | 实现合并或隐藏 semantic components，以致 `Inputs → Observation(s) → Analysis / Analyses → Evidence Products` 的 authority graph 难以辨认。 |
+
+对上述 finding 按 Study-local semantic responsibility 拆分或明确内聚性，不以 LOC、函数／class 数量或 one-object-one-file 规则替代审查。结构测试只固定 package、必需模块与 authority pointer 等稳定事实，不能替代阅读边界审查。以 `0dd28a641a3210fa03da9e5aa621742ac48b7cf0` 的 MO implementation 作一致性 probe：其中 `study.py` 同时实现 material Observation selection/construction 与 Analysis/statistics，按本检查不通过；这不触发对该既有 Study 的自动迁移。
