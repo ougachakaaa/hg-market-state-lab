@@ -37,3 +37,15 @@ git diff --check
 ### Implementation 变更
 
 Implementation 应随具体设计更新本政策中的验证命令，从 repository root 按受影响模块范围验证。检查 public request/result/view、coverage 互斥计数、ensure 逐 unit completeness 与原子写入，以及 coverage/export 无 Source I/O、无 SQLite mutation。CLI integration 同时验证 owning Dataset contract 与 lab delivery/exit-code behavior；不以共享 runtime 替代 boundary 检查。提交前审阅完整 diff，跨模块 contract 变更同时执行 producer 与 consumer 的相关检查。
+
+DataLake core implementation 的正式测试位于 `data-lake/tests/`。从 repository root 使用根 Poetry environment 执行：
+
+```bash
+poetry run pytest data-lake/tests
+poetry run ruff check data-lake
+poetry run mypy data-lake
+poetry run pytest backend-api/tests/test_architecture.py market-snapshot/tests/test_authority_topology.py
+git diff --check
+```
+
+根 package registration 或 Python tooling configuration 改变时，从根目录执行 `poetry install`，再确认 `poetry run python -c "import data_lake"` 和 `poetry run pytest`。Core tests 使用 test-local fake Dataset / Source 与临时 SQLite，不需要真实 provider credential，也不调用外部 Source。Public facade tests 直接验证 attributes；internal Repository、Source collaborator 与 SQLite 不作为 consumer boundary。

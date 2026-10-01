@@ -17,6 +17,7 @@ lab = "lab.cli:main"
 [tool.poetry]
 packages = [
     { include = "lab" },
+    { include = "data_lake", from = "data-lake/src" },
     { include = "market_snapshot", from = "market-snapshot/src" },
     { include = "backend_api", from = "backend-api/src" },
     { include = "market_research", from = "market-research/src" },
@@ -33,8 +34,15 @@ requires = ["poetry-core>=2.0.0"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.pytest.ini_options]
-testpaths = ["lab/tests", "market-snapshot/tests", "market-research/tests", "backend-api/tests"]
+testpaths = [
+    "lab/tests",
+    "data-lake/tests",
+    "market-snapshot/tests",
+    "market-research/tests",
+    "backend-api/tests",
+]
 pythonpath = [
+    "data-lake/src",
     "market-snapshot/src",
     "market-research/src",
     "backend-api/src",
@@ -44,6 +52,8 @@ pythonpath = [
 target-version = "py313"
 line-length = 100
 src = [
+    "data-lake/src",
+    "data-lake/tests",
     "lab",
     "lab/tests",
     "market-snapshot/src",
@@ -60,11 +70,13 @@ src = [
 select = ["E", "F", "I", "UP", "B"]
 
 [tool.ruff.lint.isort]
-known-first-party = ["backend_api", "lab", "market_research", "market_snapshot"]
+known-first-party = ["backend_api", "data_lake", "lab", "market_research", "market_snapshot"]
 
 [tool.mypy]
 python_version = "3.13"
 files = [
+    "data-lake/src",
+    "data-lake/tests",
     "lab",
     "market-snapshot/src",
     "market-snapshot/tests",
@@ -76,6 +88,7 @@ files = [
     "market-research/tests",
 ]
 mypy_path = [
+    "data-lake/src",
     "market-snapshot/src",
     "market-research/src",
     "backend-api/src",

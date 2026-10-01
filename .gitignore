@@ -36,3 +36,6 @@ market-research/output/**
 # Temporary Documents
 _temp_docs/**
 !_temp_docs/AGENTS.md
+
+# Dataset-owned SQLite caches
+data-lake/data/
