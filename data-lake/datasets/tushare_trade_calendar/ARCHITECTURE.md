@@ -6,7 +6,7 @@
 
 Canonical Dataset identity 为 `tushare_trade_calendar`，用于持久缓存 Tushare 交易日历 Source facts，不生成 analysis-ready 派生结果。SQLite ownership 继承模块 invariant。
 
-本 Dataset 的 authority、implementation、tests 与 persistent runtime state 由当前 `datasets/tushare_trade_calendar/` bounded context colocate 拥有：authority 为本文件与 SERVICE.md；目标 implementation 与 composition 位于 `src/`，Dataset verification 位于 `tests/`，唯一 owned SQLite 位于 `data/<owned sqlite>`。具体 filename 与目录保留机制留给 implementation。此处声明目标 ownership，不表示 physical relocation 已完成。
+本 Dataset 的 authority、implementation、tests 与 persistent runtime state 由当前 `datasets/tushare_trade_calendar/` bounded context colocate 拥有：authority 为本文件与 SERVICE.md；implementation 与 composition 位于 `src/`，Dataset verification 位于 `tests/`，唯一 owned SQLite 位于 `data/<owned sqlite>`。默认 filename 与 legacy state 安全规则见 SERVICE.md；当前 source registration 与目录 materialization 机制见 reconciliation 文档。
 
 Trade-calendar-specific models、Scope / Window interpretation、逐日 completeness、export view、Tushare adapter 与 service composition 都归本 Dataset；通用 mechanisms 依赖 DataLake shared kernel，不允许 kernel 反向依赖本 Dataset，也不依赖其他 Dataset。现有 public Python import surface 保持兼容；所有 source roots 共用根 Python project/environment。
 

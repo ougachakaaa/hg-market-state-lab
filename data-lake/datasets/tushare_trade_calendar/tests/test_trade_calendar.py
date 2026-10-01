@@ -118,7 +118,7 @@ def test_missing_cache_reads_and_factory_are_lazy(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    monkeypatch.setattr(_service, "database_path", lambda _: tmp_path / "cache/calendar.sqlite3")
+    monkeypatch.setattr(_service, "database_path", lambda *_: tmp_path / "cache/calendar.sqlite3")
 
     def forbidden() -> None:
         pytest.fail("read operations cannot resolve credentials")
@@ -129,6 +129,69 @@ def test_missing_cache_reads_and_factory_are_lazy(
     view = service.export(REQUEST)
     assert view.coverage == service.coverage(REQUEST) and view.records == ()
     assert not (tmp_path / "cache").exists()
+
+
+def test_factory_resolves_owned_storage_without_creating_it() -> None:
+    service = public.create_service()
+    assert service._core._repository.path == (
+        Path(__file__).resolve().parents[1] / "data/tushare_trade_calendar.sqlite3"
+    )
+
+
+def test_legacy_cache_is_untouched_and_never_used_as_fallback(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    # Exercise the real default composition in a temporary repository layout.
+    lake = tmp_path / "data-lake"
+    legacy_root = lake / "data"
+    legacy = Repository(legacy_root / "tushare_trade_calendar.sqlite3", DATASET, "tushare")
+    old_client = Client()
+    old_client.rows = [row()]
+    request = TradeCalendarRange("SSE", DAY, DAY)
+    assert _create_service(legacy, lambda: TradeCalSource(old_client)).ensure(request).complete
+    (legacy_root / "unrelated.sqlite3").write_bytes(b"untouched legacy state")
+    before = {
+        path.name: (path.read_bytes(), path.stat().st_mtime_ns)
+        for path in legacy_root.iterdir()
+    }
+
+    dataset_root = lake / "datasets/tushare_trade_calendar"
+    monkeypatch.setattr(
+        _service, "__file__",
+        str(dataset_root / "src/data_lake/datasets/tushare_trade_calendar/_service.py"),
+    )
+    client = Client()
+    client.rows = [row(is_open=1)]
+    monkeypatch.setattr(_service, "prepare_source", lambda: TradeCalSource(client))
+    original_connect = sqlite3.connect
+
+    def connect(database: object, *args: object, **kwargs: object) -> sqlite3.Connection:
+        assert "tushare_trade_calendar.sqlite3" not in str(database) or (
+            "datasets" in str(database)
+        ), "legacy cache must not be opened"
+        return original_connect(database, *args, **kwargs)  # type: ignore[call-overload]
+
+    monkeypatch.setattr(sqlite3, "connect", connect)
+    service = public.create_service()
+    owned = dataset_root / "data/tushare_trade_calendar.sqlite3"
+    assert service._core._repository.path == owned
+    assert service.coverage(request) == CoverageResult(1, 0, 1, 0, 0, False)
+    assert service.export(request).records == ()
+    assert not owned.parent.exists() and not client.calls
+
+    assert service.ensure(request).complete
+    assert owned.is_file() and len(client.calls) == 1
+    assert service.export(request).records[0].is_open == 1
+    # Both paths now exist; reopening still uses only the new local cache.
+    cached = public.create_service()
+    assert cached.ensure(request) == EnsureResult(1, 1, 0, 0, 0, 0, True, ())
+    assert cached.coverage(request).complete
+    assert cached.export(request).records[0].is_open == 1
+    assert len(client.calls) == 1
+    assert before == {
+        path.name: (path.read_bytes(), path.stat().st_mtime_ns)
+        for path in legacy_root.iterdir()
+    }
 
 
 def test_first_fill_existing_success_skip_and_export(
@@ -351,7 +414,7 @@ def test_environment_precedence_and_snapshot_env_fallback(
         _source.prepare_source()
         if environment is None:
             assert calls == [
-                Path(__file__).resolve().parents[2] / "market-snapshot/.env",
+                Path(__file__).resolve().parents[4] / "market-snapshot/.env",
                 "fallback-token",
             ]
         else:

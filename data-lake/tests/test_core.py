@@ -11,7 +11,6 @@ import pytest
 
 import data_lake
 import data_lake._repository as repository_module
-import data_lake._runtime as runtime_module
 from data_lake import (
     CoverageResult,
     EnsureResult,
@@ -106,17 +105,14 @@ def dataset(tmp_path: Path) -> FakeDataset:
     return FakeDataset(tmp_path / "cache")
 
 
-def test_database_path_uses_readable_canonical_identity() -> None:
-    assert database_path("tushare_trade_calendar") == (
-        Path(runtime_module.__file__).resolve().parents[2]
-        / "data/tushare_trade_calendar.sqlite3"
-    )
+def test_database_path_uses_readable_canonical_identity(tmp_path: Path) -> None:
+    assert database_path("fake", tmp_path) == tmp_path / "fake.sqlite3"
 
 
 def test_database_path_custom_root_does_not_create_storage(tmp_path: Path) -> None:
     root = tmp_path / "custom" / "cache"
-    path = database_path("tushare_trade_calendar", root)
-    assert path == root / "tushare_trade_calendar.sqlite3"
+    path = database_path("fake", root)
+    assert path == root / "fake.sqlite3"
     assert not root.exists() and not path.exists()
 
 

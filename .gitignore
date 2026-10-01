@@ -37,5 +37,8 @@ market-research/output/**
 _temp_docs/**
 !_temp_docs/AGENTS.md
 
-# Dataset-owned SQLite caches
+# Legacy SQLite caches (left untouched)
 data-lake/data/
+
+# Dataset-owned runtime state, including SQLite journals / WAL files
+data-lake/datasets/*/data/

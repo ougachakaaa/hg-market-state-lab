@@ -3,6 +3,7 @@
 import math
 from collections.abc import Callable
 from datetime import date, timedelta
+from pathlib import Path
 
 from data_lake._application import Core, Source
 from data_lake._domain import CachedUnit, ExecutionFailure, Record, Unit, UnitRecords
@@ -124,7 +125,12 @@ def project(
 class TradeCalendarService:
     def __init__(self) -> None:
         self._core = _compose(
-            Repository(database_path(DATASET), DATASET, "tushare"), prepare_source
+            Repository(
+                database_path(DATASET, Path(__file__).resolve().parents[4] / "data"),
+                DATASET,
+                "tushare",
+            ),
+            prepare_source,
         )
 
     def coverage(self, request: TradeCalendarRange) -> CoverageResult:

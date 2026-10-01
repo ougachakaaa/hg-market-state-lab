@@ -18,6 +18,7 @@ lab = "lab.cli:main"
 packages = [
     { include = "lab" },
     { include = "data_lake", from = "data-lake/src" },
+    { include = "data_lake", from = "data-lake/datasets/tushare_trade_calendar/src" },
     { include = "market_snapshot", from = "market-snapshot/src" },
     { include = "backend_api", from = "backend-api/src" },
     { include = "market_research", from = "market-research/src" },
@@ -37,12 +38,14 @@ build-backend = "poetry.core.masonry.api"
 testpaths = [
     "lab/tests",
     "data-lake/tests",
+    "data-lake/datasets/tushare_trade_calendar/tests",
     "market-snapshot/tests",
     "market-research/tests",
     "backend-api/tests",
 ]
 pythonpath = [
     "data-lake/src",
+    "data-lake/datasets/tushare_trade_calendar/src",
     "market-snapshot/src",
     "market-research/src",
     "backend-api/src",
@@ -54,6 +57,8 @@ line-length = 100
 src = [
     "data-lake/src",
     "data-lake/tests",
+    "data-lake/datasets/tushare_trade_calendar/src",
+    "data-lake/datasets/tushare_trade_calendar/tests",
     "lab",
     "lab/tests",
     "market-snapshot/src",
@@ -74,9 +79,13 @@ known-first-party = ["backend_api", "data_lake", "lab", "market_research", "mark
 
 [tool.mypy]
 python_version = "3.13"
+namespace_packages = true
+explicit_package_bases = true
 files = [
     "data-lake/src",
     "data-lake/tests",
+    "data-lake/datasets/tushare_trade_calendar/src",
+    "data-lake/datasets/tushare_trade_calendar/tests",
     "lab",
     "market-snapshot/src",
     "market-snapshot/tests",
@@ -89,6 +98,7 @@ files = [
 ]
 mypy_path = [
     "data-lake/src",
+    "data-lake/datasets/tushare_trade_calendar/src",
     "market-snapshot/src",
     "market-research/src",
     "backend-api/src",

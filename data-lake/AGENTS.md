@@ -34,16 +34,18 @@ poetry run pytest market-snapshot/tests/test_authority_topology.py
 git diff --check
 ```
 
-现有 topology 检查不自动登记新的 DataSet entry，因此还须显式确认从根 architecture 经模块入口可到达两个公共专题，并经 catalog、Dataset ARCHITECTURE.md 可到达 SERVICE.md；同时核对 section anchors、semantic owner 唯一性、transport-neutral boundary、semantic/wire types、failure 分类及 export snapshot invariant。同时确认 reconciliation 文档从模块入口可达。已有实现与新目标不一致时在 IMPLEMENTATION_RECONCILIATION.md 集中记录，不虚称实现完成。Authority-only 任务不修改 source、tests、runtime data 或根 Python 配置。
+现有 topology 检查已登记公共专题、catalog、Calendar authority 与 reconciliation 文档；新增 DataSet entry 仍须显式登记。确认从根 architecture 经模块入口可到达两个公共专题，并经 catalog、Dataset ARCHITECTURE.md 可到达 SERVICE.md；同时核对 section anchors、semantic owner 唯一性、transport-neutral boundary、semantic/wire types、failure 分类及 export snapshot invariant。确认 reconciliation 文档从模块入口可达。已有实现与新目标不一致时在 IMPLEMENTATION_RECONCILIATION.md 集中记录，不虚称实现完成。Authority-only 任务不修改 source、tests、runtime data 或根 Python 配置。
 
 ### Implementation 变更
 
 Implementation 应随具体设计更新本政策中的验证命令，从 repository root 按受影响模块范围验证。检查 public request/result/view、coverage 互斥计数、ensure 逐 unit completeness 与原子写入，以及 coverage/export 无 Source I/O、无 SQLite mutation。CLI integration 同时验证 owning Dataset contract 与 lab delivery/exit-code behavior；不以共享 runtime 替代 boundary 检查。提交前审阅完整 diff，跨模块 contract 变更同时执行 producer 与 consumer 的相关检查。
 
-当前基准实现的 core、Calendar 与混合 boundary tests 均位于 `data-lake/tests/`；以下命令适用于当前布局。目标为公共 core/module verification 留在顶层 tests，Dataset tests 下沉到 owning Dataset 的 tests；迁移时更新 discovery 与验证命令，不能以现有测试路径或禁止 datasets 下 Python 文件的断言覆盖目标 authority。从 repository root 使用根 Poetry environment 执行：
+Shared core/module tests 位于 `data-lake/tests/`，Calendar tests 位于 `data-lake/datasets/tushare_trade_calendar/tests/`，lab consumer tests 归 `lab/tests/`。以下命令递归覆盖 DataLake 的 source/tests 与所有已登记 Dataset；installed import 检查必须在 Poetry install 后执行，不能只依赖 pytest pythonpath。从 repository root 使用根 Poetry environment 执行：
 
 ```bash
-poetry run pytest data-lake/tests
+poetry run python -c "import data_lake"
+poetry run python -c "import data_lake.datasets.tushare_trade_calendar"
+poetry run pytest data-lake
 poetry run pytest lab/tests
 poetry run ruff check data-lake lab
 poetry run mypy data-lake lab
@@ -53,4 +55,4 @@ git diff --check
 
 根 package registration 或 Python tooling configuration 改变时，从根目录执行 `poetry install`，再确认 `poetry run python -c "import data_lake"` 和 `poetry run pytest`。Core tests 使用 test-local fake Dataset / Source 与临时 SQLite，不需要真实 provider credential，也不调用外部 Source。Public facade tests 直接验证 attributes；internal Repository、Source collaborator 与 SQLite 不作为 consumer boundary。
 
-Calendar tests 使用 fake trade_cal client 与临时 owned SQLite；验证逐日 completeness、semantic identity、credential lazy resolution、export snapshot、public failure taxonomy 及 lab JSON / exit codes，不依赖真实 token。
+Calendar tests 使用 fake trade_cal client 与临时 owned SQLite；验证逐日 completeness、semantic identity、credential lazy resolution、export snapshot、public failure taxonomy、installed import、Dataset-local storage 与 legacy state 隔离；lab tests 验证 public boundary、JSON / exit codes，不依赖真实 token。禁止测试操作真实 legacy cache；legacy state 不自动迁移、fallback 或双写。

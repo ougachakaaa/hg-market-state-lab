@@ -4,11 +4,8 @@ import re
 from pathlib import Path
 
 
-def database_path(dataset: str, storage_root: Path | None = None) -> Path:
-    """Use the canonical Dataset ID as the readable owned SQLite filename."""
+def database_path(dataset: str, storage_root: Path) -> Path:
+    """Resolve an owned filename within storage explicitly supplied by the Dataset."""
     if re.fullmatch(r"[a-z0-9_]+", dataset) is None:
         raise ValueError("Dataset identity must match [a-z0-9_]+ for storage")
-    root = (
-        storage_root if storage_root is not None else Path(__file__).resolve().parents[2] / "data"
-    )
-    return root / f"{dataset}.sqlite3"
+    return storage_root / f"{dataset}.sqlite3"
