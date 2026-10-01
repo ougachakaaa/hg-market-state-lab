@@ -14,7 +14,7 @@
 
 - 模块 architecture 拥有稳定 ownership 与模块边界；公共领域与 persistence invariant 由 DOMAIN_MODEL.md 拥有；公共 Application contract、failure taxonomy 与 export snapshot invariant 由 APPLICATION.md 拥有；Dataset ARCHITECTURE.md 拥有自治 bounded-context ownership 与 domain specialization，SERVICE.md 拥有 consumer contract；CLI parsing / serialization / delivery / exit-code mapping 由 lab 拥有，Dataset authority 不定义 CLI option names；catalog 只提供导航。
 - 语义变更先更新 narrowest canonical authority；下层只能 specialize 或 constrain 上层 invariant，发现冲突须显式 reconciliation。
-- 顶层 src / tests 只拥有 shared kernel 与公共验证；具体 Dataset 的 authority / src / tests / data colocate 于其 bounded context。Dataset 依赖 shared kernel；禁止 kernel 依赖具体 Dataset，当前禁止 Dataset 互相依赖。不预建 registry、plugin、manager 或 cross-Dataset workflow。
+- 顶层 src / tests 只拥有 shared kernel 与公共验证；具体 Dataset 的 authority / src / tests / data colocate 于其 bounded context。Dataset 依赖 shared kernel；禁止 kernel 依赖具体 Dataset。Dataset 间默认禁止依赖，只有 ARCHITECTURE.md 明确声明的单向 public service dependency 允许；不消费 sibling internals、不预建 registry、plugin、manager 或 generic cross-Dataset workflow。
 - 每个 DataSet exactly owns 一个 SQLite，目标 persistent state 位于 owning Dataset 的 data/；真实 runtime state 默认不进入 Git。不得引入 global database、global instrument master、跨 DataSet foreign key 或未经 authority 声明的模块依赖。
 - Implementation 必须对齐 public Application Service、owning Dataset contract 与 repository runtime invariant；consumer 可以直接进入具体 Dataset public API，但不直接进入 Repository、SQLite schema / connection、Source adapter、Dataset data/ 文件或 internal FetchUnit / Record persistence identity，不发布 arbitrary record-level mutation。
 - `coverage` / `export` 必须真正 read-only，不 materialize missing FetchUnits、不隐式 ensure、不访问 Source；只有 `ensure` 可以创建或更新 persistence state。
@@ -34,7 +34,7 @@ poetry run pytest market-snapshot/tests/test_authority_topology.py
 git diff --check
 ```
 
-现有 topology 检查已登记公共专题、catalog、Calendar authority 与 reconciliation 文档；新增 DataSet entry 仍须显式登记。确认从根 architecture 经模块入口可到达两个公共专题，并经 catalog、Dataset ARCHITECTURE.md 可到达 SERVICE.md；同时核对 section anchors、semantic owner 唯一性、transport-neutral boundary、semantic/wire types、failure 分类及 export snapshot invariant。确认 reconciliation 文档从模块入口可达。已有实现与新目标不一致时在 IMPLEMENTATION_RECONCILIATION.md 集中记录，不虚称实现完成。Authority-only 任务不修改 source、tests、runtime data 或根 Python 配置。
+现有 topology 检查已登记公共专题、catalog、Calendar authority 与 reconciliation 文档；新增 DataSet entry 必须显式登记在 DATASETS.md 并核对根入口可达性。Authority-only 任务不修改 tests implementation；现有 test 的固定 CONTEXT_ENTRIES 尚未包含新 entry 时，须用补充只读检查逐一验证新增文件可达，并在 IMPLEMENTATION_RECONCILIATION.md 记录后续 test registration。确认从根 architecture 经模块入口可到达两个公共专题，并经 catalog、Dataset ARCHITECTURE.md 可到达 SERVICE.md；同时核对 section anchors、semantic owner 唯一性、transport-neutral boundary、semantic/wire types、failure 分类及 export snapshot invariant。确认 reconciliation 文档从模块入口可达。已有实现与新目标不一致时在 IMPLEMENTATION_RECONCILIATION.md 集中记录，不虚称实现完成。Authority-only 任务不修改 source、tests、runtime data 或根 Python 配置。
 
 ### Implementation 变更
 

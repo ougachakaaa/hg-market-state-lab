@@ -31,7 +31,7 @@ data-lake/
 
 Colocation 让同一 Dataset 的语义、代码、验证与持久化 state 由同一 bounded context 拥有，避免将 authority 与 implementation 拆成两棵长期 ownership tree。真实 SQLite/runtime state 默认不进入 Git；具体 filename 与目录保留机制属于 implementation concern。此树定义稳定 ownership；当前 source/storage registration 与 legacy state 处理见 [implementation reconciliation](IMPLEMENTATION_RECONCILIATION.md)。
 
-不同 DataSet 必须能够独立存在、独立 refresh、独立删除或重建。这不定义 refresh policy。同一 instrument 可以分别存在于多个 DataSet 自己的 instrument catalog 中；不得据此合并 persistence ownership。Storage resolution 的公共调用约束见 [APPLICATION.md](APPLICATION.md)。
+不同 DataSet 的 owned state 必须能够独立存在、独立 refresh、独立删除或重建；public service 的必要事实依赖不合并 storage lifecycle，也不保证 prerequisite 缺失时 operation 仍可执行。这不定义 refresh policy。同一 instrument 可以分别存在于多个 DataSet 自己的 instrument catalog 中；不得据此合并 persistence ownership。Storage resolution 的公共调用约束见 [APPLICATION.md](APPLICATION.md)。
 
 这里的 `DataSet` 是 DataLake ownership 概念，不改写 Snapshot 中可能作为产品名称使用的 `Dataset`，也不授权读取或迁移产品私有 Raw。
 
@@ -51,7 +51,7 @@ DataLake shared kernel
 
 Dataset 内部组合 Source adapter 与 Repository 来访问 external API 和 owned SQLite。Consumer 禁止直接依赖 Dataset Repository internals、Source adapter internals、SQLite schema / connection、Dataset `data/` 文件或内部 FetchUnit / Record persistence identity。
 
-允许 `Dataset → DataLake shared kernel`；禁止 `DataLake shared kernel → specific Dataset`。当前 Dataset 之间互不依赖；未来只有真实需求与单独设计的 Dataset dependency contract 才能改变此约束。Catalog 不构成 runtime registry。
+允许 `Dataset → DataLake shared kernel`；禁止 `DataLake shared kernel → specific Dataset`。Dataset 间默认禁止依赖；唯一已声明的 service dependency 为 `tushare_index_daily → tushare_trade_calendar public Application Service`，用于目标交易日展开。Calendar 不反向依赖 Index；Futures / Options 的 underlying index relationship 只表达稳定 semantic identity，不授予 runtime dependency。禁止 cycles、跨 Dataset internal import、共享 SQLite 或跨库事务。公共 dependency 调用与 failure invariant 见 [APPLICATION.md](APPLICATION.md)，具体 prerequisite 见 Index 的 [交易日契约](datasets/tushare_index_daily/TRADING_DAYS.md)。Catalog 不构成 runtime registry。
 
 ## 3. Canonical Python boundary
 

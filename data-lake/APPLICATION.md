@@ -109,3 +109,15 @@ Source credential 属于 runtime/provider configuration，不是 Dataset semanti
 普通 consumer 创建 Dataset service 不要求提供 SQLite path、Repository、Source Adapter、database connection 或 token；Dataset-specific configuration/composition 属于 owning Dataset，通用 runtime/storage resolution machinery 属于 DataLake shared kernel；两者均为 consumer boundary 内部能力。Coverage / export 与 factory 不要求 Source credential，ensure 仅在实际 Source I/O 必要时解析。Missing required credential 属于 OperationError。
 
 SQLite location 由 owning Dataset 内部 composition 使用 shared runtime/storage machinery 解析，不接受 semantic request 中的 path 或 CLI `--db`。目标 persistent state ownership 固定为模块架构声明的 `datasets/<dataset-id>/data/<owned sqlite>`；具体 filename 与 resolution mechanics 留给 implementation reconciliation，shared machinery 不得内置具体 Dataset 知识，也不创建跨模块 config framework。现有本地凭据操作见 [README](../README.md) 与 [DEVELOPMENT](../DEVELOPMENT.md)。
+
+## 3. 已声明的 Dataset public service dependency
+
+本节只约束模块架构已允许的 dependency，不建立 dependency graph engine 或通用 orchestration framework。Consumer Dataset 必须在自己的 narrowest authority 声明 prerequisite request、读取方式、ensure 权限及失败语义；只能通过 producer 的 public semantic service 消费事实。Relationship identity 本身不构成 dependency permission。
+
+- Consumer 的 `coverage` / `export` 只允许调用 prerequisite 的 read-only public operations；整个调用链禁止 Source I/O 与 SQLite mutation，不隐式 ensure。
+- Consumer 的 `ensure` 可以按已声明契约调用 prerequisite 的 `ensure`，但每个 Dataset 只由自己的 service 写自己的 state，没有跨库原子提交或 rollback 保证。
+- 当 prerequisite 不完整，导致目标 FetchUnit 集合无法合法确定时，consumer 抛 `OperationError`；不能把未知日期当休市、以已知子集缩小 requested_units，或伪造正常 incomplete CoverageResult / EnsureResult。Prerequisite cache incompleteness 与 consumer 已知目标 units 的 incompleteness 是不同情形。
+- Prerequisite operation failure 映射为 consumer `OperationError`，保留可读的 dependency context，不泄漏 persistence / provider objects；consumer 自身输入错误仍是 `InvalidRequestError`。合法 consumer request 经内部转换后被 prerequisite 拒绝属于 composition/execution failure。
+- Consumer 每次 operation 固定一份合法 prerequisite semantic view 以展开目标集合。Export coverage 与 payload 仍须来自 consumer 同一个 committed cache snapshot，并针对这份固定目标；不声称多个 Dataset 共享同一数据库 snapshot 或 provider-current freshness。
+
+具体 Index → Calendar contract 经 [catalog](DATASETS.md) 进入 Index authority；Calendar 自己的 request/result/view 与 domain semantics 保持不变。

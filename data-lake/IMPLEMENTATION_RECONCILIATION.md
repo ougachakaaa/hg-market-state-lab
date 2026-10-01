@@ -30,3 +30,17 @@ Shared `database_path(dataset, storage_root)` 只验证 canonical filename ident
 Scope / Window / FetchUnit / Record、逐日 completeness、coverage / ensure / export、result fields、failure taxonomy、export snapshot、credential convention 与 CLI product semantics 均未重新设计。HTTP、Research/Snapshot integration、schema migration、refresh/TTL/force、cross-Dataset dependency/query 与显式 legacy import 仍不属于本轮实现范围。
 
 本轮验证：Poetry install、普通及 isolated installed imports、wheel build、DataLake/lab/相关 architecture checks（228 passed、1 skipped）、受影响模块 Ruff 与分模块 mypy、diff whitespace 均通过。真实 legacy SQLite 的 SHA-256、大小与 mtime 前后相同。额外全仓 pytest 为 829 passed、2 skipped、1 failed：未修改的 MO Option Chain Windows crash-lock recovery test 单独运行及空 pytest config 下均复现；无参数根 mypy 被基准已存在的空 `market-snapshot/scripts` files entry 阻断。这些仓库级验证问题未在本轮 DataLake reconciliation 中修改。
+
+## 5. 三个新 Dataset 的 authority-only 增量
+
+本节记录基于 `67e7b067c0e80c2b948e888282f9ec0b38fb529d` 的后续 authority 增量；上文 implementation/verification 是历史基准，不是三个新 Dataset 的实现证据。
+
+- [Index](datasets/tushare_index_daily/ARCHITECTURE.md) 已确定完整 domain/service、Source facts 与 Calendar prerequisite contract；[Futures](datasets/equity_index_futures/ARCHITECTURE.md) / [Options](datasets/equity_index_options/ARCHITECTURE.md) 只锁定稳定边界与 operation family，Scope/Window、FetchUnit/Record identity、completeness 及相应 request/payload details 仍显式待人工决定。
+- 原 repository/module/policy 的“Dataset 当前互不依赖”已显式协调为默认禁止、仅允许已声明的单向 public service dependency。本轮唯一新增 permission 为 Index → Calendar；Calendar service/domain 不变，underlying relationship 不授予 Futures/Options runtime dependency。Storage ownership、kernel direction、read-only、公共 result/errors、snapshot 与 root runtime invariant 均保留。
+- 新三个 bounded contexts 只有 authority：没有 source/test/storage directories、Python package/factory、SQLite schema、Source adapter、CLI registration 或 runtime integration。不修改根 Python registration/configuration，不执行 Source 请求或真实 cache migration。
+- 现有 architecture tests 仍按旧 implementation 验证 Dataset 不依赖 siblings；Index implementation 开始前须将 dependency check 收紧为明确 public boundary permission，而不是全面取消 sibling 限制，并验证只读/Calendar failure/两库独立 state。此为 implementation reconciliation 输入，本轮不修改 tests。
+- 现有 authority topology test 的 fixed CONTEXT_ENTRIES 不含本轮新增八个 authority 文件；本轮通过 catalog 显式登记、现有全仓 relative-link 检查与补充只读 root reachability 检查验证这些 entries。后续 implementation verification 应登记新 entries，不能将旧 test 的 green 视为新 contract 行为已被验证。
+
+没有剩余的上下层 authority conflict；Futures/Options 待决语义是有意保留的设计边界，不是被另一份 authority 隐式覆盖的契约。Index 后续仅需按既定语义 reconciliation/实现、细化事务与 batching 等 implementation concern，不借此重新决定 FetchUnit 或新增 public verbs。
+
+本次 authority 验证：现有 authority topology 检查 13 passed，DataLake boundary 检查 5 passed；补充只读检查确认新增八份 authority 从根入口可达、相对链接合法，全部十四个新增/修改文件均为 Markdown，新增 Dataset 目录只有 authority。`git diff --check` 与新增文件 whitespace 检查通过，已审阅包含新增文件的完整 diff。以上证明文档 topology 与现有边界未受破坏，不证明尚不存在的新 Dataset runtime 行为。
