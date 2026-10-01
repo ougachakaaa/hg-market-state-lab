@@ -52,3 +52,15 @@ Option volume 仍是 optional non-blocking metadata gap。若未来 Snapshot pub
 ```
 
 Run key 为 `<start_expiry_date>__<end_expiry_date>__<该 JSON 的 SHA-256 小写十六进制摘要>`。同一规范请求得到同一 key；任一 identity-changing input 的不同规范值产生不同请求摘要。`--overwrite`、output root、运行时间、临时路径和用户原始拼写不参与。实际上游结果及其 provenance 随 [retained evidence](RESULTS.md) 保留，不以运行时间或路径代替语义 identity。
+
+## Acquisition execution specialization
+
+The CLI uses MO Chain's public historical acquisition session over the actual
+Index Daily History sample dates, requesting high/low from the same fact set.
+Dates, expiry discovery, query identity and Study selection rules are unchanged.
+`--resume-source` is an execution-only boolean, default false. It requests
+validated Snapshot checkpoint reuse; it does not alter semantic request/run key
+and does not permit output replacement (`--overwrite` retains that responsibility).
+The initial index-history public call precedes the session; progress reports
+session Source attempts plus that one initial call. A bounded four-worker window
+returns dates in order and fails the Study on any public request failure.

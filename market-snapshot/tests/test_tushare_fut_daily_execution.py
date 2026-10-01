@@ -23,13 +23,15 @@ class RecordingApi(FakeTushareApi):
         self,
         *,
         ts_code: str | None = None,
+        exchange: str | None = None,
         trade_date: str | None = None,
         start_date: str | None = None,
         end_date: str | None = None,
     ) -> pd.DataFrame:
         self.starts.append(self.clock[0])
         return super().fut_daily(
-            ts_code=ts_code, trade_date=trade_date, start_date=start_date, end_date=end_date
+            ts_code=ts_code,
+            exchange=exchange, trade_date=trade_date, start_date=start_date, end_date=end_date
         )
 
 

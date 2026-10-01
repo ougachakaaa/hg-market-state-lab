@@ -18,3 +18,16 @@
 | CFFEX equity-index futures basic / daily | `im_futures_basic.py`, `im_futures_daily.py` 的 IF/IH/IC/IM family 参数化 Capture；保留 IM caller | [CFFEX futures Source contract](im-futures-contract.md) |
 
 Daily Market Snapshot 的六指数范围与 stock scope、CSI1000 history，以及各产品 completeness 均从 [Capability Catalog](../../../CAPABILITIES.md) 进入对应产品，不在本入口重复定义。
+
+## Historical session Source execution
+
+MO historical acquisition uses a shared process-local budget of 450 request
+starts/minute (60/450 seconds between starts), including attempts and retries,
+across all session endpoints/clients. Reservation locks do not cover HTTP calls.
+Explicit provider throttling pauses the entire session budget for 60 seconds
+and retries once. Connection errors/timeouts retry once after one second;
+permission, input and contract failures are not retried. Legacy futures pacing
+is unchanged for other callers; session bulk futures calls use session pacing
+only. Metrics aggregate endpoint attempts, response seconds, pacing seconds,
+retry counts and safe failure categories. They never include secrets or raw
+provider error text. Separate processes are not coordinated by this budget.

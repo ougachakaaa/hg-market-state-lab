@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import re
 import sys
+import time
 from collections.abc import Sequence
 from decimal import Decimal
 from pathlib import Path
@@ -65,28 +66,50 @@ def _request(args: argparse.Namespace) -> MOOptionRiskPremiumRequest:
     )
 
 
-def _execute(request: MOOptionRiskPremiumRequest, output_dir: Path) -> tuple[Path, ...]:
+def _execute(
+    request: MOOptionRiskPremiumRequest,
+    output_dir: Path,
+    *,
+    resume_source: bool = False,
+) -> tuple[Path, ...]:
+    started = time.monotonic()
     index_query = study.index_request(request)
     index = index_product.run_index_daily_history(index_query)
     observations._validate_index(index_query, index)
+    dates = tuple(row.trade_date for row in index.sample_observations)
     chains: dict[str, tuple[chain_product.OptionChain, chain_product.OptionChain]] = {}
-    for row in index.sample_observations:
-        pair: list[chain_product.OptionChain] = []
-        for kind in (chain_product.PriceType.HIGH, chain_product.PriceType.LOW):
-            query = study.chain_query(row.trade_date, kind)
-            read = chain_product.read_chain(query)
-            if read.error is not None:
-                raise SnapshotContractError(f"MO Chain {row.trade_date} {kind.value}: {read.error}")
-            if read.chain is None:
-                raise SnapshotContractError(
-                    f"MO Chain {row.trade_date} {kind.value} returned no chain."
-                )
-            pair.append(read.chain)
-        chains[row.trade_date] = pair[0], pair[1]
-    return evidence.retain(study.compute(request, index, chains), output_dir)
+    kinds = (chain_product.PriceType.HIGH, chain_product.PriceType.LOW)
+    with chain_product.open_chain_session(dates, resume=resume_source) as session:
+        for completed, (date, results) in enumerate(session.iter_dates(kinds), start=1):
+            pair: list[chain_product.OptionChain] = []
+            for kind in kinds:
+                read = results[kind]
+                if read.error is not None:
+                    raise SnapshotContractError(f"MO Chain {date} {kind.value}: {read.error}")
+                if read.chain is None:
+                    raise SnapshotContractError(f"MO Chain {date} {kind.value} returned no chain.")
+                pair.append(read.chain)
+            chains[date] = pair[0], pair[1]
+            attempts = session.metrics()["attempts"] + 1
+            print(
+                f"Acquired {completed}/{len(dates)} dates; latest {date}; "
+                f"elapsed {time.monotonic() - started:.1f}s; Source attempts {attempts}",
+                flush=True,
+            )
+        if len(chains) != len(dates):
+            raise SnapshotContractError("MO acquisition stopped before all dates completed.")
+        acquisition = session.provenance()
+    result = study.compute(request, index, chains)
+    result.provenance["acquisition"] = acquisition
+    return evidence.retain(result, output_dir)
 
 
-def run(request: MOOptionRiskPremiumRequest, *, overwrite: bool) -> int:
+def run(
+    request: MOOptionRiskPremiumRequest,
+    *,
+    overwrite: bool,
+    resume_source: bool = False,
+) -> int:
     try:
         config = configuration.load_config()
     except configuration.ResearchConfigError as exc:
@@ -94,9 +117,13 @@ def run(request: MOOptionRiskPremiumRequest, *, overwrite: bool) -> int:
     try:
         directory = canonical_run_directory(config.output_root, STUDY_ID, study.run_key(request))
         artifacts = execute_run(
-            lambda staging: _execute(request, staging), directory, overwrite=overwrite
+            lambda staging: _execute(request, staging, resume_source=resume_source),
+            directory,
+            overwrite=overwrite,
         )
     except IndexDailyHistoryError as exc:
+        return _failure("Snapshot/data error", str(exc), 4)
+    except chain_product.ChainReadError as exc:
         return _failure("Snapshot/data error", str(exc), 4)
     except SnapshotContractError as exc:
         return _failure("Snapshot/data error", str(exc), 4)
@@ -123,6 +150,11 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--dte-targets", default="10,20,30,40,50,60", metavar="D1,D2,...")
     parser.add_argument("--moneyness-targets", default="0,0.05,0.10,0.15,0.20", metavar="M1,M2,...")
     parser.add_argument("--overwrite", action="store_true")
+    parser.add_argument(
+        "--resume-source",
+        action="store_true",
+        help="Reuse verified Snapshot acquisition checkpoints.",
+    )
     return parser
 
 
@@ -132,7 +164,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         request = _request(args)
     except MOOptionRiskPremiumStudyError as exc:
         return _failure("Input error", str(exc), 2)
-    return run(request, overwrite=args.overwrite)
+    return run(request, overwrite=args.overwrite, resume_source=args.resume_source)
 
 
 if __name__ == "__main__":

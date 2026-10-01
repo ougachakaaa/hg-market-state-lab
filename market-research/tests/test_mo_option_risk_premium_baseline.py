@@ -4,9 +4,12 @@ from __future__ import annotations
 
 import hashlib
 import json
+from collections.abc import Iterator, Sequence
 from dataclasses import replace
 from decimal import Decimal
 from pathlib import Path
+from types import TracebackType
+from typing import Any
 
 import pytest
 
@@ -38,6 +41,51 @@ ARGS = [
     "--moneyness-targets",
     "0,0.05",
 ]
+
+
+class PublicSessionStub:
+    """Replace only the Snapshot public session; never construct private Source state."""
+
+    def __init__(self, dates: Sequence[str], *, resume: bool = False) -> None:
+        self.dates = tuple(dates)
+        self.resume = resume
+
+    def __enter__(self) -> PublicSessionStub:
+        return self
+
+    def __exit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc: BaseException | None,
+        traceback: TracebackType | None,
+    ) -> None:
+        pass
+
+    def iter_dates(
+        self, kinds: Sequence[chain_product.PriceType]
+    ) -> Iterator[tuple[str, dict[chain_product.PriceType, chain_product.ChainReadResult]]]:
+        for day in self.dates:
+            yield (
+                day,
+                {
+                    kind: cli.chain_product.read_chain(study.chain_query(day, kind))
+                    for kind in kinds
+                },
+            )
+
+    def metrics(self) -> dict[str, Any]:
+        return {"attempts": len(self.dates) * 3 + 2}
+
+    def provenance(self) -> dict[str, Any]:
+        return {
+            "reused_dates": list(self.dates) if self.resume else [],
+            "fetched_dates": [] if self.resume else list(self.dates),
+        }
+
+
+@pytest.fixture(autouse=True)
+def public_session_stub(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(cli.chain_product, "open_chain_session", PublicSessionStub)
 
 
 def request(
@@ -716,3 +764,46 @@ def test_public_result_contract_failure_precedes_chain_calls(
     monkeypatch.setattr(cli.chain_product, "read_chain", lambda _: pytest.fail("chain called"))
     assert cli.main(ARGS) == 4
     assert "Snapshot/data error" in capsys.readouterr().err
+
+
+def test_resume_source_keeps_run_identity_and_retains_public_provenance(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    root = configure(tmp_path, monkeypatch)
+    req = request()
+    monkeypatch.setattr(cli.index_product, "run_index_daily_history", lambda _: history(req))
+    monkeypatch.setattr(
+        cli.chain_product,
+        "read_chain",
+        lambda query: chain_product.ChainReadResult(
+            chain=chains()[query.target_trade_date][
+                0 if query.price_type is chain_product.PriceType.HIGH else 1
+            ]
+        ),
+    )
+    assert cli.main([*ARGS, "--resume-source"]) == 0
+    directory = root / cli.STUDY_ID / study.run_key(req)
+    retained = json.loads((directory / "request.json").read_text())
+    assert retained["run_key"] == study.run_key(req)
+    assert retained["provenance"]["acquisition"]["reused_dates"] == [ENTRY, EXPIRY]
+    assert "Acquired 2/2 dates" in capsys.readouterr().out
+
+
+def test_session_failure_has_no_success_evidence(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    root = configure(tmp_path, monkeypatch)
+    req = request()
+    monkeypatch.setattr(cli.index_product, "run_index_daily_history", lambda _: history(req))
+
+    def unavailable(*args: Any, **kwargs: Any) -> Any:
+        raise chain_product.OptionChainUnavailableError("fut_daily: connection failure")
+
+    monkeypatch.setattr(cli.chain_product, "open_chain_session", unavailable)
+    assert cli.main(ARGS) == 4
+    assert "Snapshot/data error" in capsys.readouterr().err
+    assert not (root / cli.STUDY_ID / study.run_key(req)).exists()
