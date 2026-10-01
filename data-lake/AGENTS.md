@@ -42,10 +42,13 @@ DataLake core implementation 的正式测试位于 `data-lake/tests/`。从 repo
 
 ```bash
 poetry run pytest data-lake/tests
-poetry run ruff check data-lake
-poetry run mypy data-lake
+poetry run pytest lab/tests
+poetry run ruff check data-lake lab
+poetry run mypy data-lake lab
 poetry run pytest backend-api/tests/test_architecture.py market-snapshot/tests/test_authority_topology.py
 git diff --check
 ```
 
 根 package registration 或 Python tooling configuration 改变时，从根目录执行 `poetry install`，再确认 `poetry run python -c "import data_lake"` 和 `poetry run pytest`。Core tests 使用 test-local fake Dataset / Source 与临时 SQLite，不需要真实 provider credential，也不调用外部 Source。Public facade tests 直接验证 attributes；internal Repository、Source collaborator 与 SQLite 不作为 consumer boundary。
+
+Calendar tests 使用 fake trade_cal client 与临时 owned SQLite；验证逐日 completeness、semantic identity、credential lazy resolution、export snapshot、public failure taxonomy 及 lab JSON / exit codes，不依赖真实 token。

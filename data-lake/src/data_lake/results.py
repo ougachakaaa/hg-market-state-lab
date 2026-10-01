@@ -3,7 +3,11 @@
 from dataclasses import dataclass
 
 
-class ApplicationFailure(Exception):
+class InvalidRequestError(Exception):
+    """Caller supplied an invalid semantic request."""
+
+
+class OperationError(Exception):
     """The operation could not be executed, rather than returning incomplete coverage."""
 
 
@@ -41,7 +45,7 @@ class ExportEnvelope:
 
     dataset: str
     view: str
-    export_schema_version: str
+    export_schema_version: int
     scope: object
     window: object
     coverage: CoverageResult

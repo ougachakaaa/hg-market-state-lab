@@ -10,7 +10,7 @@ from pathlib import Path
 
 from ._domain import CachedUnit, ExecutionFailure, Instrument, Record, Status, Unit, UnitRecords
 from ._serialization import canonical_json, record_hash
-from .results import ApplicationFailure, CoverageResult
+from .results import CoverageResult, OperationError
 
 SCHEMA_VERSION = 1
 DDL = """
@@ -98,16 +98,16 @@ class Repository:
         for table, required in REQUIRED_COLUMNS.items():
             columns = {row[1] for row in connection.execute(f"PRAGMA table_info({table})")}
             if not required <= columns:
-                raise ApplicationFailure("Dataset storage structure is incompatible")
+                raise OperationError("Dataset storage structure is incompatible")
         metadata = connection.execute("SELECT * FROM dataset_meta").fetchall()
         if len(metadata) != 1 or (
             metadata[0]["dataset_name"],
             metadata[0]["schema_version"],
             metadata[0]["source_name"],
         ) != (self.dataset, SCHEMA_VERSION, self.source):
-            raise ApplicationFailure("Dataset storage identity or generation is incompatible")
+            raise OperationError("Dataset storage identity or generation is incompatible")
         if connection.execute("PRAGMA foreign_key_check").fetchone() is not None:
-            raise ApplicationFailure("Dataset storage references are invalid")
+            raise OperationError("Dataset storage references are invalid")
 
     @contextmanager
     def _connect(self, *, write: bool = False) -> Iterator[sqlite3.Connection | None]:
@@ -150,7 +150,7 @@ class Repository:
             if write:
                 connection.commit()
         except (sqlite3.Error, OSError, ValueError, TypeError, KeyError) as exc:
-            raise ApplicationFailure("Dataset storage operation failed") from exc
+            raise OperationError("Dataset storage operation failed") from exc
         finally:
             try:
                 if connection is not None:
@@ -158,7 +158,7 @@ class Repository:
                 if new and not initialized:
                     self.path.unlink()
             except (sqlite3.Error, OSError) as exc:
-                raise ApplicationFailure("Dataset storage cleanup failed") from exc
+                raise OperationError("Dataset storage cleanup failed") from exc
 
     def _check_journal_mode(self) -> None:
         # Even mode=ro can create WAL/SHM files. Inspect before SQLite opens the cache.
@@ -166,7 +166,7 @@ class Repository:
         with self.path.open("rb") as database:
             header = database.read(20)
         if header.startswith(b"SQLite format 3\x00") and 2 in header[18:20]:
-            raise ApplicationFailure("Dataset storage uses unsupported WAL journal mode")
+            raise OperationError("Dataset storage uses unsupported WAL journal mode")
 
     def snapshot(self, units: Sequence[Unit]) -> Snapshot:
         statuses: dict[str, Status] = {}
@@ -192,7 +192,7 @@ class Repository:
                     ):
                         fields = json.loads(record["facts"])
                         if not isinstance(fields, dict):
-                            raise ApplicationFailure("Cached facts are invalid")
+                            raise OperationError("Cached facts are invalid")
                         records.append(Record(fields, record["instrument_key"]))
                     if (
                         row["record_count"] != len(records)
@@ -201,7 +201,7 @@ class Repository:
                         or row["error_code"] is not None
                         or row["error_message"] is not None
                     ):
-                        raise ApplicationFailure("Successful cache metadata is inconsistent")
+                        raise OperationError("Successful cache metadata is inconsistent")
                     instruments = tuple(
                         Instrument(**dict(instrument))
                         for instrument in connection.execute(
@@ -247,7 +247,7 @@ class Repository:
                 (failure.code, failure.reason, unit.key),
             )
             if changed.rowcount != 1:
-                raise ApplicationFailure("Unit execution was not started")
+                raise OperationError("Unit execution was not started")
             connection.execute("UPDATE dataset_meta SET updated_at=?", (now(),))
 
     def succeed(self, unit: Unit, normalized: UnitRecords) -> int:
@@ -258,7 +258,7 @@ class Repository:
                 "SELECT unit_id, status FROM fetch_unit WHERE unit_key=?", (unit.key,)
             ).fetchone()
             if row is None or row["status"] != Status.PENDING:
-                raise ApplicationFailure("Unit execution was not started")
+                raise OperationError("Unit execution was not started")
             for instrument in normalized.instruments:
                 connection.execute(
                     "INSERT INTO instrument(instrument_key,source_code,instrument_type,symbol,"
@@ -278,7 +278,7 @@ class Repository:
                         (record.instrument_key,),
                     ).fetchone()
                     if instrument is None:
-                        raise ApplicationFailure("Record references an unknown local instrument")
+                        raise OperationError("Record references an unknown local instrument")
                     instrument_id = instrument[0]
                 connection.execute(
                     "INSERT INTO records(fetch_unit_id,instrument_id,facts) VALUES (?,?,?)",

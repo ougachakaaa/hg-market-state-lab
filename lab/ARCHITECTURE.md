@@ -36,7 +36,7 @@ lab
     └── export   <dataset-id> [dataset-specific args] --output <path>
 ```
 
-顶层 namespace 按正式 repository-level capability 分组。`lab serve backend` 与 `lab serve frontend` 取代旧的平铺 `backend`、`frontend` 目标命令。`datalake` 声明首个 Dataset vertical slice 的目标 CLI contract；当前已可运行命令以 DEVELOPMENT 为准，不因 authority 声明而视为已实现。只有出现真实的 repository-level orchestration requirement 时才扩展 hierarchy；V1 不预定义其他 command group。
+顶层 namespace 按正式 repository-level capability 分组。`lab serve backend` 与 `lab serve frontend` 取代旧的平铺 `backend`、`frontend` 目标命令。`datalake` 通过首个 Dataset public service 实现下方 CLI contract；当前操作示例见 DEVELOPMENT。只有出现真实的 repository-level orchestration requirement 时才扩展 hierarchy；V1 不预定义其他 command group。
 
 ## Delegation 与 failure boundary
 
@@ -70,7 +70,7 @@ lab datalake ensure tushare_trade_calendar --exchange SSE --start-date 2024-01-0
 lab datalake export tushare_trade_calendar --exchange SSE --start-date 2024-01-01 --end-date 2024-12-31 --output calendar.json
 ```
 
-这些是目标 CLI contract，不声明 runtime 已实现。
+这些命令直接调用 calendar public service。
 
 ### Operation behavior 与 exit codes
 

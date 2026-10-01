@@ -1,6 +1,7 @@
 """Internal values exchanged by Dataset collaborators and persistence."""
 
 from dataclasses import dataclass
+from datetime import date
 from enum import StrEnum
 
 from ._serialization import Json, canonical_json
@@ -14,11 +15,18 @@ class Status(StrEnum):
 
 @dataclass(frozen=True)
 class Unit:
-    identity: Json
+    identity: object
 
     @property
     def key(self) -> str:
-        return canonical_json(self.identity)
+        def encode(value: object) -> object:
+            if type(value) is date:
+                return value.isoformat()
+            if isinstance(value, tuple):
+                return [encode(item) for item in value]
+            return value
+
+        return canonical_json(encode(self.identity))
 
 
 @dataclass(frozen=True)

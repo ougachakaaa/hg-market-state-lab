@@ -100,7 +100,7 @@ Dataset owns export semantics；CLI / HTTP adapter owns serialization 与 delive
 
 可恢复的单 FetchUnit failure 进入 `EnsureResult.failures`，不抛整个 operation exception；可恢复的批请求失败按所尝试 units 编码。无法执行整个 operation 时抛 OperationError，不能伪装成正常 incomplete result。OperationError 不保证回滚此前已成功提交的其他 units；重试按既有成功缓存跳过规则进行。Provider response、SQLite exception 或 internal object 不构成 public error contract。
 
-具体 public exception placement 与内部 exception translation 留给 implementation，caller 必须能从 public boundary 识别这两类 failure。现有 core 的 ApplicationFailure 尚未完成此分类，不能据此削弱目标 contract。DataLake 不定义 CLI exit code 或 HTTP status code；adapter 分别映射 request failure 与 execution failure。
+公共 `data_lake` facade 发布这两类错误；core 与 Dataset service 保留 InvalidRequestError，并将 storage / execution failures 转换为 OperationError。Caller 无需访问 internals 即可识别这两类 failure。DataLake 不定义 CLI exit code 或 HTTP status code；adapter 分别映射 request failure 与 execution failure。
 
 ## 2. Runtime configuration 与调用边界
 

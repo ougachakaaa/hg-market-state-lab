@@ -36,7 +36,7 @@ internal Source Adapter / Repository / SQLite
 
 `CoverageResult`、`EnsureResult`、`UnitFailure` 与两类 application errors 继承公共 Application authority，可由公共 `data_lake` facade 提供；caller 必须能消费结果并识别错误，无需访问 internals。内部文件拆分、类型载体与共享类型 re-export 方式留给 implementation，不改变 public semantics。
 
-以下为目标消费示意，不声明已实现：
+Public Python consumption：
 
 ```python
 from datetime import date
@@ -128,4 +128,4 @@ Coverage / export 无 Source I/O，不要求 credential。Ensure 只有实际需
 
 ## 7. Implementation reconciliation
 
-本文是目标 authority，未声明 Dataset service、factory、CLI 或 HTTP 已实现。基线 commit 的 core 仅提供公共基础设施；现有 `ApplicationFailure` 尚未区分两类错误，`ExportEnvelope.export_schema_version` 的 string annotation 与本 view 的 integer version 不一致。后续 implementation 必须按公共 Application taxonomy 和本文 public types 显式对齐，不将这些现状作为另一套 canonical semantics；本任务不修改 Python。
+Dataset service 与 factory 通过上述 public boundary 实现；CLI 直接委托同一 service。Core failure taxonomy 已对齐为 InvalidRequestError / OperationError，共享 ExportEnvelope.export_schema_version 使用 int，本 view 固定为 1。HTTP 与 Research / Snapshot integration 继续不在当前实现范围内。

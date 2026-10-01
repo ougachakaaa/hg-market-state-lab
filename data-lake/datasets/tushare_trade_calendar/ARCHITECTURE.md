@@ -67,4 +67,4 @@ instrument usage: none
 
 ## 6. 下一份 authority
 
-Consumer contract、public Python surface、operation specialization、failures 与 runtime configuration 见 [SERVICE.md](SERVICE.md)；CLI adapter 再进入 [lab authority](../../../lab/ARCHITECTURE.md)。本文声明目标 domain contract，不声明 Dataset service、CLI 或 HTTP 已实现。
+Consumer contract、public Python surface、operation specialization、failures 与 runtime configuration 见 [SERVICE.md](SERVICE.md)；CLI adapter 再进入 [lab authority](../../../lab/ARCHITECTURE.md)。本文拥有 domain contract；implementation reconciliation 状态见 SERVICE.md。

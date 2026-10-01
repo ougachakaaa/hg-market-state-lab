@@ -11,7 +11,13 @@ import pytest
 
 import data_lake
 import data_lake._repository as repository_module
-from data_lake import ApplicationFailure, CoverageResult, EnsureResult, ExportEnvelope
+from data_lake import (
+    CoverageResult,
+    EnsureResult,
+    ExportEnvelope,
+    InvalidRequestError,
+    OperationError,
+)
 from data_lake._application import Core, Source
 from data_lake._domain import (
     CachedUnit,
@@ -49,13 +55,13 @@ class FakeDataset:
 
     def targets(self, request: tuple[str, ...]) -> tuple[Unit, ...]:
         if not isinstance(request, tuple) or not all(isinstance(item, str) for item in request):
-            raise ValueError("Invalid fake request")
+            raise InvalidRequestError("Invalid fake request")
         return tuple(Unit(item) for item in request)
 
     def prepare(self) -> Source:
         self.preparations += 1
         if not self.credentials:
-            raise ApplicationFailure("Fake credential is missing")
+            raise OperationError("Fake credential is missing")
         return self
 
     def fetch(self, units: tuple[Unit, ...]) -> dict[str, object]:
@@ -82,7 +88,7 @@ class FakeDataset:
         return FakeView(
             self.repository.dataset,
             "fake-facts",
-            "1",
+            1,
             "fake-scope",
             request,
             coverage,
@@ -136,7 +142,7 @@ def test_initialization_failure_cleans_new_database_and_allows_retry(
                 "BEGIN SELECT RAISE(ABORT, 'test'); END;"
             )
             injected.setattr(repository_module, "DDL", repository_module.DDL + fault)
-        with pytest.raises(ApplicationFailure, match="storage operation failed"):
+        with pytest.raises(OperationError, match="storage operation failed"):
             dataset.core.ensure(("a",))
     assert list(dataset.repository.path.parent.iterdir()) == []
     assert dataset.calls == []
@@ -153,7 +159,7 @@ def test_initialization_exception_or_interrupt_cleans_new_database(
 
     with monkeypatch.context() as injected:
         injected.setattr(repository_module, "now", interrupt_initialization)
-        expected = ApplicationFailure if failure is RuntimeError else KeyboardInterrupt
+        expected = OperationError if failure is RuntimeError else KeyboardInterrupt
         with pytest.raises(expected):
             dataset.core.ensure(("a",))
     assert list(dataset.repository.path.parent.iterdir()) == []
@@ -170,7 +176,7 @@ def test_failure_after_schema_commit_preserves_database_and_allows_retry(
     )
     with monkeypatch.context() as injected:
         injected.setattr(repository_module, "DDL", repository_module.DDL + trigger)
-        with pytest.raises(ApplicationFailure):
+        with pytest.raises(OperationError):
             dataset.core.ensure(("a",))
     assert dataset.repository.path.exists()
     assert dataset.core.coverage(("a",)) == CoverageResult(1, 0, 1, 0, 0, False)
@@ -191,7 +197,7 @@ def test_initialization_cleanup_failure_is_application_failure(
     with monkeypatch.context() as injected:
         injected.setattr(repository_module, "DDL", repository_module.DDL + "INVALID SQL;")
         injected.setattr(Path, "unlink", reject_cleanup)
-        with pytest.raises(ApplicationFailure, match="storage cleanup failed") as error:
+        with pytest.raises(OperationError, match="storage cleanup failed") as error:
             dataset.core.ensure(("a",))
     assert str(dataset.repository.path) not in str(error.value)
     assert dataset.repository.path.exists()
@@ -283,7 +289,7 @@ def test_recoverable_batch_failure_continues_next_batch(
 
 def test_credential_failure_occurs_before_source_and_mutation(dataset: FakeDataset) -> None:
     dataset.credentials = False
-    with pytest.raises(ApplicationFailure, match="credential"):
+    with pytest.raises(OperationError, match="credential"):
         dataset.core.ensure(("a",))
     assert dataset.calls == [] and not dataset.repository.path.parent.exists()
 
@@ -292,7 +298,7 @@ def test_unclassified_exception_is_application_failure_and_pending_is_retryable(
     dataset: FakeDataset,
 ) -> None:
     dataset.responses["a"] = RuntimeError("private provider transport detail")
-    with pytest.raises(ApplicationFailure, match="could not be executed") as error:
+    with pytest.raises(OperationError, match="could not be executed") as error:
         dataset.core.ensure(("a",))
     assert "private" not in str(error.value)
     assert dataset.core.coverage(("a",)) == CoverageResult(1, 0, 0, 1, 0, False)
@@ -317,7 +323,7 @@ def test_atomic_rollback_restores_records_and_instruments(dataset: FakeDataset) 
     bad = UnitRecords(
         (Record({"value": 2}, "new"), Record({"value": 3}, "unknown")), (Instrument("new", "NEW"),)
     )
-    with pytest.raises(ApplicationFailure, match="unknown local instrument"):
+    with pytest.raises(OperationError, match="unknown local instrument"):
         dataset.repository.succeed(unit, bad)
     with sqlite3.connect(dataset.repository.path) as connection:
         assert json.loads(connection.execute("SELECT facts FROM records").fetchone()[0]) == {
@@ -339,7 +345,7 @@ def test_sql_failure_cannot_leave_success(dataset: FakeDataset) -> None:
             "WHEN NEW.status='success' BEGIN SELECT RAISE(ABORT, 'test'); END"
         )
     dataset.responses["a"] = facts()
-    with pytest.raises(ApplicationFailure):
+    with pytest.raises(OperationError):
         dataset.core.ensure(("a",))
     with sqlite3.connect(dataset.repository.path) as connection:
         assert connection.execute("SELECT count(*) FROM records").fetchone()[0] == 0
@@ -450,7 +456,7 @@ def test_wal_storage_is_rejected_before_connecting_or_mutating(
         pytest.fail("WAL rejection must happen before SQLite connects")
 
     monkeypatch.setattr(sqlite3, "connect", unexpected_connect)
-    with pytest.raises(ApplicationFailure, match="unsupported WAL"):
+    with pytest.raises(OperationError, match="unsupported WAL"):
         if operation == "write_connection":
             dataset.repository.pending(Unit("b"))
         else:
@@ -473,14 +479,14 @@ def test_instrument_required_fields_are_left_to_dataset(dataset: FakeDataset) ->
 
 def test_success_and_failure_require_started_unit(dataset: FakeDataset) -> None:
     unit = Unit("a")
-    with pytest.raises(ApplicationFailure, match="not started"):
+    with pytest.raises(OperationError, match="not started"):
         dataset.repository.succeed(unit, facts())
-    with pytest.raises(ApplicationFailure, match="not started"):
+    with pytest.raises(OperationError, match="not started"):
         dataset.repository.failed(unit, ExecutionFailure("Failure"))
     assert dataset.core.coverage(("a",)).missing_units == 1
     dataset.responses["a"] = facts()
     dataset.core.ensure(("a",))
-    with pytest.raises(ApplicationFailure, match="not started"):
+    with pytest.raises(OperationError, match="not started"):
         dataset.repository.succeed(unit, facts(2))
     assert dataset.core.export(("a",)).facts == ({"value": 1},)
 
@@ -525,7 +531,7 @@ def test_existing_invalid_storage_is_failure_not_missing(
                 connection.execute("PRAGMA ignore_check_constraints=ON")
                 connection.execute("UPDATE fetch_unit SET status='unknown'")
     before = dataset.repository.path.read_bytes()
-    with pytest.raises(ApplicationFailure):
+    with pytest.raises(OperationError):
         getattr(dataset.core, operation)(("a",))
     assert dataset.repository.path.read_bytes() == before
 
@@ -596,10 +602,10 @@ def test_invalid_request_and_invalid_batch_plan_do_not_mutate(
     dataset: FakeDataset,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    with pytest.raises(ApplicationFailure):
+    with pytest.raises(InvalidRequestError):
         dataset.core.ensure("invalid")  # type: ignore[arg-type]
     monkeypatch.setattr(dataset.core, "_batches", lambda units: (units, units))
-    with pytest.raises(ApplicationFailure, match="partition"):
+    with pytest.raises(OperationError, match="partition"):
         dataset.core.ensure(("a",))
     assert dataset.calls == [] and not dataset.repository.path.exists()
 
@@ -610,7 +616,8 @@ def test_public_facade_and_results_do_not_expose_persistence(dataset: FakeDatase
         "EnsureResult",
         "UnitFailure",
         "ExportEnvelope",
-        "ApplicationFailure",
+        "InvalidRequestError",
+        "OperationError",
     ):
         assert hasattr(data_lake, name)
     assert not hasattr(data_lake, "__all__")

@@ -5,7 +5,7 @@ from __future__ import annotations
 import argparse
 from collections.abc import Sequence
 
-from . import doctor, research, serve
+from . import datalake, doctor, research, serve
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -32,11 +32,14 @@ def build_parser() -> argparse.ArgumentParser:
     )
     research_run_parser.add_argument("study_id", help="Stable retained Study ID.")
     research_run_parser.add_argument("study_args", nargs=argparse.REMAINDER)
+    datalake.add_parser(subparsers)
     return parser
 
 
 def main(argv: Sequence[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
+    if args.command == "datalake":
+        return datalake.run(args)
     if args.command == "research":
         if args.research_command == "list":
             return research.research_list()

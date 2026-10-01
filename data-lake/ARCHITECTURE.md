@@ -50,6 +50,6 @@ Dataset authority 只能在模块边界及相关公共 domain/application invari
 
 ## 5. Deferred design
 
-本次 authority reconciliation 不实现 Dataset service、SQLite DDL、migration、Tushare client、CLI 或 HTTP；已有 core infrastructure 不等于 Dataset capability 已实现。后续 implementation 必须实现已声明的 public contract；内部文件、具体存储类型、key serialization、canonicalization/hash、事务机制、失败恢复与 adapter batching 留给 implementation design，不得重新决定已固定的 semantic request、结果计数或 export contract。Research/Snapshot integration 须独立设计。
+首个 Dataset service 与 CLI vertical slice 按已声明 contract 实现；HTTP、migration 与其他 consumer integration 继续 deferred。内部文件、具体存储类型、key serialization、canonicalization/hash、事务机制、失败恢复与 adapter batching 属于 implementation design，不得重新决定已固定的 semantic request、结果计数或 export contract。Research/Snapshot integration 须独立设计。
 
 Refresh / force / invalidation policy、TTL、stale state、多维 Window、Dataset dependency graph、cross-Dataset query engine、Source request audit table、plugin framework 与 generic workflow engine 均不在本轮设计范围内。

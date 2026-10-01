@@ -4,8 +4,15 @@ from collections.abc import Callable, Iterable, Mapping, Sequence
 from typing import Protocol
 
 from ._domain import CachedUnit, ExecutionFailure, Status, Unit, UnitRecords
-from ._repository import Repository
-from .results import ApplicationFailure, CoverageResult, EnsureResult, ExportEnvelope, UnitFailure
+from ._repository import Repository, Snapshot
+from .results import (
+    CoverageResult,
+    EnsureResult,
+    ExportEnvelope,
+    InvalidRequestError,
+    OperationError,
+    UnitFailure,
+)
 
 
 class Source(Protocol):
@@ -44,37 +51,46 @@ class Core[Request, View: ExportEnvelope]:
         # Serialize immediately to validate identities and deduplicate semantic targets.
         return tuple({unit.key: unit for unit in self._targets(request)}.values())
 
+    def _snapshot(self, units: tuple[Unit, ...]) -> Snapshot:
+        snapshot = self._repository.snapshot(units)
+        for cached in snapshot.successful:
+            try:
+                self._check_complete(cached.unit, UnitRecords(cached.records, cached.instruments))
+            except ExecutionFailure as exc:
+                raise OperationError("Successful cache violates Dataset completeness") from exc
+        return snapshot
+
     def coverage(self, request: Request) -> CoverageResult:
         try:
-            return self._repository.snapshot(self._units(request)).coverage
-        except ApplicationFailure:
+            return self._snapshot(self._units(request)).coverage
+        except (InvalidRequestError, OperationError):
             raise
         except Exception as exc:
-            raise ApplicationFailure("Coverage operation could not be executed") from exc
+            raise OperationError("Coverage operation could not be executed") from exc
 
     def export(self, request: Request) -> View:
         try:
-            snapshot = self._repository.snapshot(self._units(request))
+            snapshot = self._snapshot(self._units(request))
             view = self._project(request, snapshot.coverage, snapshot.successful)
             if view.dataset != self._repository.dataset or view.coverage != snapshot.coverage:
-                raise ApplicationFailure("Dataset projection returned inconsistent export metadata")
+                raise OperationError("Dataset projection returned inconsistent export metadata")
             return view
-        except ApplicationFailure:
+        except (InvalidRequestError, OperationError):
             raise
         except Exception as exc:
-            raise ApplicationFailure("Export operation could not be executed") from exc
+            raise OperationError("Export operation could not be executed") from exc
 
     def ensure(self, request: Request) -> EnsureResult:
         try:
             return self._ensure(request)
-        except ApplicationFailure:
+        except (InvalidRequestError, OperationError):
             raise
         except Exception as exc:
-            raise ApplicationFailure("Ensure operation could not be executed") from exc
+            raise OperationError("Ensure operation could not be executed") from exc
 
     def _ensure(self, request: Request) -> EnsureResult:
         units = self._units(request)
-        before = self._repository.snapshot(units)
+        before = self._snapshot(units)
         selected = tuple(unit for unit in units if before.statuses.get(unit.key) != Status.SUCCESS)
         if not selected:
             return EnsureResult(len(units), len(units), 0, 0, 0, 0, before.coverage.complete, ())
@@ -88,7 +104,7 @@ class Core[Request, View: ExportEnvelope]:
             or len(keys) != len(set(keys))
             or set(keys) != {unit.key for unit in selected}
         ):
-            raise ApplicationFailure("Source batches must partition the selected units")
+            raise OperationError("Source batches must partition the selected units")
         failures: list[UnitFailure] = []
         succeeded = written = 0
         for batch in batches:
@@ -114,7 +130,7 @@ class Core[Request, View: ExportEnvelope]:
                 except ExecutionFailure as failure:
                     self._repository.failed(unit, failure)
                     failures.append(UnitFailure(unit.identity, failure.reason))
-        after = self._repository.snapshot(units)
+        after = self._snapshot(units)
         return EnsureResult(
             len(units),
             before.coverage.successful_units,

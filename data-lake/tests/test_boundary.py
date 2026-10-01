@@ -7,14 +7,13 @@ ROOT = Path(__file__).resolve().parents[2]
 SOURCE = ROOT / "data-lake/src/data_lake"
 
 
-def test_core_has_no_cross_module_or_provider_dependencies() -> None:
+def test_datalake_has_no_consumer_dependencies() -> None:
     forbidden = {
         "market_snapshot",
         "market_research",
         "market_modeling",
         "backend_api",
         "lab",
-        "tushare",
         "fastapi",
     }
     for path in SOURCE.rglob("*.py"):
@@ -30,9 +29,20 @@ def test_core_has_no_cross_module_or_provider_dependencies() -> None:
             assert not any(name.split(".")[0] in forbidden for name in names), path
 
 
-def test_concrete_datasets_remain_authority_only() -> None:
+def test_provider_dependency_is_confined_to_calendar_source() -> None:
+    for path in SOURCE.rglob("*.py"):
+        tree = ast.parse(path.read_text(encoding="utf-8"))
+        for node in ast.walk(tree):
+            names = (
+                [alias.name for alias in node.names]
+                if isinstance(node, ast.Import)
+                else [node.module]
+                if isinstance(node, ast.ImportFrom) and node.module
+                else []
+            )
+            if any(name.split(".")[0] == "tushare" for name in names):
+                assert path == SOURCE / "datasets/tushare_trade_calendar/_source.py"
     assert not list((ROOT / "data-lake/datasets").rglob("*.py"))
-    assert not (SOURCE / "datasets").exists()
 
 
 def test_no_consumer_imports_core_internals() -> None:
@@ -48,3 +58,19 @@ def test_no_consumer_imports_core_internals() -> None:
                     else []
                 )
                 assert not any(name.startswith("data_lake._") for name in names), path
+
+
+def test_lab_uses_only_calendar_public_boundary() -> None:
+    for path in (ROOT / "lab").glob("*.py"):
+        tree = ast.parse(path.read_text(encoding="utf-8"))
+        for node in ast.walk(tree):
+            names = (
+                [alias.name for alias in node.names]
+                if isinstance(node, ast.Import)
+                else [node.module]
+                if isinstance(node, ast.ImportFrom) and node.module
+                else []
+            )
+            for name in names:
+                if name.startswith("data_lake"):
+                    assert name in {"data_lake", "data_lake.datasets.tushare_trade_calendar"}, path
