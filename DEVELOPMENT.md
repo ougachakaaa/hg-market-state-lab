@@ -2,7 +2,7 @@
 
 本文档只描述当前本地开发环境与操作方式，不是架构、CLI、产品或 HTTP 语义 authority。Repository-level Python runtime invariant 与仓库级路由见 [ARCHITECTURE.md](ARCHITECTURE.md)，canonical CLI interface 与 delegation 见 [lab authority](lab/ARCHITECTURE.md)，产品语义从 [market-snapshot/CAPABILITIES.md](market-snapshot/CAPABILITIES.md) 进入，HTTP transport contract 从 [backend-api HTTP catalog](backend-api/HTTP_PRODUCTS.md) 进入。
 
-正式 console command 是 `lab`，由根 canonical Python project 安装。以下命令在 repository root 的 Poetry environment 中运行。
+正式 console command 是 `lab`，由根 canonical Python project 安装。以下命令在 repository root 的 Poetry environment 中运行；help discovery 与完整 workflow 见 [lab usage guide](lab/README.md)（usage-only，不是 authority）。
 
 ## Codex managed worktree 环境
 
@@ -33,7 +33,6 @@ poetry run lab doctor
 poetry run lab serve backend
 poetry run lab serve frontend
 poetry run lab datalake list
-poetry run lab datalake coverage tushare_trade_calendar --exchange SSE --start-date 2024-01-01 --end-date 2024-01-31
 poetry run lab research list
 poetry run lab research run <study-id> --help
 ```

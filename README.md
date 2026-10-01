@@ -15,6 +15,7 @@ web-ui           → presentation and interaction
 README 是人类开发入口，不是架构或业务语义 authority。
 
 - 仓库架构、Python runtime invariant 与模块路由：[ARCHITECTURE.md](ARCHITECTURE.md)
+- `lab` 使用、help discovery 与常见 workflow：[lab/README.md](lab/README.md)（usage-only）
 - Canonical repository CLI 与委托边界：[lab/ARCHITECTURE.md](lab/ARCHITECTURE.md)
 - `market-snapshot` 稳定分层：[market-snapshot/ARCHITECTURE.md](market-snapshot/ARCHITECTURE.md)
 - `market-snapshot` capability/product catalog：[market-snapshot/CAPABILITIES.md](market-snapshot/CAPABILITIES.md)
@@ -66,27 +67,11 @@ TUSHARE_TOKEN=<your-token>
 
 ## 当前根开发命令
 
-正式 CLI 由根 canonical Python project 安装。在仓库根目录执行：
-
-```bash
-poetry run lab doctor
-poetry run lab serve backend
-poetry run lab serve frontend
-poetry run lab research list
-```
-
-命令层级见 [lab CLI authority](lab/ARCHITECTURE.md)；当前操作和 readiness 见 [DEVELOPMENT.md](DEVELOPMENT.md)。
+正式 CLI 由根 canonical Python project 安装，从 repository root 使用。命令发现、服务启动、DataLake lifecycle 与 Research discovery 的可复制示例统一见 [lab usage guide](lab/README.md)；当前环境和 readiness 见 [DEVELOPMENT.md](DEVELOPMENT.md)，CLI contract 见 [lab authority](lab/ARCHITECTURE.md)。
 
 ## Research CLI
 
-在 repository root 发现并运行 retained Study：
-
-```bash
-poetry run lab research list
-poetry run lab research run im-basis-baseline --help
-```
-
-`lab research` 的 discovery 与 forwarding 行为见 [lab CLI authority](lab/ARCHITECTURE.md) 和 [Research UI authority](market-research/ui/ARCHITECTURE.md)。Study-specific 参数和用法与对应 retained Study authority 共置，并由 `<study-id> --help` 展示。真实运行所需的 Tushare credential 仍由 `market-snapshot` 拥有。
+发现与查看 Study help 的操作见 [lab usage guide](lab/README.md)。Discovery 与 forwarding contract 见 [lab authority](lab/ARCHITECTURE.md) 和 [Research UI authority](market-research/ui/ARCHITECTURE.md)；Study-specific 参数和语义由对应 retained Study authority 拥有。真实运行所需的 Tushare credential 仍由 `market-snapshot` 拥有。
 
 ## HTTP API
 

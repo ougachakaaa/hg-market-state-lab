@@ -1,6 +1,6 @@
 # lab repository CLI authority
 
-本文档定义 `hg-market-state-lab` 的 canonical repository-level CLI。仓库身份、唯一 Python runtime 与模块边界见 [repository architecture](../ARCHITECTURE.md)；当前可运行命令及环境准备见 [DEVELOPMENT.md](../DEVELOPMENT.md)。
+本文档定义 `hg-market-state-lab` 的 canonical repository-level CLI。仓库身份、唯一 Python runtime 与模块边界见 [repository architecture](../ARCHITECTURE.md)；操作与示例见 [usage guide](README.md)（usage-only，不是 authority）；当前可运行状态及环境准备见 [DEVELOPMENT.md](../DEVELOPMENT.md)。
 
 ## Identity 与 ownership
 
@@ -36,7 +36,7 @@ lab
     └── export   <dataset-id> [dataset-specific args] --output <path>
 ```
 
-顶层 namespace 按正式 repository-level capability 分组。`lab serve backend` 与 `lab serve frontend` 取代旧的平铺 `backend`、`frontend` 目标命令。`datalake` 通过首个 Dataset public service 实现下方 CLI contract；当前操作示例见 DEVELOPMENT。只有出现真实的 repository-level orchestration requirement 时才扩展 hierarchy；V1 不预定义其他 command group。
+顶层 namespace 按正式 repository-level capability 分组。`lab serve backend` 与 `lab serve frontend` 取代旧的平铺 `backend`、`frontend` 目标命令。`datalake` 通过首个 Dataset public service 实现下方 CLI contract；操作示例见 [usage guide](README.md)。只有出现真实的 repository-level orchestration requirement 时才扩展 hierarchy；V1 不预定义其他 command group。
 
 ## Delegation 与 failure boundary
 
@@ -64,13 +64,7 @@ lab
 
 CLI 从 `data_lake.datasets.tushare_trade_calendar` 创建 service 并构造 `TradeCalendarRange`，不传 raw date strings 或 argparse namespace；service 仍负责 semantic validation。CLI 不构造 Scope / FetchUnits、不重算 completeness。Export 必填 `--output` 只属于 delivery，不进入 range；V1 不增加 view selector 或 is_open filter。
 
-```bash
-lab datalake coverage tushare_trade_calendar --exchange SSE --start-date 2024-01-01 --end-date 2024-12-31
-lab datalake ensure tushare_trade_calendar --exchange SSE --start-date 2024-01-01 --end-date 2024-12-31
-lab datalake export tushare_trade_calendar --exchange SSE --start-date 2024-01-01 --end-date 2024-12-31 --output calendar.json
-```
-
-这些命令直接调用 calendar public service。
+可复制的 Bash / PowerShell lifecycle 示例见 [usage guide](README.md)；这些命令直接调用 calendar public service。
 
 ### Operation behavior 与 exit codes
 
