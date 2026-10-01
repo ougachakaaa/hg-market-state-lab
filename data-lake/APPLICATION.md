@@ -6,7 +6,7 @@
 
 DataSet Application Service 是 transport-neutral canonical consumer boundary，公开 Python semantic request/result/view。它在内部将 Dataset-specific request 解释为 Scope + Window 和目标 FetchUnit identities，查询 coverage、编排 ensure、生成 Dataset-owned export view；caller 不需要理解 persistence mechanics。Dataset-specific consumer contract 经 catalog、Dataset ARCHITECTURE.md 进入 SERVICE.md。
 
-Consumer → public Application Service → internal Source Adapter / Repository 的依赖方向继承 [模块架构](ARCHITECTURE.md)。
+每个 Dataset 自己拥有具体 public semantic service contract；本文件拥有公共 operation family 与 result/error invariants，不定义强制 DataLake runtime facade。Consumer 直接进入具体 Dataset public API，再由 Dataset 使用 shared kernel；内部 Source adapter / Repository composition 与依赖方向继承 [模块架构](ARCHITECTURE.md)。
 
 不得把 arbitrary record-level mutation 发布为公开能力。Consumers 不直接操作 SQLite、Repository、FetchUnit / Records tables 或 Source adapter。Public boundary 不暴露 SQL、SQLite path、unit_id / record_id 等 persistence identity、argparse namespace、provider transport response 或 internal repository object。未来模块应直接消费 public semantic request/result/view，不调用 CLI 或反向解析 JSON export；实际 consumer integration 须另行设计。
 
@@ -106,6 +106,6 @@ Dataset owns export semantics；CLI / HTTP adapter owns serialization 与 delive
 
 Source credential 属于 runtime/provider configuration，不是 Dataset semantic argument；只有需要 Source I/O 时解析凭据。需要 fetch 但 credential 缺失时，在 Source request 前明确失败；全部 success 的 ensure 不需要 credential。不得增加 `--token` 或第二套 secret convention，也不因此授权 import Snapshot 私有 Source client 或 artifact helper。具体 provider credential convention 由 owning Dataset authority 声明。
 
-普通 consumer 创建 Dataset service 不要求提供 SQLite path、Repository、Source Adapter、database connection 或 token；configuration/composition 属于 DataLake internal ownership。Coverage / export 与 factory 不要求 Source credential，ensure 仅在实际 Source I/O 必要时解析。Missing required credential 属于 OperationError。
+普通 consumer 创建 Dataset service 不要求提供 SQLite path、Repository、Source Adapter、database connection 或 token；Dataset-specific configuration/composition 属于 owning Dataset，通用 runtime/storage resolution machinery 属于 DataLake shared kernel；两者均为 consumer boundary 内部能力。Coverage / export 与 factory 不要求 Source credential，ensure 仅在实际 Source I/O 必要时解析。Missing required credential 属于 OperationError。
 
-SQLite location 由 DataLake runtime 自行解析，不接受 semantic request 中的 path 或 CLI `--db`。具体 filesystem root / filename resolution 留给 implementation design；本 authority 不固定 storage-root / filename，也不创建跨模块 config framework。现有本地凭据操作见 [README](../README.md) 与 [DEVELOPMENT](../DEVELOPMENT.md)。
+SQLite location 由 owning Dataset 内部 composition 使用 shared runtime/storage machinery 解析，不接受 semantic request 中的 path 或 CLI `--db`。目标 persistent state ownership 固定为模块架构声明的 `datasets/<dataset-id>/data/<owned sqlite>`；具体 filename 与 resolution mechanics 留给 implementation reconciliation，shared machinery 不得内置具体 Dataset 知识，也不创建跨模块 config framework。现有本地凭据操作见 [README](../README.md) 与 [DEVELOPMENT](../DEVELOPMENT.md)。

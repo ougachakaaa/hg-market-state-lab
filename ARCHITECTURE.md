@@ -10,7 +10,7 @@
 
 ### `data-lake`
 
-持久缓存并管理来自外部 Source 的 reusable source facts。DataLake 拥有 source-fact persistence / cache；每个 DataSet 是独立的数据与 persistence ownership boundary。模块内部边界见 [data-lake/ARCHITECTURE.md](data-lake/ARCHITECTURE.md)。
+持久缓存并管理来自外部 Source 的 reusable source facts。DataLake 是自治 DataSet 的宿主 bounded context，拥有公共 invariants 与 shared kernel；每个 DataSet 是自治的数据产品边界，拥有自己的 authority、implementation、tests 与 source-fact persistence / cache。模块内部边界见 [data-lake/ARCHITECTURE.md](data-lake/ARCHITECTURE.md)。
 
 DataLake 不拥有 Snapshot Product semantics、Preparation、analysis-ready computation、Research、Modeling、HTTP 或 UI。`market-snapshot` 继续拥有 Product-specific source scope、Capture orchestration、Preparation、analysis-ready result 及产品已声明的 persisted Raw Artifact；新增 DataLake 不转移这些所有权。DataSet 对外发布 public Application Service，consumer 通过 semantic request/result/view 消费，不直接访问 SQLite、Repository 或 Source adapter，也不通过 CLI 或反向解析 JSON export 获取 Python semantic result。稳定方向为 consumer → DataSet public Application Service → internal Source adapter / Repository；`lab` 的 delivery contract 见其 authority，实际 Research/Snapshot integration 仍须独立设计。
 
@@ -63,7 +63,7 @@ Repository
 
 根 `pyproject.toml`、根 `poetry.lock` 与每个 worktree 的根 `.venv` 是唯一 canonical Python runtime surface。Module-local `pyproject.toml`、module-local `poetry.lock`、module-local `.venv`、Poetry editable/path dependency，以及分别进入 Python module 目录执行 Poetry workflow 均不属于目标 architecture。
 
-`data-lake` 拥有 canonical Python namespace `data_lake`，源码 ownership 位于 `data-lake/src/data_lake/`；其 implementation 与 runtime integration 同样使用上述 repository root 唯一 Python project、dependency graph 与根 `.venv`。Public Application Service 与内部 implementation boundary 由 DataLake authority 拥有，不创建 module-local Python runtime。
+`data-lake` 拥有 canonical Python namespace `data_lake`；shared kernel 源码归顶层 `data-lake/src/`，具体 Dataset 的 authority、source、tests 与 persistent state colocate 于 `data-lake/datasets/<dataset-id>/`，目标 topology 由 [DataLake authority](data-lake/ARCHITECTURE.md) 拥有。Dataset-local source roots 同样使用 repository root 唯一 Python project、dependency graph 与根 `.venv`，不创建独立 Python runtime。Consumer 可以直接依赖具体 Dataset public Application Service；shared kernel 不依赖具体 Dataset，Dataset 当前互不依赖。Public boundary 与 source registration / import compatibility 约束进入 DataLake authority；当前实现差异从该入口进入 reconciliation 文档。
 
 Runtime unification 不合并模块、不改变源码目录 ownership，也不把所有 Python source 移入统一 `src/`。`data_lake`、`market_snapshot`、`market_modeling`、`market_research` 与 `backend_api` 是独立 namespace，由各自 semantic module 拥有。
 

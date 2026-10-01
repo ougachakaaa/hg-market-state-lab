@@ -43,7 +43,7 @@ lab
 - `lab doctor` 只读检查本地仓库结构、根 Python runtime、启动前提与服务 readiness，报告人类可读状态；必要前提缺失时非零退出。它不安装依赖、不修复环境，也不运行下层业务行为。
 - `lab serve backend` 从 repository root 前台调用 `backend-api` 拥有的 launcher；`lab serve frontend` 在 `web-ui/` 前台调用其开发脚本。两者继承标准输入输出，传递子进程退出码，并保持正常的前台中断生命周期。Backend 的 HTTP composition/runtime 由 [backend-api authority](../backend-api/ARCHITECTURE.md) 拥有；Frontend 的 runtime/configuration 由 [web-ui authority](../web-ui/ARCHITECTURE.md) 拥有。
 - `lab research list` 只按 [Research UI authority](../market-research/ui/ARCHITECTURE.md) 定义的 runnable Study convention 发现并列出 Study；不 import Research implementation、不维护中央 Study catalog、不执行 Study 或读取 Source。`lab research run <study-id>` 校验 ID 与 runner layout，再从 repository root 前台调用对应 study-local CLI，原样转发 Study ID 之后的参数，继承标准输入输出并传递子进程退出码。`--help` 及所有 study-specific arguments 由该 runner 解析。具体 Study 的 request、Snapshot public-boundary composition、method、dataset、artifact、result 与 failure presentation 仍由对应 retained Study authority 拥有。
-- `lab datalake` 直接调用 [DataLake public Application Service](../data-lake/APPLICATION.md)，将 CLI arguments 转换为 owning Dataset semantic request，再呈现结果；不通过子进程运行 Dataset CLI，不直接进入 SQLite、Repository 或 Source adapter。
+- `lab datalake` 直接调用具体 Dataset public Application Service，遵循 [公共 Application contract](../data-lake/APPLICATION.md)，将 CLI arguments 转换为 owning Dataset semantic request，再呈现结果；不通过子进程运行 Dataset CLI，不直接进入 SQLite、Repository 或 Source adapter。
 - 对上述子进程 delegation，缺少本地前提或遇到不可运行的 Study 时，`lab` 在调用前给出人类可读的 operational error 并非零退出；下层进程启动后的 domain failure 由 owning module 呈现，`lab` 只传播其退出状态。DataLake 的 in-process semantic result/application failure 按下文映射，不由 lab 重新计算语义。
 
 ## DataLake delivery contract
@@ -86,7 +86,7 @@ Summary 展示 service 返回的计数与 complete，不根据 records 数量重
 
 Terminal 只报告 output path、exported record count 与 coverage summary，不 dump 完整 records。Coverage incomplete 不触发 ensure 或 Source I/O；只要 view 正常生成并成功写入，incomplete 本身不属于 export execution failure，完整性由 envelope 明确表达。写文件失败按 delivery failure 返回，不将其报告为成功导出。
 
-Source credential 与 SQLite location 由 DataLake runtime 解析；不接受 `--token`、`--db`，也不要求 coverage/export 配置 Source credential。普通 caller 只能指定 semantic range 和 lab 的 export output path。
+Source credential 与 SQLite location 由 owning Dataset 内部 composition 使用 DataLake shared runtime/storage machinery 解析；Dataset-local state ownership 由 [DataLake architecture](../data-lake/ARCHITECTURE.md) 定义，lab 不解析缓存路径，也不要求 DataLake runtime facade。不接受 `--token`、`--db`，也不要求 coverage/export 配置 Source credential。普通 caller 只能指定 semantic range 和 lab 的 export output path。
 
 V1 DataLake 不提供 describe、read、query、fetch-unit、db、refresh 或 repair，不添加 force、TTL、generic query language、多 view selection 或 terminal record dump。
 

@@ -32,7 +32,7 @@ internal Source Adapter / Repository / SQLite
 
 这是 canonical consumer boundary，不依赖 CLI / HTTP。Consumer 不访问 SQLite、Repository、Source adapter 或 Tushare transport response，也不通过 CLI 或反向解析 JSON 获取 Python result。实际 Research / Snapshot integration 仍须独立设计，不因 boundary 发布而宣称已接入。
 
-普通 consumer 使用 `create_service()` 创建 service，不要求显式传入 SQLite path、Repository、Source Adapter、database connection 或 `TUSHARE_TOKEN`。Runtime/storage/source configuration 由 DataLake 内部拥有。Factory 本身不要求 Source credential，不为了后续 read-only operation 创建缓存。
+普通 consumer 使用 `create_service()` 创建 service，不要求显式传入 SQLite path、Repository、Source Adapter、database connection 或 `TUSHARE_TOKEN`。Dataset-specific runtime/source composition 由本 Dataset 内部拥有，通用 runtime/storage machinery 由 DataLake shared kernel 拥有；调用该 Dataset public API 不需要 DataLake facade 或 manager。Filesystem relocation 不改变上述 canonical public import surface。Factory 本身不要求 Source credential，不为了后续 read-only operation 创建缓存。
 
 `CoverageResult`、`EnsureResult`、`UnitFailure` 与两类 application errors 继承公共 Application authority，可由公共 `data_lake` facade 提供；caller 必须能消费结果并识别错误，无需访问 internals。内部文件拆分、类型载体与共享类型 re-export 方式留给 implementation，不改变 public semantics。
 
@@ -124,8 +124,8 @@ Serialization 与 delivery 由 adapter 拥有；[lab](../../../lab/ARCHITECTURE.
 
 Coverage / export 无 Source I/O，不要求 credential。Ensure 只有实际需要 Source I/O 时才解析 credential；全部目标已 success 时无需 token。缺少 required credential 在 Source request 前以 `OperationError` 失败，不伪装成逐 unit 正常失败结果。
 
-复用仓库现有凭据约定：环境变量 `TUSHARE_TOKEN` 优先，本地 `market-snapshot/.env` 仅作 fallback，加载不覆盖已有环境变量。该路径是 runtime configuration convention，不授权 import Snapshot 私有 Source client 或 artifact helper。SQLite location 由 DataLake internal runtime 解析；filesystem root / filename、连接、Source composition 与 transaction implementation 留给实现。
+复用仓库现有凭据约定：环境变量 `TUSHARE_TOKEN` 优先，本地 `market-snapshot/.env` 仅作 fallback，加载不覆盖已有环境变量。该路径是 runtime configuration convention，不授权 import Snapshot 私有 Source client 或 artifact helper。SQLite location 由本 Dataset 内部 composition 使用 shared runtime/storage machinery 解析，目标 state 位于本 bounded context 的 `data/<owned sqlite>`。具体 filename、连接与 transaction mechanics 留给实现；Tushare Source composition 属于本 Dataset，shared kernel 不内置 Tushare endpoint 或本 Dataset 的知识。
 
 ## 7. Implementation reconciliation
 
-Dataset service 与 factory 通过上述 public boundary 实现；CLI 直接委托同一 service。Core failure taxonomy 已对齐为 InvalidRequestError / OperationError，共享 ExportEnvelope.export_schema_version 使用 int，本 view 固定为 1。HTTP 与 Research / Snapshot integration 继续不在当前实现范围内。
+基准实现状态、目标 source/test/storage ownership 与后续 package/import reconciliation 输入统一见 [implementation reconciliation](../../IMPLEMENTATION_RECONCILIATION.md)。本文件继续拥有上述稳定 public semantic contract，不以目录迁移重新定义 operation、result/error 或 export semantics；HTTP 与 Research / Snapshot integration 仍须独立设计。

@@ -1,10 +1,14 @@
-# tushare_trade_calendar Dataset domain authority
+# tushare_trade_calendar Dataset architecture authority
 
-本文件只拥有 Dataset identity、Source、Scope、Window、FetchUnit / Record identity、facts、completeness、Instrument 与 success specialization。继承 [DataLake architecture](../../ARCHITECTURE.md) 与公共 [DOMAIN_MODEL.md](../../DOMAIN_MODEL.md)；catalog 见 [DATASETS.md](../../DATASETS.md)。Public consumer contract 从本文件进入 [SERVICE.md](SERVICE.md)，domain 任务无需加载 service 或 CLI details。
+本文件是自治 Dataset 的 bounded-context 入口，拥有本 Dataset 的 semantic / source / test / persistent-state ownership，以及 identity、Source、Scope、Window、FetchUnit / Record identity、facts、completeness、Instrument 与 success specialization。继承 [DataLake architecture](../../ARCHITECTURE.md) 与公共 [DOMAIN_MODEL.md](../../DOMAIN_MODEL.md)；catalog 见 [DATASETS.md](../../DATASETS.md)。Public consumer contract 从本文件进入 [SERVICE.md](SERVICE.md)，domain 任务无需加载 service 或 CLI details。
 
 ## 1. Identity、Source 与 Scope
 
 Canonical Dataset identity 为 `tushare_trade_calendar`，用于持久缓存 Tushare 交易日历 Source facts，不生成 analysis-ready 派生结果。SQLite ownership 继承模块 invariant。
+
+本 Dataset 的 authority、implementation、tests 与 persistent runtime state 由当前 `datasets/tushare_trade_calendar/` bounded context colocate 拥有：authority 为本文件与 SERVICE.md；目标 implementation 与 composition 位于 `src/`，Dataset verification 位于 `tests/`，唯一 owned SQLite 位于 `data/<owned sqlite>`。具体 filename 与目录保留机制留给 implementation。此处声明目标 ownership，不表示 physical relocation 已完成。
+
+Trade-calendar-specific models、Scope / Window interpretation、逐日 completeness、export view、Tushare adapter 与 service composition 都归本 Dataset；通用 mechanisms 依赖 DataLake shared kernel，不允许 kernel 反向依赖本 Dataset，也不依赖其他 Dataset。现有 public Python import surface 保持兼容；所有 source roots 共用根 Python project/environment。
 
 Source 为 **Tushare `trade_cal`**。第一版只有一个 canonical Scope shape：
 
@@ -67,4 +71,4 @@ instrument usage: none
 
 ## 6. 下一份 authority
 
-Consumer contract、public Python surface、operation specialization、failures 与 runtime configuration 见 [SERVICE.md](SERVICE.md)；CLI adapter 再进入 [lab authority](../../../lab/ARCHITECTURE.md)。本文拥有 domain contract；implementation reconciliation 状态见 SERVICE.md。
+Consumer contract、public Python surface、operation specialization、failures 与 runtime configuration 见 [SERVICE.md](SERVICE.md)；CLI adapter 再进入 [lab authority](../../../lab/ARCHITECTURE.md)。本文拥有 bounded-context ownership 与 domain contract；当前实现状态及目标 topology 差异见 [implementation reconciliation](../../IMPLEMENTATION_RECONCILIATION.md)。

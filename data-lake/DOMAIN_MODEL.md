@@ -1,6 +1,6 @@
 # DataLake 公共领域与 persistence authority
 
-本文件拥有公共逻辑 persistence model、Scope / Window / FetchUnit 关系、normalization 与 ensure mutation flow，继承 [模块架构](ARCHITECTURE.md) 的 ownership 边界。公共 operation、结果与 application failure 由 [APPLICATION.md](APPLICATION.md) 拥有；具体 Source、identity、Record fields 与 completeness specialization 经 [DATASETS.md](DATASETS.md) 进入 owning Dataset authority。本文不定义 SQL DDL 或 Dataset-specific fields。
+本文件拥有 shared kernel 的公共逻辑 persistence model、Scope / Window / FetchUnit 关系、normalization 与 ensure mutation flow，继承 [模块架构](ARCHITECTURE.md) 的 ownership 边界。自治 Dataset 在上层边界内 specialize 或 constrain 这些 invariants；具体 ownership 与 colocation 由模块架构拥有。公共 operation、结果与 application failure 由 [APPLICATION.md](APPLICATION.md) 拥有；具体 Source、identity、Record fields 与 completeness specialization 经 [DATASETS.md](DATASETS.md) 进入 owning Dataset authority。本文不定义 SQL DDL 或 Dataset-specific fields。
 
 ## 1. 公共逻辑 persistence model
 
