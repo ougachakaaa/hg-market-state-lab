@@ -8,6 +8,12 @@
 
 ## 2. 顶层模块
 
+### `data-lake`
+
+持久缓存并管理来自外部 Source 的 reusable source facts。DataLake 拥有 source-fact persistence / cache；每个 DataSet 是独立的数据与 persistence ownership boundary。模块内部边界见 [data-lake/ARCHITECTURE.md](data-lake/ARCHITECTURE.md)。
+
+DataLake 不拥有 Snapshot Product semantics、Preparation、analysis-ready computation、Research、Modeling、HTTP 或 UI。`market-snapshot` 继续拥有 Product-specific source scope、Capture orchestration、Preparation、analysis-ready result 及产品已声明的 persisted Raw Artifact；新增 DataLake 不转移这些所有权。本轮不建立二者的 runtime dependency，未来 consumer 如何使用 DataLake 须单独设计。
+
 ### `market-snapshot`
 
 从外部市场数据 Source 捕捉事实，按明确数据需求进行确定性准备，并产出 analysis-ready artifacts。
@@ -55,6 +61,8 @@ Repository
 ```
 
 根 `pyproject.toml`、根 `poetry.lock` 与每个 worktree 的根 `.venv` 是唯一 canonical Python runtime surface。Module-local `pyproject.toml`、module-local `poetry.lock`、module-local `.venv`、Poetry editable/path dependency，以及分别进入 Python module 目录执行 Poetry workflow 均不属于目标 architecture。
+
+`data-lake` 当前只建立 semantic authority，不定义 Python package namespace 或 runtime integration；未来 Python implementation 同样受上述 repository-level runtime invariant 约束。
 
 Runtime unification 不合并模块、不改变源码目录 ownership，也不把所有 Python source 移入统一 `src/`。`market_snapshot`、`market_modeling`、`market_research` 与 `backend_api` 是独立 namespace，由各自 semantic module 拥有。
 
@@ -119,6 +127,11 @@ ARCHITECTURE.md（本文件）
     │      ↓
     │  DEVELOPMENT.md
     ├─ lab/ARCHITECTURE.md
+    ├─ data-lake/ARCHITECTURE.md
+    │      ↓
+    │  data-lake/DATASETS.md
+    │      ↓
+    │  co-located Dataset ARCHITECTURE.md
     ├─ market-snapshot/ARCHITECTURE.md
     │      ↓
     │  market-snapshot/CAPABILITIES.md

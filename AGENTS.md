@@ -9,7 +9,7 @@ Repository-level Python runtime invariant 见 [ARCHITECTURE.md](ARCHITECTURE.md)
 ## Progressive Disclosure
 
 1. 先读根 [ARCHITECTURE.md](ARCHITECTURE.md)，只确定 owning module、顶层边界与 repository-level Python runtime/CLI ownership；CLI 命令与 delegation 进入 [lab authority](lab/ARCHITECTURE.md)，当前根开发操作再读 [DEVELOPMENT.md](DEVELOPMENT.md)。
-2. 进入 owning module，读取其 local `AGENTS.md` 与 `ARCHITECTURE.md`：当前入口为 [market-snapshot/AGENTS.md](market-snapshot/AGENTS.md)、[market-research/AGENTS.md](market-research/AGENTS.md)、[backend-api/AGENTS.md](backend-api/AGENTS.md) 与 [web-ui/AGENTS.md](web-ui/AGENTS.md)。`market-modeling` 尚无 local policy 或 module authority，不得预先创建内部设计。
+2. 进入 owning module，读取其 local `AGENTS.md` 与 `ARCHITECTURE.md`：当前入口为 [data-lake/AGENTS.md](data-lake/AGENTS.md)、[market-snapshot/AGENTS.md](market-snapshot/AGENTS.md)、[market-research/AGENTS.md](market-research/AGENTS.md)、[backend-api/AGENTS.md](backend-api/AGENTS.md) 与 [web-ui/AGENTS.md](web-ui/AGENTS.md)。`market-modeling` 尚无 local policy 或 module authority，不得预先创建内部设计。
 3. 按 local catalog 或 architecture 进入相关 bounded-context entry。
 4. 只读取当前任务需要的 specialized authority；不默认加载 sibling product 或其他模块文档。
 
