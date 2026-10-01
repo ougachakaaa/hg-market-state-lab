@@ -298,6 +298,7 @@ def test_failed_low_never_commits_and_missing_matched_future_fails(tmp_path: Pat
 def test_lock_excludes_another_process_and_recovers_after_crash(tmp_path: Path) -> None:
     import subprocess
     import sys
+    import time
 
     from market_snapshot.products.mo_option_chain.checkpoint import SessionLock
 
@@ -323,8 +324,28 @@ def test_lock_excludes_another_process_and_recovers_after_crash(tmp_path: Path) 
         process.kill()
         process.wait(timeout=5)
         lock = SessionLock(path)
+        # Windows may finish releasing the OS lock after process.wait() returns.
+        deadline = time.monotonic() + 5
+        while True:
+            try:
+                lock.acquire()
+            except service.OptionChainUnavailableError:
+                if time.monotonic() >= deadline:
+                    raise
+                time.sleep(0.01)
+            else:
+                break
+        try:
+            with pytest.raises(service.OptionChainUnavailableError, match="already running"):
+                SessionLock(path).acquire()
+        finally:
+            lock.release()
         lock.acquire()
-        lock.release()
+        try:
+            with pytest.raises(service.OptionChainUnavailableError, match="already running"):
+                SessionLock(path).acquire()
+        finally:
+            lock.release()
     finally:
         if process.poll() is None:
             process.kill()
