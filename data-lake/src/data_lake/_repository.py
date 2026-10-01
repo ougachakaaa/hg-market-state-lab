@@ -112,6 +112,8 @@ class Repository:
     @contextmanager
     def _connect(self, *, write: bool = False) -> Iterator[sqlite3.Connection | None]:
         connection = None
+        new = False
+        initialized = False
         try:
             if not self.path.exists() and not write:
                 yield None
@@ -141,6 +143,7 @@ class Repository:
                     (self.dataset, SCHEMA_VERSION, self.source, timestamp, timestamp),
                 )
                 connection.commit()
+                initialized = True
             connection.execute("BEGIN IMMEDIATE" if write else "BEGIN")
             self._validate(connection)
             yield connection
@@ -149,8 +152,13 @@ class Repository:
         except (sqlite3.Error, OSError, ValueError, TypeError, KeyError) as exc:
             raise ApplicationFailure("Dataset storage operation failed") from exc
         finally:
-            if connection is not None:
-                connection.close()  # rolls back both failed writes and read transactions
+            try:
+                if connection is not None:
+                    connection.close()  # rolls back both failed writes and read transactions
+                if new and not initialized:
+                    self.path.unlink()
+            except (sqlite3.Error, OSError) as exc:
+                raise ApplicationFailure("Dataset storage cleanup failed") from exc
 
     def _check_journal_mode(self) -> None:
         # Even mode=ro can create WAL/SHM files. Inspect before SQLite opens the cache.

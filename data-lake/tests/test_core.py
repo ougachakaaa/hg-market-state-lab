@@ -10,6 +10,7 @@ from threading import Event
 import pytest
 
 import data_lake
+import data_lake._repository as repository_module
 from data_lake import ApplicationFailure, CoverageResult, EnsureResult, ExportEnvelope
 from data_lake._application import Core, Source
 from data_lake._domain import (
@@ -114,6 +115,90 @@ def test_empty_targets_are_complete_and_do_not_create_storage(dataset: FakeDatas
     assert dataset.core.ensure(()) == EnsureResult(0, 0, 0, 0, 0, 0, True, ())
     assert dataset.core.export(()).facts == ()
     assert not dataset.repository.path.exists()
+
+
+@pytest.mark.parametrize("stage", ["connect", "ddl", "metadata"])
+def test_initialization_failure_cleans_new_database_and_allows_retry(
+    dataset: FakeDataset, monkeypatch: pytest.MonkeyPatch, stage: str
+) -> None:
+    dataset.responses["a"] = facts()
+    with monkeypatch.context() as injected:
+        if stage == "connect":
+            def reject_connection(*args: object, **kwargs: object) -> sqlite3.Connection:
+                raise sqlite3.OperationalError("Injected connection failure")
+
+            injected.setattr(sqlite3, "connect", reject_connection)
+        else:
+            fault = (
+                "INVALID SQL;"
+                if stage == "ddl"
+                else "CREATE TRIGGER reject_metadata BEFORE INSERT ON dataset_meta "
+                "BEGIN SELECT RAISE(ABORT, 'test'); END;"
+            )
+            injected.setattr(repository_module, "DDL", repository_module.DDL + fault)
+        with pytest.raises(ApplicationFailure, match="storage operation failed"):
+            dataset.core.ensure(("a",))
+    assert list(dataset.repository.path.parent.iterdir()) == []
+    assert dataset.calls == []
+    assert dataset.core.coverage(("a",)).missing_units == 1
+    assert dataset.core.ensure(("a",)) == EnsureResult(1, 0, 1, 1, 0, 1, True, ())
+
+
+@pytest.mark.parametrize("failure", [RuntimeError, KeyboardInterrupt])
+def test_initialization_exception_or_interrupt_cleans_new_database(
+    dataset: FakeDataset, monkeypatch: pytest.MonkeyPatch, failure: type[BaseException]
+) -> None:
+    def interrupt_initialization() -> str:
+        raise failure("Injected initialization interruption")
+
+    with monkeypatch.context() as injected:
+        injected.setattr(repository_module, "now", interrupt_initialization)
+        expected = ApplicationFailure if failure is RuntimeError else KeyboardInterrupt
+        with pytest.raises(expected):
+            dataset.core.ensure(("a",))
+    assert list(dataset.repository.path.parent.iterdir()) == []
+    dataset.responses["a"] = facts()
+    assert dataset.core.ensure(("a",)).complete
+
+
+def test_failure_after_schema_commit_preserves_database_and_allows_retry(
+    dataset: FakeDataset, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    trigger = (
+        "CREATE TRIGGER reject_unit BEFORE INSERT ON fetch_unit "
+        "BEGIN SELECT RAISE(ABORT, 'test'); END;"
+    )
+    with monkeypatch.context() as injected:
+        injected.setattr(repository_module, "DDL", repository_module.DDL + trigger)
+        with pytest.raises(ApplicationFailure):
+            dataset.core.ensure(("a",))
+    assert dataset.repository.path.exists()
+    assert dataset.core.coverage(("a",)) == CoverageResult(1, 0, 1, 0, 0, False)
+    with sqlite3.connect(dataset.repository.path) as connection:
+        assert connection.execute("SELECT count(*) FROM dataset_meta").fetchone()[0] == 1
+        assert connection.execute("SELECT count(*) FROM records").fetchone()[0] == 0
+        connection.execute("DROP TRIGGER reject_unit")
+    dataset.responses["a"] = facts()
+    assert dataset.core.ensure(("a",)).complete
+
+
+def test_initialization_cleanup_failure_is_application_failure(
+    dataset: FakeDataset, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    def reject_cleanup(path: Path, missing_ok: bool = False) -> None:
+        raise PermissionError("Private storage path: " + str(path))
+
+    with monkeypatch.context() as injected:
+        injected.setattr(repository_module, "DDL", repository_module.DDL + "INVALID SQL;")
+        injected.setattr(Path, "unlink", reject_cleanup)
+        with pytest.raises(ApplicationFailure, match="storage cleanup failed") as error:
+            dataset.core.ensure(("a",))
+    assert str(dataset.repository.path) not in str(error.value)
+    assert dataset.repository.path.exists()
+    assert dataset.calls == []
+    # Closing the failed connection rolled back DDL before the unlink failed.
+    with sqlite3.connect(dataset.repository.path) as connection:
+        assert connection.execute("SELECT name FROM sqlite_master").fetchall() == []
 
 
 def test_four_states_and_counts_are_mutually_exclusive(dataset: FakeDataset) -> None:
