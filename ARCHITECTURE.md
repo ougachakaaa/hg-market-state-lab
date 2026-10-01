@@ -8,6 +8,12 @@
 
 ## 2. 顶层模块
 
+### `data-lake`
+
+持久缓存并管理来自外部 Source 的 reusable source facts。DataLake 是自治 DataSet 的宿主 bounded context，拥有公共 invariants 与 shared kernel；每个 DataSet 是自治的数据产品边界，拥有自己的 authority、implementation、tests 与 source-fact persistence / cache。模块内部边界见 [data-lake/ARCHITECTURE.md](data-lake/ARCHITECTURE.md)。
+
+DataLake 不拥有 Snapshot Product semantics、Preparation、analysis-ready computation、Research、Modeling、HTTP 或 UI。`market-snapshot` 继续拥有 Product-specific source scope、Capture orchestration、Preparation、analysis-ready result 及产品已声明的 persisted Raw Artifact；新增 DataLake 不转移这些所有权。DataSet 对外发布 public Application Service，consumer 通过 semantic request/result/view 消费，不直接访问 SQLite、Repository 或 Source adapter，也不通过 CLI 或反向解析 JSON export 获取 Python semantic result。稳定方向为 consumer → DataSet public Application Service → internal Source adapter / Repository；`lab` 的 delivery contract 见其 authority，实际 Research/Snapshot integration 仍须独立设计。
+
 ### `market-snapshot`
 
 从外部市场数据 Source 捕捉事实，按明确数据需求进行确定性准备，并产出 analysis-ready artifacts。
@@ -48,6 +54,7 @@ Repository
     poetry.lock
     .venv/                 # worktree-local
 
+    data-lake/             # data_lake
     market-snapshot/       # market_snapshot
     market-modeling/       # market_modeling
     market-research/       # market_research
@@ -56,7 +63,9 @@ Repository
 
 根 `pyproject.toml`、根 `poetry.lock` 与每个 worktree 的根 `.venv` 是唯一 canonical Python runtime surface。Module-local `pyproject.toml`、module-local `poetry.lock`、module-local `.venv`、Poetry editable/path dependency，以及分别进入 Python module 目录执行 Poetry workflow 均不属于目标 architecture。
 
-Runtime unification 不合并模块、不改变源码目录 ownership，也不把所有 Python source 移入统一 `src/`。`market_snapshot`、`market_modeling`、`market_research` 与 `backend_api` 是独立 namespace，由各自 semantic module 拥有。
+`data-lake` 拥有 canonical Python namespace `data_lake`；shared kernel 源码归顶层 `data-lake/src/`，具体 Dataset 的 authority、source、tests 与 persistent state colocate 于 `data-lake/datasets/<dataset-id>/`，目标 topology 由 [DataLake authority](data-lake/ARCHITECTURE.md) 拥有。Dataset-local source roots 同样使用 repository root 唯一 Python project、dependency graph 与根 `.venv`，不创建独立 Python runtime。Consumer 可以直接依赖具体 Dataset public Application Service；shared kernel 不依赖具体 Dataset，Dataset 当前互不依赖。Public boundary 与 source registration / import compatibility 约束进入 DataLake authority；当前实现差异从该入口进入 reconciliation 文档。
+
+Runtime unification 不合并模块、不改变源码目录 ownership，也不把所有 Python source 移入统一 `src/`。`data_lake`、`market_snapshot`、`market_modeling`、`market_research` 与 `backend_api` 是独立 namespace，由各自 semantic module 拥有。
 
 共享 dependency graph 或 `.venv` 不构成 cross-module import permission。模块依赖方向必须由 repository/module authority、被依赖模块发布的 public boundary 与 architecture tests 共同约束；不得因为 package 在同一环境中可 import 就绕过这些边界。
 
@@ -109,7 +118,7 @@ future modules ──────┘
 
 ## 5. Authority 导航
 
-`hg-market-state-lab` 是 repository / system identity；`lab` 是安装于根 canonical Python project 的正式 repository-level CLI/operator interface。它只负责 repository-level command routing、orchestration 与 delegation，不是业务模块，也不拥有 Snapshot、Research、Modeling、HTTP product 或 frontend 语义。其命令与转发边界见 [lab CLI authority](lab/ARCHITECTURE.md)；当前本地操作方式见 [DEVELOPMENT.md](DEVELOPMENT.md)。
+`hg-market-state-lab` 是 repository / system identity；`lab` 是安装于根 canonical Python project 的正式 repository-level CLI/operator interface。它只负责 repository-level command routing、orchestration、delegation 与已声明的 delivery，不是业务模块，也不拥有 DataSet、Snapshot、Research、Modeling、HTTP product 或 frontend 语义。其命令与转发边界见 [lab CLI authority](lab/ARCHITECTURE.md)；当前本地操作方式见 [DEVELOPMENT.md](DEVELOPMENT.md)。
 
 ```text
 AGENTS.md
@@ -119,6 +128,13 @@ ARCHITECTURE.md（本文件）
     │      ↓
     │  DEVELOPMENT.md
     ├─ lab/ARCHITECTURE.md
+    ├─ data-lake/ARCHITECTURE.md
+    │      ├─ data-lake/DOMAIN_MODEL.md
+    │      ├─ data-lake/APPLICATION.md
+    │      ↓
+    │  data-lake/DATASETS.md
+    │      ↓
+    │  co-located Dataset ARCHITECTURE.md
     ├─ market-snapshot/ARCHITECTURE.md
     │      ↓
     │  market-snapshot/CAPABILITIES.md

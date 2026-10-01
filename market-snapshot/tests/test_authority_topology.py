@@ -12,6 +12,13 @@ REPOSITORY_ROOT = Path(__file__).resolve().parents[2]
 MARKDOWN_LINK = re.compile(r"\[[^]]+\]\(([^)]+)\)")
 
 CONTEXT_ENTRIES = {
+    Path("data-lake/ARCHITECTURE.md"),
+    Path("data-lake/DOMAIN_MODEL.md"),
+    Path("data-lake/APPLICATION.md"),
+    Path("data-lake/DATASETS.md"),
+    Path("data-lake/IMPLEMENTATION_RECONCILIATION.md"),
+    Path("data-lake/datasets/tushare_trade_calendar/ARCHITECTURE.md"),
+    Path("data-lake/datasets/tushare_trade_calendar/SERVICE.md"),
     Path("market-research/studies/AUTHORING.md"),
     Path("market-research/studies/SCHEMA.md"),
     Path("market-research/studies/REVIEW.md"),

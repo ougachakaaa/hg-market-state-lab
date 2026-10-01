@@ -2,7 +2,7 @@
 
 本文档只描述当前本地开发环境与操作方式，不是架构、CLI、产品或 HTTP 语义 authority。Repository-level Python runtime invariant 与仓库级路由见 [ARCHITECTURE.md](ARCHITECTURE.md)，canonical CLI interface 与 delegation 见 [lab authority](lab/ARCHITECTURE.md)，产品语义从 [market-snapshot/CAPABILITIES.md](market-snapshot/CAPABILITIES.md) 进入，HTTP transport contract 从 [backend-api HTTP catalog](backend-api/HTTP_PRODUCTS.md) 进入。
 
-正式 console command 是 `lab`，由根 canonical Python project 安装。以下命令在 repository root 的 Poetry environment 中运行。
+正式 console command 是 `lab`，由根 canonical Python project 安装。以下命令在 repository root 的 Poetry environment 中运行；help discovery 与完整 workflow 见 [lab usage guide](lab/README.md)（usage-only，不是 authority）。
 
 ## Codex managed worktree 环境
 
@@ -32,6 +32,7 @@ PowerShell 脚本使用 Python 3.13、Poetry、Node 与 npm 达到相同终态�
 poetry run lab doctor
 poetry run lab serve backend
 poetry run lab serve frontend
+poetry run lab datalake list
 poetry run lab research list
 poetry run lab research run <study-id> --help
 ```
@@ -51,3 +52,5 @@ poetry run lab research run <study-id> --help
 `web-ui/` 是独立 npm project，使用 Vite + React + TypeScript。Node.js 需满足当前 Vite 要求（20.19+ 或 22.12+）。`npm run dev` 在 `http://127.0.0.1:5173/` 提供可选择日期的 MO Option Chain 页面，与 `doctor` 的本地诊断地址一致；`npm run build` 执行 TypeScript 检查及 production build，`npm run lint` 运行 Oxlint，`npm run test` 运行前端测试。Vite dev proxy 将 frontend origin 的 `/mo-option-chain` 原路径和 query 转发到 `http://127.0.0.1:8011`，不需要 backend CORS policy。默认 provider 已接入真实读取链路；具体响应取决于目标日期与 Source 数据。
 
 `lab doctor` 的 frontend 诊断地址与 Vite 显式绑定的 `127.0.0.1:5173` 一致。CLI ownership 以 [lab authority](lab/ARCHITECTURE.md) 为准。
+
+`lab datalake` 支持 list、coverage、ensure 与 export；参数与退出码见 lab authority。coverage / export 不访问 Source、不创建缓存；ensure 在确实需要 fetch 时解析 TUSHARE_TOKEN（环境变量优先，market-snapshot/.env fallback）。默认 owned cache 位于 `data-lake/datasets/tushare_trade_calendar/data/tushare_trade_calendar.sqlite3`，service 内部解析路径。旧 `data-lake/data/*.sqlite3` 保留原样，不自动迁移、不作为 fallback；新缓存与旧 state 分离。Source-root wiring 与当前状态见 [DataLake implementation reconciliation](data-lake/IMPLEMENTATION_RECONCILIATION.md)。export 用必填 --output 交付 UTF-8 JSON，coverage 不完整也可导出当前成功 facts。

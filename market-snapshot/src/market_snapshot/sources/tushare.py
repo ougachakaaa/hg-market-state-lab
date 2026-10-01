@@ -102,6 +102,7 @@ class TushareApi(Protocol):
         self,
         *,
         ts_code: str | None = ...,
+        exchange: str | None = ...,
         trade_date: str | None = ...,
         start_date: str | None = ...,
         end_date: str | None = ...,

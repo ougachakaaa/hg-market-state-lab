@@ -15,6 +15,7 @@ REPOSITORY_ROOT = Path(__file__).resolve().parents[2]
 STUDY_IDS = (
     "im-basis-baseline",
     "im-basis-forward-return-association",
+    "mo-option-risk-premium-baseline",
     "price-to-lagged-ma-distribution",
     "price-to-lagged-ma-short-horizon-reversion",
 )

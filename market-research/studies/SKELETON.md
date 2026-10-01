@@ -1,34 +1,34 @@
-# Canonical Study Logical Skeleton
+# Canonical Study Authority Skeleton
 
-本文件只定义新建 retained Study authority 的逻辑呈现顺序与 progressive disclosure 布局。对象含义、必需字段和关系由 [Schema](SCHEMA.md) 唯一定义；创建流程由 [Authoring](AUTHORING.md) 拥有。下列标题是可直接实例化的写作骨架，不要求逐字使用，也不对应固定数量的 Markdown 或 Python 文件。
+本文件只定义新建 retained Study authority 的标准呈现拓扑与阅读路径。对象含义、cardinality、必需字段和关系由 [Schema](SCHEMA.md) 唯一定义；创建流程由 [Authoring](AUTHORING.md) 拥有。标题和措辞可依 Study 调整，以下文件边界不可省略。
 
-## Logical presentation shape
+## Mandatory top-level topology
+
+每个新建 retained Study，无论研究复杂度，均须建立以下四个有实质内容的顶层 authority 文件：
 
 ```text
-# <Study Name>
-
-## Identity
-## Question
-## Inputs
-## Method
-### Method Context（仅存在共享研究语义时）
-### Observations（具名）
-### Analyses（具名）
-## Results
-### Evidence Products（具名）
-## Limitations
-## Acceptance
-## Authority Navigation
+studies/<study_package>/
+├── ARCHITECTURE.md
+├── INPUTS.md
+├── METHOD.md
+└── RESULTS.md
 ```
 
-按此顺序实例化 [Schema](SCHEMA.md) 的六个 semantic areas。`Identity` 是 Study 的 structural information；`Authority Navigation` 是阅读路径，不是新的 research semantic area。Method Context、Observation、Analysis 与 Evidence Product 的具体 contract 均从 Schema 填写，不在本骨架另设定义。不同 Study 可以使用符合自身术语的标题，但应保持上述逻辑顺序和语义归属。
+`ARCHITECTURE.md` 不能独自承载新 Study 的完整 authority。四个文件是稳定的顶层导航边界，不要求 Python implementation 具有相同文件布局，也不限制 Study 继续建立下层 specialized authority。
 
-## Entry and disclosure
+| 文件 | Canonical responsibility |
+| --- | --- |
+| `ARCHITECTURE.md` | 稳定入口：Identity、Question、scope / purpose、Limitations、Acceptance、具名 Observation / Analysis 与 Evidence Product 的高层概览、dependency gaps 概览、implementation location 和 Authority Navigation。它保持简洁，不重复详细契约。 |
+| `INPUTS.md` | 详细 Inputs：目标 population、外部输入与上游 canonical facts、可配置参数及 owner / consumers / semantic role、必填性与默认值、runnable Study 的 CLI / 用户映射、规范化、execution-only options、retained run identity，以及获取输入所需的 dependency gaps。 |
+| `METHOD.md` | Method Context（若有）、具名 Observation / Analysis 及其 contract、Observation → Analysis 消费关系、组件有效性与排除规则、Study-local 统计约定，以及适用的 component Artifact identity。 |
+| `RESULTS.md` | retained evidence contract：具名 Evidence Products 及其 `defined_by` Analysis、machine-readable 结构、表／图／报告、provenance、复核所需样本与排除计数、空／缺失／排除状态、适用的组件 Artifact 保留方式及 human-readable 呈现。 |
 
-每个新 Study 以 `studies/<study_package>/ARCHITECTURE.md` 为稳定 canonical entry。打开 entry 应能快速识别 Study identity、bounded Question、population / major Inputs、具名 Observations 和 Analyses 及主要消费关系、预期 Evidence Products、核心 Limitations、Acceptance overview，并知道下一步应读哪份 authority。Authority Navigation 链接真正拥有详细规则的 specialized authority 与必要的上游 authority，并指出 dependency gaps 和 implementation location；entry 只概述已下沉的契约，不完整重复定义。
+六个 semantic areas 仍由 Schema 定义：Question、Inputs、Method、Results、Limitations、Acceptance。Identity 是 structural information；Authority Navigation 是阅读路径。顶层文件安排不改变这些对象或关系，也不建立新的研究语义。
 
-简单 Study 可在 entry 中依序写完全部语义，不因骨架自动创建 specialized file。复杂 Study 可把详细 Inputs、Method 或 Results 下沉，例如使用 `INPUTS.md`、`METHOD.md`、`RESULTS.md`；这些文件名与分组都不是模板要求。下沉后，entry 仍按相同逻辑顺序保留可扫描的概述及明确链接。每条语义规则只有一个 canonical owner，所有 specialized owner 都须从 entry 可达。
+## Entry and progressive disclosure
 
-若使用上述分组，Inputs-like authority 可承载详细 population、external inputs、parameter ownership 与 run identity；Method-like authority 可承载 Method Context、Observation / Analysis contracts、消费关系与 component Artifact identities；Results-like authority 可承载 Evidence Products、retained forms、provenance 与边界状态。这些只说明细节应放在哪里，具体要求仍以 [Schema](SCHEMA.md) 为准。
+打开 `ARCHITECTURE.md` 应能识别 Study 问题与范围、主要输入、具名组件、预期证据、限制和验收，并知道详细契约应读哪里。它必须直接链接 `INPUTS.md`、`METHOD.md`、`RESULTS.md`，并使其他必要的 specialized authority 沿链接可达；读者再按问题进入相关下层文档，不必搜索目录寻找 canonical owner。
 
-多个独立 Observation、语义不同的 Analysis、多组参数 owner、复杂 run identity、component Artifact identity 或 Evidence Product contract，均可提示需要拆分；若阅读或实现某个 Analysis 必须加载大量无关组件细节，也应考虑下沉相关部分。按实际阅读边界决定，不按行数、标题数或组件数强制拆分；不创建空文件、只有形式性几行的文件，或 one-object-one-file 布局。
+Entry 可列出组件和证据名称、概述 dependency gaps，但详细参数与 run identity 只在 `INPUTS.md` 定义，Observation / Analysis mechanics 和统计只在 `METHOD.md` 定义，Evidence Product 结构只在 `RESULTS.md` 定义。每条语义规则只有一个 canonical owner；概览使用 summary + link，不复制完整 contract。
+
+四个顶层文件始终存在；只有更深层的拆分由语义复杂度和阅读边界决定。例如复杂 Method 可从 `METHOD.md` 继续链接 `method/observations/` 与 `method/analyses/` 中的组件 authority；Inputs 或 Results 也可在确有需要时下沉细节。下沉后，顶层 owner 保留清晰概览及导航，所有 specialized owner 均须可达。不得建立空文件、仅作占位的文件或机械的 one-object-one-file 布局。

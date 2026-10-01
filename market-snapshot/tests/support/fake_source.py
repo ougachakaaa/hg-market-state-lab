@@ -464,6 +464,7 @@ class FakeTushareApi:
         self,
         *,
         ts_code: str | None = None,
+        exchange: str | None = None,
         trade_date: str | None = None,
         start_date: str | None = None,
         end_date: str | None = None,
@@ -474,9 +475,15 @@ class FakeTushareApi:
             "start_date": start_date or "",
             "end_date": end_date or "",
         }
+        if exchange is not None:
+            call["exchange"] = exchange
         self.calls.append(("fut_daily", dict(call)))
         self.fut_daily_calls.append(call)
-        frame = self.futures_daily.get(ts_code or "", pd.DataFrame())
+        frame = (
+            pd.concat(list(self.futures_daily.values()), ignore_index=True)
+            if exchange is not None and self.futures_daily
+            else self.futures_daily.get(ts_code or "", pd.DataFrame())
+        )
         return self._slice(frame, "trade_date", trade_date, start_date, end_date)
 
     @staticmethod

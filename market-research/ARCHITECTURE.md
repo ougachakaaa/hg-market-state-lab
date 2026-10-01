@@ -103,13 +103,13 @@ Scratch 可以自由生成图片，但其 artifact 仍是 disposable output，�
 
 ### `studies`
 
-`studies` 用于值得保留、复查或继续推进的研究。新建 retained Study 从 [Study Authority Authoring](studies/AUTHORING.md) 进入；Authoring 拥有意图整理与创建流程，其链接的 Schema 拥有通用语义结构，[Skeleton](studies/SKELETON.md) 拥有逻辑呈现与 authority 布局，Review 拥有完整性验证，Compatibility 拥有既有 Study reconciliation。Research semantics 由当前 Study 本地拥有，允许重复。每个 Study 的 `ARCHITECTURE.md` 是稳定入口；Study authority 可按语义复杂度链接下层 specialized authority。
+`studies` 用于值得保留、复查或继续推进的研究。新建 retained Study 从 [Study Authority Authoring](studies/AUTHORING.md) 进入；Authoring 拥有意图整理与创建流程，其链接的 Schema 拥有通用语义结构，[Skeleton](studies/SKELETON.md) 拥有逻辑呈现与 authority 布局，[Implementation Package Contract](studies/IMPLEMENTATION.md) 拥有 runnable Study 的 Python package topology，Review 拥有完整性与实现拓扑验证，Compatibility 拥有既有 Study reconciliation。Research semantics 由当前 Study 本地拥有，允许重复。每个 Study 的 `ARCHITECTURE.md` 是稳定入口；新建 Study 的顶层 authority 布局固定，语义复杂度只决定是否增加下层 specialized authority。
 
 Study-specific input selection、method、plots、findings、limitations 与 acceptance 留在对应 Study authority，不进入本模块 architecture。Retained study 是 evidence record，不因被保留而成为 Snapshot、Modeling 或 production output 的 semantic authority。
 
 Retained Study 是可保留的研究知识与 evidence record，不等同于长期 software capability。`market-research/studies/<study_package>/` 拥有该 Study 的研究语义、验收与 retained evidence；`market-research/src/market_research/studies/<study_package>/` 拥有可重写或替换的 executable implementation。两侧以同名 `study_package` 对应，public Study ID 按 [Research UI authority](ui/ARCHITECTURE.md) 从 package 名映射。这种分离是有意的长期边界，不要求将 Study authority 迁入 `src`，也不机械复制 `market-snapshot` 的 co-located product authority layout。若研究对象未来形成稳定输入/输出契约、长期 runtime dependency 与 lifecycle，并演化为 production/reusable capability，须先作新的 semantic decision 与 canonical authority update。
 
-每个 retained Study implementation directory 作为 Study-local bounded module 组织。简单 Study 可以使用单个 module；复杂 Study 按 semantic responsibility 与阅读边界拆分，使 Method Context、Observation construction、Analysis execution、Results / presentation 与 orchestration 的职责易于定位，且 implementation entry 能清晰呈现主要流程。Authority file 与 Python file 不必一一对应，不按文件数量、行数或每个组件机械拆分。若修改 material component 必须阅读大量无关实现，或 CLI、分析、绘图、持久化混杂而难以辨认语义图，应在当前 Study 内评估拆分，保留易读的 orchestration / composition entry。Implementation 阅读路径沿当前 Study authority → relevant Method authority → Study-local module → related tests；相似 helper 不构成修改 sibling Studies、提升 shared Research semantics 或创建 generic framework 的理由。跨 Study consolidation 仍按 [Compatibility](studies/COMPATIBILITY.md) 的 human-triggered policy 单独进行。
+新 runnable retained Study 的 implementation 必须遵循 [Implementation Package Contract](studies/IMPLEMENTATION.md)：以 Study-local Python package 承载执行，保留 independently locatable 的 Observation、Analysis、Evidence 责任与可读的 `study.py` orchestration entry。既有实现按 [Compatibility](studies/COMPATIBILITY.md) 的非追溯规则处理；相似 helper 不构成修改 sibling Studies、提升 shared Research semantics 或创建 generic framework 的理由。跨 Study consolidation 仍按 Compatibility 的 human-triggered policy 单独进行。
 
 Retained Study 可以同时保留 machine-readable result 与 human-readable visualization，例如：
 
@@ -130,10 +130,11 @@ results/
 - [CFFEX Equity Index Basis Environment × Forward Return Association](studies/cffex_basis_forward_return_association/ARCHITECTURE.md)
 - [IM Annualized Basis Baseline](studies/im_basis_baseline/ARCHITECTURE.md)
 - [IM Basis Forward Return Association](studies/im_basis_forward_return_association/ARCHITECTURE.md)
+- [MO Option Risk Premium Baseline](studies/mo_option_risk_premium_baseline/ARCHITECTURE.md)
 - [Price-to-Lagged-MA Distribution](studies/price_to_lagged_ma_distribution/ARCHITECTURE.md)
 - [Price-to-Lagged-MA Short-Horizon Reversion](studies/price_to_lagged_ma_short_horizon_reversion/ARCHITECTURE.md)
 
-本模块不预设 Experiment Engine、Study Registry、Research Repository、plugin system、统一 execution/data/artifact schema 或通用 lifecycle。固定 Study authority schema 只定义每个研究必须回答的 product / research semantic 问题；只有真实 retained study 需要时才建立最小文件结构。
+本模块不预设 Experiment Engine、Study Registry、Research Repository、plugin system、统一 execution/data/artifact schema 或通用 lifecycle。Study Schema 只定义每个研究必须回答的 product / research semantic 问题；新建 retained Study 的顶层 authority 遵循 Skeleton 的固定布局，更深层文件只在确有阅读需要时建立。
 
 ## 6. Research 与 Modeling
 
@@ -172,16 +173,17 @@ market-research/ARCHITECTURE.md
         └── Study Authority Authoring
                 ├── Study Schema ────────────────┐
                 ├── Study Skeleton ──────────────┤
+                ├── Implementation Contract（实现时）│
                 ├── Study Review（按需）           │
                 └── Compatibility（仅既有 Study）   │
                                               ↓
-            retained Study ARCHITECTURE.md
+            new retained Study ARCHITECTURE.md
                       ↓
-            required specialized Study authority
+            mandatory top-level Study authority
                       ↓
-            required market-snapshot product authority
+            relevant deeper / upstream authority
 ```
 
-本文件只拥有 Research 的稳定 identity、职责边界、Research UI 与 visualization ownership、依赖方向、scratch / retained-study distinction 与下层 authority 导航。Study 创建入口与隔离由 Authoring 拥有；通用 Study semantic schema、逻辑呈现布局、审查流程与既有 Study compatibility policy 分别由其 specialized authority 拥有。窄 shared Research semantic 只有在后续显式 consolidation 与独立 semantic decision 后才能成为新共享 owner，不是新 Study 创建时的默认依赖，也不得借此建立通用 feature、statistics 或 visualization framework。具体研究问题、输入、方法、结果、限制与验收由对应 retained study 记录；Snapshot 产品语义继续由 [market-snapshot capability catalog](../market-snapshot/CAPABILITIES.md) 所链接的 canonical owner 定义。
+本文件只拥有 Research 的稳定 identity、职责边界、Research UI 与 visualization ownership、依赖方向、scratch / retained-study distinction 与下层 authority 导航。Study 创建入口与隔离由 Authoring 拥有；通用 Study semantic schema、逻辑呈现布局、implementation package topology、审查流程与既有 Study compatibility policy 分别由其 specialized authority 拥有。窄 shared Research semantic 只有在后续显式 consolidation 与独立 semantic decision 后才能成为新共享 owner，不是新 Study 创建时的默认依赖，也不得借此建立通用 feature、statistics 或 visualization framework。具体研究问题、输入、方法、结果、限制与验收由对应 retained study 记录；Snapshot 产品语义继续由 [market-snapshot capability catalog](../market-snapshot/CAPABILITIES.md) 所链接的 canonical owner 定义。
 
 只有在 Research 模块定位、UI/visualization ownership、跨模块依赖、Snapshot 消费原则或 scratch/studies 边界变化时更新本文件。CLI/config/output 细节进入 UI specialized authority；不得把 study-specific 细节堆入 module-level architecture，也不得复制 Snapshot product authority。

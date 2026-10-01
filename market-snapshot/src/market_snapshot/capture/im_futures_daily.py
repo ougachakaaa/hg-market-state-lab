@@ -173,3 +173,35 @@ def capture_target_date(
         lambda **kwargs: query_target_date_fut_daily(api, **kwargs),
         family,
     )
+
+
+def capture_bulk_target_date(
+    api: tushare.TushareApi,
+    trade_date: str,
+    basic_facts: Sequence[artifacts.RawRecord],
+) -> list[artifacts.RawRecord]:
+    """MO session-only CFFEX daily query; never use legacy per-contract pacing."""
+    source_date = tushare.to_tushare_date(trade_date)
+    im_futures_basic.require_im_contract_facts(basic_facts)
+    # The session adapter routes this dynamic SDK endpoint through its shared budget.
+    frame = api.fut_daily(trade_date=source_date, exchange="CFFEX")
+    if len(frame) >= 2000:
+        raise common.CollectionError("fut_daily: response may be truncated at 2000 rows")
+    records = common.to_raw_records(frame)
+    common.require_target_trade_date(records, trade_date)
+    seen: set[str] = set()
+    for row in records:
+        code = row.get("ts_code")
+        if not isinstance(code, str) or not code or code in seen:
+            raise common.CollectionError("fut_daily: missing or duplicate contract identity")
+        seen.add(code)
+    active = {
+        str(row["ts_code"])
+        for row in basic_facts
+        if require_contract_lifecycle(row)[0] <= trade_date <= require_contract_lifecycle(row)[1]
+    }
+    if not active:
+        raise common.CollectionError(f"no active IM contracts on {trade_date}")
+    return sorted(
+        (row for row in records if row["ts_code"] in active), key=lambda row: str(row["ts_code"])
+    )

@@ -21,13 +21,13 @@ def test_root_and_research_help_are_layered(capsys: pytest.CaptureFixture[str]) 
     with pytest.raises(SystemExit, match="0"):
         cli.main(["--help"])
     root_help = capsys.readouterr().out
-    assert "{doctor,serve,research}" in root_help
+    assert "{doctor,serve,research,datalake}" in root_help
     assert "research" in root_help
 
     with pytest.raises(SystemExit, match="0"):
         cli.main(["serve", "--help"])
     assert "{backend,frontend}" in capsys.readouterr().out
-    assert "data" not in root_help
+    assert "datalake" in root_help
 
     with pytest.raises(SystemExit, match="0"):
         cli.main(["research", "--help"])
