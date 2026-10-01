@@ -51,7 +51,15 @@ DataLake shared kernel
 
 Dataset 内部组合 Source adapter 与 Repository 来访问 external API 和 owned SQLite。Consumer 禁止直接依赖 Dataset Repository internals、Source adapter internals、SQLite schema / connection、Dataset `data/` 文件或内部 FetchUnit / Record persistence identity。
 
-允许 `Dataset → DataLake shared kernel`；禁止 `DataLake shared kernel → specific Dataset`。Dataset 间默认禁止依赖；唯一已声明的 service dependency 为 `tushare_index_daily → tushare_trade_calendar public Application Service`，用于目标交易日展开。Calendar 不反向依赖 Index；Futures / Options 的 underlying index relationship 只表达稳定 semantic identity，不授予 runtime dependency。禁止 cycles、跨 Dataset internal import、共享 SQLite 或跨库事务。公共 dependency 调用与 failure invariant 见 [APPLICATION.md](APPLICATION.md)，具体 prerequisite 见 Index 的 [交易日契约](datasets/tushare_index_daily/TRADING_DAYS.md)。Catalog 不构成 runtime registry。
+允许 `Dataset → DataLake shared kernel`；禁止 `DataLake shared kernel → specific Dataset`。Dataset 间默认禁止依赖；已声明的单向 public service dependencies 为下列三个 consumer → `tushare_trade_calendar public Application Service`，只用于目标交易日展开：
+
+| Consumer Dataset | Prerequisite authority |
+| --- | --- |
+| tushare_index_daily | [Index 交易日契约](datasets/tushare_index_daily/TRADING_DAYS.md) |
+| tushare_equity_index_futures | [Futures 交易日契约](datasets/tushare_equity_index_futures/TRADING_DAYS.md) |
+| tushare_equity_index_options | [Options 交易日契约](datasets/tushare_equity_index_options/TRADING_DAYS.md) |
+
+Calendar 不反向依赖这些 consumers；Futures / Options 的 underlying index relationship 只表达稳定 semantic identity，不授予 Index runtime dependency，Futures 与 Options 也不互相依赖。禁止 cycles、跨 Dataset internal import、共享 SQLite 或跨库事务。公共 dependency 调用与 failure invariant 见 [APPLICATION.md](APPLICATION.md)。Catalog 不构成 runtime registry。
 
 ## 3. Canonical Python boundary
 

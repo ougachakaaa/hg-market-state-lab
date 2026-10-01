@@ -6,7 +6,7 @@
 | --- | --- | --- |
 | `tushare_trade_calendar` | [Dataset architecture](datasets/tushare_trade_calendar/ARCHITECTURE.md) | 经 domain entry 进入 [SERVICE.md](datasets/tushare_trade_calendar/SERVICE.md) |
 | `tushare_index_daily` | [指数日线 architecture](datasets/tushare_index_daily/ARCHITECTURE.md) | 经 domain entry 进入 [SERVICE.md](datasets/tushare_index_daily/SERVICE.md) |
-| `equity_index_futures` | [股指期货 architecture](datasets/equity_index_futures/ARCHITECTURE.md) | 经 domain entry 进入 [SERVICE.md](datasets/equity_index_futures/SERVICE.md) |
-| `equity_index_options` | [股指期权 architecture](datasets/equity_index_options/ARCHITECTURE.md) | 经 domain entry 进入 [SERVICE.md](datasets/equity_index_options/SERVICE.md) |
+| `tushare_equity_index_futures` | [股指期货 architecture](datasets/tushare_equity_index_futures/ARCHITECTURE.md) | 经 domain entry 进入 [SERVICE.md](datasets/tushare_equity_index_futures/SERVICE.md) |
+| `tushare_equity_index_options` | [股指期权 architecture](datasets/tushare_equity_index_options/ARCHITECTURE.md) | 经 domain entry 进入 [SERVICE.md](datasets/tushare_equity_index_options/SERVICE.md) |
 
-Domain 任务止于 Dataset architecture；consumer 任务继续进入 SERVICE.md；CLI adapter 再进入 lab authority。Catalog 不拥有 contract，也不声明 capability 已实现。
+Domain 任务从 Dataset architecture 选择所需 FACTS、CONTRACT_UNIVERSE、TRADING_DAYS 等专题；consumer 任务继续进入 SERVICE.md；CLI adapter 再进入 lab authority。Catalog 不拥有 contract，也不声明 capability 已实现。

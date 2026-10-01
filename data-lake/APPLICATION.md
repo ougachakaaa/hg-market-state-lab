@@ -120,4 +120,4 @@ SQLite location 由 owning Dataset 内部 composition 使用 shared runtime/stor
 - Prerequisite operation failure 映射为 consumer `OperationError`，保留可读的 dependency context，不泄漏 persistence / provider objects；consumer 自身输入错误仍是 `InvalidRequestError`。合法 consumer request 经内部转换后被 prerequisite 拒绝属于 composition/execution failure。
 - Consumer 每次 operation 固定一份合法 prerequisite semantic view 以展开目标集合。Export coverage 与 payload 仍须来自 consumer 同一个 committed cache snapshot，并针对这份固定目标；不声称多个 Dataset 共享同一数据库 snapshot 或 provider-current freshness。
 
-具体 Index → Calendar contract 经 [catalog](DATASETS.md) 进入 Index authority；Calendar 自己的 request/result/view 与 domain semantics 保持不变。
+具体 Index / Futures / Options → Calendar contract 经 [catalog](DATASETS.md) 进入各自 Dataset 的 TRADING_DAYS.md；允许的 dependency edges 由模块 architecture 唯一声明。Calendar 自己的 request/result/view 与 domain semantics 保持不变。
