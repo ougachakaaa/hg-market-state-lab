@@ -1,34 +1,37 @@
 # cffex_option_expiry_dte_collection Study authority
 
-本文件是 retained Study 的稳定 entry，拥有 identity、objective、boundaries、limitations、acceptance 与导航。继承 [Study Schema](../SCHEMA.md)、[Workflow contract](../WORKFLOW.md)、[Skeleton](../SKELETON.md) 与 [Research boundaries](../../ARCHITECTURE.md)。Inputs / run identity 进入 [INPUTS.md](INPUTS.md)，workflow / dependencies 进入 [METHOD.md](METHOD.md)，retained Artifact contracts / presentation 进入 [RESULTS.md](RESULTS.md)。
+本文件是 retained Study knowledge / orchestration authority 的稳定 entry，拥有 identity、objective、boundaries、limitations、acceptance 与导航；retained authority 不要求 retained execution output。继承 [Study Schema](../SCHEMA.md)、[Workflow contract](../WORKFLOW.md)、[Skeleton](../SKELETON.md) 与 [Research boundaries](../../ARCHITECTURE.md)。Request / semantic identity 进入 [INPUTS.md](INPUTS.md)，workflow / dependencies 进入 [METHOD.md](METHOD.md)，non-persistent outcome / presentation 进入 [RESULTS.md](RESULTS.md)，Python / CLI handoff 进入 [IMPLEMENTATION.md](IMPLEMENTATION.md)。
 
 ## Identity 与 objective
 
-Study identity / future study_package 为 `cffex_option_expiry_dte_collection`，future public Study ID 为 `cffex-option-expiry-dte-collection`，遵守 [UI naming](../../ui/ARCHITECTURE.md#2-runnable-study-convention)。未来 implementation location 为同名 `src/market_research/studies/` package，本轮不创建它。
+Study identity / study_package 为 `cffex_option_expiry_dte_collection`，public Study ID 为 `cffex-option-expiry-dte-collection`，遵守 [UI naming](../../ui/ARCHITECTURE.md#2-runnable-study-convention)。未来 implementation 位于同名 `src/market_research/studies/` package，本轮不创建它。
 
-Objective 是 research preparation / empirical collection：对于一个产品、inclusive expiry window 与 target DTE，获得 observed ExpiryUniverse，并为每个 discovered expiry 收集 complete DTE-chain Observation Artifact，保留 invocation plan 与完整 collection manifest。
+Objective 是 orchestration-only research preparation：用用户选择的产品、inclusive expiry window 与 target DTE 驱动两个 reusable Observations，确保 observed Universe 中每个真实 expiry 都有 complete durable target-DTE chain Artifact。它不是 retained data-collection database producer。
 
-这是 observation / orchestration-only Study，Analysis count=0、Evidence count=0，无 hypothesis、statistical finding、图表或收益计算。完成 objective 的 retained workflow results 是 `expiry_plan` 与 `observation_collection`；不制造 Analysis / Evidence 占位。
+本 Study 的 Observation dependency contracts=2、Study-local retained Workflow Artifacts=0、Analysis=0、Evidence=0；没有 hypothesis、statistical finding、图表或收益计算。Runtime plan / ordered references / counts 不提升为 expiry_plan 或 observation_collection Artifact，不保留 Study manifest / SQLite / run directory。
 
 ## Dependency overview 与 ownership
 
-Empirical discovery 由 [cffex_option_expiry_universe](../../observations/cffex_option_expiry_universe/ARCHITECTURE.md) 拥有，单 expiry 日期解析 / chain 由 [cffex_option_expiry_dte_chain](../../observations/cffex_option_expiry_dte_chain/ARCHITECTURE.md) 拥有。Study 只选择输入、驱动 invocation、物化计划与 compose complete references，不直接访问 DataLake / Snapshot，不读取 Observation persistence，不重新计算市场日期。
+Empirical discovery 由 [cffex_option_expiry_universe](../../observations/cffex_option_expiry_universe/ARCHITECTURE.md) 拥有，单 expiry 日期解析 / chain 由 [cffex_option_expiry_dte_chain](../../observations/cffex_option_expiry_dte_chain/ARCHITECTURE.md) 拥有。Successful Observation ensure 已把完整 Artifact durable published 到该 Observation 唯一 SQLite，Study 只选择输入、驱动 public invocation、扩展 runtime plan 并报告结果。
 
-Workflow steps、binding 与失败后继续规则归 METHOD；两份具名 Workflow Artifact 的 semantic shape / completeness 归 RESULTS。Market facts 由 Observation retained Artifacts 唯一承载，collection 不复制 chain rows。
+METHOD 唯一拥有 Universe → runtime plan → all chains → summary 的顺序、bindings 与失败后继续规则；RESULTS 唯一拥有 runtime outcome / counts / failure details。Study 不直接调用 DataLake / Snapshot、不读取 Observation SQLite、不复制 market rows 建第二份 empirical cache、不重新计算市场日期、不自行 refresh。跨 Study reuse 由相同 Observation request 再 ensure 实现，不经旧 Study run / manifest。
 
 ## Limitations
 
-Universe 仅证明请求窗口的完整 historical daily facts 中实际出现的 expiry，不能推断窗口外曾挂牌的全部 expiry、未来上市计划或 provider-current freshness。Collection 不保证 actual_dte 等于 target_dte；日期与实际 DTE 是 upstream complete Artifact 的事实。
+Universe 仅证明请求窗口的完整 historical daily facts 中实际出现的 expiry，不能推断窗口外曾挂牌的全部 expiry、未来上市计划或 provider-current freshness。Chain 不保证 actual_dte 等于 target_dte；日期与实际 DTE 来自其 complete Artifact。
 
-本 Study 不提供收益、PnL、统计解释、Evidence / Findings、策略、backtest 或 Modeling output。Retained collection 是当前 Study run 的 manifest，不建立跨 Study Workflow Artifact reuse。Observation refresh / evolution 与 workflow 跨 invocation resume / reuse 保持 deferred。
+Study execution outcome 是本次 invocation 的 non-persistent feedback，不是 retained collection / reusable empirical product。本 Study 不提供 PnL、统计解释、Evidence / Findings、策略、backtest 或 Modeling output；future Analysis / Evidence persistence 另行设计，Observation refresh / definition evolution 保持 deferred。
 
 ## Acceptance 与 readiness
 
-- 四个 normalized semantic inputs 确定 run identity；expiry window 不被解释为 observation-date window，execution-only overwrite 不进入 identity。
-- Request → Universe → materialized complete expiry_plan → 每个 planned chain → complete observation_collection 的 bindings / references 可追踪，无 empirical semantics 回流至 Study。
-- 按升序尝试全部 planned expiries；某项失败不跳过、不改写计划、不宣布 complete final success，已完成 Observation 不 rollback。
-- 每个 complete collection entry 恰对应一个 plan entry，引用 complete chain identity 与其 observation_date / actual_dte；不复制 chain rows。
-- Complete empty Universe → complete empty plan → complete empty collection；非空计划任一 chain 或 output publication 失败，Study 不 complete。
-- 输出 counts / identity / retained location 符合 RESULTS，collision / overwrite / staging 符合 UI；所有给下游的 Workflow Artifacts 先物化再消费，无 Analysis / Evidence 占位。
+- 四个 normalized inputs 定义同一个 semantic Study request，完整覆盖 Observation bindings；不产生 persisted run identity / filesystem key，不以 option_type 重命名 product_code。
+- Universe ensure 成功后才扩展 in-memory 升序 plan；Universe failure 立即停止，零 chain invocations。
+- 每个 planned expiry 尝试一次 chain invocation，failure 后继续尝试剩余全部项；不删除失败项、改参数、跳日期、重试 upstream 或缩小计划。
+- 全部 planned chains 返回 complete durable Artifacts 才成功；任一 failure 使最终 Study failure，已成功 Observation Artifacts 保留且可复用，不 rollback。
+- Complete empty Universe → empty runtime plan → 零 chain invocations → success，四个 counts 为零；不为零计划构造不需要的 chain service。
+- RESULTS 的 success / failure counts 与实际执行一致，unknown 不伪报零；只输出 request / summary / failure details，不复制 chain rows 或发布 retained output。
+- CLI 不依赖 output.root / run directory / overwrite / staging；无 Workflow Artifact、Analysis、Evidence 占位。
 
-六个 Study semantic areas 已锁定，状态为 **Study Authority Complete**。两个 Observation authority 和 DataLake public capabilities 在语义上已核对，未发现 upstream capability gap；Observation runtime producer / public invocation implementation 尚不存在，因此按 [Authoring readiness](../AUTHORING.md#publication-与-dependency-handoff)，**Dependency Reconciled / Implementation Ready 尚未达到**。可以进入 Observation + Study implementation design，实际 Study implementation 需先补齐 dependencies。状态记录见 [Research reconciliation](../../IMPLEMENTATION_RECONCILIATION.md)。
+六个 semantic areas、Observation dependency contracts、orchestration semantics 与 [implementation architecture](IMPLEMENTATION.md) 完整，按 [Authoring readiness](../AUTHORING.md#publication-与-dependency-handoff) 为 **Study Authority Complete / Observation dependency contracts complete / Study implementation architecture complete / Implementation Ready**。未发现 DataLake / Observation semantic capability gap。
+
+Observation producers 与 Study runtime 均 **Not Implemented**，实际 Study runtime Dependency Reconciled 尚未完成。Implementation Ready 表示可以按 producer-first 顺序实施整个 vertical slice，不表示命令已经 runnable。当前状态与既有 test limitation 见 [Research reconciliation](../../IMPLEMENTATION_RECONCILIATION.md)。

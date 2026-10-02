@@ -17,7 +17,8 @@ DataLake / Market Snapshot public facts
     → Observation
     → complete retained Observation Artifact
     → Study
-    → Study-owned workflow / materialized Workflow Artifacts
+    → Study-owned runtime orchestration / execution outcome
+    → optional explicitly declared retained Workflow Artifacts
     → optional Study-local Analysis
     → optional Evidence / Findings
 ```
@@ -49,7 +50,9 @@ lookup Observation-owned persistence
                                       → persist complete → return Artifact
 ```
 
-已有 complete Artifact 时直接复用，不重复访问上游、不重复计算、不重复生成第二个逻辑 Artifact。Invocation 不等同于每次重新计算，不自动 refresh、overwrite 或迁移已有 Artifact。
+已有 complete Artifact 时直接复用，不重复访问上游、不重复计算、不重复生成第二个逻辑 Artifact。Successful `ensure()` return 的前提是整份合法 complete Artifact 已原子进入 Observation-owned durable persistence；不能先 return 再异步保存。Invocation 不等同于每次重新计算，不自动 refresh、overwrite 或迁移已有 Artifact。
+
+Canonical empirical reuse 是 `semantic request → Observation public ensure boundary → retained Artifact`，由 Observation identity + normalized business inputs 定位。不同 Studies / future workflows 需要相同 facts 时，由 orchestration 再次 ensure 同一 request；Analysis 只消费其已准备的 complete Artifacts，不自行 ensure。Consumer 不通过旧 Study output、filename 或 SQLite path 定位 / 复制 empirical cache，不自行决定 upstream refresh。跨 service / process recreation 的 durable reuse acceptance 唯一见 [implementation acceptance](IMPLEMENTATION.md#durable-reuse-acceptance)。
 
 ## Completeness 与 public boundary
 
@@ -61,7 +64,7 @@ Observation Artifact contract 是 Study / Analysis / external consumer 的 publi
 
 ## Persistence ownership
 
-每个 concrete Observation **exactly owns 一个 SQLite database**；该数据库承载该 Observation 的业务请求及 Artifacts，不是 one SQLite per invocation。SQLite 是 Observation internal persistence；canonical placement 与 publication mapping 见 [Implementation architecture](IMPLEMENTATION.md)，SQL schema 与 transaction algorithm 留给实现。
+每个 concrete Observation **exactly owns 一个 SQLite database**；该数据库承载多个 Observation business requests 与其 complete Artifacts，不是 one SQLite per invocation。Reusable empirical persistence 唯一归 Observation，不是 Study-owned cache。SQLite 是 Observation internal persistence；canonical placement 与 publication mapping 见 [Implementation architecture](IMPLEMENTATION.md)，SQL schema 与 transaction algorithm 留给实现。
 
 Observation runtime SQLite 文件不应进入 Git。本 authority-only 轮不创建 runtime database 或修改 repository ignore configuration。
 

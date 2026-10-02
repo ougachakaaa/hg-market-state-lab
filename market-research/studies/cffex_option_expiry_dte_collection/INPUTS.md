@@ -1,37 +1,43 @@
-# Expiry DTE Collection inputs 与 run identity
+# Expiry DTE Collection request 与 semantic identity
 
-本文件拥有 [Study](ARCHITECTURE.md) 的 request、parameter relationships、canonicalization、future CLI 映射、execution-only options 与 deterministic run identity。Invocation consumer / workflow 见 [METHOD.md](METHOD.md)，retention 见 [RESULTS.md](RESULTS.md)。
+本文件拥有 [Study](ARCHITECTURE.md) 的 canonical request、parameter relationships、canonicalization、CLI 映射与 semantic request identity。Invocation bindings / execution 见 [METHOD.md](METHOD.md)，runtime presentation 见 [RESULTS.md](RESULTS.md)，Python mapping / CLI handoff 见 [IMPLEMENTATION.md](IMPLEMENTATION.md)。本 Study 没有 retained run output。
 
 ## Required semantic request
 
-| Parameter | Semantic owner / canonical contract | Consumers / identity role | Future CLI expression |
+| Parameter | Semantic owner / canonical contract | Consumers / identity role | CLI expression |
 | --- | --- | --- | --- |
-| product_code | Study 选择值；domain / canonicalization 引用 [ExpiryUniverse inputs](../../observations/cffex_option_expiry_universe/ARCHITECTURE.md#inputs-与-business-identity) 与 [chain inputs](../../observations/cffex_option_expiry_dte_chain/ARCHITECTURE.md#inputs-与-canonicalization)，两者一致。 | Universe、全部 planned chains、两个 workflow Artifacts；identity-changing。 | --product-code，例如 MO |
-| expiry_start_date | Study 选择 inclusive expiry window 起点；date domain 引用 Universe。 | Universe、plan / collection context；identity-changing。 | --expiry-start-date，YYYY-MM-DD |
-| expiry_end_date | Study 选择 inclusive expiry window 终点；date domain / start<=end 引用 Universe。 | Universe、plan / collection context；identity-changing。 | --expiry-end-date，YYYY-MM-DD |
-| target_dte | Study 选择值；正整数自然日 domain 唯一引用 chain inputs，拒绝 bool。 | 全部 planned chain invocations、plan / collection；identity-changing。 | --target-dte，正整数文本 |
+| product_code | Study 选择值；domain / canonicalization 引用 [Universe inputs](../../observations/cffex_option_expiry_universe/ARCHITECTURE.md#inputs-与-business-identity) 与 [chain inputs](../../observations/cffex_option_expiry_dte_chain/ARCHITECTURE.md#inputs-与-canonicalization)，两者一致。 | Universe、所有 planned chains、runtime request context；identity-changing。 | --product-code，例如 MO |
+| expiry_start_date | Study 选择 inclusive expiry window 起点，date domain 引用 Universe。 | Universe、runtime plan / outcome context；identity-changing。 | --expiry-start-date，YYYY-MM-DD |
+| expiry_end_date | Study 选择 inclusive expiry window 终点，date domain / start<=end 引用 Universe。 | Universe、runtime plan / outcome context；identity-changing。 | --expiry-end-date，YYYY-MM-DD |
+| target_dte | Study 选择值，正整数自然日 domain 唯一引用 chain inputs，拒绝 bool。 | 全部 chain invocations、runtime outcome；identity-changing。 | --target-dte，正整数文本 |
 
-四项均必填、无默认值。CLI 只解析显式日期 / integer expression 为 canonical semantic types，非法输入不 trim / 改大小写、不倒置交换 window、不使用 today 或 timestamp 默认值。Study 不扩展 Observation domains；所有参数先验证再执行 workflow / upstream invocation。
+四项均必填、无默认值，canonical field 仍为 product_code。CLI 解析显式日期 / integer expression 为 canonical semantic types；所有 inputs 先验证再进入 workflow / dependency factories。非法输入不 trim / 改大小写、不倒置交换 window、不猜名称，不使用 today / timestamp / hidden date defaults。
 
-两端选择的是 expiry_date，不是 observation_date。Study 将 window 原样交给 Universe；每个 discovered expiry 与 target_dte 交给 chain。Observation 自己解析实际日期，Study 不执行 expiry-DTE 日期算术。
+两端选择的是 expiry_date window，不是 observation_date window。Study 将 window 原样交给 Universe，再将每个 discovered expiry 与 target_dte 交给 chain；实际 observation_date / actual_dte 由 chain 决定，Study 不执行 expiry-DTE 日期算术。
 
-## Deterministic run identity 与 Artifact identities
+## Semantic request identity
 
 ```text
 normalized semantic request
     = (product_code, expiry_start_date, expiry_end_date, target_dte)
-Study run identity
-    = normalized semantic request within cffex_option_expiry_dte_collection
-Workflow Artifact identity
-    = Study identity + Study run identity + expiry_plan / observation_collection
+Study request identity
+    = Study identity + normalized semantic request
 ```
 
-合法 canonical values 按原值比较；等价 CLI 表达解析为相同 semantic values 后是相同请求，任一值变化均区分 run。Inputs 覆盖实际 dependency bindings，不把 discovered expiry list、derived dates、execution timestamp、UUID、Source / code hash、path、输出位置、attempt 顺序、reuse counts 或 overwrite 加入 run identity。
+合法 canonical values 按原值比较，等价 CLI 表达解析为相同 values 后是同一个请求；任一值变化区分请求。Discovered list、derived dates、execution time / UUID、Source / code hash、path、attempt 顺序或 counts 不进入 identity。
 
-Run-key filesystem encoding / hash、具体 filenames / serialization 留给后续 implementation design；必须保持上述等价 / 区分规则与 [UI filesystem safety / placement](../../ui/ARCHITECTURE.md#3-shared-configuration-and-output-placement)。Semantic identity 不由目录字符串替代，也不定义 cache / resume。
+该 identity 只表达请求等价关系，不是 persistent Study run Artifact identity，不映射为 filesystem run key / hash / directory，也不建立 Study cache / resume。两个 Observation 的 business identities 按 METHOD bindings 确定，由其 own persistence reuse。
 
-## Execution-only options 与 invocation surface
+## Invocation surface
 
-Future Study CLI 通过 `lab research run cffex-option-expiry-dte-collection` 接收上述四个 flags；本轮只有 authority，不表示命令已可运行。`--overwrite` 为 Study-owned optional boolean flag，默认 false，CLI / run-output handling 消费，仅授权整个 Study run directory replacement，不进入 identity，不授权 Observation refresh。
+Implementation 后的 canonical user command 为：
 
-Shared configuration 仅使用 [output.root](../../ui/CONFIGURATION.md)，不增加 Study 参数、token、SQLite path、config override 或 resume flags。Canonical output collision 在调用 workflow / Observations 前处理。
+```bash
+lab research run cffex-option-expiry-dte-collection \
+  --product-code MO \
+  --expiry-start-date 2025-01-01 \
+  --expiry-end-date 2026-10-01 \
+  --target-dte 30
+```
+
+这是 future invocation target，不表示命令现已可运行。本 Study 属 [orchestration-only UI shape](../../ui/ARCHITECTURE.md#3-shared-configuration-and-output-placement)，不加载 output.root 配置、不创建 retained Study run directory，不提供 --output、--database、--sqlite-path、--resume、--overwrite 或 config override。CLI parse request → invoke Study orchestration → present outcome；Observation construction / persistence semantics 继续归其 owner。

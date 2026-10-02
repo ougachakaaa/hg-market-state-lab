@@ -1,44 +1,35 @@
-# Expiry DTE Collection retained workflow results
+# Expiry DTE Collection runtime execution outcome
 
-本文件拥有 [Study](ARCHITECTURE.md) 的两个 named Study-local Workflow Artifact semantic contracts、provenance、completeness、retention 与 human output。Producer steps 与 consumption order 归 [METHOD](METHOD.md)，run identity 归 [INPUTS](INPUTS.md)；继承 [Workflow Artifact boundary](../WORKFLOW.md)。Analysis=0、Evidence Product=0，以下产物不是 Evidence。
+本文件拥有 [Study](ARCHITECTURE.md) 的 non-persistent runtime result / CLI presentation、counts、success / empty / failure。Step names / attempts 顺序归 [METHOD.md](METHOD.md)，request identity 归 [INPUTS.md](INPUTS.md)，typed Python projection / adapter mapping 归 [IMPLEMENTATION.md](IMPLEMENTATION.md)。Study-local retained Workflow Artifacts=0、Analysis=0、Evidence=0。
 
-## expiry_plan
+## Outcome 与 counts
 
-Stable local name 为 `expiry_plan`，identity 为 Study identity + Study run identity + local name，由 METHOD STEP 2 物化。
-
-至少保留 product_code、inclusive expiry window、target_dte、source complete Universe Artifact semantic identity，以及 ordered planned entries。每项包含 expiry_date，并明确完整 chain business inputs `(product_code, expiry_date, target_dte)`；Observation identity 指向 cffex_option_expiry_dte_chain。
-
-Plan entries 恰对应 source Universe 的全部 sorted unique expiries，顺序一致，无过滤、额外或重复 entry。Complete 要求 source Universe complete、request context 一致、bindings 完整正确且已 materialized；empty source 对应 complete empty plan。Plan 不含 observation_date / actual_dte，不创造 empirical facts。
-
-## observation_collection
-
-Stable local name 为 `observation_collection`，identity 为 Study identity + Study run identity + local name，由 METHOD STEP 4 物化。它是 complete Observation Artifact manifest / composition Artifact，不是第二份 market-data copy。
-
-至少保留 request context、source complete expiry_plan identity 和 ordered collection entries。每项能够定位 expiry_date、target_dte、chain Artifact semantic identity、该 complete chain 的 observation_date / actual_dte，以及 completion status=complete。Product 在 request context 与 chain business identity 中明确；不使用 SQLite path 或任意 execution ID 替代 semantic identity。
-
-Complete 条件为 source Universe 与 plan complete、全部 planned chain Artifacts complete、entries 对 plan 一一完整引用、顺序一致、request / chain identities 一致、derived facts 原样来自各 complete chain，以及 collection 已 materialized。没有 missing、failed 或 partial entries 的 complete collection；complete empty plan 对应 complete empty collection。不复制 option-chain rows。
-
-## Retention、publication 与 provenance
-
-两个 Workflow Artifacts 属于同一个 deterministic Study run，在下游消费前先写所属 run staging workspace，成功后随整个 canonical run directory 发布。Placement、collision-before-execution、显式 overwrite、整目录 staging / replacement 与失败恢复旧输出遵守 [Research UI](../../ui/ARCHITECTURE.md#3-shared-configuration-and-output-placement)。
-
-失败不发布 complete final run output；partial / failed internal state 不构成 retained complete result，本轮不定义额外 partial-output publication、failure-output protocol、跨 invocation resume / reuse 或 Workflow Artifact cache。已成功 Observation Artifacts 保留在其独立 boundary，Study output replacement 不管理它们。
-
-Request / run identity、source Universe identity、plan identity、each chain identity 构成可追踪的 public provenance graph。Location 只定位 retained representation，不取代 semantic identity；serialization、filenames 与 run-key encoding 留给 design，不引入 database / global IDs。
-
-## Human-facing output 与 counts
-
-未来成功 / 失败 presentation 至少表达 product、expiry window、target DTE 与以下 operational counts；它们不参与 run identity：
+合法 canonical request 的 runtime result 保留四个 request fields，并表达 status=success / failure 和以下 counts：
 
 | Field | Meaning / availability |
 | --- | --- |
-| discovered expiry count | complete Universe 的 expiries 数；Universe 未完成时不可用。 |
-| planned observation count | complete plan entries 数；plan 未形成时不可用。 |
-| completed observation count | 本次 STEP 3 已返回的 complete chain Artifacts 数，包括 reused；STEP 3 尚未执行时为 0。 |
-| failed count | 本次 STEP 3 已尝试但未取得 complete Artifact 的 plan entries 数；STEP 3 尚未执行时为 0。独立说明 Universe / plan / output failure，不把它们冒充 chain failure。 |
+| product_code / expiry_start_date / expiry_end_date / target_dte | 本次合法 canonical request context，值与 INPUTS 相同。 |
+| discovered_expiry_count | Complete Universe 的 expiries 数；Universe 未成功时 None / unavailable。 |
+| planned_observation_count | 成功构建的 runtime plan entries 数，恰等于 discovered_expiry_count；plan 未形成时 None / unavailable。 |
+| completed_observation_count | 已返回对应 complete durable chain Artifacts 的计划项数，包括 Observation reuse；chain phase 尚未执行时 0。 |
+| failed_observation_count | 已尝试但未取得合法 complete chain Artifact 的计划项数，包括其 construction / operation failure；chain phase 尚未执行时 0。Universe / plan failure 不冒充 chain failure。 |
 
-STEP 3 结束并已尝试全部计划项时 completed+failed=planned；失败项不从 planned 中移除。Empty successful run 的四项 count 均为 0。提前失败的 unknown discovered / planned count 表达为不可用，不伪报零或最终成功。
+Successful non-empty outcome 满足 completed_observation_count=planned_observation_count、failed_observation_count=0；全部 chain attempts 完成时 completed+failed=planned，失败项不从 planned 中移除。Complete empty Universe success 的四项 counts 全为 0，chain invocations=0。
 
-成功必须同时给出 complete final collection semantic identity 与 canonical retained location。失败只报告实际执行状态与可读原因，不呈现 complete collection 或成功 retained location；任何 output publication failure 都是 Study failure，即使 chain failure count=0。Reused / newly-created counts 可作 operational presentation，不是 identity 或 empirical result。
+None 表达 unavailable，不伪报零。Universe failure 时 discovered / planned=None、completed / failed=0；Universe 已成功但 plan 未形成时 discovered 已知、planned=None、completed / failed=0。Counts 是 runtime execution facts，不是 empirical Artifact、identity 或 persisted audit history。
 
-不输出 mean return、win rate、distribution、chart、hypothesis result 或 Evidence / Findings。不把尚未运行状态写为已有结果，不伪造 counts。
+## Failure details 与 completion
+
+合法 request 的 operation failure result 保留 request context、实际已知 counts 与 ordered failure details：每项有 stage、readable reason，chain failure 另有 expiry_date，由 request context + expiry_date 确定该 planned business request。Stage 使用 METHOD 的 ensure_expiry_universe / build_runtime_expiry_plan / ensure_expiry_chains；非 chain stage 的 expiry_date=None。链失败明细按 planned expiry ascending order，汇总全部实际尝试结果。
+
+Universe / plan failure 立即停止后续阶段；chain phase failure 后仍按 METHOD 尝试剩余全部项，最后返回 failure。Expected Observation errors / 非法或不匹配的 Artifact return 不作 complete return，不把 upstream exception classes 暴露为 Study handling contract。Interruption 不伪造最终成功；不创建 retained partial result / Study DB，已成功 Observation Artifacts 独立保留。
+
+Invalid arguments / semantic request 不进入 workflow，CLI 提供简洁可读输入错误与可用 request context，不要求为无效值制造 canonical runtime result。
+
+## Human-facing presentation
+
+成功仅展示四个 inputs、status 与四项 counts。失败展示 request context、失败 stage、实际 counts（None 显示 unavailable）与每个失败 expiry 的 readable reason；不要求 Python traceback。CLI exit codes 为 success=0、execution failure=1、invalid arguments / request=2，repository CLI 原样传播，不建立跨 Study numeric taxonomy。
+
+本轮不增加 JSON / file delivery、成功逐 expiry listing、Universe / chain identities listing 或 reused / newly-produced counts；后者无法从当前 Artifact ensure return contract可靠地区分，不猜测。内部可持有 ordered complete Artifact references / values 供当前 orchestration 使用，不把它们变成 retained manifest。
+
+Study Results do not persist market rows。没有 retained expiry_plan / observation_collection、semantic Artifact identity、manifest / collection publication、Study SQLite、canonical retained location、run key / directory / staging / overwrite。Reusable empirical persistence 只在 Observations 内；runtime summary 不是新 reusable research product。不输出统计、Evidence / Findings 或推测的尚未运行结果。

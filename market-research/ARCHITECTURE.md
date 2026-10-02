@@ -10,11 +10,11 @@
 market-research
     ├── scratch       disposable exploration
     ├── observations  reusable retained empirical facts
-    ├── studies       objectives + workflow / Artifacts + optional Analysis / Evidence
+    ├── studies       objectives + orchestration / outcome + optional retained outputs
     └── ui            current Study CLI / output support
 ```
 
-Scratch、Observation、Study 具有不同生命周期。Observation 是独立 retained fact producer，Study 拥有 user request / workflow、invocation / composition 与 retained workflow results，并可按实际目标形成 Analysis / Evidence。Empirical collection / preparation Study 可以没有 Analysis / Evidence；Research 的解释职责终点仍是 evidence / finding，不是 production market-state output、forecast、decision、signal、recommendation 或 trading strategy。
+Scratch、Observation、Study 具有不同生命周期。Observation 唯一拥有 durable reusable empirical persistence；Study 拥有 user request / bindings、runtime orchestration / invocation / composition 与 execution outcome，并可按明确目标声明 retained workflow outputs / optional Analysis / Evidence。Retained Study 是值得保留的 research / orchestration authority，不要求 retained execution output。Orchestration-only Study 可以没有 Workflow Artifacts / Analysis / Evidence；Research 的解释职责终点仍是 evidence / finding，不是 production market-state output、forecast、decision、signal、recommendation 或 trading strategy。
 
 本模块不拥有 production modeling、model evaluation、forecasting、decision system、backtesting framework、research service/API 或 production Web UI。Observation 是本模块内部 first-class concept，不是 repository-level bounded module；新增它不建立 generic research platform。
 
@@ -25,13 +25,13 @@ Scratch、Observation、Study 具有不同生命周期。Observation 是独立 r
 ```text
 User → repository discovery / forwarding → Study-local CLI
      → Study-owned request / workflow / Observation invocation
-     → materialized Study-local workflow results
+     → runtime state / execution outcome / optional retained workflow outputs
      → optional Study-local Analysis / Evidence / visualization
 ```
 
 Repository CLI 拥有路径/layout 校验、进程调用与 exit-code propagation，不 import Research implementation 或维护 Study catalog。Study-local CLI 拥有参数、输入校验、配置、依赖 composition、Study invocation 与 success/failure presentation。新 Study 经 Observation public boundary resolve / ensure Artifacts；upstream facts 由 Observation 通过 public application boundaries 获取。Legacy Study 的直接 Snapshot composition 按 [Compatibility](studies/COMPATIBILITY.md) 保留。
 
-CLI convention、stable Study ID、配置、run-output placement / replacement 见 [Research UI authority](ui/ARCHITECTURE.md) 及 [configuration authority](ui/CONFIGURATION.md)；具体参数和用法留在 Study authority。UI output configuration 不管理 Observation SQLite。
+CLI convention、stable Study ID、orchestration-only / retained-output execution shapes 见 [Research UI authority](ui/ARCHITECTURE.md)；配置与 run-output placement / replacement 仅明确保留 outputs 时适用，见 [configuration authority](ui/CONFIGURATION.md)。具体参数和用法留在 Study authority。Orchestration-only runner 不依赖 output.root / directory；UI 不管理 Observation SQLite。
 
 ## 3. Research Result 与 Visualization
 
@@ -62,7 +62,7 @@ Research visualization 由 `market-research` 拥有，并默认以 Python 生成
 ```text
 DataLake public Application Service / Market Snapshot public result
     → Observation → retained Observation Artifact
-    → Study-owned workflow → retained workflow results
+    → Study-owned runtime orchestration → execution outcome / optional retained workflow results
     → optional Study-local Analysis → optional Evidence / Findings
 Evidence / Findings → Human / Agent Semantic Decision → authority update → Modeling
 ```
@@ -85,7 +85,7 @@ Concrete authorities 为 [cffex_option_expiry_universe](observations/cffex_optio
 
 ### Study
 
-`studies` 用于值得保留、复查或继续推进的 research question / preparation objective。Study 拥有 user request、workflow orchestration、Observation invocation / composition、Study-local materialized Artifacts、optional Analysis / Evidence、limitations 与 acceptance，不拥有 Observation definition。新建入口为 [Study Authoring](studies/AUTHORING.md)，对象模型由 [Schema](studies/SCHEMA.md) 拥有，steps / materialization boundary 进入 [Workflow](studies/WORKFLOW.md)，固定四文件布局由 [Skeleton](studies/SKELETON.md) 拥有。
+`studies` 用于值得保留、复查或继续推进的 research question / preparation objective。Study 拥有 user request / input bindings、Observation invocation orchestration、runtime plan / order / failure continuation、execution outcome 与 optional Analysis orchestration；retained Workflow Artifacts / Evidence 仅按实际目标明确声明。Study 不拥有 Observation definition 或 reusable empirical persistence，不复制 market rows 建 canonical cache。新建入口为 [Study Authoring](studies/AUTHORING.md)，对象模型由 [Schema](studies/SCHEMA.md) 拥有，runtime / retained state 与 complete-input boundary 进入 [Workflow](studies/WORKFLOW.md)，固定四文件布局由 [Skeleton](studies/SKELETON.md) 拥有。
 
 Study authority 位于 `studies/<study_package>/`，implementation 位于同名 `src/market_research/studies/<study_package>/`，保持研究知识与可替换 executable implementation 的长期分离，不迁入统一 src authority 或机械复制 Snapshot product layout。Public Study ID 由 UI authority 定义。
 
@@ -95,7 +95,7 @@ Runnable topology 由 [Implementation Package Contract](studies/IMPLEMENTATION.m
 
 Legacy Study-local Observations、旧 evidence 与 historical shared dependencies 按 [Compatibility](studies/COMPATIBILITY.md) 保持有效；新 framework 不自动迁移它们。仅 human-triggered concrete reconciliation 才迁入 Observation-first。历史 shared owners 只沿 Compatibility 或相关 legacy authority 进入，不在新 Study 默认创建路径。
 
-首个 concrete retained Study authority 为 [cffex_option_expiry_dte_collection](studies/cffex_option_expiry_dte_collection/ARCHITECTURE.md)，当前仅 authority，尚无 runnable implementation。Study output 可按目标保留 workflow Artifacts、Analysis outputs 或 Evidence / visualization，具体文件与格式由 Study 定义，不建立统一 artifact schema。Observation-owned persistence 不放入 Study run-output lifecycle。
+首个 [cffex_option_expiry_dte_collection](studies/cffex_option_expiry_dte_collection/ARCHITECTURE.md) 是 orchestration-only Study，确保 Universe 与全部 planned chains durable complete，只返回 runtime summary，零 retained Study Artifacts / Analysis / Evidence，无 run directory。其四份业务 authority 与 [concrete implementation handoff](studies/cffex_option_expiry_dte_collection/IMPLEMENTATION.md) 完整，Implementation Ready；producer / Study runtime 仍 Not Implemented，实际 runtime dependency reconciliation 未完成。其他 Study 只有明确声明时才保留 outputs，具体 shapes 由其 owner 定义。Observation persistence 不放入 Study output lifecycle；design / runtime readiness distinction 见 [Authoring](studies/AUTHORING.md#publication-与-dependency-handoff)。
 
 ## 6. Research 与 Modeling
 

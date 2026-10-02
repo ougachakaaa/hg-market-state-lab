@@ -117,4 +117,6 @@ Complete export 的非空 matching population 沿 canonical execution 成功形�
 
 Framework 三层 checks 之外，按 [Artifact acceptance](ARTIFACT.md#acceptance-scenarios) 验证精确 DTE、target=1、周末 / 假日、Calendar / Options already-complete 无 ensure、两者 incomplete 后 ensure / exact same request export、complete-but-absent、missing 后 ensure、ensure complete 后 export incomplete / invalid 仍失败、upstream failure 立即停止、无限制回溯的 proof / date termination、actual_dte、全 strikes / CALL-PUT、排序 / uniqueness、合法 nullable facts 与 owned provenance。Complete hit 使用不可用 dependency doubles 仍应 return；Study 不需 import DataLake classes。
 
-Calendar / Options 已有所需 public runtime surface，无 DataLake / Snapshot capability gap。本 producer **Authority Complete / Dependency Reconciled / Implementation Architecture Complete / Implementation Ready**，runtime **Not Implemented**；可在 Universe implementation 后实施并验证，再进行首个 Study dependency reconciliation。本轮不写 Python、创建 SQLite 或 delivery。
+Durable-before-return 与 service / process recreation 后 same-request 零 upstream reuse 必须通过 [framework durable reuse acceptance](../IMPLEMENTATION.md#durable-reuse-acceptance)，不以仅同一实例 repeat ensure 替代。
+
+Calendar / Options 已有所需 public runtime surface，无 DataLake / Snapshot capability gap。本 producer **Authority Complete / Dependency Reconciled / Implementation Architecture Complete / Implementation Ready**，runtime **Not Implemented**；可在 Universe implementation 后实施并验证，再进行首个 Study runtime dependency reconciliation。本轮不写 Python、创建 SQLite 或 delivery。

@@ -48,4 +48,6 @@ Readable public prerequisite / dependency context 可进入 OperationError messa
 
 除 framework 三层 checks，具体验证 miss 为 exact same range ensure → export、无 preliminary coverage / direct Calendar calls、ensure complete 后 export incomplete / invalid 仍失败，以及重复 expiry 去重升序、边界 inclusive、窗口外排除、complete empty / zero targets、incomplete / unit failures 不发布、provenance 值与 export 一致，repeat / reopened service reuse 零 upstream。Fake dependencies 通过合法 public results 控制，不调用 Tushare；tests 不让 Study import Options types。
 
+Durable-before-return 与 service / process recreation 后 same-request 零 upstream reuse 必须通过 [framework durable reuse acceptance](../IMPLEMENTATION.md#durable-reuse-acceptance)，不以仅同一实例 repeat ensure 替代。
+
 现有 Options public service 已有对应 request / ensure / export runtime surface，无 public capability gap；本 package **Authority Complete / Dependency Reconciled / Implementation Architecture Complete / Implementation Ready**，runtime **Not Implemented**。先实施本 producer 并通过 acceptance，再与 chain producer 一起复核 Study bindings；不在本轮创建 source、database、CLI 或 Study code。

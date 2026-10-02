@@ -74,7 +74,7 @@ validate request → normalized business key → lookup complete retained Artifa
              → atomic SQLite publication → return complete Artifact
 ```
 
-Persistence lookup 只返回合法 complete Artifact；corrupt / unreadable / incompatible state 抛 ObservationOperationError，不能伪装 miss。只有整份 Artifact 完整且通过 concrete invariants 后才原子发布；publication 成功是正常 return 的前提。Partial、failed、interrupted state 不满足 key，也不对 consumer 可见。Upstream 已成功 commits 不承诺跨库 rollback。
+Persistence lookup 只返回合法 complete Artifact；corrupt / unreadable / incompatible state 抛 ObservationOperationError，不能伪装 miss。只有整份 Artifact 完整且通过 concrete invariants 后才原子发布；durable publication 成功是正常 return 的前提，不能先 return 后异步保存，不能把仅存在于 service memory 的 Artifact 当作成功。Partial、failed、interrupted state 不满足 key，也不对 consumer 可见。Upstream 已成功 commits 不承诺跨库 rollback。
 
 V1 不预建 persisted pending state machine、job / attempt history、execution / retry queue 或 scheduler。必要 internal temporary / staging mechanics 不改变 complete boundary。V1 不承诺 single-flight：两个 concurrent misses 可重复 upstream computation，但 persistence 必须保证同 key 最多一个 logical complete Artifact。竞争 loser 读取 / 返回 winner 的 complete Artifact；若无法合法读取则 operation failure，不能发布第二个 Artifact。具体 uniqueness / transaction mechanics 由实现落实；cross-process locking optimization 延后，无 distributed lock framework 或 cross-Observation transaction。
 
@@ -98,6 +98,12 @@ Concrete package 内 public contract、service / orchestration、owned persisten
 | Concrete service | temp SQLite + controlled public dependency doubles：invalid request 在 upstream mutation 前失败，miss / success、incomplete / operation failure、corrupt / incompatible DB、Artifact invariant / publication failure、repeat ensure 与重建 service 后 durable reuse；complete hit 所有 upstream calls 为零。验证并发至多一个 complete logical Artifact、失败不可见，无真实 Tushare 调用。 |
 | Concrete semantics | 复用具体 ARTIFACT acceptance：Universe sorted unique / inclusive / empty complete / no partial；chain exact DTE、周末假日、proven absence、missing 后 ensure、upstream failure 停止、actual_dte、完整 population / ordering 与合法 None。 |
 
-Concrete semantics complete、implementation mapping complete、实际 public dependencies 可用且无 conflict / capability gap 后，才标记 concrete **Implementation Ready**。Architecture complete 不等于 runtime implemented；Study Dependency Reconciled 必须等待两项 runtime 完成及实际 bindings 复核。当前 readiness 见 [reconciliation](../IMPLEMENTATION_RECONCILIATION.md)。
+### Durable reuse acceptance
+
+两项 concrete producer 都必须验证：service instance A 对合法 request ensure 成功，整份 Artifact 已 durable / atomic persisted；关闭 connections 并丢弃 A 及其 in-memory state（process recreation equivalent），重新创建 instance B，使用同一 Observation-owned SQLite 与相同 normalized request。B 必须返回同一 semantic identity / logical complete Artifact、相同 owned public values，所有上游 factory / coverage / ensure / export calls 为零，且不 recompute。B 使用不可用 upstream doubles 仍能命中；多个不同业务请求共存于该 concrete 唯一 SQLite，不建立 Study cache。
+
+测试只用 temporary owned persistence 与受控 public dependency doubles；不依赖 Python object address、共享内存、SQLite path 的 consumer knowledge 或真实 provider。Publication / persistence failure 不返回成功，重建实例也不能读出 failed / partial state 为 complete。该验收同时适用于 Universe 与 chain，不改变其 Artifact 或 date semantics。
+
+Concrete semantics complete、implementation mapping complete、实际 public upstream dependencies 可用且无 conflict / capability gap 后，才标记 concrete **Implementation Ready**。Framework mechanics contract 完整可标为 Authority Complete / Implementation Architecture Complete / Implementation Ready；这些是设计状态，不等于 runtime implemented。Study 的 design readiness 与实际 runtime dependency reconciliation 继承 [Study handoff definition](../studies/AUTHORING.md#publication-与-dependency-handoff)：producer runtime 缺失须单独记录，实际 Study runtime dependency reconciliation 仍等待两项 runtime 完成及 bindings 复核。当前 readiness 见 [reconciliation](../IMPLEMENTATION_RECONCILIATION.md)。
 
 本轮只写 authority，不开始 Python / SQLite / Study implementation。V1 Python application boundary 不增加 Observation CLI、HTTP / REST；human execution 继续通过 Study。除此还排除 generic DataLake / Snapshot adapter、plugin、DAG、queue、background worker、run registry、global Research DB、retry / refresh engine 与 automatic migration。

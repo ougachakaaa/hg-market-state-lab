@@ -1,33 +1,33 @@
-# Expiry DTE Collection workflow authority
+# Expiry DTE Collection runtime workflow authority
 
-本文件拥有 [Study](ARCHITECTURE.md) 的 Observation dependencies、input bindings、四步执行顺序、complete consumption 与 failure orchestration。Request 值与 run identity 归 [INPUTS](INPUTS.md)，具名 Artifact shape / retention 与输出归 [RESULTS](RESULTS.md)。继承 [Workflow contract](../WORKFLOW.md)，不存在 Analysis 或 Method Context。
+本文件拥有 [Study](ARCHITECTURE.md) 的 Observation dependencies、input bindings、runtime step order、complete consumption 与 failure continuation。Request / identity 归 [INPUTS.md](INPUTS.md)，runtime outcome / counts 归 [RESULTS.md](RESULTS.md)，Python composition / handoff 归 [IMPLEMENTATION.md](IMPLEMENTATION.md)。继承 [Workflow contract](../WORKFLOW.md)，无 retained Workflow Artifacts、Analysis 或 Method Context。
 
 ## Observation Artifact dependencies
 
 | Local name / purpose | Canonical owner / Artifact contract | Invocation binding / identity |
 | --- | --- | --- |
-| expiry_universe：取得 empirical expiry dates | [Universe entry](../../observations/cffex_option_expiry_universe/ARCHITECTURE.md) / [Artifact](../../observations/cffex_option_expiry_universe/ARTIFACT.md) | Inputs.product_code、expiry_start_date、expiry_end_date；Artifact identity 为 Observation identity + 这三个 normalized inputs。 |
-| expiry_chains：每个 planned expiry 的完整 chain | [Chain entry](../../observations/cffex_option_expiry_dte_chain/ARCHITECTURE.md) / [Artifact](../../observations/cffex_option_expiry_dte_chain/ARTIFACT.md) | Inputs.product_code、plan entry.expiry_date、Inputs.target_dte；每项 identity 为 chain Observation identity + 这三个 business inputs。 |
+| expiry_universe：取得 observed expiry dates | [Universe entry](../../observations/cffex_option_expiry_universe/ARCHITECTURE.md) / [Artifact](../../observations/cffex_option_expiry_universe/ARTIFACT.md) | Inputs.product_code、expiry_start_date、expiry_end_date → ExpiryUniverseRequest 同名字段；Artifact identity 为该 Observation identity + 三个 normalized inputs。 |
+| expiry_chains：每个 planned expiry 的完整 chain | [Chain entry](../../observations/cffex_option_expiry_dte_chain/ARCHITECTURE.md) / [Artifact](../../observations/cffex_option_expiry_dte_chain/ARTIFACT.md) | Inputs.product_code、runtime plan entry.expiry_date、Inputs.target_dte → ExpiryDteChainRequest 同名字段；每项 identity 为该 Observation identity + 三个 business inputs。 |
 
-Only Study orchestration 经 Observation public boundary resolve / ensure complete Artifacts。上述 bindings 的 Python mapping 见 [Universe IMPLEMENTATION](../../observations/cffex_option_expiry_universe/IMPLEMENTATION.md) 与 [Chain IMPLEMENTATION](../../observations/cffex_option_expiry_dte_chain/IMPLEMENTATION.md)：Study orchestration 直接 import concrete Request / create_service，并消费 ensure 返回的 owned Artifact；不改变本文件 workflow。Producer runtime 尚未实现，实际 handoff 前必须 readiness reconciliation。Study 不经 CLI JSON、DataLake / Snapshot 或 persistence 获取这些事实。
+Only Study orchestration 经 concrete Observation Python public Request / create_service / service.ensure boundary 取得 complete durable Artifacts，具体接口引用 [Universe IMPLEMENTATION](../../observations/cffex_option_expiry_universe/IMPLEMENTATION.md) 与 [Chain IMPLEMENTATION](../../observations/cffex_option_expiry_dte_chain/IMPLEMENTATION.md)。不经 CLI JSON、DataLake / Snapshot、Observation SQLite 或旧 Study output 获取事实，不接管 producer derivation。当前 contracts complete，runtime producer 尚未实施，实际 bindings 验证依 IMPLEMENTATION / readiness handoff。
 
 ## Canonical workflow steps
 
-1. **ensure_expiry_universe**：以 request bindings ensure / resolve complete Universe Artifact。只有 complete Artifact 才进入下一步，complete hit 按 Observation contract 复用。
-2. **materialize_expiry_plan**：消费 complete Universe 和 request，按 Universe 升序 dates 生成一一对应的 chain invocation entries。物化 [expiry_plan](RESULTS.md#expiry_plan) 为 complete，再供 STEP 3 消费。Plan 不计算 observation_date。
-3. **ensure_expiry_chains**：消费 complete plan，按 entries 顺序逐一 invocation chain，每项在本次 workflow 中调用一次，不增加 Study retry loop。某项失败记录该项 operational failure，继续尝试剩余全部 planned entries；不能删除该项、缩小计划、改参数或跳日重试。Complete returns 可来自 Observation reuse。
-4. **materialize_observation_collection**：仅所有 planned chain Artifacts complete 后，消费 plan 和 complete chain returns，物化 [observation_collection](RESULTS.md#observation_collection)。每项引用原 chain identity，并从该 Artifact 读取 observation_date / actual_dte，不重新计算、不复制 market rows。成功后按 UI contract 发布整个 run output；发布成功才是 Study completion。
+1. **ensure_expiry_universe**：绑定 ExpiryUniverseRequest(product_code, expiry_start_date, expiry_end_date)，调用 Universe ensure。只有对应 request 的 complete durable Artifact 才进入下一步；complete hit 由 Observation reuse，failure 立即停止，不执行 chain plan。
+2. **build_runtime_expiry_plan**：消费完整 Universe 的全部 sorted unique expiries，在 memory 中构造 ordered `(product_code, expiry_date, target_dte)` invocation plan，一一对应、无过滤 / 额外 / 重复项。不计算 observation_date，不赋予 plan retained Artifact identity，不写文件或 SQLite。
+3. **ensure_expiry_chains**：按 plan 升序逐项构造 ExpiryDteChainRequest，调用 chain ensure；每个 planned business request 在本次 invocation 中尝试一次，成功返回即表示该 chain 已由 Observation durable published。某项 failure 保留对应 request 与 readable reason，继续尝试剩余全部 entries，不加入 Study retry loop，不改参数 / 日期、不直接调用 upstream。
+4. **completion_summary**：消费实际 attempts / complete returns 的 runtime state，按 RESULTS 形成 non-persistent success / failure outcome。仅所有 planned chains complete 才 success；不 materialize collection / manifest、不复制 market rows、不发布 Study output。
 
-步骤 names 是当前 Study 内的稳定语义引用，不建立通用 executable step interface。Workflow Artifacts 在所属 run staging workspace 中先物化再被下游消费，成功后保留于 canonical run output。
+Step names 是本 Study 内稳定的语义引用，不建立 generic executable interface。Runtime plan、ordered Artifact references / values、success / failure state 可以只存在于本次 invocation，用于反馈；不自动成为 Workflow Artifact 或跨 invocation reusable product。
 
 ## Empty 与 failure semantics
 
-Complete empty Universe 产生 complete empty plan；STEP 3 零 invocations，STEP 4 complete empty collection。Empty 不是统计 finding 或失败。
+Complete empty Universe → empty runtime plan → 零 chain invocations → Study success；没有不必要的 chain factory / service access，不人为生成 retained empty plan / collection。
 
-Universe failure 不生成 complete plan；plan materialization failure 不进入 chain execution。STEP 3 任一 chain failure 即使其他项成功，也不能生成 / 发布 complete final collection。STEP 4 materialization 或 run-output publication failure 同样不 complete。Internal partial / failed state 可以存在，不作为 complete input 或 final output。
+Universe operation / construction failure 停止后续 workflow；runtime plan construction failure 也不进入 chain execution。Chain invocation 的 operation / construction failure 按该 planned request 记录并继续剩余全部项；不存在同一 request 的 Study retry。全部 attempts 完成后，任一 failure 即 Study failure；不能删除失败项、把失败当作 absent expiry 或给出 fake complete collection。Counts / stage / unknown availability 唯一归 RESULTS。
 
-已成功 Observation Artifacts 持续独立存在，不因 Study failure 或 staging output failure rollback；不授予跨 invocation Workflow Artifact resume / reuse。Counts 的 availability / presentation 归 RESULTS；Study output collision 在任何 workflow / Observation invocation 前由 UI contract 处理。
+成功的 Universe / chain Artifacts 继续存在于各自 Observation persistence，Study failure 不 rollback、删除或 overwrite 它们。以后同一个或其他 Study 通过 same Observation request 再 ensure 复用，不找旧 run / manifest、不读 SQLite、不自己判断 upstream refresh。没有 Study run-output publication、collision / overwrite 或 cross-invocation workflow resume。
 
 ## Analysis boundary
 
-本 Study Analysis=0、Evidence=0，不做 sample selection、收益、PnL、statistics 或 charts。未来若新增 Analysis，须独立 semantic decision；其输入只能是 workflow 已准备的 complete Artifacts，不得自行调用 Observation / DataLake / Snapshot 或 persistence。本轮不为它预建 abstraction。
+本 Study Analysis=0、Evidence=0，不做 sample selection、PnL、statistics 或 charts。Future Analysis 需独立 semantic decision，只消费 Study orchestration 已准备的 complete Artifacts，不自行 ensure / fetch、不调用 DataLake / Snapshot 或 persistence。本轮不预建 Analysis / Evidence persistence。

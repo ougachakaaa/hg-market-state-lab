@@ -258,3 +258,39 @@ Supplemental 只读检查通过：31 份 Research Markdown、312 个 local links
 根 canonical Poetry environment 执行 `poetry run pytest market-snapshot/tests/test_authority_topology.py market-research/tests/test_study_authority_topology.py -q`：修改前与修改后均为 **24 passed / 1 failed**。失败均为 `test_new_runnable_studies_have_semantic_package_boundaries` 将 legacy source 目录的 ignored `__pycache__` 残留当作 runnable package，随后找不到 `__init__.py`；规划阶段首先报告 im_basis_baseline，本轮首先报告 price_to_lagged_ma_distribution，candidate set 遍历顺序不同。只读目录核对发现五个 legacy 残留目录均仅含 __pycache__，Git 没有其 tracked package files；本轮保持这些缓存与 tests 原样，无新增 test failure，不以历史 13 + 12 passed 记录冒充当前结果。
 
 按本轮附件十九项检查审阅 framework / concrete ownership、calls / failure / projection / opacity 与 readiness；31 份 Research Markdown 的 329 个 local links / 58 个 anchors 有效，五份修改文档均可从 root ARCHITECTURE、Research ARCHITECTURE 与 Research AGENTS 到达，`git diff --check` 通过，完整 diff 范围已核对为上述五份 Markdown。验证 authority，不宣称 runtime invocation / publication 已实施或测试；本轮结束，不开始 implementation。
+
+## Research persistence / orchestration authority reconciliation
+
+本轮基线为 `0827378626602fa15683a51cfd0763076774e455`，codex/observation，开始时工作区干净。本轮仅修改 Research authority / reconciliation Markdown，并新增首个 Study 的 specialized implementation handoff；未修改 Python、tests、DataLake、配置、ignore、legacy Compatibility 或 sibling Study authority，未创建 SQLite、runtime、commit 或 push。历史记录保留；以下决定 supersede 旧记录中强制 retained plan / collection、所有 runner 必须有 output directory，以及 producer runtime 缺失即否定 design Implementation Ready 的表述。
+
+### Human decisions 与 canonical owners
+
+[Observation architecture](observations/ARCHITECTURE.md) 拥有唯一 reusable empirical persistence / exactly-one SQLite boundary；[framework IMPLEMENTATION](observations/IMPLEMENTATION.md#durable-reuse-acceptance) 拥有 successful ensure 的 whole-Artifact validation / atomic durable publication-before-return 与 service recreation 零 upstream acceptance。[Universe IMPLEMENTATION](observations/cffex_option_expiry_universe/IMPLEMENTATION.md) 与 [Chain IMPLEMENTATION](observations/cffex_option_expiry_dte_chain/IMPLEMENTATION.md) 引用该验收，不复制框架机制。每个 concrete 的同一 owned SQLite 容纳多个 requests / complete Artifacts；Study 不读取 SQLite、不复制 rows 建第二份 empirical cache。
+
+[Study Schema](studies/SCHEMA.md) 与 [Workflow](studies/WORKFLOW.md) 分别拥有 runtime / retained object model 与 orchestration boundary。Human 确认 runtime plan、references、counts 不自动成为 Artifact，retained Workflow Artifacts=0 / Analysis=0 / Evidence=0 是完整合法 Study；明确声明 retained outputs 的其他 Study 继续使用现有 retention / publication 规则。Future Analysis 只消费 Study 已确保 complete 的 Artifacts，其 persistence 与 Evidence persistence 未决，本轮不设计。
+
+首个 Study 的 [entry](studies/cffex_option_expiry_dte_collection/ARCHITECTURE.md)、[INPUTS](studies/cffex_option_expiry_dte_collection/INPUTS.md)、[METHOD](studies/cffex_option_expiry_dte_collection/METHOD.md)、[RESULTS](studies/cffex_option_expiry_dte_collection/RESULTS.md) 拥有 orchestration-only objective、四项必填 request / normalized tuple、执行与非持久化 outcome。Human 确认 chain failure 后继续剩余全部项、最终任一失败即 failure、已成功 Observation 不 rollback；complete empty Universe 成功。撤销 retained expiry_plan / observation_collection 的 Artifact identity、manifest、materialization、publication 与 run-directory contract，runtime references 不成为新的 reusable product。Success CLI 只呈现 request / counts，failure 呈现阶段、实际 counts 与有序 readable reasons，unknown counts 不伪报零；本 Study exit codes 0 / 1 / 2 仅由 RESULTS 拥有。
+
+新增 [Study IMPLEMENTATION](studies/cffex_option_expiry_dte_collection/IMPLEMENTATION.md)，从 entry / METHOD 可达，继承通用 [Package Contract](studies/IMPLEMENTATION.md)，拥有 mandatory init / cli / study、typed request / outcome projection、explicit public Observation bindings、lazy composition / orchestration 分工与 future acceptance。没有空 analyses / evidence / observations modules。[Research UI](ui/ARCHITECTURE.md#3-shared-configuration-and-output-placement) 拥有 orchestration-only / retained-output 两种 shape；[Configuration](ui/CONFIGURATION.md) 的 output.root schema / loader failure semantics 不变，仅 retained-output runner 加载。首个 Study 不加载 output config、不调用 run-directory / publication helpers，不提供 output / database / sqlite-path / resume / overwrite flags。
+
+[Authoring](studies/AUTHORING.md#publication-与-dependency-handoff) 唯一拥有 readiness 定义：authority、dependency contracts、bindings 与 implementation architecture complete 且无 semantic gap 即 design Implementation Ready；producer runtime 缺失单独记录，实际 runtime Dependency Reconciled 仍需 producer implementation / bindings 验证。Review / Skeleton、module entry / AGENTS 与 framework package contract 同步适用范围，不改变 legacy Compatibility。
+
+### Contract preservation、capability 与 readiness
+
+[UPSTREAM](observations/UPSTREAM.md) 保持原文；Universe ensure-first、DTE Calendar / Options read-first / ensure-if-needed、one committed export 的 proof + payload、missing / proven absence / operation failure 三态与 failure 禁止跳日 / 换源规则保持不变。两项 Observation inputs / business keys / population / grain / market facts / DTE formula / date fallback / ARTIFACT / DATE_RESOLUTION 不变。只读核对现有 DataLake public contracts，未发现 contract conflict 或 DataLake / Observation semantic capability gap；尚缺 producers runtime 是实施工作，不是新的 semantic decision。
+
+| Scope | Current state |
+| --- | --- |
+| Observation framework / shared mechanics design | Authority Complete / Implementation Architecture Complete / Implementation Ready；runtime Not Implemented。 |
+| Universe / DTE Chain | Authority Complete / upstream Dependency Reconciled / Implementation Architecture Complete / Implementation Ready；runtime Not Implemented。 |
+| First Study | Study Authority Complete / Observation dependency contracts complete / Study implementation architecture complete / Implementation Ready；runtime Not Implemented，actual runtime Dependency Reconciled 未完成。 |
+
+本轮 human decisions 已编码且无剩余 vertical-slice semantic gap。**Repository vertical slice is Authority Complete and ready for implementation.** 下一 goal 顺序为 minimal shared mechanics → Universe → DTE Chain → Observation runtime / Study bindings reconciliation → Study → end-to-end tests。Observation refresh / definition evolution、future Analysis persistence 等已有 deferred concerns 不阻止当前已锁定 slice，也不由本轮发明实现。
+
+### Validation 与既有 test limitation
+
+按附件十九项逐项审阅：1–4 的唯一 persistence / one SQLite / durable-before-return / restart reuse 由 Observation owners 承载；5–7 的 public-only consumer / no upstream / no second cache 由 Study Schema / Workflow / handoff 承载；8–11 的 runtime plan / no retained collection / zero Workflow Artifacts / zero Analysis-Evidence 由首个 Study 四份 authority 承载；12–13 的 CLI / UI shape 由 INPUTS / UI 承载；14 的调用规则保留由未改的 UPSTREAM 与 concrete mappings 证明；15–16 的 bindings / no direct provider 由 METHOD / handoff 承载；17–19 由 local links / anchors / stable-entry reachability、两套 tests 与完整 diff / whitespace review 验证。此处验证 authority acceptance contract，不宣称尚不存在的 runtime behavior 已通过。
+
+根 canonical Poetry environment 执行 `poetry run pytest market-snapshot/tests/test_authority_topology.py market-research/tests/test_study_authority_topology.py -q`，修改前后均为 **24 passed / 1 failed**，无新增失败。既有 `test_new_runnable_studies_have_semantic_package_boundaries` 将 ignored legacy cache-only directories 当作 runnable package，找不到 __init__.py；修改前首先报告 price_to_lagged_ma_short_horizon_reversion，修改后首先报告 mo_option_risk_premium_baseline，set candidate order 不同但同一 limitation。五个 legacy 残留目录只有 ignored __pycache__，没有 tracked package source；缓存 / tests 保持原样。旧 REQUIRED_IMPLEMENTATION 仍固定 observations / analyses / evidence modules，下一 implementation 阶段需 reconciliation，不以本轮 authority-only edits 掩盖测试覆盖缺口。
+
+全部受影响 Markdown local links / anchors 有效，semantic owners（包括新增 handoff）从 root / Research stable entry 可达；local AGENTS 按执行政策继承链发现。完整 diff 与新文件已审阅，`git diff --check` 通过；范围仅为 20 modified / 1 new Research Markdown。没有 SQLite、Python、test、DataLake、配置、ignore 或 runtime state 变更。本轮停止于 implementation handoff，不开始实施。
