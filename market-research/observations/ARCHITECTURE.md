@@ -87,6 +87,6 @@ Observation 可以消费 DataLake public Application Service 或 Market Snapshot
 
 ## Navigation 与 non-goals
 
-从本文件进入 [Schema](SCHEMA.md) 确认 concrete semantic areas，再按 [Authoring](AUTHORING.md) 锁定设计，沿具体 Observation entry 读取必要 specialized / upstream authority。当前没有 concrete Observation，本轮不预设其 implementation topology。
+从本文件进入 [Schema](SCHEMA.md) 确认 concrete semantic areas，再按 [Authoring](AUTHORING.md) 锁定设计，沿具体 Observation entry 读取必要 specialized / upstream authority。首个 concrete entry 为 [cffex_option_expiry_dte_chain](cffex_option_expiry_dte_chain/ARCHITECTURE.md)；具体业务规则由该 entry 及其专题 contracts 拥有，本 framework 不预设 implementation topology。
 
 不创建 generic registry、plugin system、Research Repository、Experiment Engine、DAG、scheduler、executor、cache、refresh engine、HTTP API、Web UI、Observation CLI 或 automatic migration。Analysis 的当前 ownership 与 deferred reuse model 见 [Study Schema](../studies/SCHEMA.md)；实现 / 测试差异见 [implementation reconciliation](../IMPLEMENTATION_RECONCILIATION.md)。

@@ -79,7 +79,7 @@ Snapshot 继续拥有从 Source fact 到 Analysis-ready Artifact 的确定性准
 
 `observations` 拥有 reusable retained empirical products，独立于 Study 生命周期。稳定 contract 从 [Observation architecture](observations/ARCHITECTURE.md) 进入，必答 concrete semantics 与 authoring 分别进入 [Schema](observations/SCHEMA.md)、[Authoring](observations/AUTHORING.md)。本模块 entry 不拥有具体 business key、population、grain、formula、Artifact schema 或 SQLite schema。
 
-当前没有 concrete Observation。下轮可独立设计第一个 concrete authority，不从 historical shared helpers 推导已存在能力或提前创建 implementation。
+首个 concrete authority 为 [cffex_option_expiry_dte_chain](observations/cffex_option_expiry_dte_chain/ARCHITECTURE.md)，其 specialized contracts 从该 entry 进入。Authority readiness 与 runtime readiness 分开；当前尚未开始 Observation implementation，不从 historical shared helpers 推导已存在能力。
 
 ### Study
 

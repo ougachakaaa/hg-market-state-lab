@@ -2,6 +2,8 @@
 
 本文件记录 Observation-first authority 更新的基线、implementation / test drift 与交接状态，不拥有新的业务语义。入口见 [module architecture](ARCHITECTURE.md)；当前 contracts 分别见 [Observation authority](observations/ARCHITECTURE.md)、[Study Schema](studies/SCHEMA.md)、[Implementation Contract](studies/IMPLEMENTATION.md)、[Compatibility](studies/COMPATIBILITY.md) 与 [Research UI](ui/ARCHITECTURE.md)。
 
+下文第一、二轮记录保留历史基线与当时验证结果；当前首个 concrete authority 的状态见 [本轮落位记录](#首个-concrete-observation-authority-落位)，历史测试结果不代表本 worktree 已验证。
+
 ## Baseline 与本次边界
 
 基线 commit 为 `14dd806b2032672d22cc0e59d7140685aeef350c`。本次只更新 authority、navigation、authoring / review 和 reconciliation Markdown；Python、tests implementation、runtime data、SQLite schema、Snapshot / DataLake implementation、backend-api、web-ui、root runtime configuration 均未修改。
@@ -12,7 +14,7 @@
 
 | 当前差异 | 后续处理边界 |
 | --- | --- |
-| 新 Observation framework 尚无 producer、public invocation implementation、owned SQLite 或 Artifact implementation。 | 下轮先独立设计第一个 concrete Observation authority，再在明确需求与依赖就绪后另行实现；本次不创建数据或 schema。 |
+| Observation framework 与首个 concrete authority 已存在，尚无 producer、public invocation implementation、owned SQLite 或 Artifact implementation。 | 首个 concrete semantics 见本轮落位记录；下一步另行进行 implementation reconciliation / design，不从 authority readiness 推断 runtime readiness。 |
 | `test_study_authority_topology.py` 的 REQUIRED_IMPLEMENTATION 仍强制 observations.py，fixtures 仍以 Study-local method/observations 为例。 | 与未来 Package Contract / Schema 不一致；单独 test reconciliation，本次不修改测试，不保留旧规范来迎合它。 |
 | 既有 Study topology helpers 不检查独立 Observation owner、Artifact bindings / completeness 或 Observation 分支可达性。 | 现有 tests 不能单独证明新 semantic graph；本次补充非持久化 link / reachability 检查与逐条 semantic review，后续自动化检查另行设计。 |
 | 本地 src/market_research/studies 下残留已删除 Study 的 cache-only directories。 | 旧 discovery test 把目录当作 package，产生 baseline failure；不等于 tracked concrete Study，本次不清理目录、不重建 package。 |
@@ -99,3 +101,34 @@ Remaining implementation / test gaps 仍为上文所列；namespace reservation 
 此轮补充后的验证结果：repository authority tests 为 13 passed；Study topology tests 为 11 passed / 1 failed，仍为 baseline cache-only directory discovery failure，此次首次报告 `cffex_basis_forward_return_association` 缺少 init。非持久化检查确认 126 个相对链接 / anchors 有效，17 份 Research authority documents 从稳定入口可达；六项补充约束及本附件 16 条验收均已逐项复核。`git diff --check` 与新增文档 whitespace inspection 通过，逐文件内容 hash 对比和完整 incremental diff review 确认本轮只修改 Observation ARCHITECTURE、Observation SCHEMA 与本 reconciliation 三份 Markdown，其余已有工作区改动保持原样。
 
 本附件要求已明确落入 authority，足够进入第一个 concrete Observation authority 的独立设计；refresh / version evolution 仍未决定，尚未开始 Observation implementation。本轮不创建 Git commit。
+
+## 首个 Concrete Observation authority 落位
+
+本轮基于 `codex/observation` 分支的 `8d770c5e33bff5f30266c9defe043c60d7d1e329`。附件所指 `1e5ea2bb7ba28d76e5cac4e6d4b9846686f83ed8` 是该提交祖先，期间 Research 文件无变化；消费当前 DataLake public contract，包括 Options export V2 的上市首日 pre_close 合法缺席规则。
+
+Canonical entry 为 [cffex_option_expiry_dte_chain](observations/cffex_option_expiry_dte_chain/ARCHITECTURE.md)，date derivation / resolution 与 Artifact contract 分别归 [DATE_RESOLUTION.md](observations/cffex_option_expiry_dte_chain/DATE_RESOLUTION.md)、[ARTIFACT.md](observations/cffex_option_expiry_dte_chain/ARTIFACT.md)。十三个 Schema areas 的 owner mapping 在 concrete entry；module / framework entry 仅增加发现链接，不上提 DTE 或 product-specific semantics。AGENTS、AUTHORING、SCHEMA 现有 contracts 足够，无需修改；不新增 Observation catalog。
+
+本轮仅新增这三份 authority，并更新 module architecture、Observation framework architecture 与本 reconciliation，共六份 Research Markdown。未修改 Python implementation、tests、runtime data、SQLite schema、DataLake / Snapshot、CLI / UI 或 root configuration；未开始 Observation implementation，未创建 commit。
+
+### Dependency 与 remaining gaps
+
+Calendar public coverage / ensure / export 能提供完整显式 CFFEX 开市事实；Options public coverage / ensure / export 能提供单 product-day 强 completeness 与全部合法 OptionsDailyRow。当前未发现 DataLake capability gap，不扩展 upstream authority 或绕过 public boundary。
+
+Human 已确认不设人为历史下界或最大回溯次数：只在完整 product-day 证明 requested expiry 缺席时继续回溯；upstream 不能提供完整证明或日期无法继续表示时失败。该决定由 concrete DATE_RESOLUTION 唯一拥有，不新增第四个 business input。
+
+本 concrete Observation 没有剩余未决业务语义。Refresh / invalidation / definition evolution 仍沿用 framework deferred status；它们不阻塞同一有效 definition 下的 authority readiness。Public invocation Python types / package topology、SQLite schema / path / unique key / transaction / locking / retry 与测试 implementation 需下一阶段 design，不能由文档的 complete 状态推导已实现。
+
+### 本轮验证与交接
+
+根 `.venv` 不存在，`poetry env info --path` 无环境路径且非零退出。按 repository 唯一 runtime policy，本轮不安装依赖、不创建环境、不调用 `poetry run pytest` 隐式创建环境。以下现有检查未执行，不能引用上文历史结果为本轮通过：
+
+- `poetry run pytest market-snapshot/tests/test_authority_topology.py -q`
+- `poetry run pytest market-research/tests/test_study_authority_topology.py -q`
+
+旧 Study topology tests 固定 observations.py，且尚未验证 independent Observation graph / completeness；本轮不修改 tests。历史 cache-only directory failure 是上文基线记录，未将其认定为当前 worktree 已复现的 failure。
+
+Supplemental 只读检查通过：六份新增 / 修改 Markdown 中 72 个 local links / anchors 有效；三份 concrete authority 均可分别从 root ARCHITECTURE、Research ARCHITECTURE 与 Research AGENTS 进入。`git diff --check` 与含三份 untracked 新文档的 trailing-whitespace 检查通过。完整 modified diff 与新增 authority 已审阅，改动范围仅为上述六份 Research Markdown；没有通过更改 tests 或 upstream contract 掩盖 drift。
+
+Semantic review 覆盖 inputs / key、DTE 算术、精确命中、周末 / 假日、complete-but-absent、cache-missing 后 ensure、upstream failure 停止、合法 None、完整 population、complete reuse、失败不可见及 persistence boundary；acceptance scenarios 由 Artifact contract 拥有，不复制为新的规则。
+
+本轮 concrete authority 已满足十三个 semantic areas，状态为 **Concrete Observation Authority Complete**，可以进入该 Observation 的 implementation reconciliation / design；现有 pytest suite 仍待根 canonical environment 就绪后运行。Authority complete 不代表 implementation、runtime SQLite、CLI / HTTP delivery 或 runnable Study dependency 已就绪。
