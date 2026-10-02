@@ -543,3 +543,18 @@ def test_public_import_surface_and_semantic_objects() -> None:
         (),
     )
     assert asdict(view)["export_schema_version"] == 1
+
+
+def test_future_calendar_dates_are_not_clamped_and_unpublished_days_remain_retryable(
+    setup: tuple[TradeCalendarService, Repository, Client],
+) -> None:
+    service, repository, client = setup
+    request = TradeCalendarRange("SSE", date(9999, 1, 1), date(9999, 1, 2))
+    assert service.coverage(request) == CoverageResult(2, 0, 2, 0, 0, False)
+    assert not repository.path.exists() and not client.calls
+    client.rows = [row("99990101")]
+    result = service.ensure(request)
+    assert (result.requested_units, result.succeeded_units, result.failed_units) == (2, 1, 1)
+    assert service.export(request).records[0].cal_date == date(9999, 1, 1)
+    client.rows = [row("99990102")]
+    assert service.ensure(request).complete

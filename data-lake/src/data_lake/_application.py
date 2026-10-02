@@ -1,7 +1,9 @@
 """Composition helpers for Dataset-owned services, not a consumer-facing registry."""
 
 import logging
-from collections.abc import Callable, Iterable, Mapping, Sequence
+from collections.abc import Callable, Generator, Iterable, Mapping, Sequence
+from concurrent.futures import ThreadPoolExecutor
+from contextlib import closing
 from typing import Protocol
 
 from ._domain import CachedUnit, ExecutionFailure, Status, Unit, UnitRecords
@@ -41,6 +43,7 @@ class Core[Request, View: ExportEnvelope]:
         check_complete: Callable[[Unit, UnitRecords], None],
         project: Callable[[Request, CoverageResult, tuple[CachedUnit, ...]], View],
         batches: Callable[[tuple[Unit, ...]], Iterable[tuple[Unit, ...]]] = single_batch,
+        prefetch: bool = False,
     ) -> None:
         self._repository = repository
         self._targets = targets
@@ -49,6 +52,7 @@ class Core[Request, View: ExportEnvelope]:
         self._check_complete = check_complete
         self._project = project
         self._batches = batches
+        self._prefetch = prefetch
 
     def _units(self, request: Request) -> tuple[Unit, ...]:
         # Serialize immediately to validate identities and deduplicate semantic targets.
@@ -93,9 +97,55 @@ class Core[Request, View: ExportEnvelope]:
         except Exception as exc:
             raise OperationError("Ensure operation could not be executed") from exc
 
+    def _partitions(
+        self,
+        source: Source,
+        batches: tuple[tuple[Unit, ...], ...],
+    ) -> Generator[tuple[tuple[Unit, ...], Mapping[str, object] | ExecutionFailure]]:
+        def fetch(batch: tuple[Unit, ...]) -> Mapping[str, object] | ExecutionFailure:
+            try:
+                return source.fetch(batch)
+            except ExecutionFailure as failure:
+                return failure
+
+        def pending(batch: tuple[Unit, ...]) -> None:
+            for unit in batch:
+                self._repository.pending(unit)
+
+        if not self._prefetch:
+            for batch in batches:
+                pending(batch)
+                yield batch, fetch(batch)
+            return
+        worker = ThreadPoolExecutor(max_workers=1, thread_name_prefix="datalake-source")
+        future = None
+        completed = False
+        try:
+            pending(batches[0])
+            future = worker.submit(fetch, batches[0])
+            for index, batch in enumerate(batches):
+                partition = future.result()
+                if index + 1 < len(batches):
+                    next_batch = batches[index + 1]
+                    pending(next_batch)
+                    future = worker.submit(fetch, next_batch)
+                yield batch, partition
+            completed = True
+        finally:
+            try:
+                cancel = getattr(source, "cancel", None)
+                if not completed and callable(cancel):
+                    cancel()
+            finally:
+                if future is not None:
+                    future.cancel()
+                worker.shutdown(wait=True, cancel_futures=True)
+
     def _ensure(self, request: Request) -> EnsureResult:
         units = self._units(request)
-        before = self._snapshot(units)
+        checked = self._snapshot(units)
+        before = Snapshot(checked.coverage, (), checked.statuses)
+        del checked
         selected = tuple(unit for unit in units if before.statuses.get(unit.key) != Status.SUCCESS)
         logger.info(
             "ensure_start dataset=%s requested=%d already_successful=%d selected=%d",
@@ -137,45 +187,43 @@ class Core[Request, View: ExportEnvelope]:
                     len(failures),
                 )
 
-        for batch in batches:
-            for unit in batch:
-                self._repository.pending(unit)
-            try:
-                partition = source.fetch(batch)
-            except ExecutionFailure as failure:
-                for unit in batch:
-                    self._repository.failed(unit, failure)
-                    failures.append(UnitFailure(unit.identity, failure.reason))
-                    logger.warning(
-                        "unit_failed dataset=%s identity=%s code=%s reason=%s",
-                        self._repository.dataset,
-                        unit.identity,
-                        failure.code,
-                        failure.reason,
-                    )
-                report_progress()
-                continue
-            for unit in batch:
-                try:
-                    if unit.key not in partition:
-                        raise ExecutionFailure(
-                            "Source returned no facts for the requested unit", "missing_unit"
+        with self._repository.write_session(), closing(self._partitions(source, batches)) as parts:
+            for batch, partition in parts:
+                if isinstance(partition, ExecutionFailure):
+                    failure = partition
+                    for unit in batch:
+                        self._repository.failed(unit, failure)
+                        failures.append(UnitFailure(unit.identity, failure.reason))
+                        logger.warning(
+                            "unit_failed dataset=%s identity=%s code=%s reason=%s",
+                            self._repository.dataset,
+                            unit.identity,
+                            failure.code,
+                            failure.reason,
                         )
-                    normalized = self._normalize(unit, partition[unit.key])
-                    self._check_complete(unit, normalized)
-                    written += self._repository.succeed(unit, normalized)
-                    succeeded += 1
-                except ExecutionFailure as failure:
-                    self._repository.failed(unit, failure)
-                    failures.append(UnitFailure(unit.identity, failure.reason))
-                    logger.warning(
-                        "unit_failed dataset=%s identity=%s code=%s reason=%s",
-                        self._repository.dataset,
-                        unit.identity,
-                        failure.code,
-                        failure.reason,
-                    )
-            report_progress()
+                    report_progress()
+                    continue
+                for unit in batch:
+                    try:
+                        if unit.key not in partition:
+                            raise ExecutionFailure(
+                                "Source returned no facts for the requested unit", "missing_unit"
+                            )
+                        normalized = self._normalize(unit, partition[unit.key])
+                        self._check_complete(unit, normalized)
+                        written += self._repository.succeed(unit, normalized)
+                        succeeded += 1
+                    except ExecutionFailure as failure:
+                        self._repository.failed(unit, failure)
+                        failures.append(UnitFailure(unit.identity, failure.reason))
+                        logger.warning(
+                            "unit_failed dataset=%s identity=%s code=%s reason=%s",
+                            self._repository.dataset,
+                            unit.identity,
+                            failure.code,
+                            failure.reason,
+                        )
+                report_progress()
         after = self._snapshot(units)
         logger.info(
             "ensure_complete dataset=%s attempted=%d succeeded=%d failed=%d "

@@ -65,7 +65,7 @@ class Executor:
                 if self.unpaged
                 else self.catalog[int(params["offset"]) : int(params["offset"]) + 1]
             )
-        return Frame(self.daily)
+        return Frame(self.daily[int(params.get("offset", 0)) : int(params.get("offset", 0)) + 4000])
 
 
 def catalog() -> list[dict[str, Any]]:
@@ -314,3 +314,191 @@ def test_other_addressable_index_rows_are_not_written(setup: Any) -> None:
     executor.daily.append(unrelated)
     assert service.ensure(request).complete
     assert [row.index_code for row in service.export(request).records] == ["000300.SH"]
+
+
+@pytest.mark.parametrize("operation", ["coverage", "ensure", "export"])
+def test_future_window_rejected_before_dependency_or_source(setup: Any, operation: str) -> None:
+    service, repo, executor, request = setup
+    object.__setattr__(request, "end_date", date(9999, 12, 31))
+    with pytest.raises(InvalidRequestError, match="today"):
+        getattr(service, operation)(request)
+    assert not executor.calls and not repo.path.exists()
+    with pytest.raises(InvalidRequestError, match="today"):
+        public.IndexDailyRange(["000300.SH"], DAY, date(9999, 12, 31))
+
+
+@pytest.mark.parametrize("defect", ["value", "identity"])
+def test_range_fetch_partitions_days_and_keeps_failure_local(setup: Any, defect: str) -> None:
+    service, repo, executor, _ = setup
+    original = deepcopy(executor.daily)
+    executor.daily = []
+    for index in range(3):
+        for raw in original:
+            item = dict(raw, trade_date=(DAY + timedelta(days=index)).strftime("%Y%m%d"))
+            if index == 1:
+                if defect == "value":
+                    item["close"] = None
+                elif raw is original[0]:
+                    item["ts_code"] = "malformed"
+            executor.daily.append(item)
+    request = public.IndexDailyRange(["000300.SH"], DAY, DAY + timedelta(days=2))
+    result = service.ensure(request)
+    assert (result.attempted_units, result.succeeded_units, result.failed_units) == (3, 2, 1)
+    assert result.failures[0].identity == ("000300.SH", DAY + timedelta(days=1))
+    view = service.export(request)
+    assert {row.trade_date for row in view.records} == {DAY, DAY + timedelta(days=2)}
+    calls = [params for endpoint, params in executor.calls if endpoint == "index_daily"]
+    assert len(calls) == 2 and [params["offset"] for params in calls] == [0, len(executor.daily)]
+    assert calls[0]["start_date"] == "20240102" and calls[0]["end_date"] == "20240104"
+    with sqlite3.connect(repo.path) as connection:
+        assert connection.execute("SELECT count(*) FROM basis_snapshot").fetchone()[0] == 1
+
+
+def test_known_catalog_failure_does_not_issue_unusable_daily_requests(setup: Any) -> None:
+    service, _, executor, _ = setup
+    executor.catalog[0]["name"] = None
+    result = service.ensure(public.IndexDailyRange(["000300.SH"], DAY, DAY + timedelta(days=2)))
+    assert result.attempted_units == 3 and result.failed_units == 3
+    assert not any(endpoint.endswith("daily") for endpoint, _ in executor.calls)
+
+
+def test_export_reuses_each_validated_row_only_within_its_snapshot(
+    setup: Any,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    service, _, _, request = setup
+    assert service.ensure(request).complete
+    calls = 0
+    original = _source.read_row
+
+    def tracked(record: Any) -> Any:
+        nonlocal calls
+        calls += 1
+        return original(record)
+
+    monkeypatch.setattr(_source, "read_row", tracked)
+    first = service.export(request)
+    assert calls == len(first.records)
+    assert service.export(request) == first
+    assert calls == 2 * len(first.records)
+    assert service.coverage(request).complete
+    assert calls == 3 * len(first.records)
+
+
+def test_batched_metadata_preserves_code_failures_and_never_requeries_batch(setup: Any) -> None:
+    _, _, executor, _ = setup
+    good = "000300.SH"
+    bad = "000905.SH"
+    executor.catalog.append(dict(executor.catalog[0], ts_code=bad, name=None))
+    source = _source.DailySource(executor, {}, (good, bad))
+    source.fetch((Unit((good, DAY)),))
+    basic = [params for endpoint, params in executor.calls if endpoint == "index_basic"]
+    assert {p["market"] for p in basic} == {"SSE", "SZSE", "CSI", "CICC", "OTH", "MSCI", "SW"}
+    assert all(p["symbol"] == "000300,000905" for p in basic)
+    assert good in source.metadata and bad in source.errors
+    count = len(executor.calls)
+    with pytest.raises(ExecutionFailure):
+        source.fetch((Unit((bad, DAY)),))
+    assert len(executor.calls) == count
+
+
+def test_metadata_reuse_selects_latest_representative_for_requested_code(
+    setup: Any,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    service, repo, executor, request = setup
+    executor.catalog.append(dict(executor.catalog[0], ts_code="000905.SH"))
+    executor.daily = [
+        dict(daily(meta), trade_date=(DAY + timedelta(days=n)).strftime("%Y%m%d"))
+        for n in range(3)
+        for meta in executor.catalog
+    ]
+    assert service.ensure(
+        public.IndexDailyRange(["000300.SH", "000905.SH"], DAY, DAY + timedelta(days=2))
+    ).complete
+    captured = []
+    original = repo.snapshot
+
+    def tracked(units: Any) -> Any:
+        captured.append(tuple(units))
+        return original(units)
+
+    monkeypatch.setattr(repo, "snapshot", tracked)
+    monkeypatch.setattr(executor, "prepare", lambda: executor, raising=False)
+    monkeypatch.setattr(_service, "TushareExecutor", lambda: executor)
+    source = service._prepare(request.index_codes)
+    assert captured == [(Unit(("000300.SH", DAY + timedelta(days=2))),)]
+    assert set(source.metadata) == {"000300.SH"}
+
+
+def test_metadata_batches_bound_symbols_and_check_cross_market_conflicts(
+    setup: Any,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    _, _, executor, _ = setup
+    codes = tuple(f"{n:06}.SH" for n in range(100, 165))
+    executor.catalog = [dict(catalog()[0], ts_code=code) for code in codes]
+
+    def call(endpoint: str, **params: Any) -> Frame:
+        executor.calls.append((endpoint, params))
+        wanted = set(params["symbol"].split(","))
+        rows = [row for row in executor.catalog if row["ts_code"][:6] in wanted]
+        return Frame(rows[int(params["offset"]) :] if params["market"] == "SSE" else [])
+
+    monkeypatch.setattr(executor, "call", call)
+    source = _source.DailySource(executor, {}, codes)
+    source._load_metadata(codes[0])
+    assert len(source.metadata) == 64
+    source._load_metadata(codes[-1])
+    assert set(source.metadata) == set(codes)
+    assert max(len(params["symbol"].split(",")) for _, params in executor.calls) == 64
+    assert len(executor.calls) == 16
+    # A duplicate identity in another market cannot be accepted by stopping early.
+    executor.calls.clear()
+    duplicate = dict(executor.catalog[0], market="CSI")
+
+    def conflict(endpoint: str, **params: Any) -> Frame:
+        executor.calls.append((endpoint, params))
+        rows = [duplicate] if params["market"] == "CSI" else executor.catalog[:2]
+        return Frame(rows[int(params["offset"]) :] if params["market"] in ("SSE", "CSI") else [])
+
+    monkeypatch.setattr(executor, "call", conflict)
+    source = _source.DailySource(executor, {}, codes[:2])
+    with pytest.raises(ExecutionFailure):
+        source._load_metadata(codes[0])
+    assert codes[1] in source.metadata and codes[0] in source.errors
+
+
+def test_metadata_transport_failure_fails_batch_without_daily_calls(setup: Any) -> None:
+    _, _, executor, _ = setup
+    codes = ("000300.SH", "000905.SH")
+    executor.error = True
+    source = _source.DailySource(executor, {}, codes)
+    for code in codes:
+        with pytest.raises(ExecutionFailure):
+            source.fetch((Unit((code, DAY)),))
+    assert set(source.errors) == set(codes)
+    assert [endpoint for endpoint, _ in executor.calls] == ["index_basic"]
+
+
+def test_metadata_reuse_does_not_fall_back_from_corrupt_latest_representative(
+    setup: Any,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    service, repo, executor, request = setup
+    executor.daily += [dict(executor.daily[0], trade_date="20240103")]
+    assert service.ensure(
+        public.IndexDailyRange(request.index_codes, DAY, DAY + timedelta(days=1))
+    ).complete
+    with sqlite3.connect(repo.path) as connection:
+        connection.execute(
+            "UPDATE fetch_unit SET content_hash='corrupt' WHERE unit_key=?",
+            (Unit(("000300.SH", DAY + timedelta(days=1))).key,),
+        )
+    monkeypatch.setattr(
+        _service,
+        "TushareExecutor",
+        lambda: pytest.fail("invalid metadata must fail before Source initialization"),
+    )
+    with pytest.raises(OperationError, match="metadata"):
+        service._prepare(request.index_codes)

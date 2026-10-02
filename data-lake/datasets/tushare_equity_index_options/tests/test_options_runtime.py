@@ -419,3 +419,176 @@ def test_listing_exception_does_not_hide_bad_source_facts(setup: Any, defect: st
         assert "field=pre_close" in result.failures[0].reason
         assert "contract=" in result.failures[0].reason
         assert "date=2024-01-02" in result.failures[0].reason
+
+
+@pytest.mark.parametrize("operation", ["coverage", "ensure", "export"])
+def test_future_window_rejected_before_dependency_or_source(setup: Any, operation: str) -> None:
+    service, repo, executor, request = setup
+    object.__setattr__(request, "end_date", date(9999, 12, 31))
+    with pytest.raises(InvalidRequestError, match="today"):
+        getattr(service, operation)(request)
+    assert not executor.calls and not repo.path.exists()
+    with pytest.raises(InvalidRequestError, match="today"):
+        public.OptionsDailyRange(["IO"], DAY, date(9999, 12, 31))
+
+
+@pytest.mark.parametrize("defect", ["value", "identity"])
+def test_range_fetch_partitions_days_and_keeps_failure_local(setup: Any, defect: str) -> None:
+    service, repo, executor, _ = setup
+    original = deepcopy(executor.daily)
+    executor.daily = []
+    for index in range(3):
+        for raw in original:
+            item = dict(raw, trade_date=(DAY + timedelta(days=index)).strftime("%Y%m%d"))
+            if index == 1:
+                if defect == "value":
+                    item["close"] = None
+                elif raw is original[0]:
+                    item["ts_code"] = "malformed"
+            executor.daily.append(item)
+    request = public.OptionsDailyRange(["IO"], DAY, DAY + timedelta(days=2))
+    result = service.ensure(request)
+    assert (result.attempted_units, result.succeeded_units, result.failed_units) == (3, 2, 1)
+    assert result.failures[0].identity == ("IO", DAY + timedelta(days=1))
+    view = service.export(request)
+    assert {row.trade_date for row in view.records} == {DAY, DAY + timedelta(days=2)}
+    calls = [params for endpoint, params in executor.calls if endpoint == "opt_daily"]
+    assert len(calls) == 2 and [params["offset"] for params in calls] == [0, len(executor.daily)]
+    assert calls[0]["start_date"] == "20240102" and calls[0]["end_date"] == "20240104"
+    with sqlite3.connect(repo.path) as connection:
+        assert connection.execute("SELECT count(*) FROM basis_snapshot").fetchone()[0] == 1
+
+
+def test_small_window_shares_cross_section_across_products_and_releases_response(
+    setup: Any,
+) -> None:
+    service, _, executor, _ = setup
+    other = deepcopy(executor.catalog)
+    for item in other:
+        item["ts_code"] = item["ts_code"].replace("IO", "HO")
+        item["symbol"] = item["symbol"].replace("IO", "HO")
+        item["opt_code"] = "OP000016.SH"
+    executor.catalog.extend(other)
+    executor.daily = [
+        dict(daily(meta), trade_date=(DAY + timedelta(days=index)).strftime("%Y%m%d"))
+        for index in range(4)
+        for meta in executor.catalog
+    ]
+    source = _source.DailySource(executor)
+    service._source_factory = lambda: source
+    result = service.ensure(public.OptionsDailyRange(["IO", "HO"], DAY, DAY + timedelta(days=3)))
+    assert result.complete and result.succeeded_units == 8
+    daily_calls = [params for endpoint, params in executor.calls if endpoint == "opt_daily"]
+    assert len(daily_calls) == 4
+    assert not source.daily_cache
+
+
+def test_basis_validation_reuse_is_operation_local_but_records_still_checked(
+    setup: Any,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    service, _, executor, _ = setup
+    original = deepcopy(executor.daily)
+    executor.daily += [dict(row, trade_date="20240103") for row in original]
+    count = 0
+    validate = _source.validated_catalog
+
+    def tracked(product: str, basis: object) -> dict:
+        nonlocal count
+        count += 1
+        return validate(product, basis)
+
+    monkeypatch.setattr(_source, "validated_catalog", tracked)
+    request = public.OptionsDailyRange(["IO"], DAY, DAY + timedelta(days=1))
+    assert service.ensure(request).complete
+    assert count == 2  # Once on fetched facts, once on the committed read snapshot.
+    count = 0
+    assert service.coverage(request).complete
+    assert count == 1
+    assert service.coverage(request).complete
+    assert count == 2  # A new operation must independently validate its frozen basis.
+
+
+def test_known_catalog_failure_does_not_issue_unusable_daily_requests(setup: Any) -> None:
+    service, _, executor, _ = setup
+    executor.catalog[0]["name"] = None
+    result = service.ensure(public.OptionsDailyRange(["IO"], DAY, DAY + timedelta(days=2)))
+    assert result.attempted_units == 3 and result.failed_units == 3
+    assert not any(endpoint.endswith("daily") for endpoint, _ in executor.calls)
+
+
+def test_sparse_pending_dates_do_not_expand_transport_window_across_months() -> None:
+    days = (date(2024, 1, 2), date(2024, 6, 2), date(2025, 1, 2))
+    units = tuple(Unit(("IO", day)) for day in days)
+    groups = tuple(_service.batches(units))
+    assert groups == tuple((unit,) for unit in units)
+
+
+def test_export_reuses_each_validated_row_only_within_its_snapshot(
+    setup: Any,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    service, _, _, request = setup
+    assert service.ensure(request).complete
+    calls = 0
+    original = _source.read_row
+
+    def tracked(record: Any) -> Any:
+        nonlocal calls
+        calls += 1
+        return original(record)
+
+    monkeypatch.setattr(_source, "read_row", tracked)
+    first = service.export(request)
+    assert calls == len(first.records)
+    assert service.export(request) == first
+    assert calls == 2 * len(first.records)
+    assert service.coverage(request).complete
+    assert calls == 3 * len(first.records)
+
+
+def test_lifecycle_index_preserves_inclusive_edges_and_out_of_order_dates() -> None:
+    catalog = {
+        "a": {"list_date": "2024-01-02", "delist_date": "2024-01-03"},
+        "b": {"list_date": "2024-01-03", "delist_date": "2024-01-03"},
+        "c": {"list_date": "2024-01-04", "delist_date": "2024-01-05"},
+    }
+    index = _source.ContractIndex(catalog)
+    for offset in (0, 1, 2, 3, 4, 1, 0, 3, 2):
+        target = DAY + timedelta(days=offset)
+        expected = {
+            code: meta
+            for code, meta in catalog.items()
+            if meta["list_date"] <= target.isoformat() <= meta["delist_date"]
+        }
+        assert index.at(target) == expected
+
+
+@pytest.mark.parametrize("unowned", [False, True])
+def test_malformed_cross_section_is_isolated_by_product_and_day(
+    setup: Any,
+    unowned: bool,
+) -> None:
+    service, _, executor, _ = setup
+    family = "IO"
+    other_family = "HO"
+    other = deepcopy(executor.catalog)
+    for item in other:
+        item["ts_code"] = item["ts_code"].replace(family, other_family)
+        item["symbol"] = item["symbol"].replace(family, other_family)
+        item["opt_code"] = "OP000016.SH"
+    executor.catalog.extend(other)
+    executor.daily = [
+        dict(daily(meta), trade_date=(DAY + timedelta(days=n)).strftime("%Y%m%d"))
+        for n in range(2)
+        for meta in executor.catalog
+    ]
+    # An extra malformed row must not disappear during the initial product split.
+    executor.daily.append(dict(executor.daily[0], ts_code="bad" if unowned else family + "bad"))
+    request = public.OptionsDailyRange([family, other_family], DAY, DAY + timedelta(days=1))
+    result = service.ensure(request)
+    assert result.failed_units == (2 if unowned else 1)
+    assert {failure.identity for failure in result.failures} == (
+        {(family, DAY), (other_family, DAY)} if unowned else {(family, DAY)}
+    )
+    assert result.succeeded_units + result.failed_units == 4

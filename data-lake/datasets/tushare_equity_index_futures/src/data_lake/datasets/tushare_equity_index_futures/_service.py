@@ -1,23 +1,44 @@
 """Dataset-owned composition and public Calendar prerequisite."""
 
-from collections.abc import Callable
+from collections.abc import Callable, Iterable
 from datetime import date, timedelta
 from pathlib import Path
 from typing import Any
 
 from data_lake import CoverageResult, EnsureResult, InvalidRequestError, OperationError
 from data_lake._application import Core, Source
-from data_lake._domain import CachedUnit, Unit
+from data_lake._domain import CachedUnit, Record, Unit
 from data_lake._repository import Repository
 from data_lake._runtime import database_path
 from data_lake.datasets.tushare_trade_calendar import TradeCalendarRange
 from data_lake.datasets.tushare_trade_calendar import create_service as calendar_service
 from data_lake.providers.tushare import TushareExecutor
 
-from ._models import DailyWindow, FuturesDailyExport, FuturesDailyRange, FuturesDailyScope
-from ._source import DailySource, check_complete, normalize, read_row
+from ._models import (
+    DailyWindow,
+    FuturesDailyExport,
+    FuturesDailyRange,
+    FuturesDailyRow,
+    FuturesDailyScope,
+)
+from ._source import CompletenessChecker, DailySource, identity, normalize, read_row
 
 DATASET = "tushare_equity_index_futures"
+
+
+def batches(units: tuple[Unit, ...]) -> Iterable[tuple[Unit, ...]]:
+    grouped: dict[date, list[Unit]] = {}
+    for unit in units:
+        _, target = identity(unit)
+        grouped.setdefault(target, []).append(unit)
+    window: list[date] = []
+    for day in sorted(grouped):
+        if window and (len(window) == 5 or (day - window[0]).days >= 31):
+            yield tuple(unit for target in window for unit in grouped[target])
+            window.clear()
+        window.append(day)
+    if window:
+        yield tuple(unit for target in window for unit in grouped[target])
 
 
 def trading_days(calendar: Any, request: FuturesDailyRange, ensure: bool) -> tuple[date, ...]:
@@ -67,9 +88,12 @@ def trading_days(calendar: Any, request: FuturesDailyRange, ensure: bool) -> tup
 
 
 def project(
-    request: FuturesDailyRange, coverage: CoverageResult, cached: tuple[CachedUnit, ...]
+    request: FuturesDailyRange,
+    coverage: CoverageResult,
+    cached: tuple[CachedUnit, ...],
+    reader: Callable[[Record], FuturesDailyRow] | None = None,
 ) -> FuturesDailyExport:
-    records = tuple(read_row(record) for item in cached for record in item.records)
+    records = tuple((reader or read_row)(record) for item in cached for record in item.records)
     records = tuple(
         sorted(records, key=lambda row: (row.product_code, row.trade_date, row.contract_code))
     )
@@ -95,20 +119,28 @@ class FuturesDailyService:
     def _prepare(self) -> Source:
         return DailySource(TushareExecutor().prepare())
 
-    def _core(self, request: FuturesDailyRange, ensure: bool = False) -> Core:
+    def _core(
+        self,
+        request: FuturesDailyRange,
+        ensure: bool = False,
+        *,
+        reuse_rows: bool = False,
+    ) -> Core:
         if not isinstance(request, FuturesDailyRange):
             raise InvalidRequestError("request must be a FuturesDailyRange")
         request.__post_init__()
         days = trading_days(self._calendar, request, ensure)
         units = tuple(Unit((code, day)) for code in request.product_codes for day in days)
+        checker = CompletenessChecker(reuse_rows=reuse_rows)
         return Core(
             self._repository,
             targets=lambda _: units,
             prepare_source=self._source_factory,
             normalize=normalize,
-            check_complete=check_complete,
-            project=project,
-            batches=lambda selected: ((unit,) for unit in selected),
+            check_complete=checker,
+            project=lambda req, coverage, cached: project(req, coverage, cached, checker.row),
+            batches=batches,
+            prefetch=True,
         )
 
     def coverage(self, request: FuturesDailyRange) -> CoverageResult:
@@ -118,7 +150,7 @@ class FuturesDailyService:
         return self._core(request, True).ensure(request)
 
     def export(self, request: FuturesDailyRange) -> FuturesDailyExport:
-        return self._core(request).export(request)
+        return self._core(request, reuse_rows=True).export(request)
 
 
 def _create_service(

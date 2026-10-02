@@ -39,3 +39,5 @@ Observed 是 daily response 归属 (p,d) 的真实股指期权 multiset，按 me
 已有 success 默认跳过；后续 catalog 修订不重判其历史 completeness、不重写成功依据、不单独触发 refresh。Coverage 按保留的成功依据解释 owned cache，不能使用当前 catalog 扩缩旧 expected set。Export 的 expiry/strike/CALL-PUT 及其他 metadata 来自相应 success 保留的合法 Source facts，与 Records/coverage 来自同一个 owned committed snapshot；不宣称 trade_date 当时 metadata 或 provider-current freshness。
 
 Refresh、force、TTL、Source correction/stale semantics 留待独立设计。Source batching/retries/catalog row counts 不改变 product-day ownership 或 public accounting。
+
+冻结 basis 可以在本 Dataset 内去重存储；每个 unit 的历史 basis 不变，具体 generation 兼容与升级见 [PERSISTENCE.md](../../PERSISTENCE.md)。同一 operation 内验证复用见 [EXECUTION.md](../../EXECUTION.md)，仍逐 unit 验证完整 contract universe。

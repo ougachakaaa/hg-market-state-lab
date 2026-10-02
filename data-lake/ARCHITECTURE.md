@@ -82,6 +82,8 @@ Dataset-local source root 不创建独立 Python project、Poetry environment �
 | Application Service / coverage / ensure / export / public result / runtime 调用约束 | [APPLICATION.md](APPLICATION.md) |
 | Tushare-backed Dataset 的 Source execution / credential / client / shared limiter / provider failure | [providers/TUSHARE.md](providers/TUSHARE.md) |
 | Operational progress / safe request and validation diagnostics | [DIAGNOSTICS.md](DIAGNOSTICS.md) |
+| Bounded batching / validation reuse / Source-write overlap | [EXECUTION.md](EXECUTION.md) |
+| SQLite lifecycle / immutable basis / generation 2 to 3 upgrade | [PERSISTENCE.md](PERSISTENCE.md) |
 | 具体 Dataset 的 Source、identity、fields、completeness | [DATASETS.md](DATASETS.md) → owning Dataset ARCHITECTURE.md |
 | Dataset-specific consumer request/result/view、public Python surface | [DATASETS.md](DATASETS.md) → owning Dataset ARCHITECTURE.md → SERVICE.md |
 | CLI topology / delegation / serialization / file delivery | [lab authority](../lab/ARCHITECTURE.md) |
@@ -91,6 +93,6 @@ Dataset 与 provider authority 只能在模块边界及相关公共 domain/appli
 
 ## 5. Deferred design
 
-Dataset services 与 CLI vertical slices、source/test/storage ownership 的实现状态由 [implementation reconciliation](IMPLEMENTATION_RECONCILIATION.md) 集中记录。HTTP、schema migration 与其他 consumer integration 继续 deferred。内部文件、具体存储类型、key serialization、canonicalization/hash、事务机制、失败恢复与 adapter batching 属于 implementation design，不得重新决定已固定的 semantic request、结果计数或 export contract。Research/Snapshot integration 须独立设计。
+Dataset services 与 CLI vertical slices、source/test/storage ownership 的实现状态由 [implementation reconciliation](IMPLEMENTATION_RECONCILIATION.md) 集中记录。HTTP、通用 schema migration framework 与其他 consumer integration 继续 deferred；明确的 generation 2 → 3 升级由 [PERSISTENCE.md](PERSISTENCE.md) 拥有。内部 key serialization、canonicalization/hash 与 adapter batching 不得重新决定已固定的 semantic request、结果计数或 export contract。Research/Snapshot integration 须独立设计。
 
 Refresh / force / invalidation policy、TTL、stale state、多维 Window、Dataset dependency graph、cross-Dataset query engine、Source request audit table、plugin framework 与 generic workflow engine 均不在本轮设计范围内。

@@ -1,24 +1,34 @@
 """Dataset-owned composition and public Calendar prerequisite."""
 
 import json
-from collections.abc import Callable
+from collections.abc import Callable, Iterable, Sequence
 from datetime import date, timedelta
 from pathlib import Path
 from typing import Any, cast
 
 from data_lake import CoverageResult, EnsureResult, InvalidRequestError, OperationError
 from data_lake._application import Core, Source
-from data_lake._domain import CachedUnit, Unit, UnitRecords
+from data_lake._domain import CachedUnit, Record, Unit, UnitRecords
 from data_lake._repository import Repository
 from data_lake._runtime import database_path
 from data_lake.datasets.tushare_trade_calendar import TradeCalendarRange
 from data_lake.datasets.tushare_trade_calendar import create_service as calendar_service
 from data_lake.providers.tushare import TushareExecutor
 
-from ._models import DailyWindow, IndexDailyExport, IndexDailyRange, IndexDailyScope
-from ._source import DailySource, check_complete, normalize, read_row
+from ._models import DailyWindow, IndexDailyExport, IndexDailyRange, IndexDailyRow, IndexDailyScope
+from ._source import CompletenessChecker, DailySource, check_complete, identity, normalize, read_row
 
 DATASET = "tushare_index_daily"
+
+
+def batches(units: tuple[Unit, ...]) -> Iterable[tuple[Unit, ...]]:
+    grouped: dict[tuple[str, int], list[Unit]] = {}
+    for unit in units:
+        code, day = identity(unit)
+        grouped.setdefault((code, day.year), []).append(unit)
+    for group in grouped.values():
+        for offset in range(0, len(group), 250):
+            yield tuple(group[offset : offset + 250])
 
 
 def trading_days(calendar: Any, request: IndexDailyRange, ensure: bool) -> tuple[date, ...]:
@@ -68,9 +78,12 @@ def trading_days(calendar: Any, request: IndexDailyRange, ensure: bool) -> tuple
 
 
 def project(
-    request: IndexDailyRange, coverage: CoverageResult, cached: tuple[CachedUnit, ...]
+    request: IndexDailyRange,
+    coverage: CoverageResult,
+    cached: tuple[CachedUnit, ...],
+    reader: Callable[[Record], IndexDailyRow] | None = None,
 ) -> IndexDailyExport:
-    records = tuple(read_row(record) for item in cached for record in item.records)
+    records = tuple((reader or read_row)(record) for item in cached for record in item.records)
     records = tuple(sorted(records, key=lambda row: (row.index_code, row.trade_date)))
     return IndexDailyExport(
         DATASET,
@@ -91,33 +104,50 @@ class IndexDailyService:
         self._calendar = calendar_service()
         self._source_factory: Callable[[], Source] = self._prepare
 
-    def _prepare(self) -> Source:
+    def _prepare(self, codes: Sequence[str] = ()) -> Source:
         cached: dict[str, dict[str, Any]] = {}
-        units = tuple(
-            Unit((json.loads(key)[0], date.fromisoformat(json.loads(key)[1])))
-            for key in self._repository.successful_keys()
-        )
-        for unit in self._repository.snapshot(units).successful:
-            check_complete(unit.unit, UnitRecords(unit.records, unit.instruments, unit.basis))
-            cached[cast(tuple[str, date], unit.unit.identity)[0]] = cast(
-                dict[str, Any], unit.basis
-            )["metadata"]
-        return DailySource(TushareExecutor().prepare(), cached)
+        selected = set(codes)
+        representatives: dict[str, Unit] = {}
+        for key in self._repository.successful_keys():
+            code, target = json.loads(key)
+            if code in selected:
+                unit = Unit((code, date.fromisoformat(target)))
+                previous = representatives.get(code)
+                if previous is None or identity(unit)[1] > identity(previous)[1]:
+                    representatives[code] = unit
+        for item in self._repository.snapshot(tuple(representatives.values())).successful:
+            check_complete(item.unit, UnitRecords(item.records, item.instruments, item.basis))
+            cached[identity(item.unit)[0]] = cast(dict[str, Any], item.basis)["metadata"]
+        return DailySource(TushareExecutor().prepare(), cached, tuple(codes))
 
-    def _core(self, request: IndexDailyRange, ensure: bool = False) -> Core:
+    def _core(
+        self,
+        request: IndexDailyRange,
+        ensure: bool = False,
+        *,
+        reuse_rows: bool = False,
+    ) -> Core:
         if not isinstance(request, IndexDailyRange):
             raise InvalidRequestError("request must be a IndexDailyRange")
         request.__post_init__()
         days = trading_days(self._calendar, request, ensure)
         units = tuple(Unit((code, day)) for code in request.index_codes for day in days)
+        checker = CompletenessChecker(reuse_rows=reuse_rows)
+
+        def prepare_source() -> Source:
+            if self._source_factory == self._prepare:
+                return self._prepare(request.index_codes)
+            return self._source_factory()
+
         return Core(
             self._repository,
             targets=lambda _: units,
-            prepare_source=self._source_factory,
+            prepare_source=prepare_source,
             normalize=normalize,
-            check_complete=check_complete,
-            project=project,
-            batches=lambda selected: ((unit,) for unit in selected),
+            check_complete=checker,
+            project=lambda req, coverage, cached: project(req, coverage, cached, checker.row),
+            batches=batches,
+            prefetch=True,
         )
 
     def coverage(self, request: IndexDailyRange) -> CoverageResult:
@@ -127,7 +157,7 @@ class IndexDailyService:
         return self._core(request, True).ensure(request)
 
     def export(self, request: IndexDailyRange) -> IndexDailyExport:
-        return self._core(request).export(request)
+        return self._core(request, reuse_rows=True).export(request)
 
 
 def _create_service(

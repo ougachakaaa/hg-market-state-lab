@@ -2,6 +2,7 @@
 
 import math
 import re
+from collections.abc import Callable
 from dataclasses import fields
 from datetime import date
 from typing import Any, NoReturn, cast
@@ -9,6 +10,7 @@ from typing import Any, NoReturn, cast
 from data_lake._domain import ExecutionFailure, Instrument, Record, Unit, UnitRecords
 from data_lake._serialization import Json
 from data_lake.providers.tushare import Executor
+from data_lake.providers.tushare._executor import CancellableExecutor
 
 from ._models import FuturesDailyRow
 
@@ -152,9 +154,12 @@ NUMBERS = [
 OPTIONAL_NUMBERS = ["delivery_settlement_price"]
 
 
+CANONICAL_FIELDS = frozenset(field.name for field in fields(FuturesDailyRow))
+
+
 def read_row(record: Record) -> FuturesDailyRow:
     data: dict[str, Any] = dict(record.fields)
-    if set(data) != {field.name for field in fields(FuturesDailyRow)}:
+    if set(data) != CANONICAL_FIELDS:
         fail("Canonical fields are incompatible")
     for key in STRINGS:
         text(data[key])
@@ -269,23 +274,57 @@ def daily(raw: dict[str, Any], meta: dict[str, Any], target: date) -> Record:
     return Record(result, meta["contract_code"])
 
 
+class ContractIndex:
+    """Exact inclusive lifecycle sweep over an immutable, validated catalog."""
+
+    def __init__(self, catalog: dict[str, dict[str, Any]]) -> None:
+        self.catalog = catalog
+        self.starts = sorted((meta["list_date"], code) for code, meta in catalog.items())
+        self.ends = sorted((meta["delist_date"], code) for code, meta in catalog.items())
+        self.active: dict[str, dict[str, Any]] = {}
+        self.start = self.end = 0
+        self.last = ""
+
+    def at(self, target: date) -> dict[str, dict[str, Any]]:
+        day = target.isoformat()
+        if day < self.last:
+            self.active.clear()
+            self.start = self.end = 0
+        while self.start < len(self.starts) and self.starts[self.start][0] <= day:
+            _, code = self.starts[self.start]
+            self.active[code] = self.catalog[code]
+            self.start += 1
+        while self.end < len(self.ends) and self.ends[self.end][0] < day:
+            _, code = self.ends[self.end]
+            self.active.pop(code, None)
+            self.end += 1
+        self.last = day
+        return self.active
+
+
 class DailySource:
     def __init__(self, executor: Executor) -> None:
-        self.executor = executor
+        self.executor = CancellableExecutor(executor)
         self.catalog: list[dict[str, Any]] | None = None
         self.catalog_error: ExecutionFailure | None = None
         self.exclusions: set[str] = set()
         self.product_errors: dict[str, ExecutionFailure] = {}
-        self.daily_cache: dict[date, list[dict[str, Any]] | ExecutionFailure] = {}
+        self.bases: dict[str, dict[str, Json]] = {}
+        self.daily_cache: dict[tuple[str, date], list[dict[str, Any]]] = {}
+        self.daily_errors: dict[tuple[str, date], ExecutionFailure] = {}
+        self.indices: dict[str, ContractIndex] = {}
 
-    def fetch(self, units: tuple[Unit, ...]) -> dict[str, object]:
-        product, target = identity(units[0])
+    def cancel(self) -> None:
+        self.executor.cancel()
+
+    def _load_catalog(self) -> None:
         if self.catalog is None and self.catalog_error is None:
             try:
                 raw_catalog = exhaust(
                     self.executor, "fut_basic", exchange="CFFEX", fields=BASIC_FIELDS, fut_type="1"
                 )
                 catalog: list[dict[str, Any]] = []
+                catalog_codes: set[str] = set()
                 for raw in raw_catalog:
                     # Only known unrelated families may be excluded.
                     raw_product = raw.get("fut_code")
@@ -303,10 +342,9 @@ class DailySource:
                         continue
                     try:
                         normalized = metadata(raw)
-                        if normalized["contract_code"] in {
-                            meta["contract_code"] for meta in catalog
-                        }:
+                        if normalized["contract_code"] in catalog_codes:
                             fail("Duplicate catalog contract identity")
+                        catalog_codes.add(normalized["contract_code"])
                         catalog.append(normalized)
                     except ExecutionFailure as exc:
                         self.product_errors[raw_product] = exc
@@ -322,7 +360,7 @@ class DailySource:
                     code = text(raw.get("ts_code"))
                     if raw.get("exchange") != "CFFEX" or code != text(raw.get("symbol")) + ".CFX":
                         fail("Invalid nonordinary exclusion evidence")
-                    if code in {meta["contract_code"] for meta in catalog}:
+                    if code in catalog_codes:
                         fail("Conflicting ordinary/nonordinary classification")
                     self.exclusions.add(code)
             except ExecutionFailure as exc:
@@ -330,69 +368,115 @@ class DailySource:
         if self.catalog_error is not None:
             raise self.catalog_error
         assert self.catalog is not None
-        if product in self.product_errors:
-            raise self.product_errors[product]
-        basis = [meta for meta in self.catalog if meta["product_code"] == product]
-        expected = {
-            meta["contract_code"]: meta
-            for meta in basis
-            if meta["list_date"] <= target.isoformat() <= meta["delist_date"]
-        }
-        if target not in self.daily_cache:
-            try:
-                self.daily_cache[target] = exhaust(
-                    self.executor,
-                    "fut_daily",
-                    exchange="CFFEX",
-                    trade_date=target.strftime("%Y%m%d"),
-                    fields=DAILY_FIELDS,
-                )
-            except ExecutionFailure as exc:
-                self.daily_cache[target] = exc
-        response = self.daily_cache[target]
-        if isinstance(response, ExecutionFailure):
-            raise response
-        observed: list[Record] = []
+
+    def fetch(self, units: tuple[Unit, ...]) -> dict[str, object]:
+        self._load_catalog()
+        if all(identity(unit)[0] in self.product_errors for unit in units):
+            return {unit.key: self.product_errors[identity(unit)[0]] for unit in units}
+        days = sorted({identity(unit)[1] for unit in units})
+        response = exhaust(
+            self.executor,
+            "fut_daily",
+            exchange="CFFEX",
+            start_date=days[0].strftime("%Y%m%d"),
+            end_date=days[-1].strftime("%Y%m%d"),
+            fields=DAILY_FIELDS,
+        )
+        self.daily_cache = {identity(unit): [] for unit in units}
+        self.daily_errors.clear()
+        selected_days = {target.isoformat(): target for target in days}
         for raw in response:
-            code = text(raw.get("ts_code"))
+            try:
+                source_day = day(raw.get("trade_date"))
+            except ExecutionFailure:
+                self.daily_cache.clear()
+                self.daily_errors.clear()
+                raise
+            if source_day not in selected_days:
+                continue
+            target = selected_days[source_day]
+            try:
+                code = text(raw.get("ts_code"))
+            except ExecutionFailure as exc:
+                for key in self.daily_cache:
+                    if key[1] == target:
+                        self.daily_errors.setdefault(key, exc)
+                continue
             if code in self.exclusions:
                 continue
             match = re.fullmatch(r"([A-Z]+)[0-9]{4}\.CFX", code)
             if not match:
                 prefix = re.match(r"^([A-Z]+)", code)
-                if prefix and prefix[1] != product:
-                    continue
-                fail("Unclassifiable daily contract")
-            if match[1] != product:
+                failure = ExecutionFailure("Unclassifiable daily contract", "completeness")
+                for key in self.daily_cache:
+                    if key[1] == target and (prefix is None or prefix[1] == key[0]):
+                        self.daily_errors.setdefault(key, failure)
                 continue
-            if day(raw.get("trade_date")) != target.isoformat():
-                continue
+            key = match[1], target
+            if key in self.daily_cache:
+                self.daily_cache[key].append(raw)
+        result: dict[str, object] = {}
+        try:
+            for unit in units:
+                try:
+                    result[unit.key] = self._fetch_unit((unit,))[unit.key]
+                except ExecutionFailure as exc:
+                    result[unit.key] = exc
+            return result
+        finally:
+            self.daily_cache.clear()
+            self.daily_errors.clear()
+
+    def _fetch_unit(self, units: tuple[Unit, ...]) -> dict[str, object]:
+        product, target = identity(units[0])
+        assert self.catalog is not None
+        if product in self.product_errors:
+            raise self.product_errors[product]
+        if (product, target) in self.daily_errors:
+            raise self.daily_errors[product, target]
+        if product not in self.bases:
+            self.bases[product] = cast(
+                dict[str, Json],
+                {
+                    "catalog": [meta for meta in self.catalog if meta["product_code"] == product],
+                    "exhausted": True,
+                },
+            )
+        frozen = self.bases[product]
+        basis = cast(list[dict[str, Any]], frozen["catalog"])
+        if product not in self.indices:
+            self.indices[product] = ContractIndex({meta["contract_code"]: meta for meta in basis})
+        expected = self.indices[product].at(target)
+        response = self.daily_cache[product, target]
+        observed: list[Record] = []
+        for raw in response:
+            code = raw["ts_code"]
             if code not in expected:
                 fail("Unexpected active contract")
             observed.append(daily(raw, expected[code], target))
         facts = UnitRecords(
             tuple(observed),
             tuple(instrument(meta) for meta in expected.values()),
-            cast(dict[str, Json], {"catalog": basis, "exhausted": True}),
+            frozen,
         )
-        check_complete(units[0], facts)
         return {units[0].key: facts}
 
 
 def normalize(unit: Unit, raw: object) -> UnitRecords:
+    if isinstance(raw, ExecutionFailure):
+        raise raw
     if not isinstance(raw, UnitRecords):
         fail("Invalid normalized Source facts")
     return raw
 
 
-def check_complete(unit: Unit, facts: UnitRecords) -> None:
-    product, target = identity(unit)
-    if not isinstance(facts.basis, dict) or facts.basis.get("exhausted") is not True:
+def validated_catalog(product: str, basis: object) -> dict[str, dict[str, Any]]:
+    if not isinstance(basis, dict) or basis.get("exhausted") is not True:
         fail("Missing complete catalog basis")
-    catalog = cast(list[dict[str, Any]], facts.basis.get("catalog"))
+    catalog = cast(list[dict[str, Any]], basis.get("catalog"))
     if not isinstance(catalog, list):
         fail("Invalid catalog basis")
-    expected = {}
+    verified_catalog = {}
     seen = set()
     for meta in catalog:
         if not isinstance(meta, dict) or meta.get("product_code") != product:
@@ -405,11 +489,55 @@ def check_complete(unit: Unit, facts: UnitRecords) -> None:
         verified = metadata(to_provider_metadata(meta))
         if verified != meta:
             fail("Invalid frozen metadata")
-        if meta["list_date"] <= target.isoformat() <= meta["delist_date"]:
-            expected[code] = meta
+        verified_catalog[code] = meta
+    return verified_catalog
+
+
+class CompletenessChecker:
+    """Operation-local cache for internal immutable basis objects, retaining identity."""
+
+    def __init__(self, *, reuse_rows: bool = False) -> None:
+        self.catalogs: dict[int, tuple[object, str, ContractIndex]] = {}
+        self.reuse_rows = reuse_rows
+        self.rows: dict[int, tuple[Record, FuturesDailyRow]] = {}
+
+    def row(self, record: Record) -> FuturesDailyRow:
+        if not self.reuse_rows:
+            return read_row(record)
+        cached = self.rows.get(id(record))
+        if cached is None:
+            cached = record, read_row(record)
+            self.rows[id(record)] = cached
+        return cached[1]
+
+    def __call__(self, unit: Unit, facts: UnitRecords) -> None:
+        product, target = identity(unit)
+        key = id(facts.basis)
+        cached = self.catalogs.get(key)
+        if cached is None:
+            catalog = ContractIndex(validated_catalog(product, facts.basis))
+            self.catalogs[key] = facts.basis, product, catalog
+        else:
+            _, cached_product, catalog = cached
+            if cached_product != product:
+                fail("Frozen catalog product mismatch")
+        check_records(unit, facts, catalog.at(target), self.row)
+
+
+def check_complete(unit: Unit, facts: UnitRecords) -> None:
+    CompletenessChecker()(unit, facts)
+
+
+def check_records(
+    unit: Unit,
+    facts: UnitRecords,
+    expected: dict[str, dict[str, Any]],
+    reader: Callable[[Record], FuturesDailyRow] | None = None,
+) -> None:
+    product, target = identity(unit)
     observed = []
     for record in facts.records:
-        row = read_row(record)
+        row = (reader or read_row)(record)
         if row.product_code != product or row.trade_date != target:
             fail("Record ownership mismatch")
         code = row.contract_code

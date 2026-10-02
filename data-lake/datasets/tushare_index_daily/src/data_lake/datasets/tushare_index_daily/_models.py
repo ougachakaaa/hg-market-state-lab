@@ -3,7 +3,7 @@
 import re
 from collections.abc import Sequence
 from dataclasses import dataclass
-from datetime import date
+from datetime import date, datetime, timedelta, timezone
 
 from data_lake import ExportEnvelope, InvalidRequestError
 
@@ -28,6 +28,8 @@ class IndexDailyRange:
             raise InvalidRequestError("Window requires dates, not timestamps")
         if self.start_date > self.end_date:
             raise InvalidRequestError("Window is inverted")
+        if self.end_date > datetime.now(timezone(timedelta(hours=8))).date():
+            raise InvalidRequestError("Window cannot extend beyond today in Asia/Shanghai")
         object.__setattr__(self, "index_codes", tuple(sorted(set(values))))
 
 

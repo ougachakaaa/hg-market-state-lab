@@ -29,6 +29,8 @@ CONTEXT_ENTRIES = {
     Path("data-lake/datasets/tushare_index_daily/ARCHITECTURE.md"),
     Path("data-lake/providers/TUSHARE.md"),
     Path("data-lake/ARCHITECTURE.md"),
+    Path("data-lake/EXECUTION.md"),
+    Path("data-lake/PERSISTENCE.md"),
     Path("data-lake/DOMAIN_MODEL.md"),
     Path("data-lake/APPLICATION.md"),
     Path("data-lake/DATASETS.md"),
