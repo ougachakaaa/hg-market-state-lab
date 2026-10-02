@@ -86,10 +86,10 @@ poetry run lab datalake ensure tushare_trade_calendar `
 
 ```bash
 poetry run lab research list
-poetry run lab research run im-basis-baseline --help
+poetry run lab research run <study-id> --help
 ```
 
-`research list` 发现当前可运行的 retained Studies；`research run <study-id> --help` 查看对应 Study 的接口。实际参数、方法与结果语义继续读取该 Study authority，例如 [IM basis baseline](../market-research/studies/im_basis_baseline/ARCHITECTURE.md)。
+`research list` 发现当前可运行的 retained Studies；`research run <study-id> --help` 查看对应 Study 的接口。当前没有可运行的 retained Study，`research list` 输出为空。新增 Study 后，实际参数、方法与结果语义继续读取该 Study authority。
 
 ## 错误与自动化
 

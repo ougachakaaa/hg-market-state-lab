@@ -1,6 +1,6 @@
 # Price-to-Lagged-Reference Research Semantics authority
 
-本文档是 `Price-to-Lagged-MA Distribution` 与 `Price-to-Lagged-MA Short-Horizon Reversion` 共同使用的 lagged moving reference 和 price-to-reference deviation 的 narrow canonical owner。Research 边界与 retained Study 入口见 [market-research architecture](../../ARCHITECTURE.md)；输入 observation 与精确 warm-up 的产品契约见 [Index Daily History](../../../market-snapshot/src/market_snapshot/products/index_daily_history/ARCHITECTURE.md) 的 [public read/application contract](../../../market-snapshot/src/market_snapshot/products/index_daily_history/read-contract.md)。
+本文档是 `market-research` 中共用的 lagged moving reference 和 price-to-reference deviation 的 narrow canonical owner。Research 边界与 retained Study 入口见 [market-research architecture](../../ARCHITECTURE.md)；输入 observation 与精确 warm-up 的产品契约见 [Index Daily History](../../../market-snapshot/src/market_snapshot/products/index_daily_history/ARCHITECTURE.md) 的 [public read/application contract](../../../market-snapshot/src/market_snapshot/products/index_daily_history/read-contract.md)。
 
 ## Observation window 与时间方向
 
@@ -34,4 +34,4 @@ Snapshot public contract 保证每条所需 `close` 存在、finite 且严格大
 
 ## Ownership boundary
 
-本 authority 不拥有 empirical distribution bins、percentile sets、distribution granularity、forward return、MR、MFE、bucket design、run identity、CLI flags/defaults、result artifacts、hypothesis、visualization 或 findings。Empirical quantile 与 fixed-width distribution 由 [shared distribution authority](../distribution/ARCHITECTURE.md) 拥有；两个 [Distribution Study](../../studies/price_to_lagged_ma_distribution/ARCHITECTURE.md) 与 [Short-Horizon Reversion Study](../../studies/price_to_lagged_ma_short_horizon_reversion/ARCHITECTURE.md) 各自拥有其 research question、sample interpretation、execution identity、retained results 与 acceptance。本 authority 不是 generic MA、reference 或 feature framework，也不改变 Snapshot 产品对 Source facts 和 public result 的 ownership。
+本 authority 不拥有 empirical distribution bins、percentile sets、distribution granularity、forward return、MR、MFE、bucket design、run identity、CLI flags/defaults、result artifacts、hypothesis、visualization 或 findings。Empirical quantile 与 fixed-width distribution 由 [shared distribution authority](../distribution/ARCHITECTURE.md) 拥有；调用 Study 各自拥有其 research question、sample interpretation、execution identity、retained results 与 acceptance。本 authority 不是 generic MA、reference 或 feature framework，也不改变 Snapshot 产品对 Source facts 和 public result 的 ownership。

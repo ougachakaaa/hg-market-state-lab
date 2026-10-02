@@ -30,8 +30,8 @@ market-research/src/market_research/studies/
 `study_package` 必须是小写 snake_case Python identifier。Stable public Study ID 只允许小写 ASCII 字母、数字与单个连字符分隔的 segment，并通过 `_` 到 `-` 的一对一映射从 package 名确定性得到。例如：
 
 ```text
-im_basis_baseline
-    ↔ im-basis-baseline
+example_study
+    ↔ example-study
 ```
 
 `research list` 只发现具有普通、非 symlink `__init__.py` 和 `cli.py` 的直接 package，按 public Study ID 排序输出。它不 import package、不读取 Source、不执行 Study，也不从中央文件读取 catalog。非法命名、symlink、非普通文件或无法安全映射的 runner layout 必须以人类可读的 malformed-study 错误失败，不得静默加载。
@@ -61,8 +61,6 @@ Study-local CLI 将 Study-owned run key 交给共享 Research UI，canonical pla
 ```
 
 共享 Research UI 只将 key 作为不透明的单个目录名使用，并负责校验其 filesystem safety，防止绝对路径、路径逃逸或其他不安全的目录映射；它不解释 key 的 Study 语义。同一 `study-id + study-owned-run-key` 始终映射到同一 canonical run directory。共享 UI support 可以提供 configuration loading、canonical placement、collision detection 与事务性的整目录 staging/replacement，但不得定义 Study arguments、Snapshot request、artifact filenames/contents、statistics 或 result semantics。
-
-现有 `im-basis-baseline` 与 `im-basis-forward-return-association` 的 run identity 由各自显式日期区间决定，可以继续使用 `<start_trade_date>__<end_trade_date>` 作为各自的 deterministic run key；该泛化不要求迁移既有 output directory 或改变这两个 Study 的语义。
 
 若 canonical run directory 已存在，默认在调用 Snapshot 或 Study 前失败并保留原 evidence。只有 Study 显式提供并接收 `--overwrite` 时才允许替换；replacement 以整个 run directory 为单位，先在同级 staging directory 完成，发布失败恢复原 evidence。
 

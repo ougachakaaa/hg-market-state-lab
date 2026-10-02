@@ -22,18 +22,6 @@ REQUIRED_IMPLEMENTATION = (
     "analyses.py",
     "evidence.py",
 )
-# These authorities predate the fixed top-level layout; new Study directories must use it.
-LEGACY_STUDIES = frozenset(
-    {
-        "cffex_basis_forward_return_association",
-        "im_basis_baseline",
-        "im_basis_forward_return_association",
-        "price_to_lagged_ma_distribution",
-        "price_to_lagged_ma_short_horizon_reversion",
-    }
-)
-# These executable packages existed before the implementation package contract.
-LEGACY_IMPLEMENTATIONS = LEGACY_STUDIES
 
 
 def local_study_links(path: Path, study_root: Path) -> set[Path]:
@@ -95,8 +83,7 @@ def test_each_study_entry_reaches_its_specialized_authority() -> None:
         assert entry.is_file(), study_root
         authority_files = {path.resolve() for path in study_root.rglob("*.md")}
         assert authority_files <= reached_authorities(entry, study_root), study_root
-        if study_root.name not in LEGACY_STUDIES:
-            assert_new_study_topology(study_root)
+        assert_new_study_topology(study_root)
 
 
 def test_new_runnable_studies_have_semantic_package_boundaries() -> None:
@@ -105,19 +92,10 @@ def test_new_runnable_studies_have_semantic_package_boundaries() -> None:
         for path in IMPLEMENTATIONS_ROOT.iterdir()
         if path.is_dir() and path.name != "__pycache__"
     } | {path.stem for path in IMPLEMENTATIONS_ROOT.glob("*.py") if path.name != "__init__.py"}
-    for study_package in candidates - LEGACY_IMPLEMENTATIONS:
+    for study_package in candidates:
         assert_new_runnable_package(
             IMPLEMENTATIONS_ROOT / study_package, STUDIES_ROOT / study_package
         )
-
-
-def test_mo_option_risk_premium_authority_links_resolve() -> None:
-    study_root = STUDIES_ROOT / "mo_option_risk_premium_baseline"
-    for path in study_root.glob("*.md"):
-        for raw_target in MARKDOWN_LINK.findall(path.read_text(encoding="utf-8")):
-            target = raw_target.split("#", 1)[0]
-            if target and "://" not in target:
-                assert (path.parent / target).is_file(), (path, raw_target)
 
 
 def test_legacy_single_file_and_specialized_navigation(tmp_path: Path) -> None:

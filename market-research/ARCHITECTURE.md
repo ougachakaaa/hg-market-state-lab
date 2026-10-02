@@ -125,14 +125,7 @@ results/
 
 当前已有 retained Study 的合法 shared Research semantic dependencies 仅从相关 Study authority 或 [Compatibility](studies/COMPATIBILITY.md) 进入；它们不是新 Study 创建时的默认语义来源。
 
-当前 retained study 入口：
-
-- [CFFEX Equity Index Basis Environment × Forward Return Association](studies/cffex_basis_forward_return_association/ARCHITECTURE.md)
-- [IM Annualized Basis Baseline](studies/im_basis_baseline/ARCHITECTURE.md)
-- [IM Basis Forward Return Association](studies/im_basis_forward_return_association/ARCHITECTURE.md)
-- [MO Option Risk Premium Baseline](studies/mo_option_risk_premium_baseline/ARCHITECTURE.md)
-- [Price-to-Lagged-MA Distribution](studies/price_to_lagged_ma_distribution/ARCHITECTURE.md)
-- [Price-to-Lagged-MA Short-Horizon Reversion](studies/price_to_lagged_ma_short_horizon_reversion/ARCHITECTURE.md)
+当前没有 retained Study。Study 编写规范、共享 Research semantics 与 UI 支撑继续保留。
 
 本模块不预设 Experiment Engine、Study Registry、Research Repository、plugin system、统一 execution/data/artifact schema 或通用 lifecycle。Study Schema 只定义每个研究必须回答的 product / research semantic 问题；新建 retained Study 的顶层 authority 遵循 Skeleton 的固定布局，更深层文件只在确有阅读需要时建立。
 
