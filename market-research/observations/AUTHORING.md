@@ -2,6 +2,8 @@
 
 本文件拥有独立 Observation 的创建与设计交接流程。先读 [Observation architecture](ARCHITECTURE.md) 与 [Upstream policy](UPSTREAM.md)，再按 [Schema](SCHEMA.md) 锁定 concrete semantics；Research identity 与导航见 [module architecture](../ARCHITECTURE.md)。本流程不在 Study Method 内定义 Observation。
 
+先经 [Shared Component classification](../shared/ARCHITECTURE.md) 判断 local logic / 明确跨研究 reusable mechanism / independent research artifact。只有最后一类进入本流程；不因 Study 需要 reusable helper 或某段逻辑调用 DataLake 而默认创建 Observation。
+
 ## Semantic decision workflow
 
 ```text

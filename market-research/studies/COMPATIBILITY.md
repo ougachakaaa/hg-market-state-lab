@@ -36,4 +36,4 @@ Human 明确要求升级 / reconciliation、substantial semantic modification、
 - [IM Basis Research Semantics](../shared/im_basis/ARCHITECTURE.md)
 - [Price-to-Lagged-Reference Research Semantics](../shared/price_to_lagged_reference/ARCHITECTURE.md)
 
-这些窄 authority 和 helpers 继续有效，不自动成为 Observation、reusable Analysis 或新 Study 默认依赖。Consolidation 不能替代 Observation-first migration、定义 refresh / versioning，或建立 generic research framework。拆分历史 authority 仅在有真实阅读收益、能保持既定语义且在授权范围内时进行；不自动修改公式、参数、Artifact contract、evidence 或 runner。
+这些窄 authority 和 helpers 继续有效，不自动成为 Observation、reusable Analysis 或新 Study 默认依赖。新的小领域 Component 分类 / 提升见 [Component authority](../shared/ARCHITECTURE.md)，不要求为明确的机制复用先启动历史 CONSOLIDATE；后者仍只处理已有 Study research-semantic consolidation。Consolidation 不能替代 Observation-first migration、定义 refresh / versioning，或建立 generic research framework。拆分历史 authority 仅在有真实阅读收益、能保持既定语义且在授权范围内时进行；不自动修改公式、参数、Artifact contract、evidence 或 runner。

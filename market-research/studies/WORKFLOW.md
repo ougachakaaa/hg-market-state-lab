@@ -6,17 +6,17 @@
 
 每个 Study 必须定义自己的 workflow：objective、请求输入、步骤顺序、dependency bindings、每步 consumes / produces、完成条件、失败及空结果语义。至少有一个具名步骤；只有实际使用 Observation 时才声明 `1..N` 个 Observation dependency contracts，参数化展开可以产生零个或多个实际 invocations。
 
-在新 Study 内，只有 Study orchestration 可以经 Observation public boundary resolve / ensure empirical dependencies，取得 complete Artifacts，再准备下游输入。Study 不直接调用 DataLake / Snapshot 或获取市场数据，不读取 Observation persistence，不重定义 Observation empirical semantics。Legacy 适用范围由 [Compatibility](COMPATIBILITY.md) 保留。
+在新 Study 内，只有 Study orchestration 可以经 Observation public boundary ensure Artifact dependencies，也可调用 declared shared resolver / reader 取得 complete result，再准备下游输入。Component bindings / caller 分工见 [Schema](SCHEMA.md#shared-component-dependencies) 与 [Component authority](../shared/ARCHITECTURE.md)。Study 不直接调用 DataLake / Snapshot，不读取 Observation persistence，不重定义 Observation empirical semantics。Legacy 适用范围由 [Compatibility](COMPATIBILITY.md) 保留。
 
-Study 拥有 input bindings、execution order、runtime plan expansion、failure / continuation semantics 与 human-facing execution outcome，不拥有 reusable empirical persistence。Workflow 可以直接在 runtime 中 `ensure Observation → expand plan → ensure more Observations → outcome`，也可以在实际明确要求 retention 时使用 `Step A → retained Artifact A → Step B`。执行顺序、依赖展开、失败后的继续 / 停止规则属于当前 Study，不能从通用习惯推断。Step 可消费已准备的 complete Observation Artifact、合法 runtime state 或明确声明的前一步 complete Workflow Artifact；runtime state 不假称 retained Artifact，failed / partial Artifact 不作 complete empirical input。
+Study 拥有 input bindings、execution order、runtime plan expansion、failure / continuation semantics 与 human-facing execution outcome，不拥有 reusable empirical persistence。Workflow 可以直接在 runtime 中 `ensure Observation → expand plan → ensure more Observations → outcome`，也可以在实际明确要求 retention 时使用 `Step A → retained Artifact A → Step B`。执行顺序、依赖展开、失败后的继续 / 停止规则属于当前 Study，不能从通用习惯推断。Step 可消费已准备的 complete Observation Artifact / component result、合法 runtime state 或明确声明的前一步 complete Workflow Artifact；runtime state 不假称 retained Artifact，failed / partial Artifact 不作 complete empirical input。
 
-Analysis 为可选的 Study-local computation；只接收已准备好的 complete Artifacts，不能调用 DataLake / Snapshot、fetch market data、invoke / resolve / ensure Observation 或读取 Observation SQLite。Analysis 不拥有 dependency resolution，Analysis 的具体 computation / comparison / statistics 仍归 [Schema](SCHEMA.md#study-local-analysis-contracts) 及 specific Study。Observation invocation 不因被放进 Analysis 而成为合法 analytical step。
+Analysis 为可选的 Study-local computation；只接收已准备好的 complete inputs，可调用纯计算 component，不能调用 upstream-backed resolver / reader、DataLake / Snapshot、fetch market data、invoke / resolve / ensure Observation 或读取 Observation SQLite。Analysis 不拥有 dependency resolution，Analysis 的具体 computation / comparison / statistics 仍归 [Schema](SCHEMA.md#study-local-analysis-contracts) 及 specific Study。Observation invocation 不因被放进 Analysis 而成为合法 analytical step。
 
 ## Runtime orchestration state
 
 Runtime plan、ordered complete Artifact references / values、temporary invocation state、counts 与 failure summaries 可以只在本次 invocation 存在，不自动成为 retained Workflow Artifact，不要求 Artifact identity / serialization / materialization / database。Orchestration-only Study 的 Observation dependencies>0、Study-local retained Workflow Artifacts=0、Analysis=0、Evidence=0 是完整合法 shape；completion 由其 declared Observation ensures 与 runtime outcome 决定。
 
-需要重复 empirical facts 时，由 Study / future workflow 通过相同 Observation semantic request 再 ensure；consumer 不找旧 Study run、不读 Observation SQLite、不复制 market rows 建另一层 canonical cache、不自行判断 refresh。Successful Observation ensure 已 durable before return，Study 只编排这些 Artifacts。Study failure 不 rollback 已成功 Observation publication。当前不创建 Study SQLite、observation_collection.sqlite3 或 global collection DB。
+需要重复 empirical facts 时，由 Study / future workflow 通过相同 Observation semantic request 再 ensure；consumer 不找旧 Study run、不读 Observation SQLite、不复制 market rows 建另一层 canonical cache、不自行判断 refresh。Successful Observation ensure 已 durable before return；component result 无 durable reuse / publication，Study 只按其 contract 消费，不为 resolver 建 research cache。Study failure 不 rollback 已成功 Observation publication。当前不创建 Study SQLite、observation_collection.sqlite3 或 global collection DB。
 
 ## 三类 retained products
 

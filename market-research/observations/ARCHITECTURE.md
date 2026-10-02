@@ -4,7 +4,7 @@
 
 ## Purpose 与职责终点
 
-Observation 是 `market-research` 内 first-class、参数化的 retained empirical fact producer：对一组规范化业务输入，以确定性的 observation semantics 构造可长期保留、可复用的 empirical Artifact。职责终点是 **retained Observation Artifact**，不是 Study Evidence。
+Observation 是 `market-research` 内拥有最小独立研究语义、输出值得 Analysis / Study 独立消费与解释的 retained empirical artifact unit；它是最小 research artifact boundary，不是最小计算单元：对一组规范化业务输入，以确定性的 observation semantics 构造可长期保留、可复用的 empirical Artifact。职责终点是 **retained Observation Artifact**，不是 Study Evidence。Local / shared / Observation 分类与准入唯一见 [Shared Component authority](../shared/ARCHITECTURE.md)；reuse 不等于 Observation。Observation 可调用 component、包含 local logic，不把 helper 机械提升为独立 Artifact。
 
 Canonical Python namespace 为 `market_research.observations`，仍由 `market-research` 拥有。Runnable contract / topology 唯一进入 [IMPLEMENTATION.md](IMPLEMENTATION.md)，不改变 repository root 唯一 runtime / source registration；architecture 已落位不表示 runtime package 已实现。
 
@@ -13,7 +13,7 @@ Observation 不属于某个 Study，不拥有 statistical interpretation、resea
 稳定 semantic direction 为：
 
 ```text
-DataLake / Market Snapshot public facts
+DataLake / Market Snapshot public facts / declared shared components
     → Observation
     → complete retained Observation Artifact
     → Study
@@ -89,6 +89,6 @@ Observation 采用 DataLake-first **design-time capability selection**：DataLak
 
 ## Navigation 与 non-goals
 
-从本文件先进入 [Upstream policy](UPSTREAM.md)，再按 [Schema](SCHEMA.md) / [Authoring](AUTHORING.md) 锁定 concrete semantics，沿实际所需 entry 读取必要 upstream authority：[cffex_option_expiry_universe](cffex_option_expiry_universe/ARCHITECTURE.md)、[cffex_option_expiry_dte_chain](cffex_option_expiry_dte_chain/ARCHITECTURE.md)。具体规则由各 entry / 专题拥有，Implementation handoff 进入 [framework IMPLEMENTATION](IMPLEMENTATION.md) 与 concrete IMPLEMENTATION；不创建 catalog。
+从本文件先进入 [Upstream policy](UPSTREAM.md)，再按 [Schema](SCHEMA.md) / [Authoring](AUTHORING.md) 锁定 concrete semantics，沿实际所需 entry 读取必要 upstream authority：[cffex_option_expiry_dte_chain](cffex_option_expiry_dte_chain/ARCHITECTURE.md)。[Expiry Universe](../shared/cffex_option_expiry_universe/ARCHITECTURE.md) 已是 shared resolver，不进入 Observation lifecycle。具体规则由各 entry / 专题拥有，Implementation handoff 进入 [framework IMPLEMENTATION](IMPLEMENTATION.md) 与 concrete IMPLEMENTATION；不创建 catalog。
 
 不创建 generic registry、plugin system、Research Repository、Experiment Engine、DAG、scheduler、executor、cache、refresh engine、HTTP API、Web UI、Observation CLI 或 automatic migration。Analysis 的当前 ownership 与 deferred reuse model 见 [Study Schema](../studies/SCHEMA.md)；实现 / 测试差异见 [implementation reconciliation](../IMPLEMENTATION_RECONCILIATION.md)。

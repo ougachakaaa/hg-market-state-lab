@@ -1,6 +1,6 @@
 # market-research 模块架构 authority
 
-本文件定义 Research 的稳定 identity、职责边界、依赖方向、visualization ownership 与下层导航。仓库模块关系与唯一 Python runtime 见 [repository architecture](../ARCHITECTURE.md)；Observation framework、Study contracts、UI details 和实现状态分别由下层 owner 定义。
+本文件定义 Research 的稳定 identity、职责边界、依赖方向、visualization ownership 与下层导航。仓库模块关系与唯一 Python runtime 见 [repository architecture](../ARCHITECTURE.md)；Shared Component contracts、Observation framework、Study contracts、UI details 和实现状态分别由下层 owner 定义。
 
 ## 1. Purpose 与职责终点
 
@@ -9,12 +9,13 @@
 ```text
 market-research
     ├── scratch       disposable exploration
-    ├── observations  reusable retained empirical facts
+    ├── shared        small reusable research mechanisms
+    ├── observations  independent retained empirical research artifacts
     ├── studies       objectives + orchestration / outcome + optional retained outputs
     └── ui            current Study CLI / output support
 ```
 
-Scratch、Observation、Study 具有不同生命周期。Observation 唯一拥有 durable reusable empirical persistence；Study 拥有 user request / bindings、runtime orchestration / invocation / composition 与 execution outcome，并可按明确目标声明 retained workflow outputs / optional Analysis / Evidence。Retained Study 是值得保留的 research / orchestration authority，不要求 retained execution output。Orchestration-only Study 可以没有 Workflow Artifacts / Analysis / Evidence；Research 的解释职责终点仍是 evidence / finding，不是 production market-state output、forecast、decision、signal、recommendation 或 trading strategy。
+Scratch、Shared Research Component、Observation、Analysis / Study 有不同职责与生命周期。Component 复用小领域机制，不拥有 research artifact lifecycle；Observation 是最小独立 research artifact boundary，不是最小计算单元。Observation 唯一拥有 durable reusable empirical persistence；Study 拥有 user request / bindings、runtime orchestration / invocation / composition 与 execution outcome，并可按明确目标声明 retained workflow outputs / optional Analysis / Evidence。Retained Study 是值得保留的 research / orchestration authority，不要求 retained execution output。Orchestration-only Study 可以没有 Workflow Artifacts / Analysis / Evidence；Research 的解释职责终点仍是 evidence / finding，不是 production market-state output、forecast、decision、signal、recommendation 或 trading strategy。
 
 本模块不拥有 production modeling、model evaluation、forecasting、decision system、backtesting framework、research service/API 或 production Web UI。Observation 是本模块内部 first-class concept，不是 repository-level bounded module；新增它不建立 generic research platform。
 
@@ -29,7 +30,7 @@ User → repository discovery / forwarding → Study-local CLI
      → optional Study-local Analysis / Evidence / visualization
 ```
 
-Repository CLI 拥有路径/layout 校验、进程调用与 exit-code propagation，不 import Research implementation 或维护 Study catalog。Study-local CLI 拥有参数、输入校验、配置、依赖 composition、Study invocation 与 success/failure presentation。新 Study 经 Observation public boundary resolve / ensure Artifacts；upstream facts 由 Observation 通过 public application boundaries 获取。Legacy Study 的直接 Snapshot composition 按 [Compatibility](studies/COMPATIBILITY.md) 保留。
+Repository CLI 拥有路径/layout 校验、进程调用与 exit-code propagation，不 import Research implementation 或维护 Study catalog。Study-local CLI 拥有参数、输入校验、配置、依赖 composition、Study invocation 与 success/failure presentation。新 Study orchestration 经 Observation public boundary ensure Artifacts，也可调用已声明的 shared resolver / reader 准备输入；upstream facts 由 Observation 或 component 通过 public application boundaries 获取。Legacy Study 的直接 Snapshot composition 按 [Compatibility](studies/COMPATIBILITY.md) 保留。
 
 CLI convention、stable Study ID、orchestration-only / retained-output execution shapes 见 [Research UI authority](ui/ARCHITECTURE.md)；配置与 run-output placement / replacement 仅明确保留 outputs 时适用，见 [configuration authority](ui/CONFIGURATION.md)。具体参数和用法留在 Study authority。Orchestration-only runner 不依赖 output.root / directory；UI 不管理 Observation SQLite。
 
@@ -61,27 +62,31 @@ Research visualization 由 `market-research` 拥有，并默认以 Python 生成
 
 ```text
 DataLake public Application Service / Market Snapshot public result
-    → Observation → retained Observation Artifact
-    → Study-owned runtime orchestration → execution outcome / optional retained workflow results
+    → Shared Research Component result / Observation retained Artifact
+    → Study-owned runtime orchestration → prepared complete inputs / outcome
     → optional Study-local Analysis → optional Evidence / Findings
 Evidence / Findings → Human / Agent Semantic Decision → authority update → Modeling
 ```
 
-该图表达 semantic data / decision direction，不使 Research 成为 Modeling 的强制 runtime stage。Observation 先审查 DataLake public semantic capability，足够时必须使用 Dataset public Application Service；只有 semantic capability insufficient 才选明确 Snapshot public Product / Application boundary，详细规则见 [Observation authority](observations/ARCHITECTURE.md) → [UPSTREAM policy](observations/UPSTREAM.md)。这是 design-time selection，不是 runtime failover；Research（包括所有 Observation）不直接依赖 Tushare / external market-data provider，不访问 upstream internals、credential / transport、backend-api 或 FastAPI DTO。新 Study / Analysis 的消费职责及 legacy Study composition 保持现有 Schema / Compatibility，不因本次 upstream policy 变更而迁移。
+该图表达 semantic data / decision direction，不使 Research 成为 Modeling 的强制 runtime stage。Observation / upstream-backed component 先审查 DataLake public semantic capability，足够时必须使用 Dataset public Application Service；只有 semantic capability insufficient 才选明确 Snapshot public Product / Application boundary，详细规则直接进入 [Public upstream policy](UPSTREAM.md)；Observation lifecycle 另归其 authority。这是 design-time selection，不是 runtime failover；Research（包括所有 Observation）不直接依赖 Tushare / external market-data provider，不访问 upstream internals、credential / transport、backend-api 或 FastAPI DTO。Study orchestration 可消费 component result；Analysis 只计算已准备 inputs / 调用纯计算 component，不通过 helper 隐藏获取事实。具体分工见 component authority 与 Study Schema；legacy Study composition 按 Compatibility 保留。
 
 Snapshot 继续拥有从 Source fact 到 Analysis-ready Artifact 的确定性准备；DataLake 继续拥有 reusable source facts。共享 repository Python runtime 不授予内部 import permission，Snapshot / DataLake 不得反向依赖 Research。缺失的 public capability 须记录并与对应 owner reconciliation，不把 Research interpretation 推回 upstream，也不穿透内部实现。此方向不承诺具体 integration 已完成。
 
-## 5. Scratch、Observation 与 Study
+## 5. Scratch、Shared Component、Observation 与 Analysis / Study
 
 ### Scratch
 
 `scratch` 用于低约束、可能一次性的 script / notebook / dataframe / plotting 探索。其 output 是 disposable，不形成稳定 authority、业务契约、production dependency 或 retained Observation capability。
 
+### Shared Research Component
+
+shared 拥有跨研究明确复用的窄领域机制；resolver / reader 可以消费 authoritative DataLake public facts，calculator / transform 可以计算已准备输入。Local / shared 提升、Observation 准入、caller 分工与新 helper 判断唯一进入 [Shared Component authority](shared/ARCHITECTURE.md)。当前 [Expiry Universe resolver](shared/cffex_option_expiry_universe/ARCHITECTURE.md) 的具体 I/O / dependency 下沉该 owner；不建立大 utility layer。
+
 ### Observation
 
-`observations` 拥有 reusable retained empirical products，独立于 Study 生命周期。稳定 contract 从 [Observation architecture](observations/ARCHITECTURE.md) → [UPSTREAM policy](observations/UPSTREAM.md) 进入，再读 [Schema](observations/SCHEMA.md) / [Authoring](observations/AUTHORING.md) 与实际 concrete entry。本模块不拥有 concrete business key、population、grain、formula、Artifact schema 或 SQLite schema。
+`observations` 拥有最小独立 empirical research semantics 与持久化 Artifact，输出值得 Analysis / Study 独立消费和解释，独立于 Study 生命周期。可调用 shared component / 包含 local logic；复用本身不足以成为 Observation。稳定 contract 从 [Observation architecture](observations/ARCHITECTURE.md) → [Public upstream policy](UPSTREAM.md) 进入，再读 [Schema](observations/SCHEMA.md) / [Authoring](observations/AUTHORING.md) 与实际 concrete entry。本模块不拥有 concrete business key、population、grain、formula、Artifact schema 或 SQLite schema。
 
-Concrete authorities 为 [cffex_option_expiry_universe](observations/cffex_option_expiry_universe/ARCHITECTURE.md) 与 [cffex_option_expiry_dte_chain](observations/cffex_option_expiry_dte_chain/ARCHITECTURE.md)，按任务进入所需 entry / specialized contracts。Runnable contract 唯一见 [Observation IMPLEMENTATION](observations/IMPLEMENTATION.md) 与各 concrete IMPLEMENTATION。两项 runtime 已实现并验证 durable reuse；当前 implementation / verification 状态进入 [reconciliation](IMPLEMENTATION_RECONCILIATION.md#first-observation-driven-vertical-slice-implementation)。
+当前 concrete Observation 为 [cffex_option_expiry_dte_chain](observations/cffex_option_expiry_dte_chain/ARCHITECTURE.md)。Runnable contract 进入 [Observation IMPLEMENTATION](observations/IMPLEMENTATION.md) 与其 concrete handoff。Universe 已改为 shared resolver；现有 runtime / test drift 进入 [reconciliation](IMPLEMENTATION_RECONCILIATION.md#shared-component-semantic-reconciliation)，不以旧验收宣称新定位已实施。
 
 ### Study
 
@@ -91,11 +96,11 @@ Study authority 位于 `studies/<study_package>/`，implementation 位于同名 
 
 Retained Study 是研究知识与 evidence record，不等同于长期 software capability，也不因被保留而成为 Snapshot、Modeling 或 production output 的 semantic authority。若研究未来演化为 production / reusable capability，须另作 semantic decision 与 canonical authority update。
 
-Runnable topology 由 [Implementation Package Contract](studies/IMPLEMENTATION.md) 拥有，completeness / traceability / topology review 由 [Review](studies/REVIEW.md) 拥有。Study-specific input selection、Analysis、plots、findings、limitations 与 acceptance 留在当前 Study 的 narrowest owner。相似 Analysis 不触发 sibling 修改、shared 抽取或 reusable Analysis framework；复用 empirical facts 通过 Observation Artifact boundary。
+Runnable topology 由 [Implementation Package Contract](studies/IMPLEMENTATION.md) 拥有，completeness / traceability / topology review 由 [Review](studies/REVIEW.md) 拥有。Study-specific input selection、Analysis、plots、findings、limitations 与 acceptance 留在当前 Study 的 narrowest owner。Analysis 仍为 Study-local，可调用已声明的纯计算 component；只有明确跨研究机制复用才按 component authority 提升，不从相似代码继承 sibling 的研究语义或创建 reusable Analysis framework。持久化 empirical artifacts 仍通过 Observation boundary 复用。
 
-Legacy Study-local Observations、旧 evidence 与 historical shared dependencies 按 [Compatibility](studies/COMPATIBILITY.md) 保持有效；新 framework 不自动迁移它们。仅 human-triggered concrete reconciliation 才迁入 Observation-first。历史 shared owners 只沿 Compatibility 或相关 legacy authority 进入，不在新 Study 默认创建路径。
+Legacy Study-local Observations、旧 evidence 与 historical shared dependencies 按 [Compatibility](studies/COMPATIBILITY.md) 保持有效；新 framework 不自动迁移它们。仅 human-triggered concrete reconciliation 才迁入 Observation-first。历史 shared owners 的适用范围仍沿 Compatibility 或相关 legacy authority 进入；新 component 分类从 shared authority 进入，不自动加载 historical semantics。
 
-首个 [cffex_option_expiry_dte_collection](studies/cffex_option_expiry_dte_collection/ARCHITECTURE.md) 是 orchestration-only Study，确保 Universe 与全部 planned chains durable complete，只返回 runtime summary，零 retained Study Artifacts / Analysis / Evidence，无 run directory。其四份业务 authority 与 [concrete implementation handoff](studies/cffex_option_expiry_dte_collection/IMPLEMENTATION.md) 完整；producer / Study runtime 已实现，actual runtime dependencies / bindings 与 controlled E2E 已验证，见 [reconciliation](IMPLEMENTATION_RECONCILIATION.md#first-observation-driven-vertical-slice-implementation)。其他 Study 只有明确声明时才保留 outputs，具体 shapes 由其 owner 定义。Observation persistence 不放入 Study output lifecycle；design / runtime readiness distinction 见 [Authoring](studies/AUTHORING.md#publication-与-dependency-handoff)。
+当前 [cffex_option_expiry_dte_collection Study](studies/cffex_option_expiry_dte_collection/ARCHITECTURE.md) 组合 Universe component 与 chain Observation；具体 objective、bindings、workflow、outcome 与 handoff 由该 Study authority 拥有。当前 runtime drift 见 [reconciliation](IMPLEMENTATION_RECONCILIATION.md#shared-component-semantic-reconciliation)，readiness 定义见 [Authoring](studies/AUTHORING.md#publication-与-dependency-handoff)。
 
 ## 6. Research 与 Modeling
 
@@ -108,18 +113,21 @@ Evidence / Findings 只有经过 human / agent semantic decision 与对应 canon
 ```text
 repository ARCHITECTURE.md
     → market-research/ARCHITECTURE.md
+        ├── UPSTREAM.md (共用 public fact contract)
+        ├── shared/ARCHITECTURE.md
+        │   └── concrete Component entry → narrow I/O / dependency contract
         ├── observations/ARCHITECTURE.md
         │   ├── UPSTREAM.md → SCHEMA.md / AUTHORING.md → IMPLEMENTATION.md
         │   └── concrete Observation entry → relevant specialized / upstream authority
         ├── studies/AUTHORING.md
         │   ├── SCHEMA.md / WORKFLOW.md / SKELETON.md
         │   ├── IMPLEMENTATION.md / REVIEW.md / COMPATIBILITY.md (按需)
-        │   └── consumed Observation authority → concrete Study entry
+        │   └── actual Component / Observation authority → concrete Study entry
         │       → INPUTS.md / METHOD.md / RESULTS.md → relevant specialized authority
         ├── ui/ARCHITECTURE.md → CONFIGURATION.md
         └── IMPLEMENTATION_RECONCILIATION.md (当前差异与交接)
 ```
 
-本文件只拥有稳定 module identity / boundaries、依赖方向、用途分工、visualization ownership 与导航；Observation lifecycle / identity / persistence contract 留在 Observation owner，concrete shape 留在其具体 authority；Study framework、UI details 与当前实现差异各由 specialized owner 定义。
+本文件只拥有稳定 module identity / boundaries、依赖方向、用途分工、visualization ownership 与导航；Component I/O / upstream bindings 留在具体 component owner；Observation lifecycle / identity / persistence contract 留在 Observation owner，concrete shape 留在其具体 authority；Study framework、UI details 与当前实现差异各由 specialized owner 定义。
 
 [Implementation reconciliation](IMPLEMENTATION_RECONCILIATION.md) 记录本次 authority-only 更新的基线、验证与 remaining drift，不取代 semantic authority。只有 module 定位、跨模块边界、内部用途分工或导航变化时更新本文件；不得上提具体 Observation / Study schema、formula、workflow 或 implementation contract。

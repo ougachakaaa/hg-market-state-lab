@@ -1,12 +1,12 @@
 # Observation Implementation Architecture
 
-本文件唯一拥有 Observation framework 的 runnable Python contract、public object ownership、composition、persistence lifecycle / placement、complete publication、窄 shared mechanics 与 implementation verification。继承 [framework semantics](ARCHITECTURE.md) 与 [UPSTREAM policy](UPSTREAM.md)；不重定义 concrete business semantics。具体映射分别进入 [Universe implementation](cffex_option_expiry_universe/IMPLEMENTATION.md) 与 [DTE-chain implementation](cffex_option_expiry_dte_chain/IMPLEMENTATION.md)。本文是 runnable contract authority；runtime 实施与验证状态唯一进入 [reconciliation](../IMPLEMENTATION_RECONCILIATION.md#first-observation-driven-vertical-slice-implementation)。
+本文件唯一拥有 Observation framework 的 runnable Python contract、public object ownership、composition、persistence lifecycle / placement、complete publication、窄 shared mechanics 与 implementation verification。继承 [framework semantics](ARCHITECTURE.md) 与 [UPSTREAM policy](UPSTREAM.md)；不重定义 concrete business semantics。具体 Observation 映射进入 [DTE-chain implementation](cffex_option_expiry_dte_chain/IMPLEMENTATION.md)；[Universe resolver](../shared/cffex_option_expiry_universe/ARCHITECTURE.md) 不适用本 lifecycle。本文是 runnable contract authority；runtime 实施与验证状态唯一进入 [当前 reconciliation](../IMPLEMENTATION_RECONCILIATION.md#shared-component-semantic-reconciliation)。
 
 ## Implementation progressive disclosure
 
 Implementation 阅读顺序固定为 concrete semantic entry → ARTIFACT（chain 另读 DATE_RESOLUTION）→ 本文件 → concrete IMPLEMENTATION → 仅实际依赖的 upstream public SERVICE / APPLICATION。Design 继续从 ARCHITECTURE → UPSTREAM → SCHEMA / AUTHORING → concrete semantic authority 进入。不扫描 sibling Study / Product，不把 shared helpers 或现有代码当缺失 semantic decision 的替代。
 
-实施顺序为先实现两项 producer 已实际需要的最小 shared runtime primitives / common errors，再 Universe，再 chain，随后 Observation runtime reconciliation，最后在 dependencies 就绪后实施首个 Study；不将 primitive 阶段扩为独立 framework。
+只实现实际 Observation 所需的最小 internal mechanics / common errors，不因 Universe 移为 component 新建通用框架。当前 chain 已实施；下一轮先完成 Universe resolver / Study wiring reconciliation，保留 chain 的 durable lifecycle，见 [当前 gaps](../IMPLEMENTATION_RECONCILIATION.md#shared-component-semantic-reconciliation)。
 
 ## Public namespace 与 invocation
 
@@ -14,7 +14,6 @@ Canonical framework namespace 为 `market_research.observations`，framework roo
 
 | Concrete public package | Required public exports |
 | --- | --- |
-| market_research.observations.cffex_option_expiry_universe | ExpiryUniverseRequest、ExpiryUniverseArtifact、ExpiryUniverseService、create_service |
 | market_research.observations.cffex_option_expiry_dte_chain | ExpiryDteChainRequest、ExpiryDteChainArtifact、ExpiryDteChainRow、ExpiryDteChainService、create_service |
 
 普通 consumer 构造 concrete Request，使用无参数 `create_service()`，调用 `service.ensure(request) -> concrete Artifact`。V1 只有 ensure 这一 semantic operation；不提供 resolve、get、lookup、fetch、run、execute、refresh、force 等重叠或未授权 verbs，也不提供 lookup-only operation。未来真实 read-only consumer 需求须独立设计。`market_research.shared`、studies、registry / dynamic plugin 都不是 canonical Observation boundary。
@@ -86,7 +85,7 @@ Source 位于 `market-research/src/market_research/observations/`，遵守根唯
 
 Concrete package 内 public contract、service / orchestration、owned persistence、deterministic derivation 必须可辨认；chain 另有 date-resolution mechanism。按内聚性拆分，避免 giant module，不一对象一文件，不锁 private filenames。
 
-两项真实 producer 可共享非常窄的 framework-internal mechanics：path resolution、connection / transaction、atomic publication primitive、safe serialization primitive 与 common error definitions。Shared helper 接收显式 context / mechanics 参数，不知道 expiry、DTE、chain、product_code semantics、Dataset / Product identity 或 concrete Artifact business fields / schema；concrete service 继续拥有业务映射。不创建 BaseObservation、GenericObservationService、generic Repository domain model、ObservationExecutor、ArtifactRegistry、Provider / DataSource abstraction 或 WorkflowEngine。
+Observation 可复用非常窄的 framework-internal mechanics：path resolution、connection / transaction、atomic publication primitive、safe serialization primitive 与 common error definitions。Shared helper 接收显式 context / mechanics 参数，不知道 expiry、DTE、chain、product_code semantics、Dataset / Product identity 或 concrete Artifact business fields / schema；concrete service 继续拥有业务映射。不创建 BaseObservation、GenericObservationService、generic Repository domain model、ObservationExecutor、ArtifactRegistry、Provider / DataSource abstraction 或 WorkflowEngine。
 
 ## Implementation acceptance 与 handoff
 
@@ -96,14 +95,14 @@ Concrete package 内 public contract、service / orchestration、owned persisten
 | --- | --- |
 | Framework / topology | canonical packages 可 import、concrete exports / common errors、public owned types、无 registry / plugin；Study 无 DataLake / Snapshot / persistence imports，Observation 无 direct provider / private upstream imports；runtime SQLite / WAL / journal 被 ignore。 |
 | Concrete service | temp SQLite + controlled public dependency doubles：invalid request 在 upstream mutation 前失败，miss / success、incomplete / operation failure、corrupt / incompatible DB、Artifact invariant / publication failure、repeat ensure 与重建 service 后 durable reuse；complete hit 所有 upstream calls 为零。验证并发至多一个 complete logical Artifact、失败不可见，无真实 Tushare 调用。 |
-| Concrete semantics | 复用具体 ARTIFACT acceptance：Universe sorted unique / inclusive / empty complete / no partial；chain exact DTE、周末假日、proven absence、missing 后 ensure、upstream failure 停止、actual_dte、完整 population / ordering 与合法 None。 |
+| Concrete semantics | 复用具体 ARTIFACT acceptance：chain exact DTE、周末假日、proven absence、missing 后 ensure、upstream failure 停止、actual_dte、完整 population / ordering 与合法 None。 |
 
 ### Durable reuse acceptance
 
-两项 concrete producer 都必须验证：service instance A 对合法 request ensure 成功，整份 Artifact 已 durable / atomic persisted；关闭 connections 并丢弃 A 及其 in-memory state（process recreation equivalent），重新创建 instance B，使用同一 Observation-owned SQLite 与相同 normalized request。B 必须返回同一 semantic identity / logical complete Artifact、相同 owned public values，所有上游 factory / coverage / ensure / export calls 为零，且不 recompute。B 使用不可用 upstream doubles 仍能命中；多个不同业务请求共存于该 concrete 唯一 SQLite，不建立 Study cache。
+每个 concrete Observation 都必须验证：service instance A 对合法 request ensure 成功，整份 Artifact 已 durable / atomic persisted；关闭 connections 并丢弃 A 及其 in-memory state（process recreation equivalent），重新创建 instance B，使用同一 Observation-owned SQLite 与相同 normalized request。B 必须返回同一 semantic identity / logical complete Artifact、相同 owned public values，所有上游 factory / coverage / ensure / export calls 为零，且不 recompute。B 使用不可用 upstream doubles 仍能命中；多个不同业务请求共存于该 concrete 唯一 SQLite，不建立 Study cache。
 
-测试只用 temporary owned persistence 与受控 public dependency doubles；不依赖 Python object address、共享内存、SQLite path 的 consumer knowledge 或真实 provider。Publication / persistence failure 不返回成功，重建实例也不能读出 failed / partial state 为 complete。该验收同时适用于 Universe 与 chain，不改变其 Artifact 或 date semantics。
+测试只用 temporary owned persistence 与受控 public dependency doubles；不依赖 Python object address、共享内存、SQLite path 的 consumer knowledge 或真实 provider。Publication / persistence failure 不返回成功，重建实例也不能读出 failed / partial state 为 complete。该验收适用于真正的 Observation，当前 concrete 为 chain；Universe resolver 不适用，不改变 chain Artifact / date semantics。
 
-Concrete semantics complete、implementation mapping complete、实际 public upstream dependencies 可用且无 conflict / capability gap 后，才标记 concrete **Implementation Ready**。Framework mechanics contract 完整可标为 Authority Complete / Implementation Architecture Complete / Implementation Ready；这些是设计状态，不等于 runtime implemented。Study 的 design readiness 与实际 runtime dependency reconciliation 继承 [Study handoff definition](../studies/AUTHORING.md#publication-与-dependency-handoff)：producer runtime 缺失须单独记录，实际 Study runtime dependency reconciliation 需两项 runtime 完成及 bindings 复核；当前 slice 已完成该验证。当前 readiness 见 [reconciliation](../IMPLEMENTATION_RECONCILIATION.md)。
+Concrete semantics complete、implementation mapping complete、实际 public upstream dependencies 可用且无 conflict / capability gap 后，才标记 concrete **Implementation Ready**。Framework mechanics contract 完整可标为 Authority Complete / Implementation Architecture Complete / Implementation Ready；这些是设计状态，不等于 runtime implemented。Study 的 design readiness 与实际 runtime dependency reconciliation 继承 [Study handoff definition](../studies/AUTHORING.md#publication-与-dependency-handoff)：producer runtime 缺失须单独记录，实际 Study runtime dependency reconciliation 需 actual declared dependency runtime 完成及 bindings 复核；旧 slice 已验收，新 component / Study wiring 尚未 reconciliation。当前 readiness 见 [reconciliation](../IMPLEMENTATION_RECONCILIATION.md)。
 
-两项 producer 与首个 Study 已实施；验证与基线检查限制见当前 reconciliation。V1 Python application boundary 不增加 Observation CLI、HTTP / REST；human execution 继续通过 Study。除此还排除 generic DataLake / Snapshot adapter、plugin、DAG、queue、background worker、run registry、global Research DB、retry / refresh engine 与 automatic migration。
+Chain Observation 已实施；Universe / Study 仍是旧生命周期实现，新语义差异与验收限制见 [当前 reconciliation](../IMPLEMENTATION_RECONCILIATION.md#shared-component-semantic-reconciliation)。V1 Python application boundary 不增加 Observation CLI、HTTP / REST；human execution 继续通过 Study。除此还排除 generic DataLake / Snapshot adapter、plugin、DAG、queue、background worker、run registry、global Research DB、retry / refresh engine 与 automatic migration。

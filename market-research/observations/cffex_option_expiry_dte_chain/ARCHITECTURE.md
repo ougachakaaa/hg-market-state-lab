@@ -55,7 +55,7 @@ Empirical row grain 为 `one option contract × one resolved observation_date`�
 
 Artifact 表达所保留的 empirical facts，不承诺 provider-current freshness、trade_date 当时的历史 metadata，或 upstream 修订后的自动重算。合法 Source 缺席按 upstream contract 保留；不能从 Artifact 推出未观察日期、未包含产品或其他 expiry 的事实。
 
-本 Observation 不拥有 empirical expiry-universe discovery、Study 应调用哪些 expiry、cross-expiry composition / comparison、payoff、PnL、realized return、option risk premium、win rate、mean / median / quantiles、distribution、statistical tests、Analysis、Evidence 或 Study conclusions。Study 拥有是否需要 discovery、expiry window 的选择及 discovered expiries 如何驱动后续 invocations；[cffex_option_expiry_universe](../cffex_option_expiry_universe/ARCHITECTURE.md) 拥有请求窗口内 observed expiries 的 empirical fact。本 Observation 只处理选定的一个 expiry + target DTE → resolved market date → complete chain，不承接 universe semantics。
+本 Observation 不拥有 empirical expiry-universe discovery、Study 应调用哪些 expiry、cross-expiry composition / comparison、payoff、PnL、realized return、option risk premium、win rate、mean / median / quantiles、distribution、statistical tests、Analysis、Evidence 或 Study conclusions。Study 拥有是否需要 discovery、expiry window 的选择及 discovered expiries 如何驱动后续 invocations；[Universe shared resolver](../../shared/cffex_option_expiry_universe/ARCHITECTURE.md) 拥有请求窗口内 observed-expiry selection 的 component contract；不是独立 Observation Artifact，也不是本 chain 的 prerequisite。本 Observation 只处理选定的一个 expiry + target DTE → resolved market date → complete chain，不承接 universe semantics。
 
 ## Semantic ownership 与交接
 

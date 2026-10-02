@@ -6,7 +6,7 @@
 
 | Parameter | Semantic owner / canonical contract | Consumers / identity role | CLI expression |
 | --- | --- | --- | --- |
-| product_code | Study 选择值；domain / canonicalization 引用 [Universe inputs](../../observations/cffex_option_expiry_universe/ARCHITECTURE.md#inputs-与-business-identity) 与 [chain inputs](../../observations/cffex_option_expiry_dte_chain/ARCHITECTURE.md#inputs-与-canonicalization)，两者一致。 | Universe、所有 planned chains、runtime request context；identity-changing。 | --product-code，例如 MO |
+| product_code | Study 选择值；domain / canonicalization 引用 [Universe inputs](../../shared/cffex_option_expiry_universe/CONTRACT.md#inputs) 与 [chain inputs](../../observations/cffex_option_expiry_dte_chain/ARCHITECTURE.md#inputs-与-canonicalization)，两者一致。 | Universe、所有 planned chains、runtime request context；identity-changing。 | --product-code，例如 MO |
 | expiry_start_date | Study 选择 inclusive expiry window 起点，date domain 引用 Universe。 | Universe、runtime plan / outcome context；identity-changing。 | --expiry-start-date，YYYY-MM-DD |
 | expiry_end_date | Study 选择 inclusive expiry window 终点，date domain / start<=end 引用 Universe。 | Universe、runtime plan / outcome context；identity-changing。 | --expiry-end-date，YYYY-MM-DD |
 | target_dte | Study 选择值，正整数自然日 domain 唯一引用 chain inputs，拒绝 bool。 | 全部 chain invocations、runtime outcome；identity-changing。 | --target-dte，正整数文本 |
@@ -26,7 +26,7 @@ Study request identity
 
 合法 canonical values 按原值比较，等价 CLI 表达解析为相同 values 后是同一个请求；任一值变化区分请求。Discovered list、derived dates、execution time / UUID、Source / code hash、path、attempt 顺序或 counts 不进入 identity。
 
-该 identity 只表达请求等价关系，不是 persistent Study run Artifact identity，不映射为 filesystem run key / hash / directory，也不建立 Study cache / resume。两个 Observation 的 business identities 按 METHOD bindings 确定，由其 own persistence reuse。
+该 identity 只表达请求等价关系，不是 persistent Study run Artifact identity，不映射为 filesystem run key / hash / directory，也不建立 Study cache / resume。METHOD 分别绑定 resolver inputs 与 chain business key；只有 chain 由 Observation persistence durable reuse，Universe inputs 无 artifact identity / research cache。
 
 ## Invocation surface
 
@@ -40,4 +40,4 @@ lab research run cffex-option-expiry-dte-collection \
   --target-dte 30
 ```
 
-该命令已 runnable；实际历史数据可用性依 Observations 的 upstream completeness proof 决定。本 Study 属 [orchestration-only UI shape](../../ui/ARCHITECTURE.md#3-shared-configuration-and-output-placement)，不加载 output.root 配置、不创建 retained Study run directory，不提供 --output、--database、--sqlite-path、--resume、--overwrite 或 config override。CLI parse request → invoke Study orchestration → present outcome；Observation construction / persistence semantics 继续归其 owner。
+基线该命令已 runnable；新 component wiring 尚未实施，见 [当前 gaps](../../IMPLEMENTATION_RECONCILIATION.md#shared-component-semantic-reconciliation)。实际数据可用性依已选 upstream completeness proof 决定。本 Study 属 [orchestration-only UI shape](../../ui/ARCHITECTURE.md#3-shared-configuration-and-output-placement)，不加载 output.root 配置、不创建 retained Study run directory，不提供 --output、--database、--sqlite-path、--resume、--overwrite 或 config override。CLI parse request → invoke Study orchestration → present outcome；Component construction / I/O 与 Observation persistence 分别归其 owner。

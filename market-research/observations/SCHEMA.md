@@ -2,6 +2,10 @@
 
 本文件定义 concrete Observation authority 必须回答的最小 semantic areas，不定义所有 Observation 通用的业务字段或 row schema。Framework identity、lifecycle、idempotency、completeness、persistence 与 public boundary 由 [Observation architecture](ARCHITECTURE.md) 唯一拥有；创建流程由 [Authoring](AUTHORING.md) 拥有；runnable Python boundary / persistence lifecycle mapping 唯一归 [IMPLEMENTATION](IMPLEMENTATION.md)，concrete carrier mapping 进入各自 IMPLEMENTATION。
 
+## Observation admission
+
+先按 [component / local / Observation decision](../shared/ARCHITECTURE.md) 确认确实需要最小独立 empirical research artifact、值得下游独立消费与解释，并需要该 Artifact lifecycle。仅稳定 I/O 或复用不构成准入。符合时再回答以下 areas；resolver / reader result 不为填满本 Schema 而被伪装为 Artifact。
+
 ## Required semantic areas
 
 | Area | Concrete authority 必须明确的内容 |
@@ -13,7 +17,7 @@
 | Population | 被观察的对象集合、选择范围与 eligibility；由本 Observation 拥有，不留给 Study 重定义。 |
 | Grain | 每个 empirical unit / record 代表什么，以及适用的唯一性关系。 |
 | Upstream Facts | 按 [UPSTREAM policy](UPSTREAM.md) 明确 required empirical facts、canonical semantic owner、已审查的 DataLake public capability、selected upstream boundary / exact public service contract、failure semantics 与 capability gaps。选 DataLake 时证明 public semantics sufficient；只有 insufficient 时才明确其理由、selected Snapshot Product 与 exact public request / result contract，不需 DataLake-backed authority 重复排除 Snapshot。 |
-| Derivation | 从 upstream facts 到 empirical output 的确定性构造、公式、业务变换及单位；不定义 statistical interpretation。 |
+| Derivation | 从 upstream facts / declared component results 到 empirical output 的确定性构造、公式、业务变换及单位；不定义 statistical interpretation。 |
 | Validity / Missingness | 有效性、缺失、排除与 failure semantics，包括它们怎样影响 Artifact 可消费性；不静默补值或改变 population。 |
 | Artifact Contract | 供 consumer 使用的 semantic shape、字段 / 单位 / 关系、identity 可定位方式、所需 provenance 与 complete 可消费条件；实例化 [framework completeness / publication boundary](ARCHITECTURE.md#completeness-与-public-boundary)，不暴露 SQLite layout。 |
 | Persistence | 实例化 framework 的 Observation-owned persistence boundary，明确该 Observation 独立拥有一个 SQLite；canonical placement / complete publication 引用 IMPLEMENTATION；具体 SQL schema / transaction mechanics 不属于 semantic Schema。 |

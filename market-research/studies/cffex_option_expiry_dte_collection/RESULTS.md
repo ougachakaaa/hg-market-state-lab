@@ -9,7 +9,7 @@
 | Field | Meaning / availability |
 | --- | --- |
 | product_code / expiry_start_date / expiry_end_date / target_dte | 本次合法 canonical request context，值与 INPUTS 相同。 |
-| discovered_expiry_count | Complete Universe 的 expiries 数；Universe 未成功时 None / unavailable。 |
+| discovered_expiry_count | Complete Universe result 的 expiries 数；Universe 未成功时 None / unavailable。 |
 | planned_observation_count | 成功构建的 runtime plan entries 数，恰等于 discovered_expiry_count；plan 未形成时 None / unavailable。 |
 | completed_observation_count | 已返回对应 complete durable chain Artifacts 的计划项数，包括 Observation reuse；chain phase 尚未执行时 0。 |
 | failed_observation_count | 已尝试但未取得合法 complete chain Artifact 的计划项数，包括其 construction / operation failure；chain phase 尚未执行时 0。Universe / plan failure 不冒充 chain failure。 |
@@ -20,9 +20,9 @@ None 表达 unavailable，不伪报零。Universe failure 时 discovered / plann
 
 ## Failure details 与 completion
 
-合法 request 的 operation failure result 保留 request context、实际已知 counts 与 ordered failure details：每项有 stage、readable reason，chain failure 另有 expiry_date，由 request context + expiry_date 确定该 planned business request。Stage 使用 METHOD 的 ensure_expiry_universe / build_runtime_expiry_plan / ensure_expiry_chains；非 chain stage 的 expiry_date=None。链失败明细按 planned expiry ascending order，汇总全部实际尝试结果。
+合法 request 的 operation failure result 保留 request context、实际已知 counts 与 ordered failure details：每项有 stage、readable reason，chain failure 另有 expiry_date，由 request context + expiry_date 确定该 planned business request。Stage 使用 METHOD 的 resolve_expiry_universe / build_runtime_expiry_plan / ensure_expiry_chains；非 chain stage 的 expiry_date=None。链失败明细按 planned expiry ascending order，汇总全部实际尝试结果。
 
-Universe / plan failure 立即停止后续阶段；chain phase failure 后仍按 METHOD 尝试剩余全部项，最后返回 failure。Expected Observation errors / 非法或不匹配的 Artifact return 不作 complete return，不把 upstream exception classes 暴露为 Study handling contract。Interruption 不伪造最终成功；不创建 retained partial result / Study DB，已成功 Observation Artifacts 独立保留。
+Universe / plan failure 立即停止后续阶段；chain phase failure 后仍按 METHOD 尝试剩余全部项，最后返回 failure。Expected resolver / Observation failures、非法或不匹配的 component result / Artifact return 不作 complete return，不把 upstream exception classes 暴露为 Study handling contract。Interruption 不伪造最终成功；不创建 retained partial result / Study DB，已成功 Observation Artifacts 独立保留。
 
 Invalid arguments / semantic request 不进入 workflow，CLI 提供简洁可读输入错误与可用 request context，不要求为无效值制造 canonical runtime result。
 
