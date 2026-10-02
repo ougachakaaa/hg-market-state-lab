@@ -6,12 +6,12 @@
 
 Study 必须回答 Question、Inputs、Method、Results、Limitations、Acceptance 六个 areas，并实例化 `ARCHITECTURE.md`、`INPUTS.md`、`METHOD.md`、`RESULTS.md` 四个有实质内容的顶层文件。`studies/<study_package>/ARCHITECTURE.md` 是稳定入口；独立 implementation 位于同名 `src/market_research/studies/<study_package>/`。完成 authority 不自动启动 implementation 或 execution。
 
-Study 拥有研究问题、Observation Artifact composition、Study-local Analysis、Evidence / Findings。Observation 的 population、grain、derivation、validity 和 Artifact schema 由被引用的独立 canonical owner 拥有，不属于 Study Method。
+Study 拥有 research question / preparation objective、user request、workflow orchestration、Observation invocation / composition、Study-local Workflow Artifacts 与 optional Analysis / Evidence。Workflow steps / materialization 规则见 [Workflow authority](WORKFLOW.md)。Observation 的 population、grain、derivation、validity 和 Artifact schema 由独立 canonical owner 拥有，不属于 Study Method；Analysis 不 resolve / ensure dependencies。
 
 ## Canonical authoring workflow
 
 ```text
-Research Question
+Research Question / Preparation Objective
     → identify required empirical facts
     → identify required Observation Artifacts
     → Observation capability exists?
@@ -19,11 +19,13 @@ Research Question
         │        → design / implement Observation separately
         │        → return to Study
         └── yes → declare Artifact dependencies / invocation inputs
-    → design Study-local Analysis
-    → define Evidence
+    → design Study-owned workflow / ordered steps
+    → define materialized Workflow Artifacts / retained results
+    → optional Study-local Analysis
+    → optional Evidence
 ```
 
-所需 Observation 尚不存在时，显式记录 required capability、需要的 empirical facts 与 gap。Study draft 可以继续整理已决定的 question / analysis / evidence intention，但不得在一个 Study prompt 或 Study-local Method 中临时创建 Observation definition。缺失的 Artifact shape 或 consumption contract 不得猜测，依赖未就绪时不进入 Study implementation。
+所需 Observation 尚不存在时，显式记录 required capability、需要的 empirical facts 与 gap。Study draft 可以继续整理已决定的 objective / workflow / optional Analysis / Evidence intention，但不得在 Study-local Method 中临时创建 Observation definition。缺失 Artifact shape / consumption contract 不得猜测，依赖未就绪时不进入 Study implementation。Workflow-only Study 不强制继续进入 Analysis / Evidence；要明确无此职责及完成 objective 的 retained result。
 
 ## 创建隔离与导航
 
@@ -35,7 +37,8 @@ Study-owned Research semantics 必须 self-contained：question、hypothesis、A
 
 | 当前任务 | 下一份 authority |
 | --- | --- |
-| Study semantic areas / dependencies / Analysis | [Schema](SCHEMA.md) |
+| Study semantic areas / dependencies / optional Analysis | [Schema](SCHEMA.md) |
+| Steps / materialized Workflow Artifacts / complete consumption | [Workflow](WORKFLOW.md) |
 | Authority 布局与阅读顺序 | [Skeleton](SKELETON.md) |
 | 实现 runnable Study | [Implementation Package Contract](IMPLEMENTATION.md) |
 | Completeness 与 traceability | [Review](REVIEW.md) |
@@ -50,11 +53,11 @@ Human 可以用自然语言提供 Study Intention，不要求先填完整表单�
 
 | 输入项 | 记录内容 |
 | --- | --- |
-| Research goal / question | 研究意图、动机、hypothesis 和范围。 |
+| Research goal / question / objective | 研究或准备 / empirical collection 意图、动机与范围；hypothesis 若适用。 |
 | Empirical facts / Artifact needs | 已指定的 empirical facts、Observation owner（若已知）、Artifact contracts / identity、capability gaps。 |
 | Inputs / configuration | 已指定的 request、Observation invocation bindings、Analysis configuration 与 sample selection。 |
-| Method intention | 已指定的比较、统计、评估与 Analysis consumption intention。 |
-| Research product | 希望保留的 Evidence / Findings 和 presentation。 |
+| Method intention | 已指定的步骤顺序、dependency bindings、materialization、失败 / 空结果与 optional Analysis consumption。 |
+| Research product | 希望保留的 workflow results / Artifacts 和 optional Evidence / Findings / presentation。 |
 | Boundaries / open decisions | 限制、non-goals 与待决研究选择。 |
 
 各项可记录 semantic source（human decision / canonical authority）及 resolution state（decided / unresolved）。Record 是对话或工作草稿中的中间 representation，不要求新增 repository artifact，也不是最终 authority。Agent 可以规范措辞、组织已决定内容与引用 canonical facts，不能从常见做法、既有 Study、实现便利性或 human 沉默推断研究决定。非语义命名 / 排版 / 实现细节可由 Agent 整理。
@@ -72,13 +75,13 @@ Human 可以用自然语言提供 Study Intention，不要求先填完整表单�
 
 每个未决项记录 `unresolved field / topic`、`missing semantic decision`、`why the decision matters`、`recommended resolution`，有实质差异时再给出 `alternatives`。建议不构成默认授权；Agent 不自行选定改变研究含义的选项。
 
-Study input 必填 / defaults、hypothesis 与允许配置范围的关系、retained run identity、empty result、required Evidence 等缺失决定均进入该 loop。缺少 Observation capability 要走独立 authoring，而非替当前 Study 填 Observation semantics；框架明确 deferred 的问题不在本 workflow 自动决定。
+Study input 必填 / defaults、workflow 顺序 / failure、Artifact completeness / retention、retained run identity、empty result，以及适用的 hypothesis / Evidence 等缺失决定均进入该 loop。不因 Analysis / Evidence 为零而要求补出不存在的研究含义。缺少 Observation capability 要走独立 authoring，而非替当前 Study 填 Observation semantics；框架明确 deferred 的问题不在本流程自动决定。
 
 ## Publication 与 dependency handoff
 
 **Study Authority Complete** 表示六个 areas 与关系完整，Implementer 无需重新决定 Study-owned semantics；可以先于所需 capability readiness。若所需 Observation 尚未存在，可记录足够明确的 Artifact requirement / gap；尚不能确定的 material consumption semantics 则仍是 semantic incompleteness，不能仅改名为 gap 绕过 Gate。
 
-**Dependency Reconciled** 表示实际所需 Observation、Artifact public invocation / consumption contract 与相关 upstream capabilities 已就绪，ownership 无冲突。**Implementation Ready** 仅在 Study Authority Complete 与 Dependency Reconciled 均成立时成立。缺失 Observation 必须先在独立流程完成 design / implementation，再返回 Study 确认实际 contract 与 bindings，复核 authority 并设计 / 完成 Analysis 和 Evidence。
+**Dependency Reconciled** 表示实际所需 Observation、Artifact public invocation / consumption contract 与相关 upstream capabilities 已就绪，ownership 无冲突；authority 已存在但 producer / public invocation runtime 缺失时，尚不满足此状态。**Implementation Ready** 仅在 Study Authority Complete 与 Dependency Reconciled 均成立时成立。缺失 Observation 先独立 design / implementation，再返回 Study 确认实际 contract / bindings，复核 workflow 与 retained results，以及实际存在的 Analysis / Evidence。Authority complete 可以支持下一步联合 implementation design，不代表实际 Study implementation 已可开始。
 
 工作顺序仍为 `CREATE → RECONCILE → IMPLEMENT`；进入 implementation 按 Package Contract，完成后按 Review 独立验证 topology。这些名称区分 authoring / dependency readiness，不建立 persisted status、registry 或 engine。Existing Study reconciliation 与 human-triggered `CONSOLIDATE` 由 Compatibility 拥有，不是上述依赖核对的自动副作用。
 

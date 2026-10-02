@@ -17,11 +17,12 @@ DataLake / Market Snapshot public facts
     → Observation
     → complete retained Observation Artifact
     → Study
-    → Study-local Analysis
-    → Evidence / Findings
+    → Study-owned workflow / materialized Workflow Artifacts
+    → optional Study-local Analysis
+    → optional Evidence / Findings
 ```
 
-Study 可选择 Observation、提供 invocation semantic inputs、resolve / ensure Artifact 并消费它；Study / Analysis 不重新定义 Observation 的 population、grain、derivation、validity 或 Artifact schema。Artifact 可被多个 Study 复用，不因 Study 不同而重新生成，也不因被消费过而失效。Observation Artifact 表达 what was observed；Study Evidence 表达 what was learned from observations。
+Study 可选择 Observation、提供 invocation semantic inputs，并由 Study orchestration resolve / ensure complete Artifact；Analysis 只消费已准备 inputs，不自行调用 / resolve / ensure Observation 或 upstream。Study / Analysis 不重新定义 Observation 的 population、grain、derivation、validity 或 Artifact schema。Artifact 可被多个 Study 复用，不因 Study 不同而重新生成或消费而失效。Observation Artifact 表达 what was observed；[Study-local Workflow Artifact](../studies/WORKFLOW.md) 表达 retained workflow state，Study Evidence 若存在表达 what was learned。
 
 ## Business identity 与 invocation lifecycle
 
@@ -87,6 +88,6 @@ Observation 可以消费 DataLake public Application Service 或 Market Snapshot
 
 ## Navigation 与 non-goals
 
-从本文件进入 [Schema](SCHEMA.md) 确认 concrete semantic areas，再按 [Authoring](AUTHORING.md) 锁定设计，沿具体 Observation entry 读取必要 specialized / upstream authority。首个 concrete entry 为 [cffex_option_expiry_dte_chain](cffex_option_expiry_dte_chain/ARCHITECTURE.md)；具体业务规则由该 entry 及其专题 contracts 拥有，本 framework 不预设 implementation topology。
+从本文件进入 [Schema](SCHEMA.md) 确认 concrete semantic areas，再按 [Authoring](AUTHORING.md) 锁定设计，沿实际所需 entry 读取 specialized / upstream authority：[cffex_option_expiry_universe](cffex_option_expiry_universe/ARCHITECTURE.md)、[cffex_option_expiry_dte_chain](cffex_option_expiry_dte_chain/ARCHITECTURE.md)。具体规则由各 entry / 专题拥有，本 framework 不预设 implementation topology，不创建 catalog。
 
 不创建 generic registry、plugin system、Research Repository、Experiment Engine、DAG、scheduler、executor、cache、refresh engine、HTTP API、Web UI、Observation CLI 或 automatic migration。Analysis 的当前 ownership 与 deferred reuse model 见 [Study Schema](../studies/SCHEMA.md)；实现 / 测试差异见 [implementation reconciliation](../IMPLEMENTATION_RECONCILIATION.md)。

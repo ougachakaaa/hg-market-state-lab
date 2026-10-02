@@ -15,7 +15,7 @@ lab research run <study-id> [study-specific args...]
 
 Repository CLI 只拥有 runnable Study discovery、layout 校验、进程执行、参数透明转发、operational error 与 exit-code propagation。它不 import `market_research`，不解析 study-specific arguments，不组合 Snapshot dependency，不拥有 Study method、artifact 或 result semantics。
 
-每个 runnable Study 拥有自己的 CLI module。该 module 拥有其 command parsing、input validation、dependency composition、Study invocation、failure presentation 和 success presentation。新 Study 经 Observation public boundary resolve / ensure Artifacts，不在 CLI 实现 Observation；legacy Snapshot composition 按 [Compatibility](../studies/COMPATIBILITY.md) 保留。`research run <study-id> --help` 必须由该 study-local parser 生成，不由 root CLI 复制参数说明。
+每个 runnable Study 拥有自己的 CLI module，负责 parsing、input validation、runtime collaborator composition、Study invocation 与 success / failure presentation。Study orchestration 经 Observation public boundary resolve / ensure Artifacts，CLI 不代替 workflow 驱动 empirical invocations 或实现 Observation；Analysis 只计算已准备 inputs。Legacy Snapshot composition 按 [Compatibility](../studies/COMPATIBILITY.md) 保留。`research run <study-id> --help` 由 study-local parser 生成，不由 root CLI 复制参数。
 
 ## 2. Runnable Study convention
 
@@ -50,9 +50,9 @@ python -m market_research.studies.<study_package>.cli [study-specific args...]
 
 ## 3. Shared configuration and output placement
 
-Research UI configuration 只提供 `output.root`。每个 Study 从自身完整的 semantic request 确定 deterministic run key：语义相同的请求必须得到相同的 key，任何会改变 retained evidence 含义的 Study 参数变化都必须得到不同的 key。当前时间、随机 UUID、进程身份、临时路径或运行顺序不得成为 canonical semantic identity。key 的表示形式（包括是否使用 hash 或编码）由 Study 决定；共享 Research UI 不定义统一 request schema、参数列表或 key 算法。
+Research UI configuration 只提供 `output.root`。每个 Study 从完整 semantic request 确定 deterministic run key：相同请求得到相同 key，改变 retained workflow results / evidence 含义的参数变化必须区分。当前时间、随机 UUID、进程身份、临时路径或运行顺序不成为 semantic identity。Key 表示形式留给 Study design，共享 UI 不定义统一 request schema、参数列表或算法。
 
-该 run key 标识整次 Study 请求并用于 evidence output placement。Observation Artifact identity 与 internal SQLite persistence 由 [Observation authority](../observations/ARCHITECTURE.md) 及 concrete owner 定义，不由 Study run key、output.root 或 UI 管理。[Study Schema](../studies/SCHEMA.md) 定义 dependency bindings 与 Analysis consumption；共享 Research UI 不解释 Artifact business identity，也不提供分段执行或 Observation publication protocol。Analysis Artifact model 尚未决定，legacy component identity 按 Compatibility 保留。
+该 run key 标识整次 Study 请求，用于 retained Study run output / workspace placement。Run workspace 可以包含 Study-local Workflow Artifacts、实际 Analysis outputs 与 Evidence。Observation identity / internal SQLite 由 [Observation authority](../observations/ARCHITECTURE.md) 拥有，不由 run key、output.root 或 UI 管理。[Schema](../studies/SCHEMA.md) / [Workflow](../studies/WORKFLOW.md) 拥有 bindings、materialized artifacts 与 complete consumption；共享 UI 不解释 Artifact identity，不提供分段执行或 Observation publication。Legacy component identity 按 Compatibility 保留。
 
 Study-local CLI 将 Study-owned run key 交给共享 Research UI，canonical placement 为：
 
@@ -64,9 +64,11 @@ Study-local CLI 将 Study-owned run key 交给共享 Research UI，canonical pla
 
 共享 Research UI 只将 key 作为不透明的单个目录名使用，并负责校验其 filesystem safety，防止绝对路径、路径逃逸或其他不安全的目录映射；它不解释 key 的 Study 语义。同一 `study-id + study-owned-run-key` 始终映射到同一 canonical run directory。共享 UI support 可以提供 configuration loading、canonical placement、collision detection 与事务性的整目录 staging/replacement，但不得定义 Study arguments、Snapshot request、artifact filenames/contents、statistics 或 result semantics。
 
-若 canonical run directory 已存在，默认在调用 Snapshot 或 Study 前失败并保留原 evidence。只有 Study 显式提供并接收 `--overwrite` 时才允许替换；replacement 以整个 run directory 为单位，先在同级 staging directory 完成，发布失败恢复原 evidence。
+若 canonical run directory 已存在，默认在调用 Study workflow / Observation 前失败，legacy 则在 Snapshot / Study 前失败，保留原 run output。只有 Study 显式提供并接收 `--overwrite` 才允许替换；以整个 run directory 为单位，先在同级 staging directory 完成，发布失败恢复原 output。
 
-新 Study 同样必须在调用 Observation / Study 前处理 evidence collision。`--overwrite` 仅授权 Study evidence directory replacement，不授权 Observation Artifact refresh / overwrite / invalidation，也不管理 Observation-owned database。
+同次 invocation 内，workflow Artifacts 可在所属 staging workspace 先物化并以 complete state 供下游步骤消费；成功后随整目录发布，失败不发布 complete final run output。Workflow-only Study 与 Evidence-producing Study 使用同一 collision / replacement invariant；不因多个 named artifacts 引入独立目录发布或 segmented UI。
+
+`--overwrite` 仅授权 Study run directory replacement，不授权 Observation refresh / overwrite / invalidation，也不管理 Observation-owned database。跨独立 invocation 的 workflow resume / reuse、generic partial-output publication 与 failure-output protocol 继续 deferred，不从确定性 run key 或 staging 推导 cache / resume engine。
 
 Configuration 是 runner 内部支撑，repository CLI 不公开 `research config` command。
 

@@ -33,4 +33,4 @@ Concrete authority 可以明确记录尚未就绪的 public upstream capability�
 
 只有 concrete semantics 已完整且依赖能力已就绪、边界无冲突，才交接 implementation。Implementation 不由本流程自动触发，不预建统一 schema、executor、registry 或 retry engine。Observation public invocation 的 delivery 与 implementation topology 需后续单独明确，不能从现有 Study CLI 推导 Observation CLI。
 
-若任务来自 Study capability gap，在独立 Observation design / implementation 完成后返回 [Study Authoring](../studies/AUTHORING.md)，让 Study 声明 Artifact dependency 并设计 Analysis / Evidence。Refresh / definition evolution 等 [deferred semantics](ARCHITECTURE.md#explicitly-deferred-decisions) 不因本流程自动锁定。
+若任务来自 Study capability gap，独立 Observation design / implementation 完成后返回 [Study Authoring](../studies/AUTHORING.md)，核对 Artifact bindings、workflow / retained results，以及实际需要的 optional Analysis / Evidence；不强制 observation-only Study 创建它们。Refresh / definition evolution 等 [deferred semantics](ARCHITECTURE.md#explicitly-deferred-decisions) 不因本流程自动锁定。

@@ -13,16 +13,16 @@ Gate 判断 Study-owned semantics 是否完整，不代替 dependency capability
 | Navigation | Entry、specialized owners 与实际 consumed Observation authority 可沿链接到达，无 orphan owner，不默认加载无关 sibling authority。 |
 | Input ownership | Parameter owner / consumers / semantic role、input bindings、defaults、用户表达、execution-only options 和 run identity 符合 Schema，声明与实际消费一致。 |
 | Observation canonical ownership | 每个 dependency 有独立 Observation canonical owner / Artifact contract；未存在能力明确列为 gap。Study 不重定义 population、grain、derivation、validity、input domain 或 Artifact schema。 |
-| Artifact dependencies | Observation identity、invocation semantic inputs、canonicalization references、所消费 Artifact identity 与 Analysis consumption 清晰；只消费 complete Artifact，不以 SQLite schema / path 或 Study run directory 识别业务对象。 |
-| Method completeness | Optional Method Context 与每个 Analysis 的 purpose、consumes、parameters、semantics、validity / exclusions、produces 完整，实际 references 无悬空或反向依赖。 |
-| Question-to-evidence traceability | 每个重要 Question aspect 可通过 Analysis purpose / consumes 追踪到 Artifact，每个 Evidence Product 可通过 defined_by 追踪至 Analysis → Artifact，每个 material Analysis 有 retained evidence。 |
+| Artifact dependencies | Observation identity、invocation inputs、canonicalization、所消费 Artifact identity 与 workflow / optional Analysis consumption 清晰；只消费 complete Artifact，不以 SQLite / run directory 识别业务对象。 |
+| Method completeness | Required workflow / steps、consumes / produces、顺序、failure / empty semantics 与 materialization 符合 [Workflow](WORKFLOW.md)；optional Method Context / Analysis 若存在，contract 完整无悬空 references。 |
+| Objective-to-result traceability | Objective → workflow → dependencies → retained result 可追踪；Analysis 若存在再验证 prepared Artifact → Analysis → retained output，Evidence 若存在经 defined_by 追踪至 Analysis / Artifact。Analysis=0、Evidence=0 不构成 incompleteness，不制造假对象。 |
 | Retained run identity | 等价请求与 identity-changing 输入区分一致，覆盖实际 dependency bindings 和 Analysis configuration，execution-only options 不参与。 |
-| Runnable contract | Study input / CLI mapping 和 evidence output 满足 [Research UI authority](../ui/ARCHITECTURE.md)；依赖未就绪时不以未来 delivery 假设宣布 Implementation Ready。 |
-| Result completeness | Evidence structure、presentation、provenance / Artifact references、sample / exclusion counts、空 / 缺失状态完整；不把 Observation Artifact 当作 Study Evidence，不以 filename 或 representation 替代 identity。 |
+| Runnable contract | Study input / CLI mapping 和 retained run-output 满足 [Research UI authority](../ui/ARCHITECTURE.md)；依赖未就绪时不以未来 delivery 假设宣布 Implementation Ready。 |
+| Result completeness | Named Workflow Artifact shape / identity / completeness / retention、result presentation / provenance / empty / failure 完整；Evidence 若存在再核对 structure / sample / exclusion counts。三类 products 区分，不以 filename 替代 identity。 |
 | Study semantic isolation | Study-owned Analysis / evidence semantics 不继承 sibling Study、retained evidence 或 historical shared analytical semantics；Artifact reuse 通过 Observation public boundary 合法引用。 |
 | No premature abstraction | 不因重复修改 shared owners / sibling Study，不创建 reusable Analysis framework、registry 或 DAG。 |
-| Dependency distinction | Required capability / owner、Study-owned evidence semantics 与 readiness 分开；缺失 Observation / upstream capability 有显式 gap，不在 Study Method 临时实现。缺失 material consumption decision 仍作为 semantic finding。 |
-| Internal consistency | Hypothesis 与全部允许 configurations 一致；defaults / domain / binding 无冲突；Acceptance 对应 Method / Results；Analysis sample selection 不改写原 Artifact population / validity；上游 facts 不重定义。 |
+| Dependency distinction | Required capability / owner、Study-owned workflow / result semantics 与 readiness 分开；缺失 Observation / upstream capability 有显式 gap，不在 Study Method 临时实现。缺失 material consumption decision 仍作为 semantic finding。 |
+| Internal consistency | Objective 与允许 configurations 一致，hypothesis 若有再验证其关系；defaults / domain / binding 无冲突，Acceptance 对应 Method / Results；Analysis sample selection 不改写 population / validity，上游 facts 不重定义。 |
 
 若 hypothesis 固定某配置而 Inputs 允许更广范围，返回具体 finding，由 Authoring human loop 明确关系；不自行将其解释为 default hypothesis。Class / function 命名、代码拆分与测试布局等纯实现细节不阻止 authority complete。
 
@@ -39,11 +39,11 @@ Gate 全部通过判定 **Study Authority Complete**：Study-owned semantics 已
 | 检查面 | 不通过条件 |
 | --- | --- |
 | Package / entry | 新 runnable Study 是单脚本、缺少 Package Contract 必需边界，或 init docstring 不指向 canonical Study entry。 |
-| Orchestration | study.py 隐藏 material statistics、grouping、plotting、retention 或复杂 provenance，以致 request → Artifact resolution → Analysis → Evidence 不可辨认。 |
-| Observation boundary | Study 实现 Observation construction，直接读取 Observation SQLite / schema / path，或在 Analysis 重定义 population、grain、derivation、validity、Artifact shape；public input binding / resolve / ensure 属于合法 orchestration。 |
-| Traceability | 具名 dependency 无法定位到 public Artifact consumption，Analysis 无清晰 Study-local responsibility，Evidence 无法追踪至 defining Analysis。 |
+| Orchestration | study.py 隐藏 material statistics / plotting / complex serialization，或无法辨认 request → dependency resolution → materialized workflow results → optional Analysis / Evidence。 |
+| Observation / Analysis boundary | Study 直接调用 DataLake / Snapshot 或实现 Observation construction、读取 persistence；Analysis invoke / resolve / ensure Observation、fetch data 或重定义 empirical semantics。Only Study orchestration 的 public binding / resolve / ensure 合法。 |
+| Traceability | Dependencies、步骤、named workflow Artifacts、complete consumption / publication 无法追踪；实际存在的 Analysis / Evidence 无清晰责任或 defining relations。 |
 | Focused reading | 修改一个 Analysis 需理解无关 CLI、其他 Analysis、Observation internals、报告格式或 output transaction。 |
 | Mixed responsibility | 单 module 承担可独立理解的 input canonicalization、Analysis execution、evidence retention 等多个 substantial responsibilities，无清晰内聚依据。 |
-| Authority drift | 实现合并、隐藏或越界重定义语义对象，无法恢复 Schema 的 consumption / evidence graph。 |
+| Authority drift | 实现合并、隐藏或越界重定义语义对象，无法恢复 Schema / Workflow graph；或对无 Analysis / Evidence 的 Study 强制空 module。 |
 
 按 semantic responsibility 和阅读边界处理 findings，不以 LOC、函数 / class 数量或一对象一文件代替审查。结构测试可固定 package / 必需 module / authority pointer，不能替代语义阅读；本轮未修改的旧测试差异见 [implementation reconciliation](../IMPLEMENTATION_RECONCILIATION.md)。

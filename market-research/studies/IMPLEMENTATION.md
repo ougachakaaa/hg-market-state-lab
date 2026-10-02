@@ -10,24 +10,24 @@
 <study_package>/
 ├── __init__.py
 ├── cli.py
-├── study.py
-├── analyses.py
-└── evidence.py
+└── study.py
 ```
+
+上述三份为 mandatory。`analyses.py` 仅在 material Analysis 存在时需要，`evidence.py` 仅在 Evidence retention 存在时需要；不为 observation-only Study 创建空 module。复杂 Workflow Artifact serialization / composition 可用 Study-local `artifacts.py` / `workflow.py`，不强制统一文件。
 
 | 边界 | 职责 |
 | --- | --- |
 | `__init__.py` | Package identity、指向 canonical Study `ARCHITECTURE.md` 的文档字符串与最小必要 public exports；不放 material computation。 |
 | `cli.py` | Study-local inbound adapter：参数解析、输入校验、Research UI 配置、dependency composition、Study invocation 与退出 / 错误呈现；不定义 Observation / Analysis semantics。 |
-| `study.py` | 可读的 orchestration：接收 canonical request、绑定 Observation inputs、经 Observation public boundary resolve / ensure complete Artifacts、运行 Analyses、组合 result 并交给 evidence retention。 |
-| `analyses.py` | Study-local analytical sample selection、分组、比较、聚合、统计与 evidence computation；消费 Artifact contract，不访问 Observation SQLite。 |
-| `evidence.py` | Evidence Products 的 serialization、表 / 图 / 报告、retained provenance references 与 presentation；不重定义 Analysis computation 或 Observation semantics。 |
+| `study.py` | Orchestration owner：接收 canonical request、绑定 Observation inputs、resolve / ensure complete Artifacts、驱动步骤与 Workflow Artifact materialization、调用 optional Analysis、组合 result 并驱动 run-output publication。 |
+| `analyses.py`（conditional） | Study-local computation / sample selection / grouping / comparison / statistics；只消费 workflow 已准备的 complete Artifacts，禁止调用 DataLake / Snapshot、fetch market data、invoke / resolve / ensure Observation 或读取 persistence。 |
+| `evidence.py`（conditional） | 实际 Evidence Products 的 serialization、表 / 图 / 报告、retained provenance 与 presentation；不重定义 computation、Observation semantics 或 dependency resolution。 |
 
 `observations.py` 不再是新 Study 的必需责任边界；Study 不得实现 Observation 本身。其 population、grain、derivation、validity、Artifact construction 与 owned SQLite 属于独立 Observation。Legacy `observations.py` 仅按 Compatibility 处理。
 
-实现责任沿 `Study request → Observation Artifact dependencies → Analysis → Evidence Products` 可追踪。Study request canonicalization、run identity 或 dependency binding 足够复杂时可放入 `inputs.py` 或窄 composition module；多个 Analysis 共用的非平凡数学机制可放入 Study-local `statistics.py`。按内聚性增加更深的 `analyses/`、`context.py`、`provenance.py` 等边界，不创建 cross-Study framework、base class、registry、DAG executor 或 shared statistics layer。
+实现责任沿 `Study request → workflow / Observation dependencies → materialized Workflow Artifacts → optional Analysis / Evidence` 可追踪，[Workflow contract](WORKFLOW.md) 拥有 materialization / complete-input semantics。复杂 request / run identity / binding 可放入 `inputs.py`，复杂 Workflow Artifact serialization 可放入 `artifacts.py`；多个实际 Analysis 的数学机制可放入 Study-local `statistics.py`。按内聚性增加边界，不创建 cross-Study framework、base class、registry、DAG executor 或 shared statistics layer。
 
-`study.py` 不成为 statistical quantiles、Analysis grouping、plotting、retained serialization 或复杂 provenance hashing 的默认位置。Artifact input binding / resolution 是 orchestration，重新实现 Observation fact derivation 是越界。Study 不通过上游 Source、Raw、Preparation 或 SQLite 补齐 Artifact dependency；缺失能力按 Authoring 先 reconciliation。
+`study.py` 驱动物化，不成为 material statistics、grouping、plotting、复杂 serialization / provenance hashing 的默认位置。Invocation binding / resolution 是 orchestration，重新实现 Observation fact derivation 是越界。Study 不通过 DataLake / Snapshot、Source、Raw、Preparation 或 SQLite 补齐 dependency；缺失能力按 Authoring 先 reconciliation。CLI composition 可以构造 runtime collaborators，不代替 study.py 驱动 empirical invocation。
 
 ## Implementation progressive disclosure
 

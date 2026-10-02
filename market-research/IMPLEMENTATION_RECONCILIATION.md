@@ -2,7 +2,7 @@
 
 本文件记录 Observation-first authority 更新的基线、implementation / test drift 与交接状态，不拥有新的业务语义。入口见 [module architecture](ARCHITECTURE.md)；当前 contracts 分别见 [Observation authority](observations/ARCHITECTURE.md)、[Study Schema](studies/SCHEMA.md)、[Implementation Contract](studies/IMPLEMENTATION.md)、[Compatibility](studies/COMPATIBILITY.md) 与 [Research UI](ui/ARCHITECTURE.md)。
 
-下文第一、二轮记录保留历史基线与当时验证结果；当前首个 concrete authority 的状态见 [本轮落位记录](#首个-concrete-observation-authority-落位)，历史测试结果不代表本 worktree 已验证。
+下文各轮记录保留历史基线与当时验证结果；首个 Observation 的落位见 [首轮 concrete 记录](#首个-concrete-observation-authority-落位)，当前 workflow / 第二个 Observation / 首个 Study 的状态见 [本轮 workflow reconciliation](#observation-driven-study-authority-reconciliation)。历史测试结果不代表本 worktree 已验证。
 
 ## Baseline 与本次边界
 
@@ -14,7 +14,7 @@
 
 | 当前差异 | 后续处理边界 |
 | --- | --- |
-| Observation framework 与首个 concrete authority 已存在，尚无 producer、public invocation implementation、owned SQLite 或 Artifact implementation。 | 首个 concrete semantics 见本轮落位记录；下一步另行进行 implementation reconciliation / design，不从 authority readiness 推断 runtime readiness。 |
+| Observation framework、两个 concrete Observation authorities 与首个 concrete Study authority 已存在，尚无 Observation producer / public invocation runtime 或该 Study implementation。 | 当前 semantics / readiness 见本轮 workflow reconciliation；下一步另行进行 implementation design，不从 authority readiness 推断 runtime readiness。 |
 | `test_study_authority_topology.py` 的 REQUIRED_IMPLEMENTATION 仍强制 observations.py，fixtures 仍以 Study-local method/observations 为例。 | 与未来 Package Contract / Schema 不一致；单独 test reconciliation，本次不修改测试，不保留旧规范来迎合它。 |
 | 既有 Study topology helpers 不检查独立 Observation owner、Artifact bindings / completeness 或 Observation 分支可达性。 | 现有 tests 不能单独证明新 semantic graph；本次补充非持久化 link / reachability 检查与逐条 semantic review，后续自动化检查另行设计。 |
 | 本地 src/market_research/studies 下残留已删除 Study 的 cache-only directories。 | 旧 discovery test 把目录当作 package，产生 baseline failure；不等于 tracked concrete Study，本次不清理目录、不重建 package。 |
@@ -132,3 +132,44 @@ Supplemental 只读检查通过：六份新增 / 修改 Markdown 中 72 个 loca
 Semantic review 覆盖 inputs / key、DTE 算术、精确命中、周末 / 假日、complete-but-absent、cache-missing 后 ensure、upstream failure 停止、合法 None、完整 population、complete reuse、失败不可见及 persistence boundary；acceptance scenarios 由 Artifact contract 拥有，不复制为新的规则。
 
 本轮 concrete authority 已满足十三个 semantic areas，状态为 **Concrete Observation Authority Complete**，可以进入该 Observation 的 implementation reconciliation / design；现有 pytest suite 仍待根 canonical environment 就绪后运行。Authority complete 不代表 implementation、runtime SQLite、CLI / HTTP delivery 或 runnable Study dependency 已就绪。
+
+## Observation-driven Study authority reconciliation
+
+本轮基线为 `c8814598a83b121705e03b7ba2e69ac6182cf5b2`，分支为 codex/observation，开始时工作区干净。本轮只更新 Research authority Markdown；未修改 Python、tests、runtime data、SQLite schema、DataLake / Snapshot、backend-api、web-ui 或 root configuration，未创建 commit / push，未开始 implementation。
+
+### Canonical owners 与 human decisions
+
+新增 [Study Workflow authority](studies/WORKFLOW.md)，将 steps、Study-local materialized Artifact identity 与 complete consumption 下沉为独立专题；Schema 只拥有对象模型 / cardinality，具体步骤与 retained Artifact shapes 仍由具体 Study METHOD / RESULTS 拥有。不引入 generic executable workflow / DAG / registry。
+
+新增 [cffex_option_expiry_universe entry](observations/cffex_option_expiry_universe/ARCHITECTURE.md) 与其 [Artifact contract](observations/cffex_option_expiry_universe/ARTIFACT.md)。Human 已确认 historical trade-date window 与 inclusive expiry window 相同；完整 public rows 中实际出现且 expiry 位于该窗口的 sorted unique dates 是唯一 empirical definition，不宣称覆盖只在窗口外挂牌的合约。十三个 Observation Schema areas 均有 owner；合法完整空 universe 可发布 complete。
+
+新增 [cffex_option_expiry_dte_collection entry](studies/cffex_option_expiry_dte_collection/ARCHITECTURE.md) 与 [Inputs](studies/cffex_option_expiry_dte_collection/INPUTS.md)、[Method](studies/cffex_option_expiry_dte_collection/METHOD.md)、[Results](studies/cffex_option_expiry_dte_collection/RESULTS.md)。Human 已确认 chain invocation failure 后继续按 expiry 顺序尝试所有计划项；任何失败都阻止 complete final collection，无 Study retry loop，不 rollback 已 complete Observation Artifacts。
+
+Study INPUTS 拥有四个 normalized inputs / deterministic run identity；METHOD 拥有 Universe → materialized plan → chains → materialized collection 顺序与 bindings；RESULTS 拥有 expiry_plan / observation_collection semantic shapes、provenance、counts / human output 与 complete / empty / failure。Analysis=0、Evidence=0，collection 是 manifest，不复制 chain rows。DTE-chain entry 仅更正 discovery ownership 描述；其 DATE_RESOLUTION / ARTIFACT 未修改，DTE / population / completeness 不变。
+
+### Framework / output reconciliation
+
+五份 Study framework documents 同步 required Workflow、optional Analysis / Evidence、Question / Objective 与 optional hypothesis、prepared-input Analysis boundary、mandatory init / cli / study 与 conditional analyses / evidence，以及 observation-only Review Gate。Module architecture、AGENTS、Observation framework / authoring 最小更新职责与 navigation；Compatibility 不变，不自动迁移 legacy consumers。
+
+UI canonical directory 泛化为 retained Study run output / workspace，保留 collision-before-execution、显式 overwrite、whole-directory staging / replacement 与发布失败恢复旧 output。同次 invocation 内 Artifact 先在 run staging workspace 物化再消费，成功后整体发布；失败不发布 complete final output，不新增 partial-output publication / resume protocol。Observation cache / SQLite 与 output.root / overwrite 独立。
+
+### Capability 与 readiness
+
+现有 OptionsDailyRange / ensure / export 的 full product-day coverage、同一 committed snapshot public rows / expiry 与 Calendar prerequisite 已足以证明锁定的 observed-window Universe，**未发现 DataLake capability gap**，不修改 DataLake authority、不穿透 opt_basic / persistence、不添加 API。
+
+本 Study 六个 semantic areas 与 workflow / result relationships 已确定，状态为 **Study Authority Complete**；第二个 Observation 为 **Concrete Observation Authority Complete**。DataLake upstream semantic contracts 已核对，但两个 Observation 的 runtime producers / public invocation implementations 尚不存在。因此按 Authoring 定义，**Dependency Reconciled 尚未达到，Implementation Ready 尚未达到**。可以进入 Observation + Study implementation design；实际 Study implementation 必须先补齐 Observation dependencies 并复核实际 contracts / bindings。
+
+Remaining semantic decisions 仅为已明确 deferred concerns：Observation refresh / invalidation / definition evolution，跨 invocation Workflow Artifact resume / reuse，serialization / filenames / run-key encoding，Observation schema / path / unique key / transaction / locking / retry，以及 invocation Python topology / CLI / HTTP delivery。本轮不以 deterministic identity 推导 cache、generation history 或 resume。
+
+### 本轮 validation 与 test drift
+
+Semantic review 沿 request → run identity → complete Universe → materialized plan → N chains → complete manifest 核对 ownership / bindings / provenance。核对 invalid inputs、inclusive filtering、重复 expiry 去重升序、complete empty universe / zero target、upstream incomplete failure、chain failure 后全部尝试、materialization / publication failure、complete reuse、unknown counts 与 Analysis / Evidence absence；具体 acceptance 仍由各 canonical owner 拥有。
+
+旧 Study tests 的 REQUIRED_IMPLEMENTATION 固定 observations.py / analyses.py / evidence.py，fixtures 仍演示 Study-local Observations；尚不覆盖 Workflow Artifact completeness、optional Analysis / Evidence 或 Analysis invocation prohibition。Authority-only 本轮不修改 tests 或 runtime 迎合旧 invariant，需下一阶段 test reconciliation。历史 cache-only failure 只作历史记录，不视为当前 worktree 已复现。
+
+本轮只读检查通过：19 份新增 / 修改 Research Markdown（7 new / 12 modified）的 205 个 local links / anchors 有效，七份新 owner 均可分别从 root ARCHITECTURE、Research ARCHITECTURE 与 Research AGENTS 到达；Study entry 直接链接 INPUTS / METHOD / RESULTS。`git diff --check` 及含 untracked 新文档的 trailing-whitespace 检查通过。完整 modified diff 与七份新文档已审阅，范围仅为 authority Markdown；DTE-chain DATE_RESOLUTION / ARTIFACT、Compatibility、Python 与 tests 均未改变。
+
+根 `.venv` 仍不存在，`poetry env info --path` 无环境路径。未安装依赖、创建环境或通过 `poetry run` 隐式初始化。以下两项现有 suite 未执行，不能引用历史通过数，也不能据此宣称当前 baseline failures 已复现：
+
+- `poetry run pytest market-snapshot/tests/test_authority_topology.py -q`
+- `poetry run pytest market-research/tests/test_study_authority_topology.py -q`

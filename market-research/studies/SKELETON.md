@@ -16,17 +16,17 @@ studies/<study_package>/
 
 | 文件 | Canonical responsibility |
 | --- | --- |
-| `ARCHITECTURE.md` | 稳定入口：Identity、Question、scope / purpose、Limitations、Acceptance、Observation Artifact Dependencies / Analysis / Evidence Product 概览、dependency gaps、implementation location 与 Authority Navigation。 |
+| `ARCHITECTURE.md` | 稳定入口：Identity、Question / Objective、scope / purpose、Limitations、Acceptance、workflow / dependencies / retained results 与 optional Analysis / Evidence 概览、dependency gaps、implementation location 与导航。 |
 | `INPUTS.md` | Study request / configuration、Observation invocation input bindings、parameter owner / consumers / semantic role、用户表达与 CLI 映射、必填性与默认值、规范化、execution-only options、Study run identity 及输入依赖缺口。 |
-| `METHOD.md` | Observation Artifact Dependencies 的 canonical owner / identity / contract references、resolve / ensure boundary 与 Analysis consumption；Method Context（若有）、Analysis contract、Study-local sample selection / statistics / exclusions。 |
-| `RESULTS.md` | 具名 Evidence Products 与 `defined_by` Analysis、machine-readable structure、表 / 图 / 报告、Artifact provenance references、复核所需样本与排除计数、空 / 缺失状态和 human-readable 呈现。 |
+| `METHOD.md` | Required workflow / steps、Observation dependency owner / identity / contract references、invocation bindings、resolve / ensure orchestration、Workflow Artifact production / consumption 与 failure / empty semantics；optional Method Context / Analysis。 |
+| `RESULTS.md` | 具名 retained Workflow Artifact semantic shapes / completeness / retention、workflow results / provenance / human output；Evidence 若存在再定义 `defined_by`、结构 / 表 / 图 / 报告、样本与排除计数。 |
 
 六个必答 semantic areas 仍由 Schema 定义；Identity 是 structural information，Authority Navigation 是阅读路径。Observation empirical population、grain、derivation、validity 和 Artifact schema 不在上述文件重新定义。
 
 ## Entry 与 progressive disclosure
 
-Entry 必须直接链接 `INPUTS.md`、`METHOD.md`、`RESULTS.md`，并使必要的 specialized authority 可达。读者可辨认问题、主要依赖、Analyses、预期 evidence、限制和验收，然后只读取相关 owner，不必搜索目录。
+Entry 必须直接链接 `INPUTS.md`、`METHOD.md`、`RESULTS.md`，并使必要 specialized authority 可达。读者可辨认 objective、workflow、主要依赖、retained results、optional Analysis / Evidence、限制与验收，再只读相关 owner。Observation-only Study 保留四文件，不创建假 Analysis / Evidence。
 
-Detailed request / run identity 归 INPUTS，Artifact dependency composition 与 Analysis mechanics 归 METHOD，Evidence Product structure 归 RESULTS；引用外部 Observation semantics 时使用 summary + canonical link，不复制定义。Artifact identity 由 dependency 引用其 Observation owner 确定，Inputs 的绑定与 Method 的消费关系相互链接，不双重拥有输入含义。
+Detailed request / run identity 归 INPUTS，workflow / step order、dependency composition 与 optional Analysis mechanics 归 METHOD，具名 Workflow Artifact shape / retained result 与 optional Evidence structure 归 RESULTS。通用 steps / materialization boundary 见 [Workflow](WORKFLOW.md)。引用外部 Observation semantics 时使用 summary + canonical link，不复制定义；Inputs 绑定与 Method 消费关系相互链接，不双重拥有输入含义。
 
 更深层拆分只依据真实 concern 和阅读需求。例如复杂 Analysis 可从 METHOD 进入 `method/analyses/`；dependency composition 也可有自己的窄文档，但不建立 Study-local `method/observations/` definition。Inputs / Results 按需下沉并保留概览及导航，不机械一对象一文件。

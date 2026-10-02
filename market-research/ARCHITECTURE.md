@@ -10,11 +10,11 @@
 market-research
     ├── scratch       disposable exploration
     ├── observations  reusable retained empirical facts
-    ├── studies       questions + Artifact composition + Analysis + Evidence
+    ├── studies       objectives + workflow / Artifacts + optional Analysis / Evidence
     └── ui            current Study CLI / output support
 ```
 
-Scratch、Observation、Study 具有不同生命周期。Observation 是独立 retained fact producer，Study 消费其 Artifacts 并形成 Evidence / Findings。Research 的解释职责终点仍是 evidence / finding，不是 production market-state output、forecast、decision、signal、recommendation 或 trading strategy。
+Scratch、Observation、Study 具有不同生命周期。Observation 是独立 retained fact producer，Study 拥有 user request / workflow、invocation / composition 与 retained workflow results，并可按实际目标形成 Analysis / Evidence。Empirical collection / preparation Study 可以没有 Analysis / Evidence；Research 的解释职责终点仍是 evidence / finding，不是 production market-state output、forecast、decision、signal、recommendation 或 trading strategy。
 
 本模块不拥有 production modeling、model evaluation、forecasting、decision system、backtesting framework、research service/API 或 production Web UI。Observation 是本模块内部 first-class concept，不是 repository-level bounded module；新增它不建立 generic research platform。
 
@@ -24,13 +24,14 @@ Scratch、Observation、Study 具有不同生命周期。Observation 是独立 r
 
 ```text
 User → repository discovery / forwarding → Study-local CLI
-     → Study request / Artifact dependency composition
-     → Study-local Analysis → Evidence / report / visualization
+     → Study-owned request / workflow / Observation invocation
+     → materialized Study-local workflow results
+     → optional Study-local Analysis / Evidence / visualization
 ```
 
 Repository CLI 拥有路径/layout 校验、进程调用与 exit-code propagation，不 import Research implementation 或维护 Study catalog。Study-local CLI 拥有参数、输入校验、配置、依赖 composition、Study invocation 与 success/failure presentation。新 Study 经 Observation public boundary resolve / ensure Artifacts；upstream facts 由 Observation 通过 public application boundaries 获取。Legacy Study 的直接 Snapshot composition 按 [Compatibility](studies/COMPATIBILITY.md) 保留。
 
-CLI convention、stable Study ID、配置、output placement 与 evidence replacement 见 [Research UI authority](ui/ARCHITECTURE.md) 及 [configuration authority](ui/CONFIGURATION.md)；具体参数和用法留在 Study authority。UI output configuration 不管理 Observation SQLite。
+CLI convention、stable Study ID、配置、run-output placement / replacement 见 [Research UI authority](ui/ARCHITECTURE.md) 及 [configuration authority](ui/CONFIGURATION.md)；具体参数和用法留在 Study authority。UI output configuration 不管理 Observation SQLite。
 
 ## 3. Research Result 与 Visualization
 
@@ -61,11 +62,12 @@ Research visualization 由 `market-research` 拥有，并默认以 Python 生成
 ```text
 DataLake public Application Service / Market Snapshot public result
     → Observation → retained Observation Artifact
-    → Study → Study-local Analysis → Evidence / Findings
-    → Human / Agent Semantic Decision → authority update → Modeling
+    → Study-owned workflow → retained workflow results
+    → optional Study-local Analysis → optional Evidence / Findings
+Evidence / Findings → Human / Agent Semantic Decision → authority update → Modeling
 ```
 
-该图表达 semantic data / decision direction，不使 Research 成为 Modeling 的强制 runtime stage。Observation upstream boundary 的完整规则由 [Observation authority](observations/ARCHITECTURE.md) 拥有；Research 只消费 DataLake public Application Service 或 Snapshot public application/product result，不进入 Source、Raw、private Preparation、upstream persistence、Dataset / Snapshot SQLite，也不依赖 backend-api、FastAPI DTO 或 frontend types。
+该图表达 semantic data / decision direction，不使 Research 成为 Modeling 的强制 runtime stage。Observation upstream boundary 的完整规则由 [Observation authority](observations/ARCHITECTURE.md) 拥有；新 Study 只通过 Observation public boundary 取得 empirical facts，Analysis 只消费 workflow 已准备的 complete Artifacts。Research 的 upstream integration 只消费 DataLake public Application Service 或 Snapshot public result，不进入 Source、Raw、private Preparation、upstream persistence、Dataset / Snapshot SQLite，也不依赖 backend-api、FastAPI DTO 或 frontend types；legacy Study composition 按 Compatibility 保留。
 
 Snapshot 继续拥有从 Source fact 到 Analysis-ready Artifact 的确定性准备；DataLake 继续拥有 reusable source facts。共享 repository Python runtime 不授予内部 import permission，Snapshot / DataLake 不得反向依赖 Research。缺失的 public capability 须记录并与对应 owner reconciliation，不把 Research interpretation 推回 upstream，也不穿透内部实现。此方向不承诺具体 integration 已完成。
 
@@ -79,11 +81,11 @@ Snapshot 继续拥有从 Source fact 到 Analysis-ready Artifact 的确定性准
 
 `observations` 拥有 reusable retained empirical products，独立于 Study 生命周期。稳定 contract 从 [Observation architecture](observations/ARCHITECTURE.md) 进入，必答 concrete semantics 与 authoring 分别进入 [Schema](observations/SCHEMA.md)、[Authoring](observations/AUTHORING.md)。本模块 entry 不拥有具体 business key、population、grain、formula、Artifact schema 或 SQLite schema。
 
-首个 concrete authority 为 [cffex_option_expiry_dte_chain](observations/cffex_option_expiry_dte_chain/ARCHITECTURE.md)，其 specialized contracts 从该 entry 进入。Authority readiness 与 runtime readiness 分开；当前尚未开始 Observation implementation，不从 historical shared helpers 推导已存在能力。
+Concrete authorities 为 [cffex_option_expiry_universe](observations/cffex_option_expiry_universe/ARCHITECTURE.md) 与 [cffex_option_expiry_dte_chain](observations/cffex_option_expiry_dte_chain/ARCHITECTURE.md)，按任务进入所需 entry / specialized contracts。Authority readiness 与 runtime readiness 分开；当前尚未开始 Observation implementation，不从 historical shared helpers 推导已存在能力。
 
 ### Study
 
-`studies` 用于值得保留、复查或继续推进的研究问题与 evidence record。Study 拥有 question、Observation Artifact composition、Analysis、Evidence、limitations 与 acceptance，不拥有 Observation definition。新建入口为 [Study Authoring](studies/AUTHORING.md)，semantic structure 由 [Schema](studies/SCHEMA.md) 拥有，固定四文件布局由 [Skeleton](studies/SKELETON.md) 拥有。
+`studies` 用于值得保留、复查或继续推进的 research question / preparation objective。Study 拥有 user request、workflow orchestration、Observation invocation / composition、Study-local materialized Artifacts、optional Analysis / Evidence、limitations 与 acceptance，不拥有 Observation definition。新建入口为 [Study Authoring](studies/AUTHORING.md)，对象模型由 [Schema](studies/SCHEMA.md) 拥有，steps / materialization boundary 进入 [Workflow](studies/WORKFLOW.md)，固定四文件布局由 [Skeleton](studies/SKELETON.md) 拥有。
 
 Study authority 位于 `studies/<study_package>/`，implementation 位于同名 `src/market_research/studies/<study_package>/`，保持研究知识与可替换 executable implementation 的长期分离，不迁入统一 src authority 或机械复制 Snapshot product layout。Public Study ID 由 UI authority 定义。
 
@@ -93,7 +95,7 @@ Runnable topology 由 [Implementation Package Contract](studies/IMPLEMENTATION.m
 
 Legacy Study-local Observations、旧 evidence 与 historical shared dependencies 按 [Compatibility](studies/COMPATIBILITY.md) 保持有效；新 framework 不自动迁移它们。仅 human-triggered concrete reconciliation 才迁入 Observation-first。历史 shared owners 只沿 Compatibility 或相关 legacy authority 进入，不在新 Study 默认创建路径。
 
-当前基线无 tracked concrete retained Study。Study output 可按研究需要保留 machine-readable result、静态图片或 report；文件名、数量、格式由 Study 定义，不建立统一 artifact schema。Observation-owned persistence 不放入 Study evidence lifecycle。
+首个 concrete retained Study authority 为 [cffex_option_expiry_dte_collection](studies/cffex_option_expiry_dte_collection/ARCHITECTURE.md)，当前仅 authority，尚无 runnable implementation。Study output 可按目标保留 workflow Artifacts、Analysis outputs 或 Evidence / visualization，具体文件与格式由 Study 定义，不建立统一 artifact schema。Observation-owned persistence 不放入 Study run-output lifecycle。
 
 ## 6. Research 与 Modeling
 
@@ -110,7 +112,7 @@ repository ARCHITECTURE.md
         │   ├── SCHEMA.md / AUTHORING.md
         │   └── concrete Observation entry → relevant specialized / upstream authority
         ├── studies/AUTHORING.md
-        │   ├── SCHEMA.md / SKELETON.md
+        │   ├── SCHEMA.md / WORKFLOW.md / SKELETON.md
         │   ├── IMPLEMENTATION.md / REVIEW.md / COMPATIBILITY.md (按需)
         │   └── consumed Observation authority → concrete Study entry
         │       → INPUTS.md / METHOD.md / RESULTS.md → relevant specialized authority
