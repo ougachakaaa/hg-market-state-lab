@@ -9,7 +9,7 @@
 | expiry_universe：取得 empirical expiry dates | [Universe entry](../../observations/cffex_option_expiry_universe/ARCHITECTURE.md) / [Artifact](../../observations/cffex_option_expiry_universe/ARTIFACT.md) | Inputs.product_code、expiry_start_date、expiry_end_date；Artifact identity 为 Observation identity + 这三个 normalized inputs。 |
 | expiry_chains：每个 planned expiry 的完整 chain | [Chain entry](../../observations/cffex_option_expiry_dte_chain/ARCHITECTURE.md) / [Artifact](../../observations/cffex_option_expiry_dte_chain/ARTIFACT.md) | Inputs.product_code、plan entry.expiry_date、Inputs.target_dte；每项 identity 为 chain Observation identity + 这三个 business inputs。 |
 
-Only Study orchestration 经 Observation public boundary resolve / ensure complete Artifacts。上述是 invocation semantics，不预设未来 Python signature / module topology；producer / public invocation runtime 尚未实现，实际 handoff 前必须 readiness reconciliation。Study 不经 CLI JSON、DataLake / Snapshot 或 persistence 获取这些事实。
+Only Study orchestration 经 Observation public boundary resolve / ensure complete Artifacts。上述 bindings 的 Python mapping 见 [Universe IMPLEMENTATION](../../observations/cffex_option_expiry_universe/IMPLEMENTATION.md) 与 [Chain IMPLEMENTATION](../../observations/cffex_option_expiry_dte_chain/IMPLEMENTATION.md)：Study orchestration 直接 import concrete Request / create_service，并消费 ensure 返回的 owned Artifact；不改变本文件 workflow。Producer runtime 尚未实现，实际 handoff 前必须 readiness reconciliation。Study 不经 CLI JSON、DataLake / Snapshot 或 persistence 获取这些事实。
 
 ## Canonical workflow steps
 

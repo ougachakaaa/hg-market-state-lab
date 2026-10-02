@@ -6,7 +6,7 @@
 
 Observation 是 `market-research` 内 first-class、参数化的 retained empirical fact producer：对一组规范化业务输入，以确定性的 observation semantics 构造可长期保留、可复用的 empirical Artifact。职责终点是 **retained Observation Artifact**，不是 Study Evidence。
 
-未来 Python implementation 的 canonical namespace 预留为 `market_research.observations`，仍由 `market-research` 拥有。本决定只预留 namespace ownership，不创建 Python package、不规定 concrete implementation topology，也不改变 repository root 的唯一 runtime / source registration。
+Canonical Python namespace 为 `market_research.observations`，仍由 `market-research` 拥有。Runnable contract / topology 唯一进入 [IMPLEMENTATION.md](IMPLEMENTATION.md)，不改变 repository root 唯一 runtime / source registration；architecture 已落位不表示 runtime package 已实现。
 
 Observation 不属于某个 Study，不拥有 statistical interpretation、research hypothesis、Study-specific comparison、Analysis conclusion、Study Evidence、Modeling、Forecast 或 Decision。其定义不得依赖 Study question 的解释、Analysis 目标或已得结果、Study conclusion。
 
@@ -61,9 +61,9 @@ Observation Artifact contract 是 Study / Analysis / external consumer 的 publi
 
 ## Persistence ownership
 
-每个 concrete Observation **exactly owns 一个 SQLite database**；该数据库承载该 Observation 的业务请求及 Artifacts，不是 one SQLite per invocation。SQLite 是 Observation internal persistence，具体 schema、path 与 implementation 留给后续 concrete design / implementation。
+每个 concrete Observation **exactly owns 一个 SQLite database**；该数据库承载该 Observation 的业务请求及 Artifacts，不是 one SQLite per invocation。SQLite 是 Observation internal persistence；canonical placement 与 publication mapping 见 [Implementation architecture](IMPLEMENTATION.md)，SQL schema 与 transaction algorithm 留给实现。
 
-Observation runtime SQLite 文件不应进入 Git。本轮不创建 runtime database，也不为此预设文件路径或修改 repository ignore configuration。
+Observation runtime SQLite 文件不应进入 Git。本 authority-only 轮不创建 runtime database 或修改 repository ignore configuration。
 
 不建立 global `research.sqlite`、global Observation database、global Artifact DB、cross-Observation foreign key 或 Study-owned Observation persistence。Study、Analysis 与 external consumer 不直接读取 SQLite，不依赖 SQLite schema 或 path。Study evidence output 与 Observation-owned persistence 是不同边界；Study output replacement 不授予 Observation overwrite 权限。
 
@@ -86,6 +86,6 @@ Observation 采用 DataLake-first **design-time capability selection**：DataLak
 
 ## Navigation 与 non-goals
 
-从本文件先进入 [Upstream policy](UPSTREAM.md)，再按 [Schema](SCHEMA.md) / [Authoring](AUTHORING.md) 锁定 concrete semantics，沿实际所需 entry 读取必要 upstream authority：[cffex_option_expiry_universe](cffex_option_expiry_universe/ARCHITECTURE.md)、[cffex_option_expiry_dte_chain](cffex_option_expiry_dte_chain/ARCHITECTURE.md)。具体规则由各 entry / 专题拥有，本 framework 不预设 implementation topology，不创建 catalog。
+从本文件先进入 [Upstream policy](UPSTREAM.md)，再按 [Schema](SCHEMA.md) / [Authoring](AUTHORING.md) 锁定 concrete semantics，沿实际所需 entry 读取必要 upstream authority：[cffex_option_expiry_universe](cffex_option_expiry_universe/ARCHITECTURE.md)、[cffex_option_expiry_dte_chain](cffex_option_expiry_dte_chain/ARCHITECTURE.md)。具体规则由各 entry / 专题拥有，Implementation handoff 进入 [framework IMPLEMENTATION](IMPLEMENTATION.md) 与 concrete IMPLEMENTATION；不创建 catalog。
 
 不创建 generic registry、plugin system、Research Repository、Experiment Engine、DAG、scheduler、executor、cache、refresh engine、HTTP API、Web UI、Observation CLI 或 automatic migration。Analysis 的当前 ownership 与 deferred reuse model 见 [Study Schema](../studies/SCHEMA.md)；实现 / 测试差异见 [implementation reconciliation](../IMPLEMENTATION_RECONCILIATION.md)。

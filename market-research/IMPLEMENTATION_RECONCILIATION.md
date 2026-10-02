@@ -2,7 +2,7 @@
 
 本文件记录 Observation-first authority 更新的基线、implementation / test drift 与交接状态，不拥有新的业务语义。入口见 [module architecture](ARCHITECTURE.md)；当前 contracts 分别见 [Observation authority](observations/ARCHITECTURE.md)、[Study Schema](studies/SCHEMA.md)、[Implementation Contract](studies/IMPLEMENTATION.md)、[Compatibility](studies/COMPATIBILITY.md) 与 [Research UI](ui/ARCHITECTURE.md)。
 
-下文各轮记录保留历史基线与当时验证结果；首个 Observation 的落位见 [首轮 concrete 记录](#首个-concrete-observation-authority-落位)，workflow / 第二个 Observation / 首个 Study 见 [workflow reconciliation](#observation-driven-study-authority-reconciliation)，当前 upstream selection policy 与检查见 [本轮 upstream reconciliation](#observation-upstream-dependency-policy-reconciliation)。历史测试结果不代表本 worktree 已验证。
+下文各轮记录保留历史基线与当时验证结果；首个 Observation 的落位见 [首轮 concrete 记录](#首个-concrete-observation-authority-落位)，workflow / 第二个 Observation / 首个 Study 见 [workflow reconciliation](#observation-driven-study-authority-reconciliation)，当前 upstream selection policy 与检查见 [本轮 upstream reconciliation](#observation-upstream-dependency-policy-reconciliation)。Observation runnable mapping 的当前状态见 [implementation architecture reconciliation](#observation-implementation-architecture-reconciliation)。历史测试结果不代表本 worktree 已验证。
 
 ## Baseline 与本次边界
 
@@ -193,3 +193,52 @@ Observation upstream policy 已具备 **Authority Complete** 条件，可以进�
 按附件编号审查 policy requirements：stable public boundaries、DataLake-first / sufficiency、Snapshot selection、双向 failure 禁止换源、multi-upstream、gap escalation、provider prohibition、authoring / schema、两侧 execution / provenance、specialized topology、concrete / module reconciliation 和 non-goals 均由上述 owners 表达。检查附件十项 reconciliation invariants 与完整 graph；全部 Research authority 的 28 份 Markdown 中 272 个 local links、42 个 anchors 有效，UPSTREAM 可分别从 root ARCHITECTURE、Research ARCHITECTURE 与 Research AGENTS 到达。Provider dependency 扫描未发现直接依赖授权；禁止示例、公开 Dataset identity 与 upstream failure 描述不构成 provider integration。
 
 本轮找到可用 Python 3.13，并在 repository root 建立 canonical Poetry `.venv`、按现有 lock 安装依赖；root project / lock 未改变。现有 repository authority topology suite 为 13 passed，Research Study authority topology suite 为 12 passed。两套旧 tests 不完整覆盖新 policy，故另行核对 links / anchors、reachability、concrete inputs / key / population / grain 保持不变及完整差异。`git diff --check` 通过；范围仅为上述九份 authority Markdown。
+
+## Observation implementation architecture reconciliation
+
+本轮基线 `e86fbdb69fb4a3cd4e6a23cf1d9d9b9efade4a7c`，codex/observation；本次续轮开始时已有上一轮未提交 authority edits，按当前附件逐项复核并补齐，HEAD 未改变。已包含 Study 基线 754758a 与 UPSTREAM policy，prerequisite 满足。本轮只落位 authority / reconciliation，未开始 Python、SQLite、DataLake / Snapshot / Study implementation、CLI / HTTP；不 commit / push。
+
+### Decisions 与 canonical owners
+
+新增 [framework IMPLEMENTATION](observations/IMPLEMENTATION.md) 唯一拥有 namespace、ensure lifecycle、common errors、owned public object boundary、factory、placement / atomic complete publication、shared mechanics 与 tests handoff；新增 [Universe IMPLEMENTATION](observations/cffex_option_expiry_universe/IMPLEMENTATION.md) 和 [Chain IMPLEMENTATION](observations/cffex_option_expiry_dte_chain/IMPLEMENTATION.md) 拥有具体 exports、field / type projection、public dependency wiring 与 execution mapping。Framework architecture / Authoring / Schema、module / AGENTS 仅最小同步 navigation / handoff；两份 entry 替换已由本轮决定的 deferred path / topology 描述，两份 Artifact 仅澄清 Python mapping / coverage context，不改变 facts。首个 Study METHOD 仅补 public package binding links，不改变 workflow。
+
+V1 consumer 直接 concrete import → typed immutable Request → 无参 create_service → ensure → owned complete Artifact。Framework root 发布 ObservationError / ObservationInvalidRequestError / ObservationOperationError，Study 不 import upstream classes / errors 或读取 SQLite。Invalid semantic request 在 upstream mutation 前识别；合法 request 的转换拒绝、proof / calculation / persistence / publication failure 为 OperationError，不返回 partial，不换源。
+
+Runtime placement 为 `market-research/observations/<observation-id>/data/<observation-id>.sqlite3`，root-relative internal resolution、exactly one SQLite per Observation；没有上层 runtime-data convention conflict。Current ignore 不覆盖新路径，实施前必须补 ignore 并验证 WAL / journals；本轮不创建 DB 或改 ignore。Normalized business lookup → complete hit 零 upstream → miss 后 public upstream work / whole Artifact in memory → atomic publication。Concurrent misses 可重复计算，至多一个 complete logical Artifact；不承诺 single-flight，不建 job / pending / retry / history framework，不做 automatic migration / refresh / TTL / force。
+
+两个 producer 继续 DataLake-backed：Universe 仅 Options public service，exact range ensure → complete export → sorted unique in-window expiries，Calendar prerequisite 留在 Options 内；chain Calendar public complete proof → 单 product-day public check / 必要 ensure / export → complete-but-absent 才回溯 → 首个非空 full matching chain。Public row / provenance 全部投影为 Observation-owned immutable values，市场字段 meaning / units / None 仍归 upstream，不泄漏 Export / Row / Coverage runtime object。Shared mechanics 不知道 expiry / DTE / Dataset / Product / concrete schema。没有 generic DataLake / Snapshot adapter 或 direct external-provider dependency。
+
+### Dependency 与 readiness
+
+已核对 Calendar / Options SERVICE、DataLake APPLICATION、实际 concrete public init exports 及现有 runtime request / ensure / export surface；已发布 contracts 足以支持本轮映射，无 DataLake / Snapshot public capability gap，无需 Snapshot selection。未调用 factory / ensure、provider 或读取 runtime DB；本轮仅静态核对及 import / topology verification，不宣称实盘网络 execution 已验证。
+
+| Scope | Current state |
+| --- | --- |
+| 两个 Observation semantics | Authority Complete（保持既有 meaning） |
+| Framework 与两个 concrete implementation architectures | Implementation Architecture Complete |
+| 两个 concrete Observation | Authority Complete / Dependency Reconciled / Implementation Architecture Complete / Implementation Ready，依赖 public surface 可用且无 semantic conflict / capability gap；不是 runtime 已存在 |
+| Observation runtime | Not Implemented |
+| First Study | Study Authority Complete；本任务范围内 Observation dependency invocation contract fully specified；runtime Dependency Reconciled=false，Implementation Ready=false，等待两个 producers 实施与 bindings 复核 |
+
+下一步按 minimal shared runtime primitives / common errors → Universe implementation / acceptance → chain implementation / acceptance → 两项 durable reuse / failure / public ownership reconciliation → first Study dependency reconciliation → Study implementation 的顺序。Shared primitives 只覆盖两项 producer 已真实需要的 mechanical concerns，不预建 generic framework。SQL DDL / indexes / serialization / transaction details 是下一阶段 mechanics，未授权 Artifact definition evolution、cross-Observation transaction、Observation CLI / HTTP 或 Study business redesign。
+
+### Validation
+
+本轮使用现有根 canonical `.venv` 执行 repository authority topology tests：13 passed；Research Study authority topology tests：12 passed。现有 tests 未覆盖新 Observation public namespace / owned types / publication implementation，旧 Study fixtures 仍固定 mandatory analyses / evidence topology，保持既有 reconciliation drift，不修改 tests 或 runtime 迎合。后续 producer implementation 必须补本轮 IMPLEMENTATION 要求的三层验证。
+
+Supplemental 只读检查通过：31 份 Research Markdown、312 个 local links、46 个 anchors；三份新增 owners 均可从 root ARCHITECTURE、Research ARCHITECTURE 和 Research AGENTS 到达。Actual DataLake public imports / coverage / ensure / export surfaces 可用，未调用 factories / services。逐项审查当前附件第 30 节二十项 completion checks：public contract / owned type projection、zero-upstream hit、exactly-one SQLite、atomic complete publication、failure taxonomy / no failover、concrete mapping / Study bindings 与 readiness 均有明确 owner。
+
+完整差异含三份新增文件已审阅，`git diff --check` 与 trailing-whitespace 检查通过。范围为 3 new / 11 modified Research authority Markdown；concrete inputs / key / population / grain 文段保持不变，DATE_RESOLUTION、UPSTREAM、DataLake / Snapshot、runtime source、tests、root project / lock 和 ignore 未修改。当前 Observation architecture 无 direct provider path / failover，DataLake public capability 无 gap。Research runtime source 扫描未发现 direct provider import / transport call；旧 `tests/test_im_basis.py` 引用 `market_snapshot.sources.tushare` 用于 fake-Source monkeypatch，是既有 private-boundary test drift，本轮仅记录、不修改 tests，也不授予新 Observation 依赖该路径的权限。`test_research_execution.py` 中 TUSHARE_TOKEN 为禁止依赖断言的字符串，不是 credential access。具体网络 / persistence 行为仍须下一阶段实现验证。
+
+
+本次 completion audit 的二十项要求与实际 owners 对照如下（验证 authority，不冒充尚未实现的 runtime behavior）：
+
+| 附件第 30 节 checks | Current-state evidence |
+| --- | --- |
+| 1–2：framework 唯一 owner / 两项 concrete handoff | 三份 IMPLEMENTATION 实际存在；module / AGENTS / entries 逐层导航，各自 intro 明确 responsibility。 |
+| 3–5：ensure / factory / errors | Framework Public namespace、Factory、Public failures sections；concrete signature / exports tables，无参 factory，无重叠 verbs。 |
+| 6–7：owned Python types / no upstream leakage | Framework object boundary；两项 concrete field / type / provenance mapping；chain row fields 与 actual public OptionsDailyRow fields 全部对应。 |
+| 8–12：one DB / no global DB / zero-upstream hit / atomic publication / concurrency | Framework Owned SQLite 与 Complete publication sections；两个 explicit paths、normalized-input lookup、whole-Artifact validation、single atomic publication、same-key loser / failure handling。 |
+| 13–16：两项 DataLake dependencies / no provider / no failover | Concrete execution mappings、未修改的 UPSTREAM；实际 public imports 可用；provider / private-source AST scan 仅既有 legacy test finding，runtime source 无 findings。 |
+| 17：Study bindings | METHOD request fields 与两个 concrete Request fields 一一对应，owned Artifact resolution fields 支持现有 manifest；Study runtime readiness 未提前推进。 |
+| 18–20：links / diff / tests | 31 Markdown 的 312 links / 46 anchors 与三入口 reachability、git diff --check、13 + 12 passing topology tests；旧 coverage 缺口已记录。 |

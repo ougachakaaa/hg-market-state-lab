@@ -81,7 +81,7 @@ Snapshot 继续拥有从 Source fact 到 Analysis-ready Artifact 的确定性准
 
 `observations` 拥有 reusable retained empirical products，独立于 Study 生命周期。稳定 contract 从 [Observation architecture](observations/ARCHITECTURE.md) → [UPSTREAM policy](observations/UPSTREAM.md) 进入，再读 [Schema](observations/SCHEMA.md) / [Authoring](observations/AUTHORING.md) 与实际 concrete entry。本模块不拥有 concrete business key、population、grain、formula、Artifact schema 或 SQLite schema。
 
-Concrete authorities 为 [cffex_option_expiry_universe](observations/cffex_option_expiry_universe/ARCHITECTURE.md) 与 [cffex_option_expiry_dte_chain](observations/cffex_option_expiry_dte_chain/ARCHITECTURE.md)，按任务进入所需 entry / specialized contracts。Authority readiness 与 runtime readiness 分开；当前尚未开始 Observation implementation，不从 historical shared helpers 推导已存在能力。
+Concrete authorities 为 [cffex_option_expiry_universe](observations/cffex_option_expiry_universe/ARCHITECTURE.md) 与 [cffex_option_expiry_dte_chain](observations/cffex_option_expiry_dte_chain/ARCHITECTURE.md)，按任务进入所需 entry / specialized contracts。Runnable contract 唯一见 [Observation IMPLEMENTATION](observations/IMPLEMENTATION.md) 与各 concrete IMPLEMENTATION。两项 Implementation Architecture Complete / Implementation Ready，runtime 仍 Not Implemented；不从 historical shared helpers 推导已存在能力。
 
 ### Study
 
@@ -109,7 +109,7 @@ Evidence / Findings 只有经过 human / agent semantic decision 与对应 canon
 repository ARCHITECTURE.md
     → market-research/ARCHITECTURE.md
         ├── observations/ARCHITECTURE.md
-        │   ├── UPSTREAM.md → SCHEMA.md / AUTHORING.md
+        │   ├── UPSTREAM.md → SCHEMA.md / AUTHORING.md → IMPLEMENTATION.md
         │   └── concrete Observation entry → relevant specialized / upstream authority
         ├── studies/AUTHORING.md
         │   ├── SCHEMA.md / WORKFLOW.md / SKELETON.md

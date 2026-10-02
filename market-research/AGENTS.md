@@ -11,6 +11,7 @@
 | 任务 | 阅读路径 |
 | --- | --- |
 | Observation design / review | [Observation architecture](observations/ARCHITECTURE.md) → [Upstream policy](observations/UPSTREAM.md) → [Authoring](observations/AUTHORING.md) / [Schema](observations/SCHEMA.md) → specific Observation entry → 实际所需 upstream authority。 |
+| Observation implementation | Specific entry / Artifact（chain 按需 DATE_RESOLUTION）→ [framework IMPLEMENTATION](observations/IMPLEMENTATION.md) → concrete IMPLEMENTATION → public package；依赖选择仍遵守 UPSTREAM。 |
 | 新 Study | [Study Authoring](studies/AUTHORING.md) / [Schema](studies/SCHEMA.md) → [Workflow](studies/WORKFLOW.md) → 仅实际消费的 Observation authority → specific Study entry；创建布局按 [Skeleton](studies/SKELETON.md)。 |
 | Study implementation | Specific Study authority → consumed Artifact contracts → [Implementation Package Contract](studies/IMPLEMENTATION.md) → 同名 source package；从 implementation 进入时先读 init docstring 指向的 canonical authority。 |
 | Study review / historical reconciliation | 按需 [Review](studies/REVIEW.md) / [Compatibility](studies/COMPATIBILITY.md)，再读触发范围涉及的 specific authority；不自动迁移。 |
@@ -31,7 +32,7 @@ Observation upstream design 先按 Upstream policy 审查 [DataLake architecture
 - 新 Study 保留 Skeleton 四文件布局，拥有 user request、required workflow、Observation invocation / composition、Study-local materialized Artifacts 与 optional Analysis / Evidence；Analysis=0、Evidence=0 合法。Observation gap 不授权 Study 实现 Observation；dependencies 就绪后才进入实际 Study implementation。
 - 每个新 runnable Study 是同名 Study-local Python package；mandatory init、cli、study，analyses / evidence 按实际职责 conditional，按 Implementation Contract 拆分复杂 helper。study.py 拥有 orchestration / materialization；Only Study orchestration resolve / ensure Observations。Analysis 只计算已准备的 complete Artifacts，不调用 Observation / DataLake / Snapshot、不 fetch data 或读 persistence。Study 不直接消费 DataLake / Snapshot，不把 Observation construction / persistence 放入 Study；Legacy 按 Compatibility 保留。
 - 新 runnable Study 提供 stable CLI Study ID、符合 UI authority 的 cli.py、canonical usage 与 CLI / output tests；不创建中央 registry、reflection、entry-point plugin 或 dynamic registration。
-- 现有 `lab research` 是 Study 的 canonical 人类 discovery / forwarding 入口；Observation invocation semantics 与 CLI delivery 分开，后者尚未决定，不创建 Observation CLI / HTTP API。
+- 现有 `lab research` 是 Study 的 canonical 人类 discovery / forwarding 入口；Observation invocation semantics 与 CLI delivery 分开，V1 仅 Python public ensure boundary，见 [Observation IMPLEMENTATION](observations/IMPLEMENTATION.md)；不创建 Observation CLI / HTTP API。
 - Visualization 仍由 Research 通过 Python study output 生成，默认静态图片，具体形式由真实 Study 决定。除非真实重复需求与新的 authority decision 已明确改划 ownership，不自行迁移至 backend-api、web-ui 或 Research Viewer。
 - Findings 是 evidence，须 human / agent semantic decision 与 canonical update 后才可影响 Modeling，不自动形成 production contract、forecast、decision、signal 或 recommendation。未来 frontend 消费 Research semantics，不把 frontend-library configuration 写入 canonical result。
 - 不创建 concrete Observation，除非该任务明确要求；不因 authority-only reconciliation 自动迁移旧 Study / evidence 或将 historical shared helpers 提升为能力。

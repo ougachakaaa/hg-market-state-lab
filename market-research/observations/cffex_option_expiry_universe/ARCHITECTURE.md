@@ -55,7 +55,7 @@ Incomplete coverage、ensure failure、Calendar prerequisite failure、credentia
 
 ## Persistence、limitations 与 semantic ownership
 
-本 Observation exactly owns 一个 SQLite，承载其多个 requests / Artifacts，继承 [framework persistence boundary](../ARCHITECTURE.md#persistence-ownership)。Consumer 不读取数据库，runtime SQLite 不进入 Git；path、schema、unique key、transaction / locking / retry 留给后续 design。
+本 Observation exactly owns 一个 SQLite，承载其多个 requests / Artifacts，继承 [framework persistence boundary](../ARCHITECTURE.md#persistence-ownership)。Consumer 不读取数据库，runtime SQLite 不进入 Git；canonical placement / public package / publication mapping 见 [IMPLEMENTATION.md](IMPLEMENTATION.md)；SQL schema、indexes 与 transaction / locking mechanics 留给实现，semantic evolution 继续 deferred。
 
 Artifact 不保证 provider-current freshness，不解释窗口外 facts，不进行 DTE calculation、chain construction、Study selection、cross-expiry comparison、PnL、收益、statistics、Analysis 或 Evidence。未来未发布行情的窗口不能由日历或计划推测为 complete；上游不能证明完整性时失败。
 

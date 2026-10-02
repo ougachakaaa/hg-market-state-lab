@@ -10,7 +10,7 @@
 | product_code | 请求的 canonical product。 |
 | expiry_start_date / expiry_end_date | 请求的 inclusive expiry window；保留 date semantics。 |
 | expiries | date 升序序列，unique，每项位于 expiry window 内；每个 date 为一个 empirical unit。 |
-| upstream public provenance / coverage context | 实际 Options export 的 dataset、view、export_schema_version、scope、window 和完整 CoverageResult。 |
+| upstream public provenance / coverage context | 实际 Options export 的 dataset、view、export_schema_version、scope、window 和完整 coverage semantic context（Python owned-value projection 见 [IMPLEMENTATION](IMPLEMENTATION.md)，不持有 DataLake CoverageResult object）。 |
 
 Provenance 的 dataset 为 tushare_equity_index_options，view 为 options_daily，scope 仅含 requested product，trade-date window 与请求 expiry window 相同。保留实际 public schema version；不是 SQLite version。不保留 internal IDs、hash、SQLite path、provider transport、private completeness basis 或全量 daily rows；不新增执行审计机制。
 

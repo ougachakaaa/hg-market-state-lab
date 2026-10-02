@@ -32,7 +32,7 @@ Agent 先整理 human 已给出的观察意图、事实来源、限制和未决�
 
 ## Authority placement 与 review
 
-Concrete Observation 从 `observations/<observation-id>/ARCHITECTURE.md` 进入；本 framework 不规定 ID token format 或 implementation package mapping。Entry 只保留 purpose / identity、边界、关键 invariants、依赖概览与导航。按独立 semantic concern 下沉详细契约；不机械复制 Study 的四文件布局，也不因省文件把独立 concern 全塞入 entry。
+Concrete Observation 从 `observations/<observation-id>/ARCHITECTURE.md` 进入；本 framework 不规定通用 ID token format；runnable package mapping 由 [Implementation architecture](IMPLEMENTATION.md) 与 concrete IMPLEMENTATION 拥有。Entry 只保留 purpose / identity、边界、关键 invariants、依赖概览与导航。按独立 semantic concern 下沉详细契约；不机械复制 Study 的四文件布局，也不因省文件把独立 concern 全塞入 entry。
 
 Authority 完成前逐项核对 Schema 的十三个 areas、跨 area 一致性、canonical ownership、entry reachability 与相对链接。消费者无需了解 SQLite、Study question 或 Analysis conclusion 才能理解 Artifact contract。未解决的业务语义不能发布为 complete authority。
 
@@ -42,6 +42,6 @@ Concrete authority 按 [UPSTREAM](UPSTREAM.md) 记录 required facts、DataLake 
 
 两侧都没有合适 public capability 时记录 Upstream Capability Gap；source / market fact 缺口交给 DataLake，prepared / analysis-ready Product 缺口交给 Snapshot，阻止 implementation readiness。只读取实际所需 upstream authority，不加载 sibling products，不穿透 internals，不自行调用 provider 或实现 failover。
 
-只有 concrete semantics 已完整且依赖能力已就绪、边界无冲突，才交接 implementation。Implementation 不由本流程自动触发，不预建统一 schema、executor、registry 或 retry engine。Observation public invocation 的 delivery 与 implementation topology 需后续单独明确，不能从现有 Study CLI 推导 Observation CLI。
+只有 concrete semantics 已完整且依赖能力已就绪、边界无冲突，才交接 implementation。Implementation 不由本流程自动触发，不预建统一 schema、executor、registry 或 retry engine。Implementation handoff 按 [IMPLEMENTATION](IMPLEMENTATION.md) 核对 public values / ensure / errors / composition / placement / publication 与具体 runtime mapping；不能从现有 Study CLI 推导 Observation CLI。Implementation Architecture Complete 与 runtime implemented 分别判断，Study dependency readiness 等待实际 producer / bindings 复核。
 
 若任务来自 Study capability gap，独立 Observation design / implementation 完成后返回 [Study Authoring](../studies/AUTHORING.md)，核对 Artifact bindings、workflow / retained results，以及实际需要的 optional Analysis / Evidence；不强制 observation-only Study 创建它们。Refresh / definition evolution 等 [deferred semantics](ARCHITECTURE.md#explicitly-deferred-decisions) 不因本流程自动锁定。

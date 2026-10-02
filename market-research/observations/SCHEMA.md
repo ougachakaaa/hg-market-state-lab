@@ -1,6 +1,6 @@
 # Concrete Observation Semantic Schema
 
-本文件定义 concrete Observation authority 必须回答的最小 semantic areas，不定义所有 Observation 通用的业务字段或 row schema。Framework identity、lifecycle、idempotency、completeness、persistence 与 public boundary 由 [Observation architecture](ARCHITECTURE.md) 唯一拥有；创建流程由 [Authoring](AUTHORING.md) 拥有。
+本文件定义 concrete Observation authority 必须回答的最小 semantic areas，不定义所有 Observation 通用的业务字段或 row schema。Framework identity、lifecycle、idempotency、completeness、persistence 与 public boundary 由 [Observation architecture](ARCHITECTURE.md) 唯一拥有；创建流程由 [Authoring](AUTHORING.md) 拥有；runnable Python boundary / persistence lifecycle mapping 唯一归 [IMPLEMENTATION](IMPLEMENTATION.md)，concrete carrier mapping 进入各自 IMPLEMENTATION。
 
 ## Required semantic areas
 
@@ -16,7 +16,7 @@
 | Derivation | 从 upstream facts 到 empirical output 的确定性构造、公式、业务变换及单位；不定义 statistical interpretation。 |
 | Validity / Missingness | 有效性、缺失、排除与 failure semantics，包括它们怎样影响 Artifact 可消费性；不静默补值或改变 population。 |
 | Artifact Contract | 供 consumer 使用的 semantic shape、字段 / 单位 / 关系、identity 可定位方式、所需 provenance 与 complete 可消费条件；实例化 [framework completeness / publication boundary](ARCHITECTURE.md#completeness-与-public-boundary)，不暴露 SQLite layout。 |
-| Persistence | 实例化 framework 的 Observation-owned persistence boundary，明确该 Observation 独立拥有一个 SQLite；具体 schema / path 仅在后续设计确有需要且已决定时定义。 |
+| Persistence | 实例化 framework 的 Observation-owned persistence boundary，明确该 Observation 独立拥有一个 SQLite；canonical placement / complete publication 引用 IMPLEMENTATION；具体 SQL schema / transaction mechanics 不属于 semantic Schema。 |
 | Limitations | 观察范围、数据限制、不能从 Artifact 推出的结论。 |
 | Acceptance | Inputs / key、population / grain、derivation、validity、Artifact completeness 与业务幂等的可验证条件；覆盖 [invocation reuse](ARCHITECTURE.md#business-identity-与-invocation-lifecycle)、[completion visibility](ARCHITECTURE.md#completeness-与-public-boundary) 和 [persistence boundary](ARCHITECTURE.md#persistence-ownership) 的 framework invariants。 |
 
@@ -26,7 +26,7 @@
 
 - Purpose、Inputs、Population 与 Grain 能确定“用户要求观察什么”；canonicalization 不合并不同业务请求，也不把等价表达变成不同业务请求。
 - Derivation 仅依赖已声明 public facts 与 inputs；选定 contract 满足 Upstream policy，runtime failure 不触发来源替换，provenance 只经合法 public boundary 获取。Validity / Missingness 与 Artifact completeness 一致，failed / partial persistence 不被描述为 complete。
-- Artifact Contract 足以支持独立消费和跨 Study reuse，且不混入 Analysis / Study Evidence semantics。Execution provenance 与 business key 分开表达。
+- Artifact Contract 足以支持独立消费和跨 Study reuse，且不混入 Analysis / Study Evidence semantics；Python mapping 使用 Observation-owned immutable types，不向 Study 泄漏 upstream runtime objects。Execution provenance 与 business key 分开表达。
 - Acceptance 覆盖重复 invocation 复用 complete Artifact、未完成请求不满足 key、consumer 不进入 internal persistence 等 framework invariants。
 - Refresh / invalidation 和 definition evolution 遵守 [deferred decisions](ARCHITECTURE.md#explicitly-deferred-decisions)，不为填满 schema 自行决定。
 

@@ -49,7 +49,7 @@ Empirical row grain 为 `one option contract × one resolved observation_date`�
 
 ## Persistence ownership
 
-本 concrete Observation exactly owns 一个 SQLite，承载本 Observation 的多个 business requests / Artifacts，不是每次 invocation 一库。继承 [framework persistence boundary](../ARCHITECTURE.md#persistence-ownership)：Study、Analysis 与 external consumer 只消费 complete Artifact，不访问 SQLite；没有 global Artifact DB、cross-Observation FK 或 Study-owned Observation persistence。Runtime SQLite 不进入 Git。Schema、path、unique key、事务、locking、retry 与内部 state machine 留给后续 design，本轮不创建数据库。
+本 concrete Observation exactly owns 一个 SQLite，承载本 Observation 的多个 business requests / Artifacts，不是每次 invocation 一库。继承 [framework persistence boundary](../ARCHITECTURE.md#persistence-ownership)：Study、Analysis 与 external consumer 只消费 complete Artifact，不访问 SQLite；没有 global Artifact DB、cross-Observation FK 或 Study-owned Observation persistence。Runtime SQLite 不进入 Git。Canonical placement / public package / publication mapping 见 [IMPLEMENTATION.md](IMPLEMENTATION.md)；SQL schema、indexes 与 transaction / locking mechanics 留给实现，不预建 state machine，本轮不创建数据库。
 
 ## Limitations 与职责边界
 
@@ -66,4 +66,4 @@ Artifact 表达所保留的 empirical facts，不承诺 provider-current freshne
 | Derivation / Validity / Missingness | [Date resolution](DATE_RESOLUTION.md) |
 | Artifact Contract / Acceptance | [Artifact contract](ARTIFACT.md) |
 
-Concrete semantics 已锁定；implementation 状态与验证记录见 [Research reconciliation](../../IMPLEMENTATION_RECONCILIATION.md#首个-concrete-observation-authority-落位)。本 entry 不启动 implementation，不预设 public invocation Python topology、CLI 或 HTTP delivery。
+Concrete semantics 已锁定；implementation 状态与验证记录见 [Research reconciliation](../../IMPLEMENTATION_RECONCILIATION.md#首个-concrete-observation-authority-落位)。Public invocation / package handoff 进入 [IMPLEMENTATION.md](IMPLEMENTATION.md)；本 entry 不启动 implementation，也不添加 CLI 或 HTTP delivery。

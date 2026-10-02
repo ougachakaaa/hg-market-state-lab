@@ -1,6 +1,6 @@
 # CFFEX expiry / DTE retained Artifact contract
 
-本文件拥有 [cffex_option_expiry_dte_chain](ARCHITECTURE.md) 的 Artifact semantic shape、provenance、completeness / publication 与 acceptance。Business identity / population / grain 由 entry 拥有，derived resolution 由 [DATE_RESOLUTION.md](DATE_RESOLUTION.md) 拥有；不定义 Python classes、serialization envelope 或 SQLite schema。
+本文件拥有 [cffex_option_expiry_dte_chain](ARCHITECTURE.md) 的 Artifact semantic shape、provenance、completeness / publication 与 acceptance。Business identity / population / grain 由 entry 拥有，derived resolution 由 [DATE_RESOLUTION.md](DATE_RESOLUTION.md) 拥有；Python owned-type mapping 见 [IMPLEMENTATION](IMPLEMENTATION.md)；本文件不定义 Python classes、serialization envelope 或 SQLite schema。
 
 ## Resolution facts 与 semantic identity
 
