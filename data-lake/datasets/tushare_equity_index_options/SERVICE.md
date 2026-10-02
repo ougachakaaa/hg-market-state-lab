@@ -76,6 +76,6 @@ Coverage、Records 和关联成功时保留的合法 metadata/completeness basis
 
 ## 4. Runtime 与实现边界
 
-Tushare credential 使用环境变量 TUSHARE_TOKEN 优先，market-snapshot/.env 仅 fallback、不覆盖环境变量、不授予 Snapshot private imports。仅实际 Source I/O 时解析，必需但缺失时在对应 Source request 前 OperationError；完整 Calendar 且全 success 目标无需 token。
+Tushare execution 与 credential / client / shared limiter 遵循 [Provider Runtime authority](../../providers/TUSHARE.md)，本 Dataset 不自行实现 provider initialization 或请求异常转换。Factory / read-only calls 不解析 credential、不创建 client；必需但缺失时在对应 Source request 前 OperationError，完整 Calendar 且全 success 目标无需 token。
 
-本 Dataset composition 自有 opt_basic/opt_daily adapter 与 data/ 中唯一 SQLite，Calendar 只经 public namespace。不增加 Index/Futures runtime dependency。Filename、package wiring、schema、事务/batching 与 tests implementation 留给下一轮 reconciliation，不重新决定本轮语义；CLI/HTTP、Research integration、migration、refresh/TTL/force 均未实现。
+本 Dataset composition 自有 opt_basic/opt_daily adapter 与 data/ 中唯一 SQLite，adapter 通过共享 Executor 执行 provider 请求，Calendar 只经 public namespace。不增加 Index/Futures runtime dependency。Filename、package wiring、schema、事务/batching 与 tests implementation 留给下一轮 reconciliation，不重新决定本轮语义；CLI/HTTP、Research integration、migration、refresh/TTL/force 均未实现。

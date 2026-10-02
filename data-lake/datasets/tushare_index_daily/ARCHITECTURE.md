@@ -10,6 +10,8 @@ Canonical identity 为 `tushare_index_daily`，沿用现有 `tushare_trade_calen
 
 Primary Source 为 Tushare `index_daily`；instrument metadata Source 为 `index_basic`。两个 endpoint 属于本 Dataset 的 Source composition，不因 endpoint 数量拆分 Dataset，也不通过 Snapshot 私有 adapter 读取。Provider-native representation 与 canonical semantic facts 的映射由 FACTS.md 拥有。
 
+Source provider 为 Tushare，execution authority 为 [providers/TUSHARE.md](../../providers/TUSHARE.md)。本 Dataset adapter 拥有 endpoint / parameters、batching / pagination、partition、identity validation 与 normalization；credential、client、限流与 provider request failure conversion 归共享 Provider Runtime，后续实现直接采用该 boundary。
+
 本 Dataset 不拥有 moving average、return window、volatility、technical indicators、relative strength、basis 或 research features；这些属于下游 Research / Modeling。与 Futures / Options 的组合只能通过各自 public service；不建立 shared market database、global instrument master 或跨库 foreign key。
 
 ## 2. Scope、Window 与目标集合

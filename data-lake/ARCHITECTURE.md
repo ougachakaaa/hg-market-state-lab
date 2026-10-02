@@ -19,8 +19,11 @@ DataSet 是自治的数据产品边界，拥有自己的 semantic authority、im
 ```text
 data-lake/
 ├── <DataLake-level authority documents>
-├── src/                        # shared kernel implementation
-├── tests/                      # shared kernel / module boundary verification
+├── providers/
+│   └── TUSHARE.md              # provider execution authority
+├── src/data_lake/              # shared kernel + separate provider infrastructure
+│   └── providers/tushare/      # target Tushare runtime implementation
+├── tests/                      # shared kernel / provider / module boundary verification
 └── datasets/
     └── <dataset-id>/
         ├── <Dataset authority documents>
@@ -63,9 +66,11 @@ Calendar 不反向依赖这些 consumers；Futures / Options 的 underlying inde
 
 ## 3. Canonical Python boundary
 
-Canonical Python namespace 仍为 `data_lake`。顶层 `data-lake/src/` 只拥有真正跨 Dataset 的 shared kernel：公共 domain primitives / invariants、Scope / Window / FetchUnit / Record 机制、coverage / ensure / export 通用 machinery、共享 persistence machinery、公共 result / error contracts、通用 serialization / hash 及 runtime / storage resolution infrastructure。顶层 `tests/` 验证这些公共能力与模块边界，使用 test-local fake Dataset / Source。
+Canonical Python namespace 仍为 `data_lake`。模块内部区分 provider-agnostic shared kernel、provider-specific shared infrastructure 与 Dataset bounded contexts。顶层 `data-lake/src/` 拥有前两者，但它们是独立 ownership：shared kernel 包含公共 domain primitives / invariants、Scope / Window / FetchUnit / Record 机制、coverage / ensure / export 通用 machinery、共享 persistence machinery、公共 result / error contracts、通用 serialization / hash 及 generic runtime / storage resolution infrastructure；provider infrastructure 只拥有跨 Dataset 的 provider execution。顶层 `tests/` 验证公共能力、provider execution 与模块边界，kernel tests 使用 test-local fake Dataset / Source。
 
-Kernel 不得知道具体 Dataset、provider endpoint、instrument family、Dataset-specific Scope、completeness rule 或 export payload。只因一个具体 Dataset 存在的代码默认归 owning Dataset；其 service composition、Source adapter、领域 specialization 与相关 tests 归 `datasets/<dataset-id>/src/` 和 `tests/`。
+Kernel 不得知道具体 Dataset、provider endpoint、token、request frequency、provider-specific exception、instrument family、Dataset-specific Scope、completeness rule 或 export payload。只因一个具体 Dataset 存在的代码默认归 owning Dataset；其 service composition、Source adapter、领域 specialization 与相关 tests 归 `datasets/<dataset-id>/src/` 和 `tests/`。
+
+Tushare provider infrastructure 的目标 namespace 为 `data_lake.providers.tushare`，implementation 归 `data-lake/src/data_lake/providers/tushare/`，canonical execution authority 为 [providers/TUSHARE.md](providers/TUSHARE.md)。稳定依赖方向为 Dataset Source adapter → provider infrastructure → external SDK；provider 只可复用 kernel 的 provider-neutral error contracts，不依赖具体 Dataset、Service、Repository 或 FetchUnit semantics；kernel 不依赖 provider infrastructure。Provider 不拥有 Dataset endpoint selection、partition / normalization / completeness 或 persistence，也不构成 consumer-facing service；Research / Modeling / Snapshot / HTTP / CLI consumers 不直接调用 Executor。详细 execution contract 只在 provider authority 定义，不在本入口复制。
 
 Dataset-local source root 不创建独立 Python project、Poetry environment 或 dependency graph；所有 source roots 遵守 repository root 唯一 Python project 与 worktree-local 根 `.venv` invariant。Filesystem ownership 不决定 public import path，已有 Dataset public import surface 保持兼容。Multiple source roots registration 与 import/package wiring 属于 implementation concern，当前机制见 reconciliation 文档，不为此建立 plugin system 或 custom package loader。
 
@@ -75,12 +80,13 @@ Dataset-local source root 不创建独立 Python project、Poetry environment �
 | --- | --- |
 | Domain / persistence / Scope / Window / FetchUnit / Records / mutation flow | [DOMAIN_MODEL.md](DOMAIN_MODEL.md) |
 | Application Service / coverage / ensure / export / public result / runtime 调用约束 | [APPLICATION.md](APPLICATION.md) |
+| Tushare-backed Dataset 的 Source execution / credential / client / shared limiter / provider failure | [providers/TUSHARE.md](providers/TUSHARE.md) |
 | 具体 Dataset 的 Source、identity、fields、completeness | [DATASETS.md](DATASETS.md) → owning Dataset ARCHITECTURE.md |
 | Dataset-specific consumer request/result/view、public Python surface | [DATASETS.md](DATASETS.md) → owning Dataset ARCHITECTURE.md → SERVICE.md |
 | CLI topology / delegation / serialization / file delivery | [lab authority](../lab/ARCHITECTURE.md) |
 | 当前实现与目标 ownership 的差异、后续迁移输入 | [IMPLEMENTATION_RECONCILIATION.md](IMPLEMENTATION_RECONCILIATION.md) |
 
-Dataset authority 只能在模块边界及相关公共 domain/application invariant 内 specialize 或 constrain；catalog 只提供导航，不拥有 schema。具体 Dataset 任务读取与任务有关的公共 authority 和 owning Dataset authority，不默认加载 sibling Dataset。
+Dataset 与 provider authority 只能在模块边界及相关公共 domain/application invariant 内 specialize 或 constrain；catalog 只提供导航，不拥有 schema。具体 Dataset 任务读取与任务有关的公共 authority 和 owning Dataset authority，不默认加载 sibling Dataset；普通 Dataset domain task 不默认加载 provider execution authority。
 
 ## 5. Deferred design
 
