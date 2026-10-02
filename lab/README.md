@@ -112,7 +112,15 @@ poetry run lab research list
 poetry run lab research run <study-id> --help
 ```
 
-`research list` 发现当前可运行的 retained Studies；`research run <study-id> --help` 查看对应 Study 的接口。当前没有可运行的 retained Study，`research list` 输出为空。新增 Study 后，实际参数、方法与结果语义继续读取该 Study authority。
+`research list` 发现当前可运行的 retained Studies；`research run <study-id> --help` 查看对应 Study 的接口。当前支持 [cffex-option-expiry-dte-collection](../market-research/studies/cffex_option_expiry_dte_collection/ARCHITECTURE.md)，其参数见 [Study inputs](../market-research/studies/cffex_option_expiry_dte_collection/INPUTS.md)，输出见 [Study results](../market-research/studies/cffex_option_expiry_dte_collection/RESULTS.md)。
+
+例如，准备 MO 在 2026 年 1 月至 9 月到期的 target DTE=15 chains（Bash 与 PowerShell 均可直接运行）：
+
+```bash
+poetry run lab research run cffex-option-expiry-dte-collection --product-code MO --expiry-start-date 2026-01-01 --expiry-end-date 2026-09-30 --target-dte 15
+```
+
+日期窗口选择到期日、包含两端。DTE 使用自然日，到期当天为 1；实际 observation_date 按完整市场事实解析，actual DTE 可能大于 target DTE，规则见 [DTE date resolution](../market-research/observations/cffex_option_expiry_dte_chain/DATE_RESOLUTION.md)。当前 CLI 成功时只输出请求、status 与完成计数，失败时追加 stage 和原因；不输出逐 expiry 明细或文件。Reusable data 由 Observation 持久化，不创建 Study run directory。实际 expiry 数量与完成情况取决于对应数据，不是固定预期。
 
 ## 错误与自动化
 

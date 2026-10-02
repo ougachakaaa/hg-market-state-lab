@@ -34,7 +34,14 @@ class ExpiryUniverseService:
                 request.expiry_start_date,
                 request.expiry_end_date,
             )
-            require_ensure(service.ensure(upstream_request))
+            require_ensure(
+                service.ensure(upstream_request),
+                context=(
+                    f"tushare_equity_index_options product_code={request.product_code} "
+                    f"start_date={request.expiry_start_date.isoformat()} "
+                    f"end_date={request.expiry_end_date.isoformat()}"
+                ),
+            )
             view = service.export(upstream_request)
             validate_options_export(
                 view, request.product_code, request.expiry_start_date, request.expiry_end_date

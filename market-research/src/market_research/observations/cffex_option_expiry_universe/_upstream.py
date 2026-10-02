@@ -10,7 +10,7 @@ from dataclasses import fields
 from datetime import date
 from typing import Any, cast
 
-from data_lake import EnsureResult
+from data_lake import EnsureResult, UnitFailure
 from data_lake.datasets.tushare_equity_index_options import OptionsDailyExport, OptionsDailyRow
 
 from ._models import Coverage, OptionsProvenance, OptionsScope, Window
@@ -38,8 +38,8 @@ def validate_coverage(coverage: Any) -> None:
     require(coverage.complete == (counts[0] == counts[1]), "Inconsistent coverage complete flag")
 
 
-def require_ensure(result: EnsureResult) -> None:
-    require(isinstance(result, EnsureResult), "Invalid ensure result")
+def require_ensure(result: EnsureResult, *, context: str) -> None:
+    require(isinstance(result, EnsureResult), f"{context}: Invalid ensure result")
     counts = (
         result.requested_units,
         result.already_successful_units,
@@ -48,18 +48,44 @@ def require_ensure(result: EnsureResult) -> None:
         result.failed_units,
         result.records_written,
     )
-    require(all(type(value) is int and value >= 0 for value in counts), "Invalid ensure counters")
+    require(
+        all(type(value) is int and value >= 0 for value in counts),
+        f"{context}: Invalid ensure counters",
+    )
     require(
         result.already_successful_units + result.attempted_units == result.requested_units
         and result.succeeded_units + result.failed_units == result.attempted_units,
-        "Inconsistent ensure counters",
+        f"{context}: Inconsistent ensure counters",
     )
+    require(type(result.complete) is bool, f"{context}: Invalid ensure complete flag")
+    require(type(result.failures) is tuple, f"{context}: Invalid ensure failures")
+    details = []
+    for failure in result.failures:
+        require(isinstance(failure, UnitFailure), f"{context}: Invalid ensure failure")
+        require(type(failure.identity) is tuple, f"{context}: Invalid ensure failure identity")
+        identity = cast(tuple[object, ...], failure.identity)
+        require(
+            len(identity) == 2
+            and type(identity[0]) is str
+            and bool(identity[0])
+            and type(identity[1]) is date,
+            f"{context}: Invalid ensure failure identity",
+        )
+        require(
+            type(failure.reason) is str and bool(failure.reason),
+            f"{context}: Invalid ensure failure reason",
+        )
+        selector, day = cast(tuple[str, date], identity)
+        details.append(f"unit=({selector}, {day.isoformat()}): {failure.reason}")
     require(
         result.complete is True
         and not result.failures
         and result.failed_units == 0
         and result.already_successful_units + result.succeeded_units == result.requested_units,
-        "Upstream ensure did not complete",
+        f"{context}: Upstream ensure did not complete; "
+        f"requested_units={result.requested_units} attempted_units={result.attempted_units} "
+        f"succeeded_units={result.succeeded_units} failed_units={result.failed_units}; "
+        + ("; ".join(details) if details else "failures=none"),
     )
 
 

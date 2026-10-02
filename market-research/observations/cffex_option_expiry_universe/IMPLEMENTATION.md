@@ -44,6 +44,12 @@ Canonical miss strategy 是 **ensure-first**：`ensure(exact range) → require 
 
 Readable public prerequisite / dependency context 可进入 OperationError message；合法 Observation request 转成 upstream request 后被拒绝也是 operation failure，不误判 caller。Ensure complete 后 export incomplete / invalid 同样失败，不以 EnsureResult 替代 final export proof。
 
+### Ensure failure diagnostics
+
+Options ensure 未完成时，ObservationOperationError message 必须保留 Dataset `tushare_equity_index_options`、requested product_code、inclusive start_date / end_date，以及 requested_units / attempted_units / succeeded_units / failed_units。按 public EnsureResult.failures 的原顺序完整呈现每项 `(product_code, trade_date)` semantic identity 与 readable reason，不截断、去重或使用 persistence IDs。没有 failure 明细的 incomplete result 仍保留上述 context / counts，并明确无明细。
+
+诊断只消费 public UnitFailure 与 upstream 已处理的安全 reason，不读取 provider response、raw exception 或内部对象。先校验 EnsureResult、计数与 complete 类型、failure tuple / UnitFailure / identity / reason 结构；非法结构报告明确 contract validation error，不使用 arbitrary object repr 生成消息。错误沿既有 ObservationOperationError → Study Failure.reason → CLI 传递，不增加 public fields、改变退出码或发布失败 Artifact。
+
 ## Verification 与 handoff
 
 除 framework 三层 checks，具体验证 miss 为 exact same range ensure → export、无 preliminary coverage / direct Calendar calls、ensure complete 后 export incomplete / invalid 仍失败，以及重复 expiry 去重升序、边界 inclusive、窗口外排除、complete empty / zero targets、incomplete / unit failures 不发布、provenance 值与 export 一致，repeat / reopened service reuse 零 upstream。Fake dependencies 通过合法 public results 控制，不调用 Tushare；tests 不让 Study import Options types。

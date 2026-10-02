@@ -64,7 +64,13 @@ def calendar_window(
     view = service.export(request)
     _validate_calendar(view, start, end)
     if not view.coverage.complete:
-        require_ensure(service.ensure(request))
+        require_ensure(
+            service.ensure(request),
+            context=(
+                f"tushare_trade_calendar exchange=CFFEX start_date={start.isoformat()} "
+                f"end_date={end.isoformat()}"
+            ),
+        )
         view = service.export(request)
         _validate_calendar(view, start, end)
     require(view.coverage.complete is True, "Calendar export incomplete after ensure")
@@ -79,7 +85,13 @@ def candidate_day(
     validate_options_export(view, product, candidate, candidate)
     require(view.coverage.requested_units == 1, "Open candidate must have one Options target")
     if not view.coverage.complete:
-        require_ensure(service.ensure(request))
+        require_ensure(
+            service.ensure(request),
+            context=(
+                f"tushare_equity_index_options product_code={product} "
+                f"start_date={candidate.isoformat()} end_date={candidate.isoformat()}"
+            ),
+        )
         view = service.export(request)
         validate_options_export(view, product, candidate, candidate)
     require(

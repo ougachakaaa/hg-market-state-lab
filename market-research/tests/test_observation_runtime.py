@@ -11,7 +11,7 @@ from typing import Any, cast
 
 import pytest
 
-from data_lake import OperationError, UnitFailure
+from data_lake import EnsureResult, OperationError, UnitFailure
 from data_lake.datasets import tushare_equity_index_options as options
 from data_lake.datasets import tushare_trade_calendar as calendar
 from market_research.observations import (
@@ -48,6 +48,152 @@ def make_chain(
         _options_factory=lambda: cast(options.OptionsDailyService, facts),
         _calendar_factory=lambda: cast(calendar.TradeCalendarService, dates),
     )
+
+
+@pytest.mark.parametrize("stage", ["universe", "calendar", "options"])
+@pytest.mark.parametrize(
+    "scenario,expected",
+    [
+        ("unit_failure", "Upstream ensure did not complete"),
+        ("incomplete", "Upstream ensure did not complete"),
+        ("invalid_counters", "Invalid ensure counters"),
+        ("inconsistent_counters", "Inconsistent ensure counters"),
+        ("invalid_complete", "Invalid ensure complete flag"),
+        ("invalid_failures", "Invalid ensure failures"),
+        ("invalid_failure", "Invalid ensure failure"),
+        ("invalid_identity", "Invalid ensure failure identity"),
+        ("short_identity", "Invalid ensure failure identity"),
+        ("invalid_selector", "Invalid ensure failure identity"),
+        ("invalid_date", "Invalid ensure failure identity"),
+        ("invalid_reason", "Invalid ensure failure reason"),
+        ("empty_reason", "Invalid ensure failure reason"),
+    ],
+)
+def test_ensure_diagnostics_preserve_context_without_publishing_or_fallback(
+    tmp_path: Path, stage: str, scenario: str, expected: str
+) -> None:
+    class Unprintable:
+        def __repr__(self) -> str:
+            raise AssertionError("diagnostics formatted an arbitrary object")
+
+    marker = Unprintable()
+    selector = "CFFEX" if stage == "calendar" else "MO"
+    dataset = "tushare_trade_calendar" if stage == "calendar" else "tushare_equity_index_options"
+    reason = "opt_daily: timeout"
+
+    def fail(result: EnsureResult) -> EnsureResult:
+        failure = UnitFailure((selector, IDEAL), reason)
+        failed = replace(
+            result,
+            already_successful_units=result.requested_units - 1,
+            attempted_units=1,
+            succeeded_units=0,
+            failed_units=1,
+            complete=False,
+            failures=(failure,),
+        )
+        if scenario == "incomplete":
+            return replace(result, complete=False)
+        if scenario == "invalid_counters":
+            return replace(failed, failed_units=True)
+        if scenario == "inconsistent_counters":
+            return replace(failed, requested_units=result.requested_units + 1)
+        if scenario == "invalid_complete":
+            return replace(failed, complete=cast(Any, 0))
+        if scenario == "invalid_failures":
+            return replace(failed, failures=cast(Any, [failure]))
+        if scenario == "invalid_failure":
+            return replace(failed, failures=(cast(Any, marker),))
+        if scenario == "invalid_identity":
+            failure = replace(failure, identity=marker)
+        elif scenario == "short_identity":
+            failure = replace(failure, identity=(selector,))
+        elif scenario == "invalid_selector":
+            failure = replace(failure, identity=(marker, IDEAL))
+        elif scenario == "invalid_date":
+            failure = replace(failure, identity=(selector, datetime(2025, 10, 9)))
+        elif scenario == "invalid_reason":
+            failure = replace(failure, reason=cast(Any, marker))
+        elif scenario == "empty_reason":
+            failure = replace(failure, reason="")
+        return replace(failed, failures=(failure,))
+
+    facts = OptionsDouble((IDEAL,), (row(EXPIRY, IDEAL),), complete=stage != "options")
+    dates = CalendarDouble((IDEAL,), complete=stage != "calendar")
+    if stage == "calendar":
+        dates.ensure_hook = fail
+    else:
+        facts.ensure_hook = fail
+    path = tmp_path / "artifact.sqlite3"
+    with pytest.raises(ObservationOperationError) as raised:
+        if stage == "universe":
+            make_universe(path, facts).ensure(universe.ExpiryUniverseRequest("MO", START, END))
+        else:
+            make_chain(path, facts, dates).ensure(chain.ExpiryDteChainRequest("MO", EXPIRY, 15))
+    message = str(raised.value)
+    assert dataset in message and expected in message
+    assert f"{'exchange' if stage == 'calendar' else 'product_code'}={selector}" in message
+    if stage == "universe":
+        assert f"start_date={START} end_date={END}" in message
+        assert dates.calls == []
+        assert [operation for operation, _ in facts.calls] == ["ensure"]
+    elif stage == "calendar":
+        request = dates.calls[0][1]
+        assert f"start_date={request.start_date} end_date={request.end_date}" in message
+        assert facts.calls == []
+        assert [operation for operation, _ in dates.calls] == ["export", "ensure"]
+    else:
+        assert f"start_date={IDEAL} end_date={IDEAL}" in message
+        assert [operation for operation, _ in facts.calls] == ["export", "ensure"]
+        assert all(request.start_date == IDEAL for _, request in facts.calls)
+    if scenario in ("unit_failure", "incomplete"):
+        assert "requested_units=" in message and "attempted_units=" in message
+        assert "succeeded_units=" in message and "failed_units=" in message
+    if scenario == "unit_failure":
+        assert f"unit=({selector}, {IDEAL}): {reason}" in message
+    elif scenario == "incomplete":
+        assert "failures=none" in message
+    else:
+        assert "Upstream ensure did not complete" not in message
+    assert not path.exists()
+
+
+@pytest.mark.parametrize("stage", ["universe", "calendar"])
+def test_ensure_diagnostics_keep_all_failures_in_upstream_order(tmp_path: Path, stage: str) -> None:
+    previous = date(2025, 10, 8)
+    selector = "CFFEX" if stage == "calendar" else "MO"
+    failures = tuple(
+        UnitFailure((selector, day), reason)
+        for day, reason in ((IDEAL, "first timeout"), (previous, "second permission"))
+    )
+
+    def fail(result: EnsureResult) -> EnsureResult:
+        return replace(
+            result,
+            already_successful_units=result.requested_units - 2,
+            attempted_units=2,
+            succeeded_units=0,
+            failed_units=2,
+            complete=False,
+            failures=failures,
+        )
+
+    facts = OptionsDouble((previous, IDEAL))
+    dates = CalendarDouble((previous, IDEAL), complete=False)
+    path = tmp_path / "artifact.sqlite3"
+    with pytest.raises(ObservationOperationError) as raised:
+        if stage == "universe":
+            facts.ensure_hook = fail
+            make_universe(path, facts).ensure(universe.ExpiryUniverseRequest("MO", START, END))
+        else:
+            dates.ensure_hook = fail
+            make_chain(path, facts, dates).ensure(chain.ExpiryDteChainRequest("MO", EXPIRY, 15))
+    message = str(raised.value)
+    first = f"unit=({selector}, {IDEAL}): first timeout"
+    second = f"unit=({selector}, {previous}): second permission"
+    assert message.index(first) < message.index(second)
+    assert "attempted_units=2 succeeded_units=0 failed_units=2" in message
+    assert not path.exists()
 
 
 def test_public_facades_and_factory_without_upstream(monkeypatch: pytest.MonkeyPatch) -> None:

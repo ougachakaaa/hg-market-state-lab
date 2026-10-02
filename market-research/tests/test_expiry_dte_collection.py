@@ -4,12 +4,13 @@ import ast
 import subprocess
 import sys
 from dataclasses import replace
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from pathlib import Path
 from typing import Any, cast
 
 import pytest
 
+from data_lake import EnsureResult, UnitFailure
 from market_research.observations import ObservationOperationError
 from market_research.observations.cffex_option_expiry_dte_chain import (
     ExpiryDteChainRequest,
@@ -310,6 +311,87 @@ def test_cli_presentation_exit_codes_and_no_output_files(
         assert "expiry_date=2025-10-23" in text and "failed_observation_count=1" in text
     assert "Traceback" not in text and "contract_code" not in text
     assert {path for path in tmp_path.rglob("*")} == before
+
+
+@pytest.mark.parametrize("stage", ["universe", "calendar", "options"])
+def test_real_observation_failure_details_reach_study_cli(
+    tmp_path: Path, stage: str, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    ideals = tuple(expiry - timedelta(days=14) for expiry in EXPIRIES)
+    rows = tuple(row(expiry, day) for expiry, day in zip(EXPIRIES, ideals, strict=True))
+    discovery = OptionsDouble(ideals, rows)
+    facts = OptionsDouble(ideals, rows, complete=stage != "options")
+    dates = CalendarDouble(ideals, complete=stage != "calendar")
+    selector = "CFFEX" if stage == "calendar" else "MO"
+    reason = "trade_cal: permission" if stage == "calendar" else "opt_daily: timeout"
+
+    def fail(result: EnsureResult) -> EnsureResult:
+        return replace(
+            result,
+            already_successful_units=result.requested_units - 1,
+            attempted_units=1,
+            succeeded_units=0,
+            failed_units=1,
+            complete=False,
+            failures=(UnitFailure((selector, ideals[0]), reason),),
+        )
+
+    if stage == "universe":
+        discovery.ensure_hook = fail
+    elif stage == "calendar":
+        dates.ensure_hook = lambda result: (
+            fail(result) if dates.calls[-1][1].end_date == ideals[0] else result
+        )
+    else:
+        facts.ensure_hook = lambda result: (
+            fail(result) if facts.calls[-1][1].start_date == ideals[0] else result
+        )
+    universe_path, chain_path = tmp_path / "u.sqlite3", tmp_path / "c.sqlite3"
+    monkeypatch.setattr(
+        cli, "create_universe_service", lambda: make_universe(universe_path, discovery)
+    )
+    monkeypatch.setattr(
+        cli,
+        "create_chain_service",
+        forbidden if stage == "universe" else lambda: make_chain(chain_path, facts, dates),
+    )
+    monkeypatch.chdir(tmp_path)
+    assert cli.main(ARGS) == 1
+    captured = capsys.readouterr()
+    text = captured.out
+    dataset = "tushare_trade_calendar" if stage == "calendar" else "tushare_equity_index_options"
+    assert dataset in text and f"unit=({selector}, {ideals[0]}): {reason}" in text
+    assert "start_date=" in text and "end_date=" in text
+    assert "attempted_units=1 succeeded_units=0 failed_units=1" in text
+    assert "status=failure" in text and "Traceback" not in text + captured.err
+    if stage == "universe":
+        assert "stage=ensure_expiry_universe" in text
+        assert "discovered_expiry_count=unavailable" in text
+        assert "completed_observation_count=0" in text
+        assert "failed_observation_count=0" in text
+        assert facts.calls == dates.calls == []
+        assert not universe_path.exists() and not chain_path.exists()
+    else:
+        assert f"stage=ensure_expiry_chains expiry_date={EXPIRIES[0]}" in text
+        assert "planned_observation_count=3" in text
+        assert "completed_observation_count=2" in text and "failed_observation_count=1" in text
+        exported_ends = tuple(
+            request.end_date for operation, request in dates.calls if operation == "export"
+        )
+        assert exported_ends == (
+            (ideals[0], ideals[1], ideals[1], ideals[2])
+            if stage == "calendar"
+            else ideals
+        )
+        assert all(request.start_date in ideals for _, request in facts.calls)
+        retained = ExpiryDteChainService(
+            _path=chain_path, _options_factory=forbidden, _calendar_factory=forbidden
+        )
+        for expiry in EXPIRIES[1:]:
+            assert retained.ensure(ExpiryDteChainRequest("MO", expiry, 15)).complete
+        with pytest.raises(pytest.fail.Exception, match="unneeded dependency"):
+            retained.ensure(ExpiryDteChainRequest("MO", EXPIRIES[0], 15))
+    assert {path.name for path in tmp_path.iterdir()} <= {"u.sqlite3", "c.sqlite3"}
 
 
 def test_study_source_only_consumes_public_observation_values() -> None:

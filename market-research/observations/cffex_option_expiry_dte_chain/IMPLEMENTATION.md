@@ -113,6 +113,12 @@ DataLake failure != permission to change candidate date
 
 Complete export 的非空 matching population 沿 canonical execution 成功形成 chain。上述三态只区分需补齐、已证明缺席与必须失败，保持 [DATE_RESOLUTION](DATE_RESOLUTION.md#proven-absencecache-missing-与-failure) 的既有日期业务规则；date fallback 不是 infrastructure fallback。
 
+## Ensure failure diagnostics
+
+Calendar / Options ensure 未完成时，ObservationOperationError message 必须保留实际 Dataset、request selection（exchange 或 product_code）、inclusive start_date / end_date，以及 requested_units / attempted_units / succeeded_units / failed_units。Calendar identity 使用 public `(exchange, cal_date)`，Options 使用 public `(product_code, trade_date)`；按 EnsureResult.failures 原顺序完整呈现全部 semantic identities 与 readable reasons，不截断、去重或使用 persistence IDs。没有 failure 明细的 incomplete result 仍保留 context / counts，并明确无明细。
+
+诊断只消费 public UnitFailure 与 upstream 已处理的安全 reason，不读取 provider response、raw exception 或内部对象。先校验 EnsureResult、计数与 complete 类型、failure tuple / UnitFailure / identity / reason 结构；非法结构报告明确 contract validation error，不使用 arbitrary object repr 生成消息。错误沿既有 ObservationOperationError → Study Failure.reason → CLI 传递，不增加 public fields 或改变退出码。失败仍立即停止当前 chain，不回溯 candidate、不发布 Artifact；Study 继续其余 planned expiries。
+
 ## Verification 与 handoff
 
 Framework 三层 checks 之外，按 [Artifact acceptance](ARTIFACT.md#acceptance-scenarios) 验证精确 DTE、target=1、周末 / 假日、Calendar / Options already-complete 无 ensure、两者 incomplete 后 ensure / exact same request export、complete-but-absent、missing 后 ensure、ensure complete 后 export incomplete / invalid 仍失败、upstream failure 立即停止、无限制回溯的 proof / date termination、actual_dte、全 strikes / CALL-PUT、排序 / uniqueness、合法 nullable facts 与 owned provenance。Complete hit 使用不可用 dependency doubles 仍应 return；Study 不需 import DataLake classes。
