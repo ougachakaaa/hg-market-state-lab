@@ -1,6 +1,6 @@
 # Research Study Semantic Schema
 
-本文件是 retained Study semantic structure 的唯一通用 canonical definition；创建流程与 authority 布局见 [Authoring](AUTHORING.md)，完整性验证见 [Review](REVIEW.md)，既有 Study 的适用规则见 [Compatibility](COMPATIBILITY.md)，runnable Study 的共享调用与输出约定见 [Research UI authority](../ui/ARCHITECTURE.md)。本文定义 semantic objects 与必需语义，不规定文件布局、authoring workflow 或 implementation decomposition，也不拥有具体 Study 语义。
+本文件是 retained Study semantic structure 的唯一通用 canonical definition；创建流程见 [Authoring](AUTHORING.md)，authority 布局见 [Skeleton](SKELETON.md)，完整性验证见 [Review](REVIEW.md)，既有 Study 适用规则见 [Compatibility](COMPATIBILITY.md)，runnable convention 见 [Research UI authority](../ui/ARCHITECTURE.md)。Observation framework 由 [Observation authority](../observations/ARCHITECTURE.md) 拥有，具体 empirical semantics 由 concrete Observation 拥有。
 
 ## Canonical Study semantic object model
 
@@ -12,75 +12,81 @@ Study [1]
     ├── Inputs [1]
     ├── Method [1]
     │   ├── Method Context [0..1]
-    │   ├── Observation [1..N]
-    │   └── Analysis [1..N]
+    │   ├── Observation Artifact Dependency [1..N]
+    │   └── Study-local Analysis [1..N]
     ├── Results [1]
     │   └── Evidence Product [1..N expected]
     ├── Limitations [1]
     └── Acceptance [1]
 ```
 
-`Identity` 是 Study 的必备 structural information，不是第七个 research semantic area；`Semantic Areas` 只是分组标签。`Question`、`Inputs`、`Method`、`Results`、`Limitations`、`Acceptance` 仍是 Authoring 与 Review 所指的六个必答 areas。`Inputs [1]` 表示该 area 必须定义；具体输入值由 Study 确定，不要求另建 `Input` object 或统一 cardinality。`Results [1]` 必须定义 `1..N` 类预期保留的 `Evidence Product`；执行前实际产物可以是 `0`。
+Identity 是 structural information，不是第七个 research semantic area；六个必答 areas 仍为 Question、Inputs、Method、Results、Limitations、Acceptance。各 area 必须有实质内容，`TBD`、空节或“采用合适方法”不能代替研究决定。Results 定义 `1..N` 类预期 Evidence Product；未执行时实际 evidence 可以为 `0`。
 
-除 Study、具名 Observation / Analysis 和按条件定义的 component Artifact 外，本 schema 不要求其他 structural area 另有独立 ID；retained Evidence Product 须有供关系引用的 Study-local name。各 object 是语义层次，不对应固定 Markdown 或 Python 文件。
+Study 拥有研究问题、Artifact composition、Analysis 与 Evidence / Findings，不拥有 Observation definition。Observation Artifact Dependency、Analysis 和 Evidence Product 具有可引用的 Study-local name；dependency local name 只是 Study 内的引用，不替代 Observation / Artifact semantic identity，不要求 repository-global ID 或统一前缀。
 
-| Element | Role / ownership boundary | Required semantic fields and validity |
-| --- | --- | --- |
-| `Study` | 一个 bounded research question / small hypothesis 的本地 semantic authority unit，不是单独的 statistics job；上游事实及非 Research-semantic 机制仍由其 canonical owner 定义。 | 拥有 scope、六个必答 semantic areas 与 retained evidence。Study-specific 数值、公式、对象、方法和产物取舍由当前 Study authority 定义。 |
-| `Identity` | Study 的 structural information，标识当前 Study 并提供稳定的 authority 入口。 | 稳定的 `study_package` identity 与 `studies/<study_package>/ARCHITECTURE.md` 入口；预期 runnable 时有 stable public Study ID。 |
-| `Question` | 拥有研究意图与证据目标。 | 研究目标、hypothesis、可辨识的问题、希望产生的 evidence 类别及其适用配置范围。 |
-| `Inputs` | 拥有跨 Study boundary 的请求输入与整次请求的 identity 规则，不因此接管每个值的研究含义。 | 外部事实及 canonical 来源、目标 population、样本选择与范围、数据选择及 configurable values；逐项记录 material parameter 的 owner、consumers、semantic role 和适用的取值契约。Runnable 时定义 Study-specific semantic input 的必填/可选、默认值、用户可见表达与 CLI 映射，并区分 Study-owned execution-only option。保留 evidence 时定义整次请求的 identity 参与输入、等价输入 canonicalization、必须区分的变化、排除项与 Study-owned deterministic run-key rule。 |
-| `Method` | 拥有当前 Study 的 analytical graph：what is observed / analyzed and what it means。 | 显式定义共享上下文（若存在）、`1..N` 个具名 Observation、`1..N` 个具名 Analysis 及其消费关系；各组件的选择、输入与输出足以确定研究含义。 |
-| `Results` | 拥有 produced evidence 的保留与 human / machine consumption、presentation；Analysis 拥有比较、计算与证据含义。 | 定义 `1..N` 类预期保留的 `Evidence Product`、必须保留的 Analysis / statistical evidence、是否独立保留组件 Artifacts，以及哪些 human / machine forms 必需。明确已有 evidence 与尚未执行的状态；无 evidence 时不填占位数值、finding 或推测结论。Filename / format 仅在构成稳定 Study contract 时锁定。 |
-| `Evidence Product` | Results 下的预期保留产物；其证据含义来自 Method 中的 Analysis，不另定义计算或统计语义。 | 逐项给出稳定的 Study-local name，并以 `defined_by` 关系显式引用定义其证据含义的 `1..N` 个具名 Analysis；明确所表达的 evidence、所需 machine-readable structure、table、plot、report 或其他 visualization，以及适用的 empty bucket、missing statistic、excluded observation 等边界状态和复核必需的 metadata、exclusion counts、provenance。 |
-| `Limitations` | 拥有证据的解释边界。 | 研究边界、解释限制与不得从结果推出的结论。 |
-| `Acceptance` | 拥有研究设计与预期产物的验收语义。 | 设计与产物完整、可复核的条件，以及该 Study 的结果有效性与失败条件；不设全模块统一统计阈值、运行规则或 artifact schema。 |
+| Element | Ownership 与必需语义 |
+| --- | --- |
+| Study / Identity | Bounded research question / small hypothesis 的 authority unit；稳定 `study_package`、`studies/<study_package>/ARCHITECTURE.md` entry，预期 runnable 时有 public Study ID。 |
+| Question | 研究目标、hypothesis、问题范围、希望形成的 evidence 及其适用配置范围。 |
+| Inputs | Study request / configuration、Artifact invocation input bindings、Study-owned analytical sample selection、material parameter 的 owner / consumers / semantic role / input contract，以及 Study run identity。Observation input domain、canonicalization 与 empirical population 通过 canonical owner 引用，不重新定义。 |
+| Method | Optional Study-local Method Context、`1..N` 个 Observation Artifact Dependencies、`1..N` 个 Analysis 及实际消费关系；Analysis 定义分组、比较、统计与 evidence semantics。 |
+| Results | `1..N` 类预期 Evidence Products、保留与 human / machine consumption、必需 presentation forms、provenance 与适用的空 / 缺失 / 排除状态；不重定义 Analysis 计算或 Observation Artifact。 |
+| Evidence Product | 稳定 Study-local name；以 `defined_by` 关系引用定义证据含义的 `1..N` 个具名 Analysis；给出 machine-readable structure、表 / 图 / 报告、metadata、exclusion counts 和复核所需 provenance。 |
+| Limitations | 解释范围、数据 / 样本限制与不得从 evidence 推出的结论。 |
+| Acceptance | 设计、产物完整性、可复核性、研究结果有效性及失败条件；不设模块统一统计阈值或 artifact schema。 |
 
-### Parameter ownership and Study run identity
+## Parameter ownership 与 Study run identity
 
-每个 material configurable Study parameter 均须可按下列关系直接读取；可用表格或具名字段表达，不要求统一序列化格式：
+每个 material configurable parameter 明确以下关系，可用表格或具名字段表达，不规定序列化格式：
 
 | Relationship | Required meaning |
 | --- | --- |
-| `name` | 当前 Study 内稳定、可引用的参数名称。 |
-| `semantic owner` | `Study`、`Method Context`、某个具名 Observation 或某个具名 Analysis；CLI 接收位置不决定 owner。Study 拥有 population 等 Study-wide 语义，Method Context 只拥有真正跨组件共享的研究语义，组件特有参数由组件拥有。 |
-| `consumers` | 实际使用该值的具名组件或 Study-level 规则；与 owner 分开记录，多个 consumers 不自动改变 owner。 |
-| `semantic role` | 说明改变该值是否改变研究请求或证据含义，以及它影响的语义；identity-changing semantic parameter 必须进入 run identity。 |
-| `input contract` | 适用时列出必填/可选、默认值及允许值、范围或 domain；固定且不可配置的 Study 语义不因此变成参数。 |
+| name | Study 内稳定参数名称。 |
+| semantic owner | Study、Method Context、具名 Analysis，或所引用的独立 Observation；CLI 接收位置不决定 owner。Study 负责选择 invocation 值，不接管 Observation-owned input semantics。 |
+| consumers | 实际使用该值的 dependency invocation、Analysis 或 Study-level 规则；共同使用不合并 ownership。 |
+| semantic role | 改变该值是否改变研究请求或证据含义，以及影响哪些语义；identity-changing inputs 必须进入 Study run identity。 |
+| input contract | 必填 / 可选、默认值、允许值 / domain、用户表达与适用 CLI 映射。Study 可锁定所选择的配置，不能扩展或改写 Observation canonical domain / meaning。 |
 
-只控制 retained execution behavior 而不改变研究含义的值（如 `--overwrite`）应单独标为 Study-owned execution-only option，说明其执行消费位置、必填性、默认值与允许范围（适用时）；它没有 component semantic owner，也不参与 semantic run identity。`Inputs` 中的参数记录可以引用 `Method` 中唯一拥有的组件语义，不复制其定义。Observation 与 Analysis 是 Study-local semantic objects，不是跨 Study 的通用组件接口。Runnable Study 的 public ID 映射、调用入口、共享配置、output placement、collision 与 publication boundary 沿用 Research UI authority；本 schema 不规定统一 CLI 参数名、参数 schema 或 run-key 算法。Study authority 须把每个 semantic input 连接到可实现的用户提供方式。
+Study-owned analytical sample selection 是 Analysis 对已存在 Artifact 的消费范围，不改变原 Artifact population、grain、validity 或 schema。Study 可为更窄的研究问题选择子样本、分组与比较，但这些规则须定位至 Study / Analysis，并与 Observation completeness / validity 分开。
 
-保留 evidence 的 Study 须在 `Inputs` 明列或明确引用 run identity 关系：参与 identity 的 Study semantic inputs；不同用户表示映射至同一语义请求的 canonicalization；哪些参数变化产生不同 identity；哪些 execution-only options 被排除；以及从规范化语义请求确定 run key 的 Study-owned rule。相同 Study identity 与规范化语义请求须得到相同 run identity，不同的 identity-changing 输入须可区分。Run identity / run key 不依赖 wall-clock time、随机 UUID、偶然路径或意外的迭代顺序；具体 hash 或编码算法不由本 schema 统一规定。
+只控制 Study evidence execution behavior 的选项（如 `--overwrite`）单独标为 Study-owned execution-only option，给出消费位置、必填性、默认值与允许范围（适用时）；不参与 semantic run identity，也不授权 Observation refresh。Inputs 引用 Method 或 Observation 的唯一 canonical semantics，不复制定义。
 
-### Method component contracts
+保留 evidence 时，Inputs 必须定义：参与整次请求 identity 的 Study semantic inputs；等价用户表达的 canonicalization；哪些变化必须区分；排除的 execution-only options；以及 Study-owned deterministic run-key rule。所消费的 Observation / Artifact semantic identity 必须由 dependency bindings 可确定，并覆盖影响 evidence 的业务输入。
 
-`Method Context [0..1]` 由当前 Study 拥有；仅在多个 Observation / Analysis 真正共享研究语义时定义共同上下文与 method-level parameters，并说明各参数影响哪些组件。没有共享语义时不造空 Context，也不为减少重复而接管组件参数。
+相同 Study identity 与规范化语义请求得到相同 run identity，不同 identity-changing inputs 必须可区分。Run identity 不依赖 wall-clock time、random UUID、偶然 path 或意外迭代顺序。本 schema 不规定统一 hash、编码、参数名或 CLI schema；public ID、配置、placement、collision 与 evidence publication 沿用 [Research UI authority](../ui/ARCHITECTURE.md)。Study run identity 不等同于 Observation business key，也不定义 upstream revision / definition evolution policy。
 
-`Observation [1..N]` 与 `Analysis [1..N]` 均由当前 Study 本地拥有；每个具名组件有独立语义。其 contract 可按字段扫描：
+## Observation Artifact Dependencies
 
-| Field | Observation | Analysis |
-| --- | --- | --- |
-| `identity` | Stable local name / identity。 | Stable local name / identity。 |
-| `purpose` | 所观察的市场现象。 | 要回答的 Question aspect / evidential purpose。 |
-| `consumes` | 分别列出所消费的 Study inputs、适用的 Method Context 值（若有）与上游 canonical data / facts 及其 owner。 | 以稳定 Study-local name 显式列出所消费的 `1..N` 个具名 Observation。 |
-| `parameters` | 自身 parameters。 | 自身 parameters。 |
-| `semantics` | Observation semantics / derived variables。 | Grouping / comparison / statistical semantics。 |
-| `validity / exclusion` | 适用的 eligibility / exclusion / validity 规则。 | — |
-| `produces` | 供后续消费的语义输出。 | 产生的 evidence 语义；不重复维护 retained Evidence Product 的 Study-local name。 |
-| `artifact identity` | 仅需独立物化、保留或复用时定义。 | 仅需独立物化、保留或复用时定义。 |
+每个 dependency 必须明确：
 
-Analysis 的 `consumes` 以 stable local name 引用具名 Observation；`produces` 只定义 Analysis 自身的 evidence semantics。`Results` 下的 Evidence Product 唯一拥有 retained Analysis → Evidence Product mapping：每个 Evidence Product 从自身单向引用 defining Analyses，Analysis 不重复列出 Evidence Product local names。Analysis 的 `purpose` 指向其回答的 Question aspect；沿 Analysis 的 Observation 引用与 Evidence Product 的 Analysis 引用，须能恢复 Question aspect → Observation → Analysis → Evidence Product 链。一个 Evidence Product 可以汇总多个 Analyses；每个 material Analysis 都须能经 Results 中的映射追踪到 retained evidence。Evidence Product 的 local name 标识证据语义，不是表格、图形、报告的格式、filename 或 path；这些表示选择不构成依赖边。纯 request/provenance metadata 可随 evidence 保留，不因此成为独立的 Evidence Product。Local name 不采用 repository-global ID 或强制 `O-*` / `A-*` / `R-*` 前缀。
-
-### Method dependencies and component Artifact identity
-
-| Rule | Contract |
+| Field | Required meaning |
 | --- | --- |
-| Data and component flow | Study Inputs、Method Context（若有）及 upstream canonical facts → Observation；具名 Observation → 具名 Analysis；具名 Analysis → retained Evidence Product。Analysis 还可按参数的 owner / consumers 声明使用适用的 Study 或 Method Context 值，但仍须消费具名 Observation。一个 Analysis 无须消费所有 Observations；多个 Analyses 可消费同一个 Observation；多个 Observations 可独立消费相同 upstream data；一个 Evidence Product 可汇总多个 Analyses。共同输入不合并 semantic ownership。 |
-| Forbidden semantic dependencies | Analysis → Observation 不合法；默认不建立 Observation → Observation semantic contract；Observation 的定义不得依赖某个 Analysis 的目标或已得结果；sibling Study → sibling Study research-semantic dependency 不合法。复用 dataframe、helper、internal function 或中间计算，以及 filesystem layout，都不创建 semantic dependency。 |
-| Conditional Artifact identity | 仅当 Observation / Analysis 需要独立物化、保留或复用时，当前 Study 才定义其 component Artifact identity；不要求每个组件都有持久化 artifact。已物化的 Observation Artifact 可由语义 identity 匹配的 Analysis 复用。 |
-| Observation Artifact identity | 明列 Observation identity、相关 Method Context parameters、Observation-owned semantic parameters 及相关 source / input identity。只纳入影响该 Observation 语义的输入。 |
-| Analysis Artifact identity | 明列 Analysis identity、实际消费的每个 Observation 在当前 Study request 下的完整 semantic identity、相关 Method Context parameters 及 Analysis-owned semantic parameters。对已独立物化的 Observation，使用其 Artifact identity；对未物化的 Observation，纳入其 stable local identity 及全部 identity-determining semantic inputs，包括相关 Method Context / Observation-owned parameters 与 source / Study input identity。只纳入影响该 Analysis 语义的输入。 |
+| local name / purpose | Study 内的稳定引用及其支持的研究事实需求。 |
+| canonical owner | 所需独立 Observation identity、canonical authority entry 与 Artifact contract。能力尚不存在时明确 required capability 和 gap，不以 Study-local 定义替代。 |
+| invocation inputs | Study configuration / request 到 Observation business inputs 的绑定，包括已锁定的值与所引用的规范化规则。 |
+| Artifact identity | 按 Observation-owned identity contract 确定本请求消费哪个 Artifact；不得用 Study run directory、filename 或 SQLite path 代替。 |
+| resolution / consumption | 如何经 Observation public boundary resolve / ensure complete Artifact，哪些 Analysis 消费该 dependency；若 delivery 尚未定义，明确 dependency readiness gap。 |
 
-未物化 Observation 的 stable local name 本身不足以确定 Analysis Artifact identity；同一 Observation 的 window、source 或其他 identity-changing semantic input 不同，消费它的 Analysis Artifact identity 必须可区分。Component Artifact identity 由上述语义输入决定，不依赖运行时间、随机 UUID、偶然路径或意外的迭代顺序；它与 filesystem filename、path、serialization representation 不同。Study 可按参数构造易读文件名，具体 hash、serialization、文件名或 artifact 格式只在构成稳定 Study contract 时锁定。新增或重跑 Analysis 在语义上不要求重做未变化的 Observation；这不要求实现提供分段执行、通用 DAG executor、全局 Artifact Registry、cache framework 或 shared execution protocol。
+所有 dependency 必须遵守 [Observation boundary](../observations/ARCHITECTURE.md)，普通 consumer 只消费 complete Artifact。Study 不拥有 Observation population、grain、derivation、validity 或 Artifact schema，也不直接读取 Observation SQLite。Observation Artifact 是 retained empirical product，不是 Study Evidence，不以 Study 决定是否物化为前提。
 
-六个 semantic areas 必须有实质内容；`TBD`、空节或“采用合适方法”不能掩盖会改变研究含义的缺失决定。
+## Study-local Analysis contracts
+
+Method Context 只在多个 Analyses 真正共享 Study-owned research semantics 时定义；不造空 Context，不接管 Observation parameters 或 facts。每个具名 Analysis 明确以下字段：
+
+| Field | Required meaning |
+| --- | --- |
+| identity / purpose | Stable Study-local name，以及回答的 Question aspect / evidential purpose。 |
+| consumes | 按 dependency local name 引用实际消费的 `1..N` 个 complete Observation Artifacts，并声明适用 Study / Method Context inputs。 |
+| parameters / semantics | Analysis-owned parameters、analytical sample selection、分组、比较、变换、统计和解释规则。 |
+| validity / exclusions | Analysis 层的样本限制、缺失统计、排除与失败语义；不能改变 Observation validity 或把 partial Artifact 当作有效输入。 |
+| produces | 由该 Analysis 形成的 evidence semantics；不重复维护 Results 的 Evidence Product local names。 |
+
+Analysis 的 grouping / transformation 属于 Study-specific evidence computation，不成为新的 retained Observation definition。一个 Analysis 无须消费所有 Artifacts，多个 Analyses 可消费同一个 Artifact；同一 Artifact 可跨 Study 复用。共同输入不合并 ownership。
+
+Evidence Product 唯一拥有 retained Analysis → Evidence Product mapping，从自身以 `defined_by` 引用 Analysis。每个 material Analysis 均可经 Results 追踪到 retained evidence，每个重要 Question aspect 均可经 Analysis 的 `purpose` / `consumes` 和 Evidence Product 的 `defined_by` 追踪到实际 Artifact。证据 local name 不等于 representation、filename 或 path；纯 request / provenance metadata 不因此成为独立 Evidence Product。Results 明确已有 evidence 与尚未执行状态，无 evidence 时不填占位数值或推测 finding。
+
+## Dependency direction 与 deferred Analysis model
+
+Canonical data flow 为 Observation → complete Observation Artifact → Study / Analysis → Evidence Product。Study / Analysis 不反向重定义 Observation；Observation 不依赖 Analysis 或 Study conclusion。Sibling Study research-semantic dependency 不合法；相似 analytical code 不触发 shared 抽取。
+
+当前 Analysis 仍为 Study-local semantic object。本轮不定义 cross-Study Analysis reuse、Analysis Artifact、Analysis SQLite、Analysis caching、Analysis → Analysis multi-stage graph、generic Analysis registry 或 DAG executor，也不建立 `market-research/analyses/`。旧 conditional component Artifact identity 仅按 [Compatibility](COMPATIBILITY.md) 保护历史结构，不是新 Study contract。Observation refresh / definition evolution 继续由 [Observation deferred decisions](../observations/ARCHITECTURE.md#explicitly-deferred-decisions) 记录。

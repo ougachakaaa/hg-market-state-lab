@@ -2,6 +2,8 @@
 
 本文档定义 retained Study 的 human-facing execution convention 与窄义共享 Research UI 支撑。模块 identity、Research result 与 Snapshot 消费原则见 [market-research architecture](../ARCHITECTURE.md)；配置 schema 与 resolution 见 [configuration authority](CONFIGURATION.md)；具体命令与参数由对应的 canonical Study authority 拥有，从 `../studies/<study_package>/ARCHITECTURE.md` 进入。新建 Study 的详细输入与 CLI 映射位于该 entry 链接的 `INPUTS.md`，见 [Study Skeleton](../studies/SKELETON.md)。
 
+当前已定义的 human-facing runnable surface 仍以 Study CLI 为主，不是 Research 永久唯一执行模型。[Observation authority](../observations/ARCHITECTURE.md) 已定义 public invocation semantics，但 Observation CLI delivery 尚未决定；本 UI contract 不创建该 delivery。
+
 ## 1. Interaction boundary
 
 Canonical human namespace 是 repository CLI：
@@ -13,7 +15,7 @@ lab research run <study-id> [study-specific args...]
 
 Repository CLI 只拥有 runnable Study discovery、layout 校验、进程执行、参数透明转发、operational error 与 exit-code propagation。它不 import `market_research`，不解析 study-specific arguments，不组合 Snapshot dependency，不拥有 Study method、artifact 或 result semantics。
 
-每个 runnable Study 拥有自己的 CLI module。该 module 拥有其 command parsing、input validation、Snapshot public application composition、Study invocation、failure presentation 和 success presentation。`research run <study-id> --help` 必须由该 study-local parser 生成，不由 root CLI 复制参数说明。
+每个 runnable Study 拥有自己的 CLI module。该 module 拥有其 command parsing、input validation、dependency composition、Study invocation、failure presentation 和 success presentation。新 Study 经 Observation public boundary resolve / ensure Artifacts，不在 CLI 实现 Observation；legacy Snapshot composition 按 [Compatibility](../studies/COMPATIBILITY.md) 保留。`research run <study-id> --help` 必须由该 study-local parser 生成，不由 root CLI 复制参数说明。
 
 ## 2. Runnable Study convention
 
@@ -50,7 +52,7 @@ python -m market_research.studies.<study_package>.cli [study-specific args...]
 
 Research UI configuration 只提供 `output.root`。每个 Study 从自身完整的 semantic request 确定 deterministic run key：语义相同的请求必须得到相同的 key，任何会改变 retained evidence 含义的 Study 参数变化都必须得到不同的 key。当前时间、随机 UUID、进程身份、临时路径或运行顺序不得成为 canonical semantic identity。key 的表示形式（包括是否使用 hash 或编码）由 Study 决定；共享 Research UI 不定义统一 request schema、参数列表或 key 算法。
 
-该 run key 标识整次 Study 请求并用于共享 output placement。Study 内如需独立物化 Observation / Analysis Artifact，其更细粒度 semantic identity 由 [Study Schema](../studies/SCHEMA.md) 约束、由具体 Study 定义；共享 Research UI 不解释或管理组件 artifact identity，也不因组件可复用而提供新的分段执行或发布协议。
+该 run key 标识整次 Study 请求并用于 evidence output placement。Observation Artifact identity 与 internal SQLite persistence 由 [Observation authority](../observations/ARCHITECTURE.md) 及 concrete owner 定义，不由 Study run key、output.root 或 UI 管理。[Study Schema](../studies/SCHEMA.md) 定义 dependency bindings 与 Analysis consumption；共享 Research UI 不解释 Artifact business identity，也不提供分段执行或 Observation publication protocol。Analysis Artifact model 尚未决定，legacy component identity 按 Compatibility 保留。
 
 Study-local CLI 将 Study-owned run key 交给共享 Research UI，canonical placement 为：
 
@@ -64,11 +66,13 @@ Study-local CLI 将 Study-owned run key 交给共享 Research UI，canonical pla
 
 若 canonical run directory 已存在，默认在调用 Snapshot 或 Study 前失败并保留原 evidence。只有 Study 显式提供并接收 `--overwrite` 时才允许替换；replacement 以整个 run directory 为单位，先在同级 staging directory 完成，发布失败恢复原 evidence。
 
+新 Study 同样必须在调用 Observation / Study 前处理 evidence collision。`--overwrite` 仅授权 Study evidence directory replacement，不授权 Observation Artifact refresh / overwrite / invalidation，也不管理 Observation-owned database。
+
 Configuration 是 runner 内部支撑，repository CLI 不公开 `research config` command。
 
 ## 4. Snapshot boundary and failure presentation
 
-Study-local CLI 只能调用对应 Snapshot product 拥有的 production-ready public application entry，不得导入 Source/Capture internals、构造 Source client、读取 credential 或依赖 persistence layout。
+新 Study-local CLI 通过 Observation public boundary 消费 Artifact；Observation 的 DataLake / Snapshot upstream boundary 见其 authority。Legacy Study 直接 Snapshot composition 只调用对应 product 拥有的 production-ready public application entry。所有 Study CLI 均不得导入 Source/Capture internals、构造 Source client、读取 credential 或依赖 upstream / Observation persistence layout。
 
 正常用户错误必须由 study-local CLI 转换为简洁消息与 non-zero exit code，且不得要求用户阅读 Python traceback 才能识别 command/input、configuration、Snapshot/data、Study/sample 或 output filesystem failure。V1 不锁定跨 Study 的具体 exit-code number。
 

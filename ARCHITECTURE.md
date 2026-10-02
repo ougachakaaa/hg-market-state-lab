@@ -28,7 +28,7 @@ DataLake 不拥有 Snapshot Product semantics、Preparation、analysis-ready com
 
 ### `market-research`
 
-独立的 exploratory / statistical research bounded module，消费 analysis-ready market artifacts，负责开放探索、统计分析、可视化、假设发现与值得保留的研究。
+独立的 exploratory / statistical research bounded module，消费 DataLake public facts 与 Snapshot analysis-ready artifacts，负责开放探索、统计分析、可视化、假设发现与值得保留的研究。
 
 Research result 是 evidence / finding，不是 production market-state output。模块内部边界见 [market-research/ARCHITECTURE.md](market-research/ARCHITECTURE.md)。
 
@@ -88,7 +88,7 @@ Analysis-ready Artifacts
 
 该图表达业务职责与 analytical data flow，不强制 runtime deployment topology 或 package import dependency。`market-research` 与 `market-modeling` 是 sibling analytical modules；Research 不是 Modeling pipeline 的强制 stage。`market-snapshot` 的产物也可以被仓库外的 analyzer 直接消费。
 
-`market-research` 只通过 `market-snapshot` 明确支持的 public application/product boundary 消费 analysis-ready result，不依赖 Source Capture、Raw Artifact、product-private Preparation、persistence layout、`backend-api`、FastAPI 或 HTTP DTO。`market-snapshot` 与 `market-modeling` 不得依赖 `market-research`。
+`market-research` 通过 `market-snapshot` 明确支持的 public application/product boundary 消费 analysis-ready result，也可通过 DataLake public Application Service 消费 source facts；不依赖 Source Capture、Raw Artifact、product-private Preparation、upstream persistence、Dataset / Snapshot SQLite、`backend-api`、FastAPI 或 HTTP DTO。Research 内部 composition 由其 module authority 拥有，具体 integration 仍须独立设计。`data-lake`、`market-snapshot` 与 `market-modeling` 不得依赖 `market-research`。
 
 Research finding 可以经以下语义决策路径促进未来 Modeling，但该路径不是 runtime dependency，也不定义 promotion framework：
 
