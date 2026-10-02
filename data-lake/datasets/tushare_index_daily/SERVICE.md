@@ -14,6 +14,8 @@ export(request: IndexDailyRange)   → IndexDailyExport
 
 Consumer 通过 public semantic objects 直接使用 service，不经 CLI/JSON round-trip，也不接收 SQLite path、Repository、Source adapter、connection 或 provider response。Factory 由 Dataset 内部 composition 解析 owned state 及 Calendar public service；普通 consumer 不需要配置 internal collaborators。Factory/read-only calls 不创建缓存，不要求 credential。
 
+行情 Window 的 end_date 必须不晚于 operation 验证时的 Asia/Shanghai 当前日期；未来结束日期在任何 dependency/Source I/O 前抛 InvalidRequestError，不截断日期。当天未发布仍按完整性失败保持可重试。Calendar 继续允许已发布的未来日期。
+
 ## 2. Shared semantic request
 
 | IndexDailyRange field | Python semantic type | Meaning |
@@ -78,4 +80,8 @@ InvalidRequestError / OperationError 的唯一公共 owner 为 APPLICATION.md。
 
 Tushare execution 与 credential / client / shared limiter 遵循 [Provider Runtime authority](../../providers/TUSHARE.md)，本 Dataset 不自行实现 provider initialization 或请求异常转换。Factory / read-only calls 不解析 credential、不创建 client；完整 Calendar 加上全 success Index 目标的 ensure 无需 credential。缺少必需 credential 在相应 Source request 前抛 OperationError。
 
-本 Dataset 自己的 composition 拥有 index_basic/index_daily adapter 与 local storage resolution，adapter 通过共享 Executor 执行 provider 请求；只通过 Calendar public namespace 消费 prerequisite，不读取 sibling persistence。唯一 owned SQLite 目标位于本 bounded context 的 data/；具体 filename、事务、Source batching、package wiring 与测试设计由 implementation reconciliation 记录，不重新决定本轮 semantic contract。HTTP、Research/Snapshot integration、refresh/force/TTL 与 schema migration 仍 deferred；CLI registration 与当前 runtime 状态见 reconciliation。
+本 Dataset 自己的 composition 拥有 index_basic/index_daily adapter 与 local storage resolution，adapter 通过共享 Executor 执行 provider 请求；只通过 Calendar public namespace 消费 prerequisite，不读取 sibling persistence。唯一 owned SQLite 目标位于本 bounded context 的 data/；具体 filename、事务、Source batching、package wiring 与测试设计由 implementation reconciliation 记录，不重新决定本轮 semantic contract。HTTP、Research/Snapshot integration、refresh/force/TTL 与通用 schema migration framework 仍 deferred；明确的 generation 2 → 3 兼容升级见 [PERSISTENCE.md](../../PERSISTENCE.md)；CLI registration 与当前 runtime 状态见 reconciliation。
+
+## Bounded Source execution
+
+同一 index_code 和自然年内每批最多 250 个 selected 交易日，使用 index_daily 的 start_date/end_date 查询并完整分页。只提交本次 selected units，逐 unit completeness 与 public accounting 不变。执行、验证复用及单 worker 提前一批见 [EXECUTION.md](../../EXECUTION.md)。

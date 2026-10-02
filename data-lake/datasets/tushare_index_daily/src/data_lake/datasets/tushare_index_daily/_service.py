@@ -1,7 +1,7 @@
 """Dataset-owned composition and public Calendar prerequisite."""
 
 import json
-from collections.abc import Callable
+from collections.abc import Callable, Iterable
 from datetime import date, timedelta
 from pathlib import Path
 from typing import Any, cast
@@ -16,9 +16,19 @@ from data_lake.datasets.tushare_trade_calendar import create_service as calendar
 from data_lake.providers.tushare import TushareExecutor
 
 from ._models import DailyWindow, IndexDailyExport, IndexDailyRange, IndexDailyScope
-from ._source import DailySource, check_complete, normalize, read_row
+from ._source import DailySource, check_complete, identity, normalize, read_row
 
 DATASET = "tushare_index_daily"
+
+
+def batches(units: tuple[Unit, ...]) -> Iterable[tuple[Unit, ...]]:
+    grouped: dict[tuple[str, int], list[Unit]] = {}
+    for unit in units:
+        code, day = identity(unit)
+        grouped.setdefault((code, day.year), []).append(unit)
+    for group in grouped.values():
+        for offset in range(0, len(group), 250):
+            yield tuple(group[offset : offset + 250])
 
 
 def trading_days(calendar: Any, request: IndexDailyRange, ensure: bool) -> tuple[date, ...]:
@@ -117,7 +127,8 @@ class IndexDailyService:
             normalize=normalize,
             check_complete=check_complete,
             project=project,
-            batches=lambda selected: ((unit,) for unit in selected),
+            batches=batches,
+            prefetch=True,
         )
 
     def coverage(self, request: IndexDailyRange) -> CoverageResult:

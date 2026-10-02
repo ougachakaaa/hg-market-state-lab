@@ -139,3 +139,28 @@ def test_account_rate_shared_across_instances(monkeypatch: pytest.MonkeyPatch, r
     for _ in range(3):
         TushareExecutor().call("query")
     assert starts == pytest.approx([100, 100 + 60 / rate, 100 + 120 / rate])
+
+
+def test_cancel_guard_allows_inflight_call_to_finish_but_stops_subsequent_pages() -> None:
+    started = threading.Event()
+    release = threading.Event()
+    calls: list[str] = []
+    response = object()
+
+    class Delegate:
+        def call(self, endpoint: str, **parameters: Any) -> object:
+            calls.append(endpoint)
+            started.set()
+            assert release.wait(3)
+            return response
+
+    guarded = _executor.CancellableExecutor(Delegate())
+    with ThreadPoolExecutor(max_workers=1) as worker:
+        future = worker.submit(guarded.call, "opt_daily", offset=0)
+        assert started.wait(3)
+        guarded.cancel()
+        release.set()
+        assert future.result() is response
+    with pytest.raises(ExecutionFailure, match="cancelled"):
+        guarded.call("opt_daily", offset=4000)
+    assert calls == ["opt_daily"]

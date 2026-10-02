@@ -8,6 +8,7 @@ from typing import Any, NoReturn, cast
 
 from data_lake._domain import ExecutionFailure, Instrument, Record, Unit, UnitRecords
 from data_lake.providers.tushare import Executor
+from data_lake.providers.tushare._executor import CancellableExecutor
 
 from ._models import IndexDailyRow
 
@@ -85,16 +86,17 @@ def exhaust(executor: Executor, endpoint: str, **params: object) -> list[dict[st
     # Continue even after a short page. Empty terminal page proves exhaustion;
     # Repeated pages detect non-progress; Dataset reconciliation detects duplicates.
     result: list[dict[str, Any]] = []
-    seen: set[str] = set()
+    seen: set[object] = set()
     for _ in range(10000):
         page = rows(executor.call(endpoint, offset=len(result), limit=4000, **params))
         if not page:
             return result
         for row in page:
             code = text(row.get("ts_code"))
-            if code in seen:
+            key = (code, text(row.get("trade_date"))) if endpoint == "index_daily" else code
+            if key in seen:
                 fail("Catalog/daily pagination contains duplicate identity or ignored offset")
-            seen.add(code)
+            seen.add(key)
         result.extend(page)
     return fail("Source exhaustion could not be proven")
 
@@ -184,12 +186,14 @@ def metadata(raw: dict[str, Any], code: str) -> dict[str, Any]:
 
 class DailySource:
     def __init__(self, executor: Executor, cached: dict[str, dict[str, Any]]) -> None:
-        self.executor = executor
+        self.executor = CancellableExecutor(executor)
         self.metadata = cached
         self.errors: dict[str, ExecutionFailure] = {}
 
-    def fetch(self, units: tuple[Unit, ...]) -> dict[str, object]:
-        code, target = identity(units[0])
+    def cancel(self) -> None:
+        self.executor.cancel()
+
+    def _load_metadata(self, code: str) -> None:
         if code in self.errors:
             raise self.errors[code]
         if code not in self.metadata:
@@ -214,16 +218,39 @@ class DailySource:
             except ExecutionFailure as exc:
                 self.errors[code] = exc
                 raise
-        meta = self.metadata[code]
-        response = rows(
-            self.executor.call(
-                "index_daily",
-                ts_code=code,
-                start_date=target.strftime("%Y%m%d"),
-                end_date=target.strftime("%Y%m%d"),
-                fields=DAILY_FIELDS,
-            )
+
+    def fetch(self, units: tuple[Unit, ...]) -> dict[str, object]:
+        code, first = identity(units[0])
+        self._load_metadata(code)
+        last = identity(units[-1])[1]
+        response = exhaust(
+            self.executor,
+            "index_daily",
+            ts_code=code,
+            start_date=first.strftime("%Y%m%d"),
+            end_date=last.strftime("%Y%m%d"),
+            fields=DAILY_FIELDS,
         )
+        by_day: dict[str, list[dict[str, Any]]] = {}
+        for raw in response:
+            target = day(raw.get("trade_date"))
+            assert isinstance(target, str)
+            by_day.setdefault(target, []).append(raw)
+        result: dict[str, object] = {}
+        for unit in units:
+            try:
+                result[unit.key] = self._fetch_unit(
+                    (unit,), by_day.get(identity(unit)[1].isoformat(), [])
+                )[unit.key]
+            except ExecutionFailure as exc:
+                result[unit.key] = exc
+        return result
+
+    def _fetch_unit(
+        self, units: tuple[Unit, ...], response: list[dict[str, Any]]
+    ) -> dict[str, object]:
+        code, target = identity(units[0])
+        meta = self.metadata[code]
         matches = []
         for raw in response:
             source_code = text(raw.get("ts_code"))
@@ -258,6 +285,8 @@ class DailySource:
 
 
 def normalize(unit: Unit, raw: object) -> UnitRecords:
+    if isinstance(raw, ExecutionFailure):
+        raise raw
     if not isinstance(raw, UnitRecords):
         fail("Invalid normalized facts")
     return raw

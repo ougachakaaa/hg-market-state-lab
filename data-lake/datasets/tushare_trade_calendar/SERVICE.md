@@ -131,3 +131,5 @@ Tushare credential resolution、client creation、限流与 provider request fai
 ## 7. Implementation reconciliation
 
 基准实现状态、目标 source/test/storage ownership 与后续 package/import reconciliation 输入统一见 [implementation reconciliation](../../IMPLEMENTATION_RECONCILIATION.md)。本文件继续拥有上述稳定 public semantic contract，不以目录迁移重新定义 operation、result/error 或 export semantics；HTTP 与 Research / Snapshot integration 仍须独立设计。
+
+未来自然日 Window 合法，不按 today 裁剪：ensure 可缓存 Source 已发布的未来日历事实；未发布/缺失日期保持 non-success，并按逐日 failure 返回。Coverage/export 仍只读，未来日期无缓存按 missing 表达，不查询 Source；不引入未来日期 refresh 特例。

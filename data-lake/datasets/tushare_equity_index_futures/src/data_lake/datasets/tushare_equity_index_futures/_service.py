@@ -1,6 +1,6 @@
 """Dataset-owned composition and public Calendar prerequisite."""
 
-from collections.abc import Callable
+from collections.abc import Callable, Iterable
 from datetime import date, timedelta
 from pathlib import Path
 from typing import Any
@@ -15,9 +15,24 @@ from data_lake.datasets.tushare_trade_calendar import create_service as calendar
 from data_lake.providers.tushare import TushareExecutor
 
 from ._models import DailyWindow, FuturesDailyExport, FuturesDailyRange, FuturesDailyScope
-from ._source import DailySource, check_complete, normalize, read_row
+from ._source import CompletenessChecker, DailySource, identity, normalize, read_row
 
 DATASET = "tushare_equity_index_futures"
+
+
+def batches(units: tuple[Unit, ...]) -> Iterable[tuple[Unit, ...]]:
+    grouped: dict[date, list[Unit]] = {}
+    for unit in units:
+        _, target = identity(unit)
+        grouped.setdefault(target, []).append(unit)
+    window: list[date] = []
+    for day in sorted(grouped):
+        if window and (len(window) == 5 or (day - window[0]).days >= 31):
+            yield tuple(unit for target in window for unit in grouped[target])
+            window.clear()
+        window.append(day)
+    if window:
+        yield tuple(unit for target in window for unit in grouped[target])
 
 
 def trading_days(calendar: Any, request: FuturesDailyRange, ensure: bool) -> tuple[date, ...]:
@@ -106,9 +121,10 @@ class FuturesDailyService:
             targets=lambda _: units,
             prepare_source=self._source_factory,
             normalize=normalize,
-            check_complete=check_complete,
+            check_complete=CompletenessChecker(),
             project=project,
-            batches=lambda selected: ((unit,) for unit in selected),
+            batches=batches,
+            prefetch=True,
         )
 
     def coverage(self, request: FuturesDailyRange) -> CoverageResult:

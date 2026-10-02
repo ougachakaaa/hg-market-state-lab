@@ -84,6 +84,8 @@ Scope / Window / FetchUnit / Record、逐日 completeness、coverage / ensure / 
 
 ## 8. 四个 Dataset 的集中 implementation reconciliation
 
+本节记录初次落地状态；当前 provider 修正见第 9 节，当前执行和存储优化见第 10 节。
+
 本次为 implementation task，基于 `ff53cec755e6868ae90b02cf1f19bda79cc08aec`，未重新决定 Scope、Window、FetchUnit、completeness、provider 或 export semantics。第 5–7 节所述缺少 runtime、provider execution、CLI registration、package/tooling 与 topology registration 的 gaps 已关闭。
 
 ### 当前 runtime 与 delivery
@@ -155,3 +157,23 @@ Repository root 验证结果：
 扩展历史验证范围 2024-01-01..2026-10-02：SSE/CFFEX 各 1,006 自然日，4 个指数 2,664 条 / 2,664 units，IF/IH/IC/IM 10,656 条 / 2,664 units，IO/HO/MO 484,646 条 / 1,998 units。全部 ensure.complete=true；新增目标为日历各 731、指数/期货各 1,940、期权 1,455，新增抓取无失败。使用同一 process 的 180/min 共享额度；本次未引入额外实现变更。运行文件位于各自 data/exports/2024-01-01_to_2026-10-02/，继续保持 Git 忽略。
 
 扩展范围的 coverage/export 同样 complete=true、missing/pending/failed 均为 0。全部导出记录通过日期范围、身份唯一性、有限数值与 nullable 条件检查，CLI JSON 与 public export 相同；空凭据/非法 rate 下全缓存 ensure attempts=0，原 2026 年成功 facts 与原导出逐条相同。重新请求 Source 对比全部日历/指数、跨 2024/2025/2026 的 10 个期货日期及 9 个期权日期，共 11,094 条逐字段一致；包含上市首日与年末样本。请求日志共 3,892 次启动，任意 60 秒最多 180 次，日志时间戳最小启动间隔 0.333 秒，无请求/单元失败和 credential。全仓 pytest 仍为 821 passed、2 skipped，Ruff/mypy、installed imports 与更新后的 authority topology/whitespace 检查通过。
+
+
+## 10. Bounded execution 与 generation 3 optimization
+
+基于 `8d770c5` 完整实现已确认的优化。新的独立 execution / persistence concern 分别落在 [EXECUTION.md](EXECUTION.md) 和 [PERSISTENCE.md](PERSISTENCE.md)，模块入口、DOMAIN_MODEL/APPLICATION 与 policy 导航同步；Dataset SERVICE 唯一拥有未来行情日期拒绝和具体批窗口，CONTRACT_UNIVERSE 链接冻结 basis 的执行/存储契约，lab 唯一拥有增量 JSON / atomic file delivery。前述历史的 schema migration deferred 收窄为通用 framework/旧目录 import 仍 deferred，明确的 generation 2 → 3 兼容升级已实现。
+
+- 三种行情 request/service 在 Calendar/Source I/O 前拒绝超过 Asia/Shanghai today 的 end_date，不静默裁剪；Calendar 仍允许已发布未来日历。
+- Index 在同 code/自然年内每批最多 250 selected 交易日；Futures/Options 按日期合并 selected products，最多 5/3 selected 交易日且自然日跨度不超过 31 日。全部请求到空终页，不把短页当终止，不改变 FetchUnit。响应先按日期 partition；非法可寻址 daily row 只影响自己的 unit，无法寻址或分页不可靠则批失败。Source 不再保留整段历史 daily cache。
+- Operation-local catalog checker 重用同一内部 immutable basis 的完整 metadata validation/contract index；每条 Record、每个 expected/observed 集合和 instrument association 仍核对。每个 read snapshot 重用相同 basis JSON，逐 unit hash/count 未移除。
+- ensure 复用 thread-local writer connection，executemany instruments/records 和批量 instrument lookup；每个 unit 仍独立提交。结构/identity/全库 FK 校验位于 writer entry/exit 和 read snapshot，短事务核对 identity；网络期间没有写事务。可选单 Source worker 提前一批，三个行情 Dataset 启用，主线程单 writer；失败/中断保留已提交 success 与可重试 pending，不启动第三批。
+- 每个 Dataset generation 3 内容寻址去重 basis。合法 generation 2 read/cached ensure 保持只读；有实际 write selection 才备份后事务升级，失败回滚，未知 generation 拒绝。没有改写 legacy 目录；真实验证只升级隔离复制库，生产旧库 SHA-256 保持不变。
+- lab 使用浅 dataclass JSON default 和 incremental dump，UTF-8 同目录 temporary file flush/fsync 后原子替换；编码/同步/替换失败清理 temporary file、保留旧 output。Public envelope、payload、日期、null、ordering 不变。
+
+真实验证使用 2024-01-02..2024-01-12 的 9 个交易日，在完整历史库的隔离副本中移除目标再 ensure：Index 36 units/36 rows，Futures 36 units/144 rows，Options 27 units/5,964 rows，全部成功且与原缓存逐字段相同，未选中历史 units 的 hash/count/status/所有时间 metadata 一致。行情请求 Index 36 → 8，Futures 18 → 4，Options 18 → 6，Futures/Options metadata 各 4 calls；仍有空终页。三库实际升级至 generation 3，完整 generation-2 backup 可读且 FK 检查通过。
+
+完整 2024-01-01..2026-10-02 验证保留 Index 2,664、Futures 10,656、Options 484,646 rows，coverage.complete=true。空 token/非法 rate 的 cached ensure attempts=0、SQLite bytes 不变，无 Source starts；完整 JSON 与旧交付内容的统一换行 SHA-256 一致。内部 basis 内容字符数 Index 482,184 → 724，Futures 115,240,644 → 173,034，Options 3,473,171,352 → 5,214,972；这是逻辑去重体积，不是 SQLite file shrink。测得完整 Options coverage 28.81s、public export 39.71s、incremental JSON delivery 24.14s；单机样本不是稳定性能承诺。证据/script/log/隔离库位于 Calendar owned data/exports/optimization-2026-10-02/，Git 忽略，不提交 credential 或 runtime data。
+
+最终 Source 版本再次补数核对上述 9 日全部样本，并完成 484,646 rows 的完整 Options export：耗时 38.14s、JSON delivery 24.60s，进程 peak working set 3,595,468,800 bytes（约 3.35 GiB）；保持原 Windows 换行后的 JSON 为 487,126,801 bytes，与原交付 raw SHA-256 完全一致。Cancellation guard 补充验证已进入的 call 可以收束、后续分页/metadata calls 不启动；不会取消已发出 HTTP 或隐藏重试。
+
+最终验证：全仓 pytest 861 passed、2 skipped；DataLake/lab Ruff 与 mypy（50 source files）、installed isolated imports、authority topology 和 whitespace 检查通过。完整 diff 与八项优化逐项核对；未放宽逐 unit completeness、hash/count、空终页、原子提交或 read-only boundary，无 remaining implementation drift。

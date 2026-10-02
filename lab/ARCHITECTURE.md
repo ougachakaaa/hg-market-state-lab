@@ -88,7 +88,7 @@ Summary 展示 service 返回的计数与 complete，不根据 records 数量重
 
 `lab datalake --log-level {DEBUG,INFO,WARNING,ERROR} --log-file <path> <operation> ...` 的日志选项在 operation 之前，均可省略。默认 INFO stderr；可选文件为 UTF-8 timestamped logs。lab 仅配置 data_lake logger，调用结束后恢复原 handler/level/propagation 并关闭自身 handler；不修改 caller root logging。文件无法打开时返回 exit 1，且不开始 Dataset operation。事件内容与脱敏由 [DataLake diagnostics](../data-lake/DIAGNOSTICS.md) 拥有。
 
-`--output <path>` 必填且仅属于 lab delivery，不传入 Dataset service request。CLI 构造请求、调用 `service.export()`、将 Dataset-owned envelope 序列化为 UTF-8 JSON，再写入 output path；公开日期与 null 按 Dataset contract 序列化，不从 SQL row layout 推导 view。
+`--output <path>` 必填且仅属于 lab delivery，不传入 Dataset service request。CLI 构造请求、调用 `service.export()`、将 Dataset-owned envelope 序列化为 UTF-8 JSON，以增量 JSON 编码写入 output 同目录的临时文件，flush/fsync 成功后原子替换 output path；公开日期与 null 按 Dataset contract 序列化，不从 SQL row layout 推导 view。
 
 Terminal 只报告 output path、exported record count 与 coverage summary，不 dump 完整 records。Coverage incomplete 不触发 ensure 或 Source I/O；只要 view 正常生成并成功写入，incomplete 本身不属于 export execution failure，完整性由 envelope 明确表达。写文件失败按 delivery failure 返回，不将其报告为成功导出。
 
@@ -97,3 +97,5 @@ Source credential 与 SQLite location 由 owning Dataset 内部 composition 使�
 V1 DataLake 不提供 describe、read、query、fetch-unit、db、refresh 或 repair，不添加 force、TTL、generic query language、多 view selection 或 terminal record dump。
 
 V1 不提供组合启动、后台进程管理、依赖安装、测试运行、部署、plugin、registry 或 workflow engine。
+
+DataLake export delivery 不复制整个 dataclass tree 或构造完整 JSON string。编码/写入/替换失败清理临时文件并保留已有 output；wire 字段、日期、null 与 ordering 保持 Dataset contract。

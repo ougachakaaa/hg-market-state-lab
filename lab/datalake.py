@@ -3,11 +3,13 @@
 import argparse
 import json
 import logging
+import os
 import re
 import sys
+import tempfile
 from collections.abc import Iterator
 from contextlib import contextmanager
-from dataclasses import asdict
+from dataclasses import asdict, fields, is_dataclass
 from datetime import date
 from pathlib import Path
 from typing import Any, cast
@@ -66,10 +68,34 @@ def add_parser(subparsers: argparse._SubParsersAction) -> None:
                 target.add_argument("--output", required=True, type=Path)
 
 
-def _json_date(value: object) -> str:
+def _json_date(value: object) -> object:
+    if is_dataclass(value) and not isinstance(value, type):
+        return {field.name: getattr(value, field.name) for field in fields(value)}
     if type(value) is date:
         return value.isoformat()
     raise TypeError("Unsupported export value")
+
+
+def _deliver(view: object, output: Path) -> None:
+    temporary: Path | None = None
+    try:
+        with tempfile.NamedTemporaryFile(
+            mode="w",
+            encoding="utf-8",
+            dir=output.parent,
+            prefix=f".{output.name}.",
+            suffix=".tmp",
+            delete=False,
+        ) as stream:
+            temporary = Path(stream.name)
+            json.dump(view, stream, default=_json_date, ensure_ascii=False, indent=2)
+            stream.write("\n")
+            stream.flush()
+            os.fsync(stream.fileno())
+        os.replace(temporary, output)
+    finally:
+        if temporary is not None and temporary.exists():
+            temporary.unlink()
 
 
 @contextmanager
@@ -136,8 +162,7 @@ def _run(args: argparse.Namespace) -> int:
                 print("Target coverage remains incomplete")
             return 0 if result.complete else 1
         view = service.export(request)
-        payload = json.dumps(asdict(view), default=_json_date, ensure_ascii=False, indent=2)
-        args.output.write_text(payload + "\n", encoding="utf-8")
+        _deliver(view, args.output)
         print(f"Exported {len(view.records)} records to {args.output}")
         print(f"Coverage: {asdict(view.coverage)}")
         return 0

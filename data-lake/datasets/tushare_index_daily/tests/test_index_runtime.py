@@ -65,7 +65,7 @@ class Executor:
                 if self.unpaged
                 else self.catalog[int(params["offset"]) : int(params["offset"]) + 1]
             )
-        return Frame(self.daily)
+        return Frame(self.daily[int(params.get("offset", 0)) : int(params.get("offset", 0)) + 4000])
 
 
 def catalog() -> list[dict[str, Any]]:
@@ -314,3 +314,49 @@ def test_other_addressable_index_rows_are_not_written(setup: Any) -> None:
     executor.daily.append(unrelated)
     assert service.ensure(request).complete
     assert [row.index_code for row in service.export(request).records] == ["000300.SH"]
+
+
+@pytest.mark.parametrize("operation", ["coverage", "ensure", "export"])
+def test_future_window_rejected_before_dependency_or_source(setup: Any, operation: str) -> None:
+    service, repo, executor, request = setup
+    object.__setattr__(request, "end_date", date(9999, 12, 31))
+    with pytest.raises(InvalidRequestError, match="today"):
+        getattr(service, operation)(request)
+    assert not executor.calls and not repo.path.exists()
+    with pytest.raises(InvalidRequestError, match="today"):
+        public.IndexDailyRange(["000300.SH"], DAY, date(9999, 12, 31))
+
+
+@pytest.mark.parametrize("defect", ["value", "identity"])
+def test_range_fetch_partitions_days_and_keeps_failure_local(setup: Any, defect: str) -> None:
+    service, repo, executor, _ = setup
+    original = deepcopy(executor.daily)
+    executor.daily = []
+    for index in range(3):
+        for raw in original:
+            item = dict(raw, trade_date=(DAY + timedelta(days=index)).strftime("%Y%m%d"))
+            if index == 1:
+                if defect == "value":
+                    item["close"] = None
+                elif raw is original[0]:
+                    item["ts_code"] = "malformed"
+            executor.daily.append(item)
+    request = public.IndexDailyRange(["000300.SH"], DAY, DAY + timedelta(days=2))
+    result = service.ensure(request)
+    assert (result.attempted_units, result.succeeded_units, result.failed_units) == (3, 2, 1)
+    assert result.failures[0].identity == ("000300.SH", DAY + timedelta(days=1))
+    view = service.export(request)
+    assert {row.trade_date for row in view.records} == {DAY, DAY + timedelta(days=2)}
+    calls = [params for endpoint, params in executor.calls if endpoint == "index_daily"]
+    assert len(calls) == 2 and [params["offset"] for params in calls] == [0, len(executor.daily)]
+    assert calls[0]["start_date"] == "20240102" and calls[0]["end_date"] == "20240104"
+    with sqlite3.connect(repo.path) as connection:
+        assert connection.execute("SELECT count(*) FROM basis_snapshot").fetchone()[0] == 1
+
+
+def test_known_catalog_failure_does_not_issue_unusable_daily_requests(setup: Any) -> None:
+    service, _, executor, _ = setup
+    executor.catalog[0]["name"] = None
+    result = service.ensure(public.IndexDailyRange(["000300.SH"], DAY, DAY + timedelta(days=2)))
+    assert result.attempted_units == 3 and result.failed_units == 3
+    assert not any(endpoint.endswith("daily") for endpoint, _ in executor.calls)

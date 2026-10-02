@@ -6,6 +6,7 @@ from concurrent.futures import ThreadPoolExecutor
 from dataclasses import FrozenInstanceError, asdict, dataclass
 from pathlib import Path
 from threading import Event
+from typing import Any
 
 import pytest
 
@@ -119,8 +120,17 @@ def test_database_path_custom_root_does_not_create_storage(tmp_path: Path) -> No
 @pytest.mark.parametrize(
     "identity",
     [
-        "", "../fake", "a/b", "a\\b", "Fake", "fake-name", "fake.name", "fake name",
-        "fake\n", "数据", "a:b",
+        "",
+        "../fake",
+        "a/b",
+        "a\\b",
+        "Fake",
+        "fake-name",
+        "fake.name",
+        "fake name",
+        "fake\n",
+        "数据",
+        "a:b",
     ],
 )
 def test_database_path_rejects_unsafe_identity(tmp_path: Path, identity: str) -> None:
@@ -157,6 +167,7 @@ def test_initialization_failure_cleans_new_database_and_allows_retry(
     dataset.responses["a"] = facts()
     with monkeypatch.context() as injected:
         if stage == "connect":
+
             def reject_connection(*args: object, **kwargs: object) -> sqlite3.Connection:
                 raise sqlite3.OperationalError("Injected connection failure")
 
@@ -489,7 +500,10 @@ def test_wal_storage_is_rejected_before_connecting_or_mutating(
         else:
             getattr(dataset.core, operation)(("a", "b"))
     assert before == (
-        path.read_bytes(), path.stat().st_mtime_ns, dataset.preparations, len(dataset.calls)
+        path.read_bytes(),
+        path.stat().st_mtime_ns,
+        dataset.preparations,
+        len(dataset.calls),
     )
     assert sorted(p.name for p in path.parent.iterdir()) == [path.name]
 
@@ -663,3 +677,306 @@ def test_public_facade_and_results_do_not_expose_persistence(dataset: FakeDatase
         assert forbidden not in public
     with pytest.raises(FrozenInstanceError):
         result.complete = True  # type: ignore[misc]
+
+
+def test_write_session_reuses_connection_but_each_unit_commits(
+    dataset: FakeDataset,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    opened = 0
+    validate_count = 0
+    original_connect = sqlite3.connect
+    original_validate = dataset.repository._validate
+
+    def connect(*args: Any, **kwargs: Any) -> sqlite3.Connection:
+        nonlocal opened
+        opened += 1
+        return original_connect(*args, **kwargs)
+
+    def validate(connection: sqlite3.Connection) -> None:
+        nonlocal validate_count
+        validate_count += 1
+        original_validate(connection)
+
+    monkeypatch.setattr(sqlite3, "connect", connect)
+    monkeypatch.setattr(dataset.repository, "_validate", validate)
+
+    def fetch(units: tuple[Unit, ...]) -> dict[str, object]:
+        active = dataset.repository._sessions.connection
+        assert not active.in_transaction
+        with original_connect(dataset.repository.path) as reader:
+            assert reader.execute(
+                "SELECT count(*) FROM fetch_unit WHERE status='pending'"
+            ).fetchone()[0] == len(units)
+        return {unit.key: facts() for unit in units}
+
+    monkeypatch.setattr(dataset, "fetch", fetch)
+    dataset.core._batches = lambda units: ((unit,) for unit in units)
+    assert dataset.core.ensure(("a", "b", "c")).complete
+    assert opened == 2  # One writer, one final committed read snapshot.
+    assert validate_count == 3  # Writer entry/exit and final read, independent of unit count.
+
+
+def test_prefetch_overlaps_single_writer_and_stops_at_one_batch_ahead(
+    dataset: FakeDataset,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    second_started = Event()
+    write_started = Event()
+    calls: list[str] = []
+    original_succeed = dataset.repository.succeed
+
+    def fetch(units: tuple[Unit, ...]) -> dict[str, object]:
+        key = str(units[0].identity)
+        calls.append(key)
+        assert getattr(dataset.repository._sessions, "connection", None) is None
+        if key == "b":
+            second_started.set()
+            assert write_started.wait(3)
+        if key == "c":
+            assert write_started.is_set()
+        return {unit.key: facts() for unit in units}
+
+    def succeed(unit: Unit, normalized: UnitRecords) -> int:
+        if unit.identity == "a":
+            assert second_started.wait(3)
+            assert calls == ["a", "b"]
+            write_started.set()
+        return original_succeed(unit, normalized)
+
+    monkeypatch.setattr(dataset, "fetch", fetch)
+    monkeypatch.setattr(dataset.repository, "succeed", succeed)
+    dataset.core._prefetch = True
+    dataset.core._batches = lambda units: ((unit,) for unit in units)
+    assert dataset.core.ensure(("a", "b", "c")).complete
+    assert calls == ["a", "b", "c"]
+
+
+def legacy_cache(dataset: FakeDataset) -> tuple[tuple, ...]:
+    # Build a real generation-2 fixture; retain exact facts and historical metadata.
+    ddl = repository_module.DDL
+    ddl = ddl[ddl.index("CREATE TABLE dataset_meta") :]
+    ddl = ddl.replace("    basis_id INTEGER REFERENCES basis_snapshot(basis_id),\n", "")
+    dataset.repository.path.parent.mkdir(parents=True, exist_ok=True)
+    with sqlite3.connect(dataset.repository.path) as connection:
+        connection.executescript(ddl)
+        connection.execute("INSERT INTO dataset_meta VALUES(1,'fake',2,'fake-source','old','old')")
+        for index, key in enumerate(("a", "b"), start=1):
+            records = facts(index)
+            connection.execute(
+                "INSERT INTO fetch_unit(unit_id,unit_key,status,content_hash,record_count,"
+                "created_at,last_attempt_at,succeeded_at,basis) "
+                "VALUES(?,?,'success',?,1,'old','old','old',?)",
+                (
+                    index,
+                    Unit(key).key,
+                    record_hash(r.encode() for r in records.records),
+                    canonical_json({"catalog": [{"name": "original"}]}),
+                ),
+            )
+            connection.execute(
+                "INSERT INTO records(fetch_unit_id,facts) VALUES(?,?)",
+                (index, canonical_json({"value": index})),
+            )
+        return tuple(connection.execute("SELECT * FROM records ORDER BY record_id"))
+
+
+def test_legacy_read_and_cached_ensure_are_read_only_then_upgrade_preserves_history(
+    dataset: FakeDataset,
+) -> None:
+    old_records = legacy_cache(dataset)
+    before = dataset.repository.path.read_bytes()
+    assert dataset.core.coverage(("a", "b")).complete
+    assert len(dataset.core.export(("a", "b")).facts) == 2
+    assert dataset.core.ensure(("a", "b")).attempted_units == 0
+    assert dataset.repository.path.read_bytes() == before
+    assert not list(dataset.repository.path.parent.glob("*.backup"))
+    dataset.responses["c"] = facts(3)
+    assert dataset.core.ensure(("a", "b", "c")).complete
+    backups = list(dataset.repository.path.parent.glob("*.backup"))
+    assert len(backups) == 1
+    with sqlite3.connect(backups[0]) as connection:
+        assert connection.execute("SELECT schema_version FROM dataset_meta").fetchone()[0] == 2
+        assert tuple(connection.execute("SELECT * FROM records ORDER BY record_id")) == old_records
+    with sqlite3.connect(dataset.repository.path) as connection:
+        assert connection.execute("SELECT schema_version FROM dataset_meta").fetchone()[0] == 3
+        assert (
+            tuple(
+                connection.execute(
+                    "SELECT * FROM records WHERE fetch_unit_id<=2 ORDER BY record_id"
+                )
+            )
+            == old_records
+        )
+        assert connection.execute("SELECT count(*) FROM basis_snapshot").fetchone()[0] == 1
+        assert (
+            connection.execute(
+                "SELECT count(DISTINCT basis_id) FROM fetch_unit WHERE unit_id<=2"
+            ).fetchone()[0]
+            == 1
+        )
+        assert connection.execute(
+            "SELECT succeeded_at,last_attempt_at,created_at FROM fetch_unit WHERE unit_id=1"
+        ).fetchone() == ("old", "old", "old")
+        assert not connection.execute("PRAGMA foreign_key_check").fetchall()
+    cached = dataset.repository.snapshot((Unit("a"), Unit("b"))).successful
+    assert cached[0].basis is cached[1].basis
+
+
+def test_failed_upgrade_rolls_back_generation_and_preserves_recoverable_backup(
+    dataset: FakeDataset,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    old_records = legacy_cache(dataset)
+    dataset.responses["c"] = facts(3)
+    monkeypatch.setattr(
+        repository_module, "BASIS_DDL", (*repository_module.BASIS_DDL, "INVALID SQL")
+    )
+    with pytest.raises(OperationError):
+        dataset.core.ensure(("a", "c"))
+    with sqlite3.connect(dataset.repository.path) as connection:
+        assert connection.execute("SELECT schema_version FROM dataset_meta").fetchone()[0] == 2
+        assert tuple(connection.execute("SELECT * FROM records ORDER BY record_id")) == old_records
+        assert not connection.execute(
+            "SELECT name FROM sqlite_master WHERE name='basis_snapshot'"
+        ).fetchall()
+    assert len(list(dataset.repository.path.parent.glob("*.backup"))) == 1
+    assert dataset.core.coverage(("a", "b")).complete
+
+
+def test_frozen_basis_tampering_is_rejected_in_fresh_read(dataset: FakeDataset) -> None:
+    dataset.responses["a"] = UnitRecords((Record({"value": 1}),), basis={"metadata": "original"})
+    assert dataset.core.ensure(("a",)).complete
+    with sqlite3.connect(dataset.repository.path) as connection:
+        with pytest.raises(sqlite3.IntegrityError, match="immutable"):
+            connection.execute("UPDATE basis_snapshot SET facts='{}'")
+        connection.execute("DROP TRIGGER immutable_basis")
+        connection.execute("UPDATE basis_snapshot SET facts='{}'")
+    with pytest.raises(OperationError, match="basis"):
+        dataset.core.coverage(("a",))
+
+
+def test_prefetch_interruption_keeps_committed_units_and_never_starts_third_batch(
+    dataset: FakeDataset,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    calls: list[str] = []
+    second_started = Event()
+
+    def fetch(units: tuple[Unit, ...]) -> dict[str, object]:
+        key = str(units[0].identity)
+        calls.append(key)
+        if key == "b":
+            second_started.set()
+        return {unit.key: facts() for unit in units}
+
+    def interrupt(unit: Unit, normalized: UnitRecords) -> int:
+        assert second_started.wait(3)
+        raise KeyboardInterrupt
+
+    with monkeypatch.context() as injected:
+        injected.setattr(dataset, "fetch", fetch)
+        injected.setattr(dataset.repository, "succeed", interrupt)
+        injected.setattr(dataset.core, "_prefetch", True)
+        injected.setattr(dataset.core, "_batches", lambda units: ((unit,) for unit in units))
+        with pytest.raises(KeyboardInterrupt):
+            dataset.core.ensure(("a", "b", "c"))
+    assert calls == ["a", "b"]
+    assert dataset.core.coverage(("a", "b", "c")) == CoverageResult(3, 0, 1, 2, 0, False)
+    dataset.responses = {key: facts() for key in ("a", "b", "c")}
+    assert dataset.core.ensure(("a", "b", "c")).complete
+
+
+def test_prefetch_operation_failure_preserves_previous_success_and_pending_retry(
+    dataset: FakeDataset,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    calls: list[str] = []
+
+    def fetch(units: tuple[Unit, ...]) -> dict[str, object]:
+        key = str(units[0].identity)
+        calls.append(key)
+        if key == "b":
+            raise RuntimeError("injected operation failure")
+        return {unit.key: facts() for unit in units}
+
+    monkeypatch.setattr(dataset, "fetch", fetch)
+    dataset.core._prefetch = True
+    dataset.core._batches = lambda units: ((unit,) for unit in units)
+    with pytest.raises(OperationError):
+        dataset.core.ensure(("a", "b", "c"))
+    assert calls == ["a", "b"]
+    assert dataset.core.coverage(("a", "b", "c")) == CoverageResult(3, 1, 1, 1, 0, False)
+
+
+def test_backup_failure_leaves_legacy_cache_unchanged_and_no_partial_backup(
+    dataset: FakeDataset,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    legacy_cache(dataset)
+    before = dataset.repository.path.read_bytes()
+    original_connect = sqlite3.connect
+
+    class BrokenBackup(sqlite3.Connection):
+        def backup(self, *args: Any, **kwargs: Any) -> None:
+            raise OSError("Injected backup failure")
+
+    def connect(*args: Any, **kwargs: Any) -> sqlite3.Connection:
+        if kwargs.get("uri"):
+            kwargs["factory"] = BrokenBackup
+        return original_connect(*args, **kwargs)
+
+    monkeypatch.setattr(sqlite3, "connect", connect)
+    dataset.responses["c"] = facts(3)
+    with pytest.raises(OperationError):
+        dataset.core.ensure(("a", "c"))
+    assert dataset.repository.path.read_bytes() == before
+    assert not list(dataset.repository.path.parent.glob("*.backup"))
+    assert dataset.core.coverage(("a", "b")).complete
+
+
+def test_interrupted_upgrade_rolls_back_all_schema_and_basis_changes(
+    dataset: FakeDataset,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    legacy_cache(dataset)
+    before = dataset.repository.path.read_bytes()
+    dataset.responses["c"] = facts(3)
+
+    def interrupt(connection: sqlite3.Connection, encoded: str) -> int:
+        raise KeyboardInterrupt
+
+    monkeypatch.setattr(dataset.repository, "_store_basis", interrupt)
+    with pytest.raises(KeyboardInterrupt):
+        dataset.core.ensure(("a", "c"))
+    assert dataset.repository.path.read_bytes() == before
+    assert len(list(dataset.repository.path.parent.glob("*.backup"))) == 1
+    assert dataset.core.coverage(("a", "b")).complete
+
+
+def test_pipeline_cancels_source_before_waiting_for_inflight_task(
+    dataset: FakeDataset,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    started = Event()
+    cancelled = Event()
+
+    def fetch(units: tuple[Unit, ...]) -> dict[str, object]:
+        if units[0].identity == "b":
+            started.set()
+            assert cancelled.wait(3)
+        return {unit.key: facts() for unit in units}
+
+    def interrupt(unit: Unit, normalized: UnitRecords) -> int:
+        assert started.wait(3)
+        raise KeyboardInterrupt
+
+    monkeypatch.setattr(dataset, "fetch", fetch)
+    monkeypatch.setattr(dataset, "cancel", cancelled.set, raising=False)
+    monkeypatch.setattr(dataset.repository, "succeed", interrupt)
+    dataset.core._prefetch = True
+    dataset.core._batches = lambda units: ((unit,) for unit in units)
+    with pytest.raises(KeyboardInterrupt):
+        dataset.core.ensure(("a", "b", "c"))
+    assert cancelled.is_set()
+    assert dataset.core.coverage(("a", "b", "c")) == CoverageResult(3, 0, 1, 2, 0, False)

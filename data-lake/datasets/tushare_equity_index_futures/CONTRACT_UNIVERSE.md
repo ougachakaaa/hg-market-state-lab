@@ -43,3 +43,5 @@ Observed 是 daily response 中归属于 (p,d) 的普通合约 multiset。可批
 已有 success 默认跳过，不因下一次 Source catalog 增加、修订或移除合约而重新取得日行情、替换其成功依据或回溯 invalidation。覆盖查询按成功时保留的依据判断合法缓存；不能拿当前 catalog 重新定义过去成功的 expected set。Export 中关联 metadata 采用成功时保留的合法 facts，参与同一 owned-cache snapshot；不宣称是 trade_date 当时的历史 metadata 或 provider-current freshness。
 
 Refresh/force/TTL、Source correction policy 与 stale semantics 留待独立设计。Catalog 获取批次、daily 请求次数和重试次数均不改变 FetchUnit grain 或 public counters。
+
+冻结 basis 可以在本 Dataset 内去重存储；每个 unit 的历史 basis 不变，具体 generation 兼容与升级见 [PERSISTENCE.md](../../PERSISTENCE.md)。同一 operation 内验证复用见 [EXECUTION.md](../../EXECUTION.md)，仍逐 unit 验证完整 contract universe。

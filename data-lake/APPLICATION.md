@@ -121,3 +121,5 @@ SQLite location 由 owning Dataset 内部 composition 使用 shared runtime/stor
 - Consumer 每次 operation 固定一份合法 prerequisite semantic view 以展开目标集合。Export coverage 与 payload 仍须来自 consumer 同一个 committed cache snapshot，并针对这份固定目标；不声称多个 Dataset 共享同一数据库 snapshot 或 provider-current freshness。
 
 具体 Index / Futures / Options → Calendar contract 经 [catalog](DATASETS.md) 进入各自 Dataset 的 TRADING_DAYS.md；允许的 dependency edges 由模块 architecture 唯一声明。Calendar 自己的 request/result/view 与 domain semantics 保持不变。
+
+内部 batching / 单 worker 提前一批 / operation 内验证复用由 [EXECUTION.md](EXECUTION.md) 约束，SQLite 生命周期与 generation 兼容由 [PERSISTENCE.md](PERSISTENCE.md) 约束；这些执行机制不扩展 consumer boundary。

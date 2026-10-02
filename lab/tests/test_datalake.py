@@ -2,9 +2,10 @@
 
 import json
 import logging
-from dataclasses import fields
+from dataclasses import asdict, fields
 from datetime import date
 from pathlib import Path
+from typing import Any
 
 import pytest
 
@@ -247,3 +248,46 @@ def test_datalake_help(capsys: pytest.CaptureFixture[str]) -> None:
     with pytest.raises(SystemExit, match="0"):
         cli.main(["datalake", "--help"])
     assert "{list,coverage,ensure,export}" in capsys.readouterr().out
+
+
+def test_incremental_delivery_preserves_wire_and_replaces_existing_output(
+    service: Service,
+    tmp_path: Path,
+) -> None:
+    view = service.export(TradeCalendarRange("SSE", DAY, DAY))
+    output = tmp_path / "output.json"
+    output.write_text("previous", encoding="utf-8")
+    datalake._deliver(view, output)
+    expected = json.dumps(asdict(view), default=datalake._json_date, ensure_ascii=False, indent=2)
+    assert output.read_text(encoding="utf-8") == expected + "\n"
+    assert list(tmp_path.iterdir()) == [output]
+
+
+@pytest.mark.parametrize("stage", ["encoding", "flush", "replace"])
+def test_delivery_failure_preserves_output_and_removes_temporary_file(
+    service: Service,
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    stage: str,
+) -> None:
+    view = service.export(TradeCalendarRange("SSE", DAY, DAY))
+    output = tmp_path / "output.json"
+    output.write_bytes(b"previous")
+    if stage == "encoding":
+        original = datalake.json.dump
+
+        def fail(*args: Any, **kwargs: Any) -> None:
+            original(*args, **kwargs)
+            raise TypeError("injected encoding error")
+
+        monkeypatch.setattr(datalake.json, "dump", fail)
+    else:
+
+        def fail(*args: Any, **kwargs: Any) -> None:
+            raise OSError("injected delivery error")
+
+        monkeypatch.setattr(datalake.os, "fsync" if stage == "flush" else "replace", fail)
+    with pytest.raises((OSError, TypeError)):
+        datalake._deliver(view, output)
+    assert output.read_bytes() == b"previous"
+    assert list(tmp_path.iterdir()) == [output]

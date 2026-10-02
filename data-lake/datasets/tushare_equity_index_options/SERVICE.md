@@ -22,6 +22,8 @@ Selection 为 sorted unique canonical set。重复合法代码去重；不 trim�
 
 Factory 内部组合 owned cache、Source adapter 与 Calendar public service，普通 consumer 不提供 SQLite path、connection、Repository 或 credential。Factory/coverage/export 不创建 state、不要求 token；consumer 直接使用 public semantic objects，无 CLI/JSON round-trip。
 
+行情 Window 的 end_date 必须不晚于 operation 验证时的 Asia/Shanghai 当前日期；未来结束日期在任何 dependency/Source I/O 前抛 InvalidRequestError，不截断日期。当天未发布仍按完整性失败保持可重试。Calendar 继续允许已发布的未来日期。
+
 ## 2. Coverage、ensure 与 accounting
 
 按 TRADING_DAYS.md 固定完整 CFFEX 开市日目标，只统计自己 product-day units。互斥 success/missing/pending/failed 与 complete 继承 APPLICATION.md；Calendar 可用而 owned cache 不存在时目标全 missing，prerequisite 不可用时 OperationError，不能按行情行数估算 requested_units。Complete 不表达 freshness。
@@ -79,6 +81,10 @@ Coverage、Records 和关联成功时保留的合法 metadata/completeness basis
 
 Tushare execution 与 credential / client / shared limiter 遵循 [Provider Runtime authority](../../providers/TUSHARE.md)，本 Dataset 不自行实现 provider initialization 或请求异常转换。Factory / read-only calls 不解析 credential、不创建 client；必需但缺失时在对应 Source request 前 OperationError，完整 Calendar 且全 success 目标无需 token。
 
-本 Dataset composition 自有 opt_basic/opt_daily adapter 与 data/ 中唯一 SQLite，adapter 通过共享 Executor 执行 provider 请求，Calendar 只经 public namespace。不增加 Index/Futures runtime dependency。Filename、package wiring、schema、事务/batching 与 tests implementation 由 reconciliation 记录，不重新决定本轮语义；HTTP、Research integration、migration、refresh/TTL/force 均未实现。
+本 Dataset composition 自有 opt_basic/opt_daily adapter 与 data/ 中唯一 SQLite，adapter 通过共享 Executor 执行 provider 请求，Calendar 只经 public namespace。不增加 Index/Futures runtime dependency。Filename、package wiring、schema、事务/batching 与 tests implementation 由 reconciliation 记录，不重新决定本轮语义；HTTP、Research integration、通用 migration framework、refresh/TTL/force 均未实现；明确的 generation 2 → 3 兼容升级与 frozen basis persistence 见 [PERSISTENCE.md](../../PERSISTENCE.md)。
 
 V2 在 V1 字段基础上允许 pre_close 为 float 或 None，仅限 FACTS 声明的上市首日合法缺席；其他字段及完整性不变。旧缓存的有限数值保持可读，不改写已成功 facts。
+
+## Bounded Source execution
+
+按日期排列并合并同窗口所有 selected products，每批最多 3 个 selected 交易日，查询自然日跨度同时不超过 31 日，使用 opt_daily 的 exchange/start_date/end_date 查询并完整分页。只提交本次 selected units，逐 unit completeness 与 public accounting 不变。执行、验证复用及单 worker 提前一批见 [EXECUTION.md](../../EXECUTION.md)。

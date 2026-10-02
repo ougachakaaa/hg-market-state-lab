@@ -48,6 +48,22 @@ class Executor(Protocol):
     def call(self, endpoint: str, **parameters: Any) -> Any: ...
 
 
+class CancellableExecutor:
+    """Stop subsequent calls after a bounded Source task has been cancelled."""
+
+    def __init__(self, delegate: Executor) -> None:
+        self.delegate = delegate
+        self.cancelled = threading.Event()
+
+    def cancel(self) -> None:
+        self.cancelled.set()
+
+    def call(self, endpoint: str, **parameters: Any) -> Any:
+        if self.cancelled.is_set():
+            raise ExecutionFailure("Source execution cancelled", "cancelled")
+        return self.delegate.call(endpoint, **parameters)
+
+
 def resolve_credential() -> str:
     token = os.environ.get("TUSHARE_TOKEN")
     if token is None:

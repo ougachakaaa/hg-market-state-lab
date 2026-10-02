@@ -103,4 +103,6 @@ Executor 不把 provider request failure 映射到 FetchUnits；Dataset adapter 
 7. Factory 与整个 coverage / export 调用链无 credential resolution、client creation 或 Source I/O；全缓存 / 零目标且无需 prerequisite Source I/O 的 ensure 同样如此。
 8. Environment precedence 与现有 fallback 相容，包括环境变量存在但为空白时失败；不增加 secret convention 或 consumer token argument。
 
-Authority topology checks 后续须显式登记本文档；kernel / provider architecture checks 须按各自 ownership 分开，而不是把整个顶层 src 当作 kernel，或全面放开 SDK import。当前 Calendar drift、test registration 与后续实现输入集中记录在 [reconciliation](../IMPLEMENTATION_RECONCILIATION.md)。
+Authority topology checks 已显式登记本文档；kernel / provider architecture checks 按各自 ownership 分开，不能把整个顶层 src 当作 kernel 或全面放开 SDK import。已完成的 provider runtime、历史 Calendar reconciliation、当前 execution 与验证状态集中记录在 [reconciliation](../IMPLEMENTATION_RECONCILIATION.md)。
+
+内部 execution 可用 cancellation guard 包裹 Executor：取消后拒绝后续 call，已进入的 call 按既有 timeout/限流/错误契约收束。Guard 不重试、不取消已发出的 HTTP、不改变 quota 计数，也不解释 FetchUnits；Dataset Source 的分页生命周期与取消触发属于 [bounded execution](../EXECUTION.md)。

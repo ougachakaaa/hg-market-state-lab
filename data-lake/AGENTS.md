@@ -11,6 +11,8 @@
 5. 涉及 CLI delivery 时再读取 [lab authority](../lab/ARCHITECTURE.md)，不默认加载其他模块的 specialized authority。
 6. 只有涉及 Tushare-backed Dataset Source execution、credential、client、shared limiter 或 provider-level failure 时，才继续读取 [providers/TUSHARE.md](providers/TUSHARE.md)；普通 Dataset domain task 不默认加载 provider execution authority。
 
+内部批执行/验证复用进入 [EXECUTION.md](EXECUTION.md)，SQLite 生命周期及明确升级进入 [PERSISTENCE.md](PERSISTENCE.md)。
+
 ## 执行规则
 
 - 模块 architecture 拥有稳定 ownership 与模块边界；公共领域与 persistence invariant 由 DOMAIN_MODEL.md 拥有；公共 Application contract、failure taxonomy 与 export snapshot invariant 由 APPLICATION.md 拥有；provider-specific execution 由对应 provider authority 拥有；Dataset ARCHITECTURE.md 拥有自治 bounded-context ownership 与 domain specialization，SERVICE.md 拥有 consumer contract；CLI parsing / serialization / delivery / exit-code mapping 由 lab 拥有，Dataset authority 不定义 CLI option names；catalog 只提供导航。

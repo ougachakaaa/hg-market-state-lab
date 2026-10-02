@@ -9,6 +9,7 @@ from typing import Any, NoReturn, cast
 from data_lake._domain import ExecutionFailure, Instrument, Record, Unit, UnitRecords
 from data_lake._serialization import Json
 from data_lake.providers.tushare import Executor
+from data_lake.providers.tushare._executor import CancellableExecutor
 
 from ._models import OptionsDailyRow
 
@@ -284,20 +285,24 @@ def daily(raw: dict[str, Any], meta: dict[str, Any], target: date) -> Record:
 
 class DailySource:
     def __init__(self, executor: Executor) -> None:
-        self.executor = executor
+        self.executor = CancellableExecutor(executor)
         self.catalog: list[dict[str, Any]] | None = None
         self.catalog_error: ExecutionFailure | None = None
         self.product_errors: dict[str, ExecutionFailure] = {}
-        self.daily_cache: dict[date, list[dict[str, Any]] | ExecutionFailure] = {}
+        self.bases: dict[str, dict[str, Json]] = {}
+        self.daily_cache: dict[date, list[dict[str, Any]]] = {}
 
-    def fetch(self, units: tuple[Unit, ...]) -> dict[str, object]:
-        product, target = identity(units[0])
+    def cancel(self) -> None:
+        self.executor.cancel()
+
+    def _load_catalog(self) -> None:
         if self.catalog is None and self.catalog_error is None:
             try:
                 raw_catalog = exhaust(
                     self.executor, "opt_basic", exchange="CFFEX", fields=BASIC_FIELDS
                 )
                 catalog: list[dict[str, Any]] = []
+                catalog_codes: set[str] = set()
                 for raw in raw_catalog:
                     # Only known unrelated families may be excluded.
                     raw_match = re.match(r"^([A-Z]+)", str(raw.get("ts_code", "")))
@@ -308,10 +313,9 @@ class DailySource:
                         continue
                     try:
                         normalized = metadata(raw)
-                        if normalized["contract_code"] in {
-                            meta["contract_code"] for meta in catalog
-                        }:
+                        if normalized["contract_code"] in catalog_codes:
                             fail("Duplicate catalog contract identity")
+                        catalog_codes.add(normalized["contract_code"])
                         catalog.append(normalized)
                     except ExecutionFailure as exc:
                         self.product_errors[raw_product] = exc
@@ -321,28 +325,63 @@ class DailySource:
         if self.catalog_error is not None:
             raise self.catalog_error
         assert self.catalog is not None
+
+    def fetch(self, units: tuple[Unit, ...]) -> dict[str, object]:
+        self._load_catalog()
+        if all(identity(unit)[0] in self.product_errors for unit in units):
+            return {unit.key: self.product_errors[identity(unit)[0]] for unit in units}
+        days = sorted({identity(unit)[1] for unit in units})
+        response = exhaust(
+            self.executor,
+            "opt_daily",
+            exchange="CFFEX",
+            start_date=days[0].strftime("%Y%m%d"),
+            end_date=days[-1].strftime("%Y%m%d"),
+            fields=DAILY_FIELDS,
+        )
+        self.daily_cache = {target: [] for target in days}
+        selected_days = {target.isoformat(): target for target in days}
+        for raw in response:
+            try:
+                source_day = day(raw.get("trade_date"))
+            except ExecutionFailure:
+                self.daily_cache.clear()
+                raise
+            if source_day in selected_days:
+                bucket = self.daily_cache[selected_days[source_day]]
+                bucket.append(raw)
+        result: dict[str, object] = {}
+        try:
+            for unit in units:
+                try:
+                    result[unit.key] = self._fetch_unit((unit,))[unit.key]
+                except ExecutionFailure as exc:
+                    result[unit.key] = exc
+            return result
+        finally:
+            self.daily_cache.clear()
+
+    def _fetch_unit(self, units: tuple[Unit, ...]) -> dict[str, object]:
+        product, target = identity(units[0])
+        assert self.catalog is not None
         if product in self.product_errors:
             raise self.product_errors[product]
-        basis = [meta for meta in self.catalog if meta["product_code"] == product]
+        if product not in self.bases:
+            self.bases[product] = cast(
+                dict[str, Json],
+                {
+                    "catalog": [meta for meta in self.catalog if meta["product_code"] == product],
+                    "exhausted": True,
+                },
+            )
+        frozen = self.bases[product]
+        basis = cast(list[dict[str, Any]], frozen["catalog"])
         expected = {
             meta["contract_code"]: meta
             for meta in basis
             if meta["list_date"] <= target.isoformat() <= meta["delist_date"]
         }
-        if target not in self.daily_cache:
-            try:
-                self.daily_cache[target] = exhaust(
-                    self.executor,
-                    "opt_daily",
-                    exchange="CFFEX",
-                    trade_date=target.strftime("%Y%m%d"),
-                    fields=DAILY_FIELDS,
-                )
-            except ExecutionFailure as exc:
-                self.daily_cache[target] = exc
         response = self.daily_cache[target]
-        if isinstance(response, ExecutionFailure):
-            raise response
         observed: list[Record] = []
         for raw in response:
             code = text(raw.get("ts_code"))
@@ -362,26 +401,26 @@ class DailySource:
         facts = UnitRecords(
             tuple(observed),
             tuple(instrument(meta) for meta in expected.values()),
-            cast(dict[str, Json], {"catalog": basis, "exhausted": True}),
+            frozen,
         )
-        check_complete(units[0], facts)
         return {units[0].key: facts}
 
 
 def normalize(unit: Unit, raw: object) -> UnitRecords:
+    if isinstance(raw, ExecutionFailure):
+        raise raw
     if not isinstance(raw, UnitRecords):
         fail("Invalid normalized Source facts")
     return raw
 
 
-def check_complete(unit: Unit, facts: UnitRecords) -> None:
-    product, target = identity(unit)
-    if not isinstance(facts.basis, dict) or facts.basis.get("exhausted") is not True:
+def validated_catalog(product: str, basis: object) -> dict[str, dict[str, Any]]:
+    if not isinstance(basis, dict) or basis.get("exhausted") is not True:
         fail("Missing complete catalog basis")
-    catalog = cast(list[dict[str, Any]], facts.basis.get("catalog"))
+    catalog = cast(list[dict[str, Any]], basis.get("catalog"))
     if not isinstance(catalog, list):
         fail("Invalid catalog basis")
-    expected = {}
+    verified_catalog = {}
     seen = set()
     for meta in catalog:
         if not isinstance(meta, dict) or meta.get("product_code") != product:
@@ -394,8 +433,41 @@ def check_complete(unit: Unit, facts: UnitRecords) -> None:
         verified = metadata(to_provider_metadata(meta))
         if verified != meta:
             fail("Invalid frozen metadata")
-        if meta["list_date"] <= target.isoformat() <= meta["delist_date"]:
-            expected[code] = meta
+        verified_catalog[code] = meta
+    return verified_catalog
+
+
+class CompletenessChecker:
+    """Operation-local cache for internal immutable basis objects, retaining identity."""
+
+    def __init__(self) -> None:
+        self.catalogs: dict[int, tuple[object, str, dict[str, dict[str, Any]]]] = {}
+
+    def __call__(self, unit: Unit, facts: UnitRecords) -> None:
+        product, target = identity(unit)
+        key = id(facts.basis)
+        cached = self.catalogs.get(key)
+        if cached is None:
+            catalog = validated_catalog(product, facts.basis)
+            self.catalogs[key] = facts.basis, product, catalog
+        else:
+            _, cached_product, catalog = cached
+            if cached_product != product:
+                fail("Frozen catalog product mismatch")
+        expected = {
+            code: meta
+            for code, meta in catalog.items()
+            if meta["list_date"] <= target.isoformat() <= meta["delist_date"]
+        }
+        check_records(unit, facts, expected)
+
+
+def check_complete(unit: Unit, facts: UnitRecords) -> None:
+    CompletenessChecker()(unit, facts)
+
+
+def check_records(unit: Unit, facts: UnitRecords, expected: dict[str, dict[str, Any]]) -> None:
+    product, target = identity(unit)
     observed = []
     for record in facts.records:
         row = read_row(record)
