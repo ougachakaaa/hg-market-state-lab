@@ -54,16 +54,67 @@ Row 值 meanings 唯一引用 [FACTS](../../../data-lake/datasets/tushare_equity
 ## Canonical execution mapping
 
 1. 验证 Request / canonical domains，derive normalized business key，lookup owned SQLite；complete hit 直接 return，零 upstream factory / coverage / ensure / export / recomputation。
-2. Miss 才计算 ideal_calendar_date；合法 request 的计算溢出为 ObservationOperationError。显式 CFFEX，依 DATE_RESOLUTION 经 Calendar read-only check / export，必要时 ensure；要求 used window coverage complete、每自然日恰一合法 Record，固定 export proof。
-3. 从完整 Calendar facts 选择 <= ideal date 的最近开市日；休市日不调用 Options。构造仅 requested product、start_date=end_date=candidate 的 OptionsDailyRange，先 public coverage / export 检查，missing / non-success 时 ensure exact day 再 export。Ensure incomplete / unit failures 即 operation failure。
+2. Miss 才计算 ideal_calendar_date；合法 request 的计算溢出为 ObservationOperationError。显式 CFFEX，依 DATE_RESOLUTION 按下方 [Calendar read-first strategy](#calendar-read-first--ensure-if-needed) 取得完整 required window proof。
+3. 从完整 Calendar facts 选择 <= ideal date 的最近开市日；休市日不调用 Options。按下方 [Options candidate read-first strategy](#options-candidate-day-read-first--ensure-if-needed) 取得 exact product-day 的完整 export proof。
 4. 验证同一 Options export snapshot 的 scope / window / complete / requested_units=successful_units=1 / rows。上游操作失败或非法 view 立即 ObservationOperationError，不跳日期、不换 Snapshot。
 5. 恰取全部 row.expiry == request.expiry_date 的 matching rows。只有 complete-but-empty matching population 才继续严格更早的、完整 Calendar 已证明的最近开市日。Cache missing 不证明 absence；任何 required proof 无法继续或日期不可表示即 operation failure，不发布 empty chain。
 6. 首个完整非空 matching candidate 定为 observation_date，按已有公式保留 actual_dte；原值投影全部 matching rows / required provenance 为 Observation-owned values，校验 whole Artifact completeness / identities / unique contracts / ordering，然后 atomic publish、return。
 
 Calendar windows / chunks、渐进向历史扩张、batching 是 private mechanics，不锁 chunk 大小；必须覆盖每个更近 candidate 的完整证明。不用 weekday、hard-coded holidays、pretrade_date 代替 proof，不设人为历史 cutoff / arbitrary max fallback count。没有跨库 rollback、额外 Study inputs、population filters 或 upstream failure date fallback。
 
+### Calendar read-first / ensure-if-needed
+
+本 Observation 逐步证明哪个 candidate trading day 含 requested expiry chain，不要求一次准备整个大窗口。对于当前 resolution 必需的 Calendar range，构造 `TradeCalendarRange(exchange="CFFEX", start_date=required_start_date, end_date=required_end_date)`，采用 read-first / ensure-if-needed：
+
+```text
+export(required calendar range) / read-only completeness check
+    ├── complete → validate / consume this public export
+    └── incomplete → ensure(the same required range)
+                   → require ensure complete / no failures
+                   → export(the same required range)
+                   → require complete / validate / consume
+```
+
+独立 `coverage()` 可选，不要求 mechanical coverage → ensure → export。最终消费的 records 与 completeness proof 必须来自同一合法 [TradeCalendarExport](../../../data-lake/datasets/tushare_trade_calendar/SERVICE.md#4-tradecalendarrecord-与-semantic-export-view)：dataset=tushare_trade_calendar、view=calendar、schema=1、scope.exchange=CFFEX、window 等于 required range，coverage counters 一致且 complete，每自然日恰一合法 Record。Check 已证明 complete 时不 ensure；当前 export incomplete 才补齐，ensure incomplete / failure 或后续 export incomplete / invalid 均为 ObservationOperationError。
+
+All calendar facts required to prove the nearest valid CFFEX open candidate must be complete。Chunking、window expansion / batching 继续属于 private mechanics；每份 used export 自己提供 committed snapshot proof，不将独立 coverage 与另一份 records 拼接，也不声称不同 Calendar exports / Options 共享 snapshot。
+
+### Options candidate-day read-first / ensure-if-needed
+
+对 Calendar 已证明的 candidate，构造 `OptionsDailyRange(product_codes=(request.product_code,), start_date=candidate, end_date=candidate)`：
+
+```text
+read current public completeness / export state for exact product-day
+    ├── complete → validate / consume one complete export
+    └── missing / pending / failed / incomplete
+                   → ensure(exact product-day)
+                   → require ensure complete / no failures
+                   → export(exact same product-day)
+                   → require complete / validate / consume
+```
+
+Read proof 可用 `coverage + export`，或仅使用 export 中的 coverage，具体依 [Options SERVICE](../../../data-lake/datasets/tushare_equity_index_options/SERVICE.md)。**Do not mutate if the exact product-day is already publicly proven complete**；独立 coverage 不代替最终 export proof。若 coverage 与后续 export 状态不同，以实际 export 的 completeness / payload 决定能否消费；合法 incomplete export 进入补齐路径，不能拼接旧 proof、当作 absence 或越过 candidate。
+
+最终消费 one complete Options export snapshot，验证 dataset=tushare_equity_index_options、view=options_daily、schema=2、scope 仅含 requested product、window 两端为 candidate、coverage.complete=true、requested_units=successful_units=1、其余 counters=0，以及 public records 合法。EnsureResult.complete=true 不代替该 proof；ensure 后 export incomplete / invalid 仍失败。Options read-only operation 的 Calendar prerequisite failure 是 OperationError，不能伪装为已知目标的 cache missing，也不能绕过 Dataset prerequisite ownership。
+
+### Candidate 三态与停止规则
+
+| State | Meaning / required action |
+| --- | --- |
+| A — cache incomplete / missing | DataLake 尚不能证明 exact product-day complete，含 missing / pending / failed cache units；ensure exact day → export → re-evaluate。不能用当前 empty / partial rows 解释为 expiry absent。初始 failed cache 可补齐，不等于本次 ensure failure。 |
+| B — complete product-day、requested expiry absent | 合法完整 export 的 coverage.complete=true，且全部 `row.expiry == request.expiry_date` matching rows 为空；这才是 proven absence，只有此态允许移到严格更早、完整 Calendar 已证明的最近 CFFEX open day。 |
+| C — operation / completeness failure | 本次 ensure incomplete / UnitFailure、credential / provider timeout、Calendar prerequisite failure、persistence / integrity failure、invalid export，或其他 required proof 无法满足；立即 ObservationOperationError，不回溯、不换 Snapshot、不当作空、不 skip candidate。 |
+
+```text
+cache missing != proven absence
+runtime failure != proven absence
+DataLake failure != permission to change candidate date
+```
+
+Complete export 的非空 matching population 沿 canonical execution 成功形成 chain。上述三态只区分需补齐、已证明缺席与必须失败，保持 [DATE_RESOLUTION](DATE_RESOLUTION.md#proven-absencecache-missing-与-failure) 的既有日期业务规则；date fallback 不是 infrastructure fallback。
+
 ## Verification 与 handoff
 
-Framework 三层 checks 之外，按 [Artifact acceptance](ARTIFACT.md#acceptance-scenarios) 验证精确 DTE、target=1、周末 / 假日、complete-but-absent、missing 后 ensure、upstream failure 立即停止、无限制回溯的 proof / date termination、actual_dte、全 strikes / CALL-PUT、排序 / uniqueness、合法 nullable facts 与 owned provenance。Complete hit 使用不可用 dependency doubles 仍应 return；Study 不需 import DataLake classes。
+Framework 三层 checks 之外，按 [Artifact acceptance](ARTIFACT.md#acceptance-scenarios) 验证精确 DTE、target=1、周末 / 假日、Calendar / Options already-complete 无 ensure、两者 incomplete 后 ensure / exact same request export、complete-but-absent、missing 后 ensure、ensure complete 后 export incomplete / invalid 仍失败、upstream failure 立即停止、无限制回溯的 proof / date termination、actual_dte、全 strikes / CALL-PUT、排序 / uniqueness、合法 nullable facts 与 owned provenance。Complete hit 使用不可用 dependency doubles 仍应 return；Study 不需 import DataLake classes。
 
 Calendar / Options 已有所需 public runtime surface，无 DataLake / Snapshot capability gap。本 producer **Authority Complete / Dependency Reconciled / Implementation Architecture Complete / Implementation Ready**，runtime **Not Implemented**；可在 Universe implementation 后实施并验证，再进行首个 Study dependency reconciliation。本轮不写 Python、创建 SQLite 或 delivery。

@@ -30,14 +30,69 @@ Calendar、option / futures / index daily facts、公开 contract metadata 与 c
 
 ## Public execution 与 responsibility
 
-已存在 complete retained Artifact 时，沿用 [framework reuse](ARCHITECTURE.md#business-identity-与-invocation-lifecycle)，不重复 upstream access / computation。没有 complete Artifact 时才按选定 public contract 获取 facts：
+DataLake-backed Observation 先声明 required semantic fact slice，只通过选定的 Dataset public service 要求完整性证明、消费 committed public export，并派生自己的 retained Artifact；不读取 DataLake storage。沿用 [framework reuse](ARCHITECTURE.md#business-identity-与-invocation-lifecycle) 与 [publication lifecycle](IMPLEMENTATION.md#complete-publication-与-concurrency)，**complete Observation Artifact lookup MUST happen before DataLake access**：
+
+```text
+Observation.ensure(request)
+    → validate / canonicalize
+    → lookup Observation-owned persistence
+        ├── complete hit → return retained Artifact
+        │                  zero DataLake calls
+        │                  zero upstream factory / service calls
+        │                  zero recomputation
+        └── miss → invoke selected public upstream service
+                 → establish required completeness
+                 → consume public export / semantic result
+                 → deterministic Observation derivation
+                 → atomic Observation publication → return
+```
+
+Observation retained Artifact lookup 先于 DataLake Dataset cache access。Complete hit 不因 DataLake 当前缺失、credential 不可用或 provider offline 而访问上游；corrupt / unreadable retained state 的处理仍按 framework IMPLEMENTATION，不能伪装为 miss。只有没有 complete Artifact 时才按选定 public contract 获取 facts：
 
 | Canonical upstream | Allowed invocation semantics |
 | --- | --- |
-| DataLake Dataset | 按需使用 public coverage / ensure，满足 concrete authority 声明的 completeness，再消费合法 export / semantic result 并 deterministic derive。具体 Dataset contract 决定最小合法调用方式，不统一强制 coverage → ensure → export。 |
+| DataLake Dataset | Concrete Observation 根据 required fact slice 与具体 Dataset public contract，选择能够满足 completeness proof 的 minimum legal invocation sequence，再消费合法 public export 并 deterministic derive。不统一强制 coverage → ensure → export。 |
 | Snapshot Product | 直接引用该 Product public request、result 与 failure contract，不强加 Dataset-style coverage / ensure / export。 |
 
-只使用 public semantic objects。DataLake 自己拥有 coverage、ensure、export、cache completeness、Source execution 与 credentials；Observation 不读取 persistence、不重新实现 DataLake cache、不接管 provider execution。Snapshot 自己拥有 canonical Product preparation 与结果有效性；Observation 不穿透 Capture、Raw 或 private Preparation。共享 runtime 不授予内部 import 权限。
+Coverage / ensure / export 的 ownership 继续属于 Dataset Application Service。Concrete authority 只声明需要证明什么、哪个 Dataset contract 拥有这些 facts、采用何种 public invocation pattern、什么状态允许消费以及什么状态必须失败。两项已选 DataLake-backed Observation 的具体序列唯一见 [Universe IMPLEMENTATION](cffex_option_expiry_universe/IMPLEMENTATION.md#composition-与-canonical-execution) 与 [DTE-chain IMPLEMENTATION](cffex_option_expiry_dte_chain/IMPLEMENTATION.md#canonical-execution-mapping)，不在 framework 统一 concrete calls。
+
+只使用 public semantic objects。DataLake 自己拥有 coverage、ensure、export、cache completeness、Source execution 与 credentials；Observation 不读取 DataLake persistence、不重新实现 DataLake cache、不接管 provider execution。Snapshot 自己拥有 canonical Product preparation 与结果有效性；Observation 不穿透 Capture、Raw 或 private Preparation。共享 runtime 不授予内部 import 权限。
+
+### Ensure 与 committed export proof
+
+以下角色唯一继承 [DataLake APPLICATION](../../data-lake/APPLICATION.md#1-application-service-与公共-operation-family)，不改变 Dataset API：
+
+| Operation | Observation 如何使用 public contract |
+| --- | --- |
+| coverage | Read-only 当前 completeness check，可用于选择后续调用；独立 coverage 不是最终 records 的 snapshot proof。 |
+| ensure | 按需 mutate Dataset state，尝试使 requested semantic slice complete；可能报告 incomplete / unit failures 或抛 application error，Observation 必须检查结果。 |
+| export | Read-only 一份 committed Dataset cache snapshot，同时含该 request 的 coverage 与 semantic payload；incomplete export 也是合法 Dataset result，但不能作为 complete empirical derivation input。 |
+
+Canonical derivation input 是 **one public export = coverage proof + payload**。消费前按具体 Dataset / Observation contract 验证 identity、view / schema、scope / window、coverage 与 public records；不解释 Dataset completeness internals。不得拼接 operation A 的 coverage 与 operation B 的 rows，然后宣称它们为同一完整事实视图。
+
+若 concrete 先调用 `ensure(request)`，必须检查 EnsureResult，再 `export(same semantic request)`。EnsureResult.complete=true 证明 mutation operation 在结束时完成目标，不能代替后续 export 的最终 completeness / records proof；后续 export 不完整或非法时仍须失败。Independent coverage 可以指导 read-first / ensure-if-needed，不要求每次 preliminary coverage，也不改变最后消费合法完整 export 的要求。每份 export 保持自己的 snapshot invariant，不宣称不同 calls / Datasets 共享 snapshot 或 provider-current freshness。
+
+### Missing、proven absence 与 operation failure
+
+| Public state | Consumer interpretation |
+| --- | --- |
+| 合法 public check / export 表明 missing、pending、failed 或 coverage incomplete | 尚不能证明 required slice complete；按 concrete invocation pattern ensure 后重新 export / 判断，不以当前 empty / partial payload 证明 absence。初始 failed cache unit 不等于本次 ensure 已失败。 |
+| 合法 complete export 中 concrete 所需 matching population 为空 | Proven absence；是否允许 complete empty Artifact 或日期回溯，唯一由 concrete 已锁定的业务规则决定。 |
+| 本次 ensure incomplete / unit failures、operation / prerequisite / integrity failure 或非法 export | ObservationOperationError；不当作 absence、不消费 partial、不跳过 candidate、不换 Snapshot。 |
+
+```text
+cache missing != proven absence
+runtime failure != proven absence
+DataLake failure != permission to change candidate date
+```
+
+Read-only prerequisite failure 也属于 operation failure，不能绕过 public contract 将目标未知解释为普通 cache missing。日期回溯是 complete-but-absent 的 concrete business rule，不是 infrastructure fallback；完整性失败的 default 行为保持下方 runtime failure policy。
+
+### Public object lifetime 与 opaque execution
+
+DataLake public semantic objects 仅在 Observation 内消费，经 deterministic projection 成为 Observation-owned immutable public values，再交给 Study。Study 不消费 CoverageResult、EnsureResult、OptionsDailyExport、OptionsDailyRow、TradeCalendarExport 或 TradeCalendarRecord；对当前两项 producer，只消费 ExpiryUniverseArtifact、ExpiryDteChainArtifact / ExpiryDteChainRow。即使 upstream object 已 typed，也不能直接嵌入 Artifact；public owned-value mapping 见 [framework IMPLEMENTATION](IMPLEMENTATION.md#python-semantic-object-boundary) 与实际 concrete contract。
+
+Observation 只依赖 public request、result、completeness 与 semantic rows，不解释或依赖 FetchUnit generation / internal selected unit set、Repository layout、SQLite schema、pending transitions、Source batches / pagination、Tushare endpoint / provider request grouping、rate limiting / retry、worker concurrency 或 generation schema。Dataset ensure 内部如何 skip successful units、fetch missing / non-success units、调用 Source / provider，均不能成为 Research dependency；public counters / failures 仍按 Dataset contract 消费，不以此重建内部执行逻辑。
 
 ## Runtime failure 不授权换源
 
@@ -82,4 +137,4 @@ Tushare endpoint、token、HTTP response、provider request parameters、interna
 
 审查 concrete authority 的 required facts、DataLake capability review / sufficiency、selected exact public boundary、failure semantics、gap 与 public provenance；Snapshot 选择必须有 DataLake semantic insufficiency 理由。默认 provider path、runtime failover 与 silent substitution 均不合法。
 
-本专题只编码 semantic dependency rules，不创建 Python package / adapters、SQLite / persistence design、public ensure types、retry / fallback engine、provider wrapper、generic DataSource / Repository、DataLake / Snapshot facade、DI framework、plugin / registry、workflow engine、Study / Analysis implementation、CLI 或 HTTP API。不创建 MarketDataProvider、UpstreamProvider、SourceResolver、FallbackProvider、DataSourceRegistry、SnapshotRepository、SnapshotGateway、SnapshotProvider 或 GenericSnapshotService。
+本专题只编码 semantic dependency rules，不创建 Python package / adapters、SQLite / persistence design、public ensure types、retry / fallback engine、provider wrapper、generic DataSource / Repository、DataLake / Snapshot facade、DI framework、plugin / registry、workflow engine、Study / Analysis implementation、CLI 或 HTTP API。不创建 DataLakeObservationAdapter、DatasetGateway、ensure_and_export()、DataLakeClient、CoverageCoordinator、MarketDataProvider、UpstreamProvider、SourceResolver、FallbackProvider、DataSourceRegistry、SnapshotRepository、SnapshotGateway、SnapshotProvider 或 GenericSnapshotService。

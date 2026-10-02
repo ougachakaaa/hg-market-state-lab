@@ -45,7 +45,7 @@ Export 仅选择 requested product，覆盖该 inclusive trade-date window 的�
 
 唯一直接 upstream dependency 是 [tushare_equity_index_options public Application Service](../../../data-lake/datasets/tushare_equity_index_options/SERVICE.md)。请求 OptionsDailyRange，product_codes 仅含 requested product，start_date / end_date 等于上述 window。
 
-没有 reusable complete Artifact 时，通过 public ensure 补齐窗口，再 export；要求合法 view 的 scope / window 对应请求、coverage.complete=true，coverage 与 records 来自同一 committed Options snapshot。不能用先前 coverage 与另一读取的 rows 拼接 proof。已有 complete coverage 时无需重复 Source fetch；具体 read-only 检查顺序留给设计。
+没有 reusable complete Artifact 时，通过 public ensure 补齐窗口，再 export；要求合法 view 的 scope / window 对应请求、coverage.complete=true，coverage 与 records 来自同一 committed Options snapshot。不能用先前 coverage 与另一读取的 rows 拼接 proof。已有 complete coverage 时由 Dataset ensure 避免重复 Source fetch；ensure-first invocation mapping 唯一见 [IMPLEMENTATION](IMPLEMENTATION.md#composition-与-canonical-execution)。
 
 Options 自己通过 [Calendar prerequisite](../../../data-lake/datasets/tushare_equity_index_options/TRADING_DAYS.md) 确定全部 CFFEX 开市日；本 Observation 不重算日历、不直接依赖 Calendar internals。强 product-day completeness 与合法空集合由 [Options contract universe](../../../data-lake/datasets/tushare_equity_index_options/CONTRACT_UNIVERSE.md) 拥有，字段与 nullable semantics 由 [FACTS.md](../../../data-lake/datasets/tushare_equity_index_options/FACTS.md) 拥有。
 

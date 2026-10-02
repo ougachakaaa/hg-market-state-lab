@@ -242,3 +242,19 @@ Supplemental 只读检查通过：31 份 Research Markdown、312 个 local links
 | 13–16：两项 DataLake dependencies / no provider / no failover | Concrete execution mappings、未修改的 UPSTREAM；实际 public imports 可用；provider / private-source AST scan 仅既有 legacy test finding，runtime source 无 findings。 |
 | 17：Study bindings | METHOD request fields 与两个 concrete Request fields 一一对应，owned Artifact resolution fields 支持现有 manifest；Study runtime readiness 未提前推进。 |
 | 18–20：links / diff / tests | 31 Markdown 的 312 links / 46 anchors 与三入口 reachability、git diff --check、13 + 12 passing topology tests；旧 coverage 缺口已记录。 |
+
+## Observation → DataLake invocation semantics reconciliation
+
+本轮基线为 `334bd0fe838af9ef197ea9e45362f86c8e583152`，codex/observation，开始时 tracked 工作区干净。仅修改五份 Research authority / reconciliation Markdown：UPSTREAM、两个 concrete IMPLEMENTATION、Universe entry 的一处旧 deferred-order 描述，以及本记录。Framework IMPLEMENTATION 已覆盖 complete-hit / owned values / atomic publication，保持原文；没有新增 authority layer、Python / tests / DataLake 变更、runtime state、commit 或 push。
+
+[UPSTREAM](observations/UPSTREAM.md) 唯一拥有本轮 framework-level reconciliation：Observation complete lookup 先于 DataLake、hit 零 upstream factory / service calls 与 recomputation、minimum legal Dataset invocation sequence、无通用 coverage → ensure → export protocol、ensure 与 export 的角色、one committed export 的 coverage + payload proof、missing / proven absence / failure 区分、owned public values 与 opaque execution。Concrete sequences 唯一进入 [Universe IMPLEMENTATION](observations/cffex_option_expiry_universe/IMPLEMENTATION.md) 与 [DTE-chain IMPLEMENTATION](observations/cffex_option_expiry_dte_chain/IMPLEMENTATION.md)；Universe entry 只链接已锁定 mapping，不再保留检查顺序未决表述。
+
+只读核对 DataLake APPLICATION、Calendar / Options SERVICE 与 Options TRADING_DAYS：export read-only / committed snapshot、ensure 的 incomplete / failures、成功缓存跳过，以及 prerequisite ownership 均支持本轮映射，**未发现 DataLake contract conflict 或 capability gap**。Read-only Options prerequisite failure 属于 operation failure，不能冒充目标已知的 cache missing；初始 failed cache unit 与本次 ensure failure 不混淆。不修改 DataLake contract、不绕过 prerequisite、不添加 generic adapter / gateway、direct provider 或 alternative semantic path。
+
+两项 Observation 继续保持 **Authority Complete / Dependency Reconciled / Implementation Architecture Complete / Implementation Ready**，runtime **Not Implemented**。首个 Study 继续 **Study Authority Complete**，runtime Dependency Reconciled=false / Implementation Ready=false。本轮只落实用户已确认的 invocation narrowing，没有新的 business semantic decision；inputs / keys / population / grain / Artifact / date-resolution / Study workflow、refresh / definition evolution 等 deferred concerns 均不改变。
+
+### Validation 与既有 baseline failure
+
+根 canonical Poetry environment 执行 `poetry run pytest market-snapshot/tests/test_authority_topology.py market-research/tests/test_study_authority_topology.py -q`：修改前与修改后均为 **24 passed / 1 failed**。失败均为 `test_new_runnable_studies_have_semantic_package_boundaries` 将 legacy source 目录的 ignored `__pycache__` 残留当作 runnable package，随后找不到 `__init__.py`；规划阶段首先报告 im_basis_baseline，本轮首先报告 price_to_lagged_ma_distribution，candidate set 遍历顺序不同。只读目录核对发现五个 legacy 残留目录均仅含 __pycache__，Git 没有其 tracked package files；本轮保持这些缓存与 tests 原样，无新增 test failure，不以历史 13 + 12 passed 记录冒充当前结果。
+
+按本轮附件十九项检查审阅 framework / concrete ownership、calls / failure / projection / opacity 与 readiness；31 份 Research Markdown 的 329 个 local links / 58 个 anchors 有效，五份修改文档均可从 root ARCHITECTURE、Research ARCHITECTURE 与 Research AGENTS 到达，`git diff --check` 通过，完整 diff 范围已核对为上述五份 Markdown。验证 authority，不宣称 runtime invocation / publication 已实施或测试；本轮结束，不开始 implementation。
