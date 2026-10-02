@@ -19,7 +19,7 @@ request = ExpiryUniverseRequest(
 artifact = create_service().ensure(request)
 ```
 
-这是未来 consumer contract 示例，不宣称 runtime 或示例市场数据已存在。`ExpiryUniverseService.ensure(request: ExpiryUniverseRequest) -> ExpiryUniverseArtifact` 是唯一 public semantic operation。
+这是 public consumer contract 示例；示例市场数据是否可用仍由 upstream proof 决定。`ExpiryUniverseService.ensure(request: ExpiryUniverseRequest) -> ExpiryUniverseArtifact` 是唯一 public semantic operation。
 
 | Value | Required public fields / Python semantic types |
 | --- | --- |
@@ -50,4 +50,4 @@ Readable public prerequisite / dependency context 可进入 OperationError messa
 
 Durable-before-return 与 service / process recreation 后 same-request 零 upstream reuse 必须通过 [framework durable reuse acceptance](../IMPLEMENTATION.md#durable-reuse-acceptance)，不以仅同一实例 repeat ensure 替代。
 
-现有 Options public service 已有对应 request / ensure / export runtime surface，无 public capability gap；本 package **Authority Complete / Dependency Reconciled / Implementation Architecture Complete / Implementation Ready**，runtime **Not Implemented**。先实施本 producer 并通过 acceptance，再与 chain producer 一起复核 Study bindings；不在本轮创建 source、database、CLI 或 Study code。
+现有 Options public service 已有对应 request / ensure / export runtime surface，无 public capability gap；本 package **Authority Complete / Dependency Reconciled / Implementation Architecture Complete / Implementation Ready**，runtime **Implemented / Verified**。Concrete acceptance、durable restart reuse 与 Study bindings 已验证，见 [reconciliation](../../IMPLEMENTATION_RECONCILIATION.md#first-observation-driven-vertical-slice-implementation)。

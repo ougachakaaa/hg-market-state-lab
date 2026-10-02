@@ -1,12 +1,12 @@
 # Observation Implementation Architecture
 
-本文件唯一拥有 Observation framework 的 runnable Python contract、public object ownership、composition、persistence lifecycle / placement、complete publication、窄 shared mechanics 与 implementation verification。继承 [framework semantics](ARCHITECTURE.md) 与 [UPSTREAM policy](UPSTREAM.md)；不重定义 concrete business semantics。具体映射分别进入 [Universe implementation](cffex_option_expiry_universe/IMPLEMENTATION.md) 与 [DTE-chain implementation](cffex_option_expiry_dte_chain/IMPLEMENTATION.md)。本文是 implementation handoff authority，不表示 runtime 已实现。
+本文件唯一拥有 Observation framework 的 runnable Python contract、public object ownership、composition、persistence lifecycle / placement、complete publication、窄 shared mechanics 与 implementation verification。继承 [framework semantics](ARCHITECTURE.md) 与 [UPSTREAM policy](UPSTREAM.md)；不重定义 concrete business semantics。具体映射分别进入 [Universe implementation](cffex_option_expiry_universe/IMPLEMENTATION.md) 与 [DTE-chain implementation](cffex_option_expiry_dte_chain/IMPLEMENTATION.md)。本文是 runnable contract authority；runtime 实施与验证状态唯一进入 [reconciliation](../IMPLEMENTATION_RECONCILIATION.md#first-observation-driven-vertical-slice-implementation)。
 
 ## Implementation progressive disclosure
 
 Implementation 阅读顺序固定为 concrete semantic entry → ARTIFACT（chain 另读 DATE_RESOLUTION）→ 本文件 → concrete IMPLEMENTATION → 仅实际依赖的 upstream public SERVICE / APPLICATION。Design 继续从 ARCHITECTURE → UPSTREAM → SCHEMA / AUTHORING → concrete semantic authority 进入。不扫描 sibling Study / Product，不把 shared helpers 或现有代码当缺失 semantic decision 的替代。
 
-下一阶段先实现两项 producer 已实际需要的最小 shared runtime primitives / common errors，再 Universe，再 chain，随后 Observation runtime reconciliation，最后在 dependencies 就绪后实施首个 Study；不将 primitive 阶段扩为独立 framework。
+实施顺序为先实现两项 producer 已实际需要的最小 shared runtime primitives / common errors，再 Universe，再 chain，随后 Observation runtime reconciliation，最后在 dependencies 就绪后实施首个 Study；不将 primitive 阶段扩为独立 framework。
 
 ## Public namespace 与 invocation
 
@@ -62,7 +62,7 @@ market-research/observations/<observation-id>/data/<observation-id>.sqlite3
 
 该路径只用于内部 composition，不进入 Request / Artifact / semantic identity。Test-only composition 可用 temporary SQLite。数据库只存该 Observation 的 requests / Artifacts；没有 global research.sqlite / Observation DB / shared Artifact table、cross-Observation FK 或 Study-owned table。Business lookup 依据 normalized business fields；UUID、wall clock、filesystem path、hash alone 不替代这些字段，hash 只可作内部 optimization，存储必须仍能恢复 / 解释 normalized business inputs 本身。
 
-Runtime SQLite 及其 WAL / journal 不进入 Git。实施阶段必须在首次创建 state 前配置并验证 ignore；当前 ignore 尚不覆盖新 Observation data placement，本 authority-only 轮不创建 data、不改 ignore。SQL DDL、indexes、serialization encoding、connection / transaction algorithm 属于下一阶段 mechanics，不在此锁定。
+Runtime SQLite 及其 WAL / journal 不进入 Git。实施阶段必须在首次创建 state 前配置并验证 ignore；根 ignore 已覆盖 Observation-owned data placement，包括 SQLite / WAL / SHM / journal；验收见当前 reconciliation。SQL DDL、indexes、serialization encoding、connection / transaction algorithm 属于下一阶段 mechanics，不在此锁定。
 
 ## Complete publication 与 concurrency
 
@@ -104,6 +104,6 @@ Concrete package 内 public contract、service / orchestration、owned persisten
 
 测试只用 temporary owned persistence 与受控 public dependency doubles；不依赖 Python object address、共享内存、SQLite path 的 consumer knowledge 或真实 provider。Publication / persistence failure 不返回成功，重建实例也不能读出 failed / partial state 为 complete。该验收同时适用于 Universe 与 chain，不改变其 Artifact 或 date semantics。
 
-Concrete semantics complete、implementation mapping complete、实际 public upstream dependencies 可用且无 conflict / capability gap 后，才标记 concrete **Implementation Ready**。Framework mechanics contract 完整可标为 Authority Complete / Implementation Architecture Complete / Implementation Ready；这些是设计状态，不等于 runtime implemented。Study 的 design readiness 与实际 runtime dependency reconciliation 继承 [Study handoff definition](../studies/AUTHORING.md#publication-与-dependency-handoff)：producer runtime 缺失须单独记录，实际 Study runtime dependency reconciliation 仍等待两项 runtime 完成及 bindings 复核。当前 readiness 见 [reconciliation](../IMPLEMENTATION_RECONCILIATION.md)。
+Concrete semantics complete、implementation mapping complete、实际 public upstream dependencies 可用且无 conflict / capability gap 后，才标记 concrete **Implementation Ready**。Framework mechanics contract 完整可标为 Authority Complete / Implementation Architecture Complete / Implementation Ready；这些是设计状态，不等于 runtime implemented。Study 的 design readiness 与实际 runtime dependency reconciliation 继承 [Study handoff definition](../studies/AUTHORING.md#publication-与-dependency-handoff)：producer runtime 缺失须单独记录，实际 Study runtime dependency reconciliation 需两项 runtime 完成及 bindings 复核；当前 slice 已完成该验证。当前 readiness 见 [reconciliation](../IMPLEMENTATION_RECONCILIATION.md)。
 
-本轮只写 authority，不开始 Python / SQLite / Study implementation。V1 Python application boundary 不增加 Observation CLI、HTTP / REST；human execution 继续通过 Study。除此还排除 generic DataLake / Snapshot adapter、plugin、DAG、queue、background worker、run registry、global Research DB、retry / refresh engine 与 automatic migration。
+两项 producer 与首个 Study 已实施；验证与基线检查限制见当前 reconciliation。V1 Python application boundary 不增加 Observation CLI、HTTP / REST；human execution 继续通过 Study。除此还排除 generic DataLake / Snapshot adapter、plugin、DAG、queue、background worker、run registry、global Research DB、retry / refresh engine 与 automatic migration。

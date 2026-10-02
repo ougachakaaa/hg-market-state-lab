@@ -17,7 +17,7 @@ artifact = create_service().ensure(ExpiryDteChainRequest(
 ))
 ```
 
-示例仅表达 future public boundary。`ExpiryDteChainService.ensure(request: ExpiryDteChainRequest) -> ExpiryDteChainArtifact` 是唯一 public semantic operation。Request 全部必填：product_code: str、expiry_date: datetime.date、target_dte: int；canonical domain、拒绝 timestamps / bool / defaults 等规则引用 entry。
+示例表达 public boundary；市场数据可用性仍依 required public proof 判定。`ExpiryDteChainService.ensure(request: ExpiryDteChainRequest) -> ExpiryDteChainArtifact` 是唯一 public semantic operation。Request 全部必填：product_code: str、expiry_date: datetime.date、target_dte: int；canonical domain、拒绝 timestamps / bool / defaults 等规则引用 entry。
 
 ## Owned Artifact、row 与 provenance mapping
 
@@ -119,4 +119,4 @@ Framework 三层 checks 之外，按 [Artifact acceptance](ARTIFACT.md#acceptanc
 
 Durable-before-return 与 service / process recreation 后 same-request 零 upstream reuse 必须通过 [framework durable reuse acceptance](../IMPLEMENTATION.md#durable-reuse-acceptance)，不以仅同一实例 repeat ensure 替代。
 
-Calendar / Options 已有所需 public runtime surface，无 DataLake / Snapshot capability gap。本 producer **Authority Complete / Dependency Reconciled / Implementation Architecture Complete / Implementation Ready**，runtime **Not Implemented**；可在 Universe implementation 后实施并验证，再进行首个 Study runtime dependency reconciliation。本轮不写 Python、创建 SQLite 或 delivery。
+Calendar / Options 已有所需 public runtime surface，无 DataLake / Snapshot capability gap。本 producer **Authority Complete / Dependency Reconciled / Implementation Architecture Complete / Implementation Ready**，runtime **Implemented / Verified**；date-resolution / concrete acceptance、durable restart reuse 与首个 Study runtime dependencies / bindings 已验证，见 [reconciliation](../../IMPLEMENTATION_RECONCILIATION.md#first-observation-driven-vertical-slice-implementation)。

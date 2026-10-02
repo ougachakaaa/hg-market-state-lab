@@ -4,7 +4,7 @@
 
 ## Identity 与 objective
 
-Study identity / study_package 为 `cffex_option_expiry_dte_collection`，public Study ID 为 `cffex-option-expiry-dte-collection`，遵守 [UI naming](../../ui/ARCHITECTURE.md#2-runnable-study-convention)。未来 implementation 位于同名 `src/market_research/studies/` package，本轮不创建它。
+Study identity / study_package 为 `cffex_option_expiry_dte_collection`，public Study ID 为 `cffex-option-expiry-dte-collection`，遵守 [UI naming](../../ui/ARCHITECTURE.md#2-runnable-study-convention)。Implementation 位于同名 `src/market_research/studies/` package。
 
 Objective 是 orchestration-only research preparation：用用户选择的产品、inclusive expiry window 与 target DTE 驱动两个 reusable Observations，确保 observed Universe 中每个真实 expiry 都有 complete durable target-DTE chain Artifact。它不是 retained data-collection database producer。
 
@@ -34,4 +34,4 @@ Study execution outcome 是本次 invocation 的 non-persistent feedback，不�
 
 六个 semantic areas、Observation dependency contracts、orchestration semantics 与 [implementation architecture](IMPLEMENTATION.md) 完整，按 [Authoring readiness](../AUTHORING.md#publication-与-dependency-handoff) 为 **Study Authority Complete / Observation dependency contracts complete / Study implementation architecture complete / Implementation Ready**。未发现 DataLake / Observation semantic capability gap。
 
-Observation producers 与 Study runtime 均 **Not Implemented**，实际 Study runtime Dependency Reconciled 尚未完成。Implementation Ready 表示可以按 producer-first 顺序实施整个 vertical slice，不表示命令已经 runnable。当前状态与既有 test limitation 见 [Research reconciliation](../../IMPLEMENTATION_RECONCILIATION.md)。
+Observation producers 与 Study runtime 均 **Implemented / Verified**，actual runtime **Dependency Reconciled**，canonical CLI 已 runnable。Producer acceptance、Study bindings、fresh-process E2E 与 quality gates 见 [Research reconciliation](../../IMPLEMENTATION_RECONCILIATION.md#first-observation-driven-vertical-slice-implementation)。

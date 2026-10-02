@@ -42,3 +42,6 @@ data-lake/data/
 
 # Dataset-owned runtime state, including SQLite journals / WAL files
 data-lake/datasets/*/data/
+
+# Observation-owned runtime state, including SQLite journals / WAL files
+market-research/observations/*/data/

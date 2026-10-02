@@ -36,4 +36,4 @@ Complete empty universe 合法，不是 failure；不完整上游的 empty / par
 | expiry 只在请求 trade-date window 外曾挂牌 | 不据此扩大 observed universe；本 Artifact 不声称证明该历史范围。 |
 | Consumer / persistence | 只通过 Artifact boundary 消费；一个 Observation-owned SQLite，不由 Study output 管理。 |
 
-本轮 acceptance 是 semantic contract，不表示 producer 或 executable tests 已实现。
+以上 acceptance 是 semantic contract；producer executable acceptance 与 durable reuse 已验证，记录见 [reconciliation](../../IMPLEMENTATION_RECONCILIATION.md#first-observation-driven-vertical-slice-implementation)。

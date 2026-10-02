@@ -81,7 +81,7 @@ Snapshot 继续拥有从 Source fact 到 Analysis-ready Artifact 的确定性准
 
 `observations` 拥有 reusable retained empirical products，独立于 Study 生命周期。稳定 contract 从 [Observation architecture](observations/ARCHITECTURE.md) → [UPSTREAM policy](observations/UPSTREAM.md) 进入，再读 [Schema](observations/SCHEMA.md) / [Authoring](observations/AUTHORING.md) 与实际 concrete entry。本模块不拥有 concrete business key、population、grain、formula、Artifact schema 或 SQLite schema。
 
-Concrete authorities 为 [cffex_option_expiry_universe](observations/cffex_option_expiry_universe/ARCHITECTURE.md) 与 [cffex_option_expiry_dte_chain](observations/cffex_option_expiry_dte_chain/ARCHITECTURE.md)，按任务进入所需 entry / specialized contracts。Runnable contract 唯一见 [Observation IMPLEMENTATION](observations/IMPLEMENTATION.md) 与各 concrete IMPLEMENTATION。两项 Implementation Architecture Complete / Implementation Ready，runtime 仍 Not Implemented；不从 historical shared helpers 推导已存在能力。
+Concrete authorities 为 [cffex_option_expiry_universe](observations/cffex_option_expiry_universe/ARCHITECTURE.md) 与 [cffex_option_expiry_dte_chain](observations/cffex_option_expiry_dte_chain/ARCHITECTURE.md)，按任务进入所需 entry / specialized contracts。Runnable contract 唯一见 [Observation IMPLEMENTATION](observations/IMPLEMENTATION.md) 与各 concrete IMPLEMENTATION。两项 runtime 已实现并验证 durable reuse；当前 implementation / verification 状态进入 [reconciliation](IMPLEMENTATION_RECONCILIATION.md#first-observation-driven-vertical-slice-implementation)。
 
 ### Study
 
@@ -95,7 +95,7 @@ Runnable topology 由 [Implementation Package Contract](studies/IMPLEMENTATION.m
 
 Legacy Study-local Observations、旧 evidence 与 historical shared dependencies 按 [Compatibility](studies/COMPATIBILITY.md) 保持有效；新 framework 不自动迁移它们。仅 human-triggered concrete reconciliation 才迁入 Observation-first。历史 shared owners 只沿 Compatibility 或相关 legacy authority 进入，不在新 Study 默认创建路径。
 
-首个 [cffex_option_expiry_dte_collection](studies/cffex_option_expiry_dte_collection/ARCHITECTURE.md) 是 orchestration-only Study，确保 Universe 与全部 planned chains durable complete，只返回 runtime summary，零 retained Study Artifacts / Analysis / Evidence，无 run directory。其四份业务 authority 与 [concrete implementation handoff](studies/cffex_option_expiry_dte_collection/IMPLEMENTATION.md) 完整，Implementation Ready；producer / Study runtime 仍 Not Implemented，实际 runtime dependency reconciliation 未完成。其他 Study 只有明确声明时才保留 outputs，具体 shapes 由其 owner 定义。Observation persistence 不放入 Study output lifecycle；design / runtime readiness distinction 见 [Authoring](studies/AUTHORING.md#publication-与-dependency-handoff)。
+首个 [cffex_option_expiry_dte_collection](studies/cffex_option_expiry_dte_collection/ARCHITECTURE.md) 是 orchestration-only Study，确保 Universe 与全部 planned chains durable complete，只返回 runtime summary，零 retained Study Artifacts / Analysis / Evidence，无 run directory。其四份业务 authority 与 [concrete implementation handoff](studies/cffex_option_expiry_dte_collection/IMPLEMENTATION.md) 完整；producer / Study runtime 已实现，actual runtime dependencies / bindings 与 controlled E2E 已验证，见 [reconciliation](IMPLEMENTATION_RECONCILIATION.md#first-observation-driven-vertical-slice-implementation)。其他 Study 只有明确声明时才保留 outputs，具体 shapes 由其 owner 定义。Observation persistence 不放入 Study output lifecycle；design / runtime readiness distinction 见 [Authoring](studies/AUTHORING.md#publication-与-dependency-handoff)。
 
 ## 6. Research 与 Modeling
 

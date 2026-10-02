@@ -294,3 +294,46 @@ Supplemental 只读检查通过：31 份 Research Markdown、312 个 local links
 根 canonical Poetry environment 执行 `poetry run pytest market-snapshot/tests/test_authority_topology.py market-research/tests/test_study_authority_topology.py -q`，修改前后均为 **24 passed / 1 failed**，无新增失败。既有 `test_new_runnable_studies_have_semantic_package_boundaries` 将 ignored legacy cache-only directories 当作 runnable package，找不到 __init__.py；修改前首先报告 price_to_lagged_ma_short_horizon_reversion，修改后首先报告 mo_option_risk_premium_baseline，set candidate order 不同但同一 limitation。五个 legacy 残留目录只有 ignored __pycache__，没有 tracked package source；缓存 / tests 保持原样。旧 REQUIRED_IMPLEMENTATION 仍固定 observations / analyses / evidence modules，下一 implementation 阶段需 reconciliation，不以本轮 authority-only edits 掩盖测试覆盖缺口。
 
 全部受影响 Markdown local links / anchors 有效，semantic owners（包括新增 handoff）从 root / Research stable entry 可达；local AGENTS 按执行政策继承链发现。完整 diff 与新文件已审阅，`git diff --check` 通过；范围仅为 20 modified / 1 new Research Markdown。没有 SQLite、Python、test、DataLake、配置、ignore 或 runtime state 变更。本轮停止于 implementation handoff，不开始实施。
+
+## First Observation-driven vertical slice implementation
+
+本次 implementation 基于 `d6db0c5f1ec065a6b920829b93e53f0bc05c8c5e`，依当前 framework / concrete handoff 完成 producer-first vertical slice。此前各轮记录保留为历史基线；本节 supersedes 两项 producers / 首个 Study 的 Not Implemented 状态与旧 topology test limitation，不改变已锁定业务语义。
+
+### Implemented components 与 reconciliation
+
+| Owner / package | Runtime / verification |
+| --- | --- |
+| [Observation framework](src/market_research/observations/__init__.py) | Public common errors、private root-relative path / SQLite transaction / safe owned-value serialization primitives；无 registry、executor 或 shared business schema。 |
+| [ExpiryUniverse](src/market_research/observations/cffex_option_expiry_universe/__init__.py) | Immutable request / Artifact / provenance；exact-range ensure-first Options integration、sorted unique inclusive extraction、owned durable SQLite。Implemented / Verified。 |
+| [ExpiryDteChain](src/market_research/observations/cffex_option_expiry_dte_chain/__init__.py) | Immutable request / Artifact / rows / provenance；Calendar / Options read-first、incomplete-only ensure、complete-but-absent-only fallback、完整 matching population 原值保留、owned durable SQLite。Implemented / Verified。 |
+| [First Study](src/market_research/studies/cffex_option_expiry_dte_collection/study.py) / [CLI](src/market_research/studies/cffex_option_expiry_dte_collection/cli.py) | 四输入 admission、exact public Observation bindings、ascending runtime plan、每项一次 invocation / failure 后继续、non-persistent counts / failure details、exit 0 / 1 / 2。Implemented / Verified / actual runtime Dependency Reconciled。 |
+
+Public factory 为无参 `create_service()`，合法 request 在 persistence / dependency access 前验证，complete hit 在所有 upstream factories / operations 前返回。每个 concrete 唯一 owned SQLite 以三个 normalized business fields 作 primary key，多请求共存；整份合法 Artifact 先在 memory 形成，再以 SQLite FULL synchronous transaction 原子提交后返回。Concurrent losers 返回已发布 winner，无 overwrite / 第二 logical Artifact。Corrupt / unreadable / unsupported state 属 operation failure，不伪装 miss；未创建 pending / attempt / generation / migration / retry framework。
+
+Canonical production placement 保持各 Observation `data/<identity>.sqlite3`；根 ignore 覆盖整个 owned data directory，包括 WAL / SHM / journal。测试只写 temporary persistence；没有创建真实 Observation state、访问真实 provider、改动 DataLake public semantics / package registration / lab dispatch。Research 没有 direct provider / credential / upstream-private imports；Study 没有 DataLake / Snapshot / SQLite access、market-row copy 或 retained output。
+
+Authority / package surface / runtime / tests 已核对：Universe observed-window、所有 inputs / keys、chain DTE formula / Calendar proof / missing-absence-failure 三态、完整 population / nullable facts，以及 Study orchestration / zero retained artifacts 均保持原契约。没有 DataLake / Observation semantic conflict 或 capability gap，没有剩余 slice authority/runtime drift。Refresh、definition evolution、future Analysis / Evidence persistence 等原有 deferred concerns 保持 deferred。
+
+### Acceptance evidence
+
+- [Producer acceptance](tests/test_observation_runtime.py) / [public topology](tests/test_observation_boundaries.py)：domains、exact upstream sequences、empty / zero-target Universe、holiday / weekend / multi-window Calendar proof、target=1 / exact DTE / proven absence / incomplete ensure、非法 export / unit / prerequisite failures、完整 rows / None、durable-before-return、service recreation 零 upstream reuse、多请求共存、concurrent unique publication、corrupt / partial / incompatible state、real SQLite insert abort / interruption / factory failure。
+- [Study / CLI acceptance](tests/test_expiry_dte_collection.py)：四 required flags / strict parsing、help / invalid inputs 零 execution、exact bindings、unknown counts、empty success 零 chain construction、factory / operation / invalid Artifact failures、ordered full-plan continuation、counts / presentation / exits、public-only imports / no persistence、installed lab discovery / help / parse exit propagation。
+- [Fresh-process E2E](tests/test_observation_vertical_slice.py)：第一进程以 controlled public Dataset doubles 运行真实 Study CLI，发布 Universe 与两个 chains；第二独立进程禁用全部 upstream factories，same request 返回相同 summary / retained payloads，factory / Options / Calendar calls 全为零。只有两个 Observation-owned SQLite，无 Study retained files。
+- [Study topology tests](tests/test_study_authority_topology.py) 已 reconciliation：mandatory init / cli / study，conditional helpers 按实际 concern 检查；cache-only legacy directories 不冒充 runnable packages。保留 authority pointer / single-script / missing helper 的拒绝测试，并新增每个 mandatory module 缺失的验收；没有删除、skip 或弱化仍有效的行为检查。
+
+### Quality gates 与 baseline limitations
+
+全部从 repository root 唯一 Poetry / Python 3.13 根 `.venv` 执行：
+
+| Check | Result |
+| --- | --- |
+| Producer checkpoint + Calendar / Options / DataLake boundary regression | 195 passed，随后补充 publication / interruption / factory / exact-DTE tests。 |
+| Final slice / Research topology / repository authority focused checks | 144 passed。 |
+| `poetry run pytest -q -rs` | 997 passed / 2 existing skips；Windows 无 symlink creation privilege。一个 existing Starlette deprecation warning。 |
+| `poetry run ruff check lab data-lake market-research market-snapshot backend-api` | Passed。 |
+| `poetry run mypy market-research lab data-lake` | Passed，90 source files。 |
+| Authority local links / anchors / root reachability，complete diff / whitespace review | Passed；最终检查见本次执行记录。 |
+
+额外尝试 repository-wide `ruff check .` 与根配置 `mypy`，有两个确认属于未改基线的限制：`web-ui/scripts/export_contracts.py:19` 的 I001 import sorting（`git show HEAD:...` 同样失败），以及 `backend-api/tests/support` 与 `market-snapshot/tests/support` 同名造成 mypy Duplicate module（两个目录无 diff，独立指定二者亦复现）。这些不是本 slice 引入的问题；未修改 unrelated owners 来隐藏失败，受影响 Research / lab / DataLake scope 单独通过 lint / type checks。
+
+**First Observation-driven Study vertical slice is implemented and reconciled with repository authority.**

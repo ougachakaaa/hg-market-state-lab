@@ -66,7 +66,7 @@ Observation Artifact contract 是 Study / Analysis / external consumer 的 publi
 
 每个 concrete Observation **exactly owns 一个 SQLite database**；该数据库承载多个 Observation business requests 与其 complete Artifacts，不是 one SQLite per invocation。Reusable empirical persistence 唯一归 Observation，不是 Study-owned cache。SQLite 是 Observation internal persistence；canonical placement 与 publication mapping 见 [Implementation architecture](IMPLEMENTATION.md)，SQL schema 与 transaction algorithm 留给实现。
 
-Observation runtime SQLite 文件不应进入 Git。本 authority-only 轮不创建 runtime database 或修改 repository ignore configuration。
+Observation runtime SQLite 文件不应进入 Git。Owned runtime state 的 ignore / durable publication acceptance 见 [IMPLEMENTATION](IMPLEMENTATION.md)，当前 implementation 状态进入 [reconciliation](../IMPLEMENTATION_RECONCILIATION.md#first-observation-driven-vertical-slice-implementation)。
 
 不建立 global `research.sqlite`、global Observation database、global Artifact DB、cross-Observation foreign key 或 Study-owned Observation persistence。Study、Analysis 与 external consumer 不直接读取 SQLite，不依赖 SQLite schema 或 path。Study evidence output 与 Observation-owned persistence 是不同边界；Study output replacement 不授予 Observation overwrite 权限。
 

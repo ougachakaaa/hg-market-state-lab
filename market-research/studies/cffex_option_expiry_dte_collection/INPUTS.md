@@ -30,7 +30,7 @@ Study request identity
 
 ## Invocation surface
 
-Implementation 后的 canonical user command 为：
+Canonical user command 为：
 
 ```bash
 lab research run cffex-option-expiry-dte-collection \
@@ -40,4 +40,4 @@ lab research run cffex-option-expiry-dte-collection \
   --target-dte 30
 ```
 
-这是 future invocation target，不表示命令现已可运行。本 Study 属 [orchestration-only UI shape](../../ui/ARCHITECTURE.md#3-shared-configuration-and-output-placement)，不加载 output.root 配置、不创建 retained Study run directory，不提供 --output、--database、--sqlite-path、--resume、--overwrite 或 config override。CLI parse request → invoke Study orchestration → present outcome；Observation construction / persistence semantics 继续归其 owner。
+该命令已 runnable；实际历史数据可用性依 Observations 的 upstream completeness proof 决定。本 Study 属 [orchestration-only UI shape](../../ui/ARCHITECTURE.md#3-shared-configuration-and-output-placement)，不加载 output.root 配置、不创建 retained Study run directory，不提供 --output、--database、--sqlite-path、--resume、--overwrite 或 config override。CLI parse request → invoke Study orchestration → present outcome；Observation construction / persistence semantics 继续归其 owner。

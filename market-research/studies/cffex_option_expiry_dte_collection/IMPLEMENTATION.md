@@ -1,6 +1,6 @@
 # Expiry DTE Collection implementation handoff
 
-本文件把 [Study entry](ARCHITECTURE.md)、[INPUTS](INPUTS.md)、[METHOD](METHOD.md) 与 [RESULTS](RESULTS.md) 映射为 runnable Python / CLI implementation architecture，继承 [Study Package Contract](../IMPLEMENTATION.md) 与 [Research UI](../../ui/ARCHITECTURE.md)。Business semantics 继续由四份 authority 唯一拥有；本文不创建 runtime 或重新设计 Observation。
+本文件把 [Study entry](ARCHITECTURE.md)、[INPUTS](INPUTS.md)、[METHOD](METHOD.md) 与 [RESULTS](RESULTS.md) 映射为 runnable Python / CLI implementation architecture，继承 [Study Package Contract](../IMPLEMENTATION.md) 与 [Research UI](../../ui/ARCHITECTURE.md)。Business semantics 继续由四份 authority 唯一拥有；本文不重新设计 Observation；当前 runtime / verification 状态见 reconciliation。
 
 ## Package 与 typed runtime boundary
 
@@ -52,4 +52,4 @@ Implementation 必须验证：
 - 构造失败 / invalid Artifact return / operation failure 不假报成功；Study failure 不删除已成功 Observation Artifacts。
 - Producers 实施后用 temporary owned persistence + fake public upstream services 验证 whole vertical slice：初次 invocation durable publication；丢弃全部 service state 后同 request 再运行，同 logical Artifacts，零上游 factory / service calls，不产生 Study retained files。无真实 provider调用。
 
-Study semantics、Observation dependency contracts 与本 mapping 无 gap，为 **Study Authority Complete / Observation dependency contracts complete / Study implementation architecture complete / Implementation Ready**。Runtime **Not Implemented**，Study runtime Dependency Reconciled 尚未完成。按 [Authoring handoff](../AUTHORING.md#publication-与-dependency-handoff) 先完成 minimal Observation shared mechanics、两个 producers / durable acceptance，再核对实际 bindings，随后实施 Study 与 end-to-end tests；本轮仅写 authority，停止于 handoff。
+Study semantics、Observation dependency contracts 与本 mapping 无 gap，为 **Study Authority Complete / Observation dependency contracts complete / Study implementation architecture complete / Implementation Ready**。Runtime **Implemented / Verified**，Study runtime **Dependency Reconciled**。按 [Authoring handoff](../AUTHORING.md#publication-与-dependency-handoff) 完成 producer-first implementation、两个 producers / durable acceptance、exact bindings 与 fresh-process CLI E2E；验证和基线 quality-gate limitations 见 [reconciliation](../../IMPLEMENTATION_RECONCILIATION.md#first-observation-driven-vertical-slice-implementation)。
