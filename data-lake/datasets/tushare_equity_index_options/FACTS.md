@@ -55,11 +55,15 @@ Record identity 为 `(contract_code, trade_date)`；product_code 与 unit 一致
 
 Volume、amount、open_interest required 且 finite/non-negative；pre_settle、pre_close、close、settle required 且 finite。拒绝 bool、非法数值/infinity，不把缺行、缺字段或 required missing value 当零。
 
+Source 明确返回 pre_close 字段但其值合法缺席，且 trade_date == owning Instrument 的 list_date 时，pre_close 为 None，表示首次挂牌没有前收盘价。此条件与零成交规则独立；首日有成交仍可没有前收盘。不用 pre_settle 或零替代。非上市首日缺席、字段本身缺失、非法数值仍失败，pre_settle/close/settle 继续 required finite。
+
 仅当 Source 明确 volume=0 且 amount=0 时，open/high/low 中的合法缺席可以分别为 None，其他实际提供值照原值保留；不补零、不前值填充。正成交量或正成交额却缺 open/high/low 时整 unit 失败。该规则允许合法无成交 record，不改变 expected contract set、exactly-one cardinality 或其他 required facts；Source 未提供 required field 本身仍是 contract failure。
 
 不 rounding、补算或暗换单位，不生成 IV、Greeks、moneyness、DTE、option risk premium 或其他 research features。Expiry/strike/call_put 是 metadata Source facts，参与完整横截面解释，不能据此补造 catalog 未声明的合约。
 
 ## 5. Source feasibility evidence
+
+2026-10-02 历史调试：HO2601-C-3450.CFX 与 MO2601-C-8500.CFX 的 list_date=trade_date=2026-01-06；均只有 pre_close 合法缺席，pre_settle 分别 1.8/3.0，volume 1022/1838，close 5.6/9.4。首日正成交不能据此要求存在前收盘，也不放宽其他 required facts。
 
 2026-10-01 设计阶段只读核对：CFFEX opt_basic 的 offset=0/4000/8000、limit=4000 分页取得 4000/4000/2384 行，未重复；offset=12000 返回空，累计 10384 个不同 contracts，与完整请求一致。产品代码前缀为 IO/HO/MO，call_put 为 C/P，opt_code 与上表一致；last_ddate 样本为合法空。
 

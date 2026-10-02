@@ -40,14 +40,14 @@ UnitFailure 的 semantic identity 为 `(product_code: str, trade_date: datetime.
 
 Historical initialization 与 daily update 使用同一 ensure，caller 显式给日期：`ensure(FuturesDailyRange(product_codes, historical_start, historical_end))` 或 start_date=end_date 的当天请求。开市但日行情未发布时 unit non-success，后续同一 ensure 可重试；休市时零目标。无新增 refresh、daily-update、sync 或 force verbs。
 
-## 3. Futures Daily Export V1
+## 3. Futures Daily Export V2
 
-V1 唯一 view 为 `futures_daily`，无 selector。FuturesDailyExport 的 envelope：
+唯一 view 为 `futures_daily`，无 selector。FuturesDailyExport 的 envelope：
 
 | Field | Python semantic value / type |
 | --- | --- |
 | dataset | str，固定 tushare_equity_index_futures |
-| view / export_schema_version | str futures_daily / int 1；不等于 SQLite schema version |
+| view / export_schema_version | str futures_daily / int 2；不等于 SQLite schema version |
 | scope | FuturesDailyScope，product_codes 为 sorted unique product sequence |
 | window | start_date / end_date 为 request 对应 datetime.date |
 | coverage | 固定目标的 CoverageResult |
@@ -61,9 +61,11 @@ FuturesDailyRow 合并该成功 unit 保留的合法 Instrument facts 与 daily 
 | trade_unit, quote_unit, delivery_month | str；delivery_month 为 YYYYMM |
 | multiplier, per_unit | finite positive float |
 | list_date, delist_date, last_delivery_date, trade_date | datetime.date |
-| pre_close, pre_settle, open, high, low, close, settle | finite float |
+| pre_close | finite float 或 None；仅上市首日 Source 合法缺席 |
+| pre_settle, open, high, low, close, settle | finite float |
 | close_change_from_pre_settle, settle_change_from_pre_settle | finite float |
-| volume, amount, open_interest, open_interest_change | finite float，非负限制按 FACTS.md，持仓变化可负 |
+| volume, amount, open_interest | finite float，非负限制按 FACTS.md |
+| open_interest_change | finite float 或 None；可负，仅上市首日 Source 合法缺席可为 None |
 | delivery_settlement_price | finite float 或 None，仅 Source 合法缺席 |
 
 只包含目标 selection/Window/固定 D 内 success units 的完整 Records；partial coverage 合法返回可用成功 units、complete=false，失败/pending 残留不导出。无成功 Records 时为空序列；成功空 unit 不补造行。Records 数是各成功 unit record count 之和，不要求等于 successful_units。
@@ -77,3 +79,5 @@ Coverage、Records 和成功时保留的合法 metadata/completeness basis 来�
 Tushare execution 与 credential / client / shared limiter 遵循 [Provider Runtime authority](../../providers/TUSHARE.md)，本 Dataset 不自行实现 provider initialization 或请求异常转换。Factory / read-only calls 不解析 credential、不创建 client；完整 Calendar 加全 success 目标无需 token。需要而缺失则在相应 Source request 前 OperationError。
 
 唯一 owned SQLite 目标位于本 Dataset data/；Source composition 拥有 fut_basic/fut_daily 及必要 type-2 exclusion 获取，adapter 通过共享 Executor 执行 provider 请求，Calendar 只走 public namespace。Filename、package registration、SQL、事务技术、batching 与测试实现由 implementation reconciliation 记录，不重新决定本契约。HTTP、Research integration、migration、refresh/TTL/force 均未实现。
+
+V2 在 V1 字段基础上允许 pre_close / open_interest_change 为 float 或 None，仅限 FACTS 声明的上市首日合法缺席；其他字段及完整性不变。旧缓存的有限数值保持可读，不改写已成功 facts。

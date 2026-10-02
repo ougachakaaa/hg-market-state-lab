@@ -84,6 +84,16 @@ poetry run lab datalake ensure tushare_trade_calendar `
 
 ### Index、Futures 与 Options
 
+需要调试时，日志选项放在 operation 前：
+
+```bash
+poetry run lab datalake --log-level DEBUG --log-file datalake.log ensure tushare_equity_index_futures --product-codes IF IH IC IM --start-date 2026-01-01 --end-date 2026-10-02
+```
+
+默认 INFO 在 stderr 显示 ensure 进度与失败，DEBUG 增加脱敏的请求 endpoint、日期、分页、等待和耗时；--log-file 可选，文件为 UTF-8。文件父目录须已存在。Token、原始异常与 response 不写入日志。日志位置由 caller 选择，runtime 文件可放 Dataset data/ 下以保持 Git 忽略。
+
+Tushare 默认按 180 次/分钟运行，适合 2000 积分账号的 200/min 额度；`TUSHARE_CALLS_PER_MINUTE` 可设为 1..500 的整数，按自己的实际权限调整。Windows PowerShell 例如 `$env:TUSHARE_CALLS_PER_MINUTE = "180"`；Bash 例如 `export TUSHARE_CALLS_PER_MINUTE=180`。额度在单一 process 内共享，不协调其他程序的账户用量。失败请求有安全分类；可用相同 ensure 继续补齐 non-success units，已 success facts 默认跳过。
+
 以下 ensure 命令分别使用指数、期货产品与期权产品 selection；相同参数也适用于 coverage，export 再加必填 --output。
 
 ```bash

@@ -18,7 +18,7 @@ Tushare SDK / API
 
 所有 Tushare-backed Dataset 的 Source adapter 均通过这一内部 execution boundary 执行 Tushare 请求，包括 Calendar、Index、Futures 与 Options 的 metadata / daily requests。Dataset adapter 决定请求什么与 response 的含义；Executor 决定怎样统一、受限地执行请求。
 
-允许 Dataset Source adapter → `data_lake.providers.tushare` → Tushare SDK。Provider infrastructure 只可复用 shared kernel 的 provider-neutral error contracts，不依赖具体 Dataset、Dataset Service、Repository 或 FetchUnit semantics；kernel 不反向依赖 provider infrastructure。Research / Modeling / Snapshot / HTTP / CLI 等 consumers 只进入 Dataset public service，不直接调用 Executor，也不因 namespace 可 import 获得内部 execution permission。
+允许 Dataset Source adapter → `data_lake.providers.tushare` → Tushare SDK / HTTP API。Provider infrastructure 只可复用 shared kernel 的 provider-neutral error contracts，不依赖具体 Dataset、Dataset Service、Repository 或 FetchUnit semantics；kernel 不反向依赖 provider infrastructure。Research / Modeling / Snapshot / HTTP / CLI 等 consumers 只进入 Dataset public service，不直接调用 Executor，也不因 namespace 可 import 获得内部 execution permission。
 
 Dataset adapter 继续拥有 endpoint selection、provider parameters、request batching、pagination / exhaustion、response partition、identity validation、Source facts normalization 与 completeness。`Provider Request != FetchUnit`；Executor 不接收 FetchUnits，不知道调用方 Dataset，不解释 index_code、trade_date、product、expiry 或 strike。
 
@@ -59,20 +59,26 @@ Credential resolution 与 client initialization 必须 lazy：factory、`coverag
 
 ## 4. 平滑限流与并发边界
 
-V1 最大 request-start 频率为 **500 calls / minute**，统一采用平滑限流：
+V1 最大 request-start 频率为 **500 calls / minute**；实际运行额度由 provider runtime 的 `TUSHARE_CALLS_PER_MINUTE` 配置（整数 1..500），默认 **180 calls / minute**，为 2000 积分账号的 200/min 留出余量。配置不是 Dataset semantic argument，不自动推断账号积分或权限。所有 endpoint 合并消费同一 process/credential 额度，统一采用平滑限流：
 
 ```text
-minimum interval = 60 seconds / 500 = 0.12 seconds = 120 ms
-request_start[n+1] - request_start[n] >= 120 ms
+minimum interval = 60 seconds / configured calls per minute >= 120 ms
+request_start[n+1] - request_start[n] >= minimum interval
 ```
 
-这里的相邻 starts 是同一 process / credential 下所有 Dataset 的合并启动序列；不是各 Dataset 各有 500/min，也不允许瞬时 burst 500 次。限流约束实际 provider request start，不是 request completion；已经启动的请求即使失败也属于该启动序列。
+这里的相邻 starts 是同一 process / credential 下所有 Dataset 的合并启动序列；不是各 Dataset 各有独立额度，也不允许瞬时 burst。非法配置在需要 Source I/O 时以 OperationError 明确失败；read-only/factory 不读取该配置。限流约束实际 provider request start，不是 request completion；已经启动的请求即使失败也属于该启动序列。
 
 Limiter 必须对 process 内并发调用安全：同一 Dataset、多个 Dataset、sequential ensure 与后续 concurrent execution 都遵守共享 schedule。Rate-limit 等待依据 request starts，不要求前一请求完成后再额外等待 120ms；慢 response 不增加 rate-limit 强制等待，也不要求 caller 协调速度。
 
 V1 仅保证 **single Python process** 内共享预算。多个 processes、worktrees 或 machines 即使使用同一 credential，也不保证共享 500/min；不得称为 account-global limiter。不引入 Redis、SQLite / file rate-limit lock、distributed token bucket 或 central daemon；未来 cross-process quota coordination 须独立设计。
 
 ## 5. Failure boundary
+
+Provider 使用受控 HTTP client 校验 HTTP status、JSON envelope 与 provider code，再返回 SDK-compatible DataFrame；HTTP failure、非法 envelope 不能成为合法空响应或分页结束证明。成功数据不做 Dataset normalization。SDK 历史上把部分非成功 HTTP 响应转成空 DataFrame 的行为不被继承。
+
+请求错误 reason 必须包含 endpoint 与安全分类（rate_limit、quota、permission、timeout、network、http、response、provider、unknown），provider numeric code / HTTP status 可附带；不发布未经处理的远端 message、exception repr、请求 body 或 credential。原有 ExecutionFailure code 保持 source_request。初始化仍为 OperationError，不增加自动 retry。
+
+诊断事件与 delivery 配置见 [DataLake diagnostics](../DIAGNOSTICS.md)。
 
 公共 failure taxonomy 仍由 [APPLICATION.md](../APPLICATION.md) 唯一拥有；本节只固定 Tushare execution 的内部转换位置。
 

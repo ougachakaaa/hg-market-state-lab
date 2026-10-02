@@ -1,6 +1,6 @@
 # DataLake implementation reconciliation
 
-本文件集中记录 DataLake implementation reconciliation；当前实现状态以第 8 节（基于 `ff53cec755e6868ae90b02cf1f19bda79cc08aec`）为准，第 1–7 节保留历史 reconciliation/evidence，不代表当前未完成的 gaps。初始记录以 commit `8e26a5e64804a19b2228bba0feaf0b157c5ecc3a` 为基准，不另行定义业务语义。目标 ownership、topology 与依赖方向由 [模块架构](ARCHITECTURE.md) 拥有；公共 domain / application invariants 见 [DOMAIN_MODEL.md](DOMAIN_MODEL.md) 与 [APPLICATION.md](APPLICATION.md)；具体 Dataset 经 [catalog](DATASETS.md) 进入 architecture 与 SERVICE。
+本文件集中记录 DataLake implementation reconciliation；当前实现状态由第 9 节增量与第 8 节基准共同描述，第 1–7 节保留历史 reconciliation/evidence，不代表当前未完成的 gaps。初始记录以 commit `8e26a5e64804a19b2228bba0feaf0b157c5ecc3a` 为基准，不另行定义业务语义。目标 ownership、topology 与依赖方向由 [模块架构](ARCHITECTURE.md) 拥有；公共 domain / application invariants 见 [DOMAIN_MODEL.md](DOMAIN_MODEL.md) 与 [APPLICATION.md](APPLICATION.md)；具体 Dataset 经 [catalog](DATASETS.md) 进入 architecture 与 SERVICE。
 
 ## 1. Source roots 与稳定 public namespace
 
@@ -134,3 +134,24 @@ Repository root 验证结果：
 额外尝试默认整仓 mypy 时，原有 market-snapshot/tests/support 与 backend-api/tests/support 同名 module 冲突仍存在；ruff check . 仍报告未修改的 web-ui/scripts/export_contracts.py import ordering。两者是既有整仓 tooling 问题，相关范围的上述检查已全部通过；没有为了 green 删除 boundary 或跳过相关 tests。
 
 没有阻止既定四个 Dataset 正常新建缓存使用的 implementation gap。Research/Modeling/Snapshot/HTTP/UI integration、refresh/force/TTL、Source correction、legacy migration、cross-process limiter 与通用 registry/workflow 继续按任务边界 deferred。
+
+
+## 9. 2000 积分历史运行与 diagnostics reconciliation（2026-10-02）
+
+本轮响应真实 2026 年至今抓取暴露的问题；公共 operation family、DataSet-local SQLite、只读/原子写入/完整横截面 invariant 与无自动 retry 保持不变。
+
+- Provider rate 由 TUSHARE_CALLS_PER_MINUTE 控制，默认 180/min，对应 2000 积分账号 200/min 额度的余量；仍是 process/credential 共享平滑调度，最大 500/min。非法配置仅在需要 Source I/O 时失败。配置不得在同 process 已建立 state 后静默重置 schedule。
+- 受控 HTTP client 替代 SDK query 的不受控失败行为，检查 status/envelope/provider code，成功仍返回 DataFrame。请求 failure 不成为空 response / terminal page；safe endpoint/kind/numeric code 进入 source_request，远端原文和 credential 不记录。
+- 独立 [DIAGNOSTICS.md](DIAGNOSTICS.md) 拥有日志事件与脱敏；provider 记录 DEBUG 请求/等待/耗时与安全失败，kernel 记录 INFO ensure progress / summary 和单元失败，lab 提供 --log-level / --log-file delivery，调用后恢复并关闭 handler。
+- Futures/Options 的历史异常由新日志定位到首次挂牌没有前收盘价；Futures 首日 oi_chg 也合法缺席。经 Source 与 list_date 核对后更新各自 FACTS/SERVICE，再实现狭窄 nullable 条件；不补零、不覆盖其他字段。两个 export schema 升为 2，旧 finite cached facts 保持可读；SQLite generation 不变。
+- 根唯一依赖图明确登记现已由 HTTP client 直接使用的 pandas；锁定版本未改变。Poetry install、check 与 isolated installed imports 均通过。
+
+真实验证范围 2026-01-01..2026-10-02：SSE/CFFEX 各 275 自然日，4 个指数 724 条 / 724 units，IF/IH/IC/IM 2,896 条 / 724 units，IO/HO/MO 126,754 条 / 543 units，全部 coverage.complete=true、无 missing/pending/failed。缓存 operations 在空 Token / 非法 rate 配置下仍通过，ensure attempts=0。重新请求 Source 比对全部日历/指数与三个期货、三个期权日期，共 3,330 条记录逐字段一致；包括上市首日与零成交样本。该历史范围与抽样 evidence 不构成未来 provider freshness 或任意范围永远可用的保证。
+
+运行文件位于 owning Dataset data/exports/2026-01-01_to_2026-10-02/，保持 Git 忽略；日志无 credential/raw transport dump。隔离回归覆盖 lower account rate、concurrency、错误分类/脱敏、HTTP failure vs empty success、坏 envelope、首日缺席/非首日拒绝、缺字段/无穷/boolean、handler lifecycle 与 log delivery failure；对应 authority topology 已登记 diagnostics entry。单进程额度仍不协调其他程序或 worktree。
+
+最终验证：全仓 pytest 821 passed、2 skipped；DataLake/lab Ruff 与 mypy（50 files）通过，diff whitespace 通过。全仓首次检查发现已删除 Study package 的 ignored .pyc-only 残留被当作 implementation；仅将这些无 tracked/source 文件的缓存目录移到本地临时 quarantine，未改 Research source 或 tests，之后全仓检查通过。
+
+扩展历史验证范围 2024-01-01..2026-10-02：SSE/CFFEX 各 1,006 自然日，4 个指数 2,664 条 / 2,664 units，IF/IH/IC/IM 10,656 条 / 2,664 units，IO/HO/MO 484,646 条 / 1,998 units。全部 ensure.complete=true；新增目标为日历各 731、指数/期货各 1,940、期权 1,455，新增抓取无失败。使用同一 process 的 180/min 共享额度；本次未引入额外实现变更。运行文件位于各自 data/exports/2024-01-01_to_2026-10-02/，继续保持 Git 忽略。
+
+扩展范围的 coverage/export 同样 complete=true、missing/pending/failed 均为 0。全部导出记录通过日期范围、身份唯一性、有限数值与 nullable 条件检查，CLI JSON 与 public export 相同；空凭据/非法 rate 下全缓存 ensure attempts=0，原 2026 年成功 facts 与原导出逐条相同。重新请求 Source 对比全部日历/指数、跨 2024/2025/2026 的 10 个期货日期及 9 个期权日期，共 11,094 条逐字段一致；包含上市首日与年末样本。请求日志共 3,892 次启动，任意 60 秒最多 180 次，日志时间戳最小启动间隔 0.333 秒，无请求/单元失败和 credential。全仓 pytest 仍为 821 passed、2 skipped，Ruff/mypy、installed imports 与更新后的 authority topology/whitespace 检查通过。

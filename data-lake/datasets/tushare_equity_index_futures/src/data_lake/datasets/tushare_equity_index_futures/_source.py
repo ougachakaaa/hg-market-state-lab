@@ -39,7 +39,7 @@ def day(value: object, nullable: bool = False) -> str | None:
         return fail("Invalid Source date")
 
 
-def number(
+def _parse_number(
     value: object, *, nullable: bool = False, positive: bool = False, nonnegative: bool = False
 ) -> float | None:
     if nullable and absent(value):
@@ -53,6 +53,23 @@ def number(
     if not math.isfinite(result) or (positive and result <= 0) or (nonnegative and result < 0):
         fail("Invalid numeric fact")
     return result
+
+
+def number(
+    value: object,
+    *,
+    nullable: bool = False,
+    positive: bool = False,
+    nonnegative: bool = False,
+    field: str | None = None,
+    context: str = "",
+) -> float | None:
+    try:
+        return _parse_number(value, nullable=nullable, positive=positive, nonnegative=nonnegative)
+    except ExecutionFailure as exc:
+        if field is None:
+            raise
+        raise ExecutionFailure(f"{exc.reason}; field={field} {context}", exc.code) from None
 
 
 def rows(response: Any) -> list[dict[str, Any]]:
@@ -160,7 +177,11 @@ def read_row(record: Record) -> FuturesDailyRow:
     for key in NUMBERS + OPTIONAL_NUMBERS:
         data[key] = number(
             data[key],
-            nullable=key in OPTIONAL_NUMBERS,
+            nullable=key in OPTIONAL_NUMBERS
+            or (
+                key in ("pre_close", "open_interest_change")
+                and data["trade_date"] == data["list_date"]
+            ),
             positive=key in ("multiplier", "per_unit", "opt_multiplier", "strike"),
             nonnegative=key in ("volume", "amount", "open_interest"),
         )
@@ -230,10 +251,19 @@ def daily(raw: dict[str, Any], meta: dict[str, Any], target: date) -> Record:
             continue
         source = mapping.get(key, key)
         if source not in raw:
-            fail("Missing required daily field")
+            fail(
+                f"Missing required daily field; field={source} "
+                f"contract={meta['contract_code']} date={target}"
+            )
         result[key] = number(
             raw[source],
-            nullable=key in OPTIONAL_NUMBERS,
+            field=source,
+            context=f"contract={meta['contract_code']} date={target}",
+            nullable=key in OPTIONAL_NUMBERS
+            or (
+                key in ("pre_close", "open_interest_change")
+                and target.isoformat() == meta["list_date"]
+            ),
             nonnegative=key in ("volume", "amount", "open_interest"),
         )
     return Record(result, meta["contract_code"])

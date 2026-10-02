@@ -1,5 +1,6 @@
 """Composition helpers for Dataset-owned services, not a consumer-facing registry."""
 
+import logging
 from collections.abc import Callable, Iterable, Mapping, Sequence
 from typing import Protocol
 
@@ -13,6 +14,8 @@ from .results import (
     OperationError,
     UnitFailure,
 )
+
+logger = logging.getLogger(__name__)
 
 
 class Source(Protocol):
@@ -94,7 +97,19 @@ class Core[Request, View: ExportEnvelope]:
         units = self._units(request)
         before = self._snapshot(units)
         selected = tuple(unit for unit in units if before.statuses.get(unit.key) != Status.SUCCESS)
+        logger.info(
+            "ensure_start dataset=%s requested=%d already_successful=%d selected=%d",
+            self._repository.dataset,
+            len(units),
+            before.coverage.successful_units,
+            len(selected),
+        )
         if not selected:
+            logger.info(
+                "ensure_complete dataset=%s attempted=0 complete=%s",
+                self._repository.dataset,
+                before.coverage.complete,
+            )
             return EnsureResult(len(units), len(units), 0, 0, 0, 0, before.coverage.complete, ())
 
         source = self._prepare_source()
@@ -109,6 +124,19 @@ class Core[Request, View: ExportEnvelope]:
             raise OperationError("Source batches must partition the selected units")
         failures: list[UnitFailure] = []
         succeeded = written = 0
+
+        def report_progress() -> None:
+            finished = succeeded + len(failures)
+            if finished % 25 == 0 or finished == len(selected):
+                logger.info(
+                    "ensure_progress dataset=%s finished=%d/%d succeeded=%d failed=%d",
+                    self._repository.dataset,
+                    finished,
+                    len(selected),
+                    succeeded,
+                    len(failures),
+                )
+
         for batch in batches:
             for unit in batch:
                 self._repository.pending(unit)
@@ -118,6 +146,14 @@ class Core[Request, View: ExportEnvelope]:
                 for unit in batch:
                     self._repository.failed(unit, failure)
                     failures.append(UnitFailure(unit.identity, failure.reason))
+                    logger.warning(
+                        "unit_failed dataset=%s identity=%s code=%s reason=%s",
+                        self._repository.dataset,
+                        unit.identity,
+                        failure.code,
+                        failure.reason,
+                    )
+                report_progress()
                 continue
             for unit in batch:
                 try:
@@ -132,7 +168,25 @@ class Core[Request, View: ExportEnvelope]:
                 except ExecutionFailure as failure:
                     self._repository.failed(unit, failure)
                     failures.append(UnitFailure(unit.identity, failure.reason))
+                    logger.warning(
+                        "unit_failed dataset=%s identity=%s code=%s reason=%s",
+                        self._repository.dataset,
+                        unit.identity,
+                        failure.code,
+                        failure.reason,
+                    )
+            report_progress()
         after = self._snapshot(units)
+        logger.info(
+            "ensure_complete dataset=%s attempted=%d succeeded=%d failed=%d "
+            "records_written=%d complete=%s",
+            self._repository.dataset,
+            len(selected),
+            succeeded,
+            len(failures),
+            written,
+            after.coverage.complete,
+        )
         return EnsureResult(
             len(units),
             before.coverage.successful_units,

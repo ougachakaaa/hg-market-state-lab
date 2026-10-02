@@ -54,8 +54,12 @@ Record identity 为 `(contract_code, trade_date)`；product_code 与 owning unit
 
 除 delivery_settlement_price 外 daily facts required 且数值必须 finite；拒绝 bool、missing、NaN、infinity，volume/amount/open_interest 不得为负。Source 实际提供的零合法，不把零成交当缺行。Delv_settle 必须显式请求；未请求而省略字段不等于已确认 Source 合法缺席，返回的合法空值才表达 None。
 
+例外：Source 明确返回 pre_close / oi_chg 字段但其值合法缺席，且 trade_date == owning Instrument 的 list_date 时，分别为 None，表示首次挂牌没有前收盘价 / 没有前一日持仓变化基准。不用 pre_settle、当前持仓、挂牌基准价或零替代。非上市首日缺席、字段本身缺失、非法数值仍失败；其余价格/变化字段规则不变。该规则优先于上段 general required numeric rule。
+
 保留 Source 统计口径：fut_daily 文档说明 2020-01-01 之前为双边统计、之后为单边统计；不自行统一 volume/oi，也不暗换 amount 为 Index view 的千元或人民币元。不 rounding、fill、重算 change、补造价格或产生 basis/DTE/term structure。
 
 ## 5. Source feasibility evidence
+
+2026-10-02 历史抓取调试：IF2609.CFX 在 list_date=trade_date=2026-01-19 的 pre_close / oi_chg 为 Source 合法空，pre_settle=4678.6、close=4633.8、volume=5287、oi=5179。IC2611.CFX 在首次挂牌日 2026-09-21 也同时缺这两个基准字段。首次挂牌允许这两个字段合法缺席的依据只限该事实条件，不扩展其他 required facts 的 nullable policy。
 
 2026-10-01 设计阶段只读核对：CFFEX fut_type=1 返回 692 个不同 contracts（含非股指产品）；2026-09-30 与 2026-07-01 的股指 ordinary expected set 均为 16，日行情普通合约完整匹配，另有 IF.CFX/IH.CFX/IC.CFX/IM.CFX，均经 type-2 metadata 确认为非普通 family。显式请求 delv_settle 的样本合法缺席。此为当次 Source evidence，不是固定合约数量、默认产品上限或未来调用完整性的保证。

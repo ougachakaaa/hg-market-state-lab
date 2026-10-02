@@ -76,7 +76,7 @@ def project(
     return OptionsDailyExport(
         DATASET,
         "options_daily",
-        1,
+        2,
         OptionsDailyScope(tuple(request.product_codes)),
         DailyWindow(request.start_date, request.end_date),
         coverage,

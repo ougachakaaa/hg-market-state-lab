@@ -1,6 +1,7 @@
 """CLI parsing, public service delegation, error mapping and file delivery."""
 
 import json
+import logging
 from dataclasses import fields
 from datetime import date
 from pathlib import Path
@@ -84,6 +85,28 @@ def test_list_never_creates_service(
     monkeypatch.setattr(datalake, "create_service", forbidden)
     assert cli.main(["datalake", "list"]) == 0
     assert capsys.readouterr().out.strip().splitlines() == list(datalake.DATASETS)
+
+
+def test_log_file_and_handler_restoration(service: Service, tmp_path: Path) -> None:
+    logger = logging.getLogger("data_lake")
+    before = logger.handlers[:], logger.level, logger.propagate
+    logfile = tmp_path / "diagnostic.log"
+    with datalake._logging(
+        cli.build_parser().parse_args(
+            ["datalake", "--log-level", "DEBUG", "--log-file", str(logfile), "list"]
+        )
+    ):
+        logging.getLogger("data_lake.test").debug("safe diagnostic 中文")
+    assert (logger.handlers, logger.level, logger.propagate) == before
+    assert "safe diagnostic 中文" in logfile.read_text(encoding="utf-8")
+    # A closed FileHandler leaves no Windows file lock after the invocation.
+    logfile.unlink()
+
+
+def test_log_delivery_failure_prevents_source_operation(service: Service, tmp_path: Path) -> None:
+    logfile = tmp_path / "missing-parent" / "run.log"
+    assert cli.main(["datalake", "--log-file", str(logfile), *args("ensure")[1:]]) == 1
+    assert service.requests == []
 
 
 def test_coverage_constructs_semantic_range_and_accepts_incomplete(

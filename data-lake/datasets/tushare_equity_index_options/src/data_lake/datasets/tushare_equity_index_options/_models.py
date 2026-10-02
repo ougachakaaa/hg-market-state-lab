@@ -61,7 +61,7 @@ class OptionsDailyRow:
     opt_multiplier: float
     strike: float
     pre_settle: float
-    pre_close: float
+    pre_close: float | None
     close: float
     settle: float
     volume: float

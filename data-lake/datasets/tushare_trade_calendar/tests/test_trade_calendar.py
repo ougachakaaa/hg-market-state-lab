@@ -392,8 +392,6 @@ def test_environment_precedence_and_snapshot_env_fallback(
     monkeypatch: pytest.MonkeyPatch,
     environment: str | None,
 ) -> None:
-    import tushare
-
     calls: list[object] = []
     monkeypatch.setattr(_executor, "_states", {})
     if environment is None:
@@ -412,7 +410,7 @@ def test_environment_precedence_and_snapshot_env_fallback(
         calls.append(token)
         return client
 
-    monkeypatch.setattr(tushare, "pro_api", pro_api)
+    monkeypatch.setattr(_executor, "create_client", pro_api)
     if environment == "":
         with pytest.raises(OperationError):
             _source.prepare_source()

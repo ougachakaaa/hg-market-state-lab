@@ -382,3 +382,40 @@ def test_factory_owns_colocated_storage_without_source(monkeypatch: pytest.Monke
     service = public.create_service()
     assert service._repository.path == expected
     assert expected.exists() == existed
+
+
+@pytest.mark.parametrize("missing", [None, float("nan"), ""])
+def test_listing_day_pre_close_is_absent_source_fact(setup: Any, missing: object) -> None:
+    service, _, executor, request = setup
+    executor.catalog[0]["list_date"] = "20240102"
+    executor.daily[0]["pre_close"] = missing
+    # Legitimate first-day trading with no prior close is independent of volume.
+    executor.daily[0].update(vol=10, amount=20, open=1, high=2, low=1)
+    assert service.ensure(request).complete
+    view = service.export(request)
+    assert view.export_schema_version == 2
+    assert view.records[0].pre_close is None
+    assert view.records[0].pre_settle == 1
+    assert service.coverage(request).complete
+
+
+@pytest.mark.parametrize("defect", ["later_day", "missing_field", "infinity", "boolean"])
+def test_listing_exception_does_not_hide_bad_source_facts(setup: Any, defect: str) -> None:
+    service, _, executor, request = setup
+    executor.catalog[0]["list_date"] = "20240102"
+    executor.daily[0]["pre_close"] = None
+    if defect == "later_day":
+        executor.catalog[0]["list_date"] = "20240101"
+    elif defect == "missing_field":
+        executor.daily[0].pop("pre_close")
+    elif defect == "infinity":
+        executor.daily[0]["pre_close"] = float("inf")
+    else:
+        executor.daily[0]["pre_close"] = True
+    result = service.ensure(request)
+    assert not result.complete and result.failed_units == 1
+    assert service.export(request).records == ()
+    if defect != "missing_field":
+        assert "field=pre_close" in result.failures[0].reason
+        assert "contract=" in result.failures[0].reason
+        assert "date=2024-01-02" in result.failures[0].reason

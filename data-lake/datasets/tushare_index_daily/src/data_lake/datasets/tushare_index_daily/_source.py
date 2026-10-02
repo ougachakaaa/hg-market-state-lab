@@ -38,7 +38,7 @@ def day(value: object, nullable: bool = False) -> str | None:
         return fail("Invalid Source date")
 
 
-def number(
+def _parse_number(
     value: object, *, nullable: bool = False, positive: bool = False, nonnegative: bool = False
 ) -> float | None:
     if nullable and absent(value):
@@ -52,6 +52,23 @@ def number(
     if not math.isfinite(result) or (positive and result <= 0) or (nonnegative and result < 0):
         fail("Invalid numeric fact")
     return result
+
+
+def number(
+    value: object,
+    *,
+    nullable: bool = False,
+    positive: bool = False,
+    nonnegative: bool = False,
+    field: str | None = None,
+    context: str = "",
+) -> float | None:
+    try:
+        return _parse_number(value, nullable=nullable, positive=positive, nonnegative=nonnegative)
+    except ExecutionFailure as exc:
+        if field is None:
+            raise
+        raise ExecutionFailure(f"{exc.reason}; field={field} {context}", exc.code) from None
 
 
 def rows(response: Any) -> list[dict[str, Any]]:
@@ -229,7 +246,12 @@ class DailySource:
         result["trade_date"] = target.isoformat()
         for key in NUMBERS:
             source = {"pct_change": "pct_chg", "volume": "vol"}.get(key, key)
-            result[key] = number(raw.get(source), nonnegative=key in ("volume", "amount"))
+            result[key] = number(
+                raw.get(source),
+                nonnegative=key in ("volume", "amount"),
+                field=source,
+                context=f"index={code} date={target}",
+            )
         facts = UnitRecords((Record(result, code),), (instrument(meta),), {"metadata": meta})
         check_complete(units[0], facts)
         return {units[0].key: facts}

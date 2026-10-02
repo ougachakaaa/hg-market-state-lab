@@ -81,6 +81,7 @@ Dataset-local source root 不创建独立 Python project、Poetry environment �
 | Domain / persistence / Scope / Window / FetchUnit / Records / mutation flow | [DOMAIN_MODEL.md](DOMAIN_MODEL.md) |
 | Application Service / coverage / ensure / export / public result / runtime 调用约束 | [APPLICATION.md](APPLICATION.md) |
 | Tushare-backed Dataset 的 Source execution / credential / client / shared limiter / provider failure | [providers/TUSHARE.md](providers/TUSHARE.md) |
+| Operational progress / safe request and validation diagnostics | [DIAGNOSTICS.md](DIAGNOSTICS.md) |
 | 具体 Dataset 的 Source、identity、fields、completeness | [DATASETS.md](DATASETS.md) → owning Dataset ARCHITECTURE.md |
 | Dataset-specific consumer request/result/view、public Python surface | [DATASETS.md](DATASETS.md) → owning Dataset ARCHITECTURE.md → SERVICE.md |
 | CLI topology / delegation / serialization / file delivery | [lab authority](../lab/ARCHITECTURE.md) |

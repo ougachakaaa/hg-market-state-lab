@@ -40,14 +40,14 @@ UnitFailure identity 为 `(product_code: str, trade_date: datetime.date)`，reas
 
 Historical initialization 与 daily update 共用 ensure：caller 给 historical range 或显式 start_date=end_date；无 today default。开市日尚未发布日行情时 non-success，后续同一 ensure 可重试；完整 Calendar 证明休市时零目标。零成交 row 与空 universe 分别按 FACTS.md、CONTRACT_UNIVERSE.md 验证，不新增 refresh、sync、daily-update 或 force verbs。
 
-## 3. Options Daily Export V1
+## 3. Options Daily Export V2
 
-V1 唯一 view 为 `options_daily`，无 selector。OptionsDailyExport envelope：
+唯一 view 为 `options_daily`，无 selector。OptionsDailyExport envelope：
 
 | Field | Python semantic value / type |
 | --- | --- |
 | dataset | str，固定 tushare_equity_index_options |
-| view / export_schema_version | str options_daily / int 1；不等于 SQLite schema version |
+| view / export_schema_version | str options_daily / int 2；不等于 SQLite schema version |
 | scope | OptionsDailyScope，product_codes 为 sorted unique product sequence |
 | window | start_date / end_date 为 request 对应 datetime.date |
 | coverage | 固定目标的 CoverageResult |
@@ -64,7 +64,8 @@ OptionsDailyRow 合并成功时保留的合法 Instrument metadata 与 daily fac
 | per_unit, opt_multiplier, strike | finite positive float |
 | list_date, delist_date, expiry, last_exercise_date, trade_date | datetime.date |
 | last_delivery_date | datetime.date 或 None，Source 合法缺席 |
-| pre_settle, pre_close, close, settle | finite float |
+| pre_close | finite float 或 None；仅上市首日 Source 合法缺席 |
+| pre_settle, close, settle | finite float |
 | open, high, low | finite float 或 None；只在 Source volume=amount=0 时允许个别 None，实际零保留 |
 | volume, amount, open_interest | finite non-negative float |
 
@@ -79,3 +80,5 @@ Coverage、Records 和关联成功时保留的合法 metadata/completeness basis
 Tushare execution 与 credential / client / shared limiter 遵循 [Provider Runtime authority](../../providers/TUSHARE.md)，本 Dataset 不自行实现 provider initialization 或请求异常转换。Factory / read-only calls 不解析 credential、不创建 client；必需但缺失时在对应 Source request 前 OperationError，完整 Calendar 且全 success 目标无需 token。
 
 本 Dataset composition 自有 opt_basic/opt_daily adapter 与 data/ 中唯一 SQLite，adapter 通过共享 Executor 执行 provider 请求，Calendar 只经 public namespace。不增加 Index/Futures runtime dependency。Filename、package wiring、schema、事务/batching 与 tests implementation 由 reconciliation 记录，不重新决定本轮语义；HTTP、Research integration、migration、refresh/TTL/force 均未实现。
+
+V2 在 V1 字段基础上允许 pre_close 为 float 或 None，仅限 FACTS 声明的上市首日合法缺席；其他字段及完整性不变。旧缓存的有限数值保持可读，不改写已成功 facts。

@@ -2,8 +2,11 @@
 
 import argparse
 import json
+import logging
 import re
 import sys
+from collections.abc import Iterator
+from contextlib import contextmanager
 from dataclasses import asdict
 from datetime import date
 from pathlib import Path
@@ -35,6 +38,13 @@ def strict_date(value: str) -> date:
 
 def add_parser(subparsers: argparse._SubParsersAction) -> None:
     parser = subparsers.add_parser("datalake", help="Use DataLake Dataset services.")
+    parser.add_argument(
+        "--log-level",
+        choices=("DEBUG", "INFO", "WARNING", "ERROR"),
+        default="INFO",
+        help="DataLake stderr/file log detail.",
+    )
+    parser.add_argument("--log-file", type=Path, help="Optional UTF-8 diagnostic log file.")
     operations = parser.add_subparsers(dest="datalake_command", required=True)
     operations.add_parser("list", help="List supported Dataset IDs.")
     for operation in ("coverage", "ensure", "export"):
@@ -62,7 +72,37 @@ def _json_date(value: object) -> str:
     raise TypeError("Unsupported export value")
 
 
+@contextmanager
+def _logging(args: argparse.Namespace) -> Iterator[None]:
+    logger = logging.getLogger("data_lake")
+    old = logger.handlers[:], logger.level, logger.propagate
+    handlers: list[logging.Handler] = [logging.StreamHandler(sys.stderr)]
+    try:
+        if getattr(args, "log_file", None) is not None:
+            handlers.append(logging.FileHandler(args.log_file, encoding="utf-8"))
+        formatter = logging.Formatter("%(asctime)s %(levelname)s %(name)s %(message)s")
+        for handler in handlers:
+            handler.setFormatter(formatter)
+        logger.handlers = handlers
+        logger.setLevel(getattr(args, "log_level", "INFO"))
+        logger.propagate = False
+        yield
+    finally:
+        logger.handlers, logger.level, logger.propagate = old
+        for handler in handlers:
+            handler.close()
+
+
 def run(args: argparse.Namespace) -> int:
+    try:
+        with _logging(args):
+            return _run(args)
+    except OSError:
+        print("Diagnostic log file could not be opened", file=sys.stderr)
+        return 1
+
+
+def _run(args: argparse.Namespace) -> int:
     if args.datalake_command == "list":
         print("\n".join(DATASETS))
         return 0

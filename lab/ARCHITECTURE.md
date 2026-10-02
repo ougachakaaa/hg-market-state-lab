@@ -86,6 +86,8 @@ Summary 展示 service 返回的计数与 complete，不根据 records 数量重
 
 ### Export file delivery
 
+`lab datalake --log-level {DEBUG,INFO,WARNING,ERROR} --log-file <path> <operation> ...` 的日志选项在 operation 之前，均可省略。默认 INFO stderr；可选文件为 UTF-8 timestamped logs。lab 仅配置 data_lake logger，调用结束后恢复原 handler/level/propagation 并关闭自身 handler；不修改 caller root logging。文件无法打开时返回 exit 1，且不开始 Dataset operation。事件内容与脱敏由 [DataLake diagnostics](../data-lake/DIAGNOSTICS.md) 拥有。
+
 `--output <path>` 必填且仅属于 lab delivery，不传入 Dataset service request。CLI 构造请求、调用 `service.export()`、将 Dataset-owned envelope 序列化为 UTF-8 JSON，再写入 output path；公开日期与 null 按 Dataset contract 序列化，不从 SQL row layout 推导 view。
 
 Terminal 只报告 output path、exported record count 与 coverage summary，不 dump 完整 records。Coverage incomplete 不触发 ensure 或 Source I/O；只要 view 正常生成并成功写入，incomplete 本身不属于 export execution failure，完整性由 envelope 明确表达。写文件失败按 delivery failure 返回，不将其报告为成功导出。

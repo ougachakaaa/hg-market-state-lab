@@ -8,7 +8,6 @@ from pathlib import Path
 from typing import Any
 
 import pytest
-import tushare
 
 from data_lake.datasets.tushare_trade_calendar import _service as calendar
 from data_lake.providers.tushare import _executor
@@ -83,9 +82,9 @@ def test_real_cli_vertical_slice(
 
     monkeypatch.setenv("TUSHARE_TOKEN", "fake")
     monkeypatch.setattr(_executor, "_states", {})
-    monkeypatch.setattr(tushare, "pro_api", lambda token: Client())
+    monkeypatch.setattr(_executor, "create_client", lambda token: Client())
     # This suite tests lifecycle/delegation; real scheduling has a dedicated concurrency suite.
-    monkeypatch.setattr(_executor._State, "start", lambda self: None)
+    monkeypatch.setattr(_executor._State, "start", lambda self: 0.0)
     modules = [calendar] + [
         importlib.import_module(f"data_lake.datasets.{identity}._service") for identity in IDS[1:]
     ]
@@ -115,7 +114,7 @@ def test_real_cli_vertical_slice(
     assert main(["datalake", "export", dataset, *args, "--output", str(output)]) == 0
     view = json.loads(output.read_text(encoding="utf-8"))
     assert view["dataset"] == dataset and view["coverage"]["complete"] is True
-    assert view["records"] and view["export_schema_version"] == 1
+    assert view["records"] and view["export_schema_version"] == (2 if dataset in IDS[2:] else 1)
     assert calls == calls_before
     assert {path.name: path.read_bytes() for path in tmp_path.glob("*.sqlite3")} == state_before
 

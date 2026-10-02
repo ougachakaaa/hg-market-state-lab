@@ -56,7 +56,7 @@ class FuturesDailyRow:
     trade_date: date
     multiplier: float
     per_unit: float
-    pre_close: float
+    pre_close: float | None
     pre_settle: float
     open: float
     high: float
@@ -68,7 +68,7 @@ class FuturesDailyRow:
     volume: float
     amount: float
     open_interest: float
-    open_interest_change: float
+    open_interest_change: float | None
     delivery_settlement_price: float | None
 
 

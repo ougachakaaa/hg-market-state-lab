@@ -76,7 +76,7 @@ def project(
     return FuturesDailyExport(
         DATASET,
         "futures_daily",
-        1,
+        2,
         FuturesDailyScope(tuple(request.product_codes)),
         DailyWindow(request.start_date, request.end_date),
         coverage,
