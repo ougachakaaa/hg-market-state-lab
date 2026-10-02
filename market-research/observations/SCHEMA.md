@@ -12,7 +12,7 @@
 | Business Key / Canonicalization | Normalized business inputs 的确定性构成、等价表达的归一化、必须区分的输入变化、排除的 execution / provenance metadata；与 [framework semantic identity / lookup boundary](ARCHITECTURE.md#business-identity-与-invocation-lifecycle) 的对应关系，并遵守其 [deferred evolution constraints](ARCHITECTURE.md#explicitly-deferred-decisions)。 |
 | Population | 被观察的对象集合、选择范围与 eligibility；由本 Observation 拥有，不留给 Study 重定义。 |
 | Grain | 每个 empirical unit / record 代表什么，以及适用的唯一性关系。 |
-| Upstream Facts | 实际消费的 DataLake / Snapshot public facts、canonical owner、required capability 与 dependency gaps。 |
+| Upstream Facts | 按 [UPSTREAM policy](UPSTREAM.md) 明确 required empirical facts、canonical semantic owner、已审查的 DataLake public capability、selected upstream boundary / exact public service contract、failure semantics 与 capability gaps。选 DataLake 时证明 public semantics sufficient；只有 insufficient 时才明确其理由、selected Snapshot Product 与 exact public request / result contract，不需 DataLake-backed authority 重复排除 Snapshot。 |
 | Derivation | 从 upstream facts 到 empirical output 的确定性构造、公式、业务变换及单位；不定义 statistical interpretation。 |
 | Validity / Missingness | 有效性、缺失、排除与 failure semantics，包括它们怎样影响 Artifact 可消费性；不静默补值或改变 population。 |
 | Artifact Contract | 供 consumer 使用的 semantic shape、字段 / 单位 / 关系、identity 可定位方式、所需 provenance 与 complete 可消费条件；实例化 [framework completeness / publication boundary](ARCHITECTURE.md#completeness-与-public-boundary)，不暴露 SQLite layout。 |
@@ -25,7 +25,7 @@
 ## Cross-area consistency
 
 - Purpose、Inputs、Population 与 Grain 能确定“用户要求观察什么”；canonicalization 不合并不同业务请求，也不把等价表达变成不同业务请求。
-- Derivation 仅依赖已声明的 public upstream facts 和业务输入；Validity / Missingness 与 Artifact completeness 一致，failed / partial persistence 不被描述为 complete。
+- Derivation 仅依赖已声明 public facts 与 inputs；选定 contract 满足 Upstream policy，runtime failure 不触发来源替换，provenance 只经合法 public boundary 获取。Validity / Missingness 与 Artifact completeness 一致，failed / partial persistence 不被描述为 complete。
 - Artifact Contract 足以支持独立消费和跨 Study reuse，且不混入 Analysis / Study Evidence semantics。Execution provenance 与 business key 分开表达。
 - Acceptance 覆盖重复 invocation 复用 complete Artifact、未完成请求不满足 key、consumer 不进入 internal persistence 等 framework invariants。
 - Refresh / invalidation 和 definition evolution 遵守 [deferred decisions](ARCHITECTURE.md#explicitly-deferred-decisions)，不为填满 schema 自行决定。

@@ -69,11 +69,9 @@ Observation runtime SQLite 文件不应进入 Git。本轮不创建 runtime data
 
 ## Upstream dependency boundary
 
-Observation 可以消费 DataLake public Application Service 或 Market Snapshot 明确支持的 public application / product result。共享 Python environment 不授予跨模块内部访问权。
+Observation 采用 DataLake-first **design-time capability selection**：DataLake public semantic contract 足够时必须使用其 Dataset public Application Service；只有 semantic capability insufficient 才选择明确的 Market Snapshot public Product / Application boundary。Research（包括所有 Observation）绝不直接依赖 Tushare 或其他 external market-data provider，不能访问 upstream internals；共享 Python runtime 不授予内部依赖权限。
 
-不得依赖 Source / Raw internals、private Preparation、upstream persistence、Dataset SQLite、Snapshot SQLite、`backend-api`、FastAPI DTO 或 frontend types，也不得通过 CLI / JSON export 反向获取 Python semantic result。Upstream fact semantics 继续由对应 canonical owner 拥有。
-
-若 concrete Observation 需要尚不存在的 upstream capability，应在其 authority 记录 dependency gap，再与 owning upstream authority reconciliation；不得穿透 upstream boundary 作为稳定方案。本 framework 不承诺具体 Dataset / Snapshot integration 已就绪。
+详细 sufficiency / selection、runtime failure 不换源、multi-upstream ownership、gap escalation、execution 与 provenance 规则唯一归 [UPSTREAM.md](UPSTREAM.md)。具体 upstream facts 继续由选定 canonical owner 拥有；本 framework 不承诺 runtime integration 已就绪。
 
 ## Explicitly deferred decisions
 
@@ -88,6 +86,6 @@ Observation 可以消费 DataLake public Application Service 或 Market Snapshot
 
 ## Navigation 与 non-goals
 
-从本文件进入 [Schema](SCHEMA.md) 确认 concrete semantic areas，再按 [Authoring](AUTHORING.md) 锁定设计，沿实际所需 entry 读取 specialized / upstream authority：[cffex_option_expiry_universe](cffex_option_expiry_universe/ARCHITECTURE.md)、[cffex_option_expiry_dte_chain](cffex_option_expiry_dte_chain/ARCHITECTURE.md)。具体规则由各 entry / 专题拥有，本 framework 不预设 implementation topology，不创建 catalog。
+从本文件先进入 [Upstream policy](UPSTREAM.md)，再按 [Schema](SCHEMA.md) / [Authoring](AUTHORING.md) 锁定 concrete semantics，沿实际所需 entry 读取必要 upstream authority：[cffex_option_expiry_universe](cffex_option_expiry_universe/ARCHITECTURE.md)、[cffex_option_expiry_dte_chain](cffex_option_expiry_dte_chain/ARCHITECTURE.md)。具体规则由各 entry / 专题拥有，本 framework 不预设 implementation topology，不创建 catalog。
 
 不创建 generic registry、plugin system、Research Repository、Experiment Engine、DAG、scheduler、executor、cache、refresh engine、HTTP API、Web UI、Observation CLI 或 automatic migration。Analysis 的当前 ownership 与 deferred reuse model 见 [Study Schema](../studies/SCHEMA.md)；实现 / 测试差异见 [implementation reconciliation](../IMPLEMENTATION_RECONCILIATION.md)。

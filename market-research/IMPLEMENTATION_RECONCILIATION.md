@@ -2,7 +2,7 @@
 
 本文件记录 Observation-first authority 更新的基线、implementation / test drift 与交接状态，不拥有新的业务语义。入口见 [module architecture](ARCHITECTURE.md)；当前 contracts 分别见 [Observation authority](observations/ARCHITECTURE.md)、[Study Schema](studies/SCHEMA.md)、[Implementation Contract](studies/IMPLEMENTATION.md)、[Compatibility](studies/COMPATIBILITY.md) 与 [Research UI](ui/ARCHITECTURE.md)。
 
-下文各轮记录保留历史基线与当时验证结果；首个 Observation 的落位见 [首轮 concrete 记录](#首个-concrete-observation-authority-落位)，当前 workflow / 第二个 Observation / 首个 Study 的状态见 [本轮 workflow reconciliation](#observation-driven-study-authority-reconciliation)。历史测试结果不代表本 worktree 已验证。
+下文各轮记录保留历史基线与当时验证结果；首个 Observation 的落位见 [首轮 concrete 记录](#首个-concrete-observation-authority-落位)，workflow / 第二个 Observation / 首个 Study 见 [workflow reconciliation](#observation-driven-study-authority-reconciliation)，当前 upstream selection policy 与检查见 [本轮 upstream reconciliation](#observation-upstream-dependency-policy-reconciliation)。历史测试结果不代表本 worktree 已验证。
 
 ## Baseline 与本次边界
 
@@ -173,3 +173,23 @@ Semantic review 沿 request → run identity → complete Universe → materiali
 
 - `poetry run pytest market-snapshot/tests/test_authority_topology.py -q`
 - `poetry run pytest market-research/tests/test_study_authority_topology.py -q`
+
+## Observation Upstream Dependency policy reconciliation
+
+本轮基线为 `754758a8633ecc6c5d8adc4c5ff16d5bd3dfea0b`，codex/observation 分支开始时工作区干净。只新增 [UPSTREAM.md](observations/UPSTREAM.md)，最小更新 Observation architecture / Authoring / Schema、两个 concrete entry、module architecture / AGENTS 与本记录，共九份 authority Markdown（1 new / 8 modified）。未改变 Study business semantics、两个 Observation inputs / key / population / grain / derivation / Artifact / completeness，未修改 implementation、tests、DataLake / Snapshot、SQLite、CLI / HTTP、root project / lock；未创建 commit / push。
+
+### Canonical policy 与 concrete review
+
+Detailed upstream policy 唯一归 UPSTREAM：DataLake-first 是 design-time semantic capability priority，不是 runtime try / fallback。Public facts / completeness 必须完整、确定、可验证，且不能实质重做已由 Snapshot Product 拥有的 canonical deterministic semantics；不能以 rows 恰含字段、cache missing、runtime implementation 未就绪或 execution failure 判断 semantic insufficiency。
+
+DataLake sufficient 必须绑定 exact Dataset public service；insufficient 才记原因、检查 Snapshot catalog 并选明确 public Product request / result / failure contract。两侧没有足够 public capability 时记录 Upstream Capability Gap，按 source facts / prepared Product nature 交 DataLake / Snapshot owner，阻止 implementation readiness。Runtime failure 两侧均不换源，不 silent substitute / null-fill；multi-upstream 逐 fact 指定 canonical owner。Research / Observation absolute external-provider prohibition 与 public-only provenance 已落位，不创建 source / fallback abstraction。
+
+两份 existing concrete entries 只增加 policy reference 与已有 public sufficiency proof：Universe 继续只依赖 tushare_equity_index_options public service；DTE-chain 继续依赖 tushare_trade_calendar 与 tushare_equity_index_options public services。两者均不需要 substantive business change，不选择 Snapshot，不改变 date fallback / observed-window definition；DATE_RESOLUTION 与两个 ARTIFACT files 均保持原样。
+
+Observation upstream policy 已具备 **Authority Complete** 条件，可以进入 Observation implementation architecture design；实际 producer / public invocation / persistence design 仍未开始。既有 Study Dependency Reconciled / Implementation Ready 状态不因本轮 policy 更新而改变。
+
+### Validation 与 completion audit
+
+按附件编号审查 policy requirements：stable public boundaries、DataLake-first / sufficiency、Snapshot selection、双向 failure 禁止换源、multi-upstream、gap escalation、provider prohibition、authoring / schema、两侧 execution / provenance、specialized topology、concrete / module reconciliation 和 non-goals 均由上述 owners 表达。检查附件十项 reconciliation invariants 与完整 graph；全部 Research authority 的 28 份 Markdown 中 272 个 local links、42 个 anchors 有效，UPSTREAM 可分别从 root ARCHITECTURE、Research ARCHITECTURE 与 Research AGENTS 到达。Provider dependency 扫描未发现直接依赖授权；禁止示例、公开 Dataset identity 与 upstream failure 描述不构成 provider integration。
+
+本轮找到可用 Python 3.13，并在 repository root 建立 canonical Poetry `.venv`、按现有 lock 安装依赖；root project / lock 未改变。现有 repository authority topology suite 为 13 passed，Research Study authority topology suite 为 12 passed。两套旧 tests 不完整覆盖新 policy，故另行核对 links / anchors、reachability、concrete inputs / key / population / grain 保持不变及完整差异。`git diff --check` 通过；范围仅为上述九份 authority Markdown。

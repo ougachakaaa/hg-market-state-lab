@@ -10,14 +10,14 @@
 
 | 任务 | 阅读路径 |
 | --- | --- |
-| Observation design / review | [Observation architecture](observations/ARCHITECTURE.md) → [Authoring](observations/AUTHORING.md) / [Schema](observations/SCHEMA.md) → specific Observation entry → 实际所需 upstream authority。 |
+| Observation design / review | [Observation architecture](observations/ARCHITECTURE.md) → [Upstream policy](observations/UPSTREAM.md) → [Authoring](observations/AUTHORING.md) / [Schema](observations/SCHEMA.md) → specific Observation entry → 实际所需 upstream authority。 |
 | 新 Study | [Study Authoring](studies/AUTHORING.md) / [Schema](studies/SCHEMA.md) → [Workflow](studies/WORKFLOW.md) → 仅实际消费的 Observation authority → specific Study entry；创建布局按 [Skeleton](studies/SKELETON.md)。 |
 | Study implementation | Specific Study authority → consumed Artifact contracts → [Implementation Package Contract](studies/IMPLEMENTATION.md) → 同名 source package；从 implementation 进入时先读 init docstring 指向的 canonical authority。 |
 | Study review / historical reconciliation | 按需 [Review](studies/REVIEW.md) / [Compatibility](studies/COMPATIBILITY.md)，再读触发范围涉及的 specific authority；不自动迁移。 |
 | CLI / config / output | [Research UI authority](ui/ARCHITECTURE.md) → 其 configuration contract；具体参数与用法只读对应 Study authority。 |
 | 当前 implementation / test drift | [Implementation reconciliation](IMPLEMENTATION_RECONCILIATION.md)。 |
 
-需要 upstream facts 时，沿实际 Observation dependency 进入 [DataLake architecture](../data-lake/ARCHITECTURE.md) / [catalog](../data-lake/DATASETS.md)，或 [Snapshot architecture](../market-snapshot/ARCHITECTURE.md) / [catalog](../market-snapshot/CAPABILITIES.md)，只选实际 public contract。不默认加载 sibling products。
+Observation upstream design 先按 Upstream policy 审查 [DataLake architecture](../data-lake/ARCHITECTURE.md) / [catalog](../data-lake/DATASETS.md) 的实际 public Dataset contract；只有 semantic capability insufficient 才进入 [Snapshot architecture](../market-snapshot/ARCHITECTURE.md) / [catalog](../market-snapshot/CAPABILITIES.md) 选择 explicit public Product。不默认加载 sibling products，不以 runtime failure 换源。
 
 不得创建 Study 时扫描所有 Observations，不得为寻找可复用逻辑读取 sibling Studies、其 evidence、historical shared semantics 或 implementation。未知所需 Observation owner 时显式记录 capability gap，独立处理 Observation design，不在 Study-local Method 临时定义。
 
@@ -25,7 +25,7 @@
 
 - Python dependency installation、resolution 与 tooling 从 repository root 使用唯一 Poetry environment；module-local project、lock 或 virtual environment 均不创建。
 - Authority / data meaning / output / responsibility / workflow changes 先落位 narrowest canonical owner，再修改实现。发现上下层或代码 drift 时显式 reconciliation，不静默选择语义。
-- Research 只消费 DataLake public Application Service 或 Snapshot public application/product result；不导入 Source / Raw / private Preparation、upstream persistence、Dataset / Snapshot SQLite、backend-api、FastAPI DTO 或 frontend types。缺失 upstream capability 由 owning authority reconciliation。
+- Research 不直接依赖 Tushare / external market-data provider。Observation 按 [Upstream policy](observations/UPSTREAM.md) DataLake-first 选择 public semantic capability，insufficient 时才选明确 Snapshot public Product；不访问 upstream internals、provider credentials / transport、backend-api / FastAPI DTO 或 frontend types。Capability gap 交对应 owner reconciliation，不建立 runtime failover。
 - Scratch 是 disposable exploration，不形成 stable authority、retained capability 或 production dependency。
 - 独立 Observation 的 inputs、key、population、grain、derivation、validity 与 Artifact contract 按其 Schema / Authoring 锁定；Agent 不补全改变业务含义的未决决定。Lifecycle、业务幂等、complete consumption 与一个 SQLite 的 ownership 由 Observation architecture 拥有，Study 不重定义。
 - 新 Study 保留 Skeleton 四文件布局，拥有 user request、required workflow、Observation invocation / composition、Study-local materialized Artifacts 与 optional Analysis / Evidence；Analysis=0、Evidence=0 合法。Observation gap 不授权 Study 实现 Observation；dependencies 就绪后才进入实际 Study implementation。

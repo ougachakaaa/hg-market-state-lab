@@ -51,7 +51,7 @@ Options 自己通过 [Calendar prerequisite](../../../data-lake/datasets/tushare
 
 Incomplete coverage、ensure failure、Calendar prerequisite failure、credential / provider / persistence / integrity failure 或非法 view 使 invocation 失败。Cache missing 不等于 empty universe，不从已成功子集提取 partial expiries 并发布 complete。完整窗口没有 matching rows 时，empty expiry universe 是合法 complete result；完整 Calendar 证明零开市日、Options 零目标 complete 的情况同样适用。
 
-不得访问 opt_basic adapter、Repository、SQLite、private contract-universe persistence、Tushare transport 或 CLI JSON。现有 public contract 已足以证明本 observed historical universe，未发现 DataLake capability gap；不新增 API，不宣称 Observation runtime 已存在。
+遵守 [Observation upstream policy](../UPSTREAM.md)：已审查的 Options public contract 以 entire-window completeness、同一 snapshot 的合法 expiry rows，完整、确定、可验证地证明本 observed historical universe，不需重新实现 Snapshot-owned prepared Product semantics，因此 DataLake 是 design-time 选定的 canonical upstream。运行失败按上述 validity 使 invocation 失败，不切换来源。未发现 DataLake capability gap；不新增 API，不宣称 Observation runtime 已存在。
 
 ## Persistence、limitations 与 semantic ownership
 
