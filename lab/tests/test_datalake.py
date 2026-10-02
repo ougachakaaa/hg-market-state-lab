@@ -83,7 +83,7 @@ def test_list_never_creates_service(
 
     monkeypatch.setattr(datalake, "create_service", forbidden)
     assert cli.main(["datalake", "list"]) == 0
-    assert capsys.readouterr().out.strip() == "tushare_trade_calendar"
+    assert capsys.readouterr().out.strip().splitlines() == list(datalake.DATASETS)
 
 
 def test_coverage_constructs_semantic_range_and_accepts_incomplete(

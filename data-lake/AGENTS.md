@@ -41,11 +41,11 @@ git diff --check
 
 Implementation 应随具体设计更新本政策中的验证命令，从 repository root 按受影响模块范围验证。检查 public request/result/view、coverage 互斥计数、ensure 逐 unit completeness 与原子写入，以及 coverage/export 无 Source I/O、无 SQLite mutation。CLI integration 同时验证 owning Dataset contract 与 lab delivery/exit-code behavior；不以共享 runtime 替代 boundary 检查。提交前审阅完整 diff，跨模块 contract 变更同时执行 producer 与 consumer 的相关检查。
 
-Shared core/module tests 位于 `data-lake/tests/`，Calendar tests 位于 `data-lake/datasets/tushare_trade_calendar/tests/`，lab consumer tests 归 `lab/tests/`。以下命令递归覆盖 DataLake 的 source/tests 与所有已登记 Dataset；installed import 检查必须在 Poetry install 后执行，不能只依赖 pytest pythonpath。从 repository root 使用根 Poetry environment 执行：
+Shared core/module tests 位于 `data-lake/tests/`，具体 Dataset tests colocate 于 `data-lake/datasets/<dataset-id>/tests/`，provider tests 位于 `data-lake/tests/`，lab consumer tests 归 `lab/tests/`。以下命令递归覆盖 DataLake 的 source/tests 与所有已登记 Dataset；installed import 检查必须在 Poetry install 后执行，不能只依赖 pytest pythonpath。从 repository root 使用根 Poetry environment 执行：
 
 ```bash
 poetry run python -c "import data_lake"
-poetry run python -c "import data_lake.datasets.tushare_trade_calendar"
+poetry run python -c "import data_lake.datasets.tushare_trade_calendar, data_lake.datasets.tushare_index_daily, data_lake.datasets.tushare_equity_index_futures, data_lake.datasets.tushare_equity_index_options"
 poetry run pytest data-lake
 poetry run pytest lab/tests
 poetry run ruff check data-lake lab

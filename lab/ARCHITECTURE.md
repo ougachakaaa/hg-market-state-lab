@@ -50,7 +50,7 @@ lab
 
 `lab datalake` 只负责 command topology、Dataset selection、CLI parsing、semantic request construction、public service invocation、human-readable summary、exit-code mapping 与 export JSON file delivery。Window semantics、FetchUnit generation、coverage calculation、Source batching、completeness、export view fields、SQLite persistence 与 Tushare semantics 均由 DataLake / owning Dataset 拥有。
 
-`list` 只列目标 contract 正式支持的 canonical Dataset IDs，第一版仅 `tushare_trade_calendar`；不访问 Source 或缓存，不通过 filesystem scanning 推导支持范围。使用 explicit wiring，不引入 generic plugin / dynamic registry framework。Dataset navigation 见 [DataLake catalog](../data-lake/DATASETS.md)；public semantic request/view 见 [calendar SERVICE.md](../data-lake/datasets/tushare_trade_calendar/SERVICE.md)，CLI arguments 与 parsing 由本文件拥有，不复制 Dataset 字段模型。
+`list` 只列目标 contract 正式支持的 canonical Dataset IDs，当前支持 `tushare_trade_calendar`、`tushare_index_daily`、`tushare_equity_index_futures` 与 `tushare_equity_index_options`；不访问 Source 或缓存，不通过 filesystem scanning 推导支持范围。使用 explicit wiring，不引入 generic plugin / dynamic registry framework。Dataset navigation 见 [DataLake catalog](../data-lake/DATASETS.md)；public semantic request/view 见 [calendar SERVICE.md](../data-lake/datasets/tushare_trade_calendar/SERVICE.md)，CLI arguments 与 parsing 由本文件拥有，不复制 Dataset 字段模型。
 
 ### Calendar CLI parsing
 
@@ -65,6 +65,10 @@ lab
 CLI 从 `data_lake.datasets.tushare_trade_calendar` 创建 service 并构造 `TradeCalendarRange`，不传 raw date strings 或 argparse namespace；service 仍负责 semantic validation。CLI 不构造 Scope / FetchUnits、不重算 completeness。Export 必填 `--output` 只属于 delivery，不进入 range；V1 不增加 view selector 或 is_open filter。
 
 可复制的 Bash / PowerShell lifecycle 示例见 [usage guide](README.md)；这些命令直接调用 calendar public service。
+
+### Index / Futures / Options CLI parsing
+
+三个 Dataset 共享必填 `--start-date` / `--end-date`，严格解析 YYYY-MM-DD 为 date。Index 必填 `--index-codes`，使用一个或多个完整 codes；Futures / Options 必填 `--product-codes`，使用一个或多个 canonical products。CLI 分别构造 IndexDailyRange / FuturesDailyRange / OptionsDailyRange，并调用对应 public create_service()；集合规范化、合法性与 prerequisite 由 service 拥有。各命令只接受对应 Dataset 的 selection 参数；export 仍必填 --output，仅用于 UTF-8 JSON file delivery，terminal 只报告 summary。
 
 ### Operation behavior 与 exit codes
 

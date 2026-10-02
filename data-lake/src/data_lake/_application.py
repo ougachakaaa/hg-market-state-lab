@@ -55,7 +55,9 @@ class Core[Request, View: ExportEnvelope]:
         snapshot = self._repository.snapshot(units)
         for cached in snapshot.successful:
             try:
-                self._check_complete(cached.unit, UnitRecords(cached.records, cached.instruments))
+                self._check_complete(
+                    cached.unit, UnitRecords(cached.records, cached.instruments, cached.basis)
+                )
             except ExecutionFailure as exc:
                 raise OperationError("Successful cache violates Dataset completeness") from exc
         return snapshot

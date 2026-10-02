@@ -1,6 +1,6 @@
 # DataLake implementation reconciliation
 
-本文件集中记录以 commit `8e26a5e64804a19b2228bba0feaf0b157c5ecc3a` 为基准的 implementation reconciliation，不另行定义业务语义。目标 ownership、topology 与依赖方向由 [模块架构](ARCHITECTURE.md) 拥有；公共 domain / application invariants 见 [DOMAIN_MODEL.md](DOMAIN_MODEL.md) 与 [APPLICATION.md](APPLICATION.md)；具体 Dataset 经 [catalog](DATASETS.md) 进入 architecture 与 SERVICE。
+本文件集中记录 DataLake implementation reconciliation；当前实现状态以第 8 节（基于 `ff53cec755e6868ae90b02cf1f19bda79cc08aec`）为准，第 1–7 节保留历史 reconciliation/evidence，不代表当前未完成的 gaps。初始记录以 commit `8e26a5e64804a19b2228bba0feaf0b157c5ecc3a` 为基准，不另行定义业务语义。目标 ownership、topology 与依赖方向由 [模块架构](ARCHITECTURE.md) 拥有；公共 domain / application invariants 见 [DOMAIN_MODEL.md](DOMAIN_MODEL.md) 与 [APPLICATION.md](APPLICATION.md)；具体 Dataset 经 [catalog](DATASETS.md) 进入 architecture 与 SERVICE。
 
 ## 1. Source roots 与稳定 public namespace
 
@@ -80,3 +80,57 @@ Scope / Window / FetchUnit / Record、逐日 completeness、coverage / ensure / 
 本轮仅新增 provider authority 并协调模块、政策、公共 Application、四个 Dataset architecture / SERVICE 与本 reconciliation；不创建 Executor / limiter / source directories，不修改 Python source/tests、root tooling、CLI、schema 或 runtime data，不调用真实 provider 或操作 legacy cache。Provider execution 形成独立 stable concern，单份专题通过模块入口与 Dataset Source entry 按需发现；不预建 provider catalog，不把详细 contract 复制到上层。
 
 本轮验证：从 repository root 执行现有 authority topology 13 passed、DataLake boundary 5 passed。补充只读检查确认 provider authority、公共专题、reconciliation 与四个 Dataset architecture / SERVICE 从根入口可达，共 94 份可达文档；受影响链接合法，本轮没有新增或修改 anchor reference。全部十三个新增/修改路径均为 Markdown，新增文件 whitespace 与 `git diff --check` 通过，已审阅包含新 authority 的完整 diff；没有剩余上下层 semantic conflict。这些检查验证文档 topology 与现有实现边界，不证明共享 Executor / limiter 已实现或其 runtime 行为已通过验证。
+
+
+## 8. 四个 Dataset 的集中 implementation reconciliation
+
+本次为 implementation task，基于 `ff53cec755e6868ae90b02cf1f19bda79cc08aec`，未重新决定 Scope、Window、FetchUnit、completeness、provider 或 export semantics。第 5–7 节所述缺少 runtime、provider execution、CLI registration、package/tooling 与 topology registration 的 gaps 已关闭。
+
+### 当前 runtime 与 delivery
+
+| Dataset / public namespace 后缀 | Public service | FetchUnit | CLI operations |
+| --- | --- | --- | --- |
+| tushare_trade_calendar | TradeCalendarService | exchange / cal_date | coverage / ensure / export |
+| tushare_index_daily | IndexDailyService | index_code / trade_date | coverage / ensure / export |
+| tushare_equity_index_futures | FuturesDailyService | product_code / trade_date | coverage / ensure / export |
+| tushare_equity_index_options | OptionsDailyService | product_code / trade_date | coverage / ensure / export |
+
+每个 package 在 owning Dataset 的 src/data_lake/datasets/<id>/ 下发布 SERVICE 规定的 Range、Row/Record、Export、Service 与 create_service()；public aliases 显式 re-export，不使用 __all__。根 Poetry、pytest、Ruff、mypy 显式登记全部 Dataset roots；installed isolated interpreter 验证四个 public namespaces，不借 pytest pythonpath。标准 namespace wiring 保持不变，未创建 registry/manager。根 tooling 同步移除已无 Python source 的 market-snapshot/scripts registration，避免默认 mypy 在扫描空目录时提前退出。
+
+lab explicit wiring 登记四个 Dataset，selection parsing 按 [lab authority](../lab/ARCHITECTURE.md)；CLI 只通过 public service 构造 semantic request、读取结果和交付文件。无 SQLite/adapter/Executor access、coverage 重算、token/db arguments 或 terminal record dump。使用示例见 [lab usage](../lab/README.md)。
+
+### Provider execution 与 Dataset composition
+
+`data_lake.providers.tushare` 的 lazy Executor 集中解析 environment 优先 / market-snapshot/.env fallback credential，创建 SDK client，并按 process/credential 复用 execution state。线程同步的 monotonic request-start schedule 保证 120ms 平滑间隔；response completion 不持有 limiter lock，失败请求计入 starts，无自动 retry。Initialization 转 OperationError，SDK request failures 转 safe ExecutionFailure(source_request)，response 原样交给 adapter。Calendar 已移出 token/client/SDK error conversion，仅保留 trade_cal params、batching、partition 与 facts validation。
+
+三个 consumer 每次 operation 固定 Calendar public export 的完整交易日 view；Index 使用 SSE，Futures/Options 使用 CFFEX，只有 ensure 在 prerequisite incomplete 时调用 Calendar ensure。未知目标为带 Calendar context 的 OperationError，不先写自己的 pending units。目标为空或全 success 时不初始化 Source。
+
+Index 在需要的 selected units 上复用合法本地 index metadata，缺失时显式查询 provider 声明的 markets 的 index_basic；code suffix 不作为 market 推断依据。逐 index-day 查询 index_daily 并验证 exactly-one，保留 Source units，无派生指标。
+
+Futures/Options 有 attempts 时取得并冻结完整 catalog；offset/limit pagination 继续到明确空 terminal page，检测重复/不前进 page、重复 metadata 与无法证明 exhaustion 的响应，不以短页或经验数量声称完整。Daily 同样检查分页 exhaustion，同 invocation 的同日响应在产品间复用；Futures 只用合法 type-2 metadata 排除连续/主力。可确认属于其他产品的 metadata defect 隔离到对应产品。逐 product-day 验证 observed multiset 与 lifecycle expected 恰一致；duplicate、extra、missing 或非法 facts 均使整个 unit non-success，零 expected 仍须确认空 observed。
+
+### Persistence 与 snapshot
+
+每个 Dataset 默认只解析自己的 data/<id>.sqlite3。Shared Repository 的成功事务原子保存 Records、本地 instrument association、Dataset-owned JSON completeness basis 与 success metadata；Futures/Options basis 保留 invocation 中该产品完整合法 catalog，Records 保留当次 metadata。后续 catalog 不能替换旧成功依据；export 使用保存的 facts。Index basis 保留合法 instrument metadata，后续日期可复用。
+
+Internal SQLite generation 现为 2，增加 nullable basis storage；旧 generation 明确报 incompatible，不进行自动迁移、fallback 或双写。没有操作真实旧 SQLite。Migration 仍 out of scope；正常新建缓存和本次隔离 runtime 已验证。
+
+Coverage/export 通过 read-only SQLite committed snapshot 检查成功 completeness，无缓存不创建库；export 的 coverage、records 与 metadata 来自同一个 snapshot。失败事务回滚整个产品日的 records/instruments/basis，不暴露 partial chain。真实 runtime state 不进入 Git。
+
+### 验证 evidence 与剩余边界
+
+隔离测试覆盖 Calendar、三个 consumers、credential lazy lifecycle、共享并发 schedule、失败无 retry、metadata reuse、catalog exhaustion、ignored offset、duplicate/extra/missing、完整 chain 与缺 expiry/strike/leg、零成交 nullable prices、空 expected、partial counters、read-only bytes、snapshot、旧成功 basis preservation 和 transaction rollback。四个 Dataset 均通过 fake SDK 的 CLI → public service → Calendar/source/owned persistence → export 全链路验证。
+
+使用本地有效凭据额外执行 2026-09-30 的最小真实 CLI smoke，所有 SQLite/export 位于临时目录：Calendar SSE 1 条、Index 000300.SH 1 条、Futures IF 4 条、Options IO 236 条；四者 ensure/coverage/export 均 exit 0 / complete=true，临时文件已随测试清理。该单日证据不构成 provider 永久可用、catalog 数量或 freshness 保证。
+
+Repository root 验证结果：
+
+- poetry install 与 -I isolated public import 成功，四个 namespaces 可安装、可 import。
+- poetry run pytest -q：928 passed、2 skipped；包含 DataLake、lab、architecture/topology 和其余 producer/consumer regression。现有 FastAPI/httpx deprecation warning 不来自本次改动。
+- poetry run ruff check data-lake lab backend-api market-snapshot/tests/test_authority_topology.py：通过。
+- poetry run mypy data-lake lab backend-api：69 files 通过；poetry run mypy market-snapshot/src market-snapshot/tests market-research：111 files 通过。分组保持独立 test-support namespaces，未排除或削弱任何相关检查。
+- git diff --check、所有新增文件 UTF-8 / whitespace / Python syntax 检查通过；已审阅包含新增 source/tests 的完整改动。
+
+额外尝试默认整仓 mypy 时，原有 market-snapshot/tests/support 与 backend-api/tests/support 同名 module 冲突仍存在；ruff check . 仍报告未修改的 web-ui/scripts/export_contracts.py import ordering。两者是既有整仓 tooling 问题，相关范围的上述检查已全部通过；没有为了 green 删除 boundary 或跳过相关 tests。
+
+没有阻止既定四个 Dataset 正常新建缓存使用的 implementation gap。Research/Modeling/Snapshot/HTTP/UI integration、refresh/force/TTL、Source correction、legacy migration、cross-process limiter 与通用 registry/workflow 继续按任务边界 deferred。

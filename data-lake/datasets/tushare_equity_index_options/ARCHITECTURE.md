@@ -8,7 +8,7 @@ Canonical identity 为 `tushare_equity_index_options`，沿用 Tushare Dataset n
 
 Source provider 为 Tushare，execution authority 为 [providers/TUSHARE.md](../../providers/TUSHARE.md)。本 Dataset adapter 拥有 endpoint / parameters、catalog / daily request strategy、pagination、option chain / product-day partition 与 facts normalization；credential、client、限流与 provider request failure conversion 归共享 Provider Runtime，后续实现直接采用该 boundary。
 
-本 bounded context 位于 `datasets/tushare_equity_index_options/`，自治拥有 authority、未来 src/、tests/ 和 data/ 中 exactly one SQLite，共用 repository root 唯一 Python project/environment 与 `data_lake` namespace。本次仅发布 authority，不创建 package、schema、adapter、tests implementation 或 runtime data，也不提供旧名兼容实现；实现差异统一见 [reconciliation](../../IMPLEMENTATION_RECONCILIATION.md)。
+本 bounded context 位于 `datasets/tushare_equity_index_options/`，自治拥有 authority、src/、tests/ 和 data/ 中 exactly one SQLite，共用 repository root 唯一 Python project/environment 与 `data_lake` namespace。不提供旧名兼容实现；实现差异统一见 [reconciliation](../../IMPLEMENTATION_RECONCILIATION.md)。
 
 Instrument 是 Dataset-local 期权合约 catalog。Underlying relationship 通过稳定指数 identity 表达，不依赖 Index/Futures cache 存在，不引用其他库 instrument_id。Index、Futures、Options 始终分别拥有 persistence；没有跨库 FK、global instrument master、internal persistence access 或跨库事务。
 
@@ -26,4 +26,4 @@ Canonical FetchUnit identity 为 `(product_code, trade_date)`，是当日该 pro
 
 唯一跨 Dataset runtime dependency 为 Options → Calendar public Application Service，显式使用 CFFEX；failure / snapshot / ensure 权限进入 TRADING_DAYS.md。Calendar 不反向依赖 Options，不新增 Options → Index/Futures runtime dependency。Public operation family 保持 coverage / ensure / export。
 
-本 Dataset 不生成 IV、moneyness、DTE derived features、option risk premium、Greeks、premium 或 research statistics，不把自行计算的指标伪装为 Source facts。下游通过 public services 组合事实；不消费 Snapshot option-chain product internals/Raw，不通过共享数据库或 CLI JSON 获取数据。CLI/HTTP、Research integration、refresh/force/TTL 是后续独立工作，不重新决定本轮 domain/service contract。
+本 Dataset 不生成 IV、moneyness、DTE derived features、option risk premium、Greeks、premium 或 research statistics，不把自行计算的指标伪装为 Source facts。下游通过 public services 组合事实；不消费 Snapshot option-chain product internals/Raw，不通过共享数据库或 CLI JSON 获取数据。HTTP、Research integration、refresh/force/TTL 是后续独立工作，不重新决定本轮 domain/service contract。

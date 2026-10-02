@@ -49,9 +49,12 @@ def test_datalake_has_no_consumer_dependencies() -> None:
 def test_shared_kernel_has_no_dataset_or_provider_dependencies() -> None:
     assert not list((SOURCE / "data_lake/datasets").rglob("*.py"))
     for path in SOURCE.rglob("*.py"):
+        if "providers" in path.parts:
+            continue
         assert not any(
             name == "data_lake.datasets"
             or name.startswith("data_lake.datasets.")
+            or name.startswith("data_lake.providers")
             or name.split(".")[0] == "tushare"
             for name in imports(path, SOURCE)
         ), path
@@ -68,6 +71,28 @@ def test_datasets_do_not_import_siblings() -> None:
                 name.startswith("data_lake.datasets.")
                 and name != own
                 and not name.startswith(own + ".")
+                and not (
+                    dataset.name
+                    in {
+                        "tushare_index_daily",
+                        "tushare_equity_index_futures",
+                        "tushare_equity_index_options",
+                    }
+                    and name
+                    in {
+                        "data_lake.datasets.tushare_trade_calendar",
+                        *(
+                            f"data_lake.datasets.tushare_trade_calendar.{symbol}"
+                            for symbol in (
+                                "TradeCalendarRange",
+                                "TradeCalendarService",
+                                "TradeCalendarRecord",
+                                "TradeCalendarExport",
+                                "create_service",
+                            )
+                        ),
+                    }
+                )
                 for name in imports(path, source_root)
             ), path
 
@@ -81,7 +106,10 @@ def test_no_consumer_imports_datalake_internals() -> None:
                 continue
             assert not any(
                 name.startswith("data_lake.")
-                and any(part.startswith("_") for part in name.split(".")[1:])
+                and (
+                    any(part.startswith("_") for part in name.split(".")[1:])
+                    or name.startswith("data_lake.providers")
+                )
                 for name in imports(path, source_root)
             ), path
 
@@ -93,6 +121,11 @@ def test_owned_runtime_directories_are_ignored() -> None:
         "data-lake/datasets/tushare_trade_calendar/data/tushare_trade_calendar.sqlite3-wal",
         "data-lake/datasets/tushare_trade_calendar/data/tushare_trade_calendar.sqlite3-shm",
     ]
+    for dataset in DATASETS.iterdir():
+        paths.extend(
+            f"data-lake/datasets/{dataset.name}/data/{dataset.name}.sqlite3{suffix}"
+            for suffix in ("", "-wal", "-shm")
+        )
     result = subprocess.run(
         ["git", "check-ignore", "-z", "--stdin"],
         input="\0".join(paths) + "\0",
@@ -102,3 +135,32 @@ def test_owned_runtime_directories_are_ignored() -> None:
         check=True,
     )
     assert result.stdout.rstrip("\0").split("\0") == paths
+
+
+def test_provider_is_separate_from_kernel_and_dataset_semantics() -> None:
+    for path in SOURCE.rglob("*.py"):
+        names = imports(path, SOURCE)
+        if "providers" in path.parts:
+            assert all(
+                not name.startswith("data_lake.")
+                or name.startswith("data_lake.providers.")
+                or name
+                in {
+                    "data_lake._domain",
+                    "data_lake._domain.ExecutionFailure",
+                    "data_lake.results",
+                    "data_lake.results.OperationError",
+                }
+                for name in names
+            ), path
+        else:
+            assert not any(
+                name.startswith("data_lake.providers") or name == "tushare" for name in names
+            ), path
+    for source_root in DATASETS.glob("*/src"):
+        for path in source_root.rglob("*.py"):
+            names = imports(path, source_root)
+            assert not any(name.split(".")[0] in {"tushare", "dotenv"} for name in names), path
+            assert "TUSHARE_TOKEN" not in path.read_text(), path
+            if any(name.startswith("data_lake.providers") for name in names):
+                assert path.name in {"_source.py", "_service.py"}, path

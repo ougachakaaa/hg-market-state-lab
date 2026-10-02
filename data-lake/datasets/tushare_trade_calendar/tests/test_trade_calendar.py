@@ -10,7 +10,7 @@ import pytest
 
 import data_lake
 from data_lake import CoverageResult, EnsureResult, InvalidRequestError, OperationError
-from data_lake._domain import Record, UnitRecords
+from data_lake._domain import ExecutionFailure, Record, UnitRecords
 from data_lake._repository import Repository
 from data_lake._serialization import Json, record_hash
 from data_lake.datasets import tushare_trade_calendar as public
@@ -23,6 +23,7 @@ from data_lake.datasets.tushare_trade_calendar import (
 from data_lake.datasets.tushare_trade_calendar._models import CalendarWindow, TradeCalendarScope
 from data_lake.datasets.tushare_trade_calendar._service import DATASET, _create_service, targets
 from data_lake.datasets.tushare_trade_calendar._source import TradeCalSource
+from data_lake.providers.tushare import _executor
 
 DAY = date(2024, 1, 1)
 REQUEST = TradeCalendarRange("SSE", DAY, date(2024, 1, 3))
@@ -48,6 +49,12 @@ class Frame:
 
 
 class Client:
+    def call(self, endpoint: str, **kwargs: str) -> object:
+        try:
+            return getattr(self, endpoint)(**kwargs)
+        except Exception as exc:
+            raise ExecutionFailure("Tushare provider request failed", "source_request") from exc
+
     def __init__(self) -> None:
         self.rows: object = []
         self.calls: list[dict[str, str]] = []
@@ -151,13 +158,13 @@ def test_legacy_cache_is_untouched_and_never_used_as_fallback(
     assert _create_service(legacy, lambda: TradeCalSource(old_client)).ensure(request).complete
     (legacy_root / "unrelated.sqlite3").write_bytes(b"untouched legacy state")
     before = {
-        path.name: (path.read_bytes(), path.stat().st_mtime_ns)
-        for path in legacy_root.iterdir()
+        path.name: (path.read_bytes(), path.stat().st_mtime_ns) for path in legacy_root.iterdir()
     }
 
     dataset_root = lake / "datasets/tushare_trade_calendar"
     monkeypatch.setattr(
-        _service, "__file__",
+        _service,
+        "__file__",
         str(dataset_root / "src/data_lake/datasets/tushare_trade_calendar/_service.py"),
     )
     client = Client()
@@ -189,8 +196,7 @@ def test_legacy_cache_is_untouched_and_never_used_as_fallback(
     assert cached.export(request).records[0].is_open == 1
     assert len(client.calls) == 1
     assert before == {
-        path.name: (path.read_bytes(), path.stat().st_mtime_ns)
-        for path in legacy_root.iterdir()
+        path.name: (path.read_bytes(), path.stat().st_mtime_ns) for path in legacy_root.iterdir()
     }
 
 
@@ -335,14 +341,14 @@ def test_provider_request_failure_is_safe_unit_result(
     client.error = RuntimeError("private token and provider response")
     result = service.ensure(REQUEST)
     assert result.failed_units == 3
-    assert all(failure.reason == "Tushare trade_cal request failed" for failure in result.failures)
+    assert all(failure.reason == "Tushare provider request failed" for failure in result.failures)
 
 
 def test_missing_credentials_before_mutation(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     monkeypatch.delenv("TUSHARE_TOKEN", raising=False)
-    monkeypatch.setattr(_source, "dotenv_values", lambda _: {})
+    monkeypatch.setattr(_executor, "dotenv_values", lambda _: {})
     repository = Repository(tmp_path / "cache/calendar.sqlite3", DATASET, "tushare")
     service = _create_service(repository, _source.prepare_source)
     with pytest.raises(OperationError, match="credential"):
@@ -358,7 +364,7 @@ def test_cached_ensure_without_token_uses_real_lazy_composition(
     client.rows = [row(), row("20240102"), row("20240103")]
     assert service.ensure(REQUEST).complete
     monkeypatch.delenv("TUSHARE_TOKEN", raising=False)
-    monkeypatch.setattr(_source, "dotenv_values", lambda _: {})
+    monkeypatch.setattr(_executor, "dotenv_values", lambda _: {})
     cached = _create_service(repository, _source.prepare_source)
     assert cached.ensure(REQUEST) == EnsureResult(3, 3, 0, 0, 0, 0, True, ())
 
@@ -389,6 +395,7 @@ def test_environment_precedence_and_snapshot_env_fallback(
     import tushare
 
     calls: list[object] = []
+    monkeypatch.setattr(_executor, "_states", {})
     if environment is None:
         monkeypatch.delenv("TUSHARE_TOKEN", raising=False)
     else:
@@ -398,7 +405,7 @@ def test_environment_precedence_and_snapshot_env_fallback(
         calls.append(path)
         return {"TUSHARE_TOKEN": "fallback-token"}
 
-    monkeypatch.setattr(_source, "dotenv_values", dotenv)
+    monkeypatch.setattr(_executor, "dotenv_values", dotenv)
     client = Client()
 
     def pro_api(token: str) -> Client:

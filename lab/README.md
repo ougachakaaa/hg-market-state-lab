@@ -82,6 +82,19 @@ poetry run lab datalake ensure tushare_trade_calendar `
     --exchange SSE --start-date 2024-01-01 --end-date 2024-01-31
 ```
 
+### Index、Futures 与 Options
+
+以下 ensure 命令分别使用指数、期货产品与期权产品 selection；相同参数也适用于 coverage，export 再加必填 --output。
+
+```bash
+poetry run lab datalake ensure tushare_index_daily --index-codes 000300.SH 000905.SH --start-date 2026-09-30 --end-date 2026-09-30
+poetry run lab datalake ensure tushare_equity_index_futures --product-codes IF IH IC IM --start-date 2026-09-30 --end-date 2026-09-30
+poetry run lab datalake ensure tushare_equity_index_options --product-codes IO HO MO --start-date 2026-09-30 --end-date 2026-09-30
+poetry run lab datalake export tushare_equity_index_options --product-codes IO HO MO --start-date 2026-09-30 --end-date 2026-09-30 --output options.json
+```
+
+上述命令可直接在 Bash 或 PowerShell 运行。首次 ensure 可补齐所需 Calendar；coverage/export 只读，Calendar prerequisite 未完整时明确失败。查看各 Dataset 参数可使用 `lab datalake ensure <dataset-id> --help`。
+
 ### Research：发现 Study 与查看接口
 
 ```bash

@@ -8,7 +8,7 @@ Canonical identity 为 `tushare_equity_index_futures`，沿用已确定的 Tusha
 
 Source provider 为 Tushare，execution authority 为 [providers/TUSHARE.md](../../providers/TUSHARE.md)。本 Dataset adapter 拥有 endpoint / parameters、catalog / daily request strategy、pagination、product-day partition 与 facts normalization；credential、client、限流与 provider request failure conversion 归共享 Provider Runtime，后续实现直接采用该 boundary。
 
-本 bounded context 位于 `datasets/tushare_equity_index_futures/`，独立拥有 authority、未来 src/、tests/ 与 data/ 中 exactly one SQLite；canonical Python namespace 归 `data_lake`，共用根唯一 project/environment。本次只有 authority，没有 package、schema、adapter 或 persistent runtime state，不建立旧名 compatibility implementation。当前实现差异见 [implementation reconciliation](../../IMPLEMENTATION_RECONCILIATION.md)。
+本 bounded context 位于 `datasets/tushare_equity_index_futures/`，独立拥有 authority、src/、tests/ 与 data/ 中 exactly one SQLite；canonical Python namespace 归 `data_lake`，共用根唯一 project/environment。不建立旧名 compatibility implementation。当前 runtime 状态见 [implementation reconciliation](../../IMPLEMENTATION_RECONCILIATION.md)。
 
 Instrument 为 Dataset-local 合约 catalog。Underlying 是稳定指数 semantic identity，不是 Index instrument_id；本 Dataset 与 Index、Options 的 storage lifecycle 分离，无 global instrument master、跨 SQLite FK、internal persistence access 或跨库事务。
 
@@ -26,4 +26,4 @@ Canonical FetchUnit identity 为 `(product_code, trade_date)`，是 product 当�
 
 唯一跨 Dataset runtime dependency 为本 Dataset → Calendar public Application Service，显式采用 CFFEX 日历；具体调用、failure 与 snapshot 见 TRADING_DAYS.md。Calendar 不反向依赖 Futures；不增加 Futures → Index / Options runtime dependency。公开 boundary 只包含 coverage / ensure / export。
 
-本 Dataset 不生成 basis、annualized basis、main-contract / continuous series、roll return、DTE、term structure 或 research features。下游通过各 Dataset public service 组合 Source facts 后计算；不消费 Snapshot 私有 Source/Capture、Raw Artifact、CLI JSON 或其他 Dataset SQLite。HTTP、CLI registration、Research integration 与 refresh/force/TTL 仍属于独立后续工作，不能重定本轮已确定的业务语义。
+本 Dataset 不生成 basis、annualized basis、main-contract / continuous series、roll return、DTE、term structure 或 research features。下游通过各 Dataset public service 组合 Source facts 后计算；不消费 Snapshot 私有 Source/Capture、Raw Artifact、CLI JSON 或其他 Dataset SQLite。HTTP、Research integration 与 refresh/force/TTL 仍属于独立后续工作，不能重定本轮已确定的业务语义。

@@ -4,7 +4,7 @@
 
 ## 1. Target public Python surface
 
-目标 namespace 为 `data_lake.datasets.tushare_index_daily`，发布 `IndexDailyService`、`IndexDailyRange`、`IndexDailyRow`、`IndexDailyExport` 与 `create_service()`。这些是下一轮 implementation 的 contract，本轮未发布可 import 的 package。公共 CoverageResult / EnsureResult / UnitFailure / errors 复用 DataLake contract。
+目标 namespace 为 `data_lake.datasets.tushare_index_daily`，发布 `IndexDailyService`、`IndexDailyRange`、`IndexDailyRow`、`IndexDailyExport` 与 `create_service()`。这些是稳定 consumer contract；当前 implementation 状态见 [reconciliation](../../IMPLEMENTATION_RECONCILIATION.md)。公共 CoverageResult / EnsureResult / UnitFailure / errors 复用 DataLake contract。
 
 ```text
 coverage(request: IndexDailyRange) → CoverageResult
@@ -78,4 +78,4 @@ InvalidRequestError / OperationError 的唯一公共 owner 为 APPLICATION.md。
 
 Tushare execution 与 credential / client / shared limiter 遵循 [Provider Runtime authority](../../providers/TUSHARE.md)，本 Dataset 不自行实现 provider initialization 或请求异常转换。Factory / read-only calls 不解析 credential、不创建 client；完整 Calendar 加上全 success Index 目标的 ensure 无需 credential。缺少必需 credential 在相应 Source request 前抛 OperationError。
 
-本 Dataset 自己的 composition 拥有 index_basic/index_daily adapter 与 local storage resolution，adapter 通过共享 Executor 执行 provider 请求；只通过 Calendar public namespace 消费 prerequisite，不读取 sibling persistence。唯一 owned SQLite 目标位于本 bounded context 的 data/；具体 filename、事务、Source batching、package wiring 与测试设计留给下一轮 implementation reconciliation，不重新决定本轮 semantic contract。HTTP、CLI registration、Research/Snapshot integration、refresh/force/TTL 与 schema migration 未实现。
+本 Dataset 自己的 composition 拥有 index_basic/index_daily adapter 与 local storage resolution，adapter 通过共享 Executor 执行 provider 请求；只通过 Calendar public namespace 消费 prerequisite，不读取 sibling persistence。唯一 owned SQLite 目标位于本 bounded context 的 data/；具体 filename、事务、Source batching、package wiring 与测试设计由 implementation reconciliation 记录，不重新决定本轮 semantic contract。HTTP、Research/Snapshot integration、refresh/force/TTL 与 schema migration 仍 deferred；CLI registration 与当前 runtime 状态见 reconciliation。

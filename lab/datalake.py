@@ -7,12 +7,21 @@ import sys
 from dataclasses import asdict
 from datetime import date
 from pathlib import Path
-from typing import cast
+from typing import Any, cast
 
 from data_lake import InvalidRequestError, OperationError
+from data_lake.datasets import tushare_equity_index_futures as futures
+from data_lake.datasets import tushare_equity_index_options as options
+from data_lake.datasets import tushare_index_daily as index
 from data_lake.datasets.tushare_trade_calendar import TradeCalendarRange, create_service
 
 DATASET = "tushare_trade_calendar"
+DATASETS = (
+    DATASET,
+    "tushare_index_daily",
+    "tushare_equity_index_futures",
+    "tushare_equity_index_options",
+)
 
 
 def strict_date(value: str) -> date:
@@ -32,12 +41,19 @@ def add_parser(subparsers: argparse._SubParsersAction) -> None:
         command = operations.add_parser(
             operation, help=f"{operation.title()} cached Dataset facts."
         )
-        command.add_argument("dataset_id", choices=[DATASET])
-        command.add_argument("--exchange", required=True)
-        command.add_argument("--start-date", required=True, type=strict_date)
-        command.add_argument("--end-date", required=True, type=strict_date)
-        if operation == "export":
-            command.add_argument("--output", required=True, type=Path)
+        datasets = command.add_subparsers(dest="dataset_id", required=True)
+        for dataset in DATASETS:
+            target = datasets.add_parser(dataset, help=f"Use {dataset} public service.")
+            if dataset == DATASET:
+                target.add_argument("--exchange", required=True)
+            elif dataset == "tushare_index_daily":
+                target.add_argument("--index-codes", required=True, nargs="+")
+            else:
+                target.add_argument("--product-codes", required=True, nargs="+")
+            target.add_argument("--start-date", required=True, type=strict_date)
+            target.add_argument("--end-date", required=True, type=strict_date)
+            if operation == "export":
+                target.add_argument("--output", required=True, type=Path)
 
 
 def _json_date(value: object) -> str:
@@ -48,11 +64,23 @@ def _json_date(value: object) -> str:
 
 def run(args: argparse.Namespace) -> int:
     if args.datalake_command == "list":
-        print(DATASET)
+        print("\n".join(DATASETS))
         return 0
     try:
-        request = TradeCalendarRange(args.exchange, args.start_date, args.end_date)
-        service = create_service()
+        request: Any
+        service: Any
+        if args.dataset_id == DATASET:
+            request = TradeCalendarRange(args.exchange, args.start_date, args.end_date)
+            service = create_service()
+        elif args.dataset_id == "tushare_index_daily":
+            request = index.IndexDailyRange(args.index_codes, args.start_date, args.end_date)
+            service = index.create_service()
+        elif args.dataset_id == "tushare_equity_index_futures":
+            request = futures.FuturesDailyRange(args.product_codes, args.start_date, args.end_date)
+            service = futures.create_service()
+        else:
+            request = options.OptionsDailyRange(args.product_codes, args.start_date, args.end_date)
+            service = options.create_service()
         if args.datalake_command == "coverage":
             print(f"Coverage: {asdict(service.coverage(request))}")
             return 0

@@ -90,6 +90,6 @@ Dataset 与 provider authority 只能在模块边界及相关公共 domain/appli
 
 ## 5. Deferred design
 
-首个 Dataset service 与 CLI vertical slice、source/test/storage ownership 的实现状态由 [implementation reconciliation](IMPLEMENTATION_RECONCILIATION.md) 集中记录。HTTP、schema migration 与其他 consumer integration 继续 deferred。内部文件、具体存储类型、key serialization、canonicalization/hash、事务机制、失败恢复与 adapter batching 属于 implementation design，不得重新决定已固定的 semantic request、结果计数或 export contract。Research/Snapshot integration 须独立设计。
+Dataset services 与 CLI vertical slices、source/test/storage ownership 的实现状态由 [implementation reconciliation](IMPLEMENTATION_RECONCILIATION.md) 集中记录。HTTP、schema migration 与其他 consumer integration 继续 deferred。内部文件、具体存储类型、key serialization、canonicalization/hash、事务机制、失败恢复与 adapter batching 属于 implementation design，不得重新决定已固定的 semantic request、结果计数或 export contract。Research/Snapshot integration 须独立设计。
 
 Refresh / force / invalidation policy、TTL、stale state、多维 Window、Dataset dependency graph、cross-Dataset query engine、Source request audit table、plugin framework 与 generic workflow engine 均不在本轮设计范围内。
