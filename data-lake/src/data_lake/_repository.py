@@ -12,7 +12,7 @@ from ._domain import CachedUnit, ExecutionFailure, Instrument, Record, Status, U
 from ._serialization import canonical_json, record_hash
 from .results import CoverageResult, OperationError
 
-SCHEMA_VERSION = 1
+SCHEMA_VERSION = 2
 DDL = """
 CREATE TABLE dataset_meta (
     singleton INTEGER PRIMARY KEY CHECK(singleton = 1),
@@ -24,7 +24,7 @@ CREATE TABLE fetch_unit (
     status TEXT NOT NULL CHECK(status IN ('pending', 'success', 'failed')),
     content_hash TEXT, record_count INTEGER CHECK(record_count >= 0),
     created_at TEXT NOT NULL, last_attempt_at TEXT NOT NULL, succeeded_at TEXT,
-    error_code TEXT, error_message TEXT,
+    error_code TEXT, error_message TEXT, basis TEXT,
     CHECK(status != 'success' OR
           (content_hash IS NOT NULL AND record_count IS NOT NULL AND succeeded_at IS NOT NULL
            AND error_code IS NULL AND error_message IS NULL))
@@ -61,6 +61,7 @@ REQUIRED_COLUMNS = {
         "succeeded_at",
         "error_code",
         "error_message",
+        "basis",
     },
     "instrument": {
         "instrument_id",
@@ -212,7 +213,14 @@ class Repository:
                             (row["unit_id"],),
                         )
                     )
-                    successful.append(CachedUnit(unit, tuple(records), instruments))
+                    successful.append(
+                        CachedUnit(
+                            unit,
+                            tuple(records),
+                            instruments,
+                            json.loads(row["basis"]) if row["basis"] is not None else None,
+                        )
+                    )
         counts = {status: list(statuses.values()).count(status) for status in Status}
         missing = len(units) - len(statuses)
         coverage = CoverageResult(
@@ -224,6 +232,18 @@ class Repository:
             len(successful) == len(units),
         )
         return Snapshot(coverage, tuple(successful), statuses)
+
+    def successful_keys(self) -> tuple[str, ...]:
+        """Internal metadata reuse seam; identity interpretation remains Dataset-owned."""
+        with self._connect() as connection:
+            if connection is None:
+                return ()
+            return tuple(
+                row[0]
+                for row in connection.execute(
+                    "SELECT unit_key FROM fetch_unit WHERE status='success' ORDER BY unit_key"
+                )
+            )
 
     def pending(self, unit: Unit) -> None:
         with self._connect(write=True) as connection:
@@ -287,9 +307,15 @@ class Repository:
             timestamp = now()
             connection.execute(
                 "UPDATE fetch_unit SET status='success', content_hash=?, "
-                "record_count=?, succeeded_at=?, error_code=NULL, error_message=NULL "
+                "record_count=?, succeeded_at=?, basis=?, error_code=NULL, error_message=NULL "
                 "WHERE unit_key=?",
-                (record_hash(encoded), len(encoded), timestamp, unit.key),
+                (
+                    record_hash(encoded),
+                    len(encoded),
+                    timestamp,
+                    canonical_json(normalized.basis) if normalized.basis is not None else None,
+                    unit.key,
+                ),
             )
             connection.execute("UPDATE dataset_meta SET updated_at=?", (timestamp,))
         return len(encoded)

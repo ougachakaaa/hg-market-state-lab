@@ -12,6 +12,21 @@ REPOSITORY_ROOT = Path(__file__).resolve().parents[2]
 MARKDOWN_LINK = re.compile(r"\[[^]]+\]\(([^)]+)\)")
 
 CONTEXT_ENTRIES = {
+    Path("data-lake/datasets/tushare_equity_index_options/CONTRACT_UNIVERSE.md"),
+    Path("data-lake/datasets/tushare_equity_index_options/TRADING_DAYS.md"),
+    Path("data-lake/datasets/tushare_equity_index_options/FACTS.md"),
+    Path("data-lake/datasets/tushare_equity_index_options/SERVICE.md"),
+    Path("data-lake/datasets/tushare_equity_index_options/ARCHITECTURE.md"),
+    Path("data-lake/datasets/tushare_equity_index_futures/CONTRACT_UNIVERSE.md"),
+    Path("data-lake/datasets/tushare_equity_index_futures/TRADING_DAYS.md"),
+    Path("data-lake/datasets/tushare_equity_index_futures/FACTS.md"),
+    Path("data-lake/datasets/tushare_equity_index_futures/SERVICE.md"),
+    Path("data-lake/datasets/tushare_equity_index_futures/ARCHITECTURE.md"),
+    Path("data-lake/datasets/tushare_index_daily/TRADING_DAYS.md"),
+    Path("data-lake/datasets/tushare_index_daily/FACTS.md"),
+    Path("data-lake/datasets/tushare_index_daily/SERVICE.md"),
+    Path("data-lake/datasets/tushare_index_daily/ARCHITECTURE.md"),
+    Path("data-lake/providers/TUSHARE.md"),
     Path("data-lake/ARCHITECTURE.md"),
     Path("data-lake/DOMAIN_MODEL.md"),
     Path("data-lake/APPLICATION.md"),

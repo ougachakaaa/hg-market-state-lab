@@ -1,19 +1,16 @@
 """Internal credential composition and provider transport partitioning."""
 
-import os
 from collections.abc import Iterable
 from datetime import date
-from pathlib import Path
 from typing import Protocol
 
-from dotenv import dotenv_values
-
 from data_lake._domain import ExecutionFailure, Unit
+from data_lake.providers.tushare import TushareExecutor
 from data_lake.results import OperationError
 
 
 class Client(Protocol):
-    def trade_cal(self, **kwargs: str) -> object: ...
+    def call(self, endpoint: str, **kwargs: str) -> object: ...
 
 
 def provider_date(value: object) -> date:
@@ -53,15 +50,13 @@ class TradeCalSource:
     def fetch(self, units: tuple[Unit, ...]) -> dict[str, object]:
         exchange, _ = identity(units[0])
         targets = {identity(unit)[1]: unit for unit in units}
-        try:
-            response = self._client.trade_cal(
-                exchange=exchange,
-                start_date=min(targets).isoformat().replace("-", ""),
-                end_date=max(targets).isoformat().replace("-", ""),
-                fields="exchange,cal_date,is_open,pretrade_date",
-            )
-        except Exception as exc:
-            raise ExecutionFailure("Tushare trade_cal request failed", "source_request") from exc
+        response = self._client.call(
+            "trade_cal",
+            exchange=exchange,
+            start_date=min(targets).strftime("%Y%m%d"),
+            end_date=max(targets).strftime("%Y%m%d"),
+            fields="exchange,cal_date,is_open,pretrade_date",
+        )
         try:
             rows = response.to_dict(orient="records")  # type: ignore[attr-defined]
         except Exception as exc:
@@ -89,17 +84,4 @@ class TradeCalSource:
 
 
 def prepare_source() -> TradeCalSource:
-    try:
-        token = os.environ.get("TUSHARE_TOKEN")
-        if token is None:
-            root = Path(__file__).resolve().parents[7]
-            token = dotenv_values(root / "market-snapshot/.env").get("TUSHARE_TOKEN")
-        if not token or not token.strip():
-            raise OperationError("TUSHARE_TOKEN credential is required to fetch calendar facts")
-        import tushare
-
-        return TradeCalSource(tushare.pro_api(token))
-    except OperationError:
-        raise
-    except Exception as exc:
-        raise OperationError("Calendar Source could not be initialized") from exc
+    return TradeCalSource(TushareExecutor().prepare())

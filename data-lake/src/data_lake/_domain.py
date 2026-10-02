@@ -54,6 +54,7 @@ class Record:
 class UnitRecords:
     records: tuple[Record, ...]
     instruments: tuple[Instrument, ...] = ()
+    basis: dict[str, Json] | None = None
 
 
 @dataclass(frozen=True)
@@ -61,6 +62,7 @@ class CachedUnit:
     unit: Unit
     records: tuple[Record, ...]
     instruments: tuple[Instrument, ...] = ()
+    basis: dict[str, Json] | None = None
 
 
 class ExecutionFailure(Exception):
