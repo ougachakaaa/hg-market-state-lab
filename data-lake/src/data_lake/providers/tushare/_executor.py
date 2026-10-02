@@ -19,6 +19,7 @@ from ._client import RequestFailure
 logger = logging.getLogger(__name__)
 SELECTORS = {
     "ts_code",
+    "symbol",
     "exchange",
     "market",
     "trade_date",

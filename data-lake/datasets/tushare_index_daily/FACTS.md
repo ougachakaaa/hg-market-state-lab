@@ -31,6 +31,10 @@ Publisher/category/lifecycle 只保留 Source 已提供且合法的语义；格�
 
 Ensure 对缺少本地合法 instrument metadata 的 selected index，通过 index_basic 确认唯一匹配的 metadata 后，才允许该指数 selected daily units 成功。Metadata 不存在、重复/conflict 或无效时，受影响 selected units 失败；可恢复的 metadata Source request failure 同样按这些 units 返回，不创建假 instrument。完整合法 metadata 可复用；V1 不另行设计 refresh。只处理已有 success 或零目标 unit 时，不为更新 catalog 调用 Source。
 
+缺少 metadata 的 selected codes 可以按最多 64 个 code 分组，使用 index_basic 的 symbol 多值参数查询全部相关显式 markets，并完整分页。Symbol 只作为批查询过滤条件，结果仍按完整 ts_code 唯一匹配，不改变 canonical identity；缺失、重复或非法 metadata 只失败相应 code，无法证明批响应完整的请求/分页错误失败该批 codes，不启动其无用 daily requests。
+
+复用 local metadata 时，只选择请求所选 code 按 trade_date 最新的成功代表 unit，在一个 committed snapshot 内验证其 records/hash、basis 和 completeness 后使用成功时冻结的 metadata。不得从未验证的 instrument row 裸取 metadata，不因代表不合法而静默回退到更早记录；非代表历史记录仍在其成为目标时按公共契约验证。全库结构和引用检查不省略，不为 metadata 复用重新 materialize 全部历史 records。
+
 ## 3. Canonical daily Record facts
 
 下表为本 Dataset 必需的 Source facts；canonical 字段名与 provider 字段名明确分离。

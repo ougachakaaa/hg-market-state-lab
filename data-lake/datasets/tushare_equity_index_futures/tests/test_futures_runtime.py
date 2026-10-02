@@ -526,3 +526,73 @@ def test_sparse_pending_dates_do_not_expand_transport_window_across_months() -> 
     units = tuple(Unit(("IF", day)) for day in days)
     groups = tuple(_service.batches(units))
     assert groups == tuple((unit,) for unit in units)
+
+
+def test_export_reuses_each_validated_row_only_within_its_snapshot(
+    setup: Any,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    service, _, _, request = setup
+    assert service.ensure(request).complete
+    calls = 0
+    original = _source.read_row
+
+    def tracked(record: Any) -> Any:
+        nonlocal calls
+        calls += 1
+        return original(record)
+
+    monkeypatch.setattr(_source, "read_row", tracked)
+    first = service.export(request)
+    assert calls == len(first.records)
+    assert service.export(request) == first
+    assert calls == 2 * len(first.records)
+    assert service.coverage(request).complete
+    assert calls == 3 * len(first.records)
+
+
+def test_lifecycle_index_preserves_inclusive_edges_and_out_of_order_dates() -> None:
+    catalog = {
+        "a": {"list_date": "2024-01-02", "delist_date": "2024-01-03"},
+        "b": {"list_date": "2024-01-03", "delist_date": "2024-01-03"},
+        "c": {"list_date": "2024-01-04", "delist_date": "2024-01-05"},
+    }
+    index = _source.ContractIndex(catalog)
+    for offset in (0, 1, 2, 3, 4, 1, 0, 3, 2):
+        target = DAY + timedelta(days=offset)
+        expected = {
+            code: meta
+            for code, meta in catalog.items()
+            if meta["list_date"] <= target.isoformat() <= meta["delist_date"]
+        }
+        assert index.at(target) == expected
+
+
+@pytest.mark.parametrize("unowned", [False, True])
+def test_malformed_cross_section_is_isolated_by_product_and_day(
+    setup: Any,
+    unowned: bool,
+) -> None:
+    service, _, executor, _ = setup
+    family = "IF"
+    other_family = "IH"
+    other = deepcopy(executor.catalog)
+    for item in other:
+        item["ts_code"] = item["ts_code"].replace(family, other_family)
+        item["symbol"] = item["symbol"].replace(family, other_family)
+        item["fut_code"] = other_family
+    executor.catalog.extend(other)
+    executor.daily = [
+        dict(daily(meta), trade_date=(DAY + timedelta(days=n)).strftime("%Y%m%d"))
+        for n in range(2)
+        for meta in executor.catalog
+    ]
+    # An extra malformed row must not disappear during the initial product split.
+    executor.daily.append(dict(executor.daily[0], ts_code="bad" if unowned else family + "bad"))
+    request = public.FuturesDailyRange([family, other_family], DAY, DAY + timedelta(days=1))
+    result = service.ensure(request)
+    assert result.failed_units == (2 if unowned else 1)
+    assert {failure.identity for failure in result.failures} == (
+        {(family, DAY), (other_family, DAY)} if unowned else {(family, DAY)}
+    )
+    assert result.succeeded_units + result.failed_units == 4

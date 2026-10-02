@@ -2,6 +2,7 @@
 
 import math
 import re
+from collections.abc import Callable
 from dataclasses import fields
 from datetime import date
 from typing import Any, NoReturn, cast
@@ -151,9 +152,12 @@ NUMBERS = [
 OPTIONAL_NUMBERS = ["open", "high", "low"]
 
 
+CANONICAL_FIELDS = frozenset(field.name for field in fields(OptionsDailyRow))
+
+
 def read_row(record: Record) -> OptionsDailyRow:
     data: dict[str, Any] = dict(record.fields)
-    if set(data) != {field.name for field in fields(OptionsDailyRow)}:
+    if set(data) != CANONICAL_FIELDS:
         fail("Canonical fields are incompatible")
     for key in STRINGS:
         text(data[key])
@@ -283,6 +287,34 @@ def daily(raw: dict[str, Any], meta: dict[str, Any], target: date) -> Record:
     return Record(result, meta["contract_code"])
 
 
+class ContractIndex:
+    """Exact inclusive lifecycle sweep over an immutable, validated catalog."""
+
+    def __init__(self, catalog: dict[str, dict[str, Any]]) -> None:
+        self.catalog = catalog
+        self.starts = sorted((meta["list_date"], code) for code, meta in catalog.items())
+        self.ends = sorted((meta["delist_date"], code) for code, meta in catalog.items())
+        self.active: dict[str, dict[str, Any]] = {}
+        self.start = self.end = 0
+        self.last = ""
+
+    def at(self, target: date) -> dict[str, dict[str, Any]]:
+        day = target.isoformat()
+        if day < self.last:
+            self.active.clear()
+            self.start = self.end = 0
+        while self.start < len(self.starts) and self.starts[self.start][0] <= day:
+            _, code = self.starts[self.start]
+            self.active[code] = self.catalog[code]
+            self.start += 1
+        while self.end < len(self.ends) and self.ends[self.end][0] < day:
+            _, code = self.ends[self.end]
+            self.active.pop(code, None)
+            self.end += 1
+        self.last = day
+        return self.active
+
+
 class DailySource:
     def __init__(self, executor: Executor) -> None:
         self.executor = CancellableExecutor(executor)
@@ -290,7 +322,9 @@ class DailySource:
         self.catalog_error: ExecutionFailure | None = None
         self.product_errors: dict[str, ExecutionFailure] = {}
         self.bases: dict[str, dict[str, Json]] = {}
-        self.daily_cache: dict[date, list[dict[str, Any]]] = {}
+        self.daily_cache: dict[tuple[str, date], list[dict[str, Any]]] = {}
+        self.daily_errors: dict[tuple[str, date], ExecutionFailure] = {}
+        self.indices: dict[str, ContractIndex] = {}
 
     def cancel(self) -> None:
         self.executor.cancel()
@@ -339,17 +373,37 @@ class DailySource:
             end_date=days[-1].strftime("%Y%m%d"),
             fields=DAILY_FIELDS,
         )
-        self.daily_cache = {target: [] for target in days}
+        self.daily_cache = {identity(unit): [] for unit in units}
+        self.daily_errors.clear()
         selected_days = {target.isoformat(): target for target in days}
         for raw in response:
             try:
                 source_day = day(raw.get("trade_date"))
             except ExecutionFailure:
                 self.daily_cache.clear()
+                self.daily_errors.clear()
                 raise
-            if source_day in selected_days:
-                bucket = self.daily_cache[selected_days[source_day]]
-                bucket.append(raw)
+            if source_day not in selected_days:
+                continue
+            target = selected_days[source_day]
+            try:
+                code = text(raw.get("ts_code"))
+            except ExecutionFailure as exc:
+                for key in self.daily_cache:
+                    if key[1] == target:
+                        self.daily_errors.setdefault(key, exc)
+                continue
+            match = re.fullmatch(r"([A-Z]+)[0-9]{4}-[CP]-[0-9]+(?:\.[0-9]+)?\.CFX", code)
+            if not match:
+                prefix = re.match(r"^([A-Z]+)", code)
+                failure = ExecutionFailure("Unclassifiable daily contract", "completeness")
+                for key in self.daily_cache:
+                    if key[1] == target and (prefix is None or prefix[1] == key[0]):
+                        self.daily_errors.setdefault(key, failure)
+                continue
+            key = match[1], target
+            if key in self.daily_cache:
+                self.daily_cache[key].append(raw)
         result: dict[str, object] = {}
         try:
             for unit in units:
@@ -360,12 +414,15 @@ class DailySource:
             return result
         finally:
             self.daily_cache.clear()
+            self.daily_errors.clear()
 
     def _fetch_unit(self, units: tuple[Unit, ...]) -> dict[str, object]:
         product, target = identity(units[0])
         assert self.catalog is not None
         if product in self.product_errors:
             raise self.product_errors[product]
+        if (product, target) in self.daily_errors:
+            raise self.daily_errors[product, target]
         if product not in self.bases:
             self.bases[product] = cast(
                 dict[str, Json],
@@ -376,25 +433,13 @@ class DailySource:
             )
         frozen = self.bases[product]
         basis = cast(list[dict[str, Any]], frozen["catalog"])
-        expected = {
-            meta["contract_code"]: meta
-            for meta in basis
-            if meta["list_date"] <= target.isoformat() <= meta["delist_date"]
-        }
-        response = self.daily_cache[target]
+        if product not in self.indices:
+            self.indices[product] = ContractIndex({meta["contract_code"]: meta for meta in basis})
+        expected = self.indices[product].at(target)
+        response = self.daily_cache[product, target]
         observed: list[Record] = []
         for raw in response:
-            code = text(raw.get("ts_code"))
-            match = re.fullmatch(r"([A-Z]+)[0-9]{4}-[CP]-[0-9]+(?:\.[0-9]+)?\.CFX", code)
-            if not match:
-                prefix = re.match(r"^([A-Z]+)", code)
-                if prefix and prefix[1] != product:
-                    continue
-                fail("Unclassifiable daily contract")
-            if match[1] != product:
-                continue
-            if day(raw.get("trade_date")) != target.isoformat():
-                continue
+            code = raw["ts_code"]
             if code not in expected:
                 fail("Unexpected active contract")
             observed.append(daily(raw, expected[code], target))
@@ -440,37 +485,48 @@ def validated_catalog(product: str, basis: object) -> dict[str, dict[str, Any]]:
 class CompletenessChecker:
     """Operation-local cache for internal immutable basis objects, retaining identity."""
 
-    def __init__(self) -> None:
-        self.catalogs: dict[int, tuple[object, str, dict[str, dict[str, Any]]]] = {}
+    def __init__(self, *, reuse_rows: bool = False) -> None:
+        self.catalogs: dict[int, tuple[object, str, ContractIndex]] = {}
+        self.reuse_rows = reuse_rows
+        self.rows: dict[int, tuple[Record, OptionsDailyRow]] = {}
+
+    def row(self, record: Record) -> OptionsDailyRow:
+        if not self.reuse_rows:
+            return read_row(record)
+        cached = self.rows.get(id(record))
+        if cached is None:
+            cached = record, read_row(record)
+            self.rows[id(record)] = cached
+        return cached[1]
 
     def __call__(self, unit: Unit, facts: UnitRecords) -> None:
         product, target = identity(unit)
         key = id(facts.basis)
         cached = self.catalogs.get(key)
         if cached is None:
-            catalog = validated_catalog(product, facts.basis)
+            catalog = ContractIndex(validated_catalog(product, facts.basis))
             self.catalogs[key] = facts.basis, product, catalog
         else:
             _, cached_product, catalog = cached
             if cached_product != product:
                 fail("Frozen catalog product mismatch")
-        expected = {
-            code: meta
-            for code, meta in catalog.items()
-            if meta["list_date"] <= target.isoformat() <= meta["delist_date"]
-        }
-        check_records(unit, facts, expected)
+        check_records(unit, facts, catalog.at(target), self.row)
 
 
 def check_complete(unit: Unit, facts: UnitRecords) -> None:
     CompletenessChecker()(unit, facts)
 
 
-def check_records(unit: Unit, facts: UnitRecords, expected: dict[str, dict[str, Any]]) -> None:
+def check_records(
+    unit: Unit,
+    facts: UnitRecords,
+    expected: dict[str, dict[str, Any]],
+    reader: Callable[[Record], OptionsDailyRow] | None = None,
+) -> None:
     product, target = identity(unit)
     observed = []
     for record in facts.records:
-        row = read_row(record)
+        row = (reader or read_row)(record)
         if row.product_code != product or row.trade_date != target:
             fail("Record ownership mismatch")
         code = row.contract_code

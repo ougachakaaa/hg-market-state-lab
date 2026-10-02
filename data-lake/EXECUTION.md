@@ -11,3 +11,7 @@ ensure 可以启用一个 Source worker 和主线程单 SQLite writer，最多�
 每次 operation/read snapshot 可复用同一冻结 basis 的解析、metadata 合法性验证和 contract indices；复用只限内部保持不变的同一对象，不跨 operation 信任曾通过验证的可变数据。每个 unit 仍验证 expected/observed 集合、每条 canonical Record、instrument association、record_count 和 content_hash。新 ensure 尝试使用新取得的 catalog，不以历史成功 basis 推断当前 contract universe。
 
 存储连接与结构校验的边界见 [PERSISTENCE.md](PERSISTENCE.md)；复用与批执行不改变 public result、coverage、export ordering 或只读边界。
+
+同一 export 可复用其 committed snapshot 内已完整验证的 canonical Record 所投影的 typed row；缓存由 owning Dataset 拥有，保留 Record 对象身份且内部 facts 在验证与 projection 之间不变，操作结束即释放。不得跨 operation 复用、在 coverage/ensure 保留整窗 typed rows，或让 kernel 认识具体行情行类型。每条 Record 仍至少完整验证一次，unit hash/count、metadata 对照、expected/observed 与 instrument association 均不省略。固定 typed schema 的字段集合可预先计算。
+
+合约生命周期索引只索引已经验证且保持不变的同一 catalog，精确实现 owning Dataset 的 inclusive list_date/delist_date predicate；日期倒序访问也必须得到相同全集。Source 对小窗口横截面按日期及产品一次分类，不能因分桶丢弃不可归属的非法行；能归属的错误继续只影响对应产品日，无法归属的错误影响对应日期的所有 selected products。非目标日期不提交，生命周期索引不改变分页穷尽或未知活跃合约检查。

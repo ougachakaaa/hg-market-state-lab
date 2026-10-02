@@ -274,13 +274,13 @@ def test_delivery_failure_preserves_output_and_removes_temporary_file(
     output = tmp_path / "output.json"
     output.write_bytes(b"previous")
     if stage == "encoding":
-        original = datalake.json.dump
+        original = datalake.json.JSONEncoder.iterencode
 
-        def fail(*args: Any, **kwargs: Any) -> None:
-            original(*args, **kwargs)
+        def fail_encoding(*args: Any, **kwargs: Any) -> Any:
+            yield from original(*args, **kwargs)
             raise TypeError("injected encoding error")
 
-        monkeypatch.setattr(datalake.json, "dump", fail)
+        monkeypatch.setattr(datalake.json.JSONEncoder, "iterencode", fail_encoding)
     else:
 
         def fail(*args: Any, **kwargs: Any) -> None:
@@ -289,5 +289,38 @@ def test_delivery_failure_preserves_output_and_removes_temporary_file(
         monkeypatch.setattr(datalake.os, "fsync" if stage == "flush" else "replace", fail)
     with pytest.raises((OSError, TypeError)):
         datalake._deliver(view, output)
+    assert output.read_bytes() == b"previous"
+    assert list(tmp_path.iterdir()) == [output]
+
+
+def test_buffered_delivery_preserves_unicode_wire_across_multiple_flushes(tmp_path: Path) -> None:
+    view = [{"name": "行情" * 300000, "date": DAY}, {"name": "结束", "value": None}]
+    output = tmp_path / "output.json"
+    datalake._deliver(view, output)
+    expected = json.dumps(view, default=datalake._json_date, ensure_ascii=False, indent=2)
+    assert output.read_text(encoding="utf-8") == expected + "\n"
+    assert list(tmp_path.iterdir()) == [output]
+
+
+def test_encoding_failure_after_buffer_write_preserves_previous_output(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    output = tmp_path / "output.json"
+    output.write_bytes(b"previous")
+    original = datalake.json.JSONEncoder.iterencode
+    partial_sizes: list[int] = []
+
+    def tracked(*args: Any, **kwargs: Any) -> Any:
+        try:
+            yield from original(*args, **kwargs)
+        except TypeError:
+            partial_sizes.extend(path.stat().st_size for path in tmp_path.glob("*.tmp"))
+            raise
+
+    monkeypatch.setattr(datalake.json.JSONEncoder, "iterencode", tracked)
+    with pytest.raises(TypeError):
+        datalake._deliver(["行情" * 600000, object()], output)
+    assert partial_sizes and max(partial_sizes) > 1024 * 1024
     assert output.read_bytes() == b"previous"
     assert list(tmp_path.iterdir()) == [output]

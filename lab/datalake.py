@@ -88,7 +88,18 @@ def _deliver(view: object, output: Path) -> None:
             delete=False,
         ) as stream:
             temporary = Path(stream.name)
-            json.dump(view, stream, default=_json_date, ensure_ascii=False, indent=2)
+            chunks: list[str] = []
+            size = 0
+            encoder = json.JSONEncoder(default=_json_date, ensure_ascii=False, indent=2)
+            for chunk in encoder.iterencode(view):
+                chunks.append(chunk)
+                size += len(chunk)
+                if size >= 1024 * 1024:
+                    stream.write("".join(chunks))
+                    chunks.clear()
+                    size = 0
+            if chunks:
+                stream.write("".join(chunks))
             stream.write("\n")
             stream.flush()
             os.fsync(stream.fileno())

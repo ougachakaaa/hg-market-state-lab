@@ -980,3 +980,47 @@ def test_pipeline_cancels_source_before_waiting_for_inflight_task(
         dataset.core.ensure(("a", "b", "c"))
     assert cancelled.is_set()
     assert dataset.core.coverage(("a", "b", "c")) == CoverageResult(3, 0, 1, 2, 0, False)
+
+
+def test_batched_snapshot_preserves_order_associations_empty_units_and_boundaries(
+    dataset: FakeDataset,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    keys = tuple(f"unit-{n:03}" for n in range(70))
+    instruments = (Instrument("z", name="last"), Instrument("a", name="first"))
+    for n, key in enumerate(keys):
+        dataset.responses[key] = UnitRecords(
+            () if n == 32 else (Record({"value": n}, "z"), Record({"value": -n}, "a")),
+            instruments,
+            {"proof": "shared"},
+        )
+    assert dataset.core.ensure(keys).complete
+    statements: list[str] = []
+    original = sqlite3.connect
+
+    def tracked(*args: Any, **kwargs: Any) -> sqlite3.Connection:
+        connection = original(*args, **kwargs)
+        connection.set_trace_callback(statements.append)
+        return connection
+
+    monkeypatch.setattr(sqlite3, "connect", tracked)
+    selection = tuple(Unit(key) for key in reversed(keys))
+    snapshot = dataset.repository.snapshot(selection)
+    assert snapshot.coverage.complete
+    assert tuple(item.unit for item in snapshot.successful) == selection
+    assert len([s for s in statements if s.startswith("SELECT * FROM fetch_unit")]) == 2
+    assert len([s for s in statements if s.startswith("SELECT r.fetch_unit_id")]) == 2
+    assert not any("SELECT DISTINCT i." in s for s in statements)
+    for item in snapshot.successful:
+        n = int(str(item.unit.identity)[5:])
+        assert [record.fields["value"] for record in item.records] == ([] if n == 32 else [n, -n])
+        assert [instrument.key for instrument in item.instruments] == (
+            [] if n == 32 else ["a", "z"]
+        )
+    # Corruption in the second SQL batch must still reject the entire operation.
+    with sqlite3.connect(dataset.repository.path) as connection:
+        connection.execute(
+            "UPDATE fetch_unit SET record_count=99 WHERE unit_key=?", (selection[-1].key,)
+        )
+    with pytest.raises(OperationError, match="metadata"):
+        dataset.repository.snapshot(selection)

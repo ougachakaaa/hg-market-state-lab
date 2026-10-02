@@ -299,78 +299,106 @@ class Repository:
             if connection is not None:
                 generation = self._identity(connection)
                 parsed_bases: dict[object, dict | None] = {}
-                for unit in units:
-                    row = connection.execute(
-                        "SELECT * FROM fetch_unit WHERE unit_key = ?", (unit.key,)
-                    ).fetchone()
-                    if row is None:
-                        continue
-                    status = Status(row["status"])
-                    statuses[unit.key] = status
-                    if status != Status.SUCCESS:
-                        continue
-                    records: list[Record] = []
-                    for record in connection.execute(
-                        "SELECT r.facts, i.instrument_key FROM records r "
-                        "LEFT JOIN instrument i USING(instrument_id) "
-                        "WHERE r.fetch_unit_id = ? ORDER BY r.record_id",
-                        (row["unit_id"],),
-                    ):
-                        fields = json.loads(record["facts"])
-                        if not isinstance(fields, dict):
-                            raise OperationError("Cached facts are invalid")
-                        records.append(Record(fields, record["instrument_key"]))
-                    if (
-                        row["record_count"] != len(records)
-                        or row["content_hash"] != record_hash(r.encode() for r in records)
-                        or row["succeeded_at"] is None
-                        or row["error_code"] is not None
-                        or row["error_message"] is not None
-                    ):
-                        raise OperationError("Successful cache metadata is inconsistent")
-                    instruments = tuple(
-                        Instrument(**dict(instrument))
-                        for instrument in connection.execute(
-                            "SELECT DISTINCT i.instrument_key AS key, i.source_code, "
-                            "i.instrument_type, i.symbol, i.exchange, i.name, i.valid_from, "
-                            "i.valid_to FROM instrument i JOIN records r USING(instrument_id) "
-                            "WHERE r.fetch_unit_id=? ORDER BY i.instrument_key",
-                            (row["unit_id"],),
+                # A bounded SQL batch shares the same transaction and basis memo.
+                for offset in range(0, len(units), 64):
+                    chunk = [(unit, unit.key) for unit in units[offset : offset + 64]]
+                    marks = ",".join("?" for _ in chunk)
+                    rows = {
+                        row["unit_key"]: row
+                        for row in connection.execute(
+                            f"SELECT * FROM fetch_unit WHERE unit_key IN ({marks})",
+                            [key for _, key in chunk],
                         )
-                    )
-                    basis_key = row["basis_id"] if generation == 3 else row["basis"]
-                    if basis_key not in parsed_bases:
-                        if basis_key is None:
-                            parsed_bases[basis_key] = None
-                        else:
-                            encoded_basis = basis_key
-                            if generation == 3:
-                                basis_row = connection.execute(
-                                    "SELECT content_hash,facts FROM basis_snapshot "
-                                    "WHERE basis_id=?",
-                                    (basis_key,),
-                                ).fetchone()
-                                if (
-                                    basis_row is None
-                                    or hashlib.sha256(
-                                        basis_row["facts"].encode("utf-8")
-                                    ).hexdigest()
-                                    != basis_row["content_hash"]
-                                ):
-                                    raise OperationError("Frozen basis content is inconsistent")
-                                encoded_basis = basis_row["facts"]
-                            parsed = json.loads(encoded_basis)
-                            if not isinstance(parsed, dict):
-                                raise OperationError("Frozen basis is invalid")
-                            parsed_bases[basis_key] = parsed
-                    successful.append(
-                        CachedUnit(
-                            unit,
-                            tuple(records),
-                            instruments,
-                            parsed_bases[basis_key],
+                    }
+                    ids = [row["unit_id"] for row in rows.values() if row["status"] == "success"]
+                    decoded: dict[int, list[Record]] = {unit_id: [] for unit_id in ids}
+                    associations: dict[int, dict[str, Instrument]] = {
+                        unit_id: {} for unit_id in ids
+                    }
+                    instruments_by_key: dict[str, Instrument] = {}
+                    if ids:
+                        marks = ",".join("?" for _ in ids)
+                        for record in connection.execute(
+                            "SELECT r.fetch_unit_id,r.facts,i.instrument_key AS key,"
+                            "i.source_code,i.instrument_type,i.symbol,i.exchange,i.name,"
+                            "i.valid_from,i.valid_to FROM records r "
+                            "LEFT JOIN instrument i USING(instrument_id) "
+                            f"WHERE r.fetch_unit_id IN ({marks}) "
+                            "ORDER BY r.fetch_unit_id,r.record_id",
+                            ids,
+                        ):
+                            fields = json.loads(record["facts"])
+                            if not isinstance(fields, dict):
+                                raise OperationError("Cached facts are invalid")
+                            unit_id, key = record["fetch_unit_id"], record["key"]
+                            decoded[unit_id].append(Record(fields, key))
+                            if key is not None:
+                                if key not in instruments_by_key:
+                                    instruments_by_key[key] = Instrument(
+                                        key,
+                                        record["source_code"],
+                                        record["instrument_type"],
+                                        record["symbol"],
+                                        record["exchange"],
+                                        record["name"],
+                                        record["valid_from"],
+                                        record["valid_to"],
+                                    )
+                                associations[unit_id][key] = instruments_by_key[key]
+                    for unit, key in chunk:
+                        row = rows.get(key)
+                        if row is None:
+                            continue
+                        status = Status(row["status"])
+                        statuses[key] = status
+                        if status != Status.SUCCESS:
+                            continue
+                        records = decoded[row["unit_id"]]
+                        if (
+                            row["record_count"] != len(records)
+                            or row["content_hash"] != record_hash(r.encode() for r in records)
+                            or row["succeeded_at"] is None
+                            or row["error_code"] is not None
+                            or row["error_message"] is not None
+                        ):
+                            raise OperationError("Successful cache metadata is inconsistent")
+                        instruments = tuple(
+                            associations[row["unit_id"]][key]
+                            for key in sorted(associations[row["unit_id"]])
                         )
-                    )
+                        basis_key = row["basis_id"] if generation == 3 else row["basis"]
+                        if basis_key not in parsed_bases:
+                            if basis_key is None:
+                                parsed_bases[basis_key] = None
+                            else:
+                                encoded_basis = basis_key
+                                if generation == 3:
+                                    basis_row = connection.execute(
+                                        "SELECT content_hash,facts FROM basis_snapshot "
+                                        "WHERE basis_id=?",
+                                        (basis_key,),
+                                    ).fetchone()
+                                    if (
+                                        basis_row is None
+                                        or hashlib.sha256(
+                                            basis_row["facts"].encode("utf-8")
+                                        ).hexdigest()
+                                        != basis_row["content_hash"]
+                                    ):
+                                        raise OperationError("Frozen basis content is inconsistent")
+                                    encoded_basis = basis_row["facts"]
+                                parsed = json.loads(encoded_basis)
+                                if not isinstance(parsed, dict):
+                                    raise OperationError("Frozen basis is invalid")
+                                parsed_bases[basis_key] = parsed
+                        successful.append(
+                            CachedUnit(
+                                unit,
+                                tuple(records),
+                                instruments,
+                                parsed_bases[basis_key],
+                            )
+                        )
         counts = {status: list(statuses.values()).count(status) for status in Status}
         missing = len(units) - len(statuses)
         coverage = CoverageResult(
