@@ -1,6 +1,6 @@
 # Expiry DTE Chain Implementation Contract
 
-本文件拥有 [semantic entry](ARCHITECTURE.md)、[DATE_RESOLUTION](DATE_RESOLUTION.md) 与 [ARTIFACT](ARTIFACT.md) 到 runnable package 的 mapping。继承 [framework IMPLEMENTATION](../IMPLEMENTATION.md) / [UPSTREAM](../UPSTREAM.md)，不改变公式、population、date fallback 或 completeness。
+本文件拥有 [semantic entry](ARCHITECTURE.md)、[DATE_RESOLUTION](DATE_RESOLUTION.md) 与 [ARTIFACT](ARTIFACT.md) 到 runnable package 的 mapping。继承 [framework IMPLEMENTATION](../IMPLEMENTATION.md) / [UPSTREAM](../../UPSTREAM.md)，不改变公式、population、date fallback 或 completeness。
 
 ## Public package 与 request
 
@@ -125,4 +125,4 @@ Framework 三层 checks 之外，按 [Artifact acceptance](ARTIFACT.md#acceptanc
 
 Durable-before-return 与 service / process recreation 后 same-request 零 upstream reuse 必须通过 [framework durable reuse acceptance](../IMPLEMENTATION.md#durable-reuse-acceptance)，不以仅同一实例 repeat ensure 替代。
 
-Calendar / Options 已有所需 public runtime surface，无 DataLake / Snapshot capability gap。本 producer **Authority Complete / Dependency Reconciled / Implementation Architecture Complete / Implementation Ready**，runtime **Implemented / Verified**；date-resolution / concrete acceptance 与 durable restart reuse 已验证；旧首个 Study bindings 验收只适用于旧 Universe lifecycle，新 wiring 验收见 [当前 reconciliation](../../IMPLEMENTATION_RECONCILIATION.md#shared-component-runtime-reconciliation)，见 [reconciliation](../../IMPLEMENTATION_RECONCILIATION.md#first-observation-driven-vertical-slice-implementation)。
+Calendar / Options 已有所需 public runtime surface，无 DataLake / Snapshot capability gap。本 producer **Authority Complete / Dependency Reconciled / Implementation Architecture Complete / Implementation Ready**，runtime **Implemented / Verified**。当前 drift 按需见 [reconciliation](../../IMPLEMENTATION_RECONCILIATION.md)。

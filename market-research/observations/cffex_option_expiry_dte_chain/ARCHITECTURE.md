@@ -45,7 +45,7 @@ Empirical row grain 为 `one option contract × one resolved observation_date`�
 | tushare_trade_calendar | [Calendar service](../../../data-lake/datasets/tushare_trade_calendar/SERVICE.md)：显式 CFFEX，coverage / ensure / export 获得完整日历与开市事实。 |
 | tushare_equity_index_options | [Options service](../../../data-lake/datasets/tushare_equity_index_options/SERVICE.md)：coverage / ensure / export 获得完整单 product-day 及 OptionsDailyRow。强 completeness 由 [contract universe](../../../data-lake/datasets/tushare_equity_index_options/CONTRACT_UNIVERSE.md) 拥有，Calendar prerequisite 由 [trading days](../../../data-lake/datasets/tushare_equity_index_options/TRADING_DAYS.md) 拥有。 |
 
-只消费这两个 Dataset 的 public Application Service / semantic objects，遵守 [DataLake Application contract](../../../data-lake/APPLICATION.md) 与 [Observation upstream policy](../UPSTREAM.md)。Calendar 的完整 CFFEX open-date facts、Options 的强 complete product-day / expiry / contract facts 已完整、确定、可验证地满足本 Observation，不需重新实现 Snapshot-owned prepared Product semantics，因此 DataLake 是 design-time 选定的 canonical upstream。运行失败按 DATE_RESOLUTION 使 invocation 失败，不切换来源。未发现 capability gap；当前 runtime integration 与验证记录进入 [IMPLEMENTATION](IMPLEMENTATION.md)。
+只消费这两个 Dataset 的 public Application Service / semantic objects，遵守 [DataLake Application contract](../../../data-lake/APPLICATION.md) 与 [Research upstream policy](../../UPSTREAM.md)。Calendar 的完整 CFFEX open-date facts、Options 的强 complete product-day / expiry / contract facts 已完整、确定、可验证地满足本 Observation，不需重新实现 Snapshot-owned prepared Product semantics，因此 DataLake 是 design-time 选定的 canonical upstream。运行失败按 DATE_RESOLUTION 使 invocation 失败，不切换来源。未发现 capability gap；当前 runtime integration 与验证记录进入 [IMPLEMENTATION](IMPLEMENTATION.md)。
 
 ## Persistence ownership
 
@@ -66,4 +66,4 @@ Artifact 表达所保留的 empirical facts，不承诺 provider-current freshne
 | Derivation / Validity / Missingness | [Date resolution](DATE_RESOLUTION.md) |
 | Artifact Contract / Acceptance | [Artifact contract](ARTIFACT.md) |
 
-Concrete semantics 已锁定；implementation 状态与验证记录见 [Research reconciliation](../../IMPLEMENTATION_RECONCILIATION.md#首个-concrete-observation-authority-落位)。Public invocation / package handoff 进入 [IMPLEMENTATION.md](IMPLEMENTATION.md)；本 entry 不拥有 implementation mechanics，也不添加 CLI 或 HTTP delivery。
+Concrete semantics 已锁定；当前 implementation drift 按需见 [Research reconciliation](../../IMPLEMENTATION_RECONCILIATION.md)。Public invocation / package handoff 进入 [IMPLEMENTATION.md](IMPLEMENTATION.md)；本 entry 不拥有 implementation mechanics，也不添加 CLI 或 HTTP delivery。

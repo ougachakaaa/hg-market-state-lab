@@ -58,7 +58,7 @@ Partial persistence、interrupted / failed execution 不可作为 complete 返�
 
 ## Acceptance scenarios
 
-以下是 semantic acceptance；producer executable checks 与 durable reuse 记录见 [reconciliation](../../IMPLEMENTATION_RECONCILIATION.md#first-observation-driven-vertical-slice-implementation)：
+以下是 semantic acceptance；producer executable checks 与 durable reuse criteria 见 [framework IMPLEMENTATION](../IMPLEMENTATION.md#implementation-acceptance-与-handoff)：
 
 | Scenario | Required outcome |
 | --- | --- |

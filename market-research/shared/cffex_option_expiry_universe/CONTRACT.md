@@ -14,7 +14,7 @@
 
 ## Observed-window derivation
 
-保留基线已确认的业务选择，不因分类改变另造 universe：
+Observed-window selection：
 
 ```text
 trade_date window = [expiry_start_date, expiry_end_date]  # inclusive
@@ -51,7 +51,7 @@ Result 无 observation_identity / semantic artifact identity，不复制 daily r
 
 完整窗口无 matching rows，包括 Calendar 证明零开市日且 Options 零目标 complete，合法返回 empty result。Cache missing / incomplete、ensure unit failure、prerequisite / credential / provider / persistence / integrity failure 或非法 export 均不能解释为 empty / absent universe，不发布 partial result。
 
-预期错误须区分 invalid caller inputs 与合法请求 operation / completeness failure，映射为 resolver-owned failure，不以 ObservationError inheritance 授予 Observation lifecycle。Concrete Python names / error carriers 留给后续实现；Study 消费其安全 readable context，不 import upstream exception classes。Ensure 未完成的诊断保留 Dataset identity、requested product / inclusive range、requested / attempted / succeeded / failed counts，以及 public failures 原顺序的每项 product_code / trade_date / readable reason；无明细则明确说明，不截断、不用 private IDs / arbitrary object repr 或 provider response。
+预期错误须区分 invalid caller inputs 与合法请求 operation / completeness failure，映射为 resolver-owned failure，不以 ObservationError inheritance 授予 Observation lifecycle。Concrete Python names / error carriers 见 IMPLEMENTATION；Study 消费其安全 readable context，不 import upstream exception classes。Ensure 未完成的诊断保留 Dataset identity、requested product / inclusive range、requested / attempted / succeeded / failed counts，以及 public failures 原顺序的每项 product_code / trade_date / readable reason；无明细则明确说明，不截断、不用 private IDs / arbitrary object repr 或 provider response。
 
 ## Acceptance 与实施交接
 
@@ -63,6 +63,6 @@ Result 无 observation_identity / semantic artifact identity，不复制 daily r
 | invalid product / dates / 倒置范围 | upstream 前失败，无修复或 defaults。 |
 | repeated equal inputs / service recreation | 仍通过 Dataset public contract resolve；无 component SQLite / business-key lookup / durable hit 要求。 |
 | consumer / dependency boundary | Study / Observation 可显式调用；Analysis 无事实读取；无 provider / upstream private access / CLI JSON；result 为 owned public values。 |
-| implementation / state | 撤销 Universe Observation public lifecycle 和新 research persistence，保留 chain Observation；现有 state 不在本轮迁移、删除或重算。 |
+| implementation / state | Component 无 Observation public lifecycle / research persistence；chain 继续拥有独立 Observation lifecycle。 |
 
-Contract complete，已选 DataLake capability sufficient；resolver runtime mapping 见 [IMPLEMENTATION](IMPLEMENTATION.md)；wiring / tests 已 reconciliation，当前验收见 [reconciliation](../../IMPLEMENTATION_RECONCILIATION.md#shared-component-runtime-reconciliation)，不以旧 durable-reuse tests 验收本 component。
+Contract complete，已选 DataLake capability sufficient；resolver Python mapping 见 [IMPLEMENTATION](IMPLEMENTATION.md)。本 component 不以 Observation durable-reuse criteria 验收。

@@ -1,6 +1,6 @@
 # Observation Authority Authoring
 
-本文件拥有独立 Observation 的创建与设计交接流程。先读 [Observation architecture](ARCHITECTURE.md) 与 [Upstream policy](UPSTREAM.md)，再按 [Schema](SCHEMA.md) 锁定 concrete semantics；Research identity 与导航见 [module architecture](../ARCHITECTURE.md)。本流程不在 Study Method 内定义 Observation。
+本文件拥有独立 Observation 的创建与设计交接流程。先读 [Observation architecture](ARCHITECTURE.md) 与 [Upstream policy](../UPSTREAM.md)，再按 [Schema](SCHEMA.md) 锁定 concrete semantics；Research identity 与导航见 [module architecture](../ARCHITECTURE.md)。本流程不在 Study Method 内定义 Observation。
 
 先经 [Shared Component classification](../shared/ARCHITECTURE.md) 判断 local logic / 明确跨研究 reusable mechanism / independent research artifact。只有最后一类进入本流程；不因 Study 需要 reusable helper 或某段逻辑调用 DataLake 而默认创建 Observation。
 
@@ -12,15 +12,8 @@ clarify what is observed
     → lock business key / canonicalization
     → lock population / grain
     → identify required empirical facts
-    → inspect DataLake public Dataset capabilities FIRST
-    → DataLake semantically sufficient?
-        ├── YES → bind exact Dataset public service contract
-        └── NO → record semantic insufficiency reason
-                  → inspect Snapshot Capability Catalog
-                  → suitable public Product?
-                      ├── YES → bind exact Product request / result / failure contract
-                      └── NO → record Upstream Capability Gap
-                                → block implementation readiness
+    → apply Research UPSTREAM selection / sufficiency / gap policy
+    → bind selected exact public contract
     → lock deterministic derivation
     → lock validity / missingness
     → lock Artifact contract / completeness
@@ -40,9 +33,7 @@ Authority 完成前逐项核对 Schema 的十三个 areas、跨 area 一致性�
 
 ## Dependency reconciliation 与 implementation handoff
 
-Concrete authority 按 [UPSTREAM](UPSTREAM.md) 记录 required facts、DataLake public capability review、sufficiency 或 insufficiency 理由、实际 selected exact contract、failure semantics 与 gaps。DataLake sufficient 时绑定其 public contract，无需另作 Snapshot 排除说明；insufficient 才经 Snapshot catalog 选择实际 Product。不先扫描 Snapshot 或为方便切换来源，不把 runtime failure 当 capability decision。
-
-两侧都没有合适 public capability 时记录 Upstream Capability Gap；source / market fact 缺口交给 DataLake，prepared / analysis-ready Product 缺口交给 Snapshot，阻止 implementation readiness。只读取实际所需 upstream authority，不加载 sibling products，不穿透 internals，不自行调用 provider 或实现 failover。
+Concrete authority 按 [Research UPSTREAM](../UPSTREAM.md) 记录 required facts、DataLake public capability review、selected exact contract、sufficiency / insufficiency reason、failure semantics 与 gaps。Capability gap 交该 policy 指定的 upstream owner，阻止 implementation readiness；只读 actual dependencies，不用 private access / provider / runtime fallback 绕过。
 
 只有 concrete semantics 已完整且依赖能力已就绪、边界无冲突，才交接 implementation。Implementation 不由本流程自动触发，不预建统一 schema、executor、registry 或 retry engine。Implementation handoff 按 [IMPLEMENTATION](IMPLEMENTATION.md) 核对 public values / ensure / errors / composition / placement / publication 与具体 runtime mapping；不能从现有 Study CLI 推导 Observation CLI。Implementation Architecture Complete / Implementation Ready 与 runtime implemented 分别判断，Study runtime dependency reconciliation 等待实际 producer / bindings 复核；Study design readiness 按其 Authoring 定义。
 

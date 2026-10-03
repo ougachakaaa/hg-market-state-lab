@@ -34,20 +34,20 @@ Local logic 只服务一个 Study 或 Observation，可 colocate 于其 implemen
 
 Component result 可以作为 Study runtime 输入或由 Observation 纳入自己的 artifact derivation；它自身没有 retained artifact identity。Analysis 若需要某个 resolver / reader 的 result，由 orchestration 先准备，METHOD 明确 binding / meaning / completeness，不把 helper 的事实读取放进 Analysis。具体 Study 对其 inputs 的选择与解释继续归该 Study。
 
-DataLake / Snapshot 不依赖 Research。Component 只消费 public semantic contract；Source facts、field meaning、单位、nullable rules、coverage、cache、export snapshot、provider execution / credentials 均归 upstream owner。DataLake-first capability selection、禁止 private access / provider / CLI JSON round-trip、runtime failure 不换源及 one committed export proof 继承 [UPSTREAM](../UPSTREAM.md) 的公共事实规则；Observation-specific retained lookup / publication 另归 Observation specialization，不适用于 component。
+DataLake / Snapshot 不依赖 Research。Component 只消费 public semantic contract；Source facts、field meaning、单位、nullable rules、coverage、cache、export snapshot、provider execution / credentials 均归 upstream owner。DataLake-first selection 与 Research consumer constraints 继承 [UPSTREAM](../UPSTREAM.md)；Dataset operation 定义唯一引用 [DataLake APPLICATION](../../data-lake/APPLICATION.md)。[Observation lifecycle](../observations/ARCHITECTURE.md) 不适用于 component。
 
 跨研究共享是窄领域机制的显式依赖，不是大 shared utility layer。不创建 generic MarketDataProvider / Gateway、registry、DI / executor framework、shared business schema 或 cross-component research database。Framework-internal mechanical primitives 仍归其 framework owner，不因 shared 字样成为领域 component。
 
 ## Component contract 与 review
 
-每个实际提升的 component authority 必须回答 purpose / scope、真实复用理由、inputs / domains、outputs / ordering / units、deterministic rule、validity / missingness / failure、dependency owner / exact public contract、side effects 与 acceptance。调用 public ensure 时，Dataset-owned cache 可能变化；coverage / export 继续 read-only；这不产生 component-owned research persistence。Contract 既可 colocate 单文件，也可按独立 concern 下沉；不机械建立 schema / implementation 模板。
+每个实际提升的 component authority 必须回答 purpose / scope、真实复用理由、inputs / domains、outputs / ordering / units、deterministic rule、validity / missingness / failure、dependency owner / exact public contract、side effects 与 acceptance。Public operation 的副作用遵守 [DataLake APPLICATION](../../data-lake/APPLICATION.md)，不产生 component-owned research persistence。Contract 既可 colocate 单文件，也可按独立 concern 下沉；不机械建立 schema / implementation 模板。
 
-Review 核对：能从稳定入口发现唯一 owner；I/O 可独立测试；调用方向正确；Study-specific semantics 未被共享；无隐藏 I/O / partial-as-complete / silent substitution；无独立 research artifact / lifecycle。Component readiness 与代码当前状态分别记录。Framework authority 与 namespace source colocate 于本目录；每个已有独立 authority 的 component 使用同名 package directory，authority / narrow contracts 与 implementation colocate，不保留 authority-only shadow directory。原单文件 helper 改为同名 package 时保持既有 public import path / names；intentional re-exports 使用 explicit redundant aliases，不以 `__all__` 定义边界。Python public names 与 error carrier 仍由具体 implementation mapping 定义，不由分类预建框架。
+Review 核对：能从稳定入口发现唯一 owner；I/O 可独立测试；调用方向正确；Study-specific semantics 未被共享；无隐藏 I/O / partial-as-complete / silent substitution；无独立 research artifact / lifecycle。具体 readiness 与 Python mapping 留在 concrete owner，不在 framework 记录 runtime status。每个 component 的 authority / narrow contracts 与同名 package implementation colocate 于一个 canonical owner，保持既有 public import path / names；不保留 shadow authority directory，无 framework mechanics 时不建空 src。
 
 ## Authority navigation
 
-当前新分类的 concrete owner 为 [cffex_option_expiry_universe](cffex_option_expiry_universe/ARCHITECTURE.md) → [resolver contract](cffex_option_expiry_universe/CONTRACT.md)。该 resolver 已取代旧 Observation runtime；当前验证见 [reconciliation](../IMPLEMENTATION_RECONCILIATION.md#shared-component-runtime-reconciliation)。
+Component task 从本文件分类与 review rules 进入 actual concrete owner，再按需读 narrow contract / implementation handoff；upstream-backed design 另读 [UPSTREAM](../UPSTREAM.md)。若所需的是 independent retained empirical artifact，进入 [Observation Authoring](../observations/AUTHORING.md)，不在 component 中创建该 lifecycle。
 
-未来“指定日期 futures / index price reader”可按本 component 准入：消费 [Futures public service](../../data-lake/datasets/tushare_equity_index_futures/SERVICE.md) / [Index public service](../../data-lake/datasets/tushare_index_daily/SERVICE.md) 已有 authoritative export，在已准备的事实中选取所需 price。Contract 必须在真实需求出现时确定 instrument / product / date、price field（如 close / settle）、合法 absence 与 completeness；不在本轮猜测这些选择，不实现 reader，不重拥有行情事实、日历、cache 或 provider，不因此自动成为 Observation。
+Concrete resolver：[cffex_option_expiry_universe](cffex_option_expiry_universe/ARCHITECTURE.md) → CONTRACT / IMPLEMENTATION；具体 I/O、dependencies 和 readiness 留在该 owner。
 
-Historical [distribution](distribution/ARCHITECTURE.md)、[im_basis](im_basis/ARCHITECTURE.md)、[price_to_lagged_reference](price_to_lagged_reference/ARCHITECTURE.md) 的既定语义与适用范围继续由 [Compatibility](../studies/COMPATIBILITY.md) 保护；本入口不自动推广它们为新 Study 的默认依赖，也不默认扫描历史 Studies。
+Historical shared owners 仅沿 [Compatibility](../studies/COMPATIBILITY.md#method-与-consolidation) 进入，不在新 Study 默认路径，不因分类 framework 自动提升或扫描 sibling Studies。

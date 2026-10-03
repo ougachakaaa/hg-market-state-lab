@@ -1,47 +1,34 @@
 # market-research Agent Rules
 
-## 适用范围
+## 适用范围与最小阅读路径
 
-本文件适用于 `market-research/` 整棵目录，在根 [AGENTS.md](../AGENTS.md) 之上提供执行政策。下层 semantic authority 只能在上层 invariants 内 specialize / constrain。
+本文件是 `market-research/` 的 execution policy，继承根 [AGENTS.md](../AGENTS.md)。先读 [repository architecture](../ARCHITECTURE.md) → [module architecture](ARCHITECTURE.md)，再按任务路由；下层 authority 只能在上层 invariants 内 specialize / constrain。
 
-## 最小 Authority 路径
-
-先读根 [repository architecture](../ARCHITECTURE.md)，再读 [module architecture](ARCHITECTURE.md)，确认 runtime ownership、Research boundaries 与 Scratch / Shared Component / Observation / Analysis / Study 分工。之后按任务选择：
-
-| 任务 | 阅读路径 |
+| 当前任务 | 下一步 |
 | --- | --- |
-| Component / local logic 分类、提升与 review | [Shared Component authority](shared/ARCHITECTURE.md) → 仅实际所需 component entry / narrow contract；有独立 research artifact 需求才进入 Observation authoring。 |
-| Observation design / review | [Observation architecture](observations/ARCHITECTURE.md) → [Upstream policy](observations/UPSTREAM.md) → [Authoring](observations/AUTHORING.md) / [Schema](observations/SCHEMA.md) → specific Observation entry → 实际所需 upstream authority。 |
-| Observation implementation | Specific entry / Artifact（chain 按需 DATE_RESOLUTION）→ [framework IMPLEMENTATION](observations/IMPLEMENTATION.md) → concrete IMPLEMENTATION → owner-local src 中的 public package；依赖选择仍遵守 UPSTREAM。 |
-| 新 Study | [Study Authoring](studies/AUTHORING.md) / [Schema](studies/SCHEMA.md) → [Workflow](studies/WORKFLOW.md) → 仅实际消费的 Component / Observation authority → specific Study entry；创建布局按 [Skeleton](studies/SKELETON.md)。 |
-| Study implementation | Specific Study authority → consumed Artifact contracts → [Implementation Package Contract](studies/IMPLEMENTATION.md) → concrete IMPLEMENTATION（存在时）→ owner-local src 中的 Python implementation；从 implementation 进入时先读 init docstring 指向的 owner 根目录 canonical authority。 |
-| Study review / historical reconciliation | 按需 [Review](studies/REVIEW.md) / [Compatibility](studies/COMPATIBILITY.md)，再读触发范围涉及的 specific authority；不自动迁移。 |
-| CLI / config / output | [Research UI authority](ui/ARCHITECTURE.md) → 其 configuration contract；具体参数与用法只读对应 Study authority。 |
-| 当前 implementation / test drift | [Implementation reconciliation](IMPLEMENTATION_RECONCILIATION.md)。 |
+| Component 分类 / promotion / design / review | [shared/ARCHITECTURE.md](shared/ARCHITECTURE.md) → actual concrete owner / narrow contract / handoff。 |
+| Observation design / review | [observations/ARCHITECTURE.md](observations/ARCHITECTURE.md) → SCHEMA / AUTHORING → actual concrete entry / specialized contract。 |
+| Observation implementation | Observation entry / Artifact / relevant specialized semantics → [observations/IMPLEMENTATION.md](observations/IMPLEMENTATION.md) → concrete handoff → actual public package。 |
+| 新 Study / semantic review | [studies/ARCHITECTURE.md](studies/ARCHITECTURE.md) → AUTHORING / SCHEMA / WORKFLOW → actual dependencies → concrete 四文件 authority。 |
+| Study implementation / acceptance | Study entry / consumed contracts → [studies/IMPLEMENTATION.md](studies/IMPLEMENTATION.md) → concrete handoff / owner-local src。 |
+| Legacy maintenance / migration / consolidation / historical reconciliation | [studies/COMPATIBILITY.md](studies/COMPATIBILITY.md) → only triggered concrete scope；不默认迁移。 |
+| CLI / configuration / retained-output handling | [ui/ARCHITECTURE.md](ui/ARCHITECTURE.md) → CONFIGURATION（适用时）→ actual Study input / result contract。 |
+| 当前 authority / implementation drift | [IMPLEMENTATION_RECONCILIATION.md](IMPLEMENTATION_RECONCILIATION.md)。 |
 
-Observation / upstream-backed component design 先按 [Public upstream policy](UPSTREAM.md) 审查 [DataLake architecture](../data-lake/ARCHITECTURE.md) / [catalog](../data-lake/DATASETS.md) 的实际 public Dataset contract；只有 semantic capability insufficient 才进入 [Snapshot architecture](../market-snapshot/ARCHITECTURE.md) / [catalog](../market-snapshot/CAPABILITIES.md) 选择 explicit public Product。不默认加载 sibling products，不以 runtime failure 换源。
+Upstream-backed design 按 [UPSTREAM.md](UPSTREAM.md) 选择所需 public capability，再沿 DataLake / Snapshot entry 与 catalog 读取实际 owner；不默认加载 sibling Products / Datasets。新 Study 不扫描所有 Observations、sibling Studies、historical shared semantics 或 evidence 来继承研究含义。
 
-不得创建 Study 时扫描所有 Observations，不得为寻找可复用逻辑读取 sibling Studies、其 evidence、historical shared semantics 或 implementation。先按 Component authority 判断 required capability；未知 owner 时显式记录 gap，独立处理 component / Observation design，不在 Study-local Method 临时定义。
+## Authority-first execution 与 gap handling
 
-## 执行规则
+- Data meaning、output、responsibility 或 workflow 变更先落位 narrowest canonical authority，再修改实现。缺失业务决定不得从代码、常见做法、sibling 或 human 沉默推断；按对应 AUTHORING 的 decision loop 处理。
+- Observation identity / lifecycle / persistence 唯一归 [Observation architecture](observations/ARCHITECTURE.md)，不在 Study tasks 重定义；Component 分类 / caller rules 归 [Shared authority](shared/ARCHITECTURE.md)，Study object model / workflow 归 [Study entry](studies/ARCHITECTURE.md)。摘要与链接不建立第二 semantic owner。
+- Upstream selection / provider prohibition / failure boundary 归 [UPSTREAM](UPSTREAM.md)；capability gap 交正确 owner reconciliation，不用 private access 或 runtime source fallback 绕过。发现 authority / implementation conflict，保留可确认 canonical semantics，明确记录 finding，不静默选择新语义。
+- Authority Complete、design readiness 与 actual runtime readiness 按 [Study handoff](studies/AUTHORING.md#publication-与-dependency-handoff) 分开；获授权的 vertical slice 按 producer-first 顺序核对，不由文档完成自动启动 implementation。
+- Python installation / resolution / tooling 始终从 repository root 使用唯一环境，不创建 module-local project / lock / .venv。源码入口 docstring 指回 owner authority；从代码进入任务时先回到该入口。
 
-- Python dependency installation、resolution 与 tooling 从 repository root 使用唯一 Poetry environment；module-local project、lock 或 virtual environment 均不创建。
-- Authority / data meaning / output / responsibility / workflow changes 先落位 narrowest canonical owner，再修改实现。发现上下层或代码 drift 时显式 reconciliation，不静默选择语义。
-- Research 不直接依赖 Tushare / external market-data provider。Observation / upstream-backed component 按 [Public upstream policy](UPSTREAM.md) DataLake-first 选择 public semantic capability，insufficient 时才选明确 Snapshot public Product；不访问 upstream internals、provider credentials / transport、backend-api / FastAPI DTO 或 frontend types。Capability gap 交对应 owner reconciliation，不建立 runtime failover。
-- Scratch 是 disposable exploration，不形成 stable authority、retained capability 或 production dependency。
-- 仅单个 Study / Observation 使用的逻辑可 colocate；只有明确跨研究复用、稳定可测试 I/O 才提升窄 component。不因复用而创建 Observation；component 无研究 Artifact / cache / SQLite / 幂等业务键生命周期，不建立大 shared utility layer。
-- 独立 Observation 的 inputs、key、population、grain、derivation、validity 与 Artifact contract 按其 Schema / Authoring 锁定；Agent 不补全改变业务含义的未决决定。Lifecycle、业务幂等、complete consumption 与一个 SQLite 的 ownership 由 Observation architecture 拥有，Study 不重定义。
-- 新 Study 保留 Skeleton 四文件布局，拥有 user request / bindings、required workflow、Component invocation / Observation ensure orchestration、runtime plan / state / outcome；retained Workflow Artifacts / Analysis / Evidence 仅按明确目标声明，三者均可为 0。Observation 唯一拥有 reusable empirical persistence，Study 不复制 rows 建第二 canonical cache。Observation gap 不授权 Study 实现 Observation；design-ready vertical slice 可依 [Authoring handoff](studies/AUTHORING.md#publication-与-dependency-handoff) 按 producer-first 顺序实施，实际 Study 实施前复核 producers / runtime bindings。
-- 每个新 runnable Study 是同名 Study-local Python package；mandatory init、cli、study，analyses / evidence 按实际职责 conditional，按 Implementation Contract 拆分复杂 helper。study.py 拥有 orchestration / outcome，只在声明 retained outputs 时驱动物化 / publication；Only Study orchestration ensure Observations。Analysis 只计算已准备的 complete inputs，可调用 pure calculator / selector / transform，不调用会读取事实的 component、Observation / DataLake / Snapshot，不 fetch data 或读 persistence。Study orchestration 可以按声明 contract 调用 shared resolver / reader 准备输入。Study 不直接消费 DataLake / Snapshot，不把 Observation Artifact construction / persistence 放入 Study；Legacy 按 Compatibility 保留。Orchestration-only CLI 不加载 output config、不要求 run-key / directory / overwrite / staging。
-- 新 runnable Study 提供 stable CLI Study ID、符合 UI authority 的 cli.py、canonical usage 与 CLI / output tests；不创建中央 registry、reflection、entry-point plugin 或 dynamic registration。
-- 现有 `lab research` 是 Study 的 canonical 人类 discovery / forwarding 入口；Observation invocation semantics 与 CLI delivery 分开，V1 仅 Python public ensure boundary，见 [Observation IMPLEMENTATION](observations/IMPLEMENTATION.md)；不创建 Observation CLI / HTTP API。
-- Visualization 仍由 Research 通过 Python study output 生成，默认静态图片，具体形式由真实 Study 决定。除非真实重复需求与新的 authority decision 已明确改划 ownership，不自行迁移至 backend-api、web-ui 或 Research Viewer。
-- Findings 是 evidence，须 human / agent semantic decision 与 canonical update 后才可影响 Modeling，不自动形成 production contract、forecast、decision、signal 或 recommendation。未来 frontend 消费 Research semantics，不把 frontend-library configuration 写入 canonical result。
-- 不创建 concrete Observation，除非该任务明确要求；不因 authority-only reconciliation 自动迁移旧 Study / evidence 或将 historical shared helpers 提升为能力。
-- 不为假设需求建立 reusable Analysis、Experiment Engine、generic registry / Research Repository / Artifact DB、DAG、scheduler、executor、cache、refresh engine、promotion / backtest framework、research API 或 visualization framework。
+## 验证与范围
 
-## 验证
+所有检查从 repository root 执行。Authority-only change 至少运行 Research authority topology / colocation tests、repository authority link / reachability checks 与 `git diff --check`，核对新增 owner 可达性并审阅完整 diff。仅因 topology 重组需要时机械更新相关验证，不改变业务测试或实现；失败区分 baseline 问题与新引入问题。
 
-所有检查从 repository root 执行。Authority-only change 至少运行 Research authority topology tests、repository authority link / reachability checks 与 `git diff --check`，核对新增 owner 的可达性及完整 diff。旧 tests 固定过时 topology 时记录 reconciliation gap，不修改实现来迎合旧规范。
+Implementation change 运行直接相关 tests 与 Ruff / mypy 范围；cross-module contract 变更按 producer / consumer local policy 同时检查。当前 drift register 不替代 semantic owner，也不把历史通过数当当前验收。
 
-Implementation change 运行直接相关 tests 与 Ruff / mypy 范围；若变更 upstream producer contract，按 owning module local AGENTS 完成 producer / consumer reconciliation 和检查。完整差异必须审阅，验证失败须区分已有 baseline failure 与新变更引入问题。
+不因 authority 整理创建 concrete Observation、迁移 legacy Study / evidence、重算 runtime data 或提升 historical helpers。CLI、visualization 与 public delivery 变更分别遵守 UI / module authority；不自行创建 Observation CLI / HTTP API 或迁移 visualization ownership。不为假设需求建立 registry、Experiment Engine、generic Research Repository / Artifact DB、DAG、scheduler、executor、cache / refresh / retry engine、reusable Analysis / promotion / backtest / visualization framework。

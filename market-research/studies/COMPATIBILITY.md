@@ -1,6 +1,6 @@
 # Research Study Compatibility
 
-本文件拥有既有 retained Study 的非追溯 schema evolution、reconciliation、migration 与 consolidation policy。新 Study 从 [Authoring](AUTHORING.md) 进入并遵守 [Observation-first Schema](SCHEMA.md)，不以历史 authority / shared helpers 作为默认语义来源。
+本文件拥有既有 retained Study 的非追溯 schema evolution、reconciliation、migration 与 consolidation policy。本文件仅用于 legacy maintenance、migration、consolidation、historical reconciliation 或 substantial legacy semantic modification。新 Study 从 [framework entry](ARCHITECTURE.md) → [Authoring](AUTHORING.md) 进入并遵守 [Observation-first Schema](SCHEMA.md)，不以历史 authority / shared helpers 作为默认语义来源。
 
 ## Legacy retained structure
 
@@ -22,7 +22,7 @@ Human 明确要求升级 / reconciliation、substantial semantic modification、
 
 仅处理触发事项与真实冲突，保留已有研究含义，不为新版文件风格机械重排旧 authority。局部 bug 修复、CLI / evidence 维护不要求整包迁移。缺失研究决定走 Authoring human loop，不从 implementation 或 sibling Study 猜测。
 
-[Implementation Package Contract](IMPLEMENTATION.md) 对新 runnable Study 首次实现有效；已有 implementation 不因更新自动拆分。Human 要求重构或改动实质重做某些 responsibilities 时，按 [Review](REVIEW.md) 审查该次涉及的边界，同时尊重尚未迁移的 legacy contract，不由新版 topology check 强制重做整包。
+[Implementation Package Contract](IMPLEMENTATION.md) 对新 runnable Study 首次实现有效；已有 implementation 不因更新自动拆分。Human 要求重构或改动实质重做某些 responsibilities 时，按 [Implementation review](IMPLEMENTATION.md#runnable-study-implementation-topology-review) 审查该次涉及的边界，同时尊重尚未迁移的 legacy contract，不由新版 topology check 强制重做整包。
 
 显式 Observation-first migration 必须核对 independent Observation owner、invocation / Artifact contracts、Analysis consumption 与 Evidence traceability；历史 evidence、provenance 和执行 behavior 的变更范围需单独明确，不能从迁移请求推导自动 overwrite 或重算。
 

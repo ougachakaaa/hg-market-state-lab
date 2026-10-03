@@ -167,33 +167,35 @@ def test_creation_entry_does_not_link_to_legacy_shared_semantics() -> None:
     authoring = STUDIES_ROOT / "AUTHORING.md"
     entry = authoring.read_text(encoding="utf-8")
     assert "(SCHEMA.md)" in entry
-    assert "(REVIEW.md)" in entry
+    assert "(#study-authority-completeness-gate)" in entry
     assert "(COMPATIBILITY.md)" in entry
     shared_links = [
         target for target in re.findall(r"\]\(([^)]+)\)", entry) if target.startswith("../shared/")
     ]
     assert set(shared_links) == {"../shared/ARCHITECTURE.md"}
-    skeleton = STUDIES_ROOT / "SKELETON.md"
-    assert skeleton.is_file()
-    assert skeleton.resolve() in local_study_links(authoring, STUDIES_ROOT)
-    layout = skeleton.read_text(encoding="utf-8")
+    framework = STUDIES_ROOT / "ARCHITECTURE.md"
+    assert framework.is_file()
+    assert authoring.resolve() in local_study_links(framework, STUDIES_ROOT)
+    layout = entry
     assert "studies/<study_package>/" in layout
     assert all(f"── {name}" in layout for name in REQUIRED_TOP_LEVEL)
     assert all(f"`{name}`" in entry for name in REQUIRED_TOP_LEVEL)
-    review = STUDIES_ROOT / "REVIEW.md"
-    assert skeleton.resolve() in local_study_links(review, STUDIES_ROOT)
+    assert "## Study Authority Completeness Gate" in entry
 
 
-def test_implementation_contract_is_reachable_from_authoring_and_review() -> None:
+def test_implementation_contract_is_reachable_from_stable_entries_and_authoring() -> None:
     contract = STUDIES_ROOT / "IMPLEMENTATION.md"
     assert contract.is_file()
     for entry in (
         RESEARCH_ROOT / "ARCHITECTURE.md",
         RESEARCH_ROOT / "AGENTS.md",
         STUDIES_ROOT / "AUTHORING.md",
-        STUDIES_ROOT / "REVIEW.md",
+        STUDIES_ROOT / "ARCHITECTURE.md",
     ):
-        assert contract.resolve() in local_study_links(entry, RESEARCH_ROOT), entry
+        assert contract.resolve() in reached_authorities(entry, RESEARCH_ROOT), entry
+    assert "## Runnable Study implementation topology review" in contract.read_text(
+        encoding="utf-8"
+    )
 
 
 def test_new_runnable_package_requires_modules_and_authority_pointer(tmp_path: Path) -> None:

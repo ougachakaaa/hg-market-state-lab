@@ -16,7 +16,7 @@
 | Business Key / Canonicalization | Normalized business inputs 的确定性构成、等价表达的归一化、必须区分的输入变化、排除的 execution / provenance metadata；与 [framework semantic identity / lookup boundary](ARCHITECTURE.md#business-identity-与-invocation-lifecycle) 的对应关系，并遵守其 [deferred evolution constraints](ARCHITECTURE.md#explicitly-deferred-decisions)。 |
 | Population | 被观察的对象集合、选择范围与 eligibility；由本 Observation 拥有，不留给 Study 重定义。 |
 | Grain | 每个 empirical unit / record 代表什么，以及适用的唯一性关系。 |
-| Upstream Facts | 按 [UPSTREAM policy](UPSTREAM.md) 明确 required empirical facts、canonical semantic owner、已审查的 DataLake public capability、selected upstream boundary / exact public service contract、failure semantics 与 capability gaps。选 DataLake 时证明 public semantics sufficient；只有 insufficient 时才明确其理由、selected Snapshot Product 与 exact public request / result contract，不需 DataLake-backed authority 重复排除 Snapshot。 |
+| Upstream Facts | 按 [UPSTREAM policy](../UPSTREAM.md) 明确 required empirical facts、canonical semantic owner、已审查的 DataLake public capability、selected upstream boundary / exact public service contract、failure semantics 与 capability gaps。选 DataLake 时证明 public semantics sufficient；只有 insufficient 时才明确其理由、selected Snapshot Product 与 exact public request / result contract，不需 DataLake-backed authority 重复排除 Snapshot。 |
 | Derivation | 从 upstream facts / declared component results 到 empirical output 的确定性构造、公式、业务变换及单位；不定义 statistical interpretation。 |
 | Validity / Missingness | 有效性、缺失、排除与 failure semantics，包括它们怎样影响 Artifact 可消费性；不静默补值或改变 population。 |
 | Artifact Contract | 供 consumer 使用的 semantic shape、字段 / 单位 / 关系、identity 可定位方式、所需 provenance 与 complete 可消费条件；实例化 [framework completeness / publication boundary](ARCHITECTURE.md#completeness-与-public-boundary)，不暴露 SQLite layout。 |

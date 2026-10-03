@@ -1,10 +1,10 @@
 # Retained Study Implementation Package Contract
 
-本文件是未来 runnable retained Study 的 Python implementation topology 唯一 canonical owner。[Schema](SCHEMA.md) 定义 semantic graph，[Skeleton](SKELETON.md) 定义文档布局，[Authoring](AUTHORING.md) 定义交接，[Review](REVIEW.md) 验证实现，[Compatibility](COMPATIBILITY.md) 保护既有实现。Observation implementation 独立归其 [canonical owner](../observations/ARCHITECTURE.md)，不由 Study 实现。
+本文件唯一拥有新 runnable retained Study 的 Python implementation topology、implementation acceptance 与 review criteria。Framework 入口见 [Study architecture](ARCHITECTURE.md)，semantic graph 见 [Schema](SCHEMA.md)，文档布局 / semantic gate / handoff 见 [Authoring](AUTHORING.md)。既有实现仅在 [Compatibility](COMPATIBILITY.md) 触发范围内适用；Observation implementation 独立归其 [canonical owner](../observations/ARCHITECTURE.md)。
 
 ## Package boundary 与必需拓扑
 
-每个新 runnable Study 位于 `market-research/studies/<study_package>/`，authority 与 implementation 同处该 canonical owner，四份 semantic documents 继承 [Skeleton](SKELETON.md)。它必须是真实 Python package，不能由单个 `<study_package>.py` 或承担全部责任的大脚本代替。
+每个新 runnable Study 位于 `market-research/studies/<study_package>/`，authority 与 implementation 同处该 canonical owner，四份 semantic documents 继承 [四文件布局](AUTHORING.md#mandatory-top-level-topology)。它必须是真实 Python package，不能由单个 `<study_package>.py` 或承担全部责任的大脚本代替。
 
 ```text
 <study_package>/src/market_research/studies/<study_package>/
@@ -36,3 +36,19 @@
 按 semantic responsibility 和阅读边界审查拓扑，LOC、函数 / class 数量或一对象一文件不是阈值。单一 module 不同时承载多个可独立理解且可清晰拆分的 material responsibilities。已有实现非追溯规则见 Compatibility；当前 implementation / test drift 见 [reconciliation](../IMPLEMENTATION_RECONCILIATION.md)。
 
 Owner 根目录承载 authority 与实际子模块；Python implementation 位于本 owner 的 `src/` 下，按完整 `market_research.*` namespace 落位并在根 `pyproject.toml` 注册 source root。Authority 不进入 namespace/source tree；不存在 framework mechanics 时不创建空 src。源码 docstring 以相对路径指回 owner 根目录的 canonical entry。
+
+## Runnable Study implementation topology review
+
+实现形成后单独执行，不决定 authority complete。历史 implementation 只按 Compatibility 的触发范围适用。
+
+| 检查面 | 不通过条件 |
+| --- | --- |
+| Package / entry | 新 runnable Study 是单脚本、缺少 Package Contract 必需边界，或 init docstring 不指向 canonical Study entry。 |
+| Orchestration | study.py 隐藏 material statistics / plotting / complex serialization，或无法辨认 request → dependency ensure / runtime plan → outcome；实际声明 retained outputs / Analysis / Evidence 时其责任无法辨认。 |
+| Observation / Analysis boundary | Study 直接调用 DataLake / Snapshot 或实现 Observation construction、读取 persistence；Analysis invoke / resolve / ensure Observation、调用读取事实的 component、fetch data 或重定义 empirical semantics。Only Study orchestration 的事实 dependency binding / invocation 合法，pure component computation 也可由 Analysis 调用。 |
+| Traceability | Dependencies、步骤、runtime completion / failure 无法追踪；实际声明的 retained Workflow Artifacts / publication 或 Analysis / Evidence 无清晰责任。 |
+| Focused reading | 修改一个 Analysis 需理解无关 CLI、其他 Analysis、Observation internals、报告格式或 output transaction。 |
+| Mixed responsibility | 单 module 承担可独立理解的 input canonicalization、Analysis execution、evidence retention 等多个 substantial responsibilities，无清晰内聚依据。 |
+| Authority drift | 实现合并、隐藏或越界重定义语义对象，无法恢复 Schema / Workflow graph；为 orchestration-only Study 强制 directory / config / Artifact，复制 market rows 建 empirical cache，或对无 Analysis / Evidence 的 Study 强制空 module。 |
+
+按 semantic responsibility 和阅读边界处理 findings，不以 LOC、函数 / class 数量或一对象一文件代替审查。结构测试可固定 package / 必需 module / authority pointer，不能替代语义阅读；当前 authority / implementation drift 按需见 [implementation reconciliation](../IMPLEMENTATION_RECONCILIATION.md)。

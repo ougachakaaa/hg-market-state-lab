@@ -18,7 +18,7 @@ LINK = re.compile(r"\[[^]]*\]\(([^)]+)\)")
 FRAMEWORK_ENTRIES = {
     "shared": "ARCHITECTURE.md",
     "observations": "ARCHITECTURE.md",
-    "studies": "AUTHORING.md",
+    "studies": "ARCHITECTURE.md",
     "ui": "ARCHITECTURE.md",
 }
 
