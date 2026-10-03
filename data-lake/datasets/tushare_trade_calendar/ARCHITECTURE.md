@@ -6,11 +6,11 @@
 
 Canonical Dataset identity 为 `tushare_trade_calendar`，用于持久缓存 Tushare 交易日历 Source facts，不生成 analysis-ready 派生结果。SQLite ownership 继承模块 invariant。
 
-本 Dataset 的 authority、implementation、tests 与 persistent runtime state 由当前 `datasets/tushare_trade_calendar/` bounded context colocate 拥有：authority 为本文件与 SERVICE.md；implementation 与 composition 位于 `src/`，Dataset verification 位于 `tests/`，唯一 owned SQLite 位于 `data/<owned sqlite>`。默认 filename 与 legacy state 安全规则见 SERVICE.md；当前 source registration 与目录 materialization 机制见 reconciliation 文档。
+本 Dataset 的 authority、implementation、tests 与 persistent runtime state 由 `datasets/tushare_trade_calendar/` bounded context colocate 拥有：authority 为本文件与 SERVICE.md；implementation 与 composition 位于 `src/`，Dataset verification 位于 `tests/`，owned state 位于 `data/`。Filesystem / Python ownership 继承模块架构，SQLite lifecycle 与旧目录 state 隔离见 [PERSISTENCE.md](../../PERSISTENCE.md)。
 
-Trade-calendar-specific models、Scope / Window interpretation、逐日 completeness、export view、Tushare adapter 与 service composition 都归本 Dataset；通用 mechanisms 依赖 DataLake shared kernel，不允许 kernel 反向依赖本 Dataset，也不依赖其他 Dataset。现有 public Python import surface 保持兼容；所有 source roots 共用根 Python project/environment。
+Trade-calendar-specific models、Scope / Window interpretation、逐日 completeness、export view、Tushare adapter 与 service composition 都归本 Dataset；依赖方向与 public import compatibility 继承模块架构。Calendar 不依赖其他 Dataset。
 
-Source provider 为 **Tushare**，execution authority 为 [providers/TUSHARE.md](../../providers/TUSHARE.md)。本 Dataset adapter 拥有 `trade_cal` endpoint / parameters、batching、response partition 与 Calendar facts validation；credential、client、限流与 provider request failure conversion 归共享 Provider Runtime，当前 implementation 与历史 reconciliation 见 [implementation reconciliation](../../IMPLEMENTATION_RECONCILIATION.md)。
+Source provider 为 **Tushare**，execution authority 为 [providers/TUSHARE.md](../../providers/TUSHARE.md)。本 Dataset adapter 拥有 `trade_cal` endpoint / parameters、batching、response partition 与 Calendar facts validation；provider execution 继承该 authority。
 
 Source endpoint 为 **`trade_cal`**。第一版只有一个 canonical Scope shape：
 
@@ -21,7 +21,7 @@ TradeCalendarScope
 
 `exchange` 是 provider-native canonical exchange identifier，必须显式指定，不依赖 provider default。DataLake 不建立 exchange master / enum taxonomy，也不将 exchange 伪装成 Instrument。
 
-`exchange × cal_date` 已完整寻址全部 fact space；Scope shape 数量由 canonical target model 是否完整寻址事实决定，不由 provider API 数量、请求形式或 batching 方式决定。因此第一版不引入其他 Scope。
+`exchange × cal_date` 已完整寻址全部 fact space；Scope shape 的判定继承公共 domain authority，因此第一版不引入其他 Scope。
 
 ## 2. Window 与 FetchUnit identity
 
@@ -67,10 +67,10 @@ instrument usage: none
 
 ## 5. Success 与 freshness
 
-`success` 的公共含义由 [DOMAIN_MODEL.md](../../DOMAIN_MODEL.md) 拥有：在 `succeeded_at` 时曾成功取得并原子保存完整合法 Source facts。本 Dataset 将其收紧为上述 exactly-one Record invariant。
+`success` 的历史取得含义继承 [DOMAIN_MODEL.md](../../DOMAIN_MODEL.md)，本 Dataset 将 completeness 收紧为上述 exactly-one Record invariant。
 
-`coverage.complete` 的公共定义见 [APPLICATION.md](../../APPLICATION.md)，只表达 cache completeness，不保证 provider-current freshness。未来日期 facts 同样适用；不因此引入 Dataset-specific refresh framework。V1 不设计 refresh、force、TTL、stale 或 invalidation，freshness 继续属于 DataLake deferred design。
+`coverage.complete` 继承 [APPLICATION.md](../../APPLICATION.md) 的 cache completeness 定义。未来日期 facts 同样适用；freshness policy 继承模块 deferred semantics。
 
 ## 6. 下一份 authority
 
-Consumer contract、public Python surface、operation specialization、failures 与 runtime configuration 见 [SERVICE.md](SERVICE.md)；CLI adapter 再进入 [lab authority](../../../lab/ARCHITECTURE.md)。本文拥有 bounded-context ownership 与 domain contract；当前实现状态及目标 topology 差异见 [implementation reconciliation](../../IMPLEMENTATION_RECONCILIATION.md)。
+Consumer contract、public Python surface、operation specialization、failures 与 runtime configuration 见 [SERVICE.md](SERVICE.md)；CLI adapter 再进入 [lab authority](../../../lab/ARCHITECTURE.md)。

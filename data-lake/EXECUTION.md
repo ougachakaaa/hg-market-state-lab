@@ -8,7 +8,7 @@
 
 ensure 可以启用一个 Source worker 和主线程单 SQLite writer，最多提前一个 batch。所有 provider calls 仍经过共享限流；worker 不访问 SQLite。前一批持久化与后一批 Source I/O 可以重叠。Operation failure / interruption 停止后续提交并取消尚未开始的工作，触发 Source 的 cancellation guard，等待已进入的请求收束，后续分页/metadata calls 不再启动；已提交 units 保留，已开始但未提交 units 留为可重试 pending。不得隐藏重试。
 
-每次 operation/read snapshot 可复用同一冻结 basis 的解析、metadata 合法性验证和 contract indices；复用只限内部保持不变的同一对象，不跨 operation 信任曾通过验证的可变数据。每个 unit 仍验证 expected/observed 集合、每条 canonical Record、instrument association、record_count 和 content_hash。新 ensure 尝试使用新取得的 catalog，不以历史成功 basis 推断当前 contract universe。
+每次 operation/read snapshot 可复用同一冻结 basis 的解析、metadata 合法性验证和 contract indices；复用只限内部保持不变的同一对象，不跨 operation 信任曾通过验证的可变数据。每个 unit 仍验证 expected/observed 集合、每条 canonical Record、instrument association、record_count 和 content_hash。Catalog 取得与合法 metadata 复用遵循 owning Dataset authority；需要重新取得完整 contract universe 的 Dataset 不以历史成功 basis 推断当前 universe。
 
 存储连接与结构校验的边界见 [PERSISTENCE.md](PERSISTENCE.md)；复用与批执行不改变 public result、coverage、export ordering 或只读边界。
 

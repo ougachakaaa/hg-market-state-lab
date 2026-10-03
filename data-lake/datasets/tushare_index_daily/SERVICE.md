@@ -2,9 +2,9 @@
 
 本文件拥有 Index Dataset 的 transport-neutral public request/result/view 与 runtime contract，继承 [Dataset domain](ARCHITECTURE.md) 及公共 [APPLICATION.md](../../APPLICATION.md)。Facts/Instrument 由 [FACTS.md](FACTS.md) 拥有，Calendar prerequisite 由 [TRADING_DAYS.md](TRADING_DAYS.md) 拥有；不定义 CLI flags、HTTP DTO 或 SQLite schema。
 
-## 1. Target public Python surface
+## 1. Public Python surface
 
-目标 namespace 为 `data_lake.datasets.tushare_index_daily`，发布 `IndexDailyService`、`IndexDailyRange`、`IndexDailyRow`、`IndexDailyExport` 与 `create_service()`。这些是稳定 consumer contract；当前 implementation 状态见 [reconciliation](../../IMPLEMENTATION_RECONCILIATION.md)。公共 CoverageResult / EnsureResult / UnitFailure / errors 复用 DataLake contract。
+Canonical namespace 为 `data_lake.datasets.tushare_index_daily`，发布 `IndexDailyService`、`IndexDailyRange`、`IndexDailyRow`、`IndexDailyExport` 与 `create_service()`。这些是稳定 consumer contract。公共 CoverageResult / EnsureResult / UnitFailure / errors 复用 DataLake contract。
 
 ```text
 coverage(request: IndexDailyRange) → CoverageResult
@@ -78,9 +78,9 @@ Metadata 表达 export snapshot 中的 cached instrument facts，不宣称是 tr
 
 InvalidRequestError / OperationError 的唯一公共 owner 为 APPLICATION.md。自身 request validation failure 为 InvalidRequestError；storage/integrity/execution/credential failure 为 OperationError；Calendar prerequisite failure 按 TRADING_DAYS.md 映射为 OperationError；可恢复 Index unit failures 为 EnsureResult.failures，不新增第三类公共 error。
 
-Tushare execution 与 credential / client / shared limiter 遵循 [Provider Runtime authority](../../providers/TUSHARE.md)，本 Dataset 不自行实现 provider initialization 或请求异常转换。Factory / read-only calls 不解析 credential、不创建 client；完整 Calendar 加上全 success Index 目标的 ensure 无需 credential。缺少必需 credential 在相应 Source request 前抛 OperationError。
+Tushare execution 遵循 [Provider Runtime authority](../../providers/TUSHARE.md)，factory 与整个 operation 调用链继承公共 lazy Source I/O invariant；Calendar prerequisite 是否需要 Source I/O 由 TRADING_DAYS.md 拥有。
 
-本 Dataset 自己的 composition 拥有 index_basic/index_daily adapter 与 local storage resolution，adapter 通过共享 Executor 执行 provider 请求；只通过 Calendar public namespace 消费 prerequisite，不读取 sibling persistence。唯一 owned SQLite 目标位于本 bounded context 的 data/；具体 filename、事务、Source batching、package wiring 与测试设计由 implementation reconciliation 记录，不重新决定本轮 semantic contract。HTTP、Research/Snapshot integration、refresh/force/TTL 与通用 schema migration framework 仍 deferred；明确的 generation 2 → 3 兼容升级见 [PERSISTENCE.md](../../PERSISTENCE.md)；CLI registration 与当前 runtime 状态见 reconciliation。
+本 Dataset 自己的 composition 拥有 index_basic/index_daily adapter 与 local storage resolution，adapter 通过共享 Executor 执行 provider 请求；只通过 Calendar public namespace 消费 prerequisite，不读取 sibling persistence。SQLite lifecycle、默认 filename convention、旧目录 state 隔离与 generation compatibility 继承 [PERSISTENCE.md](../../PERSISTENCE.md)；bounded Source execution 见下节。Consumer integration 与 deferred semantics 继承模块架构。
 
 ## Bounded Source execution
 

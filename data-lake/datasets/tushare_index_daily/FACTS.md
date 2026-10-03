@@ -8,7 +8,7 @@
 
 V1 接受以沪深交易日语义发布、由 index_basic 确认且 index_daily 提供日线的中国指数；canonical code representation 为六位数字加 `.SH` / `.SZ` / `.CSI`。这不是九个常用指数的 whitelist。其他 Source family / calendar 的接入须先扩展本 Dataset 的窄契约；不能仅凭 index_basic 有一行就声称所有指数 Source 均已支持（例如 index_daily 不包含申万行业行情）。
 
-代表性选择包括上证综指、上证50、沪深300、中证500、中证1000、中证2000、深证成指、创业板指、科创50。它们是 consumer selection 示例，不是 service 隐式 defaults、fact-space 上限或固定代码表。各自完整 canonical ts_code 必须以 index_basic Source facts 确认；本轮没有读取 authenticated catalog，不将猜测的后缀固化为 authority。名称不作为 public request identity。
+代表性选择包括上证综指、上证50、沪深300、中证500、中证1000、中证2000、深证成指、创业板指、科创50。它们是 consumer selection 示例，不是 service 隐式 defaults、fact-space 上限或固定代码表。各自完整 canonical ts_code 必须以 index_basic Source facts 确认，不得猜测后缀。名称不作为 public request identity。
 
 `index_codes` 解释为非空 set：重复 code 合并，canonical scope 按完整 code lexicographic ascending 排序。不 trim、改写大小写、补后缀或把六位裸 symbol 转成 code。Source 不存在的 code 与合法请求格式是不同问题；read-only operation 不额外访问 Source 来验证 membership。
 

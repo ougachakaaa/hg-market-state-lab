@@ -30,9 +30,9 @@ data_lake.datasets.tushare_trade_calendar Public Application Service
 internal Source Adapter / Repository / SQLite
 ```
 
-这是 canonical consumer boundary，不依赖 CLI / HTTP。Consumer 不访问 SQLite、Repository、Source adapter 或 Tushare transport response，也不通过 CLI 或反向解析 JSON 获取 Python result。实际 Research / Snapshot integration 仍须独立设计，不因 boundary 发布而宣称已接入。
+Consumer 调用与 runtime boundary 继承 [APPLICATION.md](../../APPLICATION.md)，依赖权限及 consumer integration 边界继承模块架构。
 
-普通 consumer 使用 `create_service()` 创建 service，不要求显式传入 SQLite path、Repository、Source Adapter、database connection 或 `TUSHARE_TOKEN`。Dataset-specific runtime/source composition 由本 Dataset 内部拥有，通用 runtime/storage machinery 由 DataLake shared kernel 拥有；调用该 Dataset public API 不需要 DataLake facade 或 manager。Filesystem relocation 不改变上述 canonical public import surface。Factory 本身不要求 Source credential，不为了后续 read-only operation 创建缓存。
+普通 consumer 使用 `create_service()` 创建 service；本 Dataset 内部组合 trade_cal adapter 与 owned storage，factory 遵守公共 runtime invocation invariant。
 
 `CoverageResult`、`EnsureResult`、`UnitFailure` 与两类 application errors 继承公共 Application authority，可由公共 `data_lake` facade 提供；caller 必须能消费结果并识别错误，无需访问 internals。内部文件拆分、类型载体与共享类型 re-export 方式留给 implementation，不改变 public semantics。
 
@@ -61,7 +61,7 @@ view = service.export(request)
 | start_date | date | 必填，inclusive lower bound |
 | end_date | date | 必填，inclusive upper bound，start_date <= end_date |
 
-日期是 Python `datetime.date`，不是 raw strings 或 datetime timestamps。Exchange 不猜测、不改写大小写或建立本地 enum；空白或含首尾空白的输入不是 canonical identifier，不通过 trim 后替换输入。Provider 支持哪些 canonical identifiers 由 Source 决定，不为 request validation 额外访问 Source。
+日期是 Python `datetime.date`，不是 raw strings 或 datetime timestamps。未来自然日 Window 合法，不按 today 裁剪：ensure 可缓存 Source 已发布的未来日历事实；未发布/缺失日期按逐日 completeness failure 返回。Coverage/export 对未来日期继承公共 read-only 与 missing 行为，不引入 refresh 特例。Exchange 不猜测、不改写大小写或建立本地 enum；空白或含首尾空白的输入不是 canonical identifier，不通过 trim 后替换输入。Provider 支持哪些 canonical identifiers 由 Source 决定，不为 request validation 额外访问 Source。
 
 错误 semantic types、缺失值与无效 range 属于 `InvalidRequestError`，不能自动交换日期。Scope / Window expansion 是内部 domain interpretation；caller 只表达 range，无需构造 FetchUnits 或理解 persistence mechanics。Credential、SQLite path、output path、argparse namespace 与 HTTP DTO 不属于 request。
 
@@ -106,7 +106,7 @@ Scope 与 window 是 view context，caller 不必预先构造它们；Python 容
 
 Records 只包含目标 exchange / inclusive range 内成功 units 的合法 facts，包括休市日，不增加 is_open filter，不补齐缺失日期。每个成功 unit 对应一条 Record，因此 `len(records) = coverage.successful_units`；无成功 facts 时为空序列。Incomplete coverage 仍是合法 view。
 
-Coverage 与 records 必须来自公共 Application authority 定义的同一个逻辑 committed cache snapshot，不能由不同缓存状态的读取拼接。本 view 不包含 unit_key、content_hash、SQLite metadata、internal IDs 或 provider transport metadata。
+Coverage 与 records 遵守公共 Application authority 的 export consistency / public view invariant。
 
 ## 5. Semantic objects 与 wire meaning
 
@@ -116,20 +116,6 @@ Serialization 与 delivery 由 adapter 拥有；[lab](../../../lab/ARCHITECTURE.
 
 ## 6. Application failures 与 runtime configuration
 
-公共 taxonomy 的唯一 owner 为 [APPLICATION.md](../../APPLICATION.md)：
+Failure taxonomy 与 lazy Source I/O 继承 [APPLICATION.md](../../APPLICATION.md)，本 Dataset 不增加公共 failure category；输入错误见第 2 节，可恢复逐日 failures 见第 3 节。
 
-- `InvalidRequestError`：caller-side semantic validation failure，包括非法日期范围、错误 semantic types、空或无效 exchange 输入。
-- `OperationError`：Dataset 无法读取、persistence integrity / execution failure、required credential 缺失、Source operation 无法执行或无法生成合法 view。
-- 可恢复的单 FetchUnit failure：进入 `EnsureResult.failures`，不抛整个 operation exception。
-
-Coverage / export 无 Source I/O，不要求 credential。Ensure 只有实际需要 Source I/O 时才解析 credential；全部目标已 success 时无需 token。缺少 required credential 在 Source request 前以 `OperationError` 失败，不伪装成逐 unit 正常失败结果。
-
-Tushare credential resolution、client creation、限流与 provider request failure conversion 统一遵循 [Provider Runtime authority](../../providers/TUSHARE.md)，不由 Calendar 自行实现；当前 Source implementation drift 见 reconciliation。SQLite location 由本 Dataset 内部 composition 使用 shared runtime/storage machinery 解析，目标 state 位于本 bounded context 的 `data/<owned sqlite>`。具体 filename、连接与 transaction mechanics 留给实现；Calendar Source adapter / service composition 属于本 Dataset，adapter 通过共享 Executor 执行请求，shared kernel 不内置 Tushare endpoint 或本 Dataset 的知识。
-
-当前 reconciliation 固定默认 owned cache 为 `data/tushare_trade_calendar.sqlite3`，由 Dataset composition 提供 storage context，shared path primitive 必须显式接收该 context。旧 `data-lake/data/*.sqlite3` 是 untouched legacy runtime state：不自动移动、复制、删除、覆盖，不作为 factory、coverage/export 或 ensure 的 fallback，不双写，也不建立长期 legacy compatibility layer。新 Dataset-local cache 与旧 cache 分离；如需保留旧内容，未来另行设计显式 migration / import operation。本轮不授予操作真实旧 SQLite 的权限。
-
-## 7. Implementation reconciliation
-
-基准实现状态、目标 source/test/storage ownership 与后续 package/import reconciliation 输入统一见 [implementation reconciliation](../../IMPLEMENTATION_RECONCILIATION.md)。本文件继续拥有上述稳定 public semantic contract，不以目录迁移重新定义 operation、result/error 或 export semantics；HTTP 与 Research / Snapshot integration 仍须独立设计。
-
-未来自然日 Window 合法，不按 today 裁剪：ensure 可缓存 Source 已发布的未来日历事实；未发布/缺失日期保持 non-success，并按逐日 failure 返回。Coverage/export 仍只读，未来日期无缓存按 missing 表达，不查询 Source；不引入未来日期 refresh 特例。
+Tushare execution 统一遵循 [Provider Runtime authority](../../providers/TUSHARE.md)。Calendar composition 提供自己的 storage context，adapter 通过共享 Executor 执行 trade_cal；SQLite lifecycle、默认 filename convention、旧目录 state 隔离与 generation compatibility 继承 [PERSISTENCE.md](../../PERSISTENCE.md)。

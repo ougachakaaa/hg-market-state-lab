@@ -37,7 +37,7 @@ Contract_code 在 Dataset-local catalog 中唯一。除明确 nullable 外均 re
 | HO | 上证50 | OP000016.SH | 000016.SH |
 | MO | 中证1000 | OP000852.SH | 000852.SH |
 
-CFFEX 产品关系由本 Dataset 的 Instrument market contract table 拥有；opt_basic 提供 source_underlying_code，Source OP representation 的提取是确定性 normalization，不生成衍生 market fact。关系表与 Source value 必须一致；具体 index codes 已通过 index_basic 核对，对齐 [Index namespace](../tushare_index_daily/FACTS.md)。不能伪称 product→underlying 市场关系来自 opt_daily。没有 Index/Futures runtime dependency、跨库 FK 或 instrument_id 引用。
+CFFEX 产品关系由本 Dataset 的 Instrument market contract table 拥有；opt_basic 提供 source_underlying_code，Source OP representation 的提取是确定性 normalization，不生成衍生 market fact。关系表与 Source value 必须一致；具体 index codes 对齐 [Index namespace](../tushare_index_daily/FACTS.md)。不能伪称 product→underlying 市场关系来自 opt_daily。没有 Index/Futures runtime dependency、跨库 FK 或 instrument_id 引用。
 
 本表是当前可扩展产品分类/关系契约，不是永久 enum whitelist；未来产品先补充市场关系与 Source identity，再使用同一 product Scope，不新增 expiry/strike selection 或 registry。
 
@@ -60,11 +60,3 @@ Source 明确返回 pre_close 字段但其值合法缺席，且 trade_date == ow
 仅当 Source 明确 volume=0 且 amount=0 时，open/high/low 中的合法缺席可以分别为 None，其他实际提供值照原值保留；不补零、不前值填充。正成交量或正成交额却缺 open/high/low 时整 unit 失败。该规则允许合法无成交 record，不改变 expected contract set、exactly-one cardinality 或其他 required facts；Source 未提供 required field 本身仍是 contract failure。
 
 不 rounding、补算或暗换单位，不生成 IV、Greeks、moneyness、DTE、option risk premium 或其他 research features。Expiry/strike/call_put 是 metadata Source facts，参与完整横截面解释，不能据此补造 catalog 未声明的合约。
-
-## 5. Source feasibility evidence
-
-2026-10-02 历史调试：HO2601-C-3450.CFX 与 MO2601-C-8500.CFX 的 list_date=trade_date=2026-01-06；均只有 pre_close 合法缺席，pre_settle 分别 1.8/3.0，volume 1022/1838，close 5.6/9.4。首日正成交不能据此要求存在前收盘，也不放宽其他 required facts。
-
-2026-10-01 设计阶段只读核对：CFFEX opt_basic 的 offset=0/4000/8000、limit=4000 分页取得 4000/4000/2384 行，未重复；offset=12000 返回空，累计 10384 个不同 contracts，与完整请求一致。产品代码前缀为 IO/HO/MO，call_put 为 C/P，opt_code 与上表一致；last_ddate 样本为合法空。
-
-2026-09-30 的 656 条日行情与 metadata lifecycle expected set 完全一致，其中 70 条 volume=amount=0 且 open/high/low 缺席；2026-07-01 的 666 条亦完整匹配，其中 25 条出现同类缺席。这些是当次 Source evidence，不是日线数量常量、永久分页契约或用日行情证明 catalog 完整的替代办法。

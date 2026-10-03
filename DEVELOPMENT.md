@@ -53,4 +53,4 @@ poetry run lab research run <study-id> --help
 
 `lab doctor` 的 frontend 诊断地址与 Vite 显式绑定的 `127.0.0.1:5173` 一致。CLI ownership 以 [lab authority](lab/ARCHITECTURE.md) 为准。
 
-`lab datalake` 支持 list、coverage、ensure 与 export；参数与退出码见 lab authority。coverage / export 不访问 Source、不创建缓存；ensure 在确实需要 fetch 时解析 TUSHARE_TOKEN（环境变量优先，market-snapshot/.env fallback）。四个 Dataset 的默认 owned cache 分别位于 `data-lake/datasets/<dataset-id>/data/<dataset-id>.sqlite3`，service 内部解析路径。旧 `data-lake/data/*.sqlite3` 保留原样，不自动迁移、不作为 fallback；新缓存与旧 state 分离。Source-root wiring 与当前状态见 [DataLake implementation reconciliation](data-lake/IMPLEMENTATION_RECONCILIATION.md)。export 用必填 --output 交付 UTF-8 JSON，coverage 不完整也可导出当前成功 facts。
+`lab datalake` 支持 list、coverage、ensure 与 export；参数与退出码见 lab authority。coverage / export 不访问 Source、不创建缓存；ensure 在确实需要 fetch 时解析 TUSHARE_TOKEN（环境变量优先，market-snapshot/.env fallback）。四个 Dataset 的默认 owned cache 分别位于 `data-lake/datasets/<dataset-id>/data/<dataset-id>.sqlite3`，service 内部解析路径。旧目录缓存隔离与当前 persistence generation compatibility 见 [DataLake persistence authority](data-lake/PERSISTENCE.md)。export 用必填 --output 交付 UTF-8 JSON，coverage 不完整也可导出当前成功 facts。

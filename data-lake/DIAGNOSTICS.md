@@ -6,4 +6,4 @@
 
 Kernel INFO events 包含 Dataset、ensure 目标数、缓存跳过数、周期性进度及最终计数；单元失败 WARNING 包含 semantic identity、safe code/reason，不包含 SQLite/internal IDs。Source daily numeric normalization / required-field failure 应指出字段名、合约/指数与日期和安全的校验失败类型；不输出 arbitrary raw values。字段允许缺席的业务条件仍由 owning FACTS authority 唯一拥有。
 
-CLI 日志选项与 handler 生命周期由 [lab authority](../lab/ARCHITECTURE.md) 拥有。默认 stderr INFO；DEBUG 用于请求诊断。File delivery 是 opt-in，UTF-8、包含时间戳。日志不能以无失败替代 coverage.complete 验收。
+CLI 日志选项、默认级别、file delivery 与 handler 生命周期由 [lab authority](../lab/ARCHITECTURE.md) 拥有。日志不能以无失败替代 coverage.complete 验收。

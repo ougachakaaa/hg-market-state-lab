@@ -14,7 +14,7 @@ DataLake
 
 DataSet 是自治的数据产品边界，拥有自己的 semantic authority、implementation、tests 与 persistent runtime state；canonical Dataset identity 由其 authority 声明。一个 DataSet exactly owns 一个 SQLite database，固定 cardinality 为 `1 DataSet : 1 SQLite`。禁止多个 DataSet 共用 SQLite、一个 DataSet 跨多个 SQLite、cross-Dataset foreign key、DataLake global database 与 global instrument master。
 
-目标 filesystem ownership 为：
+Filesystem ownership 为：
 
 ```text
 data-lake/
@@ -22,7 +22,7 @@ data-lake/
 ├── providers/
 │   └── TUSHARE.md              # provider execution authority
 ├── src/data_lake/              # shared kernel + separate provider infrastructure
-│   └── providers/tushare/      # target Tushare runtime implementation
+│   └── providers/tushare/      # Tushare runtime implementation
 ├── tests/                      # shared kernel / provider / module boundary verification
 └── datasets/
     └── <dataset-id>/
@@ -32,7 +32,7 @@ data-lake/
         └── data/<owned sqlite> # Dataset persistent runtime state
 ```
 
-Colocation 让同一 Dataset 的语义、代码、验证与持久化 state 由同一 bounded context 拥有，避免将 authority 与 implementation 拆成两棵长期 ownership tree。真实 SQLite/runtime state 默认不进入 Git；具体 filename 与目录保留机制属于 implementation concern。此树定义稳定 ownership；当前 source/storage registration 与 legacy state 处理见 [implementation reconciliation](IMPLEMENTATION_RECONCILIATION.md)。
+Colocation 让同一 Dataset 的语义、代码、验证与持久化 state 由同一 bounded context 拥有。真实 SQLite/runtime state 默认不进入 Git；具体 filename 与目录 materialization 属于 implementation concern。SQLite lifecycle 与旧目录 state 隔离见 [PERSISTENCE.md](PERSISTENCE.md)。
 
 不同 DataSet 的 owned state 必须能够独立存在、独立 refresh、独立删除或重建；public service 的必要事实依赖不合并 storage lifecycle，也不保证 prerequisite 缺失时 operation 仍可执行。这不定义 refresh policy。同一 instrument 可以分别存在于多个 DataSet 自己的 instrument catalog 中；不得据此合并 persistence ownership。Storage resolution 的公共调用约束见 [APPLICATION.md](APPLICATION.md)。
 
@@ -70,29 +70,28 @@ Canonical Python namespace 仍为 `data_lake`。模块内部区分 provider-agno
 
 Kernel 不得知道具体 Dataset、provider endpoint、token、request frequency、provider-specific exception、instrument family、Dataset-specific Scope、completeness rule 或 export payload。只因一个具体 Dataset 存在的代码默认归 owning Dataset；其 service composition、Source adapter、领域 specialization 与相关 tests 归 `datasets/<dataset-id>/src/` 和 `tests/`。
 
-Tushare provider infrastructure 的目标 namespace 为 `data_lake.providers.tushare`，implementation 归 `data-lake/src/data_lake/providers/tushare/`，canonical execution authority 为 [providers/TUSHARE.md](providers/TUSHARE.md)。稳定依赖方向为 Dataset Source adapter → provider infrastructure → external SDK；provider 只可复用 kernel 的 provider-neutral error contracts，不依赖具体 Dataset、Service、Repository 或 FetchUnit semantics；kernel 不依赖 provider infrastructure。Provider 不拥有 Dataset endpoint selection、partition / normalization / completeness 或 persistence，也不构成 consumer-facing service；Research / Modeling / Snapshot / HTTP / CLI consumers 不直接调用 Executor。详细 execution contract 只在 provider authority 定义，不在本入口复制。
+Tushare provider infrastructure 的 namespace 为 `data_lake.providers.tushare`，implementation 归 `data-lake/src/data_lake/providers/tushare/`，canonical execution authority 为 [providers/TUSHARE.md](providers/TUSHARE.md)。稳定依赖方向为 Dataset Source adapter → provider infrastructure → external provider client/API；provider 只可复用 kernel 的 provider-neutral error contracts，不依赖具体 Dataset、Service、Repository 或 FetchUnit semantics；kernel 不依赖 provider infrastructure。Provider 不拥有 Dataset endpoint selection、partition / normalization / completeness 或 persistence，也不构成 consumer-facing service；Research / Modeling / Snapshot / HTTP / CLI consumers 不直接调用 Executor。详细 execution contract 只在 provider authority 定义。
 
-Dataset-local source root 不创建独立 Python project、Poetry environment 或 dependency graph；所有 source roots 遵守 repository root 唯一 Python project 与 worktree-local 根 `.venv` invariant。Filesystem ownership 不决定 public import path，已有 Dataset public import surface 保持兼容。Multiple source roots registration 与 import/package wiring 属于 implementation concern，当前机制见 reconciliation 文档，不为此建立 plugin system 或 custom package loader。
+Dataset-local source root 不创建独立 Python project、Poetry environment 或 dependency graph；所有 source roots 遵守 repository root 唯一 Python project 与 worktree-local 根 `.venv` invariant。Filesystem ownership 不决定 public import path，已有 Dataset public import surface 保持兼容。Multiple source roots registration 与 import/package wiring 属于 implementation concern，不为此建立 plugin system 或 custom package loader。
 
 ## 4. Authority 导航
 
 | 当前任务 | 下一份 authority |
 | --- | --- |
-| Domain / persistence / Scope / Window / FetchUnit / Records / mutation flow | [DOMAIN_MODEL.md](DOMAIN_MODEL.md) |
+| Scope / Window / FetchUnit / Records / logical persistence / mutation flow | [DOMAIN_MODEL.md](DOMAIN_MODEL.md) |
 | Application Service / coverage / ensure / export / public result / runtime 调用约束 | [APPLICATION.md](APPLICATION.md) |
 | Tushare-backed Dataset 的 Source execution / credential / client / shared limiter / provider failure | [providers/TUSHARE.md](providers/TUSHARE.md) |
 | Operational progress / safe request and validation diagnostics | [DIAGNOSTICS.md](DIAGNOSTICS.md) |
 | Bounded batching / validation reuse / Source-write overlap | [EXECUTION.md](EXECUTION.md) |
-| SQLite lifecycle / immutable basis / generation 2 to 3 upgrade | [PERSISTENCE.md](PERSISTENCE.md) |
+| SQLite lifecycle / transactions / read snapshots / frozen basis / supported generations | [PERSISTENCE.md](PERSISTENCE.md) |
 | 具体 Dataset 的 Source、identity、fields、completeness | [DATASETS.md](DATASETS.md) → owning Dataset ARCHITECTURE.md |
 | Dataset-specific consumer request/result/view、public Python surface | [DATASETS.md](DATASETS.md) → owning Dataset ARCHITECTURE.md → SERVICE.md |
 | CLI topology / delegation / serialization / file delivery | [lab authority](../lab/ARCHITECTURE.md) |
-| 当前实现与目标 ownership 的差异、后续迁移输入 | [IMPLEMENTATION_RECONCILIATION.md](IMPLEMENTATION_RECONCILIATION.md) |
 
 Dataset 与 provider authority 只能在模块边界及相关公共 domain/application invariant 内 specialize 或 constrain；catalog 只提供导航，不拥有 schema。具体 Dataset 任务读取与任务有关的公共 authority 和 owning Dataset authority，不默认加载 sibling Dataset；普通 Dataset domain task 不默认加载 provider execution authority。
 
-## 5. Deferred design
+## 5. Non-goals 与 deferred semantics
 
-Dataset services 与 CLI vertical slices、source/test/storage ownership 的实现状态由 [implementation reconciliation](IMPLEMENTATION_RECONCILIATION.md) 集中记录。HTTP、通用 schema migration framework 与其他 consumer integration 继续 deferred；明确的 generation 2 → 3 升级由 [PERSISTENCE.md](PERSISTENCE.md) 拥有。内部 key serialization、canonicalization/hash 与 adapter batching 不得重新决定已固定的 semantic request、结果计数或 export contract。Research/Snapshot integration 须独立设计。
+DataLake 不引入 DataLakeService、DatasetManager、runtime registry、generic plugin / workflow framework 或 cross-Dataset query layer。Dataset 的直接 public service boundary 与明确 dependency permissions 已由上文固定。
 
-Refresh / force / invalidation policy、TTL、stale state、多维 Window、Dataset dependency graph、cross-Dataset query engine、Source request audit table、plugin framework 与 generic workflow engine 均不在本轮设计范围内。
+HTTP / Research / Snapshot 等 consumer integration、通用 schema migration framework 与显式旧目录 cache import 须独立设计；当前支持的 generation compatibility 由 PERSISTENCE.md 拥有。Refresh / force / invalidation、TTL / stale、Source correction、多维 Window、通用 Dataset dependency graph 与 Source request audit table 继续 deferred，不从内部 serialization、hash、batching 或存储优化推导新的 public semantics。

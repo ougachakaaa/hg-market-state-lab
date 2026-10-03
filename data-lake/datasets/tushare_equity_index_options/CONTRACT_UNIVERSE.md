@@ -6,7 +6,7 @@
 
 每次 ensure 在 Calendar 已确定目标且存在 missing/non-success units 时，重新从 exchange=CFFEX 的 opt_basic 取得覆盖所选 products 的完整真实股指期权 catalog，包括已退市与尚未上市合约。旧 local catalog 不能替代本次完整取得；不能仅取当前挂牌合约或由 opt_daily 推导 expected。目标全部 success 或为空时不请求 metadata，coverage/export 不访问 Source。
 
-Source 请求成功不等于 catalog 完整。必须证明 provider filtering、limits、分页/截断没有遗漏所选产品 metadata；单页行数、当前样本总数、日行情数量相等均不能独立证明。FACTS.md 的分页 feasibility evidence 是设计证据，不是未来 provider 保证；若运行时无法取得足够证明，受影响 units 失败，不能退回弱 completeness。
+Source 请求成功不等于 catalog 完整。必须证明 provider filtering、limits、分页/截断没有遗漏所选产品 metadata；单页行数、当前样本总数、日行情数量相等均不能独立证明。若运行时无法取得足够证明，受影响 units 失败，不能退回弱 completeness。
 
 按 FACTS.md 显式 normalization 确认 product、exchange、contract identity、underlying、expiry/strike/CALL-PUT 与 lifecycle。Duplicate/conflicting identity、缺 required metadata 或可能属于 selected product 的无法解析行不得静默去重/丢弃。只有能证明 unrelated 的 defect 才不影响该产品；可隔离产品时其他已证明完整的产品继续。
 

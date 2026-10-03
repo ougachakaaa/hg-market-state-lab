@@ -4,7 +4,7 @@
 
 ## 1. Public Python surface 与 request
 
-目标 namespace 为 `data_lake.datasets.tushare_equity_index_futures`，发布 `FuturesDailyService`、`FuturesDailyRange`、`FuturesDailyRow`、`FuturesDailyExport` 与 `create_service()`；当前 runtime 状态见 [reconciliation](../../IMPLEMENTATION_RECONCILIATION.md)。公共 CoverageResult、EnsureResult、UnitFailure 和 errors 复用 DataLake contract。
+Canonical namespace 为 `data_lake.datasets.tushare_equity_index_futures`，发布 `FuturesDailyService`、`FuturesDailyRange`、`FuturesDailyRow`、`FuturesDailyExport` 与 `create_service()`。公共 CoverageResult、EnsureResult、UnitFailure 和 errors 复用 DataLake contract。
 
 ```text
 coverage(request: FuturesDailyRange) → CoverageResult
@@ -78,9 +78,9 @@ Coverage、Records 和成功时保留的合法 metadata/completeness basis 来�
 
 ## 4. Runtime 与实现边界
 
-Tushare execution 与 credential / client / shared limiter 遵循 [Provider Runtime authority](../../providers/TUSHARE.md)，本 Dataset 不自行实现 provider initialization 或请求异常转换。Factory / read-only calls 不解析 credential、不创建 client；完整 Calendar 加全 success 目标无需 token。需要而缺失则在相应 Source request 前 OperationError。
+Tushare execution 遵循 [Provider Runtime authority](../../providers/TUSHARE.md)，factory 与整个 operation 调用链继承公共 lazy Source I/O invariant；Calendar prerequisite 是否需要 Source I/O 由 TRADING_DAYS.md 拥有。
 
-唯一 owned SQLite 目标位于本 Dataset data/；Source composition 拥有 fut_basic/fut_daily 及必要 type-2 exclusion 获取，adapter 通过共享 Executor 执行 provider 请求，Calendar 只走 public namespace。Filename、package registration、SQL、事务技术、batching 与测试实现由 implementation reconciliation 记录，不重新决定本契约。HTTP、Research integration、通用 migration framework、refresh/TTL/force 均未实现；明确的 generation 2 → 3 兼容升级与 frozen basis persistence 见 [PERSISTENCE.md](../../PERSISTENCE.md)。
+唯一 owned SQLite 目标位于本 Dataset data/；Source composition 拥有 fut_basic/fut_daily 及必要 type-2 exclusion 获取，adapter 通过共享 Executor 执行 provider 请求，Calendar 只走 public namespace。SQLite lifecycle、默认 filename convention、旧目录 state 隔离与 generation compatibility 继承 [PERSISTENCE.md](../../PERSISTENCE.md)；bounded Source execution 见下节。Consumer integration 与 deferred semantics 继承模块架构。
 
 V2 在 V1 字段基础上允许 pre_close / open_interest_change 为 float 或 None，仅限 FACTS 声明的上市首日合法缺席；其他字段及完整性不变。旧缓存的有限数值保持可读，不改写已成功 facts。
 

@@ -1,10 +1,10 @@
 # DataLake Tushare Provider Runtime authority
 
-本文件是 DataLake 内 Tushare provider execution 的唯一 canonical authority，拥有 credential resolution、client creation、request rate limiting、provider request execution、provider-level exception normalization 与 shared runtime lifecycle。继承 [模块架构](../ARCHITECTURE.md) 的 ownership / dependency boundary 与 [公共 Application authority](../APPLICATION.md) 的 lazy Source I/O、read-only 和 failure invariants。具体 Dataset 经 [catalog](../DATASETS.md) 进入其 Source / domain authority；当前实现差异见 [implementation reconciliation](../IMPLEMENTATION_RECONCILIATION.md)。
+本文件是 DataLake 内 Tushare provider execution 的唯一 canonical authority，拥有 credential resolution、client creation、request rate limiting、provider request execution、provider-level exception normalization 与 shared runtime lifecycle。继承 [模块架构](../ARCHITECTURE.md) 的 ownership / dependency boundary 与 [公共 Application authority](../APPLICATION.md) 的 lazy Source I/O、read-only 和 failure invariants。具体 Dataset 经 [catalog](../DATASETS.md) 进入其 Source / domain authority。
 
 ## 1. Ownership 与 execution boundary
 
-Tushare Provider Runtime / Executor 属于 DataLake provider-specific shared infrastructure，目标 implementation namespace 为 `data_lake.providers.tushare`，位于 `data-lake/src/data_lake/providers/tushare/`。它不是 provider-agnostic shared kernel，不是 consumer-facing DataLake service，也不拥有任何 Dataset domain semantics。
+Tushare Provider Runtime / Executor 属于 DataLake provider-specific shared infrastructure，implementation namespace 为 `data_lake.providers.tushare`，位于 `data-lake/src/data_lake/providers/tushare/`。它不是 provider-agnostic shared kernel，不是 consumer-facing DataLake service，也不拥有任何 Dataset domain semantics。
 
 ```text
 Dataset public Application Service
@@ -13,12 +13,12 @@ Dataset Source Adapter
     ↓
 Tushare Executor
     ↓
-Tushare SDK / API
+Provider client / HTTP API
 ```
 
 所有 Tushare-backed Dataset 的 Source adapter 均通过这一内部 execution boundary 执行 Tushare 请求，包括 Calendar、Index、Futures 与 Options 的 metadata / daily requests。Dataset adapter 决定请求什么与 response 的含义；Executor 决定怎样统一、受限地执行请求。
 
-允许 Dataset Source adapter → `data_lake.providers.tushare` → Tushare SDK / HTTP API。Provider infrastructure 只可复用 shared kernel 的 provider-neutral error contracts，不依赖具体 Dataset、Dataset Service、Repository 或 FetchUnit semantics；kernel 不反向依赖 provider infrastructure。Research / Modeling / Snapshot / HTTP / CLI 等 consumers 只进入 Dataset public service，不直接调用 Executor，也不因 namespace 可 import 获得内部 execution permission。
+本内部 execution boundary 的 dependency / public access permissions 继承 [模块架构](../ARCHITECTURE.md)。
 
 Dataset adapter 继续拥有 endpoint selection、provider parameters、request batching、pagination / exhaustion、response partition、identity validation、Source facts normalization 与 completeness。`Provider Request != FetchUnit`；Executor 不接收 FetchUnits，不知道调用方 Dataset，不解释 index_code、trade_date、product、expiry 或 strike。
 
@@ -30,7 +30,7 @@ Dataset adapter 继续拥有 endpoint selection、provider parameters、request 
 TushareExecutor.call(endpoint, **provider_parameters) -> provider_response
 ```
 
-具体 Python naming 与类型载体属于后续 implementation concern；下列 execution semantics 固定：
+具体 Python naming 与类型载体属于 implementation concern；下列 execution semantics 固定：
 
 1. Caller 显式指定 endpoint，parameters 保持 provider-native transport representation。
 2. Executor 统一执行 rate limiting，再调用 Tushare client；caller 不自行 sleep 或协调速度。
@@ -53,7 +53,7 @@ Credential resolution 仅在 Provider Runtime 实现一次，稳定 credential i
 
 Provider Runtime 独自创建 Tushare client；Dataset 不直接读取 `TUSHARE_TOKEN` / `.env`，不自行调用 `tushare.pro_api(token)`。Dataset composition 仍组合自己的 adapter / storage / 已声明 prerequisites，通过内部 provider boundary 获取 execution 能力，不把 token 或 Executor 暴露为 consumer semantic argument。
 
-Credential resolution 与 client initialization 必须 lazy：factory、`coverage` / `export`、无需 Source I/O 的 `ensure` 不解析凭据、不创建 Tushare client。包括全 success 或零目标的 ensure；consumer ensure 如实际需要 prerequisite Source I/O，则该 Source 请求仍遵守 lazy initialization。需要 Source I/O 时，在发起 provider request 前完成必要 initialization。
+Credential resolution 与 client initialization 遵守 [APPLICATION.md](../APPLICATION.md) 的 lazy Source I/O invariant，包括 prerequisite 调用链。需要 Source I/O 时，在发起 provider request 前完成必要 initialization。
 
 同一 process 中解析为同一 Tushare credential 的所有 Dataset 必须共享 provider execution state，至少共享下一节定义的 request-start schedule。不同 Dataset factory、service instance、Source adapter 或 operation 不能各自创建独立预算，也不能在结束/重建时重置同一 process / credential 的调度状态。Client 的具体复用方式、内部对象与同步机制留给 implementation，不能削弱共享调度、lazy initialization 与并发安全。
 
@@ -66,7 +66,7 @@ minimum interval = 60 seconds / configured calls per minute >= 120 ms
 request_start[n+1] - request_start[n] >= minimum interval
 ```
 
-这里的相邻 starts 是同一 process / credential 下所有 Dataset 的合并启动序列；不是各 Dataset 各有独立额度，也不允许瞬时 burst。非法配置在需要 Source I/O 时以 OperationError 明确失败；read-only/factory 不读取该配置。限流约束实际 provider request start，不是 request completion；已经启动的请求即使失败也属于该启动序列。
+这里的相邻 starts 是同一 process / credential 下所有 Dataset 的合并启动序列；不是各 Dataset 各有独立额度，也不允许瞬时 burst。非法配置在需要 Source I/O 时以 OperationError 明确失败；read-only/factory 不读取该配置。同一 process / credential 已建立 execution state 后，rate 配置变更以 OperationError 拒绝，不能静默重置 schedule。限流约束实际 provider request start，不是 request completion；已经启动的请求即使失败也属于该启动序列。
 
 Limiter 必须对 process 内并发调用安全：同一 Dataset、多个 Dataset、sequential ensure 与后续 concurrent execution 都遵守共享 schedule。Rate-limit 等待依据 request starts，不要求前一请求完成后再额外等待 120ms；慢 response 不增加 rate-limit 强制等待，也不要求 caller 协调速度。
 
@@ -90,19 +90,6 @@ Provider 使用受控 HTTP client 校验 HTTP status、JSON envelope 与 provide
 
 Executor 不把 provider request failure 映射到 FetchUnits；Dataset adapter 与现有 Dataset/Core machinery 根据该请求实际尝试的目标编码 failure。不能合法确定目标集合时，仍按公共及 Dataset authority 的 operation failure boundary 处理。Provider exception object、SDK type、stack 或 provider transport response 不进入 public Application contract；可读 reason 不包含 credential。
 
-## 6. 后续 implementation 验证 invariant
-
-以下是后续 implementation 的验收要求，不表示本轮已经创建或验证 runtime：
-
-1. 所有 Tushare-backed Dataset 复用共享 execution boundary；Dataset 不解析 credential、不创建 `tushare.pro_api()` client。
-2. 同一 process / credential 下，跨 Dataset、跨 service / operation 与并发调用共享同一 request-start schedule；任意相邻 starts 至少间隔 120ms。
-3. 慢 response 不改变 request-start 限流基准；失败请求仍计入已发生的 starts，且没有隐式 retry。
-4. Initialization failure 为 `OperationError`；request failure 统一为 internal `ExecutionFailure` 的 `source_request`，不泄漏 SDK exceptions；Dataset/Core 正确映射受影响目标。
-5. 成功 provider response 原样返回；endpoint parameters、batching / pagination、partition、identity、normalization 与 completeness 仍由 adapter 独自拥有。
-6. Provider runtime 不依赖 specific Dataset / Service / Repository / FetchUnit semantics；shared kernel 不依赖 provider runtime；consumer 不直接进入 provider boundary。
-7. Factory 与整个 coverage / export 调用链无 credential resolution、client creation 或 Source I/O；全缓存 / 零目标且无需 prerequisite Source I/O 的 ensure 同样如此。
-8. Environment precedence 与现有 fallback 相容，包括环境变量存在但为空白时失败；不增加 secret convention 或 consumer token argument。
-
-Authority topology checks 已显式登记本文档；kernel / provider architecture checks 按各自 ownership 分开，不能把整个顶层 src 当作 kernel 或全面放开 SDK import。已完成的 provider runtime、历史 Calendar reconciliation、当前 execution 与验证状态集中记录在 [reconciliation](../IMPLEMENTATION_RECONCILIATION.md)。
+## 6. Cancellation boundary
 
 内部 execution 可用 cancellation guard 包裹 Executor：取消后拒绝后续 call，已进入的 call 按既有 timeout/限流/错误契约收束。Guard 不重试、不取消已发出的 HTTP、不改变 quota 计数，也不解释 FetchUnits；Dataset Source 的分页生命周期与取消触发属于 [bounded execution](../EXECUTION.md)。

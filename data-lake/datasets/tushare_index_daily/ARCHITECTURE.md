@@ -6,11 +6,11 @@
 
 Canonical identity 为 `tushare_index_daily`，沿用现有 `tushare_trade_calendar` 的 lowercase snake_case convention。Dataset 表达 Tushare 指数日线 Source facts 与 Dataset-local index catalog，不限制为四个股指期货 underlying indices。
 
-本 bounded context 位于 `datasets/tushare_index_daily/`，自治拥有 authority、`src/`、`tests/` 及 `data/<owned sqlite>` 中 exactly one SQLite；当前实现状态统一见 [reconciliation](../../IMPLEMENTATION_RECONCILIATION.md)。唯一根 Python runtime 与 namespace `data_lake` 继承上层 invariant。
+本 bounded context 位于 `datasets/tushare_index_daily/`，自治拥有 authority、`src/`、`tests/` 及 `data/` 中的 owned state（SQLite ownership 继承模块架构）。唯一根 Python runtime 与 namespace `data_lake` 继承上层 invariant。
 
 Primary Source 为 Tushare `index_daily`；instrument metadata Source 为 `index_basic`。两个 endpoint 属于本 Dataset 的 Source composition，不因 endpoint 数量拆分 Dataset，也不通过 Snapshot 私有 adapter 读取。Provider-native representation 与 canonical semantic facts 的映射由 FACTS.md 拥有。
 
-Source provider 为 Tushare，execution authority 为 [providers/TUSHARE.md](../../providers/TUSHARE.md)。本 Dataset adapter 拥有 endpoint / parameters、batching / pagination、partition、identity validation 与 normalization；credential、client、限流与 provider request failure conversion 归共享 Provider Runtime，implementation 遵循该 boundary，当前状态见 [implementation reconciliation](../../IMPLEMENTATION_RECONCILIATION.md)。
+Source provider 为 Tushare，execution authority 为 [providers/TUSHARE.md](../../providers/TUSHARE.md)。本 Dataset adapter 拥有 endpoint / parameters、batching / pagination、partition、identity validation 与 normalization；credential、client、限流与 provider request failure conversion 归共享 Provider Runtime，遵循该 execution boundary。
 
 本 Dataset 不拥有 moving average、return window、volatility、technical indicators、relative strength、basis 或 research features；这些属于下游 Research / Modeling。与 Futures / Options 的组合只能通过各自 public service；不建立 shared market database、global instrument master 或跨库 foreign key。
 
@@ -39,4 +39,4 @@ Selected units 独立验证并原子保存；一个 unit 失败不阻止其他�
 
 唯一 Dataset service dependency 为 `tushare_index_daily → tushare_trade_calendar`，仅通过 Calendar public Application Service 取得交易日语义；Calendar 不反向依赖 Index。交易日 selection、read-only 操作、ensure 编排、prerequisite failure 与 snapshot 边界由 TRADING_DAYS.md 拥有；不直接调用另一套 trade_cal、不访问 Calendar SQLite / Repository / internal source。
 
-Index 与 Futures / Options 的 storage ownership 保持分离；underlying relationship 不构成 persistence relationship。Public `coverage / ensure / export`、business Index Daily View、runtime configuration 见 SERVICE.md；当前 implementation gap 统一见 [reconciliation](../../IMPLEMENTATION_RECONCILIATION.md)。
+Index 与 Futures / Options 的 storage ownership 保持分离；underlying relationship 不构成 persistence relationship。Public `coverage / ensure / export`、business Index Daily View、runtime configuration 见 SERVICE.md。
