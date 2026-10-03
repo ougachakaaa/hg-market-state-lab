@@ -18,6 +18,50 @@ from data_lake.datasets.tushare_trade_calendar import TradeCalendarRange
 from data_lake.datasets.tushare_trade_calendar._service import _create_service as calendar_create
 from data_lake.datasets.tushare_trade_calendar._source import TradeCalSource
 
+
+@pytest.mark.parametrize("defect", ["code", "symbol", "product", "unowned", "unrelated"])
+def test_catalog_classification_checks_all_product_evidence(setup: Any, defect: str) -> None:
+    service, _, executor, _ = setup
+    other = deepcopy(executor.catalog)
+    for item in other:
+        item["ts_code"] = item["ts_code"].replace("IF", "IH")
+        item["symbol"] = item["symbol"].replace("IF", "IH")
+        item["fut_code"] = "IH"
+    executor.catalog.extend(other)
+    executor.daily = [daily(meta) for meta in executor.catalog]
+    bad = deepcopy(executor.catalog[0])
+    failed = {"IF"}
+    if defect == "code":
+        bad["ts_code"] = bad["ts_code"].replace("IF", "BAD")
+        bad["fut_code"] = "BAD"
+    elif defect == "symbol":
+        bad["symbol"] = bad["symbol"].replace("IF", "IH")
+        failed.add("IH")
+    elif defect == "product":
+        bad["fut_code"] = "IH"
+        failed.add("IH")
+    elif defect == "unowned":
+        bad["ts_code"] = "?"
+        bad["symbol"] = "?"
+        bad["fut_code"] = None
+        failed.add("IH")
+    else:
+        bad["ts_code"] = bad["ts_code"].replace("IF", "T")
+        bad["symbol"] = bad["symbol"].replace("IF", "T")
+        bad["fut_code"] = "T"
+        failed.clear()
+    executor.catalog.append(bad)
+    request = public.FuturesDailyRange(["IF", "IH"], DAY, DAY)
+    result = service.ensure(request)
+    assert {failure.identity for failure in result.failures} == {(code, DAY) for code in failed}
+    assert result.failed_units == len(failed)
+    assert result.succeeded_units == 2 - len(failed)
+    view = service.export(request)
+    assert {row.product_code for row in view.records} == {"IF", "IH"} - failed
+    if failed == {"IF", "IH"}:
+        assert not any(endpoint == "fut_daily" for endpoint, _ in executor.calls)
+
+
 DAY = date(2024, 1, 2)
 
 

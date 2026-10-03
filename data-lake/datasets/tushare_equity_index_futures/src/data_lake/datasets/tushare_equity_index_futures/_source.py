@@ -205,6 +205,30 @@ DAILY_FIELDS = (
 )
 
 
+def metadata_products(raw: dict[str, Any]) -> set[str]:
+    product = raw.get("fut_code")
+    candidates = {product} if isinstance(product, str) and product in UNDERLYING else set()
+    for key in ("ts_code", "symbol"):
+        value = raw.get(key)
+        match = re.match(r"^([A-Z]+)", value) if isinstance(value, str) else None
+        if match and match[1] in UNDERLYING:
+            candidates.add(match[1])
+    return candidates
+
+
+def classify_metadata(raw: dict[str, Any]) -> str | None:
+    symbol = text(raw.get("symbol"))
+    match = re.fullmatch(r"([A-Z]+)[0-9]{2}(0[1-9]|1[0-2])", symbol)
+    if (
+        not match
+        or raw.get("ts_code") != symbol + ".CFX"
+        or raw.get("fut_code") != match[1]
+        or raw.get("exchange") != "CFFEX"
+    ):
+        fail("Catalog product identity conflict or unclassifiable metadata")
+    return match[1] if match[1] in UNDERLYING else None
+
+
 def metadata(raw: dict[str, Any]) -> dict[str, Any]:
     product = text(raw.get("fut_code"))
     symbol = text(raw.get("symbol"))
@@ -326,28 +350,19 @@ class DailySource:
                 catalog: list[dict[str, Any]] = []
                 catalog_codes: set[str] = set()
                 for raw in raw_catalog:
-                    # Only known unrelated families may be excluded.
-                    raw_product = raw.get("fut_code")
-                    if not isinstance(raw_product, str) or not raw_product:
-                        fail("Unclassifiable metadata product")
-                    code_match = re.match(r"^([A-Z]+)", str(raw.get("ts_code", "")))
-                    if code_match and code_match[1] in UNDERLYING and raw_product != code_match[1]:
-                        self.product_errors[code_match[1]] = ExecutionFailure(
-                            "Catalog product identity conflict"
-                        )
-                        continue
-                    if raw_product not in UNDERLYING:
-                        if not raw_product:
-                            fail("Unclassifiable metadata")
-                        continue
+                    candidates = metadata_products(raw)
                     try:
+                        if classify_metadata(raw) is None:
+                            continue
                         normalized = metadata(raw)
                         if normalized["contract_code"] in catalog_codes:
                             fail("Duplicate catalog contract identity")
                         catalog_codes.add(normalized["contract_code"])
                         catalog.append(normalized)
                     except ExecutionFailure as exc:
-                        self.product_errors[raw_product] = exc
+                        if not candidates:
+                            raise
+                        self.product_errors.update(dict.fromkeys(candidates, exc))
                 self.catalog = catalog
                 excluded = exhaust(
                     self.executor,

@@ -4,7 +4,7 @@
 
 本文件是 authority / implementation 的 live drift register，不拥有 semantic contract。稳定入口为 [module architecture](ARCHITECTURE.md)；rebuild-only decisions 唯一归 [PERSISTENCE.md](PERSISTENCE.md)，public boundary / failure mapping 归 [APPLICATION.md](APPLICATION.md)。
 
-本轮 implementation reconciliation 基于 `be5bc0130108c8bdd14274fff9116dc9dab9fed7`，只对齐已冻结 persistence contract，不改变 Dataset public semantic contracts，不操作真实 cache 或执行 rebuild。
+本轮 implementation reconciliation 基于 `a729ad3f31408b92db4d5c5b598108ba5c78face`，对齐已冻结 catalog classification、Index failure isolation 与 provider dispatch 限流契约，不改变 Dataset public semantic contracts，不操作真实 cache 或执行 rebuild。
 
 ## Current reconciliation status
 
@@ -12,9 +12,17 @@ Rebuild-only persistence compliance gap 已关闭。共享 Repository 只接受�
 
 Generation 2 dual-read、2 → 3 automatic upgrade、migration backup 与 transactional upgrade / backup recovery mechanics 已移除。检测不自动修改、删除、覆盖或重建 incompatible cache；原 generation 3 schema、frozen basis 与逐 unit transaction / committed read snapshot 保持不变。现有 factory、Dataset public request/result/view、CLI adapter 与 Research consumer API 无需调整。
 
-本轮受影响 persistence concerns 未发现剩余 authority / implementation drift，也未发现需要新 semantic decision 的 ambiguity。未实现 rebuild service / CLI、force、migration framework 或 refresh semantics。
+此前受影响 persistence concerns 未发现剩余 authority / implementation drift；该关闭结论保持有效。未实现 rebuild service / CLI、force、migration framework 或 refresh semantics。
+
+本轮审查发现的 implementation gaps：
+
+- **已关闭：Futures / Options catalog classification。** 排除 metadata 前核对完整 identity / product evidence；冲突按所有候选产品失败，无法归属且不能证明 unrelated 时按 catalog failure 处理。合法产品继续执行，不能通过排除可疑行缩小 expected universe。
+- **开放：Index duplicate failure isolation。** 可定位的重复 daily / metadata identity 被当作整批分页失败，违反 owning FACTS / SERVICE 的局部失败要求。
+- **开放：Provider dispatch 限流。** 放行时间与实际发送分离，日志或线程延迟可能使实际 request starts 小于 TUSHARE authority 的 minimum interval。
 
 ## Verification boundary
+
+Catalog classification 使用隔离 fake Source 验证 code / symbol / product / underlying 冲突、无法归属行、合法 unrelated 行及多产品失败隔离；失败产品不发布 success facts，全批 catalog failure 不发起 daily requests。
 
 隔离临时 fixture 验证 generation 2、未知 generation、identity / shape 不兼容、旧 basis representation 与非法 SQLite 在以下路径明确失败：
 
