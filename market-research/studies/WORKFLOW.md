@@ -18,6 +18,8 @@ Runtime plan、ordered complete Artifact references / values、temporary invocat
 
 需要重复 empirical facts 时，由 Study / future workflow 通过相同 Observation semantic request 再 ensure；consumer 不找旧 Study run、不读 Observation SQLite、不复制 market rows 建另一层 canonical cache、不自行判断 refresh。Successful Observation ensure 已 durable before return；component result 无 durable reuse / publication，Study 只按其 contract 消费，不为 resolver 建 research cache。Study failure 不 rollback 已成功 Observation publication。当前不创建 Study SQLite、observation_collection.sqlite3 或 global collection DB。
 
+Component Result 继续是 prepared runtime value；Study 若明确声明将某个 Component workflow 中间结果物化并长期保留，它成为 Study-local Workflow Artifact，identity、retention 与 materialization 由该 Study 拥有，不把机制复用改写为 Observation lifecycle。
+
 ## 三类 retained products
 
 | Product | Ownership / meaning / reuse |

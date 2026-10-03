@@ -1,24 +1,30 @@
 # DataLake SQLite lifecycle and compatibility authority
 
-本文件拥有内部 SQLite lifecycle、transaction / read snapshot、frozen basis 与当前支持的 persistence generation compatibility，继承 [ARCHITECTURE.md](ARCHITECTURE.md) 的 owned SQLite boundary、[DOMAIN_MODEL.md](DOMAIN_MODEL.md) 的单位 ownership / 原子性及 [APPLICATION.md](APPLICATION.md) 的 read-only / export consistency invariant；不发布 consumer SQL contract 或通用 migration framework。
+本文件拥有内部 SQLite lifecycle、transaction / read snapshot、frozen basis 与 rebuild-only cache compatibility，继承 [ARCHITECTURE.md](ARCHITECTURE.md) 的 owned SQLite boundary、[DOMAIN_MODEL.md](DOMAIN_MODEL.md) 的单位 ownership / 原子性及 [APPLICATION.md](APPLICATION.md) 的 read-only / export consistency invariant；不发布 consumer SQL contract 或通用 migration framework。
 
 ## 1. Owned SQLite lifecycle
 
 Dataset composition 显式提供本 Dataset 的 storage context，shared path machinery 不提供全局默认 root，也不创建目录或 SQLite。当前默认 owned filename 为 `<dataset-id>.sqlite3`，位于模块架构声明的 Dataset-local `data/`；目录仅在有权写入的 operation 需要时 materialize。缓存缺失及非法缓存的 public 行为继承 APPLICATION.md。
 
-旧 `data-lake/data/*.sqlite3` 是隔离的 legacy runtime state：不自动移动、复制、删除、覆盖，不作为 factory、coverage/export 或 ensure 的 fallback，不双写，也不建立旧目录 compatibility layer。此规则与同一 owned SQLite 内的 generation compatibility 不同；显式旧目录 migration / import 须独立设计。
+旧 `data-lake/data/*.sqlite3` 是隔离的 legacy runtime state：不自动移动、复制、删除、覆盖，不作为 factory、coverage/export 或 ensure 的 fallback，不双写，也不建立旧目录 compatibility layer。不通过迁移或 import 使旧缓存兼容当前 runtime；不兼容缓存的处理遵循下方 rebuild-only contract。本契约不授权自动处理旧目录 state。
 
 ## 2. Frozen basis invariant
 
 Generation 3 在每个 Dataset 自己的 SQLite 内保存内容寻址的 frozen basis；多个 units 可以引用完全相同的 immutable basis。不得跨 Dataset 共享 basis。Unit 的历史 basis、records、content_hash、record_count、status 与取得时间仍一一对应；新 catalog 不修改旧 success basis。内容 hash 与存储原文必须一致；冲突、缺失引用及损坏必须报 OperationError。
 
-## 3. Current supported persistence generations
+## 3. Rebuild-only cache compatibility
 
-新建 owned SQLite 使用 generation 3；当前支持合法 generation 2 与 3。Coverage/export 对两者均保持只读，包括不升级、不备份、不建索引；全部已成功或零目标 ensure 同样不升级。未知 generation 拒绝执行。
+DataLake persistence 是可重建的 reusable source-fact cache，不是需要长期 schema migration 的业务数据库。一个 Dataset exactly owns 一个 SQLite，因此 incompatible cache 的最小 rebuild ownership boundary 是 owning Dataset；不要求 repository-wide DataLake rebuild，不合并 prerequisite 或 sibling Dataset 的 storage lifecycle。
 
-只有确实尝试写入的 ensure 可将 owned SQLite 从 generation 2 升至 3：先校验原库、创建不可覆盖的完整 SQLite backup，然后在一个事务内去重 basis、建立引用并更新 schema_version。保留原有 facts、hash、计数与所有历史 metadata；失败回滚至 generation 2，完整 backup 可恢复。Backup 仅在完整复制成功后保留，复制失败清理未完成 backup。此契约不授权处理旧目录 cache。
+当前 canonical internal persistence generation 为 3。`schema_version` / generation 只检测 persisted shape 与当前 runtime 的兼容性，不驱动 migration。Generation 2、未知 generation 或其他不兼容 persisted schema 必须明确失败，要求重建 owning Dataset cache；即使目标 units 已 success 或目标为空，也不允许通过旧格式 compatibility path 消费不兼容缓存。Public failure mapping 见 [APPLICATION.md](APPLICATION.md)。
 
-去重释放的 SQLite pages 可供后续写入复用，不承诺已有文件立刻缩小，不在 ensure 内隐式 VACUUM。
+不做 in-place migration、automatic upgrade、fallback、dual-read、dual-write 或 migration backup / transactional upgrade；不为未来建立 migration framework。原 generation 2/3 双读及写入时 2 → 3 backup / upgrade contract 已被本节取代，历史内容只保留在 Git history。当前仍存在的实现漂移见 [implementation reconciliation](IMPLEMENTATION_RECONCILIATION.md)。
+
+Cache rebuild 是显式 owning Dataset 操作，不由 coverage、ensure、export 或 factory 自动删除、覆盖或转换旧库。本文件锁定 ownership 与失败要求，不定义 rebuild CLI、删除流程或其他执行 mechanics。
+
+Internal persistence shape 与 public semantic contract 是正交 concern：内部不兼容要求 Dataset cache rebuild；public request/result/view、population、grain 或 completeness 改变则需按 owning authority 对 downstream 做正常 reconciliation。内部 generation 变化不自动改变 public export schema version 或 payload。
+
+Frozen basis 去重释放的 SQLite pages 可供后续写入复用，不承诺已有文件立刻缩小，不在 ensure 内隐式 VACUUM；兼容 cache 内的逐 unit atomic transactions 仍遵守下一节。
 
 ## 4. Transactions、read snapshots 与 validation
 

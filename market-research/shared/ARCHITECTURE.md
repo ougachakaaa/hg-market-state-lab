@@ -4,7 +4,7 @@
 
 ## 定义与判断边界
 
-Shared Research Component 是可跨研究复用的小领域 resolver、selector、reader、accessor、calculator、transform 或 helper，拥有稳定、可独立测试的输入输出。它可以调用 DataLake 已发布的 authoritative public service，但不拥有独立 research artifact、Observation execution / cache / SQLite / 幂等业务键生命周期。Component result 是调用结果，不是 retained Observation Artifact；重复相同 inputs 不承诺零上游、零计算或 durable reuse。
+Shared Research Component 是可跨研究复用的小领域 resolver、selector、reader、accessor、calculator、transform 或 helper，拥有稳定、可独立测试的输入输出。它可以调用 DataLake 已发布的 authoritative public service，但不拥有独立 research artifact、Observation execution / cache / SQLite / 幂等业务键生命周期。Component invocation 产生 **Component Result**：ephemeral prepared runtime value，不是 retained research Artifact。它没有 research Artifact identity、business-key lifecycle、component-owned SQLite、durable research cache 或 cross-invocation retained reuse guarantee；重复相同 inputs 不承诺零上游或零计算。
 
 Observation 是拥有最小独立研究语义、形成持久化 empirical artifact，且输出值得 Analysis / Study 独立消费和解释的研究单元。它是 **最小 research artifact boundary，不是最小计算单元**。可复用、确定、纯函数、被多处调用、返回日期列表、调用 DataLake 或计算量大，均不足以使 helper 成为 Observation。Observation 可以调用 component、包含 local logic、消费 public upstream facts；其输入 / business key、幂等与 lifecycle 由 Observation framework / concrete owner 约束。
 
@@ -32,7 +32,7 @@ Local logic 只服务一个 Study 或 Observation，可 colocate 于其 implemen
 | Study orchestration | Observation public ensure / complete Artifacts；按已声明 contract 调用 shared resolver / reader，准备 runtime inputs / plan。不得直接调用 DataLake / Snapshot；不复制 empirical cache。 |
 | Analysis | 已准备的 complete inputs、pure calculator / selector / transform / helper。不得调用会获取 upstream facts 的 reader / resolver、ensure Observation、读 persistence 或隐藏 I/O；依赖准备由 Study orchestration 完成。 |
 
-Component result 可以作为 Study runtime 输入或由 Observation 纳入自己的 artifact derivation；它自身没有 retained artifact identity。Analysis 若需要某个 resolver / reader 的 result，由 orchestration 先准备，METHOD 明确 binding / meaning / completeness，不把 helper 的事实读取放进 Analysis。具体 Study 对其 inputs 的选择与解释继续归该 Study。
+Component Result 可以作为 Study runtime 输入或由 Observation 纳入自己的 artifact derivation；它自身没有 retained artifact identity。Study 若明确要求把 workflow 中间结果物化并长期保留，产物成为 [Study-owned Workflow Artifact](../studies/WORKFLOW.md#materialization-与-complete-consumption)，不获得 Component-owned persistence 或 Observation lifecycle。Analysis 若需要某个 resolver / reader 的 result，由 orchestration 先准备，METHOD 明确 binding / meaning / completeness，不把 helper 的事实读取放进 Analysis。具体 Study 对其 inputs 的选择与解释继续归该 Study。
 
 DataLake / Snapshot 不依赖 Research。Component 只消费 public semantic contract；Source facts、field meaning、单位、nullable rules、coverage、cache、export snapshot、provider execution / credentials 均归 upstream owner。DataLake-first selection 与 Research consumer constraints 继承 [UPSTREAM](../UPSTREAM.md)；Dataset operation 定义唯一引用 [DataLake APPLICATION](../../data-lake/APPLICATION.md)。[Observation lifecycle](../observations/ARCHITECTURE.md) 不适用于 component。
 

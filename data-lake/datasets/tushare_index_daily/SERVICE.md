@@ -80,7 +80,7 @@ InvalidRequestError / OperationError 的唯一公共 owner 为 APPLICATION.md。
 
 Tushare execution 遵循 [Provider Runtime authority](../../providers/TUSHARE.md)，factory 与整个 operation 调用链继承公共 lazy Source I/O invariant；Calendar prerequisite 是否需要 Source I/O 由 TRADING_DAYS.md 拥有。
 
-本 Dataset 自己的 composition 拥有 index_basic/index_daily adapter 与 local storage resolution，adapter 通过共享 Executor 执行 provider 请求；只通过 Calendar public namespace 消费 prerequisite，不读取 sibling persistence。SQLite lifecycle、默认 filename convention、旧目录 state 隔离与 generation compatibility 继承 [PERSISTENCE.md](../../PERSISTENCE.md)；bounded Source execution 见下节。Consumer integration 与 deferred semantics 继承模块架构。
+本 Dataset 自己的 composition 拥有 index_basic/index_daily adapter 与 local storage resolution，adapter 通过共享 Executor 执行 provider 请求；只通过 Calendar public namespace 消费 prerequisite，不读取 sibling persistence。SQLite lifecycle、默认 filename convention、旧目录 state 隔离与 rebuild-only compatibility 继承 [PERSISTENCE.md](../../PERSISTENCE.md)；bounded Source execution 见下节。Consumer integration 与 deferred semantics 继承模块架构。
 
 ## Bounded Source execution
 

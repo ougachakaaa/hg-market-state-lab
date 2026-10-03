@@ -44,4 +44,4 @@ Observed 是 daily response 中归属于 (p,d) 的普通合约 multiset。可批
 
 Refresh/force/TTL、Source correction policy 与 stale semantics 留待独立设计。Catalog 获取批次、daily 请求次数和重试次数均不改变 FetchUnit grain 或 public counters。
 
-冻结 basis 可以在本 Dataset 内去重存储；每个 unit 的历史 basis 不变，具体 generation 兼容与升级见 [PERSISTENCE.md](../../PERSISTENCE.md)。同一 operation 内验证复用见 [EXECUTION.md](../../EXECUTION.md)，仍逐 unit 验证完整 contract universe。
+冻结 basis 可以在本 Dataset 内去重存储；每个 unit 的历史 basis 不变，内部兼容性与 owning Dataset cache rebuild 见 [PERSISTENCE.md](../../PERSISTENCE.md)。同一 operation 内验证复用见 [EXECUTION.md](../../EXECUTION.md)，仍逐 unit 验证完整 contract universe。

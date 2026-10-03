@@ -118,4 +118,4 @@ Serialization 与 delivery 由 adapter 拥有；[lab](../../../lab/ARCHITECTURE.
 
 Failure taxonomy 与 lazy Source I/O 继承 [APPLICATION.md](../../APPLICATION.md)，本 Dataset 不增加公共 failure category；输入错误见第 2 节，可恢复逐日 failures 见第 3 节。
 
-Tushare execution 统一遵循 [Provider Runtime authority](../../providers/TUSHARE.md)。Calendar composition 提供自己的 storage context，adapter 通过共享 Executor 执行 trade_cal；SQLite lifecycle、默认 filename convention、旧目录 state 隔离与 generation compatibility 继承 [PERSISTENCE.md](../../PERSISTENCE.md)。
+Tushare execution 统一遵循 [Provider Runtime authority](../../providers/TUSHARE.md)。Calendar composition 提供自己的 storage context，adapter 通过共享 Executor 执行 trade_cal；SQLite lifecycle、默认 filename convention、旧目录 state 隔离与 rebuild-only compatibility 继承 [PERSISTENCE.md](../../PERSISTENCE.md)。

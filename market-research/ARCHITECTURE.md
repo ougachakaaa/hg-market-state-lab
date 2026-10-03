@@ -9,7 +9,7 @@
 | Area | 高层职责与下一步 |
 | --- | --- |
 | Scratch | Disposable script / notebook / dataframe / plotting exploration；不形成稳定 authority、retained capability 或 production dependency。 |
-| Shared Component | 小领域 reusable mechanism；不拥有 Observation artifact lifecycle。分类、提升与 caller rules 进入 [shared/ARCHITECTURE.md](shared/ARCHITECTURE.md)。 |
+| Shared Component | 小领域 reusable mechanism；产生 ephemeral Component Result；不拥有 retained research Artifact lifecycle。分类、提升与 caller rules 进入 [shared/ARCHITECTURE.md](shared/ARCHITECTURE.md)。 |
 | Observation | 最小独立 retained empirical artifact boundary，而非最小计算单元；独立于 Study 生命周期。Identity / durable reuse / persistence 进入 [observations/ARCHITECTURE.md](observations/ARCHITECTURE.md)。 |
 | Study / Analysis | Study 拥有 request、bindings、orchestration 与 runtime outcome；Analysis 是可选的 Study-local computation。Retained workflow outputs / Evidence 仅明确声明时存在。进入 [studies/ARCHITECTURE.md](studies/ARCHITECTURE.md)。 |
 | UI | Study-local CLI 与窄 configuration / retained-output support。进入 [ui/ARCHITECTURE.md](ui/ARCHITECTURE.md)。 |
@@ -20,7 +20,7 @@ Observation 是本模块内部 first-class concept，不是 repository-level bou
 
 ```text
 DataLake public facts / Snapshot public analysis-ready results
-    → declared Shared Component results / Observation retained Artifacts
+    → declared ephemeral Component Results / Observation-owned retained Artifacts
     → Study orchestration → prepared complete inputs / runtime outcome
     → optional Study-local Analysis → optional Evidence / Findings
 ```

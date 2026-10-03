@@ -23,7 +23,7 @@ DataLake / Market Snapshot public facts / declared shared components
     → optional Evidence / Findings
 ```
 
-Study 可选择 Observation、提供 invocation semantic inputs，并由 Study orchestration resolve / ensure complete Artifact；Analysis 只消费已准备 inputs，不自行调用 / resolve / ensure Observation 或 upstream。Study / Analysis 不重新定义 Observation 的 population、grain、derivation、validity 或 Artifact schema。Artifact 可被多个 Study 复用，不因 Study 不同而重新生成或消费而失效。Observation Artifact 表达 what was observed；[Study-local Workflow Artifact](../studies/WORKFLOW.md) 表达 retained workflow state，Study Evidence 若存在表达 what was learned。
+Study 可选择 Observation、提供 invocation semantic inputs，并由 Study orchestration resolve / ensure complete Artifact；Analysis 只消费已准备 inputs，不自行调用 / resolve / ensure Observation 或 upstream。Study / Analysis 不重新定义 Observation 的 population、grain、derivation、validity 或 Artifact schema。Artifact 可被多个 Study 复用，不因 Study 不同而重新生成或消费而失效；调用它的 Study 不改变 concrete Observation ownership、business identity 或 durable persistence。Observation Artifact 表达 what was observed；[Study-local Workflow Artifact](../studies/WORKFLOW.md) 表达 retained workflow state，Study Evidence 若存在表达 what was learned。
 
 ## Business identity 与 invocation lifecycle
 

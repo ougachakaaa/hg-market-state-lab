@@ -125,4 +125,4 @@ Framework 三层 checks 之外，按 [Artifact acceptance](ARTIFACT.md#acceptanc
 
 Durable-before-return 与 service / process recreation 后 same-request 零 upstream reuse 必须通过 [framework durable reuse acceptance](../IMPLEMENTATION.md#durable-reuse-acceptance)，不以仅同一实例 repeat ensure 替代。
 
-Calendar / Options 已有所需 public runtime surface，无 DataLake / Snapshot capability gap。本 producer **Authority Complete / Dependency Reconciled / Implementation Architecture Complete / Implementation Ready**，runtime **Implemented / Verified**。当前 drift 按需见 [reconciliation](../../IMPLEMENTATION_RECONCILIATION.md)。
+Calendar / Options 已有所需 public runtime surface，无 DataLake / Snapshot capability gap。本 producer **Authority Complete / Dependency Reconciled / Implementation Architecture Complete / Implementation Ready**，runtime **Implemented / Verified**。当前 drift 按需见 [reconciliation](../../IMPLEMENTATION_RECONCILIATION.md)；上述 Research wiring 状态不声明 DataLake persistence 已符合 rebuild-only contract，其 producer gap 不授权本 Observation 换源、迁移 Dataset cache 或修改自身 Artifact ownership。

@@ -26,4 +26,4 @@ Canonical FetchUnit identity 为 `(product_code, trade_date)`，是当日该 pro
 
 唯一跨 Dataset runtime dependency 为 Options → Calendar public Application Service，显式使用 CFFEX；failure / snapshot / ensure 权限进入 TRADING_DAYS.md。Calendar 不反向依赖 Options，不新增 Options → Index/Futures runtime dependency。Public operation family 保持 coverage / ensure / export。
 
-本 Dataset 不生成 IV、moneyness、DTE derived features、option risk premium、Greeks、premium 或 research statistics，不把自行计算的指标伪装为 Source facts。下游通过 public services 组合事实；不消费 Snapshot option-chain product internals/Raw，不通过共享数据库或 CLI JSON 获取数据。HTTP、Research integration、refresh/force/TTL 是后续独立工作，不重新决定既定 domain/service contract。
+本 Dataset 不生成 IV、moneyness、DTE derived features、option risk premium、Greeks、premium 或 research statistics，不把自行计算的指标伪装为 Source facts。下游通过 public services 组合事实；不消费 Snapshot option-chain product internals/Raw，不通过共享数据库或 CLI JSON 获取数据。具体 HTTP / Research integration implementation 遵循已冻结 public service boundary；当前不引入 refresh/force/TTL，也不重新决定既定 domain/service contract。

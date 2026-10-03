@@ -6,9 +6,9 @@
 
 DataSet Application Service 是 transport-neutral canonical consumer boundary，公开 Python semantic request/result/view。它在内部将 Dataset-specific request 解释为 Scope + Window 和目标 FetchUnit identities，查询 coverage、编排 ensure、生成 Dataset-owned export view；caller 不需要理解 persistence mechanics。Dataset-specific consumer contract 经 catalog、Dataset ARCHITECTURE.md 进入 SERVICE.md。
 
-每个 Dataset 自己拥有具体 public semantic service contract；本文件拥有公共 operation family 与 result/error invariants，不定义强制 DataLake runtime facade。Consumer 直接进入具体 Dataset public API，再由 Dataset 使用 shared kernel；内部 Source adapter / Repository composition 与依赖方向继承 [模块架构](ARCHITECTURE.md)。
+每个 Dataset 自己拥有具体 public semantic service contract；本文件拥有公共 operation family 与 result/error invariants，不建立 generic DataLake facade / gateway / client。Consumer 直接进入具体 Dataset public API，再由 Dataset 使用 shared kernel；内部 Source adapter / Repository composition 与依赖方向继承 [模块架构](ARCHITECTURE.md)。
 
-不得把 arbitrary record-level mutation 发布为公开能力。Consumers 不直接操作 SQLite、Repository、FetchUnit / Records tables 或 Source adapter。Public boundary 不暴露 SQL、SQLite path、unit_id / record_id 等 persistence identity、argparse namespace、provider transport response 或 internal repository object。未来模块应直接消费 public semantic request/result/view，不调用 CLI 或反向解析 JSON export；实际 consumer integration 须另行设计。
+不得把 arbitrary record-level mutation 发布为公开能力。Consumers 只依赖 Dataset semantic request、public result / export view 与 public completeness / failure contract；不直接依赖 SQLite / filesystem layout、Repository、Source adapter、FetchUnit / Record persistence identity、provider runtime / Tushare client、provider response、internal batching / transaction / schema。Public boundary 不暴露 SQL、SQLite path、unit_id / record_id 等 persistence identity、argparse namespace、provider transport response 或 internal repository object。未来模块应直接消费 public semantic request/result/view，不调用 CLI 或反向解析 JSON export；Research producer permissions 与 capability selection 见 [Research UPSTREAM](../market-research/UPSTREAM.md)，具体 integration implementation 遵循此已冻结 boundary。
 
 第一版公开 semantic operations 固定为 `coverage`、`ensure`、`export`；`read` 与 `sync` 不作为 public product / CLI verbs。公共 operation family 不要求通用 abstract base class、plugin system 或 registry framework；每个 DataSet 拥有自己的 request/result/view contract。
 
@@ -18,7 +18,7 @@ DataSet Application Service 是 transport-neutral canonical consumer boundary，
 | ensure | 允许 | 允许 | 尽可能补齐目标 Scope + Window |
 | export | 禁止 | 禁止 | 生成 Dataset-owned business-oriented view |
 
-`coverage` / `export` 必须真正 read-only：不创建数据库、表或 pending rows，不隐式 ensure，也不因缓存缺失访问 Source。不存在的缓存按目标 units 全部 missing 表达；已经存在但无法读取或无法合法解释的 Dataset 属于 application failure，不冒充 missing。两者不要求 Source credential。
+`coverage` / `export` 必须真正 read-only：不创建数据库、表或 pending rows，不隐式 ensure，也不因缓存缺失访问 Source。不存在的缓存按目标 units 全部 missing 表达；已经存在但无法读取或无法合法解释的 Dataset 属于 application failure，不冒充 missing。不兼容 persisted schema / generation 在 coverage、ensure、export 中以 `OperationError` 明确失败，诊断标明 owning Dataset 需要 cache rebuild；不能返回普通 missing / incomplete、自动重建或升级。兼容性规则唯一见 [PERSISTENCE.md](PERSISTENCE.md)。两者不要求 Source credential。
 
 ### coverage
 

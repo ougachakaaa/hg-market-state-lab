@@ -6,11 +6,13 @@
 
 ## Baseline
 
-Semantic baseline：`174184787d99b8a36a40d9fc2ad70558395f01bf`。本次 authority 重组开始时，工作树 HEAD 为 `ae9cb5d8a0e20d1db24a6239ddec659b65a01d2e`，Research 文件与 semantic baseline 无差异。
+本次 DataLake → Research authority-only encoding / reconciliation 基准：`e25fd6c6a4e7dbaa3afc4ac488edbd201d8f86e8`。不修改 Research runtime、tests 或 retained state。
 
 ## Open reconciliation gaps
 
-No known open semantic/implementation reconciliation gaps.
+Research 当前 concrete Component / Observation / Study 的 public-service composition 与 artifact ownership 未发现新的本地实现冲突；但完整 dependency readiness 不能表述为无 open gap。
+
+DataLake generation 2 dual-read、automatic upgrade / backup、旧 migration tests 与 rebuild-only authority 的冲突唯一记录于 [DataLake drift register / handoff](../data-lake/IMPLEMENTATION_RECONCILIATION.md)。Research 不通过 Snapshot fallback、private access、第二 cache 或 Study direct-upstream 调用绕过该 producer gap；concrete handoff 的已实现 Research wiring 不代表 DataLake persistence compliance。
 
 [Observation refresh / definition evolution](observations/ARCHITECTURE.md#explicitly-deferred-decisions) 与 [Study workflow deferred decisions](studies/WORKFLOW.md#boundaries-与-deferred-decisions) 仍是待真实需求触发的 semantic decisions，不是当前 implementation drift；本 register 不为它们决定答案。
 
@@ -25,9 +27,9 @@ Authority-only 重组的当前验证范围：
 - Research authority colocation / Study topology / concrete boundary checks。
 - Repository 正式 authority 的 local links / stable-entry reachability；Research fragments 与每个 retained owner 的可达性。
 - Baseline 与当前 contracts 的逐项 semantic preservation review；完整 diff / whitespace / scope 检查。
-- Observation IMPLEMENTATION 的失效 data-only directory 描述按既有 owner colocation / output placement reconciliation；不改变业务语义或 storage placement。
+- Component Result / Study Workflow Artifact / Observation Artifact ownership 与 direct-upstream producer permissions 核对；保持现有 concrete public I/O 和业务语义。
 
-测试通过数属于执行结果，不长期写入本 register；runtime / business code 未修改，本次不启动新的 implementation reconciliation。
+测试通过数属于执行结果，不长期写入本 register；runtime / business code 未修改，本次只记录 implementation drift / handoff，不执行实现修复或 cache rebuild。
 
 ## Historical evidence
 

@@ -4,7 +4,7 @@
 
 ## Legacy retained structure
 
-**Schema evolution is non-retroactive by default.** 既有 Study-local Observation、conditional component Artifact identity、既定 shared semantic dependencies 与 package topology 是合法 legacy retained structure，继续依照其成立时的 canonical authority 可读、可复核。新版 framework 不自动使历史 Study、authority、implementation 或 evidence invalid。
+**Schema evolution is non-retroactive by default.** 既有 Study-local Observation、conditional component Artifact identity、既定 shared semantic dependencies 与 package topology 是合法 legacy retained structure，继续依照其成立时的 canonical authority 可读、可复核。新版 framework 不自动使历史 Study、authority、implementation 或 evidence invalid。历史可读性不授予当前 Shared Component retained persistence，也不授予 Study / Analysis 直接调用 DataLake / Snapshot 的权限；当前执行的 upstream 权限遵循 [UPSTREAM](../UPSTREAM.md)，真实 legacy runtime 冲突记录于 [reconciliation](../IMPLEMENTATION_RECONCILIATION.md)，不通过历史结构建立第二套当前 contract。
 
 Observation-first 更新不自动迁移既有 Study、不重写旧 authority / evidence、不要求旧 implementation 立即移除 observations.py、不重跑研究，也不把历史 Observation 自动提升为独立 capability。只有 human 明确触发针对某个 concrete Study 的 Observation-first reconciliation，才迁入新模型。
 

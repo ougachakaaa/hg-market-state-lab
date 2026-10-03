@@ -81,9 +81,9 @@ Coverage、Records 和关联成功时保留的合法 metadata/completeness basis
 
 Tushare execution 遵循 [Provider Runtime authority](../../providers/TUSHARE.md)，factory 与整个 operation 调用链继承公共 lazy Source I/O invariant；Calendar prerequisite 是否需要 Source I/O 由 TRADING_DAYS.md 拥有。
 
-本 Dataset composition 自有 opt_basic/opt_daily adapter 与 data/ 中唯一 SQLite，adapter 通过共享 Executor 执行 provider 请求，Calendar 只经 public namespace。不增加 Index/Futures runtime dependency。SQLite lifecycle、默认 filename convention、旧目录 state 隔离与 generation compatibility 继承 [PERSISTENCE.md](../../PERSISTENCE.md)；bounded Source execution 见下节。Consumer integration 与 deferred semantics 继承模块架构。
+本 Dataset composition 自有 opt_basic/opt_daily adapter 与 data/ 中唯一 SQLite，adapter 通过共享 Executor 执行 provider 请求，Calendar 只经 public namespace。不增加 Index/Futures runtime dependency。SQLite lifecycle、默认 filename convention、旧目录 state 隔离与 rebuild-only compatibility 继承 [PERSISTENCE.md](../../PERSISTENCE.md)；bounded Source execution 见下节。Consumer integration 与 deferred semantics 继承模块架构。
 
-V2 在 V1 字段基础上允许 pre_close 为 float 或 None，仅限 FACTS 声明的上市首日合法缺席；其他字段及完整性不变。旧缓存的有限数值保持可读，不改写已成功 facts。
+V2 在 V1 字段基础上允许 pre_close 为 float 或 None，仅限 FACTS 声明的上市首日合法缺席；其他字段及完整性不变。兼容当前 persistence contract 的已有缓存，其有限数值保持可读，不改写已成功 facts；public V1/V2 字段演进不授权读取 incompatible persistence generation。
 
 ## Bounded Source execution
 

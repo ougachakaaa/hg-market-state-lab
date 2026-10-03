@@ -21,7 +21,7 @@ Upstream-backed design 按 [UPSTREAM.md](UPSTREAM.md) 选择所需 public capabi
 
 - Data meaning、output、responsibility 或 workflow 变更先落位 narrowest canonical authority，再修改实现。缺失业务决定不得从代码、常见做法、sibling 或 human 沉默推断；按对应 AUTHORING 的 decision loop 处理。
 - Observation identity / lifecycle / persistence 唯一归 [Observation architecture](observations/ARCHITECTURE.md)，不在 Study tasks 重定义；Component 分类 / caller rules 归 [Shared authority](shared/ARCHITECTURE.md)，Study object model / workflow 归 [Study entry](studies/ARCHITECTURE.md)。摘要与链接不建立第二 semantic owner。
-- Upstream selection / provider prohibition / failure boundary 归 [UPSTREAM](UPSTREAM.md)；capability gap 交正确 owner reconciliation，不用 private access 或 runtime source fallback 绕过。发现 authority / implementation conflict，保留可确认 canonical semantics，明确记录 finding，不静默选择新语义。
+- Upstream selection / direct producer permissions / provider prohibition / failure boundary 归 [UPSTREAM](UPSTREAM.md)；capability gap 交正确 owner reconciliation，不用 private access 或 runtime source fallback 绕过。发现 authority / implementation conflict，保留可确认 canonical semantics，明确记录 finding，不静默选择新语义。
 - Authority Complete、design readiness 与 actual runtime readiness 按 [Study handoff](studies/AUTHORING.md#publication-与-dependency-handoff) 分开；获授权的 vertical slice 按 producer-first 顺序核对，不由文档完成自动启动 implementation。
 - Python installation / resolution / tooling 始终从 repository root 使用唯一环境，不创建 module-local project / lock / .venv。源码入口 docstring 指回 owner authority；从代码进入任务时先回到该入口。
 

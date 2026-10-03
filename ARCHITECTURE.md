@@ -12,7 +12,7 @@
 
 持久缓存并管理来自外部 Source 的 reusable source facts。DataLake 是自治 DataSet 的宿主 bounded context，拥有公共 invariants 与 shared kernel；每个 DataSet 是自治的数据产品边界，拥有自己的 authority、implementation、tests 与 source-fact persistence / cache。模块内部边界见 [data-lake/ARCHITECTURE.md](data-lake/ARCHITECTURE.md)。
 
-DataLake 不拥有 Snapshot Product semantics、Preparation、analysis-ready computation、Research、Modeling、HTTP 或 UI。`market-snapshot` 继续拥有 Product-specific source scope、Capture orchestration、Preparation、analysis-ready result 及产品已声明的 persisted Raw Artifact；新增 DataLake 不转移这些所有权。DataSet 对外发布 public Application Service，consumer 通过 semantic request/result/view 消费，不直接访问 SQLite、Repository 或 Source adapter，也不通过 CLI 或反向解析 JSON export 获取 Python semantic result。稳定方向为 consumer → DataSet public Application Service → internal Source adapter / Repository；`lab` 的 delivery contract 见其 authority，实际 Research/Snapshot integration 仍须独立设计。
+DataLake 不拥有 Snapshot Product semantics、Preparation、analysis-ready computation、Research、Modeling、HTTP 或 UI。`market-snapshot` 继续拥有 Product-specific source scope、Capture orchestration、Preparation、analysis-ready result 及产品已声明的 persisted Raw Artifact；新增 DataLake 不转移这些所有权。DataSet 对外发布 public Application Service，consumer 通过 semantic request/result/view 消费，不直接访问 SQLite、Repository 或 Source adapter，也不通过 CLI 或反向解析 JSON export 获取 Python semantic result。稳定方向为 consumer → DataSet public Application Service → internal Source adapter / Repository；`lab` 的 delivery contract 见其 authority，Research consumer 权限与 capability selection 进入 [Research upstream authority](market-research/UPSTREAM.md)，具体 integration implementation 遵循已发布 boundary。
 
 ### `market-snapshot`
 
@@ -88,7 +88,7 @@ Analysis-ready Artifacts
 
 该图表达业务职责与 analytical data flow，不强制 runtime deployment topology 或 package import dependency。`market-research` 与 `market-modeling` 是 sibling analytical modules；Research 不是 Modeling pipeline 的强制 stage。`market-snapshot` 的产物也可以被仓库外的 analyzer 直接消费。
 
-`market-research` 通过 `market-snapshot` 明确支持的 public application/product boundary 消费 analysis-ready result，也可通过 DataLake public Application Service 消费 source facts；不依赖 Source Capture、Raw Artifact、product-private Preparation、upstream persistence、Dataset / Snapshot SQLite、`backend-api`、FastAPI 或 HTTP DTO。Research 内部 composition 由其 module authority 拥有，具体 integration 仍须独立设计。`data-lake`、`market-snapshot` 与 `market-modeling` 不得依赖 `market-research`。
+`market-research` 通过 `market-snapshot` 明确支持的 public application/product boundary 消费 analysis-ready result，也可通过 DataLake public Application Service 消费 source facts；不依赖 Source Capture、Raw Artifact、product-private Preparation、upstream persistence、Dataset / Snapshot SQLite、`backend-api`、FastAPI 或 HTTP DTO。Research 内部 composition 由其 module authority 拥有，upstream producer 权限与 selection 见 [Research upstream authority](market-research/UPSTREAM.md)，具体 integration implementation 遵循该 contract。`data-lake`、`market-snapshot` 与 `market-modeling` 不得依赖 `market-research`。
 
 Research finding 可以经以下语义决策路径促进未来 Modeling，但该路径不是 runtime dependency，也不定义 promotion framework：
 

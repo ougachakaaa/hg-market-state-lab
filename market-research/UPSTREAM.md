@@ -1,6 +1,6 @@
 # Research Public Upstream Dependency authority
 
-本文件唯一拥有 Research 的 public upstream selection、semantic sufficiency、consumer completeness / failure constraints、provider prohibition 与 provenance boundary，继承 [module boundaries](ARCHITECTURE.md)。DataLake operation semantics 唯一归 [APPLICATION.md](../data-lake/APPLICATION.md)，Dataset-specific public contracts 经 [DataLake entry](../data-lake/ARCHITECTURE.md) / [catalog](../data-lake/DATASETS.md) 进入；不由 Research 重复定义。Component caller rules 归 [Shared authority](shared/ARCHITECTURE.md)，Observation retained lookup 归 [Observation architecture](observations/ARCHITECTURE.md)，publication / failure mapping 归 [Observation IMPLEMENTATION](observations/IMPLEMENTATION.md)。
+本文件唯一拥有 Research 的 public upstream selection、semantic sufficiency、直接 upstream producer permissions、consumer completeness / failure constraints、provider prohibition 与 provenance boundary，继承 [module boundaries](ARCHITECTURE.md)。DataLake operation semantics 唯一归 [APPLICATION.md](../data-lake/APPLICATION.md)，Dataset-specific public contracts 经 [DataLake entry](../data-lake/ARCHITECTURE.md) / [catalog](../data-lake/DATASETS.md) 进入；不由 Research 重复定义。Component caller rules 归 [Shared authority](shared/ARCHITECTURE.md)，Observation retained lookup 归 [Observation architecture](observations/ARCHITECTURE.md)，publication / failure mapping 归 [Observation IMPLEMENTATION](observations/IMPLEMENTATION.md)。
 
 ## DataLake-first capability selection
 
@@ -29,6 +29,8 @@ Calendar、option / futures / index daily facts、公开 contract metadata 与 c
 此时选择一个明确 Product，只消费其 public Product / Application request、result 与 failure contract。Concrete authority 必须记录 required capability、已审查的 DataLake public contracts / insufficiency reason、selected Product identity、exact public request / result contract、failure semantics 与 remaining gaps。Snapshot 产品边界由 [Snapshot architecture](../market-snapshot/ARCHITECTURE.md) 及该 Product authority 拥有；不为 Research 创建统一 facade / manager / gateway。
 
 ## Public execution 与 responsibility
+
+Research 中允许直接依赖 DataLake / Snapshot public boundary 的 producer 只有 Shared Research Component 与 Observation；两者可按 required fact slice 直接调用一个或多个具体 Dataset public Application Service，不经 generic DataLake gateway、CLI 或 JSON file round-trip。Study orchestration 只调用已声明 Component / Observation；Analysis 只消费 orchestration 已准备的 complete inputs，不调用会获取 upstream facts 的 resolver / reader。具体 caller 分工见 [Shared authority](shared/ARCHITECTURE.md)。
 
 Research producer 根据 declared semantic fact slice 调用选定 Dataset / Product public contract。Component 不做 retained lookup / research publication；Observation 的调用前后 lifecycle 另见 [Observation architecture](observations/ARCHITECTURE.md) / [IMPLEMENTATION](observations/IMPLEMENTATION.md)。
 

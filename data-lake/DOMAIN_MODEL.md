@@ -2,6 +2,8 @@
 
 本文件拥有 shared kernel 的公共逻辑 persistence model、Scope / Window / FetchUnit 关系、normalization 与 ensure mutation flow，继承 [模块架构](ARCHITECTURE.md) 的 ownership 边界。自治 Dataset 在上层边界内 specialize 或 constrain 这些 invariants；具体 ownership 与 colocation 由模块架构拥有。公共 operation、结果与 application failure 由 [APPLICATION.md](APPLICATION.md) 拥有；具体 Source、identity、Record fields 与 completeness specialization 经 [DATASETS.md](DATASETS.md) 进入 owning Dataset authority。本文不定义 SQL DDL 或 Dataset-specific fields。内部连接生命周期、冻结 basis 与 generation compatibility 见 [PERSISTENCE.md](PERSISTENCE.md)，bounded execution 见 [EXECUTION.md](EXECUTION.md)。
 
+Dataset 的数据标准是完整、稳定表达其 reusable source facts。Population、grain 与 completeness 由 owning Dataset authority 决定，不根据单个 Study 的 fact slice 改变；consumer 选择 semantic request / view 或下游样本，不重新定义 Dataset facts。
+
 ## 1. 公共逻辑 persistence model
 
 每个 DataSet 的标准模型包含 `dataset_meta`、`fetch_unit`、`instrument` 与 `records` 四个核心实体。以下是逻辑字段与 invariants，不是具体 SQL schema。
@@ -18,7 +20,7 @@ created_at
 updated_at
 ```
 
-单独拿到一个 DataSet SQLite 时，必须能够识别其 Dataset identity 与 schema generation。这里不设计 migration framework。
+单独拿到一个 DataSet SQLite 时，必须能够识别其 Dataset identity 与 schema generation；`schema_version` 仅用于 compatibility detection，不驱动 migration。Internal incompatibility 的 Dataset rebuild contract 唯一见 [PERSISTENCE.md](PERSISTENCE.md)。
 
 ### fetch_unit
 
@@ -47,7 +49,7 @@ unit does not exist OR unit.status != success
 
 已有 `success` unit 默认不重新 fetch。不引入 stale、dirty、TTL 或其他 refresh state。
 
-`success` 表示 FetchUnit 曾在 `succeeded_at` 时成功取得并原子保存了一份完整合法的 Source Fact set，满足 owning Dataset completeness；不声明当前 provider 事实仍与缓存一致。Freshness policy 继续 deferred，不因 future-dated facts 建立特例。
+`success` 表示 FetchUnit 曾在 `succeeded_at` 时成功取得并原子保存了一份完整合法的 Source Fact set，满足 owning Dataset completeness；不声明当前 provider 事实仍与缓存一致。当前无 TTL、stale-state、background refresh、automatic invalidation 或 refresh engine，不因 future-dated facts 建立特例；真实 upstream revision 需求须另行 semantic decision。
 
 `content_hash` 描述当前 FetchUnit 所拥有的 canonical Record set 的内容 hash，属于 FetchUnit metadata，不属于单条 Record；`record_count` 表达该 unit 所拥有的 Record 数量。Hash 算法与 canonical serialization 留给 implementation design。
 

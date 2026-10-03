@@ -4,7 +4,7 @@
 
 ## 1. Ownership 与 persistence boundary
 
-DataLake 是多个自治 DataSet 的宿主 bounded context，拥有 DataLake-wide invariants 与 shared kernel；具体 DataSet 持久缓存并管理来自外部 Source 的 reusable source facts。DataLake 不拥有 Snapshot Product semantics、Preparation、analysis-ready computation、Research、Modeling、HTTP 或 UI，也不接管 Snapshot 产品已声明的 Raw Artifact。Public service 的发布不自动建立 Research/Snapshot runtime integration；这些 consumer 的接入须独立设计。
+DataLake 是多个自治 DataSet 的宿主 bounded context，拥有 DataLake-wide invariants 与 shared kernel；具体 DataSet 持久缓存并管理来自外部 Source 的 reusable source facts；persistence 是可重建 cache，不维护 schema migration。DataLake 不拥有 Snapshot Product semantics、Preparation、analysis-ready computation、Research、Modeling、HTTP 或 UI，也不接管 Snapshot 产品已声明的 Raw Artifact。Public service 的发布不自动建立 Research/Snapshot runtime integration；这些 consumer 的实际接入 implementation 须遵循已发布 boundary，Research 选择与调用权限由 [Research UPSTREAM](../market-research/UPSTREAM.md) 拥有。
 
 ```text
 DataLake
@@ -34,7 +34,7 @@ data-lake/
 
 Colocation 让同一 Dataset 的语义、代码、验证与持久化 state 由同一 bounded context 拥有。真实 SQLite/runtime state 默认不进入 Git；具体 filename 与目录 materialization 属于 implementation concern。SQLite lifecycle 与旧目录 state 隔离见 [PERSISTENCE.md](PERSISTENCE.md)。
 
-不同 DataSet 的 owned state 必须能够独立存在、独立 refresh、独立删除或重建；public service 的必要事实依赖不合并 storage lifecycle，也不保证 prerequisite 缺失时 operation 仍可执行。这不定义 refresh policy。同一 instrument 可以分别存在于多个 DataSet 自己的 instrument catalog 中；不得据此合并 persistence ownership。Storage resolution 的公共调用约束见 [APPLICATION.md](APPLICATION.md)。
+不同 DataSet 的 owned state 必须能够独立存在、独立删除或重建；cache rebuild 的最小 ownership boundary 是 owning Dataset，兼容性与显式失败要求见 [PERSISTENCE.md](PERSISTENCE.md)；public service 的必要事实依赖不合并 storage lifecycle，也不保证 prerequisite 缺失时 operation 仍可执行。这不定义 refresh policy。同一 instrument 可以分别存在于多个 DataSet 自己的 instrument catalog 中；不得据此合并 persistence ownership。Storage resolution 的公共调用约束见 [APPLICATION.md](APPLICATION.md)。
 
 这里的 `DataSet` 是 DataLake ownership 概念，不改写 Snapshot 中可能作为产品名称使用的 `Dataset`，也不授权读取或迁移产品私有 Raw。
 
@@ -42,7 +42,7 @@ Colocation 让同一 Dataset 的语义、代码、验证与持久化 state 由�
 
 DataSet 内部以 Scope + transient Window 确定希望覆盖的 FetchUnits；FetchUnit 拥有 Records 与 coverage state，Source adapter 获取外部事实，Repository 管理 owned SQLite。公共领域与 persistence 细节由 [DOMAIN_MODEL.md](DOMAIN_MODEL.md) 拥有。
 
-每个 DataSet 自己拥有并发布 transport-neutral Public Application Service，作为该 Dataset 的唯一 canonical consumer boundary；Python consumer 直接通过 semantic request/result/view 使用 `coverage`、`ensure`、`export`，CLI / HTTP 只是 adapter，不拥有 Dataset 业务语义。直接消费具体 Dataset public API 是合法依赖，不是穿透 DataLake boundary；DataLake 不要求 consumer 经过 DataLakeService、DatasetManager 或 Registry。详细公共 operation contract 由 [APPLICATION.md](APPLICATION.md) 拥有。稳定依赖方向为：
+每个 DataSet 自己拥有并发布 transport-neutral Public Application Service，作为该 Dataset 的唯一 canonical consumer boundary；Python consumer 直接通过 semantic request/result/view 使用 `coverage`、`ensure`、`export`，CLI / HTTP 只是 adapter，不拥有 Dataset 业务语义。直接消费具体 Dataset public API 是合法依赖，不是穿透 DataLake boundary；DataLake 不创建 DataLakeService、DatasetManager、registry、gateway 或 generic client，也不允许通过这些新 facade 替代具体 Dataset boundary。详细公共 operation contract 由 [APPLICATION.md](APPLICATION.md) 拥有。稳定依赖方向为：
 
 ```text
 Consumers (lab CLI / future HTTP API / Research / Snapshot-Preparation / Python consumers)
@@ -83,9 +83,10 @@ Dataset-local source root 不创建独立 Python project、Poetry environment �
 | Tushare-backed Dataset 的 Source execution / credential / client / shared limiter / provider failure | [providers/TUSHARE.md](providers/TUSHARE.md) |
 | Operational progress / safe request and validation diagnostics | [DIAGNOSTICS.md](DIAGNOSTICS.md) |
 | Bounded batching / validation reuse / Source-write overlap | [EXECUTION.md](EXECUTION.md) |
-| SQLite lifecycle / transactions / read snapshots / frozen basis / supported generations | [PERSISTENCE.md](PERSISTENCE.md) |
+| SQLite lifecycle / transactions / read snapshots / frozen basis / rebuild-only compatibility | [PERSISTENCE.md](PERSISTENCE.md) |
 | 具体 Dataset 的 Source、identity、fields、completeness | [DATASETS.md](DATASETS.md) → owning Dataset ARCHITECTURE.md |
 | Dataset-specific consumer request/result/view、public Python surface | [DATASETS.md](DATASETS.md) → owning Dataset ARCHITECTURE.md → SERVICE.md |
+| 当前 authority / implementation drift 与 handoff | [IMPLEMENTATION_RECONCILIATION.md](IMPLEMENTATION_RECONCILIATION.md) |
 | CLI topology / delegation / serialization / file delivery | [lab authority](../lab/ARCHITECTURE.md) |
 
 Dataset 与 provider authority 只能在模块边界及相关公共 domain/application invariant 内 specialize 或 constrain；catalog 只提供导航，不拥有 schema。具体 Dataset 任务读取与任务有关的公共 authority 和 owning Dataset authority，不默认加载 sibling Dataset；普通 Dataset domain task 不默认加载 provider execution authority。
@@ -94,4 +95,4 @@ Dataset 与 provider authority 只能在模块边界及相关公共 domain/appli
 
 DataLake 不引入 DataLakeService、DatasetManager、runtime registry、generic plugin / workflow framework 或 cross-Dataset query layer。Dataset 的直接 public service boundary 与明确 dependency permissions 已由上文固定。
 
-HTTP / Research / Snapshot 等 consumer integration、通用 schema migration framework 与显式旧目录 cache import 须独立设计；当前支持的 generation compatibility 由 PERSISTENCE.md 拥有。Refresh / force / invalidation、TTL / stale、Source correction、多维 Window、通用 Dataset dependency graph 与 Source request audit table 继续 deferred，不从内部 serialization、hash、batching 或存储优化推导新的 public semantics。
+HTTP / Research / Snapshot 等 consumer 的具体 integration implementation 仍须按已冻结 public boundary 完成；rebuild-only compatibility 由 PERSISTENCE.md 拥有，不维护 migration framework 或旧目录 compatibility import。Refresh / force / invalidation、TTL / stale、Source correction、多维 Window、通用 Dataset dependency graph 与 Source request audit table 继续 deferred，不从内部 serialization、hash、batching 或存储优化推导新的 public semantics。

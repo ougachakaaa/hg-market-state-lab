@@ -64,7 +64,7 @@ Orchestration-only Study 可以只定义 semantic request tuple，表达“同�
 
 ## Shared Component Dependencies
 
-只声明实际使用的 component，引用其 canonical owner / narrow I/O contract、purpose、Study inputs / prepared values 到 component inputs 的 bindings、pure / upstream-backed distinction、result meaning / completeness / failure 与 consumers。Component result 作为 prepared runtime input，不要求 Observation Artifact identity / durable publication / business key；不能冒充 retained product。
+只声明实际使用的 component，引用其 canonical owner / narrow I/O contract、purpose、Study inputs / prepared values 到 component inputs 的 bindings、pure / upstream-backed distinction、result meaning / completeness / failure 与 consumers。Component Result 是 ephemeral prepared runtime input，没有 research Artifact identity / durable publication / business-key lifecycle；不能冒充 retained product。若 Study 明确声明 retention，物化产物按 [Workflow authority](WORKFLOW.md) 成为 Study-owned Workflow Artifact，不建立 Component persistence。
 
 Study orchestration 可调用 declared resolver / reader 获取 complete result，再交下游；Analysis 只可调用 pure calculator / selector / transform 计算已准备输入，不用 helper 隐藏 fetch / persistence。多个 Studies 可以依赖同一 component mechanism，不因此共享 research question / Analysis / Evidence semantics。各 caller 自己拥有研究选择与解释，不复制 component contract。
 
