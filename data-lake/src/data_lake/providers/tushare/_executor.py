@@ -5,6 +5,8 @@ import os
 import re
 import threading
 import time
+from collections.abc import Iterator
+from contextlib import contextmanager
 from pathlib import Path
 from typing import Any, Protocol
 
@@ -79,17 +81,22 @@ class _State:
     def __init__(self, client: Any, interval: float, secret: str) -> None:
         self.client = client
         self.lock = threading.Lock()
-        self.last_start = float("-inf")
+        self.last_send_end = float("-inf")
         self.interval = interval
         self.secret = secret
 
-    def start(self) -> float:
+    @contextmanager
+    def dispatch(self) -> Iterator[float]:
         entered = time.monotonic()
         with self.lock:
-            while (delay := self.last_start + self.interval - time.monotonic()) > 0:
+            while (delay := self.last_send_end + self.interval - time.monotonic()) > 0:
                 time.sleep(delay)
-            self.last_start = time.monotonic()
-            return self.last_start - entered
+            waited = time.monotonic() - entered
+            try:
+                yield waited
+            finally:
+                # Sending may fail or be descheduled. Charge its end before another send.
+                self.last_send_end = time.monotonic()
 
 
 class TushareExecutor:
@@ -116,21 +123,30 @@ class TushareExecutor:
         if not re.fullmatch(r"[a-z][a-z0-9_]*", endpoint):
             raise OperationError("Invalid Tushare endpoint identifier")
         state = self._state()
-        waited = state.start()
         started = time.monotonic()
         selectors = {
             key: value.replace(state.secret, "[redacted]") if isinstance(value, str) else value
             for key, value in parameters.items()
             if key in SELECTORS and isinstance(value, str | int) and not isinstance(value, bool)
         }
-        logger.debug(
-            "request_start endpoint=%s selectors=%s waited_seconds=%.3f",
-            endpoint,
-            selectors,
-            waited,
-        )
+        @contextmanager
+        def dispatch() -> Iterator[None]:
+            waited = None
+            try:
+                with state.dispatch() as waited:
+                    yield
+            finally:
+                if waited is not None:
+                    # A slow diagnostic sink must not hold or precede the sending gate.
+                    logger.debug(
+                        "request_start endpoint=%s selectors=%s waited_seconds=%.3f",
+                        endpoint,
+                        selectors,
+                        waited,
+                    )
+
         try:
-            response = getattr(state.client, endpoint)(**parameters)
+            response = getattr(state.client, endpoint)(dispatch=dispatch, **parameters)
         except RequestFailure as exc:
             suffix = f" code={exc.code}" if exc.code is not None else ""
             reason = f"Tushare {endpoint} request failed: {exc.kind}{suffix}"

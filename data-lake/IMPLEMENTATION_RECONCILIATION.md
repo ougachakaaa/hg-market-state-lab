@@ -18,13 +18,17 @@ Generation 2 dual-read、2 → 3 automatic upgrade、migration backup 与 transa
 
 - **已关闭：Futures / Options catalog classification。** 排除 metadata 前核对完整 identity / product evidence；冲突按所有候选产品失败，无法归属且不能证明 unrelated 时按 catalog failure 处理。合法产品继续执行，不能通过排除可疑行缩小 expected universe。
 - **已关闭：Index duplicate failure isolation。** 完整分页保留重复 rows；可定位的重复 daily / metadata identity 只失败对应 unit / code。重复整页或无法证明穷尽的响应仍失败整批，不静默去重。
-- **开放：Provider dispatch 限流。** 放行时间与实际发送分离，日志或线程延迟可能使实际 request starts 小于 TUSHARE authority 的 minimum interval。
+- **已关闭：Provider dispatch 限流。** 共享 credential-local gate 约束实际 HTTP headers/body 发送；发送结束或失败后更新调度时间并释放锁。日志、响应等待与解析不持有 gate，线程延迟不能将已放行请求积压成 burst。
+
+本轮三项 implementation gaps 均已关闭，未发现需要变更冻结 semantic contracts 的 ambiguity。已有成功缓存不自动 invalidation、重写或重新抓取；本轮验证修复后的写入与调用行为，不证明历史 Source facts 的 freshness。
 
 ## Verification boundary
 
 Catalog classification 使用隔离 fake Source 验证 code / symbol / product / underlying 冲突、无法归属行、合法 unrelated 行及多产品失败隔离；失败产品不发布 success facts，全批 catalog failure 不发起 daily requests。
 
 Index 使用隔离 fake Source 验证同页及不同非重复页的 duplicate、混合合法日期与 metadata codes、原始 row-count offset、重复整页拒绝及失败 metadata 不重复请求。局部 failures 与合法 success 的 accounting / export 保持一致。
+
+Provider 使用 fake transport、可控时钟与线程 events 验证 HTTP/HTTPS 发送边界、慢日志、发送前延迟、慢响应并行、失败发送计费 / gate 释放及 180/200/500 配置下共享额度。连接建立、响应读取与诊断在 gate 外执行；原 POST envelope、timeout、安全错误分类、无 retry 与 credential protection 保持有效。
 
 隔离临时 fixture 验证 generation 2、未知 generation、identity / shape 不兼容、旧 basis representation 与非法 SQLite 在以下路径明确失败：
 
@@ -38,4 +42,4 @@ Compatible generation 3 的 read-only 查询、cached / zero-target ensure accou
 
 ## Boundary readiness
 
-DataLake → Research public boundary 可以继续作为并行开发的稳定基础。本轮关闭 producer persistence compliance gap，未改变 public request/result/view、population、grain 或 completeness；Research 仍直接消费已声明 Dataset public semantic objects，不依赖 internal persistence mechanics，也无需 downstream API 适配。现存 incompatible cache 仍须显式由 owning Dataset 处理；本轮不发布 rebuild execution mechanics。
+DataLake → Research public boundary 可以继续作为并行开发的稳定基础。此前 persistence compliance gap 与本轮三项 implementation gaps 均已关闭，未改变 public request/result/view、population、grain 或 completeness；Research 仍直接消费已声明 Dataset public semantic objects，不依赖 internal persistence mechanics，也无需 downstream API 适配。现存 incompatible cache 仍须显式由 owning Dataset 处理；本轮不发布 rebuild execution mechanics。

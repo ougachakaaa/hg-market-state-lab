@@ -4,6 +4,7 @@ import importlib
 import json
 import subprocess
 import sys
+from contextlib import nullcontext
 from pathlib import Path
 from typing import Any
 
@@ -50,7 +51,8 @@ def test_real_cli_vertical_slice(
     class Client:
         def __getattr__(self, endpoint: str) -> Any:
             def request(**params: Any) -> Frame:
-                calls.append(endpoint)
+                with params.pop("dispatch")():
+                    calls.append(endpoint)
                 if endpoint == "trade_cal":
                     return Frame(
                         [
@@ -84,7 +86,7 @@ def test_real_cli_vertical_slice(
     monkeypatch.setattr(_executor, "_states", {})
     monkeypatch.setattr(_executor, "create_client", lambda token: Client())
     # This suite tests lifecycle/delegation; real scheduling has a dedicated concurrency suite.
-    monkeypatch.setattr(_executor._State, "start", lambda self: 0.0)
+    monkeypatch.setattr(_executor._State, "dispatch", lambda self: nullcontext(0.0))
     modules = [calendar] + [
         importlib.import_module(f"data_lake.datasets.{identity}._service") for identity in IDS[1:]
     ]

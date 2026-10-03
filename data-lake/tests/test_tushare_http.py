@@ -3,6 +3,7 @@
 import json
 import logging
 from email.message import Message
+from http.client import HTTPConnection, HTTPSConnection
 from typing import Any
 from urllib.error import HTTPError, URLError
 
@@ -26,6 +27,18 @@ class Response:
         return json.dumps(self.payload).encode()
 
 
+def install_transport(monkeypatch: pytest.MonkeyPatch, send: Any) -> None:
+    def build(*handlers: Any) -> Any:
+        class Opener:
+            def open(self, *args: Any, **kwargs: Any) -> Response:
+                with handlers[0]._dispatch():
+                    return send(*args, **kwargs)
+
+        return Opener()
+
+    monkeypatch.setattr(_client, "build_opener", build)
+
+
 @pytest.fixture
 def runtime(monkeypatch: pytest.MonkeyPatch) -> TushareExecutor:
     monkeypatch.setattr(_executor, "_states", {})
@@ -37,9 +50,8 @@ def runtime(monkeypatch: pytest.MonkeyPatch) -> TushareExecutor:
 def test_checked_success_preserves_empty_and_null(
     monkeypatch: pytest.MonkeyPatch, runtime: TushareExecutor, items: list[Any]
 ) -> None:
-    monkeypatch.setattr(
-        _client,
-        "urlopen",
+    install_transport(
+        monkeypatch,
         lambda *args, **kwargs: Response(
             {"code": 0, "data": {"fields": ["ts_code", "pre_close"], "items": items}}
         ),
@@ -68,8 +80,8 @@ def test_rejection_has_safe_actionable_classification(
     kind: str,
 ) -> None:
     caplog.set_level(logging.DEBUG, logger="data_lake")
-    monkeypatch.setattr(
-        _client, "urlopen", lambda *args, **kwargs: Response({"code": 2002, "msg": message})
+    install_transport(
+        monkeypatch, lambda *args, **kwargs: Response({"code": 2002, "msg": message})
     )
     with pytest.raises(ExecutionFailure) as caught:
         runtime.call("opt_daily", ts_code="fake-secret-token", unlisted="private")
@@ -98,7 +110,7 @@ def test_transport_failure_cannot_be_empty_page(
         calls.append(1)
         raise error
 
-    monkeypatch.setattr(_client, "urlopen", broken)
+    install_transport(monkeypatch, broken)
     with pytest.raises(ExecutionFailure, match=kind):
         runtime.call("opt_basic")
     assert calls == [1]  # no hidden retry
@@ -117,6 +129,72 @@ def test_transport_failure_cannot_be_empty_page(
 def test_bad_envelope_cannot_prove_catalog_exhaustion(
     monkeypatch: pytest.MonkeyPatch, runtime: TushareExecutor, payload: object
 ) -> None:
-    monkeypatch.setattr(_client, "urlopen", lambda *args, **kwargs: Response(payload))
+    install_transport(monkeypatch, lambda *args, **kwargs: Response(payload))
     with pytest.raises(ExecutionFailure, match="response"):
         runtime.call("fut_basic")
+
+
+@pytest.mark.parametrize("scheme", ["http", "https"])
+def test_local_handlers_gate_only_request_bytes_and_preserve_protocol(
+    monkeypatch: pytest.MonkeyPatch, runtime: TushareExecutor, scheme: str
+) -> None:
+    sent: list[bytes] = []
+    connections: list[HTTPConnection] = []
+    responses = []
+    original_request = _client.Request
+
+    def gate_locked() -> bool:
+        return _executor._states["fake-secret-token"].lock.locked()
+
+    class Socket:
+        def sendall(self, data: bytes) -> None:
+            assert gate_locked()
+            sent.append(data)
+
+        def close(self) -> None:
+            assert not gate_locked()
+
+    class WireResponse(Response):
+        status = code = 200
+        reason = "OK"
+        headers = Message()
+
+        def info(self) -> Message:
+            return self.headers
+
+        def read(self) -> bytes:
+            assert not gate_locked()
+            responses.append(1)
+            return super().read()
+
+    def connect(connection: HTTPConnection) -> None:
+        assert not gate_locked()
+        assert connection.timeout == 30
+        connections.append(connection)
+        connection.sock = Socket()  # type: ignore[assignment]
+
+    def response(connection: HTTPConnection) -> WireResponse:
+        assert not gate_locked()
+        return WireResponse({"code": 0, "data": {"fields": ["ts_code"], "items": [["IF2401.CFX"]]}})
+
+    monkeypatch.setattr(HTTPConnection, "connect", connect)
+    monkeypatch.setattr(HTTPSConnection, "connect", connect)
+    monkeypatch.setattr(HTTPConnection, "getresponse", response)
+    monkeypatch.setattr(
+        _client, "Request",
+        lambda url, *args, **kwargs: original_request(
+            url.replace("http://", scheme + "://"), *args, **kwargs
+        ),
+    )
+    # Environment proxy settings must not change this isolated direct-connection fixture.
+    monkeypatch.setattr("urllib.request.getproxies", lambda: {})
+    result = runtime.call("fut_daily", fields="ts_code", exchange="CFFEX")
+    assert result.to_dict(orient="records") == [{"ts_code": "IF2401.CFX"}]
+    assert len(connections) == len(responses) == 1
+    assert isinstance(connections[0], HTTPSConnection) == (scheme == "https")
+    assert sent[0].startswith(b"POST /dataapi/fut_daily HTTP/1.1\r\n")
+    assert b"Content-Type: application/json\r\n" in sent[0]
+    assert json.loads(sent[1]) == {
+        "api_name": "fut_daily", "token": "fake-secret-token",
+        "params": {"exchange": "CFFEX"}, "fields": "ts_code",
+    }

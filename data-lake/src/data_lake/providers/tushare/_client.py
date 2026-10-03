@@ -1,12 +1,59 @@
 """Checked Tushare HTTP envelope; never treat transport failure as empty facts."""
 
 import json
+from collections.abc import Callable
+from contextlib import AbstractContextManager
 from functools import partial
+from http.client import HTTPConnection, HTTPSConnection
+from ssl import SSLContext
 from typing import Any
 from urllib.error import HTTPError, URLError
-from urllib.request import Request, urlopen
+from urllib.request import HTTPHandler, HTTPSHandler, Request, build_opener
 
 import pandas as pd
+
+Dispatch = Callable[[], AbstractContextManager[None]]
+
+
+class _SendingHTTPConnection(HTTPConnection):
+    def __init__(self, host: str, *, dispatch: Dispatch, **kwargs: Any) -> None:
+        super().__init__(host, **kwargs)
+        self._dispatch = dispatch
+
+    def endheaders(self, message_body: Any = None, *, encode_chunked: bool = False) -> None:
+        # Establish the connection before reserving a send slot; responses never hold it.
+        if self.sock is None:
+            self.connect()
+        with self._dispatch():
+            super().endheaders(message_body, encode_chunked=encode_chunked)
+
+
+class _SendingHTTPSConnection(_SendingHTTPConnection, HTTPSConnection):
+    """Cooperative MRO retains HTTPS initialization/connect and the same send gate."""
+
+
+class _HTTPHandler(HTTPHandler):
+    def __init__(self, dispatch: Dispatch) -> None:
+        super().__init__()
+        self._dispatch = dispatch
+
+    def http_open(self, request: Request) -> Any:
+        return self.do_open(partial(_SendingHTTPConnection, dispatch=self._dispatch), request)
+
+
+class _HTTPSHandler(HTTPSHandler):
+    _context: SSLContext
+
+    def __init__(self, dispatch: Dispatch) -> None:
+        super().__init__()
+        self._dispatch = dispatch
+
+    def https_open(self, request: Request) -> Any:
+        return self.do_open(
+            partial(_SendingHTTPSConnection, dispatch=self._dispatch),
+            request,
+            context=self._context,
+        )
 
 
 class RequestFailure(Exception):
@@ -35,7 +82,9 @@ class Client:
     def __getattr__(self, endpoint: str) -> Any:
         return partial(self.query, endpoint)
 
-    def query(self, endpoint: str, fields: str = "", **parameters: object) -> Any:
+    def query(
+        self, endpoint: str, fields: str = "", *, dispatch: Dispatch, **parameters: object
+    ) -> Any:
         # Same endpoint/protocol used by the installed SDK, with checked failures.
         request = Request(
             f"http://api.waditu.com/dataapi/{endpoint}",
@@ -45,8 +94,9 @@ class Client:
             {"Content-Type": "application/json"},
             method="POST",
         )
+        opener = build_opener(_HTTPHandler(dispatch), _HTTPSHandler(dispatch))
         try:
-            with urlopen(request, timeout=30) as response:
+            with opener.open(request, timeout=30) as response:
                 payload = json.loads(response.read())
         except HTTPError as exc:
             kind = (
