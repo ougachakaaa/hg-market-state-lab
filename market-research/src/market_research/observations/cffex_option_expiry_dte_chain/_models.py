@@ -1,4 +1,4 @@
-"""Owned public values; canonical observations/cffex_option_expiry_dte_chain/IMPLEMENTATION.md."""
+"""Owned public values; canonical IMPLEMENTATION.md (beside this file)."""
 
 from dataclasses import dataclass
 from datetime import date

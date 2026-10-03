@@ -1,1 +1,1 @@
-"""Narrow Research components; canonical authority: shared/ARCHITECTURE.md."""
+"""Narrow Research components; canonical authority: ARCHITECTURE.md (beside this file)."""

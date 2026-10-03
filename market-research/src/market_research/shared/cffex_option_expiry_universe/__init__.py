@@ -1,6 +1,6 @@
-"""Canonical authority: shared/cffex_option_expiry_universe/ARCHITECTURE.md.
+"""Canonical authority: ARCHITECTURE.md (beside this file).
 
-Public Python mapping: shared/cffex_option_expiry_universe/IMPLEMENTATION.md.
+Public Python mapping: IMPLEMENTATION.md (beside this file).
 """
 
 from ._errors import ExpiryUniverseError as ExpiryUniverseError

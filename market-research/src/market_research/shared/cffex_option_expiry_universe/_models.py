@@ -1,4 +1,4 @@
-"""Owned public values; canonical shared/cffex_option_expiry_universe/IMPLEMENTATION.md."""
+"""Owned public values; canonical IMPLEMENTATION.md (beside this file)."""
 
 from dataclasses import dataclass
 from datetime import date, datetime, timedelta, timezone

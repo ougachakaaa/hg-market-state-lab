@@ -1,6 +1,6 @@
-"""Canonical authority: observations/cffex_option_expiry_dte_chain/ARCHITECTURE.md.
+"""Canonical authority: ARCHITECTURE.md (beside this file).
 
-Runnable mapping: observations/cffex_option_expiry_dte_chain/IMPLEMENTATION.md.
+Runnable mapping: IMPLEMENTATION.md (beside this file).
 """
 
 from ._models import ExpiryDteChainArtifact as ExpiryDteChainArtifact

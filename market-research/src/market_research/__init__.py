@@ -1,1 +1,1 @@
-"""Exploratory and retained market research."""
+"""Exploratory and retained market research; module authority: ../../ARCHITECTURE.md."""

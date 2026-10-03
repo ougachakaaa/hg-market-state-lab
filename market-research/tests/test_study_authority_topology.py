@@ -10,8 +10,7 @@ from pathlib import Path
 import pytest
 
 RESEARCH_ROOT = Path(__file__).resolve().parents[1]
-STUDIES_ROOT = RESEARCH_ROOT / "studies"
-IMPLEMENTATIONS_ROOT = RESEARCH_ROOT / "src/market_research/studies"
+STUDIES_ROOT = RESEARCH_ROOT / "src/market_research/studies"
 MARKDOWN_LINK = re.compile(r"\[[^]]+\]\(([^)]+)\)")
 REQUIRED_TOP_LEVEL = ("ARCHITECTURE.md", "INPUTS.md", "METHOD.md", "RESULTS.md")
 REQUIRED_IMPLEMENTATION = (
@@ -61,24 +60,22 @@ def assert_new_study_topology(study_root: Path) -> None:
 
 def assert_new_runnable_package(
     implementation_root: Path,
-    authority_root: Path,
     required_helpers: tuple[str, ...] = (),
 ) -> None:
     assert not implementation_root.with_suffix(".py").exists(), implementation_root
     assert implementation_root.is_dir(), implementation_root
     for name in (*REQUIRED_IMPLEMENTATION, *required_helpers):
         assert (implementation_root / name).is_file(), implementation_root / name
-    authority = authority_root / "ARCHITECTURE.md"
+    authority = implementation_root / "ARCHITECTURE.md"
     assert authority.is_file(), authority
     init = ast.parse((implementation_root / "__init__.py").read_text(encoding="utf-8"))
-    assert f"studies/{authority_root.name}/ARCHITECTURE.md" in (ast.get_docstring(init) or ""), (
-        implementation_root
-    )
+    pointer = "Canonical authority: ARCHITECTURE.md (beside this file)"
+    assert pointer in (ast.get_docstring(init) or ""), implementation_root
 
 
 def test_each_study_entry_reaches_its_specialized_authority() -> None:
     for study_root in STUDIES_ROOT.iterdir():
-        if not study_root.is_dir():
+        if not study_root.is_dir() or not any(study_root.glob("*.md")):
             continue
         entry = study_root / "ARCHITECTURE.md"
         assert entry.is_file(), study_root
@@ -90,13 +87,11 @@ def test_each_study_entry_reaches_its_specialized_authority() -> None:
 def test_new_runnable_studies_have_semantic_package_boundaries() -> None:
     candidates = {
         path.name
-        for path in IMPLEMENTATIONS_ROOT.iterdir()
+        for path in STUDIES_ROOT.iterdir()
         if path.is_dir() and path.name != "__pycache__" and any(path.glob("*.py"))
-    } | {path.stem for path in IMPLEMENTATIONS_ROOT.glob("*.py") if path.name != "__init__.py"}
+    } | {path.stem for path in STUDIES_ROOT.glob("*.py") if path.name != "__init__.py"}
     for study_package in candidates:
-        assert_new_runnable_package(
-            IMPLEMENTATIONS_ROOT / study_package, STUDIES_ROOT / study_package
-        )
+        assert_new_runnable_package(STUDIES_ROOT / study_package)
 
 
 def test_legacy_single_file_and_specialized_navigation(tmp_path: Path) -> None:
@@ -199,34 +194,32 @@ def test_implementation_contract_is_reachable_from_authoring_and_review() -> Non
 
 def test_new_runnable_package_requires_modules_and_authority_pointer(tmp_path: Path) -> None:
     implementation_root = tmp_path / "src/example_study"
-    authority_root = tmp_path / "studies/example_study"
     implementation_root.mkdir(parents=True)
-    authority_root.mkdir(parents=True)
-    (authority_root / "ARCHITECTURE.md").write_text("# Example\n", encoding="utf-8")
+    (implementation_root / "ARCHITECTURE.md").write_text("# Example\n", encoding="utf-8")
     for name in (*REQUIRED_IMPLEMENTATION, "analyses.py", "evidence.py"):
         (implementation_root / name).write_text("", encoding="utf-8")
     (implementation_root / "__init__.py").write_text(
-        '"""Canonical authority: studies/example_study/ARCHITECTURE.md."""\n',
+        '"""Canonical authority: ARCHITECTURE.md (beside this file)."""\n',
         encoding="utf-8",
     )
-    assert_new_runnable_package(implementation_root, authority_root)
+    assert_new_runnable_package(implementation_root)
 
     (implementation_root / "analyses.py").unlink()
     with pytest.raises(AssertionError):
-        assert_new_runnable_package(implementation_root, authority_root, ("analyses.py",))
+        assert_new_runnable_package(implementation_root, ("analyses.py",))
     (implementation_root / "analyses.py").write_text("", encoding="utf-8")
 
     (implementation_root / "__init__.py").write_text('"""Example Study."""\n', encoding="utf-8")
     with pytest.raises(AssertionError):
-        assert_new_runnable_package(implementation_root, authority_root)
+        assert_new_runnable_package(implementation_root)
 
     (implementation_root / "__init__.py").write_text(
-        '"""Canonical authority: studies/example_study/ARCHITECTURE.md."""\n',
+        '"""Canonical authority: ARCHITECTURE.md (beside this file)."""\n',
         encoding="utf-8",
     )
     (implementation_root.with_suffix(".py")).write_text("", encoding="utf-8")
     with pytest.raises(AssertionError):
-        assert_new_runnable_package(implementation_root, authority_root)
+        assert_new_runnable_package(implementation_root)
 
 
 @pytest.mark.parametrize("name", REQUIRED_IMPLEMENTATION)
@@ -235,28 +228,43 @@ def test_orchestration_package_still_requires_all_mandatory_modules(
     name: str,
 ) -> None:
     implementation = tmp_path / "src/example_study"
-    authority = tmp_path / "studies/example_study"
     implementation.mkdir(parents=True)
-    authority.mkdir(parents=True)
-    (authority / "ARCHITECTURE.md").write_text("# Example\n", encoding="utf-8")
+    (implementation / "ARCHITECTURE.md").write_text("# Example\n", encoding="utf-8")
     for module in REQUIRED_IMPLEMENTATION:
         (implementation / module).write_text("", encoding="utf-8")
     (implementation / "__init__.py").write_text(
-        '"""Canonical authority: studies/example_study/ARCHITECTURE.md."""\n',
+        '"""Canonical authority: ARCHITECTURE.md (beside this file)."""\n',
         encoding="utf-8",
     )
-    assert_new_runnable_package(implementation, authority)
+    assert_new_runnable_package(implementation)
     (implementation / name).unlink()
     with pytest.raises(AssertionError):
-        assert_new_runnable_package(implementation, authority)
+        assert_new_runnable_package(implementation)
 
 
 def test_new_runnable_study_cannot_be_a_single_script(tmp_path: Path) -> None:
     implementation_root = tmp_path / "src/example_study"
-    authority_root = tmp_path / "studies/example_study"
-    implementation_root.parent.mkdir()
-    authority_root.mkdir(parents=True)
-    (authority_root / "ARCHITECTURE.md").write_text("# Example\n", encoding="utf-8")
+    implementation_root.mkdir(parents=True)
+    (implementation_root / "ARCHITECTURE.md").write_text("# Example\n", encoding="utf-8")
     implementation_root.with_suffix(".py").write_text("", encoding="utf-8")
     with pytest.raises(AssertionError):
-        assert_new_runnable_package(implementation_root, authority_root)
+        assert_new_runnable_package(implementation_root)
+
+
+def test_runnable_package_rejects_authority_in_a_shadow_directory(tmp_path: Path) -> None:
+    implementation = tmp_path / "src/example_study"
+    implementation.mkdir(parents=True)
+    for module in REQUIRED_IMPLEMENTATION:
+        (implementation / module).write_text("", encoding="utf-8")
+    (implementation / "__init__.py").write_text(
+        '"""Canonical authority: ARCHITECTURE.md (beside this file)."""\n',
+        encoding="utf-8",
+    )
+    shadow = tmp_path / "studies/example_study"
+    shadow.mkdir(parents=True)
+    (shadow / "ARCHITECTURE.md").write_text("# Shadow authority\n", encoding="utf-8")
+    with pytest.raises(AssertionError):
+        assert_new_runnable_package(implementation)
+
+    (shadow / "ARCHITECTURE.md").rename(implementation / "ARCHITECTURE.md")
+    assert_new_runnable_package(implementation)
