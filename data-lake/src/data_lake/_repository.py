@@ -4,12 +4,11 @@ import hashlib
 import json
 import sqlite3
 from collections.abc import Iterator, Sequence
-from contextlib import closing, contextmanager
+from contextlib import contextmanager
 from dataclasses import astuple, dataclass
 from datetime import UTC, datetime
 from pathlib import Path
 from threading import local
-from uuid import uuid4
 
 from ._domain import CachedUnit, ExecutionFailure, Instrument, Record, Status, Unit, UnitRecords
 from ._serialization import canonical_json, record_hash
@@ -76,6 +75,7 @@ REQUIRED_COLUMNS = {
         "error_code",
         "error_message",
         "basis",
+        "basis_id",
     },
     "instrument": {
         "instrument_id",
@@ -89,6 +89,7 @@ REQUIRED_COLUMNS = {
         "valid_to",
     },
     "records": {"record_id", "fetch_unit_id", "instrument_id", "facts"},
+    "basis_snapshot": {"basis_id", "content_hash", "facts"},
 }
 
 
@@ -111,79 +112,35 @@ class Repository:
         self._sessions = local()
 
     def _validate(self, connection: sqlite3.Connection) -> None:
-        for table, required in REQUIRED_COLUMNS.items():
-            columns = {row[1] for row in connection.execute(f"PRAGMA table_info({table})")}
-            if not required <= columns:
-                raise OperationError("Dataset storage structure is incompatible")
-        generation = self._identity(connection)
-        if generation == 3:
-            columns = {row[1] for row in connection.execute("PRAGMA table_info(fetch_unit)")}
-            basis_columns = {
-                row[1] for row in connection.execute("PRAGMA table_info(basis_snapshot)")
-            }
-            if (
-                "basis_id" not in columns
-                or not {"basis_id", "content_hash", "facts"} <= basis_columns
-            ):
-                raise OperationError("Dataset basis storage structure is incompatible")
+        try:
+            for table, required in REQUIRED_COLUMNS.items():
+                columns = {row[1] for row in connection.execute(f"PRAGMA table_info({table})")}
+                if not required <= columns:
+                    raise self._incompatible(f"storage structure: {table}")
+            self._identity(connection)
             if connection.execute(
                 "SELECT 1 FROM fetch_unit WHERE basis IS NOT NULL LIMIT 1"
             ).fetchone():
-                raise OperationError("Dataset basis representation is inconsistent")
+                raise self._incompatible("basis representation")
+        except sqlite3.DatabaseError as exc:
+            raise self._incompatible("unreadable persisted schema") from exc
         if connection.execute("PRAGMA foreign_key_check").fetchone() is not None:
             raise OperationError("Dataset storage references are invalid")
 
-    def _identity(self, connection: sqlite3.Connection) -> int:
+    def _incompatible(self, reason: str) -> OperationError:
+        return OperationError(
+            f"Dataset '{self.dataset}' cache is incompatible ({reason}); "
+            "rebuild required for this owning Dataset"
+        )
+
+    def _identity(self, connection: sqlite3.Connection) -> None:
         metadata = connection.execute("SELECT * FROM dataset_meta").fetchall()
         if len(metadata) != 1 or (
             metadata[0]["dataset_name"] != self.dataset
             or metadata[0]["source_name"] != self.source
-            or metadata[0]["schema_version"] not in (2, SCHEMA_VERSION)
+            or metadata[0]["schema_version"] != SCHEMA_VERSION
         ):
-            raise OperationError("Dataset storage identity or generation is incompatible")
-        return int(metadata[0]["schema_version"])
-
-    def _upgrade(self, connection: sqlite3.Connection) -> None:
-        # The caller holds BEGIN IMMEDIATE. A separate reader backs up the last
-        # committed generation before any migration writes; backup never overwrites.
-        backup = self.path.with_name(self.path.name + f".schema-2.{uuid4().hex}.backup")
-        backup.touch(exist_ok=False)
-        complete_backup = False
-        try:
-            with closing(
-                sqlite3.connect(self.path.resolve().as_uri() + "?mode=ro", uri=True)
-            ) as reader:
-                with closing(sqlite3.connect(backup)) as destination:
-                    reader.backup(destination)
-            complete_backup = True
-            for statement in BASIS_DDL:
-                connection.execute(statement)
-            connection.execute(
-                "ALTER TABLE fetch_unit ADD COLUMN basis_id INTEGER "
-                "REFERENCES basis_snapshot(basis_id)"
-            )
-            for row in connection.execute(
-                "SELECT DISTINCT basis FROM fetch_unit WHERE basis IS NOT NULL"
-            ).fetchall():
-                original = row[0]
-                value = json.loads(original)
-                if not isinstance(value, dict):
-                    raise OperationError("Frozen basis is invalid")
-                encoded = canonical_json(value)
-                basis_id = self._store_basis(connection, encoded)
-                connection.execute(
-                    "UPDATE fetch_unit SET basis_id=?, basis=NULL WHERE basis=?",
-                    (basis_id, original),
-                )
-            connection.execute("UPDATE dataset_meta SET schema_version=?", (SCHEMA_VERSION,))
-            self._validate(connection)
-            connection.commit()
-            connection.execute("BEGIN IMMEDIATE")
-        except BaseException:
-            connection.rollback()
-            if not complete_backup:
-                backup.unlink()
-            raise
+            raise self._incompatible(f"storage identity or generation; expected {SCHEMA_VERSION}")
 
     @staticmethod
     def _store_basis(connection: sqlite3.Connection, encoded: str) -> int:
@@ -224,8 +181,7 @@ class Repository:
         if active is not None:
             try:
                 active.execute("BEGIN IMMEDIATE")
-                if self._identity(active) != SCHEMA_VERSION:
-                    raise OperationError("Dataset storage generation changed during execution")
+                self._identity(active)
                 yield active
                 active.commit()
             except (sqlite3.Error, OSError, ValueError, TypeError, KeyError) as exc:
@@ -268,8 +224,6 @@ class Repository:
                 initialized = True
             connection.execute("BEGIN IMMEDIATE" if write else "BEGIN")
             self._validate(connection)
-            if write and self._identity(connection) == 2:
-                self._upgrade(connection)
             yield connection
             if write:
                 connection.commit()
@@ -289,15 +243,16 @@ class Repository:
         # Header bytes 18 and 19 are the file write/read versions; 2 denotes WAL.
         with self.path.open("rb") as database:
             header = database.read(20)
+        if header and not header.startswith(b"SQLite format 3\x00"):
+            raise self._incompatible("invalid SQLite header")
         if header.startswith(b"SQLite format 3\x00") and 2 in header[18:20]:
-            raise OperationError("Dataset storage uses unsupported WAL journal mode")
+            raise self._incompatible("unsupported WAL journal mode")
 
     def snapshot(self, units: Sequence[Unit]) -> Snapshot:
         statuses: dict[str, Status] = {}
         successful: list[CachedUnit] = []
         with self._connect() as connection:
             if connection is not None:
-                generation = self._identity(connection)
                 parsed_bases: dict[object, dict | None] = {}
                 # A bounded SQL batch shares the same transaction and basis memo.
                 for offset in range(0, len(units), 64):
@@ -366,28 +321,25 @@ class Repository:
                             associations[row["unit_id"]][key]
                             for key in sorted(associations[row["unit_id"]])
                         )
-                        basis_key = row["basis_id"] if generation == 3 else row["basis"]
+                        basis_key = row["basis_id"]
                         if basis_key not in parsed_bases:
                             if basis_key is None:
                                 parsed_bases[basis_key] = None
                             else:
-                                encoded_basis = basis_key
-                                if generation == 3:
-                                    basis_row = connection.execute(
-                                        "SELECT content_hash,facts FROM basis_snapshot "
-                                        "WHERE basis_id=?",
-                                        (basis_key,),
-                                    ).fetchone()
-                                    if (
-                                        basis_row is None
-                                        or hashlib.sha256(
-                                            basis_row["facts"].encode("utf-8")
-                                        ).hexdigest()
-                                        != basis_row["content_hash"]
-                                    ):
-                                        raise OperationError("Frozen basis content is inconsistent")
-                                    encoded_basis = basis_row["facts"]
-                                parsed = json.loads(encoded_basis)
+                                basis_row = connection.execute(
+                                    "SELECT content_hash,facts FROM basis_snapshot "
+                                    "WHERE basis_id=?",
+                                    (basis_key,),
+                                ).fetchone()
+                                if (
+                                    basis_row is None
+                                    or hashlib.sha256(
+                                        basis_row["facts"].encode("utf-8")
+                                    ).hexdigest()
+                                    != basis_row["content_hash"]
+                                ):
+                                    raise OperationError("Frozen basis content is inconsistent")
+                                parsed = json.loads(basis_row["facts"])
                                 if not isinstance(parsed, dict):
                                     raise OperationError("Frozen basis is invalid")
                                 parsed_bases[basis_key] = parsed

@@ -30,7 +30,7 @@ from data_lake._domain import (
 )
 from data_lake._repository import Repository
 from data_lake._runtime import database_path
-from data_lake._serialization import canonical_json, record_hash
+from data_lake._serialization import Json, canonical_json, record_hash
 
 
 @dataclass(frozen=True)
@@ -752,7 +752,7 @@ def test_prefetch_overlaps_single_writer_and_stops_at_one_batch_ahead(
     assert calls == ["a", "b", "c"]
 
 
-def legacy_cache(dataset: FakeDataset) -> tuple[tuple, ...]:
+def legacy_cache(dataset: FakeDataset) -> None:
     # Build a real generation-2 fixture; retain exact facts and historical metadata.
     ddl = repository_module.DDL
     ddl = ddl[ddl.index("CREATE TABLE dataset_meta") :]
@@ -778,70 +778,113 @@ def legacy_cache(dataset: FakeDataset) -> tuple[tuple, ...]:
                 "INSERT INTO records(fetch_unit_id,facts) VALUES(?,?)",
                 (index, canonical_json({"value": index})),
             )
-        return tuple(connection.execute("SELECT * FROM records ORDER BY record_id"))
 
 
-def test_legacy_read_and_cached_ensure_are_read_only_then_upgrade_preserves_history(
-    dataset: FakeDataset,
+@pytest.mark.parametrize(
+    "operation,targets",
+    [
+        ("coverage", ("a", "b")),
+        ("export", ("a", "b")),
+        ("ensure", ("a", "b", "c")),  # Requires a new write in a compatible cache.
+        ("ensure", ("a", "b")),  # All requested facts are already cached.
+        ("ensure", ()),
+        ("coverage", ()),
+        ("export", ()),
+        ("write_session", ()),  # Writer entry also rejects an incompatible cache.
+    ],
+)
+@pytest.mark.parametrize(
+    "kind",
+    [
+        "legacy",
+        "generation_2",
+        "unknown_generation",
+        "wrong_identity",
+        "missing_table",
+        "missing_basis_column",
+        "inline_basis",
+        "empty",
+        "corrupt",
+    ],
+)
+def test_incompatible_cache_requires_owning_dataset_rebuild_without_mutation(
+    dataset: FakeDataset, operation: str, targets: tuple[str, ...], kind: str
 ) -> None:
-    old_records = legacy_cache(dataset)
-    before = dataset.repository.path.read_bytes()
-    assert dataset.core.coverage(("a", "b")).complete
-    assert len(dataset.core.export(("a", "b")).facts) == 2
-    assert dataset.core.ensure(("a", "b")).attempted_units == 0
-    assert dataset.repository.path.read_bytes() == before
-    assert not list(dataset.repository.path.parent.glob("*.backup"))
-    dataset.responses["c"] = facts(3)
-    assert dataset.core.ensure(("a", "b", "c")).complete
-    backups = list(dataset.repository.path.parent.glob("*.backup"))
-    assert len(backups) == 1
-    with sqlite3.connect(backups[0]) as connection:
-        assert connection.execute("SELECT schema_version FROM dataset_meta").fetchone()[0] == 2
-        assert tuple(connection.execute("SELECT * FROM records ORDER BY record_id")) == old_records
-    with sqlite3.connect(dataset.repository.path) as connection:
+    path = dataset.repository.path
+    if kind == "legacy":
+        legacy_cache(dataset)
+    elif kind in ("empty", "corrupt"):
+        path.parent.mkdir()
+        path.write_bytes(b"" if kind == "empty" else b"not sqlite")
+    else:
+        dataset.responses = {"a": facts(1), "b": facts(2)}
+        assert dataset.core.ensure(("a", "b")).complete
+        with sqlite3.connect(path) as connection:
+            if kind == "generation_2":
+                connection.execute("UPDATE dataset_meta SET schema_version=2")
+            elif kind == "unknown_generation":
+                connection.execute("UPDATE dataset_meta SET schema_version=99")
+            elif kind == "wrong_identity":
+                connection.execute("UPDATE dataset_meta SET dataset_name='other'")
+            elif kind == "missing_table":
+                connection.execute("DROP TABLE basis_snapshot")
+            elif kind == "missing_basis_column":
+                connection.execute("ALTER TABLE fetch_unit DROP COLUMN basis_id")
+            elif kind == "inline_basis":
+                connection.execute("UPDATE fetch_unit SET basis='{}'")
+    before = path.read_bytes(), path.stat().st_mtime_ns
+    entries = sorted(p.name for p in path.parent.iterdir())
+    preparations, calls = dataset.preparations, list(dataset.calls)
+    dataset.credentials = False  # Storage incompatibility must fail before Source setup.
+    with pytest.raises(OperationError, match="Dataset 'fake'.*incompatible.*rebuild required"):
+        if operation == "write_session":
+            with dataset.repository.write_session():
+                pytest.fail("Incompatible cache must never enter a writer session")
+        else:
+            getattr(dataset.core, operation)(targets)
+    assert (path.read_bytes(), path.stat().st_mtime_ns) == before
+    assert sorted(p.name for p in path.parent.iterdir()) == entries == [path.name]
+    assert not list(path.parent.glob("*.backup"))
+    assert dataset.preparations == preparations and dataset.calls == calls
+
+
+def test_current_generation_reads_and_writes_preserve_frozen_history(dataset: FakeDataset) -> None:
+    basis: dict[str, Json] = {"catalog": [{"name": "original"}]}
+    dataset.responses = {
+        key: UnitRecords(facts(index).records, basis=basis)
+        for index, key in enumerate(("a", "b"), start=1)
+    }
+    assert dataset.core.ensure(("a", "b")).complete
+    path = dataset.repository.path
+    with sqlite3.connect(path) as connection:
+        old_units = connection.execute("SELECT * FROM fetch_unit ORDER BY unit_id").fetchall()
+        old_records = connection.execute("SELECT * FROM records ORDER BY record_id").fetchall()
         assert connection.execute("SELECT schema_version FROM dataset_meta").fetchone()[0] == 3
-        assert (
-            tuple(
-                connection.execute(
-                    "SELECT * FROM records WHERE fetch_unit_id<=2 ORDER BY record_id"
-                )
-            )
-            == old_records
-        )
         assert connection.execute("SELECT count(*) FROM basis_snapshot").fetchone()[0] == 1
-        assert (
-            connection.execute(
-                "SELECT count(DISTINCT basis_id) FROM fetch_unit WHERE unit_id<=2"
-            ).fetchone()[0]
-            == 1
-        )
-        assert connection.execute(
-            "SELECT succeeded_at,last_attempt_at,created_at FROM fetch_unit WHERE unit_id=1"
-        ).fetchone() == ("old", "old", "old")
-        assert not connection.execute("PRAGMA foreign_key_check").fetchall()
-    cached = dataset.repository.snapshot((Unit("a"), Unit("b"))).successful
-    assert cached[0].basis is cached[1].basis
-
-
-def test_failed_upgrade_rolls_back_generation_and_preserves_recoverable_backup(
-    dataset: FakeDataset,
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    old_records = legacy_cache(dataset)
-    dataset.responses["c"] = facts(3)
-    monkeypatch.setattr(
-        repository_module, "BASIS_DDL", (*repository_module.BASIS_DDL, "INVALID SQL")
-    )
-    with pytest.raises(OperationError):
-        dataset.core.ensure(("a", "c"))
-    with sqlite3.connect(dataset.repository.path) as connection:
-        assert connection.execute("SELECT schema_version FROM dataset_meta").fetchone()[0] == 2
-        assert tuple(connection.execute("SELECT * FROM records ORDER BY record_id")) == old_records
-        assert not connection.execute(
-            "SELECT name FROM sqlite_master WHERE name='basis_snapshot'"
-        ).fetchall()
-    assert len(list(dataset.repository.path.parent.glob("*.backup"))) == 1
+    before = path.read_bytes(), path.stat().st_mtime_ns
+    preparations, calls = dataset.preparations, list(dataset.calls)
     assert dataset.core.coverage(("a", "b")).complete
+    assert dataset.core.export(("a", "b")).facts == ({"value": 1}, {"value": 2})
+    assert dataset.core.ensure(("a", "b")) == EnsureResult(2, 2, 0, 0, 0, 0, True, ())
+    assert dataset.core.ensure(()) == EnsureResult(0, 0, 0, 0, 0, 0, True, ())
+    assert (path.read_bytes(), path.stat().st_mtime_ns) == before
+    assert dataset.preparations == preparations and dataset.calls == calls
+    dataset.responses["c"] = UnitRecords(facts(3).records, basis={"catalog": [{"name": "new"}]})
+    assert dataset.core.ensure(("a", "b", "c")) == EnsureResult(3, 2, 1, 1, 0, 1, True, ())
+    with sqlite3.connect(path) as connection:
+        assert connection.execute("SELECT schema_version FROM dataset_meta").fetchone()[0] == 3
+        assert connection.execute("SELECT count(*) FROM basis_snapshot").fetchone()[0] == 2
+        assert connection.execute(
+            "SELECT * FROM fetch_unit WHERE unit_id<=2 ORDER BY unit_id"
+        ).fetchall() == old_units
+        assert connection.execute(
+            "SELECT * FROM records WHERE fetch_unit_id<=2 ORDER BY record_id"
+        ).fetchall() == old_records
+        assert not connection.execute("PRAGMA foreign_key_check").fetchall()
+    cached = dataset.repository.snapshot((Unit("a"), Unit("b"), Unit("c"))).successful
+    assert cached[0].basis is cached[1].basis and cached[0].basis == basis
+    assert cached[2].basis == {"catalog": [{"name": "new"}]}
+    assert sorted(p.name for p in path.parent.iterdir()) == [path.name]
 
 
 def test_frozen_basis_tampering_is_rejected_in_fresh_read(dataset: FakeDataset) -> None:
@@ -907,51 +950,6 @@ def test_prefetch_operation_failure_preserves_previous_success_and_pending_retry
         dataset.core.ensure(("a", "b", "c"))
     assert calls == ["a", "b"]
     assert dataset.core.coverage(("a", "b", "c")) == CoverageResult(3, 1, 1, 1, 0, False)
-
-
-def test_backup_failure_leaves_legacy_cache_unchanged_and_no_partial_backup(
-    dataset: FakeDataset,
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    legacy_cache(dataset)
-    before = dataset.repository.path.read_bytes()
-    original_connect = sqlite3.connect
-
-    class BrokenBackup(sqlite3.Connection):
-        def backup(self, *args: Any, **kwargs: Any) -> None:
-            raise OSError("Injected backup failure")
-
-    def connect(*args: Any, **kwargs: Any) -> sqlite3.Connection:
-        if kwargs.get("uri"):
-            kwargs["factory"] = BrokenBackup
-        return original_connect(*args, **kwargs)
-
-    monkeypatch.setattr(sqlite3, "connect", connect)
-    dataset.responses["c"] = facts(3)
-    with pytest.raises(OperationError):
-        dataset.core.ensure(("a", "c"))
-    assert dataset.repository.path.read_bytes() == before
-    assert not list(dataset.repository.path.parent.glob("*.backup"))
-    assert dataset.core.coverage(("a", "b")).complete
-
-
-def test_interrupted_upgrade_rolls_back_all_schema_and_basis_changes(
-    dataset: FakeDataset,
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    legacy_cache(dataset)
-    before = dataset.repository.path.read_bytes()
-    dataset.responses["c"] = facts(3)
-
-    def interrupt(connection: sqlite3.Connection, encoded: str) -> int:
-        raise KeyboardInterrupt
-
-    monkeypatch.setattr(dataset.repository, "_store_basis", interrupt)
-    with pytest.raises(KeyboardInterrupt):
-        dataset.core.ensure(("a", "c"))
-    assert dataset.repository.path.read_bytes() == before
-    assert len(list(dataset.repository.path.parent.glob("*.backup"))) == 1
-    assert dataset.core.coverage(("a", "b")).complete
 
 
 def test_pipeline_cancels_source_before_waiting_for_inflight_task(
