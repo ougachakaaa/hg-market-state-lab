@@ -13,7 +13,7 @@ import pytest
 
 REPOSITORY_ROOT = Path(__file__).resolve().parents[2]
 RESEARCH_ROOT = REPOSITORY_ROOT / "market-research"
-PACKAGE_ROOT = RESEARCH_ROOT / "src/market_research"
+
 LINK = re.compile(r"\[[^]]*\]\(([^)]+)\)")
 FRAMEWORK_ENTRIES = {
     "shared": "ARCHITECTURE.md",
@@ -42,7 +42,11 @@ def reachable(entry: Path) -> set[Path]:
 
 
 def test_all_research_contracts_are_reachable_through_stable_entries() -> None:
-    contracts = {path.resolve() for path in PACKAGE_ROOT.rglob("*.md")}
+    contracts = {
+        path.resolve()
+        for framework in FRAMEWORK_ENTRIES
+        for path in (RESEARCH_ROOT / framework).rglob("*.md")
+    }
     contracts.add((RESEARCH_ROOT / "UPSTREAM.md").resolve())
     assert contracts
     for entry in (
@@ -54,33 +58,28 @@ def test_all_research_contracts_are_reachable_through_stable_entries() -> None:
 
 
 @pytest.mark.parametrize("framework,entry", FRAMEWORK_ENTRIES.items())
-def test_framework_and_concrete_packages_have_adjacent_authority(
-    framework: str, entry: str
-) -> None:
-    owner = PACKAGE_ROOT / framework
-    init = owner / "__init__.py"
-    docstring = ast.get_docstring(ast.parse(init.read_text(encoding="utf-8"))) or ""
-    assert entry in docstring and "beside this file" in docstring
+def test_framework_and_concrete_packages_have_owner_authority(framework: str, entry: str) -> None:
+    owner = RESEARCH_ROOT / framework
     assert (owner / entry).is_file()
-    for candidate in owner.iterdir():
-        if not candidate.is_dir() or not any(candidate.glob("*.py")):
-            continue
-        init = candidate / "__init__.py"
-        assert init.is_file(), candidate
-        assert (candidate / "ARCHITECTURE.md").is_file(), candidate
+    for init in owner.rglob("__init__.py"):
+        package = init.parent
+        source = next(parent for parent in package.parents if parent.name == "src")
+        canonical_owner = source.parent
+        assert not list(source.rglob("*.md"))
         docstring = ast.get_docstring(ast.parse(init.read_text(encoding="utf-8"))) or ""
-        assert "Canonical authority: ARCHITECTURE.md (beside this file)" in docstring
-        assert (candidate / "ARCHITECTURE.md").resolve() in reachable(owner / entry)
+        pointer = "../../../" if canonical_owner == owner else "../../../../"
+        authority = entry if canonical_owner == owner else "ARCHITECTURE.md"
+        assert pointer + authority in docstring, init
+        assert (canonical_owner / authority).is_file()
+        assert (canonical_owner / authority).resolve() in reachable(owner / entry)
 
 
 def test_authority_only_mirror_trees_are_absent() -> None:
-    # Existing ignored Observation data is runtime state, with no parallel authority.
-    for framework in FRAMEWORK_ENTRIES:
-        old_root = RESEARCH_ROOT / framework
-        assert not list(old_root.rglob("*.md")), old_root
-        assert not list(old_root.rglob("*.py")), old_root
-    for helper in ("distribution", "im_basis", "price_to_lagged_reference"):
-        assert not (PACKAGE_ROOT / "shared" / f"{helper}.py").exists()
+    old = RESEARCH_ROOT / "src/market_research"
+    assert not list(old.rglob("*.md"))
+    assert not list(old.rglob("*.py"))
+    for framework in ("shared", "studies"):
+        assert not (RESEARCH_ROOT / framework / "src").exists()
 
 
 def heading_anchors(path: Path) -> set[str]:
@@ -137,7 +136,9 @@ def test_single_file_helper_imports_keep_their_public_namespace(
     name = f"market_research.shared.{helper}"
     module = importlib.import_module(name)
     assert module.__file__ is not None
-    assert Path(module.__file__).resolve() == PACKAGE_ROOT / "shared" / helper / "__init__.py"
+    assert Path(module.__file__).resolve() == (
+        RESEARCH_ROOT / "shared" / helper / "src/market_research/shared" / helper / "__init__.py"
+    )
     assert not hasattr(module, "__all__")
     for export in exports:
         assert getattr(module, export).__module__ == name

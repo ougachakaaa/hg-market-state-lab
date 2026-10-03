@@ -11,9 +11,7 @@ import pytest
 from lab import cli, process, research
 
 
-def patch_child(
-    monkeypatch: pytest.MonkeyPatch, exit_code: int
-) -> dict[str, Any]:
+def patch_child(monkeypatch: pytest.MonkeyPatch, exit_code: int) -> dict[str, Any]:
     invocation: dict[str, Any] = {}
 
     class FakeChild:
@@ -31,12 +29,12 @@ def patch_child(
 
 
 def create_study_package(root: Path, package_name: str, *, runner: bool = True) -> Path:
-    package = root / package_name
+    package = root / package_name / "src/market_research/studies" / package_name
     package.mkdir(parents=True)
     (package / "__init__.py").write_text("", encoding="utf-8")
     if runner:
         (package / "cli.py").write_text("", encoding="utf-8")
-    return package
+    return root / package_name
 
 
 def test_research_list_discovers_sorted_runnable_studies_without_importing_them(
@@ -97,7 +95,7 @@ def test_research_discovery_rejects_a_malformed_runner(
 ) -> None:
     studies = tmp_path / "studies"
     package = create_study_package(studies, "valid_study", runner=False)
-    (package / "cli.py").mkdir()
+    (package / "src/market_research/studies/valid_study/cli.py").mkdir()
     monkeypatch.setattr(research, "RESEARCH_STUDIES", studies)
 
     assert cli.main(["research", "list"]) == 1

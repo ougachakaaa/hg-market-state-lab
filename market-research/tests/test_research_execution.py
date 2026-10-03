@@ -99,10 +99,10 @@ def test_opaque_run_collision_fails_before_execute(tmp_path: Path) -> None:
 
 
 def test_research_ui_does_not_import_snapshot_internals() -> None:
-    research_root = Path(__file__).resolve().parents[1] / "src" / "market_research"
+    research_root = Path(__file__).resolve().parents[1]
     sources = [
-        research_root / "ui" / "configuration.py",
-        research_root / "ui" / "execution.py",
+        research_root / "ui/src/market_research/ui/configuration.py",
+        research_root / "ui/src/market_research/ui/execution.py",
     ]
     source = "\n".join(path.read_text(encoding="utf-8") for path in sources)
     for forbidden in (

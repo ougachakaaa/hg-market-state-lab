@@ -60,7 +60,26 @@ def test_root_project_installs_the_independent_package_namespaces() -> None:
         {"include": "data_lake", "from": "data-lake/datasets/tushare_equity_index_options/src"},
         {"include": "market_snapshot", "from": "market-snapshot/src"},
         {"include": "backend_api", "from": "backend-api/src"},
-        {"include": "market_research", "from": "market-research/src"},
+        {
+            "include": "market_research",
+            "from": "market-research/observations/cffex_option_expiry_dte_chain/src",
+        },
+        {"include": "market_research", "from": "market-research/observations/src"},
+        {
+            "include": "market_research",
+            "from": "market-research/shared/cffex_option_expiry_universe/src",
+        },
+        {"include": "market_research", "from": "market-research/shared/distribution/src"},
+        {"include": "market_research", "from": "market-research/shared/im_basis/src"},
+        {
+            "include": "market_research",
+            "from": "market-research/shared/price_to_lagged_reference/src",
+        },
+        {
+            "include": "market_research",
+            "from": "market-research/studies/cffex_option_expiry_dte_collection/src",
+        },
+        {"include": "market_research", "from": "market-research/ui/src"},
     ]
     assert not any(
         "path" in dependency or "develop" in dependency

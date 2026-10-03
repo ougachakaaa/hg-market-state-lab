@@ -37,11 +37,11 @@ CONTEXT_ENTRIES = {
     Path("data-lake/IMPLEMENTATION_RECONCILIATION.md"),
     Path("data-lake/datasets/tushare_trade_calendar/ARCHITECTURE.md"),
     Path("data-lake/datasets/tushare_trade_calendar/SERVICE.md"),
-    Path("market-research/src/market_research/studies/AUTHORING.md"),
-    Path("market-research/src/market_research/studies/SCHEMA.md"),
-    Path("market-research/src/market_research/studies/REVIEW.md"),
-    Path("market-research/src/market_research/studies/COMPATIBILITY.md"),
-    Path("market-research/src/market_research/shared/price_to_lagged_reference/ARCHITECTURE.md"),
+    Path("market-research/studies/AUTHORING.md"),
+    Path("market-research/studies/SCHEMA.md"),
+    Path("market-research/studies/REVIEW.md"),
+    Path("market-research/studies/COMPATIBILITY.md"),
+    Path("market-research/shared/price_to_lagged_reference/ARCHITECTURE.md"),
     Path("market-snapshot/src/market_snapshot/capture/ARCHITECTURE.md"),
     Path(
         "market-snapshot/src/market_snapshot/products/"
@@ -243,7 +243,7 @@ def test_product_packages_do_not_import_sibling_products() -> None:
 
 
 def test_shared_price_to_lagged_semantics_do_not_depend_on_studies() -> None:
-    research_root = REPOSITORY_ROOT / "market-research/src/market_research"
+    research_root = REPOSITORY_ROOT / "market-research"
 
     def imports(source: Path, package: str) -> set[str]:
         tree = ast.parse(source.read_text(encoding="utf-8"))
@@ -260,7 +260,10 @@ def test_shared_price_to_lagged_semantics_do_not_depend_on_studies() -> None:
                     names.update(f"{base}.{alias.name}" for alias in node.names)
         return names
 
-    shared_source = research_root / "shared/price_to_lagged_reference/__init__.py"
+    shared_source = (
+        research_root / "shared/price_to_lagged_reference/src"
+        / "market_research/shared/price_to_lagged_reference/__init__.py"
+    )
     assert shared_source.is_file()
     assert not any(
         name == "market_research.studies" or name.startswith("market_research.studies.")

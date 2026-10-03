@@ -4,47 +4,33 @@
 
 ## Authority 与 implementation colocation
 
-2026-10-03，基于 `09eb31335bb3bde549a41d43c7c6f8e96a9316f0` 完成 topology / ownership reconciliation。Python project、dependency graph、package root 与 runtime model 保持原样。
+2026-10-03，基于 `003a686cfd58e1b1cd466b217b0b3ecb2e0141f7` 按已确认的 owner-first 原则重新整理。Repository 唯一 Python project / dependency graph / environment 保持；公开 Python namespaces、Study IDs 与业务计算保持。
 
-| Scope | Current physical owner / change |
+| Owner | 当前 topology |
 | --- | --- |
-| Module policy | `market-research/AGENTS.md`、`ARCHITECTURE.md`、`UPSTREAM.md` 留在 module root。 |
-| Shared | Framework 与四个 component 的 authority 共置于 `src/market_research/shared/` 及各 component package。distribution / im_basis / price_to_lagged_reference 从单文件改为同名 package，原 import paths、public names 与计算保持。Universe resolver 原 package 不变。 |
-| Observation | Framework / concrete chain authority、ARTIFACT / DATE_RESOLUTION / IMPLEMENTATION 与代码共置于 `src/market_research/observations/` / chain package。 |
-| Study | Framework documents 与 concrete collection 的四文件 authority / implementation handoff 共置于 `src/market_research/studies/` / collection package。 |
-| UI | ARCHITECTURE / CONFIGURATION 与 configuration / execution support 共置于 `src/market_research/ui/`。`research.toml` 不搬迁。 |
-| Tests / navigation | Tests 留在 `market-research/tests`；topology checks 验证同目录 owner、可达性、links / anchors、source pointers、public imports；repository links / test path expectations 随迁移更新。 |
-| Durable state | Chain SQLite 仍在 `market-research/observations/cffex_option_expiry_dte_chain/data/`；该树仅存 runtime state，不再含 authority / source。保留原 factory resolution / ignore / durable reuse，不自动迁移或清理已有 SQLite。旧 Universe state 同样不读取、删除或迁移。 |
-
-30 份下层 authority relocation；无 authority-only Shared / Observation / Study / UI mirror tree。Semantic entry 与 specialized details 仍各有唯一 owner，无 centralized documentation registry。
-
-### Semantic drift review
-
-本次只改变 physical ownership / package shape / navigation。Universe 是 shared resolver（resolve / owned complete result，无 Observation lifecycle），chain 是 retained Observation（ensure / durable Artifact），collection 是 resolver + chain 的 orchestration-only Study。Observation persistence、Analysis prepared-input boundary、upstream public-only dependencies、Study failure continuation / counts / CLI exits 均保持基线语义。
+| Module | AGENTS / ARCHITECTURE / UPSTREAM、research.toml、tests 与本 evidence ledger 在 module root。无 module-level facade，故不保留 module src。 |
+| Shared | shared 根目录拥有 framework authority；四个 component 各自拥有 authority 与 src/market_research/shared/<component>/，无空 shared/src。 |
+| Observation | observations 根目录拥有 framework authority 与 src/market_research/observations/ mechanics；chain owner 拥有 specialized authority、自己的 src 与 output。 |
+| Study | studies 根目录拥有 authoring contracts；collection owner 拥有四份 semantic documents、implementation handoff 与 src/market_research/studies/<study>/，无空 studies/src。 |
+| UI | ui 根目录拥有 ARCHITECTURE / CONFIGURATION，support 在 ui/src/market_research/ui/。 |
+| Runtime registration | 根 pyproject 显式注册八个 owner-local source roots，Observation framework 使用与 DataLake 相同的 extend_path；公开 imports 保持，无 registry 或新抽象。 |
+| Persistence | 按用户授权清理了旧 chain 与 retired Universe 两份 Research SQLite；以后 chain SQLite / sidecars 归 chain/output，Git ignore 保护。Universe 仍是无 persistence 的 shared resolver。 |
+| CLI / navigation | lab 按直接 Study owner 发现，再验证 owner-local Python runner；仍通过原 module path 启动。Markdown links / source pointers / topology tests 随物理布局 reconciliation。 |
 
 ### Verification
 
-修改前：`poetry run pytest market-research/tests market-snapshot/tests/test_authority_topology.py lab/tests -q` → **336 passed / 2 skipped**。
+- 全仓库 pytest：1062 passed / 2 skipped；Windows symlink privilege 导致原有 skips，另有现存 FastAPI/Starlette deprecation warning。
+- Research / lab / Snapshot mypy：118 source files 通过；Backend mypy：21 source files 通过。相关模块 Ruff 通过。
+- 118 份正式 Markdown local links 无 broken target；Research contracts 从 stable entries 可达，source pointers、topology / public facade checks 通过。
+- `lab research list` 与 collection `--help` 保持原 Study ID / 参数；root `poetry install --only-root`、wheel build 与 9 个 fresh-process isolated wheel imports 通过。
+- 26 份搬迁 Python 文件去除 module docstrings 后 AST 比对：仅 Observation namespace extend_path、SQLite output/root resolution 与 UI config root resolution 有预期差异。
+- 完整包含 renamed / added files 的 diff 与 whitespace 检查通过；未调用真实 external provider。
 
-最终检查从 repository root 唯一 Poetry environment 执行：
-
-| Check | Result |
-| --- | --- |
-| `poetry run pytest market-research/tests market-snapshot/tests lab/tests -q -rs` | **638 passed / 2 skipped**；覆盖全 Research runtime / fresh-process controlled E2E、完整 Snapshot regression、lab forwarding 与 repository links / reachability。两项 skip 是 Windows 无 symlink creation privilege 的既有检查。 |
-| `poetry run ruff check market-research/src market-research/tests lab market-snapshot` | Passed。 |
-| `poetry run mypy market-research/src market-research/tests` | Passed，42 source files。 |
-| `poetry run mypy market-snapshot` | Passed，64 source files。 |
-| CLI smoke | `poetry run lab research list` 仍只发现 cffex-option-expiry-dte-collection；`poetry run lab research run cffex-option-expiry-dte-collection --help` 的四个必填 flags / discovery / forwarding 正常。 |
-| Packaging | `poetry build --format wheel` passed；wheel 包含全部 30 份 colocated documents 与三个同名 helper packages，不含 retired helper .py files；展开至 isolated installed directory 后，7 个 capability / UI modules 从该 wheel 内容在 fresh process 中成功 import。根 pyproject / lock / source registration 未改。 |
-| Source equivalence | 基线与当前全部 29 个 Research source files 的 executable AST 完全一致，只忽略 module docstring，按三个 helper relocation 映射比较。 |
-| Canonical links / topology | 116 份 Markdown（排除 _temp_docs 与被整理的 ledger）的原始 canonical targets 按 relocation 映射保持；全部 Research contracts 从 repository / module / AGENTS stable entries 可达；Research local links / fragments、同目录 source pointers、shared public names / module identity 与 shadow-owner rejection tests 通过。 |
-| Full diff | 完整 relocated / added / modified diff 已审阅；`git diff --check` 与新文件 whitespace checks 通过。 |
-
-没有调用真实 external provider；controlled E2E 验证既有 public services / isolated persistence / repeat-call behavior，不宣称 provider-current freshness。
+历史通过数仅解释对应 baseline，不替代当前验证。
 
 ### Remaining reconciliation gaps
 
-当前无新增 semantic decision 或 upstream capability gap。Observation refresh / definition evolution、future Analysis / Evidence persistence 与旧 state 处置仍依原 authority deferred；它们不是 colocation 所需的实现。本轮 topology、source、tests、tooling 与 navigation 无 remaining reconciliation gap。
+本次不改变 Artifact / resolver / Study workflow semantics。Observation refresh / definition evolution 等既有 deferred decisions 继续由原 specialized authority 拥有。旧 module src 下仅有 ignored Python cache，清理该缓存目录的自动审批返回 blocked by policy；无 source / authority / runtime registration 留在旧 root。
 
 ## 首个 concrete Observation authority 落位
 

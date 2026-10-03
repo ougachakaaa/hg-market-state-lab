@@ -71,7 +71,7 @@ TUSHARE_TOKEN=<your-token>
 
 ## Research CLI
 
-发现与查看 Study help 的操作见 [lab usage guide](lab/README.md)。Discovery 与 forwarding contract 见 [lab authority](lab/ARCHITECTURE.md) 和 [Research UI authority](market-research/src/market_research/ui/ARCHITECTURE.md)；Study-specific 参数和语义由对应 retained Study authority 拥有。真实运行所需的 Tushare credential 仍由 `market-snapshot` 拥有。
+发现与查看 Study help 的操作见 [lab usage guide](lab/README.md)。Discovery 与 forwarding contract 见 [lab authority](lab/ARCHITECTURE.md) 和 [Research UI authority](market-research/ui/ARCHITECTURE.md)；Study-specific 参数和语义由对应 retained Study authority 拥有。真实运行所需的 Tushare credential 仍由 `market-snapshot` 拥有。
 
 ## HTTP API
 

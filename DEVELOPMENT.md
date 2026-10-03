@@ -47,7 +47,7 @@ poetry run lab research run <study-id> --help
 
 `lab serve backend` 从 repository root 使用当前 Python interpreter 前台执行 `backend-api/scripts/api.py`。`lab serve frontend` 在 `web-ui/` 前台执行系统解析到的 npm `run dev`；首次启动前需在 `web-ui/` 自行执行 `npm install`。两个命令继承标准输入输出、传递子进程退出码，Ctrl+C 结束前台进程。缺少启动前提时明确报错，不自动修复环境。
 
-`lab research list` 列出可运行的 retained Study；`lab research run <study-id> --help` 转发到对应 Study 的帮助。Study ID、runner layout 与转发规则见 [Research UI authority](market-research/src/market_research/ui/ARCHITECTURE.md)，具体参数见对应 retained Study authority。
+`lab research list` 列出可运行的 retained Study；`lab research run <study-id> --help` 转发到对应 Study 的帮助。Study ID、runner layout 与转发规则见 [Research UI authority](market-research/ui/ARCHITECTURE.md)，具体参数见对应 retained Study authority。
 
 `web-ui/` 是独立 npm project，使用 Vite + React + TypeScript。Node.js 需满足当前 Vite 要求（20.19+ 或 22.12+）。`npm run dev` 在 `http://127.0.0.1:5173/` 提供可选择日期的 MO Option Chain 页面，与 `doctor` 的本地诊断地址一致；`npm run build` 执行 TypeScript 检查及 production build，`npm run lint` 运行 Oxlint，`npm run test` 运行前端测试。Vite dev proxy 将 frontend origin 的 `/mo-option-chain` 原路径和 query 转发到 `http://127.0.0.1:8011`，不需要 backend CORS policy。默认 provider 已接入真实读取链路；具体响应取决于目标日期与 Source 数据。
 

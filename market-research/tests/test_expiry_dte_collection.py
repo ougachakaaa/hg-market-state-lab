@@ -466,7 +466,11 @@ def test_real_producer_failure_details_reach_study_cli(
 
 
 def test_study_source_only_consumes_public_research_values() -> None:
-    source = ROOT / "market-research/src/market_research/studies/cffex_option_expiry_dte_collection"
+    source = (
+        ROOT
+        / "market-research/studies/cffex_option_expiry_dte_collection/src"
+        / "market_research/studies/cffex_option_expiry_dte_collection"
+    )
     assert {path.name for path in source.glob("*.py")} == {"__init__.py", "cli.py", "study.py"}
     allowed = {
         "market_research.observations",

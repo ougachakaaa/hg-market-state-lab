@@ -11,7 +11,7 @@ from market_research.observations import cffex_option_expiry_dte_chain as chain
 from observation_support import CalendarDouble, OptionsDouble, row
 
 ROOT = Path(__file__).resolve().parents[2]
-SOURCE = ROOT / "market-research/src/market_research/observations"
+SOURCE = ROOT / "market-research/observations"
 
 
 def test_observations_only_import_selected_public_datalake_boundaries() -> None:
@@ -40,7 +40,7 @@ def test_observations_only_import_selected_public_datalake_boundaries() -> None:
                 }
                 if name.startswith("data_lake"):
                     assert name in allowed, (path, name)
-        if path.parent == SOURCE:
+        if path.parent == SOURCE / "src/market_research/observations":
             assert not any(
                 isinstance(node, ast.ImportFrom) and (node.module or "").startswith("data_lake")
                 for node in ast.walk(tree)
@@ -49,7 +49,7 @@ def test_observations_only_import_selected_public_datalake_boundaries() -> None:
 
 def test_every_runtime_sqlite_sidecar_is_ignored() -> None:
     paths = [
-        f"market-research/observations/{identity}/data/{identity}.sqlite3{suffix}"
+        f"market-research/observations/{identity}/output/{identity}.sqlite3{suffix}"
         for identity in ("cffex_option_expiry_universe", "cffex_option_expiry_dte_chain")
         for suffix in ("", "-wal", "-shm", "-journal")
     ]
@@ -76,7 +76,7 @@ def test_public_factory_ensure_is_durable_and_cwd_independent(
 
     monkeypatch.chdir(tmp_path)
     assert owned_path("market-research/observations/example", "example.sqlite3") == (
-        ROOT / "market-research/observations/example/data/example.sqlite3"
+        ROOT / "market-research/observations/example/output/example.sqlite3"
     )
     monkeypatch.setattr(options, "create_service", lambda: facts)
     monkeypatch.setattr(calendar, "create_service", lambda: dates)

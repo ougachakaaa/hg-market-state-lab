@@ -15,15 +15,19 @@ from market_research.shared import cffex_option_expiry_universe as universe
 from observation_support import OptionsDouble, row
 
 ROOT = Path(__file__).resolve().parents[2]
-SOURCE = ROOT / "market-research/src/market_research/shared/cffex_option_expiry_universe"
+SOURCE = (
+    ROOT
+    / "market-research/shared/cffex_option_expiry_universe/src"
+    / "market_research/shared/cffex_option_expiry_universe"
+)
 
 
 def test_component_authority_is_reachable_and_source_points_to_its_owner() -> None:
     navigation = (
         ROOT / "ARCHITECTURE.md",
         ROOT / "market-research/ARCHITECTURE.md",
-        ROOT / "market-research/src/market_research/shared/ARCHITECTURE.md",
-        SOURCE / "ARCHITECTURE.md",
+        ROOT / "market-research/shared/ARCHITECTURE.md",
+        SOURCE.parents[3] / "ARCHITECTURE.md",
     )
     for current, target in zip(navigation, navigation[1:], strict=False):
         links = {
@@ -36,8 +40,8 @@ def test_component_authority_is_reachable_and_source_points_to_its_owner() -> No
         assert (entry.parent / name).is_file()
         assert f"({name})" in entry.read_text(encoding="utf-8")
     docstring = ast.get_docstring(ast.parse((SOURCE / "__init__.py").read_text(encoding="utf-8")))
-    assert "Canonical authority: ARCHITECTURE.md (beside this file)" in (docstring or "")
-    assert "Public Python mapping: IMPLEMENTATION.md (beside this file)" in (docstring or "")
+    assert "Canonical authority: ../../../../ARCHITECTURE.md (owner root)" in (docstring or "")
+    assert "Public Python mapping: ../../../../IMPLEMENTATION.md (owner root)" in (docstring or "")
 
 
 def test_resolver_is_a_shared_component_with_its_own_public_failure_boundary() -> None:
