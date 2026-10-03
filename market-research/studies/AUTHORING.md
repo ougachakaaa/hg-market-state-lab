@@ -1,77 +1,97 @@
 # Research Study Authority Authoring
 
-本文件是新建 retained Study 的稳定入口，拥有 Study Intention 到 Canonical Study Authority 的 authoring workflow。Research 模块边界与现有 Study 入口见 [market-research architecture](../ARCHITECTURE.md)；runnable Study 的共享调用与输出约定见 [Research UI authority](../ui/ARCHITECTURE.md)。Study 的必需语义见 [Schema](SCHEMA.md)，逻辑呈现与 authority 布局见 [Skeleton](SKELETON.md)，runnable implementation topology 见 [Implementation Package Contract](IMPLEMENTATION.md)，完整性与 implementation topology 判定见 [Review](REVIEW.md)；Agent 不得自行发明未给出的研究语义。
+本文件是新 retained Study 的稳定创建入口，拥有 Study Intention 到 Canonical Study Authority 的 workflow。Research 边界见 [module architecture](../ARCHITECTURE.md)，必需语义见 [Schema](SCHEMA.md)，四文件布局见 [Skeleton](SKELETON.md)，实现拓扑见 [Implementation Package Contract](IMPLEMENTATION.md)，完整性验证见 [Review](REVIEW.md)，历史适用规则见 [Compatibility](COMPATIBILITY.md)。Component 分类、提升与 narrow contract 见 [Shared Component authority](../shared/ARCHITECTURE.md)；Observation 独立设计流程见 [Observation Authoring](../observations/AUTHORING.md)。Agent 不得自行发明未给出的研究语义。
 
 ## Study identity 与完成范围
 
-新 Study 的 canonical authority 必须回答 [Schema](SCHEMA.md) 中 Question、Inputs、Method、Results、Limitations、Acceptance 六个 semantic areas，并按 [Skeleton](SKELETON.md) 实例化固定的四文件顶层 authority；`studies/<study_package>/ARCHITECTURE.md` 始终是稳定入口。四个文件都须拥有其实质职责，不能以单个 entry 或空占位文件宣布完成。独立的 implementation 位置是同名 `src/market_research/studies/<study_package>/`；完成 authority 不自动启动 implementation 或 Study execution。
+Study 必须回答 Question、Inputs、Method、Results、Limitations、Acceptance 六个 areas，并实例化 `ARCHITECTURE.md`、`INPUTS.md`、`METHOD.md`、`RESULTS.md` 四个有实质内容的顶层文件。`studies/<study_package>/ARCHITECTURE.md`（module-root relative）是稳定入口；Python implementation 与 authority 在该 owner 内 colocate。完成 authority 不自动启动 implementation 或 execution。
+
+Study 拥有 research question / preparation objective、user request、input bindings、workflow orchestration、Component invocation / Observation ensure composition、runtime state 与 execution outcome；Study-local retained Workflow Artifacts / Analysis / Evidence 仅在真实需求明确时声明。Runtime state / retained Artifact distinction 见 [Workflow authority](WORKFLOW.md)。Reusable empirical persistence、population、grain、derivation、validity 和 Artifact schema 由独立 Observation 拥有，不属于 Study Method；Analysis 不 resolve / ensure dependencies。
+
+## Canonical authoring workflow
+
+```text
+Research Question / Preparation Objective
+    → identify required empirical facts
+    → classify local logic / shared mechanism / independent research artifact
+    → declare actual Component I/O / Observation Artifact needs
+    → required capability exists?
+        ├── no → record capability gap
+        │        → design / implement Component or Observation separately
+        │        → return to Study
+        └── yes → declare Component / Artifact dependencies and input bindings
+    → design Study-owned workflow / ordered steps
+    → define runtime execution outcome
+    → declare retained Workflow Artifacts / outputs only when required
+    → optional Study-local Analysis
+    → optional Evidence
+```
+
+所需 Component / Observation contract 尚不存在时，显式记录 required capability、需要的 empirical facts 与 semantic gap。Study draft 可以继续整理已决定的 objective / workflow / optional Analysis / Evidence intention，但不得在 Study-local Method 中临时创建 Observation definition。缺失 Artifact shape / consumption contract 不得猜测，semantic / design gap 未解决时不标为 Implementation Ready。已完整设计但 runtime 未实施的 dependency 单独记录，可以设计并按 producer-first 顺序实施整个 vertical slice；实际 Study 实施前仍先完成 producers 与 bindings runtime reconciliation。Orchestration-only Study 不强制 retained Workflow Artifact / Analysis / Evidence，要明确 runtime outcome 如何完成 objective。
 
 ## 创建隔离与导航
 
-新建 Study 必须 Research-semantic self-contained：研究问题、population、predictor、target、regime、grouping、Observation、Analysis、统计解释和 evidence contract 中定义研究证据含义的语义，均由当前 Study 本地拥有，即使与既有定义相同也须在当前 Study 明确写出。创建时不得主动搜索 sibling Studies、其 retained artifacts、既有 `market-research/shared/*` 或 implementation 来继承 Research semantics / helper。Sibling Study 可作为 related work、历史 evidence 或导航被引用，但不成为 semantic owner 或 dependency。研究语义、公式、分组逻辑及 Study-local analytical code 允许有意重复；相似性不触发 shared 抽取、跨 Study 依赖或对 sibling 的修改。偶然发现的重复只可作为非 canonical 的未来建议，不阻止当前 Study 完成。不得因共用机制而共享研究语义。
+Study-owned Research semantics 必须 self-contained：question、hypothesis、Analysis-specific sample selection、grouping / comparison / statistics、解释、Evidence contract 与 limitations 由当前 Study 拥有；相似 analytical code 允许重复。Observation reuse 则明确通过 Artifact public boundary 引用 canonical owner，不以创建隔离为由重复定义 empirical facts。
 
-可以使用 repository runtime、Research UI、配置、filesystem/output/serialization mechanics、外部 libraries，以及 Snapshot public application/product boundary 提供的 canonical deterministic facts。上游事实由其 canonical owner 定义；如何选择、变换和解释事实以形成 evidence 仍由当前 Study 拥有。不得重定义上游事实，或以缺失的 Snapshot capability 为由越过其 public boundary。默认写入范围是当前 Study authority 与必要的最小导航条目；缺失的上游 contract / gap 在当前 Study 中记录，随后由对应 owner reconciliation。不得顺手修改 sibling Study、既有 shared Research semantics、无关 implementation 或 generic Research framework。
+新建 Study 不默认扫描所有 Observations，不主动搜索 sibling Studies、其 retained evidence、既有 shared Research semantics 或 implementation 来继承研究含义 / helper。只读取意图与实际依赖指向的 Component / Observation authority；若尚无已知 owner，先按 component classification 记录 capability gap，再独立处理正确类型的 owner。Sibling Study 可作为 related work / historical evidence 导航，不成为新 Study 的 semantic owner 或 runtime dependency。相似性不自动触发 shared 抽取或 sibling 修改；明确跨研究机制复用按 component authority 提升，不继承 sibling research semantics。
+
+可使用 repository runtime、Research UI、configuration、filesystem / serialization mechanics 和外部 libraries。Upstream facts 沿实际 Component / Observation authority 进入必要的 DataLake / Snapshot public contract；不能从缺失 capability 推导内部访问权。默认写入范围是当前 Study authority 与必要导航；Component / Observation / upstream gap 由对应 owner 单独 reconciliation。
 
 | 当前任务 | 下一份 authority |
 | --- | --- |
-| 确定 Study 必需语义及组件关系 | [Schema](SCHEMA.md) |
-| 实例化新 Study 的逻辑顺序与阅读布局 | [Skeleton](SKELETON.md) |
-| 实现 runnable Study 的 Python package | [Implementation Package Contract](IMPLEMENTATION.md) |
-| 审查已形成的 Study authority | [Review](REVIEW.md) |
-| 对既有 Study 做 reconciliation、migration 或 consolidation | [Compatibility](COMPATIBILITY.md) |
+| Study semantic areas / dependencies / optional Analysis | [Schema](SCHEMA.md) |
+| Steps / runtime state / explicit retained Workflow Artifacts / complete consumption | [Workflow](WORKFLOW.md) |
+| Authority 布局与阅读顺序 | [Skeleton](SKELETON.md) |
+| 实现 runnable Study | [Implementation Package Contract](IMPLEMENTATION.md) |
+| Completeness 与 traceability | [Review](REVIEW.md) |
+| Historical reconciliation / migration / consolidation | [Compatibility](COMPATIBILITY.md) |
+| Component 分类 / contract / dependency | [Shared Component authority](../shared/ARCHITECTURE.md) |
+| 缺失 Observation capability | [Observation Authoring](../observations/AUTHORING.md) |
 
-创建路径为 repository / module entry → 本文件 → Schema → Skeleton → 新 Study 四个顶层 authority 文件 → 仅所需更深层 specialized authority → 必需的上游 authority。Review 在 authoring / reconciliation 需要验证时进入；Compatibility、历史 Study 与 shared Research semantics 不在默认创建路径中。
+最小路径为 repository / module entry → 本文件 / Schema → 实际消费的 Component / Observation authority → 当前 Study entry / 四文件 → 所需 specialized authority。创建时用 Skeleton；实现时用 Implementation；审查时用 Review；Compatibility、historical shared owners 和 sibling Studies 不在默认创建路径。
 
 ## Structured Study Intention Record
 
-输入称为 `Study Intention`，由 human 提供，可以是自然语言。进入 `Template Filling` 前，authoring Agent 必须先将已给出的内容整理为显式的 **Structured Study Intention Record**；尚未给出的项允许留空：
+Human 可以用自然语言提供 Study Intention，不要求先填完整表单。Template Filling 前，Agent 必须整理显式 Structured Study Intention Record，未给出的项允许留空：
 
 | 输入项 | 记录内容 |
 | --- | --- |
-| Research goal / question | 想研究什么，以及已说明的动机或问题边界 |
-| Inputs & population | 已指定的数据、对象、样本范围与选择条件 |
-| Method intention | 已指定的比较、变换、统计或评估思路 |
-| Research product | 期望保留的结果、证据或呈现形式 |
-| Boundaries | 已指定的不研究内容、解释限制或约束 |
-| Open decisions | human 已提出或 Agent 识别出的待决研究选择 |
+| Research goal / question / objective | 研究或准备 / empirical collection 意图、动机与范围；hypothesis 若适用。 |
+| Empirical facts / Artifact needs | 已指定的 empirical facts、Component / Observation owner（若已知）、Artifact contracts / identity、capability gaps。 |
+| Inputs / configuration | 已指定的 request、Component / Observation invocation bindings、Analysis configuration 与 sample selection。 |
+| Method intention | 已指定的步骤顺序、dependency bindings、materialization、失败 / 空结果与 optional Analysis consumption。 |
+| Research product | Runtime outcome / presentation；实际明确需要时的 retained workflow results / Artifacts 和 optional Evidence / Findings。 |
+| Boundaries / open decisions | 限制、non-goals 与待决研究选择。 |
 
-Record 可以对上述每项标记 semantic source（如 `human decision` / `canonical authority`）和 resolution state（如 `decided` / `unresolved`），使事实引用、human 决定与待决选择可区分。这是 authoring workflow 的中间 representation，可以存在于对话或工作草稿中；不要求新建 repository artifact，也不是最终 Study canonical authority。
+各项可记录 semantic source（human decision / canonical authority）及 resolution state（decided / unresolved）。Record 是对话或工作草稿中的中间 representation，不要求新增 repository artifact，也不是最终 authority。Agent 可以规范措辞、组织已决定内容与引用 canonical facts，不能从常见做法、既有 Study、实现便利性或 human 沉默推断研究决定。非语义命名 / 排版 / 实现细节可由 Agent 整理。
 
-这不是要求 human 预先填写完整 authority 的表单。Agent 可以规范措辞、组织已给出的决定，并引用现有 canonical authority 中明确拥有的事实；不能从常见做法、既有 Study 或实现便利性推断未给出的研究决定。Record 中未解决的实质语义选择必须进入下述 human decision loop。
+## Authoring 状态与 human decision loop
 
-非语义性的命名、排版与实现细节可由 Agent 整理，不进入 human semantic-decision loop。
-
-## Authoring 状态模型
-
-| 状态 | 进入条件 | Required action | 退出条件 | Forbidden action |
-| --- | --- | --- | --- | --- |
-| `Study Intention` | Human 给出研究意图，不要求符合完整 schema | 提取已给出的研究决定与明确待决项，区分事实引用和研究选择 | 进入 `Structured Study Intention` | 将沉默视为默认研究决定 |
-| `Structured Study Intention` | 已提取 human 意图 | 形成上述显式 Record，标明已知 semantic source 和 resolution state | Record 足以区分已决定与未决定的语义，进入 `Template Filling` | 将未决项隐式补全，或将 Record 当作最终 authority |
-| `Template Filling` | 已形成 Structured Study Intention Record，或收到待决项的 human 决定并更新该 Record | 按 [Skeleton](SKELETON.md) 建立 `ARCHITECTURE.md`、`INPUTS.md`、`METHOD.md`、`RESULTS.md`，把六个 semantic areas 中已确定的语义填入各自 canonical owner；保留来源和未决项，仅在需要时增加更深层 authority；草稿不冒充完整 authority | 四个顶层文件及六个 semantic areas 形成可供语义审查的草稿 | 猜测缺失的输入、总体、方法、结果含义或边界；把完整 authority 压缩进 entry |
-| `Semantic Review` | 六个 semantic areas 的草稿可逐项审查 | 依 [Review](REVIEW.md) 执行 Study Authority Completeness Gate | Gate 全部通过则进入 `Authority Complete`；有实质语义缺口则进入 `Semantic Decision Required` | 用措辞修补、实现选择或其他 Study 的惯例替代缺失决定；因重复而提前抽取 shared Research semantics |
-| `Semantic Decision Required` | Review 返回至少一个未解决的实质 Study/product 语义 finding | 按下述 decision record 向 human 呈现问题；收到明确决定后更新 Structured Study Intention Record | Human 决定已明确，返回 `Template Filling` 并再经 `Semantic Review` | 自行选定建议项，或将未决语义发布为完整 authority |
-| `Authority Complete` | [Review](REVIEW.md) 判定 Study Authority Complete | 将独立 Study authority 确认为 canonical，并维护导航链接 | 本 authoring workflow 终止 | 将 Gate 通过解释为 repository capability 已齐备，或跳过后续需要的 dependency reconciliation |
-
-## Human semantic-decision loop
-
-`Semantic Decision Required` 的每个未决项必须按以下结构表达；有实际区分价值时才列 alternatives，建议方案只供 human 决定，不构成默认授权：
-
-| 字段 | 含义 |
+| 状态 | Required action / exit condition |
 | --- | --- |
-| `unresolved field / topic` | 对应的 schema 字段或研究主题 |
-| `missing semantic decision` | Human 仍需决定的具体问题 |
-| `why the decision matters` | 不同选择如何改变研究对象、方法、证据或解释 |
-| `recommended resolution` | 建议 human 如何明确该决定；若推荐具体选项，说明依据 |
-| `alternatives` | 仅在有实质差异时列出可供选择的方案及其影响 |
+| Study Intention | 提取 human 决定、事实引用与待决项，进入 Structured Study Intention。 |
+| Structured Study Intention | 形成 Record，区分 known semantics、capability gap 和 missing semantic decision，再进入 Template Filling。 |
+| Template Filling | 按 Skeleton 填入四文件的唯一 owner，只写已确定语义，保持 gaps / unresolved items 可见；草稿不得冒充完整 authority。 |
+| Semantic Review | 执行 Review Gate；语义完整进入 Authority Complete，实质缺口进入 Semantic Decision Required。 |
+| Semantic Decision Required | 向 human 表达缺失决定，取得明确 resolution 后更新 Record，返回 Template Filling 并再次完整 Review。 |
+| Authority Complete | 确认 Study-owned semantics 与导航完整；不等同于 capability ready，不自动进入 implementation。 |
 
-未决项可以在 authoring 对话或工作草稿中记录，不应写成 Study canonical authority 的既定语义。输入必填性或默认值、输入的用户表达、retained run identity、empty result 表达、required artifact 等缺失的 Study/product semantic decision 同样使用上述记录格式。Human 的明确决定更新 Structured Study Intention Record 并进入对应 Study authority 后，再进行包含 Study Authority Completeness Gate 的完整 Semantic Review。
+每个未决项记录 `unresolved field / topic`、`missing semantic decision`、`why the decision matters`、`recommended resolution`，有实质差异时再给出 `alternatives`。建议不构成默认授权；Agent 不自行选定改变研究含义的选项。
 
-例如 hypothesis 固定某个配置而 Inputs 允许更广范围时，应由 human 明确该配置是 default / primary hypothesis、hypothesis 适用于全部允许配置，还是输入范围需要收窄；Agent 不得自行选择解释。
+Study input 必填 / defaults、workflow 顺序 / failure、Artifact completeness / retention、retained run identity、empty result，以及适用的 hypothesis / Evidence 等缺失决定均进入该 loop。不因 Analysis / Evidence 为零而要求补出不存在的研究含义。缺少 Observation capability 要走独立 authoring，而非替当前 Study 填 Observation semantics；框架明确 deferred 的问题不在本流程自动决定。
 
-## Authority publication 与后续交接
+## Publication 与 dependency handoff
 
-[Review](REVIEW.md) 判定 Study Authority Complete 后，将当前 Study authority 及其导航确认为 canonical。该判定可以先于上游 capability readiness；缺失 Snapshot Product 不迫使完整的 Study-owned semantics 保持 incomplete。将所需上游 contract 与 gap 记录清楚后，由对应 canonical owner 核对 required upstream capability 与 ownership boundary。**Dependency Reconciled** 表示这些能力已存在且边界无冲突；**Implementation Ready** 仅在 Study Authority Complete 与 Dependency Reconciled 均成立时成立。工作顺序为 `CREATE → RECONCILE → IMPLEMENT`；进入 `IMPLEMENT` 时遵循 [Implementation Package Contract](IMPLEMENTATION.md)，完成后按 Review 的独立 implementation topology check 验证。这里的 dependency reconciliation 不等于 [Compatibility](COMPATIBILITY.md) 拥有的 existing Study reconciliation，后者也拥有 `CONSOLIDATE` 的显式触发与历史兼容规则。这些名称只表达 authoring / dependency contract distinction，不是 persisted status、registry 或 lifecycle engine。不得以假设的 shared Research capability 填补上游缺口。
+**Study Authority Complete** 表示六个 areas 与关系完整，Implementer 无需重新决定 Study-owned semantics；可以先于所需 capability readiness。若所需 Component / Observation 尚未存在，可记录足够明确的 I/O / Artifact requirement / gap；尚不能确定的 material consumption semantics 则仍是 semantic incompleteness，不能仅改名为 gap 绕过 Gate。
 
-## Study authority topology
+**Research dependency contracts complete** 表示实际使用的 Component I/O / bindings / completeness / failure，以及 Observation identity / Request / Artifact / durable reuse 与 upstream capability 均明确且无 semantic gap / ownership conflict。仅所用 Observation 适用 durable lifecycle；component 不补出 Artifact identity。Contract complete 可以先于 producer runtime；缺失事实 capability 或 material consumption decision 仍是 gap，不能用 planned implementation 掩盖。
 
-Study 是一个 semantic authority unit，不等于一个 physical Markdown file。新 Study 的固定顶层布局、entry 概览与更深层 disclosure boundary 由 [Skeleton](SKELETON.md) 定义。Template Filling 在 Structured Study Intention 后先实例化该布局，再把已确定语义填入唯一 canonical owner；复杂度只决定是否继续下沉 specialized authority。四个顶层文件均有实质内容、entry 导航完整并通过 [Review](REVIEW.md) 后，才能进入 `Authority Complete`。实现单个 Analysis 时，只读该 Analysis、其明确消费的 Observation 和必需的上游 contract。更深层拆分不创建跨 Study 组件接口、DAG executor、Artifact Registry 或 plugin framework。
+**Study implementation architecture complete** 表示 package / CLI / orchestration 分工、typed request / runtime outcome mapping、composition、output shape 与 acceptance 均明确，继承 [Package Contract](IMPLEMENTATION.md) 与 actual concrete handoff，不待 implementer 重新决定 persistence ownership、Workflow Artifact、output model 或 bindings。
+
+**Implementation Ready** 表示 Study Authority Complete、Research dependency contracts complete 与 Study implementation architecture complete 均成立，无新 semantic gap，足以按顺序直接实施 vertical slice；这是 design readiness，不表示 producer 或 Study runtime 已存在。No retained output 是合法明确 output model，不以 runtime 缺失强制退回已完成的 authority design。
+
+**Dependency Reconciled** 在 Study handoff 中继续表示实际 runtime dependencies / public invocation 已实施并核对 bindings；producer runtime 缺失时该 runtime 状态仍为未完成，必须与 Implementation Ready 分开记录。实际顺序为真实必要的 component / Observation mechanics → declared producers implementation / acceptance → runtime / Study bindings reconciliation → Study implementation / end-to-end acceptance；不为了顺序预建共享框架。Actual invocation / runtime readiness 不由 authority status 推断。
+
+工作顺序仍为 `CREATE → RECONCILE → IMPLEMENT`；进入 implementation 按 Package Contract，完成后按 Review 独立验证 topology。这些名称区分 authoring / dependency readiness，不建立 persisted status、registry 或 engine。Existing Study reconciliation 与 human-triggered `CONSOLIDATE` 由 Compatibility 拥有，不是上述依赖核对的自动副作用。
+
+实施某个 Analysis 时只读其 contract、实际 consumed Artifact / Observation authority 和必要机制；更深层拆分不建立 generic component interface、Artifact Registry、DAG 或 plugin framework。

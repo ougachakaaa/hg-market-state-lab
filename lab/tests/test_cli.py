@@ -11,7 +11,7 @@ from pathlib import Path
 
 import pytest
 
-from lab import cli
+from lab import cli, research
 
 REPOSITORY_ROOT = Path(__file__).resolve().parents[2]
 CLI_PATH = REPOSITORY_ROOT / "lab" / "cli.py"
@@ -92,4 +92,7 @@ def test_installed_cli_runs_through_canonical_command(arguments: list[str]) -> N
         check=False,
     )
     assert result.returncode == 0, result.stderr
-    assert result.stdout.strip()
+    if arguments == ["--help"]:
+        assert result.stdout.strip()
+    else:
+        assert result.stdout.splitlines() == list(research.discover_research_studies())

@@ -28,7 +28,7 @@ DataLake 不拥有 Snapshot Product semantics、Preparation、analysis-ready com
 
 ### `market-research`
 
-独立的 exploratory / statistical research bounded module，消费 analysis-ready market artifacts，负责开放探索、统计分析、可视化、假设发现与值得保留的研究。
+独立的 exploratory / statistical research bounded module，消费 DataLake public facts 与 Snapshot analysis-ready artifacts，负责开放探索、统计分析、可视化、假设发现与值得保留的研究。
 
 Research result 是 evidence / finding，不是 production market-state output。模块内部边界见 [market-research/ARCHITECTURE.md](market-research/ARCHITECTURE.md)。
 
@@ -63,7 +63,7 @@ Repository
 
 根 `pyproject.toml`、根 `poetry.lock` 与每个 worktree 的根 `.venv` 是唯一 canonical Python runtime surface。Module-local `pyproject.toml`、module-local `poetry.lock`、module-local `.venv`、Poetry editable/path dependency，以及分别进入 Python module 目录执行 Poetry workflow 均不属于目标 architecture。
 
-`data-lake` 拥有 canonical Python namespace `data_lake`；shared kernel 源码归顶层 `data-lake/src/`，具体 Dataset 的 authority、source、tests 与 persistent state colocate 于 `data-lake/datasets/<dataset-id>/`，目标 topology 由 [DataLake authority](data-lake/ARCHITECTURE.md) 拥有。Dataset-local source roots 同样使用 repository root 唯一 Python project、dependency graph 与根 `.venv`，不创建独立 Python runtime。Consumer 可以直接依赖具体 Dataset public Application Service；shared kernel 不依赖具体 Dataset，Dataset 当前互不依赖。Public boundary 与 source registration / import compatibility 约束进入 DataLake authority；当前实现差异从该入口进入 reconciliation 文档。
+`data-lake` 拥有 canonical Python namespace `data_lake`；shared kernel 源码归顶层 `data-lake/src/`，具体 Dataset 的 authority、source、tests 与 persistent state colocate 于 `data-lake/datasets/<dataset-id>/`，目标 topology 由 [DataLake authority](data-lake/ARCHITECTURE.md) 拥有。Dataset-local source roots 同样使用 repository root 唯一 Python project、dependency graph 与根 `.venv`，不创建独立 Python runtime。Consumer 可以直接依赖具体 Dataset public Application Service；shared kernel 不依赖具体 Dataset，Dataset 间只允许 DataLake authority 明确声明的单向 public Application Service dependency，不开放 internal persistence。Public boundary 与 source registration / import compatibility 约束进入 DataLake authority；当前实现差异从该入口进入 reconciliation 文档。
 
 Runtime unification 不合并模块、不改变源码目录 ownership，也不把所有 Python source 移入统一 `src/`。`data_lake`、`market_snapshot`、`market_modeling`、`market_research` 与 `backend_api` 是独立 namespace，由各自 semantic module 拥有。
 
@@ -88,7 +88,7 @@ Analysis-ready Artifacts
 
 该图表达业务职责与 analytical data flow，不强制 runtime deployment topology 或 package import dependency。`market-research` 与 `market-modeling` 是 sibling analytical modules；Research 不是 Modeling pipeline 的强制 stage。`market-snapshot` 的产物也可以被仓库外的 analyzer 直接消费。
 
-`market-research` 只通过 `market-snapshot` 明确支持的 public application/product boundary 消费 analysis-ready result，不依赖 Source Capture、Raw Artifact、product-private Preparation、persistence layout、`backend-api`、FastAPI 或 HTTP DTO。`market-snapshot` 与 `market-modeling` 不得依赖 `market-research`。
+`market-research` 通过 `market-snapshot` 明确支持的 public application/product boundary 消费 analysis-ready result，也可通过 DataLake public Application Service 消费 source facts；不依赖 Source Capture、Raw Artifact、product-private Preparation、upstream persistence、Dataset / Snapshot SQLite、`backend-api`、FastAPI 或 HTTP DTO。Research 内部 composition 由其 module authority 拥有，具体 integration 仍须独立设计。`data-lake`、`market-snapshot` 与 `market-modeling` 不得依赖 `market-research`。
 
 Research finding 可以经以下语义决策路径促进未来 Modeling，但该路径不是 runtime dependency，也不定义 promotion framework：
 

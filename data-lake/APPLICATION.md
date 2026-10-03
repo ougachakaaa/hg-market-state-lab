@@ -104,8 +104,22 @@ Dataset owns export semantics；CLI / HTTP adapter owns serialization 与 delive
 
 ## 2. Runtime configuration 与调用边界
 
-Source credential 属于 runtime/provider configuration，不是 Dataset semantic argument；只有需要 Source I/O 时解析凭据。需要 fetch 但 credential 缺失时，在 Source request 前明确失败；全部 success 的 ensure 不需要 credential。不得增加 `--token` 或第二套 secret convention，也不因此授权 import Snapshot 私有 Source client 或 artifact helper。具体 provider credential convention 由 owning Dataset authority 声明。
+Source credential 属于 runtime/provider configuration，不是 Dataset semantic argument；只有需要 Source I/O 时解析凭据。需要 fetch 但 credential 缺失时，在 Source request 前明确失败；无需 Source I/O 的 ensure 不需要 credential。不得增加 `--token` 或第二套 secret convention，也不因此授权 import Snapshot 私有 Source client 或 artifact helper。Provider-specific credential convention 与 execution 由对应 provider authority 拥有，Dataset authority 声明 Source provider 并链接 execution authority，不重复实现 resolution；Tushare contract 见 [providers/TUSHARE.md](providers/TUSHARE.md)。
 
-普通 consumer 创建 Dataset service 不要求提供 SQLite path、Repository、Source Adapter、database connection 或 token；Dataset-specific configuration/composition 属于 owning Dataset，通用 runtime/storage resolution machinery 属于 DataLake shared kernel；两者均为 consumer boundary 内部能力。Coverage / export 与 factory 不要求 Source credential，ensure 仅在实际 Source I/O 必要时解析。Missing required credential 属于 OperationError。
+普通 consumer 创建 Dataset service 不要求提供 SQLite path、Repository、Source Adapter、database connection 或 token；Dataset-specific configuration/composition 属于 owning Dataset，generic runtime/storage resolution machinery 属于 DataLake shared kernel，provider-specific execution 属于 provider infrastructure；三者均为 consumer boundary 内部能力。Coverage / export 与 factory 不解析 Source credential、不创建 provider client；ensure 仅在实际 Source I/O 必要时解析凭据并初始化 client。全部目标 success 或零目标且无需 prerequisite Source I/O 时不进入 provider initialization。Missing required credential 属于 OperationError；provider execution authority 不改变公共 failure taxonomy，也不负责将请求失败映射到 FetchUnits。
 
 SQLite location 由 owning Dataset 内部 composition 使用 shared runtime/storage machinery 解析，不接受 semantic request 中的 path 或 CLI `--db`。目标 persistent state ownership 固定为模块架构声明的 `datasets/<dataset-id>/data/<owned sqlite>`；具体 filename 与 resolution mechanics 留给 implementation reconciliation，shared machinery 不得内置具体 Dataset 知识，也不创建跨模块 config framework。现有本地凭据操作见 [README](../README.md) 与 [DEVELOPMENT](../DEVELOPMENT.md)。
+
+## 3. 已声明的 Dataset public service dependency
+
+本节只约束模块架构已允许的 dependency，不建立 dependency graph engine 或通用 orchestration framework。Consumer Dataset 必须在自己的 narrowest authority 声明 prerequisite request、读取方式、ensure 权限及失败语义；只能通过 producer 的 public semantic service 消费事实。Relationship identity 本身不构成 dependency permission。
+
+- Consumer 的 `coverage` / `export` 只允许调用 prerequisite 的 read-only public operations；整个调用链禁止 Source I/O 与 SQLite mutation，不隐式 ensure。
+- Consumer 的 `ensure` 可以按已声明契约调用 prerequisite 的 `ensure`，但每个 Dataset 只由自己的 service 写自己的 state，没有跨库原子提交或 rollback 保证。
+- 当 prerequisite 不完整，导致目标 FetchUnit 集合无法合法确定时，consumer 抛 `OperationError`；不能把未知日期当休市、以已知子集缩小 requested_units，或伪造正常 incomplete CoverageResult / EnsureResult。Prerequisite cache incompleteness 与 consumer 已知目标 units 的 incompleteness 是不同情形。
+- Prerequisite operation failure 映射为 consumer `OperationError`，保留可读的 dependency context，不泄漏 persistence / provider objects；consumer 自身输入错误仍是 `InvalidRequestError`。合法 consumer request 经内部转换后被 prerequisite 拒绝属于 composition/execution failure。
+- Consumer 每次 operation 固定一份合法 prerequisite semantic view 以展开目标集合。Export coverage 与 payload 仍须来自 consumer 同一个 committed cache snapshot，并针对这份固定目标；不声称多个 Dataset 共享同一数据库 snapshot 或 provider-current freshness。
+
+具体 Index / Futures / Options → Calendar contract 经 [catalog](DATASETS.md) 进入各自 Dataset 的 TRADING_DAYS.md；允许的 dependency edges 由模块 architecture 唯一声明。Calendar 自己的 request/result/view 与 domain semantics 保持不变。
+
+内部 batching / 单 worker 提前一批 / operation 内验证复用由 [EXECUTION.md](EXECUTION.md) 约束，SQLite 生命周期与 generation 兼容由 [PERSISTENCE.md](PERSISTENCE.md) 约束；这些执行机制不扩展 consumer boundary。

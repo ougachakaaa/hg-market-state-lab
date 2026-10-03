@@ -1,6 +1,6 @@
 # IM Basis Research Semantics authority
 
-本文档是两个现有 IM basis retained studies 共用的 predictor semantic owner。Research 边界见 [market-research architecture](../../ARCHITECTURE.md)；empirical quantile 见 [shared distribution authority](../distribution/ARCHITECTURE.md)；输入产品见 [CSI1000 IM Basis History](../../../market-snapshot/src/market_snapshot/products/csi1000_im_basis_history/ARCHITECTURE.md)。
+本文档是 IM basis 共用的 predictor semantic owner。Research 边界见 [market-research architecture](../../ARCHITECTURE.md)；empirical quantile 见 [shared distribution authority](../distribution/ARCHITECTURE.md)；输入产品见 [CSI1000 IM Basis History](../../../market-snapshot/src/market_snapshot/products/csi1000_im_basis_history/ARCHITECTURE.md)。
 
 本 authority 只拥有 `non_front_mean_basis` 的 IM-basis-specific predictor semantics。它不是 empirical quantile 的 owner，也不是通用 feature framework、statistics framework、Snapshot Preparation semantic 或 Modeling semantic。
 
@@ -25,11 +25,6 @@ non_front_mean_basis_T
 
 ## Consumers and ownership boundary
 
-当前 consumers：
-
-- [IM Annualized Basis Baseline](../../studies/im_basis_baseline/ARCHITECTURE.md)
-- [IM Basis Forward Return Association](../../studies/im_basis_forward_return_association/ARCHITECTURE.md)
-
-这两个 Study 都直接消费 Snapshot public semantic result；后者不依赖前者的 persisted result。`non_front_mean_basis` 只是当前 Research 中的共用 predictor，不因多个 Research consumer 而成为 Snapshot field、production feature、forecast、signal 或 Modeling contract。
+当前没有 retained Study consumer。调用方只消费 Snapshot public semantic result。`non_front_mean_basis` 只是当前 Research 中的共用 predictor，不因多个 Research consumer 而成为 Snapshot field、production feature、forecast、signal 或 Modeling contract。
 
 只有该 predictor 的 IM basis semantics 改变时才修改本文档。Quantile convention 由 [shared distribution authority](../distribution/ARCHITECTURE.md) 拥有；各 Study 的 question、target、sample、method、result 与 limitation 不上提至此。

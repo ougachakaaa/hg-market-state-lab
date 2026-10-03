@@ -50,7 +50,7 @@ lab
 
 `lab datalake` 只负责 command topology、Dataset selection、CLI parsing、semantic request construction、public service invocation、human-readable summary、exit-code mapping 与 export JSON file delivery。Window semantics、FetchUnit generation、coverage calculation、Source batching、completeness、export view fields、SQLite persistence 与 Tushare semantics 均由 DataLake / owning Dataset 拥有。
 
-`list` 只列目标 contract 正式支持的 canonical Dataset IDs，第一版仅 `tushare_trade_calendar`；不访问 Source 或缓存，不通过 filesystem scanning 推导支持范围。使用 explicit wiring，不引入 generic plugin / dynamic registry framework。Dataset navigation 见 [DataLake catalog](../data-lake/DATASETS.md)；public semantic request/view 见 [calendar SERVICE.md](../data-lake/datasets/tushare_trade_calendar/SERVICE.md)，CLI arguments 与 parsing 由本文件拥有，不复制 Dataset 字段模型。
+`list` 只列目标 contract 正式支持的 canonical Dataset IDs，当前支持 `tushare_trade_calendar`、`tushare_index_daily`、`tushare_equity_index_futures` 与 `tushare_equity_index_options`；不访问 Source 或缓存，不通过 filesystem scanning 推导支持范围。使用 explicit wiring，不引入 generic plugin / dynamic registry framework。Dataset navigation 见 [DataLake catalog](../data-lake/DATASETS.md)；public semantic request/view 见 [calendar SERVICE.md](../data-lake/datasets/tushare_trade_calendar/SERVICE.md)，CLI arguments 与 parsing 由本文件拥有，不复制 Dataset 字段模型。
 
 ### Calendar CLI parsing
 
@@ -65,6 +65,10 @@ lab
 CLI 从 `data_lake.datasets.tushare_trade_calendar` 创建 service 并构造 `TradeCalendarRange`，不传 raw date strings 或 argparse namespace；service 仍负责 semantic validation。CLI 不构造 Scope / FetchUnits、不重算 completeness。Export 必填 `--output` 只属于 delivery，不进入 range；V1 不增加 view selector 或 is_open filter。
 
 可复制的 Bash / PowerShell lifecycle 示例见 [usage guide](README.md)；这些命令直接调用 calendar public service。
+
+### Index / Futures / Options CLI parsing
+
+三个 Dataset 共享必填 `--start-date` / `--end-date`，严格解析 YYYY-MM-DD 为 date。Index 必填 `--index-codes`，使用一个或多个完整 codes；Futures / Options 必填 `--product-codes`，使用一个或多个 canonical products。CLI 分别构造 IndexDailyRange / FuturesDailyRange / OptionsDailyRange，并调用对应 public create_service()；集合规范化、合法性与 prerequisite 由 service 拥有。各命令只接受对应 Dataset 的 selection 参数；export 仍必填 --output，仅用于 UTF-8 JSON file delivery，terminal 只报告 summary。
 
 ### Operation behavior 与 exit codes
 
@@ -82,7 +86,9 @@ Summary 展示 service 返回的计数与 complete，不根据 records 数量重
 
 ### Export file delivery
 
-`--output <path>` 必填且仅属于 lab delivery，不传入 Dataset service request。CLI 构造请求、调用 `service.export()`、将 Dataset-owned envelope 序列化为 UTF-8 JSON，再写入 output path；公开日期与 null 按 Dataset contract 序列化，不从 SQL row layout 推导 view。
+`lab datalake --log-level {DEBUG,INFO,WARNING,ERROR} --log-file <path> <operation> ...` 的日志选项在 operation 之前，均可省略。默认 INFO stderr；可选文件为 UTF-8 timestamped logs。lab 仅配置 data_lake logger，调用结束后恢复原 handler/level/propagation 并关闭自身 handler；不修改 caller root logging。文件无法打开时返回 exit 1，且不开始 Dataset operation。事件内容与脱敏由 [DataLake diagnostics](../data-lake/DIAGNOSTICS.md) 拥有。
+
+`--output <path>` 必填且仅属于 lab delivery，不传入 Dataset service request。CLI 构造请求、调用 `service.export()`、将 Dataset-owned envelope 序列化为 UTF-8 JSON，以增量 JSON 编码写入 output 同目录的临时文件，flush/fsync 成功后原子替换 output path；公开日期与 null 按 Dataset contract 序列化，不从 SQL row layout 推导 view。
 
 Terminal 只报告 output path、exported record count 与 coverage summary，不 dump 完整 records。Coverage incomplete 不触发 ensure 或 Source I/O；只要 view 正常生成并成功写入，incomplete 本身不属于 export execution failure，完整性由 envelope 明确表达。写文件失败按 delivery failure 返回，不将其报告为成功导出。
 
@@ -91,3 +97,7 @@ Source credential 与 SQLite location 由 owning Dataset 内部 composition 使�
 V1 DataLake 不提供 describe、read、query、fetch-unit、db、refresh 或 repair，不添加 force、TTL、generic query language、多 view selection 或 terminal record dump。
 
 V1 不提供组合启动、后台进程管理、依赖安装、测试运行、部署、plugin、registry 或 workflow engine。
+
+DataLake export delivery 不复制整个 dataclass tree 或构造完整 JSON string。编码/写入/替换失败清理临时文件并保留已有 output；wire 字段、日期、null 与 ordering 保持 Dataset contract。
+
+增量编码的小片段可先合并为有界字符缓冲，再写入同目录临时文件；缓冲不得随整个 export 增长，不改变编码、换行或 ordering。flush/fsync 与原子替换的既有交付契约保持不变，编码中途、写入、flush 或替换失败均保留原 output 并清理临时文件。

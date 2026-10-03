@@ -1,9 +1,11 @@
 """CLI parsing, public service delegation, error mapping and file delivery."""
 
 import json
-from dataclasses import fields
+import logging
+from dataclasses import asdict, fields
 from datetime import date
 from pathlib import Path
+from typing import Any
 
 import pytest
 
@@ -83,7 +85,29 @@ def test_list_never_creates_service(
 
     monkeypatch.setattr(datalake, "create_service", forbidden)
     assert cli.main(["datalake", "list"]) == 0
-    assert capsys.readouterr().out.strip() == "tushare_trade_calendar"
+    assert capsys.readouterr().out.strip().splitlines() == list(datalake.DATASETS)
+
+
+def test_log_file_and_handler_restoration(service: Service, tmp_path: Path) -> None:
+    logger = logging.getLogger("data_lake")
+    before = logger.handlers[:], logger.level, logger.propagate
+    logfile = tmp_path / "diagnostic.log"
+    with datalake._logging(
+        cli.build_parser().parse_args(
+            ["datalake", "--log-level", "DEBUG", "--log-file", str(logfile), "list"]
+        )
+    ):
+        logging.getLogger("data_lake.test").debug("safe diagnostic 中文")
+    assert (logger.handlers, logger.level, logger.propagate) == before
+    assert "safe diagnostic 中文" in logfile.read_text(encoding="utf-8")
+    # A closed FileHandler leaves no Windows file lock after the invocation.
+    logfile.unlink()
+
+
+def test_log_delivery_failure_prevents_source_operation(service: Service, tmp_path: Path) -> None:
+    logfile = tmp_path / "missing-parent" / "run.log"
+    assert cli.main(["datalake", "--log-file", str(logfile), *args("ensure")[1:]]) == 1
+    assert service.requests == []
 
 
 def test_coverage_constructs_semantic_range_and_accepts_incomplete(
@@ -224,3 +248,79 @@ def test_datalake_help(capsys: pytest.CaptureFixture[str]) -> None:
     with pytest.raises(SystemExit, match="0"):
         cli.main(["datalake", "--help"])
     assert "{list,coverage,ensure,export}" in capsys.readouterr().out
+
+
+def test_incremental_delivery_preserves_wire_and_replaces_existing_output(
+    service: Service,
+    tmp_path: Path,
+) -> None:
+    view = service.export(TradeCalendarRange("SSE", DAY, DAY))
+    output = tmp_path / "output.json"
+    output.write_text("previous", encoding="utf-8")
+    datalake._deliver(view, output)
+    expected = json.dumps(asdict(view), default=datalake._json_date, ensure_ascii=False, indent=2)
+    assert output.read_text(encoding="utf-8") == expected + "\n"
+    assert list(tmp_path.iterdir()) == [output]
+
+
+@pytest.mark.parametrize("stage", ["encoding", "flush", "replace"])
+def test_delivery_failure_preserves_output_and_removes_temporary_file(
+    service: Service,
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    stage: str,
+) -> None:
+    view = service.export(TradeCalendarRange("SSE", DAY, DAY))
+    output = tmp_path / "output.json"
+    output.write_bytes(b"previous")
+    if stage == "encoding":
+        original = datalake.json.JSONEncoder.iterencode
+
+        def fail_encoding(*args: Any, **kwargs: Any) -> Any:
+            yield from original(*args, **kwargs)
+            raise TypeError("injected encoding error")
+
+        monkeypatch.setattr(datalake.json.JSONEncoder, "iterencode", fail_encoding)
+    else:
+
+        def fail(*args: Any, **kwargs: Any) -> None:
+            raise OSError("injected delivery error")
+
+        monkeypatch.setattr(datalake.os, "fsync" if stage == "flush" else "replace", fail)
+    with pytest.raises((OSError, TypeError)):
+        datalake._deliver(view, output)
+    assert output.read_bytes() == b"previous"
+    assert list(tmp_path.iterdir()) == [output]
+
+
+def test_buffered_delivery_preserves_unicode_wire_across_multiple_flushes(tmp_path: Path) -> None:
+    view = [{"name": "行情" * 300000, "date": DAY}, {"name": "结束", "value": None}]
+    output = tmp_path / "output.json"
+    datalake._deliver(view, output)
+    expected = json.dumps(view, default=datalake._json_date, ensure_ascii=False, indent=2)
+    assert output.read_text(encoding="utf-8") == expected + "\n"
+    assert list(tmp_path.iterdir()) == [output]
+
+
+def test_encoding_failure_after_buffer_write_preserves_previous_output(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    output = tmp_path / "output.json"
+    output.write_bytes(b"previous")
+    original = datalake.json.JSONEncoder.iterencode
+    partial_sizes: list[int] = []
+
+    def tracked(*args: Any, **kwargs: Any) -> Any:
+        try:
+            yield from original(*args, **kwargs)
+        except TypeError:
+            partial_sizes.extend(path.stat().st_size for path in tmp_path.glob("*.tmp"))
+            raise
+
+    monkeypatch.setattr(datalake.json.JSONEncoder, "iterencode", tracked)
+    with pytest.raises(TypeError):
+        datalake._deliver(["行情" * 600000, object()], output)
+    assert partial_sizes and max(partial_sizes) > 1024 * 1024
+    assert output.read_bytes() == b"previous"
+    assert list(tmp_path.iterdir()) == [output]

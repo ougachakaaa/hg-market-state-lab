@@ -10,7 +10,7 @@ from pathlib import Path
 from . import ROOT
 from .process import run_python
 
-RESEARCH_STUDIES = ROOT / "market-research" / "src" / "market_research" / "studies"
+RESEARCH_STUDIES = ROOT / "market-research" / "studies"
 STUDY_ID = re.compile(r"[a-z][a-z0-9]*(?:-[a-z0-9]+)*")
 STUDY_PACKAGE = re.compile(r"[a-z][a-z0-9]*(?:_[a-z0-9]+)*")
 
@@ -31,11 +31,25 @@ def _study_package(study_id: str) -> str:
     return study_id.replace("-", "_")
 
 
+def _source_package(owner: Path) -> Path:
+    return owner / "src" / "market_research" / "studies" / owner.name
+
+
 def _validate_runner(package_dir: Path) -> None:
     if package_dir.is_symlink() or not package_dir.is_dir():
         raise ResearchStudyError(f"malformed Study package: {package_dir.name!r}")
     if STUDY_PACKAGE.fullmatch(package_dir.name) is None:
         raise ResearchStudyError(f"malformed Study package name: {package_dir.name!r}")
+    owner = package_dir
+    package_dir = _source_package(owner)
+    for path in (
+        owner / "src",
+        owner / "src/market_research",
+        owner / "src/market_research/studies",
+        package_dir,
+    ):
+        if path.is_symlink():
+            raise ResearchStudyError(f"malformed Study package symlink: {owner.name!r}")
     initializer = package_dir / "__init__.py"
     runner = package_dir / "cli.py"
     if not _is_regular_file(initializer):
@@ -59,7 +73,7 @@ def discover_research_studies() -> tuple[str, ...]:
             raise ResearchStudyError(f"malformed Study package symlink: {candidate.name!r}")
         if not candidate.is_dir():
             continue
-        runner = candidate / "cli.py"
+        runner = _source_package(candidate) / "cli.py"
         if not runner.exists() and not runner.is_symlink():
             continue
         _validate_runner(candidate)
@@ -94,7 +108,7 @@ def research_run(study_id: str, study_args: Sequence[str]) -> int:
     if not package_dir.is_dir():
         print(f"malformed Study {study_id!r}: package path is not a directory", file=sys.stderr)
         return 2
-    runner = package_dir / "cli.py"
+    runner = _source_package(package_dir) / "cli.py"
     if not runner.exists() and not runner.is_symlink():
         print(f"non-executable Study: {study_id!r} has no cli.py", file=sys.stderr)
         return 2

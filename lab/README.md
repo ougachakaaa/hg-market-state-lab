@@ -82,14 +82,45 @@ poetry run lab datalake ensure tushare_trade_calendar `
     --exchange SSE --start-date 2024-01-01 --end-date 2024-01-31
 ```
 
+### Index、Futures 与 Options
+
+需要调试时，日志选项放在 operation 前：
+
+```bash
+poetry run lab datalake --log-level DEBUG --log-file datalake.log ensure tushare_equity_index_futures --product-codes IF IH IC IM --start-date 2026-01-01 --end-date 2026-10-02
+```
+
+默认 INFO 在 stderr 显示 ensure 进度与失败，DEBUG 增加脱敏的请求 endpoint、日期、分页、等待和耗时；--log-file 可选，文件为 UTF-8。文件父目录须已存在。Token、原始异常与 response 不写入日志。日志位置由 caller 选择，runtime 文件可放 Dataset data/ 下以保持 Git 忽略。
+
+Tushare 默认按 180 次/分钟运行，适合 2000 积分账号的 200/min 额度；`TUSHARE_CALLS_PER_MINUTE` 可设为 1..500 的整数，按自己的实际权限调整。Windows PowerShell 例如 `$env:TUSHARE_CALLS_PER_MINUTE = "180"`；Bash 例如 `export TUSHARE_CALLS_PER_MINUTE=180`。额度在单一 process 内共享，不协调其他程序的账户用量。失败请求有安全分类；可用相同 ensure 继续补齐 non-success units，已 success facts 默认跳过。
+
+以下 ensure 命令分别使用指数、期货产品与期权产品 selection；相同参数也适用于 coverage，export 再加必填 --output。
+
+```bash
+poetry run lab datalake ensure tushare_index_daily --index-codes 000300.SH 000905.SH --start-date 2026-09-30 --end-date 2026-09-30
+poetry run lab datalake ensure tushare_equity_index_futures --product-codes IF IH IC IM --start-date 2026-09-30 --end-date 2026-09-30
+poetry run lab datalake ensure tushare_equity_index_options --product-codes IO HO MO --start-date 2026-09-30 --end-date 2026-09-30
+poetry run lab datalake export tushare_equity_index_options --product-codes IO HO MO --start-date 2026-09-30 --end-date 2026-09-30 --output options.json
+```
+
+上述命令可直接在 Bash 或 PowerShell 运行。首次 ensure 可补齐所需 Calendar；coverage/export 只读，Calendar prerequisite 未完整时明确失败。查看各 Dataset 参数可使用 `lab datalake ensure <dataset-id> --help`。
+
 ### Research：发现 Study 与查看接口
 
 ```bash
 poetry run lab research list
-poetry run lab research run im-basis-baseline --help
+poetry run lab research run <study-id> --help
 ```
 
-`research list` 发现当前可运行的 retained Studies；`research run <study-id> --help` 查看对应 Study 的接口。实际参数、方法与结果语义继续读取该 Study authority，例如 [IM basis baseline](../market-research/studies/im_basis_baseline/ARCHITECTURE.md)。
+`research list` 发现当前可运行的 retained Studies；`research run <study-id> --help` 查看对应 Study 的接口。当前支持 [cffex-option-expiry-dte-collection](../market-research/studies/cffex_option_expiry_dte_collection/ARCHITECTURE.md)，其参数见 [Study inputs](../market-research/studies/cffex_option_expiry_dte_collection/INPUTS.md)，输出见 [Study results](../market-research/studies/cffex_option_expiry_dte_collection/RESULTS.md)。
+
+例如，准备 MO 在 2026 年 1 月至 9 月到期的 target DTE=15 chains（Bash 与 PowerShell 均可直接运行）：
+
+```bash
+poetry run lab research run cffex-option-expiry-dte-collection --product-code MO --expiry-start-date 2026-01-01 --expiry-end-date 2026-09-30 --target-dte 15
+```
+
+日期窗口选择到期日、包含两端。DTE 使用自然日，到期当天为 1；实际 observation_date 按完整市场事实解析，actual DTE 可能大于 target DTE，规则见 [DTE date resolution](../market-research/observations/cffex_option_expiry_dte_chain/DATE_RESOLUTION.md)。当前 CLI 成功时只输出请求、status 与完成计数，失败时追加 stage 和原因；不输出逐 expiry 明细或文件。Reusable data 由 Observation 持久化，不创建 Study run directory。实际 expiry 数量与完成情况取决于对应数据，不是固定预期。
 
 ## 错误与自动化
 

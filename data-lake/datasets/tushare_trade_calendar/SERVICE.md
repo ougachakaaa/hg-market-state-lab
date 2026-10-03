@@ -1,6 +1,6 @@
 # tushare_trade_calendar Public Application Service authority
 
-本文件拥有 Dataset-specific public semantic request/result/view、Python consumption、failures specialization、runtime/source credential 与 serialization 边界。继承 [Dataset domain](ARCHITECTURE.md) 与公共 [APPLICATION.md](../../APPLICATION.md)。不定义 CLI option names、HTTP endpoints、HTTP status codes 或存储实现。
+本文件拥有 Dataset-specific public semantic request/result/view、Python consumption、failures specialization、Dataset runtime composition 与 serialization 边界。继承 [Dataset domain](ARCHITECTURE.md) 与公共 [APPLICATION.md](../../APPLICATION.md)；Tushare provider execution 由 [providers/TUSHARE.md](../../providers/TUSHARE.md) 拥有。不定义 CLI option names、HTTP endpoints、HTTP status codes 或存储实现。
 
 ## 1. Canonical service 与 Python boundary
 
@@ -124,10 +124,12 @@ Serialization 与 delivery 由 adapter 拥有；[lab](../../../lab/ARCHITECTURE.
 
 Coverage / export 无 Source I/O，不要求 credential。Ensure 只有实际需要 Source I/O 时才解析 credential；全部目标已 success 时无需 token。缺少 required credential 在 Source request 前以 `OperationError` 失败，不伪装成逐 unit 正常失败结果。
 
-复用仓库现有凭据约定：环境变量 `TUSHARE_TOKEN` 优先，本地 `market-snapshot/.env` 仅作 fallback，加载不覆盖已有环境变量。该路径是 runtime configuration convention，不授权 import Snapshot 私有 Source client 或 artifact helper。SQLite location 由本 Dataset 内部 composition 使用 shared runtime/storage machinery 解析，目标 state 位于本 bounded context 的 `data/<owned sqlite>`。具体 filename、连接与 transaction mechanics 留给实现；Tushare Source composition 属于本 Dataset，shared kernel 不内置 Tushare endpoint 或本 Dataset 的知识。
+Tushare credential resolution、client creation、限流与 provider request failure conversion 统一遵循 [Provider Runtime authority](../../providers/TUSHARE.md)，不由 Calendar 自行实现；当前 Source implementation drift 见 reconciliation。SQLite location 由本 Dataset 内部 composition 使用 shared runtime/storage machinery 解析，目标 state 位于本 bounded context 的 `data/<owned sqlite>`。具体 filename、连接与 transaction mechanics 留给实现；Calendar Source adapter / service composition 属于本 Dataset，adapter 通过共享 Executor 执行请求，shared kernel 不内置 Tushare endpoint 或本 Dataset 的知识。
 
 当前 reconciliation 固定默认 owned cache 为 `data/tushare_trade_calendar.sqlite3`，由 Dataset composition 提供 storage context，shared path primitive 必须显式接收该 context。旧 `data-lake/data/*.sqlite3` 是 untouched legacy runtime state：不自动移动、复制、删除、覆盖，不作为 factory、coverage/export 或 ensure 的 fallback，不双写，也不建立长期 legacy compatibility layer。新 Dataset-local cache 与旧 cache 分离；如需保留旧内容，未来另行设计显式 migration / import operation。本轮不授予操作真实旧 SQLite 的权限。
 
 ## 7. Implementation reconciliation
 
 基准实现状态、目标 source/test/storage ownership 与后续 package/import reconciliation 输入统一见 [implementation reconciliation](../../IMPLEMENTATION_RECONCILIATION.md)。本文件继续拥有上述稳定 public semantic contract，不以目录迁移重新定义 operation、result/error 或 export semantics；HTTP 与 Research / Snapshot integration 仍须独立设计。
+
+未来自然日 Window 合法，不按 today 裁剪：ensure 可缓存 Source 已发布的未来日历事实；未发布/缺失日期保持 non-success，并按逐日 failure 返回。Coverage/export 仍只读，未来日期无缓存按 missing 表达，不查询 Source；不引入未来日期 refresh 特例。

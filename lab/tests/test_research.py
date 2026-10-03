@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import subprocess
 import sys
 from pathlib import Path
 from typing import Any
@@ -11,19 +10,8 @@ import pytest
 
 from lab import cli, process, research
 
-REPOSITORY_ROOT = Path(__file__).resolve().parents[2]
-STUDY_IDS = (
-    "im-basis-baseline",
-    "im-basis-forward-return-association",
-    "mo-option-risk-premium-baseline",
-    "price-to-lagged-ma-distribution",
-    "price-to-lagged-ma-short-horizon-reversion",
-)
 
-
-def patch_child(
-    monkeypatch: pytest.MonkeyPatch, exit_code: int
-) -> dict[str, Any]:
+def patch_child(monkeypatch: pytest.MonkeyPatch, exit_code: int) -> dict[str, Any]:
     invocation: dict[str, Any] = {}
 
     class FakeChild:
@@ -41,27 +29,12 @@ def patch_child(
 
 
 def create_study_package(root: Path, package_name: str, *, runner: bool = True) -> Path:
-    package = root / package_name
+    package = root / package_name / "src/market_research/studies" / package_name
     package.mkdir(parents=True)
     (package / "__init__.py").write_text("", encoding="utf-8")
     if runner:
         (package / "cli.py").write_text("", encoding="utf-8")
-    return package
-
-
-@pytest.mark.parametrize("study_id", STUDY_IDS)
-def test_real_study_help_is_owned_by_the_study(study_id: str) -> None:
-    result = subprocess.run(
-        [sys.executable, "-m", "lab.cli", "research", "run", study_id, "--help"],
-        cwd=REPOSITORY_ROOT,
-        capture_output=True,
-        text=True,
-        check=False,
-    )
-    assert result.returncode == 0
-    assert f"lab research run {study_id}" in result.stdout
-    assert "--start" in result.stdout
-    assert "--end" in result.stdout
+    return root / package_name
 
 
 def test_research_list_discovers_sorted_runnable_studies_without_importing_them(
@@ -122,7 +95,7 @@ def test_research_discovery_rejects_a_malformed_runner(
 ) -> None:
     studies = tmp_path / "studies"
     package = create_study_package(studies, "valid_study", runner=False)
-    (package / "cli.py").mkdir()
+    (package / "src/market_research/studies/valid_study/cli.py").mkdir()
     monkeypatch.setattr(research, "RESEARCH_STUDIES", studies)
 
     assert cli.main(["research", "list"]) == 1

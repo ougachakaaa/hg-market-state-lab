@@ -1,46 +1,50 @@
 # Research Study Authority Review
 
-本文件拥有 Study Authority Completeness Gate、semantic consistency / traceability checks、implementation topology review、validation findings 与 `Study Authority Complete` 的判定。必需语义由 [Schema](SCHEMA.md) 定义，Python implementation topology 由 [Implementation Package Contract](IMPLEMENTATION.md) 定义；[Authoring](AUTHORING.md) 处理 Study Intention、authoring 状态及 human semantic-decision loop。
+本文件拥有 Study Authority Completeness Gate、semantic consistency / traceability、implementation topology review 与 validation findings。必需语义由 [Schema](SCHEMA.md) 定义，文档拓扑由 [Skeleton](SKELETON.md) 定义，implementation topology 由 [Package Contract](IMPLEMENTATION.md) 定义，human semantic-decision loop 由 [Authoring](AUTHORING.md) 拥有。
 
 ## Study Authority Completeness Gate
 
-`Semantic Review` 必须逐项确认下列条件。Gate 检查当前 Study authority 是否满足 Schema，以及跨对象关系是否一致；新 Study 的呈现拓扑由 [Skeleton](SKELETON.md) 定义。它不重新定义 Schema contract，也不判断 repository 是否已经具备实现该 Study 的全部 capability。对旧 Study 仅按 [Compatibility](COMPATIBILITY.md) 中显式 reconciliation 的相关范围适用，不得据此追溯宣布历史 Study invalid：
+Gate 判断 Study-owned semantics 是否完整，不代替 dependency capability readiness。对历史 Study 仅在 [Compatibility](COMPATIBILITY.md) 的明确触发范围适用，不追溯宣布 legacy Study invalid。
 
 | 检查面 | 通过条件 |
 | --- | --- |
-| Research completeness | 核对 [Schema](SCHEMA.md) 的六个 semantic areas 在 canonical authority graph 中均有实质内容和唯一 owner，且无未解决的 research semantic decision。 |
-| New Study authority topology（仅新建 Study） | 核对 [Skeleton](SKELETON.md) 规定的四个顶层文件均存在且各有实质内容；`ARCHITECTURE.md` 直接链接其他三个顶层 owner，详细语义位于相应文件而非重复堆在 entry。单文件 authority 或空占位文件不能通过。 |
-| Authority navigation | 核对稳定 `ARCHITECTURE.md` entry 存在，六个 semantic areas 可从 entry 定位，所有更深层 specialized canonical owner 均可沿链接到达，且没有 orphan semantic owner；不检查标题拼写或确切措辞。 |
-| Input ownership | 逐项核对外部 input、parameter ownership / consumers / semantic role、execution-only options 与 run identity 符合 Schema 的 Inputs 和 parameter contracts；检查实际消费与声明一致。 |
-| Method graph completeness | 逐项核对具名 Observation / Analysis、Method Context、消费关系、语义输出及按条件定义的 component Artifact identity 符合 Schema 的 Method contracts；检查引用的组件与上游事实均存在，且依赖方向合法。 |
-| Question-to-evidence traceability | 验证每个重要 Question aspect 均可沿实际 local references 追踪至 Observation → Analysis → retained Evidence Product，每个 material Analysis 均可追踪至 retained evidence；检查引用的对象存在、指向一致，无游离统计。 |
-| Retained run identity（保留 evidence 时） | 核对 Inputs 的整次请求 identity 满足 Schema 的 run identity contract；验证等价表达与 identity-changing 输入的区分一致，execution-only options 未参与。 |
-| Runnable contract completeness（仅预期 runnable 的 Study） | 核对 Schema 所需的 Study-specific 用户输入契约已经确定，并可按 [Research UI authority](../ui/ARCHITECTURE.md) 的调用和 output placement 约定落地。 |
-| Result contract completeness | 核对 Results 与 Evidence Products 满足 Schema 的保留、呈现、边界状态及 provenance contract；逐项验证需要物化的 Observation / Analysis Artifact identity 覆盖实际语义依赖，且未把 filename、path 或 representation 当作 identity。 |
-| Study semantic isolation（新 Study） | 检查当前 Study 的 Research-specific semantics 由本地拥有，未从 sibling Study、retained artifact 或既有 shared Research analytical semantics 继承。 |
-| No premature abstraction（新 Study） | 检查创建工作未因重复研究逻辑而修改 shared authority / sibling Study 或引入 generic Research framework。 |
-| Dependency distinction | 所需上游 canonical fact / capability 及其 owner 与 Study-owned evidence semantics 分开表达；缺失 Snapshot public Product 等 capability 已记录为 dependency gap，不被误判为 Study semantic incompleteness。 |
-| Internal consistency | Question/hypothesis 与 Inputs 的研究空间一致；具体 default configuration 与核心 hypothesis 的关系明确；所有 configurable inputs 的允许范围均适用于 Question、Method、Results、Limitations 和 Acceptance；必填性、可选性与默认值无矛盾；Acceptance 对应前述研究；Study-local semantics 不重定义或冲突于所依赖的上游 canonical facts。 |
+| Research completeness | 六个 areas 均有实质内容、唯一 owner，无未解决 Study-owned research semantic decision。 |
+| New Study topology | Skeleton 的四文件均存在且有实质内容，entry 直接链接其他三个 owner，细节不重复堆在 entry；只对新 Study 强制。 |
+| Navigation | Entry、specialized owners 与实际 consumed Component / Observation authority 可沿链接到达，无 orphan owner，不默认加载无关 sibling authority。 |
+| Input ownership | Parameter owner / consumers / semantic role、bindings、defaults、用户表达和 semantic request identity 符合 Schema；retained run identity / execution-only output options 仅声明 retained outputs 时要求。 |
+| Observation canonical ownership | 每个 Observation dependency 有独立 Observation canonical owner / Artifact contract；未存在能力明确列为 gap。Study 不重定义 population、grain、derivation、validity、input domain 或 Artifact schema。 |
+| Component dependencies | 实际 component 有 canonical I/O / dependency contract 与 bindings；upstream-backed result 由 orchestration 准备，Analysis 仅调用 pure component；不虚构 retained Artifact / business key / cache。 |
+| Artifact dependencies | Observation identity、invocation inputs、canonicalization、所消费 Artifact identity 与 workflow / optional Analysis consumption 清晰；只消费 complete Artifact，不以 SQLite / run directory 识别业务对象。 |
+| Method completeness | Required workflow / steps、consumes / produces、顺序、failure / empty semantics 与 materialization 符合 [Workflow](WORKFLOW.md)；optional Method Context / Analysis 若存在，contract 完整无悬空 references。 |
+| Objective-to-result traceability | Objective → workflow → dependencies → execution outcome 可追踪；retained outputs / Analysis / Evidence 仅实际声明时核对其关系。Workflow Artifacts=0、Analysis=0、Evidence=0 不构成 incompleteness，不制造假对象。 |
+| Retained run identity | 仅 retained-output Study 适用；等价请求与 identity-changing 输入区分一致，覆盖实际 bindings / Analysis configuration，execution-only options 不参与。Orchestration-only request identity 不映射为 filesystem run key。 |
+| Runnable contract | Study input / CLI mapping、runtime outcome 与所声明 output shape 满足 [Research UI authority](../ui/ARCHITECTURE.md)；design readiness 按 [Authoring](AUTHORING.md#publication-与-dependency-handoff) 验证，runtime missing 单独记录，不以 future delivery 假装 runtime-ready。 |
+| Result completeness | Runtime presentation / counts / empty / failure 完整，temporary plan / references 不自动成为 Artifact；只有具名 retained Workflow Artifact 实际存在时才要求其 shape / identity / completeness / retention。Evidence 若存在再核对 structure / sample / exclusion counts，不以 filename 替代 identity。 |
+| Study semantic isolation | Study-owned Analysis / evidence semantics 不继承 sibling Study、retained evidence 或 historical shared analytical semantics；Artifact reuse 通过 Observation public boundary 合法引用；明确跨研究的小领域机制可引用 component，研究语义仍独立。 |
+| No premature abstraction | 不因相似代码自动修改 shared owners / sibling Study；明确 shared 提升按 component authority，不创建 reusable Analysis framework、registry 或 DAG。 |
+| Dependency distinction | Required capability / owner、Study-owned workflow / result semantics 与 readiness 分开；缺失 Component / Observation / upstream capability 有显式 gap，不在 Study Method 临时实现。缺失 material consumption decision 仍作为 semantic finding。 |
+| Internal consistency | Objective 与允许 configurations 一致，hypothesis 若有再验证其关系；defaults / domain / binding 无冲突，Acceptance 对应 Method / Results；Analysis sample selection 不改写 population / validity，上游 facts 不重定义。 |
 
-若 hypothesis 固定某个配置而 Inputs 允许更广范围，须记录该范围与 hypothesis 的不一致并返回 finding；所需语义决定由 Authoring 的 human decision loop 处理。Class/function 命名、代码拆分和测试布局等纯实现细节不阻止通过。
+若 hypothesis 固定某配置而 Inputs 允许更广范围，返回具体 finding，由 Authoring human loop 明确关系；不自行将其解释为 default hypothesis。Class / function 命名、代码拆分与测试布局等纯实现细节不阻止 authority complete。
 
 ## Review outcome
 
-Gate 全部通过时，判定 **Study Authority Complete**：六个 semantic areas 与跨对象关系已确定 Study-owned Research semantics，后续 Implementation Agent 无需重新决定这些语义。该判定不表示上游 capability 已备齐；后续 dependency reconciliation 与 implementation handoff 由 [Authoring](AUTHORING.md) 处理。
+Gate 全部通过判定 **Study Authority Complete**：Study-owned semantics 已确定，后续 Implementer 无需重新决定；该结果不表示 Observation / upstream capability ready。Dependency reconciliation 和 implementation handoff 沿 Authoring 处理。
 
-Gate 未通过时，返回未解决或不一致的字段、引用和依赖作为 validation findings，不将它们写成既定 Study 语义；Authoring 决定是否进入 `Semantic Decision Required`、更新草稿并重新提交完整 Review。
+未通过时返回具体未解决字段、引用、ownership conflict 或 missing decision，不将其写成已锁定语义。Authoring 更新 Record / 草稿后重新完整 Review；不能用实现便利性或 sibling 惯例替代 human decision。
 
 ## Runnable Study implementation topology review
 
-本审查在新 runnable Study implementation 形成后执行，与上方的 Study Authority Completeness Gate 分开；实现拓扑不决定 Study semantic authority 是否 complete。既有实现仅按 [Compatibility](COMPATIBILITY.md) 的触发范围审查，不追溯宣布历史实现 invalid。逐项核对：
+实现形成后单独执行，不决定 authority complete。历史 implementation 只按 Compatibility 的触发范围适用。
 
 | 检查面 | 不通过条件 |
 | --- | --- |
-| Package 与入口 | 新 runnable Study 被实现为 `<study_package>.py`、缺少 [Implementation Package Contract](IMPLEMENTATION.md) 的必需 package-level 边界，或 `__init__.py` 不指向当前 Study canonical authority。 |
-| Orchestration | `study.py` 含有 material Observation construction 与 Analysis execution，或隐藏大块 selection、statistics、plotting、retention、复杂 provenance 逻辑，使 pipeline 不能直接辨认。 |
-| Semantic component traceability | Authority 中具名 Observation / Analysis 无法映射到清晰的 Study-local implementation responsibility，或 Evidence Product 与定义它的 Analysis 在实现中难以追踪。 |
-| Focused reading | 修改一个 material Analysis 必须阅读无关 CLI、evidence formatting、其他 Analysis 或无关 Observation mechanics，才能理解其实现。 |
-| Mixed responsibility | 单一 module 同时拥有 input canonicalization、Observation construction、Analysis execution、evidence retention 等多个可独立理解的 substantial responsibility，且无清晰内聚性依据。 |
-| Authority drift | 实现合并或隐藏 semantic components，以致 `Inputs → Observation(s) → Analysis / Analyses → Evidence Products` 的 authority graph 难以辨认。 |
+| Package / entry | 新 runnable Study 是单脚本、缺少 Package Contract 必需边界，或 init docstring 不指向 canonical Study entry。 |
+| Orchestration | study.py 隐藏 material statistics / plotting / complex serialization，或无法辨认 request → dependency ensure / runtime plan → outcome；实际声明 retained outputs / Analysis / Evidence 时其责任无法辨认。 |
+| Observation / Analysis boundary | Study 直接调用 DataLake / Snapshot 或实现 Observation construction、读取 persistence；Analysis invoke / resolve / ensure Observation、调用读取事实的 component、fetch data 或重定义 empirical semantics。Only Study orchestration 的事实 dependency binding / invocation 合法，pure component computation 也可由 Analysis 调用。 |
+| Traceability | Dependencies、步骤、runtime completion / failure 无法追踪；实际声明的 retained Workflow Artifacts / publication 或 Analysis / Evidence 无清晰责任。 |
+| Focused reading | 修改一个 Analysis 需理解无关 CLI、其他 Analysis、Observation internals、报告格式或 output transaction。 |
+| Mixed responsibility | 单 module 承担可独立理解的 input canonicalization、Analysis execution、evidence retention 等多个 substantial responsibilities，无清晰内聚依据。 |
+| Authority drift | 实现合并、隐藏或越界重定义语义对象，无法恢复 Schema / Workflow graph；为 orchestration-only Study 强制 directory / config / Artifact，复制 market rows 建 empirical cache，或对无 Analysis / Evidence 的 Study 强制空 module。 |
 
-对上述 finding 按 Study-local semantic responsibility 拆分或明确内聚性，不以 LOC、函数／class 数量或 one-object-one-file 规则替代审查。结构测试只固定 package、必需模块与 authority pointer 等稳定事实，不能替代阅读边界审查。以 `0dd28a641a3210fa03da9e5aa621742ac48b7cf0` 的 MO implementation 作一致性 probe：其中 `study.py` 同时实现 material Observation selection/construction 与 Analysis/statistics，按本检查不通过；这不触发对该既有 Study 的自动迁移。
+按 semantic responsibility 和阅读边界处理 findings，不以 LOC、函数 / class 数量或一对象一文件代替审查。结构测试可固定 package / 必需 module / authority pointer，不能替代语义阅读；本轮未修改的旧测试差异见 [implementation reconciliation](../IMPLEMENTATION_RECONCILIATION.md)。

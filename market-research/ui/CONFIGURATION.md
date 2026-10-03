@@ -1,6 +1,6 @@
 # Research UI configuration authority
 
-本文档从属于 [Research UI authority](ARCHITECTURE.md)，拥有 study-local CLI 共用的 V1 configuration location、schema、resolution 与 failure contract。它不拥有 Study request、Study semantics 或 Snapshot Source configuration。
+本文档从属于 [Research UI authority](ARCHITECTURE.md)，拥有明确声明 retained outputs 的 study-local CLI 共用的 V1 configuration location、schema、resolution 与 failure contract。Orchestration-only runner 不加载 output configuration；文件缺失 / 非法或 output root 不可用均不应阻止这种 shape 的执行。它不拥有 Study request、Study semantics 或 upstream Source configuration。
 
 ## 1. Canonical file 与 schema
 
@@ -61,4 +61,4 @@ invalid filesystem representation
 path cannot be normalized to an absolute result
 ```
 
-Configuration 只由 study-local runner 加载；repository CLI 不提供独立 `research config` command。Runner 不得输出任何 environment value、credential 或 secret。
+Configuration 只由需要 retained outputs 的 study-local runner 加载；调用 loader 时以上完整 schema / failure contract 不变，不为 orchestration-only shape 增加 optional root / fallback config。Repository CLI 不提供独立 `research config` command。Runner 不得输出任何 environment value、credential 或 secret。

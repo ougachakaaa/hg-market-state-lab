@@ -12,7 +12,25 @@ REPOSITORY_ROOT = Path(__file__).resolve().parents[2]
 MARKDOWN_LINK = re.compile(r"\[[^]]+\]\(([^)]+)\)")
 
 CONTEXT_ENTRIES = {
+    Path("data-lake/DIAGNOSTICS.md"),
+    Path("data-lake/datasets/tushare_equity_index_options/CONTRACT_UNIVERSE.md"),
+    Path("data-lake/datasets/tushare_equity_index_options/TRADING_DAYS.md"),
+    Path("data-lake/datasets/tushare_equity_index_options/FACTS.md"),
+    Path("data-lake/datasets/tushare_equity_index_options/SERVICE.md"),
+    Path("data-lake/datasets/tushare_equity_index_options/ARCHITECTURE.md"),
+    Path("data-lake/datasets/tushare_equity_index_futures/CONTRACT_UNIVERSE.md"),
+    Path("data-lake/datasets/tushare_equity_index_futures/TRADING_DAYS.md"),
+    Path("data-lake/datasets/tushare_equity_index_futures/FACTS.md"),
+    Path("data-lake/datasets/tushare_equity_index_futures/SERVICE.md"),
+    Path("data-lake/datasets/tushare_equity_index_futures/ARCHITECTURE.md"),
+    Path("data-lake/datasets/tushare_index_daily/TRADING_DAYS.md"),
+    Path("data-lake/datasets/tushare_index_daily/FACTS.md"),
+    Path("data-lake/datasets/tushare_index_daily/SERVICE.md"),
+    Path("data-lake/datasets/tushare_index_daily/ARCHITECTURE.md"),
+    Path("data-lake/providers/TUSHARE.md"),
     Path("data-lake/ARCHITECTURE.md"),
+    Path("data-lake/EXECUTION.md"),
+    Path("data-lake/PERSISTENCE.md"),
     Path("data-lake/DOMAIN_MODEL.md"),
     Path("data-lake/APPLICATION.md"),
     Path("data-lake/DATASETS.md"),
@@ -35,7 +53,6 @@ CONTEXT_ENTRIES = {
         "market-snapshot/src/market_snapshot/products/"
         "cffex_equity_index_basis_history/ARCHITECTURE.md"
     ),
-    Path("market-research/studies/cffex_basis_forward_return_association/ARCHITECTURE.md"),
     Path("market-snapshot/src/market_snapshot/products/index_daily_history/ARCHITECTURE.md"),
     Path(
         "market-snapshot/src/market_snapshot/products/"
@@ -225,14 +242,8 @@ def test_product_packages_do_not_import_sibling_products() -> None:
     assert not violations, "sibling product imports:\n" + "\n".join(violations)
 
 
-def test_price_to_lagged_studies_depend_on_shared_semantics_not_each_other() -> None:
-    research_root = REPOSITORY_ROOT / "market-research/src/market_research"
-    studies_root = research_root / "studies"
-    study_names = (
-        "price_to_lagged_ma_distribution",
-        "price_to_lagged_ma_short_horizon_reversion",
-    )
-    shared_name = "market_research.shared.price_to_lagged_reference"
+def test_shared_price_to_lagged_semantics_do_not_depend_on_studies() -> None:
+    research_root = REPOSITORY_ROOT / "market-research"
 
     def imports(source: Path, package: str) -> set[str]:
         tree = ast.parse(source.read_text(encoding="utf-8"))
@@ -249,27 +260,15 @@ def test_price_to_lagged_studies_depend_on_shared_semantics_not_each_other() -> 
                     names.update(f"{base}.{alias.name}" for alias in node.names)
         return names
 
-    violations: list[str] = []
-    for study_name in study_names:
-        package_root = studies_root / study_name
-        package = f"market_research.studies.{study_name}"
-        sibling = next(name for name in study_names if name != study_name)
-        forbidden = f"market_research.studies.{sibling}"
-        for source in package_root.rglob("*.py"):
-            if any(
-                name == forbidden or name.startswith(f"{forbidden}.")
-                for name in imports(source, package)
-            ):
-                violations.append(f"{source.relative_to(REPOSITORY_ROOT)} -> {sibling}")
-        assert shared_name in imports(package_root / "study.py", package)
-
-    shared_source = research_root / "shared/price_to_lagged_reference.py"
+    shared_source = (
+        research_root / "shared/price_to_lagged_reference/src"
+        / "market_research/shared/price_to_lagged_reference/__init__.py"
+    )
     assert shared_source.is_file()
     assert not any(
         name == "market_research.studies" or name.startswith("market_research.studies.")
-        for name in imports(shared_source, "market_research.shared")
+        for name in imports(shared_source, "market_research.shared.price_to_lagged_reference")
     )
-    assert not violations, "sibling Study imports:\n" + "\n".join(violations)
 
 
 def test_shared_capture_does_not_import_product_contexts() -> None:
