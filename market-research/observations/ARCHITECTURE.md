@@ -6,7 +6,7 @@
 
 Observation 是 `market-research` 内拥有最小独立研究语义、输出值得 Analysis / Study 独立消费与解释的 retained empirical artifact unit；它是最小 research artifact boundary，不是最小计算单元：对一组规范化业务输入，以确定性的 observation semantics 构造可长期保留、可复用的 empirical Artifact。职责终点是 **retained Observation Artifact**，不是 Study Evidence。Local / shared / Observation 分类与准入唯一见 [Shared Component authority](../shared/ARCHITECTURE.md)；reuse 不等于 Observation。Observation 可调用 component、包含 local logic，不把 helper 机械提升为独立 Artifact。
 
-Canonical Python namespace 为 `market_research.observations`，仍由 `market-research` 拥有。Runnable contract / topology 唯一进入 [IMPLEMENTATION.md](IMPLEMENTATION.md)，不改变 repository root 唯一 runtime / source registration；architecture 已落位不表示 runtime package 已实现。
+Runnable Python contract / topology 进入 [IMPLEMENTATION.md](IMPLEMENTATION.md)，遵守 repository root 唯一 runtime；framework authority 不记录当前 implementation readiness。
 
 Observation 不属于某个 Study，不拥有 statistical interpretation、research hypothesis、Study-specific comparison、Analysis conclusion、Study Evidence、Modeling、Forecast 或 Decision。其定义不得依赖 Study question 的解释、Analysis 目标或已得结果、Study conclusion。
 
@@ -50,6 +50,8 @@ lookup Observation-owned persistence
                                       → persist complete → return Artifact
 ```
 
+Validate / canonicalize 后的 complete lookup 必须先于 DataLake / component / upstream dependency factories 或 operations。Complete hit 返回 retained Artifact，所有 dependency factories / operations / recomputation 为零；不因 Dataset cache、credential 或 provider 当前不可用而重访上游。Corrupt / unreadable retained state 按 [IMPLEMENTATION](IMPLEMENTATION.md#complete-publication-与-concurrency) 失败，不能伪装 miss。Miss 才进入 concrete 声明的 public upstream / component plan；component result 不拥有此 lookup / publication lifecycle。
+
 已有 complete Artifact 时直接复用，不重复访问上游、不重复计算、不重复生成第二个逻辑 Artifact。Successful `ensure()` return 的前提是整份合法 complete Artifact 已原子进入 Observation-owned durable persistence；不能先 return 再异步保存。Invocation 不等同于每次重新计算，不自动 refresh、overwrite 或迁移已有 Artifact。
 
 Canonical empirical reuse 是 `semantic request → Observation public ensure boundary → retained Artifact`，由 Observation identity + normalized business inputs 定位。不同 Studies / future workflows 需要相同 facts 时，由 orchestration 再次 ensure 同一 request；Analysis 只消费其已准备的 complete Artifacts，不自行 ensure。Consumer 不通过旧 Study output、filename 或 SQLite path 定位 / 复制 empirical cache，不自行决定 upstream refresh。跨 service / process recreation 的 durable reuse acceptance 唯一见 [implementation acceptance](IMPLEMENTATION.md#durable-reuse-acceptance)。
@@ -66,15 +68,15 @@ Observation Artifact contract 是 Study / Analysis / external consumer 的 publi
 
 每个 concrete Observation **exactly owns 一个 SQLite database**；该数据库承载多个 Observation business requests 与其 complete Artifacts，不是 one SQLite per invocation。Reusable empirical persistence 唯一归 Observation，不是 Study-owned cache。SQLite 是 Observation internal persistence；canonical placement 与 publication mapping 见 [Implementation architecture](IMPLEMENTATION.md)，SQL schema 与 transaction algorithm 留给实现。
 
-Observation runtime SQLite 文件不应进入 Git。Owned runtime state 的 ignore / durable publication acceptance 见 [IMPLEMENTATION](IMPLEMENTATION.md)，当前 implementation 状态进入 [reconciliation](../IMPLEMENTATION_RECONCILIATION.md#first-observation-driven-vertical-slice-implementation)。
+Observation runtime SQLite 文件不应进入 Git。Owned runtime state 的 ignore / durable publication acceptance 见 [IMPLEMENTATION](IMPLEMENTATION.md)。
 
 不建立 global `research.sqlite`、global Observation database、global Artifact DB、cross-Observation foreign key 或 Study-owned Observation persistence。Study、Analysis 与 external consumer 不直接读取 SQLite，不依赖 SQLite schema 或 path。Study evidence output 与 Observation-owned persistence 是不同边界；Study output replacement 不授予 Observation overwrite 权限。
 
 ## Upstream dependency boundary
 
-Observation 采用 DataLake-first **design-time capability selection**：DataLake public semantic contract 足够时必须使用其 Dataset public Application Service；只有 semantic capability insufficient 才选择明确的 Market Snapshot public Product / Application boundary。Research（包括所有 Observation）绝不直接依赖 Tushare 或其他 external market-data provider，不能访问 upstream internals；共享 Python runtime 不授予内部依赖权限。
+Observation 的 DataLake-first design-time selection、sufficiency、public consumption / provenance boundary、runtime failure 不换源与 provider prohibition 唯一归 [Research UPSTREAM](../UPSTREAM.md)。Miss 仅通过选定 public contract 获取完整 facts / component results；concrete owner 决定实际 invocation sequence、合法 empty / date resolution，不复制 Dataset operation 定义。
 
-详细 sufficiency / selection、runtime failure 不换源、multi-upstream ownership、gap escalation、execution 与 provenance 规则唯一归 [UPSTREAM.md](UPSTREAM.md)。具体 upstream facts 继续由选定 canonical owner 拥有；本 framework 不承诺 runtime integration 已就绪。
+Observation-specific runtime publication、owned-value projection、failure / provenance mapping 归 [IMPLEMENTATION](IMPLEMENTATION.md)；upstream fact meaning 继续属于所选 canonical owner。本 framework 不以导航或 design readiness 承诺 runtime integration。
 
 ## Explicitly deferred decisions
 
@@ -89,6 +91,12 @@ Observation 采用 DataLake-first **design-time capability selection**：DataLak
 
 ## Navigation 与 non-goals
 
-从本文件先进入 [Upstream policy](UPSTREAM.md)，再按 [Schema](SCHEMA.md) / [Authoring](AUTHORING.md) 锁定 concrete semantics，沿实际所需 entry 读取必要 upstream authority：[cffex_option_expiry_dte_chain](cffex_option_expiry_dte_chain/ARCHITECTURE.md)。[Expiry Universe](../shared/cffex_option_expiry_universe/ARCHITECTURE.md) 已是 shared resolver，不进入 Observation lifecycle。具体规则由各 entry / 专题拥有，Implementation handoff 进入 [framework IMPLEMENTATION](IMPLEMENTATION.md) 与 concrete IMPLEMENTATION；不创建 catalog。
+| 当前任务 | 下一份 authority |
+| --- | --- |
+| Concrete semantics / review | [SCHEMA](SCHEMA.md) / [AUTHORING](AUTHORING.md) → actual concrete entry。 |
+| Upstream-backed design | [Research UPSTREAM](../UPSTREAM.md) → only required public Dataset / Product contracts。 |
+| Runnable implementation / acceptance | Concrete entry / specialized contracts → [framework IMPLEMENTATION](IMPLEMENTATION.md) → concrete handoff。 |
+
+Concrete entry：[cffex_option_expiry_dte_chain](cffex_option_expiry_dte_chain/ARCHITECTURE.md) → ARTIFACT / DATE_RESOLUTION / IMPLEMENTATION，各自保留独立 concern。不扫描 sibling owners，不创建 catalog。
 
 不创建 generic registry、plugin system、Research Repository、Experiment Engine、DAG、scheduler、executor、cache、refresh engine、HTTP API、Web UI、Observation CLI 或 automatic migration。Analysis 的当前 ownership 与 deferred reuse model 见 [Study Schema](../studies/SCHEMA.md)；实现 / 测试差异见 [implementation reconciliation](../IMPLEMENTATION_RECONCILIATION.md)。

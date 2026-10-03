@@ -1,6 +1,6 @@
 # cffex_option_expiry_dte_collection Study authority
 
-本文件是 retained Study knowledge / orchestration authority 的稳定 entry，拥有 identity、objective、boundaries、limitations、acceptance 与导航；retained authority 不要求 retained execution output。继承 [Study Schema](../SCHEMA.md)、[Workflow contract](../WORKFLOW.md)、[Skeleton](../SKELETON.md) 与 [Research boundaries](../../ARCHITECTURE.md)。Request / semantic identity 进入 [INPUTS.md](INPUTS.md)，workflow / dependencies 进入 [METHOD.md](METHOD.md)，non-persistent outcome / presentation 进入 [RESULTS.md](RESULTS.md)，Python / CLI handoff 进入 [IMPLEMENTATION.md](IMPLEMENTATION.md)。
+本文件是 retained Study knowledge / orchestration authority 的稳定 entry，拥有 identity、objective、boundaries、limitations、acceptance 与导航；retained authority 不要求 retained execution output。继承 [Study framework](../ARCHITECTURE.md)、[Study Schema](../SCHEMA.md)、[Workflow contract](../WORKFLOW.md)、[四文件布局](../AUTHORING.md#mandatory-top-level-topology) 与 [Research boundaries](../../ARCHITECTURE.md)。Request / semantic identity 进入 [INPUTS.md](INPUTS.md)，workflow / dependencies 进入 [METHOD.md](METHOD.md)，non-persistent outcome / presentation 进入 [RESULTS.md](RESULTS.md)，Python / CLI handoff 进入 [IMPLEMENTATION.md](IMPLEMENTATION.md)。
 
 ## Identity 与 objective
 
@@ -34,4 +34,4 @@ Study execution outcome 是本次 invocation 的 non-persistent feedback，不�
 
 六个 semantic areas、Research dependency contracts、orchestration semantics 与 [implementation architecture](IMPLEMENTATION.md) 完整，按 [Authoring readiness](../AUTHORING.md#publication-与-dependency-handoff) 为 **Study Authority Complete / Research dependency contracts complete / Study implementation architecture complete / Implementation Ready**。未发现 DataLake public capability / Research semantic gap；组件 Python mapping 见 [Universe IMPLEMENTATION](../../shared/cffex_option_expiry_universe/IMPLEMENTATION.md)，runtime 验证另见 reconciliation。
 
-Chain 已按 Observation contract 实施。Universe resolver 与 Study 已使用新的 component boundary，runtime **Dependency Reconciled / Implemented / Verified**。当前验收见 [Research reconciliation](../../IMPLEMENTATION_RECONCILIATION.md#shared-component-runtime-reconciliation)，旧验收不替代此次验证。
+Chain 已按 Observation contract 实施。Universe resolver 与 Study 已使用新的 component boundary，runtime **Dependency Reconciled / Implemented / Verified**。当前 drift 按需见 [Research reconciliation](../../IMPLEMENTATION_RECONCILIATION.md)。

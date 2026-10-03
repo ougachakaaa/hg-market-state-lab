@@ -1,16 +1,16 @@
 # Observation Implementation Architecture
 
-本文件唯一拥有 Observation framework 的 runnable Python contract、public object ownership、composition、persistence lifecycle / placement、complete publication、窄 shared mechanics 与 implementation verification。继承 [framework semantics](ARCHITECTURE.md) 与 [UPSTREAM policy](UPSTREAM.md)；不重定义 concrete business semantics。具体 Observation 映射进入 [DTE-chain implementation](cffex_option_expiry_dte_chain/IMPLEMENTATION.md)；[Universe resolver](../shared/cffex_option_expiry_universe/ARCHITECTURE.md) 不适用本 lifecycle。本文是 runnable contract authority；runtime 实施与验证状态唯一进入 [当前 reconciliation](../IMPLEMENTATION_RECONCILIATION.md#shared-component-runtime-reconciliation)。
+本文件唯一拥有 Observation framework 的 runnable Python contract、public object ownership、composition、persistence lifecycle / placement、complete publication、窄 shared mechanics 与 implementation verification。继承 [framework semantics](ARCHITECTURE.md) 与 [Research UPSTREAM policy](../UPSTREAM.md)；不重定义 concrete business semantics。具体 Observation 映射进入 [DTE-chain implementation](cffex_option_expiry_dte_chain/IMPLEMENTATION.md)。本文是 runnable contract authority；当前 drift 按需进入 [reconciliation](../IMPLEMENTATION_RECONCILIATION.md)，不把历史 evidence 当 semantic owner。
 
 ## Implementation progressive disclosure
 
-Implementation 阅读顺序固定为 concrete semantic entry → ARTIFACT（chain 另读 DATE_RESOLUTION）→ 本文件 → concrete IMPLEMENTATION → 仅实际依赖的 upstream public SERVICE / APPLICATION。Design 继续从 ARCHITECTURE → UPSTREAM → SCHEMA / AUTHORING → concrete semantic authority 进入。不扫描 sibling Study / Product，不把 shared helpers 或现有代码当缺失 semantic decision 的替代。
+Implementation 阅读顺序固定为 concrete semantic entry → ARTIFACT（chain 另读 DATE_RESOLUTION）→ 本文件 → concrete IMPLEMENTATION → 仅实际依赖的 upstream public SERVICE / APPLICATION。Design 从 ARCHITECTURE → SCHEMA / AUTHORING → actual concrete owner 进入，上游选择按需读取 Research UPSTREAM。不扫描 sibling Study / Product，不把 shared helpers 或现有代码当缺失 semantic decision 的替代。
 
-只实现实际 Observation 所需的最小 internal mechanics / common errors，不因 Universe 移为 component 新建通用框架。当前 chain 已实施；Universe resolver / Study wiring 已 reconciliation，chain 的 durable lifecycle 保持，见 [当前验证](../IMPLEMENTATION_RECONCILIATION.md#shared-component-runtime-reconciliation)。
+只实现实际 Observation 所需的最小 internal mechanics / common errors，不预建通用框架；Component 不适用 Observation lifecycle。
 
 ## Public namespace 与 invocation
 
-Canonical framework namespace 为 `market_research.observations`，framework root 只发布 common errors，不聚合 concrete services 或创建 registry。Consumer 直接 import 实际 concrete package 的 `__init__.py`：
+Canonical framework namespace 为 `market_research.observations`，多 owner-local source roots 沿用 `pkgutil.extend_path` namespace composition；framework root 只发布 common errors，不聚合 concrete services 或创建 registry。Consumer 直接 import 实际 concrete package 的 `__init__.py`：
 
 | Concrete public package | Required public exports |
 | --- | --- |
@@ -24,9 +24,11 @@ Request / Artifact / row / provenance 是 Observation-owned typed immutable valu
 
 合法 Requests 按 concrete normalized business fields 具有 deterministic value equality。Artifact、rows 与 provenance 在相同 public values 下具有 deterministic value equality；value equality 不替代 semantic identity：同一有效 definition 下 identity 仍只由 Observation identity + normalized business inputs 决定。无 object address、connection、执行时间或 path 参与 identity / value equality。
 
+Miss 只消费 selected public contract 的完整 facts / component results；component-mediated facts 仍保留原 canonical upstream owner / public snapshot proof，不将 helper 变成新的市场事实 owner。具体 invocation sequence 归 concrete IMPLEMENTATION。
+
 Consumer 不需 construct dict、serialize JSON、写文件、构造 SQLite row 或 DataLake request 才能调用。DataLake / Snapshot public objects 仅在 Observation 内部消费，再投影为 Observation-owned values；Artifact 不直接包含 upstream Row / Export / CoverageResult / EnsureResult / service、Repository 或 SQLite object。保留 upstream field meanings / units / nullable rules，不复制其 semantic ownership。Study 无需 import upstream classes 才能理解 Artifact。
 
-Provenance 投影为 concrete Artifact 可消费的 semantic values，只保留其 authority 要求的 Dataset / Product context；不建立统一 envelope。Timestamp、provider token / endpoint、SQLite path、repository ID、execution UUID 不加入 business key；完整 provenance 不改变 reuse。内部 serialization primitives 不构成 consumer file / JSON protocol。
+Provenance 投影为 concrete Artifact 可消费的 semantic values，描述实际 selected Dataset / Product / component contract 与 concrete 要求的 public context，不穿透 provider / Repository / SQLite；不建立统一 envelope。Timestamp、provider token / endpoint、SQLite path、repository ID、execution UUID 不加入 business key；完整 provenance 不改变 reuse。内部 serialization primitives 不构成 consumer file / JSON protocol。
 
 ## Public failures
 
@@ -43,7 +45,7 @@ ObservationError
 | ObservationInvalidRequestError | Caller semantic request invalid：错误 request / field type、缺 required value、invalid canonical product、倒置日期范围、非法 target_dte 或 concrete request-domain violation。Request construction 或 ensure boundary 在任何 upstream mutation 前识别，ensure 验证先于 persistence lookup / dependency access；不通过 trim、default 或修复掩盖错误。 |
 | ObservationOperationError | 合法 Observation request 无法形成 / 返回 complete Artifact：选定 dependency execution / completeness failure、persistence unavailable / corrupt、Artifact invariant violation、日期计算 / proof 无法继续、atomic publication failure、合法请求转换后的 upstream request 被拒绝，及非 caller semantic mistake 的 runtime failure。 |
 
-Public errors 可保留 readable dependency / operation context 与 chained internal cause；DataLake internal exceptions、SQLite exception object、provider error object / Tushare response 不是 public error fields 或 handling contract。Study 不 import upstream exception classes。Upstream incomplete / unit failures 映射为 ObservationOperationError，不返回 partial Artifact；runtime failure 不改变来源，详见 UPSTREAM。进程中断不发布 complete，也不要求将系统 cancellation 当普通可恢复业务错误。
+Public errors 可保留 readable dependency / operation context 与 chained internal cause；DataLake internal exceptions、SQLite exception object、provider error object / Tushare response 不是 public error fields 或 handling contract。Study 不 import upstream exception classes。Upstream incomplete / unit failures 映射为 ObservationOperationError，不返回 partial Artifact；runtime failure 不改变来源，详见 [Research UPSTREAM](../UPSTREAM.md)。合法 empty / date resolution 仍由 concrete owner 决定。进程中断不发布 complete，也不要求将系统 cancellation 当普通可恢复业务错误。
 
 ## Factory 与 explicit composition
 
@@ -59,9 +61,9 @@ Internal / test-only construction 可显式注入 persistence collaborator 与 D
 market-research/observations/<observation-id>/output/<observation-id>.sqlite3
 ```
 
-该路径保持既有 durable cache 的 runtime placement；`market-research/observations/` 仅是 ignored runtime state location，不含 authority 或 Python source，不是第二 semantic owner。本轮不搬迁、迁移或重算既有 SQLite。该路径只用于内部 composition，不进入 Request / Artifact / semantic identity。Test-only composition 可用 temporary SQLite。数据库只存该 Observation 的 requests / Artifacts；没有 global research.sqlite / Observation DB / shared Artifact table、cross-Observation FK 或 Study-owned table。Business lookup 依据 normalized business fields；UUID、wall clock、filesystem path、hash alone 不替代这些字段，hash 只可作内部 optimization，存储必须仍能恢复 / 解释 normalized business inputs 本身。
+Concrete owner 同时拥有 authority、src 与 output；只有 `output/` 中的 SQLite / sidecars 是 ignored runtime state，不把整个 `observations/` 视为 data-only tree。Canonical placement 不授权迁移或重算已有 SQLite。该路径只用于内部 composition，不进入 Request / Artifact / semantic identity。Test-only composition 可用 temporary SQLite。数据库只存该 Observation 的 requests / Artifacts；没有 global research.sqlite / Observation DB / shared Artifact table、cross-Observation FK 或 Study-owned table。Business lookup 依据 normalized business fields；UUID、wall clock、filesystem path、hash alone 不替代这些字段，hash 只可作内部 optimization，存储必须仍能恢复 / 解释 normalized business inputs 本身。
 
-Runtime SQLite 及其 WAL / journal 不进入 Git。实施阶段必须在首次创建 state 前配置并验证 ignore；根 ignore 已覆盖 Observation-owned data placement，包括 SQLite / WAL / SHM / journal；验收见当前 reconciliation。SQL DDL、indexes、serialization encoding、connection / transaction algorithm 属于下一阶段 mechanics，不在此锁定。
+Runtime SQLite 及其 WAL / journal 不进入 Git。实施阶段必须在首次创建 state 前配置并验证 ignore；Ignore 必须覆盖 Observation-owned output，包括 SQLite / WAL / SHM / journal。SQL DDL、indexes、serialization encoding、connection / transaction algorithm 属于实现 mechanics，不在此锁定。
 
 ## Complete publication 与 concurrency
 
@@ -101,12 +103,10 @@ Observation 可复用非常窄的 framework-internal mechanics：path resolution
 
 每个 concrete Observation 都必须验证：service instance A 对合法 request ensure 成功，整份 Artifact 已 durable / atomic persisted；关闭 connections 并丢弃 A 及其 in-memory state（process recreation equivalent），重新创建 instance B，使用同一 Observation-owned SQLite 与相同 normalized request。B 必须返回同一 semantic identity / logical complete Artifact、相同 owned public values，所有上游 factory / coverage / ensure / export calls 为零，且不 recompute。B 使用不可用 upstream doubles 仍能命中；多个不同业务请求共存于该 concrete 唯一 SQLite，不建立 Study cache。
 
-测试只用 temporary owned persistence 与受控 public dependency doubles；不依赖 Python object address、共享内存、SQLite path 的 consumer knowledge 或真实 provider。Publication / persistence failure 不返回成功，重建实例也不能读出 failed / partial state 为 complete。该验收适用于真正的 Observation，当前 concrete 为 chain；Universe resolver 不适用，不改变 chain Artifact / date semantics。
+测试只用 temporary owned persistence 与受控 public dependency doubles；不依赖 Python object address、共享内存、SQLite path 的 consumer knowledge 或真实 provider。Publication / persistence failure 不返回成功，重建实例也不能读出 failed / partial state 为 complete。该验收适用于 concrete Observation，不适用于无 retained lifecycle 的 component。
 
-Concrete semantics complete、implementation mapping complete、实际 public upstream dependencies 可用且无 conflict / capability gap 后，才标记 concrete **Implementation Ready**。Framework mechanics contract 完整可标为 Authority Complete / Implementation Architecture Complete / Implementation Ready；这些是设计状态，不等于 runtime implemented。Study 的 design readiness 与实际 runtime dependency reconciliation 继承 [Study handoff definition](../studies/AUTHORING.md#publication-与-dependency-handoff)：producer runtime 缺失须单独记录，实际 Study runtime dependency reconciliation 需 actual declared dependency runtime 完成及 bindings 复核；旧 slice 验收是历史 evidence；新 component / Study wiring 已独立验证。当前 readiness 见 [reconciliation](../IMPLEMENTATION_RECONCILIATION.md)。
+Concrete semantics complete、implementation mapping complete、实际 public upstream dependencies 可用且无 conflict / capability gap 后，才标记 concrete **Implementation Ready**。Framework mechanics contract 完整可标为 Authority Complete / Implementation Architecture Complete / Implementation Ready；这些是设计状态，不等于 runtime implemented。Study 的 design readiness 与实际 runtime dependency reconciliation 继承 [Study handoff definition](../studies/AUTHORING.md#publication-与-dependency-handoff)：producer runtime 缺失须单独记录，实际 Study runtime dependency reconciliation 需 actual declared dependency runtime 完成及 bindings 复核；当前 readiness 只在实际 concrete handoff 记录。
 
-Chain Observation 已实施；Universe 使用 shared resolver、Study 已消费新 boundary，当前验收见 [reconciliation](../IMPLEMENTATION_RECONCILIATION.md#shared-component-runtime-reconciliation)。V1 Python application boundary 不增加 Observation CLI、HTTP / REST；human execution 继续通过 Study。除此还排除 generic DataLake / Snapshot adapter、plugin、DAG、queue、background worker、run registry、global Research DB、retry / refresh engine 与 automatic migration。
+V1 Python application boundary 不增加 Observation CLI、HTTP / REST；human execution 继续通过 Study。除此还排除 generic DataLake / Snapshot adapter、plugin、DAG、queue、background worker、run registry、global Research DB、retry / refresh engine 与 automatic migration。
 
 Owner 根目录承载 authority 与实际子模块；Python implementation 位于本 owner 的 `src/` 下，按完整 `market_research.*` namespace 落位并在根 `pyproject.toml` 注册 source root。Authority 不进入 namespace/source tree；不存在 framework mechanics 时不创建空 src。源码 docstring 以相对路径指回 owner 根目录的 canonical entry。
-
-每个 concrete Observation 的运行输出归其 canonical owner 的 `output/`，V1 SQLite 与 sidecars 位于 `market-research/observations/<observation-id>/output/`，受 Git ignore 保护。Shared resolver 无该 output lifecycle。

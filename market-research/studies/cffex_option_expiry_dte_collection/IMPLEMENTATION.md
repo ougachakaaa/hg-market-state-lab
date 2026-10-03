@@ -1,6 +1,6 @@
 # Expiry DTE Collection implementation handoff
 
-本文件把 [Study entry](ARCHITECTURE.md)、[INPUTS](INPUTS.md)、[METHOD](METHOD.md) 与 [RESULTS](RESULTS.md) 映射为 Python / CLI responsibilities，继承 [Study Package Contract](../IMPLEMENTATION.md) 与 [Research UI](../../ui/ARCHITECTURE.md)。四份 authority 唯一拥有业务语义；resolver I/O / failure 归 [Universe CONTRACT](../../shared/cffex_option_expiry_universe/CONTRACT.md)。当前 mapping / wiring 验证见 [implementation reconciliation](../../IMPLEMENTATION_RECONCILIATION.md#shared-component-runtime-reconciliation)。
+本文件把 [Study entry](ARCHITECTURE.md)、[INPUTS](INPUTS.md)、[METHOD](METHOD.md) 与 [RESULTS](RESULTS.md) 映射为 Python / CLI responsibilities，继承 [Study Package Contract](../IMPLEMENTATION.md) 与 [Research UI](../../ui/ARCHITECTURE.md)。四份 authority 唯一拥有业务语义；resolver I/O / failure 归 [Universe CONTRACT](../../shared/cffex_option_expiry_universe/CONTRACT.md)。当前 drift 按需见 [implementation reconciliation](../../IMPLEMENTATION_RECONCILIATION.md)。
 
 ## Package 与 typed runtime boundary
 
@@ -47,7 +47,7 @@ Runner 不调用 load_config、canonical_run_directory 或 execute_run，不读 
 - Exact resolver inputs、complete result、sorted whole plan、exact chain bindings；无 Study 日期推导、market-row copy 或 Universe Artifact identity。
 - Resolver failure 停止、unknown counts 正确；empty result success、counts=0、零 chain factory / ensure。
 - Chain failure 后全部 requests 升序尝试一次，ordered reasons / counts / exits 一致；成功 chain 不 rollback。
-- Controlled E2E：相同 request 再运行仍调用 resolver，Dataset ensure 自己复用 cache；已有 chain complete-hit 零上游、跨 service / process recreation reuse。只产生 chain Observation research SQLite，无 Universe research SQLite / Study retained files。不能以第二次禁用全部 upstream factories 的旧 E2E 验收新流程。
+- Controlled E2E：相同 request 再运行仍调用 resolver，Dataset ensure 自己复用 cache；已有 chain complete-hit 零上游、跨 service / process recreation reuse。只产生 chain Observation research SQLite，无 Universe research SQLite / Study retained files。不能要求重复 Study invocation 禁用全部 upstream factories；该要求仅适用 chain retained hit。
 - Component boundary / Study wiring / stage / tests 与 source pointers 同步 reconciliation；保留 chain durable / completeness acceptance。
 
-Study Authority Complete / Research dependency contracts complete / Study implementation architecture complete，设计 **Implementation Ready**。Runtime 新语义 **Dependency Reconciled / Implemented / Verified**；CLI 使用 resolver wiring，当前 unit / topology / runtime / fresh-process controlled E2E 见 reconciliation。历史通过不替代当前验收；旧 SQLite 状态不读取、不迁移、不删除。
+Study Authority Complete / Research dependency contracts complete / Study implementation architecture complete，设计 **Implementation Ready**。Runtime 新语义 **Dependency Reconciled / Implemented / Verified**；CLI 使用 resolver wiring；当前 drift 按需见 reconciliation，实际验收遵守以上 acceptance，不以历史通过替代。

@@ -1,6 +1,6 @@
 # Research Public Upstream Dependency authority
 
-本文件唯一拥有 component / Observation 共用的 public fact selection、DataLake-first sufficiency、Dataset operation / committed export proof、failure / absence、owner / provider / provenance boundary。继承 [Research module boundaries](ARCHITECTURE.md)。Component 分类与 caller 分工归 [Component authority](shared/ARCHITECTURE.md)；Observation retained lookup / publication 归 [Observation specialization](observations/UPSTREAM.md)。这里只规定 public facts 消费，不授予 component research artifact、cache、SQLite 或 business-key lifecycle。
+本文件唯一拥有 Research 的 public upstream selection、semantic sufficiency、consumer completeness / failure constraints、provider prohibition 与 provenance boundary，继承 [module boundaries](ARCHITECTURE.md)。DataLake operation semantics 唯一归 [APPLICATION.md](../data-lake/APPLICATION.md)，Dataset-specific public contracts 经 [DataLake entry](../data-lake/ARCHITECTURE.md) / [catalog](../data-lake/DATASETS.md) 进入；不由 Research 重复定义。Component caller rules 归 [Shared authority](shared/ARCHITECTURE.md)，Observation retained lookup 归 [Observation architecture](observations/ARCHITECTURE.md)，publication / failure mapping 归 [Observation IMPLEMENTATION](observations/IMPLEMENTATION.md)。
 
 ## DataLake-first capability selection
 
@@ -30,38 +30,22 @@ Calendar、option / futures / index daily facts、公开 contract metadata 与 c
 
 ## Public execution 与 responsibility
 
-Research producer 根据 declared semantic fact slice 调用选定 Dataset / Product public contract。Component 不做 retained lookup / research publication；Observation 的调用前后 lifecycle 另见 [Observation specialization](observations/UPSTREAM.md)。
-
-| Canonical upstream | Allowed invocation semantics |
-| --- | --- |
-| DataLake Dataset | Concrete producer 根据 required fact slice 与具体 Dataset public contract，选择能够满足 completeness proof 的 minimum legal invocation sequence，再消费合法 public export 并 deterministic derive。不统一强制 coverage → ensure → export。 |
-| Snapshot Product | 直接引用该 Product public request、result 与 failure contract，不强加 Dataset-style coverage / ensure / export。 |
-
-Coverage / ensure / export 的 ownership 继续属于 Dataset Application Service。Concrete authority 只声明需要证明什么、哪个 Dataset contract 拥有这些 facts、采用何种 public invocation pattern、什么状态允许消费以及什么状态必须失败。具体序列唯一见 [Universe resolver CONTRACT](shared/cffex_option_expiry_universe/CONTRACT.md#public-dependency-与-execution) 与 [DTE-chain IMPLEMENTATION](observations/cffex_option_expiry_dte_chain/IMPLEMENTATION.md#canonical-execution-mapping)，不在 framework 统一 concrete calls。
+Research producer 根据 declared semantic fact slice 调用选定 Dataset / Product public contract。Component 不做 retained lookup / research publication；Observation 的调用前后 lifecycle 另见 [Observation architecture](observations/ARCHITECTURE.md) / [IMPLEMENTATION](observations/IMPLEMENTATION.md)。
 
 只使用 public semantic objects。DataLake 自己拥有 coverage、ensure、export、cache completeness、Source execution 与 credentials；Research 不读取 DataLake persistence、不重新实现 DataLake cache、不接管 provider execution。Snapshot 自己拥有 canonical Product preparation 与结果有效性；Research 不穿透 Capture、Raw 或 private Preparation。共享 runtime 不授予内部 import 权限。
 
-### Ensure 与 committed export proof
+### Research consumer completeness 与 failure constraints
 
-以下角色唯一继承 [DataLake APPLICATION](../data-lake/APPLICATION.md#1-application-service-与公共-operation-family)，不改变 Dataset API：
+Coverage / ensure / export 的定义、cache completeness、committed export invariant 与 application failure taxonomy 唯一引用 [DataLake APPLICATION](../data-lake/APPLICATION.md#1-application-service-与公共-operation-family)；FetchUnit / Dataset cache ownership 引用 [DataLake DOMAIN_MODEL](../data-lake/DOMAIN_MODEL.md)。Research 不重新规定 counters、目标 unit selection、Source execution 或 persistence mechanics。
 
-| Operation | Research producer 如何使用 public contract |
-| --- | --- |
-| coverage | Read-only 当前 completeness check，可用于选择后续调用；独立 coverage 不是最终 records 的 snapshot proof。 |
-| ensure | 按需 mutate Dataset state，尝试使 requested semantic slice complete；可能报告 incomplete / unit failures 或抛 application error，Research producer 必须检查结果。 |
-| export | Read-only 一份 committed Dataset cache snapshot，同时含该 request 的 coverage 与 semantic payload；incomplete export 也是合法 Dataset result，但不能作为 complete empirical derivation input。 |
+Research producer 必须遵守以下消费约束：
 
-Canonical derivation input 是 **one public export = coverage proof + payload**。消费前按具体 Dataset / Research producer contract 验证 identity、view / schema、scope / window、coverage 与 public records；不解释 Dataset completeness internals。不得拼接 operation A 的 coverage 与 operation B 的 rows，然后宣称它们为同一完整事实视图。
-
-若 concrete 先调用 `ensure(request)`，必须检查 EnsureResult，再 `export(same semantic request)`。EnsureResult.complete=true 证明 mutation operation 在结束时完成目标，不能代替后续 export 的最终 completeness / records proof；后续 export 不完整或非法时仍须失败。Independent coverage 可以指导 read-first / ensure-if-needed，不要求每次 preliminary coverage，也不改变最后消费合法完整 export 的要求。每份 export 保持自己的 snapshot invariant，不宣称不同 calls / Datasets 共享 snapshot 或 provider-current freshness。
-
-### Missing、proven absence 与 operation failure
-
-| Public state | Consumer interpretation |
-| --- | --- |
-| 合法 public check / export 表明 missing、pending、failed 或 coverage incomplete | 尚不能证明 required slice complete；按 concrete invocation pattern ensure 后重新 export / 判断，不以当前 empty / partial payload 证明 absence。初始 failed cache unit 不等于本次 ensure 已失败。 |
-| 合法 complete export 中 concrete 所需 matching population 为空 | Proven absence；是否允许 complete empty result / Artifact 或日期回溯，唯一由 concrete 已锁定的业务规则决定。 |
-| 本次 ensure incomplete / unit failures、operation / prerequisite / integrity failure 或非法 export | producer-owned operation failure；不当作 absence、不消费 partial、不跳过 candidate、不换 Snapshot。 |
+- 根据 required fact slice 与 actual Dataset contract 选择 minimum legal invocation sequence，不统一强制 coverage → ensure → export；Snapshot Product 直接按其 public contract 消费，不套 Dataset operation family。
+- Canonical derivation input 是 **one public export = coverage proof + payload**。消费前验证具体 contract 所需 identity、view / schema、scope / window、coverage 与 public records；不拼接不同 operations 的 coverage 与 rows。
+- 若先调用 ensure，检查 EnsureResult，再 export 相同 semantic request；ensure 成功不代替最终合法完整 export proof。独立 coverage 仅指导是否补齐。每份 export 保持自身 snapshot invariant，不声称不同 calls / Datasets 共享 snapshot 或 provider-current freshness。
+- 合法 public check / export 的 missing、pending、failed 或 incomplete 状态尚不能证明 required slice complete；按 concrete pattern 补齐后重新判断，不把 empty / partial payload 当 absence。初始 failed cache unit 不等于本次 ensure failure。
+- 只有合法 complete export 中所需 matching population 为空才是 proven absence。是否允许 complete empty result / Artifact 或日期回溯，唯一归 concrete business contract。
+- 本次 ensure incomplete / unit failures、operation / prerequisite / integrity failure 或非法 export 必须作为 producer-owned operation failure：不消费 partial、不当 absence、不跳 candidate、不换源。Read-only prerequisite failure 也不能伪装普通 cache missing。
 
 ```text
 cache missing != proven absence
@@ -69,13 +53,13 @@ runtime failure != proven absence
 DataLake failure != permission to change candidate date
 ```
 
-Read-only prerequisite failure 也属于 operation failure，不能绕过 public contract 将目标未知解释为普通 cache missing。日期回溯是 complete-but-absent 的 concrete business rule，不是 infrastructure fallback；完整性失败的 default 行为保持下方 runtime failure policy。
+日期回溯只可按 concrete complete-but-absent rule 执行，不是 infrastructure fallback。具体 sequences 进入 [Universe CONTRACT](shared/cffex_option_expiry_universe/CONTRACT.md#public-dependency-与-execution) 或 [DTE-chain IMPLEMENTATION](observations/cffex_option_expiry_dte_chain/IMPLEMENTATION.md#canonical-execution-mapping)。
 
-### Public object lifetime 与 opaque execution
+### Public semantic objects 与 opaque execution
 
-DataLake public semantic objects 在 component / Observation 内消费，经 deterministic projection 成为 Research-owned immutable public values，再交给 Study。Study 不需 import Dataset Export / Row / CoverageResult / EnsureResult / service。Component result 与 Observation Artifact 分别按实际 public contract 保留 field meanings；不直接嵌入 upstream runtime objects，不重新拥有市场事实。
+DataLake / Snapshot public objects 在 component / Observation 内消费，deterministic projection 为 Research-owned immutable public values 后交 Study；Study 不需 import Dataset Export / Row / CoverageResult / EnsureResult / service。不直接嵌入 upstream runtime objects，保留 public field meaning，不重新 owning 市场事实。Observation mapping 归其 IMPLEMENTATION，component result mapping 归 concrete owner。
 
-Research producer 只依赖 public request、result、completeness 与 semantic rows，不解释或依赖 FetchUnit generation / internal selected unit set、Repository layout、SQLite schema、pending transitions、Source batches / pagination、Tushare endpoint / provider request grouping、rate limiting / retry、worker concurrency 或 generation schema。Dataset ensure 内部如何 skip successful units、fetch missing / non-success units、调用 Source / provider，均不能成为 Research dependency；public counters / failures 仍按 Dataset contract 消费，不以此重建内部执行逻辑。
+Producer 只依赖 public request / result / completeness / semantic rows，不解释 FetchUnit generation、internal selected units、Repository / SQLite、pending transitions、Source batches / pagination、provider grouping / credentials / rate limit / retry / concurrency。Public counters / failures 按 upstream contract 消费，不重建内部 execution；具体 ensure selection 与 cache behavior 仍归 DataLake。
 
 ## Runtime failure 不授权换源
 

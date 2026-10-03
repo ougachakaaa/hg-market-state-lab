@@ -18,8 +18,6 @@ Result 只在调用后作为 complete component result 消费；无 Observation 
 
 Study orchestration 或 Observation 可以调用本 resolver；Analysis 不自行调用它获取 facts，只消费已准备的 result。Chain Observation 直接接受一个 expiry，不依赖 Universe，不被强制先做 discovery。
 
-## Reconciliation 与导航
+## Navigation
 
-本 entry 与 CONTRACT 取代基线 `observations/cffex_option_expiry_universe/` 三份 authority 的当前语义；旧 Observation / Artifact / implementation handoff 已撤销，不作为第二 canonical owner。该分类已落实为 shared resolver Python boundary；本轮不迁移、读取或删除旧 Universe Research SQLite。
-
-Canonical runtime 为 `market_research.shared.cffex_option_expiry_universe`；旧 Observation public package / lifecycle 已撤销，Study 使用 resolver。当前验证与历史证据的适用限制见 [implementation reconciliation](../../IMPLEMENTATION_RECONCILIATION.md#shared-component-runtime-reconciliation)。这里只拥有 component semantics；Python mapping 见 [IMPLEMENTATION.md](IMPLEMENTATION.md)。
+具体 I/O / dependencies / failure / acceptance 进入 [CONTRACT.md](CONTRACT.md)；canonical Python boundary `market_research.shared.cffex_option_expiry_universe` 的 mapping 进入 [IMPLEMENTATION.md](IMPLEMENTATION.md)。当前 implementation drift 按需见 [Research reconciliation](../../IMPLEMENTATION_RECONCILIATION.md)。

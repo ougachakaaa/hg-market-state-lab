@@ -40,4 +40,4 @@ lab research run cffex-option-expiry-dte-collection \
   --target-dte 30
 ```
 
-该命令已使用 shared resolver + chain Observation wiring，当前验证见 [reconciliation](../../IMPLEMENTATION_RECONCILIATION.md#shared-component-runtime-reconciliation)。实际数据可用性依已选 upstream completeness proof 决定。本 Study 属 [orchestration-only UI shape](../../ui/ARCHITECTURE.md#3-shared-configuration-and-output-placement)，不加载 output.root 配置、不创建 retained Study run directory，不提供 --output、--database、--sqlite-path、--resume、--overwrite 或 config override。CLI parse request → invoke Study orchestration → present outcome；Component construction / I/O 与 Observation persistence 分别归其 owner。
+Invocation 使用 shared resolver + chain Observation 的声明 bindings。实际数据可用性依已选 upstream completeness proof 决定。本 Study 属 [orchestration-only UI shape](../../ui/ARCHITECTURE.md#3-shared-configuration-and-output-placement)，不加载 output.root 配置、不创建 retained Study run directory，不提供 --output、--database、--sqlite-path、--resume、--overwrite 或 config override。CLI parse request → invoke Study orchestration → present outcome；Component construction / I/O 与 Observation persistence 分别归其 owner。

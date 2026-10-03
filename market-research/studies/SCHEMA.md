@@ -1,6 +1,6 @@
 # Research Study Semantic Schema
 
-本文件是 retained Study semantic structure 的唯一通用 canonical definition；retained Study 表达值得保留的研究 / orchestration authority，不要求每次 execution 都保留 Study output。创建流程见 [Authoring](AUTHORING.md)，authority 布局见 [Skeleton](SKELETON.md)，完整性验证见 [Review](REVIEW.md)，既有 Study 适用规则见 [Compatibility](COMPATIBILITY.md)，runnable convention 见 [Research UI authority](../ui/ARCHITECTURE.md)。Observation framework 由 [Observation authority](../observations/ARCHITECTURE.md) 拥有，具体 empirical semantics 由 concrete Observation 拥有。Local / shared 提升、Observation 准入与 component caller 分工唯一见 [Shared Component authority](../shared/ARCHITECTURE.md)。
+本文件是 retained Study semantic structure 的唯一通用 canonical definition；retained Study 表达值得保留的研究 / orchestration authority，不要求每次 execution 都保留 Study output。创建流程见 [Authoring](AUTHORING.md)，authority 布局见 [四文件布局](AUTHORING.md#mandatory-top-level-topology)，完整性验证见 [Semantic review gate](AUTHORING.md#study-authority-completeness-gate)，既有 Study 适用规则见 [Compatibility](COMPATIBILITY.md)，runnable convention 见 [Research UI authority](../ui/ARCHITECTURE.md)。Observation framework 由 [Observation authority](../observations/ARCHITECTURE.md) 拥有，具体 empirical semantics 由 concrete Observation 拥有。Local / shared 提升、Observation 准入与 component caller 分工唯一见 [Shared Component authority](../shared/ARCHITECTURE.md)。
 
 ## Canonical Study semantic object model
 
