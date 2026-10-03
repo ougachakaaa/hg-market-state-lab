@@ -20,6 +20,6 @@ Study orchestration 或 Observation 可以调用本 resolver；Analysis 不自�
 
 ## Reconciliation 与导航
 
-本 entry 与 CONTRACT 取代基线 `observations/cffex_option_expiry_universe/` 三份 authority 的当前语义；旧 Observation / Artifact / implementation handoff 已撤销，不作为第二 canonical owner。本次只移动 / 修改 authority，不移动 Python、不实现 resolver、不删除真实 runtime state。
+本 entry 与 CONTRACT 取代基线 `observations/cffex_option_expiry_universe/` 三份 authority 的当前语义；旧 Observation / Artifact / implementation handoff 已撤销，不作为第二 canonical owner。该分类已落实为 shared resolver Python boundary；本轮不迁移、读取或删除旧 Universe Research SQLite。
 
-现有 `market_research.observations.cffex_option_expiry_universe` 与 Study wiring 仍实现旧 lifecycle，尚未符合新 authority。当前代码证据、历史验收的适用限制和下一轮独立实施范围唯一见 [implementation reconciliation](../../IMPLEMENTATION_RECONCILIATION.md#shared-component-semantic-reconciliation)。这里只锁定 component semantics；不宣称旧 Python ensure 接口已成为新 resolver。
+Canonical runtime 为 `market_research.shared.cffex_option_expiry_universe`；旧 Observation public package / lifecycle 已撤销，Study 使用 resolver。当前验证与历史证据的适用限制见 [implementation reconciliation](../../IMPLEMENTATION_RECONCILIATION.md#shared-component-runtime-reconciliation)。这里只拥有 component semantics；Python mapping 见 [IMPLEMENTATION.md](IMPLEMENTATION.md)。

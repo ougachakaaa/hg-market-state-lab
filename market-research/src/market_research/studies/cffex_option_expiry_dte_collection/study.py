@@ -10,10 +10,11 @@ from market_research.observations.cffex_option_expiry_dte_chain import (
     ExpiryDteChainRequest,
     ExpiryDteChainService,
 )
-from market_research.observations.cffex_option_expiry_universe import (
-    ExpiryUniverseArtifact,
+from market_research.shared.cffex_option_expiry_universe import (
+    ExpiryUniverseInvalidRequestError,
     ExpiryUniverseRequest,
-    ExpiryUniverseService,
+    ExpiryUniverseResolver,
+    ExpiryUniverseResult,
 )
 
 
@@ -33,7 +34,7 @@ class CollectionRequest:
         try:
             ExpiryUniverseRequest(self.product_code, self.expiry_start_date, self.expiry_end_date)
             ExpiryDteChainRequest(self.product_code, self.expiry_end_date, self.target_dte)
-        except ObservationInvalidRequestError as error:
+        except (ObservationInvalidRequestError, ExpiryUniverseInvalidRequestError) as error:
             raise CollectionInvalidRequestError(str(error)) from error
 
     @property
@@ -93,7 +94,7 @@ def _outcome(
 def run(
     request: CollectionRequest,
     *,
-    universe_factory: Callable[[], ExpiryUniverseService],
+    universe_factory: Callable[[], ExpiryUniverseResolver],
     chain_factory: Callable[[], ExpiryDteChainService],
 ) -> CollectionOutcome:
     if not isinstance(request, CollectionRequest):
@@ -105,23 +106,19 @@ def run(
         request.expiry_end_date,
     )
     try:
-        universe = universe_factory().ensure(universe_request)
+        universe = universe_factory().resolve(universe_request)
+        if not isinstance(universe, ExpiryUniverseResult):
+            raise ValueError("Universe returned an invalid resolver result")
         if (
-            not isinstance(universe, ExpiryUniverseArtifact)
-            or universe.complete is not True
-            or type(universe.expiries) is not tuple
-            or universe.semantic_identity
-            != (
-                "cffex_option_expiry_universe",
-                request.product_code,
-                request.expiry_start_date,
-                request.expiry_end_date,
-            )
+            universe.product_code != universe_request.product_code
+            or universe.expiry_start_date != universe_request.expiry_start_date
+            or universe.expiry_end_date != universe_request.expiry_end_date
         ):
-            raise ValueError("Universe returned an incomplete / mismatched Artifact")
+            raise ValueError("Universe returned a mismatched resolver result")
+        universe.__post_init__()
     except Exception as error:
         return _outcome(
-            request, None, None, 0, 0, (Failure("ensure_expiry_universe", None, str(error)),)
+            request, None, None, 0, 0, (Failure("resolve_expiry_universe", None, str(error)),)
         )
     discovered = len(universe.expiries)
     try:

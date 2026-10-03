@@ -46,7 +46,7 @@ Review 核对：能从稳定入口发现唯一 owner；I/O 可独立测试；调
 
 ## Authority navigation
 
-当前新分类的 concrete owner 为 [cffex_option_expiry_universe](cffex_option_expiry_universe/ARCHITECTURE.md) → [resolver contract](cffex_option_expiry_universe/CONTRACT.md)。该 resolver 取代旧 Observation 定位；实现差异与下一轮范围见 [reconciliation](../IMPLEMENTATION_RECONCILIATION.md#shared-component-semantic-reconciliation)。
+当前新分类的 concrete owner 为 [cffex_option_expiry_universe](cffex_option_expiry_universe/ARCHITECTURE.md) → [resolver contract](cffex_option_expiry_universe/CONTRACT.md)。该 resolver 已取代旧 Observation runtime；当前验证见 [reconciliation](../IMPLEMENTATION_RECONCILIATION.md#shared-component-runtime-reconciliation)。
 
 未来“指定日期 futures / index price reader”可按本 component 准入：消费 [Futures public service](../../data-lake/datasets/tushare_equity_index_futures/SERVICE.md) / [Index public service](../../data-lake/datasets/tushare_index_daily/SERVICE.md) 已有 authoritative export，在已准备的事实中选取所需 price。Contract 必须在真实需求出现时确定 instrument / product / date、price field（如 close / settle）、合法 absence 与 completeness；不在本轮猜测这些选择，不实现 reader，不重拥有行情事实、日历、cache 或 provider，不因此自动成为 Observation。
 

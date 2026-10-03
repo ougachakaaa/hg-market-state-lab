@@ -9,8 +9,8 @@ from datetime import date
 from market_research.observations.cffex_option_expiry_dte_chain import (
     create_service as create_chain_service,
 )
-from market_research.observations.cffex_option_expiry_universe import (
-    create_service as create_universe_service,
+from market_research.shared.cffex_option_expiry_universe import (
+    create_resolver as create_universe_resolver,
 )
 
 from .study import CollectionInvalidRequestError, CollectionRequest, run
@@ -55,7 +55,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         print(f"invalid Study request: {error}", file=sys.stderr)
         return 2
     outcome = run(
-        request, universe_factory=create_universe_service, chain_factory=create_chain_service
+        request, universe_factory=create_universe_resolver, chain_factory=create_chain_service
     )
     print(
         f"product_code={outcome.product_code} "

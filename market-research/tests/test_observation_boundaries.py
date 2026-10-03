@@ -8,7 +8,6 @@ from pathlib import Path
 import pytest
 
 from market_research.observations import cffex_option_expiry_dte_chain as chain
-from market_research.observations import cffex_option_expiry_universe as universe
 from observation_support import CalendarDouble, OptionsDouble, row
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -81,25 +80,18 @@ def test_public_factory_ensure_is_durable_and_cwd_independent(
     )
     monkeypatch.setattr(options, "create_service", lambda: facts)
     monkeypatch.setattr(calendar, "create_service", lambda: dates)
-    for name, package, request in (
-        (
-            "cffex_option_expiry_universe",
-            universe,
-            universe.ExpiryUniverseRequest("MO", trade, expiry),
-        ),
-        ("cffex_option_expiry_dte_chain", chain, chain.ExpiryDteChainRequest("MO", expiry, 15)),
-    ):
-        internal = importlib.import_module(f"market_research.observations.{name}._service")
-        path = tmp_path / f"{name}.sqlite3"
-        monkeypatch.setattr(internal, "owned_path", lambda context, filename, path=path: path)
-        artifact = package.create_service().ensure(request)
-        assert path.exists() and artifact.complete
-        monkeypatch.setattr(
-            options, "create_service", lambda: (_ for _ in ()).throw(AssertionError("upstream"))
-        )
-        monkeypatch.setattr(
-            calendar, "create_service", lambda: (_ for _ in ()).throw(AssertionError("upstream"))
-        )
-        assert package.create_service().ensure(request) == artifact
-        monkeypatch.setattr(options, "create_service", lambda: facts)
-        monkeypatch.setattr(calendar, "create_service", lambda: dates)
+    internal = importlib.import_module(
+        "market_research.observations.cffex_option_expiry_dte_chain._service"
+    )
+    path = tmp_path / "chain.sqlite3"
+    monkeypatch.setattr(internal, "owned_path", lambda context, filename: path)
+    request = chain.ExpiryDteChainRequest("MO", expiry, 15)
+    artifact = chain.create_service().ensure(request)
+    assert path.exists() and artifact.complete
+    monkeypatch.setattr(
+        options, "create_service", lambda: (_ for _ in ()).throw(AssertionError("upstream"))
+    )
+    monkeypatch.setattr(
+        calendar, "create_service", lambda: (_ for _ in ()).throw(AssertionError("upstream"))
+    )
+    assert chain.create_service().ensure(request) == artifact

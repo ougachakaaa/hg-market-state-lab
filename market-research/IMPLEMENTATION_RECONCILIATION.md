@@ -1,6 +1,6 @@
 # Market Research implementation reconciliation
 
-> 本文保留历次执行证据。当前 component / Observation 分类及 Universe / Study runtime gaps 唯一进入 [Shared component semantic reconciliation](#shared-component-semantic-reconciliation)；此前把 Universe 称为 Observation、两个 durable producers、零 upstream E2E 或整个 slice 无 drift 的结论只适用于当时基线，已被本轮新语义 supersede。旧链接导航到新 owner 或本轮 gap，不表示旧 contract 继续有效。
+> 本文保留历次执行证据。当前 runtime 状态 / 验证唯一进入 [Shared component runtime reconciliation](#shared-component-runtime-reconciliation)；分类变更基线见 [Shared component semantic reconciliation](#shared-component-semantic-reconciliation)；此前把 Universe 称为 Observation、两个 durable producers、零 upstream E2E 或整个 slice 无 drift 的结论只适用于当时基线，已被本轮新语义 supersede。旧链接导航到新 owner 或本轮 gap，不表示旧 contract 继续有效。
 
 本文件记录 Observation-first authority 更新的基线、implementation / test drift 与交接状态，不拥有新的业务语义。入口见 [module architecture](ARCHITECTURE.md)；当前 contracts 分别见 [Component authority](shared/ARCHITECTURE.md)、[Research public upstream](UPSTREAM.md)、[Observation authority](observations/ARCHITECTURE.md)、[Study Schema](studies/SCHEMA.md)、[Implementation Contract](studies/IMPLEMENTATION.md)、[Compatibility](studies/COMPATIBILITY.md) 与 [Research UI](ui/ARCHITECTURE.md)。
 
@@ -306,7 +306,7 @@ Supplemental 只读检查通过：31 份 Research Markdown、312 个 local links
 | Owner / package | Runtime / verification |
 | --- | --- |
 | [Observation framework](src/market_research/observations/__init__.py) | Public common errors、private root-relative path / SQLite transaction / safe owned-value serialization primitives；无 registry、executor 或 shared business schema。 |
-| [ExpiryUniverse](src/market_research/observations/cffex_option_expiry_universe/__init__.py) | Immutable request / Artifact / provenance；exact-range ensure-first Options integration、sorted unique inclusive extraction、owned durable SQLite。Implemented / Verified。 |
+| 历史 ExpiryUniverse（`src/market_research/observations/cffex_option_expiry_universe/__init__.py`） | Immutable request / Artifact / provenance；exact-range ensure-first Options integration、sorted unique inclusive extraction、owned durable SQLite。Implemented / Verified。 |
 | [ExpiryDteChain](src/market_research/observations/cffex_option_expiry_dte_chain/__init__.py) | Immutable request / Artifact / rows / provenance；Calendar / Options read-first、incomplete-only ensure、complete-but-absent-only fallback、完整 matching population 原值保留、owned durable SQLite。Implemented / Verified。 |
 | [First Study](src/market_research/studies/cffex_option_expiry_dte_collection/study.py) / [CLI](src/market_research/studies/cffex_option_expiry_dte_collection/cli.py) | 四输入 admission、exact public Observation bindings、ascending runtime plan、每项一次 invocation / failure 后继续、non-persistent counts / failure details、exit 0 / 1 / 2。Implemented / Verified / actual runtime Dependency Reconciled。 |
 
@@ -342,6 +342,8 @@ Authority / package surface / runtime / tests 已核对：Universe observed-wind
 
 ## Shared component semantic reconciliation
 
+> 本节记录 2c63928 authority-only 基线；下方 runtime reconciliation 已完成所列 implementation gaps。此节不是当前 runtime 状态。
+
 本轮唯一基线为 `34f28e707545d28eb588b6af42168c7e2000d8eb`，隔离 worktree 为 `C:\Users\Benjamin\.codex\worktrees\research-component-authority\hg-market-state-lab`，分支 `codex/research-component-authority`。HEAD 从该 commit 建立，无 develop 合并。主 checkout 与另一任务 owned 的 bb43 worktree 未修改；本任务 attached worktree 已核对。前次中断后从同一隔离树续做，没有另建执行任务。
 
 本轮只改 authority Markdown / navigation，撤销旧 Universe 三份 authority、建立 shared resolver entry / CONTRACT；无 Python、tests、配置、依赖声明、lock、ignore 或 DataLake contract 变更，无 runtime SQLite 创建 / 删除 / 迁移，无 push。验证环境按根 lock 安装到本 worktree 根唯一 Python 3.13 .venv，不使用主 checkout / module-local 环境。前述历次记录与链接保留为历史 evidence；其“两项 Observation / 两库 / 整个 Study 重启零上游 / 无 drift”结论不适用于新定位。
@@ -364,8 +366,8 @@ Authority / package surface / runtime / tests 已核对：Universe observed-wind
 | Baseline evidence / conflict | Current resolution / remaining work |
 | --- | --- |
 | Universe old authority 要求独立 Artifact / key / exactly-one SQLite；新语义是小领域 resolver | 新 owner 撤销旧 lifecycle；保持既定 inputs、observed-window derivation、完整 / empty / failure 与 public dependency，分类改变不篡改市场事实。 |
-| [Universe source facade](src/market_research/observations/cffex_option_expiry_universe/__init__.py) / [_models](src/market_research/observations/cffex_option_expiry_universe/_models.py) 仍指旧 authority、发布 ExpiryUniverseArtifact / observation_identity / semantic_identity | 未修改代码；下轮迁到 component public boundary / owned result 与 own failure contract，更新 pointers / consumers，不继续把旧 API 当 canonical resolver。具体 Python names / layout 属实现 mechanics。 |
-| [_service](src/market_research/observations/cffex_option_expiry_universe/_service.py) 先 _persistence.load，再 public Options calls，最后 publish；factory 指旧 Universe SQLite | 与 component 无 research persistence 冲突；下轮移除 Universe research lookup / publication，保留 exact-range ensure → export proof / extraction / diagnostics。不自动迁移或删除任何已存在旧 DB，不从旧 Artifact 读取新 resolver result。 |
+| 历史 Universe source facade（`src/market_research/observations/cffex_option_expiry_universe/__init__.py`） / 历史 _models（`src/market_research/observations/cffex_option_expiry_universe/_models.py`） 仍指旧 authority、发布 ExpiryUniverseArtifact / observation_identity / semantic_identity | 未修改代码；下轮迁到 component public boundary / owned result 与 own failure contract，更新 pointers / consumers，不继续把旧 API 当 canonical resolver。具体 Python names / layout 属实现 mechanics。 |
+| 历史 _service（`src/market_research/observations/cffex_option_expiry_universe/_service.py`） 先 _persistence.load，再 public Options calls，最后 publish；factory 指旧 Universe SQLite | 与 component 无 research persistence 冲突；下轮移除 Universe research lookup / publication，保留 exact-range ensure → export proof / extraction / diagnostics。不自动迁移或删除任何已存在旧 DB，不从旧 Artifact 读取新 resolver result。 |
 | [Study orchestration](src/market_research/studies/cffex_option_expiry_dte_collection/study.py) / [CLI](src/market_research/studies/cffex_option_expiry_dte_collection/cli.py) 仍 import Universe Observation、调用 ensure、校验 Artifact identity、stage=ensure_expiry_universe | 下轮绑定 component public I/O、校验对应 complete result、使用 resolve_expiry_universe stage / own errors。保持四 flags、plan / chain continuation、counts / exits 与无 Study output。 |
 | [Producer boundary tests](tests/test_observation_boundaries.py) / [runtime tests](tests/test_observation_runtime.py) 把 Universe 列为 Observation；[E2E](tests/test_observation_vertical_slice.py) 要求两个 research SQLite、第二次禁用全部 upstream factories | 旧验收仍能验证旧实现，不能证明新 contract。下轮重写相关分类 / component tests，验收没有 Universe research SQLite、repeat resolve 合法调用 Dataset，而 chain 继续 durable-hit 零上游。不为本轮检查改业务 / tests。 |
 | [Study topology test](tests/test_study_authority_topology.py) 的 test_creation_entry_does_not_link_to_legacy_shared_semantics 用任何 ../shared/ 字符串拒绝新 authoring 导航 | 该断言把新 component authority 与 historical shared semantics 混为一谈。新语义仍禁止默认继承历史研究语义，但允许当前 component 分类入口；本轮保留旧 test，报告新增 failure。下轮更新此区分并补新 owner reachability / boundary acceptance。 |
@@ -401,3 +403,35 @@ Authority 变更清单（路径均相对 market-research）：
 | Study framework reconciliation | studies/AUTHORING.md、studies/SCHEMA.md、studies/WORKFLOW.md、studies/SKELETON.md、studies/IMPLEMENTATION.md、studies/REVIEW.md、studies/COMPATIBILITY.md |
 | Current Study contracts | studies/cffex_option_expiry_dte_collection/{ARCHITECTURE,INPUTS,METHOD,RESULTS,IMPLEMENTATION}.md |
 | Retired Universe Observation authority | observations/cffex_option_expiry_universe/{ARCHITECTURE,ARTIFACT,IMPLEMENTATION}.md（删除） |
+
+## Shared component runtime reconciliation
+
+2026-10-03，基于 `2c63928a39340e33362c34973bd0edfd56a83d8e` 完成本轮 implementation reconciliation。本节是当前 runtime 状态，supersedes 上节 authority-only 的 Not Reconciled / test drift；不使用历史“两项 Observation / 两库 / 整个 Study 零上游”的验收证明新 contract。
+
+### Implementation 与 gap closure
+
+| Concern | Current implementation / review |
+| --- | --- |
+| Universe public boundary / own failures | [Shared facade](src/market_research/shared/cffex_option_expiry_universe/__init__.py) 发布 ExpiryUniverseRequest / ExpiryUniverseResult / ExpiryUniverseResolver / create_resolver 和独立错误 family；public resolve，无 ObservationError inheritance。Mapping 唯一见 [component IMPLEMENTATION](shared/cffex_option_expiry_universe/IMPLEMENTATION.md)。 |
+| Universe lifecycle removal | 旧 `market_research.observations.cffex_option_expiry_universe` package、Artifact identity / semantic_identity、SQLite factory / persistence / lookup / publication 全部撤销。Resolver 无 Research path / cache，重复相同请求仍调用 DataLake exact-range ensure → export。旧 Universe Research SQLite 不读取、不删除、不迁移，旧 state ignore 继续保留。 |
+| Preserved derivation / proof | 迁移现有 request admission、Options public integration / row validation / coverage proof、observed-window extraction 与 ordered diagnostics；不改 market universe、Source ownership 或 DataLake public API。Result / nested provenance 均为 frozen Research-owned values，无 rows / DataLake runtime objects。非法完整性 / scope / window / schema / dates 不返回 partial result。 |
+| Study / CLI bindings | [Study](src/market_research/studies/cffex_option_expiry_dte_collection/study.py) 调用 resolver.resolve，核对 owned result / exact request binding / complete context，再构造全量 ascending chain plan；stage=resolve_expiry_universe。Chain 继续 Observation ensure / identity check；empty success、每项一次 / failure continuation、unknown counts、四 flags / exits、零 Study retained output 保持。 |
+| Source / authority navigation | Shared package / Study source pointers 与实际 imports 更新；component mapping 从 stable entry 可达。当前 module / concrete handoff 状态同步更新；旧代码链接改为标明历史路径，历史证据不充当现行 owner。 |
+| Test classification / topology | [Boundary acceptance](tests/test_expiry_universe_boundaries.py) 检查 shared public names / own errors / no Observation or persistence imports / owned immutable results / repeat calls / invalid admission。Observation persistence / concurrency / corruption tests 只适用于 chain；Study authoring topology 允许 component classification entry，继续拒绝直接继承 historical shared semantics。 |
+
+Resolver / Study runtime **Dependency Reconciled / Implemented / Verified**；chain Observation 的业务 inputs / key、DATE_RESOLUTION、完整 Artifact、one SQLite 与 durable reuse 未改。本轮没有 semantic gap、upstream capability gap 或 remaining in-scope runtime drift。未创建 generic component framework / registry / DI / gateway、reader、Analysis 或 Evidence；没有修改 dependency graph / lock / DataLake public API，也未扩大到其他 Study。
+
+### Current verification
+
+所有检查从 repository root 唯一 Poetry environment 执行，`poetry env info --path` 为本 checkout 根 `.venv`，Python 3.13.11。
+
+- 修改前：`poetry run pytest market-research/tests lab/tests/test_research.py -q`：251 passed / 2 skipped / 1 failed。唯一 failure 为上节已记录的 blanket `../shared/` topology prohibition；不是本轮新实现引入的问题。
+- 修改后：`poetry run pytest market-research/tests lab/tests/test_research.py market-snapshot/tests/test_authority_topology.py -q -rs`：275 passed / 2 skipped。包含 resolver admission / empty / derivation / malformed exports / complete-proof failure / full ordered diagnostics，Study bindings / invalid result / construction / interruption / continuation / CLI，以及 repository links / authority reachability。
+- `poetry run pytest data-lake/datasets/tushare_equity_index_options/tests data-lake/datasets/tushare_trade_calendar/tests lab/tests/test_research.py -q -rs`：131 passed / 1 skipped。Upstream contracts 未改；这些 checks 确认 E2E 使用的 actual Dataset cache / completeness 路径和 CLI forwarding 仍有效。
+- `poetry run ruff check market-research/src market-research/tests`：passed；`poetry run mypy market-research/src market-research/tests`：41 files，passed。
+- [Fresh-process controlled E2E](tests/test_observation_vertical_slice.py) 使用实际 DataLake public services / isolated owned caches、owning Dataset 的受控 Source fixture 和真实 Study CLI。首次 Universe ensure：attempted=1、already_successful=0、complete=true，两个 chain durable published。第二独立进程仍创建 Options public service 并执行 resolver ensure → export，attempted=0、already_successful=1；Source preparation / calls=0。Chain dependencies 设为不可用，两个 complete Artifacts 仍 durable-hit，chain upstream factories / operations=0。Options 内部两次 Calendar export 是 Dataset 自己的 public prerequisite，不是 chain I/O。
+- E2E files 恰为两个 DataLake-owned SQLite 和一个 chain Observation Research SQLite；无 Universe Research SQLite / Study retained files，两个 chain payloads 重启前后相同。边界测试另确认 resolver 不改变受控 corrupt legacy 文件，不将其当作缓存。
+
+两项 skip 均为 Windows 无 symlink creation privilege 的既有检查，非 resolver / chain / E2E skip。没有调用真实 external provider；当前 acceptance 是 controlled runtime / E2E，不宣称 provider-current market availability 或 freshness。Refresh / definition evolution / future readers / 显式旧 state 处置仍按原 authority deferred，不是本轮未完成实现。
+
+提交前 review 对照 component CONTRACT、Study METHOD / RESULTS / IMPLEMENTATION 与 chain authority：public-only dependency direction、single committed export proof、no Universe lifecycle、no Study cache、chain durable-before-return / restart reuse 均一致；完整 diff / 新文件与 `git diff --check` 已审阅；全部 tracked Markdown local file links resolve。当前 gap closure 以本节验证为依据，前述历史记录保留原时间语境。

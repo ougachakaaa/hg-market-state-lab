@@ -3,6 +3,7 @@
 import ast
 import subprocess
 import sys
+from copy import copy
 from dataclasses import replace
 from datetime import date, datetime, timedelta
 from pathlib import Path
@@ -16,9 +17,10 @@ from market_research.observations.cffex_option_expiry_dte_chain import (
     ExpiryDteChainRequest,
     ExpiryDteChainService,
 )
-from market_research.observations.cffex_option_expiry_universe import (
+from market_research.shared.cffex_option_expiry_universe import (
+    ExpiryUniverseOperationError,
     ExpiryUniverseRequest,
-    ExpiryUniverseService,
+    ExpiryUniverseResolver,
 )
 from market_research.studies.cffex_option_expiry_dte_collection import (
     CollectionRequest,
@@ -29,7 +31,7 @@ from market_research.studies.cffex_option_expiry_dte_collection.study import (
     CollectionInvalidRequestError,
 )
 from observation_support import CalendarDouble, OptionsDouble, row
-from test_observation_runtime import make_chain, make_universe
+from test_observation_runtime import make_chain, make_resolver
 
 ROOT = Path(__file__).resolve().parents[2]
 START, END = date(2025, 10, 1), date(2025, 12, 31)
@@ -51,9 +53,16 @@ def forbidden() -> Any:
     pytest.fail("unneeded dependency factory must not run")
 
 
+def damaged_result(value: Any, **changes: Any) -> Any:
+    damaged = copy(value)
+    for name, replacement in changes.items():
+        object.__setattr__(damaged, name, replacement)
+    return damaged
+
+
 def artifacts(tmp_path: Path, expiries: tuple[date, ...] = EXPIRIES) -> tuple[Any, dict[date, Any]]:
     discovery = OptionsDouble((START,), tuple(row(expiry, START) for expiry in expiries))
-    universe = make_universe(tmp_path / "u.sqlite3", discovery).ensure(
+    universe = make_resolver(discovery).resolve(
         ExpiryUniverseRequest("MO", START, END),
     )
     values = {}
@@ -73,7 +82,7 @@ class UniverseDouble:
         self.value = value
         self.calls: list[ExpiryUniverseRequest] = []
 
-    def ensure(self, request: ExpiryUniverseRequest) -> Any:
+    def resolve(self, request: ExpiryUniverseRequest) -> Any:
         self.calls.append(request)
         if isinstance(self.value, Exception):
             raise self.value
@@ -96,7 +105,7 @@ class ChainDouble:
 def execute(universe: UniverseDouble, chain: ChainDouble) -> Any:
     return run(
         REQUEST,
-        universe_factory=lambda: cast(ExpiryUniverseService, universe),
+        universe_factory=lambda: cast(ExpiryUniverseResolver, universe),
         chain_factory=lambda: cast(ExpiryDteChainService, chain),
     )
 
@@ -129,7 +138,7 @@ def test_empty_universe_never_constructs_chain(tmp_path: Path) -> None:
     universe, _ = artifacts(tmp_path, ())
     u = UniverseDouble(universe)
     outcome = run(
-        REQUEST, universe_factory=lambda: cast(ExpiryUniverseService, u), chain_factory=forbidden
+        REQUEST, universe_factory=lambda: cast(ExpiryUniverseResolver, u), chain_factory=forbidden
     )
     assert outcome.status == "success"
     assert (
@@ -144,30 +153,96 @@ def test_empty_universe_never_constructs_chain(tmp_path: Path) -> None:
 def test_universe_failure_has_unknown_counts_and_no_chain(tmp_path: Path, failure: str) -> None:
     artifact, _ = artifacts(tmp_path, ())
     value = {
-        "operation": ObservationOperationError("universe unavailable"),
-        "partial": replace(artifact, complete=False),
-        "mismatch": replace(artifact, product_code="IO"),
+        "operation": ExpiryUniverseOperationError("universe unavailable"),
+        "partial": damaged_result(artifact, complete=False),
+        "mismatch": damaged_result(artifact, product_code="IO"),
         "invalid": object(),
     }.get(failure)
 
-    def factory() -> ExpiryUniverseService:
+    def factory() -> ExpiryUniverseResolver:
         if failure == "construction":
-            raise ObservationOperationError("construction failed")
-        return cast(ExpiryUniverseService, UniverseDouble(value))
+            raise ExpiryUniverseOperationError("construction failed")
+        return cast(ExpiryUniverseResolver, UniverseDouble(value))
 
     outcome = run(REQUEST, universe_factory=factory, chain_factory=forbidden)
     assert outcome.status == "failure"
     assert outcome.discovered_expiry_count is None and outcome.planned_observation_count is None
     assert outcome.completed_observation_count == outcome.failed_observation_count == 0
-    assert outcome.failures[0].stage == "ensure_expiry_universe"
+    assert outcome.failures[0].stage == "resolve_expiry_universe"
     assert outcome.failures[0].expiry_date is None
 
 
-def test_plan_failure_preserves_discovered_count(tmp_path: Path) -> None:
-    artifact, _ = artifacts(tmp_path)
-    u = UniverseDouble(replace(artifact, expiries=tuple(reversed(EXPIRIES))))
+@pytest.mark.parametrize(
+    "damage",
+    [
+        "unordered",
+        "duplicate",
+        "outside",
+        "timestamp",
+        "mutable_dates",
+        "schema",
+        "scope",
+        "window",
+        "coverage",
+        "zero_units",
+        "upstream_context",
+    ],
+)
+def test_invalid_resolver_results_stop_before_planning(tmp_path: Path, damage: str) -> None:
+    result, _ = artifacts(tmp_path)
+    context = result.provenance
+    if damage == "unordered":
+        result = damaged_result(result, expiries=tuple(reversed(EXPIRIES)))
+    elif damage == "duplicate":
+        result = damaged_result(result, expiries=(EXPIRIES[0], EXPIRIES[0]))
+    elif damage == "outside":
+        result = damaged_result(result, expiries=(date(2025, 9, 30),))
+    elif damage == "timestamp":
+        result = damaged_result(result, expiries=(datetime(2025, 10, 23),))
+    elif damage == "mutable_dates":
+        result = damaged_result(result, expiries=list(EXPIRIES))
+    else:
+        if damage == "schema":
+            context = replace(context, export_schema_version=1)
+        elif damage == "scope":
+            context = replace(context, scope=replace(context.scope, product_codes=("IO",)))
+        elif damage == "window":
+            context = replace(context, window=replace(context.window, end_date=START))
+        elif damage == "coverage":
+            context = replace(context, coverage=replace(context.coverage, missing_units=1))
+        elif damage == "zero_units":
+            context = replace(
+                context, coverage=replace(context.coverage, requested_units=0, successful_units=0)
+            )
+        else:
+            from observation_support import coverage
+
+            context = replace(context, coverage=coverage(1))
+        result = damaged_result(result, provenance=context)
+    u = UniverseDouble(result)
     outcome = run(
-        REQUEST, universe_factory=lambda: cast(ExpiryUniverseService, u), chain_factory=forbidden
+        REQUEST, universe_factory=lambda: cast(ExpiryUniverseResolver, u), chain_factory=forbidden
+    )
+    assert outcome.status == "failure" and outcome.discovered_expiry_count is None
+    assert outcome.planned_observation_count is None
+    assert outcome.completed_observation_count == outcome.failed_observation_count == 0
+    assert outcome.failures[0].stage == "resolve_expiry_universe"
+
+
+def test_plan_failure_preserves_discovered_count(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    artifact, _ = artifacts(tmp_path)
+    from market_research.studies.cffex_option_expiry_dte_collection import study
+
+    def fail_plan(*args: Any) -> Any:
+        raise ValueError("controlled plan construction failure")
+
+    monkeypatch.setattr(study, "ExpiryDteChainRequest", fail_plan)
+    monkeypatch.setattr(CollectionRequest, "__post_init__", lambda self: None)
+    u = UniverseDouble(artifact)
+    outcome = run(
+        REQUEST, universe_factory=lambda: cast(ExpiryUniverseResolver, u), chain_factory=forbidden
     )
     assert outcome.status == "failure" and outcome.discovered_expiry_count == 3
     assert outcome.planned_observation_count is None
@@ -208,7 +283,7 @@ def test_chain_factory_failure_continues_different_requests(tmp_path: Path) -> N
         return cast(ExpiryDteChainService, c)
 
     outcome = run(
-        REQUEST, universe_factory=lambda: cast(ExpiryUniverseService, u), chain_factory=factory
+        REQUEST, universe_factory=lambda: cast(ExpiryUniverseResolver, u), chain_factory=factory
     )
     assert len(attempts) == 2
     assert [request.expiry_date for request in c.calls] == list(EXPIRIES[1:])
@@ -217,7 +292,7 @@ def test_chain_factory_failure_continues_different_requests(tmp_path: Path) -> N
 
 
 def test_interruption_propagates(tmp_path: Path) -> None:
-    def interrupt() -> ExpiryUniverseService:
+    def interrupt() -> ExpiryUniverseResolver:
         raise KeyboardInterrupt
 
     with pytest.raises(KeyboardInterrupt):
@@ -265,7 +340,7 @@ def test_invalid_study_request(values: tuple[Any, ...]) -> None:
 def test_cli_help_and_invalid_parse_zero_dependencies(
     args: list[str], monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    monkeypatch.setattr(cli, "create_universe_service", forbidden)
+    monkeypatch.setattr(cli, "create_universe_resolver", forbidden)
     monkeypatch.setattr(cli, "create_chain_service", forbidden)
     with pytest.raises(SystemExit) as exited:
         cli.main(args)
@@ -275,7 +350,7 @@ def test_cli_help_and_invalid_parse_zero_dependencies(
 def test_cli_semantic_admission_precedes_composition(
     monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
 ) -> None:
-    monkeypatch.setattr(cli, "create_universe_service", forbidden)
+    monkeypatch.setattr(cli, "create_universe_resolver", forbidden)
     monkeypatch.setattr(cli, "create_chain_service", forbidden)
     assert cli.main(["--product-code", "mo", *ARGS[2:]]) == 2
     assert "invalid Study request" in capsys.readouterr().err
@@ -288,14 +363,14 @@ def test_cli_presentation_exit_codes_and_no_output_files(
     artifact, values = artifacts(tmp_path, () if kind == "empty" else EXPIRIES)
     before = {path for path in tmp_path.rglob("*")}
     u = UniverseDouble(
-        ObservationOperationError("universe unavailable")
+        ExpiryUniverseOperationError("universe unavailable")
         if kind == "universe_failure"
         else artifact
     )
     if kind == "chain_failure":
         values[EXPIRIES[0]] = ObservationOperationError("chain unavailable")
     c = ChainDouble(values)
-    monkeypatch.setattr(cli, "create_universe_service", lambda: u)
+    monkeypatch.setattr(cli, "create_universe_resolver", lambda: u)
     monkeypatch.setattr(cli, "create_chain_service", forbidden if kind == "empty" else lambda: c)
     monkeypatch.chdir(tmp_path)
     code = cli.main(ARGS)
@@ -306,7 +381,7 @@ def test_cli_presentation_exit_codes_and_no_output_files(
     if kind == "universe_failure":
         assert "discovered_expiry_count=unavailable" in text
         assert "planned_observation_count=unavailable" in text
-        assert "stage=ensure_expiry_universe" in text
+        assert "stage=resolve_expiry_universe" in text
     if kind == "chain_failure":
         assert "expiry_date=2025-10-23" in text and "failed_observation_count=1" in text
     assert "Traceback" not in text and "contract_code" not in text
@@ -314,7 +389,7 @@ def test_cli_presentation_exit_codes_and_no_output_files(
 
 
 @pytest.mark.parametrize("stage", ["universe", "calendar", "options"])
-def test_real_observation_failure_details_reach_study_cli(
+def test_real_producer_failure_details_reach_study_cli(
     tmp_path: Path, stage: str, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
 ) -> None:
     ideals = tuple(expiry - timedelta(days=14) for expiry in EXPIRIES)
@@ -347,9 +422,7 @@ def test_real_observation_failure_details_reach_study_cli(
             fail(result) if facts.calls[-1][1].start_date == ideals[0] else result
         )
     universe_path, chain_path = tmp_path / "u.sqlite3", tmp_path / "c.sqlite3"
-    monkeypatch.setattr(
-        cli, "create_universe_service", lambda: make_universe(universe_path, discovery)
-    )
+    monkeypatch.setattr(cli, "create_universe_resolver", lambda: make_resolver(discovery))
     monkeypatch.setattr(
         cli,
         "create_chain_service",
@@ -365,7 +438,7 @@ def test_real_observation_failure_details_reach_study_cli(
     assert "attempted_units=1 succeeded_units=0 failed_units=1" in text
     assert "status=failure" in text and "Traceback" not in text + captured.err
     if stage == "universe":
-        assert "stage=ensure_expiry_universe" in text
+        assert "stage=resolve_expiry_universe" in text
         assert "discovered_expiry_count=unavailable" in text
         assert "completed_observation_count=0" in text
         assert "failed_observation_count=0" in text
@@ -379,9 +452,7 @@ def test_real_observation_failure_details_reach_study_cli(
             request.end_date for operation, request in dates.calls if operation == "export"
         )
         assert exported_ends == (
-            (ideals[0], ideals[1], ideals[1], ideals[2])
-            if stage == "calendar"
-            else ideals
+            (ideals[0], ideals[1], ideals[1], ideals[2]) if stage == "calendar" else ideals
         )
         assert all(request.start_date in ideals for _, request in facts.calls)
         retained = ExpiryDteChainService(
@@ -391,15 +462,15 @@ def test_real_observation_failure_details_reach_study_cli(
             assert retained.ensure(ExpiryDteChainRequest("MO", expiry, 15)).complete
         with pytest.raises(pytest.fail.Exception, match="unneeded dependency"):
             retained.ensure(ExpiryDteChainRequest("MO", EXPIRIES[0], 15))
-    assert {path.name for path in tmp_path.iterdir()} <= {"u.sqlite3", "c.sqlite3"}
+    assert {path.name for path in tmp_path.iterdir()} <= {"c.sqlite3"}
 
 
-def test_study_source_only_consumes_public_observation_values() -> None:
+def test_study_source_only_consumes_public_research_values() -> None:
     source = ROOT / "market-research/src/market_research/studies/cffex_option_expiry_dte_collection"
     assert {path.name for path in source.glob("*.py")} == {"__init__.py", "cli.py", "study.py"}
     allowed = {
         "market_research.observations",
-        "market_research.observations.cffex_option_expiry_universe",
+        "market_research.shared.cffex_option_expiry_universe",
         "market_research.observations.cffex_option_expiry_dte_chain",
     }
     forbidden_roots = {"data_lake", "market_snapshot", "sqlite3", "tushare", "pathlib", "json"}
@@ -415,7 +486,7 @@ def test_study_source_only_consumes_public_observation_values() -> None:
             )
             for name in names:
                 assert name.split(".")[0] not in forbidden_roots
-                if name.startswith("market_research.observations"):
+                if name.startswith(("market_research.observations", "market_research.shared")):
                     assert name in allowed
         text = path.read_text(encoding="utf-8")
         assert not any(

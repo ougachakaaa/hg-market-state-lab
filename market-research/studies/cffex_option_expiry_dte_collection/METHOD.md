@@ -9,7 +9,7 @@
 | expiry_universe：resolve observed expiry dates | [Shared resolver entry](../../shared/cffex_option_expiry_universe/ARCHITECTURE.md) / [I/O contract](../../shared/cffex_option_expiry_universe/CONTRACT.md) | Inputs.product_code、expiry_start_date、expiry_end_date 原样绑定同名 inputs；取得对应请求的 complete component result，无 Observation business key / Artifact identity / durable publication。 |
 | expiry_chains：每个 planned expiry 的 retained chain | [Chain entry](../../observations/cffex_option_expiry_dte_chain/ARCHITECTURE.md) / [Artifact](../../observations/cffex_option_expiry_dte_chain/ARTIFACT.md) / [public implementation](../../observations/cffex_option_expiry_dte_chain/IMPLEMENTATION.md) | Inputs.product_code、runtime plan expiry_date、Inputs.target_dte → ExpiryDteChainRequest 同名字段；Artifact identity 为 Observation identity + 三个 business inputs。 |
 
-Only Study orchestration 调用 resolver public I/O / chain public ensure，分别取得 complete result / durable Artifact。不经 CLI JSON、DataLake / Snapshot、SQLite 或旧 Study output 获取事实，不接管 derivation。Contracts complete；现有 wiring 仍为旧 Universe Observation，见 [当前 reconciliation](../../IMPLEMENTATION_RECONCILIATION.md#shared-component-semantic-reconciliation)。
+Only Study orchestration 调用 resolver public I/O / chain public ensure，分别取得 complete result / durable Artifact。不经 CLI JSON、DataLake / Snapshot、SQLite 或旧 Study output 获取事实，不接管 derivation。Contracts complete；现有 wiring 已 reconciliation 为 resolver + chain Observation，见 [当前验证](../../IMPLEMENTATION_RECONCILIATION.md#shared-component-runtime-reconciliation)。
 
 ## Canonical workflow steps
 

@@ -1,12 +1,12 @@
 # Expiry DTE Collection implementation handoff
 
-本文件把 [Study entry](ARCHITECTURE.md)、[INPUTS](INPUTS.md)、[METHOD](METHOD.md) 与 [RESULTS](RESULTS.md) 映射为 Python / CLI responsibilities，继承 [Study Package Contract](../IMPLEMENTATION.md) 与 [Research UI](../../ui/ARCHITECTURE.md)。四份 authority 唯一拥有业务语义；resolver I/O / failure 归 [Universe CONTRACT](../../shared/cffex_option_expiry_universe/CONTRACT.md)。当前代码仍有 [implementation gaps](../../IMPLEMENTATION_RECONCILIATION.md#shared-component-semantic-reconciliation)。
+本文件把 [Study entry](ARCHITECTURE.md)、[INPUTS](INPUTS.md)、[METHOD](METHOD.md) 与 [RESULTS](RESULTS.md) 映射为 Python / CLI responsibilities，继承 [Study Package Contract](../IMPLEMENTATION.md) 与 [Research UI](../../ui/ARCHITECTURE.md)。四份 authority 唯一拥有业务语义；resolver I/O / failure 归 [Universe CONTRACT](../../shared/cffex_option_expiry_universe/CONTRACT.md)。当前 mapping / wiring 验证见 [implementation reconciliation](../../IMPLEMENTATION_RECONCILIATION.md#shared-component-runtime-reconciliation)。
 
 ## Package 与 typed runtime boundary
 
 Study source 仍为 `market-research/src/market_research/studies/cffex_option_expiry_dte_collection/`，mandatory __init__.py / cli.py / study.py。Init docstring 指向 Study entry，intentional re-exports 使用 explicit redundant aliases，不用 __all__。无 observations.py / analyses.py / evidence.py / artifacts.py 占位。
 
-Study 接收 typed request 与显式 resolver / chain collaborators，返回 typed immutable non-persistent outcome。Resolver public Python carrier / operation spelling 和 source layout 留给下一轮实现选择，不沿用旧 Observation namespace / ensure / Artifact / error family 作为新 canonical contract，不为本轮创建目录或框架。该选择是 mechanics，无待决研究含义。
+Study 接收 typed request 与显式 resolver / chain collaborators，返回 typed immutable non-persistent outcome。Resolver 使用 `market_research.shared.cffex_option_expiry_universe` 的 ExpiryUniverseRequest / ExpiryUniverseResult / ExpiryUniverseResolver / create_resolver，public operation 为 resolve，own failure family 见 [component Python mapping](../../shared/cffex_option_expiry_universe/IMPLEMENTATION.md)。该 mapping 不引入新研究语义。
 
 | Value / path | Python mapping |
 | --- | --- |
@@ -40,7 +40,7 @@ Stable flags 继承 INPUTS，lab discovery / forwarding 无变化。--help 零 w
 
 Runner 不调用 load_config、canonical_run_directory 或 execute_run，不读 output.root、不创建 run output；无 output / database / sqlite-path / resume / overwrite flags。Resolver 经 DataLake public ensure 使用 Dataset cache；只有 chain research SQLite 由 Observation factory 管理。
 
-## Acceptance、readiness 与下一轮
+## Acceptance 与 readiness
 
 - Mandatory package / pointer、Component + Observation public-only imports；无 direct DataLake / Snapshot / provider / persistence 或第二 empirical cache。
 - 四必填 flags / strict parsing，invalid request / --help 零 operations，无 output config / directory。
@@ -50,4 +50,4 @@ Runner 不调用 load_config、canonical_run_directory 或 execute_run，不读 
 - Controlled E2E：相同 request 再运行仍调用 resolver，Dataset ensure 自己复用 cache；已有 chain complete-hit 零上游、跨 service / process recreation reuse。只产生 chain Observation research SQLite，无 Universe research SQLite / Study retained files。不能以第二次禁用全部 upstream factories 的旧 E2E 验收新流程。
 - Component boundary / Study wiring / stage / tests 与 source pointers 同步 reconciliation；保留 chain durable / completeness acceptance。
 
-Study Authority Complete / Research dependency contracts complete / Study implementation architecture complete，设计 **Implementation Ready**。Runtime 新语义 **Not Reconciled**；现有 CLI 是旧 wiring，历史通过不能证明新 resolver 已实施。本轮不改 Python / tests / state。下一轮可按已锁定 contract 独立实施 resolver → Study wiring / focused acceptance；状态处置限制进入 reconciliation。
+Study Authority Complete / Research dependency contracts complete / Study implementation architecture complete，设计 **Implementation Ready**。Runtime 新语义 **Dependency Reconciled / Implemented / Verified**；CLI 使用 resolver wiring，当前 unit / topology / runtime / fresh-process controlled E2E 见 reconciliation。历史通过不替代当前验收；旧 SQLite 状态不读取、不迁移、不删除。

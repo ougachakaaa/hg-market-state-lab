@@ -195,6 +195,10 @@ def validate_options_export(view: OptionsDailyExport, product: str, start: date,
         keys.append((row.product_code, row.trade_date, row.contract_code))
     require(keys == sorted(set(keys)), "Unordered / duplicate Options public rows")
     require(view.coverage.successful_units > 0 or not keys, "Rows without successful units")
+    require(
+        len({key[:2] for key in keys}) <= view.coverage.successful_units,
+        "Options row product-days exceed successful units",
+    )
 
 
 def options_provenance(view: OptionsDailyExport) -> OptionsProvenance:

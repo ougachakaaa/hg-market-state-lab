@@ -1,4 +1,4 @@
-"""Observation producer acceptance through owned SQLite and public dependency doubles."""
+"""Resolver and chain acceptance through controlled public Dataset dependencies."""
 
 import json
 import sqlite3
@@ -20,7 +20,7 @@ from market_research.observations import (
     ObservationOperationError,
 )
 from market_research.observations import cffex_option_expiry_dte_chain as chain
-from market_research.observations import cffex_option_expiry_universe as universe
+from market_research.shared import cffex_option_expiry_universe as universe
 from observation_support import CalendarDouble, OptionsDouble, coverage, row
 
 EXPIRY = date(2025, 10, 23)
@@ -33,9 +33,8 @@ def unavailable() -> Any:
     pytest.fail("retained hit must not construct / call upstream")
 
 
-def make_universe(path: Path, dependency: OptionsDouble) -> universe.ExpiryUniverseService:
-    return universe.ExpiryUniverseService(
-        _path=path,
+def make_resolver(dependency: OptionsDouble) -> universe.ExpiryUniverseResolver:
+    return universe.ExpiryUniverseResolver(
         _options_factory=lambda: cast(options.OptionsDailyService, dependency),
     )
 
@@ -125,9 +124,11 @@ def test_ensure_diagnostics_preserve_context_without_publishing_or_fallback(
     else:
         facts.ensure_hook = fail
     path = tmp_path / "artifact.sqlite3"
-    with pytest.raises(ObservationOperationError) as raised:
+    with pytest.raises(
+        universe.ExpiryUniverseOperationError if stage == "universe" else ObservationOperationError
+    ) as raised:
         if stage == "universe":
-            make_universe(path, facts).ensure(universe.ExpiryUniverseRequest("MO", START, END))
+            make_resolver(facts).resolve(universe.ExpiryUniverseRequest("MO", START, END))
         else:
             make_chain(path, facts, dates).ensure(chain.ExpiryDteChainRequest("MO", EXPIRY, 15))
     message = str(raised.value)
@@ -181,10 +182,12 @@ def test_ensure_diagnostics_keep_all_failures_in_upstream_order(tmp_path: Path, 
     facts = OptionsDouble((previous, IDEAL))
     dates = CalendarDouble((previous, IDEAL), complete=False)
     path = tmp_path / "artifact.sqlite3"
-    with pytest.raises(ObservationOperationError) as raised:
+    with pytest.raises(
+        universe.ExpiryUniverseOperationError if stage == "universe" else ObservationOperationError
+    ) as raised:
         if stage == "universe":
             facts.ensure_hook = fail
-            make_universe(path, facts).ensure(universe.ExpiryUniverseRequest("MO", START, END))
+            make_resolver(facts).resolve(universe.ExpiryUniverseRequest("MO", START, END))
         else:
             dates.ensure_hook = fail
             make_chain(path, facts, dates).ensure(chain.ExpiryDteChainRequest("MO", EXPIRY, 15))
@@ -199,7 +202,7 @@ def test_ensure_diagnostics_keep_all_failures_in_upstream_order(tmp_path: Path, 
 def test_public_facades_and_factory_without_upstream(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(options, "create_service", unavailable)
     monkeypatch.setattr(calendar, "create_service", unavailable)
-    assert isinstance(universe.create_service(), universe.ExpiryUniverseService)
+    assert isinstance(universe.create_resolver(), universe.ExpiryUniverseResolver)
     assert isinstance(chain.create_service(), chain.ExpiryDteChainService)
     assert issubclass(ObservationInvalidRequestError, ObservationError)
     assert issubclass(ObservationOperationError, ObservationError)
@@ -219,7 +222,7 @@ def test_public_facades_and_factory_without_upstream(monkeypatch: pytest.MonkeyP
     ],
 )
 def test_universe_rejects_invalid_requests(values: tuple[Any, ...]) -> None:
-    with pytest.raises(ObservationInvalidRequestError):
+    with pytest.raises(universe.ExpiryUniverseInvalidRequestError):
         universe.ExpiryUniverseRequest(*values)
 
 
@@ -246,7 +249,6 @@ def test_invalid_ensure_precedes_lookup_and_dependencies(tmp_path: Path) -> None
     path = tmp_path / "corrupt.sqlite3"
     path.write_text("corrupt", encoding="utf-8")
     for service in (
-        universe.ExpiryUniverseService(_path=path, _options_factory=unavailable),
         chain.ExpiryDteChainService(
             _path=path, _options_factory=unavailable, _calendar_factory=unavailable
         ),
@@ -255,7 +257,7 @@ def test_invalid_ensure_precedes_lookup_and_dependencies(tmp_path: Path) -> None
             service.ensure(cast(Any, object()))
 
 
-def test_universe_semantics_durable_reuse_multiple_requests(tmp_path: Path) -> None:
+def test_universe_semantics_repeated_resolve_without_retention(tmp_path: Path) -> None:
     before, after = START.replace(month=9), END.replace(month=11, day=30)
     values = (
         row(END, IDEAL, strike=8500),
@@ -268,8 +270,8 @@ def test_universe_semantics_durable_reuse_multiple_requests(tmp_path: Path) -> N
     dependency = OptionsDouble((START, IDEAL), values)
     path = tmp_path / "universe.sqlite3"
     request = universe.ExpiryUniverseRequest("MO", START, END)
-    first_service = make_universe(path, dependency)
-    first = first_service.ensure(request)
+    first_service = make_resolver(dependency)
+    first = first_service.resolve(request)
     assert first.expiries == (START, EXPIRY, END)
     assert [operation for operation, _ in dependency.calls] == ["ensure", "export"]
     assert (
@@ -285,21 +287,17 @@ def test_universe_semantics_durable_reuse_multiple_requests(tmp_path: Path) -> N
     assert first.provenance.window.start_date == START
     with pytest.raises(FrozenInstanceError):
         first.product_code = "IO"  # type: ignore[misc]
-    with sqlite3.connect(path) as db:
-        assert db.execute("SELECT count(*) FROM artifacts").fetchone()[0] == 1
+    assert not path.exists()
+    assert first_service.resolve(request) == first
     del first_service
-    recreated = universe.ExpiryUniverseService(_path=path, _options_factory=unavailable)
-    assert recreated.ensure(request) == first
-    assert len(dependency.calls) == 2
-    other = universe.ExpiryUniverseRequest("MO", IDEAL, IDEAL)
-    make_universe(path, dependency).ensure(other)
-    with sqlite3.connect(path) as db:
-        assert db.execute("SELECT count(*) FROM artifacts").fetchone()[0] == 2
+    assert make_resolver(dependency).resolve(request) == first
+    assert [op for op, _ in dependency.calls] == ["ensure", "export"] * 3
+    assert not path.exists()
 
 
 @pytest.mark.parametrize("opens", [(), (IDEAL,)])
 def test_universe_complete_empty(tmp_path: Path, opens: tuple[date, ...]) -> None:
-    result = make_universe(tmp_path / "u.sqlite3", OptionsDouble(opens)).ensure(
+    result = make_resolver(OptionsDouble(opens)).resolve(
         universe.ExpiryUniverseRequest("MO", START, END),
     )
     assert result.complete is True and result.expiries == ()
@@ -316,10 +314,11 @@ def test_universe_complete_empty(tmp_path: Path, opens: tuple[date, ...]) -> Non
         "bad_window",
         "bad_counters",
         "bad_row",
+        "bad_row_units",
         "operation",
     ],
 )
-def test_universe_failure_never_publishes(tmp_path: Path, kind: str) -> None:
+def test_universe_failure_never_returns_partial_result(tmp_path: Path, kind: str) -> None:
     dependency = OptionsDouble((IDEAL,), (row(EXPIRY, IDEAL),))
     if kind == "incomplete":
         dependency.ensure_hook = lambda result: replace(result, complete=False)
@@ -345,6 +344,10 @@ def test_universe_failure_never_publishes(tmp_path: Path, kind: str) -> None:
         dependency.export_hook = lambda view: replace(
             view, records=(replace(view.records[0], close=float("nan")),)
         )
+    elif kind == "bad_row_units":
+        dependency.export_hook = lambda view: replace(
+            view, records=(row(EXPIRY, START), *view.records)
+        )
     else:
 
         def fail(result: Any) -> Any:
@@ -352,8 +355,8 @@ def test_universe_failure_never_publishes(tmp_path: Path, kind: str) -> None:
 
         dependency.ensure_hook = fail
     path = tmp_path / "u.sqlite3"
-    with pytest.raises(ObservationOperationError):
-        make_universe(path, dependency).ensure(universe.ExpiryUniverseRequest("MO", START, END))
+    with pytest.raises(universe.ExpiryUniverseOperationError):
+        make_resolver(dependency).resolve(universe.ExpiryUniverseRequest("MO", START, END))
     assert not path.exists()
 
 
@@ -541,29 +544,18 @@ def test_chain_unrepresentable_date_or_exhausted_history(
     assert not facts.calls
 
 
-@pytest.mark.parametrize("producer", ["universe", "chain"])
 @pytest.mark.parametrize("damage", ["corrupt", "version", "payload", "partial", "publication"])
 def test_persistence_failure_is_not_a_hit_or_silent_miss(
-    tmp_path: Path, producer: str, damage: str, monkeypatch: pytest.MonkeyPatch
+    tmp_path: Path, damage: str, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     path = tmp_path / "owned.sqlite3"
     facts, dates = OptionsDouble((IDEAL,), (row(EXPIRY, IDEAL),)), CalendarDouble((IDEAL,))
-    if producer == "universe":
-        service: Any = make_universe(path, facts)
-        request: Any = universe.ExpiryUniverseRequest("MO", START, END)
-        from market_research.observations.cffex_option_expiry_universe import (
-            _persistence as universe_storage,
-        )
+    service = make_chain(path, facts, dates)
+    request = chain.ExpiryDteChainRequest("MO", EXPIRY, 15)
+    from market_research.observations.cffex_option_expiry_dte_chain import (
+        _persistence as storage,
+    )
 
-        storage: Any = universe_storage
-    else:
-        service = make_chain(path, facts, dates)
-        request = chain.ExpiryDteChainRequest("MO", EXPIRY, 15)
-        from market_research.observations.cffex_option_expiry_dte_chain import (
-            _persistence as chain_storage,
-        )
-
-        storage = chain_storage
     if damage == "publication":
 
         def fail(*args: Any) -> Any:
@@ -594,8 +586,7 @@ def test_persistence_failure_is_not_a_hit_or_silent_miss(
     assert not facts.calls and not dates.calls
 
 
-@pytest.mark.parametrize("producer", ["universe", "chain"])
-def test_concurrent_misses_publish_one_logical_artifact(tmp_path: Path, producer: str) -> None:
+def test_concurrent_misses_publish_one_logical_artifact(tmp_path: Path) -> None:
     path = tmp_path / "owned.sqlite3"
     barrier = Barrier(2)
 
@@ -607,10 +598,6 @@ def test_concurrent_misses_publish_one_logical_artifact(tmp_path: Path, producer
             return view
 
         facts.export_hook = synchronize
-        if producer == "universe":
-            return make_universe(path, facts).ensure(
-                universe.ExpiryUniverseRequest("MO", START, END)
-            )
         return make_chain(path, facts, CalendarDouble((IDEAL,))).ensure(
             chain.ExpiryDteChainRequest("MO", EXPIRY, 15),
         )
@@ -622,21 +609,14 @@ def test_concurrent_misses_publish_one_logical_artifact(tmp_path: Path, producer
         assert db.execute("SELECT count(*) FROM artifacts").fetchone()[0] == 1
 
 
-@pytest.mark.parametrize("producer", ["universe", "chain"])
 def test_sqlite_insert_abort_is_atomic_and_failed_request_can_be_ensured_later(
     tmp_path: Path,
-    producer: str,
 ) -> None:
     path = tmp_path / "owned.sqlite3"
     facts = OptionsDouble((IDEAL,), (row(EXPIRY, IDEAL),))
-    if producer == "universe":
-        service: Any = make_universe(path, facts)
-        first: Any = universe.ExpiryUniverseRequest("MO", START, END)
-        second: Any = universe.ExpiryUniverseRequest("MO", IDEAL, END)
-    else:
-        service = make_chain(path, facts, CalendarDouble((IDEAL,)))
-        first = chain.ExpiryDteChainRequest("MO", EXPIRY, 15)
-        second = chain.ExpiryDteChainRequest("MO", EXPIRY, 14)
+    service = make_chain(path, facts, CalendarDouble((IDEAL,)))
+    first = chain.ExpiryDteChainRequest("MO", EXPIRY, 15)
+    second = chain.ExpiryDteChainRequest("MO", EXPIRY, 14)
     retained = service.ensure(first)
     with sqlite3.connect(path) as db:
         db.execute("""CREATE TRIGGER reject_publication BEFORE INSERT ON artifacts
@@ -652,8 +632,7 @@ def test_sqlite_insert_abort_is_atomic_and_failed_request_can_be_ensured_later(
         assert db.execute("SELECT count(*) FROM artifacts").fetchone()[0] == 2
 
 
-@pytest.mark.parametrize("producer", ["universe", "chain"])
-def test_interrupted_upstream_never_publishes(tmp_path: Path, producer: str) -> None:
+def test_interrupted_upstream_never_publishes(tmp_path: Path) -> None:
     path = tmp_path / "owned.sqlite3"
     facts = OptionsDouble((IDEAL,), (row(EXPIRY, IDEAL),))
 
@@ -662,28 +641,20 @@ def test_interrupted_upstream_never_publishes(tmp_path: Path, producer: str) -> 
 
     facts.export_hook = interrupt
     with pytest.raises(KeyboardInterrupt):
-        if producer == "universe":
-            make_universe(path, facts).ensure(universe.ExpiryUniverseRequest("MO", START, END))
-        else:
-            make_chain(path, facts, CalendarDouble((IDEAL,))).ensure(
-                chain.ExpiryDteChainRequest("MO", EXPIRY, 15),
-            )
+        make_chain(path, facts, CalendarDouble((IDEAL,))).ensure(
+            chain.ExpiryDteChainRequest("MO", EXPIRY, 15),
+        )
     assert not path.exists()
 
 
-@pytest.mark.parametrize("producer", ["universe", "chain"])
 def test_factory_construction_error_is_public_operation_failure(
-    producer: str,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     import importlib
 
-    name = (
-        "cffex_option_expiry_universe"
-        if producer == "universe"
-        else "cffex_option_expiry_dte_chain"
+    module = importlib.import_module(
+        "market_research.observations.cffex_option_expiry_dte_chain._service"
     )
-    module = importlib.import_module(f"market_research.observations.{name}._service")
 
     def fail(*args: Any) -> Any:
         raise OSError("owned path unavailable")

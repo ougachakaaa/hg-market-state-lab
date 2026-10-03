@@ -65,4 +65,4 @@ Result 无 observation_identity / semantic artifact identity，不复制 daily r
 | consumer / dependency boundary | Study / Observation 可显式调用；Analysis 无事实读取；无 provider / upstream private access / CLI JSON；result 为 owned public values。 |
 | implementation / state | 撤销 Universe Observation public lifecycle 和新 research persistence，保留 chain Observation；现有 state 不在本轮迁移、删除或重算。 |
 
-Contract complete，已选 DataLake capability sufficient；resolver runtime mapping / wiring / tests 仍需下一轮 reconciliation，不能引用旧 durable-reuse tests 宣称本 component 已实现。具体范围见 [reconciliation](../../IMPLEMENTATION_RECONCILIATION.md#shared-component-semantic-reconciliation)。
+Contract complete，已选 DataLake capability sufficient；resolver runtime mapping 见 [IMPLEMENTATION](IMPLEMENTATION.md)；wiring / tests 已 reconciliation，当前验收见 [reconciliation](../../IMPLEMENTATION_RECONCILIATION.md#shared-component-runtime-reconciliation)，不以旧 durable-reuse tests 验收本 component。

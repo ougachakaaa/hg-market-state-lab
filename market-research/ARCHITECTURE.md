@@ -86,7 +86,7 @@ shared 拥有跨研究明确复用的窄领域机制；resolver / reader 可以�
 
 `observations` 拥有最小独立 empirical research semantics 与持久化 Artifact，输出值得 Analysis / Study 独立消费和解释，独立于 Study 生命周期。可调用 shared component / 包含 local logic；复用本身不足以成为 Observation。稳定 contract 从 [Observation architecture](observations/ARCHITECTURE.md) → [Public upstream policy](UPSTREAM.md) 进入，再读 [Schema](observations/SCHEMA.md) / [Authoring](observations/AUTHORING.md) 与实际 concrete entry。本模块不拥有 concrete business key、population、grain、formula、Artifact schema 或 SQLite schema。
 
-当前 concrete Observation 为 [cffex_option_expiry_dte_chain](observations/cffex_option_expiry_dte_chain/ARCHITECTURE.md)。Runnable contract 进入 [Observation IMPLEMENTATION](observations/IMPLEMENTATION.md) 与其 concrete handoff。Universe 已改为 shared resolver；现有 runtime / test drift 进入 [reconciliation](IMPLEMENTATION_RECONCILIATION.md#shared-component-semantic-reconciliation)，不以旧验收宣称新定位已实施。
+当前 concrete Observation 为 [cffex_option_expiry_dte_chain](observations/cffex_option_expiry_dte_chain/ARCHITECTURE.md)。Runnable contract 进入 [Observation IMPLEMENTATION](observations/IMPLEMENTATION.md) 与其 concrete handoff。Universe 已改为 shared resolver；新的 resolver / Study runtime 已 reconciliation；当前验证见 [reconciliation](IMPLEMENTATION_RECONCILIATION.md#shared-component-runtime-reconciliation)。
 
 ### Study
 
@@ -100,7 +100,7 @@ Runnable topology 由 [Implementation Package Contract](studies/IMPLEMENTATION.m
 
 Legacy Study-local Observations、旧 evidence 与 historical shared dependencies 按 [Compatibility](studies/COMPATIBILITY.md) 保持有效；新 framework 不自动迁移它们。仅 human-triggered concrete reconciliation 才迁入 Observation-first。历史 shared owners 的适用范围仍沿 Compatibility 或相关 legacy authority 进入；新 component 分类从 shared authority 进入，不自动加载 historical semantics。
 
-当前 [cffex_option_expiry_dte_collection Study](studies/cffex_option_expiry_dte_collection/ARCHITECTURE.md) 组合 Universe component 与 chain Observation；具体 objective、bindings、workflow、outcome 与 handoff 由该 Study authority 拥有。当前 runtime drift 见 [reconciliation](IMPLEMENTATION_RECONCILIATION.md#shared-component-semantic-reconciliation)，readiness 定义见 [Authoring](studies/AUTHORING.md#publication-与-dependency-handoff)。
+当前 [cffex_option_expiry_dte_collection Study](studies/cffex_option_expiry_dte_collection/ARCHITECTURE.md) 组合 Universe component 与 chain Observation；具体 objective、bindings、workflow、outcome 与 handoff 由该 Study authority 拥有。当前 runtime 验证见 [reconciliation](IMPLEMENTATION_RECONCILIATION.md#shared-component-runtime-reconciliation)，readiness 定义见 [Authoring](studies/AUTHORING.md#publication-与-dependency-handoff)。
 
 ## 6. Research 与 Modeling
 
@@ -130,4 +130,4 @@ repository ARCHITECTURE.md
 
 本文件只拥有稳定 module identity / boundaries、依赖方向、用途分工、visualization ownership 与导航；Component I/O / upstream bindings 留在具体 component owner；Observation lifecycle / identity / persistence contract 留在 Observation owner，concrete shape 留在其具体 authority；Study framework、UI details 与当前实现差异各由 specialized owner 定义。
 
-[Implementation reconciliation](IMPLEMENTATION_RECONCILIATION.md) 记录本次 authority-only 更新的基线、验证与 remaining drift，不取代 semantic authority。只有 module 定位、跨模块边界、内部用途分工或导航变化时更新本文件；不得上提具体 Observation / Study schema、formula、workflow 或 implementation contract。
+[Implementation reconciliation](IMPLEMENTATION_RECONCILIATION.md) 记录历次 authority / implementation 更新的基线、当前验证与 remaining gaps，不取代 semantic authority。只有 module 定位、跨模块边界、内部用途分工或导航变化时更新本文件；不得上提具体 Observation / Study schema、formula、workflow 或 implementation contract。

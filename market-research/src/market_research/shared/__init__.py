@@ -1,1 +1,1 @@
-"""Narrow semantics shared by real retained studies."""
+"""Narrow Research components; canonical authority: shared/ARCHITECTURE.md."""
