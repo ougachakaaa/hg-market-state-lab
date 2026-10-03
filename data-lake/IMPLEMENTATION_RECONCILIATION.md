@@ -17,12 +17,14 @@ Generation 2 dual-read、2 → 3 automatic upgrade、migration backup 与 transa
 本轮审查发现的 implementation gaps：
 
 - **已关闭：Futures / Options catalog classification。** 排除 metadata 前核对完整 identity / product evidence；冲突按所有候选产品失败，无法归属且不能证明 unrelated 时按 catalog failure 处理。合法产品继续执行，不能通过排除可疑行缩小 expected universe。
-- **开放：Index duplicate failure isolation。** 可定位的重复 daily / metadata identity 被当作整批分页失败，违反 owning FACTS / SERVICE 的局部失败要求。
+- **已关闭：Index duplicate failure isolation。** 完整分页保留重复 rows；可定位的重复 daily / metadata identity 只失败对应 unit / code。重复整页或无法证明穷尽的响应仍失败整批，不静默去重。
 - **开放：Provider dispatch 限流。** 放行时间与实际发送分离，日志或线程延迟可能使实际 request starts 小于 TUSHARE authority 的 minimum interval。
 
 ## Verification boundary
 
 Catalog classification 使用隔离 fake Source 验证 code / symbol / product / underlying 冲突、无法归属行、合法 unrelated 行及多产品失败隔离；失败产品不发布 success facts，全批 catalog failure 不发起 daily requests。
+
+Index 使用隔离 fake Source 验证同页及不同非重复页的 duplicate、混合合法日期与 metadata codes、原始 row-count offset、重复整页拒绝及失败 metadata 不重复请求。局部 failures 与合法 success 的 accounting / export 保持一致。
 
 隔离临时 fixture 验证 generation 2、未知 generation、identity / shape 不兼容、旧 basis representation 与非法 SQLite 在以下路径明确失败：
 

@@ -87,17 +87,19 @@ def exhaust(executor: Executor, endpoint: str, **params: object) -> list[dict[st
     # Continue even after a short page. Empty terminal page proves exhaustion;
     # Repeated pages detect non-progress; Dataset reconciliation detects duplicates.
     result: list[dict[str, Any]] = []
-    seen: set[object] = set()
+    seen_pages: set[str] = set()
     for _ in range(10000):
         page = rows(executor.call(endpoint, offset=len(result), limit=4000, **params))
         if not page:
             return result
+        signature = repr(page)
+        if signature in seen_pages:
+            fail("Source pagination repeated a page; exhaustion cannot be proven")
+        seen_pages.add(signature)
         for row in page:
-            code = text(row.get("ts_code"))
-            key = (code, text(row.get("trade_date"))) if endpoint == "index_daily" else code
-            if key in seen:
-                fail("Catalog/daily pagination contains duplicate identity or ignored offset")
-            seen.add(key)
+            text(row.get("ts_code"))
+            if endpoint == "index_daily":
+                text(row.get("trade_date"))
         result.extend(page)
     return fail("Source exhaustion could not be proven")
 

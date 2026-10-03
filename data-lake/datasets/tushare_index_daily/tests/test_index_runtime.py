@@ -402,6 +402,92 @@ def test_batched_metadata_preserves_code_failures_and_never_requeries_batch(setu
     assert len(executor.calls) == count
 
 
+@pytest.mark.parametrize("separate_pages", [False, True])
+def test_duplicate_daily_isolated_after_exhaustion(
+    setup: Any, monkeypatch: pytest.MonkeyPatch, separate_pages: bool
+) -> None:
+    service, _, executor, _ = setup
+    bad = executor.daily[0]
+    good = dict(bad, trade_date="20240103")
+    records = [bad, good, deepcopy(bad)]
+    original = executor.call
+
+    def call(endpoint: str, **params: Any) -> Frame:
+        if endpoint != "index_daily":
+            return original(endpoint, **params)
+        executor.calls.append((endpoint, params))
+        offset = params["offset"]
+        return Frame(records[offset : offset + (2 if separate_pages else 4000)])
+
+    monkeypatch.setattr(executor, "call", call)
+    result = service.ensure(public.IndexDailyRange(["000300.SH"], DAY, DAY + timedelta(days=1)))
+    assert (result.attempted_units, result.succeeded_units, result.failed_units) == (2, 1, 1)
+    assert result.records_written == 1
+    assert [failure.identity for failure in result.failures] == [("000300.SH", DAY)]
+    view = service.export(public.IndexDailyRange(["000300.SH"], DAY, DAY + timedelta(days=1)))
+    assert [row.trade_date for row in view.records] == [DAY + timedelta(days=1)]
+    offsets = [params["offset"] for endpoint, params in executor.calls if endpoint == "index_daily"]
+    assert offsets == ([0, 2, 3] if separate_pages else [0, 3])
+
+
+@pytest.mark.parametrize("separate_pages", [False, True])
+def test_duplicate_metadata_isolated_after_exhaustion(
+    setup: Any, monkeypatch: pytest.MonkeyPatch, separate_pages: bool
+) -> None:
+    service, _, executor, _ = setup
+    good, bad = "000300.SH", "000905.SH"
+    bad_meta = dict(executor.catalog[0], ts_code=bad)
+    records = [bad_meta, executor.catalog[0], deepcopy(bad_meta)]
+    original = executor.call
+
+    def call(endpoint: str, **params: Any) -> Frame:
+        if endpoint != "index_basic":
+            return original(endpoint, **params)
+        executor.calls.append((endpoint, params))
+        offset = params["offset"]
+        return Frame(
+            records[offset : offset + (2 if separate_pages else 4000)]
+            if params["market"] == "SSE"
+            else []
+        )
+
+    monkeypatch.setattr(executor, "call", call)
+    source = _source.DailySource(executor, {}, (good, bad))
+    service._source_factory = lambda: source
+    result = service.ensure(public.IndexDailyRange([good, bad], DAY, DAY))
+    assert (result.attempted_units, result.succeeded_units, result.failed_units) == (2, 1, 1)
+    assert result.records_written == 1
+    assert [failure.identity for failure in result.failures] == [(bad, DAY)]
+    assert set(source.metadata) == {good} and set(source.errors) == {bad}
+    daily_codes = [
+        params["ts_code"] for endpoint, params in executor.calls if endpoint == "index_daily"
+    ]
+    assert daily_codes == [good, good]
+    count = len(executor.calls)
+    with pytest.raises(ExecutionFailure):
+        source.fetch((Unit((bad, DAY)),))
+    assert len(executor.calls) == count
+
+
+def test_repeated_daily_page_still_fails_entire_batch(
+    setup: Any, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    service, _, executor, _ = setup
+    original = executor.call
+    page = [executor.daily[0], dict(executor.daily[0], trade_date="20240103")]
+
+    def call(endpoint: str, **params: Any) -> Frame:
+        if endpoint != "index_daily":
+            return original(endpoint, **params)
+        executor.calls.append((endpoint, params))
+        return Frame(page)
+
+    monkeypatch.setattr(executor, "call", call)
+    result = service.ensure(public.IndexDailyRange(["000300.SH"], DAY, DAY + timedelta(days=1)))
+    assert (result.succeeded_units, result.failed_units, result.records_written) == (0, 2, 0)
+    assert all("repeated a page" in failure.reason for failure in result.failures)
+
+
 def test_metadata_reuse_selects_latest_representative_for_requested_code(
     setup: Any,
     monkeypatch: pytest.MonkeyPatch,
