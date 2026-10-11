@@ -6,7 +6,7 @@
 
 Canonical identity 为 `tushare_equity_index_futures`，沿用已确定的 Tushare Dataset naming convention。本 Dataset 管理 CFFEX 股指期货真实普通月合约及其 Tushare Source 日线 facts；metadata Source 为 `fut_basic`，ordinary instrument selection 显式使用 `fut_type="1"`，daily Source 为 `fut_daily`。主力/连续序列不作为 instrument 或 records。
 
-Source provider 为 Tushare，execution 继承 [providers/tushare/ARCHITECTURE.md](../../providers/tushare/ARCHITECTURE.md)。本 Dataset adapter 拥有 endpoint / parameters、catalog / daily request strategy、pagination、product-day partition 与 facts normalization。
+Source provider 为 Tushare，execution 继承 [providers/tushare/ARCHITECTURE.md](../../providers/tushare/ARCHITECTURE.md)。本 Dataset Source Adapter 拥有 endpoint / parameters、catalog / daily request strategy、pagination 与 product-day partition；facts normalization 与 completeness 规则由 Dataset Domain authority 拥有。
 
 本 bounded context 位于 `datasets/tushare_equity_index_futures/`；authority、`src/`、`tests/` 与 `data/` 的 ownership、colocation 和 Python boundary 继承 [模块架构](../../ARCHITECTURE.md)。不建立旧名 compatibility implementation。
 
@@ -27,3 +27,22 @@ Canonical FetchUnit identity 为 `(product_code, trade_date)`，是 product 当�
 唯一跨 Dataset runtime dependency 为本 Dataset → Calendar public Application Service，显式采用 CFFEX 日历；具体调用、failure 与 snapshot 见 TRADING_DAYS.md。Calendar 不反向依赖 Futures；不增加 Futures → Index / Options runtime dependency。公开 boundary 只包含 coverage / ensure / export。
 
 本 Dataset 不生成 basis、annualized basis、main-contract / continuous series、roll return、DTE、term structure 或 research features。下游通过各 Dataset public service 组合 Source facts 后计算；不消费 Snapshot 私有 Source/Capture、Raw Artifact、CLI JSON 或其他 Dataset SQLite。具体 HTTP / Research integration implementation 遵循已冻结 public service boundary；当前不引入 refresh/force/TTL，也不重定已确定的业务语义。
+
+## 4. Dataset Composition 与职责组织
+
+本 Dataset 按公共 [COMPOSITION.md](../../COMPOSITION.md) 接入 Kernel；六角色绑定如下：
+
+| Role | 本 Dataset 绑定 / canonical owner |
+| --- | --- |
+| Target Planner | 本文件第 2 节：canonical products × 固定 D → `(product_code, trade_date)`；CFFEX Calendar view 与权限归 [TRADING_DAYS.md](TRADING_DAYS.md) |
+| Source Port / Adapter | 本 Dataset 的 fut_basic/fut_daily Adapter，含 type-2 exclusion evidence 请求；[FACTS.md](FACTS.md) 拥有请求范围/映射与 bounded strategy，Provider 只执行请求 |
+| Normalizer | Futures Domain；[FACTS.md](FACTS.md) 拥有 ordinary family、Instrument、daily facts 与 underlying mapping |
+| Completeness Validator | Futures Domain；[CONTRACT_UNIVERSE.md](CONTRACT_UNIVERSE.md) 拥有完整 catalog 证明、inclusive lifecycle expected set、observed multiset、零 Records success 与历史 basis predicate，结合 FACTS.md 校验全部字段 |
+| Export Projector | Futures Domain 的业务 view projection；[SERVICE.md](SERVICE.md) 唯一拥有 `futures_daily` V2、fields、ordering 与 wire meaning |
+| Repository Port / Adapter | Kernel 标准 SQLite Adapter；Futures Composition Root 绑定自己的 identity/source/storage context，basis 存储与 snapshot 机制归 [PERSISTENCE.md](../../PERSISTENCE.md) |
+
+Public Service 先验证 request，再按 TRADING_DAYS.md 固定合法 Calendar view，Target Planner 纯展开 products × D；catalog lifecycle 不能缩小目标 units。Composition Root 绑定 Calendar public service、领域策略与 Adapters，发布 FuturesDailyService / create_service()。Kernel 编排 selected units 的 Source / validation / commit，不解释 CFFEX、普通月合约或 expected set。
+
+新 attempts 的 catalog acquisition 由 Source Adapter 执行，catalog 是否完整、可排除 family、每次 invocation basis 与 success 历史解释归 CONTRACT_UNIVERSE.md；这些不成为 Kernel Repository 或 Provider 规则。Source 保持有界响应，Domain Validator/索引的复用遵守 EXECUTION.md 与本 Dataset completeness authority。Batch Planner 的产品日分组/bounds 归 FACTS.md；prefetch/单 writer 属于 Kernel 执行配置。
+
+目标职责区分 Dataset Domain（目标展开、family/metadata/daily normalization、catalog/逐 unit validation、projection）、Source Adapter（请求、分页、partition）、Composition Root / Public Service（request / Calendar 编排、实例绑定、Kernel delegation）。Domain 不依赖 Provider、SQLite 或 sibling internals；public namespace 与 request/result/view 保持 SERVICE.md 契约，不创建另一套通用 persistence 或 ensure engine。

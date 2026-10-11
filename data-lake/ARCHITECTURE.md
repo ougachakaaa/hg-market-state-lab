@@ -1,10 +1,10 @@
 # DataLake 模块架构 authority
 
-本文件是 DataLake 的稳定模块入口，只定义职责、ownership、关键模块 invariant、public boundary、依赖方向与 authority 导航。仓库级职责与 Python runtime invariant 见 [repository architecture](../ARCHITECTURE.md)；专题语义按任务从下方导航选择，不要求加载全部公共或 Dataset authority。
+本文件是 DataLake 的稳定模块入口，只定义职责、ownership、Shared Kernel 架构、关键模块 invariant、public boundary、依赖方向与 authority 导航。仓库级职责与 Python runtime invariant 见 [repository architecture](../ARCHITECTURE.md)；专题语义按任务从下方导航选择，不要求加载全部公共或 Dataset authority。
 
 ## 1. Ownership 与 persistence boundary
 
-DataLake 是多个自治 DataSet 的宿主 bounded context，拥有 DataLake-wide invariants 与 shared kernel；具体 DataSet 持久缓存并管理来自外部 Source 的 reusable source facts；persistence 是可重建 cache，不维护 schema migration。DataLake 不拥有 Snapshot Product semantics、Preparation、analysis-ready computation、Research、Modeling、HTTP 或 UI，也不接管 Snapshot 产品已声明的 Raw Artifact。Public service 的发布不自动建立 Research/Snapshot runtime integration；这些 consumer 的实际接入 implementation 须遵循已发布 boundary，Research 选择与调用权限由 [Research UPSTREAM](../market-research/UPSTREAM.md) 拥有。
+DataLake = **Shared Kernel + Autonomous Datasets + Provider Infrastructure**。Kernel 提供通用领域模型、Application Use Cases、Outbound Ports 与持久化机制；Dataset 是拥有独立事实语义的自治领域边界，通过 Composition 发布自己的 Public Application Service；Provider 提供跨 Dataset 的外部请求执行能力。具体 DataSet 持久缓存并管理来自外部 Source 的 reusable source facts；persistence 是可重建 cache，不维护 schema migration。DataLake 不拥有 Snapshot Product semantics、Preparation、analysis-ready computation、Research、Modeling、HTTP 或 UI，也不接管 Snapshot 产品已声明的 Raw Artifact。Public service 的发布不自动建立 Research/Snapshot runtime integration；这些 consumer 的实际接入 implementation 须遵循已发布 boundary，Research 选择与调用权限由 [Research UPSTREAM](../market-research/UPSTREAM.md) 拥有。
 
 ```text
 DataLake
@@ -43,7 +43,7 @@ Shared Kernel、Provider 与 Dataset 分别拥有自己的 authority、implement
 
 ## 2. 领域关系与 public boundary
 
-DataSet 内部以 Scope + transient Window 确定希望覆盖的 FetchUnits；FetchUnit 拥有 Records 与 coverage state，Source adapter 获取外部事实，Repository 管理 owned SQLite。公共领域与 persistence 细节由 [DOMAIN_MODEL.md](DOMAIN_MODEL.md) 拥有。
+核心领域主轴为 `Dataset → Scope + Window → FetchUnits → Records`。Dataset 定义业务维度与事实全集，Kernel 不强制按日。公共原语与不变量由 [DOMAIN_MODEL.md](DOMAIN_MODEL.md) 拥有；四个领域策略与两个 Outbound Ports 的接入责任由 [COMPOSITION.md](COMPOSITION.md) 拥有。
 
 每个 DataSet 自己拥有并发布 transport-neutral Public Application Service，作为该 Dataset 的唯一 canonical consumer boundary；Python consumer 直接通过 semantic request/result/view 使用 `coverage`、`ensure`、`export`，CLI / HTTP 只是 adapter，不拥有 Dataset 业务语义。直接消费具体 Dataset public API 是合法依赖，不是穿透 DataLake boundary；DataLake 不创建 DataLakeService、DatasetManager、registry、gateway 或 generic client，也不允许通过这些新 facade 替代具体 Dataset boundary。详细公共 operation contract 由 [APPLICATION.md](APPLICATION.md) 拥有。稳定依赖方向为：
 
@@ -55,7 +55,7 @@ Dataset public Application Service
 DataLake shared kernel
 ```
 
-Dataset 内部组合 Source adapter 与 Repository 来访问 external API 和 owned SQLite。Consumer 禁止直接依赖 Dataset Repository internals、Source adapter internals、SQLite schema / connection、Dataset `data/` 文件或内部 FetchUnit / Record persistence identity。
+Dataset Composition Root 将领域策略、Dataset Source Adapter、Kernel SQLite Repository Adapter 及已授权 prerequisites 绑定到 Kernel Application；Public Service 是这一 Composition 的产物。Consumer 禁止直接依赖 Dataset Repository internals、Source adapter internals、SQLite schema / connection、Dataset `data/` 文件或内部 FetchUnit / Record persistence identity。
 
 允许 `Dataset → DataLake shared kernel`；禁止 `DataLake shared kernel → specific Dataset`。Dataset 间默认禁止依赖；已声明的单向 public service dependencies 为下列三个 consumer → `tushare_trade_calendar public Application Service`，只用于目标交易日展开：
 
@@ -67,22 +67,50 @@ Dataset 内部组合 Source adapter 与 Repository 来访问 external API 和 ow
 
 Calendar 不反向依赖这些 consumers；Futures / Options 的 underlying index relationship 只表达稳定 semantic identity，不授予 Index runtime dependency，Futures 与 Options 也不互相依赖。禁止 cycles、跨 Dataset internal import、共享 SQLite 或跨库事务。公共 dependency 调用与 failure invariant 见 [APPLICATION.md](APPLICATION.md)。Catalog 不构成 runtime registry。
 
-## 3. Canonical Python boundary
+## 3. Shared Kernel Hexagonal Architecture
+
+目标职责结构位于 `data-lake/src/data_lake/`：
+
+```text
+data_lake/
+├── domain/                     # 通用领域原语与不变量
+├── application/                # coverage / ensure / export Use Cases
+├── ports/                      # Source / Repository Outbound contracts
+├── adapters/outbound/sqlite/    # 标准 Repository Adapter
+└── results.py                  # 兼容的公共 result / error contracts
+```
+
+这是后续代码组织的职责目标，不要求创建空目录、逐概念 Protocol 或机械拆文件；当前代码差距见 [Implementation reconciliation](RECONCILIATION.md)。通用 runtime/storage resolution 与 serialization/hash helpers 按实际职责组织，不因此新增架构层。
+
+| Boundary | Canonical responsibility |
+| --- | --- |
+| Domain | Scope / Window 公共语义、FetchUnit identity / ownership / status、Record / Instrument / UnitRecords、Dataset-independent completeness invariants；见 [DOMAIN_MODEL.md](DOMAIN_MODEL.md) |
+| Application | 目标确定后的通用生命周期、状态协调、Source 编排、验证调用、提交与一致性读取；公共 operations 与 failure 见 [APPLICATION.md](APPLICATION.md)，内部执行见 [EXECUTION.md](EXECUTION.md) |
+| Ports | Kernel 定义 Source 与 Repository 的 provider/storage-neutral 能力；见 [PORTS.md](PORTS.md) |
+| Outbound Adapters | 实现相应 Port；标准 SQLite Adapter 由 Kernel 维护，lifecycle / transaction / snapshot / frozen basis 见 [PERSISTENCE.md](PERSISTENCE.md)；Dataset Source Adapter 留在 owning Dataset |
+
+依赖方向固定为 Application → Domain / Ports，Ports → Domain / 中立 result/error types，Outbound Adapter → 对应 Port / Domain。Domain 不依赖 Application、Ports、具体 Adapter 或外部基础设施；Application 不依赖 SQLite、Tushare 或具体 Dataset / Provider。Adapter 不反向拥有领域规则、Use Case 或 public operation semantics。
+
+Dataset Composition Root 可以选择具体 Adapter 并依赖 Kernel Application / Domain / Ports；Kernel 各层均不依赖具体 Dataset / Provider。交易日、合约生命周期、行情完整性及业务 Export 由 Dataset 提供。Kernel 不创建无实际职责的 Inbound Adapter；Dataset Public Service 是业务入口，CLI / HTTP 等传输 Adapter 归实际 owning module。
+
+## 4. Canonical Python boundary
 
 Canonical Python namespace 仍为 `data_lake`。模块内部区分 provider-agnostic shared kernel、provider-specific shared infrastructure 与 Dataset bounded contexts。顶层 `data-lake/src/` 只拥有 shared kernel：公共 domain primitives / invariants、Scope / Window / FetchUnit / Record 机制、coverage / ensure / export 通用 machinery、共享 persistence machinery、公共 result / error contracts、通用 serialization / hash 及 generic runtime / storage resolution infrastructure；provider infrastructure 只拥有跨 Dataset 的 provider execution，归对应 Provider 的 source root；Provider-specific tests 同样归该 Provider。顶层 `tests/` 验证公共能力与模块边界，kernel tests 使用 test-local fake Dataset / Source。
 
 Kernel 不得知道具体 Dataset、provider endpoint、token、request frequency、provider-specific exception、instrument family、Dataset-specific Scope、completeness rule 或 export payload。只因一个具体 Dataset 存在的代码默认归 owning Dataset；其 service composition、Source adapter、领域 specialization 与相关 tests 归 `datasets/<dataset-id>/src/` 和 `tests/`。
 
-Tushare provider infrastructure 的 namespace 为 `data_lake.providers.tushare`，implementation 归 `data-lake/providers/tushare/src/data_lake/providers/tushare/`，canonical execution authority 为 [providers/tushare/ARCHITECTURE.md](providers/tushare/ARCHITECTURE.md)。稳定依赖方向为 Dataset Source adapter → provider infrastructure → external provider client/API；provider 只可复用 kernel 的 provider-neutral error contracts，不依赖具体 Dataset、Service、Repository 或 FetchUnit semantics；kernel 不依赖 provider infrastructure。Provider 不拥有 Dataset endpoint selection、partition / normalization / completeness 或 persistence，也不构成 consumer-facing service；Research / Modeling / Snapshot / HTTP / CLI consumers 不直接调用 Executor。详细 execution contract 只在 provider authority 定义。
+Tushare provider infrastructure 的 namespace 为 `data_lake.providers.tushare`，implementation 归 `data-lake/providers/tushare/src/data_lake/providers/tushare/`，canonical execution authority 为 [providers/tushare/ARCHITECTURE.md](providers/tushare/ARCHITECTURE.md)。稳定依赖方向为 Dataset Source adapter → provider infrastructure → external provider client/API；provider 只可复用 kernel 的 provider-neutral error contracts，不依赖具体 Dataset、Service、Repository 或 FetchUnit semantics；kernel 不依赖 provider infrastructure。Provider 不拥有 Dataset endpoint selection、partition、Domain normalization / completeness 或 persistence，也不构成 consumer-facing service；Research / Modeling / Snapshot / HTTP / CLI consumers 不直接调用 Executor。详细 execution contract 只在 provider authority 定义。
 
 Provider-local 与 Dataset-local source roots 不创建独立 Python project、Poetry environment 或 dependency graph；所有 source roots 遵守 repository root 唯一 Python project 与 worktree-local 根 `.venv` invariant。Filesystem ownership 不决定 Python import path，已有 Provider namespace、internal execution imports 与 Dataset public import surface 保持兼容。Multiple source roots registration 与 import/package wiring 复用已有工程机制，属于 implementation concern，不为此建立 plugin system 或 custom package loader。
 
-## 4. Authority 导航
+## 5. Authority 导航
 
 | 当前任务 | 下一份 authority |
 | --- | --- |
-| Scope / Window / FetchUnit / Records / logical persistence / mutation flow | [DOMAIN_MODEL.md](DOMAIN_MODEL.md) |
+| Scope / Window / FetchUnit / Records / logical persistence / completeness invariants | [DOMAIN_MODEL.md](DOMAIN_MODEL.md) |
 | Application Service / coverage / ensure / export / public result / runtime 调用约束 | [APPLICATION.md](APPLICATION.md) |
+| Source / Repository Outbound Ports、Adapter 输入输出及失败责任 | [PORTS.md](PORTS.md) |
+| Dataset 的六角色接入、Composition Root、目标代码职责组织 | [COMPOSITION.md](COMPOSITION.md) → owning Dataset ARCHITECTURE.md |
 | Tushare-backed Dataset 的 Source execution / credential / client / shared limiter / provider failure | [providers/tushare/ARCHITECTURE.md](providers/tushare/ARCHITECTURE.md) |
 | Operational progress / safe request and validation diagnostics | [DIAGNOSTICS.md](DIAGNOSTICS.md) |
 | Bounded batching / validation reuse / Source-write overlap | [EXECUTION.md](EXECUTION.md) |
@@ -93,7 +121,7 @@ Provider-local 与 Dataset-local source roots 不创建独立 Python project、P
 
 Dataset 与 provider authority 只能在模块边界及相关公共 domain/application invariant 内 specialize 或 constrain；catalog 只提供导航，不拥有 schema。具体 Dataset 任务读取与任务有关的公共 authority 和 owning Dataset authority，不默认加载 sibling Dataset；普通 Dataset domain task 不默认加载 provider execution authority。
 
-## 5. Non-goals 与 deferred semantics
+## 6. Non-goals 与 deferred semantics
 
 DataLake 不引入 DataLakeService、DatasetManager、runtime registry、generic plugin / workflow framework 或 cross-Dataset query layer。Dataset 的直接 public service boundary 与明确 dependency permissions 已由上文固定。
 

@@ -2,6 +2,8 @@
 
 本文件拥有 Index Dataset 的 transport-neutral public request/result/view 与 runtime contract，继承 [Dataset domain](ARCHITECTURE.md) 及公共 [APPLICATION.md](../../APPLICATION.md)。Facts/Instrument 由 [FACTS.md](FACTS.md) 拥有，Calendar prerequisite 由 [TRADING_DAYS.md](TRADING_DAYS.md) 拥有；不定义 CLI flags、HTTP DTO 或 SQLite schema。
 
+六角色绑定、Composition Root 与目标内部职责组织由 [Dataset architecture](ARCHITECTURE.md) 拥有，并继承公共 [COMPOSITION.md](../../COMPOSITION.md)；本文件只拥有 consumer contract 与 operation specialization。
+
 ## 1. Public Python surface
 
 Canonical namespace 为 `data_lake.datasets.tushare_index_daily`，发布 `IndexDailyService`、`IndexDailyRange`、`IndexDailyRow`、`IndexDailyExport` 与 `create_service()`。这些是稳定 consumer contract。公共 CoverageResult / EnsureResult / UnitFailure / errors 复用 DataLake contract。
@@ -78,8 +80,4 @@ Metadata 表达 export snapshot 中的 cached instrument facts，不宣称是 tr
 
 Failure taxonomy 继承 [APPLICATION.md](../../APPLICATION.md)；自身 request validation 见第 2 节，Index unit failures 见第 3 节，Calendar prerequisite failure 见 [TRADING_DAYS.md](TRADING_DAYS.md)。
 
-Provider execution 继承 [TUSHARE.md](../../providers/tushare/ARCHITECTURE.md)，storage lifecycle 与 compatibility 继承 [PERSISTENCE.md](../../PERSISTENCE.md)。Calendar 调用链与 Source I/O 条件由 [TRADING_DAYS.md](TRADING_DAYS.md) 拥有；bounded Source execution 见下节。
-
-## Bounded Source execution
-
-同一 index_code 和自然年内每批最多 250 个 selected 交易日，使用 index_daily 的 start_date/end_date 查询并完整分页。只提交本次 selected units，逐 unit completeness 与 public accounting 不变。执行、验证复用及单 worker 提前一批见 [EXECUTION.md](../../EXECUTION.md)。
+Provider execution 继承 [Tushare Provider authority](../../providers/tushare/ARCHITECTURE.md)，storage lifecycle 与 compatibility 继承 [PERSISTENCE.md](../../PERSISTENCE.md)。Calendar 调用链与 Source I/O 条件由 [TRADING_DAYS.md](TRADING_DAYS.md) 拥有；Batch Planner / Source execution 见 [FACTS.md](FACTS.md)。

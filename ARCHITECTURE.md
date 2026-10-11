@@ -131,6 +131,8 @@ ARCHITECTURE.md（本文件）
     ├─ data-lake/ARCHITECTURE.md
     │      ├─ data-lake/DOMAIN_MODEL.md
     │      ├─ data-lake/APPLICATION.md
+    │      ├─ data-lake/PORTS.md
+    │      ├─ data-lake/COMPOSITION.md
     │      ├─ co-located Provider ARCHITECTURE.md
     │      ↓
     │  data-lake/DATASETS.md

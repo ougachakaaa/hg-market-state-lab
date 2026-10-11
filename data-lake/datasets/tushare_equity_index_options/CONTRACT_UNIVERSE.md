@@ -41,3 +41,5 @@ Observed 是 daily response 归属 (p,d) 的真实股指期权 multiset，按 me
 Refresh、force、TTL、Source correction/stale semantics 留待独立设计。Source batching/retries/catalog row counts 不改变 product-day ownership 或 public accounting。
 
 冻结 basis 可以在本 Dataset 内去重存储；每个 unit 的历史 basis 不变，内部兼容性与 owning Dataset cache rebuild 见 [PERSISTENCE.md](../../PERSISTENCE.md)。同一 operation 内验证复用见 [EXECUTION.md](../../EXECUTION.md)，仍逐 unit 验证完整 contract universe。
+
+合约生命周期索引是本 Dataset Domain 的内部策略，只索引已验证且保持不变的同一 catalog，精确实现上述 inclusive list_date/delist_date predicate；日期倒序访问仍须得到相同全集。索引不改变 expected/observed、未知活跃合约或分页完整性检查。

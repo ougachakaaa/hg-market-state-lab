@@ -1,6 +1,8 @@
 # tushare_trade_calendar Public Application Service authority
 
-本文件拥有 Dataset-specific public semantic request/result/view、Python consumption、failures specialization、Dataset runtime composition 与 serialization 边界。继承 [Dataset domain](ARCHITECTURE.md) 与公共 [APPLICATION.md](../../APPLICATION.md)；Tushare provider execution 由 [providers/tushare/ARCHITECTURE.md](../../providers/tushare/ARCHITECTURE.md) 拥有。不定义 CLI option names、HTTP endpoints、HTTP status codes 或存储实现。
+本文件拥有 Dataset-specific public semantic request/result/view、Python consumption、failures specialization、public runtime 与 serialization 边界。继承 [Dataset domain](ARCHITECTURE.md) 与公共 [APPLICATION.md](../../APPLICATION.md)；Tushare provider execution 由 [providers/tushare/ARCHITECTURE.md](../../providers/tushare/ARCHITECTURE.md) 拥有。不定义 CLI option names、HTTP endpoints、HTTP status codes 或存储实现。
+
+六角色绑定、Composition Root 与目标内部职责组织由 [Dataset architecture](ARCHITECTURE.md) 拥有，并继承公共 [COMPOSITION.md](../../COMPOSITION.md)；本文件只拥有 consumer contract 与 operation specialization。
 
 ## 1. Canonical service 与 Python boundary
 
@@ -116,4 +118,4 @@ Serialization 与 delivery boundary 继承 [APPLICATION.md](../../APPLICATION.md
 
 Failure taxonomy 与 lazy Source I/O 继承 [APPLICATION.md](../../APPLICATION.md)，本 Dataset 不增加公共 failure category；输入错误见第 2 节，可恢复逐日 failures 见第 3 节。
 
-Calendar composition 提供自己的 storage context，adapter 通过共享 Executor 执行 trade_cal。Provider execution 继承 [TUSHARE.md](../../providers/tushare/ARCHITECTURE.md)，storage lifecycle 与 compatibility 继承 [PERSISTENCE.md](../../PERSISTENCE.md)。
+Calendar composition 提供自己的 storage context，adapter 通过共享 Executor 执行 trade_cal。Provider execution 继承 [Tushare Provider authority](../../providers/tushare/ARCHITECTURE.md)，storage lifecycle 与 compatibility 继承 [PERSISTENCE.md](../../PERSISTENCE.md)。

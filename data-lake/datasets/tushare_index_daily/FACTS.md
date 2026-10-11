@@ -56,3 +56,7 @@ Ensure 对缺少本地合法 instrument metadata 的 selected index，通过 ind
 日期由 provider YYYYMMDD representation 确定性转换为 date；数值必须可合法转换为 finite numeric value，不接受 bool、缺失值、NaN 或 infinity。Volume / amount 不接受负值；零仅在 Source 实际报告零时合法。禁止 rounding、fill、重算 change/pct_change、单位暗换或将 None 当零。
 
 成交量与成交额表达该指数 Source 的统计范围，不用全市场股票成交替代；不将不同 Source 的成交口径“修正”为行情软件口径。以上 Source units 参见 index_daily 文档；本 Dataset 不生成衍生指标或 research features。
+
+## Bounded Source execution
+
+同一 index_code 和自然年内每批最多 250 个 selected 交易日，使用 index_daily 的 start_date/end_date 查询并完整分页。只提交本次 selected units，逐 unit completeness 与 public accounting 不变。执行、验证复用及单 worker 提前一批见 [EXECUTION.md](../../EXECUTION.md)。

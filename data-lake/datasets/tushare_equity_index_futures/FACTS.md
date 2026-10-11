@@ -57,3 +57,9 @@ Record identity 为 `(contract_code, trade_date)`；product_code 与 owning unit
 例外：Source 明确返回 pre_close / oi_chg 字段但其值合法缺席，且 trade_date == owning Instrument 的 list_date 时，分别为 None，表示首次挂牌没有前收盘价 / 没有前一日持仓变化基准。不用 pre_settle、当前持仓、挂牌基准价或零替代。非上市首日缺席、字段本身缺失、非法数值仍失败；其余价格/变化字段规则不变。该规则优先于上段 general required numeric rule。
 
 保留 Source 统计口径：fut_daily 文档说明 2020-01-01 之前为双边统计、之后为单边统计；不自行统一 volume/oi，也不暗换 amount 为 Index view 的千元或人民币元。不 rounding、fill、重算 change、补造价格或产生 basis/DTE/term structure。
+
+## Bounded Source execution
+
+按日期排列并合并同窗口所有 selected products，每批最多 5 个 selected 交易日，查询自然日跨度同时不超过 31 日，使用 fut_daily 的 exchange/start_date/end_date 查询并完整分页。只提交本次 selected units，逐 unit completeness 与 public accounting 不变。执行、验证复用及单 worker 提前一批见 [EXECUTION.md](../../EXECUTION.md)。
+
+小窗口横截面按日期与产品一次分类；不能因分桶丢弃不可归属的非法行。可归属错误只影响对应产品日，无法归属错误影响对应日期所有 selected products；非目标日期不提交。分类只实现 CONTRACT_UNIVERSE.md 的既定 predicate，不改变分页穷尽或未知活跃合约检查。

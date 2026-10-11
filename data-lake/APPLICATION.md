@@ -1,12 +1,12 @@
-# DataLake 公共 Application Service authority
+# DataLake Shared Kernel Application authority
 
-本文件拥有 DataSet public Application Service 的公共 semantic contract，继承 [模块架构](ARCHITECTURE.md) 的职责与依赖边界。Scope / Window、FetchUnit 状态、Record ownership、原子成功与 mutation flow 由 [DOMAIN_MODEL.md](DOMAIN_MODEL.md) 拥有；Dataset-specific request、view、payload 与 specialization 经 [DATASETS.md](DATASETS.md) 进入 owning Dataset authority。CLI topology、serialization 与 file delivery 由 [lab authority](../lab/ARCHITECTURE.md) 拥有。
+本文件拥有 Kernel 的 coverage / ensure / export Use Cases、通用生命周期与 Dataset Public Application Service 的公共 semantic contract，继承 [模块架构](ARCHITECTURE.md) 的职责与依赖边界。Scope / Window、FetchUnit 状态、Record ownership、原子成功由 [DOMAIN_MODEL.md](DOMAIN_MODEL.md) 拥有；Dataset-specific request、view、payload 与 specialization 经 [DATASETS.md](DATASETS.md) 进入 owning Dataset authority。CLI topology、serialization 与 file delivery 由 [lab authority](../lab/ARCHITECTURE.md) 拥有。
 
 ## 1. Application Service 与公共 operation family
 
 DataSet Application Service 是 transport-neutral canonical consumer boundary，公开 Python semantic request/result/view。它在内部将 Dataset-specific request 解释为 Scope + Window 和目标 FetchUnit identities，查询 coverage、编排 ensure、生成 Dataset-owned export view；caller 不需要理解 persistence mechanics。Dataset-specific consumer contract 经 catalog、Dataset ARCHITECTURE.md 进入 SERVICE.md。
 
-每个 Dataset 自己拥有具体 public semantic service contract；本文件拥有公共 operation family 与 result/error invariants，不建立 generic DataLake facade / gateway / client。Consumer 直接进入具体 Dataset public API，再由 Dataset 使用 shared kernel；内部 Source adapter / Repository composition 与依赖方向继承 [模块架构](ARCHITECTURE.md)。
+每个 Dataset 自己拥有具体 public semantic service contract；Kernel Application 在目标确定后执行通用机制，依赖 Domain 与 [Outbound Ports](PORTS.md)，不直接依赖 SQLite、Tushare 或具体 Dataset。领域策略及 Adapter 由 [Composition Root](COMPOSITION.md) 绑定；本文件拥有公共 operation family 与 result/error invariants，不建立 generic DataLake facade / gateway / client。Consumer 直接进入具体 Dataset public API，再由 Dataset 使用 shared kernel；内部 Source adapter / Repository composition 与依赖方向继承 [模块架构](ARCHITECTURE.md)。
 
 不得把 arbitrary record-level mutation 发布为公开能力。Consumers 只依赖 Dataset semantic request、public result / export view 与 public completeness / failure contract；不直接依赖 SQLite / filesystem layout、Repository、Source adapter、FetchUnit / Record persistence identity、provider runtime / Tushare client、provider response、internal batching / transaction / schema。Public boundary 不暴露 SQL、SQLite path、unit_id / record_id 等 persistence identity、argparse namespace、provider transport response 或 internal repository object。未来模块应直接消费 public semantic request/result/view，不调用 CLI 或反向解析 JSON export；Research producer permissions 与 capability selection 见 [Research UPSTREAM](../market-research/UPSTREAM.md)，具体 integration implementation 遵循此已冻结 boundary。
 
@@ -123,3 +123,33 @@ SQLite location 由 owning Dataset 内部 composition 使用 shared runtime/stor
 具体 Index / Futures / Options → Calendar contract 经 [catalog](DATASETS.md) 进入各自 Dataset 的 TRADING_DAYS.md；允许的 dependency edges 由模块 architecture 唯一声明。Calendar 自己的 request/result/view 与 domain semantics 保持不变。
 
 内部 batching / 单 worker 提前一批 / operation 内验证复用由 [EXECUTION.md](EXECUTION.md) 约束，SQLite 生命周期与 generation 兼容由 [PERSISTENCE.md](PERSISTENCE.md) 约束；这些执行机制不扩展 consumer boundary。
+
+## 4. Use Case lifecycle 与职责分工
+
+Dataset Service 验证 semantic request、按已声明权限固定 prerequisite view，并用 Dataset Target Planner 得到目标 units；Kernel 不解释这些业务维度。进入 Kernel 后，三个 Use Cases 复用以下机制：
+
+| Use Case | Kernel Application responsibility |
+| --- | --- |
+| coverage | 对固定目标经 Repository Port 取 committed snapshot，校验每个成功 unit 的 Dataset completeness，发布公共互斥计数与 complete；不准备 Source |
+| ensure | 验证既有成功缓存，选择 missing / non-success，惰性准备 Source、验证 batch partition，协调 pending / fetch / normalize / validate / commit / failure，最后按同一目标计算结束 coverage 与 EnsureResult |
+| export | 对固定目标取一个 committed snapshot，验证成功事实与 completeness，以该 snapshot 的 coverage / facts 调用 Dataset Projector 并校验公共 envelope 一致性；不再次查询拼接另一份缓存状态 |
+
+Ensure 的稳定概念顺序为：
+
+```text
+fixed desired FetchUnits
+    → read / validate existing state
+    → select missing / non-success units
+    → prepare Source only if selected is non-empty
+    → validate batch plan
+    → commit selected units pending before their requests
+    → Source Port fetch / partition
+    → Dataset Normalizer → UnitRecords
+    → Dataset Completeness Validator
+    → Repository Port atomic success (Records / instruments / basis / hash / count / status)
+    → final target coverage / EnsureResult
+```
+
+可恢复的 batch/unit failure 由 Application 协调 Repository failure state 与公共 UnitFailure；初始化、缓存完整性或整个 operation failure 按第 1 节分类。Content hash / SQL 事务由 persistence adapter 实现公共领域不变量，Application 不执行 SQL，也不解释 completeness basis。无 selected units 时不准备 Source、不进入写生命周期。
+
+Application 不接管 Dataset endpoint、metadata reuse eligibility、合约全集证明、calendar selection 或 Export payload；也不复制 Provider credential / limiter / request execution。内部调度、取消与验证复用见 [EXECUTION.md](EXECUTION.md)，SQLite transactions / snapshot 的实现约束见 [PERSISTENCE.md](PERSISTENCE.md)。

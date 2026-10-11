@@ -1,10 +1,25 @@
-# DataLake 公共领域与 persistence authority
+# DataLake Shared Kernel Domain authority
 
-本文件拥有 shared kernel 的公共逻辑 persistence model、Scope / Window / FetchUnit 关系、normalization 与 ensure mutation flow，继承 [模块架构](ARCHITECTURE.md) 的 ownership 边界。自治 Dataset 在上层边界内 specialize 或 constrain 这些 invariants；具体 ownership 与 colocation 由模块架构拥有。公共 operation、结果与 application failure 由 [APPLICATION.md](APPLICATION.md) 拥有；具体 Source、identity、Record fields 与 completeness specialization 经 [DATASETS.md](DATASETS.md) 进入 owning Dataset authority。本文不定义 SQL DDL 或 Dataset-specific fields。内部连接生命周期、冻结 basis 与 generation compatibility 见 [PERSISTENCE.md](PERSISTENCE.md)，bounded execution 见 [EXECUTION.md](EXECUTION.md)。
+本文件拥有 Shared Kernel Domain 的公共原语、不变量、逻辑 persistence model 与 Scope / Window / FetchUnit 关系，继承 [模块架构](ARCHITECTURE.md) 的 ownership 边界。自治 Dataset 在上层边界内 specialize 或 constrain 这些 invariants；具体 ownership 与 colocation 由模块架构拥有。公共 operation、结果与 application failure 由 [APPLICATION.md](APPLICATION.md) 拥有；具体 Source、identity、Record fields 与 completeness specialization 经 [DATASETS.md](DATASETS.md) 进入 owning Dataset authority。本文不定义 SQL DDL 或 Dataset-specific fields。Application lifecycle 见 [APPLICATION.md](APPLICATION.md)，外部能力契约见 [PORTS.md](PORTS.md)，Dataset 策略接入见 [COMPOSITION.md](COMPOSITION.md)；SQLite 机制见 [PERSISTENCE.md](PERSISTENCE.md)。
 
 Dataset 的数据标准是完整、稳定表达其 reusable source facts。Population、grain 与 completeness 由 owning Dataset authority 决定，不根据单个 Study 的 fact slice 改变；consumer 选择 semantic request / view 或下游样本，不重新定义 Dataset facts。
 
-## 1. 公共逻辑 persistence model
+## 1. 通用领域原语与完整性
+
+Domain 不依赖 Application、Ports、SQL、Provider、具体 Dataset 或任何外部 I/O；canonical serialization/hash 若被原语复用，必须保持纯函数与 provider/storage-neutral。Domain 只定义公共关系，不解释交易日、合约生命周期或市场字段。
+
+| Primitive | 公共语义 |
+| --- | --- |
+| Scope / Window | Dataset 事实范围与 transient operation 目标；具体业务维度由 Dataset 定义 |
+| FetchUnit | Dataset 内稳定 semantic identity、状态与最小同步/完整性/原子写入 ownership；不强制逐日 |
+| Record | 一个 owning FetchUnit 的 canonical fact；自然 identity 与字段由 Dataset 定义 |
+| Instrument | Dataset-local catalog identity 与事实；可声明 usage: none |
+| UnitRecords | 一份 unit 的 canonical Records、相关 Instruments 与必要 completeness basis；只提供通用载体，不解释 basis 的业务结构 |
+| CachedUnit | 从一致缓存读取的 Unit 与对应 canonical facts / basis；不是 consumer view |
+
+Dataset-independent completeness 要求：Records 唯一归属 owning unit，Instrument association 合法且 Dataset-local，canonical facts 与成功 metadata/hash/count/basis 一致。Dataset Validator 在这些公共约束内定义更强的 predicate；Kernel 不猜 cardinality、expected instruments 或业务 required fields。Validation 的调用与失败分类见 APPLICATION.md，Repository integrity 与 Dataset completeness 的分工见 PORTS.md。
+
+## 2. 公共逻辑 persistence model
 
 每个 DataSet 的标准模型包含 `dataset_meta`、`fetch_unit`、`instrument` 与 `records` 四个核心实体。以下是逻辑字段与 invariants，不是具体 SQL schema。
 
@@ -90,7 +105,7 @@ valid_to
 
 不是所有 Dataset 都具有自然的 tradable instrument。标准模型保留 instrument entity，但 Dataset 必须能够声明 `instrument usage: none`，此时不要求 instrument entries 或 Records 引用，不得人为制造 Instrument 语义。
 
-## 2. Scope、Window 与 Source Request
+## 3. Scope、Window 与 Source Request
 
 Scope 由具体 Dataset authority 定义，用于确定该次 operation 所针对的 Source fact 范围。Window 是 transient operation input，描述希望 Dataset 覆盖的范围，第一版只设计一维 Window。
 
@@ -110,39 +125,8 @@ Window 不直接创建 Records，也不定义 Source API request batching。逻�
 
 `FetchUnit != Source Request`：FetchUnit 是 DataLake ownership unit；Source Request 是 provider adapter 的传输/调用单位。一个 Source Request 可以返回 `1..n` FetchUnits，返回事实必须按 FetchUnit identity 重新 partition，然后写入各 unit 自己拥有的 Records。不得因为 provider endpoint 支持 date range query，就把整个 range 变成一个 FetchUnit。
 
-## 3. Ensure mutation flow
+## 4. Normalization invariant
 
-`ensure` 的稳定概念 flow 为：
+Normalization 只稳定表达 Source facts，必须确定且保持 Source 语义；不得生成 analysis-ready 派生结果、补造缺失事实或把缺失当作数值零。逐 unit canonical facts 的业务映射与 completeness 归 Dataset Domain，通过 COMPOSITION.md 的 Normalizer / Validator 接入。
 
-```text
-Dataset + Scope + Window
-          ↓
-      expand Window
-          ↓
-  desired FetchUnits
-          ↓
- inspect existing state
-          ↓
-select missing / not success
-          ↓
- create / update selected
-    fetch_unit state
-          ↓
-     Source request(s)
-          ↓
-      Source facts
-          ↓
-partition by FetchUnit
-          ↓
-normalize source representation
-          ↓
-canonical Record set
-          ↓
-compute content_hash
-          ↓
-atomic persistence
-    ├─ replace records owned by unit
-    └─ mark unit success
-```
-
-Normalization 只稳定表达 Source facts，必须确定且保持 Source 语义；不得生成 analysis-ready 派生结果、补造缺失事实或把缺失当作数值零。每个 unit 的成功必须满足 Dataset-specific completeness，不能用一次请求的成功代替所有目标 units 的成功。
+Ensure 的状态协调、Source 执行、验证与提交顺序由 [APPLICATION.md](APPLICATION.md) 拥有，Domain 仅拥有此处的原语与不变量。

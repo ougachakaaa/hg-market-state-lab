@@ -60,3 +60,9 @@ Source 明确返回 pre_close 字段但其值合法缺席，且 trade_date == ow
 仅当 Source 明确 volume=0 且 amount=0 时，open/high/low 中的合法缺席可以分别为 None，其他实际提供值照原值保留；不补零、不前值填充。正成交量或正成交额却缺 open/high/low 时整 unit 失败。该规则允许合法无成交 record，不改变 expected contract set、exactly-one cardinality 或其他 required facts；Source 未提供 required field 本身仍是 contract failure。
 
 不 rounding、补算或暗换单位，不生成 IV、Greeks、moneyness、DTE、option risk premium 或其他 research features。Expiry/strike/call_put 是 metadata Source facts，参与完整横截面解释，不能据此补造 catalog 未声明的合约。
+
+## Bounded Source execution
+
+按日期排列并合并同窗口所有 selected products，每批最多 3 个 selected 交易日，查询自然日跨度同时不超过 31 日，使用 opt_daily 的 exchange/start_date/end_date 查询并完整分页。只提交本次 selected units，逐 unit completeness 与 public accounting 不变。执行、验证复用及单 worker 提前一批见 [EXECUTION.md](../../EXECUTION.md)。
+
+小窗口横截面按日期与产品一次分类；不能因分桶丢弃不可归属的非法行。可归属错误只影响对应产品日，无法归属错误影响对应日期所有 selected products；非目标日期不提交。分类只实现 CONTRACT_UNIVERSE.md 的既定 predicate，不改变分页穷尽或未知活跃合约检查。

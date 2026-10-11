@@ -1,6 +1,6 @@
 # DataLake SQLite lifecycle and compatibility authority
 
-本文件拥有内部 SQLite lifecycle、transaction / read snapshot、frozen basis 与 rebuild-only cache compatibility，继承 [ARCHITECTURE.md](ARCHITECTURE.md) 的 owned SQLite boundary、[DOMAIN_MODEL.md](DOMAIN_MODEL.md) 的单位 ownership / 原子性及 [APPLICATION.md](APPLICATION.md) 的 read-only / export consistency invariant；不发布 consumer SQL contract 或通用 migration framework。
+本文件是 Kernel Outbound SQLite Repository Adapter 的 canonical authority，拥有内部 SQLite lifecycle、transaction / read snapshot、frozen basis 与 rebuild-only cache compatibility，继承 [ARCHITECTURE.md](ARCHITECTURE.md) 的 owned SQLite boundary、[DOMAIN_MODEL.md](DOMAIN_MODEL.md) 的单位 ownership / 原子性及 [APPLICATION.md](APPLICATION.md) 的 read-only / export consistency invariant；实现 [Repository Port](PORTS.md)；不反向拥有 Application lifecycle 或 Dataset completeness，不发布 consumer SQL contract 或通用 migration framework。
 
 ## 1. Owned SQLite lifecycle
 

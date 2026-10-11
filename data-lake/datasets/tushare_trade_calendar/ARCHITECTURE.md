@@ -10,7 +10,7 @@ Canonical Dataset identity 为 `tushare_trade_calendar`，用于持久缓存 Tus
 
 Trade-calendar-specific models、Scope / Window interpretation、逐日 completeness、export view、Tushare adapter 与 service composition 都归本 Dataset；依赖方向与 public import compatibility 继承模块架构。Calendar 不依赖其他 Dataset。
 
-Source provider 为 **Tushare**，execution 继承 [providers/tushare/ARCHITECTURE.md](../../providers/tushare/ARCHITECTURE.md)。本 Dataset adapter 拥有 `trade_cal` endpoint / parameters、batching、response partition 与 Calendar facts validation。
+Source provider 为 **Tushare**，execution 继承 [providers/tushare/ARCHITECTURE.md](../../providers/tushare/ARCHITECTURE.md)。本 Dataset Source Adapter 拥有 `trade_cal` endpoint / parameters、batching 与 response partition；Calendar facts validation 规则由本文件的 Dataset Domain 拥有。
 
 Source endpoint 为 **`trade_cal`**。第一版只有一个 canonical Scope shape：
 
@@ -71,6 +71,23 @@ instrument usage: none
 
 `coverage.complete` 继承 [APPLICATION.md](../../APPLICATION.md) 的 cache completeness 定义。未来日期 facts 同样适用；freshness policy 继承模块 deferred semantics。
 
-## 6. 下一份 authority
+## 6. Dataset Composition 与职责组织
+
+本 Dataset 按公共 [COMPOSITION.md](../../COMPOSITION.md) 接入 Kernel；六角色绑定如下，表中链接是具体规则的 canonical owner：
+
+| Role | 本 Dataset 绑定 |
+| --- | --- |
+| Target Planner | 本文件第 1–2 节：显式 exchange + inclusive Window 展开全部自然日 `(exchange, cal_date)`；无跨 Dataset prerequisite |
+| Source Port / Adapter | Calendar `trade_cal` Adapter；本文件第 1 节拥有 endpoint / 参数选择，Provider 仅按 [Tushare authority](../../providers/tushare/ARCHITECTURE.md) 执行 |
+| Normalizer | Calendar Domain；本文件第 3 节的四个 canonical facts，不补造休市事实 |
+| Completeness Validator | Calendar Domain；本文件第 3–4 节的 exactly-one Record / identity / required facts / no-instrument predicate |
+| Export Projector | Calendar Domain 的业务 view projection；[SERVICE.md](SERVICE.md) 唯一拥有 `calendar` view、字段、ordering 与 wire meaning |
+| Repository Port / Adapter | 使用 Kernel 标准 SQLite Adapter，Calendar Composition Root 绑定本 Dataset identity/source/storage context；[PERSISTENCE.md](../../PERSISTENCE.md) 拥有存储机制 |
+
+Calendar Composition Root 发布 TradeCalendarService / create_service()，只绑定上述能力并委托 Kernel 的 coverage/ensure/export；不自行拥有第二套通用同步 engine。Batch Planner 是 Calendar-owned 可选执行策略；现有 trade_cal 按自然年分组、显式 exchange 与日期范围获取，只处理 selected units。共享调度/逐 unit pending 与提交仍由 [EXECUTION.md](../../EXECUTION.md) 拥有。
+
+目标职责为 Dataset Domain（request interpretation / normalization / validation / projection）、Source Adapter（trade_cal 请求和 partition）、Composition Root / Public Service（实例绑定与 delegation）。文件名可按职责调整，不要求机械目录模板；Domain 不调用 Provider 或 SQLite，Source Adapter 不访问 Repository。Python namespace 与 public request/result/view 保持 SERVICE.md 契约。
+
+## 7. 下一份 authority
 
 Consumer contract、public Python surface、operation specialization、failures 与 runtime configuration 见 [SERVICE.md](SERVICE.md)；CLI adapter 再进入 [lab authority](../../../lab/ARCHITECTURE.md)。

@@ -20,7 +20,7 @@ Provider client / HTTP API
 
 本内部 execution boundary 的 dependency / public access permissions 继承 [模块架构](../../ARCHITECTURE.md)。
 
-Dataset adapter 继续拥有 endpoint selection、provider parameters、request batching、pagination / exhaustion、response partition、identity validation、Source facts normalization 与 completeness。`Provider Request != FetchUnit`；Executor 不接收 FetchUnits，不知道调用方 Dataset，不解释 index_code、trade_date、product、expiry 或 strike。
+Dataset Source Adapter 实现 Kernel 的 [Source Port](../../PORTS.md)，拥有 endpoint selection、provider parameters、request batching、pagination / exhaustion 与 response partition；identity / facts normalization 与 completeness 的规则由 Dataset Domain 拥有，Adapter 调用这些策略。`Provider Request != FetchUnit`；Executor 不接收 FetchUnits，不知道调用方 Dataset，不解释 index_code、trade_date、product、expiry 或 strike。
 
 ## 2. 薄请求契约
 
@@ -37,7 +37,7 @@ TushareExecutor.call(endpoint, **provider_parameters) -> provider_response
 3. Provider-level request execution failure 在 Executor 内统一转换。
 4. 成功 response 原样交还 Dataset adapter，不 partition、不 normalize、不转换成统一 Record DTO。
 
-不发布 `fetch_index_daily` / `fetch_future_daily` / `fetch_option_daily` 等 endpoint-specific typed facade。Response 解读失败、identity / normalization / completeness failure 仍归 Dataset adapter 与现有 Dataset/Core machinery，不作为 provider transport failure。
+不发布 `fetch_index_daily` / `fetch_future_daily` / `fetch_option_daily` 等 endpoint-specific typed facade。Response 解读失败归 Dataset Adapter，identity / normalization / completeness failure 归 Dataset 领域策略与 Kernel Application 的验证编排，不作为 provider transport failure。
 
 Executor 不拥有 retry policy、FetchUnit generation、Dataset batching / pagination policy、instrument catalog、SQLite、coverage、ensure orchestration、export 或 Research / Modeling transformation。V1 不自动 retry，不引入 backoff / retry budget / 自动恢复框架；未来 retry 如有稳定需求须另行设计。
 
@@ -94,4 +94,4 @@ Executor 不把 provider request failure 映射到 FetchUnits；Dataset adapter 
 
 ## 6. Cancellation boundary
 
-内部 execution 可用 cancellation guard 包裹 Executor：取消后拒绝后续 call，已进入的 call 按既有 timeout/限流/错误契约收束。Guard 不重试、不取消已发出的 HTTP、不改变 quota 计数，也不解释 FetchUnits；Dataset Source 的分页生命周期与取消触发属于 [bounded execution](../../EXECUTION.md)。
+内部 execution 可用 cancellation guard 包裹 Executor：取消后拒绝后续 call，已进入的 call 按既有 timeout/限流/错误契约收束。Guard 不重试、不取消已发出的 HTTP、不改变 quota 计数，也不解释 FetchUnits；Dataset Source 的分页停止遵守 Adapter lifecycle，取消触发与等待属于 [bounded execution](../../EXECUTION.md)。

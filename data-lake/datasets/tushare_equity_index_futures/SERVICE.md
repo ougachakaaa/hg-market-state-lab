@@ -2,6 +2,8 @@
 
 本文件拥有 transport-neutral public request/result/view 与 runtime contract，继承 [Dataset architecture](ARCHITECTURE.md) 和公共 [APPLICATION.md](../../APPLICATION.md)。Source facts 由 [FACTS.md](FACTS.md) 拥有，strong completeness 由 [CONTRACT_UNIVERSE.md](CONTRACT_UNIVERSE.md) 拥有，Calendar prerequisite 见 [TRADING_DAYS.md](TRADING_DAYS.md)。不定义 CLI flags、HTTP DTO 或 SQL。
 
+六角色绑定、Composition Root 与目标内部职责组织由 [Dataset architecture](ARCHITECTURE.md) 拥有，并继承公共 [COMPOSITION.md](../../COMPOSITION.md)；本文件只拥有 consumer contract 与 operation specialization。
+
 ## 1. Public Python surface 与 request
 
 Canonical namespace 为 `data_lake.datasets.tushare_equity_index_futures`，发布 `FuturesDailyService`、`FuturesDailyRange`、`FuturesDailyRow`、`FuturesDailyExport` 与 `create_service()`。公共 CoverageResult、EnsureResult、UnitFailure 和 errors 复用 DataLake contract。
@@ -78,10 +80,6 @@ Coverage、Records 和成功时保留的合法 metadata/completeness basis 来�
 
 ## 4. Runtime 与实现边界
 
-Provider execution 继承 [TUSHARE.md](../../providers/tushare/ARCHITECTURE.md)，storage lifecycle 与 compatibility 继承 [PERSISTENCE.md](../../PERSISTENCE.md)。Calendar 调用链与 Source I/O 条件由 [TRADING_DAYS.md](TRADING_DAYS.md) 拥有；bounded Source execution 见下节。
+Provider execution 继承 [Tushare Provider authority](../../providers/tushare/ARCHITECTURE.md)，storage lifecycle 与 compatibility 继承 [PERSISTENCE.md](../../PERSISTENCE.md)。Calendar 调用链与 Source I/O 条件由 [TRADING_DAYS.md](TRADING_DAYS.md) 拥有；Batch Planner / Source execution 见 [FACTS.md](FACTS.md)。
 
 兼容当前 persistence contract 的已有缓存，其有限数值保持可读，不改写已成功 facts；public export schema version 不授权读取 incompatible persistence generation。
-
-## Bounded Source execution
-
-按日期排列并合并同窗口所有 selected products，每批最多 5 个 selected 交易日，查询自然日跨度同时不超过 31 日，使用 fut_daily 的 exchange/start_date/end_date 查询并完整分页。只提交本次 selected units，逐 unit completeness 与 public accounting 不变。执行、验证复用及单 worker 提前一批见 [EXECUTION.md](../../EXECUTION.md)。
