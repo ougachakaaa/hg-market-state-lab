@@ -6,11 +6,11 @@
 
 Canonical Dataset identity 为 `tushare_trade_calendar`，用于持久缓存 Tushare 交易日历 Source facts，不生成 analysis-ready 派生结果。SQLite ownership 继承模块 invariant。
 
-本 Dataset 的 authority、implementation、tests 与 persistent runtime state 由 `datasets/tushare_trade_calendar/` bounded context colocate 拥有：authority 为本文件与 SERVICE.md；implementation 与 composition 位于 `src/`，Dataset verification 位于 `tests/`，owned state 位于 `data/`。Filesystem / Python ownership 继承模块架构，SQLite lifecycle 与旧目录 state 隔离见 [PERSISTENCE.md](../../PERSISTENCE.md)。
+本 bounded context 位于 `datasets/tushare_trade_calendar/`，authority 为本文件与 [SERVICE.md](SERVICE.md)；`src/`、`tests/` 与 `data/` 的 ownership、colocation 和 Python boundary 继承 [模块架构](../../ARCHITECTURE.md)。SQLite lifecycle 见 [PERSISTENCE.md](../../PERSISTENCE.md)。
 
 Trade-calendar-specific models、Scope / Window interpretation、逐日 completeness、export view、Tushare adapter 与 service composition 都归本 Dataset；依赖方向与 public import compatibility 继承模块架构。Calendar 不依赖其他 Dataset。
 
-Source provider 为 **Tushare**，execution authority 为 [providers/TUSHARE.md](../../providers/TUSHARE.md)。本 Dataset adapter 拥有 `trade_cal` endpoint / parameters、batching、response partition 与 Calendar facts validation；provider execution 继承该 authority。
+Source provider 为 **Tushare**，execution 继承 [providers/TUSHARE.md](../../providers/TUSHARE.md)。本 Dataset adapter 拥有 `trade_cal` endpoint / parameters、batching、response partition 与 Calendar facts validation。
 
 Source endpoint 为 **`trade_cal`**。第一版只有一个 canonical Scope shape：
 

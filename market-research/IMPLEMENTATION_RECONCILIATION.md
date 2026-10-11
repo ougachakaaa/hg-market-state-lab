@@ -12,7 +12,7 @@
 
 Research 当前 concrete Component / Observation / Study 的 public-service composition 与 artifact ownership 未发现新的本地实现冲突。
 
-DataLake rebuild-only persistence compliance gap 已由 producer implementation reconciliation 关闭，当前状态唯一记录于 [DataLake drift register](../data-lake/IMPLEMENTATION_RECONCILIATION.md)。本轮仅同步此 producer 状态引用，不改变 Research runtime、public I/O 或 retained state；DataLake → Research public boundary 不需要 downstream API 适配。Research 不通过 Snapshot fallback、private access、第二 cache 或 Study direct-upstream 调用绕过 producer failure。
+Producer failure 的消费约束继承 [UPSTREAM](UPSTREAM.md)：Research 不通过 Snapshot fallback、private access、第二 cache 或 Study direct-upstream 调用绕过 producer failure。DataLake cache compatibility 由 [producer persistence authority](../data-lake/PERSISTENCE.md) 拥有。
 
 [Observation refresh / definition evolution](observations/ARCHITECTURE.md#explicitly-deferred-decisions) 与 [Study workflow deferred decisions](studies/WORKFLOW.md#boundaries-与-deferred-decisions) 仍是待真实需求触发的 semantic decisions，不是当前 implementation drift；本 register 不为它们决定答案。
 

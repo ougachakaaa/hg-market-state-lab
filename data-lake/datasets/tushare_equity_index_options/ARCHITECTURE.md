@@ -6,9 +6,9 @@
 
 Canonical identity 为 `tushare_equity_index_options`，沿用 Tushare Dataset naming convention。本 Dataset 管理 CFFEX 真实股指期权合约及其 Tushare Source 日线 facts；metadata Source 为 `opt_basic`，daily Source 为 `opt_daily`。不管理 synthetic chain instruments 或其他交易所期权。
 
-Source provider 为 Tushare，execution authority 为 [providers/TUSHARE.md](../../providers/TUSHARE.md)。本 Dataset adapter 拥有 endpoint / parameters、catalog / daily request strategy、pagination、option chain / product-day partition 与 facts normalization；credential、client、限流与 provider request failure conversion 归共享 Provider Runtime，遵循该 execution boundary。
+Source provider 为 Tushare，execution 继承 [providers/TUSHARE.md](../../providers/TUSHARE.md)。本 Dataset adapter 拥有 endpoint / parameters、catalog / daily request strategy、pagination、option chain / product-day partition 与 facts normalization。
 
-本 bounded context 位于 `datasets/tushare_equity_index_options/`，自治拥有 authority、src/、tests/ 和 data/ 中的 owned state（SQLite ownership 继承模块架构），共用 repository root 唯一 Python project/environment 与 `data_lake` namespace。不提供旧名兼容实现。
+本 bounded context 位于 `datasets/tushare_equity_index_options/`；authority、`src/`、`tests/` 与 `data/` 的 ownership、colocation 和 Python boundary 继承 [模块架构](../../ARCHITECTURE.md)。不提供旧名兼容实现。
 
 Instrument 是 Dataset-local 期权合约 catalog。Underlying relationship 通过稳定指数 identity 表达，不依赖 Index/Futures cache 存在，不引用其他库 instrument_id。Index、Futures、Options 始终分别拥有 persistence；没有跨库 FK、global instrument master、internal persistence access 或跨库事务。
 

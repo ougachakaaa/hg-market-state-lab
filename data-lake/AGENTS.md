@@ -15,7 +15,6 @@
 | Tushare credential、client、限流与 provider execution failure | [providers/TUSHARE.md](providers/TUSHARE.md) |
 | Dataset-specific domain / Source / completeness | [DATASETS.md](DATASETS.md) → owning Dataset ARCHITECTURE.md → 所需专题 |
 | Dataset-specific public service / consumer contract | owning Dataset ARCHITECTURE.md → SERVICE.md |
-| 当前 authority / implementation drift 与 handoff | [IMPLEMENTATION_RECONCILIATION.md](IMPLEMENTATION_RECONCILIATION.md) |
 | CLI delivery / delegation | [lab authority](../lab/ARCHITECTURE.md) |
 
 普通 Dataset domain task 不默认加载 provider execution、service 或 CLI authority；涉及已声明 prerequisite 时，读取其 public contract，不加载 sibling internals。Python tooling 与当前环境操作遵循 [repository architecture](../ARCHITECTURE.md) 和 [DEVELOPMENT.md](../DEVELOPMENT.md)，从 repository root 使用唯一根环境。

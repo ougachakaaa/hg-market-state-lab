@@ -2,7 +2,9 @@
 
 本文件拥有内部批执行、验证复用与生命周期契约，继承 [DOMAIN_MODEL.md](DOMAIN_MODEL.md) 和 [APPLICATION.md](APPLICATION.md)。具体 endpoint、分组大小与完整性仍由 Dataset 拥有；provider 限流与错误转换由 [Tushare authority](providers/TUSHARE.md) 拥有。
 
-一次 ensure 只选择 missing / non-success units。Source batch 必须精确 partition 这些 units；请求覆盖的日期区间可以包含已缓存日期，但只能提交 selected units。每个 unit 在其请求开始前提交 pending，完整性通过后独立原子提交；网络请求期间不得持有写事务。分页必须取得空终页，短页不能证明结束；重复页或重复自然 identity 属于 completeness failure。
+一次 ensure 只选择 missing / non-success units。Source batch 必须精确 partition 这些 units；请求覆盖的日期区间可以包含已缓存日期，但只能提交 selected units。每个 unit 在其请求开始前提交 pending，完整性通过后独立原子提交；网络请求期间不得持有写事务。
+
+分页必须取得空终页，短页不能证明结束。Offset 按原始响应行数推进，完整分页保留重复自然 identity，不能静默去重。可定位的重复 identity 按 owning Dataset completeness 隔离失败；重复整页或其他无法证明穷尽的响应使整批失败，不作为合法分页结束。
 
 批响应按日期及产品 partition；单 unit 数据异常只影响该 unit，无法证明整个请求完整的错误影响该批。Source 只保留当前小窗口的行情响应，释放后才处理下一窗口，不保留整段历史 daily cache。已知 catalog/metadata failure 时不启动无法提交的后续行情请求；产品隔离规则仍由 Dataset completeness 拥有。
 

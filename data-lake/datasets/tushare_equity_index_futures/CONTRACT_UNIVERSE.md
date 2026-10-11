@@ -8,7 +8,7 @@
 
 请求显式使用 exchange=CFFEX、fut_type=1。取得完整 catalog 意味着已证明所选 products 的所有 Source metadata 都已取得且可合法解释，包括 provider limits、分页/截断与 Source filtering 的完整性；单次 API success、非空响应、少于某个经验行数或当前样本数量都不是独立证明。分页和批量 strategy 留给实现，但若不能证明无截断，必须将受影响 units 判为 failure，不能降低 completeness。
 
-Catalog 按 FACTS.md 验证 identity、ordinary classification、product、required facts 与 lifecycle。重复或冲突不能静默去重；无法识别且可能属于所选产品的 metadata 不得丢弃后声称该产品完整。只有能证明与某产品无关的缺陷才不影响该产品。失败可以隔离到产品时，其他已证明完整的产品继续执行。
+Catalog 按 [FACTS.md](FACTS.md) 验证 identity、ordinary classification、product、required facts 与 lifecycle。排除任何 metadata 前，必须核对完整 ts_code / symbol / fut_code / exchange evidence；identity 或产品证据冲突时，所有候选所选产品均失败。无法归属且不能证明 unrelated 的行按 catalog failure 处理，不能丢弃后缩小 expected universe。重复或冲突不能静默去重；只有能证明与某产品无关的缺陷才不影响该产品。失败可以隔离到产品时，其他已证明完整的产品继续执行。
 
 本次合法 catalog 在 invocation 内冻结，所有本次尝试的 product-day 共用这一 basis，不逐日重新决定 expected set。它是本 Dataset-local metadata，不建立 global instrument master；后续 catalog 不自动重判已 success units。
 

@@ -6,11 +6,11 @@
 
 Canonical identity 为 `tushare_index_daily`，沿用现有 `tushare_trade_calendar` 的 lowercase snake_case convention。Dataset 表达 Tushare 指数日线 Source facts 与 Dataset-local index catalog，不限制为四个股指期货 underlying indices。
 
-本 bounded context 位于 `datasets/tushare_index_daily/`，自治拥有 authority、`src/`、`tests/` 及 `data/` 中的 owned state（SQLite ownership 继承模块架构）。唯一根 Python runtime 与 namespace `data_lake` 继承上层 invariant。
+本 bounded context 位于 `datasets/tushare_index_daily/`；authority、`src/`、`tests/` 与 `data/` 的 ownership、colocation 和 Python boundary 继承 [模块架构](../../ARCHITECTURE.md)。
 
 Primary Source 为 Tushare `index_daily`；instrument metadata Source 为 `index_basic`。两个 endpoint 属于本 Dataset 的 Source composition，不因 endpoint 数量拆分 Dataset，也不通过 Snapshot 私有 adapter 读取。Provider-native representation 与 canonical semantic facts 的映射由 FACTS.md 拥有。
 
-Source provider 为 Tushare，execution authority 为 [providers/TUSHARE.md](../../providers/TUSHARE.md)。本 Dataset adapter 拥有 endpoint / parameters、batching / pagination、partition、identity validation 与 normalization；credential、client、限流与 provider request failure conversion 归共享 Provider Runtime，遵循该 execution boundary。
+Source provider 为 Tushare，execution 继承 [providers/TUSHARE.md](../../providers/TUSHARE.md)。本 Dataset adapter 拥有 endpoint / parameters、batching / pagination、partition、identity validation 与 normalization。
 
 本 Dataset 不拥有 moving average、return window、volatility、technical indicators、relative strength、basis 或 research features；这些属于下游 Research / Modeling。与 Futures / Options 的组合只能通过各自 public service；不建立 shared market database、global instrument master 或跨库 foreign key。
 
@@ -33,7 +33,7 @@ Canonical FetchUnit identity 为 `(index_code, trade_date)`，是一只指数一
 
 `FetchUnit != Source Request`：adapter 可按 `ts_code + start_date + end_date` 批量获取历史，并处理 provider truncation / pagination；返回行必须 partition 回逐指数逐日 units。只验证、写入本次 selected units；response 中其他日期、已 success unit 或其他指数不授权新写入。无法确定目标归属的响应不能用来宣告所尝试 units 成功。
 
-Selected units 独立验证并原子保存；一个 unit 失败不阻止其他能完整验证的 unit。Status 继承 `pending / success / failed`，不新增 incomplete / stale；已有 success 默认跳过，即使批响应含该 unit 也不重写。Metadata 只服务本地 instrument ownership，不发布独立 record-level mutation 或新的 catalog operation。
+Selected units 独立验证并原子保存；可定位的重复 daily identity 只失败对应 `(index_code, trade_date)`，其他能完整验证的 units 继续。分页穷尽与整批失败边界继承 [EXECUTION.md](../../EXECUTION.md)。Status 与已有 success 的跳过规则继承公共 domain authority。Metadata 只服务本地 instrument ownership，不发布独立 record-level mutation 或新的 catalog operation。
 
 ## 4. Dependency 与下一份 authority
 

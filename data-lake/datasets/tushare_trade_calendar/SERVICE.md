@@ -30,9 +30,7 @@ data_lake.datasets.tushare_trade_calendar Public Application Service
 internal Source Adapter / Repository / SQLite
 ```
 
-Consumer 调用与 runtime boundary 继承 [APPLICATION.md](../../APPLICATION.md)，依赖权限及 consumer integration 边界继承模块架构。
-
-普通 consumer 使用 `create_service()` 创建 service；本 Dataset 内部组合 trade_cal adapter 与 owned storage，factory 遵守公共 runtime invocation invariant。
+Consumer 调用、factory 与 runtime boundary 继承 [APPLICATION.md](../../APPLICATION.md)，依赖权限继承 [模块架构](../../ARCHITECTURE.md)。普通 consumer 使用 `create_service()`；本 Dataset 内部组合 trade_cal adapter 与 owned storage。
 
 `CoverageResult`、`EnsureResult`、`UnitFailure` 与两类 application errors 继承公共 Application authority，可由公共 `data_lake` facade 提供；caller 必须能消费结果并识别错误，无需访问 internals。内部文件拆分、类型载体与共享类型 re-export 方式留给 implementation，不改变 public semantics。
 
@@ -67,7 +65,7 @@ view = service.export(request)
 
 ## 3. Coverage 与 ensure specialization
 
-结果字段、互斥计数、complete 与不存在缓存的处理继承 [APPLICATION.md](../../APPLICATION.md)。本 Dataset 的 `requested_units = (end_date - start_date).days + 1`，包括休市日。Coverage 是 cache completeness，不表达 freshness。
+结果字段、互斥计数、complete 与不存在缓存的处理继承 [APPLICATION.md](../../APPLICATION.md)。本 Dataset 的 `requested_units = (end_date - start_date).days + 1`，包括休市日。
 
 Ensure 使用 Tushare `trade_cal`，Source 请求显式指定目标 exchange。Batching 不改变 [domain completeness](ARCHITECTURE.md)；返回 facts 按 identity partition。已有 success units 跳过，即使 batch response 包含它们也不重写。每个 selected unit 独立验证并原子提交。
 
@@ -77,7 +75,7 @@ Ensure 使用 Tushare `trade_cal`，Source 请求显式指定目标 exchange。B
 
 ## 4. TradeCalendarRecord 与 semantic export view
 
-`export` 构造 Dataset-owned business view，可被 Python caller 直接消费，不写文件、不接收 output path、不隐式 ensure。V1 唯一 view 为 `calendar`，不引入 view selector。
+`export` 遵循 [APPLICATION.md](../../APPLICATION.md) 的 semantic view、read-only 与 delivery boundary。唯一 view 为 `calendar`，不引入 view selector。
 
 `TradeCalendarRecord` 恰有四个 public semantic fields：
 
@@ -112,10 +110,10 @@ Coverage 与 records 遵守公共 Application authority 的 export consistency /
 
 Service 返回 semantic objects，JSON 只是一种 adapter representation。稳定 JSON meaning 为：日期成为 `YYYY-MM-DD`；`None` 成为 `null`；`is_open` 成为 integer 0 / 1；coverage 计数为 JSON integers、complete 为 boolean；records 成为有序 array。Scope 表达 `{exchange}`，window 表达 `{start_date, end_date}`，envelope / Record 字段名与上述 contract 一致。
 
-Serialization 与 delivery 由 adapter 拥有；[lab](../../../lab/ARCHITECTURE.md) 负责 CLI parsing、JSON file delivery 与 exit-code mapping，未来 HTTP adapter 负责自己的 parsing、DTO projection、serialization 与 error mapping。Adapter 不重新决定 Dataset semantics；本文件不设计 HTTP endpoint 或固定 HTTP status code。
+Serialization 与 delivery boundary 继承 [APPLICATION.md](../../APPLICATION.md)；CLI parsing、JSON file delivery 与 exit-code mapping 见 [lab authority](../../../lab/ARCHITECTURE.md)。
 
 ## 6. Application failures 与 runtime configuration
 
 Failure taxonomy 与 lazy Source I/O 继承 [APPLICATION.md](../../APPLICATION.md)，本 Dataset 不增加公共 failure category；输入错误见第 2 节，可恢复逐日 failures 见第 3 节。
 
-Tushare execution 统一遵循 [Provider Runtime authority](../../providers/TUSHARE.md)。Calendar composition 提供自己的 storage context，adapter 通过共享 Executor 执行 trade_cal；SQLite lifecycle、默认 filename convention、旧目录 state 隔离与 rebuild-only compatibility 继承 [PERSISTENCE.md](../../PERSISTENCE.md)。
+Calendar composition 提供自己的 storage context，adapter 通过共享 Executor 执行 trade_cal。Provider execution 继承 [TUSHARE.md](../../providers/TUSHARE.md)，storage lifecycle 与 compatibility 继承 [PERSISTENCE.md](../../PERSISTENCE.md)。

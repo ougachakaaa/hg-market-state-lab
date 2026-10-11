@@ -68,7 +68,9 @@ request_start[n+1] - request_start[n] >= minimum interval
 
 这里的相邻 starts 是同一 process / credential 下所有 Dataset 的合并启动序列；不是各 Dataset 各有独立额度，也不允许瞬时 burst。非法配置在需要 Source I/O 时以 OperationError 明确失败；read-only/factory 不读取该配置。同一 process / credential 已建立 execution state 后，rate 配置变更以 OperationError 拒绝，不能静默重置 schedule。限流约束实际 provider request start，不是 request completion；已经启动的请求即使失败也属于该启动序列。
 
-Limiter 必须对 process 内并发调用安全：同一 Dataset、多个 Dataset、sequential ensure 与后续 concurrent execution 都遵守共享 schedule。Rate-limit 等待依据 request starts，不要求前一请求完成后再额外等待 120ms；慢 response 不增加 rate-limit 强制等待，也不要求 caller 协调速度。
+Request start 以实际 HTTP headers/body 发送边界为准，不能只限制上层 call 或提前预留的调度时间。共享 credential-local gate 保护实际发送，发送结束或失败后更新调度时间并释放 gate；线程延迟不能将已放行请求积压成 burst。连接建立、日志、响应等待与解析不持有 gate。
+
+Limiter 必须对 process 内并发调用安全：同一 Dataset、多个 Dataset、sequential ensure 与后续 concurrent execution 都遵守共享 schedule。Rate-limit 等待不要求前一请求完成响应后再额外等待 120ms；慢 response 不增加 rate-limit 强制等待，也不要求 caller 协调速度。
 
 V1 仅保证 **single Python process** 内共享预算。多个 processes、worktrees 或 machines 即使使用同一 credential，也不保证共享 500/min；不得称为 account-global limiter。不引入 Redis、SQLite / file rate-limit lock、distributed token bucket 或 central daemon；未来 cross-process quota coordination 须独立设计。
 

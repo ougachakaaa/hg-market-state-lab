@@ -20,7 +20,7 @@ export(request: FuturesDailyRange)   → FuturesDailyExport
 
 Product selection 解释为 sorted unique canonical set；不 trim、转大小写、名称猜测或隐式 defaults。重复合法代码去重，不是重复 FetchUnits；未在当前市场关系表确认的产品为 InvalidRequestError，未来扩展按 FACTS.md。空/错误 types、非法代码或倒置范围在任何 dependency/Source 操作前 InvalidRequestError，不交换日期。Request 不接受 contract、delivery month、token、path、output path 或 internal object；Scope 只含 product_codes，Window 为两端 date。
 
-Factory 内部组合 owned storage、Source adapter 与 Calendar public service，不要求普通 consumer 提供 SQLite path、connection、Repository 或 token。Factory/read-only calls 不创建 state、不要求 Source credential；consumer 直接使用 semantic objects，无 CLI/JSON round-trip。
+Consumer 调用、factory 与 read-only boundary 继承 [APPLICATION.md](../../APPLICATION.md)。`create_service()` 由本 Dataset 内部 composition 组合 owned storage、fut_basic/fut_daily adapter、必要的 type-2 exclusion 获取与 Calendar public service。
 
 行情 Window 的 end_date 必须不晚于 operation 验证时的 Asia/Shanghai 当前日期；未来结束日期在任何 dependency/Source I/O 前抛 InvalidRequestError，不截断日期。当天未发布仍按完整性失败保持可重试。Calendar 继续允许已发布的未来日期。
 
@@ -78,11 +78,9 @@ Coverage、Records 和成功时保留的合法 metadata/completeness basis 来�
 
 ## 4. Runtime 与实现边界
 
-Tushare execution 遵循 [Provider Runtime authority](../../providers/TUSHARE.md)，factory 与整个 operation 调用链继承公共 lazy Source I/O invariant；Calendar prerequisite 是否需要 Source I/O 由 TRADING_DAYS.md 拥有。
+Provider execution 继承 [TUSHARE.md](../../providers/TUSHARE.md)，storage lifecycle 与 compatibility 继承 [PERSISTENCE.md](../../PERSISTENCE.md)。Calendar 调用链与 Source I/O 条件由 [TRADING_DAYS.md](TRADING_DAYS.md) 拥有；bounded Source execution 见下节。
 
-唯一 owned SQLite 目标位于本 Dataset data/；Source composition 拥有 fut_basic/fut_daily 及必要 type-2 exclusion 获取，adapter 通过共享 Executor 执行 provider 请求，Calendar 只走 public namespace。SQLite lifecycle、默认 filename convention、旧目录 state 隔离与 rebuild-only compatibility 继承 [PERSISTENCE.md](../../PERSISTENCE.md)；bounded Source execution 见下节。Consumer integration 与 deferred semantics 继承模块架构。
-
-V2 在 V1 字段基础上允许 pre_close / open_interest_change 为 float 或 None，仅限 FACTS 声明的上市首日合法缺席；其他字段及完整性不变。兼容当前 persistence contract 的已有缓存，其有限数值保持可读，不改写已成功 facts；public V1/V2 字段演进不授权读取 incompatible persistence generation。
+兼容当前 persistence contract 的已有缓存，其有限数值保持可读，不改写已成功 facts；public export schema version 不授权读取 incompatible persistence generation。
 
 ## Bounded Source execution
 

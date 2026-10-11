@@ -18,7 +18,7 @@ DataLake persistence 是可重建的 reusable source-fact cache，不是需要�
 
 当前 canonical internal persistence generation 为 3。`schema_version` / generation 只检测 persisted shape 与当前 runtime 的兼容性，不驱动 migration。Generation 2、未知 generation 或其他不兼容 persisted schema 必须明确失败，要求重建 owning Dataset cache；即使目标 units 已 success 或目标为空，也不允许通过旧格式 compatibility path 消费不兼容缓存。Public failure mapping 见 [APPLICATION.md](APPLICATION.md)。
 
-不做 in-place migration、automatic upgrade、fallback、dual-read、dual-write 或 migration backup / transactional upgrade；不为未来建立 migration framework。原 generation 2/3 双读及写入时 2 → 3 backup / upgrade contract 已被本节取代，历史内容只保留在 Git history。Implementation status 与 authority / implementation drift 由 [implementation reconciliation](IMPLEMENTATION_RECONCILIATION.md) 记录。
+不做 in-place migration、automatic upgrade、fallback、dual-read、dual-write 或 migration backup / transactional upgrade；不为未来建立 migration framework。
 
 Cache rebuild 是显式 owning Dataset 操作，不由 coverage、ensure、export 或 factory 自动删除、覆盖或转换旧库。本文件锁定 ownership 与失败要求，不定义 rebuild CLI、删除流程或其他执行 mechanics。
 
