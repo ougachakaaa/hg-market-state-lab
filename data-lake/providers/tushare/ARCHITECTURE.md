@@ -1,10 +1,10 @@
 # DataLake Tushare Provider Runtime authority
 
-本文件是 DataLake 内 Tushare provider execution 的唯一 canonical authority，拥有 credential resolution、client creation、request rate limiting、provider request execution、provider-level exception normalization 与 shared runtime lifecycle。继承 [模块架构](../ARCHITECTURE.md) 的 ownership / dependency boundary 与 [公共 Application authority](../APPLICATION.md) 的 lazy Source I/O、read-only 和 failure invariants。具体 Dataset 经 [catalog](../DATASETS.md) 进入其 Source / domain authority。
+本文件是 DataLake 内 Tushare provider execution 的唯一 canonical authority，拥有 credential resolution、client creation、request rate limiting、provider request execution、provider-level exception normalization 与 shared runtime lifecycle。继承 [模块架构](../../ARCHITECTURE.md) 的 ownership / dependency boundary 与 [公共 Application authority](../../APPLICATION.md) 的 lazy Source I/O、read-only 和 failure invariants。具体 Dataset 经 [catalog](../../DATASETS.md) 进入其 Source / domain authority。
 
 ## 1. Ownership 与 execution boundary
 
-Tushare Provider Runtime / Executor 属于 DataLake provider-specific shared infrastructure，implementation namespace 为 `data_lake.providers.tushare`，位于 `data-lake/src/data_lake/providers/tushare/`。它不是 provider-agnostic shared kernel，不是 consumer-facing DataLake service，也不拥有任何 Dataset domain semantics。
+Tushare Provider Runtime / Executor 属于 DataLake provider-specific shared infrastructure，implementation namespace 为 `data_lake.providers.tushare`，由 `data-lake/providers/tushare/` 独立拥有：本文件为 authority，`src/data_lake/providers/tushare/` 为 implementation，`tests/` 为 Provider verification。Filesystem ownership 不改变该 Python namespace，source root 使用 repository root 唯一 Python project / environment。它不是 provider-agnostic shared kernel，不是 consumer-facing DataLake service，也不拥有任何 Dataset domain semantics。
 
 ```text
 Dataset public Application Service
@@ -18,7 +18,7 @@ Provider client / HTTP API
 
 所有 Tushare-backed Dataset 的 Source adapter 均通过这一内部 execution boundary 执行 Tushare 请求，包括 Calendar、Index、Futures 与 Options 的 metadata / daily requests。Dataset adapter 决定请求什么与 response 的含义；Executor 决定怎样统一、受限地执行请求。
 
-本内部 execution boundary 的 dependency / public access permissions 继承 [模块架构](../ARCHITECTURE.md)。
+本内部 execution boundary 的 dependency / public access permissions 继承 [模块架构](../../ARCHITECTURE.md)。
 
 Dataset adapter 继续拥有 endpoint selection、provider parameters、request batching、pagination / exhaustion、response partition、identity validation、Source facts normalization 与 completeness。`Provider Request != FetchUnit`；Executor 不接收 FetchUnits，不知道调用方 Dataset，不解释 index_code、trade_date、product、expiry 或 strike。
 
@@ -53,7 +53,7 @@ Credential resolution 仅在 Provider Runtime 实现一次，稳定 credential i
 
 Provider Runtime 独自创建 Tushare client；Dataset 不直接读取 `TUSHARE_TOKEN` / `.env`，不自行调用 `tushare.pro_api(token)`。Dataset composition 仍组合自己的 adapter / storage / 已声明 prerequisites，通过内部 provider boundary 获取 execution 能力，不把 token 或 Executor 暴露为 consumer semantic argument。
 
-Credential resolution 与 client initialization 遵守 [APPLICATION.md](../APPLICATION.md) 的 lazy Source I/O invariant，包括 prerequisite 调用链。需要 Source I/O 时，在发起 provider request 前完成必要 initialization。
+Credential resolution 与 client initialization 遵守 [APPLICATION.md](../../APPLICATION.md) 的 lazy Source I/O invariant，包括 prerequisite 调用链。需要 Source I/O 时，在发起 provider request 前完成必要 initialization。
 
 同一 process 中解析为同一 Tushare credential 的所有 Dataset 必须共享 provider execution state，至少共享下一节定义的 request-start schedule。不同 Dataset factory、service instance、Source adapter 或 operation 不能各自创建独立预算，也不能在结束/重建时重置同一 process / credential 的调度状态。Client 的具体复用方式、内部对象与同步机制留给 implementation，不能削弱共享调度、lazy initialization 与并发安全。
 
@@ -80,9 +80,9 @@ Provider 使用受控 HTTP client 校验 HTTP status、JSON envelope 与 provide
 
 请求错误 reason 必须包含 endpoint 与安全分类（rate_limit、quota、permission、timeout、network、http、response、provider、unknown），provider numeric code / HTTP status 可附带；不发布未经处理的远端 message、exception repr、请求 body 或 credential。原有 ExecutionFailure code 保持 source_request。初始化仍为 OperationError，不增加自动 retry。
 
-诊断事件与 delivery 配置见 [DataLake diagnostics](../DIAGNOSTICS.md)。
+诊断事件与 delivery 配置见 [DataLake diagnostics](../../DIAGNOSTICS.md)。
 
-公共 failure taxonomy 仍由 [APPLICATION.md](../APPLICATION.md) 唯一拥有；本节只固定 Tushare execution 的内部转换位置。
+公共 failure taxonomy 仍由 [APPLICATION.md](../../APPLICATION.md) 唯一拥有；本节只固定 Tushare execution 的内部转换位置。
 
 | Failure | 转换位置与结果 |
 | --- | --- |
@@ -94,4 +94,4 @@ Executor 不把 provider request failure 映射到 FetchUnits；Dataset adapter 
 
 ## 6. Cancellation boundary
 
-内部 execution 可用 cancellation guard 包裹 Executor：取消后拒绝后续 call，已进入的 call 按既有 timeout/限流/错误契约收束。Guard 不重试、不取消已发出的 HTTP、不改变 quota 计数，也不解释 FetchUnits；Dataset Source 的分页生命周期与取消触发属于 [bounded execution](../EXECUTION.md)。
+内部 execution 可用 cancellation guard 包裹 Executor：取消后拒绝后续 call，已进入的 call 按既有 timeout/限流/错误契约收束。Guard 不重试、不取消已发出的 HTTP、不改变 quota 计数，也不解释 FetchUnits；Dataset Source 的分页生命周期与取消触发属于 [bounded execution](../../EXECUTION.md)。

@@ -8,6 +8,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 SOURCE = ROOT / "data-lake/src"
 DATASETS = ROOT / "data-lake/datasets"
+PROVIDERS = ROOT / "data-lake/providers"
 
 
 def imports(path: Path, source_root: Path) -> set[str]:
@@ -39,7 +40,7 @@ def test_datalake_has_no_consumer_dependencies() -> None:
         "lab",
         "fastapi",
     }
-    for source_root in (SOURCE, *(DATASETS.glob("*/src"))):
+    for source_root in (SOURCE, *PROVIDERS.glob("*/src"), *DATASETS.glob("*/src")):
         for path in source_root.rglob("*.py"):
             assert not any(
                 name.split(".")[0] in forbidden for name in imports(path, source_root)
@@ -48,9 +49,8 @@ def test_datalake_has_no_consumer_dependencies() -> None:
 
 def test_shared_kernel_has_no_dataset_or_provider_dependencies() -> None:
     assert not list((SOURCE / "data_lake/datasets").rglob("*.py"))
+    assert not (SOURCE / "data_lake/providers").exists()
     for path in SOURCE.rglob("*.py"):
-        if "providers" in path.parts:
-            continue
         assert not any(
             name == "data_lake.datasets"
             or name.startswith("data_lake.datasets.")
@@ -98,7 +98,12 @@ def test_datasets_do_not_import_siblings() -> None:
 
 
 def test_no_consumer_imports_datalake_internals() -> None:
-    for directory in ("lab", "backend-api/src", "market-snapshot/src", "market-research/src"):
+    for directory in (
+        "lab",
+        "backend-api/src",
+        "market-snapshot/src",
+        *(path.relative_to(ROOT).as_posix() for path in (ROOT / "market-research").glob("**/src")),
+    ):
         scan_root = ROOT / directory
         source_root = ROOT if directory == "lab" else scan_root
         for path in scan_root.rglob("*.py"):
@@ -138,9 +143,9 @@ def test_owned_runtime_directories_are_ignored() -> None:
 
 
 def test_provider_is_separate_from_kernel_and_dataset_semantics() -> None:
-    for path in SOURCE.rglob("*.py"):
-        names = imports(path, SOURCE)
-        if "providers" in path.parts:
+    for source_root in PROVIDERS.glob("*/src"):
+        for path in source_root.rglob("*.py"):
+            names = imports(path, source_root)
             assert all(
                 not name.startswith("data_lake.")
                 or name.startswith("data_lake.providers.")
@@ -152,10 +157,6 @@ def test_provider_is_separate_from_kernel_and_dataset_semantics() -> None:
                     "data_lake.results.OperationError",
                 }
                 for name in names
-            ), path
-        else:
-            assert not any(
-                name.startswith("data_lake.providers") or name == "tushare" for name in names
             ), path
     for source_root in DATASETS.glob("*/src"):
         for path in source_root.rglob("*.py"):

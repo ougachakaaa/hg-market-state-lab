@@ -104,7 +104,7 @@ Dataset owns export semantics；CLI / HTTP adapter owns serialization 与 delive
 
 ## 2. Runtime configuration 与调用边界
 
-Source credential 属于 runtime/provider configuration，不是 Dataset semantic argument。不得增加 `--token` 或第二套 secret convention，也不因此授权 import Snapshot 私有 Source client 或 artifact helper。Provider-specific credential convention 与 execution 由对应 provider authority 拥有，Dataset authority 声明 Source provider 并链接 execution authority，不重复实现 resolution；Tushare contract 见 [providers/TUSHARE.md](providers/TUSHARE.md)。
+Source credential 属于 runtime/provider configuration，不是 Dataset semantic argument。不得增加 `--token` 或第二套 secret convention，也不因此授权 import Snapshot 私有 Source client 或 artifact helper。Provider-specific credential convention 与 execution 由对应 provider authority 拥有，Dataset authority 声明 Source provider 并链接 execution authority，不重复实现 resolution；Tushare contract 见 [providers/tushare/ARCHITECTURE.md](providers/tushare/ARCHITECTURE.md)。
 
 普通 consumer 创建 Dataset service 不要求提供 SQLite path、Repository、Source Adapter、database connection 或 token；Dataset-specific configuration/composition 属于 owning Dataset，generic runtime/storage resolution machinery 属于 DataLake shared kernel，provider-specific execution 属于 provider infrastructure；三者均为 consumer boundary 内部能力。Coverage / export 与 factory 不解析 Source credential、不创建 provider client；ensure 仅在实际 Source I/O 必要时解析凭据并初始化 client。全部目标 success 或零目标且无需 prerequisite Source I/O 时不进入 provider initialization。Missing required credential 在 Source request 前以 OperationError 明确失败；provider execution authority 不改变公共 failure taxonomy，也不负责将请求失败映射到 FetchUnits。
 

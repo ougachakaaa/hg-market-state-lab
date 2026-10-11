@@ -10,7 +10,7 @@ Canonical Dataset identity 为 `tushare_trade_calendar`，用于持久缓存 Tus
 
 Trade-calendar-specific models、Scope / Window interpretation、逐日 completeness、export view、Tushare adapter 与 service composition 都归本 Dataset；依赖方向与 public import compatibility 继承模块架构。Calendar 不依赖其他 Dataset。
 
-Source provider 为 **Tushare**，execution 继承 [providers/TUSHARE.md](../../providers/TUSHARE.md)。本 Dataset adapter 拥有 `trade_cal` endpoint / parameters、batching、response partition 与 Calendar facts validation。
+Source provider 为 **Tushare**，execution 继承 [providers/tushare/ARCHITECTURE.md](../../providers/tushare/ARCHITECTURE.md)。本 Dataset adapter 拥有 `trade_cal` endpoint / parameters、batching、response partition 与 Calendar facts validation。
 
 Source endpoint 为 **`trade_cal`**。第一版只有一个 canonical Scope shape：
 

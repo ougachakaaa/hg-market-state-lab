@@ -111,7 +111,7 @@ def test_fallback_path_and_initialization_failure(monkeypatch: pytest.MonkeyPatc
     monkeypatch.setattr(_executor, "create_client", broken)
     with pytest.raises(OperationError, match="initialized"):
         TushareExecutor().prepare()
-    assert paths == [Path(__file__).resolve().parents[2] / "market-snapshot/.env"]
+    assert paths == [Path(__file__).resolve().parents[4] / "market-snapshot/.env"]
 
 
 @pytest.mark.parametrize("rate", ["0", "501", "abc", "200.0"])

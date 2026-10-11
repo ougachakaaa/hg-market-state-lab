@@ -70,7 +70,7 @@ class CancellableExecutor:
 def resolve_credential() -> str:
     token = os.environ.get("TUSHARE_TOKEN")
     if token is None:
-        root = Path(__file__).resolve().parents[5]
+        root = Path(__file__).resolve().parents[7]
         token = dotenv_values(root / "market-snapshot/.env").get("TUSHARE_TOKEN")
     if not token or not token.strip():
         raise OperationError("TUSHARE_TOKEN credential is required for Source I/O")

@@ -6,7 +6,7 @@
 
 Canonical identity 为 `tushare_equity_index_futures`，沿用已确定的 Tushare Dataset naming convention。本 Dataset 管理 CFFEX 股指期货真实普通月合约及其 Tushare Source 日线 facts；metadata Source 为 `fut_basic`，ordinary instrument selection 显式使用 `fut_type="1"`，daily Source 为 `fut_daily`。主力/连续序列不作为 instrument 或 records。
 
-Source provider 为 Tushare，execution 继承 [providers/TUSHARE.md](../../providers/TUSHARE.md)。本 Dataset adapter 拥有 endpoint / parameters、catalog / daily request strategy、pagination、product-day partition 与 facts normalization。
+Source provider 为 Tushare，execution 继承 [providers/tushare/ARCHITECTURE.md](../../providers/tushare/ARCHITECTURE.md)。本 Dataset adapter 拥有 endpoint / parameters、catalog / daily request strategy、pagination、product-day partition 与 facts normalization。
 
 本 bounded context 位于 `datasets/tushare_equity_index_futures/`；authority、`src/`、`tests/` 与 `data/` 的 ownership、colocation 和 Python boundary 继承 [模块架构](../../ARCHITECTURE.md)。不建立旧名 compatibility implementation。
 

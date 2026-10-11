@@ -63,7 +63,7 @@ Repository
 
 根 `pyproject.toml`、根 `poetry.lock` 与每个 worktree 的根 `.venv` 是唯一 canonical Python runtime surface。Module-local `pyproject.toml`、module-local `poetry.lock`、module-local `.venv`、Poetry editable/path dependency，以及分别进入 Python module 目录执行 Poetry workflow 均不属于目标 architecture。
 
-`data-lake` 拥有 canonical Python namespace `data_lake`；shared kernel 源码归顶层 `data-lake/src/`，具体 Dataset 的 authority、source、tests 与 persistent state colocate 于 `data-lake/datasets/<dataset-id>/`，topology 由 [DataLake authority](data-lake/ARCHITECTURE.md) 拥有。Dataset-local source roots 同样使用 repository root 唯一 Python project、dependency graph 与根 `.venv`，不创建独立 Python runtime。Consumer 可以直接依赖具体 Dataset public Application Service；shared kernel 不依赖具体 Dataset，Dataset 间只允许 DataLake authority 明确声明的单向 public Application Service dependency，不开放 internal persistence。Public boundary 与 source registration / import compatibility 约束进入 DataLake authority。
+`data-lake` 拥有 canonical Python namespace `data_lake`；shared kernel 源码归顶层 `data-lake/src/`，具体 Provider 与 Dataset 的 authority、source、tests 分别 colocate 于 `data-lake/providers/<provider-id>/` 与 `data-lake/datasets/<dataset-id>/`，persistent state 仍由 Dataset 拥有，topology 由 [DataLake authority](data-lake/ARCHITECTURE.md) 拥有。Provider-local / Dataset-local source roots 同样使用 repository root 唯一 Python project、dependency graph 与根 `.venv`，不创建独立 Python runtime。Consumer 可以直接依赖具体 Dataset public Application Service；shared kernel 不依赖具体 Provider 或 Dataset，Dataset 间只允许 DataLake authority 明确声明的单向 public Application Service dependency，不开放 internal persistence。Public boundary 与 source registration / import compatibility 约束进入 DataLake authority。
 
 Runtime unification 不合并模块、不改变源码目录 ownership，也不把所有 Python source 移入统一 `src/`。`data_lake`、`market_snapshot`、`market_modeling`、`market_research` 与 `backend_api` 是独立 namespace，由各自 semantic module 拥有。
 
@@ -131,6 +131,7 @@ ARCHITECTURE.md（本文件）
     ├─ data-lake/ARCHITECTURE.md
     │      ├─ data-lake/DOMAIN_MODEL.md
     │      ├─ data-lake/APPLICATION.md
+    │      ├─ co-located Provider ARCHITECTURE.md
     │      ↓
     │  data-lake/DATASETS.md
     │      ↓

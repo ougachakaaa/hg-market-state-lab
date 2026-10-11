@@ -12,7 +12,7 @@
 | Batching、partition、worker/writer、cancellation、验证复用 | [EXECUTION.md](EXECUTION.md) |
 | SQLite lifecycle、transactions / snapshots、frozen basis、rebuild-only compatibility | [PERSISTENCE.md](PERSISTENCE.md) |
 | Logging / diagnostics | [DIAGNOSTICS.md](DIAGNOSTICS.md) |
-| Tushare credential、client、限流与 provider execution failure | [providers/TUSHARE.md](providers/TUSHARE.md) |
+| Tushare credential、client、限流与 provider execution failure | [providers/tushare/ARCHITECTURE.md](providers/tushare/ARCHITECTURE.md) |
 | Dataset-specific domain / Source / completeness | [DATASETS.md](DATASETS.md) → owning Dataset ARCHITECTURE.md → 所需专题 |
 | Dataset-specific public service / consumer contract | owning Dataset ARCHITECTURE.md → SERVICE.md |
 | CLI delivery / delegation | [lab authority](../lab/ARCHITECTURE.md) |
@@ -24,7 +24,7 @@
 - 语义变更先更新 narrowest canonical authority；下层只能 specialize 或 constrain 上层 invariant。发现 authority / implementation 冲突须显式核对并报告，不能静默选择或发明另一套语义。
 - 上表中的 owner 唯一拥有对应契约；其他文档通过链接继承，不复制规则或维护历史施工、commit / test evidence。Catalog 只导航。
 - Implementation 遵守模块 public/dependency boundary，不穿透 consumer 或 sibling internals；共享 Python runtime 不授予额外 import permission。
-- Dataset source/test/storage ownership 遵循模块架构；package wiring 保持既有 public imports 兼容，不创建 Dataset-local project 或环境。
+- Shared Kernel / Provider / Dataset 的 authority、source 与 tests ownership 遵循模块架构；Provider 任务从 `providers/<provider-id>/ARCHITECTURE.md` 进入，Dataset storage 仍由 owning Dataset 拥有。Package wiring 保持既有 Provider execution imports 与 Dataset public imports 兼容，不创建 Provider-local / Dataset-local project 或环境。
 - Runtime state 不进入 Git；验证使用临时 SQLite / fake Source，不操作真实缓存。旧目录 state 隔离遵循 PERSISTENCE.md，credential convention 遵循 provider authority。
 
 ## Verification rules
@@ -44,7 +44,7 @@ Authority-only 不修改 source、runtime data 或根 Python 配置；只有修�
 
 ### Implementation
 
-从 repository root 按受影响范围运行；共享 core/provider/module tests 位于 `data-lake/tests/`，Dataset tests 位于 `datasets/<dataset-id>/tests/`，CLI consumer tests 位于 `lab/tests/`：
+从 repository root 按受影响范围运行；共享 core/module tests 位于 `data-lake/tests/`，Provider tests 位于 `providers/<provider-id>/tests/`，Dataset tests 位于 `datasets/<dataset-id>/tests/`，CLI consumer tests 位于 `lab/tests/`：
 
 ```bash
 poetry run python -c "import data_lake"
