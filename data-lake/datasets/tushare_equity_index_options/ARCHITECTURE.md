@@ -34,15 +34,17 @@ Canonical FetchUnit identity 为 `(product_code, trade_date)`，是当日该 pro
 
 | Role | 本 Dataset 绑定 / canonical owner |
 | --- | --- |
-| Target Planner | 本文件第 2 节：canonical products × 固定 D → `(product_code, trade_date)`；CFFEX Calendar view 与权限归 [TRADING_DAYS.md](TRADING_DAYS.md) |
+| FetchUnitPlanner | 本文件第 2 节：canonical products × 固定 D → `(product_code, trade_date)`；CFFEX Calendar view 与权限归 [TRADING_DAYS.md](TRADING_DAYS.md) |
 | Source Port / Adapter | 本 Dataset 的 opt_basic/opt_daily Adapter；[FACTS.md](FACTS.md) 拥有 Source mapping / bounded strategy，Provider 只执行请求 |
 | Normalizer | Options Domain；[FACTS.md](FACTS.md) 拥有 anchored identity / product normalization、Instrument、underlying 与 daily facts mapping |
 | Completeness Validator | Options Domain；[CONTRACT_UNIVERSE.md](CONTRACT_UNIVERSE.md) 拥有完整 catalog、全部 active expiry/strike/CALL-PUT expected set、observed multiset、零 Records success 与历史 basis；nullable 条件只由 FACTS.md 拥有 |
 | Export Projector | Options Domain 的业务 view projection；[SERVICE.md](SERVICE.md) 唯一拥有 `options_daily` V2、fields、ordering 与 wire meaning |
 | Repository Port / Adapter | Kernel 标准 SQLite Adapter；Options Composition Root 绑定自己的 identity/source/storage context，basis 存储与 snapshot 机制归 [PERSISTENCE.md](../../PERSISTENCE.md) |
 
-Public Service 先验证 request，再按 TRADING_DAYS.md 固定合法 Calendar view，Target Planner 纯展开 products × D；不按 expiry、strike、CALL-PUT、缺 metadata 或 Source rows 改变目标。Composition Root 绑定 Calendar public service、领域策略与 Adapters，发布 OptionsDailyService / create_service()；Kernel 只负责目标确定后的通用生命周期。
+本 Dataset 有一个 Dataset-owned Calendar Prerequisite Resolver，按 [TRADING_DAYS.md](TRADING_DAYS.md) 将合法 Options request + operation permission 转为已验证 CFFEX Calendar context（由匹配 Window 的完整 view 验证得到的固定 D）。Composition Root 绑定该 Resolver、Calendar public service、上述六角色与 Adapters，发布 OptionsDailyService / create_service()。Public Service 先验证 request，再调用 Resolver；纯 FetchUnitPlanner 消费 request/context 展开 products × D，不读库、不调用 Calendar/Source、不按 expiry、strike、CALL-PUT、缓存、缺 metadata 或 Source rows 改变目标；Kernel 随后检查缓存并选择待执行 units。
 
-Source Adapter 执行完整 catalog acquisition 与 daily 请求；metadata 是否完整、身份/市场关系、inclusive list_date/delist_date、chain completeness 和 nullable facts 都归 Dataset Domain，不移入 Provider / Kernel。Domain Validator/索引的复用遵守 EXECUTION.md 与本 Dataset completeness authority，不能按新 catalog 重判旧 success。Batch Planner 的产品日分组/bounds 归 FACTS.md，prefetch/单 writer 属于 Kernel 执行配置。
+Normalizer 按 FACTS.md 将 product-day daily facts、合法 Instruments 和 invocation catalog basis 转为 UnitRecords；Validator 按 CONTRACT_UNIVERSE.md 验证全部 active expiry/strike/CALL-PUT 横截面（含已证明为空的零 Records），通过后才经 Repository Port 原子提交。Catalog acquisition 在 selected units 的 Source 执行阶段进行，用于业务 completeness，不作为额外跨 Dataset Resolver 或裁剪目标的 Planning Context。交接与历史 basis 的读校验继承 [PORTS.md](../../PORTS.md)；Kernel 只负责目标确定后的通用生命周期。
+
+Source Adapter 执行完整 catalog acquisition 与 daily 请求；metadata 是否完整、身份/市场关系、inclusive list_date/delist_date、chain completeness 和 nullable facts 都归 Dataset Domain，不移入 Provider / Kernel。Domain Validator/索引的复用遵守 EXECUTION.md 与本 Dataset completeness authority，不能按新 catalog 重判旧 success。BatchPlanner 的产品日分组/bounds 归 FACTS.md，prefetch/单 writer 属于 Kernel 执行配置。
 
 目标职责区分 Dataset Domain（目标展开、identity/metadata/daily normalization、catalog/逐 unit validation、projection）、Source Adapter（请求、分页、partition）、Composition Root / Public Service（request / Calendar 编排、实例绑定、Kernel delegation）。Domain 不依赖 Provider、SQLite 或 sibling internals；public namespace 与 request/result/view 保持 SERVICE.md 契约，不创建第二套通用 persistence 或 ensure engine。

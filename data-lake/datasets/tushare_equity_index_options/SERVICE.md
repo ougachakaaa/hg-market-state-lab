@@ -81,6 +81,6 @@ Coverage、Records 和关联成功时保留的合法 metadata/completeness basis
 
 ## 4. Runtime 与实现边界
 
-Provider execution 继承 [Tushare Provider authority](../../providers/tushare/ARCHITECTURE.md)，storage lifecycle 与 compatibility 继承 [PERSISTENCE.md](../../PERSISTENCE.md)。Calendar 调用链与 Source I/O 条件由 [TRADING_DAYS.md](TRADING_DAYS.md) 拥有；其他 dependency permissions 继承 [Dataset architecture](ARCHITECTURE.md)，Batch Planner / Source execution 见 [FACTS.md](FACTS.md)。
+Provider execution 继承 [Tushare Provider authority](../../providers/tushare/ARCHITECTURE.md)，storage lifecycle 与 compatibility 继承 [PERSISTENCE.md](../../PERSISTENCE.md)。Calendar 调用链与 Source I/O 条件由 [TRADING_DAYS.md](TRADING_DAYS.md) 拥有；其他 dependency permissions 继承 [Dataset architecture](ARCHITECTURE.md)，BatchPlanner / Source execution 见 [FACTS.md](FACTS.md)。
 
 兼容当前 persistence contract 的已有缓存，其有限数值保持可读，不改写已成功 facts；public export schema version 不授权读取 incompatible persistence generation。

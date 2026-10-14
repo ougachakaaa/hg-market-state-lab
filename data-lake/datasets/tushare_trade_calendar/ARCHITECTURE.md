@@ -77,14 +77,16 @@ instrument usage: none
 
 | Role | 本 Dataset 绑定 |
 | --- | --- |
-| Target Planner | 本文件第 1–2 节：显式 exchange + inclusive Window 展开全部自然日 `(exchange, cal_date)`；无跨 Dataset prerequisite |
+| FetchUnitPlanner | 本文件第 1–2 节：显式 exchange + inclusive Window 展开全部自然日 `(exchange, cal_date)`；无跨 Dataset prerequisite |
 | Source Port / Adapter | Calendar `trade_cal` Adapter；本文件第 1 节拥有 endpoint / 参数选择，Provider 仅按 [Tushare authority](../../providers/tushare/ARCHITECTURE.md) 执行 |
 | Normalizer | Calendar Domain；本文件第 3 节的四个 canonical facts，不补造休市事实 |
 | Completeness Validator | Calendar Domain；本文件第 3–4 节的 exactly-one Record / identity / required facts / no-instrument predicate |
 | Export Projector | Calendar Domain 的业务 view projection；[SERVICE.md](SERVICE.md) 唯一拥有 `calendar` view、字段、ordering 与 wire meaning |
 | Repository Port / Adapter | 使用 Kernel 标准 SQLite Adapter，Calendar Composition Root 绑定本 Dataset identity/source/storage context；[PERSISTENCE.md](../../PERSISTENCE.md) 拥有存储机制 |
 
-Calendar Composition Root 发布 TradeCalendarService / create_service()，只绑定上述能力并委托 Kernel 的 coverage/ensure/export；不自行拥有第二套通用同步 engine。Batch Planner 是 Calendar-owned 可选执行策略；现有 trade_cal 按自然年分组、显式 exchange 与日期范围获取，只处理 selected units。共享调度/逐 unit pending 与提交仍由 [EXECUTION.md](../../EXECUTION.md) 拥有。
+Calendar Composition Root 发布 TradeCalendarService / create_service()，只绑定上述能力并委托 Kernel 的 coverage/ensure/export；不自行拥有第二套通用同步 engine。本 Dataset 有零个 Prerequisite Resolver，Planning Context 为空；FetchUnitPlanner 仅依合法 request 展开自然日，不读取缓存、不调用 Source。Kernel 随后检查并选择 missing/non-success units。
+
+Calendar-owned 可选 BatchPlanner 按自然年组合同 exchange 的 selected units，trade_cal 显式使用 exchange 与该批日期范围，只处理 selected units；自然年 Batch 不改变自然日 FetchUnit identity、逐日 status 或原子写入。Normalizer 将逐日 Source facts 转为 UnitRecords（恰一条 Record、无 Instrument），Validator 按第 3–4 节通过后，才经 Repository Port 提交；读 success 仍按同一 predicate 验证。共享调度/逐 unit pending 与提交由 [EXECUTION.md](../../EXECUTION.md) 拥有，交接由 [PORTS.md](../../PORTS.md) 拥有。
 
 目标职责为 Dataset Domain（request interpretation / normalization / validation / projection）、Source Adapter（trade_cal 请求和 partition）、Composition Root / Public Service（实例绑定与 delegation）。文件名可按职责调整，不要求机械目录模板；Domain 不调用 Provider 或 SQLite，Source Adapter 不访问 Repository。Python namespace 与 public request/result/view 保持 SERVICE.md 契约。
 

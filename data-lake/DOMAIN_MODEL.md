@@ -14,10 +14,18 @@ Domain 不依赖 Application、Ports、SQL、Provider、具体 Dataset 或任何
 | FetchUnit | Dataset 内稳定 semantic identity、状态与最小同步/完整性/原子写入 ownership；不强制逐日 |
 | Record | 一个 owning FetchUnit 的 canonical fact；自然 identity 与字段由 Dataset 定义 |
 | Instrument | Dataset-local catalog identity 与事实；可声明 usage: none |
-| UnitRecords | 一份 unit 的 canonical Records、相关 Instruments 与必要 completeness basis；只提供通用载体，不解释 basis 的业务结构 |
+| UnitRecords | 一份 unit 的 canonical Records、相关 Instruments 与必要 completeness basis；结构与 Dataset 无关，内容具有 owning Dataset 业务语义；载体本身不是完整性证明 |
 | CachedUnit | 从一致缓存读取的 Unit 与对应 canonical facts / basis；不是 consumer view |
 
 Dataset-independent completeness 要求：Records 唯一归属 owning unit，Instrument association 合法且 Dataset-local，canonical facts 与成功 metadata/hash/count/basis 一致。Dataset Validator 在这些公共约束内定义更强的 predicate；Kernel 不猜 cardinality、expected instruments 或业务 required fields。Validation 的调用与失败分类见 APPLICATION.md，Repository integrity 与 Dataset completeness 的分工见 PORTS.md。
+
+### UnitRecords 载体不变量
+
+UnitRecords 与一个明确 FetchUnit 一起交接，只承载该 unit 的 canonical Records、关联 Instruments 和适用的 completeness basis，不携带跨 unit 的混合成功事实。Records 可为 `0..n`，是否允许零条及其证明由 Dataset completeness predicate 决定；构造空载体、取得 API success 或已有 success status 都不证明完整。
+
+Normalizer 确定性转换得到的载体仍须由 Dataset Completeness Validator 验证业务字段、自然 identity、cardinality、Instrument association 和必要 basis，才可用于成功写入。在验证与提交之间，其事实及 basis 必须保持不变；这不要求新增 validated wrapper、class 或 SQL schema。读取成功缓存时还原的 facts/basis 同样须重新验证，不能信任载体类型或先前验证结果。
+
+Repository 负责公共结构、引用、hash/count 与成功 metadata 的通用数据完整性；Dataset Validator 负责业务完整性。唯一成功事实交接主线与端口责任见 [PORTS.md](PORTS.md)，Application 负责调用顺序；Kernel 不解释 basis 的业务字段或 expected-set 公式。
 
 ## 2. 公共逻辑 persistence model
 
@@ -111,10 +119,10 @@ Scope 由具体 Dataset authority 定义，用于确定该次 operation 所针�
 
 Canonical Scope shape 是否需要多个，由 target model 是否能完整寻址 Dataset fact space 决定，不由 provider API 数量或 transport batching 方式决定；这不引入 generic Scope registry。
 
-Window 不持久化，因为它表达一次操作的目标范围，而非数据库当前 coverage；coverage state 由各 FetchUnit 拥有。Window 负责在 Dataset 与 Scope 下确定目标 FetchUnit 集合：
+Window 不持久化，因为它表达一次操作的目标范围，而非数据库当前 coverage；coverage state 由各 FetchUnit 拥有。Dataset Domain 的 [FetchUnitPlanner](COMPOSITION.md) 根据 Request 中的 Scope + Window 与已验证 Planning Context 确定完整目标 FetchUnit 集合：
 
 ```text
-Window
+Dataset Request (Scope + Window) + Planning Context
     ↓
 logically generate desired FetchUnit identities
     ↓

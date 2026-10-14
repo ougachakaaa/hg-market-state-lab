@@ -47,15 +47,17 @@ Index 与 Futures / Options 的 storage ownership 保持分离；underlying rela
 
 | Role | 本 Dataset 绑定 / canonical owner |
 | --- | --- |
-| Target Planner | 本文件第 2–3 节：canonical index set × 固定交易日 D → `(index_code, trade_date)`；D 的取得与权限只由 [TRADING_DAYS.md](TRADING_DAYS.md) 拥有 |
+| FetchUnitPlanner | 本文件第 2–3 节：canonical index set × 固定交易日 D → `(index_code, trade_date)`；D 的取得与权限只由 [TRADING_DAYS.md](TRADING_DAYS.md) 拥有 |
 | Source Port / Adapter | 本 Dataset 的 index_basic/index_daily Adapter；Source identity / metadata acquisition / bounded requests 见 [FACTS.md](FACTS.md)，Provider 只执行请求 |
 | Normalizer | Index Domain；[FACTS.md](FACTS.md) 的 Source → Instrument / canonical daily facts mapping |
 | Completeness Validator | Index Domain；本文件第 3 节的 exactly-one predicate 结合 FACTS.md 的 required facts、metadata / Instrument association；读缓存仍验证成功时 basis |
 | Export Projector | Index Domain 的业务 view projection；[SERVICE.md](SERVICE.md) 唯一拥有 `index_daily` view、字段、ordering 与 wire meaning |
 | Repository Port / Adapter | Kernel 标准 SQLite Adapter；Index Composition Root 绑定自己的 identity/source/storage context，存储机制见 [PERSISTENCE.md](../../PERSISTENCE.md) |
 
-Public Service 在自身 request validation 后按 TRADING_DAYS.md 取得合法 Calendar view，纯 Target Planner 消费固定 D。Calendar 调用与 ensure 权限属于 Dataset service orchestration，不放入 Kernel 或纯领域策略。Composition Root 绑定 Calendar public service、上述策略与 Adapters，发布 IndexDailyService / create_service()；目标 selection 后的通用 ensure、coverage、snapshot 与 failure accounting 委托 Kernel。
+本 Dataset 有一个 Dataset-owned Calendar Prerequisite Resolver，按 [TRADING_DAYS.md](TRADING_DAYS.md) 将合法 Index request + operation permission 转为已验证 SSE Calendar context（由匹配 Window 的完整 view 验证得到的固定 D）。Composition Root 绑定该 Resolver、Calendar public service、上述六角色与 Adapters，发布 IndexDailyService / create_service()。Public Service 先验证 request，再调用 Resolver；纯 FetchUnitPlanner 消费 request/context 展开 canonical index set × D，不读库、不调用 Calendar/Source、不按缓存或缺行缩小目标；Kernel 随后检查缓存并选择待执行 units。
 
-Index Domain 拥有本地 metadata 可复用的业务条件与成功代表 unit 选择（FACTS.md）；composition 通过 Repository Port 读取并验证代表 snapshot 后向 Source 提供合法 metadata。Source Adapter 不直连 SQLite，也不以裸 instrument row 或当前 provider metadata 替换旧 success basis。Batch Planner 属于 Dataset 执行策略，具体 bounds / endpoints 归 FACTS.md，prefetch 与 writer lifecycle 归 EXECUTION.md。
+Normalizer 按 FACTS.md 将 daily facts 与合法本地 index metadata 转为 UnitRecords（恰一条 Record、关联 Instrument 和成功 metadata basis）；Completeness Validator 通过后才经 Repository Port 原子提交。Metadata acquisition/reuse 位于 selected units 的 Source 执行准备与完整性流程，不是额外 Calendar Resolver 或 Planning Context，不改变目标全集。交接与读 success 重验证继承 [PORTS.md](../../PORTS.md)；通用 ensure、coverage、snapshot 与 failure accounting 委托 Kernel。
+
+Index Domain 拥有本地 metadata 可复用的业务条件与成功代表 unit 选择（FACTS.md）；composition 通过 Repository Port 读取并验证代表 snapshot 后向 Source 提供合法 metadata。Source Adapter 不直连 SQLite，也不以裸 instrument row 或当前 provider metadata 替换旧 success basis。BatchPlanner 属于 Dataset 执行策略，具体 bounds / endpoints 归 FACTS.md，prefetch 与 writer lifecycle 归 EXECUTION.md。
 
 目标职责区分 Dataset Domain（目标展开、metadata/fact normalization、validation、projection）、Source Adapter（请求、分页、partition）、Composition Root / Public Service（request / Calendar 编排、实例绑定、Kernel delegation）。不强制独立策略文件；纯领域逻辑不依赖 Provider、SQLite 或 Calendar internal modules。Public namespace 与 request/result/view 不变。

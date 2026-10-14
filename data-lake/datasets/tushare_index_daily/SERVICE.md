@@ -80,4 +80,4 @@ Metadata 表达 export snapshot 中的 cached instrument facts，不宣称是 tr
 
 Failure taxonomy 继承 [APPLICATION.md](../../APPLICATION.md)；自身 request validation 见第 2 节，Index unit failures 见第 3 节，Calendar prerequisite failure 见 [TRADING_DAYS.md](TRADING_DAYS.md)。
 
-Provider execution 继承 [Tushare Provider authority](../../providers/tushare/ARCHITECTURE.md)，storage lifecycle 与 compatibility 继承 [PERSISTENCE.md](../../PERSISTENCE.md)。Calendar 调用链与 Source I/O 条件由 [TRADING_DAYS.md](TRADING_DAYS.md) 拥有；Batch Planner / Source execution 见 [FACTS.md](FACTS.md)。
+Provider execution 继承 [Tushare Provider authority](../../providers/tushare/ARCHITECTURE.md)，storage lifecycle 与 compatibility 继承 [PERSISTENCE.md](../../PERSISTENCE.md)。Calendar 调用链与 Source I/O 条件由 [TRADING_DAYS.md](TRADING_DAYS.md) 拥有；BatchPlanner / Source execution 见 [FACTS.md](FACTS.md)。

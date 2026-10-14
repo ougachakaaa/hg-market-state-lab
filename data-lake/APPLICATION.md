@@ -112,7 +112,7 @@ SQLite location 由 owning Dataset 内部 composition 使用 shared runtime/stor
 
 ## 3. 已声明的 Dataset public service dependency
 
-本节只约束模块架构已允许的 dependency，不建立 dependency graph engine 或通用 orchestration framework。Consumer Dataset 必须在自己的 narrowest authority 声明 prerequisite request、读取方式、ensure 权限及失败语义；只能通过 producer 的 public semantic service 消费事实。Relationship identity 本身不构成 dependency permission。
+本节只约束模块架构已允许的 dependency，不建立 dependency graph engine 或通用 orchestration framework。可选 Prerequisite Resolver 的角色、输入输出、权限和复用生命周期由 [COMPOSITION.md](COMPOSITION.md) 拥有；本节拥有它与 planning / Use Case 的调用顺序和公共失败边界。Consumer Dataset 必须在自己的 narrowest authority 声明 prerequisite request、读取方式、ensure 权限及失败语义；Resolver 只能通过 producer 的 public semantic service 消费事实。Relationship identity 本身不构成 dependency permission。
 
 - Consumer 的 `coverage` / `export` 只允许调用 prerequisite 的 read-only public operations；整个调用链禁止 Source I/O 与 SQLite mutation，不隐式 ensure。
 - Consumer 的 `ensure` 可以按已声明契约调用 prerequisite 的 `ensure`，但每个 Dataset 只由自己的 service 写自己的 state，没有跨库原子提交或 rollback 保证。
@@ -126,7 +126,20 @@ SQLite location 由 owning Dataset 内部 composition 使用 shared runtime/stor
 
 ## 4. Use Case lifecycle 与职责分工
 
-Dataset Service 验证 semantic request、按已声明权限固定 prerequisite view，并用 Dataset Target Planner 得到目标 units；Kernel 不解释这些业务维度。进入 Kernel 后，三个 Use Cases 复用以下机制：
+三个 operation 共享以下进入 Kernel 前的顺序，由 owning Dataset Public Service / Composition 负责：
+
+```text
+validate Dataset Request
+    → determine Operation Permission from operation + authorized dependency
+    → invoke zero / one / multiple Prerequisite Resolvers in owning Composition order
+    → validate and fix Planning Context (empty if no prerequisite)
+    → Dataset Domain FetchUnitPlanner(Request, Context) → complete desired FetchUnits
+    → delegate fixed target to Kernel Use Case
+```
+
+无效 request 在 prerequisite 调用前抛 InvalidRequestError；Resolver 无法获得合法完整前置事实时按第 3 节抛 OperationError，在目标确定前不查询 consumer units 来猜目标、不建立 consumer pending、不准备 consumer Source。必要 prerequisite ensure 可以写 producer 自己的 state，先前已提交事实不跨库 rollback，且不计入 consumer counters。合法前置事实证明零目标时才可按既有零目标语义进入 Use Case。
+
+Planning Context 和完整目标在本次 operation 固定；Kernel 不调用 Resolver、不解释这些业务维度，也不按缓存状态重规划目标。进入 Kernel 后，三个 Use Cases 复用以下机制：
 
 | Use Case | Kernel Application responsibility |
 | --- | --- |
@@ -137,19 +150,22 @@ Dataset Service 验证 semantic request、按已声明权限固定 prerequisite 
 Ensure 的稳定概念顺序为：
 
 ```text
-fixed desired FetchUnits
+validated Request → authorized prerequisite resolution → fixed Planning Context
+    → FetchUnitPlanner → complete desired FetchUnits
     → read / validate existing state
     → select missing / non-success units
     → prepare Source only if selected is non-empty
     → validate batch plan
     → commit selected units pending before their requests
     → Source Port fetch / partition
-    → Dataset Normalizer → UnitRecords
+    → Dataset Normalizer → UnitRecords (not a completeness proof)
     → Dataset Completeness Validator
     → Repository Port atomic success (Records / instruments / basis / hash / count / status)
     → final target coverage / EnsureResult
 ```
 
 可恢复的 batch/unit failure 由 Application 协调 Repository failure state 与公共 UnitFailure；初始化、缓存完整性或整个 operation failure 按第 1 节分类。Content hash / SQL 事务由 persistence adapter 实现公共领域不变量，Application 不执行 SQL，也不解释 completeness basis。无 selected units 时不准备 Source、不进入写生命周期。
+
+Source facts 的唯一成功写入交接契约见 [PORTS.md](PORTS.md)；Application 必须在 atomic success 前调用 Dataset Validator，即使 Source Adapter 已提前调用 Dataset normalization。所有成功缓存读路径也经过相应业务验证，缓存不合法时 OperationError，不转成 silent refetch；Repository 的通用 integrity 检查不能替代业务验证。Read-only operations 从 Resolver 到 Kernel / Projector 均不获得写权限。
 
 Application 不接管 Dataset endpoint、metadata reuse eligibility、合约全集证明、calendar selection 或 Export payload；也不复制 Provider credential / limiter / request execution。内部调度、取消与验证复用见 [EXECUTION.md](EXECUTION.md)，SQLite transactions / snapshot 的实现约束见 [PERSISTENCE.md](PERSISTENCE.md)。

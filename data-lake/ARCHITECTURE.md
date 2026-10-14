@@ -43,7 +43,7 @@ Shared Kernel、Provider 与 Dataset 分别拥有自己的 authority、implement
 
 ## 2. 领域关系与 public boundary
 
-核心领域主轴为 `Dataset → Scope + Window → FetchUnits → Records`。Dataset 定义业务维度与事实全集，Kernel 不强制按日。公共原语与不变量由 [DOMAIN_MODEL.md](DOMAIN_MODEL.md) 拥有；四个领域策略与两个 Outbound Ports 的接入责任由 [COMPOSITION.md](COMPOSITION.md) 拥有。
+核心领域主轴为 `Dataset → Scope + Window → FetchUnits → Records`。Dataset 定义业务维度与事实全集，Kernel 不强制按日。公共原语与不变量由 [DOMAIN_MODEL.md](DOMAIN_MODEL.md) 拥有；FetchUnitPlanner 等四个领域策略、两个 Outbound Ports 和可选 Dataset-owned Prerequisite Resolver 的接入责任由 [COMPOSITION.md](COMPOSITION.md) 拥有，不增加核心角色或 Port 数量。
 
 每个 DataSet 自己拥有并发布 transport-neutral Public Application Service，作为该 Dataset 的唯一 canonical consumer boundary；Python consumer 直接通过 semantic request/result/view 使用 `coverage`、`ensure`、`export`，CLI / HTTP 只是 adapter，不拥有 Dataset 业务语义。直接消费具体 Dataset public API 是合法依赖，不是穿透 DataLake boundary；DataLake 不创建 DataLakeService、DatasetManager、registry、gateway 或 generic client，也不允许通过这些新 facade 替代具体 Dataset boundary。详细公共 operation contract 由 [APPLICATION.md](APPLICATION.md) 拥有。稳定依赖方向为：
 
@@ -110,7 +110,7 @@ Provider-local 与 Dataset-local source roots 不创建独立 Python project、P
 | Scope / Window / FetchUnit / Records / logical persistence / completeness invariants | [DOMAIN_MODEL.md](DOMAIN_MODEL.md) |
 | Application Service / coverage / ensure / export / public result / runtime 调用约束 | [APPLICATION.md](APPLICATION.md) |
 | Source / Repository Outbound Ports、Adapter 输入输出及失败责任 | [PORTS.md](PORTS.md) |
-| Dataset 的六角色接入、Composition Root、目标代码职责组织 | [COMPOSITION.md](COMPOSITION.md) → owning Dataset ARCHITECTURE.md |
+| FetchUnitPlanner、可选 Prerequisite Resolver、六角色接入与 Composition Root | [COMPOSITION.md](COMPOSITION.md) → owning Dataset ARCHITECTURE.md → 必要 TRADING_DAYS.md |
 | Tushare-backed Dataset 的 Source execution / credential / client / shared limiter / provider failure | [providers/tushare/ARCHITECTURE.md](providers/tushare/ARCHITECTURE.md) |
 | Operational progress / safe request and validation diagnostics | [DIAGNOSTICS.md](DIAGNOSTICS.md) |
 | Bounded batching / validation reuse / Source-write overlap | [EXECUTION.md](EXECUTION.md) |
@@ -118,6 +118,7 @@ Provider-local 与 Dataset-local source roots 不创建独立 Python project、P
 | 具体 Dataset 的 Source、identity、fields、completeness | [DATASETS.md](DATASETS.md) → owning Dataset ARCHITECTURE.md |
 | Dataset-specific consumer request/result/view、public Python surface | [DATASETS.md](DATASETS.md) → owning Dataset ARCHITECTURE.md → SERVICE.md |
 | CLI topology / delegation / serialization / file delivery | [lab authority](../lab/ARCHITECTURE.md) |
+| Authority 到当前代码的映射与尚未处理的实现差异 | [IMPLEMENTATION.md](IMPLEMENTATION.md)（状态与后续任务，不拥有新语义） |
 
 Dataset 与 provider authority 只能在模块边界及相关公共 domain/application invariant 内 specialize 或 constrain；catalog 只提供导航，不拥有 schema。具体 Dataset 任务读取与任务有关的公共 authority 和 owning Dataset authority，不默认加载 sibling Dataset；普通 Dataset domain task 不默认加载 provider execution authority。
 
