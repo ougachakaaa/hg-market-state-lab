@@ -1,25 +1,16 @@
 """Internal credential composition and provider transport partitioning."""
 
 from collections.abc import Iterable
-from datetime import date
 from typing import Protocol
 
-from data_lake._domain import ExecutionFailure, Unit
+from data_lake.domain import ExecutionFailure, Unit
 from data_lake.providers.tushare import TushareExecutor
-from data_lake.results import OperationError
+
+from ._domain import identity, provider_date
 
 
 class Client(Protocol):
     def call(self, endpoint: str, **kwargs: str) -> object: ...
-
-
-def provider_date(value: object) -> date:
-    if not isinstance(value, str) or len(value) != 8 or not value.isascii() or not value.isdigit():
-        raise ExecutionFailure("Source date must be a valid YYYYMMDD value", "invalid_date")
-    try:
-        return date(int(value[:4]), int(value[4:6]), int(value[6:]))
-    except ValueError as exc:
-        raise ExecutionFailure("Source date is invalid", "invalid_date") from exc
 
 
 def batches(units: tuple[Unit, ...]) -> Iterable[tuple[Unit, ...]]:
@@ -29,18 +20,6 @@ def batches(units: tuple[Unit, ...]) -> Iterable[tuple[Unit, ...]]:
         _, day = identity(unit)
         groups.setdefault(day.year, []).append(unit)
     return tuple(tuple(group) for group in groups.values())
-
-
-def identity(unit: Unit) -> tuple[str, date]:
-    value = unit.identity
-    if (
-        not isinstance(value, tuple)
-        or len(value) != 2
-        or not isinstance(value[0], str)
-        or type(value[1]) is not date
-    ):
-        raise OperationError("Invalid internal calendar identity")
-    return value[0], value[1]
 
 
 class TradeCalSource:

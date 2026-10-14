@@ -4,11 +4,10 @@ import logging
 from collections.abc import Callable, Generator, Iterable, Mapping, Sequence
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import closing
-from typing import Protocol
 
-from ._domain import CachedUnit, ExecutionFailure, Status, Unit, UnitRecords
-from ._repository import Repository, Snapshot
-from .results import (
+from data_lake.domain import CachedUnit, ExecutionFailure, Status, Unit, UnitRecords
+from data_lake.ports import Repository, Snapshot, Source
+from data_lake.results import (
     CoverageResult,
     EnsureResult,
     ExportEnvelope,
@@ -18,12 +17,6 @@ from .results import (
 )
 
 logger = logging.getLogger(__name__)
-
-
-class Source(Protocol):
-    def fetch(self, units: tuple[Unit, ...]) -> Mapping[str, object]:
-        """Fetch and partition facts by canonical unit key; absent units are incomplete."""
-        ...
 
 
 def single_batch(units: tuple[Unit, ...]) -> Iterable[tuple[Unit, ...]]:

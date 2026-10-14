@@ -23,7 +23,11 @@ def test_dataset_physically_owns_source_and_depends_on_shared_kernel() -> None:
         for node in ast.walk(ast.parse(path.read_text(encoding="utf-8")))
         if isinstance(node, ast.ImportFrom) and node.module
     }
-    assert {"data_lake._application", "data_lake._repository", "data_lake._runtime"} <= names
+    assert {
+        "data_lake.application",
+        "data_lake.adapters.outbound.sqlite",
+        "data_lake._runtime",
+    } <= names
 
 
 def test_provider_dependency_is_confined_to_owned_source_adapter() -> None:

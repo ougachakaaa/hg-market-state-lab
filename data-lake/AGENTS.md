@@ -27,7 +27,7 @@
 - 上表中的 owner 唯一拥有对应契约；其他文档通过链接继承，不复制规则或维护历史施工、commit / test evidence。Catalog 只导航。
 - Implementation 遵守模块 public/dependency boundary，不穿透 consumer 或 sibling internals；共享 Python runtime 不授予额外 import permission。
 - Shared Kernel / Provider / Dataset 的 authority、source 与 tests ownership 遵循模块架构；Provider 任务从 `providers/<provider-id>/ARCHITECTURE.md` 进入，Dataset storage 仍由 owning Dataset 拥有。Package wiring 保持既有 Provider execution imports 与 Dataset public imports 兼容，不创建 Provider-local / Dataset-local project 或环境。
-- Kernel 结构任务先锁定模块架构的 Domain / Application / Ports / Adapters 依赖方向，再读受影响专题；Dataset 接入任务读取 COMPOSITION.md 与 owning Dataset 角色绑定，不按旧 Python 文件名推导 semantic owner。当前待实现的结构差距见 [RECONCILIATION.md](RECONCILIATION.md)，该清单不覆盖 canonical authority，也不授权在 authority-only 任务中修改实现。
+- Kernel 结构任务先锁定模块架构的 Domain / Application / Ports / Adapters 依赖方向，再读受影响专题；Dataset 接入任务读取 COMPOSITION.md 与 owning Dataset 角色绑定，不按旧 Python 文件名推导 semantic owner。
 - Runtime state 不进入 Git；验证使用临时 SQLite / fake Source，不操作真实缓存。旧目录 state 隔离遵循 PERSISTENCE.md，credential convention 遵循 provider authority。
 
 ## Verification rules

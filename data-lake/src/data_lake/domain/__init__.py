@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from datetime import date
 from enum import StrEnum
 
-from ._serialization import Json, canonical_json
+from data_lake._serialization import Json, canonical_json
 
 
 class Status(StrEnum):

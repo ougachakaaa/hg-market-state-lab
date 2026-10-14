@@ -1,76 +1,20 @@
-"""Dataset-owned Source normalization and completeness."""
+"""Dataset Source adapter: provider requests, pagination and target partitioning."""
 
-import math
-import re
-from collections.abc import Callable
-from dataclasses import fields
-from datetime import date
-from typing import Any, NoReturn, cast
+from collections.abc import Iterable
+from typing import Any
 
-from data_lake._domain import ExecutionFailure, Instrument, Record, Unit, UnitRecords
+from data_lake.domain import ExecutionFailure, Unit
 from data_lake.providers.tushare import Executor
 from data_lake.providers.tushare._executor import CancellableExecutor
 
-from ._models import IndexDailyRow
-
-
-def fail(reason: str) -> NoReturn:
-    raise ExecutionFailure(reason, "completeness")
-
-
-def text(value: object) -> str:
-    if not isinstance(value, str) or not value.strip():
-        fail("Invalid required text fact")
-    return value
-
-
-def absent(value: object) -> bool:
-    return value is None or value == "" or (type(value) is float and math.isnan(value))
-
-
-def day(value: object, nullable: bool = False) -> str | None:
-    if nullable and absent(value):
-        return None
-    value = text(value)
-    if not re.fullmatch(r"[0-9]{8}", value):
-        fail("Invalid Source date")
-    try:
-        return date(int(value[:4]), int(value[4:6]), int(value[6:])).isoformat()
-    except ValueError:
-        return fail("Invalid Source date")
-
-
-def _parse_number(
-    value: object, *, nullable: bool = False, positive: bool = False, nonnegative: bool = False
-) -> float | None:
-    if nullable and absent(value):
-        return None
-    if isinstance(value, bool) or value is None:
-        fail("Missing required numeric fact")
-    try:
-        result = float(cast(Any, value))
-    except (ValueError, TypeError, OverflowError):
-        return fail("Invalid numeric fact")
-    if not math.isfinite(result) or (positive and result <= 0) or (nonnegative and result < 0):
-        fail("Invalid numeric fact")
-    return result
-
-
-def number(
-    value: object,
-    *,
-    nullable: bool = False,
-    positive: bool = False,
-    nonnegative: bool = False,
-    field: str | None = None,
-    context: str = "",
-) -> float | None:
-    try:
-        return _parse_number(value, nullable=nullable, positive=positive, nonnegative=nonnegative)
-    except ExecutionFailure as exc:
-        if field is None:
-            raise
-        raise ExecutionFailure(f"{exc.reason}; field={field} {context}", exc.code) from None
+from ._domain import (
+    day,
+    fail,
+    identity,
+    normalize_daily,
+    select_metadata,
+    text,
+)
 
 
 def rows(response: Any) -> list[dict[str, Any]]:
@@ -104,90 +48,10 @@ def exhaust(executor: Executor, endpoint: str, **params: object) -> list[dict[st
     return fail("Source exhaustion could not be proven")
 
 
-def identity(unit: Unit) -> tuple[str, date]:
-    code, target = cast(tuple[str, date], unit.identity)
-    return code, target
-
-
-def instrument(metadata: dict[str, Any]) -> Instrument:
-    code = text(metadata.get("contract_code", metadata.get("index_code")))
-    return Instrument(
-        code,
-        code,
-        "source",
-        metadata["symbol"],
-        metadata.get("exchange"),
-        metadata["name"],
-        metadata.get("list_date"),
-        metadata.get("delist_date"),
-    )
-
-
-STRINGS = ["index_code", "symbol", "name", "market"]
-OPTIONAL_STRINGS = ["publisher", "category"]
-DATES = ["trade_date"]
-OPTIONAL_DATES: list[str] = []
-NUMBERS = ["open", "high", "low", "close", "pre_close", "change", "pct_change", "volume", "amount"]
-OPTIONAL_NUMBERS: list[str] = []
-
-
-CANONICAL_FIELDS = frozenset(field.name for field in fields(IndexDailyRow))
-
-
-def read_row(record: Record) -> IndexDailyRow:
-    data: dict[str, Any] = dict(record.fields)
-    if set(data) != CANONICAL_FIELDS:
-        fail("Canonical fields are incompatible")
-    for key in STRINGS:
-        text(data[key])
-    for key in OPTIONAL_STRINGS:
-        if data[key] is not None:
-            text(data[key])
-    for key in DATES + OPTIONAL_DATES:
-        value = data[key]
-        if value is None and key in OPTIONAL_DATES:
-            continue
-        if not isinstance(value, str):
-            fail("Invalid canonical date")
-        try:
-            parsed = date.fromisoformat(value)
-        except ValueError:
-            fail("Invalid canonical date")
-        if parsed.isoformat() != value:
-            fail("Invalid canonical date")
-        data[key] = parsed
-    for key in NUMBERS + OPTIONAL_NUMBERS:
-        data[key] = number(
-            data[key],
-            nullable=key in OPTIONAL_NUMBERS,
-            positive=key in ("multiplier", "per_unit", "opt_multiplier", "strike"),
-            nonnegative=key in ("volume", "amount", "open_interest"),
-        )
-    return IndexDailyRow(**data)
-
-
 BASIC_FIELDS = "ts_code,name,market,publisher,category,list_date,exp_date"
+
+
 DAILY_FIELDS = "ts_code,trade_date,open,high,low,close,pre_close,change,pct_chg,vol,amount"
-
-
-def metadata(raw: dict[str, Any], code: str) -> dict[str, Any]:
-    if raw.get("ts_code") != code:
-        fail("Index metadata identity mismatch")
-    result: dict[str, Any] = {
-        "index_code": code,
-        "symbol": code[:6],
-        "name": text(raw.get("name")),
-        "market": text(raw.get("market")),
-    }
-    for key in ("publisher", "category"):
-        if key not in raw:
-            fail("Missing optional metadata field")
-        result[key] = None if absent(raw[key]) else text(raw[key])
-    if "list_date" not in raw or "exp_date" not in raw:
-        fail("Missing lifecycle metadata fields")
-    result["published_on"] = day(raw.get("list_date"), nullable=True)
-    result["terminated_on"] = day(raw.get("exp_date"), nullable=True)
-    return result
 
 
 class DailySource:
@@ -230,19 +94,9 @@ class DailySource:
             except ExecutionFailure as exc:
                 self.errors.update(dict.fromkeys(selected, exc))
             else:
-                by_code: dict[str, list[dict[str, Any]]] = {}
-                for raw in catalog:
-                    candidate = raw.get("ts_code")
-                    if isinstance(candidate, str) and candidate in selected:
-                        by_code.setdefault(candidate, []).append(raw)
-                for item in selected:
-                    try:
-                        matches = by_code.get(item, [])
-                        if len(matches) != 1:
-                            fail("Index requires exactly one legal instrument")
-                        self.metadata[item] = metadata(matches[0], item)
-                    except ExecutionFailure as exc:
-                        self.errors[item] = exc
+                selected_metadata, errors = select_metadata(catalog, selected)
+                self.metadata.update(selected_metadata)
+                self.errors.update(errors)
             if code in self.errors:
                 raise self.errors[code]
 
@@ -276,101 +130,15 @@ class DailySource:
     def _fetch_unit(
         self, units: tuple[Unit, ...], response: list[dict[str, Any]]
     ) -> dict[str, object]:
-        code, target = identity(units[0])
-        meta = self.metadata[code]
-        matches = []
-        for raw in response:
-            source_code = text(raw.get("ts_code"))
-            if not re.fullmatch(r"[0-9]{6}\.(SH|SZ|CSI)", source_code):
-                fail("Unclassifiable index daily identity")
-            if source_code != code:
-                continue
-            source_day = day(raw.get("trade_date"))
-            if source_day != target.isoformat():
-                continue
-            matches.append(raw)
-        if len(matches) != 1:
-            fail("Index unit requires exactly one daily row")
-        raw = matches[0]
-        result: dict[str, Any] = {
-            key: value
-            for key, value in meta.items()
-            if key not in ("published_on", "terminated_on")
-        }
-        result["trade_date"] = target.isoformat()
-        for key in NUMBERS:
-            source = {"pct_change": "pct_chg", "volume": "vol"}.get(key, key)
-            result[key] = number(
-                raw.get(source),
-                nonnegative=key in ("volume", "amount"),
-                field=source,
-                context=f"index={code} date={target}",
-            )
-        facts = UnitRecords((Record(result, code),), (instrument(meta),), {"metadata": meta})
-        check_complete(units[0], facts)
-        return {units[0].key: facts}
+        unit = units[0]
+        return {unit.key: normalize_daily(unit, response, self.metadata[identity(unit)[0]])}
 
 
-def normalize(unit: Unit, raw: object) -> UnitRecords:
-    if isinstance(raw, ExecutionFailure):
-        raise raw
-    if not isinstance(raw, UnitRecords):
-        fail("Invalid normalized facts")
-    return raw
-
-
-class CompletenessChecker:
-    """Dataset-owned typed rows, retained only during a single export."""
-
-    def __init__(self, *, reuse_rows: bool = False) -> None:
-        self.reuse_rows = reuse_rows
-        self.rows: dict[int, tuple[Record, IndexDailyRow]] = {}
-
-    def row(self, record: Record) -> IndexDailyRow:
-        if not self.reuse_rows:
-            return read_row(record)
-        cached = self.rows.get(id(record))
-        if cached is None:
-            cached = record, read_row(record)
-            self.rows[id(record)] = cached
-        return cached[1]
-
-    def __call__(self, unit: Unit, facts: UnitRecords) -> None:
-        check_complete(unit, facts, self.row)
-
-
-def check_complete(
-    unit: Unit,
-    facts: UnitRecords,
-    reader: Callable[[Record], IndexDailyRow] | None = None,
-) -> None:
-    code, target = identity(unit)
-    if len(facts.records) != 1 or len(facts.instruments) != 1:
-        fail("Index unit must own one record and instrument")
-    row = (reader or read_row)(facts.records[0])
-    if row.index_code != code or row.trade_date != target or row.symbol != code[:6]:
-        fail("Canonical index identity mismatch")
-    if facts.records[0].instrument_key != code or facts.instruments[0].key != code:
-        fail("Index instrument mismatch")
-    if not isinstance(facts.basis, dict) or not isinstance(facts.basis.get("metadata"), dict):
-        fail("Missing instrument metadata")
-    meta = cast(dict[str, Any], facts.basis["metadata"])
-    if set(meta) != {
-        "index_code",
-        "symbol",
-        "name",
-        "market",
-        "publisher",
-        "category",
-        "published_on",
-        "terminated_on",
-    }:
-        fail("Incomplete cached instrument facts")
-    for key in ("index_code", "symbol", "name", "market", "publisher", "category"):
-        if facts.records[0].fields[key] != meta.get(key):
-            fail("Index metadata mismatch")
-    for key in ("published_on", "terminated_on"):
-        if meta.get(key) is not None:
-            value = meta[key]
-            if not isinstance(value, str) or date.fromisoformat(value).isoformat() != value:
-                fail("Invalid canonical instrument date")
+def batches(units: tuple[Unit, ...]) -> Iterable[tuple[Unit, ...]]:
+    grouped: dict[tuple[str, int], list[Unit]] = {}
+    for unit in units:
+        code, day = identity(unit)
+        grouped.setdefault((code, day.year), []).append(unit)
+    for group in grouped.values():
+        for offset in range(0, len(group), 250):
+            yield tuple(group[offset : offset + 250])

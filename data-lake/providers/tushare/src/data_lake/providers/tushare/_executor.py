@@ -12,7 +12,7 @@ from typing import Any, Protocol
 
 from dotenv import dotenv_values
 
-from data_lake._domain import ExecutionFailure
+from data_lake.domain import ExecutionFailure
 from data_lake.results import OperationError
 
 from ._client import Client as create_client

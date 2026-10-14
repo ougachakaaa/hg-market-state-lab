@@ -80,7 +80,7 @@ data_lake/
 └── results.py                  # 兼容的公共 result / error contracts
 ```
 
-这是后续代码组织的职责目标，不要求创建空目录、逐概念 Protocol 或机械拆文件；当前代码差距见 [Implementation reconciliation](RECONCILIATION.md)。通用 runtime/storage resolution 与 serialization/hash helpers 按实际职责组织，不因此新增架构层。
+这是代码组织的职责边界，不要求创建空目录、逐概念 Protocol 或机械拆文件。通用 runtime/storage resolution 与 serialization/hash helpers 按实际职责组织，不因此新增架构层。
 
 | Boundary | Canonical responsibility |
 | --- | --- |

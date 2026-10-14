@@ -50,4 +50,4 @@ Kernel 的目标目录由模块架构锁定。Dataset 保持 `datasets/<dataset-
 
 不锁定 Dataset 的机械文件模板；当前 `_models.py`、`_source.py`、`_service.py` 的名字不授予 semantic ownership。纯业务规则不能因调用 provider 或当前 colocate 于 adapter 文件而被定义为 Provider / Kernel 规则。只因一个 Dataset 存在的逻辑仍归该 Dataset；重复的 representation helper 不自动证明应抽进 Kernel。
 
-新增或修改 Dataset 时，先在 owning authority 确认事实、六角色绑定和必要依赖权限，再实现；不得新增 DataLakeService、DatasetManager、Registry、Plugin Framework、通用依赖图或无实际职责的 Inbound Adapter。当前代码到目标职责的差距记录在 [RECONCILIATION.md](RECONCILIATION.md)，不改变以上契约。
+新增或修改 Dataset 时，先在 owning authority 确认事实、六角色绑定和必要依赖权限，再实现；不得新增 DataLakeService、DatasetManager、Registry、Plugin Framework、通用依赖图或无实际职责的 Inbound Adapter。

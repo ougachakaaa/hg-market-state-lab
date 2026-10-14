@@ -5,14 +5,23 @@ import json
 import sqlite3
 from collections.abc import Iterator, Sequence
 from contextlib import contextmanager
-from dataclasses import astuple, dataclass
+from dataclasses import astuple
 from datetime import UTC, datetime
 from pathlib import Path
 from threading import local
 
-from ._domain import CachedUnit, ExecutionFailure, Instrument, Record, Status, Unit, UnitRecords
-from ._serialization import canonical_json, record_hash
-from .results import CoverageResult, OperationError
+from data_lake._serialization import canonical_json, record_hash
+from data_lake.domain import (
+    CachedUnit,
+    ExecutionFailure,
+    Instrument,
+    Record,
+    Status,
+    Unit,
+    UnitRecords,
+)
+from data_lake.ports import Snapshot
+from data_lake.results import CoverageResult, OperationError
 
 SCHEMA_VERSION = 3
 BASIS_DDL = (
@@ -95,13 +104,6 @@ REQUIRED_COLUMNS = {
 
 def now() -> str:
     return datetime.now(UTC).isoformat()
-
-
-@dataclass(frozen=True)
-class Snapshot:
-    coverage: CoverageResult
-    successful: tuple[CachedUnit, ...]
-    statuses: dict[str, Status]
 
 
 class Repository:

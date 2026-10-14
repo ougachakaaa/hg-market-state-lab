@@ -5,24 +5,27 @@ import sqlite3
 from dataclasses import asdict, fields
 from datetime import date, datetime
 from pathlib import Path
+from typing import cast
 
 import pytest
 
 import data_lake
 from data_lake import CoverageResult, EnsureResult, InvalidRequestError, OperationError
-from data_lake._domain import ExecutionFailure, Record, UnitRecords
-from data_lake._repository import Repository
 from data_lake._serialization import Json, record_hash
+from data_lake.adapters.outbound.sqlite import Repository
 from data_lake.datasets import tushare_trade_calendar as public
 from data_lake.datasets.tushare_trade_calendar import (
     TradeCalendarRange,
     TradeCalendarService,
+    _composition,
     _service,
     _source,
 )
+from data_lake.datasets.tushare_trade_calendar._domain import DATASET, targets
 from data_lake.datasets.tushare_trade_calendar._models import CalendarWindow, TradeCalendarScope
-from data_lake.datasets.tushare_trade_calendar._service import DATASET, _create_service, targets
+from data_lake.datasets.tushare_trade_calendar._service import _create_service
 from data_lake.datasets.tushare_trade_calendar._source import TradeCalSource
+from data_lake.domain import ExecutionFailure, Record, UnitRecords
 from data_lake.providers.tushare import _executor
 
 DAY = date(2024, 1, 1)
@@ -125,7 +128,9 @@ def test_missing_cache_reads_and_factory_are_lazy(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    monkeypatch.setattr(_service, "database_path", lambda *_: tmp_path / "cache/calendar.sqlite3")
+    monkeypatch.setattr(
+        _composition, "database_path", lambda *_: tmp_path / "cache/calendar.sqlite3"
+    )
 
     def forbidden() -> None:
         pytest.fail("read operations cannot resolve credentials")
@@ -140,9 +145,26 @@ def test_missing_cache_reads_and_factory_are_lazy(
 
 def test_factory_resolves_owned_storage_without_creating_it() -> None:
     service = public.create_service()
-    assert service._core._repository.path == (
+    assert cast(Repository, service._core._repository).path == (
         Path(__file__).resolve().parents[1] / "data/tushare_trade_calendar.sqlite3"
     )
+
+
+@pytest.mark.parametrize("operation", ["coverage", "ensure", "export"])
+def test_validation_execution_failure_remains_an_operation_error(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, operation: str
+) -> None:
+    repository = Repository(tmp_path / "calendar.sqlite3", DATASET, "tushare")
+    service = _create_service(repository, lambda: pytest.fail("validation must precede Source"))
+    request = TradeCalendarRange("SSE", DAY, DAY)
+
+    def broken_validation(request: TradeCalendarRange) -> None:
+        raise RuntimeError("Unexpected validation failure")
+
+    monkeypatch.setattr(TradeCalendarRange, "__post_init__", broken_validation)
+    with pytest.raises(OperationError, match=f"{operation.title()} operation"):
+        getattr(service, operation)(request)
+    assert not repository.path.exists()
 
 
 def test_legacy_cache_is_untouched_and_never_used_as_fallback(
@@ -163,9 +185,9 @@ def test_legacy_cache_is_untouched_and_never_used_as_fallback(
 
     dataset_root = lake / "datasets/tushare_trade_calendar"
     monkeypatch.setattr(
-        _service,
+        _composition,
         "__file__",
-        str(dataset_root / "src/data_lake/datasets/tushare_trade_calendar/_service.py"),
+        str(dataset_root / "src/data_lake/datasets/tushare_trade_calendar/_composition.py"),
     )
     client = Client()
     client.rows = [row(is_open=1)]
@@ -181,7 +203,7 @@ def test_legacy_cache_is_untouched_and_never_used_as_fallback(
     monkeypatch.setattr(sqlite3, "connect", connect)
     service = public.create_service()
     owned = dataset_root / "data/tushare_trade_calendar.sqlite3"
-    assert service._core._repository.path == owned
+    assert cast(Repository, service._core._repository).path == owned
     assert service.coverage(request) == CoverageResult(1, 0, 1, 0, 0, False)
     assert service.export(request).records == ()
     assert not owned.parent.exists() and not client.calls

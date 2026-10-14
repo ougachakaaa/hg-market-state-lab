@@ -1,44 +1,21 @@
 """Dataset-owned composition and public Calendar prerequisite."""
 
-from collections.abc import Callable, Iterable
+from collections.abc import Callable
 from datetime import date, timedelta
-from pathlib import Path
 from typing import Any
 
 from data_lake import CoverageResult, EnsureResult, InvalidRequestError, OperationError
-from data_lake._application import Core, Source
-from data_lake._domain import CachedUnit, Record, Unit
-from data_lake._repository import Repository
-from data_lake._runtime import database_path
+from data_lake.application import Core
 from data_lake.datasets.tushare_trade_calendar import TradeCalendarRange
 from data_lake.datasets.tushare_trade_calendar import create_service as calendar_service
-from data_lake.providers.tushare import TushareExecutor
+from data_lake.ports import Repository, Source
 
+from ._composition import compose, create_repository, prepare_source
+from ._domain import targets
 from ._models import (
-    DailyWindow,
     FuturesDailyExport,
     FuturesDailyRange,
-    FuturesDailyRow,
-    FuturesDailyScope,
 )
-from ._source import CompletenessChecker, DailySource, identity, normalize, read_row
-
-DATASET = "tushare_equity_index_futures"
-
-
-def batches(units: tuple[Unit, ...]) -> Iterable[tuple[Unit, ...]]:
-    grouped: dict[date, list[Unit]] = {}
-    for unit in units:
-        _, target = identity(unit)
-        grouped.setdefault(target, []).append(unit)
-    window: list[date] = []
-    for day in sorted(grouped):
-        if window and (len(window) == 5 or (day - window[0]).days >= 31):
-            yield tuple(unit for target in window for unit in grouped[target])
-            window.clear()
-        window.append(day)
-    if window:
-        yield tuple(unit for target in window for unit in grouped[target])
 
 
 def trading_days(calendar: Any, request: FuturesDailyRange, ensure: bool) -> tuple[date, ...]:
@@ -87,37 +64,14 @@ def trading_days(calendar: Any, request: FuturesDailyRange, ensure: bool) -> tup
         raise OperationError("Calendar prerequisite could not be used") from exc
 
 
-def project(
-    request: FuturesDailyRange,
-    coverage: CoverageResult,
-    cached: tuple[CachedUnit, ...],
-    reader: Callable[[Record], FuturesDailyRow] | None = None,
-) -> FuturesDailyExport:
-    records = tuple((reader or read_row)(record) for item in cached for record in item.records)
-    records = tuple(
-        sorted(records, key=lambda row: (row.product_code, row.trade_date, row.contract_code))
-    )
-    return FuturesDailyExport(
-        DATASET,
-        "futures_daily",
-        2,
-        FuturesDailyScope(tuple(request.product_codes)),
-        DailyWindow(request.start_date, request.end_date),
-        coverage,
-        records,
-    )
-
-
 class FuturesDailyService:
     def __init__(self) -> None:
-        self._repository = Repository(
-            database_path(DATASET, Path(__file__).resolve().parents[4] / "data"), DATASET, "tushare"
-        )
+        self._repository = create_repository()
         self._calendar = calendar_service()
         self._source_factory: Callable[[], Source] = self._prepare
 
     def _prepare(self) -> Source:
-        return DailySource(TushareExecutor().prepare())
+        return prepare_source()
 
     def _core(
         self,
@@ -130,18 +84,8 @@ class FuturesDailyService:
             raise InvalidRequestError("request must be a FuturesDailyRange")
         request.__post_init__()
         days = trading_days(self._calendar, request, ensure)
-        units = tuple(Unit((code, day)) for code in request.product_codes for day in days)
-        checker = CompletenessChecker(reuse_rows=reuse_rows)
-        return Core(
-            self._repository,
-            targets=lambda _: units,
-            prepare_source=self._source_factory,
-            normalize=normalize,
-            check_complete=checker,
-            project=lambda req, coverage, cached: project(req, coverage, cached, checker.row),
-            batches=batches,
-            prefetch=True,
-        )
+        units = targets(request, days)
+        return compose(self._repository, units, self._source_factory, reuse_rows=reuse_rows)
 
     def coverage(self, request: FuturesDailyRange) -> CoverageResult:
         return self._core(request).coverage(request)

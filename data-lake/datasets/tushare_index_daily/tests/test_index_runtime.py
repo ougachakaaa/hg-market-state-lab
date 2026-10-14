@@ -5,18 +5,18 @@ from copy import deepcopy
 from dataclasses import replace
 from datetime import date, timedelta
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 import pytest
 
 from data_lake import InvalidRequestError, OperationError
-from data_lake._domain import ExecutionFailure, Unit
-from data_lake._repository import Repository
+from data_lake.adapters.outbound.sqlite import Repository
 from data_lake.datasets import tushare_index_daily as public
-from data_lake.datasets.tushare_index_daily import _service, _source
+from data_lake.datasets.tushare_index_daily import _composition, _domain, _service, _source
 from data_lake.datasets.tushare_trade_calendar import TradeCalendarRange
 from data_lake.datasets.tushare_trade_calendar._service import _create_service as calendar_create
 from data_lake.datasets.tushare_trade_calendar._source import TradeCalSource
+from data_lake.domain import ExecutionFailure, Unit
 
 DAY = date(2024, 1, 2)
 
@@ -271,7 +271,7 @@ def test_local_metadata_reused_for_new_date(setup: Any, monkeypatch: pytest.Monk
 
     monkeypatch.setattr(executor, "call", call)
     monkeypatch.setattr(executor, "prepare", lambda: executor, raising=False)
-    monkeypatch.setattr(_service, "TushareExecutor", lambda: executor)
+    monkeypatch.setattr(_composition, "TushareExecutor", lambda: executor)
     service._source_factory = service._prepare
     assert service.ensure(public.IndexDailyRange(["000300.SH"], next_day, next_day)).complete
 
@@ -304,7 +304,7 @@ def test_factory_owns_colocated_storage_without_source(monkeypatch: pytest.Monke
     expected = dataset_root / "data" / (dataset_root.name + ".sqlite3")
     existed = expected.exists()
     service = public.create_service()
-    assert service._repository.path == expected
+    assert cast(Repository, service._repository).path == expected
     assert expected.exists() == existed
 
 
@@ -369,14 +369,14 @@ def test_export_reuses_each_validated_row_only_within_its_snapshot(
     service, _, _, request = setup
     assert service.ensure(request).complete
     calls = 0
-    original = _source.read_row
+    original = _domain.read_row
 
     def tracked(record: Any) -> Any:
         nonlocal calls
         calls += 1
         return original(record)
 
-    monkeypatch.setattr(_source, "read_row", tracked)
+    monkeypatch.setattr(_domain, "read_row", tracked)
     first = service.export(request)
     assert calls == len(first.records)
     assert service.export(request) == first
@@ -511,7 +511,7 @@ def test_metadata_reuse_selects_latest_representative_for_requested_code(
 
     monkeypatch.setattr(repo, "snapshot", tracked)
     monkeypatch.setattr(executor, "prepare", lambda: executor, raising=False)
-    monkeypatch.setattr(_service, "TushareExecutor", lambda: executor)
+    monkeypatch.setattr(_composition, "TushareExecutor", lambda: executor)
     source = service._prepare(request.index_codes)
     assert captured == [(Unit(("000300.SH", DAY + timedelta(days=2))),)]
     assert set(source.metadata) == {"000300.SH"}
@@ -582,7 +582,7 @@ def test_metadata_reuse_does_not_fall_back_from_corrupt_latest_representative(
             (Unit(("000300.SH", DAY + timedelta(days=1))).key,),
         )
     monkeypatch.setattr(
-        _service,
+        _composition,
         "TushareExecutor",
         lambda: pytest.fail("invalid metadata must fail before Source initialization"),
     )

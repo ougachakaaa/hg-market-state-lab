@@ -10,7 +10,7 @@ from typing import Any
 
 import pytest
 
-from data_lake.datasets.tushare_trade_calendar import _service as calendar
+from data_lake.datasets.tushare_trade_calendar import _composition as calendar
 from data_lake.providers.tushare import _executor
 from lab.cli import main
 
@@ -88,7 +88,8 @@ def test_real_cli_vertical_slice(
     # This suite tests lifecycle/delegation; real scheduling has a dedicated concurrency suite.
     monkeypatch.setattr(_executor._State, "dispatch", lambda self: nullcontext(0.0))
     modules = [calendar] + [
-        importlib.import_module(f"data_lake.datasets.{identity}._service") for identity in IDS[1:]
+        importlib.import_module(f"data_lake.datasets.{identity}._composition")
+        for identity in IDS[1:]
     ]
     for module in modules:
         monkeypatch.setattr(

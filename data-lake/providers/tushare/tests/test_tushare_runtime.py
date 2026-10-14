@@ -10,7 +10,7 @@ from typing import Any
 import pytest
 
 from data_lake import OperationError
-from data_lake._domain import ExecutionFailure
+from data_lake.domain import ExecutionFailure
 from data_lake.providers.tushare import TushareExecutor, _executor
 
 

@@ -5,18 +5,18 @@ from copy import deepcopy
 from dataclasses import replace
 from datetime import date, timedelta
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 import pytest
 
 from data_lake import InvalidRequestError, OperationError
-from data_lake._domain import ExecutionFailure, Unit
-from data_lake._repository import Repository
+from data_lake.adapters.outbound.sqlite import Repository
 from data_lake.datasets import tushare_equity_index_futures as public
-from data_lake.datasets.tushare_equity_index_futures import _service, _source
+from data_lake.datasets.tushare_equity_index_futures import _domain, _service, _source
 from data_lake.datasets.tushare_trade_calendar import TradeCalendarRange
 from data_lake.datasets.tushare_trade_calendar._service import _create_service as calendar_create
 from data_lake.datasets.tushare_trade_calendar._source import TradeCalSource
+from data_lake.domain import ExecutionFailure, Unit
 
 
 @pytest.mark.parametrize("defect", ["code", "symbol", "product", "unowned", "unrelated"])
@@ -412,7 +412,7 @@ def test_factory_owns_colocated_storage_without_source(monkeypatch: pytest.Monke
     expected = dataset_root / "data" / (dataset_root.name + ".sqlite3")
     existed = expected.exists()
     service = public.create_service()
-    assert service._repository.path == expected
+    assert cast(Repository, service._repository).path == expected
     assert expected.exists() == existed
 
 
@@ -539,14 +539,14 @@ def test_basis_validation_reuse_is_operation_local_but_records_still_checked(
     original = deepcopy(executor.daily)
     executor.daily += [dict(row, trade_date="20240103") for row in original]
     count = 0
-    validate = _source.validated_catalog
+    validate = _domain.validated_catalog
 
     def tracked(product: str, basis: object) -> dict:
         nonlocal count
         count += 1
         return validate(product, basis)
 
-    monkeypatch.setattr(_source, "validated_catalog", tracked)
+    monkeypatch.setattr(_domain, "validated_catalog", tracked)
     request = public.FuturesDailyRange(["IF"], DAY, DAY + timedelta(days=1))
     assert service.ensure(request).complete
     assert count == 2  # Once on fetched facts, once on the committed read snapshot.
@@ -568,7 +568,7 @@ def test_known_catalog_failure_does_not_issue_unusable_daily_requests(setup: Any
 def test_sparse_pending_dates_do_not_expand_transport_window_across_months() -> None:
     days = (date(2024, 1, 2), date(2024, 6, 2), date(2025, 1, 2))
     units = tuple(Unit(("IF", day)) for day in days)
-    groups = tuple(_service.batches(units))
+    groups = tuple(_source.batches(units))
     assert groups == tuple((unit,) for unit in units)
 
 
@@ -579,14 +579,14 @@ def test_export_reuses_each_validated_row_only_within_its_snapshot(
     service, _, _, request = setup
     assert service.ensure(request).complete
     calls = 0
-    original = _source.read_row
+    original = _domain.read_row
 
     def tracked(record: Any) -> Any:
         nonlocal calls
         calls += 1
         return original(record)
 
-    monkeypatch.setattr(_source, "read_row", tracked)
+    monkeypatch.setattr(_domain, "read_row", tracked)
     first = service.export(request)
     assert calls == len(first.records)
     assert service.export(request) == first
@@ -601,7 +601,7 @@ def test_lifecycle_index_preserves_inclusive_edges_and_out_of_order_dates() -> N
         "b": {"list_date": "2024-01-03", "delist_date": "2024-01-03"},
         "c": {"list_date": "2024-01-04", "delist_date": "2024-01-05"},
     }
-    index = _source.ContractIndex(catalog)
+    index = _domain.ContractIndex(catalog)
     for offset in (0, 1, 2, 3, 4, 1, 0, 3, 2):
         target = DAY + timedelta(days=offset)
         expected = {

@@ -11,7 +11,7 @@ from typing import Any
 import pytest
 
 import data_lake
-import data_lake._repository as repository_module
+import data_lake.adapters.outbound.sqlite as repository_module
 from data_lake import (
     CoverageResult,
     EnsureResult,
@@ -19,8 +19,11 @@ from data_lake import (
     InvalidRequestError,
     OperationError,
 )
-from data_lake._application import Core, Source
-from data_lake._domain import (
+from data_lake._runtime import database_path
+from data_lake._serialization import Json, canonical_json, record_hash
+from data_lake.adapters.outbound.sqlite import Repository
+from data_lake.application import Core
+from data_lake.domain import (
     CachedUnit,
     ExecutionFailure,
     Instrument,
@@ -28,9 +31,7 @@ from data_lake._domain import (
     Unit,
     UnitRecords,
 )
-from data_lake._repository import Repository
-from data_lake._runtime import database_path
-from data_lake._serialization import Json, canonical_json, record_hash
+from data_lake.ports import Source
 
 
 @dataclass(frozen=True)

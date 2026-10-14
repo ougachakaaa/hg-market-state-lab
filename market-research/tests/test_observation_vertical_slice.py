@@ -21,7 +21,7 @@ from pathlib import Path
 # Reuse the owning Dataset's controlled Source fixture; no network/credentials.
 sys.path.insert(0, str(Path.cwd() / "data-lake/datasets/tushare_equity_index_options/tests"))
 from test_options_runtime import Executor
-from data_lake._repository import Repository
+from data_lake.adapters.outbound.sqlite import Repository
 from data_lake.datasets import tushare_equity_index_options as options
 from data_lake.datasets import tushare_trade_calendar as calendar
 from data_lake.datasets.tushare_equity_index_options._service import (

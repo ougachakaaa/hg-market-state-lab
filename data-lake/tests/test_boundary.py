@@ -5,6 +5,8 @@ import importlib.util
 import subprocess
 from pathlib import Path
 
+import pytest
+
 ROOT = Path(__file__).resolve().parents[2]
 SOURCE = ROOT / "data-lake/src"
 DATASETS = ROOT / "data-lake/datasets"
@@ -114,6 +116,7 @@ def test_no_consumer_imports_datalake_internals() -> None:
                 and (
                     any(part.startswith("_") for part in name.split(".")[1:])
                     or name.startswith("data_lake.providers")
+                    or name.split(".")[1] in {"domain", "application", "ports", "adapters"}
                 )
                 for name in imports(path, source_root)
             ), path
@@ -151,8 +154,8 @@ def test_provider_is_separate_from_kernel_and_dataset_semantics() -> None:
                 or name.startswith("data_lake.providers.")
                 or name
                 in {
-                    "data_lake._domain",
-                    "data_lake._domain.ExecutionFailure",
+                    "data_lake.domain",
+                    "data_lake.domain.ExecutionFailure",
                     "data_lake.results",
                     "data_lake.results.OperationError",
                 }
@@ -164,4 +167,64 @@ def test_provider_is_separate_from_kernel_and_dataset_semantics() -> None:
             assert not any(name.split(".")[0] in {"tushare", "dotenv"} for name in names), path
             assert "TUSHARE_TOKEN" not in path.read_text(), path
             if any(name.startswith("data_lake.providers") for name in names):
-                assert path.name in {"_source.py", "_service.py"}, path
+                assert path.name in {"_source.py", "_composition.py"}, path
+
+
+@pytest.mark.parametrize(
+    ("boundary", "allowed"),
+    [
+        ("domain", {"domain", "_serialization"}),
+        ("ports", {"domain", "ports", "results"}),
+        ("application", {"domain", "ports", "application", "results"}),
+        ("adapters", {"domain", "ports", "adapters", "results", "_serialization"}),
+    ],
+)
+def test_kernel_hexagonal_dependency_direction(boundary: str, allowed: set[str]) -> None:
+    for path in (SOURCE / "data_lake" / boundary).rglob("*.py"):
+        names = imports(path, SOURCE)
+        assert all(
+            name.split(".")[1] in allowed for name in names if name.startswith("data_lake.")
+        ), path
+        if boundary != "adapters":
+            assert not any(
+                name.split(".")[0] in {"sqlite3", "tushare", "requests", "httpx", "dotenv"}
+                for name in names
+            ), path
+
+
+def test_dataset_domains_are_pure_and_sources_do_not_access_persistence() -> None:
+    for dataset in DATASETS.iterdir():
+        source_root = dataset / "src"
+        package = source_root / "data_lake/datasets" / dataset.name
+        if not package.is_dir():
+            continue
+        own = f"data_lake.datasets.{dataset.name}"
+        for filename in ("_domain.py", "_models.py"):
+            path = package / filename
+            names = imports(path, source_root)
+            assert all(
+                not name.startswith("data_lake.")
+                or name.split(".")[1] in {"domain", "results", "_serialization"}
+                or name
+                in {
+                    "data_lake.CoverageResult",
+                    "data_lake.ExportEnvelope",
+                    "data_lake.InvalidRequestError",
+                }
+                or name == f"{own}._models"
+                or name.startswith(f"{own}._models.")
+                for name in names
+            ), path
+            assert not any(
+                name.split(".")[0]
+                in {"sqlite3", "tushare", "requests", "httpx", "dotenv", "os", "pathlib"}
+                for name in names
+            ), path
+        names = imports(package / "_source.py", source_root)
+        assert not any(
+            name.startswith(("data_lake.adapters", "data_lake.application"))
+            or name.split(".")[0] == "sqlite3"
+            or name.startswith((f"{own}._service", f"{own}._composition"))
+            or name == "data_lake.ports.Repository"
+            for name in names
+        ), package
