@@ -310,6 +310,30 @@ def test_batch_success_does_not_imply_unit_success(dataset: FakeDataset) -> None
     assert retry == EnsureResult(5, 2, 3, 3, 0, 3, True, ())
 
 
+@pytest.mark.parametrize("operation", ["coverage", "ensure", "export"])
+def test_success_cache_is_revalidated_by_dataset_before_use(
+    dataset: FakeDataset, monkeypatch: pytest.MonkeyPatch, operation: str
+) -> None:
+    dataset.responses["a"] = facts()
+    assert dataset.core.ensure(("a",)).complete
+    before = dataset.repository.path.read_bytes()
+    calls = list(dataset.calls)
+    preparations = dataset.preparations
+    checked: list[tuple[Unit, UnitRecords]] = []
+
+    def reject(unit: Unit, records: UnitRecords) -> None:
+        checked.append((unit, records))
+        raise ExecutionFailure("Cached facts fail Dataset completeness")
+
+    monkeypatch.setattr(dataset.core, "_check_complete", reject)
+    with pytest.raises(OperationError, match="Dataset completeness"):
+        getattr(dataset.core, operation)(("a",))
+    assert len(checked) == 1
+    assert checked[0] == (Unit("a"), facts())
+    assert dataset.repository.path.read_bytes() == before
+    assert dataset.calls == calls and dataset.preparations == preparations
+
+
 def test_recoverable_batch_failure_continues_next_batch(
     dataset: FakeDataset,
     monkeypatch: pytest.MonkeyPatch,

@@ -1,7 +1,7 @@
 """Dataset-owned composition and public Calendar prerequisite."""
 
 from collections.abc import Callable, Sequence
-from datetime import date, timedelta
+from datetime import date
 from typing import Any
 
 from data_lake import CoverageResult, EnsureResult, InvalidRequestError, OperationError
@@ -15,48 +15,72 @@ from ._domain import targets
 from ._models import IndexDailyExport, IndexDailyRange
 
 
+def _validated_days(view: Any, dependency: TradeCalendarRange) -> tuple[date, ...]:
+    """Validate even partial producer views before granting prerequisite writes."""
+    coverage = view.coverage
+    counts = (
+        coverage.requested_units,
+        coverage.successful_units,
+        coverage.missing_units,
+        coverage.pending_units,
+        coverage.failed_units,
+    )
+    if (
+        type(view.dataset) is not str
+        or view.dataset != "tushare_trade_calendar"
+        or type(view.view) is not str
+        or view.view != "calendar"
+        or type(view.export_schema_version) is not int
+        or view.export_schema_version != 1
+        or type(view.scope.exchange) is not str
+        or view.scope.exchange != dependency.exchange
+        or type(view.window.start_date) is not date
+        or type(view.window.end_date) is not date
+        or view.window.start_date != dependency.start_date
+        or view.window.end_date != dependency.end_date
+        or any(type(count) is not int or count < 0 for count in counts)
+        or type(coverage.complete) is not bool
+        or coverage.requested_units != (dependency.end_date - dependency.start_date).days + 1
+        or sum(counts[1:]) != coverage.requested_units
+        or coverage.complete != (coverage.successful_units == coverage.requested_units)
+        or not isinstance(view.records, Sequence)
+        or isinstance(view.records, str | bytes | bytearray)
+        or len(view.records) != coverage.successful_units
+    ):
+        raise OperationError("Calendar prerequisite envelope or coverage is invalid")
+    previous = None
+    days = []
+    for row in view.records:
+        if (
+            type(row.exchange) is not str
+            or row.exchange != dependency.exchange
+            or type(row.cal_date) is not date
+            or not dependency.start_date <= row.cal_date <= dependency.end_date
+            or (previous is not None and row.cal_date <= previous)
+            or type(row.is_open) is not int
+            or row.is_open not in (0, 1)
+            or (row.pretrade_date is not None and type(row.pretrade_date) is not date)
+        ):
+            raise OperationError("Calendar prerequisite facts are invalid")
+        previous = row.cal_date
+        if row.is_open == 1:
+            days.append(row.cal_date)
+    return tuple(days)
+
+
 def trading_days(calendar: Any, request: IndexDailyRange, ensure: bool) -> tuple[date, ...]:
     try:
         dependency = TradeCalendarRange("SSE", request.start_date, request.end_date)
         view = calendar.export(dependency)
+        days = _validated_days(view, dependency)
         if not view.coverage.complete and ensure:
-            if not calendar.ensure(dependency).complete:
+            if calendar.ensure(dependency).complete is not True:
                 raise OperationError("Calendar ensure did not complete")
             view = calendar.export(dependency)
-        desired = tuple(
-            request.start_date + timedelta(days=i)
-            for i in range((request.end_date - request.start_date).days + 1)
-        )
-        if (
-            not view.coverage.complete
-            or view.dataset != "tushare_trade_calendar"
-            or view.view != "calendar"
-            or view.scope.exchange != "SSE"
-            or view.window.start_date != request.start_date
-            or view.window.end_date != request.end_date
-            or tuple(row.cal_date for row in view.records) != desired
-            or view.coverage.requested_units != len(desired)
-            or view.coverage.successful_units != len(desired)
-            or any(
-                (
-                    view.coverage.missing_units,
-                    view.coverage.pending_units,
-                    view.coverage.failed_units,
-                )
-            )
-            or any(
-                (
-                    row.exchange != "SSE"
-                    or type(row.is_open) is not int
-                    or row.is_open not in (0, 1)
-                    or type(row.cal_date) is not date
-                    or (row.pretrade_date is not None and type(row.pretrade_date) is not date)
-                )
-                for row in view.records
-            )
-        ):
-            raise OperationError("Calendar prerequisite view is incomplete or invalid")
-        return tuple(row.cal_date for row in view.records if row.is_open == 1)
+            days = _validated_days(view, dependency)
+        if not view.coverage.complete:
+            raise OperationError("Calendar prerequisite view is incomplete")
+        return days
     except Exception as exc:
         raise OperationError("Calendar prerequisite could not be used") from exc
 
