@@ -22,7 +22,7 @@ Universe 仅证明请求窗口的完整 historical daily facts 中实际出现�
 
 Study execution outcome 是本次 invocation 的 non-persistent feedback，不是 retained collection / reusable empirical product。本 Study 不提供 PnL、统计解释、Evidence / Findings、策略、backtest 或 Modeling output；future Analysis / Evidence persistence 另行设计，Observation refresh / definition evolution 保持 deferred。
 
-## Acceptance 与 readiness
+## Acceptance
 
 - 四个 normalized inputs 定义同一个 semantic Study request，完整覆盖 Component / Observation bindings；不产生 persisted run identity / filesystem key，不以 option_type 重命名 product_code。
 - Universe resolve 成功后才扩展 in-memory 升序 plan；Universe failure 立即停止，零 chain invocations。
@@ -32,6 +32,4 @@ Study execution outcome 是本次 invocation 的 non-persistent feedback，不�
 - RESULTS 的 success / failure counts 与实际执行一致，unknown 不伪报零；只输出 request / summary / failure details，不复制 chain rows 或发布 retained output。
 - CLI 不依赖 output.root / run directory / overwrite / staging；无 Workflow Artifact、Analysis、Evidence 占位。
 
-六个 semantic areas、Research dependency contracts、orchestration semantics 与 [implementation architecture](IMPLEMENTATION.md) 完整，按 [Authoring readiness](../AUTHORING.md#publication-与-dependency-handoff) 为 **Study Authority Complete / Research dependency contracts complete / Study implementation architecture complete / Implementation Ready**。未发现 DataLake public capability / Research semantic gap；组件 Python mapping 见 [Universe IMPLEMENTATION](../../shared/cffex_option_expiry_universe/IMPLEMENTATION.md)，runtime 验证另见 reconciliation。
-
-Chain 已按 Observation contract 实施。Universe resolver 与 Study 已使用新的 component boundary，runtime **Dependency Reconciled / Implemented / Verified**。当前 drift 按需见 [Research reconciliation](../../IMPLEMENTATION_RECONCILIATION.md)。
+Python / CLI responsibilities 与 runtime acceptance 见 [implementation mapping](IMPLEMENTATION.md)；组件 Python mapping 见 [Universe IMPLEMENTATION](../../shared/cffex_option_expiry_universe/IMPLEMENTATION.md)。Design readiness 与 runtime acceptance 的区分遵循 [Authoring handoff](../AUTHORING.md#publication-与-dependency-handoff)，不以历史完成状态代替当前验收。

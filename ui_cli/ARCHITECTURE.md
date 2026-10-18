@@ -14,7 +14,7 @@ The owning directory and Python namespace are `ui_cli`. The executable stays `la
 
 原则：`lab` orchestrates；owning modules define semantics and execute domain behavior。`lab` 不重新实现或复制下层业务逻辑。
 
-Console entry 只组合 command topology、help 与 dispatch；readiness diagnostics、service delegation、Research discovery/forwarding、DataLake delivery 与共享 process mechanics 在 `lab` 内按职责分离。这是内部实现边界，不改变 `lab` 的唯一 public interface 或 owning module semantics。
+Console entry 只组合 command topology、help 与 dispatch；readiness diagnostics、service delegation、Research discovery/forwarding、DataLake delivery 与共享 process mechanics 在 `ui_cli` 内按职责分离。这是内部实现边界，不改变 `lab` 的唯一 public interface 或 owning module semantics。
 
 ## Supported platforms 与 installation
 
@@ -40,7 +40,7 @@ lab
     └── export   <dataset-id> [dataset-specific args] --output <path>
 ```
 
-顶层 namespace 按正式 repository-level capability 分组。`lab serve backend` 与 `lab serve frontend` 取代旧的平铺 `backend`、`frontend` 目标命令。`datalake` 通过首个 Dataset public service 实现下方 CLI contract；操作示例见 [usage guide](README.md)。只有出现真实的 repository-level orchestration requirement 时才扩展 hierarchy；V1 不预定义其他 command group。
+顶层 namespace 按正式 repository-level capability 分组。`lab serve backend` 与 `lab serve frontend` 取代旧的平铺 `backend`、`frontend` 目标命令。`datalake` 通过下方明确支持的 Dataset public services 实现 delivery contract；操作示例见 [usage guide](README.md)。只有出现真实的 repository-level orchestration requirement 时才扩展 hierarchy；V1 不预定义其他 command group。
 
 ## Delegation 与 failure boundary
 

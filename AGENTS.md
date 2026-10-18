@@ -2,7 +2,7 @@
 
 ## Naming transition routing
 
-The [repository mapping](ARCHITECTURE.md#naming-and-transition-authority) defines canonical filesystem and namespaces. [Migration record](MODULE_MIGRATION.md) records engineering scope and verification; all entry paths and local policies below use the migrated filesystem.
+The [repository mapping](ARCHITECTURE.md#naming-and-transition-authority) defines canonical filesystem and namespaces; all entry paths and local policies below use those identities. Completed migration scope and verification remain in Git history.
 
 ## 适用范围与继承
 

@@ -26,7 +26,7 @@ Kernel 只在完整目标确定后协调缓存与执行；Dataset 拥有事实�
 
 ## 1. Ownership 与 persistence boundary
 
-DataLake = **Shared Kernel + Autonomous Datasets + Provider Infrastructure**。Kernel 提供通用领域模型、Application Use Cases、Outbound Ports 与持久化机制；Dataset 是拥有独立事实语义的自治领域边界，通过 Composition 发布自己的 Public Application Service；Provider 提供跨 Dataset 的外部请求执行能力。具体 DataSet 持久缓存并管理来自外部 Source 的 reusable source facts；persistence 是可重建 cache，不维护 schema migration。DataLake 不拥有 Snapshot Product semantics、Preparation、analysis-ready computation、Research、Modeling、HTTP 或 UI，也不接管 Snapshot 产品已声明的 Raw Artifact。Public service 的发布不自动建立 Research/Snapshot runtime integration；这些 consumer 的实际接入 implementation 须遵循已发布 boundary，Research 选择与调用权限由 [Research UPSTREAM](../market_research/UPSTREAM.md) 拥有。
+DataLake = **Shared Kernel + Autonomous Datasets + Provider Infrastructure**。Kernel 提供通用领域模型、Application Use Cases、Outbound Ports 与持久化机制；Dataset 是拥有独立事实语义的自治领域边界，通过 Composition 发布自己的 Public Application Service；Provider 提供跨 Dataset 的外部请求执行能力。具体 DataSet 持久缓存并管理来自外部 Source 的 reusable source facts；persistence 是可重建 cache，不维护 schema migration。DataLake 不拥有 Snapshot Product semantics、Preparation、analysis-ready computation、Research、Modeling、HTTP 或 UI，也不接管 Snapshot 产品已声明的 Raw Artifact。Research / Snapshot consumers 只经已发布 public boundary 接入；Research 选择与调用权限由 [Research UPSTREAM](../market_research/UPSTREAM.md) 拥有。
 
 ```text
 DataLake
@@ -91,7 +91,7 @@ Calendar 不反向依赖这些 consumers；Futures / Options 的 underlying inde
 
 ## 3. Shared Kernel Hexagonal Architecture
 
-目标职责结构位于 `data_lake/src/data_lake/`：
+职责结构位于 `data_lake/src/data_lake/`：
 
 ```text
 data_lake/
@@ -141,7 +141,7 @@ Provider-local 与 Dataset-local source roots 不创建独立 Python project、P
 | 具体 Dataset 的 Source、identity、fields、completeness | [DATASETS.md](DATASETS.md) → owning Dataset ARCHITECTURE.md |
 | Dataset-specific consumer request/result/view、public Python surface | [DATASETS.md](DATASETS.md) → owning Dataset ARCHITECTURE.md → SERVICE.md |
 | CLI topology / delegation / serialization / file delivery | [lab authority](../ui_cli/ARCHITECTURE.md) |
-| Authority 到当前代码的映射与尚未处理的实现差异 | [IMPLEMENTATION.md](IMPLEMENTATION.md)（状态与后续任务，不拥有新语义） |
+| Authority 到代码职责的映射 | [IMPLEMENTATION.md](IMPLEMENTATION.md)（实现映射，不拥有新语义） |
 
 Dataset 与 provider authority 只能在模块边界及相关公共 domain/application invariant 内 specialize 或 constrain；catalog 只提供导航，不拥有 schema。具体 Dataset 任务读取与任务有关的公共 authority 和 owning Dataset authority，不默认加载 sibling Dataset；普通 Dataset domain task 不默认加载 provider execution authority。
 
@@ -149,4 +149,4 @@ Dataset 与 provider authority 只能在模块边界及相关公共 domain/appli
 
 DataLake 不引入 DataLakeService、DatasetManager、runtime registry、generic plugin / workflow framework 或 cross-Dataset query layer。Dataset 的直接 public service boundary 与明确 dependency permissions 已由上文固定。
 
-HTTP / Research / Snapshot 等 consumer 的具体 integration implementation 仍须按已冻结 public boundary 完成；rebuild-only compatibility 由 PERSISTENCE.md 拥有，不维护 migration framework 或旧目录 compatibility import。Refresh / force / invalidation、TTL / stale、Source correction、多维 Window、通用 Dataset dependency graph 与 Source request audit table 继续 deferred，不从内部 serialization、hash、batching 或存储优化推导新的 public semantics。
+HTTP / Research / Snapshot 等 consumers 遵循已冻结 public boundary；rebuild-only compatibility 由 [PERSISTENCE.md](PERSISTENCE.md) 拥有，不维护 migration framework 或旧目录 compatibility import。Refresh / force / invalidation、TTL / stale、Source correction、多维 Window、通用 Dataset dependency graph 与 Source request audit table 继续 deferred，不从内部 serialization、hash、batching 或存储优化推导新的 public semantics。

@@ -1,11 +1,10 @@
-# DataLake V1 Release Acceptance
+# DataLake V1 Historical Acceptance Evidence
 
-本文件是 2026-10-18（Asia/Shanghai）的验收证据，不是 semantic Authority，不定义新增契约。稳定入口为 [ARCHITECTURE.md](ARCHITECTURE.md)，当前实现映射为 [IMPLEMENTATION.md](IMPLEMENTATION.md)，运行与恢复说明见 [DEVELOPMENT.md](../DEVELOPMENT.md)。
+本文件仅保留 2026-10-18（Asia/Shanghai）、目录迁移前的 V1 验收证据，不是当前 semantic authority、implementation handoff、operational instructions 或 merge readiness assessment。下文路径、命令、通过数和平台结论均只属于所列历史基线，不是当前验证结果。
 
+当前契约从 [DataLake architecture](ARCHITECTURE.md) 进入；代码职责见 [implementation mapping](IMPLEMENTATION.md)，当前验证命令见 [Agent rules](AGENTS.md)，日常运行与恢复见 [DEVELOPMENT.md](../DEVELOPMENT.md)。完成的目录迁移及其验证记录保留在 Git history。
 
-本文保留目录迁移前的 V1 验收证据；下文历史命令与路径不是当前操作入口。当前 canonical 目录、namespace 与收尾验证见 [repository migration record](../MODULE_MIGRATION.md)，日常运行见 [DEVELOPMENT.md](../DEVELOPMENT.md)。
-
-## 验收版本与结论
+## 历史验收版本与结论
 
 - Branch：`chore/datalake-authority-boundaries`。
 - 审查及真实 Source 验收基线：`0f49e18f9781bbb54ee4e3f80301fedea44358fe`。
@@ -13,9 +12,8 @@
 - Architecture / Authority / Implementation：Frozen / Closed / Reconciled；未发现阻断性 drift。
 - Verification：Passed，1038 passed、2 个非阻断 symlink 场景因系统权限 skipped；未将 skip 计作通过。
 - Runtime / Release：Validated / Ready；本次约定的 V1 验收范围无剩余阻断条件。
-- Merge：可以将包含本轮文档收尾的分支合并到本地 `develop`；目标审查版本为 `fb8315fb07158d1c32fcb245bc118d256b6ceb9e`，它是 HEAD 的祖先。该历史结论不代替当前分支变化后的 CI / review；本次迁移收尾的 merge assessment 见 repository migration record。
 
-## 契约审查与离线验证
+## 历史契约审查与离线验证
 
 审查涵盖 Kernel → Domain/Ports、Dataset → Kernel/Provider、三个行情 Dataset → Calendar public service 的依赖方向；四 Dataset 的 Planner、Resolver 权限与操作级 context、UnitRecords 验证后提交、逐 unit transaction、失败重试、只读 snapshots、frozen basis、rebuild-only compatibility，以及 CLI / installed imports / Research consumer。没有引入新接口、框架或其他模块业务语义。
 
@@ -29,7 +27,7 @@
 | CLI delivery、consumer 兼容、跨进程持久化复用 | `lab/tests`、`market-research/tests`、backend architecture checks |
 | Authority 相对链接与根入口可达性 | `market-snapshot/tests/test_authority_topology.py`，另检查 DataLake 全部文档及 anchors |
 
-实际检查（均从 repository root 使用根 Poetry 环境）：
+历史检查记录（当时从 repository root 使用根 Poetry 环境；旧路径仅用于复核，不可作为当前命令复制执行）：
 
 - 基线：`poetry run pytest data-lake lab/tests backend-api/tests/test_architecture.py market-snapshot/tests/test_authority_topology.py -q`：773 passed、1 skipped。
 - 最终：`poetry run pytest data-lake lab/tests market-research/tests backend-api/tests/test_architecture.py market-snapshot/tests/test_authority_topology.py -q -rs`：**1038 passed、2 skipped，41.30 秒**。
@@ -40,7 +38,7 @@
 
 最终两个 skip 均因 Windows 缺少创建 symlink 的权限（WinError 1314），对应 `lab/tests/test_research.py::test_research_discovery_rejects_a_package_symlink` 与 `market-research/tests/test_research_execution.py::test_symlinked_study_and_run_locations_are_rejected`。它们不计作通过，不涉及 Dataset source-fact / public service 验收；本机未验证这两个 Research discovery/output-layout 的真实 symlink 场景。
 
-## 真实 Source Smoke
+## 历史真实 Source Smoke
 
 日期范围固定为 **2026-10-15..2026-10-15**；使用现有合法 credential、真实 Source Adapter 和 Provider HTTP 链路。四个 Dataset 各使用一个系统临时目录内的独立 SQLite，Calendar 的 SSE/CFFEX 两个 scope 共用其唯一 owned SQLite。临时 harness 只重定向 Composition 的内部 `database_path`，并计数/限制 Provider calls；未改变公开 request 或 Provider 业务行为，未读取或修改用户默认/legacy 缓存。
 
@@ -58,13 +56,13 @@
 
 本次未遇到真实 Provider rejection，不声称现场复现了 quota/permission/network failure；对应失败分类、无隐式 retry 与恢复通过离线受控测试验证。单日 smoke 不代表全部历史日期、所有产品或任意账号权限已验证；没有待补的本次外部 Source 验收条件。原始 Source facts、临时 SQLite、credential 和运行输出不进入 Git。
 
-## V1 限制与发布边界
+## 当时验收的限制与范围
 
 - Limiter 只保证同一 process / credential，不协调其他 processes/worktrees/machines；账号实际 endpoint 权限与配额由 operator 确认。
 - 不自动 retry；失败/中断后显式重复 ensure。Success 表达成功取得时的完整事实，不保证 freshness；无 refresh/force/TTL/source-correction policy。
 - SQLite 仅接受 compatible generation 3，rebuild-only，无 migration/旧库 fallback；仅 operator 可显式处理 owning Dataset cache，不能自动清理真实数据。
 - 本次在 Windows native / 根 Python 3.13 环境验收；不声称已完成 Linux 或其他部署环境运行验收。
 
-**DataLake V1 — Architecture Frozen, Implementation Reconciled, Release Ready.**
+历史验收结论：**DataLake V1 — Architecture Frozen, Implementation Reconciled, Release Ready.**
 
-本结论适用于上述 V1 契约及验收范围，不扩大已声明平台、quota 或 freshness 保证；后续以维护、缺陷修复和新增 Dataset 为主。本历史验收记录不代表当前迁移收尾的 commit、merge 或 deployment 状态。
+本结论适用于上述 V1 契约及验收范围，不扩大已声明平台、quota 或 freshness 保证；后续以维护、缺陷修复和新增 Dataset 为主。本历史验收记录不代表当前 commit、merge 或 deployment 状态。

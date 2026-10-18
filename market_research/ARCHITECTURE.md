@@ -67,6 +67,6 @@ repository ARCHITECTURE.md
 
 Upstream-backed Component / Observation design 按需进入 [UPSTREAM.md](UPSTREAM.md)，只读实际所需 public contracts；不默认扫描 sibling owners。Study implementation、legacy maintenance 与 migration 的专题选择由 Study entry 路由。
 
-执行政策见 [AGENTS.md](AGENTS.md)；当前 authority / implementation drift 才进入 [IMPLEMENTATION_RECONCILIATION.md](IMPLEMENTATION_RECONCILIATION.md)，不将其作为 semantic design 阅读前提。各 owner 的 authority 与 implementation colocate；具体 source / package / output topology 归各 implementation contract。
+执行政策见 [AGENTS.md](AGENTS.md)；已关闭的 reconciliation 与验证证据保留在 Git history，不作为 semantic design 阅读前提。各 owner 的 authority 与 implementation colocate；具体 source / package / output topology 归各 implementation contract。
 
 仅在 module identity、职责边界、顶层关系、依赖方向、visualization ownership 或导航变化时更新本文件；concrete capability 状态、schema、公式、workflow、readiness 和历史 evidence 不进入本入口。

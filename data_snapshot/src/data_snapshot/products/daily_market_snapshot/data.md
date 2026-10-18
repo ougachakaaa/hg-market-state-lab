@@ -23,7 +23,7 @@ Source Capture 名称是本项目语义名称，不要求与 Tushare endpoint �
 
 分析结论：第一版 Analysis-ready Artifact 只表达市场观察事实，不输出 bullish / bearish、risk-on / risk-off、超买 / 超卖、市场情绪评分、后市预测等分析结论。这些属于后续 AI Analysis，不属于本阶段 Analysis Preparation。
 
-派生字段：第一版不加入 advance_ratio / decline_ratio 等比例指标（v1 裁定：breadth 的计数已经直接表达同样信息；若后续需要，先修改本 Guide，再做实现 reconciliation）。
+派生字段：第一版不加入 advance_ratio / decline_ratio 等比例指标（v1 裁定：breadth 的计数已经直接表达同样信息；若后续需要，先修改本 data authority，再做实现 reconciliation）。
 
 架构机制：不建立通用 universe framework、交易日历系统、scheduler、定时任务、节假日推断、自动 fallback、schema version framework、migration framework、registry 或数据库元数据系统。
 
@@ -41,7 +41,7 @@ Source Capture 名称是本项目语义名称，不要求与 Tushare endpoint �
 
 #### 指数观察 universe（第一版固定）
 
-以下六个指数代码构成第一版 daily-data_snapshot 场景的指数观察 universe。第一版不做通用 universe framework，只把这组代码作为当前 Analysis Preparation Definition 的明确输入范围。
+以下六个指数代码构成第一版 Daily Market Snapshot 场景的指数观察 universe。第一版不做通用 universe framework，只把这组代码作为当前 Analysis Preparation Definition 的明确输入范围。
 
 | ts_code | 指数 |
 | --- | --- |
@@ -119,4 +119,4 @@ Raw Artifact 应尽量保留 Source 返回数据的原始语义。
 
 ### 执行边界
 
-Raw 文件的写入、覆盖与重跑策略属于采集实现细节，本 Definition 不预设；无数据交易日的处理边界见第 3 节，Raw → Analysis-ready Artifact 的依赖边界见第 7 节。
+Raw 文件的写入、覆盖与重跑策略属于采集实现细节，本 Definition 不预设；无数据交易日的处理边界见第 3 节，Raw → Analysis-ready Artifact 的依赖边界见 [Preparation 第 7 节](preparation.md#7-analysis-ready-artifact-与-raw-的依赖关系)。

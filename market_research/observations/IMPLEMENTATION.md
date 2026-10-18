@@ -1,6 +1,6 @@
 # Observation Implementation Architecture
 
-本文件唯一拥有 Observation framework 的 runnable Python contract、public object ownership、composition、persistence lifecycle / placement、complete publication、窄 shared mechanics 与 implementation verification。继承 [framework semantics](ARCHITECTURE.md) 与 [Research UPSTREAM policy](../UPSTREAM.md)；不重定义 concrete business semantics。具体 Observation 映射进入 [DTE-chain implementation](cffex_option_expiry_dte_chain/IMPLEMENTATION.md)。本文是 runnable contract authority；当前 drift 按需进入 [reconciliation](../IMPLEMENTATION_RECONCILIATION.md)，不把历史 evidence 当 semantic owner。
+本文件唯一拥有 Observation framework 的 runnable Python contract、public object ownership、composition、persistence lifecycle / placement、complete publication、窄 shared mechanics 与 implementation verification。继承 [framework semantics](ARCHITECTURE.md) 与 [Research UPSTREAM policy](../UPSTREAM.md)；不重定义 concrete business semantics。具体 Observation 映射进入 [DTE-chain implementation](cffex_option_expiry_dte_chain/IMPLEMENTATION.md)。本文是 runnable contract authority，不把历史 evidence 当 semantic owner。
 
 ## Implementation progressive disclosure
 

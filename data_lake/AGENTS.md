@@ -19,7 +19,7 @@
 | Dataset-specific domain / Source / completeness | [DATASETS.md](DATASETS.md) → owning Dataset ARCHITECTURE.md → 所需专题 |
 | Dataset-specific public service / consumer contract | owning Dataset ARCHITECTURE.md → SERVICE.md |
 | CLI delivery / delegation | [lab authority](../ui_cli/ARCHITECTURE.md) |
-| 已记录的 authority / implementation 差异与后续任务 | [IMPLEMENTATION.md](IMPLEMENTATION.md) → 对应 canonical authority；状态记录不代替语义 |
+| Authority 到代码职责的映射 | [IMPLEMENTATION.md](IMPLEMENTATION.md) → 对应 canonical authority；实现映射不代替语义 |
 
 普通 Dataset domain task 不默认加载 provider execution、service 或 CLI authority；涉及已声明 prerequisite 时，读取其 public contract，不加载 sibling internals。Python tooling 与当前环境操作遵循 [repository architecture](../ARCHITECTURE.md) 和 [DEVELOPMENT.md](../DEVELOPMENT.md)，从 repository root 使用唯一根环境。
 

@@ -80,17 +80,3 @@ GET /mo-option-premium-plane
 ```
 
 依赖方向只能向下；HTTP、presentation 或 sibling product 不得反向定义 Source scope、Raw、Basis、Point 或 Plane semantics。
-
-## 6. Reconciliation Result
-
-本次跨 backend、HTTP 与 frontend authority reconciliation 已确认：
-
-1. `PremiumPoint Preparation` 唯一拥有 `reference_basis × value_basis × time_normalization × representation` 四维 metric space；reference-relative time value 不 clamp，yield 使用 coordinate 所选 reference notional，并原样保留 negative、zero、null。HTTP 只投影 prepared facts，frontend 只通过 generated contract 选择并展示。
-2. Premium table rows 覆盖 selected side 与 selected expiries 下全部真实 Point strikes，同时保持 sparse Point absence、nullable metric 与 numeric zero 的区别。
-3. Strike relative-to-reference coloring 只属于 frontend presentation，使用 raw spot / nullable expiry futures facts，不改变 analytical semantics。
-4. Premium endpoint、query、generated-contract ownership、request lifecycle 与 Option Chain product/viewport authority 均未改变。
-5. `underlying_spot` 与 `expiry_futures` 的 decomposition 和 denominator 角色已分离；futures decomposition 不冒充传统 intrinsic value，futures 缺失时不 fallback，reference-invariant total points 仍保留真实 premium fact。
-6. unannualized/annualized 与 points/yield 均为独立 axes；inclusive-calendar DTE、365、contract multiplier、sparse Point、failure classification、reference coloring 和 Raw Inspector 语义保持不变。
-7. HTTP 采用完整 structured metric projection，frontend 的四个 metric selectors 全部是 local presentation state，并组织为“标的 / 计算口径 / 表示方式”；Call/Put 与 expiry visibility 保持独立。
-
-`MO Premium Plane multidimensional metric authority is implementation-ready.`

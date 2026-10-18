@@ -33,7 +33,7 @@
 
 从 Study entry 进入 INPUTS / METHOD / RESULTS 或必要 specialized authority，再读 `study.py` composition；随后只读实际 Analysis、evidence、input helper 或 consumed Observation public contract 与相关测试。修改一个 Analysis 不要求阅读无关 CLI、其他 Analysis、Observation internal persistence 或无关报告格式。
 
-按 semantic responsibility 和阅读边界审查拓扑，LOC、函数 / class 数量或一对象一文件不是阈值。单一 module 不同时承载多个可独立理解且可清晰拆分的 material responsibilities。已有实现非追溯规则见 Compatibility；当前 implementation / test drift 见 [reconciliation](../IMPLEMENTATION_RECONCILIATION.md)。
+按 semantic responsibility 和阅读边界审查拓扑，LOC、函数 / class 数量或一对象一文件不是阈值。单一 module 不同时承载多个可独立理解且可清晰拆分的 material responsibilities。已有实现非追溯规则见 Compatibility。
 
 Owner 根目录承载 authority 与实际子模块；Python implementation 位于本 owner 的 `src/` 下，按完整 `market_research.*` namespace 落位并在根 `pyproject.toml` 注册 source root。Authority 不进入 namespace/source tree；不存在 framework mechanics 时不创建空 src。源码 docstring 以相对路径指回 owner 根目录的 canonical entry。
 
@@ -51,4 +51,4 @@ Owner 根目录承载 authority 与实际子模块；Python implementation 位�
 | Mixed responsibility | 单 module 承担可独立理解的 input canonicalization、Analysis execution、evidence retention 等多个 substantial responsibilities，无清晰内聚依据。 |
 | Authority drift | 实现合并、隐藏或越界重定义语义对象，无法恢复 Schema / Workflow graph；为 orchestration-only Study 强制 directory / config / Artifact，复制 market rows 建 empirical cache，或对无 Analysis / Evidence 的 Study 强制空 module。 |
 
-按 semantic responsibility 和阅读边界处理 findings，不以 LOC、函数 / class 数量或一对象一文件代替审查。结构测试可固定 package / 必需 module / authority pointer，不能替代语义阅读；当前 authority / implementation drift 按需见 [implementation reconciliation](../IMPLEMENTATION_RECONCILIATION.md)。
+按 semantic responsibility 和阅读边界处理 findings，不以 LOC、函数 / class 数量或一对象一文件代替审查。结构测试可固定 package / 必需 module / authority pointer，不能替代语义阅读。

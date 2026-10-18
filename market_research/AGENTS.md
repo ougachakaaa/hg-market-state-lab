@@ -13,7 +13,6 @@
 | Study implementation / acceptance | Study entry / consumed contracts → [studies/IMPLEMENTATION.md](studies/IMPLEMENTATION.md) → concrete handoff / owner-local src。 |
 | Legacy maintenance / migration / consolidation / historical reconciliation | [studies/COMPATIBILITY.md](studies/COMPATIBILITY.md) → only triggered concrete scope；不默认迁移。 |
 | CLI / configuration / retained-output handling | [ui/ARCHITECTURE.md](ui/ARCHITECTURE.md) → CONFIGURATION（适用时）→ actual Study input / result contract。 |
-| 当前 authority / implementation drift | [IMPLEMENTATION_RECONCILIATION.md](IMPLEMENTATION_RECONCILIATION.md)。 |
 
 Upstream-backed design 按 [UPSTREAM.md](UPSTREAM.md) 选择所需 public capability，再沿 DataLake / Snapshot entry 与 catalog 读取实际 owner；不默认加载 sibling Products / Datasets。新 Study 不扫描所有 Observations、sibling Studies、historical shared semantics 或 evidence 来继承研究含义。
 
@@ -29,6 +28,6 @@ Upstream-backed design 按 [UPSTREAM.md](UPSTREAM.md) 选择所需 public capabi
 
 所有检查从 repository root 执行。Authority-only change 至少运行 Research authority topology / colocation tests、repository authority link / reachability checks 与 `git diff --check`，核对新增 owner 可达性并审阅完整 diff。仅因 topology 重组需要时机械更新相关验证，不改变业务测试或实现；失败区分 baseline 问题与新引入问题。
 
-Implementation change 运行直接相关 tests 与 Ruff / mypy 范围；cross-module contract 变更按 producer / consumer local policy 同时检查。当前 drift register 不替代 semantic owner，也不把历史通过数当当前验收。
+Implementation change 运行直接相关 tests 与 Ruff / mypy 范围；cross-module contract 变更按 producer / consumer local policy 同时检查。发现真实 authority / implementation drift 须核对 canonical owner 并报告，不把历史通过数当当前验收。
 
 不因 authority 整理创建 concrete Observation、迁移 legacy Study / evidence、重算 runtime data 或提升 historical helpers。CLI、visualization 与 public delivery 变更分别遵守 UI / module authority；不自行创建 Observation CLI / HTTP API 或迁移 visualization ownership。不为假设需求建立 registry、Experiment Engine、generic Research Repository / Artifact DB、DAG、scheduler、executor、cache / refresh / retry engine、reusable Analysis / promotion / backtest / visualization framework。

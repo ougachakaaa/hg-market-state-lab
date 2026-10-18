@@ -28,8 +28,6 @@ Data Snapshot directly succeeds Market Snapshot as an independent bounded module
 
 Stable dependencies continue to follow published boundaries: `ui_cli` delegates to owning modules; `ui_http` consumes owning module public application/product boundaries; `ui_web` consumes the published HTTP/OpenAPI contract. Business modules do not depend on these inbound adapters. Research consumes only authorized Dataset / Snapshot public contracts, with detailed caller permissions in its UPSTREAM authority; DataLake / Snapshot / Modeling do not depend on Research. Snapshot may consume explicitly authorized Dataset public services, never internals. Modeling remains a sibling of Research with no new internal design or import permissions inferred from renaming.
 
-Engineering scope, remaining drift and validation responsibilities are recorded in [Implementation handoff](MODULE_MIGRATION.md); it is not a business authority.
-
 ## 1. 仓库定位
 
 `hg-market-state-lab` 是用于市场状态数据准备、探索研究、市场状态建模与结果展示的实验性系统。
@@ -78,7 +76,7 @@ Repository-wide inbound HTTP delivery adapter 与 HTTP composition root，负责
 
 Python runtime ownership is repository-level; semantic and package ownership remains module-level.
 
-仓库只拥有一个 canonical Python project/toolchain、一个 dependency graph 与一个 dependency-resolution boundary。目标状态固定为：
+仓库只拥有一个 canonical Python project/toolchain、一个 dependency graph 与一个 dependency-resolution boundary。Canonical layout 为：
 
 ```text
 Repository
@@ -111,16 +109,18 @@ Runtime unification 不合并模块、不改变源码目录 ownership，也不�
 
 ```text
 External Market Sources
-        ↓
-data_snapshot
-        ↓
-Analysis-ready Artifacts
-        ├──→ market_research ───→ Exploratory Studies / Evidence
-        │
-        └──→ market_modeling ───→ Market-state Outputs
+        ├──→ data_lake ───→ Public Dataset Facts ───→ market_research
+        │                         │                         │
+        │                         └──→ data_snapshot        └──→ Exploratory Studies / Evidence
+        │                                  ↑
+        └──────────────────────────────────┘
+                                           ↓
+                                Analysis-ready Artifacts
+                                   ├──→ market_research
+                                   └──→ market_modeling ───→ Market-state Outputs
 ```
 
-该图表达业务职责与 analytical data flow，不强制 runtime deployment topology 或 package import dependency。`market_research` 与 `market_modeling` 是 sibling analytical modules；Research 不是 Modeling pipeline 的强制 stage。`data_snapshot` 的产物也可以被仓库外的 analyzer 直接消费。
+该图表达业务职责与 analytical data flow，不强制 runtime deployment topology 或 package import dependency。Dataset Facts → Snapshot 仅指明确授权的 public service consumption，不强制替换 Snapshot Capture；Research 的具体 producer 权限见 UPSTREAM。`market_research` 与 `market_modeling` 是 sibling analytical modules；Research 不是 Modeling pipeline 的强制 stage。`data_snapshot` 的产物也可以被仓库外的 analyzer 直接消费。
 
 `market_research` 通过 `data_snapshot` 明确支持的 public application/product boundary 消费 analysis-ready result，也可通过 DataLake public Application Service 消费 source facts；不依赖 Source Capture、Raw Artifact、product-private Preparation、upstream persistence、Dataset / Snapshot SQLite、`ui_http`、FastAPI 或 HTTP DTO。Research 内部 composition 由其 module authority 拥有，upstream producer 权限与 selection 见 [Research upstream authority](market_research/UPSTREAM.md)，具体 integration implementation 遵循该 contract。`data_lake`、`data_snapshot` 与 `market_modeling` 不得依赖 `market_research`。
 

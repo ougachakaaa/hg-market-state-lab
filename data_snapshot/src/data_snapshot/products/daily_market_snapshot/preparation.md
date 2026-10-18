@@ -122,7 +122,7 @@ Analysis Preparation 应产生语义一致的结果。
 
 ## 9. 实现约束
 
-本文档是第一版 daily-data_snapshot 场景的 Analysis Preparation Definition authority。各职责如下：
+本文档是第一版 Daily Market Snapshot 场景的 Analysis Preparation Definition authority。各职责如下：
 
 ```text
 trade_date
@@ -133,6 +133,6 @@ Source Capture stock_daily → data/raw/YYYY-MM-DD/stock_daily.json
 Analysis Preparation → data/snapshots/YYYY-MM-DD/snapshot.json
 ```
 
-Source Capture 职责：调用 Tushare 对应 endpoint、按本文档 universe 选择范围、minimal normalization，写出 Raw Artifact。Analysis Preparation 职责：只消费上述 Raw Artifact，按本文档第 6 节组装 breadth / indices，写出 Analysis-ready Artifact；不得调用 Tushare。
+Source Capture 职责：调用 Tushare 对应 endpoint、按 [data authority](data.md#4-产品专属-capture-scope) 的 universe 选择范围、minimal normalization，写出 Raw Artifact。Analysis Preparation 职责：只消费上述 Raw Artifact，按本文档第 6 节组装 breadth / indices，写出 Analysis-ready Artifact；不得调用 Tushare。
 
 实现不得超出本文档、[Shared Source Capture authority](../../capture/ARCHITECTURE.md) 与 [模块架构](../../../../ARCHITECTURE.md) 的范围。实现状态和代码位置不属于本文档的稳定语义。

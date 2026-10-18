@@ -36,6 +36,8 @@ Calendar、option / futures / index daily facts、公开 contract metadata 与 c
 
 Research 中允许直接依赖 DataLake / Snapshot public boundary 的 producer 只有 Shared Research Component 与 Observation；两者可按 required fact slice 直接调用一个或多个具体 Dataset public Application Service，不经 generic DataLake gateway、CLI 或 JSON file round-trip。Study orchestration 只调用已声明 Component / Observation；Analysis 只消费 orchestration 已准备的 complete inputs，不调用会获取 upstream facts 的 resolver / reader。具体 caller 分工见 [Shared authority](shared/ARCHITECTURE.md)。
 
+上述 producer permissions 约束 facts 的获取与消费；Study-local CLI 的 collaborator construction 不等于 Study orchestration / Analysis direct upstream consumption。既有且明确授权的 legacy Snapshot CLI composition 仅按 [Compatibility](studies/COMPATIBILITY.md#legacy-retained-structure) 保留，不扩展 producer permissions 或授权新 Study 直接接入 upstream。
+
 Research producer 根据 declared semantic fact slice 调用选定 Dataset / Product public contract。Component 不做 retained lookup / research publication；Observation 的调用前后 lifecycle 另见 [Observation architecture](observations/ARCHITECTURE.md) / [IMPLEMENTATION](observations/IMPLEMENTATION.md)。
 
 只使用 public semantic objects。DataLake 自己拥有 coverage、ensure、export、cache completeness、Source execution 与 credentials；Research 不读取 DataLake persistence、不重新实现 DataLake cache、不接管 provider execution。Snapshot 自己拥有 canonical Product preparation 与结果有效性；Research 不穿透 Capture、Raw 或 private Preparation。共享 runtime 不授予内部 import 权限。

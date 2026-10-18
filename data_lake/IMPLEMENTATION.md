@@ -1,10 +1,10 @@
-# DataLake authority / implementation reconciliation
+# DataLake implementation mapping
 
-本文件只记录当前 authority 到 implementation 的映射与尚未处理的差异，不拥有业务契约，不作为历史施工或测试日志。稳定入口为 [ARCHITECTURE.md](ARCHITECTURE.md)；角色语义由 [COMPOSITION.md](COMPOSITION.md)、执行顺序由 [APPLICATION.md](APPLICATION.md)、交接由 [PORTS.md](PORTS.md) 唯一拥有。当前 implementation 已按现行 authority 完成 reconciliation；后续代码或 authority 变更须同步更新这里的当前状态。
+本文件只记录 authority 到 implementation 的职责映射，不拥有业务契约，不作为历史施工、状态登记或测试日志。稳定入口为 [ARCHITECTURE.md](ARCHITECTURE.md)；角色语义由 [COMPOSITION.md](COMPOSITION.md)、执行顺序由 [APPLICATION.md](APPLICATION.md)、交接由 [PORTS.md](PORTS.md) 唯一拥有。代码组织变化时同步更新实际职责映射；发现真实 authority / implementation 差异须按 [Agent rules](AGENTS.md) 核对并报告。
 
-## Canonical filesystem and frozen V1 conformance
+## Canonical filesystem
 
-The canonical directory and Python namespace are `data_lake`. The isolated [experiments entry](experiments/README.md) is materialized under [EXPERIMENTS.md](EXPERIMENTS.md), outside formal package wiring. Repository migration status and checks are recorded in [MODULE_MIGRATION.md](../MODULE_MIGRATION.md). V1 business conformance below remains unchanged.
+The canonical directory and Python namespace are `data_lake`. The isolated [experiments entry](experiments/README.md) is materialized under [EXPERIMENTS.md](EXPERIMENTS.md), outside formal package wiring.
 
 ## 1. 当前实现映射
 
@@ -20,10 +20,8 @@ The canonical directory and Python namespace are `data_lake`. The isolated [expe
 
 内部 callable 名称、days tuple、bool 或策略 co-location 本身不构成业务缺陷；上述职责映射不要求因角色命名强制创建类、接口或文件。
 
-## 2. 当前 reconciliation 状态
+## 2. Prerequisite validation mapping
 
 三个 consumer 的 `_service.py::_validated_days` 在初次 export 和补齐后的 export 上执行 producer view validation；只有合法 incomplete view 才能触发 owning Dataset 已授权的同范围 ensure。无法取得合法完整前置事实时，在进入 consumer Kernel 前以带 Calendar context 的 OperationError 失败。Read-only operations 不调用 prerequisite ensure。
 
-四个 Dataset 的 FetchUnitPlanner、Composition、UnitRecords 交接与 Kernel 读写验证链路已与现行 authority 对齐；现有 public API、persistence 和 Provider execution 契约保持兼容。
-
-DataLake V1 无已知未解决的阻断性 authority / implementation drift；该状态不代表任意账号权限、日期或 Source freshness 均已验证。Calendar producer contract 由 [Calendar SERVICE](datasets/tushare_trade_calendar/SERVICE.md) 拥有，Resolver specialization 分别由 [Index TRADING_DAYS](datasets/tushare_index_daily/TRADING_DAYS.md)、[Futures TRADING_DAYS](datasets/tushare_equity_index_futures/TRADING_DAYS.md) 和 [Options TRADING_DAYS](datasets/tushare_equity_index_options/TRADING_DAYS.md) 拥有；本文件不重复定义契约。V1 架构冻结后的工作以维护、缺陷修复和新增 Dataset 为主；不主动启动新架构迭代。验证范围、外部运行结果与发布结论见非 Authority 的 [Release Acceptance](RELEASE_ACCEPTANCE.md)。
+Calendar producer contract 由 [Calendar SERVICE](datasets/tushare_trade_calendar/SERVICE.md) 拥有，Resolver specialization 分别由 [Index TRADING_DAYS](datasets/tushare_index_daily/TRADING_DAYS.md)、[Futures TRADING_DAYS](datasets/tushare_equity_index_futures/TRADING_DAYS.md) 和 [Options TRADING_DAYS](datasets/tushare_equity_index_options/TRADING_DAYS.md) 拥有；本文件不重复定义契约。历史 V1 验收范围与外部运行证据见非 Authority 的 [Release Acceptance](RELEASE_ACCEPTANCE.md)；当前验证按 Agent rules 执行。

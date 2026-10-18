@@ -28,4 +28,4 @@ Runtime plan、references、counts 和 failure summaries 可以只存在于本�
 
 新 Study 最小路径是本 entry → AUTHORING / SCHEMA / WORKFLOW → actual Component / Observation contracts → concrete Study entry → INPUTS / METHOD / RESULTS；不扫描 sibling concrete owners。Implementation 时再进入 package contract 与 concrete handoff；authority completion 不自动启动 implementation / execution。
 
-Concrete entry：[cffex_option_expiry_dte_collection](cffex_option_expiry_dte_collection/ARCHITECTURE.md)。具体 objective、bindings、method、results 与 readiness 留在该 owner；当前 implementation drift 按需从 [module reconciliation](../IMPLEMENTATION_RECONCILIATION.md) 读取。
+Concrete entry：[cffex_option_expiry_dte_collection](cffex_option_expiry_dte_collection/ARCHITECTURE.md)。具体 objective、bindings、method、results 与 readiness 留在该 owner。

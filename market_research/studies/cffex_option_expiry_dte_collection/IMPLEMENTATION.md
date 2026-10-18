@@ -1,6 +1,6 @@
 # Expiry DTE Collection implementation handoff
 
-本文件把 [Study entry](ARCHITECTURE.md)、[INPUTS](INPUTS.md)、[METHOD](METHOD.md) 与 [RESULTS](RESULTS.md) 映射为 Python / CLI responsibilities，继承 [Study Package Contract](../IMPLEMENTATION.md) 与 [Research UI](../../ui/ARCHITECTURE.md)。四份 authority 唯一拥有业务语义；resolver I/O / failure 归 [Universe CONTRACT](../../shared/cffex_option_expiry_universe/CONTRACT.md)。当前 drift 按需见 [implementation reconciliation](../../IMPLEMENTATION_RECONCILIATION.md)。
+本文件把 [Study entry](ARCHITECTURE.md)、[INPUTS](INPUTS.md)、[METHOD](METHOD.md) 与 [RESULTS](RESULTS.md) 映射为 Python / CLI responsibilities，继承 [Study Package Contract](../IMPLEMENTATION.md) 与 [Research UI](../../ui/ARCHITECTURE.md)。四份 authority 唯一拥有业务语义；resolver I/O / failure 归 [Universe CONTRACT](../../shared/cffex_option_expiry_universe/CONTRACT.md)。
 
 ## Package 与 typed runtime boundary
 
@@ -40,7 +40,7 @@ Stable flags 继承 INPUTS，lab discovery / forwarding 无变化。--help 零 w
 
 Runner 不调用 load_config、canonical_run_directory 或 execute_run，不读 output.root、不创建 run output；无 output / database / sqlite-path / resume / overwrite flags。Resolver 经 DataLake public ensure 使用 Dataset cache；只有 chain research SQLite 由 Observation factory 管理。
 
-## Acceptance 与 readiness
+## Acceptance
 
 - Mandatory package / pointer、Component + Observation public-only imports；无 direct DataLake / Snapshot / provider / persistence 或第二 empirical cache。
 - 四必填 flags / strict parsing，invalid request / --help 零 operations，无 output config / directory。
@@ -50,4 +50,4 @@ Runner 不调用 load_config、canonical_run_directory 或 execute_run，不读 
 - Controlled E2E：相同 request 再运行仍调用 resolver，Dataset ensure 自己复用 cache；已有 chain complete-hit 零上游、跨 service / process recreation reuse。只产生 chain Observation research SQLite，无 Universe research SQLite / Study retained files。不能要求重复 Study invocation 禁用全部 upstream factories；该要求仅适用 chain retained hit。
 - Component boundary / Study wiring / stage / tests 与 source pointers 同步 reconciliation；保留 chain durable / completeness acceptance。
 
-Study Authority Complete / Research dependency contracts complete / Study implementation architecture complete，设计 **Implementation Ready**。Runtime 新语义 **Dependency Reconciled / Implemented / Verified**；CLI 使用 resolver wiring；当前 drift 按需见 reconciliation，实际验收遵守以上 acceptance，不以历史通过替代；上述 Research wiring 状态不声明 DataLake persistence 已符合新的 rebuild-only contract，该 producer drift 由 reconciliation 链接记录，Study 不绕过 producer boundary。
+实际验收遵守以上 acceptance，不以历史通过替代。DataLake persistence compatibility 唯一遵循 [producer authority](../../../data_lake/PERSISTENCE.md)；Study 不绕过 producer boundary，也不接管 Dataset cache lifecycle。

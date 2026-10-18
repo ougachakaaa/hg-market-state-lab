@@ -17,7 +17,7 @@ lab research run <study-id> [study-specific args...]
 
 Repository CLI 只拥有 runnable Study discovery、layout 校验、进程执行、参数透明转发、operational error 与 exit-code propagation。它不 import `market_research`，不解析 study-specific arguments，不组合 Snapshot dependency，不拥有 Study method、artifact 或 result semantics。
 
-每个 runnable Study 拥有自己的 CLI module，负责 parsing、input validation、runtime collaborator composition、Study invocation 与 success / failure presentation。Study orchestration 经 Observation public boundary resolve / ensure Artifacts，CLI 不代替 workflow 驱动 empirical invocations 或实现 Observation；Analysis 只计算已准备 inputs。Legacy Snapshot composition 按 [Compatibility](../studies/COMPATIBILITY.md) 保留。`research run <study-id> --help` 由 study-local parser 生成，不由 root CLI 复制参数。
+每个 runnable Study 拥有自己的 CLI module，负责 parsing、input validation、runtime collaborator composition、Study invocation 与 success / failure presentation。Study orchestration 调用声明的 Component / Observation public boundary 准备 complete inputs，CLI 不代替 workflow 驱动 empirical invocations 或实现 Observation；Analysis 只计算已准备 inputs。Legacy Snapshot composition 的范围唯一见 [Compatibility](../studies/COMPATIBILITY.md#legacy-retained-structure)。`research run <study-id> --help` 由 study-local parser 生成，不由 root CLI 复制参数。
 
 ## 2. Runnable Study convention
 
@@ -85,7 +85,7 @@ Configuration 是 runner 内部支撑，repository CLI 不公开 `research confi
 
 ## 4. Snapshot boundary and failure presentation
 
-新 Study-local CLI 通过 Observation public boundary 消费 Artifact；Observation 的 DataLake / Snapshot upstream boundary 见其 authority。Legacy Study 直接 Snapshot composition 只调用对应 product 拥有的 production-ready public application entry。所有 Study CLI 均不得导入 Source/Capture internals、构造 Source client、读取 credential 或依赖 upstream / Observation persistence layout。
+新 Study-local CLI 只组合声明的 Component / Observation public collaborators，由 Study orchestration 准备 complete inputs；其 DataLake / Snapshot upstream permissions 见 [UPSTREAM](../UPSTREAM.md)。Legacy Snapshot CLI composition 仅适用 [Compatibility](../studies/COMPATIBILITY.md#legacy-retained-structure) 已保留的范围。所有 Study CLI 均不得导入 Source/Capture internals、构造 Source client、读取 credential 或依赖 upstream / Observation persistence layout。
 
 正常用户错误必须由 study-local CLI 转换为简洁消息与 non-zero exit code，且不得要求用户阅读 Python traceback 才能识别 command/input、configuration、Snapshot/data、Study/sample 或 output filesystem failure。V1 不锁定跨 Study 的具体 exit-code number。
 

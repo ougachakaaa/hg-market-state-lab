@@ -66,4 +66,4 @@ Artifact 表达所保留的 empirical facts，不承诺 provider-current freshne
 | Derivation / Validity / Missingness | [Date resolution](DATE_RESOLUTION.md) |
 | Artifact Contract / Acceptance | [Artifact contract](ARTIFACT.md) |
 
-Concrete semantics 已锁定；当前 implementation drift 按需见 [Research reconciliation](../../IMPLEMENTATION_RECONCILIATION.md)。Public invocation / package handoff 进入 [IMPLEMENTATION.md](IMPLEMENTATION.md)；本 entry 不拥有 implementation mechanics，也不添加 CLI 或 HTTP delivery。
+Public invocation / package handoff 进入 [IMPLEMENTATION.md](IMPLEMENTATION.md)；本 entry 不拥有 implementation mechanics，也不添加 CLI 或 HTTP delivery。

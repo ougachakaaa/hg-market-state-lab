@@ -20,4 +20,4 @@ Study orchestration 或 Observation 可以调用本 resolver；Analysis 不自�
 
 ## Navigation
 
-具体 I/O / dependencies / failure / acceptance 进入 [CONTRACT.md](CONTRACT.md)；canonical Python boundary `market_research.shared.cffex_option_expiry_universe` 的 mapping 进入 [IMPLEMENTATION.md](IMPLEMENTATION.md)。当前 implementation drift 按需见 [Research reconciliation](../../IMPLEMENTATION_RECONCILIATION.md)。
+具体 I/O / dependencies / failure / acceptance 进入 [CONTRACT.md](CONTRACT.md)；canonical Python boundary `market_research.shared.cffex_option_expiry_universe` 的 mapping 进入 [IMPLEMENTATION.md](IMPLEMENTATION.md)。

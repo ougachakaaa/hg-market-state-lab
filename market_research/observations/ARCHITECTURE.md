@@ -60,7 +60,7 @@ Canonical empirical reuse 是 `semantic request → Observation public ensure bo
 
 普通 consumer 只能消费 complete Observation Artifact。Partial persistence、interrupted execution 和 failed execution 均不等于 complete Artifact；business key 只有在完整可消费 Artifact 已形成后才算被满足。具体 completeness acceptance 由 concrete Observation authority 定义；本文件不建立完整 state machine、retry engine 或 transactional implementation。
 
-未来 implementation 必须能够原子地区分 business key 已形成 complete Artifact 与尚未形成可消费 Artifact；consumer 不得看到未完成 persistence 被发布为 complete。这里只锁定完成状态的可见性，不决定 SQLite schema、事务算法、锁、retry 或内部状态机。
+Implementation 必须能够原子地区分 business key 已形成 complete Artifact 与尚未形成可消费 Artifact；consumer 不得看到未完成 persistence 被发布为 complete。这里只锁定完成状态的可见性，不决定 SQLite schema、事务算法、锁、retry 或内部状态机。
 
 Observation Artifact contract 是 Study / Analysis / external consumer 的 public research-data boundary。每个 concrete Observation 自己拥有 Artifact semantic shape；本 framework 不规定统一 row schema、业务字段、文件格式或 serialization representation。
 
@@ -85,7 +85,7 @@ Observation-specific runtime publication、owned-value projection、failure / pr
 - 相同 normalized inputs 下 upstream facts 修订后，是否 refresh、overwrite 或保留 generation history。
 - Observation definition / authority 演进后 old Artifact 是否继续有效、definition version 是否进入 generation identity、是否 migrate。
 
-本轮 identity / reuse contract 以同一有效 definition 为前提，不定义 definition versioning 或 invalidation policy。这些未决项不阻塞 framework reconciliation；未来具体需求触及它们时须先作 semantic decision。
+Identity / reuse contract 以同一有效 definition 为前提，不定义 definition versioning 或 invalidation policy。具体需求触及这些未决项时须先作 semantic decision。
 
 在相关 human semantic decision 明确之前，Agent 不得自行将 version、source digest、code hash 或 timestamp 加入 business key；不得以这些 implementation / provenance metadata 绕过同一业务请求的 reuse contract。本约束不决定未来 generation identity 或 evolution policy。
 
@@ -99,4 +99,4 @@ Observation-specific runtime publication、owned-value projection、failure / pr
 
 Concrete entry：[cffex_option_expiry_dte_chain](cffex_option_expiry_dte_chain/ARCHITECTURE.md) → ARTIFACT / DATE_RESOLUTION / IMPLEMENTATION，各自保留独立 concern。不扫描 sibling owners，不创建 catalog。
 
-不创建 generic registry、plugin system、Research Repository、Experiment Engine、DAG、scheduler、executor、cache、refresh engine、HTTP API、Web UI、Observation CLI 或 automatic migration。Analysis 的当前 ownership 与 deferred reuse model 见 [Study Schema](../studies/SCHEMA.md)；实现 / 测试差异见 [implementation reconciliation](../IMPLEMENTATION_RECONCILIATION.md)。
+不创建 generic registry、plugin system、Research Repository、Experiment Engine、DAG、scheduler、executor、cache、refresh engine、HTTP API、Web UI、Observation CLI 或 automatic migration。Analysis 的当前 ownership 与 deferred reuse model 见 [Study Schema](../studies/SCHEMA.md)。
