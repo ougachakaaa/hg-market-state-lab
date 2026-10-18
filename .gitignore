@@ -11,9 +11,9 @@ __pycache__/
 .ruff_cache/
 
 # Frontend dependencies and build output
-web-ui/node_modules/
-web-ui/dist/
-web-ui/dist-ssr/
+ui_web/node_modules/
+ui_web/dist/
+ui_web/dist-ssr/
 
 # Local editor settings
 .vscode/
@@ -22,27 +22,42 @@ web-ui/dist-ssr/
 .env
 
 # Raw Dataset (internal runtime artifacts)
-market-snapshot/data/raw/**
-!market-snapshot/data/raw/.gitkeep
+data_snapshot/data/raw/**
+!data_snapshot/data/raw/.gitkeep
 
 # Daily Market Snapshot output (runtime artifacts)
-market-snapshot/data/snapshots/**
-!market-snapshot/data/snapshots/.gitkeep
+data_snapshot/data/snapshots/**
+!data_snapshot/data/snapshots/.gitkeep
 
 # Research retained outputs (runtime artifacts)
-market-research/output/**
-!market-research/output/.gitkeep
+market_research/output/**
+!market_research/output/.gitkeep
 
 # Temporary Documents
 _temp_docs/**
 !_temp_docs/AGENTS.md
 
 # Legacy SQLite caches (left untouched)
-data-lake/data/
+data_lake/data/
 
 # Dataset-owned runtime state, including SQLite journals / WAL files
-data-lake/datasets/*/data/
+data_lake/datasets/*/data/
 
 # Observation-owned runtime state, including SQLite journals / WAL files
+market_research/observations/*/data/
+market_research/observations/*/output/
+
+# Experimental runtime artifacts (never formal Dataset state)
+data_lake/experiments/**/data/
+data_lake/experiments/**/output/
+
+# Retained ignored state in pre-migration checkouts; migrate explicitly
+data-lake/data/
+data-lake/datasets/*/data/
+market-snapshot/data/
+market-research/output/
 market-research/observations/*/data/
 market-research/observations/*/output/
+web-ui/node_modules/
+web-ui/dist/
+web-ui/dist-ssr/

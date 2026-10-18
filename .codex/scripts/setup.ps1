@@ -1,8 +1,8 @@
 $ErrorActionPreference = 'Stop'
 
 $repoRoot = (Resolve-Path (Join-Path $PSScriptRoot '../..')).Path
-$snapshotDir = Join-Path $repoRoot 'market-snapshot'
-$frontendDir = Join-Path $repoRoot 'web-ui'
+$snapshotDir = Join-Path $repoRoot 'data_snapshot'
+$frontendDir = Join-Path $repoRoot 'ui_web'
 
 $pythonLauncher = Get-Command py -ErrorAction SilentlyContinue
 if ($pythonLauncher) {
@@ -57,12 +57,15 @@ foreach ($required in @(
     }
 }
 
+& $pythonCommand @pythonArgs (Join-Path $repoRoot '.codex/scripts/migrate_local_state.py')
+if ($LASTEXITCODE -ne 0) { throw 'Follow LOCAL_MIGRATION.md before setup.' }
+
 $localEnv = Join-Path $snapshotDir '.env'
 if (-not (Test-Path -LiteralPath $localEnv)) {
     Copy-Item -LiteralPath (Join-Path $snapshotDir '.env.example') -Destination $localEnv
-    Write-Host 'Created market-snapshot/.env from .env.example.'
+    Write-Host 'Created data_snapshot/.env from .env.example.'
 } else {
-    Write-Host 'Using existing market-snapshot/.env.'
+    Write-Host 'Using existing data_snapshot/.env.'
 }
 
 Push-Location $repoRoot
@@ -86,7 +89,7 @@ try {
         throw "Poetry environment is not worktree-local: $actualEnv"
     }
 
-    Write-Host 'Installing frontend dependencies into web-ui/node_modules...'
+    Write-Host 'Installing frontend dependencies into ui_web/node_modules...'
     Push-Location $frontendDir
     try {
         & $npm.Source ci

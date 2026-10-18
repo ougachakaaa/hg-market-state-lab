@@ -4,8 +4,8 @@ set -euo pipefail
 
 script_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)"
 repo_root="$(cd -- "${script_dir}/../.." && pwd -P)"
-market_snapshot_dir="${repo_root}/market-snapshot"
-frontend_dir="${repo_root}/web-ui"
+snapshot_dir="${repo_root}/data_snapshot"
+frontend_dir="${repo_root}/ui_web"
 
 missing_tools=()
 for tool in python3.13 poetry node npm; do
@@ -35,7 +35,7 @@ required_files=(
     "${repo_root}/pyproject.toml"
     "${repo_root}/poetry.lock"
     "${repo_root}/poetry.toml"
-    "${market_snapshot_dir}/.env.example"
+    "${snapshot_dir}/.env.example"
     "${frontend_dir}/package.json"
     "${frontend_dir}/package-lock.json"
 )
@@ -46,11 +46,13 @@ for required_file in "${required_files[@]}"; do
     fi
 done
 
-if [[ ! -e "${market_snapshot_dir}/.env" ]]; then
-    cp -- "${market_snapshot_dir}/.env.example" "${market_snapshot_dir}/.env"
-    printf 'Created market-snapshot/.env from .env.example.\n'
+"${python313}" "${repo_root}/.codex/scripts/migrate_local_state.py"
+
+if [[ ! -e "${snapshot_dir}/.env" ]]; then
+    cp -- "${snapshot_dir}/.env.example" "${snapshot_dir}/.env"
+    printf 'Created data_snapshot/.env from .env.example.\n'
 else
-    printf 'Using existing market-snapshot/.env.\n'
+    printf 'Using existing data_snapshot/.env.\n'
 fi
 
 printf 'Installing repository Python dependencies into .venv...\n'
@@ -89,7 +91,7 @@ if [[ "${poetry_env_resolved}" != "${expected_venv_resolved}" ]]; then
     exit 1
 fi
 
-printf 'Installing frontend dependencies into web-ui/node_modules...\n'
+printf 'Installing frontend dependencies into ui_web/node_modules...\n'
 (
     cd -- "${frontend_dir}"
     npm ci
