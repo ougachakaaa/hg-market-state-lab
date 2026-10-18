@@ -65,7 +65,7 @@ ARCHITECTURE.md
 | --- | --- |
 | `products/<product>/` | 保留活跃 Product-local Source scope、Preparation、Application Service 与 public contract |
 | `sources/`、`capture/` | 保留共享 provider adapter、Source facts、normalization 与 Capture mechanics；产品专属 scope 下沉 Product |
-| `cffex_equity_index_basis/` | 两个真实 Product 共用的 CFFEX family、slot、calendar distance、formula 与 ordering 语义 owner；实现迁移属于后续 implementation |
+| `cffex_equity_index_basis/` | 两个真实 Product 共用的 CFFEX family、slot、calendar distance、formula 与 ordering 语义 owner |
 | `products/csi1000_im_basis_history/` | 保留旧 IM Product public contract、scope 与当前实现；共用语义以共享 authority 为准 |
 | `artifacts.py` | 仅保留通用 Raw root、filesystem/JSON mechanics；Product-specific Raw 路径由各 Product 构造 |
 

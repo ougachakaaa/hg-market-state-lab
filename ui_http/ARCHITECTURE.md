@@ -63,7 +63,7 @@ ui_http → market_modeling application/product boundaries
 
 `ui_http` 可以组合多个 owning module 发布的 application boundaries，但不因此成为 Query Layer、Mutation domain 或 business service layer，也不在产品之间创建共享业务 schema。未来模块可以接入同一 HTTP composition root，而无需把 `ui_http` 插入 analytical flow。
 
-Market Snapshot CLI 继续属于 `data_snapshot`；本模块只专门拥有 HTTP inbound delivery，不建立“所有 delivery 都必须迁移到 ui_http”的规则。
+本模块只专门拥有 HTTP inbound delivery，不建立“所有 delivery 都必须迁移到 ui_http”的规则。
 
 ## 5. Authority Routing
 
@@ -71,7 +71,7 @@ Frontend-consumed HTTP products、endpoint/query、DTO projection、wire orderin
 
 Owning module authority 仍唯一拥有 application/product semantics：
 
-- Market Snapshot 产品与 application boundary：[data_snapshot architecture](../data_snapshot/ARCHITECTURE.md)
+- Data Snapshot 产品与 application boundary：[data_snapshot architecture](../data_snapshot/ARCHITECTURE.md)
 - Web presentation 与 generated-contract feedback loop：[ui_web architecture](../ui_web/ARCHITECTURE.md)
 
 本文件不复制 endpoint、DTO、Premium metric tree、error table 或 FastAPI implementation 细节。
