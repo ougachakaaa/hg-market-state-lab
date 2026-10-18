@@ -48,7 +48,9 @@ Condition 决定哪些历史日期满足条件；Sample Selection 再按研究�
 
 ## Forward Outcome Evaluation invariants
 
-第一阶段 Outcome **仅限未来累计收益率**。研究必须明确目标资产、Horizon 的含义、收益观察起点和终点、日历 / 日期对齐以及价格口径；不得从 Sample Date 或 Horizon 名称推定 close-to-close、自然日或交易日等具体约定。观察起点必须与 Condition 的判定时点及信息边界一致，不能以判定前的价格冒充条件成立后的观察起点。
+第一阶段 Outcome **仅限未来累计收益率**。研究必须明确目标资产、Horizon 的含义、收益观察起点和终点、日历 / 日期对齐以及价格口径；不得从 Sample Date 或 Horizon 名称推定 close-to-close、自然日或交易日等具体约定。观察锚点与 Condition 判定时点的关系必须明确，Condition 不得使用其约定信息边界之后的信息。
+
+允许在信息边界明确的情况下，以 T 日收盘信息判定条件，观察 T 日收盘至未来收盘的累计收益。这里的收盘价是市场统计观察锚点，不宣称条件确认后能够以该价格成交；不得将观察收益解释为可执行交易收益，也不得将判定前已经发生的收益冒充条件成立后的未来收益。具体判定时点、公式和日历由后续专题 contract 明确，本入口不设默认口径。
 
 Condition 的数据对象可以与 Outcome 目标资产不同，例如用一个市场对象的条件观察另一个资产；两者的身份与对应关系须明确且可追溯。Evaluation 不拥有买卖执行、仓位、交易成本、信号、策略收益或回测框架。具体公式、异常 / 缺失与边界日期处理留给专题 contract，不在此选定默认值。
 
@@ -80,6 +82,8 @@ DataLake 继续拥有 source facts，Snapshot 继续拥有其 canonical determin
 
 ## Authority navigation 与后续设计
 
-稳定路径为 repository entry → module entry → 本文件 → 已发布的窄专题 contract。当前尚未发布 Condition、Sample Selection、Evaluation、Outcome、Analysis 或 Lifecycle 的具体 contract；待决问题与建议设计顺序见 [Decision Topics](DECISIONS.md)。Decision Topics 记录问题，不构成默认规则或 implementation readiness。
+稳定路径为 repository entry → module entry → 本文件 → 已发布的窄专题 contract。本文件拥有稳定设计语义与 invariants；[Decision Topics](DECISIONS.md) 拥有待决语义问题；[Development Roadmap](ROADMAP.md) 唯一拥有开发阶段、依赖、TODO、验收标准与完成状态。Roadmap 不覆盖领域 authority，Decision Topics 不构成默认规则或 implementation readiness。
+
+当前尚未发布 Condition、Sample Selection、Evaluation、Outcome、Analysis 或 Lifecycle 的具体 contract；后续设计问题进入 Decision Topics，推进顺序与验收进入 Roadmap。
 
 后续按独立 semantic ownership 发布专题并从本入口导航：Condition / Sample Selection 拥有判定与样本契约，Evaluation 拥有收益观察计算，Outcome 拥有观察及追溯交接，Analysis 拥有统计解释，Lifecycle 拥有定义与执行的具体关联。专题只能在本文件与上层 invariant 内 specialize / constrain；不预建空 contract、通用研究引擎、插件系统、调度器、通用 DSL 或数据库设计。
