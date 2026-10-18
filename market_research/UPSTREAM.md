@@ -4,6 +4,12 @@
 
 ## Canonical namespaces and formal capability scope
 
+### Research paradigm scope
+
+本文件的 DataLake-first selection、semantic sufficiency、public-only consumption、completeness / failure、禁止 provider / runtime fallback 与 provenance 边界适用于 V1 和 [V2](v2/ARCHITECTURE.md)。文中的 Component / Observation / Study 角色、直接 producer permissions、Research-owned value projection 与 retained lifecycle 映射描述 V1，不强制 V2 采用这些对象。
+
+V2 当前只确立领域职责，尚未发布 upstream acquisition 的具体 owner / caller contract；Condition、Sample Selection、Evaluation 等概念名称不自动取得 direct upstream permission。后续实现前，须在本 authority 明确 V2 producer / caller 权限，并在 V2 专题绑定 required facts、exact public capability、complete input 与 failure contract；本轮不新增调用角色或运行路径。
+
 Snapshot uses namespace `data_snapshot`; DataLake uses `data_lake`. Resolve canonical paths through the [repository mapping](../ARCHITECTURE.md#naming-and-transition-authority). DataLake-first examines formal Dataset public contracts only. [Experiments](../data_lake/EXPERIMENTS.md) are not eligible public capabilities, cannot fill an Upstream Capability Gap and cannot bypass the provider prohibition.
 
 ## DataLake-first capability selection

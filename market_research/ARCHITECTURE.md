@@ -10,6 +10,15 @@ The owning module/directory and canonical Python namespace are `market_research`
 
 `market_research` 是独立 exploratory / statistical research bounded module，负责开放探索、retained empirical facts、descriptive / conditional statistics、research-specific slicing / joining / grouping / reshaping、hypothesis discovery、study-specific evaluation 与 visualization。Research 的解释职责终点是 evidence / finding。
 
+## Research paradigms 与 authority scope
+
+本模块并存两个研究范式，均继承本文件的 module / upstream / Modeling / visualization 边界：
+
+- **V1（现有范式）**：下表及 Shared Component → Observation → Study / Study-local Analysis 的组织、caller 与 retained lifecycle 规则，继续由原路径拥有；既有 authority、实现、CLI、配置与输出契约保持不变。
+- **V2（新设计）**：[v2/ARCHITECTURE.md](v2/ARCHITECTURE.md) 独立拥有 Conditional Forward Return Research 的领域语义。目前只有 Semantic Authority，不表示 runtime readiness，不替换或迁移 V1。
+
+V2 不自动继承 V1 的 Study / Observation object model、四文件模板、持久化或 caller 分工，也不因此获得新的 upstream import permission。跨范式复用须按实际 public contract 单独确认；同名 Analysis 或观察事实不代表相同 identity / lifecycle。下表是 **V1 导航**，不是 V2 的必经设计路径。
+
 | Area | 高层职责与下一步 |
 | --- | --- |
 | Scratch | Disposable script / notebook / dataframe / plotting exploration；不形成稳定 authority、retained capability 或 production dependency。 |
@@ -21,6 +30,8 @@ The owning module/directory and canonical Python namespace are `market_research`
 Observation 是本模块内部 first-class concept，不是 repository-level bounded module。Retained Study 是值得保留的研究 / orchestration authority，不要求每次 execution 保留 output，也不自动成为长期 software capability。
 
 ## Dependency direction
+
+以下内部链及 Study / Analysis caller 分工适用于 V1；V2 的概念执行主线见其独立入口。模块对外的依赖方向、公开边界与禁止事项适用于两者。
 
 ```text
 DataLake public facts / Snapshot public analysis-ready results
@@ -57,6 +68,7 @@ Research 的最终消费者首先是人。Visualization 是 Research Result 的 
 ```text
 repository ARCHITECTURE.md
     → market_research/ARCHITECTURE.md
+        ├── v2/ARCHITECTURE.md → DECISIONS.md（待决专题，不是已发布 Contract）
         ├── shared/ARCHITECTURE.md → concrete Component → narrow contract / handoff
         ├── observations/ARCHITECTURE.md → SCHEMA / AUTHORING / IMPLEMENTATION
         │   └── concrete Observation → relevant specialized authority
@@ -65,7 +77,7 @@ repository ARCHITECTURE.md
         └── ui/ARCHITECTURE.md → CONFIGURATION.md
 ```
 
-Upstream-backed Component / Observation design 按需进入 [UPSTREAM.md](UPSTREAM.md)，只读实际所需 public contracts；不默认扫描 sibling owners。Study implementation、legacy maintenance 与 migration 的专题选择由 Study entry 路由。
+两种范式的 upstream-backed design 按需进入 [UPSTREAM.md](UPSTREAM.md)，只读实际所需 public contracts；不默认扫描 sibling owners。V1 Study implementation、legacy maintenance 与 migration 的专题选择由 Study entry 路由。V2 后续专题由其独立入口导航，不在本文件扩展具体 contract。
 
 执行政策见 [AGENTS.md](AGENTS.md)；已关闭的 reconciliation 与验证证据保留在 Git history，不作为 semantic design 阅读前提。各 owner 的 authority 与 implementation colocate；具体 source / package / output topology 归各 implementation contract。
 

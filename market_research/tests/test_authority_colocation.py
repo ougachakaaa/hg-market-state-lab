@@ -16,6 +16,7 @@ RESEARCH_ROOT = REPOSITORY_ROOT / "market_research"
 
 LINK = re.compile(r"\[[^]]*\]\(([^)]+)\)")
 FRAMEWORK_ENTRIES = {
+    "v2": "ARCHITECTURE.md",
     "shared": "ARCHITECTURE.md",
     "observations": "ARCHITECTURE.md",
     "studies": "ARCHITECTURE.md",

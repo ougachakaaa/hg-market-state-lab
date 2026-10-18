@@ -6,6 +6,7 @@
 
 | 当前任务 | 下一步 |
 | --- | --- |
+| V2 semantic design / reconciliation / 后续专题设计 | [v2/ARCHITECTURE.md](v2/ARCHITECTURE.md) → [Decision Topics](v2/DECISIONS.md) → 已发布的实际专题；不套用 V1 Study / Observation authoring gate。 |
 | Component 分类 / promotion / design / review | [shared/ARCHITECTURE.md](shared/ARCHITECTURE.md) → actual concrete owner / narrow contract / handoff。 |
 | Observation design / review | [observations/ARCHITECTURE.md](observations/ARCHITECTURE.md) → SCHEMA / AUTHORING → actual concrete entry / specialized contract。 |
 | Observation implementation | Observation entry / Artifact / relevant specialized semantics → [observations/IMPLEMENTATION.md](observations/IMPLEMENTATION.md) → concrete handoff → actual public package。 |
@@ -13,6 +14,8 @@
 | Study implementation / acceptance | Study entry / consumed contracts → [studies/IMPLEMENTATION.md](studies/IMPLEMENTATION.md) → concrete handoff / owner-local src。 |
 | Legacy maintenance / migration / consolidation / historical reconciliation | [studies/COMPATIBILITY.md](studies/COMPATIBILITY.md) → only triggered concrete scope；不默认迁移。 |
 | CLI / configuration / retained-output handling | [ui/ARCHITECTURE.md](ui/ARCHITECTURE.md) → CONFIGURATION（适用时）→ actual Study input / result contract。 |
+
+除 V2 专项路由外，上表的 Component / Observation / Study / UI 路由适用于 V1。下列 execution policy 对两种范式有效，其中 V1 object model、caller、handoff 与 lifecycle 的专门规则仅约束 V1。
 
 Upstream-backed design 按 [UPSTREAM.md](UPSTREAM.md) 选择所需 public capability，再沿 DataLake / Snapshot entry 与 catalog 读取实际 owner；不默认加载 sibling Products / Datasets。新 Study 不扫描所有 Observations、sibling Studies、historical shared semantics 或 evidence 来继承研究含义。
 
