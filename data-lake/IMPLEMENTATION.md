@@ -22,4 +22,4 @@
 
 四个 Dataset 的 FetchUnitPlanner、Composition、UnitRecords 交接与 Kernel 读写验证链路已与现行 authority 对齐；现有 public API、persistence 和 Provider execution 契约保持兼容。
 
-本轮范围内无已知未解决的 authority / implementation drift。Calendar producer contract 由 [Calendar SERVICE](datasets/tushare_trade_calendar/SERVICE.md) 拥有，Resolver specialization 分别由 [Index TRADING_DAYS](datasets/tushare_index_daily/TRADING_DAYS.md)、[Futures TRADING_DAYS](datasets/tushare_equity_index_futures/TRADING_DAYS.md) 和 [Options TRADING_DAYS](datasets/tushare_equity_index_options/TRADING_DAYS.md) 拥有；本文件不重复定义契约。
+DataLake V1 无已知未解决的阻断性 authority / implementation drift；该状态不代表任意账号权限、日期或 Source freshness 均已验证。Calendar producer contract 由 [Calendar SERVICE](datasets/tushare_trade_calendar/SERVICE.md) 拥有，Resolver specialization 分别由 [Index TRADING_DAYS](datasets/tushare_index_daily/TRADING_DAYS.md)、[Futures TRADING_DAYS](datasets/tushare_equity_index_futures/TRADING_DAYS.md) 和 [Options TRADING_DAYS](datasets/tushare_equity_index_options/TRADING_DAYS.md) 拥有；本文件不重复定义契约。V1 架构冻结后的工作以维护、缺陷修复和新增 Dataset 为主；不主动启动新架构迭代。验证范围、外部运行结果与发布结论见非 Authority 的 [Release Acceptance](RELEASE_ACCEPTANCE.md)。

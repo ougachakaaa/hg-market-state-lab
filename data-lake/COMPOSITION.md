@@ -80,4 +80,4 @@ Kernel 的目标目录由模块架构锁定。Dataset 保持 `datasets/<dataset-
 
 新增或修改 Dataset 时，先在 owning authority 确认事实、六角色绑定和必要依赖权限，再实现；不得新增 DataLakeService、DatasetManager、Registry、Plugin Framework、通用依赖图或无实际职责的 Inbound Adapter。
 
-当前实现映射与待处理差异见 [IMPLEMENTATION.md](IMPLEMENTATION.md)；该文档不定义第二套语义，也不意味着本轮修改 implementation。
+当前实现映射与待处理差异见 [IMPLEMENTATION.md](IMPLEMENTATION.md)；该文档不定义第二套语义，也不授权额外的 implementation 重构。

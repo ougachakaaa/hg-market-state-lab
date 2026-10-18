@@ -3,6 +3,7 @@
 `hg-market-state-lab` 是用于市场状态数据准备、探索研究、市场状态建模与结果展示的实验性仓库。
 
 ```text
+data-lake        → reusable source facts and Dataset-owned caches
 market-snapshot  → market state data preparation
 market-modeling  → market state modeling
 market-research  → exploratory and statistical research
@@ -17,6 +18,7 @@ README 是人类开发入口，不是架构或业务语义 authority。
 - 仓库架构、Python runtime invariant 与模块路由：[ARCHITECTURE.md](ARCHITECTURE.md)
 - `lab` 使用、help discovery 与常见 workflow：[lab/README.md](lab/README.md)（usage-only）
 - Canonical repository CLI 与委托边界：[lab/ARCHITECTURE.md](lab/ARCHITECTURE.md)
+- DataLake Shared Kernel、自治 Dataset 与 consumer contract 入口：[data-lake/ARCHITECTURE.md](data-lake/ARCHITECTURE.md)
 - `market-snapshot` 稳定分层：[market-snapshot/ARCHITECTURE.md](market-snapshot/ARCHITECTURE.md)
 - `market-snapshot` capability/product catalog：[market-snapshot/CAPABILITIES.md](market-snapshot/CAPABILITIES.md)
 - `market-research` exploratory/statistical research 边界：[market-research/ARCHITECTURE.md](market-research/ARCHITECTURE.md)

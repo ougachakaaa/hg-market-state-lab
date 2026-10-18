@@ -2,6 +2,22 @@
 
 本文件是 DataLake 的稳定模块入口，只定义职责、ownership、Shared Kernel 架构、关键模块 invariant、public boundary、依赖方向与 authority 导航。仓库级职责与 Python runtime invariant 见 [repository architecture](../ARCHITECTURE.md)；专题语义按任务从下方导航选择，不要求加载全部公共或 Dataset authority。
 
+## Core Mental Model
+
+```text
+Consumer → 具体 Dataset Public Service（coverage / ensure / export）
+               ↓ request validation / operation permission
+         可选 Prerequisite Resolver → 已授权 Dataset Public Service
+               ↓ 固定 Planning Context
+         FetchUnitPlanner → 完整目标 FetchUnits
+               ↓
+         Shared Kernel Application → Source Port ← Dataset Source Adapter → Provider → Source
+               ↓ normalize → UnitRecords → validate
+         Repository Port ← Kernel SQLite Adapter → 该 Dataset 唯一 owned SQLite
+```
+
+Kernel 只在完整目标确定后协调缓存与执行；Dataset 拥有事实含义和完整性，Provider 只执行外部请求。图中 Source 与写入链路仅用于确有待补目标的 ensure；coverage/export 经只读 Repository snapshot 验证后投影。角色接入与新增 Dataset 从 [COMPOSITION.md](COMPOSITION.md) 进入，operation 由 [APPLICATION.md](APPLICATION.md) 拥有，数据交接由 [PORTS.md](PORTS.md) 拥有；维护具体事实或消费 public view 时，从 [DATASETS.md](DATASETS.md) 选择 owning architecture / SERVICE，不加载无关 Dataset。
+
 ## 1. Ownership 与 persistence boundary
 
 DataLake = **Shared Kernel + Autonomous Datasets + Provider Infrastructure**。Kernel 提供通用领域模型、Application Use Cases、Outbound Ports 与持久化机制；Dataset 是拥有独立事实语义的自治领域边界，通过 Composition 发布自己的 Public Application Service；Provider 提供跨 Dataset 的外部请求执行能力。具体 DataSet 持久缓存并管理来自外部 Source 的 reusable source facts；persistence 是可重建 cache，不维护 schema migration。DataLake 不拥有 Snapshot Product semantics、Preparation、analysis-ready computation、Research、Modeling、HTTP 或 UI，也不接管 Snapshot 产品已声明的 Raw Artifact。Public service 的发布不自动建立 Research/Snapshot runtime integration；这些 consumer 的实际接入 implementation 须遵循已发布 boundary，Research 选择与调用权限由 [Research UPSTREAM](../market-research/UPSTREAM.md) 拥有。

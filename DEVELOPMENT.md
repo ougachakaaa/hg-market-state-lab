@@ -54,3 +54,11 @@ poetry run lab research run <study-id> --help
 `lab doctor` 的 frontend 诊断地址与 Vite 显式绑定的 `127.0.0.1:5173` 一致。CLI ownership 以 [lab authority](lab/ARCHITECTURE.md) 为准。
 
 `lab datalake` 支持 list、coverage、ensure 与 export；参数与退出码见 lab authority。coverage / export 不访问 Source、不创建缓存；ensure 在确实需要 fetch 时解析 TUSHARE_TOKEN（环境变量优先，market-snapshot/.env fallback）。四个 Dataset 的默认 owned cache 分别位于 `data-lake/datasets/<dataset-id>/data/<dataset-id>.sqlite3`，service 内部解析路径。旧目录缓存隔离与 rebuild-only cache compatibility 见 [DataLake persistence authority](data-lake/PERSISTENCE.md)；当前 runtime 仅接受 compatible generation 3，不兼容 cache 以 OperationError 明确提示 owning Dataset 需要 rebuild；不自动升级或重建。export 用必填 --output 交付 UTF-8 JSON，coverage 不完整也可导出当前成功 facts。
+
+## DataLake V1 运行与恢复
+
+操作示例沿用 [lab usage guide](lab/README.md)。Tushare 限流只在单一 Python process / credential 内共享，不能协调其他 processes、worktrees 或机器；按账号权限配置 `TUSHARE_CALLS_PER_MINUTE`。Provider 不自动 retry；可恢复失败或中断后由 operator 再次执行相同 ensure，已提交 success 跳过，non-success 重新尝试。缺 credential、权限或网络时先解决运行条件，不通过换源或修改成功缓存规避失败。限制与错误分类以 [Provider authority](data-lake/providers/tushare/ARCHITECTURE.md) 为准。
+
+遇到 incompatible generation 或损坏缓存时先停止使用该 Dataset 的 writers，保留原文件供诊断；coverage/export 不负责修复。确需 rebuild 时，由 operator 显式将该 Dataset 的完整 `data/` 目录移至仓库外的备份位置，再使用原 semantic request 执行 ensure，由 service 重新创建 owned cache。不要复制旧 SQLite 内容进入新库，不自动迁移、删除原缓存或重建 sibling Dataset。Calendar 与三个行情库分别拥有生命周期；重建 Calendar 后须先恢复所需日期范围，才能为行情 operations 提供完整 prerequisite。具体 compatibility / integrity 规则见 [PERSISTENCE.md](data-lake/PERSISTENCE.md)。
+
+日常 ensure 不刷新已有 success，不保证 provider-current freshness；无需通过重建缓存例行更新历史事实。运行验收使用系统临时存储并重定向内部 Composition 路径，不把 token 或 storage path 加入 public request，不对默认用户缓存做试验。V1 验收范围与已知限制见 [Release Acceptance](data-lake/RELEASE_ACCEPTANCE.md)（非 Authority）。
