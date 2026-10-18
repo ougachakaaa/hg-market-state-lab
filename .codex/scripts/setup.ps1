@@ -57,9 +57,6 @@ foreach ($required in @(
     }
 }
 
-& $pythonCommand @pythonArgs (Join-Path $repoRoot '.codex/scripts/migrate_local_state.py')
-if ($LASTEXITCODE -ne 0) { throw 'Follow LOCAL_MIGRATION.md before setup.' }
-
 $localEnv = Join-Path $snapshotDir '.env'
 if (-not (Test-Path -LiteralPath $localEnv)) {
     Copy-Item -LiteralPath (Join-Path $snapshotDir '.env.example') -Destination $localEnv

@@ -30,7 +30,7 @@
 - Implementation 遵守模块 public/dependency boundary，不穿透 consumer 或 sibling internals；共享 Python runtime 不授予额外 import permission。
 - Shared Kernel / Provider / Dataset 的 authority、source 与 tests ownership 遵循模块架构；Provider 任务从 `providers/<provider-id>/ARCHITECTURE.md` 进入，Dataset storage 仍由 owning Dataset 拥有。Package wiring 保持既有 Provider execution imports 与 Dataset public imports 兼容，不创建 Provider-local / Dataset-local project 或环境。
 - Kernel 结构任务先锁定模块架构的 Domain / Application / Ports / Adapters 依赖方向，再读受影响专题；Dataset 接入任务读取 COMPOSITION.md 与 owning Dataset 角色绑定，不按旧 Python 文件名推导 semantic owner。
-- Runtime state 不进入 Git；验证使用临时 SQLite / fake Source，不操作真实缓存。旧目录 state 隔离遵循 PERSISTENCE.md，credential convention 遵循 provider authority。
+- Runtime state 不进入 Git；验证使用临时 SQLite / fake Source，不操作真实缓存。Canonical cache lifecycle / integrity 遵循 PERSISTENCE.md，credential convention 遵循 provider authority。
 
 ## Verification rules
 
@@ -56,8 +56,8 @@ poetry run python -c "import data_lake"
 poetry run python -c "import data_lake.datasets.tushare_trade_calendar, data_lake.datasets.tushare_index_daily, data_lake.datasets.tushare_equity_index_futures, data_lake.datasets.tushare_equity_index_options"
 poetry run pytest data_lake
 poetry run pytest ui_cli/tests
-poetry run ruff check data_lake lab
-poetry run mypy data_lake lab
+poetry run ruff check data_lake ui_cli
+poetry run mypy data_lake ui_cli
 poetry run pytest ui_http/tests/test_architecture.py data_snapshot/tests/test_authority_topology.py
 git diff --check
 ```

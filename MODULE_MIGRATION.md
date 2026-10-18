@@ -20,21 +20,21 @@ Root Poetry registration, pytest/Ruff/mypy roots, CLI delegation, Research disco
 
 Distribution `hg-market-state-lab`, executable `lab`, npm package identity, Product/Dataset IDs, URLs, DTOs and public semantic request/result/failure contracts are unchanged. `poetry.lock`, npm lock contents and generated OpenAPI/TypeScript contents are unchanged. The HTTP runtime's published historical description is retained verbatim. Historical commands in [V1 acceptance evidence](data_lake/RELEASE_ACCEPTANCE.md) remain historical evidence, not current operational entries.
 
-## Local runtime state
+## Disposable runtime state reconciliation
 
-All seven implementation-checkout directories were renamed as complete directories, preserving ignored contents. A private temporary manifest verified all **262 pre-existing runtime/credential asset files** byte-for-byte with SHA-256 after the move. No credentials, SQLite files, Raw artifacts or outputs enter the implementation commit. Tests use fake Sources / temporary databases; no real Source acquisition or user-cache rebuild was used.
+The final cleanup is based on `904f0e9d93b878e8202b01eb69d9e21fc934ef65`. The [repository authority](ARCHITECTURE.md#naming-and-transition-authority) now explicitly treats all local running data as disposable. Canonical Dataset caches, Snapshot Raw / outputs, Observation SQLite and Research outputs are used directly, regardless of historical directories. Local data has no cross-directory migration or compatibility obligation.
 
-[Local migration guide](LOCAL_MIGRATION.md) defines storage locations and explicit copy/verify steps for other upgraded checkouts. `.codex/scripts/migrate_local_state.py` defaults to read-only inspection, refuses conflicting destinations and symlinks, copies exclusively with `--apply`, verifies hashes and never deletes source assets. Operators retain external backups and archive legacy sources explicitly after verification. Bootstrap, Dataset storage resolution, Snapshot Source/artifact access, Observation storage and Research output configuration reject applicable legacy state rather than silently adopting empty canonical storage. Isolated legacy DataLake caches remain isolated; no schema migration or rebuild is implied.
+The local-state migration helper, dedicated migration tests, bootstrap preflight, runtime legacy-directory guards and historical-directory ignore rules have been removed. No user data or historical local directory is deleted. Credentials are configured through the current environment or canonical `.env`; historical tokens are not migrated. Root Poetry and frontend worktree-local dependency ownership remain unchanged.
 
-The existing root `.venv` was reused and root installation refreshed. Ignored module-local environments were retained as inactive historical files. Frontend dependencies belong to `ui_web/node_modules`; other worktrees install their own dependencies. No user installation directory was deleted for this migration.
+Dataset generation 3 / rebuild-only compatibility, schema and content integrity, read-only behavior, Observation complete lookup / atomic durable publication, and Study output collision / overwrite / staging semantics remain unchanged. Retained business semantics inside canonical storage do not imply filesystem migration obligations. The local migration guide and its operational instructions have been retired.
 
-## Executed verification
+## Baseline verification at `904f0e9`
 
 | Check | Result |
 | --- | --- |
 | Root `poetry install --no-interaction` | Passed; no dependency/version changes |
 | Root `poetry run pytest -q -rs` | **1424 passed, 2 skipped**, 50.73 seconds |
-| Repository Ruff and root mypy | Passed; mypy checked 188 source files; migration helper also checked separately |
+| Repository Ruff and root mypy | Passed; mypy checked 188 source files |
 | CLI doctor, datalake list, research list and Study `--help` | Passed; root Python 3.13.11, Node 22.23.2, npm 11.0.0 |
 | External temporary cwd with installed `python -I` imports | 20 owning packages/services passed; retired `lab`, `market_snapshot`, `backend_api` imports absent; installed console entry `ui_cli.cli:main` |
 | HTTP launcher from external cwd | Started on temporary loopback port, served unchanged `/mo-option-chain` and `/mo-option-premium-plane` OpenAPI routes, then stopped |
@@ -44,13 +44,31 @@ The existing root `.venv` was reused and root installation refreshed. Ignored mo
 | Frontend test, build, lint | Passed: 15 test files / 66 tests; production build completed |
 | Authority links and heading anchors | 123 Markdown files, no findings; topology/reachability tests passed |
 | Bootstrap syntax | Git Bash `bash -n` and PowerShell parser passed |
-| Runtime safety | Controlled tests cover copy/idempotence/conflicts, SQLite companions and legacy-state rejection |
-| Relocation/reference/diff audit | Every original tracked file accounted for; production changes beyond mechanical migration are local-state safeguards and preserved wire text; `git diff --check` passed |
+| Relocation/reference/diff audit | Every original tracked file accounted for; the baseline included local-state safeguards (removed by final cleanup) and preserved wire text; `git diff --check` passed |
 
-## Limits and merge assessment
+## Baseline limits
 
 Two existing symlink tests remain **skipped**, not passed: CLI Research package discovery and Research output-layout symlink rejection. Windows returned WinError 1314 (no symlink-creation privilege). Ordinary discovery/output and boundary tests passed. Linux/WSL bootstrap execution was not exercised on this Windows host; both scripts passed syntax checks and Windows root install/readiness/launcher steps were exercised. No Linux runtime acceptance is claimed.
 
 The unchanged frontend graph reports one existing npm audit high-severity transitive `source-map-js` finding. Dependency upgrades are outside this migration's explicit version-preservation constraint; no automatic audit fix was applied. Vite reports a large production-chunk warning; pytest reports a third-party Starlette/httpx deprecation warning. Neither warning indicates a namespace/path failure.
 
-No structural migration work remains deferred. Implementation is ready for review and merge into `develop` within the verified Windows scope, with skipped platform scenarios, unexecuted Linux bootstrap and the unchanged dependency finding disclosed above. This record does not merge, publish or deploy the branch; target-branch changes still require normal review/CI.
+## Final cleanup verification and merge assessment
+
+Checks below were executed for this cleanup on Windows with the existing root Poetry environment; no real Source requests or user-cache operations were performed.
+
+| Check | Result |
+| --- | --- |
+| Root `poetry run pytest -q -rs` | **1417 passed, 2 skipped**, 66.62 seconds; the seven removed cases exclusively tested retired local-state migration behavior |
+| `poetry run ruff check .` / `poetry run mypy` | Passed; mypy checked 186 source files |
+| Frontend `npm run test -- --run` | 15 test files / **66 tests passed** |
+| Frontend `contract:check`, `build`, `lint` | Passed; committed OpenAPI / TypeScript artifacts unchanged |
+| CLI doctor, datalake list, research list, Study `--help` | Passed; canonical layout and root environment ready |
+| External temporary cwd / installed `python -I` | 20 packages/services import successfully; retired `lab`, `market_snapshot`, `backend_api` namespaces absent; console entry remains `ui_cli.cli:main` |
+| Canonical runtime paths with historical state present | Temporary fixtures passed with canonical stores both absent and present: Dataset paths, credential loading, Raw read/write, Observation paths and Research config work independently; old credential is never adopted; historical fixture hashes unchanged |
+| Authority navigation / links / anchors | Full topology suite passed; all local links and heading anchors passed across 122 tracked Markdown files, excluding `_temp_docs` |
+| Bootstrap syntax | PowerShell parser and Git Bash `bash -n` passed |
+| Final reconciliation / diff review | No migration helper/guard references remain; seven module layouts and public contracts retained; no credential or runtime artifact staged; `git diff --check` passed |
+
+The two existing symlink scenarios remain skipped for WinError 1314 and are not counted as passed. Linux/WSL bootstrap execution remains unverified. The existing Starlette/httpx deprecation and Vite chunk-size warnings remain non-blocking; dependencies and locks were not changed.
+
+No blocking regression or authority/implementation gap was found. The branch is ready to merge into local `develop` at `a71b5f9b7316007bf7f45297f4f01ee2e2e8255c`, which is an ancestor and permits a fast-forward merge. This assessment covers the verified Windows scope; a changed target branch still requires normal review/CI. This task commits the cleanup but does not merge, push or deploy it.

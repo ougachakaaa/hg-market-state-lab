@@ -4,9 +4,9 @@
 
 正式 console command 是 `lab`，由根 canonical Python project 安装。以下命令在 repository root 的 Poetry environment 中运行；help discovery 与完整 workflow 见 [lab usage guide](ui_cli/README.md)（usage-only，不是 authority）。
 
-## Directory and namespace migration
+## Canonical runtime paths
 
-Canonical paths follow [repository authority](ARCHITECTURE.md#naming-and-transition-authority). Before using an upgraded checkout, follow the [local state migration guide](LOCAL_MIGRATION.md). The executable remains `lab`.
+Canonical paths and disposable runtime state follow [repository authority](ARCHITECTURE.md#naming-and-transition-authority). Start directly with the new paths; historical local directories can remain and do not affect execution. Configure credentials through the current environment or `data_snapshot/.env` (bootstrap can create an empty template); no historical token is copied. The executable remains `lab`.
 
 ## Codex managed worktree 环境
 
@@ -57,7 +57,7 @@ poetry run lab research run <study-id> --help
 
 `lab doctor` 的 frontend 诊断地址与 Vite 显式绑定的 `127.0.0.1:5173` 一致。CLI ownership 以 [lab authority](ui_cli/ARCHITECTURE.md) 为准。
 
-`lab datalake` 支持 list、coverage、ensure 与 export；参数与退出码见 lab authority。coverage / export 不访问 Source、不创建缓存；ensure 在确实需要 fetch 时解析 TUSHARE_TOKEN（环境变量优先，data_snapshot/.env fallback）。四个 Dataset 的默认 owned cache 分别位于 `data_lake/datasets/<dataset-id>/data/<dataset-id>.sqlite3`，service 内部解析路径。旧目录缓存隔离与 rebuild-only cache compatibility 见 [DataLake persistence authority](data_lake/PERSISTENCE.md)；当前 runtime 仅接受 compatible generation 3，不兼容 cache 以 OperationError 明确提示 owning Dataset 需要 rebuild；不自动升级或重建。export 用必填 --output 交付 UTF-8 JSON，coverage 不完整也可导出当前成功 facts。
+`lab datalake` 支持 list、coverage、ensure 与 export；参数与退出码见 lab authority。coverage / export 不访问 Source、不创建缓存；ensure 在确实需要 fetch 时解析 TUSHARE_TOKEN（环境变量优先，data_snapshot/.env fallback）。四个 Dataset 的默认 owned cache 分别位于 `data_lake/datasets/<dataset-id>/data/<dataset-id>.sqlite3`，service 内部解析路径。Canonical storage 与 rebuild-only cache compatibility 见 [DataLake persistence authority](data_lake/PERSISTENCE.md)；当前 runtime 仅接受 compatible generation 3，不兼容 cache 以 OperationError 明确提示 owning Dataset 需要 rebuild；不自动升级或重建。export 用必填 --output 交付 UTF-8 JSON，coverage 不完整也可导出当前成功 facts。
 
 ## DataLake V1 运行与恢复
 

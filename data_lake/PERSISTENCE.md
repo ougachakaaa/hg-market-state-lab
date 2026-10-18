@@ -6,7 +6,7 @@
 
 Dataset composition 显式提供本 Dataset 的 storage context，shared path machinery 不提供全局默认 root，也不创建目录或 SQLite。当前默认 owned filename 为 `<dataset-id>.sqlite3`，位于模块架构声明的 Dataset-local `data/`；目录仅在有权写入的 operation 需要时 materialize。缓存缺失及非法缓存的 public 行为继承 APPLICATION.md。
 
-旧 `data_lake/data/*.sqlite3` 是隔离的 legacy runtime state：不自动移动、复制、删除、覆盖，不作为 factory、coverage/export 或 ensure 的 fallback，不双写，也不建立旧目录 compatibility layer。不通过迁移或 import 使旧缓存兼容当前 runtime；不兼容缓存的处理遵循下方 rebuild-only contract。本契约不授权自动处理旧目录 state。
+Dataset 直接使用 canonical owned storage；其他目录中的缓存不参与路径解析、fallback 或运行前检测，也不自动移动、复制、删除、覆盖或双写。所有本地运行数据的 disposable policy 继承 [repository authority](../ARCHITECTURE.md#naming-and-transition-authority)。Canonical cache 的不兼容或损坏仍按下方 rebuild-only / integrity contract 明确失败，不伪装成 cache miss。
 
 ## 2. Frozen basis invariant
 

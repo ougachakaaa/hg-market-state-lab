@@ -7,9 +7,6 @@ from pathlib import Path
 
 def owned_path(context: str, filename: str) -> Path:
     root = Path(__file__).resolve().parents[5]
-    legacy = root / context.replace("market_research/", "market-research/", 1)
-    if (legacy / "output").exists() or (legacy / "data").exists():
-        raise OSError("Legacy Observation state remains; follow LOCAL_MIGRATION.md")
     return root / context / "output" / filename
 
 

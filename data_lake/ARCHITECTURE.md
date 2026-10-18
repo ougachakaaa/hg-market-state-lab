@@ -57,7 +57,7 @@ data_lake/
         └── data/<owned sqlite> # Dataset persistent runtime state
 ```
 
-Shared Kernel、Provider 与 Dataset 分别拥有自己的 authority、implementation 与 tests；Provider co-locate 于 `providers/<provider-id>/`，Dataset co-locate 于 `datasets/<dataset-id>/`，顶层只拥有 DataLake-wide authority、shared kernel 与模块边界验证。Provider 是 provider-specific infrastructure ownership unit，不因此成为 Dataset 或拥有 persistent source-fact state。真实 SQLite/runtime state 默认不进入 Git；具体 filename 与目录 materialization 属于 implementation concern。SQLite lifecycle 与旧目录 state 隔离见 [PERSISTENCE.md](PERSISTENCE.md)。
+Shared Kernel、Provider 与 Dataset 分别拥有自己的 authority、implementation 与 tests；Provider co-locate 于 `providers/<provider-id>/`，Dataset co-locate 于 `datasets/<dataset-id>/`，顶层只拥有 DataLake-wide authority、shared kernel 与模块边界验证。Provider 是 provider-specific infrastructure ownership unit，不因此成为 Dataset 或拥有 persistent source-fact state。真实 SQLite/runtime state 默认不进入 Git；具体 filename 与目录 materialization 属于 implementation concern。SQLite lifecycle 与 cache compatibility 见 [PERSISTENCE.md](PERSISTENCE.md)。
 
 不同 DataSet 的 owned state 必须能够独立存在、独立删除或重建；cache rebuild 的最小 ownership boundary 是 owning Dataset，兼容性与显式失败要求见 [PERSISTENCE.md](PERSISTENCE.md)；public service 的必要事实依赖不合并 storage lifecycle，也不保证 prerequisite 缺失时 operation 仍可执行。这不定义 refresh policy。同一 instrument 可以分别存在于多个 DataSet 自己的 instrument catalog 中；不得据此合并 persistence ownership。Storage resolution 的公共调用约束见 [APPLICATION.md](APPLICATION.md)。
 

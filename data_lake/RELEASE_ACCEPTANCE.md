@@ -3,17 +3,17 @@
 本文件是 2026-10-18（Asia/Shanghai）的验收证据，不是 semantic Authority，不定义新增契约。稳定入口为 [ARCHITECTURE.md](ARCHITECTURE.md)，当前实现映射为 [IMPLEMENTATION.md](IMPLEMENTATION.md)，运行与恢复说明见 [DEVELOPMENT.md](../DEVELOPMENT.md)。
 
 
-??????????????????????????????????????? [repository migration record](../MODULE_MIGRATION.md)??????????????? namespace ??????
+本文保留目录迁移前的 V1 验收证据；下文历史命令与路径不是当前操作入口。当前 canonical 目录、namespace 与收尾验证见 [repository migration record](../MODULE_MIGRATION.md)，日常运行见 [DEVELOPMENT.md](../DEVELOPMENT.md)。
 
 ## 验收版本与结论
 
 - Branch：`chore/datalake-authority-boundaries`。
 - 审查及真实 Source 验收基线：`0f49e18f9781bbb54ee4e3f80301fedea44358fe`。
-- 验收后版本：上述 HEAD 加本轮未提交的文档收尾 diff；Python source、public API、dependency graph、SQLite generation 均未修改。
+- 验收记录已随 `f2f66644e9ef04d7e9b83e2a177b5f718badc462` 固化；当轮文档收尾未修改 Python source、public API、dependency graph 或 SQLite generation。
 - Architecture / Authority / Implementation：Frozen / Closed / Reconciled；未发现阻断性 drift。
 - Verification：Passed，1038 passed、2 个非阻断 symlink 场景因系统权限 skipped；未将 skip 计作通过。
 - Runtime / Release：Validated / Ready；本次约定的 V1 验收范围无剩余阻断条件。
-- Merge：可以将包含本轮文档收尾的分支合并到本地 `develop`；目标审查版本为 `fb8315fb07158d1c32fcb245bc118d256b6ceb9e`，它是 HEAD 的祖先。本任务未提交、合并或发布；该结论不代替目标分支变化后的 CI / review。
+- Merge：可以将包含本轮文档收尾的分支合并到本地 `develop`；目标审查版本为 `fb8315fb07158d1c32fcb245bc118d256b6ceb9e`，它是 HEAD 的祖先。该历史结论不代替当前分支变化后的 CI / review；本次迁移收尾的 merge assessment 见 repository migration record。
 
 ## 契约审查与离线验证
 
@@ -67,4 +67,4 @@
 
 **DataLake V1 — Architecture Frozen, Implementation Reconciled, Release Ready.**
 
-本结论适用于上述 V1 契约及验收范围，不扩大已声明平台、quota 或 freshness 保证；后续以维护、缺陷修复和新增 Dataset 为主。本任务不执行 commit、merge 或 deployment。
+本结论适用于上述 V1 契约及验收范围，不扩大已声明平台、quota 或 freshness 保证；后续以维护、缺陷修复和新增 Dataset 为主。本历史验收记录不代表当前迁移收尾的 commit、merge 或 deployment 状态。

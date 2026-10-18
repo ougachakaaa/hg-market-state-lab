@@ -20,22 +20,6 @@ def isolated(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("TUSHARE_TOKEN", "fake-token")
 
 
-def test_legacy_credential_requires_explicit_switch(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    legacy = tmp_path / "market-snapshot/.env"
-    legacy.parent.mkdir()
-    legacy.write_text("FAKE_ONLY=fixture")
-    monkeypatch.delenv("TUSHARE_TOKEN")
-    monkeypatch.setattr(
-        _executor, "__file__",
-        str(tmp_path / "data_lake/providers/tushare/src/data_lake/providers/tushare/_executor.py"),
-    )
-    with pytest.raises(OperationError, match="LOCAL_MIGRATION"):
-        _executor.resolve_credential()
-    assert not (tmp_path / "data_snapshot").exists()
-
-
 def test_shared_concurrent_starts_and_slow_responses(monkeypatch: pytest.MonkeyPatch) -> None:
     starts: list[float] = []
     lock = threading.Lock()

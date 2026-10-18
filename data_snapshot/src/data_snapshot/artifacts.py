@@ -24,16 +24,8 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 RAW_DIR = REPO_ROOT / "data" / "raw"
 
 
-def check_local_migration() -> None:
-    """Refuse split local state before a read, write or Source request."""
-    legacy = REPO_ROOT.parent / "market-snapshot"
-    if (legacy / "data").exists() or (legacy / ".env").exists():
-        raise OSError("Legacy Snapshot state remains; follow LOCAL_MIGRATION.md")
-
-
 def write_raw_artifact(records: Sequence[RawRecord], raw_dir: Path, raw_artifact: str) -> Path:
     """Write one Raw Artifact file and return its path."""
-    check_local_migration()
     raw_dir.mkdir(parents=True, exist_ok=True)
     path = raw_dir / f"{raw_artifact}.json"
     path.write_text(json.dumps(list(records), ensure_ascii=False, indent=2), encoding="utf-8")
@@ -42,5 +34,4 @@ def write_raw_artifact(records: Sequence[RawRecord], raw_dir: Path, raw_artifact
 
 def read_raw_artifact(raw_dir: Path, raw_artifact: str) -> object:
     """Read one Raw Artifact file as decoded JSON."""
-    check_local_migration()
     return json.loads((raw_dir / f"{raw_artifact}.json").read_text(encoding="utf-8"))

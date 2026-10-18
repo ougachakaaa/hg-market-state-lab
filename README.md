@@ -3,18 +3,18 @@
 `hg-market-state-lab` 是用于市场状态数据准备、探索研究、市场状态建模与结果展示的实验性仓库。
 
 ```text
-data_lake        ? reusable source facts and Dataset-owned caches
-data_snapshot    ? market state data preparation
-market_modeling  ? market state modeling
-market_research  ? exploratory and statistical research
-ui_cli           ? repository CLI (lab)
-ui_http          ? repository-wide HTTP inbound delivery and composition
-ui_web           ? presentation and interaction
+data_lake        → reusable source facts and Dataset-owned caches
+data_snapshot    → market state data preparation
+market_modeling  → market state modeling
+market_research  → exploratory and statistical research
+ui_cli           → repository CLI (lab)
+ui_http          → repository-wide HTTP inbound delivery and composition
+ui_web           → presentation and interaction
 ```
 
 ## Canonical module layout
 
-Directories and imports follow [repository authority](ARCHITECTURE.md#naming-and-transition-authority). For an existing checkout, follow the [local state migration guide](LOCAL_MIGRATION.md) before running operations. The executable remains `lab`.
+Directories, imports and disposable local runtime state follow [repository authority](ARCHITECTURE.md#naming-and-transition-authority). Run directly with canonical paths; no local data or token migration is required. Configure credentials in the current environment or `data_snapshot/.env` as needed. The executable remains `lab`.
 
 ## Authority 与开发文档
 
@@ -103,7 +103,7 @@ npm run dev
 
 ## 验证命令
 
-Market Snapshot（在 repository root）：
+Data Snapshot（在 repository root）：
 
 ```bash
 poetry run pytest data_snapshot/tests
@@ -111,7 +111,7 @@ poetry run ruff check data_snapshot
 poetry run mypy data_snapshot
 ```
 
-Backend API（在 repository root）：
+HTTP API（在 repository root）：
 
 ```bash
 poetry run pytest ui_http/tests

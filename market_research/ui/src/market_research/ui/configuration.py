@@ -40,8 +40,6 @@ def _validate_schema(payload: Any) -> str:
 
 def load_config() -> ResearchConfig:
     """Load and fully validate the repository's canonical V1 config."""
-    if (REPOSITORY_ROOT / "market-research/output").exists():
-        raise ResearchConfigError("Legacy Research outputs remain; follow LOCAL_MIGRATION.md")
     try:
         with CANONICAL_CONFIG_PATH.open("rb") as stream:
             payload = tomllib.load(stream)

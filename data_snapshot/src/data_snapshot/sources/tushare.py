@@ -24,7 +24,7 @@ from typing import Protocol
 import pandas as pd
 from dotenv import load_dotenv
 
-from ..artifacts import REPO_ROOT, check_local_migration
+from ..artifacts import REPO_ROOT
 
 ENV_FILE = REPO_ROOT / ".env"
 
@@ -159,10 +159,6 @@ def get_tushare_token() -> str:
     Raises ``TushareCredentialError`` instead of returning an empty token, so a
     missing credential fails before any Source request is made.
     """
-    try:
-        check_local_migration()
-    except OSError as error:
-        raise TushareSourceError(str(error)) from error
     if ENV_FILE.is_file():
         load_dotenv(ENV_FILE, override=False)
 

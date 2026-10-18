@@ -18,7 +18,9 @@ Owning module directories use `snake_case`; Python namespaces match their owning
 | `ui_http/` | `ui_http` |
 | `ui_web/` | Not applicable; npm project |
 
-These identities are the canonical filesystem and import paths. Historical names are not supported import surfaces. Internal co-location and public business contracts are unchanged. Local ignored state switching is documented in [local migration guide](LOCAL_MIGRATION.md).
+These identities are the canonical filesystem and import paths. Historical names are not supported import surfaces. Internal co-location and public business contracts are unchanged.
+
+All local running data, including SQLite caches, Raw Artifacts, Observation persistence and Research Outputs, is disposable runtime state. Each module directly uses its canonical runtime paths; historical directories and their contents must not affect current execution. Directory changes require no state migration, inheritance, compatibility or preservation mechanism. Repository tooling neither copies nor deletes historical local state. Credentials are configured afresh through the current environment or canonical `.env`; historical tokens are not migrated and credentials never enter Git. This filesystem policy does not relax Dataset cache compatibility/integrity, Product Raw contracts, Observation atomic publication/durable reuse, or Study output collision/replacement rules within canonical storage.
 
 The root Python project/distribution remains `hg-market-state-lab`, with one root Poetry environment, dependency graph and worktree-local root `.venv`. Naming changes do not alter business functions, data meaning, Product identity, application services, request/result, formulas, completeness or failure semantics. `lab` remains the executable even after its owning module/package becomes `ui_cli`.
 

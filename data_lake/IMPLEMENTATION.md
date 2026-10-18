@@ -4,7 +4,7 @@
 
 ## Canonical filesystem and frozen V1 conformance
 
-The canonical directory and Python namespace are `data_lake`. The isolated [experiments entry](experiments/README.md) is materialized under [EXPERIMENTS.md](EXPERIMENTS.md), outside formal package wiring. Repository migration status and checks are recorded in [MODULE_MIGRATION.md](../MODULE_MIGRATION.md); local ignored assets follow [LOCAL_MIGRATION.md](../LOCAL_MIGRATION.md). V1 business conformance below remains unchanged.
+The canonical directory and Python namespace are `data_lake`. The isolated [experiments entry](experiments/README.md) is materialized under [EXPERIMENTS.md](EXPERIMENTS.md), outside formal package wiring. Repository migration status and checks are recorded in [MODULE_MIGRATION.md](../MODULE_MIGRATION.md). V1 business conformance below remains unchanged.
 
 ## 1. 当前实现映射
 

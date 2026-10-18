@@ -46,8 +46,6 @@ for required_file in "${required_files[@]}"; do
     fi
 done
 
-"${python313}" "${repo_root}/.codex/scripts/migrate_local_state.py"
-
 if [[ ! -e "${snapshot_dir}/.env" ]]; then
     cp -- "${snapshot_dir}/.env.example" "${snapshot_dir}/.env"
     printf 'Created data_snapshot/.env from .env.example.\n'

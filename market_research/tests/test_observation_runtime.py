@@ -18,7 +18,6 @@ from market_research.observations import (
     ObservationError,
     ObservationInvalidRequestError,
     ObservationOperationError,
-    _sqlite,
 )
 from market_research.observations import cffex_option_expiry_dte_chain as chain
 from market_research.shared import cffex_option_expiry_universe as universe
@@ -28,23 +27,6 @@ EXPIRY = date(2025, 10, 23)
 IDEAL = date(2025, 10, 9)
 START = date(2025, 10, 1)
 END = date(2025, 10, 31)
-
-
-def test_legacy_observation_is_not_an_empty_new_store(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    context = "market_research/observations/cffex_option_expiry_dte_chain"
-    legacy = tmp_path / context.replace("market_research", "market-research") / "output"
-    legacy.mkdir(parents=True)
-    (legacy / "fixture.sqlite3").write_bytes(b"retained fixture")
-    monkeypatch.setattr(
-        _sqlite, "__file__",
-        str(tmp_path / "market_research/observations/src/market_research/observations/_sqlite.py"),
-    )
-    with pytest.raises(OSError, match="LOCAL_MIGRATION"):
-        _sqlite.owned_path(context, "fixture.sqlite3")
-    assert not (tmp_path / context).exists()
-    assert (legacy / "fixture.sqlite3").read_bytes() == b"retained fixture"
 
 
 def unavailable() -> Any:

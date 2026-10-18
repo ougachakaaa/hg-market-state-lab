@@ -9,16 +9,6 @@ import pytest
 from market_research.ui import configuration
 
 
-def test_legacy_outputs_block_config_before_new_storage(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    configure_location(monkeypatch, tmp_path, '[output]\nroot = "market_research/output"\n')
-    (tmp_path / "market-research/output").mkdir(parents=True)
-    with pytest.raises(configuration.ResearchConfigError, match="LOCAL_MIGRATION"):
-        configuration.load_config()
-    assert not (tmp_path / "market_research/output").exists()
-
-
 def configure_location(monkeypatch: pytest.MonkeyPatch, root: Path, text: str) -> Path:
     path = root / "market_research" / "research.toml"
     path.parent.mkdir(parents=True)

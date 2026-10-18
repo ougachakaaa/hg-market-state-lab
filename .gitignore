@@ -50,14 +50,3 @@ market_research/observations/*/output/
 # Experimental runtime artifacts (never formal Dataset state)
 data_lake/experiments/**/data/
 data_lake/experiments/**/output/
-
-# Retained ignored state in pre-migration checkouts; migrate explicitly
-data-lake/data/
-data-lake/datasets/*/data/
-market-snapshot/data/
-market-research/output/
-market-research/observations/*/data/
-market-research/observations/*/output/
-web-ui/node_modules/
-web-ui/dist/
-web-ui/dist-ssr/

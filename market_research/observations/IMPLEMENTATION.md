@@ -63,7 +63,7 @@ market_research/observations/<observation-id>/output/<observation-id>.sqlite3
 
 Concrete owner 同时拥有 authority、src 与 output；只有 `output/` 中的 SQLite / sidecars 是 ignored runtime state，不把整个 `observations/` 视为 data-only tree。Canonical placement 不授权迁移或重算已有 SQLite。该路径只用于内部 composition，不进入 Request / Artifact / semantic identity。Test-only composition 可用 temporary SQLite。数据库只存该 Observation 的 requests / Artifacts；没有 global research.sqlite / Observation DB / shared Artifact table、cross-Observation FK 或 Study-owned table。Business lookup 依据 normalized business fields；UUID、wall clock、filesystem path、hash alone 不替代这些字段，hash 只可作内部 optimization，存储必须仍能恢复 / 解释 normalized business inputs 本身。
 
-Runtime SQLite 及其 WAL / journal 不进入 Git。实施阶段必须在首次创建 state 前配置并验证 ignore；Ignore 必须覆盖 Observation-owned output，包括 SQLite / WAL / SHM / journal。SQL DDL、indexes、serialization encoding、connection / transaction algorithm 属于实现 mechanics，不在此锁定。
+Runtime SQLite 及其 WAL / journal 不进入 Git。实施阶段必须在首次创建 state 前配置并验证 ignore；Ignore 必须覆盖 Observation-owned output，包括 SQLite / WAL / SHM / journal。目录变更遵循 [repository disposable runtime policy](../../ARCHITECTURE.md#naming-and-transition-authority)，不检测或继承历史路径；canonical SQLite 内的 durable reuse、schema failure 与 atomic publication 契约保持不变。SQL DDL、indexes、serialization encoding、connection / transaction algorithm 属于实现 mechanics，不在此锁定。
 
 ## Complete publication 与 concurrency
 

@@ -111,20 +111,6 @@ def test_database_path_uses_readable_canonical_identity(tmp_path: Path) -> None:
     assert database_path("fake", tmp_path) == tmp_path / "fake.sqlite3"
 
 
-def test_database_path_refuses_legacy_state_even_with_new_cache(tmp_path: Path) -> None:
-    (tmp_path / "pyproject.toml").touch()
-    legacy = tmp_path / "data-lake/datasets/fake/data"
-    canonical = tmp_path / "data_lake/datasets/fake/data"
-    legacy.mkdir(parents=True)
-    canonical.mkdir(parents=True)
-    for directory in (legacy, canonical):
-        (directory / "fake.sqlite3").write_bytes(b"untouched fixture")
-    with pytest.raises(OperationError, match="LOCAL_MIGRATION"):
-        database_path("fake", canonical)
-    assert (legacy / "fake.sqlite3").read_bytes() == b"untouched fixture"
-    assert (canonical / "fake.sqlite3").read_bytes() == b"untouched fixture"
-
-
 def test_database_path_custom_root_does_not_create_storage(tmp_path: Path) -> None:
     root = tmp_path / "custom" / "cache"
     path = database_path("fake", root)
