@@ -2,6 +2,10 @@
 
 本文件是 Research 的稳定入口，拥有 module identity、职责终点、顶层关系、依赖方向、Research / Modeling 边界与 visualization ownership。仓库模块关系及唯一 Python runtime / dependency environment 见 [repository architecture](../ARCHITECTURE.md)；专题 contract 和 implementation details 由下层 owner 定义。
 
+## Module naming transition
+
+The target owning module/directory is `market_research/`, with unchanged Python namespace `market_research`; the current directory is `market-research/`. Inherit the [repository mapping and transition rules](../ARCHITECTURE.md#naming-and-transition-authority). Old labels and current links below refer to the same owner. Existing co-location, Study-local CLI and Research visualization ownership remain unchanged; the `ui_*` family does not relocate these internal concerns.
+
 ## Purpose 与职责终点
 
 `market-research` 是独立 exploratory / statistical research bounded module，负责开放探索、retained empirical facts、descriptive / conditional statistics、research-specific slicing / joining / grouping / reshaping、hypothesis discovery、study-specific evaluation 与 visualization。Research 的解释职责终点是 evidence / finding。

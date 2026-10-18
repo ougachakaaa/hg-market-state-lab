@@ -2,6 +2,12 @@
 
 本文档定义 `hg-market-state-lab` 的 canonical repository-level CLI。仓库身份、唯一 Python runtime 与模块边界见 [repository architecture](../ARCHITECTURE.md)；操作与示例见 [usage guide](README.md)（usage-only，不是 authority）；当前可运行状态及环境准备见 [DEVELOPMENT.md](../DEVELOPMENT.md)。
 
+## Owning module versus executable identity
+
+The target owning module/directory and Python namespace are `ui_cli`; the current directory/package remain `lab`. Inherit the [repository mapping and transition rules](../ARCHITECTURE.md#naming-and-transition-authority). The executable stays `lab`, with unchanged hierarchy, arguments, exit codes, delegation, delivery and failure semantics.
+
+The sole installation mechanism remains the root console-script registration: current `[project.scripts] lab = "lab.cli:main"`, target `[project.scripts] lab = "ui_cli.cli:main"`. The target entry is implemented only in the next Goal. References to the `lab` namespace below mean the command namespace or current package, not a competing target Python namespace. Study-local CLI and business behavior remain with their existing owners.
+
 ## Identity 与 ownership
 
 `hg-market-state-lab` 是 repository / system identity；`lab` 是安装于 repository canonical Python project 的正式 console command，面向 human、operator 与 developer。`lab` 是 repository-level operator/orchestration interface，不是业务模块。

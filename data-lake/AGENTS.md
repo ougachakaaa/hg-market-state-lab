@@ -7,6 +7,7 @@
 | 任务 / 应修改的 canonical owner | 阅读路径 |
 | --- | --- |
 | 模块职责、ownership、public / dependency / Python boundary | [ARCHITECTURE.md](ARCHITECTURE.md) |
+| Experimental Source exploration, isolation and formal admission | [EXPERIMENTS.md](EXPERIMENTS.md) |
 | Shared Kernel Domain primitives、逻辑 persistence、状态、公共 completeness / normalization invariants | [DOMAIN_MODEL.md](DOMAIN_MODEL.md) |
 | Kernel Use Cases / lifecycle、公共 request/result/view、failure taxonomy、dependency 调用与 runtime boundary | [APPLICATION.md](APPLICATION.md) |
 | Source / Repository Outbound Ports、Adapter 能力与读写/失败责任 | [PORTS.md](PORTS.md) |

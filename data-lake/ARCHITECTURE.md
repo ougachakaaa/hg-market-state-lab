@@ -2,6 +2,12 @@
 
 本文件是 DataLake 的稳定模块入口，只定义职责、ownership、Shared Kernel 架构、关键模块 invariant、public boundary、依赖方向与 authority 导航。仓库级职责与 Python runtime invariant 见 [repository architecture](../ARCHITECTURE.md)；专题语义按任务从下方导航选择，不要求加载全部公共或 Dataset authority。
 
+## Module naming transition
+
+The target owning module/directory is `data_lake/`; Python namespace `data_lake` stays unchanged. The current filesystem remains `data-lake/`. Inherit the [repository mapping and transition rules](../ARCHITECTURE.md#naming-and-transition-authority); paths below describe current ownership, with internal relative topology and co-location unchanged.
+
+DataLake V1 Shared Kernel, Dataset, Provider, Persistence, Public Application Service and all business invariants remain frozen. [Source Experiments](EXPERIMENTS.md) defines only an isolated experimental area and formal admission boundary; it adds no formal runtime role to the Dataset chain below.
+
 ## Core Mental Model
 
 ```text
@@ -123,6 +129,7 @@ Provider-local 与 Dataset-local source roots 不创建独立 Python project、P
 
 | 当前任务 | 下一份 authority |
 | --- | --- |
+| Experimental Source isolation and formal Dataset admission | [EXPERIMENTS.md](EXPERIMENTS.md) |
 | Scope / Window / FetchUnit / Records / logical persistence / completeness invariants | [DOMAIN_MODEL.md](DOMAIN_MODEL.md) |
 | Application Service / coverage / ensure / export / public result / runtime 调用约束 | [APPLICATION.md](APPLICATION.md) |
 | Source / Repository Outbound Ports、Adapter 输入输出及失败责任 | [PORTS.md](PORTS.md) |

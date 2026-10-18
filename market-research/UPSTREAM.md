@@ -2,6 +2,10 @@
 
 本文件唯一拥有 Research 的 public upstream selection、semantic sufficiency、直接 upstream producer permissions、consumer completeness / failure constraints、provider prohibition 与 provenance boundary，继承 [module boundaries](ARCHITECTURE.md)。DataLake operation semantics 唯一归 [APPLICATION.md](../data-lake/APPLICATION.md)，Dataset-specific public contracts 经 [DataLake entry](../data-lake/ARCHITECTURE.md) / [catalog](../data-lake/DATASETS.md) 进入；不由 Research 重复定义。Component caller rules 归 [Shared authority](shared/ARCHITECTURE.md)，Observation retained lookup 归 [Observation architecture](observations/ARCHITECTURE.md)，publication / failure mapping 归 [Observation IMPLEMENTATION](observations/IMPLEMENTATION.md)。
 
+## Naming transition and formal capability scope
+
+Snapshot becomes `data_snapshot`; DataLake remains namespace `data_lake`. Resolve current paths/labels through the [repository mapping](../ARCHITECTURE.md#naming-and-transition-authority). DataLake-first examines formal Dataset public contracts only. [Experiments](../data-lake/EXPERIMENTS.md) are not eligible public capabilities, cannot fill an Upstream Capability Gap and cannot bypass the provider prohibition.
+
 ## DataLake-first capability selection
 
 ```text

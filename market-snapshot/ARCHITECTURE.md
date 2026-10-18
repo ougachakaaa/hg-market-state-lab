@@ -2,6 +2,12 @@
 
 本文件定义 `market-snapshot` 的稳定 ownership、执行角色与依赖边界。仓库级定位见 [repository architecture](../ARCHITECTURE.md)；产品与共享能力从 [CAPABILITIES.md](CAPABILITIES.md) 进入。字段、公式、产品结果和失败契约由对应 bounded context 拥有。
 
+## Module identity and DataLake boundary
+
+The target owning module/namespace is `data_snapshot`, directly succeeding `market-snapshot` as an independent bounded module. Inherit the [repository mapping and transition rules](../ARCHITECTURE.md#naming-and-transition-authority). Current directory/package remain `market-snapshot/` and `market_snapshot`; old labels below name this same owner.
+
+All existing Products, Capture, Preparation, Raw Artifacts, public application contracts and shared capabilities remain here. DataLake owns reusable source facts and Dataset-owned caches. Sharing the `data_*` family does not move Snapshot semantics or Raw into DataLake, delete shared capabilities, or force replacement of Snapshot Capture. Dataset integration uses only explicitly authorized Dataset Public Application Services, never private persistence or Source adapters. [DataLake Experiments](../data-lake/EXPERIMENTS.md) cannot be stable runtime dependencies.
+
 ## 1. Product 是主要语义所有权边界
 
 Product 是一个具有明确数据需求、query identity、invariants 和 analysis-ready result 的 bounded ownership unit。一个 Product 可以拥有完整 vertical slice：Source scope 与 completeness、产品专属 Source Facts / Raw、Analysis Preparation、Application Service、public Python application contract、semantic failure，以及需要时的 persisted output contract。
@@ -67,4 +73,4 @@ ARCHITECTURE.md
 
 ## 6. Canonical Python namespace
 
-本模块 Python namespace 为 `market_snapshot`，实现位于 `src/market_snapshot/`。Repository-level Python runtime 与依赖图由 [repository architecture](../ARCHITECTURE.md) 拥有；共享环境不改变 Product ownership。Daily cadence 不是模块级 invariant，具体 daily semantics 留在对应 Product。
+The target canonical Python namespace is `data_snapshot`, with implementation at `data_snapshot/src/data_snapshot/` (repository-relative). The current package remains `market_snapshot` at `market-snapshot/src/market_snapshot/` until implementation. Only the namespace/path changes; Product identity and public request/result/failure semantics remain unchanged. The [repository authority](../ARCHITECTURE.md) owns Python runtime and dependency graph; sharing an environment does not alter Product ownership. Daily cadence is not a module invariant; daily semantics remain Product-local.

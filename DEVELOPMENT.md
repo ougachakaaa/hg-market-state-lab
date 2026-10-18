@@ -4,6 +4,10 @@
 
 正式 console command 是 `lab`，由根 canonical Python project 安装。以下命令在 repository root 的 Poetry environment 中运行；help discovery 与完整 workflow 见 [lab usage guide](lab/README.md)（usage-only，不是 authority）。
 
+## Naming transition
+
+Target identities and current filesystem are distinguished by [repository authority](ARCHITECTURE.md#naming-and-transition-authority); pending engineering work is in [Implementation handoff](MODULE_MIGRATION.md). Paths, imports and operational examples on this page describe the current implementation. The formal executable remains `lab`.
+
 ## Codex managed worktree 环境
 
 Codex 使用仓库内的 Local Environment 创建 managed worktree 时，会自动运行：

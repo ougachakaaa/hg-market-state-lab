@@ -2,6 +2,10 @@
 
 本文件定义 `web-ui` 的稳定职责、数据依赖方向与 authority 路由。仓库级定位见 [../ARCHITECTURE.md](../ARCHITECTURE.md)；具体 vertical slice 的 authority 与实现共址于 `src/features/`。
 
+## Module naming transition
+
+The target owning module/directory is `ui_web/`; the current directory remains `web-ui/`. It remains an independent npm project without a Python namespace. Inherit the [repository mapping and transition rules](../ARCHITECTURE.md#naming-and-transition-authority). Old labels and links below identify the same presentation owner. Interaction, display behavior, generated wire contracts and co-located feature authority/implementation/tests remain unchanged.
+
 ## 1. Purpose
 
 `web-ui` 是数据产品与市场状态结果的展示、交互层，负责：

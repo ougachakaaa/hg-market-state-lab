@@ -1,5 +1,9 @@
 # AGENTS.md
 
+## Naming transition routing
+
+The [repository mapping](ARCHITECTURE.md#naming-and-transition-authority) uniquely distinguishes current filesystem from target module/namespace. [Implementation handoff](MODULE_MIGRATION.md) records pending engineering scope. Until directories actually migrate, the progressive-disclosure entry paths below and local policy scopes remain on current filesystem paths.
+
 ## 适用范围与继承
 
 本文件定义 `hg-market-state-lab` 的 repository-wide agent execution policy。进入子目录后，必须继续读取路径上最近的 `AGENTS.md`；local rule 在明确专门化本文件时优先。本继承规则只适用于执行政策，不允许下层 semantic authority 覆盖上层 invariant。

@@ -2,6 +2,10 @@
 
 本文件定义 `backend-api` 的稳定职责、依赖方向与 authority 路由。仓库级模块边界及 analytical flow 见 [repository architecture](../ARCHITECTURE.md)；具体 HTTP product contract 从 [HTTP product catalog](HTTP_PRODUCTS.md) 进入。
 
+## Module naming transition
+
+The target owning module/directory and Python namespace are `ui_http`; current directory/package remain `backend-api/` and `backend_api`. Inherit the [repository mapping and transition rules](../ARCHITECTURE.md#naming-and-transition-authority). Old labels and links below identify the same HTTP owner. Endpoints, DTOs, OpenAPI wire semantics, status/error projection and owning module public contracts remain unchanged.
+
 ## 1. Purpose
 
 `backend-api` 是 repository-wide inbound HTTP delivery adapter 与 HTTP composition root。它把 repository 内各 owning module 的 application/product boundary 暴露为 HTTP，不是 analytical pipeline stage，也不是任何业务模块的子模块。

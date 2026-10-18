@@ -11,6 +11,10 @@ backend-api      → repository-wide HTTP inbound delivery and composition
 web-ui           → presentation and interaction
 ```
 
+## Naming transition
+
+Target identities and current filesystem are distinguished by [repository authority](ARCHITECTURE.md#naming-and-transition-authority); pending engineering work is in [Implementation handoff](MODULE_MIGRATION.md). Paths, imports and operational examples on this page describe the current implementation. The formal executable remains `lab`.
+
 ## Authority 与开发文档
 
 README 是人类开发入口，不是架构或业务语义 authority。

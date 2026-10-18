@@ -2,6 +2,10 @@
 
 本文件只记录当前 authority 到 implementation 的映射与尚未处理的差异，不拥有业务契约，不作为历史施工或测试日志。稳定入口为 [ARCHITECTURE.md](ARCHITECTURE.md)；角色语义由 [COMPOSITION.md](COMPOSITION.md)、执行顺序由 [APPLICATION.md](APPLICATION.md)、交接由 [PORTS.md](PORTS.md) 唯一拥有。当前 implementation 已按现行 authority 完成 reconciliation；后续代码或 authority 变更须同步更新这里的当前状态。
 
+## Naming drift versus frozen V1 conformance
+
+Target directory `data_lake/` remains current `data-lake/`; Python namespace and Provider/Dataset imports remain `data_lake`. The target experiments area is not materialized; its boundary is owned by [EXPERIMENTS.md](EXPERIMENTS.md). Repository path/tooling/consumer work is tracked in [MODULE_MIGRATION.md](../MODULE_MIGRATION.md). Conformance statements below describe V1 business architecture, not completion of target naming.
+
 ## 1. 当前实现映射
 
 | Authority responsibility | 当前 implementation seam / 合规含义 |

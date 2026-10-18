@@ -56,7 +56,7 @@ Source Capture 名称是本项目语义名称，不要求与 Tushare endpoint �
 
 对目标交易日（传给 Tushare 时为 `YYYYMMDD`），分别取得上述每一个指数在该交易日的 `index_daily` 数据。
 
-字段与单位见 [Shared Source Capture authority](../../capture/ARCHITECTURE.md#index_daily)。
+字段与单位见 [Shared Source Capture authority](../../capture/index-stock-contract.md#3-index_daily)。
 
 ### 4.2 `stock_daily` scope
 
@@ -70,7 +70,7 @@ Source Capture 名称是本项目语义名称，不要求与 Tushare endpoint �
 
 不要把它定义成“全部上市股票数量”。
 
-Tushare `daily` 的未复权、停牌缺行、`pre_close` 与 `pct_chg` 语义及字段单位见 [Shared Source Capture authority](../../capture/ARCHITECTURE.md#stock_daily)。本场景不把实际返回并参与统计的数量解释成全部上市股票数量。
+Tushare `daily` 的未复权、停牌缺行、`pre_close` 与 `pct_chg` 语义及字段单位见 [Shared Source Capture authority](../../capture/index-stock-contract.md#4-stock_daily)。本场景不把实际返回并参与统计的数量解释成全部上市股票数量。
 
 ## 5. Raw Artifact 文件契约
 
