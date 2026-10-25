@@ -167,7 +167,7 @@ market_modeling ─────┼──→ ui_http ───→ ui_web
 future modules ──────┘
 ```
 
-`ui_http` 是 inbound delivery boundary，不是 analytical pipeline stage。稳定依赖方向是 `ui_http` 依赖 owning module 的 public application/product boundary；`data_snapshot`、`market_research`、`market_analyze` 与 `market_modeling` 不得依赖 `ui_http`，也不得用 FastAPI、HTTP DTO/status/error envelope、OpenAPI 或 frontend types 定义自己的 semantic model。当前 `market_research` 与 `market_analyze` 均不提供可运行的 service/API；Analyze 的概念性 public Python boundary 不是 HTTP 发布。
+`ui_http` 是 inbound delivery boundary，不是 analytical pipeline stage。稳定依赖方向是 `ui_http` 依赖 owning module 的 public application/product boundary；`data_snapshot`、`market_research`、`market_analyze` 与 `market_modeling` 不得依赖 `ui_http`，也不得用 FastAPI、HTTP DTO/status/error envelope、OpenAPI 或 frontend types 定义自己的 semantic model。Research 已发布独立的 Python Observation API，未发布 HTTP service；Analyze 的概念性 public Python boundary 尚无 runtime，也不是 HTTP 发布。
 
 ## 5. Authority 导航
 

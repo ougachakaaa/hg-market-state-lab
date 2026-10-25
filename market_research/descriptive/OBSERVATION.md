@@ -4,7 +4,8 @@ This contract specializes the [Descriptive entry](ARCHITECTURE.md). It owns fixe
 requests, population, outcomes, coverage and derivation. Public inputs follow
 [UPSTREAM.md](../UPSTREAM.md); numerical contracts remain
 [Analyze-owned](../../market_analyze/CONTRACT.md). Status: Implementation Ready for
-the [index first case](cases/trailing_return/ARCHITECTURE.md); no producer exists yet.
+the [index first case](cases/trailing_return/ARCHITECTURE.md). Its independent Python
+producer is published under `market_research.descriptive.observation`.
 
 ## Fixed observation request
 
@@ -33,7 +34,8 @@ For stocks, raw-price change and adjusted/economic return must be distinguished;
 and dividends cannot be ignored while claiming economic return. Abstract permission does
 not publish a data capability. Current bindings/gaps are in [ACCEPTANCE.md](ACCEPTANCE.md).
 
-The conceptual operation is `observe(ObservationJobSpec, prepared_inputs) -> ObservationSet`.
+The public operation is `observe(ObservationJobSpec) -> ObservationSet`; the independent
+pure operation is `construct_observations(ObservationJobSpec, prepared_inputs)`.
 Only Input Preparation performs upstream I/O. Construction consumes validated facts and
 availability proof; it cannot reacquire facts or shift dates. Changing only AnalysisSpec
 does not require new observations. [Execution](EXECUTION.md) owns Job identity/expansion.
@@ -130,6 +132,27 @@ identical inputs. The case chooses sufficient fingerprint/retention rules; reque
 differs from actual input identity. No database or durable lifecycle is mandated.
 One set can support several analyses; dependence/overlapping lookbacks remain Research
 context, never an independence assertion.
+
+## Python boundary
+
+`market_research.descriptive.observation` publishes `ObservationJobSpec`, `DateWindow`,
+`ObservationSet`, outcome / coverage records, explicit failure types and `observe`.
+`subject` is a stable identity string, with its interpretation and validation selected
+by the metric case, rather than an index-specific field on the general request.
+The first case requires a full canonical index code and an explicit empty mapping of
+metric parameters. Requests copy parameters into an immutable mapping; dates and H have
+no defaults. `None` represents a Not Applicable ratio. Counts derive from immutable
+outcome tuples. Observation keys use the full structural Job identity and anchor.
+
+The case boundary `market_research.descriptive.cases.trailing_return` publishes
+`prepare_inputs` and `construct_observations` for independent consumption/testing.
+Preparation defaults to the selected public factories; keyword-only Calendar / Index
+service arguments support public-contract fakes without changing source selection.
+Construction consumes retained, validated prepared views and performs no I/O.
+Its provenance retains typed case inputs, exact canonical bytes / SHA-256 and endpoint
+requirements. Preparation failures expose their stage, category, request and all obtained
+attempt evidence; upstream errors retain their original exception as the cause.
+No observation API implements Research Job/Batch execution or conversion.
 
 ## Minimum acceptance obligations
 

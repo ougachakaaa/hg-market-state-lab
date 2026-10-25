@@ -80,12 +80,15 @@ coupling. A person may use descriptive findings to formulate a condition hypothe
 human research workflow grants no program dependency. Only Descriptive is detailed here;
 no Conditional contract, directory scaffold or implementation is introduced.
 
-Current state: first-case contracts are Implementation Ready, with architecture/integration
-checks. No Research execution package, case implementation, CLI, HTTP service or report
-renderer is published.
-Observation Producer, Sample Converter and Job / Batch Executor are Expected Implementation
-Gaps, not runtime capabilities. Analyze's statistical API is likewise authority-only.
+Current state: the index Trailing Return Observation producer is implemented as an
+independent Python capability under `src/market_research/descriptive/`, with public
+preparation, pure construction and contract tests. Its public boundary is owned by
+[Observation](descriptive/OBSERVATION.md); usage is in [README](README.md).
+Sample Converter and Job / Batch Executor remain Expected Implementation Gaps.
+No Research CLI, HTTP service or report renderer is published. Analyze's statistical API
+is likewise authority-only. Actual verification and live-data limitations are recorded in
+[Acceptance](descriptive/ACCEPTANCE.md).
 The concrete first case and implementation acceptance gates are reached through the
-Descriptive entry; readiness applies to encoded semantics, not a completed runtime. Agent
+Descriptive entry; semantic readiness alone does not establish runtime or live acceptance. Agent
 execution policy is in [AGENTS.md](AGENTS.md); upstream semantics belong only to
 [UPSTREAM.md](UPSTREAM.md).

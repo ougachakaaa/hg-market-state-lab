@@ -3,7 +3,8 @@
 This first concrete Descriptive case specializes [Observation](../../OBSERVATION.md),
 [integration](../../ANALYZE_INTEGRATION.md), [execution](../../EXECUTION.md) and
 [public upstream policy](../../../UPSTREAM.md). Status: Implementation Ready for the
-index binding below; runtime and live-data acceptance are Expected Implementation Gaps.
+index binding below. The independent Observation runtime is implemented; actual checks
+and the live-data gate are recorded in [Acceptance](../../ACCEPTANCE.md).
 
 | Concern | Canonical owner |
 | --- | --- |
@@ -87,8 +88,8 @@ The mandatory scenarios A-H and boundary cases are owned by
 closes [100,110,121,110,121], H=2, last three anchors:
 [121/100-1,110/110-1,121/121-1], with three distinct keys and unchanged decimal_ratio.
 Verify discovery doubling, date.min history exhaustion, one-day windows, exclusions,
-overflow and canonical fingerprint fixtures. These are future behavior gates, not
-implemented tests or completed live acceptance.
+overflow and canonical fingerprint fixtures. These are covered by the Observation
+behavior tests; they do not establish live acceptance or downstream analysis readiness.
 
 First real-data end-to-end acceptance supplies a metadata-verified CSI1000 code,
 explicit historical dates/H, quantile points, decimal_ratio interval edges, unique request

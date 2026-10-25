@@ -42,14 +42,15 @@ missing-tolerant policy preserves calendar candidates and records unavailable fa
 Individual stocks and other series require their own published fact/calendar binding
 and price semantics; their gaps do not block the index case. See the capability and
 reconciliation matrices in [ACCEPTANCE.md](ACCEPTANCE.md).
-Observation, conversion and execution contracts are Implementation Ready for this case;
-producer, converter, executors and statistical API remain Expected Implementation Gaps.
+Observation production for this case is implemented with independent public preparation
+and pure construction. Conversion and execution contracts are Implementation Ready;
+converter, executors and statistical API remain Expected Implementation Gaps.
 [Acceptance gates](ACCEPTANCE.md) distinguish semantic readiness from runtime and live-data
 verification. No unresolved implicit default is authorized.
 
 ## Deferred scope
 
-No case is implemented by this authority encoding. Conditional Research and its contracts,
+Beyond the implemented index Observation slice, Conditional Research and its contracts,
 Condition Engine, forward evaluation, backtesting, strategy/model/signal design, generic runner or
 pipeline DSL, research database, artifact registry, automatic hypothesis discovery, Web
 visualization, full report rendering and new Research CLI are out of scope. No mandatory

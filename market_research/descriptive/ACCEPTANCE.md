@@ -9,8 +9,8 @@ the stated scope, not that runtime or live-data acceptance exists.
 
 | Work package / case | Semantic readiness | Runtime / remaining limitation | Canonical owner |
 | --- | --- | --- | --- |
-| Asset-agnostic scalar Observation | Implementation Ready as abstract contract | No producer; each new series needs explicit fact/calendar/metric binding | [Observation](OBSERVATION.md) |
-| Index Trailing Return, complete or legal partial facts | Implementation Ready with explicit canonical index_code, dates and H | No implementation; live CSI1000 identity and data acceptance unperformed | [Case](cases/trailing_return/ARCHITECTURE.md), [inputs](cases/trailing_return/INPUTS.md), [identity](cases/trailing_return/INPUT_IDENTITY.md) |
+| Asset-agnostic scalar Observation | Implementation Ready as abstract contract | Immutable domain and independent Python API implemented; each new series still needs explicit fact/calendar/metric binding | [Observation](OBSERVATION.md) |
+| Index Trailing Return, complete or legal partial facts | Implementation Ready with explicit canonical index_code, dates and H | Observation runtime and deterministic contract tests implemented; live gate blocked by incompatible existing Calendar cache | [Case](cases/trailing_return/ARCHITECTURE.md), [inputs](cases/trailing_return/INPUTS.md), [identity](cases/trailing_return/INPUT_IDENTITY.md) |
 | Converter / association with missing and coverage context | Implementation Ready | No converter/association; zero eligible fails conversion | [Integration](ANALYZE_INTEGRATION.md) |
 | Single Job / Batch | Implementation Ready | No executors; final Success still requires every declared analysis/association | [Execution](EXECUTION.md) |
 | Analyze NumericSample, Quantile, IntervalCount | Existing contracts remain Implementation Ready | No package or installed statistical API; no market missing-value responsibility | [Public contract](../../market_analyze/CONTRACT.md), [Quantile](../../market_analyze/QUANTILE.md), [IntervalCount](../../market_analyze/INTERVAL_COUNT.md) |
@@ -25,7 +25,8 @@ shapes, optional analyses, retries, adjustment engines and durable outputs are o
 
 ## Mandatory scenarios A-H
 
-These are implementation acceptance specifications, not behavior tests already executed.
+These are cross-stage acceptance specifications. Observation-only checks are implemented
+and executed below; downstream conversion, execution and analysis gates remain unperformed.
 Each successful construction verifies unique ordered keys, exactly one outcome per
 candidate, all missing dependencies and derived counts/ratios.
 
@@ -74,7 +75,7 @@ and superseded rules are not alternate valid policies.
 | Complete-input trailing_return_inputs_v1 hash | Superseded | New construction uses explicit v2 profile with final coverage, expected/absent keys and endpoint requirements; historical v1 semantics unchanged. |
 | Converter maps every eligible scalar, Analyze pure and market-agnostic | Remain Valid | Integration specializes SampleBinding to retain missing/coverage context; no NumericSample change. |
 | Valid zero-eligible set versus successful analysis / Job | Remain Valid | All-unavailable is newly admissible construction; zero-eligible conversion failure and all-required-analysis Success rule stay independent. |
-| Research producers/converters/executors and Analyze API | Implementation Gap | Authority-only; no runtime added. Stock and other-asset gaps are scoped separately in the readiness matrix. |
+| Research producers/converters/executors and Analyze API | Implementation Gap at OBS-02 | OBS-IMP-01 implements only the Observation producer; converters, executors and Analyze remain authority-only. Stock and other-asset gaps are scoped separately in the readiness matrix. |
 
 ## Authority topology and handoff
 
@@ -88,5 +89,73 @@ valid; Conditional stays independent and unimplemented.
 
 Repository checks establish navigation, boundary and tooling consistency only; they do
 not prove missing-aware runtime, numerical correctness or live-data success. Report actual
-check outcomes at handoff. Stop after semantic encoding and reconciliation; implementation
-requires a separate task.
+check outcomes at handoff. OBS-02 stopped at semantic encoding; the separately requested
+OBS-IMP-01 implementation is recorded below.
+
+## OBS-IMP-01 implementation and reconciliation
+
+Implemented against exact baseline `31ad726211069a673fe973bc1a924bf67881e0f2` on
+`reset/market-research-descriptive`, starting from a clean worktree. The scope ends at
+an independently executable ObservationSet; Converter, Analyze and Executor work remains
+outside this implementation.
+
+| Authority | Runtime / evidence |
+| --- | --- |
+| [Observation](OBSERVATION.md): fixed request, keys, three outcomes and accounting | [Public models](../src/market_research/descriptive/observation/models.py), [observe](../src/market_research/descriptive/observation/api.py), [API tests](../tests/test_observation_api.py) |
+| [Inputs](cases/trailing_return/INPUTS.md): export-first public acquisition, complete Calendar, partial Index, discovery and explicit failures | [Public validation / evidence](../src/market_research/descriptive/cases/trailing_return/inputs.py), [preparation](../src/market_research/descriptive/cases/trailing_return/preparation.py), [input tests](../tests/test_observation_inputs.py) |
+| [Case](cases/trailing_return/ARCHITECTURE.md): calendar endpoints, binary64 formula, precedence, coverage and dependence | [Pure construction](../src/market_research/descriptive/cases/trailing_return/construction.py), [behavior tests](../tests/test_observation_construction.py) |
+| [Input identity](cases/trailing_return/INPUT_IDENTITY.md): retained final views, v2 payload and SHA-256 | [Canonical identity](../src/market_research/descriptive/cases/trailing_return/identity.py), [independent golden bytes and sensitivity tests](../tests/test_observation_identity.py) |
+
+The public Python names, immutable carriers and Not Applicable representation are encoded
+in the Observation owner. Inputs explicitly clarifies rejection of contradictory facts
+where backward discovery overlaps the sample's closed-date prefix. Formula, population,
+partial-input policy, canonical v2 bytes and upstream contracts are unchanged; no semantic
+or upstream public capability gap was found for this implementation. Runtime registration
+adds only the real Research source root to the root project/tooling; the corresponding
+repository packaging invariant test was updated.
+
+Production imports consume only the shared public `data_lake` results and the selected
+Calendar / Index public facades. Public service calls occur only in preparation. AST and
+execution tests enforce no Analyze, Converter, Executor, Snapshot, provider, Repository,
+SQLite, CLI or HTTP dependency in this slice. Complete inputs, missing intermediate and
+warm-up facts, holidays, all-unavailable / all-excluded / mixed sets, both-missing and
+mixed missing/non-positive endpoints, no candidates, malformed public fields and proofs,
+date.min exhaustion, adjacent doubling, overflow and fingerprint cases are covered.
+
+### Verification evidence (2026-10-25)
+
+- `poetry install --only-root`: passed; direct import from installed root environment passed.
+- `poetry run pytest market_research/tests -q`: 192 passed, including 189 new tests and
+  the 3 existing repository boundary checks.
+- `poetry run pytest data_snapshot/tests/test_authority_topology.py ui_http/tests/test_architecture.py -q`:
+  18 passed.
+- `poetry run pytest -q`: 1338 passed; one existing FastAPI/Starlette TestClient
+  deprecation warning, no failures.
+- `poetry run ruff check market_research ui_http`: passed.
+- `poetry run mypy market_research/src market_research/tests ui_http`: passed.
+- `poetry check --lock`: passed; no dependency/lock change required.
+- `git diff --check`: passed; full tracked diff and new runtime/tests reviewed.
+
+Live-data Observation acceptance: **Blocked**, not passed. An actual call through the
+public Observation API requested 2024-01-10..2024-01-16 with H=2, using candidate subject
+`000852.SH`; its CSI1000 metadata was not confirmed because preparation was blocked.
+The initial public SSE
+Calendar export raised `OperationError`: `Dataset 'tushare_trade_calendar' cache is
+incompatible (storage structure: fetch_unit); rebuild required for this owning Dataset`.
+Research exposed `UpstreamFailure` at `input_preparation`, retaining the request and
+attempt evidence. No ensure, Index acquisition, public CSI1000 metadata confirmation or
+real endpoint/return verification was reached. No cache was rebuilt, edited or replaced,
+and no private access or source fallback was used. Repairing existing Dataset runtime
+state is separate from this implementation. Downstream end-to-end analysis acceptance
+also remains unperformed because those runtimes are not in scope.
+
+| Delivery component | Status |
+| --- | --- |
+| Observation Domain | Complete |
+| Input Preparation | Complete |
+| Trailing Return Construction | Complete |
+| Missing-data Coverage | Complete |
+| Fingerprint / Provenance | Complete |
+| Public API | Complete |
+| Deterministic Tests | Passed |
+| Live-data Acceptance | Blocked |

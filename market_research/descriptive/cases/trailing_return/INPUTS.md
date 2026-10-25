@@ -72,6 +72,8 @@ common snapshot/freshness is promised.
    If A is date.min, fail HistoryInsufficient without constructing an invalid prior range.
    No arbitrary cutoff, weekday estimate, pretrade_date shortcut, price-row calendar,
    unknown-gap skipping or trimming candidates is authorized.
+   If discovery overlaps the sample's closed-date prefix, final public facts for the
+   same Calendar identity must agree; contradictory slices are InvalidPublicInput.
 4. Let L be the Hth open before A, B the latest anchor. Retain the complete ordered
    sessions from L through B. Each candidate's lookback is H positions earlier. Acquire
    one IndexDailyRange L..B, including all open sessions, even intermediate sessions not

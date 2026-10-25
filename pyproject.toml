@@ -24,6 +24,7 @@ packages = [
     { include = "data_lake", from = "data_lake/datasets/tushare_equity_index_futures/src" },
     { include = "data_lake", from = "data_lake/datasets/tushare_equity_index_options/src" },
     { include = "data_snapshot", from = "data_snapshot/src" },
+    { include = "market_research", from = "market_research/src" },
     { include = "ui_http", from = "ui_http/src" },
 ]
 
@@ -58,6 +59,7 @@ pythonpath = [
     "data_lake/datasets/tushare_equity_index_options/src",
     "data_lake/datasets/tushare_trade_calendar/src",
     "data_snapshot/src",
+    "market_research/src",
     "ui_http/src",
 ]
 
@@ -85,6 +87,7 @@ src = [
     "ui_http/tests",
     "ui_http/scripts",
     "market_research/tests",
+    "market_research/src",
 ]
 
 [tool.ruff.lint]
@@ -117,8 +120,10 @@ files = [
     "ui_http/tests",
     "ui_http/scripts",
     "market_research/tests",
+    "market_research/src",
 ]
 mypy_path = [
+    "market_research/src",
     "data_snapshot/tests",
     "ui_http/tests",
     "market_research/tests",
