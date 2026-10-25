@@ -4,7 +4,7 @@
 
 ## Owning module versus executable identity
 
-The owning directory and Python namespace are `ui_cli`. The executable stays `lab`, with unchanged hierarchy, arguments, exit codes, delegation, delivery and failure semantics. The sole installation mechanism is root `[project.scripts] lab = "ui_cli.cli:main"`. Study-local CLI and business behavior remain with their existing owners.
+The owning directory and Python namespace are `ui_cli`. The executable stays `lab`. The sole installation mechanism is root `[project.scripts] lab = "ui_cli.cli:main"`. Business behavior remains with its owning module. Research execution commands are retired by the Research reset; other commands retain their arguments, exit codes, delegation, delivery and failure semantics.
 
 ## Identity 与 ownership
 
@@ -14,7 +14,7 @@ The owning directory and Python namespace are `ui_cli`. The executable stays `la
 
 原则：`lab` orchestrates；owning modules define semantics and execute domain behavior。`lab` 不重新实现或复制下层业务逻辑。
 
-Console entry 只组合 command topology、help 与 dispatch；readiness diagnostics、service delegation、Research discovery/forwarding、DataLake delivery 与共享 process mechanics 在 `ui_cli` 内按职责分离。这是内部实现边界，不改变 `lab` 的唯一 public interface 或 owning module semantics。
+Console entry 只组合 command topology、help 与 dispatch；readiness diagnostics、service delegation、DataLake delivery 与共享 process mechanics 在 `ui_cli` 内按职责分离。这是内部实现边界，不改变 `lab` 的唯一 public interface 或 owning module semantics。
 
 ## Supported platforms 与 installation
 
@@ -22,7 +22,7 @@ V1 使用同一 `lab` namespace 支持 Windows native 与 Linux；WSL 按 Linux 
 
 CLI 使用 `pathlib` 与当前 Python runtime 的路径语义。属于 canonical Python runtime 的子进程使用当前 interpreter；外部工具由平台可感知的 executable resolution 查找。实现不假设 `/bin/`、`Scripts/`、`bin/` 或任何固定 executable 后缀，也不以具体 launcher 文件名判断安装成功。所有平台共用同一 command parsing、delegation 与 failure semantics。
 
-## V1 command hierarchy
+## Current command hierarchy
 
 ```text
 lab
@@ -30,9 +30,6 @@ lab
 ├── serve
 │   ├── backend
 │   └── frontend
-├── research
-│   ├── list
-│   └── run <study-id> [study-specific args...]
 └── datalake
     ├── list
     ├── coverage <dataset-id> [dataset-specific args]
@@ -46,9 +43,8 @@ lab
 
 - `lab doctor` 只读检查本地仓库结构、根 Python runtime、启动前提与服务 readiness，报告人类可读状态；必要前提缺失时非零退出。它不安装依赖、不修复环境，也不运行下层业务行为。
 - `lab serve backend` 从 repository root 前台调用 `ui_http` 拥有的 launcher；`lab serve frontend` 在 `ui_web/` 前台调用其开发脚本。两者继承标准输入输出，传递子进程退出码，并保持正常的前台中断生命周期。Backend 的 HTTP composition/runtime 由 [ui_http authority](../ui_http/ARCHITECTURE.md) 拥有；Frontend 的 runtime/configuration 由 [ui_web authority](../ui_web/ARCHITECTURE.md) 拥有。
-- `lab research list` 只按 [Research UI authority](../market_research/ui/ARCHITECTURE.md) 定义的 runnable Study convention 发现并列出 Study；不 import Research implementation、不维护中央 Study catalog、不执行 Study 或读取 Source。`lab research run <study-id>` 校验 ID 与 runner layout，再从 repository root 前台调用对应 study-local CLI，原样转发 Study ID 之后的参数，继承标准输入输出并传递子进程退出码。`--help` 及所有 study-specific arguments 由该 runner 解析。具体 Study 的 request、已声明 Component / Observation composition、method、dataset、artifact、result 与 failure presentation 仍由对应 retained Study authority 拥有。
 - `lab datalake` 直接调用具体 Dataset public Application Service，遵循 [公共 Application contract](../data_lake/APPLICATION.md)，将 CLI arguments 转换为 owning Dataset semantic request，再呈现结果；不通过子进程运行 Dataset CLI，不直接进入 SQLite、Repository 或 Source adapter。
-- 对上述子进程 delegation，缺少本地前提或遇到不可运行的 Study 时，`lab` 在调用前给出人类可读的 operational error 并非零退出；下层进程启动后的 domain failure 由 owning module 呈现，`lab` 只传播其退出状态。DataLake 的 in-process semantic result/application failure 按下文映射，不由 lab 重新计算语义。
+- 对上述子进程 delegation，缺少本地前提时，`lab` 在调用前给出人类可读的 operational error 并非零退出；下层进程启动后的 domain failure 由 owning module 呈现，`lab` 只传播其退出状态。DataLake 的 in-process semantic result/application failure 按下文映射，不由 lab 重新计算语义。
 
 ## DataLake delivery contract
 
@@ -107,3 +103,9 @@ V1 不提供组合启动、后台进程管理、依赖安装、测试运行、�
 DataLake export delivery 不复制整个 dataclass tree 或构造完整 JSON string。编码/写入/替换失败清理临时文件并保留已有 output；wire 字段、日期、null 与 ordering 保持 Dataset contract。
 
 增量编码的小片段可先合并为有界字符缓冲，再写入同目录临时文件；缓冲不得随整个 export 增长，不改变编码、换行或 ordering。flush/fsync 与原子替换的既有交付契约保持不变，编码中途、写入、flush 或替换失败均保留原 output 并清理临时文件。
+
+## Research retirement
+
+`lab research` and its Study discovery/forwarding interface are removed as a breaking change.
+Research currently publishes no execution capability or replacement CLI. Its semantic
+foundation is owned by [Research authority](../market_research/ARCHITECTURE.md).

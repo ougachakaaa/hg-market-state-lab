@@ -9,7 +9,6 @@ dependencies = [
     "python-dotenv (>=1.2.3,<2.0.0)",
     "fastapi (>=0.141.1,<0.142.0)",
     "uvicorn (>=0.53.0,<0.54.0)",
-    "matplotlib (>=3.10.0,<4.0.0)",
 ]
 
 [project.scripts]
@@ -26,14 +25,6 @@ packages = [
     { include = "data_lake", from = "data_lake/datasets/tushare_equity_index_options/src" },
     { include = "data_snapshot", from = "data_snapshot/src" },
     { include = "ui_http", from = "ui_http/src" },
-    { include = "market_research", from = "market_research/observations/cffex_option_expiry_dte_chain/src" },
-    { include = "market_research", from = "market_research/observations/src" },
-    { include = "market_research", from = "market_research/shared/cffex_option_expiry_universe/src" },
-    { include = "market_research", from = "market_research/shared/distribution/src" },
-    { include = "market_research", from = "market_research/shared/im_basis/src" },
-    { include = "market_research", from = "market_research/shared/price_to_lagged_reference/src" },
-    { include = "market_research", from = "market_research/studies/cffex_option_expiry_dte_collection/src" },
-    { include = "market_research", from = "market_research/ui/src" },
 ]
 
 [tool.poetry.group.dev.dependencies]
@@ -67,14 +58,6 @@ pythonpath = [
     "data_lake/datasets/tushare_equity_index_options/src",
     "data_lake/datasets/tushare_trade_calendar/src",
     "data_snapshot/src",
-    "market_research/observations/cffex_option_expiry_dte_chain/src",
-    "market_research/observations/src",
-    "market_research/shared/cffex_option_expiry_universe/src",
-    "market_research/shared/distribution/src",
-    "market_research/shared/im_basis/src",
-    "market_research/shared/price_to_lagged_reference/src",
-    "market_research/studies/cffex_option_expiry_dte_collection/src",
-    "market_research/ui/src",
     "ui_http/src",
 ]
 
@@ -101,14 +84,6 @@ src = [
     "ui_http/src",
     "ui_http/tests",
     "ui_http/scripts",
-    "market_research/observations/cffex_option_expiry_dte_chain/src",
-    "market_research/observations/src",
-    "market_research/shared/cffex_option_expiry_universe/src",
-    "market_research/shared/distribution/src",
-    "market_research/shared/im_basis/src",
-    "market_research/shared/price_to_lagged_reference/src",
-    "market_research/studies/cffex_option_expiry_dte_collection/src",
-    "market_research/ui/src",
     "market_research/tests",
 ]
 
@@ -141,14 +116,6 @@ files = [
     "ui_http/src",
     "ui_http/tests",
     "ui_http/scripts",
-    "market_research/observations/cffex_option_expiry_dte_chain/src",
-    "market_research/observations/src",
-    "market_research/shared/cffex_option_expiry_universe/src",
-    "market_research/shared/distribution/src",
-    "market_research/shared/im_basis/src",
-    "market_research/shared/price_to_lagged_reference/src",
-    "market_research/studies/cffex_option_expiry_dte_collection/src",
-    "market_research/ui/src",
     "market_research/tests",
 ]
 mypy_path = [
@@ -162,17 +129,9 @@ mypy_path = [
     "data_lake/datasets/tushare_equity_index_options/src",
     "data_lake/datasets/tushare_trade_calendar/src",
     "data_snapshot/src",
-    "market_research/observations/cffex_option_expiry_dte_chain/src",
-    "market_research/observations/src",
-    "market_research/shared/cffex_option_expiry_universe/src",
-    "market_research/shared/distribution/src",
-    "market_research/shared/im_basis/src",
-    "market_research/shared/price_to_lagged_reference/src",
-    "market_research/studies/cffex_option_expiry_dte_collection/src",
-    "market_research/ui/src",
     "ui_http/src",
 ]
 
 [[tool.mypy.overrides]]
-module = ["tushare", "tushare.*", "pandas", "pandas.*", "matplotlib", "matplotlib.*"]
+module = ["tushare", "tushare.*", "pandas", "pandas.*"]
 ignore_missing_imports = true

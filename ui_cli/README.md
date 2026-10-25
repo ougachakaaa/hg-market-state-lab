@@ -13,7 +13,6 @@ poetry run lab --help
 poetry run lab serve --help
 poetry run lab datalake --help
 poetry run lab datalake export --help
-poetry run lab research --help
 ```
 
 ## 命令速览
@@ -24,9 +23,6 @@ lab
 ├── serve                          前台启动开发服务
 │   ├── backend                    启动 backend
 │   └── frontend                   启动 frontend
-├── research                       发现并运行 retained Studies
-│   ├── list                       列出当前可运行的 Study IDs
-│   └── run <study-id>              转发到对应 Study 的 CLI
 └── datalake                       使用 Dataset public services
     ├── list                       发现支持的 Dataset IDs
     ├── coverage <dataset-id>      查看当前缓存覆盖
@@ -105,22 +101,10 @@ poetry run lab datalake export tushare_equity_index_options --product-codes IO H
 
 上述命令可直接在 Bash 或 PowerShell 运行。首次 ensure 可补齐所需 Calendar；coverage/export 只读，Calendar prerequisite 未完整时明确失败。查看各 Dataset 参数可使用 `lab datalake ensure <dataset-id> --help`。
 
-### Research：发现 Study 与查看接口
+### Research status
 
-```bash
-poetry run lab research list
-poetry run lab research run <study-id> --help
-```
-
-`research list` 发现当前可运行的 retained Studies；`research run <study-id> --help` 查看对应 Study 的接口。当前支持 [cffex-option-expiry-dte-collection](../market_research/studies/cffex_option_expiry_dte_collection/ARCHITECTURE.md)，其参数见 [Study inputs](../market_research/studies/cffex_option_expiry_dte_collection/INPUTS.md)，输出见 [Study results](../market_research/studies/cffex_option_expiry_dte_collection/RESULTS.md)。
-
-例如，准备 MO 在 2026 年 1 月至 9 月到期的 target DTE=15 chains（Bash 与 PowerShell 均可直接运行）：
-
-```bash
-poetry run lab research run cffex-option-expiry-dte-collection --product-code MO --expiry-start-date 2026-01-01 --expiry-end-date 2026-09-30 --target-dte 15
-```
-
-日期窗口选择到期日、包含两端。DTE 使用自然日，到期当天为 1；实际 observation_date 按完整市场事实解析，actual DTE 可能大于 target DTE，规则见 [DTE date resolution](../market_research/observations/cffex_option_expiry_dte_chain/DATE_RESOLUTION.md)。当前 CLI 成功时只输出请求、status 与完成计数，失败时追加 stage 和原因；不输出逐 expiry 明细或文件。Reusable data 由 Observation 持久化，不创建 Study run directory。实际 expiry 数量与完成情况取决于对应数据，不是固定预期。
+Research execution and Study discovery are retired. No replacement Research CLI
+is published; see the [Research authority](../market_research/ARCHITECTURE.md).
 
 ## 错误与自动化
 
@@ -134,6 +118,5 @@ poetry run lab research run cffex-option-expiry-dte-collection --product-code MO
 | 本地 setup、bootstrap、当前 runtime 状态 | [DEVELOPMENT.md](../DEVELOPMENT.md) |
 | 修改或审阅 CLI semantics、delegation、delivery | [lab authority](ARCHITECTURE.md) |
 | Dataset-specific semantics | [DataLake catalog](../data_lake/DATASETS.md) → owning Dataset authority |
-| Research execution convention / Study-specific semantics | [Research UI entry](../market_research/ui/ARCHITECTURE.md) → 对应 retained Study authority |
 
 Usage guide 不替代上述 authority；业务语义由 owning module 定义。

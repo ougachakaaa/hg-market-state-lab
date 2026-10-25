@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import ast
-import importlib.util
 import re
 from collections import deque
 from pathlib import Path
@@ -12,6 +11,9 @@ REPOSITORY_ROOT = Path(__file__).resolve().parents[2]
 MARKDOWN_LINK = re.compile(r"\[[^]]+\]\(([^)]+)\)")
 
 CONTEXT_ENTRIES = {
+    Path("market_research/ARCHITECTURE.md"),
+    Path("market_research/UPSTREAM.md"),
+    Path("market_research/descriptive/ARCHITECTURE.md"),
     Path("data_lake/EXPERIMENTS.md"),
     Path("data_lake/DIAGNOSTICS.md"),
     Path("data_lake/datasets/tushare_equity_index_options/CONTRACT_UNIVERSE.md"),
@@ -37,12 +39,6 @@ CONTEXT_ENTRIES = {
     Path("data_lake/DATASETS.md"),
     Path("data_lake/datasets/tushare_trade_calendar/ARCHITECTURE.md"),
     Path("data_lake/datasets/tushare_trade_calendar/SERVICE.md"),
-    Path("market_research/studies/AUTHORING.md"),
-    Path("market_research/studies/SCHEMA.md"),
-    Path("market_research/studies/ARCHITECTURE.md"),
-    Path("market_research/studies/IMPLEMENTATION.md"),
-    Path("market_research/studies/COMPATIBILITY.md"),
-    Path("market_research/shared/price_to_lagged_reference/ARCHITECTURE.md"),
     Path("data_snapshot/src/data_snapshot/capture/ARCHITECTURE.md"),
     Path(
         "data_snapshot/src/data_snapshot/products/"
@@ -241,35 +237,6 @@ def test_product_packages_do_not_import_sibling_products() -> None:
                 ):
                     violations.append(f"{source.relative_to(REPOSITORY_ROOT)} -> {sibling}")
     assert not violations, "sibling product imports:\n" + "\n".join(violations)
-
-
-def test_shared_price_to_lagged_semantics_do_not_depend_on_studies() -> None:
-    research_root = REPOSITORY_ROOT / "market_research"
-
-    def imports(source: Path, package: str) -> set[str]:
-        tree = ast.parse(source.read_text(encoding="utf-8"))
-        names: set[str] = set()
-        for node in ast.walk(tree):
-            if isinstance(node, ast.Import):
-                names.update(alias.name for alias in node.names)
-            elif isinstance(node, ast.ImportFrom):
-                base = importlib.util.resolve_name(
-                    "." * node.level + (node.module or ""), package
-                ) if node.level else node.module
-                if base is not None:
-                    names.add(base)
-                    names.update(f"{base}.{alias.name}" for alias in node.names)
-        return names
-
-    shared_source = (
-        research_root / "shared/price_to_lagged_reference/src"
-        / "market_research/shared/price_to_lagged_reference/__init__.py"
-    )
-    assert shared_source.is_file()
-    assert not any(
-        name == "market_research.studies" or name.startswith("market_research.studies.")
-        for name in imports(shared_source, "market_research.shared.price_to_lagged_reference")
-    )
 
 
 def test_shared_capture_does_not_import_product_contexts() -> None:

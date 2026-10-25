@@ -29,10 +29,6 @@ data_snapshot/data/raw/**
 data_snapshot/data/snapshots/**
 !data_snapshot/data/snapshots/.gitkeep
 
-# Research retained outputs (runtime artifacts)
-market_research/output/**
-!market_research/output/.gitkeep
-
 # Temporary Documents
 _temp_docs/**
 !_temp_docs/AGENTS.md
@@ -42,10 +38,6 @@ data_lake/data/
 
 # Dataset-owned runtime state, including SQLite journals / WAL files
 data_lake/datasets/*/data/
-
-# Observation-owned runtime state, including SQLite journals / WAL files
-market_research/observations/*/data/
-market_research/observations/*/output/
 
 # Experimental runtime artifacts (never formal Dataset state)
 data_lake/experiments/**/data/

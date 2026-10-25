@@ -74,11 +74,13 @@ TUSHARE_TOKEN=<your-token>
 
 ## 当前根开发命令
 
-正式 CLI 由根 canonical Python project 安装，从 repository root 使用。命令发现、服务启动、DataLake lifecycle 与 Research discovery 的可复制示例统一见 [lab usage guide](ui_cli/README.md)；当前环境和 readiness 见 [DEVELOPMENT.md](DEVELOPMENT.md)，CLI contract 见 [lab authority](ui_cli/ARCHITECTURE.md)。
+正式 CLI 由根 canonical Python project 安装，从 repository root 使用。命令发现、服务启动与 DataLake lifecycle 的可复制示例统一见 [lab usage guide](ui_cli/README.md)；当前环境和 readiness 见 [DEVELOPMENT.md](DEVELOPMENT.md)，CLI contract 见 [lab authority](ui_cli/ARCHITECTURE.md)。
 
-## Research CLI
+## Research status
 
-发现与查看 Study help 的操作见 [lab usage guide](ui_cli/README.md)。Discovery 与 forwarding contract 见 [lab authority](ui_cli/ARCHITECTURE.md) 和 [Research UI authority](market_research/ui/ARCHITECTURE.md)；Study-specific 参数和语义由对应 retained Study authority 拥有。真实运行所需的 Tushare credential 仍由 `data_snapshot` 拥有。
+The [Research semantic foundation](market_research/ARCHITECTURE.md) starts with
+Descriptive Research. Previous execution packages and CLI commands are retired;
+no Research execution capability is currently published.
 
 ## HTTP API
 

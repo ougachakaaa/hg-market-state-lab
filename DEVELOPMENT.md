@@ -37,8 +37,6 @@ poetry run lab doctor
 poetry run lab serve backend
 poetry run lab serve frontend
 poetry run lab datalake list
-poetry run lab research list
-poetry run lab research run <study-id> --help
 ```
 
 安装环境已激活时可直接使用 `lab`；`poetry run lab` 会从根环境调用相同的 console script。
@@ -51,7 +49,6 @@ poetry run lab research run <study-id> --help
 
 `lab serve backend` 从 repository root 使用当前 Python interpreter 前台执行 `ui_http/scripts/api.py`。`lab serve frontend` 在 `ui_web/` 前台执行系统解析到的 npm `run dev`；首次启动前需在 `ui_web/` 自行执行 `npm install`。两个命令继承标准输入输出、传递子进程退出码，Ctrl+C 结束前台进程。缺少启动前提时明确报错，不自动修复环境。
 
-`lab research list` 列出可运行的 retained Study；`lab research run <study-id> --help` 转发到对应 Study 的帮助。Study ID、runner layout 与转发规则见 [Research UI authority](market_research/ui/ARCHITECTURE.md)，具体参数见对应 retained Study authority。
 
 `ui_web/` 是独立 npm project，使用 Vite + React + TypeScript。Node.js 需满足当前 Vite 要求（20.19+ 或 22.12+）。`npm run dev` 在 `http://127.0.0.1:5173/` 提供可选择日期的 MO Option Chain 页面，与 `doctor` 的本地诊断地址一致；`npm run build` 执行 TypeScript 检查及 production build，`npm run lint` 运行 Oxlint，`npm run test` 运行前端测试。Vite dev proxy 将 frontend origin 的 `/mo-option-chain` 原路径和 query 转发到 `http://127.0.0.1:8011`，不需要 backend CORS policy。默认 provider 已接入真实读取链路；具体响应取决于目标日期与 Source 数据。
 
@@ -66,3 +63,6 @@ poetry run lab research run <study-id> --help
 遇到 incompatible generation 或损坏缓存时先停止使用该 Dataset 的 writers，保留原文件供诊断；coverage/export 不负责修复。确需 rebuild 时，由 operator 显式将该 Dataset 的完整 `data/` 目录移至仓库外的备份位置，再使用原 semantic request 执行 ensure，由 service 重新创建 owned cache。不要复制旧 SQLite 内容进入新库，不自动迁移、删除原缓存或重建 sibling Dataset。Calendar 与三个行情库分别拥有生命周期；重建 Calendar 后须先恢复所需日期范围，才能为行情 operations 提供完整 prerequisite。具体 compatibility / integrity 规则见 [PERSISTENCE.md](data_lake/PERSISTENCE.md)。
 
 日常 ensure 不刷新已有 success，不保证 provider-current freshness；无需通过重建缓存例行更新历史事实。运行验收使用系统临时存储并重定向内部 Composition 路径，不把 token 或 storage path 加入 public request，不对默认用户缓存做试验。历史 V1 验收证据见 [Historical Acceptance](data_lake/RELEASE_ACCEPTANCE.md)（仅历史基线，非当前验收或操作指令）；当前验证按受影响模块的 Agent rules 执行。
+
+Research currently has a [semantic foundation](market_research/ARCHITECTURE.md) only;
+there is no Research execution command. The previous Study CLI is retired.

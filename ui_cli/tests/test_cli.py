@@ -11,28 +11,23 @@ from pathlib import Path
 
 import pytest
 
-from ui_cli import cli, research
+from ui_cli import cli
 
 REPOSITORY_ROOT = Path(__file__).resolve().parents[2]
 CLI_PATH = REPOSITORY_ROOT / "ui_cli" / "cli.py"
 
 
-def test_root_and_research_help_are_layered(capsys: pytest.CaptureFixture[str]) -> None:
+def test_root_and_service_help_are_layered(capsys: pytest.CaptureFixture[str]) -> None:
     with pytest.raises(SystemExit, match="0"):
         cli.main(["--help"])
     root_help = capsys.readouterr().out
-    assert "{doctor,serve,research,datalake}" in root_help
-    assert "research" in root_help
+    assert "{doctor,serve,datalake}" in root_help
+    assert "research" not in root_help
 
     with pytest.raises(SystemExit, match="0"):
         cli.main(["serve", "--help"])
     assert "{backend,frontend}" in capsys.readouterr().out
     assert "datalake" in root_help
-
-    with pytest.raises(SystemExit, match="0"):
-        cli.main(["research", "--help"])
-    research_help = capsys.readouterr().out
-    assert "{list,run}" in research_help
 
 
 @pytest.mark.parametrize("command", ["backend", "frontend"])
@@ -80,7 +75,7 @@ def test_root_cli_is_the_only_repository_executable_surface() -> None:
     assert not (REPOSITORY_ROOT / "dev.py").exists()
 
 
-@pytest.mark.parametrize("arguments", [["--help"], ["research", "list"]])
+@pytest.mark.parametrize("arguments", [["--help"], ["datalake", "list"]])
 def test_installed_cli_runs_through_canonical_command(arguments: list[str]) -> None:
     poetry = shutil.which("poetry")
     assert poetry is not None
@@ -95,4 +90,14 @@ def test_installed_cli_runs_through_canonical_command(arguments: list[str]) -> N
     if arguments == ["--help"]:
         assert result.stdout.strip()
     else:
-        assert result.stdout.splitlines() == list(research.discover_research_studies())
+        assert "tushare_index_daily" in result.stdout.splitlines()
+
+
+@pytest.mark.parametrize(
+    "arguments",
+    [["research", "list"], ["research", "run", "old-study"], ["research", "--help"]],
+)
+def test_retired_research_commands_are_rejected(arguments: list[str]) -> None:
+    with pytest.raises(SystemExit) as excinfo:
+        cli.main(arguments)
+    assert excinfo.value.code == 2
