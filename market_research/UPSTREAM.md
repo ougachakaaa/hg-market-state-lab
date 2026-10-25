@@ -36,8 +36,10 @@ around the gap using private access or extend upstream behavior implicitly.
 
 Only Input Preparation acquires upstream market facts. It may call one or more explicitly
 selected Dataset public Application Services or Snapshot public Product boundaries.
-Observation Construction consumes prepared facts; analysis and reports cannot secretly
-acquire them, including via helpers that hide upstream I/O. These are responsibilities,
+Observation Construction consumes prepared facts; Sample Converter, Analyze, execution
+result assembly and interpretation cannot secretly acquire them, including via helpers
+that hide upstream I/O. Research executors organize Input Preparation but do not grant
+other phases acquisition permission. These are responsibilities,
 not a mandatory adapter hierarchy or generic gateway.
 
 Research never directly accesses external market-data providers (including Tushare),
@@ -79,10 +81,12 @@ One semantic fact has one declared canonical upstream owner. Multiple required u
 are legal only with explicit fact ownership and completeness for each; no implicit merging,
 overrides, freshness guarantees or source-conflict resolution is granted.
 
-ResearchRun records actual semantic requests and public input references: Dataset identity,
-public view/schema, scope/window and coverage context, or Snapshot Product identity,
+Research-owned JobResult execution context records actual semantic requests and public
+input references: Dataset identity, public view/schema, scope/window and coverage context,
+or Snapshot Product identity,
 query/result contract and version where published. ObservationSet carries source and
-derivation references; results link observations, methods and run context. Exact reproducibility
+derivation references; JobResult links observations, converted samples, Analyze method/results
+and execution context, while BatchResult preserves per-Job traceability. Exact reproducibility
 requirements and sufficient input retention/reference strategy must be decided by the
 concrete case; a mutable upstream cache or a window alone is not proof of identical inputs.
 No new universal provenance envelope or persistence lifecycle is imposed.

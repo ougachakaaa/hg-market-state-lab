@@ -13,6 +13,7 @@ Owning module directories use `snake_case`; Python namespaces match their owning
 | `data_lake/` | `data_lake` |
 | `data_snapshot/` | `data_snapshot` |
 | `market_research/` | `market_research` |
+| `market_analyze/` | Intended `market_analyze`; authority only, no package yet |
 | `market_modeling/` | Reserved; no package or module authority yet |
 | `ui_cli/` | `ui_cli` (executable `lab`) |
 | `ui_http/` | `ui_http` |
@@ -26,7 +27,7 @@ The root Python project/distribution remains `hg-market-state-lab`, with one roo
 
 Data Snapshot directly succeeds Market Snapshot as an independent bounded module; naming does not transfer its Product, Capture, Preparation, persisted Raw or shared capabilities into DataLake. DataLake V1 remains frozen. Experimental Source validation is isolated under `data_lake/experiments/`, with no stable consumer dependency; the narrow contract is [Experiments authority](data_lake/EXPERIMENTS.md).
 
-Stable dependencies continue to follow published boundaries: `ui_cli` delegates to owning modules; `ui_http` consumes owning module public application/product boundaries; `ui_web` consumes the published HTTP/OpenAPI contract. Business modules do not depend on these inbound adapters. Research consumes only authorized Dataset / Snapshot public contracts, with detailed caller permissions in its UPSTREAM authority; DataLake / Snapshot / Modeling do not depend on Research. Snapshot may consume explicitly authorized Dataset public services, never internals. Modeling remains a sibling of Research with no new internal design or import permissions inferred from renaming.
+Stable dependencies continue to follow published boundaries: `ui_cli` delegates to owning modules; `ui_http` consumes owning module public application/product boundaries; `ui_web` consumes the published HTTP/OpenAPI contract. Business modules do not depend on these inbound adapters. Research consumes only authorized Dataset / Snapshot public contracts for market inputs, with detailed caller permissions in its UPSTREAM authority, and the independent Analyze public numerical contract for statistics. DataLake / Snapshot / Analyze / Modeling do not depend on Research; Analyze also does not depend on DataLake or Snapshot. Snapshot may consume explicitly authorized Dataset public services, never internals. Modeling remains a sibling of Research with no new internal design or import permissions inferred from renaming.
 
 ## 1. 仓库定位
 
@@ -54,9 +55,15 @@ DataLake 不拥有 Snapshot Product semantics、Preparation、analysis-ready com
 
 ### `market_research`
 
-独立的 exploratory / statistical research bounded module，消费 DataLake public facts 与 Snapshot analysis-ready artifacts，将历史市场事实转换为可复现的 empirical observations、statistical analyses 与 research evidence。当前从 Descriptive Research 开始；Research 不拥有 UI presentation。
+独立的 exploratory / statistical research bounded module，消费授权的 DataLake public facts、Snapshot analysis-ready artifacts 与 Analyze public numerical capability，拥有市场指标、empirical observations、Sample Converter、Research Executor、统计结果的业务关联与 research evidence / interpretation。Descriptive 与 Conditional 是独立演化的范式，当前只细化 Descriptive；Research 不拥有 UI presentation 或通用数值统计公式。
 
 Research result 是 evidence / finding，不是 production market-state output。模块内部边界见 [market_research/ARCHITECTURE.md](market_research/ARCHITECTURE.md)。
+
+### `market_analyze`
+
+独立的通用数值统计 bounded module，拥有 numerical sample、统计方法参数、计算结果及统计失败语义；第一阶段仅包含 Quantile 与 IntervalCount。它不理解市场标的、金融公式、Research ObservationSet / Job / Batch，也不获取市场数据。Research 仅通过其 public Python semantic boundary 消费统计能力；Analyze 不依赖 Research、DataLake 或 Snapshot，该 boundary 不表示 HTTP 服务。
+
+当前仅有 authority，尚无可运行或可安装的 Python package；本次不新增安装配置。模块边界与公共数值契约入口见 [market_analyze/ARCHITECTURE.md](market_analyze/ARCHITECTURE.md)。
 
 ### `ui_cli`
 
@@ -88,6 +95,7 @@ Repository
     data_snapshot/         # data_snapshot
     market_modeling/       # market_modeling; no new implementation implied
     market_research/       # market_research
+    market_analyze/        # authority only; intended namespace market_analyze, no package yet
     ui_cli/                # ui_cli; executable remains lab
     ui_http/               # ui_http
     ui_web/                # npm project; no Python namespace
@@ -97,7 +105,7 @@ Repository
 
 `data_lake` 拥有 canonical Python namespace `data_lake`；shared kernel 源码归顶层 `data_lake/src/`，具体 Provider 与 Dataset 的 authority、source、tests 分别 colocate 于 `data_lake/providers/<provider-id>/` 与 `data_lake/datasets/<dataset-id>/`，persistent state 仍由 Dataset 拥有，topology 由 [DataLake authority](data_lake/ARCHITECTURE.md) 拥有。Provider-local / Dataset-local source roots 同样使用 repository root 唯一 Python project、dependency graph 与根 `.venv`，不创建独立 Python runtime。Consumer 可以直接依赖具体 Dataset public Application Service；shared kernel 不依赖具体 Provider 或 Dataset，Dataset 间只允许 DataLake authority 明确声明的单向 public Application Service dependency，不开放 internal persistence。Public boundary 与 source registration / import compatibility 约束进入 DataLake authority。
 
-Runtime unification 不合并模块、不改变源码目录 ownership，也不把所有 Python source 移入统一 `src/`。`data_lake`、`data_snapshot`、`market_modeling`、`market_research`、`ui_cli` 与 `ui_http` 是独立 namespace，由各自 semantic module 拥有。
+Runtime unification 不合并模块、不改变源码目录 ownership，也不把所有 Python source 移入统一 `src/`。`data_lake`、`data_snapshot`、`market_modeling`、`market_research`、`ui_cli` 与 `ui_http` 是独立 namespace，由各自 semantic module 拥有。`market_analyze` 的预期 namespace 同样独立，但当前只有 authority，不因此创建 package、source root 或第二套 Python runtime。
 
 共享 dependency graph 或 `.venv` 不构成 cross-module import permission。模块依赖方向必须由 repository/module authority、被依赖模块发布的 public boundary 与 architecture tests 共同约束；不得因为 package 在同一环境中可 import 就绕过这些边界。
 
@@ -122,7 +130,18 @@ External Market Sources
 
 该图表达业务职责与 analytical data flow，不强制 runtime deployment topology 或 package import dependency。Dataset Facts → Snapshot 仅指明确授权的 public service consumption，不强制替换 Snapshot Capture；Research 的具体 producer 权限见 UPSTREAM。`market_research` 与 `market_modeling` 是 sibling analytical modules；Research 不是 Modeling pipeline 的强制 stage。`data_snapshot` 的产物也可以被仓库外的 analyzer 直接消费。
 
-`market_research` 通过 `data_snapshot` 明确支持的 public application/product boundary 消费 analysis-ready result，也可通过 DataLake public Application Service 消费 source facts；不依赖 Source Capture、Raw Artifact、product-private Preparation、upstream persistence、Dataset / Snapshot SQLite、`ui_http`、FastAPI 或 HTTP DTO。Research 内部 composition 由其 module authority 拥有，upstream producer 权限与 selection 见 [Research upstream authority](market_research/UPSTREAM.md)，具体 integration implementation 遵循该 contract。`data_lake`、`data_snapshot` 与 `market_modeling` 不得依赖 `market_research`。
+`market_research` 通过 `data_snapshot` 明确支持的 public application/product boundary 消费 analysis-ready result，也可通过 DataLake public Application Service 消费 source facts；不依赖 Source Capture、Raw Artifact、product-private Preparation、upstream persistence、Dataset / Snapshot SQLite、`ui_http`、FastAPI 或 HTTP DTO。Research 内部 composition 由其 module authority 拥有，upstream producer 权限与 selection 见 [Research upstream authority](market_research/UPSTREAM.md)，具体 integration implementation 遵循该 contract。`data_lake`、`data_snapshot`、`market_analyze` 与 `market_modeling` 不得依赖 `market_research`。
+
+Research 与 Analyze 的依赖方向如下；这是 semantic boundary，不声明已有 runtime implementation：
+
+```text
+market_research
+    ├──→ data_lake public API
+    ├──→ data_snapshot public API (only as authorized by Research UPSTREAM)
+    └──→ market_analyze public API
+```
+
+Research 构造市场观察、转换数值样本并关联返回的统计结果；Analyze 只计算数值统计，不反向获取市场事实或依赖 Research。具体转换与执行契约从 Research module authority 进入，不在根层重复定义。
 
 Research finding 可以经以下语义决策路径促进未来 Modeling，但该路径不是 runtime dependency，也不定义 promotion framework：
 
@@ -148,7 +167,7 @@ market_modeling ─────┼──→ ui_http ───→ ui_web
 future modules ──────┘
 ```
 
-`ui_http` 是 inbound delivery boundary，不是 analytical pipeline stage。稳定依赖方向是 `ui_http` 依赖 owning module 的 public application/product boundary；`data_snapshot`、`market_research` 与 `market_modeling` 不得依赖 `ui_http`，也不得用 FastAPI、HTTP DTO/status/error envelope、OpenAPI 或 frontend types 定义自己的 semantic model。当前 `market_research` 不提供 research service/API。
+`ui_http` 是 inbound delivery boundary，不是 analytical pipeline stage。稳定依赖方向是 `ui_http` 依赖 owning module 的 public application/product boundary；`data_snapshot`、`market_research`、`market_analyze` 与 `market_modeling` 不得依赖 `ui_http`，也不得用 FastAPI、HTTP DTO/status/error envelope、OpenAPI 或 frontend types 定义自己的 semantic model。当前 `market_research` 与 `market_analyze` 均不提供可运行的 service/API；Analyze 的概念性 public Python boundary 不是 HTTP 发布。
 
 ## 5. Authority 导航
 
@@ -178,6 +197,9 @@ ARCHITECTURE.md（本文件）
     │      ↓
     │  co-located product / capability ARCHITECTURE.md
     ├─ market_research/ARCHITECTURE.md
+    ├─ market_analyze/ARCHITECTURE.md
+    │      ↓
+    │  market_analyze/CONTRACT.md
     ├─ ui_http/ARCHITECTURE.md
     │      ↓
     │  ui_http/HTTP_PRODUCTS.md

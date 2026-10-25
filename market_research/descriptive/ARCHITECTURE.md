@@ -1,77 +1,65 @@
 # Descriptive Research authority
 
 This is the initial research paradigm under the [module authority](../ARCHITECTURE.md).
-Public fact acquisition follows [UPSTREAM.md](../UPSTREAM.md). This document owns
-observation, population, analysis and evidence semantics for descriptive research;
-concrete case definitions must specialize these boundaries before implementation.
+Public fact acquisition follows [UPSTREAM.md](../UPSTREAM.md). Descriptive Research owns
+the empirical meaning and interpretation of historical observations, sample conversion
+and research execution. Generic numerical statistics are delegated to the independent
+[Analyze module](../../market_analyze/ARCHITECTURE.md).
 
-## Observation and population
+## Main flow and authority navigation
 
-An ObservationSet is a coherent empirical collection, not an AnalysisResult or an assumed
-stored artifact. Before constructing one, specify observation grain/key, variable meaning,
-units, derivation, temporal reference/window/alignment, population scope, validity rules,
-handling of legitimate null/absence, and source/derivation provenance. Different cases
-can have different schemas and grains; no universal row schema or asset hierarchy is required.
+```text
+ObservationJobSpec → complete prepared facts → ObservationSet
+    → Research Sample Converter → Analyze NumericSample
+    → Analyze API (Quantile / IntervalCount) → Analyze AnalysisResult
+    → Research association → JobResult → BatchResult / Evidence
+```
 
-Distinguish required input completeness from admissibility for a statistical population.
-An upstream failure cannot be disguised as an excluded observation. Define valid/invalid
-observations and any exclusions explicitly, preserve their reasons, and account for the
-constructed, eligible and analyzed counts. Grouping or method-specific eligibility belongs
-to the AnalysisSpec and must remain traceable to the original ObservationSet.
-Window boundaries, lookback requirements and use of facts outside the evaluation window
-must be explicit; construction cannot silently shift dates or discard required history.
-
-## Analysis and evidence
-
-An AnalysisSpec defines target variables, population, grouping, statistical method and
-parameters. Analysis reads the prepared ObservationSet without mutating or reconstructing
-it and without upstream I/O. Multiple analyses can reuse exactly the same observation
-collection. AnalysisResult identifies that collection and spec, reports sample counts,
-calculated statistics, diagnostics and evidence. Empty/insufficient populations and
-undefined statistics must be handled explicitly by the case/method contract, not guessed
-or silently converted to numeric results.
-
-Method definitions must settle units, estimator conventions, quantile interpolation,
-histogram boundaries, tail definitions and other relevant parameters before calculation.
-No historical `shared.distribution` defaults are inherited. Applicable choices belong
-to the concrete analysis contract; this foundation chooses no formulas or defaults.
-
-ResearchReport assembles computed evidence, findings and limitations with definition/run
-context. It does not recalculate statistics, filter populations or turn descriptive
-associations into causality, predictive validity or authoritative trading signals.
-Interpretation must state the population and limitations supporting the claim.
-
-## Capability directions
-
-| Family | Intended directions, subject to concrete case contracts |
+| Concern | Canonical owner |
 | --- | --- |
-| Distribution | Descriptive statistics, quantiles, empirical distributions, histograms, tail frequencies |
-| Time-series | Rolling statistics, temporal variation, historical period comparisons |
-| Relationship | Joint distributions, correlations, group comparisons |
+| Fixed observation request, grain, population, validity, market derivation and provenance | [OBSERVATION.md](OBSERVATION.md) |
+| ObservationSet → NumericSample and statistical result → research association | [ANALYZE_INTEGRATION.md](ANALYZE_INTEGRATION.md) |
+| ResearchPlan, single Job / Batch control, statuses and results | [EXECUTION.md](EXECUTION.md) |
+| Numerical input, method parameters, results and failures | [Analyze CONTRACT.md](../../market_analyze/CONTRACT.md) |
 
-These directions authorize no complete statistical library or universal engine.
+An ObservationSet may support multiple analyses after conversion. Method parameter changes
+do not require upstream acquisition or observation reconstruction as a semantic prerequisite.
+Research interpretation must state its population, subject, horizon, historical window,
+input/derivation provenance, statistical method and limitations. It consumes computed
+results without recalculating statistics or silently filtering the analyzed population.
+Descriptive association does not establish causality, predictive validity or a trading signal.
 
 ## First intended case and readiness
 
-CSI1000 historical daily return distribution is the first intended case:
+**CSI1000 Trailing Cumulative Return Distribution** illustrates the ownership and flow:
 
 ```text
-Authorized index daily facts → daily return observations
-    → population validation → distribution analysis → reproducible evidence
+subject = CSI1000
+metric = trailing_cumulative_return
+horizon = 2 trading sessions
+sample_window = 2020-01-01 ... 2025-12-31
+
+Authorized historical index facts → fixed-horizon return ObservationSet
+    → Research Converter → NumericSample → Quantile and IntervalCount
+    → Research JobResult association → interpreted evidence
 ```
 
-Daily returns, volatility, quantiles, tails and historical period variation are eventual
-questions, not implemented capabilities. The separate case task must decide the exact
-index/public upstream binding, return definition/units, historical window and boundary
-inputs, validity/population, initial AnalysisSpec and reproducibility strategy. Start with
-the smallest executable descriptive slice; do not infer unresolved choices from legacy
-code. IM basis, MO option premiums and variable relationships are possible future cases,
-not reasons to create shared asset abstractions now.
+The dates and horizon are examples, not approved production defaults. A ResearchPlan can
+expand multiple subjects, horizons and windows into independent fixed-parameter Jobs under
+an explicitly declared expansion rule. Before implementation the concrete case must settle
+the index code and public upstream binding, return formula/units, actual historical window,
+boundary inputs, population/validity and reproducibility strategy. Statistical choices
+belong to Analyze's method authority; no quantile algorithm or interval buckets are selected
+here. These case and statistical choices remain unresolved semantic decisions. The
+Observation Producer, Converter and Executors are Expected Implementation Gaps, not
+runnable capabilities.
 
 ## Deferred scope
 
-No case is implemented by this reset. Conditional Research and its contracts, Condition
-Engine, forward evaluation, backtesting, strategy/model/signal design, generic runner or
+No case is implemented by this authority encoding. Conditional Research and its contracts,
+Condition Engine, forward evaluation, backtesting, strategy/model/signal design, generic runner or
 pipeline DSL, research database, artifact registry, automatic hypothesis discovery, Web
 visualization, full report rendering and new Research CLI are out of scope. No mandatory
-durable storage or six-class hierarchy is required for the first version.
+durable storage or class hierarchy is required for the first version. Descriptive and
+Conditional remain independent under the module invariant; no cross-paradigm framework
+or shared execution engine is authorized.

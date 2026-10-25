@@ -7,6 +7,7 @@ data_lake        → reusable source facts and Dataset-owned caches
 data_snapshot    → market state data preparation
 market_modeling  → market state modeling
 market_research  → exploratory and statistical research
+market_analyze   → generic numerical statistics (authority only)
 ui_cli           → repository CLI (lab)
 ui_http          → repository-wide HTTP inbound delivery and composition
 ui_web           → presentation and interaction
@@ -27,6 +28,7 @@ README 是人类开发入口，不是架构或业务语义 authority。
 - `data_snapshot` 稳定分层：[data_snapshot/ARCHITECTURE.md](data_snapshot/ARCHITECTURE.md)
 - `data_snapshot` capability/product catalog：[data_snapshot/CAPABILITIES.md](data_snapshot/CAPABILITIES.md)
 - `market_research` exploratory/statistical research 边界：[market_research/ARCHITECTURE.md](market_research/ARCHITECTURE.md)
+- `market_analyze` 独立数值统计边界（仅 authority）：[market_analyze/ARCHITECTURE.md](market_analyze/ARCHITECTURE.md)
 - `ui_http` HTTP boundary 与 product catalog：[ui_http/ARCHITECTURE.md](ui_http/ARCHITECTURE.md)
 - `ui_web` 边界与 visualization 路由：[ui_web/ARCHITECTURE.md](ui_web/ARCHITECTURE.md)
 - 根开发命令与 managed worktree 说明：[DEVELOPMENT.md](DEVELOPMENT.md)
@@ -81,6 +83,10 @@ TUSHARE_TOKEN=<your-token>
 The [Research semantic foundation](market_research/ARCHITECTURE.md) starts with
 Descriptive Research. Previous execution packages and CLI commands are retired;
 no Research execution capability is currently published.
+
+Research owns observation, sample conversion, execution and interpretation; the independent
+[Analyze authority](market_analyze/ARCHITECTURE.md) owns generic numerical statistics.
+Analyze currently has no runnable Python package, installed API, CLI or HTTP service.
 
 ## HTTP API
 
