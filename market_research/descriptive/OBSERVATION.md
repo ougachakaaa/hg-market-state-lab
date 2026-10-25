@@ -3,7 +3,7 @@
 This contract specializes the [Descriptive entry](ARCHITECTURE.md). It owns fixed
 requests, population, outcomes, coverage and derivation. Public inputs follow
 [UPSTREAM.md](../UPSTREAM.md); numerical contracts remain
-[Analyze-owned](../../market_analyze/CONTRACT.md). Status: Implementation Ready for
+[Statistics-owned](../../market_statistics/CONTRACT.md). Status: Implementation Ready for
 the [index first case](cases/trailing_return/ARCHITECTURE.md). Its independent Python
 producer is published under `market_research.descriptive.observation`.
 
@@ -37,7 +37,7 @@ not publish a data capability. Current bindings/gaps are in [ACCEPTANCE.md](ACCE
 The public operation is `observe(ObservationJobSpec) -> ObservationSet`; the independent
 pure operation is `construct_observations(ObservationJobSpec, prepared_inputs)`.
 Only Input Preparation performs upstream I/O. Construction consumes validated facts and
-availability proof; it cannot reacquire facts or shift dates. Changing only AnalysisSpec
+availability proof; it cannot reacquire facts or shift dates. Changing only StatisticalSpec
 does not require new observations. [Execution](EXECUTION.md) owns Job identity/expansion.
 
 ## Population and temporal invariants
@@ -92,7 +92,7 @@ No undeclared filtering, imputation, truncation, rounding, deduplication or outl
 Eligible numbers retain calculated binary64 coordinates. Duplicate keys, extra outcomes,
 unaccounted anchors and inconsistent counts fail construction, never silent repair.
 Legal zero-candidate, all-unavailable and all-excluded populations yield valid zero-eligible
-sets; [conversion](ANALYZE_INTEGRATION.md) then fails explicitly, preserving diagnostics.
+sets; [conversion](STATISTICS_INTEGRATION.md) then fails explicitly, preserving diagnostics.
 
 ## Coverage
 

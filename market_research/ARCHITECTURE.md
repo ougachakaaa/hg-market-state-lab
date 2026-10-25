@@ -5,7 +5,7 @@
 `market_research` transforms historical market facts into reproducible empirical
 observations and interpreted research evidence. It is the active business organizer,
 consuming authorized data contracts and the independent numerical capability of
-`market_analyze` under the [repository architecture](../ARCHITECTURE.md).
+`market_statistics` under the [repository architecture](../ARCHITECTURE.md).
 
 This authority formally supersedes the previous V1 Component / durable Observation /
 Study framework, Shared Component classification and lifecycle, publishing conventions,
@@ -18,8 +18,8 @@ are retired; Git history is the historical reference. No legacy interface surviv
 ```text
 ResearchPlan → fixed-parameter ObservationJobSpecs
     → Input Preparation → Observation Construction → ObservationSet
-    → Research Sample Converter → SampleProjection (Analyze NumericSample + Research binding)
-    → market_analyze public API → Analyze AnalysisResult
+    → Research Sample Converter → SampleProjection (Statistics NumericSample + Research binding)
+    → market_statistics compute → StatisticalResult
     → Research result association → JobResult / BatchResult → Evidence / Interpretation
 ```
 
@@ -29,7 +29,7 @@ Observation Construction owns market indicator formulas and empirical variables 
 from those facts. Research owns sample conversion, single-job and batch execution control,
 association of external numerical results, and interpretation with research context.
 Executors orchestrate these responsibilities; they do not own financial or statistical
-formulas. Generic numerical statistics belong exclusively to Analyze. These responsibilities
+formulas. Generic numerical statistics belong exclusively to Statistics. These responsibilities
 do not require a package hierarchy, shared base classes or a generic execution engine.
 
 ## Semantic ownership and navigation
@@ -39,14 +39,14 @@ These are conceptual responsibilities, not prescribed Python classes or callable
 | Concept | Ownership |
 | --- | --- |
 | ObservationJobSpec / ObservationSet | Research observation request, empirical meaning, population, validity and derivation: [Observation authority](descriptive/OBSERVATION.md). |
-| Sample Converter / SampleProjection / SampleBinding / result association | Research-owned outbound adaptation and business linkage: [Analyze integration](descriptive/ANALYZE_INTEGRATION.md). |
+| Sample Converter / SampleProjection / SampleBinding / result association | Research-owned outbound adaptation and business linkage: [Statistics integration](descriptive/STATISTICS_INTEGRATION.md). |
 | ResearchPlan / JobResult / BatchResult | Research definition, execution context, control and complete reporting: [Execution authority](descriptive/EXECUTION.md). |
-| NumericSample / AnalysisSpec / AnalysisResult / AnalysisFailure | Analyze-owned public numerical contracts: [Analyze contract](../market_analyze/CONTRACT.md). Research consumes them without defining competing types. |
+| NumericSample / StatisticalSpec / StatisticalResult / StatisticalFailure | Statistics-owned public numerical contracts: [Statistics contract](../market_statistics/CONTRACT.md). Research consumes them without defining competing types. |
 
 The previous ResearchDefinition / ResearchRun / ResearchReport conceptual inventory is
 replaced by these responsibilities, not retained as an additional required model layer.
 Research owns research parameters, population selection, business linkage and evidence;
-it does not transfer market semantics into Analyze's method parameters or result types.
+it does not transfer market semantics into the Statistics method parameters or result types.
 An ObservationSet can support multiple analyses through explicit conversion. Changing only
 statistical parameters does not semantically require new market inputs or observations.
 ObservationSets and results are not automatically durable artifacts.
@@ -57,10 +57,10 @@ methods and execution context; a concrete case must explain how it meets that re
 ## Module and dependency boundaries
 
 Research consumes DataLake / Snapshot public semantic contracts under [UPSTREAM.md](UPSTREAM.md)
-and Analyze's [public numerical contract](../market_analyze/CONTRACT.md).
+and the Statistics [public numerical contract](../market_statistics/CONTRACT.md).
 It owns no market-data acquisition infrastructure, provider clients, upstream persistence
-or canonical Snapshot Product preparation. DataLake, Snapshot and Analyze never depend
-on Research; Analyze also never depends on DataLake or Snapshot and performs no upstream I/O.
+or canonical Snapshot Product preparation. DataLake, Snapshot and Statistics never depend
+on Research; Statistics also never depends on DataLake or Snapshot and performs no upstream I/O.
 Modeling remains a sibling, not a required downstream runtime stage; current repository
 rules grant it no Research import permission. Any eventual Modeling or UI consumption of
 published Research outputs requires its own authorized public boundary.
@@ -85,7 +85,7 @@ independent Python capability under `src/market_research/descriptive/`, with pub
 preparation, pure construction and contract tests. Its public boundary is owned by
 [Observation](descriptive/OBSERVATION.md); usage is in [README](README.md).
 Sample Converter and Job / Batch Executor remain Expected Implementation Gaps.
-No Research CLI, HTTP service or report renderer is published. Analyze's statistical API
+No Research CLI, HTTP service or report renderer is published. The Statistics public API
 is likewise authority-only. Actual verification and live-data limitations are recorded in
 [Acceptance](descriptive/ACCEPTANCE.md).
 The concrete first case and implementation acceptance gates are reached through the

@@ -168,7 +168,7 @@ def test_only_published_datalake_imports_and_no_forbidden_dependency_edges() -> 
         "data_lake.datasets.tushare_index_daily",
     }
     forbidden = (
-        "market_analyze",
+        "market_statistics",
         "data_snapshot",
         "ui_cli",
         "ui_http",

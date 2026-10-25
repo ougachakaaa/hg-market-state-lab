@@ -51,6 +51,6 @@ result = construct_observations(job, prepared)
 Preparation failures expose `stage`, `category`, `request` and obtained `evidence`;
 `UpstreamFailure.__cause__` retains the public DataLake error. An incomplete Calendar
 fails preparation; a validated partial Index Export can produce unavailable outcomes.
-Construction makes no upstream calls. This API requires no Analyze, Converter or Executor.
+Construction makes no upstream calls. This API requires no Statistics, Converter or Executor.
 
 Verification commands and actual live-data status are in [Acceptance](descriptive/ACCEPTANCE.md).

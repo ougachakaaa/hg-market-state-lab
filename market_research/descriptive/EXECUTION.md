@@ -3,8 +3,8 @@
 This contract specializes the [Descriptive entry](ARCHITECTURE.md). It owns plan
 validation/expansion, Job/Batch control, identity and complete result accounting.
 Observation and conversion semantics belong to [OBSERVATION.md](OBSERVATION.md) and
-[ANALYZE_INTEGRATION.md](ANALYZE_INTEGRATION.md); numerical semantics to
-[Analyze](../../market_analyze/CONTRACT.md); inputs to [UPSTREAM.md](../UPSTREAM.md).
+[STATISTICS_INTEGRATION.md](STATISTICS_INTEGRATION.md); numerical semantics to
+[Statistics](../../market_statistics/CONTRACT.md); inputs to [UPSTREAM.md](../UPSTREAM.md).
 Status: Implementation Ready for the first case; executors are not implemented.
 
 ## ResearchPlan and preflight
@@ -16,7 +16,7 @@ ResearchPlan
   subjects: ordered non-empty sequence
   horizons: ordered non-empty sequence
   windows: ordered non-empty sequence of inclusive date pairs
-  analysis_requests: ordered non-empty sequence of (request_id, Analyze AnalysisSpec)
+  analysis_requests: ordered non-empty sequence of (request_id, Statistics-owned StatisticalSpec)
   on_job_failure: continue | stop
 ```
 
@@ -29,7 +29,7 @@ are supplied for dates, horizon, analysis parameters or on_job_failure.
 
 Before **any** DataLake I/O, validate the entire plan's structure, semantic types,
 non-emptiness, metric/case parameters, horizon/windows, duplicate elements, request
-identities and standalone specs. Use Analyze's public `validate_spec`; do not copy its
+identities and standalone specs. Use the Statistics public `validate_spec`; do not copy its
 algorithm-level validation. An IntervalCount unit must also match the case-declared
 metric unit before I/O. Future market-window limits follow the selected upstream's
 public request contract; do not silently truncate dates.
@@ -40,7 +40,7 @@ unique within the plan's analysis_requests (therefore in each expanded Job); ret
 unchanged. Identical specs with different request_ids are legal distinct explicit
 requests; duplicate IDs are invalid even with different specs. No method-level request
 deduplication occurs. Invalid specs become InvalidPlan with the originating
-InvalidAnalysisSpec context. InvalidPlan raises before execution and produces no
+InvalidStatisticalSpec context. InvalidPlan raises before execution and produces no
 BatchResult or fake partially successful subset.
 
 ## Expansion and identity
@@ -64,7 +64,7 @@ implementation may use this tuple directly or a collision-safe deterministic enc
 a hash alone must never silently merge unequal tuples.
 
 Identity never depends on random values, execution time, list position or process ID.
-AnalysisSpec is not part of observation identity. Each analysis occurrence is associated
+StatisticalSpec is not part of observation identity. Each analysis occurrence is associated
 using (job_identity, request_id, exact spec). Results retain the exact request/spec and
 execution context, so changing a spec under the same request_id cannot silently overwrite
 or reuse a previous result. JobResult instances belong to a particular execution, not a
@@ -78,7 +78,7 @@ execute_job(ObservationJobSpec, analysis_requests) -> JobResult
 
 Input Preparation → Observation Construction → ObservationSet
     → Research Conversion → SampleProjection
-    → ordered Analyze calls with projection.numeric_sample
+    → ordered Statistics compute calls with projection.numeric_sample
     → Research result association → JobResult
 ```
 
@@ -98,14 +98,14 @@ prevent remaining attempts. Preserve every attempt and returned result.
 AnalysisOutcome
   request_id / exact_spec
   status: success | failed | not_attempted
-  result: returned Analyze result, when present
+  result: returned Statistics result, when present
   associated_evidence: only after successful association
   error or not_attempted_reason: as applicable
 ```
 
 No analysis-level Skipped state is used. Before legal conversion, failures in preparation,
 construction or conversion make **all** analyses not_attempted with the blocking reason;
-they do not fabricate Analyze failures. In an attempted Job with a valid sample all
+they do not fabricate Statistics failures. In an attempted Job with a valid sample all
 requests are attempted, including those after a failure.
 
 ```text
@@ -145,8 +145,12 @@ applicable failures are retained, not just the first.
 | input_preparation | UpstreamFailure (retaining InvalidRequestError / OperationError), IncompleteInput (required calendar or inputs outside authorized partial policy), InvalidPublicInput, HistoryInsufficient; requests/dependency context retained; recoverable unit failures remain diagnostics when case policy permits |
 | observation_construction | ObservationConstructionFailure: formula/numerical failure or inconsistent observation accounting |
 | conversion | InvalidObservationSet, UnmappableSample, NoEligibleObservations as owned by integration |
-| analyze | InvalidSample, InvalidAnalysisSpec, CalculationFailure preserved from Analyze |
+| analyze | InvalidSample, InvalidStatisticalSpec, CalculationFailure preserved from Statistics |
 | result_association | ResultAssociationFailure: mismatched result linkage or inability to assemble a valid association/result |
+
+The Research stage `analyze`, analysis_requests, AnalysisOutcome and analysis_outcomes
+keep their names; they delegate numerical work to Statistics `compute`, and do not
+define an alternate numerical API or change execution/association ownership.
 
 A legal preflight request rejected by an upstream still fails input_preparation, rather
 than retrospectively creating InvalidPlan. A validated upstream view containing a

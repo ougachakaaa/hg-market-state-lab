@@ -1,7 +1,7 @@
 # Trailing cumulative return case authority
 
 This first concrete Descriptive case specializes [Observation](../../OBSERVATION.md),
-[integration](../../ANALYZE_INTEGRATION.md), [execution](../../EXECUTION.md) and
+[integration](../../STATISTICS_INTEGRATION.md), [execution](../../EXECUTION.md) and
 [public upstream policy](../../../UPSTREAM.md). Status: Implementation Ready for the
 index binding below. The independent Observation runtime is implemented; actual checks
 and the live-data gate are recorded in [Acceptance](../../ACCEPTANCE.md).
@@ -48,7 +48,7 @@ SSE basis; it supersedes the former strict input consumption and two-outcome pol
 Results under the revision carry input profile `trailing_return_inputs_v2`; retained
 historical v1-profile results must not be reused as v2 results on business identity alone.
 Observation key is `(job_identity,T)`; candidates/outcomes sort ascending T. Actual input
-changes affect provenance, not the question; AnalysisSpec affects neither identity nor
+changes affect provenance, not the question; StatisticalSpec affects neither identity nor
 observation keys. No execution time or random identifier enters those identities.
 
 ## Computability and eligibility

@@ -15,14 +15,16 @@ CONTEXT_ENTRIES = {
     Path("market_research/UPSTREAM.md"),
     Path("market_research/descriptive/ARCHITECTURE.md"),
     Path("market_research/descriptive/OBSERVATION.md"),
-    Path("market_research/descriptive/ANALYZE_INTEGRATION.md"),
+    Path("market_research/descriptive/STATISTICS_INTEGRATION.md"),
     Path("market_research/descriptive/EXECUTION.md"),
     Path("market_research/descriptive/ACCEPTANCE.md"),
     Path("market_research/descriptive/cases/trailing_return/ARCHITECTURE.md"),
-    Path("market_analyze/ARCHITECTURE.md"),
-    Path("market_analyze/CONTRACT.md"),
-    Path("market_analyze/QUANTILE.md"),
-    Path("market_analyze/INTERVAL_COUNT.md"),
+    Path("market_statistics/AGENTS.md"),
+    Path("market_statistics/ARCHITECTURE.md"),
+    Path("market_statistics/CONTRACT.md"),
+    Path("market_statistics/QUANTILE.md"),
+    Path("market_statistics/INTERVAL_COUNT.md"),
+    Path("market_statistics/BACKEND.md"),
     Path("data_lake/EXPERIMENTS.md"),
     Path("data_lake/DIAGNOSTICS.md"),
     Path("data_lake/datasets/tushare_equity_index_options/CONTRACT_UNIVERSE.md"),
@@ -119,6 +121,17 @@ def test_context_authority_is_reachable_from_the_root_entry() -> None:
         path for path in CONTEXT_ENTRIES if (REPOSITORY_ROOT / path).resolve() not in visited
     }
     assert not missing, f"context authority is unreachable: {sorted(map(str, missing))}"
+
+
+def test_statistics_authority_retires_the_previous_canonical_paths() -> None:
+    assert (REPOSITORY_ROOT / "market_statistics/ARCHITECTURE.md").is_file()
+    assert not (REPOSITORY_ROOT / "market_analyze").exists()
+    assert (
+        REPOSITORY_ROOT / "market_research/descriptive/STATISTICS_INTEGRATION.md"
+    ).is_file()
+    assert not (
+        REPOSITORY_ROOT / "market_research/descriptive/ANALYZE_INTEGRATION.md"
+    ).exists()
 
 
 def test_retired_snapshot_implementation_is_absent() -> None:

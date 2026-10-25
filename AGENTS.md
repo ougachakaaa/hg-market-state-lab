@@ -13,7 +13,7 @@ Repository-level Python runtime invariant 见 [ARCHITECTURE.md](ARCHITECTURE.md)
 ## Progressive Disclosure
 
 1. 先读根 [ARCHITECTURE.md](ARCHITECTURE.md)，只确定 owning module、顶层边界与 repository-level Python runtime/CLI ownership；CLI 使用与示例进入 [lab usage guide](ui_cli/README.md)（usage-only，不是 authority），CLI semantics 与 delegation 进入 [lab authority](ui_cli/ARCHITECTURE.md)，当前根开发环境与 runtime 状态再读 [DEVELOPMENT.md](DEVELOPMENT.md)。
-2. 进入 owning module，读取其 local `AGENTS.md` 与 `ARCHITECTURE.md`：当前入口为 [data_lake/AGENTS.md](data_lake/AGENTS.md)、[data_snapshot/AGENTS.md](data_snapshot/AGENTS.md)、[market_research/AGENTS.md](market_research/AGENTS.md)、[market_analyze/AGENTS.md](market_analyze/AGENTS.md)、[ui_http/AGENTS.md](ui_http/AGENTS.md) 与 [ui_web/AGENTS.md](ui_web/AGENTS.md)。`market_analyze` 当前仅有 authority，无 Python package 或 runtime；`market_modeling` 尚无 local policy 或 module authority，不得预先创建内部设计。
+2. 进入 owning module，读取其 local `AGENTS.md` 与 `ARCHITECTURE.md`：当前入口为 [data_lake/AGENTS.md](data_lake/AGENTS.md)、[data_snapshot/AGENTS.md](data_snapshot/AGENTS.md)、[market_research/AGENTS.md](market_research/AGENTS.md)、[market_statistics/AGENTS.md](market_statistics/AGENTS.md)、[ui_http/AGENTS.md](ui_http/AGENTS.md) 与 [ui_web/AGENTS.md](ui_web/AGENTS.md)。`market_statistics` 当前仅有 authority，无 Python package 或 runtime；`market_modeling` 尚无 local policy 或 module authority，不得预先创建内部设计。
 3. 按 local catalog 或 architecture 进入相关 bounded-context entry。
 4. 只读取当前任务需要的 specialized authority；不默认加载 sibling product 或其他模块文档。
 

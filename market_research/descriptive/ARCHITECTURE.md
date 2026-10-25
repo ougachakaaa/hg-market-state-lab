@@ -4,23 +4,23 @@ This is the initial research paradigm under the [module authority](../ARCHITECTU
 Public fact acquisition follows [UPSTREAM.md](../UPSTREAM.md). Descriptive Research owns
 the empirical meaning and interpretation of historical observations, sample conversion
 and research execution. Generic numerical statistics are delegated to the independent
-[Analyze module](../../market_analyze/ARCHITECTURE.md).
+[Statistics module](../../market_statistics/ARCHITECTURE.md).
 
 ## Main flow and authority navigation
 
 ```text
 ObservationJobSpec → validated prepared facts / availability evidence → ObservationSet
     → Research Sample Converter → SampleProjection (NumericSample + Research SampleBinding)
-    → Analyze API (Quantile / IntervalCount) → Analyze AnalysisResult
+    → Statistics compute (Quantile / IntervalCount) → StatisticalResult
     → Research association → JobResult → BatchResult / Evidence
 ```
 
 | Concern | Canonical owner |
 | --- | --- |
 | Fixed observation request, grain, population, validity, market derivation and provenance | [OBSERVATION.md](OBSERVATION.md) |
-| ObservationSet → SampleProjection and statistical result → research association | [ANALYZE_INTEGRATION.md](ANALYZE_INTEGRATION.md) |
+| ObservationSet → SampleProjection and statistical result → research association | [STATISTICS_INTEGRATION.md](STATISTICS_INTEGRATION.md) |
 | ResearchPlan, single Job / Batch control, statuses and results | [EXECUTION.md](EXECUTION.md) |
-| Numerical input, method parameters, results and failures | [Analyze CONTRACT.md](../../market_analyze/CONTRACT.md) |
+| Numerical input, method parameters, results and failures | [Statistics CONTRACT.md](../../market_statistics/CONTRACT.md) |
 | First case: formula, public input binding, warm-up, validity and fingerprint | [Trailing Return](cases/trailing_return/ARCHITECTURE.md) |
 | Implementation readiness and cross-contract acceptance gates | [ACCEPTANCE.md](ACCEPTANCE.md) |
 
@@ -36,7 +36,7 @@ Descriptive association does not establish causality, predictive validity or a t
 [Trailing Return](cases/trailing_return/ARCHITECTURE.md) is the first concrete case,
 with CSI1000 as representative target and full canonical index_code as required input.
 It owns formula, session alignment, explicit window, public service selection, warm-up,
-eligibility and reproducible fact identity. Statistics remain Analyze-owned.
+eligibility and reproducible fact identity. Numerical statistics belong to Market Statistics.
 The Observation subject is asset-agnostic; this case binds only Index Daily. Its
 missing-tolerant policy preserves calendar candidates and records unavailable facts.
 Individual stocks and other series require their own published fact/calendar binding
