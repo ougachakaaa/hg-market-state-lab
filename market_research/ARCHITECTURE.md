@@ -18,7 +18,7 @@ are retired; Git history is the historical reference. No legacy interface surviv
 ```text
 ResearchPlan → fixed-parameter ObservationJobSpecs
     → Input Preparation → Observation Construction → ObservationSet
-    → Research Sample Converter → Analyze NumericSample
+    → Research Sample Converter → SampleProjection (Analyze NumericSample + Research binding)
     → market_analyze public API → Analyze AnalysisResult
     → Research result association → JobResult / BatchResult → Evidence / Interpretation
 ```
@@ -38,7 +38,7 @@ These are conceptual responsibilities, not prescribed Python classes or callable
 | Concept | Ownership |
 | --- | --- |
 | ObservationJobSpec / ObservationSet | Research observation request, empirical meaning, population, validity and derivation: [Observation authority](descriptive/OBSERVATION.md). |
-| Sample Converter / result association | Research-owned outbound adaptation and business linkage: [Analyze integration](descriptive/ANALYZE_INTEGRATION.md). |
+| Sample Converter / SampleProjection / SampleBinding / result association | Research-owned outbound adaptation and business linkage: [Analyze integration](descriptive/ANALYZE_INTEGRATION.md). |
 | ResearchPlan / JobResult / BatchResult | Research definition, execution context, control and complete reporting: [Execution authority](descriptive/EXECUTION.md). |
 | NumericSample / AnalysisSpec / AnalysisResult / AnalysisFailure | Analyze-owned public numerical contracts: [Analyze contract](../market_analyze/CONTRACT.md). Research consumes them without defining competing types. |
 
@@ -79,9 +79,12 @@ coupling. A person may use descriptive findings to formulate a condition hypothe
 human research workflow grants no program dependency. Only Descriptive is detailed here;
 no Conditional contract, directory scaffold or implementation is introduced.
 
-Current state: semantic foundation only, with architecture/integration checks. No Research
-execution package, case implementation, CLI, HTTP service or report renderer is published.
+Current state: first-case contracts are Implementation Ready, with architecture/integration
+checks. No Research execution package, case implementation, CLI, HTTP service or report
+renderer is published.
 Observation Producer, Sample Converter and Job / Batch Executor are Expected Implementation
 Gaps, not runtime capabilities. Analyze's statistical API is likewise authority-only.
-The first intended case remains illustrative in the descriptive authority. Agent execution
-policy is in [AGENTS.md](AGENTS.md); upstream semantics belong only to [UPSTREAM.md](UPSTREAM.md).
+The concrete first case and implementation acceptance gates are reached through the
+Descriptive entry; readiness applies to encoded semantics, not a completed runtime. Agent
+execution policy is in [AGENTS.md](AGENTS.md); upstream semantics belong only to
+[UPSTREAM.md](UPSTREAM.md).

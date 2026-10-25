@@ -1,66 +1,87 @@
 # Descriptive observation authority
 
-This contract specializes the [Descriptive entry](ARCHITECTURE.md). It owns
-`ObservationJobSpec`, `ObservationSet` and market observation construction. Public input
-selection, completeness and upstream failure semantics remain in [UPSTREAM.md](../UPSTREAM.md).
-Numerical statistical methods belong to [Analyze](../../market_analyze/CONTRACT.md).
+This contract specializes the [Descriptive entry](ARCHITECTURE.md). It owns fixed
+observation requests, population accounting, validity and derivation. Public inputs
+follow [UPSTREAM.md](../UPSTREAM.md); numerical models/methods remain
+[Analyze-owned](../../market_analyze/CONTRACT.md). Status: Implementation Ready for
+the [first case](cases/trailing_return/ARCHITECTURE.md); no producer exists yet.
 
 ## Fixed observation request
 
-An `ObservationJobSpec` fixes one subject, one metric definition, one horizon, one historical
-sample window and the business parameters required by that metric. `JobSpec` is only a
-contextual shorthand for this request, not a second competing model. Research owns the
-question and stable methodological choices as well as their actual execution binding.
+```text
+ObservationJobSpec
+  subject
+  metric: versioned metric definition identity
+  metric_parameters
+  horizon
+  historical_sample_window: inclusive (start_date, end_date)
+```
 
-- Horizon describes the span covered by one observation; in the illustrative return case
-  it is a number of trading sessions, not the full historical research period.
-- Historical sample window identifies which historical dates belong to the research
-  population. The case must define the date reference and inclusion boundaries.
-- Metric parameters define the market variable and its derivation. Analysis parameters
-  such as quantile points or count intervals belong to Analyze's `AnalysisSpec`.
+One Job fixes one subject, one scalar metric definition and all its business parameters,
+one positive integer horizon (bool rejected), and one inclusive historical date window.
+Dates are date values, not timestamps or raw strings, with start <= end. The case defines
+the horizon's unit and anchor meaning. `JobSpec` is only contextual shorthand.
+Metric parameters are explicit, including an empty parameter set when the definition has
+no parameters; statistical method parameters are not observation parameters.
 
-Changing observation parameters changes the empirical request. Changing only statistical
-method parameters is a different semantic change and does not require rebuilding observations.
-The conceptual operation is `observe(ObservationJobSpec) -> ObservationSet`; it prescribes
-neither a Python signature nor synchronous/asynchronous execution.
+The conceptual operation is `observe(ObservationJobSpec, prepared_inputs) -> ObservationSet`.
+Only Input Preparation performs public upstream I/O. Construction consumes prepared
+complete inputs; it does not secretly reacquire facts or shift dates. Changing observation
+parameters changes the empirical request; changing only AnalysisSpec does not require
+new observations. [Execution](EXECUTION.md) owns stable Job identity and expansion.
 
-## ObservationSet and construction
+## ObservationSet
 
-An `ObservationSet` is a coherent Research-owned empirical collection. It is neither an
-Analyze input/result nor an automatically persisted artifact. A concrete case must define:
+```text
+ObservationSet
+  job_identity / fixed_job_spec
+  observation_definition: grain, key definition, formula/version, unit, temporal meaning
+  candidate_anchors: deterministic ordered unique anchor sequence
+  eligible_observations: ordered (observation_key, anchor, scalar_value)
+  excluded_observations: ordered (observation_key, anchor, reason_code, reason)
+  candidate_count / eligible_count / excluded_count
+  provenance: actual input references and derivation definition
+  sample_dependence_context
+```
 
-| Responsibility | Required semantics |
-| --- | --- |
-| Grain and identity | What one observation represents, its key and the meaning of duplicates. No universal row schema or asset hierarchy is imposed. |
-| Market variable | Metric definition, financial formula, units and required business parameters; Research owns their calculation from prepared facts. |
-| Temporal meaning | Observation reference date, horizon, historical window, alignment, lookback and any required facts outside that window. |
-| Population and validity | Intended population, valid/invalid observations, legitimate absence/null, explicit eligibility/exclusion rules and reasons. |
-| Provenance | Actual input references, request context, derivation definition and association back to the fixed observation request. |
+Counts are derived from their collections, not caller-supplied conflicting claims.
+For the first scalar-per-anchor version, every candidate anchor owns exactly one unique
+observation key and exactly one outcome: eligible or excluded. The two outcome collections
+are disjoint and ordered by the candidate sequence. Duplicate keys, unaccounted anchors,
+extra outcomes or inconsistent counts are invalid construction, never silently repaired.
 
-Input Preparation acquires and validates complete authorized market facts. Observation
-Construction consumes those prepared facts and does not acquire data through hidden helpers.
-Construction cannot silently shift dates, replace required history, impute facts or copy
-canonical Snapshot Product preparation into Research contrary to UPSTREAM.
+```text
+candidate_count = eligible_count + excluded_count
+```
 
-Required input completeness and statistical admissibility are different concerns. An
-upstream failure must fail explicitly; it cannot be relabeled as an ineligible observation.
-Any legitimate observation exclusions must be declared and retain their reasons. Account
-for constructed and eligible observations so conversion can reconcile analyzed counts.
-Research selects business populations; Analyze does not learn subject or horizon semantics
-to make those selections. Method-specific numerical validity remains Analyze-owned.
+The case owns candidate population, exact key/order, scalar formula/unit, required facts,
+legitimate null/absence and exclusion codes. Every exclusion keeps its key and reason.
+No undeclared population filtering, imputation, truncation, rounding or hidden deduplication
+is permitted. Values retain their calculated binary64 numerical coordinate.
 
-## Reuse, traceability and readiness
+Required upstream incompleteness, missing required records and invalid public views fail
+the Job at input_preparation. They are not exclusions. Failures in applying a valid
+formula/constructing an internally consistent set fail at observation_construction.
+A complete population can be empty, or all candidates excluded, yielding a valid
+ObservationSet with zero eligible values; conversion then fails explicitly under
+[Analyze integration](ANALYZE_INTEGRATION.md). It is never a successful empty analysis.
 
-One ObservationSet can support multiple requested analyses through the
-[Research-owned conversion boundary](ANALYZE_INTEGRATION.md). Observation construction
-does not own Quantile or IntervalCount algorithms or their defaults.
+## Provenance and reuse
 
-Preserve enough source and derivation references to explain what facts and calculations
-actually produced the observations. A re-fetchable historical window or mutable upstream
-cache does not prove identical historical inputs. Concrete cases must choose a sufficient
-input retention/reference strategy under UPSTREAM; no universal provenance envelope,
-mandatory SQLite lifecycle or artifact registry is introduced.
+Preserve actual requests, validated public input identity, retained consumed facts or
+adequate immutable references, and formula/version back to the fixed request. A window
+or mutable cache does not establish identical inputs; the case chooses a sufficient
+fingerprint/retention strategy. No mandatory database, registry or artifact lifecycle
+is imposed. Identity of the observation request differs from identity of the facts used.
 
-The first case's exact index/public contract binding, return formula, historical interval,
-boundary history and population rules remain case decisions. Its Observation Producer is
-an Expected Implementation Gap. No legacy observation package or persistence contract is restored.
+One set supports multiple analyses through the Research converter. Research retains
+sample dependence, including overlapping lookbacks; neither construction nor conversion
+asserts independent samples. Generic statistical calculation belongs only to Analyze.
+
+## Minimum acceptance obligations
+
+Test total/disjoint candidate accounting, unique keys and deterministic ordering,
+explicit exclusion reasons, missing required facts as failure, zero-candidate and
+all-excluded sets, and unchanged identity when only statistical requests change.
+Formula, boundary-history, unit and concrete provenance fixtures are owned by the
+[first case](cases/trailing_return/ARCHITECTURE.md), not inferred from retired Research.

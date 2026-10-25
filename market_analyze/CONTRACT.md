@@ -1,77 +1,96 @@
 # Analyze public numerical contract
 
 This contract specializes the [module authority](ARCHITECTURE.md). It owns the public
-numerical model and operation semantics. These are conceptual interfaces, not prescribed
-Python classes, field layouts, function names or synchronous/asynchronous mechanisms.
+sample, operation, method/result unions and failures. Independently readable method
+contracts are [Quantile](QUANTILE.md) and [IntervalCount](INTERVAL_COUNT.md).
+These contracts are Implementation Ready; runtime remains an Expected Implementation Gap.
 
-## Public models and operation
-
-| Model | Responsibility |
-| --- | --- |
-| NumericSample | A numerical sample and the generic statistical context necessary to interpret it, including accountable sample quantity and applicable units/dependence context. It does not carry a requirement to understand market business fields. |
-| AnalysisSpec | The requested numerical method and explicit method parameters; it neither acquires inputs nor defines financial variables or business populations. |
-| AnalysisResult | The computed numerical result with method/parameter context, sample quantity and diagnostics sufficient to explain the calculation. It remains separate from the input sample. |
-| AnalysisFailure | An explicit failure when statistical input, method parameters or calculation cannot legally complete under the applicable contract. |
+## Public API and validation
 
 ```text
-analyze(NumericSample, AnalysisSpec) -> AnalysisResult
+analyze(sample: NumericSample, spec: AnalysisSpec) -> AnalysisResult
+validate_spec(spec: AnalysisSpec) -> valid or InvalidAnalysisSpec
+AnalysisSpec   = QuantileSpec | IntervalCountSpec
+AnalysisResult = QuantileResult | IntervalCountResult
 ```
 
-This successful-operation notation does not hide `AnalysisFailure`. Whether failures are
-represented as exceptions, result variants or another Python mechanism is not decided.
-No consumer-specific request/result types or market identifiers are required by this API.
-Consumers keep their own linkage between sample/result context and business observations.
+The public Python semantic operation is synchronous, pure computation: no I/O,
+randomness, input mutation or persistent state. Failures raise Analyze-owned errors,
+never fabricated successful results. Python class layout and internal file organization
+are implementation choices; named fields and typed variants below are public obligations,
+not an unconstrained dictionary protocol. The `method` tag discriminates specs/results:
+`quantile` or `interval_count`. Unknown tags are invalid specs.
 
-Analyze validates its own public sample and method parameters even if a consumer already
-validated them. It performs numerical calculation over the supplied sample, without
-market-data acquisition, financial derivation or business population selection. It does
-not mutate the consumer's observations or silently repair inputs by dropping values,
-imputing facts, changing units or substituting a method.
+The intended public facade is `market_analyze`: consumers must be able to import
+NumericSample, both Spec variants, both Result variants, the AnalysisSpec/AnalysisResult
+unions, analyze, validate_spec and the three public error categories from it. This fixes
+the future consumer boundary without creating or registering that package in this task.
 
-## First statistical methods
+Public `validate_spec` validates without a sample or I/O and raises
+`InvalidAnalysisSpec` on independently illegal specs. Construction may also validate;
+consumers need not import internals. `analyze` revalidates sample, independent spec, then
+sample/spec compatibility, even after preflight. If both arguments are invalid,
+`InvalidSample` takes precedence.
 
-| Method | Conceptual input and output responsibility |
+## NumericSample
+
+```text
+NumericSample
+  values: ordered, non-empty sequence of finite float64 numbers
+  unit: non-empty opaque string identifier
+sample_count = len(values)
+```
+
+The coordinate is IEEE-754 binary64. Public Python scalar inputs are built-in int or
+float, excluding bool; integers undergo ordinary correctly rounded binary64 conversion.
+Other numeric representations must be adapted to these scalars before public submission;
+do not implicitly parse text, Decimal, fractions, complex or null values. Reject
+conversion overflow, NaN and either infinity.
+Values must form a one-dimensional ordered sequence, not a set, mapping, scalar string
+or nested data. Container class is not prescribed. No independent input count is accepted.
+Weights, grouped samples and multivariate inputs are unsupported.
+
+Duplicates retain full multiplicity. Preserve input order and values; methods may sort
+private copies. No deletion, filling, clipping, deduplication, presentation rounding or
+unit conversion. Binary64 representation/arithmetic rounding is inherent and is not
+presentation rounding. Pass `unit` through exactly, case sensitively, without trimming
+or alias resolution. Empty/non-string units are invalid; Analyze assigns no business
+meaning to an otherwise non-empty identifier. Singleton samples are valid, empty ones
+are always invalid.
+
+Sample keys, source references, dependence and business context belong to consumers,
+not NumericSample. Analyze does not require or interpret them.
+
+## Results and diagnostics
+
+Each typed result retains method identity, full parameters/estimator, actual derived
+`sample_count`, unchanged `unit` and method-specific calculated payload. Counts are exact
+nonnegative integers; calculated scalars must be finite binary64 values. No non-finite
+successful result or implicit percentage conversion is permitted.
+
+Method contracts define applicable diagnostics; no free-form metadata envelope is needed.
+The initial methods are descriptive only: no independence assertion/test, confidence
+interval or statistical significance inference.
+
+## Stable failure categories
+
+`AnalysisFailure` names the public failure family below, not an additional result variant
+or a required fourth error category.
+
+| Category | Meaning |
 | --- | --- |
-| Quantile | Numerical sample plus an explicit collection of quantile points; report the calculated quantiles, sample quantity and relevant diagnostics under a declared estimator convention. |
-| IntervalCount | Numerical sample plus explicit interval definitions; report counts and relevant sample accounting/diagnostics under declared interval rules. |
+| `InvalidSample` | Illegal shape, empty sample, illegal/non-finite scalar or invalid unit. Never silently discard values. |
+| `InvalidAnalysisSpec` | Unknown method, illegal parameters/order/types, or sample/spec unit mismatch. Compatibility is checked at analyze time. |
+| `CalculationFailure` | Valid inputs cannot produce a finite defined result, including arithmetic overflow or numerical execution failure. Retain method and readable reason. Never substitute another method or repaired sample. |
 
-These are the initial capability directions, not a complete executable specification.
-No quantile points, bucket defaults, estimator conventions, numeric representation or
-mathematical library behavior are implicitly selected. No historical `shared.distribution`
-formula, output shape or default is inherited.
+Wrong public object variants fail in the respective validation category. Consumers can
+identify the three categories without parsing messages; exact exception hierarchy is an
+implementation detail. Process termination is not a successful numerical result.
 
-## Failure ownership
+## Minimum acceptance obligations
 
-Analyze owns the distinction between invalid numerical input, invalid/unsupported method
-parameters, and a calculation that cannot legally produce a defined statistical result.
-The applicable method contract must state which conditions fail and which have explicitly
-defined valid results or diagnostics. Concrete classifications, thresholds, codes and
-Python mechanisms remain pending; this authority creates no executable error taxonomy.
-
-Empty or insufficient samples and undefined statistics must not be guessed into numerical
-success. Invalid values must not be silently filtered to manufacture a successful result.
-Legal exclusions, if any, require an explicit numerical contract and accountable counts;
-Analyze cannot reinterpret a missing market fact or upstream failure as sample eligibility.
-Consumers own how a statistical failure affects their execution, without rewriting its
-statistical meaning.
-
-## Pending statistical decisions and readiness
-
-The statistical owner must settle the following before implementing each applicable method:
-
-| Concern | Pending decision |
-| --- | --- |
-| Quantiles | Point domain/validation, interpolation and estimator convention, duplicate points and ordering where applicable. |
-| Intervals | Endpoint validity/order, open/closed boundaries, overlap, repeated intervals and values outside all intervals. |
-| Sample validity | Numeric representation, non-finite/illegal values, empty and insufficient samples, and failure versus explicitly valid outcomes. |
-| Repeated values | How repeated sample values contribute to quantiles and counts; no implicit deduplication. |
-| Accounting | Count denominators and any reported proportions, including overlap/outside-value accounting; no normalization default. |
-| Statistical context | Representation and treatment of units, sample identity/reference and relevant dependence context, without consumer business semantics. |
-
-These decisions belong to Analyze and any future narrow method authority reached from
-this contract. A separate method document is warranted when a stable method-specific
-contract is defined; this encoding does not create empty method scaffolds. Consumer
-variable selection and business validity remain consumer-owned.
-
-The statistical API and both methods are Expected Implementation Gaps. This contract
-neither claims runtime readiness nor authorizes calculation using unresolved defaults.
+Test invalid types/shapes, bool, empty sample/unit, NaN and both infinities; finite
+representation conversion and overflow; duplicates; input immutability; unchanged opaque
+units; unknown-tag preflight; analyze-time revalidation and validation precedence.
+Method fixtures belong to the linked method contracts. Verify public facade attributes
+directly; this authority does not require `__all__`.
