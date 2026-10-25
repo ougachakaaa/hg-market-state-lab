@@ -61,6 +61,7 @@ def test_root_project_installs_the_independent_package_namespaces() -> None:
         {"include": "data_lake", "from": "data_lake/datasets/tushare_equity_index_options/src"},
         {"include": "data_snapshot", "from": "data_snapshot/src"},
         {"include": "market_research", "from": "market_research/src"},
+        {"include": "market_statistics", "from": "market_statistics/src"},
         {"include": "ui_http", "from": "ui_http/src"},
     ]
     assert not any(

@@ -1,7 +1,8 @@
 # Quantile method authority
 
 Inherit the [public contract](CONTRACT.md) for samples, validation, errors and results.
-This file owns Quantile only (STAT-05). Status: Implementation Ready, no implementation.
+This file owns Quantile only (STAT-05).
+Status: implemented by STAT-IMP-01; numerical semantics unchanged.
 
 ## Spec and estimator
 
@@ -60,7 +61,7 @@ Every requested point appears once and unmodified. This retains all method param
 No additional successful warning diagnostics are required; estimator and common sample
 accounting suffice. No independence inference is made.
 
-## Minimum deterministic acceptance (future implementation)
+## Minimum deterministic acceptance
 
 | Input / condition | Expected behavior |
 | --- | --- |
@@ -77,5 +78,6 @@ accounting suffice. No independence inference is made.
 Exact binary fixtures above use exact equality. Other interpolation tests allow binary64
 roundoff against Type 7, not presentation precision.
 Check repeated values, every requested point in order, method/estimator/count/unit and
-input immutability across backend and adapted paths. These are deterministic acceptance
-requirements, not evidence that a numerical implementation or conformance tests exist.
+input immutability across backend and adapted paths. Executable acceptance is in
+[Quantile tests](tests/test_quantile.py) and
+[backend failure tests](tests/test_backend_failures.py).

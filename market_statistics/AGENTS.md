@@ -13,25 +13,26 @@ decisions explicitly; do not infer defaults from statistical convention, old cod
 silence. Statistics must not depend on Research, DataLake, Snapshot, Modeling or inbound
 UI modules, acquire market facts, or take ownership of consumer conversion and interpretation.
 
-Current scope is authority only: no Python package, method implementation, package
-registration, CLI or HTTP service. Do not create a module-local Python environment,
-statistical framework or compatibility layer. Authority readiness is not runtime readiness.
+STAT-IMP-01 implements the public Python package, both V1 methods and root package
+registration under the existing contracts. No CLI or HTTP service is published. Do not
+create a module-local Python environment, statistical framework or compatibility layer.
+Authority readiness is not runtime readiness.
 
 Run applicable checks from the repository root's unique Poetry environment:
 
 ```bash
-poetry run pytest market_research/tests
+poetry run pytest market_statistics/tests market_research/tests
 poetry run pytest data_snapshot/tests/test_authority_topology.py ui_http/tests/test_architecture.py
-poetry run ruff check market_research
-poetry run mypy market_research/tests
+poetry run ruff check market_statistics market_research
+poetry run mypy market_statistics/src market_statistics/tests market_research/tests
 poetry run ruff check data_snapshot/tests/test_authority_topology.py
 poetry run mypy data_snapshot/tests/test_authority_topology.py
 git diff --check
 ```
 
 Check relative links/anchors, root reachability, unique semantic ownership and the complete
-diff. Future runtime work must add appropriate behavior verification once its contracts
-are settled; current architecture checks do not establish statistical correctness.
-The separate STAT-IMP-01 must explicitly declare NumPy in the root project with a tested
-Python-compatible range and prove method conformance; STAT-01 adds neither that dependency
-nor a runtime. Keep future acceptance obligations distinct from actually executed checks.
+diff. Runtime changes must run numerical and failure-injection tests; architecture checks
+alone do not establish statistical correctness.
+NumPy is declared in the root project with a tested Python-compatible range. Backend
+upgrades must prove method conformance. STAT-01 added neither that dependency nor a
+runtime; STAT-IMP-01 supplies runtime evidence. Keep obligations distinct from executed checks.

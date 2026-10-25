@@ -16,10 +16,10 @@ For V1, the preferred backend is NumPy through supported public APIs only:
 | Quantile | `numpy.quantile(values, points, method="linear")` | Preserve the method's frozen binary64 branches, operation order and failure boundary wherever library behavior differs. |
 | IntervalCount | `numpy.histogram(values, bins=explicit_edges, density=False)` | Retain separately counted underflow and overflow; use the full sample denominator for frequencies. |
 
-Use no private NumPy internals. NumPy must become an explicit root-project dependency
-when runtime implementation begins, with a tested range compatible with repository
-Python 3.13; a transitive installation is not the dependency declaration. STAT-01 changes
-neither pyproject.toml nor poetry.lock and creates no adapter or module-local environment.
+Use no private NumPy internals. NumPy is an explicit root-project dependency with a
+tested range compatible with repository Python 3.13; a transitive installation is not
+the dependency declaration. STAT-01 changed neither pyproject.toml nor poetry.lock and
+created no adapter or module-local environment; STAT-IMP-01 implements the runtime.
 SciPy and statsmodels are potential future backends, not V1 dependencies.
 
 ## Conformance and error boundary
@@ -50,8 +50,8 @@ backend operations rather than reinterpret their failure as a successful computa
 
 ## Conformance acceptance and upgrades
 
-The following are obligations for future implementation; none has been executed by
-this authority-only goal:
+The following obligations are implemented by STAT-IMP-01. STAT-01 established only
+authority; current runtime evidence is linked from [README](README.md):
 
 | Concern | Required acceptance evidence |
 | --- | --- |
@@ -65,3 +65,23 @@ that detect semantic drift. If published behavior cannot be preserved, reconcile
 authority explicitly and change method version when necessary before accepting the
 upgrade. No bitwise identity is promised across untested libraries, versions or
 architectures; this does not relax the frozen method operation order and failure rules.
+
+## V1 implementation conformance
+
+The root project declares `numpy>=2.5.3,<2.6.0`, tested on NumPy 2.5.3 and Python 3.13.
+Quantile bypasses NumPy interpolation for endpoints, singleton and exact-index requests.
+For remaining points it checks the required difference for finiteness, invokes the public
+linear quantile API and validates its float64 result shape/finiteness. For `g >= 0.5`,
+NumPy's right-endpoint subtraction branch is adapted to the published left-endpoint
+addition order. In particular, `[1,1e16]` at `.75` returns `7500000000000001.0` rather
+than NumPy's `7500000000000000.0`. Required overflowing differences fail before backend
+execution; direct branches never perform that difference. This is method-local handling,
+not an alternate estimator or backend engine.
+
+IntervalCount uses the public histogram API with explicit binary64 edges and
+`density=False`. Returned integer counts and unchanged edges are checked for shape,
+type, nonnegativity and conservation with separately counted outside values. All
+frequencies use the actual full sample count. Backend RuntimeWarnings and floating-point
+invalid/overflow/division errors become CalculationFailure within a scoped context;
+no process-global warning policy is modified. Failure-injection tests cover malformed
+outputs, exceptions and finite-looking results after invalid numerical execution.

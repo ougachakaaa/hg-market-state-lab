@@ -44,7 +44,8 @@ and price semantics; their gaps do not block the index case. See the capability 
 reconciliation matrices in [ACCEPTANCE.md](ACCEPTANCE.md).
 Observation production for this case is implemented with independent public preparation
 and pure construction. Conversion and execution contracts are Implementation Ready;
-converter, executors and statistical API remain Expected Implementation Gaps.
+converter and executors remain Expected Implementation Gaps. The independent
+Statistics public numerical API is implemented by STAT-IMP-01.
 [Acceptance gates](ACCEPTANCE.md) distinguish semantic readiness from runtime and live-data
 verification. No unresolved implicit default is authorized.
 

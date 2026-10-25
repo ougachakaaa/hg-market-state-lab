@@ -6,6 +6,7 @@ requires-python = ">=3.13,<3.14"
 dependencies = [
     "tushare (>=1.4.29,<2.0.0)",
     "pandas (>=3.0.6,<4.0.0)",
+    "numpy (>=2.5.3,<2.6.0)",
     "python-dotenv (>=1.2.3,<2.0.0)",
     "fastapi (>=0.141.1,<0.142.0)",
     "uvicorn (>=0.53.0,<0.54.0)",
@@ -25,6 +26,7 @@ packages = [
     { include = "data_lake", from = "data_lake/datasets/tushare_equity_index_options/src" },
     { include = "data_snapshot", from = "data_snapshot/src" },
     { include = "market_research", from = "market_research/src" },
+    { include = "market_statistics", from = "market_statistics/src" },
     { include = "ui_http", from = "ui_http/src" },
 ]
 
@@ -49,6 +51,7 @@ testpaths = [
     "data_lake/datasets/tushare_trade_calendar/tests",
     "data_snapshot/tests",
     "market_research/tests",
+    "market_statistics/tests",
     "ui_http/tests",
 ]
 pythonpath = [
@@ -60,6 +63,7 @@ pythonpath = [
     "data_lake/datasets/tushare_trade_calendar/src",
     "data_snapshot/src",
     "market_research/src",
+    "market_statistics/src",
     "ui_http/src",
 ]
 
@@ -87,14 +91,16 @@ src = [
     "ui_http/tests",
     "ui_http/scripts",
     "market_research/tests",
+    "market_statistics/tests",
     "market_research/src",
+    "market_statistics/src",
 ]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B"]
 
 [tool.ruff.lint.isort]
-known-first-party = ["ui_http", "data_lake", "ui_cli", "market_research", "data_snapshot"]
+known-first-party = ["ui_http", "data_lake", "ui_cli", "market_research", "market_statistics", "data_snapshot"]
 
 [tool.mypy]
 python_version = "3.13"
@@ -120,13 +126,17 @@ files = [
     "ui_http/tests",
     "ui_http/scripts",
     "market_research/tests",
+    "market_statistics/tests",
     "market_research/src",
+    "market_statistics/src",
 ]
 mypy_path = [
     "market_research/src",
+    "market_statistics/src",
     "data_snapshot/tests",
     "ui_http/tests",
     "market_research/tests",
+    "market_statistics/tests",
     "data_lake/src",
     "data_lake/providers/tushare/src",
     "data_lake/datasets/tushare_index_daily/src",

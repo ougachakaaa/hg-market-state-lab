@@ -61,23 +61,21 @@ method recommendation is authorized.
 
 ## Authority and runtime status
 
-This module currently contains authority only. The intended future Python namespace is
-`market_statistics`, but no Python package, callable public API or statistical implementation
-is published or installed. NumericSample, both methods, validation, failure semantics
-and backend conformance requirements are Implementation Ready; the facade, numerical
-adapter and runtime tests remain Expected Implementation Gaps for the separate
-STAT-IMP-01 goal. No numerical dependency is added by STAT-01.
+STAT-IMP-01 publishes the independently installable `market_statistics` Python facade
+under `src/market_statistics/`, with immutable NumericSample, typed specs/results,
+standalone validation, both V1 methods and stable statistical failures. NumPy is an
+explicit root dependency; method-local adapters and deterministic tests enforce the
+published contracts. Public usage and verification entry points are in [README](README.md).
 
 The [repository runtime invariant](../ARCHITECTURE.md#3-python-runtime-与-module-boundary)
 continues to apply: one root Python project, dependency graph and worktree-local `.venv`.
-Authority creation adds no package registration, module-local tooling or independent runtime.
-No statistical DSL, universal engine, registry, framework or legacy `shared.distribution`
-implementation is introduced or inherited.
+There is no module-local tooling/runtime, CLI, HTTP, statistical DSL, universal engine,
+registry, framework or inherited legacy `shared.distribution` implementation.
 
 Agent reading and verification rules are in [AGENTS.md](AGENTS.md). Method decisions must
 be made in the narrow statistical authority before implementation; authority readiness
 does not claim runtime readiness.
 
-Future module-boundary acceptance must verify no market-domain imports, upstream I/O,
+Module-boundary acceptance tests verify no market-domain imports, upstream I/O,
 reverse Research dependency, input mutation, unapproved backend defaults or runtime
-registry/framework. These are future runtime obligations, not tests executed by STAT-01.
+registry/framework. STAT-01 established authority only; runtime evidence belongs to STAT-IMP-01.

@@ -3,7 +3,7 @@
 This contract specializes the [module authority](ARCHITECTURE.md). It owns the public
 sample (STAT-03), operation, method/result unions and failures (STAT-02). Independently
 readable method contracts are [Quantile](QUANTILE.md) and [IntervalCount](INTERVAL_COUNT.md).
-These contracts are Implementation Ready; runtime remains an Expected Implementation Gap.
+STAT-IMP-01 implements these contracts through the public `market_statistics` facade.
 
 ## Public API and validation
 
@@ -22,10 +22,10 @@ variants below are public obligations, not an unconstrained dictionary protocol.
 The `method` tag discriminates specs/results:
 `quantile` or `interval_count`. Unknown tags are invalid specs.
 
-The intended public facade is `market_statistics`: consumers must be able to import
+The public facade is `market_statistics`: consumers must be able to import
 NumericSample, both Spec variants, both Result variants, the StatisticalSpec/StatisticalResult
-unions, compute, validate_spec and the three public error categories from it. This fixes
-the future consumer boundary without creating or registering that package in this task.
+unions, compute, validate_spec and the three public error categories from it. The package
+is registered in the repository root project; no separate environment is required.
 
 ```python
 from market_statistics import (
@@ -108,7 +108,7 @@ Wrong public object variants fail in the respective validation category. Consume
 identify the three categories without parsing messages; exact exception hierarchy is an
 implementation detail. Process termination is not a successful numerical result.
 
-## Minimum acceptance obligations (future implementation)
+## Minimum acceptance obligations
 
 Test invalid types/shapes, bool, empty sample/unit, NaN and both infinities; finite
 representation conversion and overflow; duplicates; input immutability; unchanged opaque
@@ -116,6 +116,7 @@ units; unknown-tag preflight; compute-time revalidation and validation precedenc
 Verify sample-free validate_spec returning None, compatibility failure only at compute
 when a standalone spec is legal, both typed dispatch/result variants, derived count,
 unchanged unit and stable failure categories, including invalid public object variants.
-Method fixtures belong to the linked method contracts. Future facade re-exports use
+Method fixtures belong to the linked method contracts. Facade re-exports use
 explicit aliases (`from pkg.module import Name as Name`); verify expected attributes
-directly without introducing `__all__`. This matrix is not evidence of executed runtime tests.
+directly without introducing `__all__`. Executable evidence is in `tests/`; current
+verification is recorded in [README](README.md).

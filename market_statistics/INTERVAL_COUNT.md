@@ -2,7 +2,7 @@
 
 Inherit the [public contract](CONTRACT.md) for representation, validation and errors.
 This file owns interval boundaries, accounting and diagnostics (STAT-06).
-Status: Implementation Ready, no implementation.
+Status: implemented by STAT-IMP-01; numerical semantics unchanged.
 
 ## Spec and partition
 
@@ -70,7 +70,7 @@ sum(bin_counts) + underflow_count + overflow_count = sample_count
 The frequency total including outside categories is one within binary64 roundoff.
 Do not force a displayed 100% by changing counts or discarding outside values.
 
-## Minimum deterministic acceptance (future implementation)
+## Minimum deterministic acceptance
 
 | Input / condition | Expected behavior |
 | --- | --- |
@@ -83,5 +83,6 @@ Do not force a displayed 100% by changing counts or discarding outside values.
 | Backend count/edge shape, type or conservation failure for valid inputs | `CalculationFailure`, never repaired counts or a partial successful result |
 
 Verify the NumPy path against all partition fixtures, outside frequencies (including
-zero), unchanged sample/edges/unit, typed results and exact count conservation. These
-are future implementation obligations; STAT-01 executes no numerical runtime tests.
+zero), unchanged sample/edges/unit, typed results and exact count conservation.
+Executable acceptance is in [IntervalCount tests](tests/test_interval_count.py) and
+[backend failure tests](tests/test_backend_failures.py). STAT-01 remains authority-only history.
