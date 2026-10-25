@@ -85,7 +85,7 @@ Input Preparation → Observation Construction → ObservationSet
 A direct single-job entry applies the same fixed-request/request-list validation before
 I/O (InvalidPlan classification). For a batch, preflight completes once before expansion.
 Executors own orchestration only, never financial/statistical formulas or hidden input
-acquisition outside Input Preparation. Already prepared complete inputs may be reused
+acquisition outside Input Preparation. Already validated inputs and availability proof may be reused
 when each Job's requirements are satisfied and actual input provenance remains visible;
 reuse grants no common-snapshot/freshness guarantee across upstream operations.
 
@@ -126,6 +126,14 @@ result assembly failure also makes it Failed; no fabricated completed Job is per
 A skipped Job was never attempted, has no fabricated facts/results and marks all its
 analyses not_attempted with the policy reason. An attempted failure is never Skipped.
 
+A legal partial ObservationSet is not itself a failed Job. Under the declared case
+policy, Ensure complete=false / recoverable unit failures are retained preparation
+diagnostics rather than automatic Job failures; final Export must pass validation.
+With eligible values and every required analysis/association successful, a Job can be
+Success while reporting incomplete market/observation coverage. No extra minimum coverage
+threshold exists in this case. Zero eligible values instead fail conversion; retain the
+ObservationSet, coverage, all outcomes and diagnostics, with analyses not_attempted.
+
 ## Failure reporting
 
 Each failure retains at least job_identity, failure_stage, failure_category and reason.
@@ -134,14 +142,14 @@ applicable failures are retained, not just the first.
 
 | Stage | Categories / boundary |
 | --- | --- |
-| input_preparation | UpstreamFailure (retaining InvalidRequestError / OperationError / unit failures), IncompleteInput, InvalidPublicInput, HistoryInsufficient; actual requests and dependency context retained |
+| input_preparation | UpstreamFailure (retaining InvalidRequestError / OperationError), IncompleteInput (required calendar or inputs outside authorized partial policy), InvalidPublicInput, HistoryInsufficient; requests/dependency context retained; recoverable unit failures remain diagnostics when case policy permits |
 | observation_construction | ObservationConstructionFailure: formula/numerical failure or inconsistent observation accounting |
 | conversion | InvalidObservationSet, UnmappableSample, NoEligibleObservations as owned by integration |
 | analyze | InvalidSample, InvalidAnalysisSpec, CalculationFailure preserved from Analyze |
 | result_association | ResultAssociationFailure: mismatched result linkage or inability to assemble a valid association/result |
 
 A legal preflight request rejected by an upstream still fails input_preparation, rather
-than retrospectively creating InvalidPlan. A complete upstream view containing a
+than retrospectively creating InvalidPlan. A validated upstream view containing a
 case-excludable observation is handled only under the case's explicit eligibility rule.
 Ordinary unexpected execution exceptions are recorded as a stage-specific execution
 failure with their readable cause, never as successful statistics. Cancellation/process

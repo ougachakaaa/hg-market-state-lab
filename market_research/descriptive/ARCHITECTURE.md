@@ -9,7 +9,7 @@ and research execution. Generic numerical statistics are delegated to the indepe
 ## Main flow and authority navigation
 
 ```text
-ObservationJobSpec → complete prepared facts → ObservationSet
+ObservationJobSpec → validated prepared facts / availability evidence → ObservationSet
     → Research Sample Converter → SampleProjection (NumericSample + Research SampleBinding)
     → Analyze API (Quantile / IntervalCount) → Analyze AnalysisResult
     → Research association → JobResult → BatchResult / Evidence
@@ -37,6 +37,11 @@ Descriptive association does not establish causality, predictive validity or a t
 with CSI1000 as representative target and full canonical index_code as required input.
 It owns formula, session alignment, explicit window, public service selection, warm-up,
 eligibility and reproducible fact identity. Statistics remain Analyze-owned.
+The Observation subject is asset-agnostic; this case binds only Index Daily. Its
+missing-tolerant policy preserves calendar candidates and records unavailable facts.
+Individual stocks and other series require their own published fact/calendar binding
+and price semantics; their gaps do not block the index case. See the capability and
+reconciliation matrices in [ACCEPTANCE.md](ACCEPTANCE.md).
 Observation, conversion and execution contracts are Implementation Ready for this case;
 producer, converter, executors and statistical API remain Expected Implementation Gaps.
 [Acceptance gates](ACCEPTANCE.md) distinguish semantic readiness from runtime and live-data

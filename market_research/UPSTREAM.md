@@ -59,13 +59,28 @@ schema/view, scope/window, coverage and required records together; do not combin
 from one operation with rows from another. If ensure is required, inspect its outcome
 and export the same semantic request; ensure success alone is not input proof.
 
-Required incomplete inputs, failed units, prerequisite/integrity/operation failures and
-invalid public results fail explicitly. Do not analyze partial data, silently drop required
-records, impute facts, reinterpret missing/null as zero or claim absence from an empty
-incomplete payload. Only a complete valid result can prove absence; the concrete case
-must decide whether that absence or a legitimate null is admissible. Each required
-dependency must meet its own contract; separate calls do not imply a common snapshot
-or provider-current freshness.
+The default is fail-closed for required incomplete inputs and failed units. A concrete
+Descriptive case may explicitly authorize missing-tolerant consumption of a legal partial
+public Export, with verifiable target population, counters and successful records. This
+permission applies to market-fact availability, never an incomplete calendar needed to
+prove candidates or horizon. [Trailing Return input policy](descriptive/cases/trailing_return/INPUTS.md)
+is the first such authorization. Other consumption scenarios retain the default.
+
+Validate Dataset/view/schema, exact scope/window, nonnegative integer counters (not bool),
+mutually exclusive accounting and complete formula, successful record count, identity,
+types/legality and agreement with the complete selected calendar. Proof and payload must
+come from the same Export. A legal absent target fact is unavailable, not a zero value,
+closed session or evidence of suspension/listing/delisting. Null/illegal facts inside a
+successful row, duplicate/conflicting identities, malformed proof and prerequisite,
+integrity or operation errors still fail explicitly. A recoverable Ensure UnitFailure is
+diagnostic evidence; it does not authorize accepting an illegal exported row. Preserve
+public reasons without inventing a market explanation or declaring Source-confirmed
+absence. Missing-tolerant policy changes no upstream success/complete semantics.
+
+The case declares preparation sequencing, missing reasons, required-fact identities,
+coverage and provenance. No silent deletion, filling or imputation is allowed. Each
+dependency meets its own public contract; separate calls imply neither a common snapshot
+nor provider-current freshness. An OperationError is never converted into normal Missing.
 
 Failure of a selected DataLake capability does not authorize Snapshot substitution;
 Snapshot failure does not authorize reconstruction from DataLake. Missing credentials,

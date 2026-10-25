@@ -23,7 +23,8 @@ ResearchPlan → fixed-parameter ObservationJobSpecs
     → Research result association → JobResult / BatchResult → Evidence / Interpretation
 ```
 
-Input Preparation acquires complete facts through authorized upstream public contracts.
+Input Preparation acquires validated facts and availability evidence through authorized
+upstream public contracts, under the selected case's completeness policy.
 Observation Construction owns market indicator formulas and empirical variables derived
 from those facts. Research owns sample conversion, single-job and batch execution control,
 association of external numerical results, and interpretation with research context.

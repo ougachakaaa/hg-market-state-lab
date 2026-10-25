@@ -18,8 +18,11 @@ SampleBinding
   ordered_observation_keys
   candidate_count
   eligible_count
+  unavailable_count
   excluded_count
+  unavailable_records
   exclusion_reasons
+  coverage_context
   business_provenance
   sample_dependence_context
 ```
@@ -36,13 +39,17 @@ the eligible observation at the same position in numeric_sample.values:
 ```text
 len(numeric_sample.values) = eligible_count
 len(ordered_observation_keys) = len(numeric_sample.values)
-candidate_count = eligible_count + excluded_count
+candidate_count = eligible_count + unavailable_count + excluded_count
 ```
 
 The source reference resolves to the particular ObservationSet/fixed request and its
 actual input fingerprint within the JobResult, not merely a subject/window label.
 Exclusion reasons retain ordered excluded keys, codes and readable explanations;
-business_provenance retains observation definition, input references and the fixed Job.
+unavailable_records retain ordered unavailable keys, anchors and every missing fact
+identity/reason/evidence reference. coverage_context retains expected/available fact
+units, original public CoverageResults, warm-up context and all ObservationSet ratios,
+including Not Applicable. Counts derive from retained source outcome collections.
+Business provenance retains observation definition, input references and the fixed Job.
 Dependence context retains the case-declared anchor spacing, horizon and overlapping
 lookback meaning; it is not an independence claim.
 
@@ -55,6 +62,11 @@ These Research categories report stage `conversion`. No NumericSample or success
 statistical result is fabricated for these cases. Numeric legality is inherited from
 Analyze rather than redefined here; conversion validation does not replace analyze-time
 validation.
+
+When zero eligible observations prevent a SampleProjection, JobResult still retains the
+valid ObservationSet and its unavailable/excluded records, coverage and preparation
+diagnostics. Analyze never receives missing markers or a fabricated empty sample and
+does not clean market data or interpret its absence.
 
 ## Analysis and association
 
@@ -81,7 +93,8 @@ Association failures preserve already returned raw Analyze results as traceable 
 without claiming a valid completed business association.
 
 A numerical result is not automatically a finding. Interpretation retains population,
-subject, metric, horizon, window, actual inputs, method, exclusions and dependence
+subject, metric, horizon, window, actual inputs, method, unavailable/excluded outcomes,
+fact and observation coverage and dependence
 limitations. No reverse dependency from Analyze to Research or the input owners exists.
 
 ## Minimum acceptance obligations
