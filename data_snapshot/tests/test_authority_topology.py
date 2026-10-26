@@ -17,6 +17,7 @@ CONTEXT_ENTRIES = {
     Path("market_research/descriptive/OBSERVATION.md"),
     Path("market_research/descriptive/SAMPLE_CONVERSION.md"),
     Path("market_research/descriptive/STATISTICS_INTEGRATION.md"),
+    Path("market_research/descriptive/RESULT_ASSOCIATION.md"),
     Path("market_research/descriptive/EXECUTION.md"),
     Path("market_research/descriptive/ACCEPTANCE.md"),
     Path("market_research/descriptive/cases/trailing_return/ARCHITECTURE.md"),

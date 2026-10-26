@@ -17,9 +17,17 @@ ResearchPlan
   subjects: ordered non-empty sequence
   horizons: ordered non-empty sequence
   windows: ordered non-empty sequence of inclusive date pairs
-  analysis_requests: ordered non-empty sequence of (request_id, Statistics-owned StatisticalSpec)
+  analysis_requests: ordered non-empty sequence of Research-owned AnalysisRequest
   on_job_failure: continue | stop
 ```
+
+The single public [AnalysisRequest](RESULT_ASSOCIATION.md#public-operation-and-carriers)
+encodes the existing ordered `(request_id, Statistics-owned StatisticalSpec)` vocabulary.
+Future Executors reuse it; no competing request model is authorized. Local request
+construction validation and association-boundary rejection do not implement InvalidPlan:
+the future plan/direct-job preflight still owns that classification and ID uniqueness.
+Executors pass each actual corresponding compute result directly to association; a bare
+Statistics result carries no authenticated sample identity.
 
 All listed analyses are required in V1; no optional-analysis policy exists.
 Each horizon is a strictly positive integer, excluding bool. Each date is a date value,

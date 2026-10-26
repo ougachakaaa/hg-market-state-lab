@@ -20,6 +20,7 @@ ObservationJobSpec → validated prepared facts / availability evidence → Obse
 | Fixed observation request, grain, population, validity, market derivation and provenance | [OBSERVATION.md](OBSERVATION.md) |
 | ObservationSet → SampleProjection / SampleBinding | [SAMPLE_CONVERSION.md](SAMPLE_CONVERSION.md) |
 | Statistics consumption and result association | [STATISTICS_INTEGRATION.md](STATISTICS_INTEGRATION.md) |
+| AnalysisRequest, immutable evidence, exact result linkage and association failures | [RESULT_ASSOCIATION.md](RESULT_ASSOCIATION.md) via Statistics integration |
 | ResearchPlan, single Job / Batch control, statuses and results | [EXECUTION.md](EXECUTION.md) |
 | Numerical input, method parameters, results and failures | [Statistics CONTRACT.md](../../market_statistics/CONTRACT.md) |
 | First case: formula, public input binding, warm-up, validity and fingerprint | [Trailing Return](cases/trailing_return/ARCHITECTURE.md) |
