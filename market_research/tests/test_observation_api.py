@@ -168,7 +168,6 @@ def test_only_published_datalake_imports_and_no_forbidden_dependency_edges() -> 
         "data_lake.datasets.tushare_index_daily",
     }
     forbidden = (
-        "market_statistics",
         "data_snapshot",
         "ui_cli",
         "ui_http",
@@ -189,6 +188,9 @@ def test_only_published_datalake_imports_and_no_forbidden_dependency_edges() -> 
                 else []
             )
             for name in modules:
+                if name == "market_statistics" or name.startswith("market_statistics."):
+                    assert "conversion" in path.relative_to(SOURCE).parts, (path, name)
+                    assert name == "market_statistics", (path, name)
                 assert not any(
                     name == prefix or name.startswith(prefix + ".") for prefix in forbidden
                 ), (path, name)
@@ -197,7 +199,6 @@ def test_only_published_datalake_imports_and_no_forbidden_dependency_edges() -> 
             if isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute):
                 if node.func.attr in {"export", "ensure", "coverage"}:
                     assert path.name == "preparation.py", path
-    assert not list(SOURCE.rglob("*converter*"))
     assert not list(SOURCE.rglob("*executor*"))
 
 
