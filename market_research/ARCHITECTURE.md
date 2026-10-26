@@ -85,9 +85,11 @@ Current state: the index Trailing Return Observation producer is implemented as 
 independent Python capability under `src/market_research/descriptive/`, with public
 preparation, pure construction and contract tests. Its public boundary is owned by
 [Observation](descriptive/OBSERVATION.md); usage is in [README](README.md).
-Sample Converter and Job / Batch Executor remain Expected Implementation Gaps.
+The reusable scalar [Sample Converter](descriptive/SAMPLE_CONVERSION.md) is implemented
+under `market_research.descriptive.conversion`. Result Association and Job / Batch
+Executor remain Expected Implementation Gaps.
 No Research CLI, HTTP service or report renderer is published. The independent Statistics
-public API is implemented; Research conversion and execution remain unimplemented.
+public API is implemented; Research execution remains unimplemented.
 Actual verification and live-data limitations are recorded in
 [Acceptance](descriptive/ACCEPTANCE.md).
 The concrete first case and implementation acceptance gates are reached through the

@@ -132,7 +132,7 @@ External Market Sources
 
 `market_research` 通过 `data_snapshot` 明确支持的 public application/product boundary 消费 analysis-ready result，也可通过 DataLake public Application Service 消费 source facts；不依赖 Source Capture、Raw Artifact、product-private Preparation、upstream persistence、Dataset / Snapshot SQLite、`ui_http`、FastAPI 或 HTTP DTO。Research 内部 composition 由其 module authority 拥有，upstream producer 权限与 selection 见 [Research upstream authority](market_research/UPSTREAM.md)，具体 integration implementation 遵循该 contract。`data_lake`、`data_snapshot`、`market_statistics` 与 `market_modeling` 不得依赖 `market_research`。
 
-Research 与 Statistics 的依赖方向如下；这是 semantic boundary，Research conversion / execution 尚未实现：
+Research 与 Statistics 的依赖方向如下；这是 semantic boundary，实际 readiness 见 [Research Acceptance](market_research/descriptive/ACCEPTANCE.md)：
 
 ```text
 market_research

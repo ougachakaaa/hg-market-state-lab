@@ -1,4 +1,4 @@
-# Research Observation usage
+# Research Observation and sample conversion usage
 
 This is usage documentation. Contracts are owned by [the module authority](ARCHITECTURE.md)
 and its [Observation boundary](descriptive/OBSERVATION.md).
@@ -54,3 +54,43 @@ fails preparation; a validated partial Index Export can produce unavailable outc
 Construction makes no upstream calls. This API requires no Statistics, Converter or Executor.
 
 Verification commands and actual live-data status are in [Acceptance](descriptive/ACCEPTANCE.md).
+
+## Pure scalar conversion and Statistics reuse
+
+For an existing legal ObservationSet such as `result` above, the independent public
+[converter](descriptive/SAMPLE_CONVERSION.md) performs no acquisition or statistics:
+
+```python
+from market_research.descriptive.conversion import (
+    InvalidObservationSet,
+    NoEligibleObservations,
+    UnmappableSample,
+    convert,
+)
+from market_statistics import IntervalCountSpec, QuantileSpec, compute
+
+projection = convert(result)
+sample = projection.numeric_sample
+binding = projection.binding
+assert binding.source_observation_reference is result
+assert len(binding.ordered_observation_keys) == sample.sample_count == binding.eligible_count
+
+quantile_result = compute(sample, QuantileSpec(points=[0, 0.5, 1]))
+interval_result = compute(
+    sample, IntervalCountSpec(edges=[-0.2, 0, 0.2], unit=sample.unit),
+)
+```
+
+`SampleProjection` contains the Statistics NumericSample and Research SampleBinding.
+The same binding and source serve both requests. `binding.unavailable_records` and
+`binding.exclusion_reasons` are the complete original typed outcome records;
+`coverage_context`, `business_provenance` and `sample_dependence_context` retain original
+objects. Counts and observation/unavailable/excluded ratios are read-only source properties.
+The exact fixed request, definition and Job identity are reachable through the source.
+
+Conversion raises `InvalidObservationSet` for malformed sources, then
+`NoEligibleObservations` for a valid source with no Eligible values, then
+`UnmappableSample` for Statistics sample-construction rejection. All expose stage
+`conversion`, category and readable exception text; translated failures retain their cause.
+The caller retains the source and diagnostics when conversion fails. No JobResult or
+business result association is produced. See [deterministic outputs and reconciliation](descriptive/CONVERSION_ACCEPTANCE.md).
