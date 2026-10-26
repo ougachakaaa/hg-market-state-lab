@@ -189,7 +189,10 @@ def test_only_published_datalake_imports_and_no_forbidden_dependency_edges() -> 
             )
             for name in modules:
                 if name == "market_statistics" or name.startswith("market_statistics."):
-                    assert "conversion" in path.relative_to(SOURCE).parts, (path, name)
+                    assert {"conversion", "association"} & set(path.relative_to(SOURCE).parts), (
+                        path,
+                        name,
+                    )
                     assert name == "market_statistics", (path, name)
                 assert not any(
                     name == prefix or name.startswith(prefix + ".") for prefix in forbidden
