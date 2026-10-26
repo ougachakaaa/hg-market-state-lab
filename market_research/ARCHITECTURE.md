@@ -39,7 +39,8 @@ These are conceptual responsibilities, not prescribed Python classes or callable
 | Concept | Ownership |
 | --- | --- |
 | ObservationJobSpec / ObservationSet | Research observation request, empirical meaning, population, validity and derivation: [Observation authority](descriptive/OBSERVATION.md). |
-| Sample Converter / SampleProjection / SampleBinding / result association | Research-owned outbound adaptation and business linkage: [Statistics integration](descriptive/STATISTICS_INTEGRATION.md). |
+| Sample Converter / SampleProjection / SampleBinding | Research-owned adaptation: [Sample conversion](descriptive/SAMPLE_CONVERSION.md). |
+| Statistics consumption / result association | Research-owned business linkage: [Statistics integration](descriptive/STATISTICS_INTEGRATION.md). |
 | ResearchPlan / JobResult / BatchResult | Research definition, execution context, control and complete reporting: [Execution authority](descriptive/EXECUTION.md). |
 | NumericSample / StatisticalSpec / StatisticalResult / StatisticalFailure | Statistics-owned public numerical contracts: [Statistics contract](../market_statistics/CONTRACT.md). Research consumes them without defining competing types. |
 

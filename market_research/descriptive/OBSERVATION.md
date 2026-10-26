@@ -92,7 +92,7 @@ No undeclared filtering, imputation, truncation, rounding, deduplication or outl
 Eligible numbers retain calculated binary64 coordinates. Duplicate keys, extra outcomes,
 unaccounted anchors and inconsistent counts fail construction, never silent repair.
 Legal zero-candidate, all-unavailable and all-excluded populations yield valid zero-eligible
-sets; [conversion](STATISTICS_INTEGRATION.md) then fails explicitly, preserving diagnostics.
+sets; [conversion](SAMPLE_CONVERSION.md) then fails explicitly, preserving diagnostics.
 
 ## Coverage
 

@@ -9,7 +9,8 @@
 | Facts, public upstream selection, completeness, provenance or failure | [UPSTREAM.md](UPSTREAM.md) → actual Dataset / Product public contract |
 | Descriptive flow and evidence interpretation | [descriptive/ARCHITECTURE.md](descriptive/ARCHITECTURE.md) |
 | Fixed observation request, population, market derivation or provenance | [descriptive/OBSERVATION.md](descriptive/OBSERVATION.md) |
-| Research-owned sample conversion or Statistics result association | [descriptive/STATISTICS_INTEGRATION.md](descriptive/STATISTICS_INTEGRATION.md) |
+| Research-owned sample conversion | [descriptive/SAMPLE_CONVERSION.md](descriptive/SAMPLE_CONVERSION.md) |
+| Statistics consumption or Research result association | [descriptive/STATISTICS_INTEGRATION.md](descriptive/STATISTICS_INTEGRATION.md) |
 | ResearchPlan, Job / Batch control, statuses or result accounting | [descriptive/EXECUTION.md](descriptive/EXECUTION.md) |
 | Numerical inputs, methods, results or statistical failures | [Statistics entry](../market_statistics/ARCHITECTURE.md) → [public contract](../market_statistics/CONTRACT.md) |
 

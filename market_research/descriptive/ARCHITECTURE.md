@@ -18,7 +18,8 @@ ObservationJobSpec → validated prepared facts / availability evidence → Obse
 | Concern | Canonical owner |
 | --- | --- |
 | Fixed observation request, grain, population, validity, market derivation and provenance | [OBSERVATION.md](OBSERVATION.md) |
-| ObservationSet → SampleProjection and statistical result → research association | [STATISTICS_INTEGRATION.md](STATISTICS_INTEGRATION.md) |
+| ObservationSet → SampleProjection / SampleBinding | [SAMPLE_CONVERSION.md](SAMPLE_CONVERSION.md) |
+| Statistics consumption and result association | [STATISTICS_INTEGRATION.md](STATISTICS_INTEGRATION.md) |
 | ResearchPlan, single Job / Batch control, statuses and results | [EXECUTION.md](EXECUTION.md) |
 | Numerical input, method parameters, results and failures | [Statistics CONTRACT.md](../../market_statistics/CONTRACT.md) |
 | First case: formula, public input binding, warm-up, validity and fingerprint | [Trailing Return](cases/trailing_return/ARCHITECTURE.md) |

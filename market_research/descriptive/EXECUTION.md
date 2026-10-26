@@ -3,6 +3,7 @@
 This contract specializes the [Descriptive entry](ARCHITECTURE.md). It owns plan
 validation/expansion, Job/Batch control, identity and complete result accounting.
 Observation and conversion semantics belong to [OBSERVATION.md](OBSERVATION.md) and
+[SAMPLE_CONVERSION.md](SAMPLE_CONVERSION.md); result association to
 [STATISTICS_INTEGRATION.md](STATISTICS_INTEGRATION.md); numerical semantics to
 [Statistics](../../market_statistics/CONTRACT.md); inputs to [UPSTREAM.md](../UPSTREAM.md).
 Status: Implementation Ready for the first case; executors are not implemented.
@@ -144,7 +145,7 @@ applicable failures are retained, not just the first.
 | --- | --- |
 | input_preparation | UpstreamFailure (retaining InvalidRequestError / OperationError), IncompleteInput (required calendar or inputs outside authorized partial policy), InvalidPublicInput, HistoryInsufficient; requests/dependency context retained; recoverable unit failures remain diagnostics when case policy permits |
 | observation_construction | ObservationConstructionFailure: formula/numerical failure or inconsistent observation accounting |
-| conversion | InvalidObservationSet, UnmappableSample, NoEligibleObservations as owned by integration |
+| conversion | InvalidObservationSet, UnmappableSample, NoEligibleObservations as owned by [conversion](SAMPLE_CONVERSION.md) |
 | analyze | InvalidSample, InvalidStatisticalSpec, CalculationFailure preserved from Statistics |
 | result_association | ResultAssociationFailure: mismatched result linkage or inability to assemble a valid association/result |
 
