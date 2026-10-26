@@ -12,9 +12,10 @@ the stated scope, not that runtime or live-data acceptance exists.
 | Asset-agnostic scalar Observation | Implementation Ready as abstract contract | Immutable domain and independent Python API implemented; each new series still needs explicit fact/calendar/metric binding | [Observation](OBSERVATION.md) |
 | Index Trailing Return, complete or legal partial facts | Implementation Ready with explicit canonical index_code, dates and H | Observation runtime and deterministic contract tests implemented; live gate blocked by incompatible existing Calendar cache | [Case](cases/trailing_return/ARCHITECTURE.md), [inputs](cases/trailing_return/INPUTS.md), [identity](cases/trailing_return/INPUT_IDENTITY.md) |
 | Sample Converter with missing and coverage context | Implementation Ready | Implemented; deterministic conversion and Statistics reuse verified by CONV-01; zero eligible fails explicitly | [Conversion](SAMPLE_CONVERSION.md), [evidence](CONVERSION_ACCEPTANCE.md) |
-| Result Association | Implementation Ready; ASSOC-01 freezes exact linkage, bounded structure and non-attestation limits | Not Implemented | [Integration](STATISTICS_INTEGRATION.md) → [association](RESULT_ASSOCIATION.md) |
+| Result Association | Implementation Ready; exact linkage, bounded structure and non-attestation limits | Implemented by ASSOC-01; deterministic component flow and negative checks passed | [Integration](STATISTICS_INTEGRATION.md) → [association](RESULT_ASSOCIATION.md), [evidence](ASSOCIATION_ACCEPTANCE.md) |
 | Research Job Executor | Implementation Ready | Not Implemented; final Success still requires every declared analysis/association | [Execution](EXECUTION.md) |
 | Research Batch Executor | Implementation Ready | Not Implemented | [Execution](EXECUTION.md) |
+| Research Evidence Storage / Result Reuse / Cache | Deferred; no persistence or reuse protocol published | Not Implemented | [Association scope](RESULT_ASSOCIATION.md#failures-scope-and-non-guarantees) |
 | Statistics NumericSample, Quantile, IntervalCount | Existing contracts remain Implementation Ready | Independent installed Python API and both methods implemented (STAT-IMP-01); no market missing-value responsibility | [Public contract](../../market_statistics/CONTRACT.md), [Quantile](../../market_statistics/QUANTILE.md), [IntervalCount](../../market_statistics/INTERVAL_COUNT.md) |
 | Individual-stock return Observation | Abstractly allowed; not ready as concrete case | Upstream Capability Gap: no stock daily Public Service in current DataLake catalog. Semantic Gap: identity/calendar binding and raw versus adjusted return/corporate-action convention require formal case decisions | [Subject contract](OBSERVATION.md), [published catalog](../../data_lake/DATASETS.md), [selection policy](../UPSTREAM.md) |
 | Index futures, commodity futures, other market series | Abstractly allowed; no return case declared | Existing index-futures Dataset alone does not decide contract selection/roll/price-return/calendar semantics. Commodity/other bindings unreviewed, not claimed supported | [Subject contract](OBSERVATION.md), [selection policy](../UPSTREAM.md) |
@@ -29,7 +30,9 @@ shapes, optional analyses, retries, adjustment engines and durable outputs are o
 
 These are cross-stage acceptance specifications. Observation checks are recorded below;
 conversion and independent Statistics reuse are verified in [CONV-01 evidence](CONVERSION_ACCEPTANCE.md).
-Result association, execution and live end-to-end gates remain unperformed.
+Independent result association is verified in [ASSOC-01 evidence](ASSOCIATION_ACCEPTANCE.md).
+Job/Batch execution and live end-to-end gates remain unperformed. The historical
+incompatible Trade Calendar cache limitation below is unchanged.
 Each successful construction verifies unique ordered keys, exactly one outcome per
 candidate, all missing dependencies and derived counts/ratios.
 

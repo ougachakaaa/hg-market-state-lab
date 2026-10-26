@@ -45,8 +45,8 @@ Individual stocks and other series require their own published fact/calendar bin
 and price semantics; their gaps do not block the index case. See the capability and
 reconciliation matrices in [ACCEPTANCE.md](ACCEPTANCE.md).
 Observation production for this case is implemented with independent public preparation
-and pure construction. The reusable scalar converter is implemented; Result Association
-and Job / Batch Executors remain Expected Implementation Gaps. The independent
+and pure construction. The reusable scalar converter and independent Result Association
+are implemented; Job / Batch Executors remain Expected Implementation Gaps. The independent
 Statistics public numerical API is implemented by STAT-IMP-01.
 [Acceptance gates](ACCEPTANCE.md) distinguish semantic readiness from runtime and live-data
 verification. No unresolved implicit default is authorized.

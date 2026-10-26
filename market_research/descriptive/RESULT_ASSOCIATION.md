@@ -3,7 +3,8 @@
 This contract specializes [Statistics integration](STATISTICS_INTEGRATION.md) under
 [Descriptive](ARCHITECTURE.md). It owns ASSOC-01 only: a synchronous, pure, case-agnostic
 association of a published scalar observation population, projection, request and result.
-Status: Implementation Ready; runtime readiness belongs to [Acceptance](ACCEPTANCE.md).
+Status: implemented by ASSOC-01; actual verification is recorded in
+[Association acceptance](ASSOCIATION_ACCEPTANCE.md) and [readiness](ACCEPTANCE.md).
 [Observation](OBSERVATION.md) owns the question/population/market derivation/provenance;
 [conversion](SAMPLE_CONVERSION.md) owns NumericSample mapping and SampleBinding;
 [Statistics](../../market_statistics/CONTRACT.md) owns numerical types and calculations;

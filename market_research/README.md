@@ -1,4 +1,4 @@
-# Research Observation and sample conversion usage
+# Research Observation, conversion and association usage
 
 This is usage documentation. Contracts are owned by [the module authority](ARCHITECTURE.md)
 and its [Observation boundary](descriptive/OBSERVATION.md).
@@ -94,3 +94,31 @@ Conversion raises `InvalidObservationSet` for malformed sources, then
 `conversion`, category and readable exception text; translated failures retain their cause.
 The caller retains the source and diagnostics when conversion fails. No JobResult or
 business result association is produced. See [deterministic outputs and reconciliation](descriptive/CONVERSION_ACCEPTANCE.md).
+
+## Pure statistical result association
+
+For the same `job`, ObservationSet `result` and `projection` above:
+
+```python
+from market_research.descriptive.association import AnalysisRequest, associate
+
+request = AnalysisRequest("return_quantiles", QuantileSpec(points=[0, 0.5, 1]))
+numerical_result = compute(projection.numeric_sample, request.spec)
+evidence = associate(job, result, projection, request, numerical_result)
+assert evidence.request is request
+assert evidence.statistical_result is numerical_result
+assert evidence.projection is projection
+assert evidence.source_observation_reference is result
+```
+
+`ResearchAnalysisEvidence` is frozen; source question, keys, coverage, typed provenance
+and dependence remain reachable through its original projection/binding/source.
+`ResultAssociationFailure` reports stage/category, readable reason and attributable
+Job/request identity; the caller retains the raw result when linkage fails.
+Association validates source identity, exact request/result parameters, sample mapping,
+units/counts and bounded result structure without conversion, computation or I/O.
+A bare result has no sample identity: association cannot prove its hidden computation
+origin or independently certify its mathematical payload. Use the actual corresponding
+public compute result. No Executor, persistence or cache is provided. See the
+[contract](descriptive/RESULT_ASSOCIATION.md) and
+[deterministic acceptance](descriptive/ASSOCIATION_ACCEPTANCE.md).

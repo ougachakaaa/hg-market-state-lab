@@ -125,5 +125,7 @@ Converter-owned tests reuse public Observation fixtures, without network or user
 | Immutability and purity | Stable positional linkage and original evidence; no I/O or computation invocation |
 | Reuse | Same projected sample consumed by public Quantile and IntervalCount; assert numerical outputs and unchanged binding |
 
-Architecture tests enforce only the new public Statistics edge, existing DataLake public
-access/preparation-only acquisition, and continued absence of Executor/association runtime.
+Architecture tests enforce the converter's precise public Statistics edge, existing
+DataLake public access/preparation-only acquisition and continued absence of Executor.
+ASSOC-01 separately authorizes [association](RESULT_ASSOCIATION.md)'s public edges;
+Converter remains independent of Association.

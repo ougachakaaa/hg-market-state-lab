@@ -86,8 +86,10 @@ independent Python capability under `src/market_research/descriptive/`, with pub
 preparation, pure construction and contract tests. Its public boundary is owned by
 [Observation](descriptive/OBSERVATION.md); usage is in [README](README.md).
 The reusable scalar [Sample Converter](descriptive/SAMPLE_CONVERSION.md) is implemented
-under `market_research.descriptive.conversion`. Result Association and Job / Batch
-Executor remain Expected Implementation Gaps.
+under `market_research.descriptive.conversion`. Independent Result Association is implemented
+under `market_research.descriptive.association`, retaining original request/result/projection
+and source evidence under its [contract](descriptive/RESULT_ASSOCIATION.md).
+Job / Batch Executors remain Expected Implementation Gaps.
 No Research CLI, HTTP service or report renderer is published. The independent Statistics
 public API is implemented; Research execution remains unimplemented.
 Actual verification and live-data limitations are recorded in

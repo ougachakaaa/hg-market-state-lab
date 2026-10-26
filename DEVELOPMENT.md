@@ -65,6 +65,6 @@ poetry run lab datalake list
 日常 ensure 不刷新已有 success，不保证 provider-current freshness；无需通过重建缓存例行更新历史事实。运行验收使用系统临时存储并重定向内部 Composition 路径，不把 token 或 storage path 加入 public request，不对默认用户缓存做试验。历史 V1 验收证据见 [Historical Acceptance](data_lake/RELEASE_ACCEPTANCE.md)（仅历史基线，非当前验收或操作指令）；当前验证按受影响模块的 Agent rules 执行。
 
 Research publishes an independent [Python Observation API](market_research/README.md)
-for index Trailing Return and a reusable scalar Sample Converter, using this same root
-environment. There is no Research execution command, Result Association or Job / Batch
-Executor. The previous Study CLI is retired.
+for index Trailing Return, a reusable scalar Sample Converter and independent Result
+Association, using this same root environment. There is no Research execution command
+or Job / Batch Executor. The previous Study CLI is retired.

@@ -16,7 +16,7 @@
 
 语义变更先更新 narrowest canonical authority，再修改实现；下层只能 specialize 上层 invariant。
 缺失的研究方法决定必须显式记录并解决，不从旧实现、统计惯例或用户沉默推断。
-Authority readiness 不等于 runtime readiness；当前有独立 Observation 与 Sample Conversion Python API，
+Authority readiness 不等于 runtime readiness；当前有独立 Observation、Sample Conversion 与 Result Association Python API，
 无 Research Job / Batch execution、CLI 或 HTTP API。
 不恢复旧 framework、compatibility、mandatory persistence 或 generic engine。
 Descriptive / Conditional 不相互 import，不通过共享基类或执行引擎耦合；不创建 Conditional 空框架。
