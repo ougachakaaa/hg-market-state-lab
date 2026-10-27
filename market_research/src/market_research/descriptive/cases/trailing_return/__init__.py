@@ -13,3 +13,4 @@ from .inputs import InvalidPublicInput as InvalidPublicInput
 from .inputs import PreparedInputs as PreparedInputs
 from .inputs import UpstreamFailure as UpstreamFailure
 from .preparation import prepare_inputs as prepare_inputs
+from .validation import validate_job as validate_job

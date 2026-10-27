@@ -10,6 +10,48 @@ SOURCE = Path(__file__).resolve().parents[1] / "src/market_research"
 CONVERSION = "market_research.descriptive.conversion"
 OBSERVATION = "market_research.descriptive.observation"
 ASSOCIATION = "market_research.descriptive.association"
+EXECUTION = "market_research.descriptive.execution"
+CASE = "market_research.descriptive.cases.trailing_return"
+EXECUTION_PUBLIC = {
+    OBSERVATION: {
+        "JobIdentity",
+        "ObservationJobSpec",
+        "ObservationSet",
+        "ObservationConstructionFailure",
+    },
+    CONVERSION: {
+        "SampleProjection",
+        "InvalidObservationSet",
+        "NoEligibleObservations",
+        "UnmappableSample",
+        "convert",
+    },
+    ASSOCIATION: {
+        "AnalysisRequest",
+        "ResearchAnalysisEvidence",
+        "ResultAssociationFailure",
+        "associate",
+    },
+    CASE: {
+        "InputAttempt",
+        "InputPreparationFailure",
+        "PreparedInputs",
+        "TrailingReturnProvenance",
+        "prepare_inputs",
+        "construct_observations",
+        "validate_job",
+    },
+    "market_statistics": {
+        "StatisticalResult",
+        "StatisticalSpec",
+        "IntervalCountSpec",
+        "InvalidSample",
+        "InvalidStatisticalSpec",
+        "CalculationFailure",
+        "validate_spec",
+        "compute",
+    },
+}
 ASSOCIATION_STATISTICS = {
     "NumericSample",
     "InvalidSample",
@@ -28,6 +70,7 @@ ASSOCIATION_STATISTICS = {
 def check_imports(text: str, package: str) -> None:
     conversion = package == CONVERSION or package.startswith(CONVERSION + ".")
     association = package == ASSOCIATION or package.startswith(ASSOCIATION + ".")
+    execution = package == EXECUTION or package.startswith(EXECUTION + ".")
     for node in ast.walk(ast.parse(text)):
         if isinstance(node, ast.ImportFrom):
             names = [resolve_name("." * node.level + (node.module or ""), package)]
@@ -36,6 +79,22 @@ def check_imports(text: str, package: str) -> None:
         else:
             continue
         for name in names:
+            if execution:
+                if name in EXECUTION_PUBLIC:
+                    assert isinstance(node, ast.ImportFrom)
+                    assert {alias.name for alias in node.names} <= EXECUTION_PUBLIC[name]
+                else:
+                    assert (
+                        name in {"collections.abc", "dataclasses", "typing"}
+                        or name == EXECUTION
+                        or name.startswith(EXECUTION + ".")
+                    ), name
+                continue
+            assert name != EXECUTION and not name.startswith(EXECUTION + "."), name
+            if isinstance(node, ast.ImportFrom):
+                assert all(
+                    f"{name}.{alias.name}" != EXECUTION for alias in node.names
+                ), "Components cannot import execution through its parent package"
             if name == "market_statistics" or name.startswith("market_statistics."):
                 assert (conversion or association) and name == "market_statistics", name
                 assert isinstance(node, ast.ImportFrom), "Import only the required public types"
@@ -88,7 +147,6 @@ def test_conversion_imports_only_public_contracts_and_has_no_effectful_dependenc
     for path in SOURCE.rglob("*.py"):
         package = ".".join(("market_research", *path.relative_to(SOURCE).parent.parts))
         check_imports(path.read_text(encoding="utf-8"), package)
-    assert not list(SOURCE.rglob("*executor*"))
 
 
 @pytest.mark.parametrize(
@@ -122,6 +180,24 @@ def test_conversion_imports_only_public_contracts_and_has_no_effectful_dependenc
         ("import time", ASSOCIATION),
         ("from ..association import associate", CONVERSION),
         ("from ..association import associate", OBSERVATION),
+        ("from ..execution import execute_job", CONVERSION),
+        ("from ..execution import execute_job", OBSERVATION),
+        ("from .. import execution", OBSERVATION),
+        ("from market_research.descriptive import execution", ASSOCIATION),
+        ("from ...execution import execute_job", CASE),
+        ("from ..cases.trailing_return.inputs import validate_job", EXECUTION),
+        ("from ..observation.models import ObservationSet", EXECUTION),
+        ("from ..association.api import associate", EXECUTION),
+        ("from ..conversion.validation import validate_source", EXECUTION),
+        ("from market_statistics.api import compute", EXECUTION),
+        ("import market_statistics", EXECUTION),
+        ("from market_statistics import NumericSample", EXECUTION),
+        ("from data_lake import OperationError", EXECUTION),
+        ("from data_lake.datasets.tushare_index_daily import create_service", EXECUTION),
+        ("import sqlite3", EXECUTION),
+        ("import socket", EXECUTION),
+        ("import random", EXECUTION),
+        ("import time", EXECUTION),
     ],
 )
 def test_boundary_check_rejects_extra_permissions(text: str, package: str) -> None:

@@ -189,7 +189,9 @@ def test_only_published_datalake_imports_and_no_forbidden_dependency_edges() -> 
             )
             for name in modules:
                 if name == "market_statistics" or name.startswith("market_statistics."):
-                    assert {"conversion", "association"} & set(path.relative_to(SOURCE).parts), (
+                    assert {"conversion", "association", "execution"} & set(
+                        path.relative_to(SOURCE).parts
+                    ), (
                         path,
                         name,
                     )
@@ -202,7 +204,6 @@ def test_only_published_datalake_imports_and_no_forbidden_dependency_edges() -> 
             if isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute):
                 if node.func.attr in {"export", "ensure", "coverage"}:
                     assert path.name == "preparation.py", path
-    assert not list(SOURCE.rglob("*executor*"))
 
 
 def test_public_facades_export_attributes_directly_without_all() -> None:
