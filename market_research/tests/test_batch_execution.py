@@ -1,10 +1,11 @@
 """EXEC-02: whole-plan isolation, real Single Job composition and honest accounting."""
 
 import importlib
-from collections import UserList
+from collections import UserDict, UserList
 from copy import copy
 from dataclasses import FrozenInstanceError, replace
 from datetime import date, datetime
+from types import MappingProxyType
 from typing import Any, cast
 
 import pytest
@@ -24,6 +25,7 @@ from market_research.descriptive.execution import (
     execute_batch,
     execute_job,
 )
+from market_research.descriptive.execution.plan import preflight_plan
 from market_research.descriptive.observation import (
     DateWindow,
     InvalidObservationRequest,
@@ -202,6 +204,7 @@ def test_reject_bad_containers_at_construction_and_execution(
         {"metric": "trailing_cumulative_return_v2"},
         {"metric": None},
         {"metric_parameters": {"unused": []}},
+        {"metric_parameters": MappingProxyType({"unused": []})},
         {"metric_parameters": None},
         {"on_job_failure": "STOP"},
         {"on_job_failure": None},
@@ -215,6 +218,26 @@ def test_all_fields_revalidated_before_io(changes: dict[str, Any], services: lis
     with pytest.raises(InvalidPlan):
         execute_batch(corrupt(accepted, **changes))
     assert services == []
+
+
+@pytest.mark.parametrize("bad", [{}, {"unused": []}, UserDict(), UserDict({"unused": []})])
+def test_reject_replaced_parameter_mapping_before_job_or_service_creation(
+    monkeypatch: pytest.MonkeyPatch,
+    services: list[str],
+    bad: Any,
+) -> None:
+    accepted = plan()
+    malformed = corrupt(accepted, metric_parameters=bad)
+    monkeypatch.setattr(
+        BATCH, "execute_job", lambda *args: pytest.fail("executed before full preflight")
+    )
+    for operation in (preflight_plan, execute_batch):
+        with pytest.raises(InvalidPlan, match="immutable mapping snapshot") as caught:
+            operation(malformed)
+        assert isinstance(caught.value.__cause__, ValueError)
+        assert malformed.metric_parameters is bad
+        assert services == []
+    assert type(accepted.metric_parameters) is MappingProxyType
 
 
 def test_eighth_case_specific_job_invalid_executes_none(
@@ -369,6 +392,8 @@ def test_plan_snapshots_frozen_results_and_independent_runs() -> None:
         analysis_requests=requests,
         metric_parameters=params,
     )
+    snapshot = accepted.metric_parameters
+    assert type(snapshot) is MappingProxyType and snapshot is not params
     subjects.clear()
     horizons.clear()
     windows.clear()
@@ -382,6 +407,7 @@ def test_plan_snapshots_frozen_results_and_independent_runs() -> None:
     with pytest.raises(FrozenInstanceError):
         accepted.on_job_failure = "stop"  # type: ignore[misc]
     first, second = execute_batch(accepted), execute_batch(accepted)
+    assert accepted.metric_parameters is snapshot
     with pytest.raises(FrozenInstanceError):
         first.job_results = ()  # type: ignore[misc]
     assert first.job_results[0].job_identity == second.job_results[0].job_identity

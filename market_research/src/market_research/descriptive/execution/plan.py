@@ -53,8 +53,8 @@ def preflight_plan(plan: ResearchPlan) -> tuple[tuple[ObservationJobSpec, JobIde
     try:
         if type(plan) is not ResearchPlan:
             raise ValueError("Expected public ResearchPlan")
-        if not isinstance(plan.metric_parameters, Mapping):
-            raise ValueError("metric_parameters must be an explicit mapping")
+        if type(plan.metric_parameters) is not MappingProxyType:
+            raise ValueError("metric_parameters must retain its immutable mapping snapshot")
         if not isinstance(plan.on_job_failure, str) or plan.on_job_failure not in (
             "continue",
             "stop",
