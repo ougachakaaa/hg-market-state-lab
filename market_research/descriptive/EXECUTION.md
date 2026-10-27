@@ -21,9 +21,9 @@ is required, and analyses do not add an observation dimension. No hidden paramet
 dates, horizon, failure policy, normalization or deduplication are authorized. InvalidPlan
 precedes all service creation and DataLake I/O.
 
-Status: EXEC-01 is implemented. EXEC-02 Batch authority is frozen; runtime remains an
-Expected Implementation Gap until separately implemented and verified. Historical
-[Single Job acceptance](JOB_EXECUTION_ACCEPTANCE.md) retains its scope.
+Status: EXEC-01 and EXEC-02 are implemented for Index Trailing Return. Deterministic
+verification is recorded separately in [Single Job acceptance](JOB_EXECUTION_ACCEPTANCE.md)
+and [Batch acceptance](BATCH_EXECUTION_ACCEPTANCE.md). Live-data acceptance remains separate.
 
 ## Business identity and execution scope
 

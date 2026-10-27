@@ -91,9 +91,11 @@ under `market_research.descriptive.association`, retaining original request/resu
 and source evidence under its [contract](descriptive/RESULT_ASSOCIATION.md).
 Single Job execution is implemented under `market_research.descriptive.execution`,
 composing these public components under [its contract](descriptive/JOB_EXECUTION.md).
-ResearchPlan / Batch execution remains an Expected Implementation Gap.
+ResearchPlan / Batch execution is implemented in the same facade, composing Single Job
+under the [Batch contract](descriptive/BATCH_EXECUTION.md).
 No Research CLI, HTTP service or report renderer is published. The independent Statistics
-public API is implemented; deterministic Single Job acceptance is recorded separately
+public API is implemented; deterministic Single Job and
+[Batch acceptance](descriptive/BATCH_EXECUTION_ACCEPTANCE.md) are recorded separately
 from the pending live-data gate.
 Actual verification and live-data limitations are recorded in
 [Acceptance](descriptive/ACCEPTANCE.md).

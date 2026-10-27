@@ -14,7 +14,7 @@ the stated scope, not that runtime or live-data acceptance exists.
 | Sample Converter with missing and coverage context | Implementation Ready | Implemented; deterministic conversion and Statistics reuse verified by CONV-01; zero eligible fails explicitly | [Conversion](SAMPLE_CONVERSION.md), [evidence](CONVERSION_ACCEPTANCE.md) |
 | Result Association | Implementation Ready; exact linkage, bounded structure and non-attestation limits | Implemented by ASSOC-01; deterministic component flow and negative checks passed | [Integration](STATISTICS_INTEGRATION.md) → [association](RESULT_ASSOCIATION.md), [evidence](ASSOCIATION_ACCEPTANCE.md) |
 | Research Job Executor | Implementation Ready | Implemented by EXEC-01 for Index Trailing Return; every required analysis/association must succeed; deterministic acceptance passed | [Execution](EXECUTION.md) → [Single Job](JOB_EXECUTION.md), [evidence](JOB_EXECUTION_ACCEPTANCE.md) |
-| Research Batch Executor | Implementation Ready | Not Implemented | [Execution](EXECUTION.md) |
+| Research Batch Executor | Implementation Ready | Implemented by EXEC-02; immutable ResearchPlan, full preflight, ordered Single Job composition, continue/stop and Skipped accounting; deterministic acceptance passed | [Execution](EXECUTION.md) → [Batch](BATCH_EXECUTION.md), [evidence](BATCH_EXECUTION_ACCEPTANCE.md) |
 | Research Evidence Storage / Result Reuse / Cache | Deferred; no persistence or reuse protocol published | Not Implemented | [Association scope](RESULT_ASSOCIATION.md#failures-scope-and-non-guarantees) |
 | Statistics NumericSample, Quantile, IntervalCount | Existing contracts remain Implementation Ready | Independent installed Python API and both methods implemented (STAT-IMP-01); no market missing-value responsibility | [Public contract](../../market_statistics/CONTRACT.md), [Quantile](../../market_statistics/QUANTILE.md), [IntervalCount](../../market_statistics/INTERVAL_COUNT.md) |
 | Individual-stock return Observation | Abstractly allowed; not ready as concrete case | Upstream Capability Gap: no stock daily Public Service in current DataLake catalog. Semantic Gap: identity/calendar binding and raw versus adjusted return/corporate-action convention require formal case decisions | [Subject contract](OBSERVATION.md), [published catalog](../../data_lake/DATASETS.md), [selection policy](../UPSTREAM.md) |
@@ -32,7 +32,8 @@ These are cross-stage acceptance specifications. Observation checks are recorded
 conversion and independent Statistics reuse are verified in [CONV-01 evidence](CONVERSION_ACCEPTANCE.md).
 Independent result association is verified in [ASSOC-01 evidence](ASSOCIATION_ACCEPTANCE.md).
 Single Job deterministic execution is verified in [EXEC-01 evidence](JOB_EXECUTION_ACCEPTANCE.md).
-ResearchPlan/Batch execution and live end-to-end gates remain unperformed. The historical
+ResearchPlan/Batch deterministic execution is verified in [EXEC-02 evidence](BATCH_EXECUTION_ACCEPTANCE.md).
+Live end-to-end gates remain unperformed. The historical
 incompatible Trade Calendar cache limitation below is unchanged.
 Each successful construction verifies unique ordered keys, exactly one outcome per
 candidate, all missing dependencies and derived counts/ratios.

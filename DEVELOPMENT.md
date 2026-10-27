@@ -66,6 +66,7 @@ poetry run lab datalake list
 
 Research publishes an independent [Python Observation API](market_research/README.md)
 for index Trailing Return, a reusable scalar Sample Converter and independent Result
-Association, plus the Single Job Executor, using this same root environment. Deterministic
-public API acceptance runs with `poetry run python market_research/tests/job_execution_example.py`.
-There is no Research execution command or Batch Executor. The previous Study CLI is retired.
+Association, Single Job and Batch execution, using this same root environment. Deterministic
+public API acceptance runs with `poetry run python market_research/tests/job_execution_example.py`
+and `poetry run python market_research/tests/batch_execution_example.py`.
+There is no Research execution CLI command. The previous Study CLI is retired.

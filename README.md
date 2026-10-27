@@ -83,7 +83,9 @@ TUSHARE_TOKEN=<your-token>
 The [Research semantic foundation](market_research/ARCHITECTURE.md) starts with
 Descriptive Research. The independent Python [Single Job Executor](market_research/descriptive/JOB_EXECUTION.md)
 composes Observation, conversion, Statistics and association. Previous execution packages
-and CLI commands are retired; Batch execution remains unimplemented.
+and CLI commands are retired. [ResearchPlan / Batch execution](market_research/descriptive/BATCH_EXECUTION.md)
+composes the same Single Job operation with full preflight and continue/stop accounting;
+[deterministic examples](market_research/README.md#batch-execution) use public-service fakes.
 
 Research owns observation, sample conversion, execution and interpretation; the independent
 [Statistics authority](market_statistics/ARCHITECTURE.md) owns generic numerical statistics.

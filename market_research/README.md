@@ -1,4 +1,4 @@
-# Research Observation, conversion, association and Single Job usage
+# Research Observation, conversion, association and execution usage
 
 This is usage documentation. Contracts are owned by [the module authority](ARCHITECTURE.md)
 and its [Observation boundary](descriptive/OBSERVATION.md).
@@ -161,4 +161,57 @@ It asserts and prints both Success (two successful evidences, no failures) and F
 (quantile failure followed by successful distribution evidence) with complete ordered
 outcomes and retained source/projection. The [contract](descriptive/JOB_EXECUTION.md)
 and [actual acceptance](descriptive/JOB_EXECUTION_ACCEPTANCE.md) record the exact scope.
-ResearchPlan and Batch execution remain unimplemented.
+
+## Batch execution
+
+```python
+from datetime import date
+from market_research.descriptive.association import AnalysisRequest
+from market_research.descriptive.execution import ResearchPlan, BatchResult, execute_batch
+from market_research.descriptive.observation import DateWindow
+from market_statistics import IntervalCountSpec, QuantileSpec
+
+plan = ResearchPlan(
+    metric="trailing_cumulative_return_v1",
+    metric_parameters={},
+    subjects=["000001.SH", "000300.SH"],
+    horizons=[2, 5],
+    windows=[
+        DateWindow(date(2024, 1, 8), date(2024, 1, 9)),
+        DateWindow(date(2024, 1, 9), date(2024, 1, 10)),
+    ],
+    analysis_requests=[
+        AnalysisRequest("quantiles", QuantileSpec([0.1, 0.5, 0.9])),
+        AnalysisRequest("distribution", IntervalCountSpec([-0.2, 0, 0.2], "decimal_ratio")),
+    ],
+    on_job_failure="continue",  # mandatory; alternatively "stop"
+)
+batch: BatchResult = execute_batch(plan)
+```
+
+Construction snapshots the input sequences and explicit empty parameters. execute_batch
+revalidates the entire Plan and every expanded fixed Job before any input service or I/O.
+This example expands in subjects → horizons → windows order to eight JobResults and
+sixteen ordered AnalysisOutcomes. Each attempted Job independently calls execute_job.
+Normal execution uses authorized DataLake services; the standalone example below supplies
+synthetic public-service fakes instead, with no live metadata claim or cache access.
+
+Inspect `batch.plan`, `batch.job_results`, derived `planned_count`, `success_count`,
+`failed_count`, `skipped_count` and `status`. Continue executes every planned Job after
+failures. Stop retains the first Failed Job's complete analysis outcomes and marks each
+later Job Skipped with the failed identity, policy reason and not_attempted analyses.
+Original raw results, Evidence, Coverage and Provenance remain reachable on each Job.
+InvalidPlan raises before I/O; an unexpected Single Job contract violation propagates
+instead of returning fabricated completion. No persistence, retry or cache is added.
+
+Run the independent deterministic example from the repository root:
+
+```bash
+poetry run python market_research/tests/batch_execution_example.py
+```
+
+It asserts eight successful independent Jobs, then injects failure in Job two:
+continue yields 7 Success / 1 Failed / 0 Skipped; stop yields 1 Success / 1 Failed /
+6 Skipped. Each attempted Job still completes both required analysis attempts.
+See the [Batch contract](descriptive/BATCH_EXECUTION.md) and
+[actual acceptance](descriptive/BATCH_EXECUTION_ACCEPTANCE.md).
