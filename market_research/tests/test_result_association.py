@@ -1,5 +1,6 @@
 """ASSOC-01 acceptance: observable linkage, original evidence and explicit limits."""
 
+import asyncio
 import builtins
 import importlib
 import io
@@ -40,7 +41,7 @@ from market_statistics import (
 from observation_fixtures import DAYS, execute, job, pure_fixture
 
 
-def corrupt[T](value: T, **changes: Any) -> T:
+def corrupt[T](value: T, /, **changes: Any) -> T:
     """Bypass frozen constructors on a copy to exercise the untrusted boundary."""
     result = copy(value)
     for name, replacement in changes.items():
@@ -592,10 +593,13 @@ def test_j_malformed_request_is_revalidated_at_association(changes: dict[str, An
     bad = corrupt(request, **changes)
     with pytest.raises(ResultAssociationFailure) as error:
         associate(source.fixed_job_spec, source, projection, bad, result)
-    assert error.value.reason and error.value.__cause__ is not None
+    assert error.value.reason
     assert error.value.request_id == (request.request_id if "request_id" not in changes else None)
     if "spec" in changes:
         assert isinstance(error.value.__cause__, InvalidStatisticalSpec)
+    else:
+        assert isinstance(error.value.__cause__, ValueError)
+        assert not isinstance(error.value.__cause__, ResultAssociationFailure)
 
 
 def test_k_immutability_and_negative_purity_guards(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -667,6 +671,7 @@ def test_l_failure_retains_raw_result_attributable_context_and_readable_reason()
     assert failure.stage == "result_association" and failure.category == "ResultAssociationFailure"
     assert failure.request_id == "wrong-points" and failure.job_identity == source.job_identity
     assert "points" in failure.reason and failure.reason == str(failure)
+    assert failure.__cause__ is None  # Native association failure is not wrapped.
     assert repr(raw_result) == before and raw_result is not None
     evidence = associate(source.fixed_job_spec, source, projection, request, raw_result)
     assert evidence.statistical_result is raw_result
@@ -851,3 +856,340 @@ def test_public_statistics_spec_validation_is_used_at_both_request_boundaries(
     assert len(seen) == 1 and seen[0] is spec
     associate(source.fixed_job_spec, source, projection, request, result)
     assert len(seen) == 2 and seen[1] is spec
+
+
+@pytest.fixture
+def mixed_source() -> ObservationSet[TrailingReturnProvenance]:
+    return execute(
+        job(), DAYS[:5], {DAYS[0]: 100.0, DAYS[1]: 110.0, DAYS[2]: 121.0, DAYS[4]: -1.0}
+    )
+
+
+def assert_corrupt_source_fails(
+    original: ObservationSet[TrailingReturnProvenance],
+    bad: ObservationSet[TrailingReturnProvenance],
+) -> ResultAssociationFailure:
+    # Convert/compute the valid source first, then bind to the corrupted copy so a
+    # different-source guard cannot hide a missing nested-evidence check.
+    projection = convert(original)
+    request = AnalysisRequest("nested-evidence", QuantileSpec([0.5]))
+    result = compute(projection.numeric_sample, request.spec)
+    before = repr(original), repr(result)
+    with pytest.raises(ResultAssociationFailure) as error:
+        associate(
+            bad.fixed_job_spec,
+            bad,
+            SampleProjection(
+                projection.numeric_sample,
+                SampleBinding(bad, projection.binding.ordered_observation_keys),
+            ),
+            request,
+            result,
+        )
+    failure = error.value
+    assert failure.request_id == request.request_id
+    assert failure.job_identity == original.job_identity
+    assert failure.stage == "result_association"
+    assert failure.category == "ResultAssociationFailure"
+    assert not isinstance(failure.__cause__, ResultAssociationFailure)
+    assert (repr(original), repr(result)) == before
+    return failure
+
+
+@pytest.mark.parametrize(
+    "changes",
+    [
+        {"endpoint_role": "other"},
+        {"endpoint_role": None},
+        {"reason": ""},
+        {"reason": None},
+        {"input_reference": ""},
+        {"input_reference": 1},
+        {"diagnostic_reasons": ["diagnostic"]},
+        {"diagnostic_reasons": (None,)},
+        {"diagnostic_reasons": "diagnostic"},
+        {"fact": None},
+    ],
+)
+def test_nested_missing_dependency_fields(
+    mixed_source: ObservationSet[TrailingReturnProvenance], changes: dict[str, Any]
+) -> None:
+    record = mixed_source.unavailable_observations[0]
+    missing = corrupt(record.missing_dependencies[0], **changes)
+    bad_record = corrupt(record, missing_dependencies=(missing,))
+    assert_corrupt_source_fails(
+        mixed_source, corrupt(mixed_source, unavailable_observations=(bad_record,))
+    )
+
+
+@pytest.mark.parametrize("location", ["missing", "available", "offending"])
+@pytest.mark.parametrize(
+    "field,value",
+    [
+        ("dataset", ""),
+        ("view", None),
+        ("subject", 1),
+        ("field", ""),
+        ("export_schema_version", True),
+        ("export_schema_version", 1.0),
+        ("trade_date", "2024-01-08"),
+    ],
+)
+@pytest.mark.parametrize("delete", [False, True])
+def test_nested_required_fact_identity_fields(
+    mixed_source: ObservationSet[TrailingReturnProvenance],
+    location: str,
+    field: str,
+    value: Any,
+    delete: bool,
+) -> None:
+    record: Any
+    if location == "offending":
+        record = mixed_source.excluded_observations[0]
+        collection, outcomes = "offending_facts", "excluded_observations"
+    else:
+        record = mixed_source.unavailable_observations[0]
+        collection = "missing_dependencies" if location == "missing" else "available_endpoints"
+        outcomes = "unavailable_observations"
+    endpoint = getattr(record, collection)[0]
+    fact = corrupt(endpoint.fact, **{field: value})
+    if delete:
+        object.__delattr__(fact, field)
+    bad_endpoint = corrupt(endpoint, fact=fact)
+    bad_record = corrupt(record, **{collection: (bad_endpoint,)})
+    failure = assert_corrupt_source_fails(
+        mixed_source, corrupt(mixed_source, **{outcomes: (bad_record,)})
+    )
+    if delete:
+        assert isinstance(failure.__cause__, AttributeError)
+
+
+@pytest.mark.parametrize("location", ["available", "offending"])
+@pytest.mark.parametrize(
+    "changes",
+    [
+        {"endpoint_role": "other"},
+        {"endpoint_role": None},
+        {"fact": None},
+        {"value": True},
+        {"value": 1},
+        {"value": float("nan")},
+        {"value": float("inf")},
+        {"value": -float("inf")},
+    ],
+)
+def test_nested_endpoint_role_fact_and_binary64_value(
+    mixed_source: ObservationSet[TrailingReturnProvenance], location: str, changes: dict[str, Any]
+) -> None:
+    record: Any
+    if location == "available":
+        record = mixed_source.unavailable_observations[0]
+        collection, outcomes = "available_endpoints", "unavailable_observations"
+    else:
+        record = mixed_source.excluded_observations[0]
+        collection, outcomes = "offending_facts", "excluded_observations"
+    endpoint = corrupt(getattr(record, collection)[0], **changes)
+    bad_record = corrupt(record, **{collection: (endpoint,)})
+    assert_corrupt_source_fails(mixed_source, corrupt(mixed_source, **{outcomes: (bad_record,)}))
+
+
+@pytest.mark.parametrize(
+    "changes",
+    [
+        {"reason_code": ""},
+        {"reason_code": None},
+        {"reason": ""},
+        {"reason": 1},
+        {"offending_facts": []},
+        {"offending_facts": ()},
+        {"offending_facts": (None,)},
+    ],
+)
+def test_nested_exclusion_reason_and_offending_facts(
+    mixed_source: ObservationSet[TrailingReturnProvenance], changes: dict[str, Any]
+) -> None:
+    record = corrupt(mixed_source.excluded_observations[0], **changes)
+    assert_corrupt_source_fails(
+        mixed_source, corrupt(mixed_source, excluded_observations=(record,))
+    )
+
+
+@pytest.mark.parametrize("partition", ["overall", "warm_up", "sample"])
+@pytest.mark.parametrize("field", ["expected_keys", "available_keys"])
+@pytest.mark.parametrize(
+    "keys",
+    [
+        [],
+        (("subject",),),
+        (("subject", DAYS[0], "extra"),),
+        (("", DAYS[0]),),
+        ((1, DAYS[0]),),
+        (("subject", "2024-01-08"),),
+        (["subject", DAYS[0]],),
+    ],
+)
+def test_nested_coverage_key_structure(
+    mixed_source: ObservationSet[TrailingReturnProvenance],
+    partition: str,
+    field: str,
+    keys: Any,
+) -> None:
+    coverage = mixed_source.market_fact_coverage
+    part = corrupt(getattr(coverage, partition), **{field: keys})
+    bad_coverage = corrupt(coverage, **{partition: part})
+    assert_corrupt_source_fails(
+        mixed_source, corrupt(mixed_source, market_fact_coverage=bad_coverage)
+    )
+
+
+@pytest.mark.parametrize("kind", ["duplicate", "order", "subset", "partition"])
+def test_nested_coverage_existing_conservation_rules(
+    mixed_source: ObservationSet[TrailingReturnProvenance], kind: str
+) -> None:
+    coverage = mixed_source.market_fact_coverage
+    part = coverage.overall
+    if kind == "duplicate":
+        part = corrupt(part, expected_keys=(part.expected_keys[0],) * 2)
+    elif kind == "order":
+        part = corrupt(part, expected_keys=part.expected_keys[::-1])
+    elif kind == "subset":
+        part = corrupt(part, available_keys=(("outside", DAYS[0]),))
+    else:
+        part = corrupt(part, available_keys=())
+    assert_corrupt_source_fails(
+        mixed_source, corrupt(mixed_source, market_fact_coverage=corrupt(coverage, overall=part))
+    )
+
+
+@pytest.mark.parametrize("operation", ["fixed_identity", "validate_projection", "validate_result"])
+@pytest.mark.parametrize("attributed", [False, True])
+def test_existing_failure_keeps_identity_cause_and_safe_attribution(
+    monkeypatch: pytest.MonkeyPatch, operation: str, attributed: bool
+) -> None:
+    source, projection, request, result = quantile_bundle()
+    cause = ValueError("original validation cause")
+    existing = ResultAssociationFailure(
+        "already classified",
+        request_id="original-request" if attributed else None,
+        job_identity=source.job_identity if attributed else None,
+    )
+
+    def fail(*args: Any, **kwargs: Any) -> Any:
+        raise existing from cause
+
+    api = importlib.import_module("market_research.descriptive.association.api")
+    monkeypatch.setattr(api, operation, fail)
+    with pytest.raises(ResultAssociationFailure) as error:
+        associate(source.fixed_job_spec, source, projection, request, result)
+    assert error.value is existing
+    assert existing.__cause__ is cause
+    assert cause.__cause__ is None
+    assert existing.reason == "already classified"
+    assert existing.stage == "result_association"
+    assert existing.category == "ResultAssociationFailure"
+    assert existing.request_id == ("original-request" if attributed else request.request_id)
+    expected_identity = source.job_identity if attributed or operation != "fixed_identity" else None
+    assert existing.job_identity == expected_identity
+
+
+@pytest.mark.parametrize("kind", ["request", "job"])
+def test_existing_failure_does_not_invent_unsafe_attribution(
+    monkeypatch: pytest.MonkeyPatch, kind: str
+) -> None:
+    source, projection, request, result = quantile_bundle()
+    fixed = source.fixed_job_spec
+    existing = ResultAssociationFailure("early failure")
+    if kind == "request":
+        request = corrupt(request, request_id="")
+    else:
+        fixed = corrupt(fixed, horizon=True)
+
+    def fail(*args: Any, **kwargs: Any) -> Any:
+        raise existing
+
+    api = importlib.import_module("market_research.descriptive.association.api")
+    monkeypatch.setattr(api, "fixed_identity", fail)
+    with pytest.raises(ResultAssociationFailure) as error:
+        associate(fixed, source, projection, request, result)
+    assert error.value is existing and existing.__cause__ is None
+    assert existing.request_id == (None if kind == "request" else request.request_id)
+    assert existing.job_identity is None
+
+
+@pytest.mark.parametrize("exception", [AttributeError, TypeError, ValueError, ArithmeticError])
+def test_translated_validation_failure_keeps_original_cause(
+    monkeypatch: pytest.MonkeyPatch, exception: type[Exception]
+) -> None:
+    source, projection, request, result = quantile_bundle()
+    cause = exception("original malformed field")
+
+    def fail(*args: Any, **kwargs: Any) -> Any:
+        raise cause
+
+    api = importlib.import_module("market_research.descriptive.association.api")
+    monkeypatch.setattr(api, "validate_result", fail)
+    with pytest.raises(ResultAssociationFailure) as error:
+        associate(source.fixed_job_spec, source, projection, request, result)
+    assert error.value.__cause__ is cause
+    assert error.value.request_id == request.request_id
+    assert error.value.job_identity == source.job_identity
+    assert error.value.reason == str(cause)
+
+
+@pytest.mark.parametrize(
+    "exception",
+    [RuntimeError, AssertionError, asyncio.CancelledError, KeyboardInterrupt, SystemExit],
+)
+def test_unexpected_errors_and_cancellation_propagate(
+    monkeypatch: pytest.MonkeyPatch, exception: type[BaseException]
+) -> None:
+    source, projection, request, result = quantile_bundle()
+    unexpected = exception("propagate unchanged")
+
+    def fail(*args: Any, **kwargs: Any) -> Any:
+        raise unexpected
+
+    api = importlib.import_module("market_research.descriptive.association.api")
+    monkeypatch.setattr(api, "validate_result", fail)
+    with pytest.raises(exception) as error:
+        associate(source.fixed_job_spec, source, projection, request, result)
+    assert error.value is unexpected and unexpected.__cause__ is None
+
+
+@pytest.mark.parametrize(
+    "field", ["endpoint_role", "fact", "reason", "input_reference", "diagnostic_reasons"]
+)
+def test_nested_missing_dependency_absent_fields(
+    mixed_source: ObservationSet[TrailingReturnProvenance], field: str
+) -> None:
+    record = mixed_source.unavailable_observations[0]
+    missing = copy(record.missing_dependencies[0])
+    object.__delattr__(missing, field)
+    bad_record = corrupt(record, missing_dependencies=(missing,))
+    failure = assert_corrupt_source_fails(
+        mixed_source, corrupt(mixed_source, unavailable_observations=(bad_record,))
+    )
+    assert isinstance(failure.__cause__, AttributeError)
+
+
+def test_nested_legal_evidence_is_retained_without_case_revalidation(
+    mixed_source: ObservationSet[TrailingReturnProvenance],
+) -> None:
+    record = mixed_source.unavailable_observations[0]
+    # Empty diagnostics are legal; finite endpoints need no positivity policy here.
+    missing = corrupt(record.missing_dependencies[0], diagnostic_reasons=())
+    endpoint = corrupt(record.available_endpoints[0], value=-0.0)
+    source = corrupt(
+        mixed_source,
+        unavailable_observations=(
+            corrupt(record, missing_dependencies=(missing,), available_endpoints=(endpoint,)),
+        ),
+    )
+    projection = convert(source)
+    request = AnalysisRequest("legal-nested", QuantileSpec([0.5]))
+    result = compute(projection.numeric_sample, request.spec)
+    evidence = associate(source.fixed_job_spec, source, projection, request, result)
+    retained = evidence.source_observation_reference.unavailable_observations[0]
+    assert retained.missing_dependencies[0] is missing
+    assert retained.available_endpoints[0] is endpoint
+    assert endpoint.value.hex() == "-0x0.0p+0"

@@ -34,6 +34,13 @@ def associate[P](
         require(type(request) is AnalysisRequest, "Expected public AnalysisRequest")
         AnalysisRequest.__post_init__(request)
         validate_result(projection.numeric_sample, request.spec, statistical_result)
+    except ResultAssociationFailure as exc:
+        # Keep the original failure and cause; enrich only safely identified context.
+        if exc.request_id is None:
+            exc.request_id = request_id
+        if exc.job_identity is None:
+            exc.job_identity = identity
+        raise
     except (
         AttributeError,
         TypeError,

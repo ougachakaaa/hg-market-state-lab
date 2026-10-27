@@ -2,6 +2,7 @@
 
 from dataclasses import replace
 from datetime import date
+from math import isfinite
 from types import MappingProxyType
 
 from market_statistics import NumericSample
@@ -29,6 +30,31 @@ from .failures import ResultAssociationFailure
 def require(condition: bool, reason: str) -> None:
     if not condition:
         raise ResultAssociationFailure(reason)
+
+
+def _text(value: object) -> bool:
+    return isinstance(value, str) and bool(value)
+
+
+def _validate_fact(fact: RequiredFact) -> None:
+    require(isinstance(fact, RequiredFact), "Expected typed RequiredFact identity")
+    require(
+        all(_text(value) for value in (fact.dataset, fact.view, fact.subject, fact.field))
+        and type(fact.export_schema_version) is int
+        and type(fact.trade_date) is date,
+        "Malformed required fact identity",
+    )
+
+
+def _validate_endpoint(endpoint: EndpointFact) -> None:
+    require(isinstance(endpoint, EndpointFact), "Expected typed endpoint evidence")
+    _validate_fact(endpoint.fact)
+    require(
+        endpoint.endpoint_role in ("anchor", "lookback")
+        and type(endpoint.value) is float
+        and isfinite(endpoint.value),
+        "Malformed endpoint role or fact value",
+    )
 
 
 def fixed_identity[P](fixed: ObservationJobSpec, source: ObservationSet[P]) -> JobIdentity:
@@ -104,10 +130,18 @@ def validate_projection[P](
             and all(isinstance(item, EndpointFact) for item in record.available_endpoints),
             "Malformed retained unavailable evidence",
         )
-        require(
-            all(isinstance(item.fact, RequiredFact) for item in record.missing_dependencies),
-            "Missing dependencies must retain typed fact identities",
-        )
+        for missing in record.missing_dependencies:
+            _validate_fact(missing.fact)
+            require(
+                missing.endpoint_role in ("anchor", "lookback")
+                and _text(missing.reason)
+                and _text(missing.input_reference)
+                and type(missing.diagnostic_reasons) is tuple
+                and all(isinstance(reason, str) for reason in missing.diagnostic_reasons),
+                "Malformed missing dependency evidence",
+            )
+        for endpoint in record.available_endpoints:
+            _validate_endpoint(endpoint)
     for excluded in source.excluded_observations:
         require(
             type(excluded.offending_facts) is tuple
@@ -118,6 +152,8 @@ def validate_projection[P](
             and bool(excluded.reason),
             "Malformed retained exclusion evidence",
         )
+        for endpoint in excluded.offending_facts:
+            _validate_endpoint(endpoint)
     coverage = source.market_fact_coverage
     require(isinstance(coverage, MarketFactCoverage), "Expected original MarketFactCoverage")
     for part in (coverage.overall, coverage.warm_up, coverage.sample):
@@ -126,6 +162,17 @@ def validate_projection[P](
             type(part.expected_keys) is tuple and type(part.available_keys) is tuple,
             "Coverage keys must remain immutable",
         )
+        for keys in (part.expected_keys, part.available_keys):
+            require(
+                all(
+                    type(key) is tuple
+                    and len(key) == 2
+                    and _text(key[0])
+                    and type(key[1]) is date
+                    for key in keys
+                ),
+                "Malformed fact coverage key",
+            )
         FactCoverage.__post_init__(part)
     MarketFactCoverage.__post_init__(coverage)
     context = source.sample_dependence_context
