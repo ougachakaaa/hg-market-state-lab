@@ -6,7 +6,13 @@ Observation and conversion semantics belong to [OBSERVATION.md](OBSERVATION.md) 
 [SAMPLE_CONVERSION.md](SAMPLE_CONVERSION.md); result association to
 [STATISTICS_INTEGRATION.md](STATISTICS_INTEGRATION.md); numerical semantics to
 [Statistics](../../market_statistics/CONTRACT.md); inputs to [UPSTREAM.md](../UPSTREAM.md).
-Status: Implementation Ready for the first case; executors are not implemented.
+Status: EXEC-01 authority frozen for the first case; runtime acceptance is tracked in
+[Acceptance](ACCEPTANCE.md). ResearchPlan expansion and Batch remain unimplemented.
+
+The independently consumable [Single Job contract](JOB_EXECUTION.md) owns the concrete
+`execute_job(fixed_job, analysis_requests) -> JobResult` boundary, pure preflight,
+immutable runtime records and stage-specific failure retention. This entry owns the
+shared business identity and future Plan/Batch policy; the child cannot override them.
 
 ## ResearchPlan and preflight
 
@@ -25,7 +31,7 @@ The single public [AnalysisRequest](RESULT_ASSOCIATION.md#public-operation-and-c
 encodes the existing ordered `(request_id, Statistics-owned StatisticalSpec)` vocabulary.
 Future Executors reuse it; no competing request model is authorized. Local request
 construction validation and association-boundary rejection do not implement InvalidPlan:
-the future plan/direct-job preflight still owns that classification and ID uniqueness.
+plan/direct-job preflight owns that classification and ID uniqueness.
 Executors pass each actual corresponding compute result directly to association; a bare
 Statistics result carries no authenticated sample identity.
 
@@ -80,94 +86,21 @@ or reuse a previous result. JobResult instances belong to a particular execution
 global cache keyed solely by observation identity. No durable execution ID scheme is
 required; execution time, if retained, is context and not business identity.
 
-## Single Job
+## Single Job delegation
 
-```text
-execute_job(ObservationJobSpec, analysis_requests) -> JobResult
+EXEC-01 freezes the direct single Job operation under [JOB_EXECUTION.md](JOB_EXECUTION.md).
+It binds only the published Index Trailing Return case, validates the entire fixed Job
+and ordered non-empty request sequence before any upstream call, and reuses public
+Preparation, Construction, Converter, Statistics and Association operations. No registry
+or generic engine is authorized. All requests are required and run sequentially against
+one projection; each actual compute result goes directly to its corresponding association.
+Only Success/Failed are produced by this operation. Batch-only Skipped generation and
+whole-plan expansion remain EXEC-02 scope.
 
-Input Preparation → Observation Construction → ObservationSet
-    → Research Conversion → SampleProjection
-    → ordered Statistics compute calls with projection.numeric_sample
-    → Research result association → JobResult
-```
-
-A direct single-job entry applies the same fixed-request/request-list validation before
-I/O (InvalidPlan classification). For a batch, preflight completes once before expansion.
-Executors own orchestration only, never financial/statistical formulas or hidden input
-acquisition outside Input Preparation. Already validated inputs and availability proof may be reused
-when each Job's requirements are satisfied and actual input provenance remains visible;
-reuse grants no common-snapshot/freshness guarantee across upstream operations.
-
-After legal conversion, attempt every analysis sequentially in the user's declared
-order. A failure in one does not prevent the other independent requests from being tried.
-Associate each returned result; a per-request association failure likewise does not
-prevent remaining attempts. Preserve every attempt and returned result.
-
-```text
-AnalysisOutcome
-  request_id / exact_spec
-  status: success | failed | not_attempted
-  result: returned Statistics result, when present
-  associated_evidence: only after successful association
-  error or not_attempted_reason: as applicable
-```
-
-No analysis-level Skipped state is used. Before legal conversion, failures in preparation,
-construction or conversion make **all** analyses not_attempted with the blocking reason;
-they do not fabricate Statistics failures. In an attempted Job with a valid sample all
-requests are attempted, including those after a failure.
-
-```text
-JobResult
-  job_identity / fixed_job_spec
-  status: Success | Failed | Skipped
-  ordered analysis_outcomes: one per declared request
-  actual execution/input context
-  ObservationSet / SampleProjection when obtained
-  failures: ordered failure records
-  skip_reason / triggering_failed_job_identity when Skipped
-```
-
-Success requires legal preparation, construction, conversion, association and success of
-**all** required analyses. Any required analysis failure makes the Job Failed even if
-other successful results are retained as valid partial evidence. Overall association or
-result assembly failure also makes it Failed; no fabricated completed Job is permitted.
-A skipped Job was never attempted, has no fabricated facts/results and marks all its
-analyses not_attempted with the policy reason. An attempted failure is never Skipped.
-
-A legal partial ObservationSet is not itself a failed Job. Under the declared case
-policy, Ensure complete=false / recoverable unit failures are retained preparation
-diagnostics rather than automatic Job failures; final Export must pass validation.
-With eligible values and every required analysis/association successful, a Job can be
-Success while reporting incomplete market/observation coverage. No extra minimum coverage
-threshold exists in this case. Zero eligible values instead fail conversion; retain the
-ObservationSet, coverage, all outcomes and diagnostics, with analyses not_attempted.
-
-## Failure reporting
-
-Each failure retains at least job_identity, failure_stage, failure_category and reason.
-Analysis/association failures additionally retain request_id when attributable; all
-applicable failures are retained, not just the first.
-
-| Stage | Categories / boundary |
-| --- | --- |
-| input_preparation | UpstreamFailure (retaining InvalidRequestError / OperationError), IncompleteInput (required calendar or inputs outside authorized partial policy), InvalidPublicInput, HistoryInsufficient; requests/dependency context retained; recoverable unit failures remain diagnostics when case policy permits |
-| observation_construction | ObservationConstructionFailure: formula/numerical failure or inconsistent observation accounting |
-| conversion | InvalidObservationSet, UnmappableSample, NoEligibleObservations as owned by [conversion](SAMPLE_CONVERSION.md) |
-| analyze | InvalidSample, InvalidStatisticalSpec, CalculationFailure preserved from Statistics |
-| result_association | ResultAssociationFailure: mismatched result linkage or inability to assemble a valid association/result |
-
-The Research stage `analyze`, analysis_requests, AnalysisOutcome and analysis_outcomes
-keep their names; they delegate numerical work to Statistics `compute`, and do not
-define an alternate numerical API or change execution/association ownership.
-
-A legal preflight request rejected by an upstream still fails input_preparation, rather
-than retrospectively creating InvalidPlan. A validated upstream view containing a
-case-excludable observation is handled only under the case's explicit eligibility rule.
-Ordinary unexpected execution exceptions are recorded as a stage-specific execution
-failure with their readable cause, never as successful statistics. Cancellation/process
-termination is outside the promise to return a completed BatchResult; no durable recovery
-or fabricated status is introduced.
+The child contract owns the concrete carriers and all attempted/not-attempted and failure
+rules, including complete ordered accounting and retained partial evidence. The existing
+business identity above remains canonical. See its [reconciliation](JOB_EXECUTION.md#authority-reconciliation)
+for how the existing component contracts are composed without changing their semantics.
 
 ## Batch execution and totals
 

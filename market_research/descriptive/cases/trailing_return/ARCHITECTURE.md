@@ -51,6 +51,17 @@ Observation key is `(job_identity,T)`; candidates/outcomes sort ascending T. Act
 changes affect provenance, not the question; StatisticalSpec affects neither identity nor
 observation keys. No execution time or random identifier enters those identities.
 
+### Public direct-job preflight
+
+`market_research.descriptive.cases.trailing_return.validate_job(job) -> JobIdentity`
+is the pure public preflight boundary for this case. It reuses the same existing
+fixed-request/case validator as preparation, with the current Asia/Shanghai date limit,
+and returns the existing structural identity above. It performs no upstream service
+creation, acquisition or mutation and offers no option to disable current-date checks.
+Invalid fixed requests raise InvalidObservationRequest. It introduces no new formula,
+identity or input policy. The [Single Job contract](../../JOB_EXECUTION.md) owns
+InvalidPlan translation and analysis-spec/unit preflight.
+
 ## Computability and eligibility
 
 After validating all public inputs, resolve every candidate's exact calendar T-H, then
