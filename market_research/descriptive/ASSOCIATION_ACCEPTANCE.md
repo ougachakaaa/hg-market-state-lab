@@ -221,3 +221,61 @@ is unchanged; this goal neither reran live acquisition nor repaired caches or ve
 CSI1000 metadata. EXEC-01 — Single Job Executor, EXEC-02 — Research Batch Executor,
 Live Research E2E Acceptance, and Evidence Persistence / Result Reuse remain separate
 roadmap work. ASSOC-01 Complete; no Executor implementation is started.
+
+## ASSOC-HARD-01 verification — 2026-10-27
+
+Branch `reset/market-research-descriptive` started clean at the exact requested baseline
+`6172196f2f62f2b2dfb4d07819634c84b64a33e3`. The hardening implementation is commit
+`9c0f7b9674db586d54d10dc02a9c17cca5fd04ff`:
+`fix(research): harden association evidence validation and failures`.
+This factual update follows it in a separate documentation commit.
+
+Review of RESULT_ASSOCIATION.md, SAMPLE_CONVERSION.md and Observation's published
+carriers confirmed that both fixes enforce existing obligations. No semantic Authority
+change or preceding contract commit was needed. The earlier runtime claim of complete
+source validation is qualified by this review finding: nested retained evidence previously
+had weaker shape checks than Converter. This commit closes that gap within Association.
+
+- MissingDependency now checks role, non-empty reason/reference and immutable string
+  diagnostics; RequiredFact checks all six fields, excluding bool as a schema-version int.
+- Both available and offending EndpointFacts check role, typed fact identity and finite
+  built-in binary64 values. Exclusion reasons and required offending facts remain checked.
+- All three FactCoverage partitions check immutable two-coordinate subject/date keys,
+  then reuse Observation's existing uniqueness/order/subset and partition conservation.
+- Existing ResultAssociationFailure instances propagate without wrapping, retaining their cause
+  and prior attribution; absent attribution is enriched only from safely identified
+  request/Job context. Other translated validation exceptions retain their original cause.
+  Stage/category remain unchanged; unexpected errors and cancellation propagate.
+
+The tests bypass frozen dataclass construction on copies, bind projections to the actual
+corrupted source and assert failure without Evidence. They cover malformed/deleted fact
+fields, missing dependency diagnostics/references, both endpoint locations, exclusions,
+all coverage partitions and failure chains/attribution. Legal empty diagnostic tuples and
+finite signed-zero endpoints remain accepted without applying case eligibility rules.
+Original source/result objects remain intact. There are 144 additional test cases;
+the association test file now passes 318 cases.
+
+All required commands ran from the repository root in its unique Poetry environment:
+
+| Command | Result |
+| --- | --- |
+| `poetry run pytest market_research/tests -q` | 583 passed |
+| `poetry run pytest market_statistics/tests -q` | 171 passed |
+| `poetry run pytest data_snapshot/tests/test_authority_topology.py ui_http/tests/test_architecture.py -q` | 19 passed |
+| `poetry run ruff check market_research` | Passed |
+| `poetry run mypy market_research/src market_research/tests` | Passed; 31 source files |
+| `poetry run pytest -q` | 1901 passed; one existing Starlette TestClient/httpx deprecation warning |
+| `git diff --check` / `git diff --cached --check` | Passed; complete runtime diff reviewed before commit |
+
+An initial targeted run exposed a test-helper parameter collision with EndpointFact.value;
+making the helper's source parameter positional-only resolved it. One Ruff line-length
+finding was corrected before the final checks above.
+
+Public API and Evidence fields, Statistics algorithms, Converter semantics and source,
+Observation source and provenance/fingerprint semantics are unchanged. No Converter
+validator is imported, no complete validation engine is copied and no new framework is
+introduced. Association performs only bounded structural checks and reuses the existing
+public Observation invariants. No acquisition, indicator calculation or Converter rerun
+occurs inside associate. No Authority drift remains for these two findings.
+Executor, Cache, Persistence, Replay and live E2E remain outside this goal.
+ASSOC-HARD-01 Complete; no blocking or remaining issue in this hardening scope.
