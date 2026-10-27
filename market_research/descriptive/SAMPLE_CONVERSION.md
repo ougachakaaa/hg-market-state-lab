@@ -126,6 +126,8 @@ Converter-owned tests reuse public Observation fixtures, without network or user
 | Reuse | Same projected sample consumed by public Quantile and IntervalCount; assert numerical outputs and unchanged binding |
 
 Architecture tests enforce the converter's precise public Statistics edge, existing
-DataLake public access/preparation-only acquisition and continued absence of Executor.
+DataLake public access/preparation-only acquisition and no reverse dependency on Executor.
 ASSOC-01 separately authorizes [association](RESULT_ASSOCIATION.md)'s public edges;
 Converter remains independent of Association.
+EXEC-01 separately authorizes [Single Job execution](JOB_EXECUTION.md) to consume the
+public converter; its orchestration adds no conversion responsibility or reverse edge.

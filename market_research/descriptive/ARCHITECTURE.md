@@ -46,7 +46,8 @@ and price semantics; their gaps do not block the index case. See the capability 
 reconciliation matrices in [ACCEPTANCE.md](ACCEPTANCE.md).
 Observation production for this case is implemented with independent public preparation
 and pure construction. The reusable scalar converter and independent Result Association
-are implemented; Job / Batch Executors remain Expected Implementation Gaps. The independent
+are implemented. The [Single Job Executor](JOB_EXECUTION.md) composes them through public
+boundaries; ResearchPlan / Batch execution remains an Expected Implementation Gap. The independent
 Statistics public numerical API is implemented by STAT-IMP-01.
 [Acceptance gates](ACCEPTANCE.md) distinguish semantic readiness from runtime and live-data
 verification. No unresolved implicit default is authorized.

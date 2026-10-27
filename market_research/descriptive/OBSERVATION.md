@@ -145,7 +145,9 @@ no defaults. `None` represents a Not Applicable ratio. Counts derive from immuta
 outcome tuples. Observation keys use the full structural Job identity and anchor.
 
 The case boundary `market_research.descriptive.cases.trailing_return` publishes
-`prepare_inputs` and `construct_observations` for independent consumption/testing.
+`prepare_inputs` and `construct_observations` for independent consumption/testing,
+plus the pure `validate_job(job) -> JobIdentity` for [direct Job preflight](JOB_EXECUTION.md).
+The validator reuses case rules without service creation and preserves caller inputs.
 Preparation defaults to the selected public factories; keyword-only Calendar / Index
 service arguments support public-contract fakes without changing source selection.
 Construction consumes retained, validated prepared views and performs no I/O.

@@ -81,8 +81,9 @@ TUSHARE_TOKEN=<your-token>
 ## Research status
 
 The [Research semantic foundation](market_research/ARCHITECTURE.md) starts with
-Descriptive Research. Previous execution packages and CLI commands are retired;
-no Research execution capability is currently published.
+Descriptive Research. The independent Python [Single Job Executor](market_research/descriptive/JOB_EXECUTION.md)
+composes Observation, conversion, Statistics and association. Previous execution packages
+and CLI commands are retired; Batch execution remains unimplemented.
 
 Research owns observation, sample conversion, execution and interpretation; the independent
 [Statistics authority](market_statistics/ARCHITECTURE.md) owns generic numerical statistics.

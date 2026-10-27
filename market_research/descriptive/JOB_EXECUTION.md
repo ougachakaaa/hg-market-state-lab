@@ -4,8 +4,8 @@ This contract specializes [Execution](EXECUTION.md), which owns business identit
 future Plan/Batch control. It owns EXEC-01: the direct single Job public boundary,
 preflight, immutable execution records and stage accounting. It does not own market
 formulas, acquisition, conversion, numerical algorithms or association validation.
-Status: authority frozen; runtime readiness and actual verification belong to
-[Acceptance](ACCEPTANCE.md), not this contract.
+Status: EXEC-01 implemented. Actual verification belongs to
+[Single Job acceptance](JOB_EXECUTION_ACCEPTANCE.md) and [readiness](ACCEPTANCE.md).
 
 ## Public operation and preflight
 

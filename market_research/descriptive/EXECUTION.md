@@ -6,7 +6,7 @@ Observation and conversion semantics belong to [OBSERVATION.md](OBSERVATION.md) 
 [SAMPLE_CONVERSION.md](SAMPLE_CONVERSION.md); result association to
 [STATISTICS_INTEGRATION.md](STATISTICS_INTEGRATION.md); numerical semantics to
 [Statistics](../../market_statistics/CONTRACT.md); inputs to [UPSTREAM.md](../UPSTREAM.md).
-Status: EXEC-01 authority frozen for the first case; runtime acceptance is tracked in
+Status: EXEC-01 implemented for the first case; runtime acceptance is tracked in
 [Acceptance](ACCEPTANCE.md). ResearchPlan expansion and Batch remain unimplemented.
 
 The independently consumable [Single Job contract](JOB_EXECUTION.md) owns the concrete
@@ -29,7 +29,7 @@ ResearchPlan
 
 The single public [AnalysisRequest](RESULT_ASSOCIATION.md#public-operation-and-carriers)
 encodes the existing ordered `(request_id, Statistics-owned StatisticalSpec)` vocabulary.
-Future Executors reuse it; no competing request model is authorized. Local request
+Executors reuse it; no competing request model is authorized. Local request
 construction validation and association-boundary rejection do not implement InvalidPlan:
 plan/direct-job preflight owns that classification and ID uniqueness.
 Executors pass each actual corresponding compute result directly to association; a bare

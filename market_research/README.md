@@ -1,4 +1,4 @@
-# Research Observation, conversion and association usage
+# Research Observation, conversion, association and Single Job usage
 
 This is usage documentation. Contracts are owned by [the module authority](ARCHITECTURE.md)
 and its [Observation boundary](descriptive/OBSERVATION.md).
@@ -119,6 +119,46 @@ Association validates source identity, exact request/result parameters, sample m
 units/counts and bounded result structure without conversion, computation or I/O.
 A bare result has no sample identity: association cannot prove its hidden computation
 origin or independently certify its mathematical payload. Use the actual corresponding
-public compute result. No Executor, persistence or cache is provided. See the
+public compute result. This pure component does not execute Jobs or persist/cache evidence.
+See the
 [contract](descriptive/RESULT_ASSOCIATION.md) and
 [deterministic acceptance](descriptive/ASSOCIATION_ACCEPTANCE.md).
+
+## Single Job execution
+
+For the explicit fixed `job` above, the public executor performs preflight, preparation,
+construction, conversion and every required analysis/association in declared order:
+
+```python
+from market_research.descriptive.association import AnalysisRequest
+from market_research.descriptive.execution import execute_job
+from market_statistics import IntervalCountSpec, QuantileSpec
+
+job_result = execute_job(
+    job,
+    [
+        AnalysisRequest("quantiles", QuantileSpec([0, 0.5, 1])),
+        AnalysisRequest("distribution", IntervalCountSpec([-0.2, 0, 0.2], "decimal_ratio")),
+    ],
+)
+```
+
+Inspect `job_result.status`, ordered `analysis_outcomes` and `failures`. Each outcome
+retains its original request/spec, raw result when returned, successful evidence or
+attributable failure. All analyses share one projection. A failed analysis or association
+does not prevent later requests; any required failure makes the Job Failed. Preparation,
+construction or conversion failure returns all requests as not_attempted, retaining
+obtained inputs, attempts and observations. InvalidPlan instead raises before I/O.
+`input_attempts` exposes original preparation evidence. Skipped is reserved for Batch.
+
+Run the independent deterministic example with public-service fakes, without market I/O:
+
+```bash
+poetry run python market_research/tests/job_execution_example.py
+```
+
+It asserts and prints both Success (two successful evidences, no failures) and Failed
+(quantile failure followed by successful distribution evidence) with complete ordered
+outcomes and retained source/projection. The [contract](descriptive/JOB_EXECUTION.md)
+and [actual acceptance](descriptive/JOB_EXECUTION_ACCEPTANCE.md) record the exact scope.
+ResearchPlan and Batch execution remain unimplemented.

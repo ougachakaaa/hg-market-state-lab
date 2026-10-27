@@ -139,13 +139,13 @@ Wrong variants, missing/malformed fields, Job/source mismatches, key/value/unit/
 mismatches and invalid method/estimator/parameter/geometry/accounting all fail here,
 never as Statistics CalculationFailure. No partial successful evidence is returned.
 No input is mutated, replaced or discarded; the caller still holds the raw result.
-Future Executor owns attempts/AnalysisOutcome and must retain returned raw results on
-association failure; ASSOC-01 adds no separate outcome/Job/Batch carrier.
+The [Single Job Executor](JOB_EXECUTION.md) owns attempts/AnalysisOutcome and retains
+returned raw results on association failure; ASSOC-01 adds no separate outcome/Job/Batch carrier.
 
 A bare StatisticalResult has no source-sample identity. Metadata-identical externally
 supplied results may have unrelated hidden computation histories; associate **cannot
 prove** that a result was computed from this sample. It verifies the observable relations
-above, not cryptographic or execution-origin attestation. Future Executor must pass the
+above, not cryptographic or execution-origin attestation. Executor must pass the
 actual result from its corresponding compute call directly to associate. Do not add
 hashes, attestations or cache keys to hide this limitation.
 
@@ -170,5 +170,6 @@ edges/bin geometry/closures/counts/frequencies. Assert attributable failures, ca
 unchanged raw results/inputs, immutable evidence and negative no-I/O/no-convert/no-compute
 guards. A distinct legal scalar case with another typed provenance must pass without
 Trailing Return assumptions. Explicitly accept metadata-identical payloads whose hidden
-computation origin cannot be inferred. Executors, persistence and live acceptance remain
+computation origin cannot be inferred. Executor verification is recorded in
+[Single Job acceptance](JOB_EXECUTION_ACCEPTANCE.md); persistence and live acceptance remain
 separate gates.

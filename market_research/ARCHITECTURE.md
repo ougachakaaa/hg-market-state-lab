@@ -89,9 +89,12 @@ The reusable scalar [Sample Converter](descriptive/SAMPLE_CONVERSION.md) is impl
 under `market_research.descriptive.conversion`. Independent Result Association is implemented
 under `market_research.descriptive.association`, retaining original request/result/projection
 and source evidence under its [contract](descriptive/RESULT_ASSOCIATION.md).
-Job / Batch Executors remain Expected Implementation Gaps.
+Single Job execution is implemented under `market_research.descriptive.execution`,
+composing these public components under [its contract](descriptive/JOB_EXECUTION.md).
+ResearchPlan / Batch execution remains an Expected Implementation Gap.
 No Research CLI, HTTP service or report renderer is published. The independent Statistics
-public API is implemented; Research execution remains unimplemented.
+public API is implemented; deterministic Single Job acceptance is recorded separately
+from the pending live-data gate.
 Actual verification and live-data limitations are recorded in
 [Acceptance](descriptive/ACCEPTANCE.md).
 The concrete first case and implementation acceptance gates are reached through the

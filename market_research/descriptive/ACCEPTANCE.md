@@ -13,7 +13,7 @@ the stated scope, not that runtime or live-data acceptance exists.
 | Index Trailing Return, complete or legal partial facts | Implementation Ready with explicit canonical index_code, dates and H | Observation runtime and deterministic contract tests implemented; live gate blocked by incompatible existing Calendar cache | [Case](cases/trailing_return/ARCHITECTURE.md), [inputs](cases/trailing_return/INPUTS.md), [identity](cases/trailing_return/INPUT_IDENTITY.md) |
 | Sample Converter with missing and coverage context | Implementation Ready | Implemented; deterministic conversion and Statistics reuse verified by CONV-01; zero eligible fails explicitly | [Conversion](SAMPLE_CONVERSION.md), [evidence](CONVERSION_ACCEPTANCE.md) |
 | Result Association | Implementation Ready; exact linkage, bounded structure and non-attestation limits | Implemented by ASSOC-01; deterministic component flow and negative checks passed | [Integration](STATISTICS_INTEGRATION.md) → [association](RESULT_ASSOCIATION.md), [evidence](ASSOCIATION_ACCEPTANCE.md) |
-| Research Job Executor | Implementation Ready | Not Implemented; final Success still requires every declared analysis/association | [Execution](EXECUTION.md) |
+| Research Job Executor | Implementation Ready | Implemented by EXEC-01 for Index Trailing Return; every required analysis/association must succeed; deterministic acceptance passed | [Execution](EXECUTION.md) → [Single Job](JOB_EXECUTION.md), [evidence](JOB_EXECUTION_ACCEPTANCE.md) |
 | Research Batch Executor | Implementation Ready | Not Implemented | [Execution](EXECUTION.md) |
 | Research Evidence Storage / Result Reuse / Cache | Deferred; no persistence or reuse protocol published | Not Implemented | [Association scope](RESULT_ASSOCIATION.md#failures-scope-and-non-guarantees) |
 | Statistics NumericSample, Quantile, IntervalCount | Existing contracts remain Implementation Ready | Independent installed Python API and both methods implemented (STAT-IMP-01); no market missing-value responsibility | [Public contract](../../market_statistics/CONTRACT.md), [Quantile](../../market_statistics/QUANTILE.md), [IntervalCount](../../market_statistics/INTERVAL_COUNT.md) |
@@ -31,7 +31,8 @@ shapes, optional analyses, retries, adjustment engines and durable outputs are o
 These are cross-stage acceptance specifications. Observation checks are recorded below;
 conversion and independent Statistics reuse are verified in [CONV-01 evidence](CONVERSION_ACCEPTANCE.md).
 Independent result association is verified in [ASSOC-01 evidence](ASSOCIATION_ACCEPTANCE.md).
-Job/Batch execution and live end-to-end gates remain unperformed. The historical
+Single Job deterministic execution is verified in [EXEC-01 evidence](JOB_EXECUTION_ACCEPTANCE.md).
+ResearchPlan/Batch execution and live end-to-end gates remain unperformed. The historical
 incompatible Trade Calendar cache limitation below is unchanged.
 Each successful construction verifies unique ordered keys, exactly one outcome per
 candidate, all missing dependencies and derived counts/ratios.
