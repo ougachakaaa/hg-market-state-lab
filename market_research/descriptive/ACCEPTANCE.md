@@ -10,7 +10,7 @@ the stated scope, not that runtime or live-data acceptance exists.
 | Work package / case | Semantic readiness | Runtime / remaining limitation | Canonical owner |
 | --- | --- | --- | --- |
 | Asset-agnostic scalar Observation | Implementation Ready as abstract contract | Immutable domain and independent Python API implemented; each new series still needs explicit fact/calendar/metric binding | [Observation](OBSERVATION.md) |
-| Index Trailing Return, complete or legal partial facts | Implementation Ready with explicit canonical index_code, dates and H | Observation runtime and deterministic contract tests implemented; live gate blocked by incompatible existing Calendar cache | [Case](cases/trailing_return/ARCHITECTURE.md), [inputs](cases/trailing_return/INPUTS.md), [identity](cases/trailing_return/INPUT_IDENTITY.md) |
+| Index Trailing Return, complete or legal partial facts | Implementation Ready with explicit canonical index_code, dates and H | Observation runtime and deterministic contract tests implemented; isolated real-market E2E Verified by LIVE-E2E-01; historical default Calendar cache remains unresolved | [Case](cases/trailing_return/ARCHITECTURE.md), [inputs](cases/trailing_return/INPUTS.md), [identity](cases/trailing_return/INPUT_IDENTITY.md), [live evidence](LIVE_E2E_ACCEPTANCE.md) |
 | Sample Converter with missing and coverage context | Implementation Ready | Implemented; deterministic conversion and Statistics reuse verified by CONV-01; zero eligible fails explicitly | [Conversion](SAMPLE_CONVERSION.md), [evidence](CONVERSION_ACCEPTANCE.md) |
 | Result Association | Implementation Ready; exact linkage, bounded structure and non-attestation limits | Implemented by ASSOC-01; deterministic component flow and negative checks passed | [Integration](STATISTICS_INTEGRATION.md) → [association](RESULT_ASSOCIATION.md), [evidence](ASSOCIATION_ACCEPTANCE.md) |
 | Research Job Executor | Implementation Ready | Implemented by EXEC-01 for Index Trailing Return; every required analysis/association must succeed; deterministic acceptance passed | [Execution](EXECUTION.md) → [Single Job](JOB_EXECUTION.md), [evidence](JOB_EXECUTION_ACCEPTANCE.md) |
@@ -33,8 +33,10 @@ conversion and independent Statistics reuse are verified in [CONV-01 evidence](C
 Independent result association is verified in [ASSOC-01 evidence](ASSOCIATION_ACCEPTANCE.md).
 Single Job deterministic execution is verified in [EXEC-01 evidence](JOB_EXECUTION_ACCEPTANCE.md).
 ResearchPlan/Batch deterministic execution is verified in [EXEC-02 evidence](BATCH_EXECUTION_ACCEPTANCE.md).
-Live end-to-end gates remain unperformed. The historical
-incompatible Trade Calendar cache limitation below is unchanged.
+The bounded isolated real-market end-to-end gate is Verified by
+[LIVE-E2E-01](LIVE_E2E_ACCEPTANCE.md), including verified CSI1000 metadata, both numerical
+methods, Single Job and Batch. The historical incompatible default Trade Calendar
+cache limitation below is unchanged; its blocked attempt is not reclassified.
 Each successful construction verifies unique ordered keys, exactly one outcome per
 candidate, all missing dependencies and derived counts/ratios.
 
@@ -149,7 +151,7 @@ date.min exhaustion, adjacent doubling, overflow and fingerprint cases are cover
 - `poetry check --lock`: passed; no dependency/lock change required.
 - `git diff --check`: passed; full tracked diff and new runtime/tests reviewed.
 
-Live-data Observation acceptance: **Blocked**, not passed. An actual call through the
+Historical live-data Observation acceptance (2026-10-25): **Blocked**, not passed. An actual call through the
 public Observation API requested 2024-01-10..2024-01-16 with H=2, using candidate subject
 `000852.SH`; its CSI1000 metadata was not confirmed because preparation was blocked.
 The initial public SSE

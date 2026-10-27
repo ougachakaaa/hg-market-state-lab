@@ -55,6 +55,12 @@ Construction makes no upstream calls. This API requires no Statistics, Converter
 
 Verification commands and actual live-data status are in [Acceptance](descriptive/ACCEPTANCE.md).
 
+The bounded [LIVE-E2E-01 acceptance](descriptive/LIVE_E2E_ACCEPTANCE.md) is Verified for
+metadata-confirmed CSI1000, using fresh isolated Dataset storage. Its
+[opt-in harness](tests/live_e2e_acceptance.py) runs only when explicitly invoked;
+ordinary pytest remains deterministic. The historical incompatible default Calendar
+cache was neither repaired nor changed.
+
 ## Pure scalar conversion and Statistics reuse
 
 For an existing legal ObservationSet such as `result` above, the independent public

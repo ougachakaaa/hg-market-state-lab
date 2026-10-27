@@ -1,0 +1,2038 @@
+{
+  "goal": "LIVE-E2E-01",
+  "verdict": "Verified",
+  "tested_sha": "14775901dc2c2f202d8c0c59795b4b18c27bab3c",
+  "executed_at_utc": "2026-10-27T15:29:29.827794+00:00",
+  "python": "3.13.11",
+  "platform": "Windows",
+  "root_poetry_environment": true,
+  "target": "000852.SH",
+  "window": {
+    "start_date": "2024-01-10",
+    "end_date": "2024-01-16"
+  },
+  "horizon": 2,
+  "historical_default_cache_repaired": false,
+  "isolation": {
+    "established_before_source": true,
+    "fresh_external_temporary_directory": true,
+    "separate_dataset_files": true,
+    "index_calendar_dependency_isolated": true,
+    "factory_storage_free": true,
+    "runtime_schema_generation": 3,
+    "repository_bindings": {
+      "tushare_trade_calendar": 6,
+      "tushare_index_daily": 3
+    },
+    "sqlite_connections": {
+      "tushare_trade_calendar.sqlite3": 14,
+      "tushare_index_daily.sqlite3": 4
+    },
+    "materialized_files": [
+      "tushare_index_daily.sqlite3",
+      "tushare_trade_calendar.sqlite3"
+    ],
+    "default_cache_metadata_unchanged": true
+  },
+  "credential_available": true,
+  "configured_calls_per_minute": 180.0,
+  "single_job_status": "Success",
+  "single_analysis_statuses": [
+    "success",
+    "success"
+  ],
+  "public_input_attempts": [
+    {
+      "request": {
+        "exchange": "SSE",
+        "start_date": "2024-01-10",
+        "end_date": "2024-01-16"
+      },
+      "preliminary_export": {
+        "dataset": "tushare_trade_calendar",
+        "view": "calendar",
+        "export_schema_version": 1,
+        "scope": {
+          "exchange": "SSE"
+        },
+        "window": {
+          "start_date": "2024-01-10",
+          "end_date": "2024-01-16"
+        },
+        "coverage": {
+          "requested_units": 7,
+          "successful_units": 0,
+          "missing_units": 7,
+          "pending_units": 0,
+          "failed_units": 0,
+          "complete": false
+        },
+        "records": []
+      },
+      "ensure_result": {
+        "requested_units": 7,
+        "already_successful_units": 0,
+        "attempted_units": 7,
+        "succeeded_units": 7,
+        "failed_units": 0,
+        "records_written": 7,
+        "complete": true,
+        "failures": []
+      },
+      "final_export": {
+        "dataset": "tushare_trade_calendar",
+        "view": "calendar",
+        "export_schema_version": 1,
+        "scope": {
+          "exchange": "SSE"
+        },
+        "window": {
+          "start_date": "2024-01-10",
+          "end_date": "2024-01-16"
+        },
+        "coverage": {
+          "requested_units": 7,
+          "successful_units": 7,
+          "missing_units": 0,
+          "pending_units": 0,
+          "failed_units": 0,
+          "complete": true
+        },
+        "records": [
+          {
+            "exchange": "SSE",
+            "cal_date": "2024-01-10",
+            "is_open": 1,
+            "pretrade_date": "2024-01-09"
+          },
+          {
+            "exchange": "SSE",
+            "cal_date": "2024-01-11",
+            "is_open": 1,
+            "pretrade_date": "2024-01-10"
+          },
+          {
+            "exchange": "SSE",
+            "cal_date": "2024-01-12",
+            "is_open": 1,
+            "pretrade_date": "2024-01-11"
+          },
+          {
+            "exchange": "SSE",
+            "cal_date": "2024-01-13",
+            "is_open": 0,
+            "pretrade_date": "2024-01-12"
+          },
+          {
+            "exchange": "SSE",
+            "cal_date": "2024-01-14",
+            "is_open": 0,
+            "pretrade_date": "2024-01-12"
+          },
+          {
+            "exchange": "SSE",
+            "cal_date": "2024-01-15",
+            "is_open": 1,
+            "pretrade_date": "2024-01-12"
+          },
+          {
+            "exchange": "SSE",
+            "cal_date": "2024-01-16",
+            "is_open": 1,
+            "pretrade_date": "2024-01-15"
+          }
+        ]
+      }
+    },
+    {
+      "request": {
+        "exchange": "SSE",
+        "start_date": "2024-01-08",
+        "end_date": "2024-01-09"
+      },
+      "preliminary_export": {
+        "dataset": "tushare_trade_calendar",
+        "view": "calendar",
+        "export_schema_version": 1,
+        "scope": {
+          "exchange": "SSE"
+        },
+        "window": {
+          "start_date": "2024-01-08",
+          "end_date": "2024-01-09"
+        },
+        "coverage": {
+          "requested_units": 2,
+          "successful_units": 0,
+          "missing_units": 2,
+          "pending_units": 0,
+          "failed_units": 0,
+          "complete": false
+        },
+        "records": []
+      },
+      "ensure_result": {
+        "requested_units": 2,
+        "already_successful_units": 0,
+        "attempted_units": 2,
+        "succeeded_units": 2,
+        "failed_units": 0,
+        "records_written": 2,
+        "complete": true,
+        "failures": []
+      },
+      "final_export": {
+        "dataset": "tushare_trade_calendar",
+        "view": "calendar",
+        "export_schema_version": 1,
+        "scope": {
+          "exchange": "SSE"
+        },
+        "window": {
+          "start_date": "2024-01-08",
+          "end_date": "2024-01-09"
+        },
+        "coverage": {
+          "requested_units": 2,
+          "successful_units": 2,
+          "missing_units": 0,
+          "pending_units": 0,
+          "failed_units": 0,
+          "complete": true
+        },
+        "records": [
+          {
+            "exchange": "SSE",
+            "cal_date": "2024-01-08",
+            "is_open": 1,
+            "pretrade_date": "2024-01-05"
+          },
+          {
+            "exchange": "SSE",
+            "cal_date": "2024-01-09",
+            "is_open": 1,
+            "pretrade_date": "2024-01-08"
+          }
+        ]
+      }
+    },
+    {
+      "request": {
+        "index_codes": [
+          "000852.SH"
+        ],
+        "start_date": "2024-01-08",
+        "end_date": "2024-01-16"
+      },
+      "preliminary_export": {
+        "dataset": "tushare_index_daily",
+        "view": "index_daily",
+        "export_schema_version": 1,
+        "scope": {
+          "index_codes": [
+            "000852.SH"
+          ]
+        },
+        "window": {
+          "start_date": "2024-01-08",
+          "end_date": "2024-01-16"
+        },
+        "coverage": {
+          "requested_units": 7,
+          "successful_units": 0,
+          "missing_units": 7,
+          "pending_units": 0,
+          "failed_units": 0,
+          "complete": false
+        },
+        "records": []
+      },
+      "ensure_result": {
+        "requested_units": 7,
+        "already_successful_units": 0,
+        "attempted_units": 7,
+        "succeeded_units": 7,
+        "failed_units": 0,
+        "records_written": 7,
+        "complete": true,
+        "failures": []
+      },
+      "final_export": {
+        "dataset": "tushare_index_daily",
+        "view": "index_daily",
+        "export_schema_version": 1,
+        "scope": {
+          "index_codes": [
+            "000852.SH"
+          ]
+        },
+        "window": {
+          "start_date": "2024-01-08",
+          "end_date": "2024-01-16"
+        },
+        "coverage": {
+          "requested_units": 7,
+          "successful_units": 7,
+          "missing_units": 0,
+          "pending_units": 0,
+          "failed_units": 0,
+          "complete": true
+        },
+        "records": [
+          {
+            "index_code": "000852.SH",
+            "symbol": "000852",
+            "name": "\u4e2d\u8bc11000",
+            "market": "SSE",
+            "publisher": "\u4e2d\u8bc1\u6307\u6570\u6709\u9650\u516c\u53f8",
+            "category": "\u89c4\u6a21\u6307\u6570",
+            "trade_date": "2024-01-08",
+            "open": 5664.4526,
+            "high": 5664.4526,
+            "low": 5543.5745,
+            "close": 5543.5745,
+            "pre_close": 5675.8091,
+            "change": -132.2346,
+            "pct_change": -2.3298,
+            "volume": 110512726.0,
+            "amount": 112633892.9246
+          },
+          {
+            "index_code": "000852.SH",
+            "symbol": "000852",
+            "name": "\u4e2d\u8bc11000",
+            "market": "SSE",
+            "publisher": "\u4e2d\u8bc1\u6307\u6570\u6709\u9650\u516c\u53f8",
+            "category": "\u89c4\u6a21\u6307\u6570",
+            "trade_date": "2024-01-09",
+            "open": 5553.1836,
+            "high": 5607.2178,
+            "low": 5513.1298,
+            "close": 5553.3035,
+            "pre_close": 5543.5745,
+            "change": 9.729,
+            "pct_change": 0.1755,
+            "volume": 110223223.0,
+            "amount": 114678407.1692
+          },
+          {
+            "index_code": "000852.SH",
+            "symbol": "000852",
+            "name": "\u4e2d\u8bc11000",
+            "market": "SSE",
+            "publisher": "\u4e2d\u8bc1\u6307\u6570\u6709\u9650\u516c\u53f8",
+            "category": "\u89c4\u6a21\u6307\u6570",
+            "trade_date": "2024-01-10",
+            "open": 5540.6641,
+            "high": 5580.4191,
+            "low": 5462.3615,
+            "close": 5512.0686,
+            "pre_close": 5553.3035,
+            "change": -41.2349,
+            "pct_change": -0.7425,
+            "volume": 106499446.0,
+            "amount": 108158125.143
+          },
+          {
+            "index_code": "000852.SH",
+            "symbol": "000852",
+            "name": "\u4e2d\u8bc11000",
+            "market": "SSE",
+            "publisher": "\u4e2d\u8bc1\u6307\u6570\u6709\u9650\u516c\u53f8",
+            "category": "\u89c4\u6a21\u6307\u6570",
+            "trade_date": "2024-01-11",
+            "open": 5507.803,
+            "high": 5634.0247,
+            "low": 5502.2938,
+            "close": 5611.1149,
+            "pre_close": 5512.0686,
+            "change": 99.0463,
+            "pct_change": 1.7969,
+            "volume": 124717749.0,
+            "amount": 123635425.1661
+          },
+          {
+            "index_code": "000852.SH",
+            "symbol": "000852",
+            "name": "\u4e2d\u8bc11000",
+            "market": "SSE",
+            "publisher": "\u4e2d\u8bc1\u6307\u6570\u6709\u9650\u516c\u53f8",
+            "category": "\u89c4\u6a21\u6307\u6570",
+            "trade_date": "2024-01-12",
+            "open": 5601.0976,
+            "high": 5646.2716,
+            "low": 5574.4084,
+            "close": 5574.4926,
+            "pre_close": 5611.1149,
+            "change": -36.6223,
+            "pct_change": -0.6527,
+            "volume": 121066881.0,
+            "amount": 118289969.7421
+          },
+          {
+            "index_code": "000852.SH",
+            "symbol": "000852",
+            "name": "\u4e2d\u8bc11000",
+            "market": "SSE",
+            "publisher": "\u4e2d\u8bc1\u6307\u6570\u6709\u9650\u516c\u53f8",
+            "category": "\u89c4\u6a21\u6307\u6570",
+            "trade_date": "2024-01-15",
+            "open": 5558.1481,
+            "high": 5607.1342,
+            "low": 5520.363,
+            "close": 5559.376,
+            "pre_close": 5574.4926,
+            "change": -15.1166,
+            "pct_change": -0.2712,
+            "volume": 108667184.0,
+            "amount": 107428092.7928
+          },
+          {
+            "index_code": "000852.SH",
+            "symbol": "000852",
+            "name": "\u4e2d\u8bc11000",
+            "market": "SSE",
+            "publisher": "\u4e2d\u8bc1\u6307\u6570\u6709\u9650\u516c\u53f8",
+            "category": "\u89c4\u6a21\u6307\u6570",
+            "trade_date": "2024-01-16",
+            "open": 5555.0003,
+            "high": 5566.2102,
+            "low": 5463.2948,
+            "close": 5539.4741,
+            "pre_close": 5559.376,
+            "change": -19.9019,
+            "pct_change": -0.358,
+            "volume": 116803108.0,
+            "amount": 113669505.6087
+          }
+        ]
+      }
+    }
+  ],
+  "single_statistical_results": [
+    {
+      "points_and_values": [
+        [
+          0.1,
+          -0.008045239512030821
+        ],
+        [
+          0.5,
+          -0.005683318588033837
+        ],
+        [
+          0.9,
+          0.010959089549401701
+        ]
+      ],
+      "sample_count": 5,
+      "unit": "decimal_ratio",
+      "method": "quantile",
+      "estimator": "type7_linear_v1"
+    },
+    {
+      "edges": [
+        -0.2,
+        0.0,
+        0.2
+      ],
+      "bins": [
+        {
+          "left": -0.2,
+          "right": 0.0,
+          "left_inclusive": true,
+          "right_inclusive": false,
+          "count": 3,
+          "frequency": 0.6
+        },
+        {
+          "left": 0.0,
+          "right": 0.2,
+          "left_inclusive": true,
+          "right_inclusive": true,
+          "count": 2,
+          "frequency": 0.4
+        }
+      ],
+      "underflow_count": 0,
+      "overflow_count": 0,
+      "underflow_frequency": 0.0,
+      "overflow_frequency": 0.0,
+      "sample_count": 5,
+      "unit": "decimal_ratio",
+      "method": "interval_count"
+    }
+  ],
+  "single": {
+    "metadata": {
+      "index_code": "000852.SH",
+      "symbol": "000852",
+      "name": "\u4e2d\u8bc11000",
+      "market": "SSE",
+      "publisher": "\u4e2d\u8bc1\u6307\u6570\u6709\u9650\u516c\u53f8",
+      "category": "\u89c4\u6a21\u6307\u6570"
+    },
+    "open_sessions": [
+      "2024-01-08",
+      "2024-01-09",
+      "2024-01-10",
+      "2024-01-11",
+      "2024-01-12",
+      "2024-01-15",
+      "2024-01-16"
+    ],
+    "endpoints": [
+      {
+        "anchor": "2024-01-10",
+        "lookback": "2024-01-08",
+        "anchor_close": 5512.0686,
+        "lookback_close": 5543.5745,
+        "return": -0.005683318588033837
+      },
+      {
+        "anchor": "2024-01-11",
+        "lookback": "2024-01-09",
+        "anchor_close": 5611.1149,
+        "lookback_close": 5553.3035,
+        "return": 0.010410272011965427
+      },
+      {
+        "anchor": "2024-01-12",
+        "lookback": "2024-01-10",
+        "anchor_close": 5574.4926,
+        "lookback_close": 5512.0686,
+        "return": 0.011324967907692551
+      },
+      {
+        "anchor": "2024-01-15",
+        "lookback": "2024-01-11",
+        "anchor_close": 5559.376,
+        "lookback_close": 5611.1149,
+        "return": -0.00922078783309166
+      },
+      {
+        "anchor": "2024-01-16",
+        "lookback": "2024-01-12",
+        "anchor_close": 5539.4741,
+        "lookback_close": 5574.4926,
+        "return": -0.0062819170304395655
+      }
+    ],
+    "counts": {
+      "candidate": 5,
+      "eligible": 5,
+      "unavailable": 0,
+      "excluded": 0
+    },
+    "market_fact_coverage": {
+      "overall": {
+        "expected_keys": [
+          [
+            "000852.SH",
+            "2024-01-08"
+          ],
+          [
+            "000852.SH",
+            "2024-01-09"
+          ],
+          [
+            "000852.SH",
+            "2024-01-10"
+          ],
+          [
+            "000852.SH",
+            "2024-01-11"
+          ],
+          [
+            "000852.SH",
+            "2024-01-12"
+          ],
+          [
+            "000852.SH",
+            "2024-01-15"
+          ],
+          [
+            "000852.SH",
+            "2024-01-16"
+          ]
+        ],
+        "available_keys": [
+          [
+            "000852.SH",
+            "2024-01-08"
+          ],
+          [
+            "000852.SH",
+            "2024-01-09"
+          ],
+          [
+            "000852.SH",
+            "2024-01-10"
+          ],
+          [
+            "000852.SH",
+            "2024-01-11"
+          ],
+          [
+            "000852.SH",
+            "2024-01-12"
+          ],
+          [
+            "000852.SH",
+            "2024-01-15"
+          ],
+          [
+            "000852.SH",
+            "2024-01-16"
+          ]
+        ]
+      },
+      "warm_up": {
+        "expected_keys": [
+          [
+            "000852.SH",
+            "2024-01-08"
+          ],
+          [
+            "000852.SH",
+            "2024-01-09"
+          ]
+        ],
+        "available_keys": [
+          [
+            "000852.SH",
+            "2024-01-08"
+          ],
+          [
+            "000852.SH",
+            "2024-01-09"
+          ]
+        ]
+      },
+      "sample": {
+        "expected_keys": [
+          [
+            "000852.SH",
+            "2024-01-10"
+          ],
+          [
+            "000852.SH",
+            "2024-01-11"
+          ],
+          [
+            "000852.SH",
+            "2024-01-12"
+          ],
+          [
+            "000852.SH",
+            "2024-01-15"
+          ],
+          [
+            "000852.SH",
+            "2024-01-16"
+          ]
+        ],
+        "available_keys": [
+          [
+            "000852.SH",
+            "2024-01-10"
+          ],
+          [
+            "000852.SH",
+            "2024-01-11"
+          ],
+          [
+            "000852.SH",
+            "2024-01-12"
+          ],
+          [
+            "000852.SH",
+            "2024-01-15"
+          ],
+          [
+            "000852.SH",
+            "2024-01-16"
+          ]
+        ]
+      }
+    },
+    "numeric_sample": {
+      "values": [
+        -0.005683318588033837,
+        0.010410272011965427,
+        0.011324967907692551,
+        -0.00922078783309166,
+        -0.0062819170304395655
+      ],
+      "unit": "decimal_ratio"
+    },
+    "binding_keys": [
+      [
+        [
+          "trailing_cumulative_return_v1",
+          "000852.SH",
+          [],
+          2,
+          "trading_sessions",
+          "2024-01-10",
+          "2024-01-16",
+          "end_session",
+          "inclusive"
+        ],
+        "2024-01-10"
+      ],
+      [
+        [
+          "trailing_cumulative_return_v1",
+          "000852.SH",
+          [],
+          2,
+          "trading_sessions",
+          "2024-01-10",
+          "2024-01-16",
+          "end_session",
+          "inclusive"
+        ],
+        "2024-01-11"
+      ],
+      [
+        [
+          "trailing_cumulative_return_v1",
+          "000852.SH",
+          [],
+          2,
+          "trading_sessions",
+          "2024-01-10",
+          "2024-01-16",
+          "end_session",
+          "inclusive"
+        ],
+        "2024-01-12"
+      ],
+      [
+        [
+          "trailing_cumulative_return_v1",
+          "000852.SH",
+          [],
+          2,
+          "trading_sessions",
+          "2024-01-10",
+          "2024-01-16",
+          "end_session",
+          "inclusive"
+        ],
+        "2024-01-15"
+      ],
+      [
+        [
+          "trailing_cumulative_return_v1",
+          "000852.SH",
+          [],
+          2,
+          "trading_sessions",
+          "2024-01-10",
+          "2024-01-16",
+          "end_session",
+          "inclusive"
+        ],
+        "2024-01-16"
+      ]
+    ],
+    "input_profile": "trailing_return_inputs_v2",
+    "input_fingerprint": "5bbb52782df680da17036420bdee777b9c3febaf19cd08e8f09c383b8ecf2bfc",
+    "public_input_attempts": [
+      {
+        "request": {
+          "exchange": "SSE",
+          "start_date": "2024-01-10",
+          "end_date": "2024-01-16"
+        },
+        "preliminary_export": {
+          "dataset": "tushare_trade_calendar",
+          "view": "calendar",
+          "export_schema_version": 1,
+          "scope": {
+            "exchange": "SSE"
+          },
+          "window": {
+            "start_date": "2024-01-10",
+            "end_date": "2024-01-16"
+          },
+          "coverage": {
+            "requested_units": 7,
+            "successful_units": 0,
+            "missing_units": 7,
+            "pending_units": 0,
+            "failed_units": 0,
+            "complete": false
+          },
+          "records": []
+        },
+        "ensure_result": {
+          "requested_units": 7,
+          "already_successful_units": 0,
+          "attempted_units": 7,
+          "succeeded_units": 7,
+          "failed_units": 0,
+          "records_written": 7,
+          "complete": true,
+          "failures": []
+        },
+        "final_export": {
+          "dataset": "tushare_trade_calendar",
+          "view": "calendar",
+          "export_schema_version": 1,
+          "scope": {
+            "exchange": "SSE"
+          },
+          "window": {
+            "start_date": "2024-01-10",
+            "end_date": "2024-01-16"
+          },
+          "coverage": {
+            "requested_units": 7,
+            "successful_units": 7,
+            "missing_units": 0,
+            "pending_units": 0,
+            "failed_units": 0,
+            "complete": true
+          },
+          "records": [
+            {
+              "exchange": "SSE",
+              "cal_date": "2024-01-10",
+              "is_open": 1,
+              "pretrade_date": "2024-01-09"
+            },
+            {
+              "exchange": "SSE",
+              "cal_date": "2024-01-11",
+              "is_open": 1,
+              "pretrade_date": "2024-01-10"
+            },
+            {
+              "exchange": "SSE",
+              "cal_date": "2024-01-12",
+              "is_open": 1,
+              "pretrade_date": "2024-01-11"
+            },
+            {
+              "exchange": "SSE",
+              "cal_date": "2024-01-13",
+              "is_open": 0,
+              "pretrade_date": "2024-01-12"
+            },
+            {
+              "exchange": "SSE",
+              "cal_date": "2024-01-14",
+              "is_open": 0,
+              "pretrade_date": "2024-01-12"
+            },
+            {
+              "exchange": "SSE",
+              "cal_date": "2024-01-15",
+              "is_open": 1,
+              "pretrade_date": "2024-01-12"
+            },
+            {
+              "exchange": "SSE",
+              "cal_date": "2024-01-16",
+              "is_open": 1,
+              "pretrade_date": "2024-01-15"
+            }
+          ]
+        }
+      },
+      {
+        "request": {
+          "exchange": "SSE",
+          "start_date": "2024-01-08",
+          "end_date": "2024-01-09"
+        },
+        "preliminary_export": {
+          "dataset": "tushare_trade_calendar",
+          "view": "calendar",
+          "export_schema_version": 1,
+          "scope": {
+            "exchange": "SSE"
+          },
+          "window": {
+            "start_date": "2024-01-08",
+            "end_date": "2024-01-09"
+          },
+          "coverage": {
+            "requested_units": 2,
+            "successful_units": 0,
+            "missing_units": 2,
+            "pending_units": 0,
+            "failed_units": 0,
+            "complete": false
+          },
+          "records": []
+        },
+        "ensure_result": {
+          "requested_units": 2,
+          "already_successful_units": 0,
+          "attempted_units": 2,
+          "succeeded_units": 2,
+          "failed_units": 0,
+          "records_written": 2,
+          "complete": true,
+          "failures": []
+        },
+        "final_export": {
+          "dataset": "tushare_trade_calendar",
+          "view": "calendar",
+          "export_schema_version": 1,
+          "scope": {
+            "exchange": "SSE"
+          },
+          "window": {
+            "start_date": "2024-01-08",
+            "end_date": "2024-01-09"
+          },
+          "coverage": {
+            "requested_units": 2,
+            "successful_units": 2,
+            "missing_units": 0,
+            "pending_units": 0,
+            "failed_units": 0,
+            "complete": true
+          },
+          "records": [
+            {
+              "exchange": "SSE",
+              "cal_date": "2024-01-08",
+              "is_open": 1,
+              "pretrade_date": "2024-01-05"
+            },
+            {
+              "exchange": "SSE",
+              "cal_date": "2024-01-09",
+              "is_open": 1,
+              "pretrade_date": "2024-01-08"
+            }
+          ]
+        }
+      },
+      {
+        "request": {
+          "index_codes": [
+            "000852.SH"
+          ],
+          "start_date": "2024-01-08",
+          "end_date": "2024-01-16"
+        },
+        "preliminary_export": {
+          "dataset": "tushare_index_daily",
+          "view": "index_daily",
+          "export_schema_version": 1,
+          "scope": {
+            "index_codes": [
+              "000852.SH"
+            ]
+          },
+          "window": {
+            "start_date": "2024-01-08",
+            "end_date": "2024-01-16"
+          },
+          "coverage": {
+            "requested_units": 7,
+            "successful_units": 0,
+            "missing_units": 7,
+            "pending_units": 0,
+            "failed_units": 0,
+            "complete": false
+          },
+          "records": []
+        },
+        "ensure_result": {
+          "requested_units": 7,
+          "already_successful_units": 0,
+          "attempted_units": 7,
+          "succeeded_units": 7,
+          "failed_units": 0,
+          "records_written": 7,
+          "complete": true,
+          "failures": []
+        },
+        "final_export": {
+          "dataset": "tushare_index_daily",
+          "view": "index_daily",
+          "export_schema_version": 1,
+          "scope": {
+            "index_codes": [
+              "000852.SH"
+            ]
+          },
+          "window": {
+            "start_date": "2024-01-08",
+            "end_date": "2024-01-16"
+          },
+          "coverage": {
+            "requested_units": 7,
+            "successful_units": 7,
+            "missing_units": 0,
+            "pending_units": 0,
+            "failed_units": 0,
+            "complete": true
+          },
+          "records": [
+            {
+              "index_code": "000852.SH",
+              "symbol": "000852",
+              "name": "\u4e2d\u8bc11000",
+              "market": "SSE",
+              "publisher": "\u4e2d\u8bc1\u6307\u6570\u6709\u9650\u516c\u53f8",
+              "category": "\u89c4\u6a21\u6307\u6570",
+              "trade_date": "2024-01-08",
+              "open": 5664.4526,
+              "high": 5664.4526,
+              "low": 5543.5745,
+              "close": 5543.5745,
+              "pre_close": 5675.8091,
+              "change": -132.2346,
+              "pct_change": -2.3298,
+              "volume": 110512726.0,
+              "amount": 112633892.9246
+            },
+            {
+              "index_code": "000852.SH",
+              "symbol": "000852",
+              "name": "\u4e2d\u8bc11000",
+              "market": "SSE",
+              "publisher": "\u4e2d\u8bc1\u6307\u6570\u6709\u9650\u516c\u53f8",
+              "category": "\u89c4\u6a21\u6307\u6570",
+              "trade_date": "2024-01-09",
+              "open": 5553.1836,
+              "high": 5607.2178,
+              "low": 5513.1298,
+              "close": 5553.3035,
+              "pre_close": 5543.5745,
+              "change": 9.729,
+              "pct_change": 0.1755,
+              "volume": 110223223.0,
+              "amount": 114678407.1692
+            },
+            {
+              "index_code": "000852.SH",
+              "symbol": "000852",
+              "name": "\u4e2d\u8bc11000",
+              "market": "SSE",
+              "publisher": "\u4e2d\u8bc1\u6307\u6570\u6709\u9650\u516c\u53f8",
+              "category": "\u89c4\u6a21\u6307\u6570",
+              "trade_date": "2024-01-10",
+              "open": 5540.6641,
+              "high": 5580.4191,
+              "low": 5462.3615,
+              "close": 5512.0686,
+              "pre_close": 5553.3035,
+              "change": -41.2349,
+              "pct_change": -0.7425,
+              "volume": 106499446.0,
+              "amount": 108158125.143
+            },
+            {
+              "index_code": "000852.SH",
+              "symbol": "000852",
+              "name": "\u4e2d\u8bc11000",
+              "market": "SSE",
+              "publisher": "\u4e2d\u8bc1\u6307\u6570\u6709\u9650\u516c\u53f8",
+              "category": "\u89c4\u6a21\u6307\u6570",
+              "trade_date": "2024-01-11",
+              "open": 5507.803,
+              "high": 5634.0247,
+              "low": 5502.2938,
+              "close": 5611.1149,
+              "pre_close": 5512.0686,
+              "change": 99.0463,
+              "pct_change": 1.7969,
+              "volume": 124717749.0,
+              "amount": 123635425.1661
+            },
+            {
+              "index_code": "000852.SH",
+              "symbol": "000852",
+              "name": "\u4e2d\u8bc11000",
+              "market": "SSE",
+              "publisher": "\u4e2d\u8bc1\u6307\u6570\u6709\u9650\u516c\u53f8",
+              "category": "\u89c4\u6a21\u6307\u6570",
+              "trade_date": "2024-01-12",
+              "open": 5601.0976,
+              "high": 5646.2716,
+              "low": 5574.4084,
+              "close": 5574.4926,
+              "pre_close": 5611.1149,
+              "change": -36.6223,
+              "pct_change": -0.6527,
+              "volume": 121066881.0,
+              "amount": 118289969.7421
+            },
+            {
+              "index_code": "000852.SH",
+              "symbol": "000852",
+              "name": "\u4e2d\u8bc11000",
+              "market": "SSE",
+              "publisher": "\u4e2d\u8bc1\u6307\u6570\u6709\u9650\u516c\u53f8",
+              "category": "\u89c4\u6a21\u6307\u6570",
+              "trade_date": "2024-01-15",
+              "open": 5558.1481,
+              "high": 5607.1342,
+              "low": 5520.363,
+              "close": 5559.376,
+              "pre_close": 5574.4926,
+              "change": -15.1166,
+              "pct_change": -0.2712,
+              "volume": 108667184.0,
+              "amount": 107428092.7928
+            },
+            {
+              "index_code": "000852.SH",
+              "symbol": "000852",
+              "name": "\u4e2d\u8bc11000",
+              "market": "SSE",
+              "publisher": "\u4e2d\u8bc1\u6307\u6570\u6709\u9650\u516c\u53f8",
+              "category": "\u89c4\u6a21\u6307\u6570",
+              "trade_date": "2024-01-16",
+              "open": 5555.0003,
+              "high": 5566.2102,
+              "low": 5463.2948,
+              "close": 5539.4741,
+              "pre_close": 5559.376,
+              "change": -19.9019,
+              "pct_change": -0.358,
+              "volume": 116803108.0,
+              "amount": 113669505.6087
+            }
+          ]
+        }
+      }
+    ],
+    "statistical_results": [
+      {
+        "points_and_values": [
+          [
+            0.1,
+            -0.008045239512030821
+          ],
+          [
+            0.5,
+            -0.005683318588033837
+          ],
+          [
+            0.9,
+            0.010959089549401701
+          ]
+        ],
+        "sample_count": 5,
+        "unit": "decimal_ratio",
+        "method": "quantile",
+        "estimator": "type7_linear_v1"
+      },
+      {
+        "edges": [
+          -0.2,
+          0.0,
+          0.2
+        ],
+        "bins": [
+          {
+            "left": -0.2,
+            "right": 0.0,
+            "left_inclusive": true,
+            "right_inclusive": false,
+            "count": 3,
+            "frequency": 0.6
+          },
+          {
+            "left": 0.0,
+            "right": 0.2,
+            "left_inclusive": true,
+            "right_inclusive": true,
+            "count": 2,
+            "frequency": 0.4
+          }
+        ],
+        "underflow_count": 0,
+        "overflow_count": 0,
+        "underflow_frequency": 0.0,
+        "overflow_frequency": 0.0,
+        "sample_count": 5,
+        "unit": "decimal_ratio",
+        "method": "interval_count"
+      }
+    ],
+    "independent_checks": "passed",
+    "association_reference_checks": "passed"
+  },
+  "batch": {
+    "status": "success",
+    "planned": 1,
+    "success": 1,
+    "failed": 0,
+    "skipped": 0
+  },
+  "batch_job": {
+    "metadata": {
+      "index_code": "000852.SH",
+      "symbol": "000852",
+      "name": "\u4e2d\u8bc11000",
+      "market": "SSE",
+      "publisher": "\u4e2d\u8bc1\u6307\u6570\u6709\u9650\u516c\u53f8",
+      "category": "\u89c4\u6a21\u6307\u6570"
+    },
+    "open_sessions": [
+      "2024-01-08",
+      "2024-01-09",
+      "2024-01-10",
+      "2024-01-11",
+      "2024-01-12",
+      "2024-01-15",
+      "2024-01-16"
+    ],
+    "endpoints": [
+      {
+        "anchor": "2024-01-10",
+        "lookback": "2024-01-08",
+        "anchor_close": 5512.0686,
+        "lookback_close": 5543.5745,
+        "return": -0.005683318588033837
+      },
+      {
+        "anchor": "2024-01-11",
+        "lookback": "2024-01-09",
+        "anchor_close": 5611.1149,
+        "lookback_close": 5553.3035,
+        "return": 0.010410272011965427
+      },
+      {
+        "anchor": "2024-01-12",
+        "lookback": "2024-01-10",
+        "anchor_close": 5574.4926,
+        "lookback_close": 5512.0686,
+        "return": 0.011324967907692551
+      },
+      {
+        "anchor": "2024-01-15",
+        "lookback": "2024-01-11",
+        "anchor_close": 5559.376,
+        "lookback_close": 5611.1149,
+        "return": -0.00922078783309166
+      },
+      {
+        "anchor": "2024-01-16",
+        "lookback": "2024-01-12",
+        "anchor_close": 5539.4741,
+        "lookback_close": 5574.4926,
+        "return": -0.0062819170304395655
+      }
+    ],
+    "counts": {
+      "candidate": 5,
+      "eligible": 5,
+      "unavailable": 0,
+      "excluded": 0
+    },
+    "market_fact_coverage": {
+      "overall": {
+        "expected_keys": [
+          [
+            "000852.SH",
+            "2024-01-08"
+          ],
+          [
+            "000852.SH",
+            "2024-01-09"
+          ],
+          [
+            "000852.SH",
+            "2024-01-10"
+          ],
+          [
+            "000852.SH",
+            "2024-01-11"
+          ],
+          [
+            "000852.SH",
+            "2024-01-12"
+          ],
+          [
+            "000852.SH",
+            "2024-01-15"
+          ],
+          [
+            "000852.SH",
+            "2024-01-16"
+          ]
+        ],
+        "available_keys": [
+          [
+            "000852.SH",
+            "2024-01-08"
+          ],
+          [
+            "000852.SH",
+            "2024-01-09"
+          ],
+          [
+            "000852.SH",
+            "2024-01-10"
+          ],
+          [
+            "000852.SH",
+            "2024-01-11"
+          ],
+          [
+            "000852.SH",
+            "2024-01-12"
+          ],
+          [
+            "000852.SH",
+            "2024-01-15"
+          ],
+          [
+            "000852.SH",
+            "2024-01-16"
+          ]
+        ]
+      },
+      "warm_up": {
+        "expected_keys": [
+          [
+            "000852.SH",
+            "2024-01-08"
+          ],
+          [
+            "000852.SH",
+            "2024-01-09"
+          ]
+        ],
+        "available_keys": [
+          [
+            "000852.SH",
+            "2024-01-08"
+          ],
+          [
+            "000852.SH",
+            "2024-01-09"
+          ]
+        ]
+      },
+      "sample": {
+        "expected_keys": [
+          [
+            "000852.SH",
+            "2024-01-10"
+          ],
+          [
+            "000852.SH",
+            "2024-01-11"
+          ],
+          [
+            "000852.SH",
+            "2024-01-12"
+          ],
+          [
+            "000852.SH",
+            "2024-01-15"
+          ],
+          [
+            "000852.SH",
+            "2024-01-16"
+          ]
+        ],
+        "available_keys": [
+          [
+            "000852.SH",
+            "2024-01-10"
+          ],
+          [
+            "000852.SH",
+            "2024-01-11"
+          ],
+          [
+            "000852.SH",
+            "2024-01-12"
+          ],
+          [
+            "000852.SH",
+            "2024-01-15"
+          ],
+          [
+            "000852.SH",
+            "2024-01-16"
+          ]
+        ]
+      }
+    },
+    "numeric_sample": {
+      "values": [
+        -0.005683318588033837,
+        0.010410272011965427,
+        0.011324967907692551,
+        -0.00922078783309166,
+        -0.0062819170304395655
+      ],
+      "unit": "decimal_ratio"
+    },
+    "binding_keys": [
+      [
+        [
+          "trailing_cumulative_return_v1",
+          "000852.SH",
+          [],
+          2,
+          "trading_sessions",
+          "2024-01-10",
+          "2024-01-16",
+          "end_session",
+          "inclusive"
+        ],
+        "2024-01-10"
+      ],
+      [
+        [
+          "trailing_cumulative_return_v1",
+          "000852.SH",
+          [],
+          2,
+          "trading_sessions",
+          "2024-01-10",
+          "2024-01-16",
+          "end_session",
+          "inclusive"
+        ],
+        "2024-01-11"
+      ],
+      [
+        [
+          "trailing_cumulative_return_v1",
+          "000852.SH",
+          [],
+          2,
+          "trading_sessions",
+          "2024-01-10",
+          "2024-01-16",
+          "end_session",
+          "inclusive"
+        ],
+        "2024-01-12"
+      ],
+      [
+        [
+          "trailing_cumulative_return_v1",
+          "000852.SH",
+          [],
+          2,
+          "trading_sessions",
+          "2024-01-10",
+          "2024-01-16",
+          "end_session",
+          "inclusive"
+        ],
+        "2024-01-15"
+      ],
+      [
+        [
+          "trailing_cumulative_return_v1",
+          "000852.SH",
+          [],
+          2,
+          "trading_sessions",
+          "2024-01-10",
+          "2024-01-16",
+          "end_session",
+          "inclusive"
+        ],
+        "2024-01-16"
+      ]
+    ],
+    "input_profile": "trailing_return_inputs_v2",
+    "input_fingerprint": "5bbb52782df680da17036420bdee777b9c3febaf19cd08e8f09c383b8ecf2bfc",
+    "public_input_attempts": [
+      {
+        "request": {
+          "exchange": "SSE",
+          "start_date": "2024-01-10",
+          "end_date": "2024-01-16"
+        },
+        "preliminary_export": {
+          "dataset": "tushare_trade_calendar",
+          "view": "calendar",
+          "export_schema_version": 1,
+          "scope": {
+            "exchange": "SSE"
+          },
+          "window": {
+            "start_date": "2024-01-10",
+            "end_date": "2024-01-16"
+          },
+          "coverage": {
+            "requested_units": 7,
+            "successful_units": 7,
+            "missing_units": 0,
+            "pending_units": 0,
+            "failed_units": 0,
+            "complete": true
+          },
+          "records": [
+            {
+              "exchange": "SSE",
+              "cal_date": "2024-01-10",
+              "is_open": 1,
+              "pretrade_date": "2024-01-09"
+            },
+            {
+              "exchange": "SSE",
+              "cal_date": "2024-01-11",
+              "is_open": 1,
+              "pretrade_date": "2024-01-10"
+            },
+            {
+              "exchange": "SSE",
+              "cal_date": "2024-01-12",
+              "is_open": 1,
+              "pretrade_date": "2024-01-11"
+            },
+            {
+              "exchange": "SSE",
+              "cal_date": "2024-01-13",
+              "is_open": 0,
+              "pretrade_date": "2024-01-12"
+            },
+            {
+              "exchange": "SSE",
+              "cal_date": "2024-01-14",
+              "is_open": 0,
+              "pretrade_date": "2024-01-12"
+            },
+            {
+              "exchange": "SSE",
+              "cal_date": "2024-01-15",
+              "is_open": 1,
+              "pretrade_date": "2024-01-12"
+            },
+            {
+              "exchange": "SSE",
+              "cal_date": "2024-01-16",
+              "is_open": 1,
+              "pretrade_date": "2024-01-15"
+            }
+          ]
+        },
+        "ensure_result": null,
+        "final_export": {
+          "dataset": "tushare_trade_calendar",
+          "view": "calendar",
+          "export_schema_version": 1,
+          "scope": {
+            "exchange": "SSE"
+          },
+          "window": {
+            "start_date": "2024-01-10",
+            "end_date": "2024-01-16"
+          },
+          "coverage": {
+            "requested_units": 7,
+            "successful_units": 7,
+            "missing_units": 0,
+            "pending_units": 0,
+            "failed_units": 0,
+            "complete": true
+          },
+          "records": [
+            {
+              "exchange": "SSE",
+              "cal_date": "2024-01-10",
+              "is_open": 1,
+              "pretrade_date": "2024-01-09"
+            },
+            {
+              "exchange": "SSE",
+              "cal_date": "2024-01-11",
+              "is_open": 1,
+              "pretrade_date": "2024-01-10"
+            },
+            {
+              "exchange": "SSE",
+              "cal_date": "2024-01-12",
+              "is_open": 1,
+              "pretrade_date": "2024-01-11"
+            },
+            {
+              "exchange": "SSE",
+              "cal_date": "2024-01-13",
+              "is_open": 0,
+              "pretrade_date": "2024-01-12"
+            },
+            {
+              "exchange": "SSE",
+              "cal_date": "2024-01-14",
+              "is_open": 0,
+              "pretrade_date": "2024-01-12"
+            },
+            {
+              "exchange": "SSE",
+              "cal_date": "2024-01-15",
+              "is_open": 1,
+              "pretrade_date": "2024-01-12"
+            },
+            {
+              "exchange": "SSE",
+              "cal_date": "2024-01-16",
+              "is_open": 1,
+              "pretrade_date": "2024-01-15"
+            }
+          ]
+        }
+      },
+      {
+        "request": {
+          "exchange": "SSE",
+          "start_date": "2024-01-08",
+          "end_date": "2024-01-09"
+        },
+        "preliminary_export": {
+          "dataset": "tushare_trade_calendar",
+          "view": "calendar",
+          "export_schema_version": 1,
+          "scope": {
+            "exchange": "SSE"
+          },
+          "window": {
+            "start_date": "2024-01-08",
+            "end_date": "2024-01-09"
+          },
+          "coverage": {
+            "requested_units": 2,
+            "successful_units": 2,
+            "missing_units": 0,
+            "pending_units": 0,
+            "failed_units": 0,
+            "complete": true
+          },
+          "records": [
+            {
+              "exchange": "SSE",
+              "cal_date": "2024-01-08",
+              "is_open": 1,
+              "pretrade_date": "2024-01-05"
+            },
+            {
+              "exchange": "SSE",
+              "cal_date": "2024-01-09",
+              "is_open": 1,
+              "pretrade_date": "2024-01-08"
+            }
+          ]
+        },
+        "ensure_result": null,
+        "final_export": {
+          "dataset": "tushare_trade_calendar",
+          "view": "calendar",
+          "export_schema_version": 1,
+          "scope": {
+            "exchange": "SSE"
+          },
+          "window": {
+            "start_date": "2024-01-08",
+            "end_date": "2024-01-09"
+          },
+          "coverage": {
+            "requested_units": 2,
+            "successful_units": 2,
+            "missing_units": 0,
+            "pending_units": 0,
+            "failed_units": 0,
+            "complete": true
+          },
+          "records": [
+            {
+              "exchange": "SSE",
+              "cal_date": "2024-01-08",
+              "is_open": 1,
+              "pretrade_date": "2024-01-05"
+            },
+            {
+              "exchange": "SSE",
+              "cal_date": "2024-01-09",
+              "is_open": 1,
+              "pretrade_date": "2024-01-08"
+            }
+          ]
+        }
+      },
+      {
+        "request": {
+          "index_codes": [
+            "000852.SH"
+          ],
+          "start_date": "2024-01-08",
+          "end_date": "2024-01-16"
+        },
+        "preliminary_export": {
+          "dataset": "tushare_index_daily",
+          "view": "index_daily",
+          "export_schema_version": 1,
+          "scope": {
+            "index_codes": [
+              "000852.SH"
+            ]
+          },
+          "window": {
+            "start_date": "2024-01-08",
+            "end_date": "2024-01-16"
+          },
+          "coverage": {
+            "requested_units": 7,
+            "successful_units": 7,
+            "missing_units": 0,
+            "pending_units": 0,
+            "failed_units": 0,
+            "complete": true
+          },
+          "records": [
+            {
+              "index_code": "000852.SH",
+              "symbol": "000852",
+              "name": "\u4e2d\u8bc11000",
+              "market": "SSE",
+              "publisher": "\u4e2d\u8bc1\u6307\u6570\u6709\u9650\u516c\u53f8",
+              "category": "\u89c4\u6a21\u6307\u6570",
+              "trade_date": "2024-01-08",
+              "open": 5664.4526,
+              "high": 5664.4526,
+              "low": 5543.5745,
+              "close": 5543.5745,
+              "pre_close": 5675.8091,
+              "change": -132.2346,
+              "pct_change": -2.3298,
+              "volume": 110512726.0,
+              "amount": 112633892.9246
+            },
+            {
+              "index_code": "000852.SH",
+              "symbol": "000852",
+              "name": "\u4e2d\u8bc11000",
+              "market": "SSE",
+              "publisher": "\u4e2d\u8bc1\u6307\u6570\u6709\u9650\u516c\u53f8",
+              "category": "\u89c4\u6a21\u6307\u6570",
+              "trade_date": "2024-01-09",
+              "open": 5553.1836,
+              "high": 5607.2178,
+              "low": 5513.1298,
+              "close": 5553.3035,
+              "pre_close": 5543.5745,
+              "change": 9.729,
+              "pct_change": 0.1755,
+              "volume": 110223223.0,
+              "amount": 114678407.1692
+            },
+            {
+              "index_code": "000852.SH",
+              "symbol": "000852",
+              "name": "\u4e2d\u8bc11000",
+              "market": "SSE",
+              "publisher": "\u4e2d\u8bc1\u6307\u6570\u6709\u9650\u516c\u53f8",
+              "category": "\u89c4\u6a21\u6307\u6570",
+              "trade_date": "2024-01-10",
+              "open": 5540.6641,
+              "high": 5580.4191,
+              "low": 5462.3615,
+              "close": 5512.0686,
+              "pre_close": 5553.3035,
+              "change": -41.2349,
+              "pct_change": -0.7425,
+              "volume": 106499446.0,
+              "amount": 108158125.143
+            },
+            {
+              "index_code": "000852.SH",
+              "symbol": "000852",
+              "name": "\u4e2d\u8bc11000",
+              "market": "SSE",
+              "publisher": "\u4e2d\u8bc1\u6307\u6570\u6709\u9650\u516c\u53f8",
+              "category": "\u89c4\u6a21\u6307\u6570",
+              "trade_date": "2024-01-11",
+              "open": 5507.803,
+              "high": 5634.0247,
+              "low": 5502.2938,
+              "close": 5611.1149,
+              "pre_close": 5512.0686,
+              "change": 99.0463,
+              "pct_change": 1.7969,
+              "volume": 124717749.0,
+              "amount": 123635425.1661
+            },
+            {
+              "index_code": "000852.SH",
+              "symbol": "000852",
+              "name": "\u4e2d\u8bc11000",
+              "market": "SSE",
+              "publisher": "\u4e2d\u8bc1\u6307\u6570\u6709\u9650\u516c\u53f8",
+              "category": "\u89c4\u6a21\u6307\u6570",
+              "trade_date": "2024-01-12",
+              "open": 5601.0976,
+              "high": 5646.2716,
+              "low": 5574.4084,
+              "close": 5574.4926,
+              "pre_close": 5611.1149,
+              "change": -36.6223,
+              "pct_change": -0.6527,
+              "volume": 121066881.0,
+              "amount": 118289969.7421
+            },
+            {
+              "index_code": "000852.SH",
+              "symbol": "000852",
+              "name": "\u4e2d\u8bc11000",
+              "market": "SSE",
+              "publisher": "\u4e2d\u8bc1\u6307\u6570\u6709\u9650\u516c\u53f8",
+              "category": "\u89c4\u6a21\u6307\u6570",
+              "trade_date": "2024-01-15",
+              "open": 5558.1481,
+              "high": 5607.1342,
+              "low": 5520.363,
+              "close": 5559.376,
+              "pre_close": 5574.4926,
+              "change": -15.1166,
+              "pct_change": -0.2712,
+              "volume": 108667184.0,
+              "amount": 107428092.7928
+            },
+            {
+              "index_code": "000852.SH",
+              "symbol": "000852",
+              "name": "\u4e2d\u8bc11000",
+              "market": "SSE",
+              "publisher": "\u4e2d\u8bc1\u6307\u6570\u6709\u9650\u516c\u53f8",
+              "category": "\u89c4\u6a21\u6307\u6570",
+              "trade_date": "2024-01-16",
+              "open": 5555.0003,
+              "high": 5566.2102,
+              "low": 5463.2948,
+              "close": 5539.4741,
+              "pre_close": 5559.376,
+              "change": -19.9019,
+              "pct_change": -0.358,
+              "volume": 116803108.0,
+              "amount": 113669505.6087
+            }
+          ]
+        },
+        "ensure_result": null,
+        "final_export": {
+          "dataset": "tushare_index_daily",
+          "view": "index_daily",
+          "export_schema_version": 1,
+          "scope": {
+            "index_codes": [
+              "000852.SH"
+            ]
+          },
+          "window": {
+            "start_date": "2024-01-08",
+            "end_date": "2024-01-16"
+          },
+          "coverage": {
+            "requested_units": 7,
+            "successful_units": 7,
+            "missing_units": 0,
+            "pending_units": 0,
+            "failed_units": 0,
+            "complete": true
+          },
+          "records": [
+            {
+              "index_code": "000852.SH",
+              "symbol": "000852",
+              "name": "\u4e2d\u8bc11000",
+              "market": "SSE",
+              "publisher": "\u4e2d\u8bc1\u6307\u6570\u6709\u9650\u516c\u53f8",
+              "category": "\u89c4\u6a21\u6307\u6570",
+              "trade_date": "2024-01-08",
+              "open": 5664.4526,
+              "high": 5664.4526,
+              "low": 5543.5745,
+              "close": 5543.5745,
+              "pre_close": 5675.8091,
+              "change": -132.2346,
+              "pct_change": -2.3298,
+              "volume": 110512726.0,
+              "amount": 112633892.9246
+            },
+            {
+              "index_code": "000852.SH",
+              "symbol": "000852",
+              "name": "\u4e2d\u8bc11000",
+              "market": "SSE",
+              "publisher": "\u4e2d\u8bc1\u6307\u6570\u6709\u9650\u516c\u53f8",
+              "category": "\u89c4\u6a21\u6307\u6570",
+              "trade_date": "2024-01-09",
+              "open": 5553.1836,
+              "high": 5607.2178,
+              "low": 5513.1298,
+              "close": 5553.3035,
+              "pre_close": 5543.5745,
+              "change": 9.729,
+              "pct_change": 0.1755,
+              "volume": 110223223.0,
+              "amount": 114678407.1692
+            },
+            {
+              "index_code": "000852.SH",
+              "symbol": "000852",
+              "name": "\u4e2d\u8bc11000",
+              "market": "SSE",
+              "publisher": "\u4e2d\u8bc1\u6307\u6570\u6709\u9650\u516c\u53f8",
+              "category": "\u89c4\u6a21\u6307\u6570",
+              "trade_date": "2024-01-10",
+              "open": 5540.6641,
+              "high": 5580.4191,
+              "low": 5462.3615,
+              "close": 5512.0686,
+              "pre_close": 5553.3035,
+              "change": -41.2349,
+              "pct_change": -0.7425,
+              "volume": 106499446.0,
+              "amount": 108158125.143
+            },
+            {
+              "index_code": "000852.SH",
+              "symbol": "000852",
+              "name": "\u4e2d\u8bc11000",
+              "market": "SSE",
+              "publisher": "\u4e2d\u8bc1\u6307\u6570\u6709\u9650\u516c\u53f8",
+              "category": "\u89c4\u6a21\u6307\u6570",
+              "trade_date": "2024-01-11",
+              "open": 5507.803,
+              "high": 5634.0247,
+              "low": 5502.2938,
+              "close": 5611.1149,
+              "pre_close": 5512.0686,
+              "change": 99.0463,
+              "pct_change": 1.7969,
+              "volume": 124717749.0,
+              "amount": 123635425.1661
+            },
+            {
+              "index_code": "000852.SH",
+              "symbol": "000852",
+              "name": "\u4e2d\u8bc11000",
+              "market": "SSE",
+              "publisher": "\u4e2d\u8bc1\u6307\u6570\u6709\u9650\u516c\u53f8",
+              "category": "\u89c4\u6a21\u6307\u6570",
+              "trade_date": "2024-01-12",
+              "open": 5601.0976,
+              "high": 5646.2716,
+              "low": 5574.4084,
+              "close": 5574.4926,
+              "pre_close": 5611.1149,
+              "change": -36.6223,
+              "pct_change": -0.6527,
+              "volume": 121066881.0,
+              "amount": 118289969.7421
+            },
+            {
+              "index_code": "000852.SH",
+              "symbol": "000852",
+              "name": "\u4e2d\u8bc11000",
+              "market": "SSE",
+              "publisher": "\u4e2d\u8bc1\u6307\u6570\u6709\u9650\u516c\u53f8",
+              "category": "\u89c4\u6a21\u6307\u6570",
+              "trade_date": "2024-01-15",
+              "open": 5558.1481,
+              "high": 5607.1342,
+              "low": 5520.363,
+              "close": 5559.376,
+              "pre_close": 5574.4926,
+              "change": -15.1166,
+              "pct_change": -0.2712,
+              "volume": 108667184.0,
+              "amount": 107428092.7928
+            },
+            {
+              "index_code": "000852.SH",
+              "symbol": "000852",
+              "name": "\u4e2d\u8bc11000",
+              "market": "SSE",
+              "publisher": "\u4e2d\u8bc1\u6307\u6570\u6709\u9650\u516c\u53f8",
+              "category": "\u89c4\u6a21\u6307\u6570",
+              "trade_date": "2024-01-16",
+              "open": 5555.0003,
+              "high": 5566.2102,
+              "low": 5463.2948,
+              "close": 5539.4741,
+              "pre_close": 5559.376,
+              "change": -19.9019,
+              "pct_change": -0.358,
+              "volume": 116803108.0,
+              "amount": 113669505.6087
+            }
+          ]
+        }
+      }
+    ],
+    "statistical_results": [
+      {
+        "points_and_values": [
+          [
+            0.1,
+            -0.008045239512030821
+          ],
+          [
+            0.5,
+            -0.005683318588033837
+          ],
+          [
+            0.9,
+            0.010959089549401701
+          ]
+        ],
+        "sample_count": 5,
+        "unit": "decimal_ratio",
+        "method": "quantile",
+        "estimator": "type7_linear_v1"
+      },
+      {
+        "edges": [
+          -0.2,
+          0.0,
+          0.2
+        ],
+        "bins": [
+          {
+            "left": -0.2,
+            "right": 0.0,
+            "left_inclusive": true,
+            "right_inclusive": false,
+            "count": 3,
+            "frequency": 0.6
+          },
+          {
+            "left": 0.0,
+            "right": 0.2,
+            "left_inclusive": true,
+            "right_inclusive": true,
+            "count": 2,
+            "frequency": 0.4
+          }
+        ],
+        "underflow_count": 0,
+        "overflow_count": 0,
+        "underflow_frequency": 0.0,
+        "overflow_frequency": 0.0,
+        "sample_count": 5,
+        "unit": "decimal_ratio",
+        "method": "interval_count"
+      }
+    ],
+    "independent_checks": "passed",
+    "association_reference_checks": "passed"
+  },
+  "provider_calls": {
+    "trade_cal": 2,
+    "index_basic": 8,
+    "index_daily": 2
+  }
+}
