@@ -1,7 +1,7 @@
 # Descriptive Single Job execution contract
 
 This contract specializes [Execution](EXECUTION.md), which owns business identity and
-future Plan/Batch control. It owns EXEC-01: the direct single Job public boundary,
+[Plan/Batch control](BATCH_EXECUTION.md). It owns EXEC-01: the direct single Job public boundary,
 preflight, immutable execution records and stage accounting. It does not own market
 formulas, acquisition, conversion, numerical algorithms or association validation.
 Status: EXEC-01 implemented. Actual verification belongs to
@@ -34,7 +34,8 @@ Before **any** upstream service creation or DataLake operation:
    exactly. Validate its exact spec using Statistics public `validate_spec`, even if
    constructor validation was bypassed. Require unique IDs within the Job. Identical
    specs with different IDs are legal distinct occurrences.
-4. Require IntervalCount unit to equal this case's `decimal_ratio` exactly. No defaults,
+4. Require IntervalCount unit to equal the case public immutable `DEFINITION.unit`
+   exactly (currently `decimal_ratio`), the same source used by construction. No defaults,
    normalization, implicit parameter generation or method-level deduplication is allowed.
 
 Invalid inputs raise `InvalidPlan` with readable cause and chained originating exception
@@ -67,8 +68,8 @@ Read-only `input_attempts` returns the original prepared attempts, or obtained a
 from the preparation failure when preparation did not return. Provenance, Coverage,
 SampleBinding and StatisticalResult remain reachable through original objects.
 `skip_reason` and `triggering_failed_job_identity` are reserved optional fields, always
-None from execute_job. Skipped is reserved for future Batch: no facts/results are
-fabricated and every request would be not_attempted with its policy reason.
+None from execute_job. Only [Batch policy](BATCH_EXECUTION.md) constructs Skipped: no facts/results are
+fabricated and every request is not_attempted with its policy reason.
 
 ## Stage control and evidence retention
 
@@ -126,7 +127,8 @@ The analyze stage name remains Research-owned while computation stays Statistics
 | Conversion and association | Remain independent, pure, case-agnostic public capabilities; failures/objects retained without changing algorithms |
 | Statistics public contract | Root facade only: validate_spec, compute, public spec/result variants and errors; no numerical implementation copied |
 | Prior tests forbidding execution | Superseded only for the precise execution-to-public-component edges; components and Statistics cannot depend on execution |
-| Plan/Batch, persistence, cache/replay, CLI/HTTP and live-data gate | Deferred; no new runtime/API or live acceptance claim |
+| Plan/Batch | Specialized by [EXEC-02](BATCH_EXECUTION.md); direct Job still returns Success/Failed only |
+| Persistence, cache/replay, CLI/HTTP and live-data gate | Deferred; no new runtime/API or live acceptance claim |
 
 Deterministic acceptance must cover complete/partial populations, zero eligible, all
 preflight rejection classes with zero upstream I/O, distinct preparation/construction

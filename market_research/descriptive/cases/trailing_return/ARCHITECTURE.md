@@ -53,6 +53,11 @@ observation keys. No execution time or random identifier enters those identities
 
 ### Public direct-job preflight
 
+The case facade publishes `DEFINITION`, the frozen public ObservationDefinition already
+used by construction. Its read-only metric and unit are the case-owned source for
+Single Job and Batch preflight, including exact IntervalCount compatibility. The unit
+remains `decimal_ratio`; no registry, conversion or Statistics unit semantics are added.
+
 `market_research.descriptive.cases.trailing_return.validate_job(job) -> JobIdentity`
 is the pure public preflight boundary for this case. It reuses the same existing
 fixed-request/case validator as preparation, with the current Asia/Shanghai date limit,
