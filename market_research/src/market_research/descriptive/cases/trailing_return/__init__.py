@@ -1,5 +1,6 @@
 """Index Trailing Return public preparation and pure construction boundary."""
 
+from .construction import DEFINITION as DEFINITION
 from .construction import construct_observations as construct_observations
 from .identity import EndpointRequirement as EndpointRequirement
 from .identity import TrailingReturnProvenance as TrailingReturnProvenance

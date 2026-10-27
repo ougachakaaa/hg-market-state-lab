@@ -14,6 +14,7 @@ EXECUTION = "market_research.descriptive.execution"
 CASE = "market_research.descriptive.cases.trailing_return"
 EXECUTION_PUBLIC = {
     OBSERVATION: {
+        "DateWindow",
         "JobIdentity",
         "ObservationJobSpec",
         "ObservationSet",
@@ -33,6 +34,7 @@ EXECUTION_PUBLIC = {
         "associate",
     },
     CASE: {
+        "DEFINITION",
         "InputAttempt",
         "InputPreparationFailure",
         "PreparedInputs",
@@ -85,7 +87,7 @@ def check_imports(text: str, package: str) -> None:
                     assert {alias.name for alias in node.names} <= EXECUTION_PUBLIC[name]
                 else:
                     assert (
-                        name in {"collections.abc", "dataclasses", "typing"}
+                        name in {"collections.abc", "dataclasses", "typing", "types"}
                         or name == EXECUTION
                         or name.startswith(EXECUTION + ".")
                     ), name

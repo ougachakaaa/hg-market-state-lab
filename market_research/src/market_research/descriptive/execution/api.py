@@ -13,6 +13,7 @@ from market_statistics import (
 
 from ..association import AnalysisRequest, ResultAssociationFailure, associate
 from ..cases.trailing_return import (
+    DEFINITION,
     InputPreparationFailure,
     PreparedInputs,
     TrailingReturnProvenance,
@@ -57,8 +58,10 @@ def _preflight(
             if request.request_id in seen:
                 raise ValueError(f"Duplicate request_id: {request.request_id!r}")
             seen.add(request.request_id)
-            if isinstance(request.spec, IntervalCountSpec) and request.spec.unit != "decimal_ratio":
-                raise ValueError("Index Trailing Return requires IntervalCount unit decimal_ratio")
+            if isinstance(request.spec, IntervalCountSpec) and request.spec.unit != DEFINITION.unit:
+                raise ValueError(
+                    f"Index Trailing Return requires IntervalCount unit {DEFINITION.unit}"
+                )
     except Exception as exc:
         raise InvalidPlan(f"{type(exc).__name__}: {exc}") from exc
     return identity, requests

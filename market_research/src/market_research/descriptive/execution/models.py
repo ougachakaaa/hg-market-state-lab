@@ -21,7 +21,7 @@ type FailureStage = Literal[
 
 
 class InvalidPlan(ValueError):
-    """Illegal direct Job input, rejected before any upstream operation."""
+    """Illegal Job or ResearchPlan, rejected before any upstream operation."""
 
 
 @dataclass(frozen=True)
