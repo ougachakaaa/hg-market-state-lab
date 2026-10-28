@@ -2,7 +2,9 @@
 
 Start agents at [AGENTS.md](AGENTS.md). [Architecture](ARCHITECTURE.md) routes to the
 canonical Task / Run / Gate / storage contracts. This guide supplies usage only.
-No approved business Task is included; the acceptance fixture is synthetic.
+Approved Tasks enter through the [Task catalog](tasks/README.md). The WB-01
+acceptance fixture below remains synthetic. For WB-02 backend readiness and actual
+Run evidence, use the [Historical Return Observation guide](tasks/historical_return_observation/README.md).
 
 From repository root, using the existing Python 3.13 environment:
 

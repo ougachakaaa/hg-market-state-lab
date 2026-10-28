@@ -8,7 +8,8 @@ first, then only the relevant contract: [Task](contracts/TASK.md),
 Agents may propose Task designs. Only explicit user approval promotes a proposal
 to approved, versioned Task authority. Never infer approval from a successful Run,
 an approval field supplied to the recorder, or a synthetic test fixture. A Run
-cannot edit its Task. No approved business Task ships in this foundation.
+cannot edit its Task. Approved Tasks are discoverable through the
+[Task catalog](tasks/README.md); follow the selected Task's authority before execution.
 
 Workbench scripts use the repository-root Python environment. Do not add a package,
 environment, server, database, `lab` group, planner or execution engine. Do not import

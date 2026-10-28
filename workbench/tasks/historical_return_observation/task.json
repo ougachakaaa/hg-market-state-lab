@@ -1,0 +1,96 @@
+{
+  "task_id": "historical_return_observation",
+  "version": "1",
+  "approval": {
+    "kind": "user_approved",
+    "reference": "workbench/tasks/historical_return_observation/DESIGN_REQUEST.md: WB-02 user Goal; Task design and G1 acceptance only, no live market execution approval"
+  },
+  "goal": "Describe the historical N-trading-session trailing cumulative return distribution for explicitly specified supported index subjects and inclusive historical sample windows, retaining statistical results, coverage, limitations and execution evidence.",
+  "scope": "Published descriptive trailing_cumulative_return_v1 index case only. WB-02 implements G1 Backend Ready and evidence preservation only. No forward returns, predictions, strategies, trading recommendations, live Research or paid data access is authorized by Task approval.",
+  "required_inputs": [
+    "Before research execution: explicit full canonical supported index_code identities; no guessed code, suffix, stock or futures binding. Syntax alone does not prove provider membership or readiness.",
+    "Before research execution: explicit strictly positive non-bool integer horizon(s) H in trading_sessions.",
+    "Before research execution: explicit inclusive start_date/end_date sample window(s), start <= end, no future end date in Asia/Shanghai; anchors are return-ending sessions, with warm-up preceding the window as needed.",
+    "Before research execution: explicit ordered analysis requests with unique request_id and supported method/spec parameters: quantile points or interval_count edges and decimal_ratio unit. No invented statistic or automatic bins.",
+    "Before research execution: explicit metric=trailing_cumulative_return_v1, metric_parameters={} and on_job_failure=continue or stop; missing inputs require explicit resolution before execution.",
+    "Before research execution: user authorization for actual capability invocation, including any acquisition, cache writes and paid-data access. Record the published case's source and missing-data policy; unresolved intent conflicts must be resolved, never replaced with a default.",
+    "For a G1-only Run: backend target and finite timeout, using the documented operational defaults if not overridden; original_request must explicitly state readiness-only scope. Research inputs may remain unresolved and must not be invented."
+  ],
+  "allowed_capabilities": [
+    "G1: read-only GET /openapi.json on the existing repository backend; no Research operation is invoked by the readiness checker.",
+    "Operator/Agent may explicitly start a stopped backend using poetry run lab serve backend from the repository root, then recheck; never terminate, replace or take ownership of an existing user-owned process.",
+    "G3 future implementation: published GET /research/capabilities and GET /research/capabilities/{id}, or public market_research.descriptive.capabilities list_capabilities/get_capability; discovery does not establish live readiness.",
+    "G4 future implementation: public market_research.descriptive.execution ResearchPlan/preview_plan or POST /research/preview, under their owners' contracts; no market I/O in preview.",
+    "G5 future implementation and separate execution authorization: public market_research.descriptive.execution execute_batch or POST /research/execute, delegating to published Research and Statistics semantics. No direct provider, private module or cache access.",
+    "Existing workbench/run_store.py create, artifact, event, gate and read operations for exact Task snapshots and same-Run evidence."
+  ],
+  "research_meaning": {
+    "metric": "trailing_cumulative_return_v1",
+    "formula": "close(T) / close(T-H) - 1",
+    "unit": "decimal_ratio",
+    "horizon": "Positive integer trading sessions on the published SSE calendar, never calendar days or available-price row offsets.",
+    "population": "Inclusive window of ending-session anchors; preserve eligible, unavailable and excluded populations, coverage, warm-up and overlapping-lookback dependence.",
+    "limitations": "Historical descriptive evidence only; no IID, causality, prediction or trading inference. Use the existing index case source binding and missing-tolerant policy without imputation, silent filtering, shortened horizons or provider fallback. No arbitrary stocks or futures."
+  },
+  "planning_constraints": [
+    "Resolve every required research input explicitly before G4 can pass or G5 execute. G1 can run independently of market inputs and credentials.",
+    "Discover actual admitted capabilities before composing a workflow. Task permission cannot expand Research, Statistics, Dataset, Snapshot or HTTP boundaries.",
+    "Before execution persist the full explicit validated plan/preview, selected public surface, operation order, analysis requests, resolved inputs, authorization and evidence/output plan as same-Run artifacts. Freeze workflow before invocation; a changed workflow needs a new Run because creation workflow/inputs are immutable.",
+    "Choose a surface whose published constraints permit the complete requested computation; never silently truncate dates, change horizon or alter the population. Preview legality is not live-data readiness.",
+    "HTTP currently limits both POSTs to 8 jobs, 4 analyses per job, 93 inclusive calendar days per window, H <= 20, 128 coordinates per spec, 128 request_id characters and 64 KiB body. A single 2010-2026 HTTP ResearchPlan is unsupported.",
+    "Public Python ResearchPlan/execute_batch has no HTTP size caps or acknowledgment field; it still enforces complete semantic preflight, upstream/calendar legality and availability. Long-history live readiness was not proven by WB-01 or by WB-02 G1.",
+    "Do not split HTTP calls and merge results as if equivalent to a single computation: quantiles, frequencies, sample accounting, coverage, dependence and provenance require an explicit future design and acceptance. WB-02 implements no partitioning, aggregation or long-window execution.",
+    "Preserve full historical goals such as 2010-2026 as requested inputs. Future G4/G5 must establish a legal complete-window surface and verify actual live history including warm-up or explicitly report the blocker; do not claim current executability.",
+    "G2 and G6 are intentionally deferred in this MVP and recorded SKIPPED with explicit reasons; this satisfies only their current deferral disposition, never authentication or visualization readiness. G3/G4/G5 have no WB-02 implementation or outcomes.",
+    "Dependencies are Task-owned prerequisites for evaluating later checks; G1/G3/G4/G5 require PASS before dependent checks proceed. G3 permits G2's explicit MVP SKIPPED disposition only after G1 passes. Intentional G2/G6 deferrals may be recorded independently of prerequisite success: SKIPPED does not evaluate a check or claim dependency satisfaction. A G1-only Run does not complete the research Task."
+  ],
+  "expected_outputs": [
+    "WB-02: deterministic raw G1 JSON with actual HTTP/OpenAPI observations, explicit status/reason and finite timeout; preserved same-Run artifact and retrievable Gate outcome.",
+    "Future research: frozen validated workflow and full original objective, actual capability invocations/results/failures, statistical method/spec/results and units, subject/H/window/formula, population/coverage/warm-up/dependence/provenance, output locations and honest limitations. No fabricated results for unexecuted Gates.",
+    "Explicit report of G2/G6 deferral, G3/G4/G5 unexecuted state and any long-history blocker."
+  ],
+  "acceptance_criteria": [
+    "G1 passes only from an actual compatible OpenAPI response with the four expected Research operations/operationIds and same-Run preserved readiness evidence; port reachability or lab doctor exit alone is insufficient.",
+    "Deterministic isolated HTTP tests cover compatible API, stopped backend, wrong service, malformed/incompatible OpenAPI, timeout, correct Run ownership/retrieval, deferred Gates and no market/cache side effects.",
+    "Real launched backend smoke when environment permits, using an isolated port if occupied; no Tushare credentials or Research execution required.",
+    "Future G4/G5 acceptance must prove complete historical objectives such as 2010-2026 under the selected public surface without assumed partition equivalence or unproven live-data availability."
+  ],
+  "gates": [
+    {
+      "gate_id": "G1",
+      "name": "Backend Ready",
+      "criteria": "PASS iff the actual read-only checker observes HTTP 200 JSON OpenAPI compatibility as defined in BACKEND_READY.md, and its raw result is preserved as same-Run evidence. Attempted connection, timeout, HTTP, JSON or compatibility failures are FAIL with explicit reason. Invalid target/timeout prevents a request and is BLOCKED. No process identity or market-data readiness claim.",
+      "depends_on": []
+    },
+    {
+      "gate_id": "G2",
+      "name": "Authentication",
+      "criteria": "Deferred in the current MVP: SKIPPED with reason that the current loopback backend has no authentication and G2 implementation is deferred. Never PASS or imply access security; future authentication needs an approved design/version.",
+      "depends_on": ["G1"]
+    },
+    {
+      "gate_id": "G3",
+      "name": "Capability Discovery",
+      "criteria": "Future implementation: actual published capability discovery preserved in this Run, supported index case and constraints confirmed, no inference of live readiness. PASS requires actual evidence. WB-02 performs no G3 check and records no outcome.",
+      "depends_on": ["G1", "G2"]
+    },
+    {
+      "gate_id": "G4",
+      "name": "Workflow Planning and Persistence",
+      "criteria": "Future implementation: explicitly resolved research inputs and authorization, actual capability-composed full-window legal workflow and pure preview, exact workflow persisted/frozen before execution with same-Run evidence. Long-history surface/data gaps remain explicit blockers; partition/merge equivalence cannot be assumed. WB-02 records no outcome.",
+      "depends_on": ["G3"]
+    },
+    {
+      "gate_id": "G5",
+      "name": "Execution",
+      "criteria": "Future implementation: invoke only the authorized frozen workflow/public operations, preserve actual results, failures, population/coverage/provenance and artifact locations; success requires all requested computation and analyses, with no fabricated, truncated or silently aggregated results. Verify complete long-history and warm-up availability or report failure/blocker. WB-02 records no outcome.",
+      "depends_on": ["G4"]
+    },
+    {
+      "gate_id": "G6",
+      "name": "Visualization",
+      "criteria": "Deferred in the current MVP: SKIPPED with explicit visualization-deferred reason. Never PASS or claim a rendered result; future implementation needs an approved design/version.",
+      "depends_on": ["G5"]
+    }
+  ]
+}

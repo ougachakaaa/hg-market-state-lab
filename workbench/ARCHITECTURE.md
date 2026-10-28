@@ -22,7 +22,8 @@ Stable entry is [AGENTS.md](AGENTS.md); practical instructions are in [README.md
 `run_store.py` is an independently usable standard-library script in the existing
 root runtime, not an installed Python package or official `lab` command.
 
-No universal Gate count or ordering exists. The six previously discussed Research
-Gates await a future user-approved Research Task and have no global authority here.
-No business Tasks, readiness/authentication/capability discovery, workflow planning,
-Research execution, visualization, scheduling or agent orchestration are implemented.
+No universal Gate count or ordering exists. Approved Tasks enter through the narrow
+[Task catalog](tasks/README.md); their Gates have no global authority here.
+The first Task implements only its own backend-readiness check. Authentication,
+capability discovery, workflow planning, Research execution, visualization, scheduling
+and agent orchestration are not implemented by Workbench.
