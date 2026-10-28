@@ -10,6 +10,9 @@ __pycache__/
 .mypy_cache/
 .ruff_cache/
 
+# Workbench-owned local execution evidence
+/workbench/.runs/
+
 # Frontend dependencies and build output
 ui_web/node_modules/
 ui_web/dist/

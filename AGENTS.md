@@ -17,6 +17,10 @@ Repository-level Python runtime invariant 见 [ARCHITECTURE.md](ARCHITECTURE.md)
 3. 按 local catalog 或 architecture 进入相关 bounded-context entry。
 4. 只读取当前任务需要的 specialized authority；不默认加载 sibling product 或其他模块文档。
 
+Repository-root operational Tasks / Runs / Gates and shared execution evidence enter
+[workbench/AGENTS.md](workbench/AGENTS.md). Workbench is outside the business/interaction
+module taxonomy; continue into business authority only when an approved Task needs it.
+
 `_temp_docs/` 不属于 repository authority，不参与上述导航链。除非任务明确指定其中某个文件，否则不得读取、引用或把其内容当作项目事实；需要固化的内容必须先与当前 authority reconciliation，再写入正式 authority。
 
 ## Progressive Disclosure：Authority authoring

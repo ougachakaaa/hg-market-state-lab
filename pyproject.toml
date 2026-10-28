@@ -53,6 +53,7 @@ testpaths = [
     "market_research/tests",
     "market_statistics/tests",
     "ui_http/tests",
+    "workbench/tests",
 ]
 pythonpath = [
     "data_lake/src",

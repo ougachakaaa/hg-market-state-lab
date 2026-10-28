@@ -171,6 +171,13 @@ future modules ──────┘
 
 ## 5. Authority 导航
 
+`workbench/` is a repository-root, agent-facing operational contract and shared
+execution-evidence facility, outside the `data_*`, `market_*` and `ui_*` module
+taxonomy. It is not a business module or Agent Runtime. Start at
+[Workbench agent entry](workbench/AGENTS.md) and [Workbench authority](workbench/ARCHITECTURE.md);
+its scripts use the existing root Python runtime without a new package or `lab` command.
+Task-specific permission never expands a business module's published boundary.
+
 `hg-market-state-lab` 是 repository / system identity；`lab` 是安装于根 canonical Python project 的正式 repository-level CLI/operator interface。它只负责 repository-level command routing、orchestration、delegation 与已声明的 delivery，不是业务模块，也不拥有 DataSet、Snapshot、Research、Modeling、HTTP product 或 frontend 语义。其命令与转发边界见 [lab CLI authority](ui_cli/ARCHITECTURE.md)；当前本地操作方式见 [DEVELOPMENT.md](DEVELOPMENT.md)。
 
 ```text

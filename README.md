@@ -21,6 +21,10 @@ Directories, imports and disposable local runtime state follow [repository autho
 
 README 是人类开发入口，不是架构或业务语义 authority。
 
+Agent-facing Task / Run / Gate contracts and local evidence storage start at the
+[Workbench usage guide](workbench/README.md) and [agent entry](workbench/AGENTS.md).
+Workbench is a repository-root operational facility, separate from the modules above.
+
 - 仓库架构、Python runtime invariant 与模块路由：[ARCHITECTURE.md](ARCHITECTURE.md)
 - `lab` 使用、help discovery 与常见 workflow：[ui_cli/README.md](ui_cli/README.md)（usage-only）
 - Canonical repository CLI 与委托边界：[ui_cli/ARCHITECTURE.md](ui_cli/ARCHITECTURE.md)
