@@ -3,6 +3,8 @@
 This is the stable usage entry, not semantic authority. Start with the Research-owned
 [capability contract](descriptive/RESEARCH_CAPABILITY.md), [Plan/Batch contract](descriptive/BATCH_EXECUTION.md)
 or [HTTP transport contract](../ui_http/products/research/http-contract.md) for authoritative rules.
+Executed verification and live HTTP limits are recorded in
+[Research entry acceptance](descriptive/RESEARCH_ENTRY_ACCEPTANCE.md).
 
 ## What is available
 

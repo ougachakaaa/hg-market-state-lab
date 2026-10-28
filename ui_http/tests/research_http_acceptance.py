@@ -51,6 +51,26 @@ def run_acceptance(*, write_examples: bool = False) -> None:
         assert result["status"] == "success" and job["status"] == "Success"
         assert [a["status"] for a in job["analysis_outcomes"]] == ["success", "success"]
         assert job["observation_set"]["eligible_count"] == 5
+        assert [
+            result[name]
+            for name in (
+                "planned_count",
+                "success_count",
+                "failed_count",
+                "skipped_count",
+            )
+        ] == [1, 1, 0, 0]
+        assert job["observation_set"]["observation_coverage"] == 1.0
+        coverage = job["observation_set"]["market_fact_coverage"]
+        assert [
+            coverage[part]["available_fact_units"]
+            for part in (
+                "overall",
+                "warm_up",
+                "sample",
+            )
+        ] == [7, 2, 5]
+        assert [coverage[part]["ratio"] for part in ("overall", "warm_up", "sample")] == [1.0] * 3
         assert job["projection"]["numeric_sample"]["sample_count"] == 5
         assert (
             job["projection"]["source_input_fingerprint"]
@@ -60,8 +80,19 @@ def run_acceptance(*, write_examples: bool = False) -> None:
             2,
             3,
         ]
+        assert job["analysis_outcomes"][0]["statistical_result"]["points_and_values"] == [
+            [0.1, -0.18666666666666662],
+            [0.5, 0.0],
+            [0.9, 0.12],
+        ]
+        assert job["projection"]["source_input_fingerprint"] == (
+            "b6b4cc205d576c84e6d89dc86a214e2592e14814ff08dcfaf0eba1fa17e446b8"
+        )
+        fixtures = Path(__file__).parent / "fixtures"
+        if not write_examples:
+            assert result == json.loads((fixtures / "research_success.json").read_text())
+            assert preview.json() == json.loads((fixtures / "research_preview.json").read_text())
         if write_examples:
-            fixtures = Path(__file__).parent / "fixtures"
             fixtures.mkdir(exist_ok=True)
             for name, value in (
                 ("research_plan", body),

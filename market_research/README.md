@@ -3,6 +3,8 @@
 The stable human/agent entry is [USAGE.md](USAGE.md): the one admitted capability,
 Python plan, HTTP discovery → preview → execute, evidence interpretation and operational limits.
 This README retains component-level Python examples.
+The [Research entry acceptance](descriptive/RESEARCH_ENTRY_ACCEPTANCE.md) records actual
+HTTP/schema checks; its deterministic gate does not claim live HTTP acceptance.
 
 This is usage documentation. Contracts are owned by [the module authority](ARCHITECTURE.md)
 and its [Observation boundary](descriptive/OBSERVATION.md).

@@ -83,6 +83,7 @@ TUSHARE_TOKEN=<your-token>
 Start with the stable [Research human/agent usage guide](market_research/USAGE.md).
 One admitted descriptive capability is discoverable through the existing backend;
 its [HTTP contract](ui_http/products/research/http-contract.md) owns the four operations.
+Actual checks and release limits are in [Research entry acceptance](market_research/descriptive/RESEARCH_ENTRY_ACCEPTANCE.md).
 
 The [Research semantic foundation](market_research/ARCHITECTURE.md) starts with
 Descriptive Research. The independent Python [Single Job Executor](market_research/descriptive/JOB_EXECUTION.md)
