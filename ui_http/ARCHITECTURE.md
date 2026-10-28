@@ -55,7 +55,12 @@ ui_http HTTP projection
 ```text
 ui_http → data_snapshot application/product boundaries
 ui_http → market_modeling application/product boundaries
+ui_http → market_research public capabilities / execution / observation / association / case facades
+ui_http → market_statistics root public Specs/results (transport construction/projection only)
 ```
+
+Research delivery never imports private Research modules or DataLake services/internals.
+Research and Statistics never depend on ui_http.
 
 禁止 `data_snapshot → ui_http` 或 `market_modeling → ui_http`。Business modules 不得通过 FastAPI、HTTP DTO/status/error envelope、OpenAPI 或 frontend types 定义 semantic model。
 
@@ -67,11 +72,12 @@ ui_http → market_modeling application/product boundaries
 
 ## 5. Authority Routing
 
-Frontend-consumed HTTP products、endpoint/query、DTO projection、wire ordering、error envelope 与 status mapping 从 [HTTP product catalog](HTTP_PRODUCTS.md) 进入对应 specialized contract。
+Published HTTP products (including agent-facing Research)、endpoint/query、DTO projection、wire ordering、error envelope 与 status mapping 从 [HTTP product catalog](HTTP_PRODUCTS.md) 进入对应 specialized contract。
 
 Owning module authority 仍唯一拥有 application/product semantics：
 
 - Data Snapshot 产品与 application boundary：[data_snapshot architecture](../data_snapshot/ARCHITECTURE.md)
+- Research capability and pure preview: [Research publication](../market_research/descriptive/RESEARCH_CAPABILITY.md)
 - Web presentation 与 generated-contract feedback loop：[ui_web architecture](../ui_web/ARCHITECTURE.md)
 
 本文件不复制 endpoint、DTO、Premium metric tree、error table 或 FastAPI implementation 细节。

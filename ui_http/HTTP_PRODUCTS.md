@@ -5,6 +5,7 @@
 | HTTP product | Owning business module | Canonical HTTP contract |
 | --- | --- | --- |
 | MO Option Chain | `data_snapshot` | [HTTP contract](products/mo_option_chain/http-contract.md) |
+| Descriptive Research | `market_research` | [HTTP contract](products/research/http-contract.md) |
 | MO Premium Plane | `data_snapshot` | [HTTP contract](products/mo_option_premium/http-contract.md) |
 
 Owning business module 定义 query/result 与 classified semantic failures；本 catalog 只导航 HTTP transport authority，不创建 repository product catalog、shared DTO schema 或通用 API framework。

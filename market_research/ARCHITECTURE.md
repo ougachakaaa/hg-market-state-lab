@@ -41,6 +41,7 @@ These are conceptual responsibilities, not prescribed Python classes or callable
 | ObservationJobSpec / ObservationSet | Research observation request, empirical meaning, population, validity and derivation: [Observation authority](descriptive/OBSERVATION.md). |
 | Sample Converter / SampleProjection / SampleBinding | Research-owned adaptation: [Sample conversion](descriptive/SAMPLE_CONVERSION.md). |
 | Statistics consumption / result association | Research-owned business linkage: [Statistics integration](descriptive/STATISTICS_INTEGRATION.md). |
+| Capability discovery / pure plan preview | [Capability publication](descriptive/RESEARCH_CAPABILITY.md); HTTP belongs to ui_http. |
 | ResearchPlan / JobResult / BatchResult | Research definition, execution context, control and complete reporting: [Execution authority](descriptive/EXECUTION.md). |
 | NumericSample / StatisticalSpec / StatisticalResult / StatisticalFailure | Statistics-owned public numerical contracts: [Statistics contract](../market_statistics/CONTRACT.md). Research consumes them without defining competing types. |
 

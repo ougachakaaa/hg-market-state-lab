@@ -24,6 +24,7 @@ ObservationJobSpec → validated prepared facts / availability evidence → Obse
 | ResearchPlan, single Job / Batch control, statuses and results | [EXECUTION.md](EXECUTION.md) |
 | Numerical input, method parameters, results and failures | [Statistics CONTRACT.md](../../market_statistics/CONTRACT.md) |
 | First case: formula, public input binding, warm-up, validity and fingerprint | [Trailing Return](cases/trailing_return/ARCHITECTURE.md) |
+| Admitted capability publication and pure preview | [RESEARCH_CAPABILITY.md](RESEARCH_CAPABILITY.md) |
 | Implementation readiness and cross-contract acceptance gates | [ACCEPTANCE.md](ACCEPTANCE.md) |
 
 An ObservationSet may support multiple analyses after conversion. Method parameter changes

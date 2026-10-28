@@ -11,6 +11,7 @@
 | Fixed observation request, population, market derivation or provenance | [descriptive/OBSERVATION.md](descriptive/OBSERVATION.md) |
 | Research-owned sample conversion | [descriptive/SAMPLE_CONVERSION.md](descriptive/SAMPLE_CONVERSION.md) |
 | Statistics consumption or Research result association | [descriptive/STATISTICS_INTEGRATION.md](descriptive/STATISTICS_INTEGRATION.md) → [association contract](descriptive/RESULT_ASSOCIATION.md) |
+| Capability description, pure preview or HTTP entry | [Capability publication](descriptive/RESEARCH_CAPABILITY.md) → [HTTP contract](../ui_http/products/research/http-contract.md) |
 | ResearchPlan, Job / Batch control, statuses or result accounting | [descriptive/EXECUTION.md](descriptive/EXECUTION.md) |
 | Numerical inputs, methods, results or statistical failures | [Statistics entry](../market_statistics/ARCHITECTURE.md) → [public contract](../market_statistics/CONTRACT.md) |
 
