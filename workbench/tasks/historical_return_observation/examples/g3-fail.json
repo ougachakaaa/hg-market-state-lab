@@ -1,0 +1,40 @@
+{
+  "capabilities": [],
+  "capability_count": null,
+  "capability_ids": [],
+  "discovery_complete": false,
+  "exchanges": [
+    {
+      "body_base64": "",
+      "body_complete": false,
+      "content_encoding": null,
+      "content_type": null,
+      "error": "request_timeout",
+      "http_status": null,
+      "method": "GET",
+      "path": "/research/capabilities",
+      "response_bytes": 0,
+      "response_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  ],
+  "gate_id": "G3",
+  "live_market_readiness": "not_probed",
+  "missing_task_requirements": [
+    "trailing_cumulative_return_v1"
+  ],
+  "prerequisites": {
+    "authentication": "not_established",
+    "g1_evidence": "0facf27b63aa433c98f67ae2a1004074",
+    "g1_sequence": 2,
+    "g2_sequence": 3
+  },
+  "reason": "Discovery responses failed transport, contract or consistency checks.",
+  "reason_code": "discovery_failed",
+  "schema_version": 1,
+  "status": "FAIL",
+  "target": "http://127.0.0.1:8011",
+  "task_id": "historical_return_observation",
+  "task_readiness": false,
+  "task_version": "1",
+  "timeout_seconds": 0.5
+}

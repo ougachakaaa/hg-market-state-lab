@@ -14,8 +14,10 @@ It contains no execution outcomes. Run creation freezes the entire JSON definiti
 
 Read the [G1 contract](BACKEND_READY.md) for the Task-specific checker, failure map
 and evidence procedure. [Usage](README.md) owns commands; [WB-02 acceptance](ACCEPTANCE.md)
-owns actual verification. These documents neither expand public business boundaries
-nor create an executor for G3/G4/G5.
+owns actual verification. WB-03 adds the narrow [G3 discovery contract](CAPABILITY_DISCOVERY.md)
+and [its acceptance](DISCOVERY_ACCEPTANCE.md) for the already approved discovery slice,
+preserving the exact version-1 snapshot. These documents neither expand public business
+boundaries nor implement G4/G5.
 
 Business meaning remains with the [Research publication](../../../market_research/descriptive/RESEARCH_CAPABILITY.md),
 [trailing-return case](../../../market_research/descriptive/cases/trailing_return/ARCHITECTURE.md)

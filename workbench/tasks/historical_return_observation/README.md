@@ -1,9 +1,10 @@
 # Historical Return Observation usage
 
 Start at the [Task entry](ARCHITECTURE.md), then read [task.json](task.json) and the
-[G1 contract](BACKEND_READY.md). This guide is usage-only. Version `1` approves
-Task design and G1 acceptance; actual market execution requires separate authorization
-and resolved research inputs. Only G1 is implemented.
+[G1 contract](BACKEND_READY.md) and [G3 contract](CAPABILITY_DISCOVERY.md). This guide
+is usage-only. WB-03 authorizes implementation of version `1`'s existing discovery
+slice without changing its frozen definition. G1 and G3 are implemented; actual
+market execution requires separate authorization and resolved research inputs.
 
 From the repository root in its existing Poetry environment:
 
@@ -35,7 +36,7 @@ It prints the actual `result`, `run_id`, `task_sha256`, `preserved_readiness_pat
 artifact registration and Gate outcomes. Its exit follows G1; evidence-storage errors
 exit nonzero. `evidence_verified=true` means the same-Run frozen snapshot and preserved
 JSON were read back after removal of the temporary source. It does not mean the full
-research Task succeeded. G3/G4/G5 remain unexecuted, with no fabricated outcomes.
+research Task succeeded. This command leaves G3/G4/G5 unexecuted.
 
 Retrieve using the existing public Run Store operation, replacing RUN_ID with the
 returned identity (add `--root PATH` before `read` if a custom store was used):
@@ -54,6 +55,34 @@ without creating an installed package. It calls only existing `create`, `artifac
 `gate`, and `read` operations. The raw checker can also be used independently by an
 external Codex / DSH agent with local tool access. A cloud agent still requires a
 registered reachable tool; local HTTP alone does not provide that connection.
+
+## G3 in the same Run
+
+Use the `run_id` returned by `record_g1.py`, including a Run created before WB-03:
+
+```powershell
+poetry run python workbench/tasks/historical_return_observation/record_g3.py --run RUN_ID --timeout 2
+```
+
+Add `--root PATH` if that G1 Run uses a custom store. The target is derived exclusively
+from preserved successful G1 evidence; changing backend origin requires a G1 check
+for that origin. Latest G1 PASS and the Task's explicit G2 SKIPPED deferral are required.
+The script appends the original list/detail bytes and verification JSON as one artifact,
+then G3, and verifies them using a fresh reader. Previous records, frozen Task,
+inputs and `manifest.workflow` remain unchanged. It creates no ResearchPlan or preview.
+
+The report includes actual `capability_count`, `capability_ids`, complete inspected
+`capabilities` (descriptions and published constraints), per-request errors and raw
+base64 response bodies. `discovery_complete` and `task_readiness` are separate:
+an empty valid catalog is complete discovery but G3 FAIL with the required ID missing.
+Publication support never proves live provider/data readiness. PASS=0, FAIL=1,
+BLOCKED=2; storage/unsupported Run failures exit 1. Timeout is per request, with no
+retry or redirect. Repeat explicitly to append another independent attempt.
+
+The existing `run_store.py read` command above retrieves G1 and G3 from the same Run.
+`preserved_discovery_path` locates the artifact verified after temporary source removal.
+See [WB-03 acceptance](DISCOVERY_ACCEPTANCE.md) for actual PASS/failure evidence and
+the complete changed-file/reconciliation record. G4/G5 remain unexecuted.
 
 For full historical research such as 2010-2026, retain exact requested dates but stop
 at the current implementation boundary. HTTP cannot accept one such window. Python
