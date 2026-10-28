@@ -5,7 +5,8 @@ shared [Gate](../../contracts/GATE.md) contract. The [WB-03 user Goal](DISCOVERY
 authorizes implementation of this already approved discovery slice. Version 1 and
 existing Run snapshots remain byte-for-byte unchanged: WB-02 implementation-state
 statements in that snapshot describe WB-02, not a permanent prohibition on G3.
-G4/G5 remain unimplemented. Research owns capability meaning and publication under
+WB-04 subsequently adds [G4 planning](WORKFLOW_PLANNING.md); G5 remains unimplemented.
+Research owns capability meaning and publication under
 [its contract](../../../market_research/descriptive/RESEARCH_CAPABILITY.md);
 [HTTP authority](../../../ui_http/products/research/http-contract.md) owns transport.
 

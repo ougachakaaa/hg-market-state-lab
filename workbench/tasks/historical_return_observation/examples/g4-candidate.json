@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "original_objective": "Synthetic planning acceptance only: study the 21-trading-session trailing cumulative return distribution of index 000852.SH for inclusive ending-session dates 2010-01-01 through 2026-10-28. Request quantiles at 0, 0.25, 0.5, 0.75, 1 and interval counts with edges -0.2, -0.1, 0, 0.1, 0.2 in decimal_ratio. Use trailing_cumulative_return_v1 with empty metric parameters and continue on job failure. Preserve the validated plan and Preview; do not execute research or acquire market data. Future execution authorization remains pending.",
+  "input_resolution": {
+    "kind": "synthetic_test",
+    "reference": "All inputs are explicitly supplied in this synthetic original_objective; this fixture is not a live research request or execution approval."
+  },
+  "capability_id": "trailing_cumulative_return_v1",
+  "execution_surface": "python",
+  "research_plan": {
+    "metric": "trailing_cumulative_return_v1",
+    "metric_parameters": {},
+    "subjects": ["000852.SH"],
+    "horizons": [21],
+    "windows": [{"start_date": "2010-01-01", "end_date": "2026-10-28"}],
+    "analysis_requests": [
+      {"request_id": "quartiles", "spec": {"method": "quantile", "points": [0, 0.25, 0.5, 0.75, 1]}},
+      {"request_id": "explicit-bins", "spec": {"method": "interval_count", "edges": [-0.2, -0.1, 0, 0.1, 0.2], "unit": "decimal_ratio"}}
+    ],
+    "on_job_failure": "continue"
+  }
+}

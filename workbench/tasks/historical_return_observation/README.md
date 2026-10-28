@@ -1,9 +1,10 @@
 # Historical Return Observation usage
 
 Start at the [Task entry](ARCHITECTURE.md), then read [task.json](task.json) and the
-[G1 contract](BACKEND_READY.md) and [G3 contract](CAPABILITY_DISCOVERY.md). This guide
-is usage-only. WB-03 authorizes implementation of version `1`'s existing discovery
-slice without changing its frozen definition. G1 and G3 are implemented; actual
+[G1 contract](BACKEND_READY.md), [G3 contract](CAPABILITY_DISCOVERY.md) and
+[G4 contract](WORKFLOW_PLANNING.md). This guide
+is usage-only. WB-03/WB-04 implement version `1`'s approved discovery and planning
+slices without changing its frozen definition. G1, G3 and G4 are implemented; actual
 market execution requires separate authorization and resolved research inputs.
 
 From the repository root in its existing Poetry environment:
@@ -82,10 +83,49 @@ retry or redirect. Repeat explicitly to append another independent attempt.
 The existing `run_store.py read` command above retrieves G1 and G3 from the same Run.
 `preserved_discovery_path` locates the artifact verified after temporary source removal.
 See [WB-03 acceptance](DISCOVERY_ACCEPTANCE.md) for actual PASS/failure evidence and
-the complete changed-file/reconciliation record. G4/G5 remain unexecuted.
+the complete WB-03 changed-file/reconciliation record. That check leaves G4/G5 unexecuted.
 
-For full historical research such as 2010-2026, retain exact requested dates but stop
-at the current implementation boundary. HTTP cannot accept one such window. Python
-has different constraints, not proven long-history availability. Future G4/G5 must
-resolve the complete legal surface and live data, preserve/freeze the workflow and
-obtain execution authorization. No partitioning, merging or market execution is added.
+## G4 Agent planning and persistence
+
+Codex / DSH first reads the same Run's actual G3 capability descriptors, interprets
+the original research goal and resolves every missing input through user interaction.
+No guessed index, H, dates, statistical methods/parameters, units or failure policy.
+Write a candidate using the exact shape of [the synthetic example](examples/g4-candidate.json).
+This example explicitly requests `000852.SH`, H=21, inclusive 2010-01-01..2026-10-28,
+trailing_cumulative_return_v1, empty metric parameters, quantile quartiles and explicit
+decimal_ratio interval edges, with continue on failure. All values are test-only,
+not defaults. The Agent selects Python because the complete historical window and H
+exceed HTTP caps. The public Python preflight decides whether that plan is legal.
+
+Direct Agent instruction example:
+
+> Read the synthetic original_objective in examples/g4-candidate.json and the actual
+> same-Run G3 descriptor. Confirm that this is the discovered supported index case,
+> preserve all explicit inputs, and compose the complete public ResearchPlan shown
+> there. Select public Python Preview for the full historical window. Freeze only
+> planning and actual Preview into this Run; execution authorization stays pending.
+> Report the exact frozen workflow identity/hash and remaining data-readiness gaps.
+
+From repository root, substitute an existing Run with latest suitable G1/G3 PASS
+and explicit G2 MVP SKIPPED; do not reuse a Run whose latest G3 failed:
+
+```powershell
+poetry run python workbench/tasks/historical_return_observation/record_g4.py --run RUN_ID --candidate workbench/tasks/historical_return_observation/examples/g4-candidate.json
+poetry run python workbench/tasks/historical_return_observation/record_g4.py --run RUN_ID --read
+```
+
+Optional `--root PATH` selects the existing store. PASS=0, FAIL=1, BLOCKED=2; operational
+errors exit 1. `--read` needs no draft and locates the exact accepted workflow, Preview
+and attempt references through G4 PASS, verifies their hashes/associations and rechecks
+the public pure Preview. It returns `integrity_verified`, not execution permission.
+Store the returned `workflow_artifact.artifact_id` and `sha256` for future explicit G5
+authorization. The mutable candidate and original manifest.workflow are not execution
+authority. After PASS, a changed plan requires a new Run. Do not edit frozen evidence.
+
+Only Python is supported by this recorder; HTTP selection is explicitly rejected,
+including an oversized historical window, without a POST or request splitting.
+Long-history Calendar, warm-up, Index facts and source/cache readiness remain unproven.
+No research, acquisition, automatic partition/merge or G5 is performed. See
+[WB-04 acceptance](PLANNING_ACCEPTANCE.md) for actual artifacts and verification.
+Deterministic validation does not prove general natural-language planning quality;
+interactive acceptance belongs to the final Workbench E2E Goal.

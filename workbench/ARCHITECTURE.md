@@ -25,6 +25,7 @@ root runtime, not an installed Python package or official `lab` command.
 No universal Gate count or ordering exists. Approved Tasks enter through the narrow
 [Task catalog](tasks/README.md); their Gates have no global authority here.
 The first Task implements its own backend-readiness and read-only capability-discovery
-checks. Authentication, workflow planning, Research execution, visualization, scheduling
-and agent orchestration are not implemented by Workbench. Discovery consumes published
-HTTP responses; Workbench owns no capability registry or business validation.
+checks and Task-specific validation/persistence of Agent-authored workflows through
+pure public Python Research Preview. Authentication, Research execution, visualization,
+scheduling and agent orchestration are not implemented by Workbench. Discovery consumes
+published HTTP responses; Workbench owns no capability registry or business validation.

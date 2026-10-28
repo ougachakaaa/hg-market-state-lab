@@ -17,7 +17,10 @@ and evidence procedure. [Usage](README.md) owns commands; [WB-02 acceptance](ACC
 owns actual verification. WB-03 adds the narrow [G3 discovery contract](CAPABILITY_DISCOVERY.md)
 and [its acceptance](DISCOVERY_ACCEPTANCE.md) for the already approved discovery slice,
 preserving the exact version-1 snapshot. These documents neither expand public business
-boundaries nor implement G4/G5.
+boundaries. WB-04 implements the narrow [G4 workflow contract](WORKFLOW_PLANNING.md)
+under [its request](PLANNING_REQUEST.md), with [separate acceptance](PLANNING_ACCEPTANCE.md).
+The exact Task v1 snapshot remains unchanged. Pending execution authorization is an
+explicit planning disposition; see that contract's reconciliation. G5 remains unimplemented.
 
 Business meaning remains with the [Research publication](../../../market_research/descriptive/RESEARCH_CAPABILITY.md),
 [trailing-return case](../../../market_research/descriptive/cases/trailing_return/ARCHITECTURE.md)
