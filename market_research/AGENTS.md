@@ -6,6 +6,7 @@
 | Task | Next authority |
 | --- | --- |
 | Module ownership, concepts, dependency direction | [ARCHITECTURE.md](ARCHITECTURE.md) |
+| Human/agent usage and executable discovery → preview → execute flow | [USAGE.md](USAGE.md) (usage-only) |
 | Facts, public upstream selection, completeness, provenance or failure | [UPSTREAM.md](UPSTREAM.md) → actual Dataset / Product public contract |
 | Descriptive flow and evidence interpretation | [descriptive/ARCHITECTURE.md](descriptive/ARCHITECTURE.md) |
 | Fixed observation request, population, market derivation or provenance | [descriptive/OBSERVATION.md](descriptive/OBSERVATION.md) |
@@ -19,7 +20,8 @@
 缺失的研究方法决定必须显式记录并解决，不从旧实现、统计惯例或用户沉默推断。
 Authority readiness 不等于 runtime readiness；当前有独立 Observation、Sample Conversion、Result Association
 与 [Single Job Executor](descriptive/JOB_EXECUTION.md) Python API。
-ResearchPlan / [Batch execution](descriptive/BATCH_EXECUTION.md) 已实现；CLI 与 HTTP API 尚未实现。
+ResearchPlan / [Batch execution](descriptive/BATCH_EXECUTION.md) 已实现；bounded HTTP delivery
+由 ui_http 发布，入口见 [USAGE.md](USAGE.md)。No Research CLI is implemented.
 不恢复旧 framework、compatibility、mandatory persistence 或 generic engine。
 Descriptive / Conditional 不相互 import，不通过共享基类或执行引擎耦合；不创建 Conditional 空框架。
 Research 仅消费 Statistics public contract；不在 Research 重定义其类型或通用统计公式。

@@ -12,7 +12,7 @@ from market_research.descriptive.execution import ResearchPlan, BatchResult, exe
 # execute_batch(plan: ResearchPlan) -> BatchResult
 ```
 
-ResearchPlan is frozen with all seven explicit fields below. on_job_failure has no default.
+ResearchPlan is frozen with all eight explicit fields below. on_job_failure has no default.
 The four sequence inputs accept collections.abc.Sequence, rejecting str, bytes,
 bytearray, sets, mappings and generators. Snapshot declaration order into tuples; retain
 original immutable AnalysisRequests and Statistics specs. DateWindow is the existing

@@ -1,0 +1,43 @@
+{
+  "analysis_requests": [
+    {
+      "request_id": "p10_p50_p90",
+      "spec": {
+        "method": "quantile",
+        "points": [
+          0.1,
+          0.5,
+          0.9
+        ]
+      }
+    },
+    {
+      "request_id": "distribution",
+      "spec": {
+        "edges": [
+          -0.2,
+          0.0,
+          0.2
+        ],
+        "method": "interval_count",
+        "unit": "decimal_ratio"
+      }
+    }
+  ],
+  "horizons": [
+    2
+  ],
+  "metric": "trailing_cumulative_return_v1",
+  "metric_parameters": {},
+  "on_job_failure": "continue",
+  "subjects": [
+    "000852.SH"
+  ],
+  "windows": [
+    {
+      "end_date": "2024-01-16",
+      "start_date": "2024-01-10"
+    }
+  ],
+  "acknowledge_acquisition": true
+}

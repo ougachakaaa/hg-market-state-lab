@@ -69,7 +69,7 @@ ASSOCIATION_STATISTICS = {
 }
 
 
-def check_imports(text: str, package: str) -> None:
+def check_imports(text: str, package: str, *, publication: bool = False) -> None:
     conversion = package == CONVERSION or package.startswith(CONVERSION + ".")
     association = package == ASSOCIATION or package.startswith(ASSOCIATION + ".")
     execution = package == EXECUTION or package.startswith(EXECUTION + ".")
@@ -81,6 +81,16 @@ def check_imports(text: str, package: str) -> None:
         else:
             continue
         for name in names:
+            if publication:
+                allowed_publication = {
+                    "dataclasses": {"dataclass"},
+                    "typing": {"Literal"},
+                    CASE: {"DEFINITION"},
+                    "market_statistics": {"QuantileSpec", "IntervalCountSpec"},
+                }
+                assert isinstance(node, ast.ImportFrom) and name in allowed_publication, name
+                assert {alias.name for alias in node.names} <= allowed_publication[name]
+                continue
             if execution:
                 if name in EXECUTION_PUBLIC:
                     assert isinstance(node, ast.ImportFrom)
@@ -94,9 +104,9 @@ def check_imports(text: str, package: str) -> None:
                 continue
             assert name != EXECUTION and not name.startswith(EXECUTION + "."), name
             if isinstance(node, ast.ImportFrom):
-                assert all(
-                    f"{name}.{alias.name}" != EXECUTION for alias in node.names
-                ), "Components cannot import execution through its parent package"
+                assert all(f"{name}.{alias.name}" != EXECUTION for alias in node.names), (
+                    "Components cannot import execution through its parent package"
+                )
             if name == "market_statistics" or name.startswith("market_statistics."):
                 assert (conversion or association) and name == "market_statistics", name
                 assert isinstance(node, ast.ImportFrom), "Import only the required public types"
@@ -148,7 +158,26 @@ def check_imports(text: str, package: str) -> None:
 def test_conversion_imports_only_public_contracts_and_has_no_effectful_dependencies() -> None:
     for path in SOURCE.rglob("*.py"):
         package = ".".join(("market_research", *path.relative_to(SOURCE).parent.parts))
-        check_imports(path.read_text(encoding="utf-8"), package)
+        check_imports(
+            path.read_text(encoding="utf-8"),
+            package,
+            publication=path.relative_to(SOURCE).as_posix() == "descriptive/capabilities.py",
+        )
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        "from market_statistics import compute",
+        "from market_statistics.models import QuantileSpec",
+        "from .cases.trailing_return import prepare_inputs",
+        "import socket",
+        "from .execution import execute_batch",
+    ],
+)
+def test_capability_publication_cannot_execute_or_acquire(text: str) -> None:
+    with pytest.raises(AssertionError):
+        check_imports(text, "market_research.descriptive", publication=True)
 
 
 @pytest.mark.parametrize(

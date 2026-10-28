@@ -5,7 +5,7 @@ This specializes [HTTP ownership](../../ARCHITECTURE.md), cataloged in
 [capability publication](../../../market_research/descriptive/RESEARCH_CAPABILITY.md),
 Plan/Batch, observations and evidence. Statistics owns numerical rules. HTTP owns only
 strict parsing, bounded synchronous invocation, wire projection and status/error mapping.
-Usage belongs to the planned `market_research/USAGE.md`.
+Usage belongs to [Research USAGE](../../../market_research/USAGE.md).
 
 ## Operations and dependency boundary
 
@@ -81,7 +81,12 @@ Job identity and a safe reason; HTTP never reruns failure classification.
 Tagged quantile results retain method, estimator, ordered points_and_values,
 sample_count and unit. Tagged interval_count retains edges, bins with both bounds and
 inclusion flags/count/frequency, underflow/overflow counts/frequencies, sample_count/unit.
-All numeric payloads are finite JSON numbers; zero and null remain distinct.
+Successful numeric payloads are finite JSON numbers; zero and null remain distinct.
+If a rejected raw numerical result contains NaN/infinity, retain that coordinate as
+`{"kind":"non_finite","value":"nan|positive_infinity|negative_infinity"}` in the
+same ordered result field. This explicitly tagged anomaly is legal only on failed raw
+results, never successful results or NumericSample values; it avoids invalid JSON numbers
+without discarding a returned association-failure result.
 
 Observation projection includes definition, all candidate anchors and E/U/X counts,
 ratios (null when inapplicable), every eligible key/anchor/value, every unavailable key,

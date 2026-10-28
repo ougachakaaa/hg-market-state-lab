@@ -55,4 +55,4 @@ No service is created, no availability probe occurs, and no preview/result is pe
 
 This adds no Plan legality rule, calculation or second expansion implementation. Python
 ResearchPlan remains free of HTTP limits, acknowledgment and transport dependencies.
-The planned stable `market_research/USAGE.md` explains human and agent operation; it is not authority.
+The stable [usage guide](../USAGE.md) explains human and agent operation; it is not authority.

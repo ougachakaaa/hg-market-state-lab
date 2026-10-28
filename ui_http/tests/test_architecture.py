@@ -109,3 +109,31 @@ def test_market_snapshot_has_no_reverse_backend_dependency() -> None:
 def test_market_snapshot_contains_no_fastapi_runtime_package() -> None:
     assert not (MARKET_SOURCE / "api").exists()
     assert not (REPOSITORY_ROOT / "data_snapshot/scripts/api.py").exists()
+
+
+def test_research_transport_uses_only_admitted_public_boundaries() -> None:
+    allowed = {
+        "market_research.descriptive.capabilities", "market_research.descriptive.execution",
+        "market_research.descriptive.association", "market_research.descriptive.observation",
+        "market_research.descriptive.cases.trailing_return", "market_statistics",
+    }
+    violations = [
+        f"{source.relative_to(REPOSITORY_ROOT)} -> {name}"
+        for source in BACKEND_SOURCE.rglob("*.py")
+        for name in imported_modules(source)
+        if (name.startswith(("market_research", "market_statistics", "data_lake")))
+        and name not in allowed
+    ]
+    assert not violations, violations
+
+
+def test_research_and_statistics_have_no_reverse_http_dependency() -> None:
+    forbidden = ("ui_http", "fastapi", "starlette", "uvicorn")
+    violations = [
+        f"{source.relative_to(REPOSITORY_ROOT)} -> {name}"
+        for module in ("market_research", "market_statistics")
+        for source in (REPOSITORY_ROOT / module / "src").rglob("*.py")
+        for name in imported_modules(source)
+        if any(name == prefix or name.startswith(prefix + ".") for prefix in forbidden)
+    ]
+    assert not violations, violations

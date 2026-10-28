@@ -188,7 +188,10 @@ def test_classified_failures_map_without_partial_plane(
 def test_runtime_openapi_publishes_both_products_without_422() -> None:
     document = TestClient(runtime_app).get("/openapi.json").json()
 
-    assert set(document["paths"]) == {"/mo-option-chain", ROUTE}
+    assert set(document["paths"]) == {
+        "/mo-option-chain", ROUTE, "/research/capabilities", "/research/capabilities/{id}",
+        "/research/preview", "/research/execute",
+    }
     assert set(document["paths"][ROUTE]["get"]["responses"]) == {"200", "400", "404", "503"}
 
 

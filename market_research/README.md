@@ -1,5 +1,9 @@
 # Research Observation, conversion, association and execution usage
 
+The stable human/agent entry is [USAGE.md](USAGE.md): the one admitted capability,
+Python plan, HTTP discovery → preview → execute, evidence interpretation and operational limits.
+This README retains component-level Python examples.
+
 This is usage documentation. Contracts are owned by [the module authority](ARCHITECTURE.md)
 and its [Observation boundary](descriptive/OBSERVATION.md).
 

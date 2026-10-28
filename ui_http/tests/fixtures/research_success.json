@@ -1,0 +1,837 @@
+{
+  "plan": {
+    "metric": "trailing_cumulative_return_v1",
+    "metric_parameters": {},
+    "subjects": [
+      "000852.SH"
+    ],
+    "horizons": [
+      2
+    ],
+    "windows": [
+      {
+        "start_date": "2024-01-10",
+        "end_date": "2024-01-16"
+      }
+    ],
+    "analysis_requests": [
+      {
+        "request_id": "p10_p50_p90",
+        "spec": {
+          "method": "quantile",
+          "points": [
+            0.1,
+            0.5,
+            0.9
+          ]
+        }
+      },
+      {
+        "request_id": "distribution",
+        "spec": {
+          "method": "interval_count",
+          "edges": [
+            -0.2,
+            0.0,
+            0.2
+          ],
+          "unit": "decimal_ratio"
+        }
+      }
+    ],
+    "on_job_failure": "continue"
+  },
+  "status": "success",
+  "planned_count": 1,
+  "success_count": 1,
+  "failed_count": 0,
+  "skipped_count": 0,
+  "job_results": [
+    {
+      "fixed_job_spec": {
+        "subject": "000852.SH",
+        "metric": "trailing_cumulative_return_v1",
+        "metric_parameters": {},
+        "horizon": 2,
+        "historical_sample_window": {
+          "start_date": "2024-01-10",
+          "end_date": "2024-01-16"
+        }
+      },
+      "job_identity": {
+        "metric": "trailing_cumulative_return_v1",
+        "subject": "000852.SH",
+        "metric_parameters": {},
+        "horizon": 2,
+        "horizon_unit": "trading_sessions",
+        "start_date": "2024-01-10",
+        "end_date": "2024-01-16",
+        "anchor_meaning": "end_session",
+        "bounds": "inclusive"
+      },
+      "status": "Success",
+      "skip_reason": null,
+      "triggering_failed_job_identity": null,
+      "analysis_outcomes": [
+        {
+          "request": {
+            "request_id": "p10_p50_p90",
+            "spec": {
+              "method": "quantile",
+              "points": [
+                0.1,
+                0.5,
+                0.9
+              ]
+            }
+          },
+          "status": "success",
+          "statistical_result": {
+            "method": "quantile",
+            "estimator": "type7_linear_v1",
+            "points_and_values": [
+              [
+                0.1,
+                -0.18666666666666662
+              ],
+              [
+                0.5,
+                0.0
+              ],
+              [
+                0.9,
+                0.12
+              ]
+            ],
+            "sample_count": 5,
+            "unit": "decimal_ratio"
+          },
+          "associated": true,
+          "failure": null,
+          "not_attempted_reason": null
+        },
+        {
+          "request": {
+            "request_id": "distribution",
+            "spec": {
+              "method": "interval_count",
+              "edges": [
+                -0.2,
+                0.0,
+                0.2
+              ],
+              "unit": "decimal_ratio"
+            }
+          },
+          "status": "success",
+          "statistical_result": {
+            "method": "interval_count",
+            "edges": [
+              -0.2,
+              0.0,
+              0.2
+            ],
+            "bins": [
+              {
+                "left": -0.2,
+                "right": 0.0,
+                "left_inclusive": true,
+                "right_inclusive": false,
+                "count": 2,
+                "frequency": 0.4
+              },
+              {
+                "left": 0.0,
+                "right": 0.2,
+                "left_inclusive": true,
+                "right_inclusive": true,
+                "count": 3,
+                "frequency": 0.6
+              }
+            ],
+            "underflow_count": 0,
+            "overflow_count": 0,
+            "underflow_frequency": 0.0,
+            "overflow_frequency": 0.0,
+            "sample_count": 5,
+            "unit": "decimal_ratio"
+          },
+          "associated": true,
+          "failure": null,
+          "not_attempted_reason": null
+        }
+      ],
+      "failures": [],
+      "input_attempts": [
+        {
+          "request": {
+            "kind": "calendar",
+            "exchange": "SSE",
+            "start_date": "2024-01-10",
+            "end_date": "2024-01-16"
+          },
+          "preliminary_export": {
+            "state": "available",
+            "dataset": "tushare_trade_calendar",
+            "view": "calendar",
+            "export_schema_version": 1,
+            "coverage": {
+              "requested_units": 7,
+              "successful_units": 7,
+              "missing_units": 0,
+              "pending_units": 0,
+              "failed_units": 0,
+              "complete": true
+            },
+            "record_count": 7
+          },
+          "ensure_result": null,
+          "final_export": {
+            "state": "available",
+            "dataset": "tushare_trade_calendar",
+            "view": "calendar",
+            "export_schema_version": 1,
+            "coverage": {
+              "requested_units": 7,
+              "successful_units": 7,
+              "missing_units": 0,
+              "pending_units": 0,
+              "failed_units": 0,
+              "complete": true
+            },
+            "record_count": 7
+          }
+        },
+        {
+          "request": {
+            "kind": "calendar",
+            "exchange": "SSE",
+            "start_date": "2024-01-08",
+            "end_date": "2024-01-09"
+          },
+          "preliminary_export": {
+            "state": "available",
+            "dataset": "tushare_trade_calendar",
+            "view": "calendar",
+            "export_schema_version": 1,
+            "coverage": {
+              "requested_units": 2,
+              "successful_units": 2,
+              "missing_units": 0,
+              "pending_units": 0,
+              "failed_units": 0,
+              "complete": true
+            },
+            "record_count": 2
+          },
+          "ensure_result": null,
+          "final_export": {
+            "state": "available",
+            "dataset": "tushare_trade_calendar",
+            "view": "calendar",
+            "export_schema_version": 1,
+            "coverage": {
+              "requested_units": 2,
+              "successful_units": 2,
+              "missing_units": 0,
+              "pending_units": 0,
+              "failed_units": 0,
+              "complete": true
+            },
+            "record_count": 2
+          }
+        },
+        {
+          "request": {
+            "kind": "index_daily",
+            "index_codes": [
+              "000852.SH"
+            ],
+            "start_date": "2024-01-08",
+            "end_date": "2024-01-16"
+          },
+          "preliminary_export": {
+            "state": "available",
+            "dataset": "tushare_index_daily",
+            "view": "index_daily",
+            "export_schema_version": 1,
+            "coverage": {
+              "requested_units": 7,
+              "successful_units": 7,
+              "missing_units": 0,
+              "pending_units": 0,
+              "failed_units": 0,
+              "complete": true
+            },
+            "record_count": 7
+          },
+          "ensure_result": null,
+          "final_export": {
+            "state": "available",
+            "dataset": "tushare_index_daily",
+            "view": "index_daily",
+            "export_schema_version": 1,
+            "coverage": {
+              "requested_units": 7,
+              "successful_units": 7,
+              "missing_units": 0,
+              "pending_units": 0,
+              "failed_units": 0,
+              "complete": true
+            },
+            "record_count": 7
+          }
+        }
+      ],
+      "prepared_context": {
+        "calendar_slices": [
+          {
+            "request": {
+              "kind": "calendar",
+              "exchange": "SSE",
+              "start_date": "2024-01-10",
+              "end_date": "2024-01-16"
+            },
+            "final_export": {
+              "state": "available",
+              "dataset": "tushare_trade_calendar",
+              "view": "calendar",
+              "export_schema_version": 1,
+              "coverage": {
+                "requested_units": 7,
+                "successful_units": 7,
+                "missing_units": 0,
+                "pending_units": 0,
+                "failed_units": 0,
+                "complete": true
+              },
+              "record_count": 7
+            }
+          },
+          {
+            "request": {
+              "kind": "calendar",
+              "exchange": "SSE",
+              "start_date": "2024-01-08",
+              "end_date": "2024-01-09"
+            },
+            "final_export": {
+              "state": "available",
+              "dataset": "tushare_trade_calendar",
+              "view": "calendar",
+              "export_schema_version": 1,
+              "coverage": {
+                "requested_units": 2,
+                "successful_units": 2,
+                "missing_units": 0,
+                "pending_units": 0,
+                "failed_units": 0,
+                "complete": true
+              },
+              "record_count": 2
+            }
+          }
+        ],
+        "index_slice": {
+          "request": {
+            "kind": "index_daily",
+            "index_codes": [
+              "000852.SH"
+            ],
+            "start_date": "2024-01-08",
+            "end_date": "2024-01-16"
+          },
+          "final_export": {
+            "state": "available",
+            "dataset": "tushare_index_daily",
+            "view": "index_daily",
+            "export_schema_version": 1,
+            "coverage": {
+              "requested_units": 7,
+              "successful_units": 7,
+              "missing_units": 0,
+              "pending_units": 0,
+              "failed_units": 0,
+              "complete": true
+            },
+            "record_count": 7
+          }
+        }
+      },
+      "observation_set": {
+        "job_identity": {
+          "metric": "trailing_cumulative_return_v1",
+          "subject": "000852.SH",
+          "metric_parameters": {},
+          "horizon": 2,
+          "horizon_unit": "trading_sessions",
+          "start_date": "2024-01-10",
+          "end_date": "2024-01-16",
+          "anchor_meaning": "end_session",
+          "bounds": "inclusive"
+        },
+        "observation_definition": {
+          "metric": "trailing_cumulative_return_v1",
+          "grain": "one_scalar_per_end_session",
+          "key_definition": "(job_identity, anchor)",
+          "formula": "close(T) / close(T-H) - 1",
+          "unit": "decimal_ratio",
+          "horizon_unit": "trading_sessions",
+          "calendar": "SSE",
+          "anchor_meaning": "end_session",
+          "bounds": "inclusive"
+        },
+        "candidate_anchors": [
+          "2024-01-10",
+          "2024-01-11",
+          "2024-01-12",
+          "2024-01-15",
+          "2024-01-16"
+        ],
+        "candidate_count": 5,
+        "eligible_count": 5,
+        "unavailable_count": 0,
+        "excluded_count": 0,
+        "observation_coverage": 1.0,
+        "unavailable_ratio": 0.0,
+        "excluded_ratio": 0.0,
+        "eligible_observations": [
+          {
+            "observation_key": {
+              "job_identity": {
+                "metric": "trailing_cumulative_return_v1",
+                "subject": "000852.SH",
+                "metric_parameters": {},
+                "horizon": 2,
+                "horizon_unit": "trading_sessions",
+                "start_date": "2024-01-10",
+                "end_date": "2024-01-16",
+                "anchor_meaning": "end_session",
+                "bounds": "inclusive"
+              },
+              "anchor": "2024-01-10"
+            },
+            "anchor": "2024-01-10",
+            "scalar_value": 0.19999999999999996
+          },
+          {
+            "observation_key": {
+              "job_identity": {
+                "metric": "trailing_cumulative_return_v1",
+                "subject": "000852.SH",
+                "metric_parameters": {},
+                "horizon": 2,
+                "horizon_unit": "trading_sessions",
+                "start_date": "2024-01-10",
+                "end_date": "2024-01-16",
+                "anchor_meaning": "end_session",
+                "bounds": "inclusive"
+              },
+              "anchor": "2024-01-11"
+            },
+            "anchor": "2024-01-11",
+            "scalar_value": -0.19999999999999996
+          },
+          {
+            "observation_key": {
+              "job_identity": {
+                "metric": "trailing_cumulative_return_v1",
+                "subject": "000852.SH",
+                "metric_parameters": {},
+                "horizon": 2,
+                "horizon_unit": "trading_sessions",
+                "start_date": "2024-01-10",
+                "end_date": "2024-01-16",
+                "anchor_meaning": "end_session",
+                "bounds": "inclusive"
+              },
+              "anchor": "2024-01-12"
+            },
+            "anchor": "2024-01-12",
+            "scalar_value": -0.16666666666666663
+          },
+          {
+            "observation_key": {
+              "job_identity": {
+                "metric": "trailing_cumulative_return_v1",
+                "subject": "000852.SH",
+                "metric_parameters": {},
+                "horizon": 2,
+                "horizon_unit": "trading_sessions",
+                "start_date": "2024-01-10",
+                "end_date": "2024-01-16",
+                "anchor_meaning": "end_session",
+                "bounds": "inclusive"
+              },
+              "anchor": "2024-01-15"
+            },
+            "anchor": "2024-01-15",
+            "scalar_value": 0.0
+          },
+          {
+            "observation_key": {
+              "job_identity": {
+                "metric": "trailing_cumulative_return_v1",
+                "subject": "000852.SH",
+                "metric_parameters": {},
+                "horizon": 2,
+                "horizon_unit": "trading_sessions",
+                "start_date": "2024-01-10",
+                "end_date": "2024-01-16",
+                "anchor_meaning": "end_session",
+                "bounds": "inclusive"
+              },
+              "anchor": "2024-01-16"
+            },
+            "anchor": "2024-01-16",
+            "scalar_value": 0.0
+          }
+        ],
+        "unavailable_observations": [],
+        "excluded_observations": [],
+        "market_fact_coverage": {
+          "overall": {
+            "expected_keys": [
+              [
+                "000852.SH",
+                "2024-01-08"
+              ],
+              [
+                "000852.SH",
+                "2024-01-09"
+              ],
+              [
+                "000852.SH",
+                "2024-01-10"
+              ],
+              [
+                "000852.SH",
+                "2024-01-11"
+              ],
+              [
+                "000852.SH",
+                "2024-01-12"
+              ],
+              [
+                "000852.SH",
+                "2024-01-15"
+              ],
+              [
+                "000852.SH",
+                "2024-01-16"
+              ]
+            ],
+            "available_keys": [
+              [
+                "000852.SH",
+                "2024-01-08"
+              ],
+              [
+                "000852.SH",
+                "2024-01-09"
+              ],
+              [
+                "000852.SH",
+                "2024-01-10"
+              ],
+              [
+                "000852.SH",
+                "2024-01-11"
+              ],
+              [
+                "000852.SH",
+                "2024-01-12"
+              ],
+              [
+                "000852.SH",
+                "2024-01-15"
+              ],
+              [
+                "000852.SH",
+                "2024-01-16"
+              ]
+            ],
+            "absent_keys": [],
+            "expected_fact_units": 7,
+            "available_fact_units": 7,
+            "ratio": 1.0
+          },
+          "warm_up": {
+            "expected_keys": [
+              [
+                "000852.SH",
+                "2024-01-08"
+              ],
+              [
+                "000852.SH",
+                "2024-01-09"
+              ]
+            ],
+            "available_keys": [
+              [
+                "000852.SH",
+                "2024-01-08"
+              ],
+              [
+                "000852.SH",
+                "2024-01-09"
+              ]
+            ],
+            "absent_keys": [],
+            "expected_fact_units": 2,
+            "available_fact_units": 2,
+            "ratio": 1.0
+          },
+          "sample": {
+            "expected_keys": [
+              [
+                "000852.SH",
+                "2024-01-10"
+              ],
+              [
+                "000852.SH",
+                "2024-01-11"
+              ],
+              [
+                "000852.SH",
+                "2024-01-12"
+              ],
+              [
+                "000852.SH",
+                "2024-01-15"
+              ],
+              [
+                "000852.SH",
+                "2024-01-16"
+              ]
+            ],
+            "available_keys": [
+              [
+                "000852.SH",
+                "2024-01-10"
+              ],
+              [
+                "000852.SH",
+                "2024-01-11"
+              ],
+              [
+                "000852.SH",
+                "2024-01-12"
+              ],
+              [
+                "000852.SH",
+                "2024-01-15"
+              ],
+              [
+                "000852.SH",
+                "2024-01-16"
+              ]
+            ],
+            "absent_keys": [],
+            "expected_fact_units": 5,
+            "available_fact_units": 5,
+            "ratio": 1.0
+          }
+        },
+        "sample_dependence_context": {
+          "horizon": 2,
+          "horizon_unit": "trading_sessions",
+          "ordered_anchors": [
+            "2024-01-10",
+            "2024-01-11",
+            "2024-01-12",
+            "2024-01-15",
+            "2024-01-16"
+          ],
+          "spans": [
+            {
+              "anchor": "2024-01-10",
+              "lookback": "2024-01-08"
+            },
+            {
+              "anchor": "2024-01-11",
+              "lookback": "2024-01-09"
+            },
+            {
+              "anchor": "2024-01-12",
+              "lookback": "2024-01-10"
+            },
+            {
+              "anchor": "2024-01-15",
+              "lookback": "2024-01-11"
+            },
+            {
+              "anchor": "2024-01-16",
+              "lookback": "2024-01-12"
+            }
+          ],
+          "interpretation": "Lookback spans may overlap and share endpoint facts, including across Jobs; no independence, causality or predictive claim is implied."
+        },
+        "provenance": {
+          "input_profile": "trailing_return_inputs_v2",
+          "input_fingerprint": "b6b4cc205d576c84e6d89dc86a214e2592e14814ff08dcfaf0eba1fa17e446b8",
+          "endpoint_requirements": [
+            {
+              "anchor": "2024-01-10",
+              "anchor_daily_key": [
+                "000852.SH",
+                "2024-01-10"
+              ],
+              "lookback_daily_key": [
+                "000852.SH",
+                "2024-01-08"
+              ],
+              "missing_required_facts": []
+            },
+            {
+              "anchor": "2024-01-11",
+              "anchor_daily_key": [
+                "000852.SH",
+                "2024-01-11"
+              ],
+              "lookback_daily_key": [
+                "000852.SH",
+                "2024-01-09"
+              ],
+              "missing_required_facts": []
+            },
+            {
+              "anchor": "2024-01-12",
+              "anchor_daily_key": [
+                "000852.SH",
+                "2024-01-12"
+              ],
+              "lookback_daily_key": [
+                "000852.SH",
+                "2024-01-10"
+              ],
+              "missing_required_facts": []
+            },
+            {
+              "anchor": "2024-01-15",
+              "anchor_daily_key": [
+                "000852.SH",
+                "2024-01-15"
+              ],
+              "lookback_daily_key": [
+                "000852.SH",
+                "2024-01-11"
+              ],
+              "missing_required_facts": []
+            },
+            {
+              "anchor": "2024-01-16",
+              "anchor_daily_key": [
+                "000852.SH",
+                "2024-01-16"
+              ],
+              "lookback_daily_key": [
+                "000852.SH",
+                "2024-01-12"
+              ],
+              "missing_required_facts": []
+            }
+          ]
+        }
+      },
+      "projection": {
+        "numeric_sample": {
+          "values": [
+            0.19999999999999996,
+            -0.19999999999999996,
+            -0.16666666666666663,
+            0.0,
+            0.0
+          ],
+          "unit": "decimal_ratio",
+          "sample_count": 5
+        },
+        "ordered_observation_keys": [
+          {
+            "job_identity": {
+              "metric": "trailing_cumulative_return_v1",
+              "subject": "000852.SH",
+              "metric_parameters": {},
+              "horizon": 2,
+              "horizon_unit": "trading_sessions",
+              "start_date": "2024-01-10",
+              "end_date": "2024-01-16",
+              "anchor_meaning": "end_session",
+              "bounds": "inclusive"
+            },
+            "anchor": "2024-01-10"
+          },
+          {
+            "job_identity": {
+              "metric": "trailing_cumulative_return_v1",
+              "subject": "000852.SH",
+              "metric_parameters": {},
+              "horizon": 2,
+              "horizon_unit": "trading_sessions",
+              "start_date": "2024-01-10",
+              "end_date": "2024-01-16",
+              "anchor_meaning": "end_session",
+              "bounds": "inclusive"
+            },
+            "anchor": "2024-01-11"
+          },
+          {
+            "job_identity": {
+              "metric": "trailing_cumulative_return_v1",
+              "subject": "000852.SH",
+              "metric_parameters": {},
+              "horizon": 2,
+              "horizon_unit": "trading_sessions",
+              "start_date": "2024-01-10",
+              "end_date": "2024-01-16",
+              "anchor_meaning": "end_session",
+              "bounds": "inclusive"
+            },
+            "anchor": "2024-01-12"
+          },
+          {
+            "job_identity": {
+              "metric": "trailing_cumulative_return_v1",
+              "subject": "000852.SH",
+              "metric_parameters": {},
+              "horizon": 2,
+              "horizon_unit": "trading_sessions",
+              "start_date": "2024-01-10",
+              "end_date": "2024-01-16",
+              "anchor_meaning": "end_session",
+              "bounds": "inclusive"
+            },
+            "anchor": "2024-01-15"
+          },
+          {
+            "job_identity": {
+              "metric": "trailing_cumulative_return_v1",
+              "subject": "000852.SH",
+              "metric_parameters": {},
+              "horizon": 2,
+              "horizon_unit": "trading_sessions",
+              "start_date": "2024-01-10",
+              "end_date": "2024-01-16",
+              "anchor_meaning": "end_session",
+              "bounds": "inclusive"
+            },
+            "anchor": "2024-01-16"
+          }
+        ],
+        "source_job_identity": {
+          "metric": "trailing_cumulative_return_v1",
+          "subject": "000852.SH",
+          "metric_parameters": {},
+          "horizon": 2,
+          "horizon_unit": "trading_sessions",
+          "start_date": "2024-01-10",
+          "end_date": "2024-01-16",
+          "anchor_meaning": "end_session",
+          "bounds": "inclusive"
+        },
+        "source_input_fingerprint": "b6b4cc205d576c84e6d89dc86a214e2592e14814ff08dcfaf0eba1fa17e446b8"
+      }
+    }
+  ],
+  "source_identity_limitation": "Source fingerprint identifies consumed inputs, not authenticated numerical origin. Lookback spans may overlap/share facts; no independence, causality or predictive validity. Full input exports, canonical bytes and original exceptions/diagnostics remain Python-only."
+}

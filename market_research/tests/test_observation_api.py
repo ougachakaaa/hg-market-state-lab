@@ -189,9 +189,11 @@ def test_only_published_datalake_imports_and_no_forbidden_dependency_edges() -> 
             )
             for name in modules:
                 if name == "market_statistics" or name.startswith("market_statistics."):
-                    assert {"conversion", "association", "execution"} & set(
-                        path.relative_to(SOURCE).parts
-                    ), (
+                    assert path.relative_to(SOURCE).as_posix() == "descriptive/capabilities.py" or {
+                        "conversion",
+                        "association",
+                        "execution",
+                    } & set(path.relative_to(SOURCE).parts), (
                         path,
                         name,
                     )

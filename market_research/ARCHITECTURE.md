@@ -94,7 +94,11 @@ Single Job execution is implemented under `market_research.descriptive.execution
 composing these public components under [its contract](descriptive/JOB_EXECUTION.md).
 ResearchPlan / Batch execution is implemented in the same facade, composing Single Job
 under the [Batch contract](descriptive/BATCH_EXECUTION.md).
-No Research CLI, HTTP service or report renderer is published. The independent Statistics
+The [capability publication](descriptive/RESEARCH_CAPABILITY.md) and pure preview facade
+publish this one case; bounded HTTP delivery belongs to
+[ui_http](../ui_http/products/research/http-contract.md). Human/agent usage is in
+[USAGE.md](USAGE.md), not a competing semantic authority.
+No Research CLI or report renderer is published. The independent Statistics
 public API is implemented; deterministic Single Job and
 [Batch acceptance](descriptive/BATCH_EXECUTION_ACCEPTANCE.md) are recorded separately
 from the [isolated real-market E2E acceptance](descriptive/LIVE_E2E_ACCEPTANCE.md).

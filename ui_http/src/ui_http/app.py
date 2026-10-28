@@ -1,6 +1,6 @@
 """Repository FastAPI composition root for owning-module product adapters.
 
-This module composes the independent MO Option Chain and MO Premium Plane HTTP
+This module composes the independent MO Option Chain, MO Premium Plane and Research
 adapters. It owns runtime wiring only; each product-local bounded context keeps
 ownership of its router, query contract, DTOs and error envelope.
 """
@@ -46,6 +46,10 @@ from .products.mo_option_premium.errors import (
 from .products.mo_option_premium.errors import (
     REQUIRED_QUERY_PARAMS as PREMIUM_REQUIRED_QUERY_PARAMS,
 )
+from .products.research.endpoint import is_research_path
+from .products.research.endpoint import router as research_router
+from .products.research.errors import ResearchApiError
+from .products.research.errors import error_response as research_error_response
 
 TITLE = "hg-market-state-lab Market Snapshot API"
 VERSION = "0.1.0"
@@ -155,7 +159,7 @@ def contract_openapi(application: FastAPI) -> Callable[[], dict[str, Any]]:
 
 
 def create_app() -> FastAPI:
-    """Build the repository runtime with both independent product adapters."""
+    """Build the repository runtime with independent product adapters."""
     application = FastAPI(
         title=TITLE,
         version=VERSION,
@@ -177,6 +181,10 @@ def create_app() -> FastAPI:
     async def handle_request_validation_error(
         request: Request, exc: RequestValidationError
     ) -> JSONResponse:
+        if is_research_path(request.url.path):
+            return research_error_response(ResearchApiError(
+                "invalid_request", "Body must match the strict Research request schema.",
+            ))
         errors = [dict(error) for error in exc.errors()]
         detail = validation_detail(request, errors)
         param = validation_param(request, errors)
@@ -198,6 +206,7 @@ def create_app() -> FastAPI:
 
     application.include_router(chain_router)
     application.include_router(premium_router)
+    application.include_router(research_router)
     return application
 
 

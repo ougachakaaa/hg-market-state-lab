@@ -1,0 +1,71 @@
+{
+  "plan": {
+    "metric": "trailing_cumulative_return_v1",
+    "metric_parameters": {},
+    "subjects": [
+      "000852.SH"
+    ],
+    "horizons": [
+      2
+    ],
+    "windows": [
+      {
+        "start_date": "2024-01-10",
+        "end_date": "2024-01-16"
+      }
+    ],
+    "analysis_requests": [
+      {
+        "request_id": "p10_p50_p90",
+        "spec": {
+          "method": "quantile",
+          "points": [
+            0.1,
+            0.5,
+            0.9
+          ]
+        }
+      },
+      {
+        "request_id": "distribution",
+        "spec": {
+          "method": "interval_count",
+          "edges": [
+            -0.2,
+            0.0,
+            0.2
+          ],
+          "unit": "decimal_ratio"
+        }
+      }
+    ],
+    "on_job_failure": "continue"
+  },
+  "jobs": [
+    {
+      "fixed_job_spec": {
+        "subject": "000852.SH",
+        "metric": "trailing_cumulative_return_v1",
+        "metric_parameters": {},
+        "horizon": 2,
+        "historical_sample_window": {
+          "start_date": "2024-01-10",
+          "end_date": "2024-01-16"
+        }
+      },
+      "job_identity": {
+        "metric": "trailing_cumulative_return_v1",
+        "subject": "000852.SH",
+        "metric_parameters": {},
+        "horizon": 2,
+        "horizon_unit": "trading_sessions",
+        "start_date": "2024-01-10",
+        "end_date": "2024-01-16",
+        "anchor_meaning": "end_session",
+        "bounds": "inclusive"
+      }
+    }
+  ],
+  "planned_count": 1,
+  "analysis_attempt_count": 2
+}
