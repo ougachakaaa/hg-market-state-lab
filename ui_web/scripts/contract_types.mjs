@@ -4,6 +4,11 @@ import openapiTS, { astToString, COMMENT_HEADER } from 'openapi-typescript'
 
 const contracts = [
   {
+    name: 'Application Authentication',
+    input: 'src/app/auth/api/auth.openapi.json',
+    output: 'src/app/auth/api/auth.generated.ts',
+  },
+  {
     name: 'MO Option Chain',
     input: 'src/features/mo_option_chain/api/moOptionChain.openapi.json',
     output: 'src/features/mo_option_chain/api/moOptionChain.generated.ts',

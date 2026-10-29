@@ -32,7 +32,7 @@ OpenAPI 与 TypeScript artifacts 是 backend HTTP contract 的生成表示，不
 | --- | --- | --- |
 | MO Option Chain | [`GET /mo-option-chain`](../ui_http/products/mo_option_chain/http-contract.md) | `mo_option_chain` frontend bounded context |
 | MO Premium Plane | [`GET /mo-option-premium-plane`](../ui_http/products/mo_option_premium/http-contract.md) | `mo_option_premium` frontend bounded context |
-| Application Authentication (G3 target) | [Auth HTTP contract](../ui_http/AUTHENTICATION.md#4-http-contract-and-access-order) | application Auth boundary，独立于 MO features |
+| Application Authentication | [Auth HTTP contract](../ui_http/AUTHENTICATION.md#4-http-contract-and-access-order) | application Auth boundary，独立于 MO features |
 
 两个 MO Product contract boundaries 与一个 Application Authentication contract boundary 平级且独立；三者各自拥有独立的 generated artifacts 和 ownership。Backend runtime 可以组合多个 product routes，但 runtime composition 不得把 sibling frontend features 强制耦合进共享业务 schema、共享 DTO ownership 或共享 feature-local contract boundary。
 

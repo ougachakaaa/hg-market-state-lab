@@ -52,9 +52,9 @@ Application composition 不改变两者的 backend dependencies，也不表示�
 
 本 authority 不规定 React Router、navigation control 的精确 component/props、URL scheme、component tree、mounting strategy、CSS filename、state-management library 或 generic feature framework；这些实现选择仍须遵循 `ui-system.md` 规定的 Ant Design、theme 与 custom CSS boundary。实现只需满足默认 entry、显式 navigation、两个 surface 可访问及 bounded-context independence，不为假设中的未来 feature 引入 plugin 或 routing abstraction。
 
-## 5. Application Authentication (G3 target)
+## 5. Application Authentication (G3 implemented)
 
-认证 HTTP、用户状态、审批、Cookie、限流与同源协议唯一归 [Authentication MVP V1](../ui_http/AUTHENTICATION.md)。本节只拥有 application 交互和 gate；G0 仅编码目标，不代表当前 shell 已实现登录。
+认证 HTTP、用户状态、审批、Cookie、限流与同源协议唯一归 [Authentication MVP V1](../ui_http/AUTHENTICATION.md)。本节只拥有 application 交互和 gate；G3 已实现下述交互，完整跨层安全验收仍归 G4。
 
 Login / Registration 是 application-level 入口；认证通过后的默认 surface 仍为 MO Option Chain，用户可切换 MO Premium Plane。登录状态不属于两个 MO feature 的 local query/presentation state，不经 sibling feature 共享；shell 不因此接管产品 query、DTO 或图表语义。
 

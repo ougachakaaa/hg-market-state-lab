@@ -4,6 +4,7 @@ import config from './vite.config.ts'
 
 const backendTarget = 'http://127.0.0.1:8011'
 const frontendConsumedRoutes = [
+  '/auth',
   '/mo-option-chain',
   '/mo-option-premium-plane',
 ] as const

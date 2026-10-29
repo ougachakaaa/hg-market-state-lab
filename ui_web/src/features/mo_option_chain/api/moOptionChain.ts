@@ -1,3 +1,4 @@
+import { protectedRequest } from '../../../shared/http/protectedRequest'
 import Ajv2020 from 'ajv/dist/2020.js'
 import openApi from './moOptionChain.openapi.json'
 import type { components, paths } from './moOptionChain.generated'
@@ -59,7 +60,7 @@ export async function loadMoOptionChain(targetTradeDate: string, signal?: AbortS
 
   let response: Response
   try {
-    response = await fetch(`${path}?${query}`, { signal })
+    response = await protectedRequest(`${path}?${query}`, signal)
   } catch (error) {
     if (signal?.aborted) throw error
     throw new ChainRequestError('network', '无法连接数据服务')

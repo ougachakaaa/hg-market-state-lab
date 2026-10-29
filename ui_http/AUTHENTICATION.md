@@ -6,7 +6,7 @@
 
 G0 仅编码已确认的 MVP 语义、必要的输入规则与验收契约。本文件描述 G1–G4 的目标行为；G0 不代表运行中的 server 已受保护。G0 不修改生产代码、依赖、数据库、HTTP routes、页面或 generated artifacts。后续 Goal 不得把尚未实现的安全契约报告为已生效。
 
-G1 已实现 Auth-owned SQLite、注册与审批 Public Python Service、canonical `lab auth` 以及无 HTTP app 构造的 Auth import。G2 已实现 Auth HTTP endpoints、HS256 Cookie/sliding session、统一 Access Gate、同源验证与内存限流，以及 OpenAPI/doctor 和两个 MO consumer 的 reconciliation。G3 Web 认证交互与 G4 整体验收仍为后续目标；当前 frontend 尚无登录界面。
+G1 已实现 Auth-owned SQLite、注册与审批 Public Python Service、canonical `lab auth` 以及无 HTTP app 构造的 Auth import。G2 已实现 Auth HTTP endpoints、HS256 Cookie/sliding session、统一 Access Gate、同源验证与内存限流，以及 OpenAPI/doctor 和两个 MO consumer 的 reconciliation。G3 已实现 Web 登录/注册、application gate、Cookie 身份恢复、退出、401 与旧请求隔离，以及独立 Auth generated contract 和同源 dev proxy。G4 整体安全验收仍为后续目标；G3 验证范围与运行方式见 [development guide](../DEVELOPMENT.md)。
 
 Auth 是 `ui_http` 内的技术访问能力，不是新的 business module、HTTP runtime、Python project 或通用用户平台。所有本地和服务器访问都需要登录；不提供 local bypass。Operator 是拥有服务器操作权限的人，无 Web 管理员角色、Admin HTTP API 或管理页面。MVP 不包含 OAuth、RBAC、邮件、密码找回、验证码、Refresh Token、Redis 或复杂风控。
 

@@ -84,7 +84,7 @@ application authentication state / access gate
 
 它不拥有 backend product semantics、feature query logic、feature presentation state、financial projection、chart series construction 或 feature-specific formatting。MO Option Chain 与 MO Premium Plane 保持独立 bounded contexts；不得为当前两个 surface 引入 generic plugin framework 或 generalized feature runtime。
 
-Application-level Login / Registration / Logout、身份检查和 Auth request lifecycle 归 [application authority](application.md#5-application-authentication-g3-target)；application Auth API/types 与产品 feature API 分开拥有。这里的全局身份状态不是 feature-local server/query state；shared transport 只传递通用信号，不反向依赖 application 或解释产品 state。
+Application-level Login / Registration / Logout、身份检查和 Auth request lifecycle 归 [application authority](application.md#5-application-authentication-g3-implemented)；application Auth API/types 与产品 feature API 分开拥有。这里的全局身份状态不是 feature-local server/query state；shared transport 只传递通用信号，不反向依赖 application 或解释产品 state。
 
 Feature Page 是单个 frontend vertical slice 的 composition root。它通过 feature hooks 取得 state 与 actions，并组合 feature controls、components、charts，以及 loading、error、empty、success presentation。Page 应主要表达 presentation composition，不应直接累积大量 HTTP lifecycle mechanics、`AbortController` coordination、stale-response logic、projection algorithms、Plotly trace/layout construction、generic formatting helper 或 domain-neutral reusable UI implementation。
 
