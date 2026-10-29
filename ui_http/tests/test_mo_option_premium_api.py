@@ -10,6 +10,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 from data_snapshot.products.mo_option_premium import service
+from http_support.auth import authenticated_client
 from ui_http import app as runtime_app
 from ui_http import create_app
 from ui_http.products.mo_option_premium import endpoint
@@ -75,7 +76,7 @@ def client() -> TestClient:
     application.dependency_overrides[endpoint.get_premium_plane_provider] = lambda: (
         lambda _query: service.PremiumPlaneResult(plane=premium_plane())
     )
-    return TestClient(application)
+    return authenticated_client(application)
 
 
 def error(response: Any) -> dict[str, Any]:
@@ -176,7 +177,7 @@ def test_classified_failures_map_without_partial_plane(
     application.dependency_overrides[endpoint.get_premium_plane_provider] = lambda: (
         lambda _query: service.PremiumPlaneResult(error=failure)
     )
-    response = TestClient(application).get(
+    response = authenticated_client(application).get(
         ROUTE, params={"as_of": AS_OF, "option_product": "MO"}
     )
 
@@ -186,13 +187,29 @@ def test_classified_failures_map_without_partial_plane(
 
 
 def test_runtime_openapi_publishes_both_products_without_422() -> None:
-    document = TestClient(runtime_app).get("/openapi.json").json()
+    document = authenticated_client(runtime_app).get("/openapi.json").json()
 
     assert set(document["paths"]) == {
-        "/mo-option-chain", ROUTE, "/research/capabilities", "/research/capabilities/{id}",
-        "/research/preview", "/research/execute",
+        "/mo-option-chain",
+        ROUTE,
+        "/research/capabilities",
+        "/research/capabilities/{id}",
+        "/research/preview",
+        "/research/execute",
+        "/auth/register",
+        "/auth/login",
+        "/auth/me",
+        "/auth/logout",
     }
-    assert set(document["paths"][ROUTE]["get"]["responses"]) == {"200", "400", "404", "503"}
+    assert set(document["paths"][ROUTE]["get"]["responses"]) == {
+        "200",
+        "400",
+        "401",
+        "403",
+        "404",
+        "500",
+        "503",
+    }
 
 
 def test_published_openapi_matches_the_frontend_contract_snapshot() -> None:

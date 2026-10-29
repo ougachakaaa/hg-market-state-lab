@@ -77,3 +77,26 @@ def test_the_bind_address_stays_overridable(monkeypatch: pytest.MonkeyPatch) -> 
 
     assert calls["host"] == "0.0.0.0"
     assert calls["port"] == 9000
+
+
+@pytest.fixture(autouse=True)
+def production_shim_environment(monkeypatch: pytest.MonkeyPatch) -> None:
+    import base64
+
+    monkeypatch.setenv("LAB_AUTH_JWT_SECRET", base64.urlsafe_b64encode(bytes(range(32))).decode())
+    monkeypatch.setenv("LAB_AUTH_ORIGIN", "https://example.test")
+    monkeypatch.setenv("LAB_AUTH_MODE", "production")
+
+
+def test_launcher_disables_implicit_proxy_trust(monkeypatch: pytest.MonkeyPatch) -> None:
+    calls = serve(load_shim(), monkeypatch, [])
+    assert calls["proxy_headers"] is False
+
+
+def test_loopback_mode_refuses_external_bind_before_starting_server(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("LAB_AUTH_MODE", "loopback-http")
+    monkeypatch.setenv("LAB_AUTH_ORIGIN", "http://127.0.0.1:5173")
+    with pytest.raises(RuntimeError, match="listener"):
+        serve(load_shim(), monkeypatch, ["--host", "0.0.0.0"])

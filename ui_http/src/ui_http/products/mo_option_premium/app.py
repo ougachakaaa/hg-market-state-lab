@@ -8,6 +8,8 @@ from typing import Any
 
 from fastapi import FastAPI
 
+from ui_http.auth._http import install_auth
+
 from .endpoint import router
 
 
@@ -35,6 +37,7 @@ def create_app() -> FastAPI:
         summary="Minimal HTTP delivery adapter for the MO Premium Plane contract.",
     )
     application.openapi = contract_openapi(application)  # type: ignore[method-assign]
+    install_auth(application)
     application.include_router(router)
     return application
 

@@ -16,11 +16,11 @@ type ErrorStatus = Exclude<keyof Operation['responses'], 200>
 type ChainErrorResponse = Operation['responses'][ErrorStatus]['content']['application/json']
 
 export class ChainRequestError extends Error {
-  readonly kind: ChainErrorKind | 'network' | 'invalid_response'
+  readonly kind: ChainErrorResponse['error']['kind'] | 'network' | 'invalid_response'
   readonly param?: ChainError['param']
 
   constructor(
-    kind: ChainErrorKind | 'network' | 'invalid_response',
+    kind: ChainErrorResponse['error']['kind'] | 'network' | 'invalid_response',
     message: string,
     param?: ChainError['param'],
   ) {

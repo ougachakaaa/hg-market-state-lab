@@ -7,7 +7,7 @@ from pathlib import Path
 from uuid import UUID, uuid4
 
 from argon2 import PasswordHasher
-from argon2.exceptions import HashingError
+from argon2.exceptions import HashingError, InvalidHashError, VerificationError, VerifyMismatchError
 from argon2.low_level import Type
 
 from ._models import (
@@ -59,7 +59,11 @@ class AuthService:
     def __init__(self, store: UserStore) -> None:
         self._store = store
         self._hasher = PasswordHasher(
-            memory_cost=19456, time_cost=2, parallelism=1, salt_len=16, type=Type.ID,
+            memory_cost=19456,
+            time_cost=2,
+            parallelism=1,
+            salt_len=16,
+            type=Type.ID,
         )
 
     def register(self, username: str, password: str) -> RegistrationAccepted:
@@ -71,10 +75,36 @@ class AuthService:
         except (HashingError, MemoryError):
             raise AuthServiceError(AuthFailureKind.OPERATIONAL_FAILURE) from None
         self._store.insert(
-            str(uuid4()), canonical, password_hash,
+            str(uuid4()),
+            canonical,
+            password_hash,
             datetime.now(UTC).isoformat(timespec="microseconds"),
         )
         return RegistrationAccepted()
+
+    def verify_credentials(self, username: str, password: str) -> UserIdentity:
+        canonical, validated = _username(username), _password(password)
+        record = self._store.find(canonical, by_username=True)
+        # Public synthetic hash with the same parameters as stored credentials.
+        dummy = (
+            "$argon2id$v=19$m=19456,t=2,p=1$c3ludGhldGljLWR1bW15IQ$"
+            "CTxQcEifVwN+Lkfcf5eTBsJ3Tc6gOYaekGJCLf3GCVU"
+        )
+        try:
+            self._hasher.verify(record[1] if record else dummy, validated)
+        except VerifyMismatchError:
+            raise AuthServiceError(AuthFailureKind.AUTHENTICATION_FAILED) from None
+        except (VerificationError, InvalidHashError, MemoryError):
+            raise AuthServiceError(AuthFailureKind.OPERATIONAL_FAILURE) from None
+        if record is None or record[0].status != UserStatus.ACTIVE:
+            raise AuthServiceError(AuthFailureKind.AUTHENTICATION_FAILED)
+        return record[0]
+
+    def get_active_user(self, user_id: str) -> UserIdentity:
+        record = self._store.find(_user_id(user_id))
+        if record is None or record[0].status != UserStatus.ACTIVE:
+            raise AuthServiceError(AuthFailureKind.AUTHENTICATION_FAILED)
+        return record[0]
 
     def list_pending(self) -> tuple[PendingUser, ...]:
         return self._store.list_pending()

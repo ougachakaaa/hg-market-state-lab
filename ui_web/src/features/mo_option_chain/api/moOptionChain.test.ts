@@ -118,3 +118,13 @@ describe('loadMoOptionChain', () => {
     expect(abortError).not.toBeInstanceOf(ChainRequestError)
   })
 })
+
+
+it.each([[401, 'authentication_required'], [403, 'origin_forbidden'], [500, 'internal_error']])(
+  'preserves generated access errors for HTTP %s', async (status, kind) => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(response({
+      error: { kind, detail: 'Access failed.', param: null },
+    }, status as number)))
+    await expect(loadMoOptionChain('2026-09-17')).rejects.toMatchObject({ kind, message: 'Access failed.' })
+  },
+)

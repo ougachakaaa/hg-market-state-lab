@@ -21,7 +21,7 @@ runtime = importlib.import_module('ui_http.app')
 assert isinstance(app, FastAPI)
 assert app is runtime.app
 assert create_app is runtime.create_app
-assert TestClient(app).get('/openapi.json').status_code == 200
+assert 'paths' in app.openapi()
 assert create_app().openapi() == app.openapi()
 """
     result = subprocess.run(

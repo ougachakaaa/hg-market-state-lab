@@ -4,13 +4,15 @@ poetry run python ui_http/tests/research_http_acceptance.py
 --write-examples refreshes the explicitly synthetic, tested guide examples.
 """
 
+import base64
 import json
+import os
 import sys
 from pathlib import Path
+from tempfile import TemporaryDirectory
 from unittest.mock import patch
 
-from fastapi.testclient import TestClient
-
+from http_support.auth import authenticated_client
 from http_support.research_services import ResearchServices
 from market_research.descriptive.execution import execute_batch
 from ui_http.app import create_app
@@ -20,6 +22,13 @@ from ui_http.products.research.requests import PLAN_EXAMPLE
 def run_acceptance(*, write_examples: bool = False) -> None:
     services = ResearchServices()
     with (
+        TemporaryDirectory(prefix="g2-research-") as directory,
+        patch.dict(os.environ, {
+            "LAB_AUTH_DB_PATH": str(Path(directory) / "auth.sqlite3"),
+            "LAB_AUTH_JWT_SECRET": base64.urlsafe_b64encode(bytes(range(32))).decode(),
+            "LAB_AUTH_ORIGIN": "https://testserver",
+            "LAB_AUTH_MODE": "production",
+        }),
         patch(
             "market_research.descriptive.cases.trailing_return.preparation.create_calendar_service",
             services.create_calendar,
@@ -29,7 +38,7 @@ def run_acceptance(*, write_examples: bool = False) -> None:
             services.create_index,
         ),
         patch("ui_http.products.research.endpoint.execute_batch", wraps=execute_batch) as delegated,
-        TestClient(create_app()) as client,
+        authenticated_client(create_app()) as client,
     ):
         schema = client.get("/openapi.json").json()
         body = schema["components"]["schemas"]["PlanBody"]["examples"][0]

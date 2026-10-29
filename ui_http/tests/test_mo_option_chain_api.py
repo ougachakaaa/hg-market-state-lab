@@ -32,6 +32,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 from data_snapshot.products.mo_option_chain import service
+from http_support.auth import authenticated_client
 from http_support.fake_chain_service import (
     CALL_WITH_NULL_PRICE,
     CALL_WITH_PRICE,
@@ -88,13 +89,13 @@ def client(provider: FakeChainReadProvider) -> TestClient:
     """The real application reading the chain from the fake boundary."""
     application = app_module.create_app()
     application.dependency_overrides[endpoint.get_chain_read_provider] = lambda: provider
-    return TestClient(application)
+    return authenticated_client(application)
 
 
 @pytest.fixture
 def default_client() -> TestClient:
     """The real application exactly as it starts, with no provider override."""
-    return TestClient(app_module.create_app())
+    return authenticated_client(app_module.create_app())
 
 
 def body(response: Any) -> dict[str, Any]:
@@ -617,7 +618,7 @@ def test_openapi_declares_every_error_kind_and_status(client: TestClient) -> Non
     operation = document["paths"][ENDPOINT]["get"]
     schemas = document["components"]["schemas"]
 
-    assert set(operation["responses"]) == {"200", "400", "404", "503"}
+    assert set(operation["responses"]) == {"200", "400", "401", "403", "404", "500", "503"}
     assert set(schemas["ChainErrorKind"]["enum"]) == set(ERROR_STATUS)
     assert schemas["ChainErrorResponse"]["required"] == ["error"]
     assert schemas["ChainErrorBody"]["required"] == ["kind", "detail"]

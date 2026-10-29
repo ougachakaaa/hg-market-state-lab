@@ -79,3 +79,13 @@ describe('loadMoOptionPremiumPlane', () => {
     expect(abortError).not.toBeInstanceOf(PremiumRequestError)
   })
 })
+
+
+it.each([[401, 'authentication_required'], [403, 'origin_forbidden'], [500, 'internal_error']])(
+  'preserves generated access errors for HTTP %s', async (status, kind) => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(response({
+      error: { kind, detail: 'Access failed.', param: null },
+    }, status as number)))
+    await expect(loadMoOptionPremiumPlane('2026-09-21', 'close')).rejects.toMatchObject({ kind, message: 'Access failed.' })
+  },
+)

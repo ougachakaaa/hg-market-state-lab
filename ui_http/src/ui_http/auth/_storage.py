@@ -1,6 +1,7 @@
 """Auth-owned SQLite implementation. Consumers use the package public service."""
 
 import os
+import re
 import sqlite3
 import tempfile
 from collections.abc import Iterator
@@ -8,6 +9,10 @@ from contextlib import closing, contextmanager
 from datetime import UTC, datetime
 from pathlib import Path
 from uuid import UUID
+
+from argon2 import extract_parameters
+from argon2.exceptions import InvalidHashError
+from argon2.low_level import Type
 
 from ._models import AuthFailureKind, AuthServiceError, PendingUser, UserIdentity, UserStatus
 
@@ -28,6 +33,7 @@ _SCHEMA_VERSION = 1
 class UserStore:
     def __init__(self, path: Path) -> None:
         self.path = path
+        self._checked = False
 
     def _initialize(self) -> None:
         if self.path.exists():
@@ -35,8 +41,9 @@ class UserStore:
         self.path.parent.mkdir(parents=True, exist_ok=True)
         # Publish a fully initialized empty DB without replacing a concurrent creator.
         # An existing empty/corrupt file must never be mistaken for a new database.
-        descriptor, filename = tempfile.mkstemp(prefix=".auth-", suffix=".sqlite3",
-                                              dir=self.path.parent)
+        descriptor, filename = tempfile.mkstemp(
+            prefix=".auth-", suffix=".sqlite3", dir=self.path.parent
+        )
         os.close(descriptor)
         temporary = Path(filename)
         try:
@@ -61,8 +68,12 @@ class UserStore:
                 with connection:
                     connection.execute("BEGIN IMMEDIATE" if write else "BEGIN")
                     self._validate_schema(connection)
+                    if write or not self._checked:
+                        if [row[0] for row in connection.execute("PRAGMA quick_check")] != ["ok"]:
+                            raise AuthServiceError(AuthFailureKind.OPERATIONAL_FAILURE)
+                        self._checked = True
                     yield connection
-        except (sqlite3.Error, OSError, ValueError, TypeError, KeyError):
+        except (sqlite3.Error, OSError, ValueError, TypeError, KeyError, InvalidHashError):
             raise AuthServiceError(AuthFailureKind.OPERATIONAL_FAILURE) from None
 
     @staticmethod
@@ -79,7 +90,6 @@ class UserStore:
         if (
             connection.execute("PRAGMA user_version").fetchone()[0] != _SCHEMA_VERSION
             or objects != expected
-            or [row[0] for row in connection.execute("PRAGMA quick_check")] != ["ok"]
         ):
             raise AuthServiceError(AuthFailureKind.OPERATIONAL_FAILURE)
 
@@ -95,7 +105,10 @@ class UserStore:
     @staticmethod
     def _identity(row: sqlite3.Row) -> UserIdentity:
         user_id = row["id"]
-        if str(UUID(user_id)) != user_id:
+        if (
+            str(UUID(user_id)) != user_id
+            or re.fullmatch(r"[a-z0-9][a-z0-9_.-]{2,63}", row["username"]) is None
+        ):
             raise ValueError("Invalid stored identity")
         return UserIdentity(user_id, row["username"], UserStatus(row["status"]))
 
@@ -110,10 +123,38 @@ class UserStore:
                 timestamp = datetime.fromisoformat(row["created_at"])
                 if timestamp.utcoffset() != UTC.utcoffset(timestamp):
                     raise ValueError("Invalid stored timestamp")
-                result.append(PendingUser(
-                    identity.id, identity.username, identity.status, timestamp,
-                ))
+                result.append(
+                    PendingUser(
+                        identity.id,
+                        identity.username,
+                        identity.status,
+                        timestamp,
+                    )
+                )
             return tuple(result)
+
+    def find(self, key: str, *, by_username: bool = False) -> tuple[UserIdentity, str] | None:
+        column = "username" if by_username else "id"
+        with self._transaction() as connection:
+            row = connection.execute(
+                "SELECT id, username, status, password_hash, created_at FROM users "
+                f"WHERE {column} = ?",
+                (key,),
+            ).fetchone()
+            if row is None:
+                return None
+            parameters = extract_parameters(row["password_hash"])
+            timestamp = datetime.fromisoformat(row["created_at"])
+            if (
+                parameters.type != Type.ID
+                or parameters.memory_cost < 19456
+                or parameters.time_cost < 2
+                or parameters.parallelism < 1
+                or parameters.salt_len < 16
+                or timestamp.utcoffset() != UTC.utcoffset(timestamp)
+            ):
+                raise ValueError("Invalid stored credentials")
+            return self._identity(row), row["password_hash"]
 
     def transition(self, user_id: str, source: UserStatus, target: UserStatus) -> UserIdentity:
         with self._transaction(write=True) as connection:

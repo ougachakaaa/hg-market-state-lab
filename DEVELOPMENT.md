@@ -44,11 +44,22 @@ poetry run lab auth pending
 
 ## 当前命令与状态
 
-G1 Auth 已提供持久化注册 Python service 与 `lab auth pending/approve/reject/disable`，使用方式见 [CLI usage guide](ui_cli/README.md#authentication注册申请与-operator-审批)。默认独立数据库为 `ui_http/data/auth.sqlite3`；`LAB_AUTH_DB_PATH` 只接受绝对路径，CLI 与未来 HTTP Auth 使用相同 composition，不依赖当前目录。整个 `ui_http/data/`（含 journal/WAL）已忽略。首次操作创建数据库；既有不兼容或损坏 schema 明确失败，不自动恢复。Auth CLI 不需要 JWT 配置；HTTP/JWT、Cookie 与访问拦截尚待 G2，当前 HTTP runtime 仍未受认证保护。
+G1 Auth 已提供持久化注册 Python service 与 `lab auth pending/approve/reject/disable`，使用方式见 [CLI usage guide](ui_cli/README.md#authentication注册申请与-operator-审批)。默认独立数据库为 `ui_http/data/auth.sqlite3`；`LAB_AUTH_DB_PATH` 只接受绝对路径，CLI 与未来 HTTP Auth 使用相同 composition，不依赖当前目录。整个 `ui_http/data/`（含 journal/WAL）已忽略。首次操作创建数据库；既有不兼容或损坏 schema 明确失败，不自动恢复。Auth CLI 不需要 JWT 配置；G2 HTTP runtime 已强制认证，包括 docs/schema 与独立 product app。注册、登录、身份查询、退出见 [Auth HTTP contract](ui_http/AUTHENTICATION.md#4-http-contract-and-access-order)。G3 登录页面和 `/auth` Vite proxy 尚未实现。
 
-`doctor` 检查仓库结构、backend launcher、当前 Python 3.13 runtime 是否位于根 `.venv`，以及 Node 和 npm。它报告默认本地地址 `127.0.0.1:8011` 的 backend 状态：未监听为 `stopped`，监听且 `/openapi.json` 有效为 `running / healthy`，否则为 `port occupied / unhealthy`。服务未启动是正常状态。若 `ui_web/package.json` 不存在，frontend 报告 `not initialized`；存在后检查默认 `127.0.0.1:5173` 是否监听，不要求专用 health endpoint。
+`doctor` 检查仓库结构、backend launcher、当前 Python 3.13 runtime 是否位于根 `.venv`，以及 Node 和 npm。它报告默认本地地址 `127.0.0.1:8011` 的 backend 状态：未监听为 `stopped`，监听且 `/openapi.json` 返回预期认证 401 为 `running / authentication required`，旧版有效 schema 200 为 `running / healthy`，否则为 `port occupied / unhealthy`。服务未启动是正常状态。若 `ui_web/package.json` 不存在，frontend 报告 `not initialized`；存在后检查默认 `127.0.0.1:5173` 是否监听，不要求专用 health endpoint。
 
 `doctor` 在必要的仓库结构、backend launcher、Poetry 或 Python 3.13 条件不满足时非零退出；frontend 已初始化但 Node/npm 不可用时也非零退出。frontend 尚未初始化和服务停止本身不使 `doctor` 失败。检查只读，不创建虚拟环境、不安装依赖，也不调用 Tushare 或运行 pytest、Ruff、mypy。
+
+启动 backend 前必须配置 Auth；没有有效配置会拒绝启动。本机 HTTP 示例（Bash，仓库根目录）：
+
+```bash
+export LAB_AUTH_MODE=loopback-http
+export LAB_AUTH_ORIGIN=http://127.0.0.1:5173
+export LAB_AUTH_JWT_SECRET="$(poetry run python -c 'import secrets; print(secrets.token_urlsafe(32))')"
+poetry run lab serve backend
+```
+
+密钥由当前 shell 继承给进程，应通过安全的环境配置保存以便重启复用；重新生成会使旧 JWT 失效，不在仓库保存或打印真实密钥。Production（默认模式）要求 HTTPS browser origin，Cookie 固定 Secure；本机模式只接受 loopback listener/origin。Launcher 禁用隐式 proxy-header trust。无浏览器的 unsafe HTTP caller 同样须携带匹配 Origin；登录只通过 HttpOnly Cookie，没有 Bearer 入口。首次 HTTP 注册为 Pending，再用 `lab auth approve` 审批；前端登录交互留给 G3。
 
 `lab serve backend` 从 repository root 使用当前 Python interpreter 前台执行 `ui_http/scripts/api.py`。`lab serve frontend` 在 `ui_web/` 前台执行系统解析到的 npm `run dev`；首次启动前需在 `ui_web/` 自行执行 `npm install`。两个命令继承标准输入输出、传递子进程退出码，Ctrl+C 结束前台进程。缺少启动前提时明确报错，不自动修复环境。
 

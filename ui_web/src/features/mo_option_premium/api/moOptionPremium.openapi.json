@@ -1,6 +1,49 @@
 {
   "components": {
     "schemas": {
+      "AuthErrorBody": {
+        "properties": {
+          "detail": {
+            "title": "Detail",
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "invalid_request",
+              "authentication_required",
+              "invalid_credentials",
+              "origin_forbidden",
+              "rate_limited",
+              "internal_error"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "param": {
+            "default": null,
+            "title": "Param",
+            "type": "null"
+          }
+        },
+        "required": [
+          "kind",
+          "detail"
+        ],
+        "title": "AuthErrorBody",
+        "type": "object"
+      },
+      "AuthErrorResponse": {
+        "properties": {
+          "error": {
+            "$ref": "#/components/schemas/AuthErrorBody"
+          }
+        },
+        "required": [
+          "error"
+        ],
+        "title": "AuthErrorResponse",
+        "type": "object"
+      },
       "ExpiryDTO": {
         "additionalProperties": false,
         "properties": {
@@ -380,6 +423,13 @@
         "title": "ValueMetricsDTO",
         "type": "object"
       }
+    },
+    "securitySchemes": {
+      "CookieSession": {
+        "in": "cookie",
+        "name": "lab_access_token",
+        "type": "apiKey"
+      }
     }
   },
   "info": {
@@ -447,6 +497,26 @@
             },
             "description": "Invalid or unsupported request."
           },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthErrorResponse"
+                }
+              }
+            },
+            "description": "HTTP access error"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthErrorResponse"
+                }
+              }
+            },
+            "description": "HTTP access error"
+          },
           "404": {
             "content": {
               "application/json": {
@@ -456,6 +526,16 @@
               }
             },
             "description": "Observation is unavailable."
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthErrorResponse"
+                }
+              }
+            },
+            "description": "HTTP access error"
           },
           "503": {
             "content": {
@@ -468,6 +548,11 @@
             "description": "Plane cannot be produced."
           }
         },
+        "security": [
+          {
+            "CookieSession": []
+          }
+        ],
         "summary": "Read Mo Option Premium Plane"
       }
     }

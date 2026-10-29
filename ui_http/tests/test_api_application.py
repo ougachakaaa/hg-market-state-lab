@@ -27,6 +27,7 @@ from fastapi.testclient import TestClient
 import ui_http
 import ui_http.products.mo_option_chain as chain_api
 import ui_http.products.mo_option_premium as premium_api
+from http_support.auth import authenticated_client
 from ui_http.products.mo_option_chain import ROUTE_PATH
 from ui_http.products.mo_option_premium import (
     ROUTE_PATH as PREMIUM_ROUTE_PATH,
@@ -67,7 +68,7 @@ def application() -> FastAPI:
 
 @pytest.fixture
 def client(application: FastAPI) -> TestClient:
-    return TestClient(application)
+    return authenticated_client(application)
 
 
 def route_paths(application: FastAPI) -> list[str]:
@@ -133,8 +134,8 @@ def test_the_application_still_serves_its_framework_routes(client: TestClient) -
 
 def test_the_published_contract_is_stable_across_builds(application: FastAPI) -> None:
     """Building the app twice publishes the same contract."""
-    first = TestClient(application).get("/openapi.json").json()
-    second = TestClient(app_module.create_app()).get("/openapi.json").json()
+    first = authenticated_client(application).get("/openapi.json").json()
+    second = authenticated_client(app_module.create_app()).get("/openapi.json").json()
 
     assert first == second
 
@@ -157,7 +158,7 @@ def test_neutral_runtime_composes_each_product_route_once() -> None:
 def test_neutral_runtime_preserves_each_product_validation_envelope(
     path: str, params: dict[str, str], missing_param: str
 ) -> None:
-    response = TestClient(runtime_module.create_app()).get(path, params=params)
+    response = authenticated_client(runtime_module.create_app()).get(path, params=params)
 
     assert response.status_code == 400
     assert response.json()["error"]["kind"] == "invalid_request"

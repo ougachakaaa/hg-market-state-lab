@@ -13,6 +13,7 @@ class UserStatus(StrEnum):
 
 
 class AuthFailureKind(StrEnum):
+    AUTHENTICATION_FAILED = "authentication_failed"
     INVALID_INPUT = "invalid_input"
     NOT_FOUND = "not_found"
     INVALID_TRANSITION = "invalid_transition"
@@ -24,12 +25,15 @@ class AuthServiceError(Exception):
 
     def __init__(self, kind: AuthFailureKind) -> None:
         self.kind = kind
-        super().__init__({
-            AuthFailureKind.INVALID_INPUT: "Invalid authentication input.",
-            AuthFailureKind.NOT_FOUND: "User not found.",
-            AuthFailureKind.INVALID_TRANSITION: "Invalid user status transition.",
-            AuthFailureKind.OPERATIONAL_FAILURE: "Authentication service unavailable.",
-        }[kind])
+        super().__init__(
+            {
+                AuthFailureKind.AUTHENTICATION_FAILED: "Authentication failed.",
+                AuthFailureKind.INVALID_INPUT: "Invalid authentication input.",
+                AuthFailureKind.NOT_FOUND: "User not found.",
+                AuthFailureKind.INVALID_TRANSITION: "Invalid user status transition.",
+                AuthFailureKind.OPERATIONAL_FAILURE: "Authentication service unavailable.",
+            }[kind]
+        )
 
 
 @dataclass(frozen=True)

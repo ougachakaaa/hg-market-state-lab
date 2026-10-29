@@ -25,6 +25,25 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /** AuthErrorBody */
+        AuthErrorBody: {
+            /** Detail */
+            detail: string;
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "invalid_request" | "authentication_required" | "invalid_credentials" | "origin_forbidden" | "rate_limited" | "internal_error";
+            /**
+             * Param
+             * @default null
+             */
+            param: null;
+        };
+        /** AuthErrorResponse */
+        AuthErrorResponse: {
+            error: components["schemas"]["AuthErrorBody"];
+        };
         /** ExpiryDTO */
         ExpiryDTO: {
             /** Dte */
@@ -192,6 +211,24 @@ export interface operations {
                     "application/json": components["schemas"]["PremiumErrorResponse"];
                 };
             };
+            /** @description HTTP access error */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AuthErrorResponse"];
+                };
+            };
+            /** @description HTTP access error */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AuthErrorResponse"];
+                };
+            };
             /** @description Observation is unavailable. */
             404: {
                 headers: {
@@ -199,6 +236,15 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PremiumErrorResponse"];
+                };
+            };
+            /** @description HTTP access error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AuthErrorResponse"];
                 };
             };
             /** @description Plane cannot be produced. */

@@ -7,6 +7,7 @@ import socket
 import subprocess
 import sys
 from pathlib import Path
+from urllib.error import HTTPError
 from urllib.request import urlopen
 
 from . import ROOT
@@ -62,6 +63,16 @@ def _backend_status() -> str:
                 and "paths" in document
             ):
                 return "running / healthy"
+    except HTTPError as error:
+        try:
+            with error:
+                if error.code == 401 and json.load(error) == {"error": {
+                    "kind": "authentication_required", "detail": "Authentication required.",
+                    "param": None,
+                }}:
+                    return "running / authentication required"
+        except (ValueError, OSError):
+            pass
     except Exception:  # A different service or malformed response is an unhealthy local port.
         pass
     return "port occupied / unhealthy" if _port_listening(BACKEND_PORT) else "stopped"

@@ -28,6 +28,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src"))
 import uvicorn  # noqa: E402
 
 from ui_http import app  # noqa: E402
+from ui_http.auth._session import AuthConfig  # noqa: E402
 
 
 def main(argv: list[str] | None = None) -> None:
@@ -35,7 +36,8 @@ def main(argv: list[str] | None = None) -> None:
     parser.add_argument("--host", default="127.0.0.1", help="Bind host.")
     parser.add_argument("--port", type=int, default=8011, help="Bind port.")
     args = parser.parse_args(argv)
-    uvicorn.run(app, host=args.host, port=args.port)
+    AuthConfig.from_environment().validate_listener(args.host)
+    uvicorn.run(app, host=args.host, port=args.port, proxy_headers=False)
 
 
 if __name__ == "__main__":

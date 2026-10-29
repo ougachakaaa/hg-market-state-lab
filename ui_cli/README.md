@@ -50,7 +50,7 @@ poetry run lab serve frontend
 
 ### Authentication：注册申请与 Operator 审批
 
-G1 发布 Python 注册 service 和本机审批 CLI，HTTP 登录与访问保护仍待 G2。Python caller 使用同一公开入口：
+G1 发布 Python 注册 service 和本机审批 CLI；G2 已提供 HTTP 注册/登录与统一访问保护。Backend 启动须先配置 Auth，见 [开发环境](../DEVELOPMENT.md)。Python caller 使用同一公开入口：
 
 ```python
 from getpass import getpass

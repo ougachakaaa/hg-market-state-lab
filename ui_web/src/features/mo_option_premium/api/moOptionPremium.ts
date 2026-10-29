@@ -20,11 +20,11 @@ type ErrorStatus = Exclude<keyof Operation['responses'], 200>
 type PremiumErrorResponse = Operation['responses'][ErrorStatus]['content']['application/json']
 
 export class PremiumRequestError extends Error {
-  readonly kind: PremiumErrorKind | 'network' | 'invalid_response'
+  readonly kind: PremiumErrorResponse['error']['kind'] | 'network' | 'invalid_response'
   readonly param?: PremiumError['param']
 
   constructor(
-    kind: PremiumErrorKind | 'network' | 'invalid_response',
+    kind: PremiumErrorResponse['error']['kind'] | 'network' | 'invalid_response',
     message: string,
     param?: PremiumError['param'],
   ) {

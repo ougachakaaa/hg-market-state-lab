@@ -110,6 +110,8 @@ poetry run python ui_http/scripts/api.py
 poetry run python ui_http/scripts/api.py --host 127.0.0.1 --port 8012
 ```
 
+启动前按 [Auth 本机配置](DEVELOPMENT.md) 设置 `LAB_AUTH_JWT_SECRET`、`LAB_AUTH_MODE` 和 `LAB_AUTH_ORIGIN`。所有业务 API、OpenAPI 和交互文档都要求有效登录 Cookie；注册需经 `lab auth approve` 审批，G3 尚未提供 Web 登录界面。
+
 默认地址为 `127.0.0.1:8011`，OpenAPI 位于 `/openapi.json`，交互文档位于 `/docs`。MO Option Chain 的 HTTP 契约见 [Option Chain authority](ui_http/products/mo_option_chain/http-contract.md)；MO Premium Plane 的 HTTP 契约见 [Premium Plane authority](ui_http/products/mo_option_premium/http-contract.md)。
 
 ## Web UI

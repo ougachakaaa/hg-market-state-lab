@@ -358,3 +358,54 @@ def test_storage_path_resolution_is_independent_of_cwd(
     # Inspect composition only: never open or mutate the real default DB in tests.
     expected = Path(__file__).resolve().parents[1] / "data" / "auth.sqlite3"
     assert create_service()._store.path == expected
+
+
+def test_repeated_active_read_checks_schema_without_repeated_full_scan(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    service = create_service()
+    service.register("alice", PASSWORD)
+    user_id = service.list_pending()[0].id
+    service.approve(user_id)
+    queries: list[str] = []
+    connect = sqlite3.connect
+
+    def tracked(*args: Any, **kwargs: Any) -> sqlite3.Connection:
+        connection = connect(*args, **kwargs)
+        connection.set_trace_callback(queries.append)
+        return connection
+
+    monkeypatch.setattr(sqlite3, "connect", tracked)
+    for _ in range(3):
+        assert service.get_active_user(user_id).status == UserStatus.ACTIVE
+    assert not any("quick_check" in query for query in queries)
+    assert sum("sqlite_schema" in query for query in queries) == 3
+    queries.clear()
+    assert create_service().get_active_user(user_id).status == UserStatus.ACTIVE
+    assert sum("quick_check" in query for query in queries) == 1
+
+
+@pytest.mark.parametrize("mutation", [
+    "PRAGMA user_version=99", "ALTER TABLE users ADD COLUMN unexpected TEXT",
+    "DROP TABLE users", "UPDATE users SET password_hash='$argon2id$broken'",
+    "UPDATE users SET created_at='broken'",
+])
+def test_hot_active_read_fails_closed_after_database_mutation(auth_db: Path, mutation: str) -> None:
+    user_id = set_status("active")
+    service = create_service()
+    assert service.get_active_user(user_id).status == UserStatus.ACTIVE
+    with closing(sqlite3.connect(auth_db)) as connection, connection:
+        connection.execute(mutation)
+    with pytest.raises(AuthServiceError) as failure:
+        service.get_active_user(user_id)
+    assert failure.value.kind == AuthFailureKind.OPERATIONAL_FAILURE
+
+
+def test_hot_read_corrupt_file_is_operational_failure(auth_db: Path) -> None:
+    user_id = set_status("active")
+    service = create_service()
+    service.get_active_user(user_id)
+    auth_db.write_bytes(b"broken database")
+    with pytest.raises(AuthServiceError) as failure:
+        service.get_active_user(user_id)
+    assert failure.value.kind == AuthFailureKind.OPERATIONAL_FAILURE

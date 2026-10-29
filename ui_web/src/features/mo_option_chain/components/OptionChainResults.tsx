@@ -1,11 +1,11 @@
-import type { ChainErrorKind, ExpiryGroup, OptionChain, OptionPoint } from '../api/moOptionChain'
+import type { ExpiryGroup, OptionChain, OptionPoint } from '../api/moOptionChain'
 import { ChainRequestError } from '../api/moOptionChain'
 import type { ExpiryColors } from '../charts/expiryPalette'
 import { missingPriceCount } from '../model/combinedChartData'
 import { formatPrice } from '../model/priceDisplay'
 import { ExpirySwatches } from './OptionChainControls'
 
-const errorTitles: Record<ChainErrorKind, string> = {
+const errorTitles: Partial<Record<ChainRequestError['kind'], string>> = {
   invalid_request: '请求日期或参数无效',
   unsupported_query: '当前不支持此查询',
   date_not_available: '该日期无可用数据',
@@ -16,7 +16,7 @@ const errorTitles: Record<ChainErrorKind, string> = {
 export function OptionChainError({ date, error }: { date: string; error: ChainRequestError }) {
   const title = error.kind === 'network' ? '无法连接数据服务'
     : error.kind === 'invalid_response' ? '数据服务响应异常'
-      : errorTitles[error.kind]
+      : errorTitles[error.kind] ?? '数据服务访问失败'
   return (
     <Alert type="error" showIcon role="alert" title={title}
       description={<Space orientation="vertical" size={0}>

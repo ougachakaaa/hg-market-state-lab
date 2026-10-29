@@ -1,6 +1,49 @@
 {
   "components": {
     "schemas": {
+      "AuthErrorBody": {
+        "properties": {
+          "detail": {
+            "title": "Detail",
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "invalid_request",
+              "authentication_required",
+              "invalid_credentials",
+              "origin_forbidden",
+              "rate_limited",
+              "internal_error"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "param": {
+            "default": null,
+            "title": "Param",
+            "type": "null"
+          }
+        },
+        "required": [
+          "kind",
+          "detail"
+        ],
+        "title": "AuthErrorBody",
+        "type": "object"
+      },
+      "AuthErrorResponse": {
+        "properties": {
+          "error": {
+            "$ref": "#/components/schemas/AuthErrorBody"
+          }
+        },
+        "required": [
+          "error"
+        ],
+        "title": "AuthErrorResponse",
+        "type": "object"
+      },
       "ChainErrorBody": {
         "additionalProperties": false,
         "description": "The single error object of every non-2xx response body.",
@@ -281,6 +324,13 @@
         "title": "ValidationError",
         "type": "object"
       }
+    },
+    "securitySchemes": {
+      "CookieSession": {
+        "in": "cookie",
+        "name": "lab_access_token",
+        "type": "apiKey"
+      }
     }
   },
   "info": {
@@ -349,6 +399,26 @@
             },
             "description": "Invalid or unsupported request."
           },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthErrorResponse"
+                }
+              }
+            },
+            "description": "HTTP access error"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthErrorResponse"
+                }
+              }
+            },
+            "description": "HTTP access error"
+          },
           "404": {
             "content": {
               "application/json": {
@@ -358,6 +428,16 @@
               }
             },
             "description": "The target trade date cannot be served by the Source."
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthErrorResponse"
+                }
+              }
+            },
+            "description": "HTTP access error"
           },
           "503": {
             "content": {
@@ -370,6 +450,11 @@
             "description": "The complete chain cannot currently be produced."
           }
         },
+        "security": [
+          {
+            "CookieSession": []
+          }
+        ],
         "summary": "Read the MO CSI1000 option chain of one target trade date"
       }
     }

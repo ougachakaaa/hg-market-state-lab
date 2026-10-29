@@ -28,6 +28,25 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /** AuthErrorBody */
+        AuthErrorBody: {
+            /** Detail */
+            detail: string;
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "invalid_request" | "authentication_required" | "invalid_credentials" | "origin_forbidden" | "rate_limited" | "internal_error";
+            /**
+             * Param
+             * @default null
+             */
+            param: null;
+        };
+        /** AuthErrorResponse */
+        AuthErrorResponse: {
+            error: components["schemas"]["AuthErrorBody"];
+        };
         /**
          * ChainErrorBody
          * @description The single error object of every non-2xx response body.
@@ -220,6 +239,24 @@ export interface operations {
                     "application/json": components["schemas"]["ChainErrorResponse"];
                 };
             };
+            /** @description HTTP access error */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AuthErrorResponse"];
+                };
+            };
+            /** @description HTTP access error */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AuthErrorResponse"];
+                };
+            };
             /** @description The target trade date cannot be served by the Source. */
             404: {
                 headers: {
@@ -227,6 +264,15 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ChainErrorResponse"];
+                };
+            };
+            /** @description HTTP access error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AuthErrorResponse"];
                 };
             };
             /** @description The complete chain cannot currently be produced. */
