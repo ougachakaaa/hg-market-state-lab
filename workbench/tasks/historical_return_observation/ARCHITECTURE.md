@@ -28,6 +28,9 @@ WB-06 records [natural-language E2E acceptance](wb06/ACCEPTANCE.md), its
 [human research report](wb06/REPORT.md), [live readiness](wb06/LIVE_READINESS.md)
 and [problem log](wb06/problems.json). Deterministic acceptance and full-history live
 acceptance have separate conclusions; these records grant no execution permission.
+WB-07's [procedure](wb07/SCENARIO.md), [current acceptance](wb07/ACCEPTANCE.md)
+and [problems](wb07/PROBLEMS.md) track the separately commissioned real-market matrix
+and persistent cold/warm cache acceptance. Each live G5 needs exact user authorization.
 
 Business meaning remains with the [Research publication](../../../market_research/descriptive/RESEARCH_CAPABILITY.md),
 [trailing-return case](../../../market_research/descriptive/cases/trailing_return/ARCHITECTURE.md)

@@ -1,0 +1,227 @@
+{
+  "baseline": "3edb363160a79e5c832c7da58bda6b4e28b19e54",
+  "cold_run_id": "d95b13c5cb554fab9f19e89cdc3c5b78",
+  "workflow": {
+    "artifact_id": "adcebe33f9b84a33becb16832f7a9ad0",
+    "sha256": "14484338f2073b73b9f19dc9e92a4a9727a91923d1975eb53146708c50733a10",
+    "stored_path": "blobs/adcebe33f9b84a33becb16832f7a9ad0"
+  },
+  "preview": {
+    "artifact_id": "7cbecef3ac3e42e2885451f14af2c160",
+    "sha256": "d61e85133090af3e6af235f39ed529dc793fc3f81b842cff835b935e04d1f3e6",
+    "stored_path": "blobs/7cbecef3ac3e42e2885451f14af2c160"
+  },
+  "planned_count": 16,
+  "analysis_attempt_count": 32,
+  "preflight": {
+    "run_id": "d95b13c5cb554fab9f19e89cdc3c5b78",
+    "workflow": {
+      "artifact_id": "adcebe33f9b84a33becb16832f7a9ad0",
+      "sha256": "14484338f2073b73b9f19dc9e92a4a9727a91923d1975eb53146708c50733a10",
+      "stored_path": "blobs/adcebe33f9b84a33becb16832f7a9ad0"
+    },
+    "preview": {
+      "artifact_id": "7cbecef3ac3e42e2885451f14af2c160",
+      "sha256": "d61e85133090af3e6af235f39ed529dc793fc3f81b842cff835b935e04d1f3e6",
+      "stored_path": "blobs/7cbecef3ac3e42e2885451f14af2c160"
+    },
+    "initial_calendar_coverage": {
+      "requested_units": 302,
+      "successful_units": 0,
+      "missing_units": 302,
+      "pending_units": 0,
+      "failed_units": 0,
+      "complete": false
+    },
+    "initial_index_coverage": {
+      "status": "OperationError",
+      "prerequisite": "incomplete Calendar; target units unknown"
+    },
+    "isolation": {
+      "factory_bindings_verified": true,
+      "implicit_calendar_verified": true,
+      "repository_bindings": {
+        "tushare_trade_calendar": 4,
+        "tushare_index_daily": 2
+      },
+      "sqlite_connections": {
+        "tushare_trade_calendar.sqlite3": 1
+      },
+      "default_cache_unchanged": true
+    },
+    "defaults": {
+      "tushare_trade_calendar": {
+        "status": "OperationError",
+        "requires_rebuild": true,
+        "calendar_dependency": true
+      },
+      "tushare_index_daily": {
+        "status": "OperationError",
+        "requires_rebuild": false,
+        "calendar_dependency": true
+      },
+      "credential_available": true,
+      "readonly_connections": [
+        "tushare_trade_calendar.sqlite3",
+        "tushare_trade_calendar.sqlite3"
+      ],
+      "default_cache_unchanged": true,
+      "provider_calls": 0,
+      "permissions": "not_verified",
+      "metadata": "not_verified"
+    },
+    "limits": {
+      "provider_calls": 160,
+      "calls_per_minute": 60,
+      "wall_seconds": 900,
+      "database_bytes": 536870912,
+      "evidence_bytes": 268435456
+    },
+    "execution": "NOT RUN; exact user authorization and tested controls required",
+    "approval_sentence": "AUTHORIZE G5 adcebe33f9b84a33becb16832f7a9ad0 14484338f2073b73b9f19dc9e92a4a9727a91923d1975eb53146708c50733a10 via market_research.descriptive.execution.execute_batch for \u7edf\u8ba1 2026 \u5e74\u56db\u4e2a\u4e3b\u8981\u6307\u6570\u7684\u5386\u53f2\u7d2f\u8ba1\u6da8\u8dcc\u5e45\u5206\u5e03\u3002 including market-data acquisition, DataLake cache writes, possible paid-data access"
+  },
+  "no_consent_audit": {
+    "limits": {
+      "provider_calls": 160,
+      "calls_per_minute": 60,
+      "wall_seconds": 900,
+      "database_bytes": 536870912,
+      "evidence_bytes": 268435456
+    },
+    "run_id": "d95b13c5cb554fab9f19e89cdc3c5b78",
+    "storage_enforcement": "250ms sampled; may overshoot by in-flight writes",
+    "factory_bindings_verified": true,
+    "implicit_calendar_verified": true,
+    "provider_calls": {},
+    "elapsed_seconds": 0.056455800076946616,
+    "database_bytes": 0,
+    "new_evidence_bytes": 1402,
+    "repository_bindings": {
+      "tushare_trade_calendar": 2,
+      "tushare_index_daily": 1
+    },
+    "sqlite_connections": {},
+    "default_cache_unchanged": true
+  },
+  "preflight_artifacts": [
+    {
+      "artifact_id": "b594977943f14beb81968545352260c5",
+      "sha256": "a6248a7dfc67ca9449bcc30861e007db6c05bf328e40ebfe1dd6dc08226de351",
+      "stored_path": "blobs/b594977943f14beb81968545352260c5"
+    },
+    {
+      "artifact_id": "0d848483b198435cb039ebd3787f888a",
+      "sha256": "5ca839e7afa4fb20fa469310af49fc5f0123dc7844ccec6fc0050c595bd0113a",
+      "stored_path": "blobs/0d848483b198435cb039ebd3787f888a"
+    }
+  ],
+  "artifacts": [
+    {
+      "artifact_id": "aa701a4ad14d48668a01728724a6c94c",
+      "label": "raw G1 backend readiness JSON",
+      "sha256": "0a3d761885b488a99f96a33954e89541ee07e0b6e00fc41172b02097cf46527b",
+      "size_bytes": 1296,
+      "stored_path": "blobs/aa701a4ad14d48668a01728724a6c94c"
+    },
+    {
+      "artifact_id": "b0a8f4c2eb3f4ff2b81187b6bbc94331",
+      "label": "raw G3 capability discovery JSON",
+      "sha256": "6946f2c2a01b469cdcdfcb33ef1094001cfdbd2600c843b656f62ee787c7e1ba",
+      "size_bytes": 11131,
+      "stored_path": "blobs/b0a8f4c2eb3f4ff2b81187b6bbc94331"
+    },
+    {
+      "artifact_id": "7cbecef3ac3e42e2885451f14af2c160",
+      "label": "G4 actual pure Preview",
+      "sha256": "d61e85133090af3e6af235f39ed529dc793fc3f81b842cff835b935e04d1f3e6",
+      "size_bytes": 6751,
+      "stored_path": "blobs/7cbecef3ac3e42e2885451f14af2c160"
+    },
+    {
+      "artifact_id": "adcebe33f9b84a33becb16832f7a9ad0",
+      "label": "G4 frozen workflow",
+      "sha256": "14484338f2073b73b9f19dc9e92a4a9727a91923d1975eb53146708c50733a10",
+      "size_bytes": 11149,
+      "stored_path": "blobs/adcebe33f9b84a33becb16832f7a9ad0"
+    },
+    {
+      "artifact_id": "e95db937e9dc4acf9c49c3f22b74545e",
+      "label": "G4 planning attempt",
+      "sha256": "fdb0b552d93a031a599f1b3c408f7e3d60fd19ae6376a7d71afd6ec64d3a647e",
+      "size_bytes": 5007,
+      "stored_path": "blobs/e95db937e9dc4acf9c49c3f22b74545e"
+    },
+    {
+      "artifact_id": "3e5aacb37cb543f8be54c4d3eb061a70",
+      "label": "G5 execution report",
+      "sha256": "7ae0fca4637fe3088c09d37322b398bc3834f05fe3adb3fd82064668214f8635",
+      "size_bytes": 654,
+      "stored_path": "blobs/3e5aacb37cb543f8be54c4d3eb061a70"
+    },
+    {
+      "artifact_id": "b594977943f14beb81968545352260c5",
+      "label": "WB-07 no-Source preflight",
+      "sha256": "a6248a7dfc67ca9449bcc30861e007db6c05bf328e40ebfe1dd6dc08226de351",
+      "size_bytes": 2416,
+      "stored_path": "blobs/b594977943f14beb81968545352260c5"
+    },
+    {
+      "artifact_id": "0d848483b198435cb039ebd3787f888a",
+      "label": "WB-07 no-consent controls audit",
+      "sha256": "5ca839e7afa4fb20fa469310af49fc5f0123dc7844ccec6fc0050c595bd0113a",
+      "size_bytes": 667,
+      "stored_path": "blobs/0d848483b198435cb039ebd3787f888a"
+    }
+  ],
+  "gates": [
+    {
+      "evidence": [
+        "aa701a4ad14d48668a01728724a6c94c"
+      ],
+      "gate_id": "G1",
+      "reason": "Observed the expected published Research OpenAPI structure.",
+      "status": "PASS"
+    },
+    {
+      "evidence": [],
+      "gate_id": "G2",
+      "reason": "Authentication deferred in current MVP; loopback backend has no authentication.",
+      "status": "SKIPPED"
+    },
+    {
+      "evidence": [],
+      "gate_id": "G6",
+      "reason": "Visualization implementation deferred in current MVP; no visualization performed.",
+      "status": "SKIPPED"
+    },
+    {
+      "evidence": [
+        "b0a8f4c2eb3f4ff2b81187b6bbc94331"
+      ],
+      "gate_id": "G3",
+      "reason": "All published capabilities inspected; required Task capability is supported.",
+      "status": "PASS"
+    },
+    {
+      "evidence": [
+        "adcebe33f9b84a33becb16832f7a9ad0",
+        "7cbecef3ac3e42e2885451f14af2c160",
+        "e95db937e9dc4acf9c49c3f22b74545e"
+      ],
+      "gate_id": "G4",
+      "reason": "Explicit full-window plan validated; pure Preview frozen; G5 authorization pending and live readiness unproven",
+      "status": "PASS"
+    },
+    {
+      "evidence": [
+        "3e5aacb37cb543f8be54c4d3eb061a70"
+      ],
+      "gate_id": "G5",
+      "reason": "Explicit trustworthy user authorization for this frozen workflow is missing or inappropriate",
+      "status": "BLOCKED"
+    }
+  ],
+  "intent_count": 0,
+  "live_execution": "NOT RUN",
+  "warm_run": "NOT RUN"
+}
