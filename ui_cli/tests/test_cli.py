@@ -21,7 +21,7 @@ def test_root_and_service_help_are_layered(capsys: pytest.CaptureFixture[str]) -
     with pytest.raises(SystemExit, match="0"):
         cli.main(["--help"])
     root_help = capsys.readouterr().out
-    assert "{doctor,serve,datalake}" in root_help
+    assert "{doctor,serve,datalake,auth}" in root_help
     assert "research" not in root_help
 
     with pytest.raises(SystemExit, match="0"):
@@ -53,8 +53,8 @@ def test_repository_cli_does_not_import_owning_module_implementation() -> None:
             elif isinstance(node, ast.ImportFrom) and node.module is not None:
                 imported.append(node.module)
     assert not any(
-        name.split(".", maxsplit=1)[0]
-        in {"market_research", "data_snapshot", "ui_http"}
+        name.split(".", maxsplit=1)[0] in {"market_research", "data_snapshot", "ui_http"}
+        and name != "ui_http.auth"
         for name in imported
     )
 

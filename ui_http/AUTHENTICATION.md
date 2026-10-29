@@ -6,6 +6,8 @@
 
 G0 仅编码已确认的 MVP 语义、必要的输入规则与验收契约。本文件描述 G1–G4 的目标行为；G0 不代表运行中的 server 已受保护。G0 不修改生产代码、依赖、数据库、HTTP routes、页面或 generated artifacts。后续 Goal 不得把尚未实现的安全契约报告为已生效。
 
+G1 已实现 Auth-owned SQLite、注册与审批 Public Python Service、canonical `lab auth` 以及无 HTTP app 构造的 Auth import。G2–G4 仍为目标契约；当前 HTTP runtime 尚未实现认证保护。
+
 Auth 是 `ui_http` 内的技术访问能力，不是新的 business module、HTTP runtime、Python project 或通用用户平台。所有本地和服务器访问都需要登录；不提供 local bypass。Operator 是拥有服务器操作权限的人，无 Web 管理员角色、Admin HTTP API 或管理页面。MVP 不包含 OAuth、RBAC、邮件、密码找回、验证码、Refresh Token、Redis 或复杂风控。
 
 ## 2. User identity and persistence
@@ -42,7 +44,9 @@ G1 发布 `ui_http.auth` 下的公开 Python service boundary；`create_service(
 
 Register 返回不揭示是否新建的受理结果。List 返回按 `(created_at, id)` 升序排列的 pending views，含 `id, username, status, created_at`；状态操作返回 `id, username, status`。公开 failure categories 为 invalid input、not found、invalid transition、operational failure；Python service 不返回 HTTP status，也不因 CLI caller 绕过状态规则。
 
-Service import 和 Operator 操作不能启动/构造 HTTP app、读取 JWT secret、访问市场数据或依赖 FastAPI request context。当前 `ui_http/__init__.py` 的 eager app import 是 G1 需要解除的 import side effect；保留现有 HTTP public entry 的兼容性，不引入第二个 launcher。CLI 仅允许导入这个公开 Auth boundary，不可进入 Auth persistence internals。
+公开 Python exports 为 `create_service() -> AuthService`、`RegistrationAccepted`（仅通用 `message`）、`UserIdentity`、`PendingUser`（含 timezone-aware UTC `datetime`）、`UserStatus` 及 `AuthServiceError` / `AuthFailureKind`。List 返回不可变 `tuple[PendingUser, ...]`；状态操作返回 `UserIdentity`。Failure 通过 `AuthServiceError.kind` 分类为 `invalid_input`、`not_found`、`invalid_transition`、`operational_failure`，异常文本不含原始输入、SQL 或配置。G2 的 credential verification / current active identity lookup 在此 boundary 内扩展；G1 不提前发布登录方法或 HTTP/JWT 实现。
+
+Service import 和 Operator 操作不能启动/构造 HTTP app、读取 JWT secret、访问市场数据或依赖 FastAPI request context。G1 已解除 G0 discovery 记录的 `ui_http/__init__.py` eager app import side effect；现有 HTTP public entry 保持兼容，不引入第二个 launcher。CLI 仅允许导入这个公开 Auth boundary，不可进入 Auth persistence internals。
 
 ## 3. Authentication and token lifecycle
 
@@ -56,7 +60,9 @@ Service import 和 Operator 操作不能启动/构造 HTTP app、读取 JWT secr
 
 ### Cookie and sliding expiration
 
-唯一登录 Cookie 名为 `lab_access_token`，`HttpOnly`、`Path=/`、无 Domain（host-only）、`SameSite=Lax`、`Max-Age=3600`，Expires 与 token 的 exp 一致；生产必须 `Secure`。JWT 仅通过 Cookie 交付，不在 JSON、URL、frontend storage 或日志中返回。Auth responses 使用 `Cache-Control: no-store`；所有通过认证的响应同样禁止共享/浏览器缓存，避免缓存身份响应或 Set-Cookie。
+唯一登录 Cookie 名为 `lab_access_token`，`HttpOnly`、`Path=/`、无 Domain（host-only）、`SameSite=Strict`、`Max-Age=3600`，Expires 与 token 的 exp 一致；生产必须 `Secure`。JWT 仅通过 Cookie 交付，不在 JSON、URL、frontend storage 或日志中返回。Auth responses 使用 `Cache-Control: no-store`；所有通过认证的响应同样禁止共享/浏览器缓存，避免缓存身份响应或 Set-Cookie。
+
+当前 frontend/API 采用 same-origin 交互，不需要 cross-site authenticated requests；部分既有 GET 会访问 Source 或写缓存，因此采用 Strict。已知约束：从外部站点导航进入时，首个跨站请求不携带该 Cookie，可能呈现未认证结果；MVP 不增加绕过或补救流程。Strict 不替代下文独立的 Origin/Referer 同源验证；G1 仅修改目标契约，不实现 Cookie 或 CSRF framework。
 
 每次成功的已认证 HTTP 请求在生成最终响应时，以当时 UTC 时间重新签发 3600 秒 JWT 并更新 Cookie。这里的成功为最终 HTTP 2xx；Research 在 200 中表达 failed/partial evidence 仍属于 HTTP 成功。请求入站时必须已持有效 JWT；不能用滑动续期挽救入站时已过期的请求。
 
@@ -137,7 +143,7 @@ Limiter 必须位于 password hashing、verification、JSON parsing、数据库�
 
 仅支持单进程内存；重启丢失计数、多个 workers/hosts 不共享、没有 distributed protection，不能替代公网入口防护。G4 必须验证并报告这些限制。
 
-默认只信任直接 socket peer，忽略客户端自带的 `Forwarded` / `X-Forwarded-For` 等 header。MVP launcher 不启用隐式 proxy-header trust；本地 Vite proxy 后多个 browser 可能共享同一 loopback bucket。若部署需要真实 client IP，必须由后续 Deployment Gate 显式确认代理地址/链、入口覆盖与 header overwrite，按可信链从右向左选择首个不可信地址；禁止 wildcard trust 和任取最左侧 header。无可确定 peer 时拒绝或使用共享保守 bucket，不使用任意 header 构造新身份。
+默认只信任直接 socket peer，忽略客户端自带的 `Forwarded` / `X-Forwarded-For` 等 header。MVP launcher 不启用隐式 proxy-header trust；本地 Vite proxy 后多个 browser 可能共享同一 loopback bucket。Trusted Proxy、真实 Client IP 解析及 Nginx 入口限流明确 deferred 至后续 Deployment Gate，G1 不实现代理支持或 HTTP limiter。若部署需要真实 client IP，必须由该 Gate 显式确认代理地址/链、入口覆盖与 header overwrite，按可信链从右向左选择首个不可信地址；禁止 wildcard trust 和任取最左侧 header。无可确定 peer 时拒绝或使用共享保守 bucket，不使用任意 header 构造新身份。
 
 ### Same-origin policy
 

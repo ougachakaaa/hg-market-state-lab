@@ -30,11 +30,16 @@ lab
 ├── serve
 │   ├── backend
 │   └── frontend
-└── datalake
-    ├── list
-    ├── coverage <dataset-id> [dataset-specific args]
-    ├── ensure   <dataset-id> [dataset-specific args]
-    └── export   <dataset-id> [dataset-specific args] --output <path>
+├── datalake
+│   ├── list
+│   ├── coverage <dataset-id> [dataset-specific args]
+│   ├── ensure   <dataset-id> [dataset-specific args]
+│   └── export   <dataset-id> [dataset-specific args] --output <path>
+└── auth
+    ├── pending
+    ├── approve <user-id>
+    ├── reject <user-id>
+    └── disable <user-id>
 ```
 
 顶层 namespace 按正式 repository-level capability 分组。`lab serve backend` 与 `lab serve frontend` 取代旧的平铺 `backend`、`frontend` 目标命令。`datalake` 通过下方明确支持的 Dataset public services 实现 delivery contract；操作示例见 [usage guide](README.md)。只有出现真实的 repository-level orchestration requirement 时才扩展 hierarchy；V1 不预定义其他 command group。
@@ -104,9 +109,9 @@ DataLake export delivery 不复制整个 dataclass tree 或构造完整 JSON str
 
 增量编码的小片段可先合并为有界字符缓冲，再写入同目录临时文件；缓冲不得随整个 export 增长，不改变编码、换行或 ordering。flush/fsync 与原子替换的既有交付契约保持不变，编码中途、写入、flush 或替换失败均保留原 output 并清理临时文件。
 
-## Authentication Operator contract (G1 target)
+## Authentication Operator contract
 
-本节是 [Authentication MVP V1](../ui_http/AUTHENTICATION.md) 的 CLI specialization；G0 只发布目标，当前 command hierarchy 不代表已实现 `auth`。G1 在同一个 canonical `lab` 下新增：
+本节是 [Authentication MVP V1](../ui_http/AUTHENTICATION.md) 的 CLI specialization；G1 在同一个 canonical `lab` 下实现：
 
 ```text
 lab auth pending

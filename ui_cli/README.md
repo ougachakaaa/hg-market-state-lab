@@ -13,6 +13,7 @@ poetry run lab --help
 poetry run lab serve --help
 poetry run lab datalake --help
 poetry run lab datalake export --help
+poetry run lab auth --help
 ```
 
 ## 命令速览
@@ -23,11 +24,16 @@ lab
 ├── serve                          前台启动开发服务
 │   ├── backend                    启动 backend
 │   └── frontend                   启动 frontend
-└── datalake                       使用 Dataset public services
-    ├── list                       发现支持的 Dataset IDs
-    ├── coverage <dataset-id>      查看当前缓存覆盖
-    ├── ensure <dataset-id>        补齐缺失或未成功的覆盖
-    └── export <dataset-id>        读取当前 semantic view 并交付 JSON
+├── datalake                       使用 Dataset public services
+│   ├── list                       发现支持的 Dataset IDs
+│   ├── coverage <dataset-id>      查看当前缓存覆盖
+│   ├── ensure <dataset-id>        补齐缺失或未成功的覆盖
+│   └── export <dataset-id>        读取当前 semantic view 并交付 JSON
+└── auth                           本机 Operator 用户审批
+    ├── pending                    查看待审批用户
+    ├── approve <user-id>          批准 Pending 用户
+    ├── reject <user-id>           拒绝 Pending 用户
+    └── disable <user-id>          禁用 Active 用户
 ```
 
 ## 常用 workflow
@@ -41,6 +47,29 @@ poetry run lab serve frontend
 ```
 
 服务在前台运行，backend 与 frontend 分别在独立终端启动，Ctrl+C 结束。环境与安装前提见 [DEVELOPMENT.md](../DEVELOPMENT.md)。
+
+### Authentication：注册申请与 Operator 审批
+
+G1 发布 Python 注册 service 和本机审批 CLI，HTTP 登录与访问保护仍待 G2。Python caller 使用同一公开入口：
+
+```python
+from getpass import getpass
+from ui_http.auth import create_service
+
+result = create_service().register(input("Username: "), getpass("Password: "))
+print(result.message)
+```
+
+Operator 从 pending 输出复制 UUID，按需执行对应命令：
+
+```bash
+poetry run lab auth pending
+poetry run lab auth approve <user-id>
+poetry run lab auth reject <user-id>
+poetry run lab auth disable <user-id>
+```
+
+`approve` / `reject` 用于 Pending；`disable` 用于 Active。重复目标状态操作成功，其他转换明确失败。空 pending 列表成功退出。CLI 不需要启动 server 或配置 JWT secret；数据库默认位于 `ui_http/data/auth.sqlite3`，可用服务器环境变量 `LAB_AUTH_DB_PATH` 指定绝对路径。用户名规则、密码要求与 service failure 分类见 [Auth authority](../ui_http/AUTHENTICATION.md#2-user-identity-and-persistence)。
 
 ### DataLake：发现、补齐、导出
 
