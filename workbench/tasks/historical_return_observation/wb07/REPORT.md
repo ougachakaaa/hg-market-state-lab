@@ -1,9 +1,8 @@
 # WB-07 real research and cache acceptance report
 
-Updated 2026-10-30 Asia/Shanghai. **Cold real-market research PASS; independent
-numerical verification PASS; public-service cache reuse PASS; Warm Research NOT RUN,
-awaiting separate exact user authorization.** Full WB-07 E2E remains incomplete until
-its independently authorized Warm Research and cold/warm result comparison complete.
+Updated 2026-10-30 Asia/Shanghai. **Cold real-market research PASS; Warm Research
+PASS; independent numerical verification PASS for both Runs; public-service and
+Research-level cache reuse PASS. The requested WB-07 E2E is complete.**
 The requested sample window remains inclusive 2026-01-01..2026-10-29.
 
 ## Actual research findings
@@ -86,16 +85,44 @@ A new independent Run `7ac42795d02f453496b6cc95fc0ec173` has actual G1/G3 PASS,
 G2/G6 SKIPPED and G4 PASS. Its Preview has the identical digest and full 16/32 plan.
 Workflow `bde3e79f53824c8896fb0fe4bb1e522a`, SHA-256:
 `94e80ee9deba25414d09ab1069f092af54ee513f4bd50f0913f0457515218fa4`.
-It has no execution intent or authorization and has not invoked Research.
+After displaying its complete separate challenge and zero-Provider envelope, the real
+user supplied its exact approval sentence on 2026-10-30. Ordinary G5 preserved that
+actual reply in authorization `57d839698fd24304ba6050765640c93f`, recorded one intent
+at sequence 13, invoked public execute_batch once, and completed at sequence 15 with
+G5 PASS at sequence 17. No cold authorization or intent was reused; no retry occurred.
 
-Warm will reuse the existing cache and enforce **zero Provider calls** with the
-existing control wrapper, plus 900 seconds, 512 MiB database storage and 256 MiB new
-Run evidence. Storage checks sample every 250ms; an in-flight overshoot remains an
-explicit limitation. The generic G5 challenge lists potential acquisition/paid-data
-side effects, but this Warm operational ceiling rejects any attempted Provider call.
-No cold authorization or intent is transferable. The exact new approval sentence is
-in evidence.json at `warm.approval_sentence` and is presented in the chat.
+Warm reused the same cache with **zero Provider calls and attempts**, sockets denied,
+and the existing 900s / 512 MiB databases / 256 MiB new evidence controls. It completed
+in 1.627 seconds; all 16 Jobs and 32 analyses succeeded. Research found every initial
+public Export complete, so it invoked no Ensure operation. New attempted units and
+records written are zero by that execution path, not invented EnsureResult counters.
+Database bytes, SHA-256 and mtimes exactly match the pre-Warm snapshot and the prior
+service-level audit. Default cache contents/size/mtime also remain unchanged.
 
-The [acceptance record](ACCEPTANCE.md) and [problem report](PROBLEMS.md) distinguish
-completed work from the remaining Warm authorization/execution/comparison. Business,
-financial and numerical contracts remain unchanged. The original full Goal continues.
+The independent saved-Export oracle passes again for all 16/32 Warm results. Every
+ordered observation, NumericSample, statistical outcome, final public Export,
+canonical input byte sequence and input fingerprint matches Cold exactly. The
+[Cold/Warm audit](cache_audit.json) contains all 16 pair checks, file snapshots and
+actual Warm controls. Warm result artifact `6baa5381b92c4a89aeb40597b294cf88`, SHA-256
+`1a9c6562aec043374bdbc0e99e696628c05efeebbd0a98c74f36ebac69f9e3c1`, is 20,285,115 bytes;
+new Run evidence through completion is 20,293,011 bytes. Its local path is
+`workbench/.runs/7ac42795d02f453496b6cc95fc0ec173/blobs/6baa5381b92c4a89aeb40597b294cf88`.
+Original full result blobs have different hashes because each binds its own Run,
+authorization and acquisition history; Warm preliminary Exports already contain all
+facts. Their final research inputs and computed outputs are identical.
+
+| Comparison | Cold | Warm |
+| --- | --- | --- |
+| Completed Jobs / analyses | 16 / 32 | 16 / 32 |
+| Provider invocations | 77 | 0 |
+| Calendar / Index new records | 328 / 828 | 0 / 0 |
+| Ensure operations | 5 Calendar + 16 Index | 0; all initial Exports complete |
+| Wall seconds | 77.846 | 1.627 |
+| Fact / observation coverage | Complete / 100% for all Jobs | Identical |
+| Original input fingerprints / observations / statistics | Saved and independently verified | Exact match for all 16 pairs |
+
+The [acceptance record](ACCEPTANCE.md), [problem report](PROBLEMS.md) and artifact
+index retain all original outcomes and limitations. Business, financial and numerical
+contracts remain unchanged. Default-cache rebuild, distributed/account-global quotas,
+future market freshness and inferences beyond this historical sample are outside the
+successful acceptance claim. Storage checks remain sampled rather than OS quotas.

@@ -1,8 +1,8 @@
 # WB-07 problem report
 
 Updated 2026-10-30 Asia/Shanghai. Cold real-market execution and independent
-verification completed; public-service cache reuse passed. Separate Warm approval
-is pending. [Evidence](evidence.json) and [acceptance](ACCEPTANCE.md) own actual outcomes.
+verification completed; independently authorized Warm Research and both cache reuse
+levels passed. [Evidence](evidence.json) and [acceptance](ACCEPTANCE.md) own actual outcomes.
 
 | ID / stage | Expected vs actual; severity / cause | Actions / status | Impact and next action |
 | --- | --- | --- | --- |
@@ -24,9 +24,12 @@ is pending. [Evidence](evidence.json) and [acceptance](ACCEPTANCE.md) own actual
 | P16 / control review | A monitoring or audit exception could stop the watchdog thread without stopping acquisition; high, discovered by pre-execution code review, not a live incident | Fail closed with process exit even when audit cannot be written; two subprocess fault tests added; RESOLVED | No provider request occurred; durable G5 intent remains the uncertainty anchor if audit storage fails |
 | P17 / post-cold inspection | Scratch inspector expected ensure_result on prepared index_slice; actual Ensure is retained in input_attempts; low, agent reporting mistake | KeyError occurred after completed G5; read original saved schema, corrected inspection without execution; RESOLVED | Original result unchanged, no retry or second intent |
 | P18 / oracle lint | Two long assertion lines failed Ruff; low, acceptance-script formatting | Split lines; Ruff/mypy pass; RESOLVED | Actual independent oracle had already passed; no business changes |
-| P19 / Warm consent | Independent Warm G4 complete, but its exact real approval absent; blocking, required separate boundary | New Run/Workflow frozen with same plan/cache; no intent or invocation; BLOCKED | Obtain displayed Warm sentence, then execute once under zero-Provider ceiling and compare original results |
+| P19 / Warm consent | Independent Warm G4 initially lacked its separate real approval; blocking, required boundary | Real user supplied exact new statement; ordinary G5 completed once under zero-Provider ceiling; RESOLVED | Both separate approvals/intents/results retained; all 16 pairs independently verified identical |
+| P20 / final reporting | Two documentation patches included nonmatching context lines; low, agent patch error | Tool rejected both patches without modifying any file; used verified context or appended the intended text; RESOLVED | No result or execution changed; no retry |
+| P21 / staged whitespace | Final JSON write used Windows CRLF despite the scoped -text byte-preservation policy; low, agent serialization mistake | Staged check rejected CR endings; normalized only committed summary JSON to LF and repeated the check; RESOLVED | Original immutable artifacts and parsed evidence values unchanged; no execution retry |
 
 Cold execution observed no Provider/unit failures or market gaps in the requested
 range. All 16 real Jobs and 32 analyses succeeded. Watchdog failures in tests are
 deliberate control tests and do not describe live execution. No execution was retried
-and no historical evidence was deleted. Warm Research remains NOT RUN.
+and no historical evidence was deleted. Warm Research also completed all 16/32,
+with zero Provider calls/Ensure/new records and exact Cold input/output equality.

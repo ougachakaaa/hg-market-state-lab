@@ -7,8 +7,8 @@ Preparation/consent-blocker commit: `a3ab0b586badee0d2eea71a7d902655de870dbfc`.
 [matrix](MATRIX.md), [intervals](DISTRIBUTIONS.md), [results](results.json),
 [problems](PROBLEMS.md) and [artifact index](evidence.json) separate concerns.
 
-**Cold real-market acceptance PASS. Public-service cache reuse PASS. Warm Research
-NOT RUN, awaiting separate actual user approval. Full E2E NOT COMPLETE.**
+**Full requested WB-07 real-market E2E PASS: Cold and Warm Research, independent
+numerical verification, public-service and Research-level cache reuse all complete.**
 
 ## Frozen inputs and actual cold execution
 
@@ -84,20 +84,32 @@ Original BatchResult remains unchanged and can be reread from its immutable arti
 | B real facts/metadata | PASS cold: actual Dataset Exports and four matching metadata identities |
 | C independent correctness | PASS cold: saved public Export oracles, no network/SQLite |
 | D cache population | PASS cold: original Ensure/Export evidence and guarded SQLite writes |
-| E cache reuse | PASS public-service level; Research-level Warm NOT RUN |
-| F isolation | PASS cold and service reuse; default contents unchanged |
-| G original evidence | PASS cold: real approval/intent/result/audits, immutable digests verified |
-| H problem reporting | PASS for encountered issues; limitations and Warm pending status explicit |
+| E cache reuse | PASS public-service and Research-level Warm; zero Provider calls/new records; all 16 input/output pairs identical |
+| F isolation | PASS both Runs and service reuse; default contents unchanged; Warm cache bytes/hashes/mtimes unchanged |
+| G original evidence | PASS both Runs: separate real approvals/intents/results/audits, immutable digests verified |
+| H problem reporting | PASS for all encountered issues; resolved blockers and residual limitations explicit |
 
 New Warm Run: `7ac42795d02f453496b6cc95fc0ec173`; Workflow:
 `bde3e79f53824c8896fb0fe4bb1e522a`; SHA-256:
 `94e80ee9deba25414d09ab1069f092af54ee513f4bd50f0913f0457515218fa4`.
 Actual G1/G3/G4 PASS; G2/G6 exact SKIPPED reasons. Same entire plan, same Preview
-hash, same retained cache. No Warm authorization/intent/invocation. Propose zero
-Provider calls (enforced rejection of any need), 900s, 512 MiB databases and 256 MiB
-new evidence, same sampled-storage limitation. Separate real exact user approval is
-required before that new G5. After execution, compare actual observations, statistics,
-fingerprints, Export payloads, Ensure counters, Provider count and cache file invariance.
+hash, same retained cache. The real user supplied its exact separately displayed
+approval on 2026-10-30. Ordinary G5 saved authorization
+`57d839698fd24304ba6050765640c93f`, intent sequence 13, original BatchResult
+`6baa5381b92c4a89aeb40597b294cf88`, completion sequence 15 and PASS sequence 17.
+Exactly one Warm intent and one public Batch invocation, independent of Cold.
+
+Warm result SHA-256:
+`1a9c6562aec043374bdbc0e99e696628c05efeebbd0a98c74f36ebac69f9e3c1`, 20,285,115 bytes.
+Its 16 Jobs / 32 analyses succeeded in 1.627s. Actual enforced Provider ceiling zero;
+no Provider calls or attempts, sockets denied, no ceiling/monitor fault. Every initial
+Export was complete, so Research called no Ensure. No synthetic zero-counter result
+was inserted. Cache file sizes, SHA-256 and mtimes before/after match exactly; default
+cache checks match. New evidence 20,293,011 bytes, within the unchanged storage/time
+envelope. The [audit](cache_audit.json) and original registered comparison preserve
+all 16 exact observation/statistics/Export/canonical-byte/fingerprint pair checks.
+The independent saved-Export oracle passes separately for all Warm Jobs and analyses.
+No remaining research or cache acceptance item is deferred.
 
 ## Commands and checks
 
@@ -113,6 +125,7 @@ business seam was installed. Additional actual commands:
 ```powershell
 poetry run python workbench/tasks/historical_return_observation/wb07/verify_saved.py --run d95b13c5cb554fab9f19e89cdc3c5b78 --output workbench/.runs/wb07-cold-verified.json
 poetry run python workbench/tasks/historical_return_observation/wb07/verify_cache.py --run d95b13c5cb554fab9f19e89cdc3c5b78 --output workbench/.runs/wb07-cache-verified.json
+poetry run python workbench/tasks/historical_return_observation/wb07/verify_saved.py --run 7ac42795d02f453496b6cc95fc0ec173 --output workbench/.runs/wb07-warm-verified.json
 poetry run python ui_http/scripts/api.py --host 127.0.0.1 --port 18071
 poetry run ruff check workbench
 poetry run mypy workbench/run_store.py workbench/tasks/historical_return_observation
@@ -131,3 +144,25 @@ candidate, actual newly launched backend and the new Run above. Existing cold Ga
 were read, never replanned or repeated. Both pure Preview and G4 evidence remain
 unchanged. Verification/reporting code is Task-local acceptance tooling, not new
 Workbench or business functionality.
+
+Final reconciliation: actual natural-language request -> separately frozen and
+genuinely authorized Cold/Warm Workflows -> real public Batch and DataLake
+Ensure/Export -> independent saved-fact oracles -> original result comparison ->
+this acceptance. Task v1, Research/Statistics/producer ownership and formulas remain
+their canonical owners'. Both approved executions retained full dates, H, methods,
+coverage and provenance. No acquisition retry, provider fallback, cache repair or
+silent population change occurred. G2/G6 remain approved SKIPPED, not authentication
+or visualization PASS. Remaining OPEN items are the default-cache condition, sampled
+storage limitation and existing dependency warning; none falsifies this isolated
+historical acceptance or claims future/provider-current freshness.
+
+Final delivery checks: 263 Workbench tests passed in 102.04s (one existing
+Starlette warning); all 21 topology/HTTP checks passed in 13.00s. Ruff and mypy
+(11 source files) passed; the existing storage acceptance example passed. Final
+read-only audit independently rechecked both 16/32 numerical results, all 16 exact
+Cold/Warm pairs, separate real authorizations and one intent per Run, cache file
+invariance, unchanged Task digest, 16 matrix rows and 16 complete interval groups.
+It verified 26 preceding original artifacts, then was itself registered as artifact
+`ecbd29bde01e488ab6949cebe3835dfd`; RunStore integrity checks cover all 27 retained
+artifacts. Historical missing-consent/pre-Warm snapshots remain explicitly historical.
+The delivery commit is discoverable with `git log -1 --format=%H -- workbench/tasks/historical_return_observation/wb07/REPORT.md`; its exact SHA is also provided in the final response.

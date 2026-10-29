@@ -1,6 +1,9 @@
-# WB-07 actual interval distributions
+# WB-07 actual Cold/Warm interval distributions
 
 Original decimal_ratio edges are fixed by the user request. Intervals are left-closed/right-open except the final bin, which includes 0.15. Each frequency uses the complete 197-sample denominator, including both tails. Values below are percentages for display; [results.json](results.json) retains original full-precision frequencies.
+
+All 16 independently executed Warm distributions exactly match the Cold outcomes
+below; both saved-Export numerical verifications passed. See [cache audit](cache_audit.json).
 
 ## 000852.SH 中证1000 H=1
 

@@ -1,4 +1,4 @@
-# WB-07 actual cold research matrix
+# WB-07 actual Cold/Warm research matrix
 
 Source: immutable actual Research BatchResult `06f9fc648e16494dbf79ab35585a3a09`, SHA-256 `e59d737f93212b48b934926b19833b7f2fc832327ee726e434deab2b45d40fb1`. Full precision values and interval outcomes: [results.json](results.json). Independent saved-Export verification passed for all 16 Jobs / 32 analyses.
 
@@ -26,3 +26,8 @@ Inclusive question window: 2026-01-01..2026-10-29. First open anchor 2026-01-05;
 All figures describe historical distributions. Overlapping lookback spans share market inputs; no IID, prediction, tradability or strategy-return claim follows.
 
 The four H=1 medians are 中证1000 0.1974%, 中证500 0.0355%, 沪深300 -0.0435%, 上证50 -0.0511%. At H=10 the corresponding medians are 中证1000 -0.5547%, 中证500 -0.6966%, 沪深300 -0.8747%, 上证50 -0.8611%. These are descriptive endpoint returns, not annualized or strategy returns.
+
+The independently authorized Warm Run `7ac42795d02f453496b6cc95fc0ec173` produced
+identical full-precision values for every row. Its own saved-Export oracle verified all
+16 Jobs / 32 analyses; [Cold/Warm audit](cache_audit.json) binds the separate result
+artifact and all original fingerprint/observation/statistical equality checks.
