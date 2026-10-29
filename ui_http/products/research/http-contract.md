@@ -137,8 +137,14 @@ unique operation IDs and actual response statuses. Remove the unused framework 4
 where its real 400 response is documented. MO routes, error schemas and generated per-feature
 contracts retain their semantics; global composition tests add the four Research paths.
 
-Default launch remains `poetry run lab serve backend`, 127.0.0.1:8011, no auth, CORS or
-public deployment added. No frontend Research consumer is admitted: run sibling generation
+Default launch remains `poetry run lab serve backend`, 127.0.0.1:8011. Repository-wide
+access follows [Authentication MVP V1](../../AUTHENTICATION.md), superseding the previous
+no-auth runtime scope: all four Research operations require authentication before parsing,
+preflight, guard acquisition or execution. Auth errors remain separate from the closed
+product error map above. G0 encodes this target; G2 implements the gate. Acquisition
+acknowledgment, HTTP bounds and the single-process execution guard remain required;
+authentication does not approve public exposure of execute. No CORS or public deployment
+is introduced. No frontend Research consumer is admitted: run sibling generation
 and freshness checks but create no Research TypeScript artifacts. OpenAPI/local HTTP alone
 does not connect a cloud agent; registered reachable tooling is required. No MCP, cloud
 hosting, cache repair, historical-run retrieval or additional Research engine is introduced.

@@ -10,7 +10,7 @@ The owning directory and Python namespace are `ui_cli`. The executable stays `la
 
 `hg-market-state-lab` 是 repository / system identity；`lab` 是安装于 repository canonical Python project 的正式 console command，面向 human、operator 与 developer。`lab` 是 repository-level operator/orchestration interface，不是业务模块。
 
-`lab` 只拥有 command parsing、hierarchical help、repository path/runtime resolution、local prerequisite/readiness checks、process invocation 与 foreground lifecycle、command forwarding、exit-code propagation、人类可读的 operational errors、明确需要的 repository-level discovery，以及 DataLake public service delegation、summary、exit-code mapping 与 export file delivery。它不拥有 DataSet、Snapshot、Research method/dataset/result、Modeling、HTTP product 或 frontend 语义；共享根 `.venv` 与可 import 的下层 package 不授予跨模块 semantic access。
+`lab` 只拥有 command parsing、hierarchical help、repository path/runtime resolution、local prerequisite/readiness checks、process invocation 与 foreground lifecycle、command forwarding、exit-code propagation、人类可读的 operational errors、明确需要的 repository-level discovery，以及 DataLake / Auth public service delegation、summary、exit-code mapping 与已声明的 file delivery。它不拥有 DataSet、Snapshot、Research method/dataset/result、Modeling、Auth identity/state/storage、HTTP product 或 frontend 语义；共享根 `.venv` 与可 import 的下层 package 不授予跨模块 semantic access。
 
 原则：`lab` orchestrates；owning modules define semantics and execute domain behavior。`lab` 不重新实现或复制下层业务逻辑。
 
@@ -103,6 +103,29 @@ V1 不提供组合启动、后台进程管理、依赖安装、测试运行、�
 DataLake export delivery 不复制整个 dataclass tree 或构造完整 JSON string。编码/写入/替换失败清理临时文件并保留已有 output；wire 字段、日期、null 与 ordering 保持 Dataset contract。
 
 增量编码的小片段可先合并为有界字符缓冲，再写入同目录临时文件；缓冲不得随整个 export 增长，不改变编码、换行或 ordering。flush/fsync 与原子替换的既有交付契约保持不变，编码中途、写入、flush 或替换失败均保留原 output 并清理临时文件。
+
+## Authentication Operator contract (G1 target)
+
+本节是 [Authentication MVP V1](../ui_http/AUTHENTICATION.md) 的 CLI specialization；G0 只发布目标，当前 command hierarchy 不代表已实现 `auth`。G1 在同一个 canonical `lab` 下新增：
+
+```text
+lab auth pending
+lab auth approve <user-id>
+lab auth reject <user-id>
+lab auth disable <user-id>
+```
+
+此能力扩展上文的 public service delegation 范围，CLI 不拥有 Auth identity/state/storage。Operator 由服务器 OS/操作权限定义；CLI 不要求 Web 登录、JWT secret 或 HTTP server，也不建立管理员角色。它直接调用 `ui_http.auth` 公开 service，不能调用 HTTP endpoint、打开 SQLite、导入 persistence internals、实现哈希或重新定义状态转换。HTTP 与 CLI 使用相同 Auth-owned storage composition；不接受 `--db`、`--password` 或 `--token`，也不提供 CLI register/login、密码管理或用户批量操作。
+
+`pending` 无参数，展示 service 返回的 ID、规范化 username、status、UTC created_at，保持其排序；空列表显示无待审批申请并成功。三个状态命令各接受一个 UUID user ID，先作 CLI parsing，再委托 owning service；成功展示 ID、username、结果 status，不输出 hash 或凭据。State matrix、幂等与 failure classification 仅由 Auth authority 拥有。
+
+| Result | Exit code | Delivery |
+| --- | --- | --- |
+| pending 或状态操作成功（包括目标状态幂等） | 0 | 人类可读结果 |
+| parsing、invalid input、unknown user ID 或 invalid transition | 2 | 安全的输入/目标错误 |
+| storage/configuration/operational failure | 1 | 安全的执行错误，无 SQL、hash、secret |
+
+G2 同时按 Auth authority 调整 `doctor`：受保护 `/openapi.json` 的预期 401 报告 `running / authentication required`，不使 readiness 失败，不获取凭据、不登录、不添加匿名健康路由。其他 prerequisite 检查、端口诊断与退出码保持原边界。G0/G1 的无认证 runtime 仍按现有 200 OpenAPI 检测；正式 Auth 生效后不保留匿名 schema exemption。
 
 ## Research retirement
 

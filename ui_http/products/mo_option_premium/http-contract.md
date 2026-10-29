@@ -415,6 +415,8 @@ generated TypeScript
 React / Plotly renderer
 ```
 
+Repository-wide access 前置条件遵循 [Authentication MVP V1](../../AUTHENTICATION.md)。上节 auth non-goal 表示产品不拥有认证协议，不再承诺匿名访问；Auth failures/Cookie 与本产品的 DTO、error enum 和业务分类独立。G0 编码目标、G2 实现 gate；原产品计算与 sparse-plane 语义不变。
+
 ## 12. Completion Check
 
 仅阅读 [MO Premium Plane product authority](../../../data_snapshot/src/data_snapshot/products/mo_option_premium/ARCHITECTURE.md) 与本文档，应能唯一回答：

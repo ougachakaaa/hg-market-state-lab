@@ -251,6 +251,8 @@ server deployment / 反向代理 / TLS 配置
 
 `service_not_wired` 仅保留作 bootstrap/test compatibility；它不属于 market semantic failure。
 
+本节 auth non-goal 仅表示本产品不拥有认证协议。Repository HTTP access 统一遵循 [Authentication MVP V1](../../AUTHENTICATION.md)，本地与服务器均无匿名产品访问例外；认证前置响应与 Cookie 不并入本产品 closed error kinds 或业务 DTO。G0 只发布该目标，实际 gate 由 Auth G2 实现；其余 V1 non-goals 保留。
+
 ## 9. 完成自检
 
 仅阅读本文档与 [product authority](../../../data_snapshot/src/data_snapshot/products/mo_option_chain/ARCHITECTURE.md) / [read contract](../../../data_snapshot/src/data_snapshot/products/mo_option_chain/read-contract.md)，应能唯一回答：
