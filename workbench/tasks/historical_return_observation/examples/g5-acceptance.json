@@ -1,0 +1,1056 @@
+{
+  "synthetic_only": true,
+  "live_readiness": "not_verified",
+  "provider_calls": 0,
+  "default_cache_access": false,
+  "cases": [
+    {
+      "scenario": "success",
+      "run_id": "4e66bd4669064d1e87076bd9589f8793",
+      "g5_status": "PASS",
+      "execution_context": "synthetic_test",
+      "execute_batch_call_count": 1,
+      "statistics_call_count": 2,
+      "original_evidence_unchanged": true,
+      "fresh_process_read_verified": true,
+      "workflow_artifact": {
+        "artifact_id": "cf2220be32064f269391d334494a512d",
+        "sha256": "de0511fb4df667ff0bde8d5178696e57f5ce00e7d1af56db0540e96b2c5be89a",
+        "stored_path": "blobs/cf2220be32064f269391d334494a512d"
+      },
+      "authorization_artifact": {
+        "artifact_id": "37ecec98b7824ef28dacbf08bb145b75",
+        "sha256": "d6c39062b8ede3e6ba272352ef00715e0ea7edddc65487a77d0c98c9a5a5d51e",
+        "stored_path": "blobs/37ecec98b7824ef28dacbf08bb145b75"
+      },
+      "result_artifact": {
+        "artifact_id": "b5f836849cb84ab18f497f56a25286b9",
+        "sha256": "dad2f2b226f010e47766a2110b20e6a5a1ae505c1b5a877527766c87b96f7964",
+        "stored_path": "blobs/b5f836849cb84ab18f497f56a25286b9"
+      },
+      "report_artifact": {
+        "artifact_id": "dfc38523ecb142d6a0476c1e5b6c241d",
+        "sha256": "662367c4ac0b9713a2ab53382dd502b0e48022498b55845db1340f08c70c676a",
+        "stored_path": "blobs/dfc38523ecb142d6a0476c1e5b6c241d"
+      },
+      "result_path": "C:\\Users\\Benjamin\\source\\repos\\hg-market-state-lab\\workbench\\.runs\\4e66bd4669064d1e87076bd9589f8793\\blobs\\b5f836849cb84ab18f497f56a25286b9",
+      "batch_status": "success",
+      "counts": {
+        "planned_count": 1,
+        "success_count": 1,
+        "failed_count": 0,
+        "skipped_count": 0
+      },
+      "plan": {
+        "analysis_requests": [
+          {
+            "request_id": "quartiles",
+            "spec": {
+              "method": "quantile",
+              "points": [
+                0.0,
+                0.25,
+                0.5,
+                0.75,
+                1.0
+              ]
+            }
+          },
+          {
+            "request_id": "explicit-bins",
+            "spec": {
+              "edges": [
+                -0.2,
+                -0.1,
+                0.0,
+                0.1,
+                0.2
+              ],
+              "method": "interval_count",
+              "unit": "decimal_ratio"
+            }
+          }
+        ],
+        "horizons": [
+          2
+        ],
+        "metric": "trailing_cumulative_return_v1",
+        "metric_parameters": {},
+        "on_job_failure": "continue",
+        "subjects": [
+          "000001.SH"
+        ],
+        "windows": [
+          {
+            "end_date": "2024-01-12",
+            "start_date": "2024-01-10"
+          }
+        ]
+      },
+      "jobs": [
+        {
+          "job_identity": [
+            "trailing_cumulative_return_v1",
+            "000001.SH",
+            [],
+            2,
+            "trading_sessions",
+            "2024-01-10",
+            "2024-01-12",
+            "end_session",
+            "inclusive"
+          ],
+          "status": "Success",
+          "population": {
+            "candidate_count": 3,
+            "eligible_count": 3,
+            "unavailable_count": 0,
+            "excluded_count": 0,
+            "observation_coverage": 1.0
+          },
+          "fact_coverage": {
+            "overall": 1.0,
+            "warm_up": 1.0,
+            "sample": 1.0
+          },
+          "input_fingerprint": "a8070811a40b23de33a7eb8dec984020ed15360464f72a5251e61735816e883c",
+          "analyses": [
+            {
+              "request": {
+                "request_id": "quartiles",
+                "spec": {
+                  "method": "quantile",
+                  "points": [
+                    0.0,
+                    0.25,
+                    0.5,
+                    0.75,
+                    1.0
+                  ]
+                }
+              },
+              "status": "success",
+              "statistical_result": {
+                "estimator": "type7_linear_v1",
+                "method": "quantile",
+                "points_and_values": [
+                  [
+                    0.0,
+                    0.05660377358490565
+                  ],
+                  [
+                    0.25,
+                    0.05742810038468582
+                  ],
+                  [
+                    0.5,
+                    0.058252427184465994
+                  ],
+                  [
+                    0.75,
+                    0.05912621359223302
+                  ],
+                  [
+                    1.0,
+                    0.06000000000000005
+                  ]
+                ],
+                "sample_count": 3,
+                "unit": "decimal_ratio"
+              },
+              "failure": null
+            },
+            {
+              "request": {
+                "request_id": "explicit-bins",
+                "spec": {
+                  "edges": [
+                    -0.2,
+                    -0.1,
+                    0.0,
+                    0.1,
+                    0.2
+                  ],
+                  "method": "interval_count",
+                  "unit": "decimal_ratio"
+                }
+              },
+              "status": "success",
+              "statistical_result": {
+                "bins": [
+                  {
+                    "count": 0,
+                    "frequency": 0.0,
+                    "left": -0.2,
+                    "left_inclusive": true,
+                    "right": -0.1,
+                    "right_inclusive": false
+                  },
+                  {
+                    "count": 0,
+                    "frequency": 0.0,
+                    "left": -0.1,
+                    "left_inclusive": true,
+                    "right": 0.0,
+                    "right_inclusive": false
+                  },
+                  {
+                    "count": 3,
+                    "frequency": 1.0,
+                    "left": 0.0,
+                    "left_inclusive": true,
+                    "right": 0.1,
+                    "right_inclusive": false
+                  },
+                  {
+                    "count": 0,
+                    "frequency": 0.0,
+                    "left": 0.1,
+                    "left_inclusive": true,
+                    "right": 0.2,
+                    "right_inclusive": true
+                  }
+                ],
+                "edges": [
+                  -0.2,
+                  -0.1,
+                  0.0,
+                  0.1,
+                  0.2
+                ],
+                "method": "interval_count",
+                "overflow_count": 0,
+                "overflow_frequency": 0.0,
+                "sample_count": 3,
+                "underflow_count": 0,
+                "underflow_frequency": 0.0,
+                "unit": "decimal_ratio"
+              },
+              "failure": null
+            }
+          ]
+        }
+      ],
+      "gate_sequence": 16
+    },
+    {
+      "scenario": "partial_batch",
+      "run_id": "703ff8e4d4b445138f5059087cf317de",
+      "g5_status": "FAIL",
+      "execution_context": "synthetic_test",
+      "execute_batch_call_count": 1,
+      "statistics_call_count": 4,
+      "original_evidence_unchanged": true,
+      "fresh_process_read_verified": true,
+      "workflow_artifact": {
+        "artifact_id": "b4e1a28c9b6c4a8f86756366d1d5802d",
+        "sha256": "24c6899da97ac339598dd1b6b852e837f39ad9445491e5defc582603fbf988da",
+        "stored_path": "blobs/b4e1a28c9b6c4a8f86756366d1d5802d"
+      },
+      "authorization_artifact": {
+        "artifact_id": "9720f07575314ed2bdbd75ec0c162746",
+        "sha256": "7b5f21873dea1c7b38dd821185558da3478895425d836b3fa5e1ed7d5f9a34dd",
+        "stored_path": "blobs/9720f07575314ed2bdbd75ec0c162746"
+      },
+      "result_artifact": {
+        "artifact_id": "61d00e1bf8464000b7d2113983aa175b",
+        "sha256": "d0569803b51b410377369355f5e8194407fc9fe9518425d40871e6dc53e82b3b",
+        "stored_path": "blobs/61d00e1bf8464000b7d2113983aa175b"
+      },
+      "report_artifact": {
+        "artifact_id": "42d26ab90ac94037afd215da94263770",
+        "sha256": "589e5e1c95a2c4e70a4055295b64e80e351b260da5fff5e95e30c752c8d03ed9",
+        "stored_path": "blobs/42d26ab90ac94037afd215da94263770"
+      },
+      "result_path": "C:\\Users\\Benjamin\\source\\repos\\hg-market-state-lab\\workbench\\.runs\\703ff8e4d4b445138f5059087cf317de\\blobs\\61d00e1bf8464000b7d2113983aa175b",
+      "batch_status": "partial_success",
+      "counts": {
+        "planned_count": 2,
+        "success_count": 1,
+        "failed_count": 1,
+        "skipped_count": 0
+      },
+      "plan": {
+        "analysis_requests": [
+          {
+            "request_id": "quartiles",
+            "spec": {
+              "method": "quantile",
+              "points": [
+                0.0,
+                0.25,
+                0.5,
+                0.75,
+                1.0
+              ]
+            }
+          },
+          {
+            "request_id": "explicit-bins",
+            "spec": {
+              "edges": [
+                -0.2,
+                -0.1,
+                0.0,
+                0.1,
+                0.2
+              ],
+              "method": "interval_count",
+              "unit": "decimal_ratio"
+            }
+          }
+        ],
+        "horizons": [
+          2
+        ],
+        "metric": "trailing_cumulative_return_v1",
+        "metric_parameters": {},
+        "on_job_failure": "continue",
+        "subjects": [
+          "000001.SH",
+          "000300.SH"
+        ],
+        "windows": [
+          {
+            "end_date": "2024-01-12",
+            "start_date": "2024-01-10"
+          }
+        ]
+      },
+      "jobs": [
+        {
+          "job_identity": [
+            "trailing_cumulative_return_v1",
+            "000001.SH",
+            [],
+            2,
+            "trading_sessions",
+            "2024-01-10",
+            "2024-01-12",
+            "end_session",
+            "inclusive"
+          ],
+          "status": "Success",
+          "population": {
+            "candidate_count": 3,
+            "eligible_count": 3,
+            "unavailable_count": 0,
+            "excluded_count": 0,
+            "observation_coverage": 1.0
+          },
+          "fact_coverage": {
+            "overall": 1.0,
+            "warm_up": 1.0,
+            "sample": 1.0
+          },
+          "input_fingerprint": "a8070811a40b23de33a7eb8dec984020ed15360464f72a5251e61735816e883c",
+          "analyses": [
+            {
+              "request": {
+                "request_id": "quartiles",
+                "spec": {
+                  "method": "quantile",
+                  "points": [
+                    0.0,
+                    0.25,
+                    0.5,
+                    0.75,
+                    1.0
+                  ]
+                }
+              },
+              "status": "success",
+              "statistical_result": {
+                "estimator": "type7_linear_v1",
+                "method": "quantile",
+                "points_and_values": [
+                  [
+                    0.0,
+                    0.05660377358490565
+                  ],
+                  [
+                    0.25,
+                    0.05742810038468582
+                  ],
+                  [
+                    0.5,
+                    0.058252427184465994
+                  ],
+                  [
+                    0.75,
+                    0.05912621359223302
+                  ],
+                  [
+                    1.0,
+                    0.06000000000000005
+                  ]
+                ],
+                "sample_count": 3,
+                "unit": "decimal_ratio"
+              },
+              "failure": null
+            },
+            {
+              "request": {
+                "request_id": "explicit-bins",
+                "spec": {
+                  "edges": [
+                    -0.2,
+                    -0.1,
+                    0.0,
+                    0.1,
+                    0.2
+                  ],
+                  "method": "interval_count",
+                  "unit": "decimal_ratio"
+                }
+              },
+              "status": "success",
+              "statistical_result": {
+                "bins": [
+                  {
+                    "count": 0,
+                    "frequency": 0.0,
+                    "left": -0.2,
+                    "left_inclusive": true,
+                    "right": -0.1,
+                    "right_inclusive": false
+                  },
+                  {
+                    "count": 0,
+                    "frequency": 0.0,
+                    "left": -0.1,
+                    "left_inclusive": true,
+                    "right": 0.0,
+                    "right_inclusive": false
+                  },
+                  {
+                    "count": 3,
+                    "frequency": 1.0,
+                    "left": 0.0,
+                    "left_inclusive": true,
+                    "right": 0.1,
+                    "right_inclusive": false
+                  },
+                  {
+                    "count": 0,
+                    "frequency": 0.0,
+                    "left": 0.1,
+                    "left_inclusive": true,
+                    "right": 0.2,
+                    "right_inclusive": true
+                  }
+                ],
+                "edges": [
+                  -0.2,
+                  -0.1,
+                  0.0,
+                  0.1,
+                  0.2
+                ],
+                "method": "interval_count",
+                "overflow_count": 0,
+                "overflow_frequency": 0.0,
+                "sample_count": 3,
+                "underflow_count": 0,
+                "underflow_frequency": 0.0,
+                "unit": "decimal_ratio"
+              },
+              "failure": null
+            }
+          ]
+        },
+        {
+          "job_identity": [
+            "trailing_cumulative_return_v1",
+            "000300.SH",
+            [],
+            2,
+            "trading_sessions",
+            "2024-01-10",
+            "2024-01-12",
+            "end_session",
+            "inclusive"
+          ],
+          "status": "Failed",
+          "population": {
+            "candidate_count": 3,
+            "eligible_count": 3,
+            "unavailable_count": 0,
+            "excluded_count": 0,
+            "observation_coverage": 1.0
+          },
+          "fact_coverage": {
+            "overall": 1.0,
+            "warm_up": 1.0,
+            "sample": 1.0
+          },
+          "input_fingerprint": "f309654c18042629dce211bc69aeba70577483c22c628880bbb9c0561e659936",
+          "analyses": [
+            {
+              "request": {
+                "request_id": "quartiles",
+                "spec": {
+                  "method": "quantile",
+                  "points": [
+                    0.0,
+                    0.25,
+                    0.5,
+                    0.75,
+                    1.0
+                  ]
+                }
+              },
+              "status": "failed",
+              "statistical_result": null,
+              "failure": {
+                "diagnostic_text_omitted": true,
+                "failure_category": "CalculationFailure",
+                "failure_stage": "analyze",
+                "job_identity": [
+                  "trailing_cumulative_return_v1",
+                  "000300.SH",
+                  [],
+                  2,
+                  "trading_sessions",
+                  "2024-01-10",
+                  "2024-01-12",
+                  "end_session",
+                  "inclusive"
+                ],
+                "request_id": "quartiles"
+              }
+            },
+            {
+              "request": {
+                "request_id": "explicit-bins",
+                "spec": {
+                  "edges": [
+                    -0.2,
+                    -0.1,
+                    0.0,
+                    0.1,
+                    0.2
+                  ],
+                  "method": "interval_count",
+                  "unit": "decimal_ratio"
+                }
+              },
+              "status": "success",
+              "statistical_result": {
+                "bins": [
+                  {
+                    "count": 0,
+                    "frequency": 0.0,
+                    "left": -0.2,
+                    "left_inclusive": true,
+                    "right": -0.1,
+                    "right_inclusive": false
+                  },
+                  {
+                    "count": 0,
+                    "frequency": 0.0,
+                    "left": -0.1,
+                    "left_inclusive": true,
+                    "right": 0.0,
+                    "right_inclusive": false
+                  },
+                  {
+                    "count": 3,
+                    "frequency": 1.0,
+                    "left": 0.0,
+                    "left_inclusive": true,
+                    "right": 0.1,
+                    "right_inclusive": false
+                  },
+                  {
+                    "count": 0,
+                    "frequency": 0.0,
+                    "left": 0.1,
+                    "left_inclusive": true,
+                    "right": 0.2,
+                    "right_inclusive": true
+                  }
+                ],
+                "edges": [
+                  -0.2,
+                  -0.1,
+                  0.0,
+                  0.1,
+                  0.2
+                ],
+                "method": "interval_count",
+                "overflow_count": 0,
+                "overflow_frequency": 0.0,
+                "sample_count": 3,
+                "underflow_count": 0,
+                "underflow_frequency": 0.0,
+                "unit": "decimal_ratio"
+              },
+              "failure": null
+            }
+          ]
+        }
+      ],
+      "gate_sequence": 16
+    },
+    {
+      "scenario": "partial_facts",
+      "run_id": "3d227f4f583a4ca991e003a35736c310",
+      "g5_status": "PASS",
+      "execution_context": "synthetic_test",
+      "execute_batch_call_count": 1,
+      "statistics_call_count": 2,
+      "original_evidence_unchanged": true,
+      "fresh_process_read_verified": true,
+      "workflow_artifact": {
+        "artifact_id": "b6d675b624e04fddb040e93e70104d5d",
+        "sha256": "e1baa3d22ad4e71d593f7bcf4950de42a812e314e6af67bcd8a294589a985473",
+        "stored_path": "blobs/b6d675b624e04fddb040e93e70104d5d"
+      },
+      "authorization_artifact": {
+        "artifact_id": "9ea99b9746e94b58b1f1b8a72d450b47",
+        "sha256": "894703f848fb361e616b80342696a2a2dc1d28e5fca30d912f48c79a911a1e5e",
+        "stored_path": "blobs/9ea99b9746e94b58b1f1b8a72d450b47"
+      },
+      "result_artifact": {
+        "artifact_id": "7acfb4dac03f4dd7b188b15997ee9271",
+        "sha256": "3a6aebeb145d3aedc61b0de3f6a779753ccb2a90a6a2e3932206b034b49489ff",
+        "stored_path": "blobs/7acfb4dac03f4dd7b188b15997ee9271"
+      },
+      "report_artifact": {
+        "artifact_id": "3ad75b1b32184f89b52aed5f64683836",
+        "sha256": "6567e7793c6e208783f7b244e8fd5931178bfd12585e10784b70448da4c673cb",
+        "stored_path": "blobs/3ad75b1b32184f89b52aed5f64683836"
+      },
+      "result_path": "C:\\Users\\Benjamin\\source\\repos\\hg-market-state-lab\\workbench\\.runs\\3d227f4f583a4ca991e003a35736c310\\blobs\\7acfb4dac03f4dd7b188b15997ee9271",
+      "batch_status": "success",
+      "counts": {
+        "planned_count": 1,
+        "success_count": 1,
+        "failed_count": 0,
+        "skipped_count": 0
+      },
+      "plan": {
+        "analysis_requests": [
+          {
+            "request_id": "quartiles",
+            "spec": {
+              "method": "quantile",
+              "points": [
+                0.0,
+                0.25,
+                0.5,
+                0.75,
+                1.0
+              ]
+            }
+          },
+          {
+            "request_id": "explicit-bins",
+            "spec": {
+              "edges": [
+                -0.2,
+                -0.1,
+                0.0,
+                0.1,
+                0.2
+              ],
+              "method": "interval_count",
+              "unit": "decimal_ratio"
+            }
+          }
+        ],
+        "horizons": [
+          2
+        ],
+        "metric": "trailing_cumulative_return_v1",
+        "metric_parameters": {},
+        "on_job_failure": "continue",
+        "subjects": [
+          "000001.SH"
+        ],
+        "windows": [
+          {
+            "end_date": "2024-01-12",
+            "start_date": "2024-01-10"
+          }
+        ]
+      },
+      "jobs": [
+        {
+          "job_identity": [
+            "trailing_cumulative_return_v1",
+            "000001.SH",
+            [],
+            2,
+            "trading_sessions",
+            "2024-01-10",
+            "2024-01-12",
+            "end_session",
+            "inclusive"
+          ],
+          "status": "Success",
+          "population": {
+            "candidate_count": 3,
+            "eligible_count": 1,
+            "unavailable_count": 2,
+            "excluded_count": 0,
+            "observation_coverage": 0.3333333333333333
+          },
+          "fact_coverage": {
+            "overall": 0.8,
+            "warm_up": 1.0,
+            "sample": 0.6666666666666666
+          },
+          "input_fingerprint": "b4918892c0409828b961bce6576242265ac06b6bb7af5b571049e941f462e0b9",
+          "analyses": [
+            {
+              "request": {
+                "request_id": "quartiles",
+                "spec": {
+                  "method": "quantile",
+                  "points": [
+                    0.0,
+                    0.25,
+                    0.5,
+                    0.75,
+                    1.0
+                  ]
+                }
+              },
+              "status": "success",
+              "statistical_result": {
+                "estimator": "type7_linear_v1",
+                "method": "quantile",
+                "points_and_values": [
+                  [
+                    0.0,
+                    0.058252427184465994
+                  ],
+                  [
+                    0.25,
+                    0.058252427184465994
+                  ],
+                  [
+                    0.5,
+                    0.058252427184465994
+                  ],
+                  [
+                    0.75,
+                    0.058252427184465994
+                  ],
+                  [
+                    1.0,
+                    0.058252427184465994
+                  ]
+                ],
+                "sample_count": 1,
+                "unit": "decimal_ratio"
+              },
+              "failure": null
+            },
+            {
+              "request": {
+                "request_id": "explicit-bins",
+                "spec": {
+                  "edges": [
+                    -0.2,
+                    -0.1,
+                    0.0,
+                    0.1,
+                    0.2
+                  ],
+                  "method": "interval_count",
+                  "unit": "decimal_ratio"
+                }
+              },
+              "status": "success",
+              "statistical_result": {
+                "bins": [
+                  {
+                    "count": 0,
+                    "frequency": 0.0,
+                    "left": -0.2,
+                    "left_inclusive": true,
+                    "right": -0.1,
+                    "right_inclusive": false
+                  },
+                  {
+                    "count": 0,
+                    "frequency": 0.0,
+                    "left": -0.1,
+                    "left_inclusive": true,
+                    "right": 0.0,
+                    "right_inclusive": false
+                  },
+                  {
+                    "count": 1,
+                    "frequency": 1.0,
+                    "left": 0.0,
+                    "left_inclusive": true,
+                    "right": 0.1,
+                    "right_inclusive": false
+                  },
+                  {
+                    "count": 0,
+                    "frequency": 0.0,
+                    "left": 0.1,
+                    "left_inclusive": true,
+                    "right": 0.2,
+                    "right_inclusive": true
+                  }
+                ],
+                "edges": [
+                  -0.2,
+                  -0.1,
+                  0.0,
+                  0.1,
+                  0.2
+                ],
+                "method": "interval_count",
+                "overflow_count": 0,
+                "overflow_frequency": 0.0,
+                "sample_count": 1,
+                "underflow_count": 0,
+                "underflow_frequency": 0.0,
+                "unit": "decimal_ratio"
+              },
+              "failure": null
+            }
+          ]
+        }
+      ],
+      "gate_sequence": 16
+    },
+    {
+      "scenario": "long_window",
+      "run_id": "067ffdceff39424b812bb3e7ebeb68fa",
+      "g5_status": "PASS",
+      "execution_context": "synthetic_test",
+      "execute_batch_call_count": 1,
+      "statistics_call_count": 2,
+      "original_evidence_unchanged": true,
+      "fresh_process_read_verified": true,
+      "workflow_artifact": {
+        "artifact_id": "dbd63aaff71f4ab5968b28ce1091cb86",
+        "sha256": "19e0eb7d6173e18f045d9aecd553da61e7a96ab90f12c3cb7c2b9554f36803c3",
+        "stored_path": "blobs/dbd63aaff71f4ab5968b28ce1091cb86"
+      },
+      "authorization_artifact": {
+        "artifact_id": "4e7ad9a33f37473db3b426eaa0db76d3",
+        "sha256": "a61fde8bed01f4f256ac4c6d76f85a11345ab55bfae48fb94a2a8d5a12919136",
+        "stored_path": "blobs/4e7ad9a33f37473db3b426eaa0db76d3"
+      },
+      "result_artifact": {
+        "artifact_id": "cf1e659fa73049739835500c01f12faa",
+        "sha256": "089f213a4b0468fb581dac4511eccc787701fc68c3c742db2ee8833ee94a7de5",
+        "stored_path": "blobs/cf1e659fa73049739835500c01f12faa"
+      },
+      "report_artifact": {
+        "artifact_id": "c28c86cc28e84a40b98a01bf300d3477",
+        "sha256": "516ae7e1411f5a544748744a4cc57d7090aba0f4101249a7cbb127fee22dfdd3",
+        "stored_path": "blobs/c28c86cc28e84a40b98a01bf300d3477"
+      },
+      "result_path": "C:\\Users\\Benjamin\\source\\repos\\hg-market-state-lab\\workbench\\.runs\\067ffdceff39424b812bb3e7ebeb68fa\\blobs\\cf1e659fa73049739835500c01f12faa",
+      "batch_status": "success",
+      "counts": {
+        "planned_count": 1,
+        "success_count": 1,
+        "failed_count": 0,
+        "skipped_count": 0
+      },
+      "plan": {
+        "analysis_requests": [
+          {
+            "request_id": "quartiles",
+            "spec": {
+              "method": "quantile",
+              "points": [
+                0.0,
+                0.25,
+                0.5,
+                0.75,
+                1.0
+              ]
+            }
+          },
+          {
+            "request_id": "explicit-bins",
+            "spec": {
+              "edges": [
+                -0.2,
+                -0.1,
+                0.0,
+                0.1,
+                0.2
+              ],
+              "method": "interval_count",
+              "unit": "decimal_ratio"
+            }
+          }
+        ],
+        "horizons": [
+          21
+        ],
+        "metric": "trailing_cumulative_return_v1",
+        "metric_parameters": {},
+        "on_job_failure": "continue",
+        "subjects": [
+          "000001.SH"
+        ],
+        "windows": [
+          {
+            "end_date": "2026-10-28",
+            "start_date": "2010-01-01"
+          }
+        ]
+      },
+      "jobs": [
+        {
+          "job_identity": [
+            "trailing_cumulative_return_v1",
+            "000001.SH",
+            [],
+            21,
+            "trading_sessions",
+            "2010-01-01",
+            "2026-10-28",
+            "end_session",
+            "inclusive"
+          ],
+          "status": "Success",
+          "population": {
+            "candidate_count": 5,
+            "eligible_count": 5,
+            "unavailable_count": 0,
+            "excluded_count": 0,
+            "observation_coverage": 1.0
+          },
+          "fact_coverage": {
+            "overall": 1.0,
+            "warm_up": 1.0,
+            "sample": 1.0
+          },
+          "input_fingerprint": "c46d6553b18a6490c7e3ff65c72af2d4d5957fb21e16291b6bf38165ca2c8d44",
+          "analyses": [
+            {
+              "request": {
+                "request_id": "quartiles",
+                "spec": {
+                  "method": "quantile",
+                  "points": [
+                    0.0,
+                    0.25,
+                    0.5,
+                    0.75,
+                    1.0
+                  ]
+                }
+              },
+              "status": "success",
+              "statistical_result": {
+                "estimator": "type7_linear_v1",
+                "method": "quantile",
+                "points_and_values": [
+                  [
+                    0.0,
+                    0.443661971830986
+                  ],
+                  [
+                    0.25,
+                    0.4532374100719425
+                  ],
+                  [
+                    0.5,
+                    0.46323529411764697
+                  ],
+                  [
+                    0.75,
+                    0.4736842105263157
+                  ],
+                  [
+                    1.0,
+                    0.48461538461538467
+                  ]
+                ],
+                "sample_count": 5,
+                "unit": "decimal_ratio"
+              },
+              "failure": null
+            },
+            {
+              "request": {
+                "request_id": "explicit-bins",
+                "spec": {
+                  "edges": [
+                    -0.2,
+                    -0.1,
+                    0.0,
+                    0.1,
+                    0.2
+                  ],
+                  "method": "interval_count",
+                  "unit": "decimal_ratio"
+                }
+              },
+              "status": "success",
+              "statistical_result": {
+                "bins": [
+                  {
+                    "count": 0,
+                    "frequency": 0.0,
+                    "left": -0.2,
+                    "left_inclusive": true,
+                    "right": -0.1,
+                    "right_inclusive": false
+                  },
+                  {
+                    "count": 0,
+                    "frequency": 0.0,
+                    "left": -0.1,
+                    "left_inclusive": true,
+                    "right": 0.0,
+                    "right_inclusive": false
+                  },
+                  {
+                    "count": 0,
+                    "frequency": 0.0,
+                    "left": 0.0,
+                    "left_inclusive": true,
+                    "right": 0.1,
+                    "right_inclusive": false
+                  },
+                  {
+                    "count": 0,
+                    "frequency": 0.0,
+                    "left": 0.1,
+                    "left_inclusive": true,
+                    "right": 0.2,
+                    "right_inclusive": true
+                  }
+                ],
+                "edges": [
+                  -0.2,
+                  -0.1,
+                  0.0,
+                  0.1,
+                  0.2
+                ],
+                "method": "interval_count",
+                "overflow_count": 5,
+                "overflow_frequency": 1.0,
+                "sample_count": 5,
+                "underflow_count": 0,
+                "underflow_frequency": 0.0,
+                "unit": "decimal_ratio"
+              },
+              "failure": null
+            }
+          ]
+        }
+      ],
+      "gate_sequence": 16
+    }
+  ]
+}

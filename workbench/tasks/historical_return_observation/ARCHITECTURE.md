@@ -20,7 +20,10 @@ preserving the exact version-1 snapshot. These documents neither expand public b
 boundaries. WB-04 implements the narrow [G4 workflow contract](WORKFLOW_PLANNING.md)
 under [its request](PLANNING_REQUEST.md), with [separate acceptance](PLANNING_ACCEPTANCE.md).
 The exact Task v1 snapshot remains unchanged. Pending execution authorization is an
-explicit planning disposition; see that contract's reconciliation. G5 remains unimplemented.
+explicit planning disposition; see that contract's reconciliation. WB-05 implements
+[G5 authorized execution and delivery](AUTHORIZED_EXECUTION.md) under
+[its request](EXECUTION_REQUEST.md), with [separate acceptance](EXECUTION_ACCEPTANCE.md).
+Live execution still requires approval of the exact frozen artifact and side effects.
 
 Business meaning remains with the [Research publication](../../../market_research/descriptive/RESEARCH_CAPABILITY.md),
 [trailing-return case](../../../market_research/descriptive/cases/trailing_return/ARCHITECTURE.md)

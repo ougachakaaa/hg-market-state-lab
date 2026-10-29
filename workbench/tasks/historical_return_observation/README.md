@@ -2,9 +2,9 @@
 
 Start at the [Task entry](ARCHITECTURE.md), then read [task.json](task.json) and the
 [G1 contract](BACKEND_READY.md), [G3 contract](CAPABILITY_DISCOVERY.md) and
-[G4 contract](WORKFLOW_PLANNING.md). This guide
+[G4 contract](WORKFLOW_PLANNING.md) and [G5 contract](AUTHORIZED_EXECUTION.md). This guide
 is usage-only. WB-03/WB-04 implement version `1`'s approved discovery and planning
-slices without changing its frozen definition. G1, G3 and G4 are implemented; actual
+slices without changing its frozen definition. G1, G3, G4 and G5 are implemented; actual
 market execution requires separate authorization and resolved research inputs.
 
 From the repository root in its existing Poetry environment:
@@ -129,3 +129,63 @@ No research, acquisition, automatic partition/merge or G5 is performed. See
 [WB-04 acceptance](PLANNING_ACCEPTANCE.md) for actual artifacts and verification.
 Deterministic validation does not prove general natural-language planning quality;
 interactive acceptance belongs to the final Workbench E2E Goal.
+
+## G5 authorized Python execution and result delivery
+
+First retrieve the exact accepted G4 with `record_g4.py --run RUN_ID --read`.
+Use a real user-input workflow, not the synthetic example Run above. Preserve the
+returned workflow artifact ID, SHA-256 and objective. Read
+[the execution contract](AUTHORIZED_EXECUTION.md) before invoking.
+
+In a human-controlled interactive terminal:
+
+```powershell
+poetry run python workbench/tasks/historical_return_observation/record_g5.py --run RUN_ID
+poetry run python workbench/tasks/historical_return_observation/record_g5.py --run RUN_ID --read
+poetry run python workbench/run_store.py read --run RUN_ID
+```
+
+Optional `--root PATH` selects the same store. The execution command displays the
+full challenge and exact approval sentence, then asks for an explicit resource budget
+and safe data/cache isolation description. An agent must never answer this human
+prompt on the user's behalf. Noninteractive execution without a host authorizer blocks.
+No generated JSON file grants permission, and Task approval alone grants no execution.
+
+Codex / DSH may instead load `record_g5.py` with `runpy.run_path` and call
+`record_g5(root, run_id, authorize=resolve_actual_user_approval)`. This callback must
+show `approval_sentence(challenge)` to the user, resolve the actual reply in its trusted
+session, and return the exact fields defined in the contract. `source_reference` must
+locate that real reply, and `user_statement` must be its verbatim approval sentence.
+Return `None` when there is no trustworthy approval. A callback that constructs its own
+approval or reads an agent-authored approval file violates this boundary.
+
+Approval is preserved separately; G4 bytes remain unchanged. The adapter records a
+durable intent before the single public execute_batch call. Any existing intent blocks
+another call. If interrupted, use `--read` and inspect the original Run; arrange operator
+reconciliation. Never retry or delete the intent/lock automatically.
+
+PASS=0 means every requested computation succeeded; FAIL=1 includes partial/failed
+Batches with preserved successful analyses and failures. BLOCKED=2 means unmet
+prerequisites, missing authorization or uncertain execution. Storage/evidence errors
+exit 1. `--read` performs no execution. A completed result retains its original outcome
+even after a blocked duplicate invocation; it is not permission for another execution.
+
+The read report gives workflow, authorization, result and report artifact references.
+Files are at `workbench/.runs/RUN_ID/blobs/ARTIFACT_ID` (or the explicit store root).
+The result envelope's `batch_result` contains actual statistics, ordered Job/analysis
+outcomes, populations, coverage, warm-up/dependence and public provenance. Public numeric
+units remain decimal_ratio; incomplete facts are explicitly retained. Unsafe exception
+objects/free text are omitted with markers. Research's legal partial-Index policy remains
+unchanged; PASS does not mean 100% market coverage. A returned Batch with failed Jobs
+is G5 FAIL even when the Python call completed normally.
+
+Reproduce isolated acceptance, with zero paid-data access/default-cache changes:
+
+```powershell
+poetry run python workbench/tests/g5_execution_example.py
+```
+
+This uses explicitly synthetic authorization and public-service fakes in its test harness;
+it cannot authorize the live adapter. See [WB-05 acceptance](EXECUTION_ACCEPTANCE.md)
+for actual artifacts/checks. No full-history live readiness or WB-06 interactive
+natural-language acceptance is claimed.
