@@ -51,3 +51,12 @@ and associations. Preserve actual missing data and the requested end date.
 Deliver separate research/cache/market-completeness/E2E conclusions, 16 actual rows
 only when results exist, interval distributions, evidence references and all encountered
 problems. No synthetic result may substitute for this acceptance.
+
+The implemented post-cold [saved-result oracle](verify_saved.py) forbids network and
+SQLite and verifies immutable public Export payloads independently. The
+[public-service reuse audit](verify_cache.py) denies Provider/network access, requires
+complete coverage before any Ensure, compares full public Exports to cold evidence,
+and verifies zero attempts/writes plus unchanged database bytes/hashes/mtimes.
+This audit is not a second Research execution or a new G5 intent. The separately
+authorized Warm Research uses the same plan/cache with a proposed Provider ceiling
+of zero; any unexpected acquisition need must fail rather than fetch.

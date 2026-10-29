@@ -171,6 +171,48 @@
       "sha256": "5ca839e7afa4fb20fa469310af49fc5f0123dc7844ccec6fc0050c595bd0113a",
       "size_bytes": 667,
       "stored_path": "blobs/0d848483b198435cb039ebd3787f888a"
+    },
+    {
+      "artifact_id": "7eb599b1dda645c69ec14f78b3b56e0c",
+      "label": "G5 authorization",
+      "sha256": "07db6b127951af54d7a861e5996037c0245a2a8f62851413b01d91d7fa8178f8",
+      "size_bytes": 2337,
+      "stored_path": "blobs/7eb599b1dda645c69ec14f78b3b56e0c"
+    },
+    {
+      "artifact_id": "06f9fc648e16494dbf79ab35585a3a09",
+      "label": "G5 actual BatchResult",
+      "sha256": "e59d737f93212b48b934926b19833b7f2fc832327ee726e434deab2b45d40fb1",
+      "size_bytes": 19113258,
+      "stored_path": "blobs/06f9fc648e16494dbf79ab35585a3a09"
+    },
+    {
+      "artifact_id": "eeddd880106b42fe886abe88ff2b32b1",
+      "label": "G5 execution report",
+      "sha256": "344036294eebe2f6d2f978d639b01700c306e5d816d2c38312f9494c3b273e55",
+      "size_bytes": 1034,
+      "stored_path": "blobs/eeddd880106b42fe886abe88ff2b32b1"
+    },
+    {
+      "artifact_id": "292c10802e2242638f752fc85e1e77db",
+      "label": "WB-07 cold operational audit",
+      "sha256": "8489d7d9458ec0e57cca6052105b49b9f2d3235a53b523c6e881fc528c89641d",
+      "size_bytes": 805,
+      "stored_path": "blobs/292c10802e2242638f752fc85e1e77db"
+    },
+    {
+      "artifact_id": "a88104a3ca834feb9ca683a8a4a0c160",
+      "label": "WB-07 cold independent verification",
+      "sha256": "bc7058488cdc1bf9086f2f8418da191441cb9c8075fe92c4d0b6e02a08cecb7d",
+      "size_bytes": 80428,
+      "stored_path": "blobs/a88104a3ca834feb9ca683a8a4a0c160"
+    },
+    {
+      "artifact_id": "961173b78322470582336f397f13da4d",
+      "label": "WB-07 public-service cache reuse",
+      "sha256": "7527a69da07b9cafe6f90fa98937dc62603a82080cb16274c8c486681175370c",
+      "size_bytes": 2211540,
+      "stored_path": "blobs/961173b78322470582336f397f13da4d"
     }
   ],
   "gates": [
@@ -219,9 +261,1264 @@
       "gate_id": "G5",
       "reason": "Explicit trustworthy user authorization for this frozen workflow is missing or inappropriate",
       "status": "BLOCKED"
+    },
+    {
+      "evidence": [
+        "7eb599b1dda645c69ec14f78b3b56e0c",
+        "06f9fc648e16494dbf79ab35585a3a09",
+        "eeddd880106b42fe886abe88ff2b32b1"
+      ],
+      "gate_id": "G5",
+      "reason": "All requested computations succeeded; coverage is reported without a completeness claim",
+      "status": "PASS"
     }
   ],
-  "intent_count": 0,
-  "live_execution": "NOT RUN",
-  "warm_run": "NOT RUN"
+  "intent_count": 1,
+  "live_execution": "Cold completed PASS; independent Export verification PASS",
+  "warm_run": "G1/G3/G4 complete; separate user authorization pending; no intent",
+  "cold_execution": {
+    "run_id": "d95b13c5cb554fab9f19e89cdc3c5b78",
+    "status": "PASS",
+    "execution_state": "completed",
+    "execution_context": "live",
+    "authorization": {
+      "artifact_id": "7eb599b1dda645c69ec14f78b3b56e0c",
+      "sha256": "07db6b127951af54d7a861e5996037c0245a2a8f62851413b01d91d7fa8178f8",
+      "stored_path": "blobs/7eb599b1dda645c69ec14f78b3b56e0c"
+    },
+    "workflow_artifact": {
+      "artifact_id": "adcebe33f9b84a33becb16832f7a9ad0",
+      "sha256": "14484338f2073b73b9f19dc9e92a4a9727a91923d1975eb53146708c50733a10",
+      "stored_path": "blobs/adcebe33f9b84a33becb16832f7a9ad0"
+    },
+    "result_artifact": {
+      "artifact_id": "06f9fc648e16494dbf79ab35585a3a09",
+      "sha256": "e59d737f93212b48b934926b19833b7f2fc832327ee726e434deab2b45d40fb1",
+      "stored_path": "blobs/06f9fc648e16494dbf79ab35585a3a09"
+    },
+    "report_artifact": {
+      "artifact_id": "eeddd880106b42fe886abe88ff2b32b1",
+      "sha256": "344036294eebe2f6d2f978d639b01700c306e5d816d2c38312f9494c3b273e55",
+      "stored_path": "blobs/eeddd880106b42fe886abe88ff2b32b1"
+    },
+    "integrity_verified": true
+  },
+  "cold_audit": {
+    "limits": {
+      "provider_calls": 160,
+      "calls_per_minute": 60,
+      "wall_seconds": 900,
+      "database_bytes": 536870912,
+      "evidence_bytes": 268435456
+    },
+    "run_id": "d95b13c5cb554fab9f19e89cdc3c5b78",
+    "storage_enforcement": "250ms sampled; may overshoot by in-flight writes",
+    "factory_bindings_verified": true,
+    "implicit_calendar_verified": true,
+    "provider_calls": {
+      "trade_cal": 5,
+      "index_basic": 32,
+      "index_daily": 40
+    },
+    "elapsed_seconds": 77.84601190011017,
+    "database_bytes": 761856,
+    "new_evidence_bytes": 19121216,
+    "repository_bindings": {
+      "tushare_trade_calendar": 34,
+      "tushare_index_daily": 17
+    },
+    "sqlite_connections": {
+      "tushare_trade_calendar.sqlite3": 118,
+      "tushare_index_daily.sqlite3": 108
+    },
+    "default_cache_unchanged": true
+  },
+  "cold_verification": {
+    "verdict": "PASS",
+    "jobs_verified": 16,
+    "analyses_verified": 32,
+    "network_and_sqlite_forbidden": true
+  },
+  "cache_reuse": {
+    "verdict": "PASS public-service cache reuse; Research-level warm NOT RUN",
+    "operations": [
+      {
+        "request": {
+          "end_date": "2026-10-29",
+          "exchange": "SSE",
+          "start_date": "2026-01-01"
+        },
+        "dataset": "tushare_trade_calendar",
+        "coverage": {
+          "requested_units": 302,
+          "successful_units": 302,
+          "missing_units": 0,
+          "pending_units": 0,
+          "failed_units": 0,
+          "complete": true
+        },
+        "ensure": {
+          "requested_units": 302,
+          "already_successful_units": 302,
+          "attempted_units": 0,
+          "succeeded_units": 0,
+          "failed_units": 0,
+          "records_written": 0,
+          "complete": true,
+          "failures": []
+        }
+      },
+      {
+        "request": {
+          "end_date": "2026-01-04",
+          "exchange": "SSE",
+          "start_date": "2026-01-04"
+        },
+        "dataset": "tushare_trade_calendar",
+        "coverage": {
+          "requested_units": 1,
+          "successful_units": 1,
+          "missing_units": 0,
+          "pending_units": 0,
+          "failed_units": 0,
+          "complete": true
+        },
+        "ensure": {
+          "requested_units": 1,
+          "already_successful_units": 1,
+          "attempted_units": 0,
+          "succeeded_units": 0,
+          "failed_units": 0,
+          "records_written": 0,
+          "complete": true,
+          "failures": []
+        }
+      },
+      {
+        "request": {
+          "end_date": "2026-01-03",
+          "exchange": "SSE",
+          "start_date": "2026-01-02"
+        },
+        "dataset": "tushare_trade_calendar",
+        "coverage": {
+          "requested_units": 2,
+          "successful_units": 2,
+          "missing_units": 0,
+          "pending_units": 0,
+          "failed_units": 0,
+          "complete": true
+        },
+        "ensure": {
+          "requested_units": 2,
+          "already_successful_units": 2,
+          "attempted_units": 0,
+          "succeeded_units": 0,
+          "failed_units": 0,
+          "records_written": 0,
+          "complete": true,
+          "failures": []
+        }
+      },
+      {
+        "request": {
+          "end_date": "2026-01-01",
+          "exchange": "SSE",
+          "start_date": "2025-12-29"
+        },
+        "dataset": "tushare_trade_calendar",
+        "coverage": {
+          "requested_units": 4,
+          "successful_units": 4,
+          "missing_units": 0,
+          "pending_units": 0,
+          "failed_units": 0,
+          "complete": true
+        },
+        "ensure": {
+          "requested_units": 4,
+          "already_successful_units": 4,
+          "attempted_units": 0,
+          "succeeded_units": 0,
+          "failed_units": 0,
+          "records_written": 0,
+          "complete": true,
+          "failures": []
+        }
+      },
+      {
+        "request": {
+          "end_date": "2026-10-29",
+          "index_codes": [
+            "000852.SH"
+          ],
+          "start_date": "2025-12-31"
+        },
+        "dataset": "tushare_index_daily",
+        "coverage": {
+          "requested_units": 198,
+          "successful_units": 198,
+          "missing_units": 0,
+          "pending_units": 0,
+          "failed_units": 0,
+          "complete": true
+        },
+        "ensure": {
+          "requested_units": 198,
+          "already_successful_units": 198,
+          "attempted_units": 0,
+          "succeeded_units": 0,
+          "failed_units": 0,
+          "records_written": 0,
+          "complete": true,
+          "failures": []
+        }
+      },
+      {
+        "request": {
+          "end_date": "2026-01-04",
+          "exchange": "SSE",
+          "start_date": "2026-01-02"
+        },
+        "dataset": "tushare_trade_calendar",
+        "coverage": {
+          "requested_units": 3,
+          "successful_units": 3,
+          "missing_units": 0,
+          "pending_units": 0,
+          "failed_units": 0,
+          "complete": true
+        },
+        "ensure": {
+          "requested_units": 3,
+          "already_successful_units": 3,
+          "attempted_units": 0,
+          "succeeded_units": 0,
+          "failed_units": 0,
+          "records_written": 0,
+          "complete": true,
+          "failures": []
+        }
+      },
+      {
+        "request": {
+          "end_date": "2026-01-01",
+          "exchange": "SSE",
+          "start_date": "2025-12-27"
+        },
+        "dataset": "tushare_trade_calendar",
+        "coverage": {
+          "requested_units": 6,
+          "successful_units": 6,
+          "missing_units": 0,
+          "pending_units": 0,
+          "failed_units": 0,
+          "complete": true
+        },
+        "ensure": {
+          "requested_units": 6,
+          "already_successful_units": 6,
+          "attempted_units": 0,
+          "succeeded_units": 0,
+          "failed_units": 0,
+          "records_written": 0,
+          "complete": true,
+          "failures": []
+        }
+      },
+      {
+        "request": {
+          "end_date": "2026-10-29",
+          "index_codes": [
+            "000852.SH"
+          ],
+          "start_date": "2025-12-29"
+        },
+        "dataset": "tushare_index_daily",
+        "coverage": {
+          "requested_units": 200,
+          "successful_units": 200,
+          "missing_units": 0,
+          "pending_units": 0,
+          "failed_units": 0,
+          "complete": true
+        },
+        "ensure": {
+          "requested_units": 200,
+          "already_successful_units": 200,
+          "attempted_units": 0,
+          "succeeded_units": 0,
+          "failed_units": 0,
+          "records_written": 0,
+          "complete": true,
+          "failures": []
+        }
+      },
+      {
+        "request": {
+          "end_date": "2026-01-04",
+          "exchange": "SSE",
+          "start_date": "2025-12-31"
+        },
+        "dataset": "tushare_trade_calendar",
+        "coverage": {
+          "requested_units": 5,
+          "successful_units": 5,
+          "missing_units": 0,
+          "pending_units": 0,
+          "failed_units": 0,
+          "complete": true
+        },
+        "ensure": {
+          "requested_units": 5,
+          "already_successful_units": 5,
+          "attempted_units": 0,
+          "succeeded_units": 0,
+          "failed_units": 0,
+          "records_written": 0,
+          "complete": true,
+          "failures": []
+        }
+      },
+      {
+        "request": {
+          "end_date": "2025-12-30",
+          "exchange": "SSE",
+          "start_date": "2025-12-21"
+        },
+        "dataset": "tushare_trade_calendar",
+        "coverage": {
+          "requested_units": 10,
+          "successful_units": 10,
+          "missing_units": 0,
+          "pending_units": 0,
+          "failed_units": 0,
+          "complete": true
+        },
+        "ensure": {
+          "requested_units": 10,
+          "already_successful_units": 10,
+          "attempted_units": 0,
+          "succeeded_units": 0,
+          "failed_units": 0,
+          "records_written": 0,
+          "complete": true,
+          "failures": []
+        }
+      },
+      {
+        "request": {
+          "end_date": "2026-10-29",
+          "index_codes": [
+            "000852.SH"
+          ],
+          "start_date": "2025-12-25"
+        },
+        "dataset": "tushare_index_daily",
+        "coverage": {
+          "requested_units": 202,
+          "successful_units": 202,
+          "missing_units": 0,
+          "pending_units": 0,
+          "failed_units": 0,
+          "complete": true
+        },
+        "ensure": {
+          "requested_units": 202,
+          "already_successful_units": 202,
+          "attempted_units": 0,
+          "succeeded_units": 0,
+          "failed_units": 0,
+          "records_written": 0,
+          "complete": true,
+          "failures": []
+        }
+      },
+      {
+        "request": {
+          "end_date": "2026-01-04",
+          "exchange": "SSE",
+          "start_date": "2025-12-26"
+        },
+        "dataset": "tushare_trade_calendar",
+        "coverage": {
+          "requested_units": 10,
+          "successful_units": 10,
+          "missing_units": 0,
+          "pending_units": 0,
+          "failed_units": 0,
+          "complete": true
+        },
+        "ensure": {
+          "requested_units": 10,
+          "already_successful_units": 10,
+          "attempted_units": 0,
+          "succeeded_units": 0,
+          "failed_units": 0,
+          "records_written": 0,
+          "complete": true,
+          "failures": []
+        }
+      },
+      {
+        "request": {
+          "end_date": "2025-12-25",
+          "exchange": "SSE",
+          "start_date": "2025-12-06"
+        },
+        "dataset": "tushare_trade_calendar",
+        "coverage": {
+          "requested_units": 20,
+          "successful_units": 20,
+          "missing_units": 0,
+          "pending_units": 0,
+          "failed_units": 0,
+          "complete": true
+        },
+        "ensure": {
+          "requested_units": 20,
+          "already_successful_units": 20,
+          "attempted_units": 0,
+          "succeeded_units": 0,
+          "failed_units": 0,
+          "records_written": 0,
+          "complete": true,
+          "failures": []
+        }
+      },
+      {
+        "request": {
+          "end_date": "2026-10-29",
+          "index_codes": [
+            "000852.SH"
+          ],
+          "start_date": "2025-12-18"
+        },
+        "dataset": "tushare_index_daily",
+        "coverage": {
+          "requested_units": 207,
+          "successful_units": 207,
+          "missing_units": 0,
+          "pending_units": 0,
+          "failed_units": 0,
+          "complete": true
+        },
+        "ensure": {
+          "requested_units": 207,
+          "already_successful_units": 207,
+          "attempted_units": 0,
+          "succeeded_units": 0,
+          "failed_units": 0,
+          "records_written": 0,
+          "complete": true,
+          "failures": []
+        }
+      },
+      {
+        "request": {
+          "end_date": "2026-10-29",
+          "index_codes": [
+            "000905.SH"
+          ],
+          "start_date": "2025-12-31"
+        },
+        "dataset": "tushare_index_daily",
+        "coverage": {
+          "requested_units": 198,
+          "successful_units": 198,
+          "missing_units": 0,
+          "pending_units": 0,
+          "failed_units": 0,
+          "complete": true
+        },
+        "ensure": {
+          "requested_units": 198,
+          "already_successful_units": 198,
+          "attempted_units": 0,
+          "succeeded_units": 0,
+          "failed_units": 0,
+          "records_written": 0,
+          "complete": true,
+          "failures": []
+        }
+      },
+      {
+        "request": {
+          "end_date": "2026-10-29",
+          "index_codes": [
+            "000905.SH"
+          ],
+          "start_date": "2025-12-29"
+        },
+        "dataset": "tushare_index_daily",
+        "coverage": {
+          "requested_units": 200,
+          "successful_units": 200,
+          "missing_units": 0,
+          "pending_units": 0,
+          "failed_units": 0,
+          "complete": true
+        },
+        "ensure": {
+          "requested_units": 200,
+          "already_successful_units": 200,
+          "attempted_units": 0,
+          "succeeded_units": 0,
+          "failed_units": 0,
+          "records_written": 0,
+          "complete": true,
+          "failures": []
+        }
+      },
+      {
+        "request": {
+          "end_date": "2026-10-29",
+          "index_codes": [
+            "000905.SH"
+          ],
+          "start_date": "2025-12-25"
+        },
+        "dataset": "tushare_index_daily",
+        "coverage": {
+          "requested_units": 202,
+          "successful_units": 202,
+          "missing_units": 0,
+          "pending_units": 0,
+          "failed_units": 0,
+          "complete": true
+        },
+        "ensure": {
+          "requested_units": 202,
+          "already_successful_units": 202,
+          "attempted_units": 0,
+          "succeeded_units": 0,
+          "failed_units": 0,
+          "records_written": 0,
+          "complete": true,
+          "failures": []
+        }
+      },
+      {
+        "request": {
+          "end_date": "2026-10-29",
+          "index_codes": [
+            "000905.SH"
+          ],
+          "start_date": "2025-12-18"
+        },
+        "dataset": "tushare_index_daily",
+        "coverage": {
+          "requested_units": 207,
+          "successful_units": 207,
+          "missing_units": 0,
+          "pending_units": 0,
+          "failed_units": 0,
+          "complete": true
+        },
+        "ensure": {
+          "requested_units": 207,
+          "already_successful_units": 207,
+          "attempted_units": 0,
+          "succeeded_units": 0,
+          "failed_units": 0,
+          "records_written": 0,
+          "complete": true,
+          "failures": []
+        }
+      },
+      {
+        "request": {
+          "end_date": "2026-10-29",
+          "index_codes": [
+            "000300.SH"
+          ],
+          "start_date": "2025-12-31"
+        },
+        "dataset": "tushare_index_daily",
+        "coverage": {
+          "requested_units": 198,
+          "successful_units": 198,
+          "missing_units": 0,
+          "pending_units": 0,
+          "failed_units": 0,
+          "complete": true
+        },
+        "ensure": {
+          "requested_units": 198,
+          "already_successful_units": 198,
+          "attempted_units": 0,
+          "succeeded_units": 0,
+          "failed_units": 0,
+          "records_written": 0,
+          "complete": true,
+          "failures": []
+        }
+      },
+      {
+        "request": {
+          "end_date": "2026-10-29",
+          "index_codes": [
+            "000300.SH"
+          ],
+          "start_date": "2025-12-29"
+        },
+        "dataset": "tushare_index_daily",
+        "coverage": {
+          "requested_units": 200,
+          "successful_units": 200,
+          "missing_units": 0,
+          "pending_units": 0,
+          "failed_units": 0,
+          "complete": true
+        },
+        "ensure": {
+          "requested_units": 200,
+          "already_successful_units": 200,
+          "attempted_units": 0,
+          "succeeded_units": 0,
+          "failed_units": 0,
+          "records_written": 0,
+          "complete": true,
+          "failures": []
+        }
+      },
+      {
+        "request": {
+          "end_date": "2026-10-29",
+          "index_codes": [
+            "000300.SH"
+          ],
+          "start_date": "2025-12-25"
+        },
+        "dataset": "tushare_index_daily",
+        "coverage": {
+          "requested_units": 202,
+          "successful_units": 202,
+          "missing_units": 0,
+          "pending_units": 0,
+          "failed_units": 0,
+          "complete": true
+        },
+        "ensure": {
+          "requested_units": 202,
+          "already_successful_units": 202,
+          "attempted_units": 0,
+          "succeeded_units": 0,
+          "failed_units": 0,
+          "records_written": 0,
+          "complete": true,
+          "failures": []
+        }
+      },
+      {
+        "request": {
+          "end_date": "2026-10-29",
+          "index_codes": [
+            "000300.SH"
+          ],
+          "start_date": "2025-12-18"
+        },
+        "dataset": "tushare_index_daily",
+        "coverage": {
+          "requested_units": 207,
+          "successful_units": 207,
+          "missing_units": 0,
+          "pending_units": 0,
+          "failed_units": 0,
+          "complete": true
+        },
+        "ensure": {
+          "requested_units": 207,
+          "already_successful_units": 207,
+          "attempted_units": 0,
+          "succeeded_units": 0,
+          "failed_units": 0,
+          "records_written": 0,
+          "complete": true,
+          "failures": []
+        }
+      },
+      {
+        "request": {
+          "end_date": "2026-10-29",
+          "index_codes": [
+            "000016.SH"
+          ],
+          "start_date": "2025-12-31"
+        },
+        "dataset": "tushare_index_daily",
+        "coverage": {
+          "requested_units": 198,
+          "successful_units": 198,
+          "missing_units": 0,
+          "pending_units": 0,
+          "failed_units": 0,
+          "complete": true
+        },
+        "ensure": {
+          "requested_units": 198,
+          "already_successful_units": 198,
+          "attempted_units": 0,
+          "succeeded_units": 0,
+          "failed_units": 0,
+          "records_written": 0,
+          "complete": true,
+          "failures": []
+        }
+      },
+      {
+        "request": {
+          "end_date": "2026-10-29",
+          "index_codes": [
+            "000016.SH"
+          ],
+          "start_date": "2025-12-29"
+        },
+        "dataset": "tushare_index_daily",
+        "coverage": {
+          "requested_units": 200,
+          "successful_units": 200,
+          "missing_units": 0,
+          "pending_units": 0,
+          "failed_units": 0,
+          "complete": true
+        },
+        "ensure": {
+          "requested_units": 200,
+          "already_successful_units": 200,
+          "attempted_units": 0,
+          "succeeded_units": 0,
+          "failed_units": 0,
+          "records_written": 0,
+          "complete": true,
+          "failures": []
+        }
+      },
+      {
+        "request": {
+          "end_date": "2026-10-29",
+          "index_codes": [
+            "000016.SH"
+          ],
+          "start_date": "2025-12-25"
+        },
+        "dataset": "tushare_index_daily",
+        "coverage": {
+          "requested_units": 202,
+          "successful_units": 202,
+          "missing_units": 0,
+          "pending_units": 0,
+          "failed_units": 0,
+          "complete": true
+        },
+        "ensure": {
+          "requested_units": 202,
+          "already_successful_units": 202,
+          "attempted_units": 0,
+          "succeeded_units": 0,
+          "failed_units": 0,
+          "records_written": 0,
+          "complete": true,
+          "failures": []
+        }
+      },
+      {
+        "request": {
+          "end_date": "2026-10-29",
+          "index_codes": [
+            "000016.SH"
+          ],
+          "start_date": "2025-12-18"
+        },
+        "dataset": "tushare_index_daily",
+        "coverage": {
+          "requested_units": 207,
+          "successful_units": 207,
+          "missing_units": 0,
+          "pending_units": 0,
+          "failed_units": 0,
+          "complete": true
+        },
+        "ensure": {
+          "requested_units": 207,
+          "already_successful_units": 207,
+          "attempted_units": 0,
+          "succeeded_units": 0,
+          "failed_units": 0,
+          "records_written": 0,
+          "complete": true,
+          "failures": []
+        }
+      }
+    ],
+    "cold_ensures": [
+      {
+        "request": {
+          "end_date": "2026-10-29",
+          "exchange": "SSE",
+          "start_date": "2026-01-01"
+        },
+        "dataset": "tushare_trade_calendar",
+        "ensure": {
+          "already_successful_units": 0,
+          "attempted_units": 302,
+          "complete": true,
+          "failed_units": 0,
+          "failures": [],
+          "records_written": 302,
+          "requested_units": 302,
+          "succeeded_units": 302
+        }
+      },
+      {
+        "request": {
+          "end_date": "2026-01-01",
+          "exchange": "SSE",
+          "start_date": "2025-12-29"
+        },
+        "dataset": "tushare_trade_calendar",
+        "ensure": {
+          "already_successful_units": 1,
+          "attempted_units": 3,
+          "complete": true,
+          "failed_units": 0,
+          "failures": [],
+          "records_written": 3,
+          "requested_units": 4,
+          "succeeded_units": 3
+        }
+      },
+      {
+        "request": {
+          "end_date": "2026-10-29",
+          "index_codes": [
+            "000852.SH"
+          ],
+          "start_date": "2025-12-31"
+        },
+        "dataset": "tushare_index_daily",
+        "ensure": {
+          "already_successful_units": 0,
+          "attempted_units": 198,
+          "complete": true,
+          "failed_units": 0,
+          "failures": [],
+          "records_written": 198,
+          "requested_units": 198,
+          "succeeded_units": 198
+        }
+      },
+      {
+        "request": {
+          "end_date": "2026-01-01",
+          "exchange": "SSE",
+          "start_date": "2025-12-27"
+        },
+        "dataset": "tushare_trade_calendar",
+        "ensure": {
+          "already_successful_units": 4,
+          "attempted_units": 2,
+          "complete": true,
+          "failed_units": 0,
+          "failures": [],
+          "records_written": 2,
+          "requested_units": 6,
+          "succeeded_units": 2
+        }
+      },
+      {
+        "request": {
+          "end_date": "2026-10-29",
+          "index_codes": [
+            "000852.SH"
+          ],
+          "start_date": "2025-12-29"
+        },
+        "dataset": "tushare_index_daily",
+        "ensure": {
+          "already_successful_units": 198,
+          "attempted_units": 2,
+          "complete": true,
+          "failed_units": 0,
+          "failures": [],
+          "records_written": 2,
+          "requested_units": 200,
+          "succeeded_units": 2
+        }
+      },
+      {
+        "request": {
+          "end_date": "2025-12-30",
+          "exchange": "SSE",
+          "start_date": "2025-12-21"
+        },
+        "dataset": "tushare_trade_calendar",
+        "ensure": {
+          "already_successful_units": 4,
+          "attempted_units": 6,
+          "complete": true,
+          "failed_units": 0,
+          "failures": [],
+          "records_written": 6,
+          "requested_units": 10,
+          "succeeded_units": 6
+        }
+      },
+      {
+        "request": {
+          "end_date": "2026-10-29",
+          "index_codes": [
+            "000852.SH"
+          ],
+          "start_date": "2025-12-25"
+        },
+        "dataset": "tushare_index_daily",
+        "ensure": {
+          "already_successful_units": 200,
+          "attempted_units": 2,
+          "complete": true,
+          "failed_units": 0,
+          "failures": [],
+          "records_written": 2,
+          "requested_units": 202,
+          "succeeded_units": 2
+        }
+      },
+      {
+        "request": {
+          "end_date": "2025-12-25",
+          "exchange": "SSE",
+          "start_date": "2025-12-06"
+        },
+        "dataset": "tushare_trade_calendar",
+        "ensure": {
+          "already_successful_units": 5,
+          "attempted_units": 15,
+          "complete": true,
+          "failed_units": 0,
+          "failures": [],
+          "records_written": 15,
+          "requested_units": 20,
+          "succeeded_units": 15
+        }
+      },
+      {
+        "request": {
+          "end_date": "2026-10-29",
+          "index_codes": [
+            "000852.SH"
+          ],
+          "start_date": "2025-12-18"
+        },
+        "dataset": "tushare_index_daily",
+        "ensure": {
+          "already_successful_units": 202,
+          "attempted_units": 5,
+          "complete": true,
+          "failed_units": 0,
+          "failures": [],
+          "records_written": 5,
+          "requested_units": 207,
+          "succeeded_units": 5
+        }
+      },
+      {
+        "request": {
+          "end_date": "2026-10-29",
+          "index_codes": [
+            "000905.SH"
+          ],
+          "start_date": "2025-12-31"
+        },
+        "dataset": "tushare_index_daily",
+        "ensure": {
+          "already_successful_units": 0,
+          "attempted_units": 198,
+          "complete": true,
+          "failed_units": 0,
+          "failures": [],
+          "records_written": 198,
+          "requested_units": 198,
+          "succeeded_units": 198
+        }
+      },
+      {
+        "request": {
+          "end_date": "2026-10-29",
+          "index_codes": [
+            "000905.SH"
+          ],
+          "start_date": "2025-12-29"
+        },
+        "dataset": "tushare_index_daily",
+        "ensure": {
+          "already_successful_units": 198,
+          "attempted_units": 2,
+          "complete": true,
+          "failed_units": 0,
+          "failures": [],
+          "records_written": 2,
+          "requested_units": 200,
+          "succeeded_units": 2
+        }
+      },
+      {
+        "request": {
+          "end_date": "2026-10-29",
+          "index_codes": [
+            "000905.SH"
+          ],
+          "start_date": "2025-12-25"
+        },
+        "dataset": "tushare_index_daily",
+        "ensure": {
+          "already_successful_units": 200,
+          "attempted_units": 2,
+          "complete": true,
+          "failed_units": 0,
+          "failures": [],
+          "records_written": 2,
+          "requested_units": 202,
+          "succeeded_units": 2
+        }
+      },
+      {
+        "request": {
+          "end_date": "2026-10-29",
+          "index_codes": [
+            "000905.SH"
+          ],
+          "start_date": "2025-12-18"
+        },
+        "dataset": "tushare_index_daily",
+        "ensure": {
+          "already_successful_units": 202,
+          "attempted_units": 5,
+          "complete": true,
+          "failed_units": 0,
+          "failures": [],
+          "records_written": 5,
+          "requested_units": 207,
+          "succeeded_units": 5
+        }
+      },
+      {
+        "request": {
+          "end_date": "2026-10-29",
+          "index_codes": [
+            "000300.SH"
+          ],
+          "start_date": "2025-12-31"
+        },
+        "dataset": "tushare_index_daily",
+        "ensure": {
+          "already_successful_units": 0,
+          "attempted_units": 198,
+          "complete": true,
+          "failed_units": 0,
+          "failures": [],
+          "records_written": 198,
+          "requested_units": 198,
+          "succeeded_units": 198
+        }
+      },
+      {
+        "request": {
+          "end_date": "2026-10-29",
+          "index_codes": [
+            "000300.SH"
+          ],
+          "start_date": "2025-12-29"
+        },
+        "dataset": "tushare_index_daily",
+        "ensure": {
+          "already_successful_units": 198,
+          "attempted_units": 2,
+          "complete": true,
+          "failed_units": 0,
+          "failures": [],
+          "records_written": 2,
+          "requested_units": 200,
+          "succeeded_units": 2
+        }
+      },
+      {
+        "request": {
+          "end_date": "2026-10-29",
+          "index_codes": [
+            "000300.SH"
+          ],
+          "start_date": "2025-12-25"
+        },
+        "dataset": "tushare_index_daily",
+        "ensure": {
+          "already_successful_units": 200,
+          "attempted_units": 2,
+          "complete": true,
+          "failed_units": 0,
+          "failures": [],
+          "records_written": 2,
+          "requested_units": 202,
+          "succeeded_units": 2
+        }
+      },
+      {
+        "request": {
+          "end_date": "2026-10-29",
+          "index_codes": [
+            "000300.SH"
+          ],
+          "start_date": "2025-12-18"
+        },
+        "dataset": "tushare_index_daily",
+        "ensure": {
+          "already_successful_units": 202,
+          "attempted_units": 5,
+          "complete": true,
+          "failed_units": 0,
+          "failures": [],
+          "records_written": 5,
+          "requested_units": 207,
+          "succeeded_units": 5
+        }
+      },
+      {
+        "request": {
+          "end_date": "2026-10-29",
+          "index_codes": [
+            "000016.SH"
+          ],
+          "start_date": "2025-12-31"
+        },
+        "dataset": "tushare_index_daily",
+        "ensure": {
+          "already_successful_units": 0,
+          "attempted_units": 198,
+          "complete": true,
+          "failed_units": 0,
+          "failures": [],
+          "records_written": 198,
+          "requested_units": 198,
+          "succeeded_units": 198
+        }
+      },
+      {
+        "request": {
+          "end_date": "2026-10-29",
+          "index_codes": [
+            "000016.SH"
+          ],
+          "start_date": "2025-12-29"
+        },
+        "dataset": "tushare_index_daily",
+        "ensure": {
+          "already_successful_units": 198,
+          "attempted_units": 2,
+          "complete": true,
+          "failed_units": 0,
+          "failures": [],
+          "records_written": 2,
+          "requested_units": 200,
+          "succeeded_units": 2
+        }
+      },
+      {
+        "request": {
+          "end_date": "2026-10-29",
+          "index_codes": [
+            "000016.SH"
+          ],
+          "start_date": "2025-12-25"
+        },
+        "dataset": "tushare_index_daily",
+        "ensure": {
+          "already_successful_units": 200,
+          "attempted_units": 2,
+          "complete": true,
+          "failed_units": 0,
+          "failures": [],
+          "records_written": 2,
+          "requested_units": 202,
+          "succeeded_units": 2
+        }
+      },
+      {
+        "request": {
+          "end_date": "2026-10-29",
+          "index_codes": [
+            "000016.SH"
+          ],
+          "start_date": "2025-12-18"
+        },
+        "dataset": "tushare_index_daily",
+        "ensure": {
+          "already_successful_units": 202,
+          "attempted_units": 5,
+          "complete": true,
+          "failed_units": 0,
+          "failures": [],
+          "records_written": 5,
+          "requested_units": 207,
+          "succeeded_units": 5
+        }
+      }
+    ],
+    "provider_calls": 0,
+    "network_attempts": 0,
+    "new_records_written": 0,
+    "database_bytes_hashes_mtimes_unchanged": true,
+    "isolation": {
+      "factory_bindings_verified": true,
+      "implicit_calendar_verified": true,
+      "repository_bindings": {
+        "tushare_trade_calendar": 28,
+        "tushare_index_daily": 17
+      },
+      "sqlite_connections": {
+        "tushare_trade_calendar.sqlite3": 104,
+        "tushare_index_daily.sqlite3": 64
+      },
+      "default_cache_unchanged": true
+    }
+  },
+  "post_execution_artifacts": {
+    "WB-07 cold operational audit": {
+      "artifact_id": "292c10802e2242638f752fc85e1e77db",
+      "sha256": "8489d7d9458ec0e57cca6052105b49b9f2d3235a53b523c6e881fc528c89641d",
+      "stored_path": "blobs/292c10802e2242638f752fc85e1e77db"
+    },
+    "WB-07 cold independent verification": {
+      "artifact_id": "a88104a3ca834feb9ca683a8a4a0c160",
+      "sha256": "bc7058488cdc1bf9086f2f8418da191441cb9c8075fe92c4d0b6e02a08cecb7d",
+      "stored_path": "blobs/a88104a3ca834feb9ca683a8a4a0c160"
+    },
+    "WB-07 public-service cache reuse": {
+      "artifact_id": "961173b78322470582336f397f13da4d",
+      "sha256": "7527a69da07b9cafe6f90fa98937dc62603a82080cb16274c8c486681175370c",
+      "stored_path": "blobs/961173b78322470582336f397f13da4d"
+    }
+  },
+  "warm": {
+    "run_id": "7ac42795d02f453496b6cc95fc0ec173",
+    "workflow": {
+      "artifact_id": "bde3e79f53824c8896fb0fe4bb1e522a",
+      "sha256": "94e80ee9deba25414d09ab1069f092af54ee513f4bd50f0913f0457515218fa4",
+      "stored_path": "blobs/bde3e79f53824c8896fb0fe4bb1e522a"
+    },
+    "preview": {
+      "artifact_id": "df3cc5892bdb4a33b7f8b62e70aec4fe",
+      "sha256": "d61e85133090af3e6af235f39ed529dc793fc3f81b842cff835b935e04d1f3e6",
+      "stored_path": "blobs/df3cc5892bdb4a33b7f8b62e70aec4fe"
+    },
+    "approval_sentence": "AUTHORIZE G5 bde3e79f53824c8896fb0fe4bb1e522a 94e80ee9deba25414d09ab1069f092af54ee513f4bd50f0913f0457515218fa4 via market_research.descriptive.execution.execute_batch for \u7edf\u8ba1 2026 \u5e74\u56db\u4e2a\u4e3b\u8981\u6307\u6570\u7684\u5386\u53f2\u7d2f\u8ba1\u6da8\u8dcc\u5e45\u5206\u5e03\u3002 including market-data acquisition, DataLake cache writes, possible paid-data access",
+    "shared_cold_cache": true,
+    "proposed_provider_call_ceiling": 0,
+    "execution": "NOT RUN; awaiting separate genuine user approval",
+    "readiness_artifact": {
+      "artifact_id": "148383811adf417889d471e7f9dcfb37",
+      "sha256": "5e689c57f0ed9dff97e803ab2b0ebe61f60622ce02c4dc44e8a2104172fbfa2d",
+      "stored_path": "blobs/148383811adf417889d471e7f9dcfb37"
+    },
+    "zero_provider_ceiling_tested": true
+  }
 }

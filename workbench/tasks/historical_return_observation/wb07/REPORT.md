@@ -1,66 +1,101 @@
-# WB-07 blocked delivery report
+# WB-07 real research and cache acceptance report
 
-WB-07 has verified preparation for the requested 2026 four-index / four-horizon
-research, but **no real-market execution has occurred**. Exact cold-workflow user
-consent is absent. Automatic Goal continuations do not constitute that consent.
-The [original request](REQUEST.md), Stage 3, explicitly requires approval of the
-Frozen Workflow ID, SHA-256 and acquisition side effects before G5. The Workbench
-[G5 contract](../AUTHORIZED_EXECUTION.md) requires the actual user's exact sentence.
+Updated 2026-10-30 Asia/Shanghai. **Cold real-market research PASS; independent
+numerical verification PASS; public-service cache reuse PASS; Warm Research NOT RUN,
+awaiting separate exact user authorization.** Full WB-07 E2E remains incomplete until
+its independently authorized Warm Research and cold/warm result comparison complete.
+The requested sample window remains inclusive 2026-01-01..2026-10-29.
 
-## Completed work and retained evidence
+## Actual research findings
 
-Actual backend OpenAPI and capability list/detail discovery passed. A newly authored
-plan preserves all requested subjects, H=1/3/5/10, inclusive 2026-01-01..2026-10-29,
-metric, parameters, analyses and failure policy. Public Python Preview expands
-16 Jobs / 32 analyses. The immutable G4 is integrity verified. [Acceptance](ACCEPTANCE.md)
-records exact identities, hashes, test results and reconciliation; [evidence.json](evidence.json)
-indexes eight original artifacts in ignored Workbench storage. Task v1 and all
-business/Statistics implementations remain unchanged.
+The [16-row matrix](MATRIX.md), [complete interval distributions](DISTRIBUTIONS.md)
+and [full-precision statistical results](results.json) come from the immutable actual
+Research BatchResult, never fixtures. All 16 Jobs and 32 analyses succeeded. Each Job
+has 197 samples / Eligible observations, zero Unavailable and zero Excluded, 100%
+observation coverage and complete sample/warm-up market fact coverage.
 
-The narrow opt-in tool retains one fresh external cache directory across later cold
-and warm operations, checks all Repository/SQLite paths including implicit Calendar
-dependencies, counts and caps Provider calls, applies the existing rate limiter and
-terminates on deadline, sampled storage excess or lost monitoring/audit facilities.
-Seven focused control tests pass without Provider access. Storage ceilings are sampled
-and can overshoot during an in-flight write; no OS quota is claimed.
+Actual Dataset Exports confirm the four full codes and names: 000852.SH / CSI1000,
+000905.SH / CSI500, 000300.SH / CSI300 and 000016.SH / SSE50. Exact provider names,
+market, publisher and category are retained in results.json. First candidate anchor
+is 2026-01-05; last is 2026-10-29. H=10 requires prices from 2025-12-18; Calendar
+backward discovery also retains padding, never a weekday-derived schedule.
 
-Default cache compatibility was probed through public services with SQLite read-only
-connections and network denied. Calendar requires rebuild; Index coverage is blocked
-by its Calendar prerequisite. Those files remain unchanged. No rebuild/migration was
-attempted. The new isolated cache remains empty. Its initial Calendar coverage is
-302 missing natural dates; Index target units cannot be determined without Calendar.
-Credential availability was verified without recording any secret; current permissions,
-provider metadata and market publication completeness remain unverified.
+Across all four indices, the P5-to-P95 spread is wider at H=10 than at H=1. The
+CSI1000/CSI500 spreads are wider than the CSI300/SSE50 spreads at each requested H.
+H=10 medians range from -0.5547% (CSI1000) to -0.8747% (CSI300); the matrix provides
+all intermediate horizons and quantiles. These are descriptive historical endpoint
+returns with overlapping inputs, not annualized returns, forecasts or trading findings.
 
-The ordinary G5 adapter's absent-consent check returned BLOCKED before invocation.
-There is no authorization artifact, execution intent, BatchResult or warm Run.
+## Cold acquisition and cache evidence
 
-## Requested deliverables and disposition
+The real user's exact cold-workflow approval was resolved from their actual chat
+reply, preserved separately and validated by the ordinary G5 adapter. Exactly one
+execution intent preceded exactly one public execute_batch invocation. Fresh-process
+read_execution verifies original authorization/workflow/intent/Batch/report linkage.
+The earlier absent-consent BLOCKED outcome remains in history and is not rewritten.
 
-| Requested output | Actual delivery |
+| Cold resource / operation | Actual |
 | --- | --- |
-| 16-row real research matrix | NOT RUN; no measured values exist |
-| Full quantile / interval distributions and descriptive comparisons | NOT RUN; no statistical finding is asserted |
-| Cold/warm comparison and Provider audit | Both research Runs NOT RUN; preflight/no-consent audit proves zero Provider calls only |
-| E2E acceptance report | [Acceptance and readiness](ACCEPTANCE.md); no real-market PASS |
-| Independent problem report | [Problems](PROBLEMS.md), including resolved tooling errors and unresolved conditions |
-| Original Workbench evidence | [Artifact index](evidence.json); blobs at workbench/.runs/Run-ID/stored_path |
-| Authority/implementation reconciliation | Existing Task/Python surface suffices; no business semantic changes; controls are Task-local operational tooling |
-| Commands, tests and commit | Commands/results in acceptance; this blocked-delivery commit is discoverable with `git log -1 --format=%H -- workbench/tasks/historical_return_observation/wb07/REPORT.md` |
+| Provider calls | 77: trade_cal 5, index_basic 32, index_daily 40 |
+| Wall time / configured rate | 77.846 seconds / 60 calls per minute, process/credential scope |
+| Isolated databases | 761,856 bytes total; two Generation 3 owned files |
+| New Run evidence through completion | 19,121,216 bytes |
+| Immutable BatchResult blob | 19,113,258 bytes |
+| Calendar Ensure calls / requested / already successful | 5 / 342 / 14 |
+| Calendar attempted / succeeded / failed / records written | 328 / 328 / 0 / 328 |
+| Index Ensure calls / requested / already successful | 16 / 3,228 / 2,400 |
+| Index attempted / succeeded / failed / records written | 828 / 828 / 0 / 828 |
+| Final Index targets by H, per index | H=1: 198; H=3: 200; H=5: 202; H=10: 207; all complete |
+| Isolation | All Repository/SQLite bindings guarded; implicit Calendar isolated; default hashes/size/mtime unchanged |
 
-No market return, sample count, session count, coverage ratio, metadata identity or
-cache reuse result is invented to fill the unexecuted deliverables. The independent
-verification and genuine warm authorization remain future work under the unchanged
-full Goal, not waived requirements.
+Requested/already-successful totals above sum actual public Ensure calls with overlapping
+ranges; unique writes are the attempted/succeeded counts, not 3,228 distinct Index facts.
+Both caches persist in the same external directory for Warm Research. No existing
+user cache was copied, repaired or migrated. Default Calendar still requires rebuild;
+that condition did not block the fresh-isolation route.
 
-## Required external action
+After cold completion, 26 distinct actual public requests were independently reread
+via coverage/export, compared in full with the saved cold public Exports, then passed
+to ordinary Ensure only after complete coverage was established. Provider and sockets
+were forbidden throughout: zero Provider calls/attempts, zero attempted units, zero
+new records, unchanged exported payloads/metadata and unchanged database bytes,
+hashes and mtimes. This proves service-level successful-unit reuse. It does not
+substitute for a separately authorized Research-level Warm Run.
 
-Cold Run: `d95b13c5cb554fab9f19e89cdc3c5b78`; Workflow:
-`adcebe33f9b84a33becb16832f7a9ad0`; SHA-256:
-`14484338f2073b73b9f19dc9e92a4a9727a91923d1975eb53146708c50733a10`.
-The exact approval sentence is retained in evidence.json at
-`preflight.approval_sentence`. The stated envelope is 160 calls, 60/minute, 900 seconds,
-512 MiB isolated databases and 256 MiB new Run evidence with the sampled-storage
-limitation above. Resume requires the real user's explicit approval and a fresh
-read-only eligibility/control check. Warm G5 needs its own new Run, frozen Workflow
-and separate real approval after cold results and cache completeness are inspected.
+## Independent verification and evidence
+
+The saved-result oracle forbids network and SQLite. For each Job it reconstructs SSE
+open anchors, exact H-position lookbacks and close(T)/close(T-H)-1 from saved public
+Exports, then verifies E/U/X, all fact/observation coverage, positional sample mapping,
+Type 7, every interval/tail count and full-sample frequency, conservation, original
+request association, retained canonical input bytes and SHA-256. It also compares the
+full fingerprint payload to the actual saved public facts. All 16/32 checks pass.
+
+Cold Run: `d95b13c5cb554fab9f19e89cdc3c5b78`. Actual result artifact:
+`06f9fc648e16494dbf79ab35585a3a09`; SHA-256:
+`e59d737f93212b48b934926b19833b7f2fc832327ee726e434deab2b45d40fb1`.
+Local original: `workbench/.runs/d95b13c5cb554fab9f19e89cdc3c5b78/blobs/06f9fc648e16494dbf79ab35585a3a09`.
+[Evidence index](evidence.json) records all original artifacts, authorization, cold
+operational audit, independent oracle and complete cache-operation evidence references.
+Large original blobs and cache files remain outside Git; committed results contain
+only public metadata, statistics, coverage, fingerprints and references.
+
+## Separate Warm Research authorization
+
+A new independent Run `7ac42795d02f453496b6cc95fc0ec173` has actual G1/G3 PASS,
+G2/G6 SKIPPED and G4 PASS. Its Preview has the identical digest and full 16/32 plan.
+Workflow `bde3e79f53824c8896fb0fe4bb1e522a`, SHA-256:
+`94e80ee9deba25414d09ab1069f092af54ee513f4bd50f0913f0457515218fa4`.
+It has no execution intent or authorization and has not invoked Research.
+
+Warm will reuse the existing cache and enforce **zero Provider calls** with the
+existing control wrapper, plus 900 seconds, 512 MiB database storage and 256 MiB new
+Run evidence. Storage checks sample every 250ms; an in-flight overshoot remains an
+explicit limitation. The generic G5 challenge lists potential acquisition/paid-data
+side effects, but this Warm operational ceiling rejects any attempted Provider call.
+No cold authorization or intent is transferable. The exact new approval sentence is
+in evidence.json at `warm.approval_sentence` and is presented in the chat.
+
+The [acceptance record](ACCEPTANCE.md) and [problem report](PROBLEMS.md) distinguish
+completed work from the remaining Warm authorization/execution/comparison. Business,
+financial and numerical contracts remain unchanged. The original full Goal continues.

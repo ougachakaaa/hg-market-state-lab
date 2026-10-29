@@ -1,0 +1,3069 @@
+{
+  "run_id": "d95b13c5cb554fab9f19e89cdc3c5b78",
+  "result_artifact": {
+    "artifact_id": "06f9fc648e16494dbf79ab35585a3a09",
+    "sha256": "e59d737f93212b48b934926b19833b7f2fc832327ee726e434deab2b45d40fb1",
+    "stored_path": "blobs/06f9fc648e16494dbf79ab35585a3a09"
+  },
+  "jobs": [
+    {
+      "index": "000852.SH",
+      "name": "\u4e2d\u8bc11000",
+      "horizon": 1,
+      "sample_count": 197,
+      "eligible": 197,
+      "unavailable": 0,
+      "excluded": 0,
+      "observation_coverage": 1.0,
+      "market_fact_coverage": {
+        "complete": true,
+        "failed_units": 0,
+        "missing_units": 0,
+        "pending_units": 0,
+        "requested_units": 198,
+        "successful_units": 198
+      },
+      "first_anchor": "2026-01-05",
+      "last_anchor": "2026-10-29",
+      "warm_up_start": "2025-12-31",
+      "metadata": {
+        "index_code": "000852.SH",
+        "symbol": "000852",
+        "name": "\u4e2d\u8bc11000",
+        "market": "SSE",
+        "publisher": "\u4e2d\u8bc1\u6307\u6570\u6709\u9650\u516c\u53f8",
+        "category": "\u89c4\u6a21\u6307\u6570"
+      },
+      "job_status": "Success",
+      "input_fingerprint": "19ac5c0a3f9a27b2daa7bd762be2a4d56241c5acfcfb2081b8202fbce31adcaa",
+      "quantiles": {
+        "estimator": "type7_linear_v1",
+        "method": "quantile",
+        "points_and_values": [
+          [
+            0.05,
+            -0.030791639427108962
+          ],
+          [
+            0.1,
+            -0.024455509501015868
+          ],
+          [
+            0.25,
+            -0.013229707750446296
+          ],
+          [
+            0.5,
+            0.0019738868123522213
+          ],
+          [
+            0.75,
+            0.010241415489350869
+          ],
+          [
+            0.9,
+            0.021090590049845127
+          ],
+          [
+            0.95,
+            0.025620563522733293
+          ]
+        ],
+        "sample_count": 197,
+        "unit": "decimal_ratio"
+      },
+      "interval_count": {
+        "bins": [
+          {
+            "count": 0,
+            "frequency": 0.0,
+            "left": -0.15,
+            "left_inclusive": true,
+            "right": -0.1,
+            "right_inclusive": false
+          },
+          {
+            "count": 3,
+            "frequency": 0.015228426395939087,
+            "left": -0.1,
+            "left_inclusive": true,
+            "right": -0.05,
+            "right_inclusive": false
+          },
+          {
+            "count": 9,
+            "frequency": 0.04568527918781726,
+            "left": -0.05,
+            "left_inclusive": true,
+            "right": -0.03,
+            "right_inclusive": false
+          },
+          {
+            "count": 17,
+            "frequency": 0.08629441624365482,
+            "left": -0.03,
+            "left_inclusive": true,
+            "right": -0.02,
+            "right_inclusive": false
+          },
+          {
+            "count": 29,
+            "frequency": 0.14720812182741116,
+            "left": -0.02,
+            "left_inclusive": true,
+            "right": -0.01,
+            "right_inclusive": false
+          },
+          {
+            "count": 34,
+            "frequency": 0.17258883248730963,
+            "left": -0.01,
+            "left_inclusive": true,
+            "right": 0.0,
+            "right_inclusive": false
+          },
+          {
+            "count": 54,
+            "frequency": 0.27411167512690354,
+            "left": 0.0,
+            "left_inclusive": true,
+            "right": 0.01,
+            "right_inclusive": false
+          },
+          {
+            "count": 29,
+            "frequency": 0.14720812182741116,
+            "left": 0.01,
+            "left_inclusive": true,
+            "right": 0.02,
+            "right_inclusive": false
+          },
+          {
+            "count": 18,
+            "frequency": 0.09137055837563451,
+            "left": 0.02,
+            "left_inclusive": true,
+            "right": 0.03,
+            "right_inclusive": false
+          },
+          {
+            "count": 4,
+            "frequency": 0.02030456852791878,
+            "left": 0.03,
+            "left_inclusive": true,
+            "right": 0.05,
+            "right_inclusive": false
+          },
+          {
+            "count": 0,
+            "frequency": 0.0,
+            "left": 0.05,
+            "left_inclusive": true,
+            "right": 0.1,
+            "right_inclusive": false
+          },
+          {
+            "count": 0,
+            "frequency": 0.0,
+            "left": 0.1,
+            "left_inclusive": true,
+            "right": 0.15,
+            "right_inclusive": true
+          }
+        ],
+        "edges": [
+          -0.15,
+          -0.1,
+          -0.05,
+          -0.03,
+          -0.02,
+          -0.01,
+          0.0,
+          0.01,
+          0.02,
+          0.03,
+          0.05,
+          0.1,
+          0.15
+        ],
+        "method": "interval_count",
+        "overflow_count": 0,
+        "overflow_frequency": 0.0,
+        "sample_count": 197,
+        "underflow_count": 0,
+        "underflow_frequency": 0.0,
+        "unit": "decimal_ratio"
+      },
+      "independent_export_oracles": "PASS",
+      "observations_sha256": "08a1a238745974f9f2b260533e0f044c36cf28c3cb269ed84bcb1f5cc000d17e"
+    },
+    {
+      "index": "000852.SH",
+      "name": "\u4e2d\u8bc11000",
+      "horizon": 3,
+      "sample_count": 197,
+      "eligible": 197,
+      "unavailable": 0,
+      "excluded": 0,
+      "observation_coverage": 1.0,
+      "market_fact_coverage": {
+        "complete": true,
+        "failed_units": 0,
+        "missing_units": 0,
+        "pending_units": 0,
+        "requested_units": 200,
+        "successful_units": 200
+      },
+      "first_anchor": "2026-01-05",
+      "last_anchor": "2026-10-29",
+      "warm_up_start": "2025-12-29",
+      "metadata": {
+        "index_code": "000852.SH",
+        "symbol": "000852",
+        "name": "\u4e2d\u8bc11000",
+        "market": "SSE",
+        "publisher": "\u4e2d\u8bc1\u6307\u6570\u6709\u9650\u516c\u53f8",
+        "category": "\u89c4\u6a21\u6307\u6570"
+      },
+      "job_status": "Success",
+      "input_fingerprint": "9e9d69813bcfb3e4f4eb92bfd6a1015cd6c51fa5abdb602b13eec80c625065c5",
+      "quantiles": {
+        "estimator": "type7_linear_v1",
+        "method": "quantile",
+        "points_and_values": [
+          [
+            0.05,
+            -0.048620119206495206
+          ],
+          [
+            0.1,
+            -0.03965454941943011
+          ],
+          [
+            0.25,
+            -0.02145310932017097
+          ],
+          [
+            0.5,
+            -0.0018280473669820552
+          ],
+          [
+            0.75,
+            0.019972823761509106
+          ],
+          [
+            0.9,
+            0.03359966228058568
+          ],
+          [
+            0.95,
+            0.04378119673322861
+          ]
+        ],
+        "sample_count": 197,
+        "unit": "decimal_ratio"
+      },
+      "interval_count": {
+        "bins": [
+          {
+            "count": 1,
+            "frequency": 0.005076142131979695,
+            "left": -0.15,
+            "left_inclusive": true,
+            "right": -0.1,
+            "right_inclusive": false
+          },
+          {
+            "count": 7,
+            "frequency": 0.03553299492385787,
+            "left": -0.1,
+            "left_inclusive": true,
+            "right": -0.05,
+            "right_inclusive": false
+          },
+          {
+            "count": 25,
+            "frequency": 0.12690355329949238,
+            "left": -0.05,
+            "left_inclusive": true,
+            "right": -0.03,
+            "right_inclusive": false
+          },
+          {
+            "count": 21,
+            "frequency": 0.1065989847715736,
+            "left": -0.03,
+            "left_inclusive": true,
+            "right": -0.02,
+            "right_inclusive": false
+          },
+          {
+            "count": 23,
+            "frequency": 0.116751269035533,
+            "left": -0.02,
+            "left_inclusive": true,
+            "right": -0.01,
+            "right_inclusive": false
+          },
+          {
+            "count": 24,
+            "frequency": 0.1218274111675127,
+            "left": -0.01,
+            "left_inclusive": true,
+            "right": 0.0,
+            "right_inclusive": false
+          },
+          {
+            "count": 27,
+            "frequency": 0.13705583756345177,
+            "left": 0.0,
+            "left_inclusive": true,
+            "right": 0.01,
+            "right_inclusive": false
+          },
+          {
+            "count": 20,
+            "frequency": 0.10152284263959391,
+            "left": 0.01,
+            "left_inclusive": true,
+            "right": 0.02,
+            "right_inclusive": false
+          },
+          {
+            "count": 21,
+            "frequency": 0.1065989847715736,
+            "left": 0.02,
+            "left_inclusive": true,
+            "right": 0.03,
+            "right_inclusive": false
+          },
+          {
+            "count": 19,
+            "frequency": 0.09644670050761421,
+            "left": 0.03,
+            "left_inclusive": true,
+            "right": 0.05,
+            "right_inclusive": false
+          },
+          {
+            "count": 9,
+            "frequency": 0.04568527918781726,
+            "left": 0.05,
+            "left_inclusive": true,
+            "right": 0.1,
+            "right_inclusive": false
+          },
+          {
+            "count": 0,
+            "frequency": 0.0,
+            "left": 0.1,
+            "left_inclusive": true,
+            "right": 0.15,
+            "right_inclusive": true
+          }
+        ],
+        "edges": [
+          -0.15,
+          -0.1,
+          -0.05,
+          -0.03,
+          -0.02,
+          -0.01,
+          0.0,
+          0.01,
+          0.02,
+          0.03,
+          0.05,
+          0.1,
+          0.15
+        ],
+        "method": "interval_count",
+        "overflow_count": 0,
+        "overflow_frequency": 0.0,
+        "sample_count": 197,
+        "underflow_count": 0,
+        "underflow_frequency": 0.0,
+        "unit": "decimal_ratio"
+      },
+      "independent_export_oracles": "PASS",
+      "observations_sha256": "607742ea4f594fb75d97e715c789d3be8af688ebb460defe9d67570770d2c1ab"
+    },
+    {
+      "index": "000852.SH",
+      "name": "\u4e2d\u8bc11000",
+      "horizon": 5,
+      "sample_count": 197,
+      "eligible": 197,
+      "unavailable": 0,
+      "excluded": 0,
+      "observation_coverage": 1.0,
+      "market_fact_coverage": {
+        "complete": true,
+        "failed_units": 0,
+        "missing_units": 0,
+        "pending_units": 0,
+        "requested_units": 202,
+        "successful_units": 202
+      },
+      "first_anchor": "2026-01-05",
+      "last_anchor": "2026-10-29",
+      "warm_up_start": "2025-12-25",
+      "metadata": {
+        "index_code": "000852.SH",
+        "symbol": "000852",
+        "name": "\u4e2d\u8bc11000",
+        "market": "SSE",
+        "publisher": "\u4e2d\u8bc1\u6307\u6570\u6709\u9650\u516c\u53f8",
+        "category": "\u89c4\u6a21\u6307\u6570"
+      },
+      "job_status": "Success",
+      "input_fingerprint": "3bf13e78f576f8844811863c10c549cbc09aeae40621bb5960da682699a25d86",
+      "quantiles": {
+        "estimator": "type7_linear_v1",
+        "method": "quantile",
+        "points_and_values": [
+          [
+            0.05,
+            -0.06479046632394825
+          ],
+          [
+            0.1,
+            -0.05232809132750427
+          ],
+          [
+            0.25,
+            -0.03095449782713844
+          ],
+          [
+            0.5,
+            -0.0022838029451694997
+          ],
+          [
+            0.75,
+            0.025500396452970753
+          ],
+          [
+            0.9,
+            0.04554706931798368
+          ],
+          [
+            0.95,
+            0.06258273210911725
+          ]
+        ],
+        "sample_count": 197,
+        "unit": "decimal_ratio"
+      },
+      "interval_count": {
+        "bins": [
+          {
+            "count": 2,
+            "frequency": 0.01015228426395939,
+            "left": -0.15,
+            "left_inclusive": true,
+            "right": -0.1,
+            "right_inclusive": false
+          },
+          {
+            "count": 23,
+            "frequency": 0.116751269035533,
+            "left": -0.1,
+            "left_inclusive": true,
+            "right": -0.05,
+            "right_inclusive": false
+          },
+          {
+            "count": 28,
+            "frequency": 0.14213197969543148,
+            "left": -0.05,
+            "left_inclusive": true,
+            "right": -0.03,
+            "right_inclusive": false
+          },
+          {
+            "count": 17,
+            "frequency": 0.08629441624365482,
+            "left": -0.03,
+            "left_inclusive": true,
+            "right": -0.02,
+            "right_inclusive": false
+          },
+          {
+            "count": 18,
+            "frequency": 0.09137055837563451,
+            "left": -0.02,
+            "left_inclusive": true,
+            "right": -0.01,
+            "right_inclusive": false
+          },
+          {
+            "count": 16,
+            "frequency": 0.08121827411167512,
+            "left": -0.01,
+            "left_inclusive": true,
+            "right": 0.0,
+            "right_inclusive": false
+          },
+          {
+            "count": 19,
+            "frequency": 0.09644670050761421,
+            "left": 0.0,
+            "left_inclusive": true,
+            "right": 0.01,
+            "right_inclusive": false
+          },
+          {
+            "count": 15,
+            "frequency": 0.07614213197969544,
+            "left": 0.01,
+            "left_inclusive": true,
+            "right": 0.02,
+            "right_inclusive": false
+          },
+          {
+            "count": 12,
+            "frequency": 0.06091370558375635,
+            "left": 0.02,
+            "left_inclusive": true,
+            "right": 0.03,
+            "right_inclusive": false
+          },
+          {
+            "count": 31,
+            "frequency": 0.15736040609137056,
+            "left": 0.03,
+            "left_inclusive": true,
+            "right": 0.05,
+            "right_inclusive": false
+          },
+          {
+            "count": 16,
+            "frequency": 0.08121827411167512,
+            "left": 0.05,
+            "left_inclusive": true,
+            "right": 0.1,
+            "right_inclusive": false
+          },
+          {
+            "count": 0,
+            "frequency": 0.0,
+            "left": 0.1,
+            "left_inclusive": true,
+            "right": 0.15,
+            "right_inclusive": true
+          }
+        ],
+        "edges": [
+          -0.15,
+          -0.1,
+          -0.05,
+          -0.03,
+          -0.02,
+          -0.01,
+          0.0,
+          0.01,
+          0.02,
+          0.03,
+          0.05,
+          0.1,
+          0.15
+        ],
+        "method": "interval_count",
+        "overflow_count": 0,
+        "overflow_frequency": 0.0,
+        "sample_count": 197,
+        "underflow_count": 0,
+        "underflow_frequency": 0.0,
+        "unit": "decimal_ratio"
+      },
+      "independent_export_oracles": "PASS",
+      "observations_sha256": "4b7cb878e2b11657c5e554ffd65aceb1794fde0b8e632c1edc3ac276427ebb56"
+    },
+    {
+      "index": "000852.SH",
+      "name": "\u4e2d\u8bc11000",
+      "horizon": 10,
+      "sample_count": 197,
+      "eligible": 197,
+      "unavailable": 0,
+      "excluded": 0,
+      "observation_coverage": 1.0,
+      "market_fact_coverage": {
+        "complete": true,
+        "failed_units": 0,
+        "missing_units": 0,
+        "pending_units": 0,
+        "requested_units": 207,
+        "successful_units": 207
+      },
+      "first_anchor": "2026-01-05",
+      "last_anchor": "2026-10-29",
+      "warm_up_start": "2025-12-18",
+      "metadata": {
+        "index_code": "000852.SH",
+        "symbol": "000852",
+        "name": "\u4e2d\u8bc11000",
+        "market": "SSE",
+        "publisher": "\u4e2d\u8bc1\u6307\u6570\u6709\u9650\u516c\u53f8",
+        "category": "\u89c4\u6a21\u6307\u6570"
+      },
+      "job_status": "Success",
+      "input_fingerprint": "79eac81dbabb979e2664cd9ef62bbdef434691f0eec623a2386ff4bf85c9d8a1",
+      "quantiles": {
+        "estimator": "type7_linear_v1",
+        "method": "quantile",
+        "points_and_values": [
+          [
+            0.05,
+            -0.1137723891413843
+          ],
+          [
+            0.1,
+            -0.08558042027930779
+          ],
+          [
+            0.25,
+            -0.042710224233771465
+          ],
+          [
+            0.5,
+            -0.005546775437700768
+          ],
+          [
+            0.75,
+            0.04237008615359206
+          ],
+          [
+            0.9,
+            0.07343960508314425
+          ],
+          [
+            0.95,
+            0.09010079880110877
+          ]
+        ],
+        "sample_count": 197,
+        "unit": "decimal_ratio"
+      },
+      "interval_count": {
+        "bins": [
+          {
+            "count": 11,
+            "frequency": 0.05583756345177665,
+            "left": -0.15,
+            "left_inclusive": true,
+            "right": -0.1,
+            "right_inclusive": false
+          },
+          {
+            "count": 26,
+            "frequency": 0.1319796954314721,
+            "left": -0.1,
+            "left_inclusive": true,
+            "right": -0.05,
+            "right_inclusive": false
+          },
+          {
+            "count": 28,
+            "frequency": 0.14213197969543148,
+            "left": -0.05,
+            "left_inclusive": true,
+            "right": -0.03,
+            "right_inclusive": false
+          },
+          {
+            "count": 5,
+            "frequency": 0.025380710659898477,
+            "left": -0.03,
+            "left_inclusive": true,
+            "right": -0.02,
+            "right_inclusive": false
+          },
+          {
+            "count": 18,
+            "frequency": 0.09137055837563451,
+            "left": -0.02,
+            "left_inclusive": true,
+            "right": -0.01,
+            "right_inclusive": false
+          },
+          {
+            "count": 13,
+            "frequency": 0.06598984771573604,
+            "left": -0.01,
+            "left_inclusive": true,
+            "right": 0.0,
+            "right_inclusive": false
+          },
+          {
+            "count": 12,
+            "frequency": 0.06091370558375635,
+            "left": 0.0,
+            "left_inclusive": true,
+            "right": 0.01,
+            "right_inclusive": false
+          },
+          {
+            "count": 11,
+            "frequency": 0.05583756345177665,
+            "left": 0.01,
+            "left_inclusive": true,
+            "right": 0.02,
+            "right_inclusive": false
+          },
+          {
+            "count": 9,
+            "frequency": 0.04568527918781726,
+            "left": 0.02,
+            "left_inclusive": true,
+            "right": 0.03,
+            "right_inclusive": false
+          },
+          {
+            "count": 24,
+            "frequency": 0.1218274111675127,
+            "left": 0.03,
+            "left_inclusive": true,
+            "right": 0.05,
+            "right_inclusive": false
+          },
+          {
+            "count": 34,
+            "frequency": 0.17258883248730963,
+            "left": 0.05,
+            "left_inclusive": true,
+            "right": 0.1,
+            "right_inclusive": false
+          },
+          {
+            "count": 4,
+            "frequency": 0.02030456852791878,
+            "left": 0.1,
+            "left_inclusive": true,
+            "right": 0.15,
+            "right_inclusive": true
+          }
+        ],
+        "edges": [
+          -0.15,
+          -0.1,
+          -0.05,
+          -0.03,
+          -0.02,
+          -0.01,
+          0.0,
+          0.01,
+          0.02,
+          0.03,
+          0.05,
+          0.1,
+          0.15
+        ],
+        "method": "interval_count",
+        "overflow_count": 0,
+        "overflow_frequency": 0.0,
+        "sample_count": 197,
+        "underflow_count": 2,
+        "underflow_frequency": 0.01015228426395939,
+        "unit": "decimal_ratio"
+      },
+      "independent_export_oracles": "PASS",
+      "observations_sha256": "c67d11a4986950cc5a5610ab806965ad2d6eaf7997c4edebbbf516f89132cbee"
+    },
+    {
+      "index": "000905.SH",
+      "name": "\u4e2d\u8bc1500",
+      "horizon": 1,
+      "sample_count": 197,
+      "eligible": 197,
+      "unavailable": 0,
+      "excluded": 0,
+      "observation_coverage": 1.0,
+      "market_fact_coverage": {
+        "complete": true,
+        "failed_units": 0,
+        "missing_units": 0,
+        "pending_units": 0,
+        "requested_units": 198,
+        "successful_units": 198
+      },
+      "first_anchor": "2026-01-05",
+      "last_anchor": "2026-10-29",
+      "warm_up_start": "2025-12-31",
+      "metadata": {
+        "index_code": "000905.SH",
+        "symbol": "000905",
+        "name": "\u4e2d\u8bc1500",
+        "market": "SSE",
+        "publisher": "\u4e2d\u8bc1\u6307\u6570\u6709\u9650\u516c\u53f8",
+        "category": "\u89c4\u6a21\u6307\u6570"
+      },
+      "job_status": "Success",
+      "input_fingerprint": "7d7a2a4a6c9b7b83febbd055d8bee4322d4a0a4d997ca4832eedf703f25a2679",
+      "quantiles": {
+        "estimator": "type7_linear_v1",
+        "method": "quantile",
+        "points_and_values": [
+          [
+            0.05,
+            -0.03003296520646721
+          ],
+          [
+            0.1,
+            -0.025495445598805677
+          ],
+          [
+            0.25,
+            -0.012831357013211475
+          ],
+          [
+            0.5,
+            0.0003548904690249266
+          ],
+          [
+            0.75,
+            0.011244514032930697
+          ],
+          [
+            0.9,
+            0.021743256886488822
+          ],
+          [
+            0.95,
+            0.02500103134483091
+          ]
+        ],
+        "sample_count": 197,
+        "unit": "decimal_ratio"
+      },
+      "interval_count": {
+        "bins": [
+          {
+            "count": 0,
+            "frequency": 0.0,
+            "left": -0.15,
+            "left_inclusive": true,
+            "right": -0.1,
+            "right_inclusive": false
+          },
+          {
+            "count": 1,
+            "frequency": 0.005076142131979695,
+            "left": -0.1,
+            "left_inclusive": true,
+            "right": -0.05,
+            "right_inclusive": false
+          },
+          {
+            "count": 9,
+            "frequency": 0.04568527918781726,
+            "left": -0.05,
+            "left_inclusive": true,
+            "right": -0.03,
+            "right_inclusive": false
+          },
+          {
+            "count": 17,
+            "frequency": 0.08629441624365482,
+            "left": -0.03,
+            "left_inclusive": true,
+            "right": -0.02,
+            "right_inclusive": false
+          },
+          {
+            "count": 29,
+            "frequency": 0.14720812182741116,
+            "left": -0.02,
+            "left_inclusive": true,
+            "right": -0.01,
+            "right_inclusive": false
+          },
+          {
+            "count": 41,
+            "frequency": 0.20812182741116753,
+            "left": -0.01,
+            "left_inclusive": true,
+            "right": 0.0,
+            "right_inclusive": false
+          },
+          {
+            "count": 45,
+            "frequency": 0.22842639593908629,
+            "left": 0.0,
+            "left_inclusive": true,
+            "right": 0.01,
+            "right_inclusive": false
+          },
+          {
+            "count": 31,
+            "frequency": 0.15736040609137056,
+            "left": 0.01,
+            "left_inclusive": true,
+            "right": 0.02,
+            "right_inclusive": false
+          },
+          {
+            "count": 19,
+            "frequency": 0.09644670050761421,
+            "left": 0.02,
+            "left_inclusive": true,
+            "right": 0.03,
+            "right_inclusive": false
+          },
+          {
+            "count": 4,
+            "frequency": 0.02030456852791878,
+            "left": 0.03,
+            "left_inclusive": true,
+            "right": 0.05,
+            "right_inclusive": false
+          },
+          {
+            "count": 1,
+            "frequency": 0.005076142131979695,
+            "left": 0.05,
+            "left_inclusive": true,
+            "right": 0.1,
+            "right_inclusive": false
+          },
+          {
+            "count": 0,
+            "frequency": 0.0,
+            "left": 0.1,
+            "left_inclusive": true,
+            "right": 0.15,
+            "right_inclusive": true
+          }
+        ],
+        "edges": [
+          -0.15,
+          -0.1,
+          -0.05,
+          -0.03,
+          -0.02,
+          -0.01,
+          0.0,
+          0.01,
+          0.02,
+          0.03,
+          0.05,
+          0.1,
+          0.15
+        ],
+        "method": "interval_count",
+        "overflow_count": 0,
+        "overflow_frequency": 0.0,
+        "sample_count": 197,
+        "underflow_count": 0,
+        "underflow_frequency": 0.0,
+        "unit": "decimal_ratio"
+      },
+      "independent_export_oracles": "PASS",
+      "observations_sha256": "a9df183c2af8c2fec4e27923753ac63d67ed74c2bd6d83c8ffaa2d2feef6193f"
+    },
+    {
+      "index": "000905.SH",
+      "name": "\u4e2d\u8bc1500",
+      "horizon": 3,
+      "sample_count": 197,
+      "eligible": 197,
+      "unavailable": 0,
+      "excluded": 0,
+      "observation_coverage": 1.0,
+      "market_fact_coverage": {
+        "complete": true,
+        "failed_units": 0,
+        "missing_units": 0,
+        "pending_units": 0,
+        "requested_units": 200,
+        "successful_units": 200
+      },
+      "first_anchor": "2026-01-05",
+      "last_anchor": "2026-10-29",
+      "warm_up_start": "2025-12-29",
+      "metadata": {
+        "index_code": "000905.SH",
+        "symbol": "000905",
+        "name": "\u4e2d\u8bc1500",
+        "market": "SSE",
+        "publisher": "\u4e2d\u8bc1\u6307\u6570\u6709\u9650\u516c\u53f8",
+        "category": "\u89c4\u6a21\u6307\u6570"
+      },
+      "job_status": "Success",
+      "input_fingerprint": "bc14a3036d9c598c8076f48debb5722710795adb773c8332080675ec70f402f7",
+      "quantiles": {
+        "estimator": "type7_linear_v1",
+        "method": "quantile",
+        "points_and_values": [
+          [
+            0.05,
+            -0.04528914326810751
+          ],
+          [
+            0.1,
+            -0.039819256647817936
+          ],
+          [
+            0.25,
+            -0.022535365433988486
+          ],
+          [
+            0.5,
+            0.0006254024114580314
+          ],
+          [
+            0.75,
+            0.019235203893368746
+          ],
+          [
+            0.9,
+            0.03403631210127659
+          ],
+          [
+            0.95,
+            0.045122781744344406
+          ]
+        ],
+        "sample_count": 197,
+        "unit": "decimal_ratio"
+      },
+      "interval_count": {
+        "bins": [
+          {
+            "count": 0,
+            "frequency": 0.0,
+            "left": -0.15,
+            "left_inclusive": true,
+            "right": -0.1,
+            "right_inclusive": false
+          },
+          {
+            "count": 6,
+            "frequency": 0.030456852791878174,
+            "left": -0.1,
+            "left_inclusive": true,
+            "right": -0.05,
+            "right_inclusive": false
+          },
+          {
+            "count": 27,
+            "frequency": 0.13705583756345177,
+            "left": -0.05,
+            "left_inclusive": true,
+            "right": -0.03,
+            "right_inclusive": false
+          },
+          {
+            "count": 27,
+            "frequency": 0.13705583756345177,
+            "left": -0.03,
+            "left_inclusive": true,
+            "right": -0.02,
+            "right_inclusive": false
+          },
+          {
+            "count": 15,
+            "frequency": 0.07614213197969544,
+            "left": -0.02,
+            "left_inclusive": true,
+            "right": -0.01,
+            "right_inclusive": false
+          },
+          {
+            "count": 21,
+            "frequency": 0.1065989847715736,
+            "left": -0.01,
+            "left_inclusive": true,
+            "right": 0.0,
+            "right_inclusive": false
+          },
+          {
+            "count": 29,
+            "frequency": 0.14720812182741116,
+            "left": 0.0,
+            "left_inclusive": true,
+            "right": 0.01,
+            "right_inclusive": false
+          },
+          {
+            "count": 27,
+            "frequency": 0.13705583756345177,
+            "left": 0.01,
+            "left_inclusive": true,
+            "right": 0.02,
+            "right_inclusive": false
+          },
+          {
+            "count": 16,
+            "frequency": 0.08121827411167512,
+            "left": 0.02,
+            "left_inclusive": true,
+            "right": 0.03,
+            "right_inclusive": false
+          },
+          {
+            "count": 24,
+            "frequency": 0.1218274111675127,
+            "left": 0.03,
+            "left_inclusive": true,
+            "right": 0.05,
+            "right_inclusive": false
+          },
+          {
+            "count": 5,
+            "frequency": 0.025380710659898477,
+            "left": 0.05,
+            "left_inclusive": true,
+            "right": 0.1,
+            "right_inclusive": false
+          },
+          {
+            "count": 0,
+            "frequency": 0.0,
+            "left": 0.1,
+            "left_inclusive": true,
+            "right": 0.15,
+            "right_inclusive": true
+          }
+        ],
+        "edges": [
+          -0.15,
+          -0.1,
+          -0.05,
+          -0.03,
+          -0.02,
+          -0.01,
+          0.0,
+          0.01,
+          0.02,
+          0.03,
+          0.05,
+          0.1,
+          0.15
+        ],
+        "method": "interval_count",
+        "overflow_count": 0,
+        "overflow_frequency": 0.0,
+        "sample_count": 197,
+        "underflow_count": 0,
+        "underflow_frequency": 0.0,
+        "unit": "decimal_ratio"
+      },
+      "independent_export_oracles": "PASS",
+      "observations_sha256": "8ad7082d9ca8114eb8a971b06652d8df533a2ee5c63ed03c0a57fbc794f95ce7"
+    },
+    {
+      "index": "000905.SH",
+      "name": "\u4e2d\u8bc1500",
+      "horizon": 5,
+      "sample_count": 197,
+      "eligible": 197,
+      "unavailable": 0,
+      "excluded": 0,
+      "observation_coverage": 1.0,
+      "market_fact_coverage": {
+        "complete": true,
+        "failed_units": 0,
+        "missing_units": 0,
+        "pending_units": 0,
+        "requested_units": 202,
+        "successful_units": 202
+      },
+      "first_anchor": "2026-01-05",
+      "last_anchor": "2026-10-29",
+      "warm_up_start": "2025-12-25",
+      "metadata": {
+        "index_code": "000905.SH",
+        "symbol": "000905",
+        "name": "\u4e2d\u8bc1500",
+        "market": "SSE",
+        "publisher": "\u4e2d\u8bc1\u6307\u6570\u6709\u9650\u516c\u53f8",
+        "category": "\u89c4\u6a21\u6307\u6570"
+      },
+      "job_status": "Success",
+      "input_fingerprint": "2ee3fac2b95c520d954c403ac03573b917ad113c715e02b19137ad61c81c9667",
+      "quantiles": {
+        "estimator": "type7_linear_v1",
+        "method": "quantile",
+        "points_and_values": [
+          [
+            0.05,
+            -0.05843940488851942
+          ],
+          [
+            0.1,
+            -0.0514552245325036
+          ],
+          [
+            0.25,
+            -0.029828248756837983
+          ],
+          [
+            0.5,
+            -0.004030369067487105
+          ],
+          [
+            0.75,
+            0.028899772814250824
+          ],
+          [
+            0.9,
+            0.04579705987532116
+          ],
+          [
+            0.95,
+            0.0597653660964164
+          ]
+        ],
+        "sample_count": 197,
+        "unit": "decimal_ratio"
+      },
+      "interval_count": {
+        "bins": [
+          {
+            "count": 1,
+            "frequency": 0.005076142131979695,
+            "left": -0.15,
+            "left_inclusive": true,
+            "right": -0.1,
+            "right_inclusive": false
+          },
+          {
+            "count": 21,
+            "frequency": 0.1065989847715736,
+            "left": -0.1,
+            "left_inclusive": true,
+            "right": -0.05,
+            "right_inclusive": false
+          },
+          {
+            "count": 27,
+            "frequency": 0.13705583756345177,
+            "left": -0.05,
+            "left_inclusive": true,
+            "right": -0.03,
+            "right_inclusive": false
+          },
+          {
+            "count": 21,
+            "frequency": 0.1065989847715736,
+            "left": -0.03,
+            "left_inclusive": true,
+            "right": -0.02,
+            "right_inclusive": false
+          },
+          {
+            "count": 18,
+            "frequency": 0.09137055837563451,
+            "left": -0.02,
+            "left_inclusive": true,
+            "right": -0.01,
+            "right_inclusive": false
+          },
+          {
+            "count": 15,
+            "frequency": 0.07614213197969544,
+            "left": -0.01,
+            "left_inclusive": true,
+            "right": 0.0,
+            "right_inclusive": false
+          },
+          {
+            "count": 18,
+            "frequency": 0.09137055837563451,
+            "left": 0.0,
+            "left_inclusive": true,
+            "right": 0.01,
+            "right_inclusive": false
+          },
+          {
+            "count": 17,
+            "frequency": 0.08629441624365482,
+            "left": 0.01,
+            "left_inclusive": true,
+            "right": 0.02,
+            "right_inclusive": false
+          },
+          {
+            "count": 10,
+            "frequency": 0.050761421319796954,
+            "left": 0.02,
+            "left_inclusive": true,
+            "right": 0.03,
+            "right_inclusive": false
+          },
+          {
+            "count": 33,
+            "frequency": 0.16751269035532995,
+            "left": 0.03,
+            "left_inclusive": true,
+            "right": 0.05,
+            "right_inclusive": false
+          },
+          {
+            "count": 16,
+            "frequency": 0.08121827411167512,
+            "left": 0.05,
+            "left_inclusive": true,
+            "right": 0.1,
+            "right_inclusive": false
+          },
+          {
+            "count": 0,
+            "frequency": 0.0,
+            "left": 0.1,
+            "left_inclusive": true,
+            "right": 0.15,
+            "right_inclusive": true
+          }
+        ],
+        "edges": [
+          -0.15,
+          -0.1,
+          -0.05,
+          -0.03,
+          -0.02,
+          -0.01,
+          0.0,
+          0.01,
+          0.02,
+          0.03,
+          0.05,
+          0.1,
+          0.15
+        ],
+        "method": "interval_count",
+        "overflow_count": 0,
+        "overflow_frequency": 0.0,
+        "sample_count": 197,
+        "underflow_count": 0,
+        "underflow_frequency": 0.0,
+        "unit": "decimal_ratio"
+      },
+      "independent_export_oracles": "PASS",
+      "observations_sha256": "462a8f9a3c4a2b058f57d90a8f9839d3025594870d83fbc60d292106f1718f7a"
+    },
+    {
+      "index": "000905.SH",
+      "name": "\u4e2d\u8bc1500",
+      "horizon": 10,
+      "sample_count": 197,
+      "eligible": 197,
+      "unavailable": 0,
+      "excluded": 0,
+      "observation_coverage": 1.0,
+      "market_fact_coverage": {
+        "complete": true,
+        "failed_units": 0,
+        "missing_units": 0,
+        "pending_units": 0,
+        "requested_units": 207,
+        "successful_units": 207
+      },
+      "first_anchor": "2026-01-05",
+      "last_anchor": "2026-10-29",
+      "warm_up_start": "2025-12-18",
+      "metadata": {
+        "index_code": "000905.SH",
+        "symbol": "000905",
+        "name": "\u4e2d\u8bc1500",
+        "market": "SSE",
+        "publisher": "\u4e2d\u8bc1\u6307\u6570\u6709\u9650\u516c\u53f8",
+        "category": "\u89c4\u6a21\u6307\u6570"
+      },
+      "job_status": "Success",
+      "input_fingerprint": "cfef050c6489d9f4718434a50a30b35a33bc15b66837b4f8de6309b4ec6ce933",
+      "quantiles": {
+        "estimator": "type7_linear_v1",
+        "method": "quantile",
+        "points_and_values": [
+          [
+            0.05,
+            -0.09751989777514787
+          ],
+          [
+            0.1,
+            -0.08123742668046559
+          ],
+          [
+            0.25,
+            -0.0427762980305042
+          ],
+          [
+            0.5,
+            -0.006966391458148924
+          ],
+          [
+            0.75,
+            0.04427798692594198
+          ],
+          [
+            0.9,
+            0.08054847472177369
+          ],
+          [
+            0.95,
+            0.09119922467204179
+          ]
+        ],
+        "sample_count": 197,
+        "unit": "decimal_ratio"
+      },
+      "interval_count": {
+        "bins": [
+          {
+            "count": 9,
+            "frequency": 0.04568527918781726,
+            "left": -0.15,
+            "left_inclusive": true,
+            "right": -0.1,
+            "right_inclusive": false
+          },
+          {
+            "count": 34,
+            "frequency": 0.17258883248730963,
+            "left": -0.1,
+            "left_inclusive": true,
+            "right": -0.05,
+            "right_inclusive": false
+          },
+          {
+            "count": 24,
+            "frequency": 0.1218274111675127,
+            "left": -0.05,
+            "left_inclusive": true,
+            "right": -0.03,
+            "right_inclusive": false
+          },
+          {
+            "count": 14,
+            "frequency": 0.07106598984771574,
+            "left": -0.03,
+            "left_inclusive": true,
+            "right": -0.02,
+            "right_inclusive": false
+          },
+          {
+            "count": 14,
+            "frequency": 0.07106598984771574,
+            "left": -0.02,
+            "left_inclusive": true,
+            "right": -0.01,
+            "right_inclusive": false
+          },
+          {
+            "count": 14,
+            "frequency": 0.07106598984771574,
+            "left": -0.01,
+            "left_inclusive": true,
+            "right": 0.0,
+            "right_inclusive": false
+          },
+          {
+            "count": 12,
+            "frequency": 0.06091370558375635,
+            "left": 0.0,
+            "left_inclusive": true,
+            "right": 0.01,
+            "right_inclusive": false
+          },
+          {
+            "count": 8,
+            "frequency": 0.04060913705583756,
+            "left": 0.01,
+            "left_inclusive": true,
+            "right": 0.02,
+            "right_inclusive": false
+          },
+          {
+            "count": 5,
+            "frequency": 0.025380710659898477,
+            "left": 0.02,
+            "left_inclusive": true,
+            "right": 0.03,
+            "right_inclusive": false
+          },
+          {
+            "count": 20,
+            "frequency": 0.10152284263959391,
+            "left": 0.03,
+            "left_inclusive": true,
+            "right": 0.05,
+            "right_inclusive": false
+          },
+          {
+            "count": 36,
+            "frequency": 0.18274111675126903,
+            "left": 0.05,
+            "left_inclusive": true,
+            "right": 0.1,
+            "right_inclusive": false
+          },
+          {
+            "count": 7,
+            "frequency": 0.03553299492385787,
+            "left": 0.1,
+            "left_inclusive": true,
+            "right": 0.15,
+            "right_inclusive": true
+          }
+        ],
+        "edges": [
+          -0.15,
+          -0.1,
+          -0.05,
+          -0.03,
+          -0.02,
+          -0.01,
+          0.0,
+          0.01,
+          0.02,
+          0.03,
+          0.05,
+          0.1,
+          0.15
+        ],
+        "method": "interval_count",
+        "overflow_count": 0,
+        "overflow_frequency": 0.0,
+        "sample_count": 197,
+        "underflow_count": 0,
+        "underflow_frequency": 0.0,
+        "unit": "decimal_ratio"
+      },
+      "independent_export_oracles": "PASS",
+      "observations_sha256": "b9d62c0d0326dc3046047b768c638fa6b3dafcc3d9d9527afd3d27f3ceef566c"
+    },
+    {
+      "index": "000300.SH",
+      "name": "\u6caa\u6df1300",
+      "horizon": 1,
+      "sample_count": 197,
+      "eligible": 197,
+      "unavailable": 0,
+      "excluded": 0,
+      "observation_coverage": 1.0,
+      "market_fact_coverage": {
+        "complete": true,
+        "failed_units": 0,
+        "missing_units": 0,
+        "pending_units": 0,
+        "requested_units": 198,
+        "successful_units": 198
+      },
+      "first_anchor": "2026-01-05",
+      "last_anchor": "2026-10-29",
+      "warm_up_start": "2025-12-31",
+      "metadata": {
+        "index_code": "000300.SH",
+        "symbol": "000300",
+        "name": "\u6caa\u6df1300",
+        "market": "SSE",
+        "publisher": "\u4e2d\u8bc1\u6307\u6570\u6709\u9650\u516c\u53f8\u3001\u4e0a\u6d77\u8bc1\u5238\u4ea4\u6613\u6240",
+        "category": "\u89c4\u6a21\u6307\u6570"
+      },
+      "job_status": "Success",
+      "input_fingerprint": "d4a1fb5ba33bdaf8b4d0eb6a7bb4bc03640f4d9a16ee2b604aa631e10fbe3f2d",
+      "quantiles": {
+        "estimator": "type7_linear_v1",
+        "method": "quantile",
+        "points_and_values": [
+          [
+            0.05,
+            -0.01993670303311663
+          ],
+          [
+            0.1,
+            -0.014517840191821783
+          ],
+          [
+            0.25,
+            -0.006897148545385257
+          ],
+          [
+            0.5,
+            -0.0004348981954818143
+          ],
+          [
+            0.75,
+            0.006633812898791724
+          ],
+          [
+            0.9,
+            0.014218120417769422
+          ],
+          [
+            0.95,
+            0.016540590723370656
+          ]
+        ],
+        "sample_count": 197,
+        "unit": "decimal_ratio"
+      },
+      "interval_count": {
+        "bins": [
+          {
+            "count": 0,
+            "frequency": 0.0,
+            "left": -0.15,
+            "left_inclusive": true,
+            "right": -0.1,
+            "right_inclusive": false
+          },
+          {
+            "count": 0,
+            "frequency": 0.0,
+            "left": -0.1,
+            "left_inclusive": true,
+            "right": -0.05,
+            "right_inclusive": false
+          },
+          {
+            "count": 3,
+            "frequency": 0.015228426395939087,
+            "left": -0.05,
+            "left_inclusive": true,
+            "right": -0.03,
+            "right_inclusive": false
+          },
+          {
+            "count": 7,
+            "frequency": 0.03553299492385787,
+            "left": -0.03,
+            "left_inclusive": true,
+            "right": -0.02,
+            "right_inclusive": false
+          },
+          {
+            "count": 26,
+            "frequency": 0.1319796954314721,
+            "left": -0.02,
+            "left_inclusive": true,
+            "right": -0.01,
+            "right_inclusive": false
+          },
+          {
+            "count": 66,
+            "frequency": 0.3350253807106599,
+            "left": -0.01,
+            "left_inclusive": true,
+            "right": 0.0,
+            "right_inclusive": false
+          },
+          {
+            "count": 58,
+            "frequency": 0.29441624365482233,
+            "left": 0.0,
+            "left_inclusive": true,
+            "right": 0.01,
+            "right_inclusive": false
+          },
+          {
+            "count": 31,
+            "frequency": 0.15736040609137056,
+            "left": 0.01,
+            "left_inclusive": true,
+            "right": 0.02,
+            "right_inclusive": false
+          },
+          {
+            "count": 4,
+            "frequency": 0.02030456852791878,
+            "left": 0.02,
+            "left_inclusive": true,
+            "right": 0.03,
+            "right_inclusive": false
+          },
+          {
+            "count": 2,
+            "frequency": 0.01015228426395939,
+            "left": 0.03,
+            "left_inclusive": true,
+            "right": 0.05,
+            "right_inclusive": false
+          },
+          {
+            "count": 0,
+            "frequency": 0.0,
+            "left": 0.05,
+            "left_inclusive": true,
+            "right": 0.1,
+            "right_inclusive": false
+          },
+          {
+            "count": 0,
+            "frequency": 0.0,
+            "left": 0.1,
+            "left_inclusive": true,
+            "right": 0.15,
+            "right_inclusive": true
+          }
+        ],
+        "edges": [
+          -0.15,
+          -0.1,
+          -0.05,
+          -0.03,
+          -0.02,
+          -0.01,
+          0.0,
+          0.01,
+          0.02,
+          0.03,
+          0.05,
+          0.1,
+          0.15
+        ],
+        "method": "interval_count",
+        "overflow_count": 0,
+        "overflow_frequency": 0.0,
+        "sample_count": 197,
+        "underflow_count": 0,
+        "underflow_frequency": 0.0,
+        "unit": "decimal_ratio"
+      },
+      "independent_export_oracles": "PASS",
+      "observations_sha256": "71a9e777005a428bfec9180551c2f456975cdea30c3b92dd8e4ad14013651d24"
+    },
+    {
+      "index": "000300.SH",
+      "name": "\u6caa\u6df1300",
+      "horizon": 3,
+      "sample_count": 197,
+      "eligible": 197,
+      "unavailable": 0,
+      "excluded": 0,
+      "observation_coverage": 1.0,
+      "market_fact_coverage": {
+        "complete": true,
+        "failed_units": 0,
+        "missing_units": 0,
+        "pending_units": 0,
+        "requested_units": 200,
+        "successful_units": 200
+      },
+      "first_anchor": "2026-01-05",
+      "last_anchor": "2026-10-29",
+      "warm_up_start": "2025-12-29",
+      "metadata": {
+        "index_code": "000300.SH",
+        "symbol": "000300",
+        "name": "\u6caa\u6df1300",
+        "market": "SSE",
+        "publisher": "\u4e2d\u8bc1\u6307\u6570\u6709\u9650\u516c\u53f8\u3001\u4e0a\u6d77\u8bc1\u5238\u4ea4\u6613\u6240",
+        "category": "\u89c4\u6a21\u6307\u6570"
+      },
+      "job_status": "Success",
+      "input_fingerprint": "d09fd508231baed8ffe24422ff48b2f4a825c0ccf2421f2a91c462733fac3a60",
+      "quantiles": {
+        "estimator": "type7_linear_v1",
+        "method": "quantile",
+        "points_and_values": [
+          [
+            0.05,
+            -0.03152660784414436
+          ],
+          [
+            0.1,
+            -0.022747177499367388
+          ],
+          [
+            0.25,
+            -0.012408922586676696
+          ],
+          [
+            0.5,
+            -0.002080965709750693
+          ],
+          [
+            0.75,
+            0.009453379821085406
+          ],
+          [
+            0.9,
+            0.018683045180983893
+          ],
+          [
+            0.95,
+            0.028512460163062133
+          ]
+        ],
+        "sample_count": 197,
+        "unit": "decimal_ratio"
+      },
+      "interval_count": {
+        "bins": [
+          {
+            "count": 0,
+            "frequency": 0.0,
+            "left": -0.15,
+            "left_inclusive": true,
+            "right": -0.1,
+            "right_inclusive": false
+          },
+          {
+            "count": 2,
+            "frequency": 0.01015228426395939,
+            "left": -0.1,
+            "left_inclusive": true,
+            "right": -0.05,
+            "right_inclusive": false
+          },
+          {
+            "count": 9,
+            "frequency": 0.04568527918781726,
+            "left": -0.05,
+            "left_inclusive": true,
+            "right": -0.03,
+            "right_inclusive": false
+          },
+          {
+            "count": 14,
+            "frequency": 0.07106598984771574,
+            "left": -0.03,
+            "left_inclusive": true,
+            "right": -0.02,
+            "right_inclusive": false
+          },
+          {
+            "count": 34,
+            "frequency": 0.17258883248730963,
+            "left": -0.02,
+            "left_inclusive": true,
+            "right": -0.01,
+            "right_inclusive": false
+          },
+          {
+            "count": 51,
+            "frequency": 0.25888324873096447,
+            "left": -0.01,
+            "left_inclusive": true,
+            "right": 0.0,
+            "right_inclusive": false
+          },
+          {
+            "count": 41,
+            "frequency": 0.20812182741116753,
+            "left": 0.0,
+            "left_inclusive": true,
+            "right": 0.01,
+            "right_inclusive": false
+          },
+          {
+            "count": 29,
+            "frequency": 0.14720812182741116,
+            "left": 0.01,
+            "left_inclusive": true,
+            "right": 0.02,
+            "right_inclusive": false
+          },
+          {
+            "count": 9,
+            "frequency": 0.04568527918781726,
+            "left": 0.02,
+            "left_inclusive": true,
+            "right": 0.03,
+            "right_inclusive": false
+          },
+          {
+            "count": 8,
+            "frequency": 0.04060913705583756,
+            "left": 0.03,
+            "left_inclusive": true,
+            "right": 0.05,
+            "right_inclusive": false
+          },
+          {
+            "count": 0,
+            "frequency": 0.0,
+            "left": 0.05,
+            "left_inclusive": true,
+            "right": 0.1,
+            "right_inclusive": false
+          },
+          {
+            "count": 0,
+            "frequency": 0.0,
+            "left": 0.1,
+            "left_inclusive": true,
+            "right": 0.15,
+            "right_inclusive": true
+          }
+        ],
+        "edges": [
+          -0.15,
+          -0.1,
+          -0.05,
+          -0.03,
+          -0.02,
+          -0.01,
+          0.0,
+          0.01,
+          0.02,
+          0.03,
+          0.05,
+          0.1,
+          0.15
+        ],
+        "method": "interval_count",
+        "overflow_count": 0,
+        "overflow_frequency": 0.0,
+        "sample_count": 197,
+        "underflow_count": 0,
+        "underflow_frequency": 0.0,
+        "unit": "decimal_ratio"
+      },
+      "independent_export_oracles": "PASS",
+      "observations_sha256": "3f00b8218cdc7f2eaa947c9416e2ff18914e1db4bbb03acbf501e78d15e5824d"
+    },
+    {
+      "index": "000300.SH",
+      "name": "\u6caa\u6df1300",
+      "horizon": 5,
+      "sample_count": 197,
+      "eligible": 197,
+      "unavailable": 0,
+      "excluded": 0,
+      "observation_coverage": 1.0,
+      "market_fact_coverage": {
+        "complete": true,
+        "failed_units": 0,
+        "missing_units": 0,
+        "pending_units": 0,
+        "requested_units": 202,
+        "successful_units": 202
+      },
+      "first_anchor": "2026-01-05",
+      "last_anchor": "2026-10-29",
+      "warm_up_start": "2025-12-25",
+      "metadata": {
+        "index_code": "000300.SH",
+        "symbol": "000300",
+        "name": "\u6caa\u6df1300",
+        "market": "SSE",
+        "publisher": "\u4e2d\u8bc1\u6307\u6570\u6709\u9650\u516c\u53f8\u3001\u4e0a\u6d77\u8bc1\u5238\u4ea4\u6613\u6240",
+        "category": "\u89c4\u6a21\u6307\u6570"
+      },
+      "job_status": "Success",
+      "input_fingerprint": "aee29641bcf8c88647c9b003710f05c7fc3610c40dd50292d338906f3ca25765",
+      "quantiles": {
+        "estimator": "type7_linear_v1",
+        "method": "quantile",
+        "points_and_values": [
+          [
+            0.05,
+            -0.0375481666888279
+          ],
+          [
+            0.1,
+            -0.03265562342025574
+          ],
+          [
+            0.25,
+            -0.017554309492327835
+          ],
+          [
+            0.5,
+            -0.002794392955512315
+          ],
+          [
+            0.75,
+            0.012206157435094456
+          ],
+          [
+            0.9,
+            0.02446768893049329
+          ],
+          [
+            0.95,
+            0.03021408581818249
+          ]
+        ],
+        "sample_count": 197,
+        "unit": "decimal_ratio"
+      },
+      "interval_count": {
+        "bins": [
+          {
+            "count": 0,
+            "frequency": 0.0,
+            "left": -0.15,
+            "left_inclusive": true,
+            "right": -0.1,
+            "right_inclusive": false
+          },
+          {
+            "count": 2,
+            "frequency": 0.01015228426395939,
+            "left": -0.1,
+            "left_inclusive": true,
+            "right": -0.05,
+            "right_inclusive": false
+          },
+          {
+            "count": 21,
+            "frequency": 0.1065989847715736,
+            "left": -0.05,
+            "left_inclusive": true,
+            "right": -0.03,
+            "right_inclusive": false
+          },
+          {
+            "count": 24,
+            "frequency": 0.1218274111675127,
+            "left": -0.03,
+            "left_inclusive": true,
+            "right": -0.02,
+            "right_inclusive": false
+          },
+          {
+            "count": 29,
+            "frequency": 0.14720812182741116,
+            "left": -0.02,
+            "left_inclusive": true,
+            "right": -0.01,
+            "right_inclusive": false
+          },
+          {
+            "count": 33,
+            "frequency": 0.16751269035532995,
+            "left": -0.01,
+            "left_inclusive": true,
+            "right": 0.0,
+            "right_inclusive": false
+          },
+          {
+            "count": 33,
+            "frequency": 0.16751269035532995,
+            "left": 0.0,
+            "left_inclusive": true,
+            "right": 0.01,
+            "right_inclusive": false
+          },
+          {
+            "count": 26,
+            "frequency": 0.1319796954314721,
+            "left": 0.01,
+            "left_inclusive": true,
+            "right": 0.02,
+            "right_inclusive": false
+          },
+          {
+            "count": 19,
+            "frequency": 0.09644670050761421,
+            "left": 0.02,
+            "left_inclusive": true,
+            "right": 0.03,
+            "right_inclusive": false
+          },
+          {
+            "count": 8,
+            "frequency": 0.04060913705583756,
+            "left": 0.03,
+            "left_inclusive": true,
+            "right": 0.05,
+            "right_inclusive": false
+          },
+          {
+            "count": 2,
+            "frequency": 0.01015228426395939,
+            "left": 0.05,
+            "left_inclusive": true,
+            "right": 0.1,
+            "right_inclusive": false
+          },
+          {
+            "count": 0,
+            "frequency": 0.0,
+            "left": 0.1,
+            "left_inclusive": true,
+            "right": 0.15,
+            "right_inclusive": true
+          }
+        ],
+        "edges": [
+          -0.15,
+          -0.1,
+          -0.05,
+          -0.03,
+          -0.02,
+          -0.01,
+          0.0,
+          0.01,
+          0.02,
+          0.03,
+          0.05,
+          0.1,
+          0.15
+        ],
+        "method": "interval_count",
+        "overflow_count": 0,
+        "overflow_frequency": 0.0,
+        "sample_count": 197,
+        "underflow_count": 0,
+        "underflow_frequency": 0.0,
+        "unit": "decimal_ratio"
+      },
+      "independent_export_oracles": "PASS",
+      "observations_sha256": "6497afed0b5bc2c84c1d984d04df3db1a88377c3c020c0d95e29a0022cee4f7d"
+    },
+    {
+      "index": "000300.SH",
+      "name": "\u6caa\u6df1300",
+      "horizon": 10,
+      "sample_count": 197,
+      "eligible": 197,
+      "unavailable": 0,
+      "excluded": 0,
+      "observation_coverage": 1.0,
+      "market_fact_coverage": {
+        "complete": true,
+        "failed_units": 0,
+        "missing_units": 0,
+        "pending_units": 0,
+        "requested_units": 207,
+        "successful_units": 207
+      },
+      "first_anchor": "2026-01-05",
+      "last_anchor": "2026-10-29",
+      "warm_up_start": "2025-12-18",
+      "metadata": {
+        "index_code": "000300.SH",
+        "symbol": "000300",
+        "name": "\u6caa\u6df1300",
+        "market": "SSE",
+        "publisher": "\u4e2d\u8bc1\u6307\u6570\u6709\u9650\u516c\u53f8\u3001\u4e0a\u6d77\u8bc1\u5238\u4ea4\u6613\u6240",
+        "category": "\u89c4\u6a21\u6307\u6570"
+      },
+      "job_status": "Success",
+      "input_fingerprint": "60c00a7eabac6342d573df4e8e6be4adc81e7023273fc5953ed44ae04aad8ac0",
+      "quantiles": {
+        "estimator": "type7_linear_v1",
+        "method": "quantile",
+        "points_and_values": [
+          [
+            0.05,
+            -0.04876038615669216
+          ],
+          [
+            0.1,
+            -0.041146792740263116
+          ],
+          [
+            0.25,
+            -0.025841354998367816
+          ],
+          [
+            0.5,
+            -0.008746828479945123
+          ],
+          [
+            0.75,
+            0.016261084454834762
+          ],
+          [
+            0.9,
+            0.031725894370892946
+          ],
+          [
+            0.95,
+            0.046534320259909244
+          ]
+        ],
+        "sample_count": 197,
+        "unit": "decimal_ratio"
+      },
+      "interval_count": {
+        "bins": [
+          {
+            "count": 0,
+            "frequency": 0.0,
+            "left": -0.15,
+            "left_inclusive": true,
+            "right": -0.1,
+            "right_inclusive": false
+          },
+          {
+            "count": 9,
+            "frequency": 0.04568527918781726,
+            "left": -0.1,
+            "left_inclusive": true,
+            "right": -0.05,
+            "right_inclusive": false
+          },
+          {
+            "count": 31,
+            "frequency": 0.15736040609137056,
+            "left": -0.05,
+            "left_inclusive": true,
+            "right": -0.03,
+            "right_inclusive": false
+          },
+          {
+            "count": 26,
+            "frequency": 0.1319796954314721,
+            "left": -0.03,
+            "left_inclusive": true,
+            "right": -0.02,
+            "right_inclusive": false
+          },
+          {
+            "count": 27,
+            "frequency": 0.13705583756345177,
+            "left": -0.02,
+            "left_inclusive": true,
+            "right": -0.01,
+            "right_inclusive": false
+          },
+          {
+            "count": 30,
+            "frequency": 0.15228426395939088,
+            "left": -0.01,
+            "left_inclusive": true,
+            "right": 0.0,
+            "right_inclusive": false
+          },
+          {
+            "count": 18,
+            "frequency": 0.09137055837563451,
+            "left": 0.0,
+            "left_inclusive": true,
+            "right": 0.01,
+            "right_inclusive": false
+          },
+          {
+            "count": 12,
+            "frequency": 0.06091370558375635,
+            "left": 0.01,
+            "left_inclusive": true,
+            "right": 0.02,
+            "right_inclusive": false
+          },
+          {
+            "count": 18,
+            "frequency": 0.09137055837563451,
+            "left": 0.02,
+            "left_inclusive": true,
+            "right": 0.03,
+            "right_inclusive": false
+          },
+          {
+            "count": 20,
+            "frequency": 0.10152284263959391,
+            "left": 0.03,
+            "left_inclusive": true,
+            "right": 0.05,
+            "right_inclusive": false
+          },
+          {
+            "count": 6,
+            "frequency": 0.030456852791878174,
+            "left": 0.05,
+            "left_inclusive": true,
+            "right": 0.1,
+            "right_inclusive": false
+          },
+          {
+            "count": 0,
+            "frequency": 0.0,
+            "left": 0.1,
+            "left_inclusive": true,
+            "right": 0.15,
+            "right_inclusive": true
+          }
+        ],
+        "edges": [
+          -0.15,
+          -0.1,
+          -0.05,
+          -0.03,
+          -0.02,
+          -0.01,
+          0.0,
+          0.01,
+          0.02,
+          0.03,
+          0.05,
+          0.1,
+          0.15
+        ],
+        "method": "interval_count",
+        "overflow_count": 0,
+        "overflow_frequency": 0.0,
+        "sample_count": 197,
+        "underflow_count": 0,
+        "underflow_frequency": 0.0,
+        "unit": "decimal_ratio"
+      },
+      "independent_export_oracles": "PASS",
+      "observations_sha256": "4fb1d5e12092c8071625143aabf34c6df012560ad9bee31e3897aec85e53806c"
+    },
+    {
+      "index": "000016.SH",
+      "name": "\u4e0a\u8bc150",
+      "horizon": 1,
+      "sample_count": 197,
+      "eligible": 197,
+      "unavailable": 0,
+      "excluded": 0,
+      "observation_coverage": 1.0,
+      "market_fact_coverage": {
+        "complete": true,
+        "failed_units": 0,
+        "missing_units": 0,
+        "pending_units": 0,
+        "requested_units": 198,
+        "successful_units": 198
+      },
+      "first_anchor": "2026-01-05",
+      "last_anchor": "2026-10-29",
+      "warm_up_start": "2025-12-31",
+      "metadata": {
+        "index_code": "000016.SH",
+        "symbol": "000016",
+        "name": "\u4e0a\u8bc150",
+        "market": "SSE",
+        "publisher": "\u4e2d\u8bc1\u6307\u6570\u6709\u9650\u516c\u53f8\u3001\u4e0a\u6d77\u8bc1\u5238\u4ea4\u6613\u6240",
+        "category": "\u89c4\u6a21\u6307\u6570"
+      },
+      "job_status": "Success",
+      "input_fingerprint": "08a906209a313dd706834c8a3fb0fcbde9af02a3a3d86d85939177d2a8ababe9",
+      "quantiles": {
+        "estimator": "type7_linear_v1",
+        "method": "quantile",
+        "points_and_values": [
+          [
+            0.05,
+            -0.014840436102712596
+          ],
+          [
+            0.1,
+            -0.012651686566250464
+          ],
+          [
+            0.25,
+            -0.006914585493616898
+          ],
+          [
+            0.5,
+            -0.0005105263270980265
+          ],
+          [
+            0.75,
+            0.004635881225358407
+          ],
+          [
+            0.9,
+            0.012306509478124731
+          ],
+          [
+            0.95,
+            0.016473324729464965
+          ]
+        ],
+        "sample_count": 197,
+        "unit": "decimal_ratio"
+      },
+      "interval_count": {
+        "bins": [
+          {
+            "count": 0,
+            "frequency": 0.0,
+            "left": -0.15,
+            "left_inclusive": true,
+            "right": -0.1,
+            "right_inclusive": false
+          },
+          {
+            "count": 0,
+            "frequency": 0.0,
+            "left": -0.1,
+            "left_inclusive": true,
+            "right": -0.05,
+            "right_inclusive": false
+          },
+          {
+            "count": 1,
+            "frequency": 0.005076142131979695,
+            "left": -0.05,
+            "left_inclusive": true,
+            "right": -0.03,
+            "right_inclusive": false
+          },
+          {
+            "count": 6,
+            "frequency": 0.030456852791878174,
+            "left": -0.03,
+            "left_inclusive": true,
+            "right": -0.02,
+            "right_inclusive": false
+          },
+          {
+            "count": 23,
+            "frequency": 0.116751269035533,
+            "left": -0.02,
+            "left_inclusive": true,
+            "right": -0.01,
+            "right_inclusive": false
+          },
+          {
+            "count": 73,
+            "frequency": 0.37055837563451777,
+            "left": -0.01,
+            "left_inclusive": true,
+            "right": 0.0,
+            "right_inclusive": false
+          },
+          {
+            "count": 67,
+            "frequency": 0.3401015228426396,
+            "left": 0.0,
+            "left_inclusive": true,
+            "right": 0.01,
+            "right_inclusive": false
+          },
+          {
+            "count": 20,
+            "frequency": 0.10152284263959391,
+            "left": 0.01,
+            "left_inclusive": true,
+            "right": 0.02,
+            "right_inclusive": false
+          },
+          {
+            "count": 6,
+            "frequency": 0.030456852791878174,
+            "left": 0.02,
+            "left_inclusive": true,
+            "right": 0.03,
+            "right_inclusive": false
+          },
+          {
+            "count": 1,
+            "frequency": 0.005076142131979695,
+            "left": 0.03,
+            "left_inclusive": true,
+            "right": 0.05,
+            "right_inclusive": false
+          },
+          {
+            "count": 0,
+            "frequency": 0.0,
+            "left": 0.05,
+            "left_inclusive": true,
+            "right": 0.1,
+            "right_inclusive": false
+          },
+          {
+            "count": 0,
+            "frequency": 0.0,
+            "left": 0.1,
+            "left_inclusive": true,
+            "right": 0.15,
+            "right_inclusive": true
+          }
+        ],
+        "edges": [
+          -0.15,
+          -0.1,
+          -0.05,
+          -0.03,
+          -0.02,
+          -0.01,
+          0.0,
+          0.01,
+          0.02,
+          0.03,
+          0.05,
+          0.1,
+          0.15
+        ],
+        "method": "interval_count",
+        "overflow_count": 0,
+        "overflow_frequency": 0.0,
+        "sample_count": 197,
+        "underflow_count": 0,
+        "underflow_frequency": 0.0,
+        "unit": "decimal_ratio"
+      },
+      "independent_export_oracles": "PASS",
+      "observations_sha256": "77f14b5c42dfa650910427ed7dd409ce8b021bb9a17c87142e3c60fa96d7f766"
+    },
+    {
+      "index": "000016.SH",
+      "name": "\u4e0a\u8bc150",
+      "horizon": 3,
+      "sample_count": 197,
+      "eligible": 197,
+      "unavailable": 0,
+      "excluded": 0,
+      "observation_coverage": 1.0,
+      "market_fact_coverage": {
+        "complete": true,
+        "failed_units": 0,
+        "missing_units": 0,
+        "pending_units": 0,
+        "requested_units": 200,
+        "successful_units": 200
+      },
+      "first_anchor": "2026-01-05",
+      "last_anchor": "2026-10-29",
+      "warm_up_start": "2025-12-29",
+      "metadata": {
+        "index_code": "000016.SH",
+        "symbol": "000016",
+        "name": "\u4e0a\u8bc150",
+        "market": "SSE",
+        "publisher": "\u4e2d\u8bc1\u6307\u6570\u6709\u9650\u516c\u53f8\u3001\u4e0a\u6d77\u8bc1\u5238\u4ea4\u6613\u6240",
+        "category": "\u89c4\u6a21\u6307\u6570"
+      },
+      "job_status": "Success",
+      "input_fingerprint": "f1451a3b10f6dbf273c5aa18b6395744cc9be0f89e7a12703725531b66691347",
+      "quantiles": {
+        "estimator": "type7_linear_v1",
+        "method": "quantile",
+        "points_and_values": [
+          [
+            0.05,
+            -0.0247377129315123
+          ],
+          [
+            0.1,
+            -0.018639217129062646
+          ],
+          [
+            0.25,
+            -0.010469946035381095
+          ],
+          [
+            0.5,
+            -0.0019507076057452277
+          ],
+          [
+            0.75,
+            0.0071464991560443725
+          ],
+          [
+            0.9,
+            0.01821748266307646
+          ],
+          [
+            0.95,
+            0.023933631806401356
+          ]
+        ],
+        "sample_count": 197,
+        "unit": "decimal_ratio"
+      },
+      "interval_count": {
+        "bins": [
+          {
+            "count": 0,
+            "frequency": 0.0,
+            "left": -0.15,
+            "left_inclusive": true,
+            "right": -0.1,
+            "right_inclusive": false
+          },
+          {
+            "count": 1,
+            "frequency": 0.005076142131979695,
+            "left": -0.1,
+            "left_inclusive": true,
+            "right": -0.05,
+            "right_inclusive": false
+          },
+          {
+            "count": 4,
+            "frequency": 0.02030456852791878,
+            "left": -0.05,
+            "left_inclusive": true,
+            "right": -0.03,
+            "right_inclusive": false
+          },
+          {
+            "count": 8,
+            "frequency": 0.04060913705583756,
+            "left": -0.03,
+            "left_inclusive": true,
+            "right": -0.02,
+            "right_inclusive": false
+          },
+          {
+            "count": 38,
+            "frequency": 0.19289340101522842,
+            "left": -0.02,
+            "left_inclusive": true,
+            "right": -0.01,
+            "right_inclusive": false
+          },
+          {
+            "count": 64,
+            "frequency": 0.3248730964467005,
+            "left": -0.01,
+            "left_inclusive": true,
+            "right": 0.0,
+            "right_inclusive": false
+          },
+          {
+            "count": 44,
+            "frequency": 0.2233502538071066,
+            "left": 0.0,
+            "left_inclusive": true,
+            "right": 0.01,
+            "right_inclusive": false
+          },
+          {
+            "count": 22,
+            "frequency": 0.1116751269035533,
+            "left": 0.01,
+            "left_inclusive": true,
+            "right": 0.02,
+            "right_inclusive": false
+          },
+          {
+            "count": 11,
+            "frequency": 0.05583756345177665,
+            "left": 0.02,
+            "left_inclusive": true,
+            "right": 0.03,
+            "right_inclusive": false
+          },
+          {
+            "count": 4,
+            "frequency": 0.02030456852791878,
+            "left": 0.03,
+            "left_inclusive": true,
+            "right": 0.05,
+            "right_inclusive": false
+          },
+          {
+            "count": 1,
+            "frequency": 0.005076142131979695,
+            "left": 0.05,
+            "left_inclusive": true,
+            "right": 0.1,
+            "right_inclusive": false
+          },
+          {
+            "count": 0,
+            "frequency": 0.0,
+            "left": 0.1,
+            "left_inclusive": true,
+            "right": 0.15,
+            "right_inclusive": true
+          }
+        ],
+        "edges": [
+          -0.15,
+          -0.1,
+          -0.05,
+          -0.03,
+          -0.02,
+          -0.01,
+          0.0,
+          0.01,
+          0.02,
+          0.03,
+          0.05,
+          0.1,
+          0.15
+        ],
+        "method": "interval_count",
+        "overflow_count": 0,
+        "overflow_frequency": 0.0,
+        "sample_count": 197,
+        "underflow_count": 0,
+        "underflow_frequency": 0.0,
+        "unit": "decimal_ratio"
+      },
+      "independent_export_oracles": "PASS",
+      "observations_sha256": "59e84314738290e21ef288018fac7b7f6c1a9e529860c7f14af5b8a73dc3d2f7"
+    },
+    {
+      "index": "000016.SH",
+      "name": "\u4e0a\u8bc150",
+      "horizon": 5,
+      "sample_count": 197,
+      "eligible": 197,
+      "unavailable": 0,
+      "excluded": 0,
+      "observation_coverage": 1.0,
+      "market_fact_coverage": {
+        "complete": true,
+        "failed_units": 0,
+        "missing_units": 0,
+        "pending_units": 0,
+        "requested_units": 202,
+        "successful_units": 202
+      },
+      "first_anchor": "2026-01-05",
+      "last_anchor": "2026-10-29",
+      "warm_up_start": "2025-12-25",
+      "metadata": {
+        "index_code": "000016.SH",
+        "symbol": "000016",
+        "name": "\u4e0a\u8bc150",
+        "market": "SSE",
+        "publisher": "\u4e2d\u8bc1\u6307\u6570\u6709\u9650\u516c\u53f8\u3001\u4e0a\u6d77\u8bc1\u5238\u4ea4\u6613\u6240",
+        "category": "\u89c4\u6a21\u6307\u6570"
+      },
+      "job_status": "Success",
+      "input_fingerprint": "2185a2acb5b4e2bbd3ba719e3b2daa9fd0b316b91f4be6194f0b8185016adbf0",
+      "quantiles": {
+        "estimator": "type7_linear_v1",
+        "method": "quantile",
+        "points_and_values": [
+          [
+            0.05,
+            -0.02729746273515752
+          ],
+          [
+            0.1,
+            -0.024364636874653622
+          ],
+          [
+            0.25,
+            -0.015446025702431476
+          ],
+          [
+            0.5,
+            -0.003849851284561945
+          ],
+          [
+            0.75,
+            0.01026418760199288
+          ],
+          [
+            0.9,
+            0.023569874341893733
+          ],
+          [
+            0.95,
+            0.028761800616286942
+          ]
+        ],
+        "sample_count": 197,
+        "unit": "decimal_ratio"
+      },
+      "interval_count": {
+        "bins": [
+          {
+            "count": 0,
+            "frequency": 0.0,
+            "left": -0.15,
+            "left_inclusive": true,
+            "right": -0.1,
+            "right_inclusive": false
+          },
+          {
+            "count": 1,
+            "frequency": 0.005076142131979695,
+            "left": -0.1,
+            "left_inclusive": true,
+            "right": -0.05,
+            "right_inclusive": false
+          },
+          {
+            "count": 7,
+            "frequency": 0.03553299492385787,
+            "left": -0.05,
+            "left_inclusive": true,
+            "right": -0.03,
+            "right_inclusive": false
+          },
+          {
+            "count": 22,
+            "frequency": 0.1116751269035533,
+            "left": -0.03,
+            "left_inclusive": true,
+            "right": -0.02,
+            "right_inclusive": false
+          },
+          {
+            "count": 47,
+            "frequency": 0.23857868020304568,
+            "left": -0.02,
+            "left_inclusive": true,
+            "right": -0.01,
+            "right_inclusive": false
+          },
+          {
+            "count": 39,
+            "frequency": 0.19796954314720813,
+            "left": -0.01,
+            "left_inclusive": true,
+            "right": 0.0,
+            "right_inclusive": false
+          },
+          {
+            "count": 30,
+            "frequency": 0.15228426395939088,
+            "left": 0.0,
+            "left_inclusive": true,
+            "right": 0.01,
+            "right_inclusive": false
+          },
+          {
+            "count": 27,
+            "frequency": 0.13705583756345177,
+            "left": 0.01,
+            "left_inclusive": true,
+            "right": 0.02,
+            "right_inclusive": false
+          },
+          {
+            "count": 16,
+            "frequency": 0.08121827411167512,
+            "left": 0.02,
+            "left_inclusive": true,
+            "right": 0.03,
+            "right_inclusive": false
+          },
+          {
+            "count": 8,
+            "frequency": 0.04060913705583756,
+            "left": 0.03,
+            "left_inclusive": true,
+            "right": 0.05,
+            "right_inclusive": false
+          },
+          {
+            "count": 0,
+            "frequency": 0.0,
+            "left": 0.05,
+            "left_inclusive": true,
+            "right": 0.1,
+            "right_inclusive": false
+          },
+          {
+            "count": 0,
+            "frequency": 0.0,
+            "left": 0.1,
+            "left_inclusive": true,
+            "right": 0.15,
+            "right_inclusive": true
+          }
+        ],
+        "edges": [
+          -0.15,
+          -0.1,
+          -0.05,
+          -0.03,
+          -0.02,
+          -0.01,
+          0.0,
+          0.01,
+          0.02,
+          0.03,
+          0.05,
+          0.1,
+          0.15
+        ],
+        "method": "interval_count",
+        "overflow_count": 0,
+        "overflow_frequency": 0.0,
+        "sample_count": 197,
+        "underflow_count": 0,
+        "underflow_frequency": 0.0,
+        "unit": "decimal_ratio"
+      },
+      "independent_export_oracles": "PASS",
+      "observations_sha256": "c5a157c1c0ade3a11d22f528d57b9565a7444405c14a0b68cd5f09f6d0496d39"
+    },
+    {
+      "index": "000016.SH",
+      "name": "\u4e0a\u8bc150",
+      "horizon": 10,
+      "sample_count": 197,
+      "eligible": 197,
+      "unavailable": 0,
+      "excluded": 0,
+      "observation_coverage": 1.0,
+      "market_fact_coverage": {
+        "complete": true,
+        "failed_units": 0,
+        "missing_units": 0,
+        "pending_units": 0,
+        "requested_units": 207,
+        "successful_units": 207
+      },
+      "first_anchor": "2026-01-05",
+      "last_anchor": "2026-10-29",
+      "warm_up_start": "2025-12-18",
+      "metadata": {
+        "index_code": "000016.SH",
+        "symbol": "000016",
+        "name": "\u4e0a\u8bc150",
+        "market": "SSE",
+        "publisher": "\u4e2d\u8bc1\u6307\u6570\u6709\u9650\u516c\u53f8\u3001\u4e0a\u6d77\u8bc1\u5238\u4ea4\u6613\u6240",
+        "category": "\u89c4\u6a21\u6307\u6570"
+      },
+      "job_status": "Success",
+      "input_fingerprint": "9107a8f23a2fa31a50c3e13700b7e4bf14eca5a1fd046da1877ed5282a6bb993",
+      "quantiles": {
+        "estimator": "type7_linear_v1",
+        "method": "quantile",
+        "points_and_values": [
+          [
+            0.05,
+            -0.040526791669786524
+          ],
+          [
+            0.1,
+            -0.032148629610888844
+          ],
+          [
+            0.25,
+            -0.02207995374340177
+          ],
+          [
+            0.5,
+            -0.008611232388579193
+          ],
+          [
+            0.75,
+            0.012934759030110765
+          ],
+          [
+            0.9,
+            0.0315812974457316
+          ],
+          [
+            0.95,
+            0.036143498835276275
+          ]
+        ],
+        "sample_count": 197,
+        "unit": "decimal_ratio"
+      },
+      "interval_count": {
+        "bins": [
+          {
+            "count": 0,
+            "frequency": 0.0,
+            "left": -0.15,
+            "left_inclusive": true,
+            "right": -0.1,
+            "right_inclusive": false
+          },
+          {
+            "count": 2,
+            "frequency": 0.01015228426395939,
+            "left": -0.1,
+            "left_inclusive": true,
+            "right": -0.05,
+            "right_inclusive": false
+          },
+          {
+            "count": 20,
+            "frequency": 0.10152284263959391,
+            "left": -0.05,
+            "left_inclusive": true,
+            "right": -0.03,
+            "right_inclusive": false
+          },
+          {
+            "count": 36,
+            "frequency": 0.18274111675126903,
+            "left": -0.03,
+            "left_inclusive": true,
+            "right": -0.02,
+            "right_inclusive": false
+          },
+          {
+            "count": 35,
+            "frequency": 0.17766497461928935,
+            "left": -0.02,
+            "left_inclusive": true,
+            "right": -0.01,
+            "right_inclusive": false
+          },
+          {
+            "count": 22,
+            "frequency": 0.1116751269035533,
+            "left": -0.01,
+            "left_inclusive": true,
+            "right": 0.0,
+            "right_inclusive": false
+          },
+          {
+            "count": 26,
+            "frequency": 0.1319796954314721,
+            "left": 0.0,
+            "left_inclusive": true,
+            "right": 0.01,
+            "right_inclusive": false
+          },
+          {
+            "count": 21,
+            "frequency": 0.1065989847715736,
+            "left": 0.01,
+            "left_inclusive": true,
+            "right": 0.02,
+            "right_inclusive": false
+          },
+          {
+            "count": 14,
+            "frequency": 0.07106598984771574,
+            "left": 0.02,
+            "left_inclusive": true,
+            "right": 0.03,
+            "right_inclusive": false
+          },
+          {
+            "count": 19,
+            "frequency": 0.09644670050761421,
+            "left": 0.03,
+            "left_inclusive": true,
+            "right": 0.05,
+            "right_inclusive": false
+          },
+          {
+            "count": 2,
+            "frequency": 0.01015228426395939,
+            "left": 0.05,
+            "left_inclusive": true,
+            "right": 0.1,
+            "right_inclusive": false
+          },
+          {
+            "count": 0,
+            "frequency": 0.0,
+            "left": 0.1,
+            "left_inclusive": true,
+            "right": 0.15,
+            "right_inclusive": true
+          }
+        ],
+        "edges": [
+          -0.15,
+          -0.1,
+          -0.05,
+          -0.03,
+          -0.02,
+          -0.01,
+          0.0,
+          0.01,
+          0.02,
+          0.03,
+          0.05,
+          0.1,
+          0.15
+        ],
+        "method": "interval_count",
+        "overflow_count": 0,
+        "overflow_frequency": 0.0,
+        "sample_count": 197,
+        "underflow_count": 0,
+        "underflow_frequency": 0.0,
+        "unit": "decimal_ratio"
+      },
+      "independent_export_oracles": "PASS",
+      "observations_sha256": "64c3c3cfe629b25fe6654cb8b89afdfa408ea57c604ded142165b9c8c9a1d005"
+    }
+  ],
+  "analyses_verified": 32,
+  "independent_verification": "PASS",
+  "network_and_sqlite_forbidden": true
+}
