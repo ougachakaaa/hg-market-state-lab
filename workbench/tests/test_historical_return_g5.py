@@ -139,21 +139,100 @@ def test_missing_or_inappropriate_authorization_blocks(tmp_path, problem):
 def test_live_wrapper_rejects_synthetic_and_noninteractive_cli(tmp_path):
     run_id = frozen_run(tmp_path)
     with patch.object(execution, "execute_batch", side_effect=AssertionError("not authorized")):
-        report = G5["record_g5"](tmp_path, run_id, authorize=authorization)
+        report = G5["record_g5"](tmp_path, run_id,
+                                 authorize=lambda c: authorization(c, "synthetic_test"))
     assert report["result"]["status"] == "BLOCKED"
     done = subprocess.run([sys.executable, str(TASK_DIR / "record_g5.py"), "--root", str(tmp_path),
                            "--run", run_id], capture_output=True, text=True, timeout=20)
     assert done.returncode == 2 and json.loads(done.stdout)["result"]["status"] == "BLOCKED"
     assert not G5["intents"](RunStore(tmp_path).read(run_id))
-    with pytest.raises(ValueError, match="Synthetic"):
-        G5["_record_g5"](tmp_path, run_id, authorize=authorization,
-                         invoke=execution.execute_batch, context="synthetic_test")
+    assert "_record_g5" not in G5
+    with pytest.raises(TypeError, match="unexpected keyword"):
+        G5["record_g5"](tmp_path, run_id, authorize=authorization,
+                        invoke=lambda plan: execution.execute_batch(plan), context="synthetic_test")
+
+
+@pytest.mark.parametrize("wrapped", [False, True])
+def test_synthetic_authorization_cannot_invoke_public_api_through_wrappers(tmp_path, wrapped):
+    run_id = frozen_run(tmp_path)
+    with isolated_services(), patch.object(execution, "execute_batch",
+                                            wraps=execution.execute_batch) as spy:
+        report = execute(tmp_path, run_id,
+                         invoke=(lambda plan: execution.execute_batch(plan)) if wrapped else None,
+                         authorize=lambda c: authorization(c, "synthetic_test"))
+    assert report["result"]["status"] == "BLOCKED"
+    assert spy.call_count == 0
+    assert not G5["intents"](RunStore(tmp_path).read(run_id))
+
+
+def test_synthetic_planning_cannot_be_promoted_by_live_style_authorization(tmp_path):
+    from test_historical_return_g4 import candidate
+
+    run_id = discovered(tmp_path)
+    G4["record_g4"](tmp_path, run_id, candidate())
+    def forbidden(*args):
+        pytest.fail("Synthetic planning cannot reach authorization or execution")
+    report = execute(tmp_path, run_id, authorize=forbidden, invoke=forbidden)
+    assert report["result"]["status"] == "BLOCKED"
+    assert "Synthetic planning" in report["result"]["reason"]
+
+
+def test_simulated_host_harness_cannot_execute_without_active_service_fakes(tmp_path):
+    run_id = frozen_run(tmp_path)
+    with patch.object(execution, "execute_batch", wraps=execution.execute_batch) as spy:
+        report = execute(tmp_path, run_id)
+    assert report["result"]["status"] == "BLOCKED"
+    assert spy.call_count == 0
+
+
+@pytest.mark.parametrize("later_gate", ["G1", "G2", "G3", "G4"])
+def test_completed_execution_survives_later_failed_gate_without_reinvocation(tmp_path, later_gate):
+    run_id = frozen_run(tmp_path)
+    with isolated_services():
+        assert execute(tmp_path, run_id)["result"]["status"] == "PASS"
+    original = G5["read_execution"](tmp_path, run_id)
+    gate(tmp_path, run_id, later_gate, "FAIL")
+    before = RunStore(tmp_path).read(run_id)
+    with pytest.raises(ValueError):
+        G4["read_frozen"](tmp_path, run_id)  # Current eligibility remains revoked.
+    with patch.object(execution, "execute_batch",
+                      side_effect=AssertionError("read cannot execute")):
+        assert G5["read_execution"](tmp_path, run_id) == original
+    done, read = fresh_read(tmp_path, run_id)
+    assert done.returncode == 0 and read == original
+    assert RunStore(tmp_path).read(run_id) == before
+
+
+@pytest.mark.parametrize("corrupt", ["workflow", "preview", "authorization", "intent", "result"])
+def test_historical_read_fails_closed_on_corrupt_bound_evidence_after_later_g3_fail(
+        tmp_path, corrupt):
+    run_id = frozen_run(tmp_path)
+    with isolated_services():
+        execute(tmp_path, run_id)
+    read = G5["read_execution"](tmp_path, run_id)
+    preview_ref = G4["read_frozen"](tmp_path, run_id)["preview_artifact"]
+    gate(tmp_path, run_id, "G3", "FAIL")
+    if corrupt == "intent":
+        intent = read["intent"]
+        intent["payload"]["details"]["challenge"]["workflow"]["sha256"] = "0" * 64
+        path = tmp_path / run_id / "records" / f"{intent['sequence']:08d}.json"
+        path.write_text(json.dumps(intent), encoding="utf-8")
+    else:
+        ref = (read["authorization"] if corrupt == "authorization" else
+               preview_ref if corrupt == "preview" else
+               read[corrupt + "_artifact"])
+        (tmp_path / run_id / ref["stored_path"]).write_bytes(b"corrupt")
+    with patch.object(execution, "execute_batch",
+                      side_effect=AssertionError("read cannot execute")):
+        with pytest.raises(ValueError):
+            G5["read_execution"](tmp_path, run_id)
 
 
 def test_live_authorization_requires_real_source_kind_and_verbatim_bound_statement(tmp_path):
     run_id = frozen_run(tmp_path)
     challenge = G5["challenge_for"](G4["read_frozen"](tmp_path, run_id))
     auth = authorization(challenge, "user_message")
+    auth["user_statement"] = "approve"
     with pytest.raises(ValueError, match="explicitly approve"):
         G5["validate_authorization"](auth, challenge, "live")
     auth["user_statement"] = G5["approval_sentence"](challenge)
@@ -254,7 +333,7 @@ def test_uncertain_attempt_never_retries_and_fresh_read_finds_intent(tmp_path, f
         if name == "G5 actual BatchResult":
             raise OSError("disk failure")
         return original_save(store, rid, directory, name, value)
-    with isolated_services(), patch.dict(G5["_record_g5"].__globals__, {
+    with isolated_services(), patch.dict(G5["record_g5"].__globals__, {
             "save": failing_save if failure == "publication" else original_save}):
         if failure in ("keyboard", "publication"):
             with pytest.raises(KeyboardInterrupt if failure == "keyboard" else OSError):

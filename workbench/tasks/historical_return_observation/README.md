@@ -147,7 +147,10 @@ poetry run python workbench/run_store.py read --run RUN_ID
 
 Optional `--root PATH` selects the same store. The execution command displays the
 full challenge and exact approval sentence, then asks for an explicit resource budget
-and safe data/cache isolation description. An agent must never answer this human
+and data/cache isolation declaration. These strings enforce no controls. Before
+long-history live acceptance, verify isolation and bounded acquisition through existing
+owner-approved facilities; if controls cannot be verified, do not execute full history.
+An agent must never answer this human
 prompt on the user's behalf. Noninteractive execution without a host authorizer blocks.
 No generated JSON file grants permission, and Task approval alone grants no execution.
 
@@ -168,7 +171,9 @@ PASS=0 means every requested computation succeeded; FAIL=1 includes partial/fail
 Batches with preserved successful analyses and failures. BLOCKED=2 means unmet
 prerequisites, missing authorization or uncertain execution. Storage/evidence errors
 exit 1. `--read` performs no execution. A completed result retains its original outcome
-even after a blocked duplicate invocation; it is not permission for another execution.
+even after a later G1/G3 failure or blocked duplicate invocation. Read validates the
+evidence bound to the historical intent; a new execution still requires current latest
+Gate eligibility. A completed result is not permission for another execution.
 
 The read report gives workflow, authorization, result and report artifact references.
 Files are at `workbench/.runs/RUN_ID/blobs/ARTIFACT_ID` (or the explicit store root).
@@ -185,7 +190,10 @@ Reproduce isolated acceptance, with zero paid-data access/default-cache changes:
 poetry run python workbench/tests/g5_execution_example.py
 ```
 
-This uses explicitly synthetic authorization and public-service fakes in its test harness;
-it cannot authorize the live adapter. See [WB-05 acceptance](EXECUTION_ACCEPTANCE.md)
+This uses a simulated user interaction in the test harness and public-service fakes
+through the ordinary adapter. Its fixture approval is test evidence only. Production has
+no synthetic execution seam; historical synthetic Runs remain readable. Reported
+`result_path` is relative to the selected Run store, with artifact IDs/hashes unchanged
+in historical examples. See [WB-05 acceptance](EXECUTION_ACCEPTANCE.md)
 for actual artifacts/checks. No full-history live readiness or WB-06 interactive
 natural-language acceptance is claimed.

@@ -33,7 +33,7 @@
         "sha256": "662367c4ac0b9713a2ab53382dd502b0e48022498b55845db1340f08c70c676a",
         "stored_path": "blobs/dfc38523ecb142d6a0476c1e5b6c241d"
       },
-      "result_path": "C:\\Users\\Benjamin\\source\\repos\\hg-market-state-lab\\workbench\\.runs\\4e66bd4669064d1e87076bd9589f8793\\blobs\\b5f836849cb84ab18f497f56a25286b9",
+      "result_path": "4e66bd4669064d1e87076bd9589f8793/blobs/b5f836849cb84ab18f497f56a25286b9",
       "batch_status": "success",
       "counts": {
         "planned_count": 1,
@@ -262,7 +262,7 @@
         "sha256": "589e5e1c95a2c4e70a4055295b64e80e351b260da5fff5e95e30c752c8d03ed9",
         "stored_path": "blobs/42d26ab90ac94037afd215da94263770"
       },
-      "result_path": "C:\\Users\\Benjamin\\source\\repos\\hg-market-state-lab\\workbench\\.runs\\703ff8e4d4b445138f5059087cf317de\\blobs\\61d00e1bf8464000b7d2113983aa175b",
+      "result_path": "703ff8e4d4b445138f5059087cf317de/blobs/61d00e1bf8464000b7d2113983aa175b",
       "batch_status": "partial_success",
       "counts": {
         "planned_count": 2,
@@ -623,7 +623,7 @@
         "sha256": "6567e7793c6e208783f7b244e8fd5931178bfd12585e10784b70448da4c673cb",
         "stored_path": "blobs/3ad75b1b32184f89b52aed5f64683836"
       },
-      "result_path": "C:\\Users\\Benjamin\\source\\repos\\hg-market-state-lab\\workbench\\.runs\\3d227f4f583a4ca991e003a35736c310\\blobs\\7acfb4dac03f4dd7b188b15997ee9271",
+      "result_path": "3d227f4f583a4ca991e003a35736c310/blobs/7acfb4dac03f4dd7b188b15997ee9271",
       "batch_status": "success",
       "counts": {
         "planned_count": 1,
@@ -852,7 +852,7 @@
         "sha256": "516ae7e1411f5a544748744a4cc57d7090aba0f4101249a7cbb127fee22dfdd3",
         "stored_path": "blobs/c28c86cc28e84a40b98a01bf300d3477"
       },
-      "result_path": "C:\\Users\\Benjamin\\source\\repos\\hg-market-state-lab\\workbench\\.runs\\067ffdceff39424b812bb3e7ebeb68fa\\blobs\\cf1e659fa73049739835500c01f12faa",
+      "result_path": "067ffdceff39424b812bb3e7ebeb68fa/blobs/cf1e659fa73049739835500c01f12faa",
       "batch_status": "success",
       "counts": {
         "planned_count": 1,

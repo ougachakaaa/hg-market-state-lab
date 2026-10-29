@@ -12,7 +12,7 @@ Statistics owns numerical results. Workbench only authorizes, delegates and pres
 
 ## Prerequisites and authorization
 
-`record_g5.py` consumes only `record_g4.read_frozen`: exact canonical Task v1,
+Before execution, `record_g5.py` consumes `record_g4.read_frozen`: exact canonical Task v1,
 latest suitable G1 PASS, explicit authorized G2 SKIPPED, latest suitable G3 PASS,
 and exactly one accepted latest G4 PASS with verified workflow/Preview/report linkage.
 Reconstruct the public ResearchPlan from that frozen workflow and compare public
@@ -23,8 +23,13 @@ Authorization is separate same-Run evidence; the frozen workflow remains pending
 The authorization challenge contains Run/Task identity, original objective, exact
 workflow and Preview references, Python execute_batch surface and acquisition,
 cache-write and possible paid-data effects. Live confirmation must also record an
-explicit resource budget and isolation description; Workbench records these operator
-constraints, it cannot enforce provider quotas. An unbounded budget is inappropriate.
+explicit resource budget and isolation description. `resource_budget` and
+`data_isolation` are operator declarations, not enforced resource controls. Nonempty
+strings do not establish safe isolation or bounded acquisition. Before any long-history
+live acceptance, an operator must verify isolation and bounded acquisition through
+existing owner-approved facilities, including their actual scope and limits. If those
+controls cannot be verified, do not attempt full-history live execution. Workbench does
+not enforce provider quotas or redirect caches. An unbounded budget is inappropriate.
 
 For a local human, the CLI requires a TTY and displays the whole challenge before
 asking for an exact workflow-bound approval sentence, budget and isolation description.
@@ -43,13 +48,16 @@ cannot authenticate a speaker or prove natural-language consent. Never implement
 callback by reading an agent-generated approval file or self-asserting consent.
 Missing, declined, malformed or mismatched authorization blocks before invocation.
 
-Synthetic authorization is accepted only by the private deterministic-test seam with
-an explicitly supplied isolated invocation function and `source_kind=synthetic_test`.
-The live wrapper rejects it. No synthetic artifact is reusable as live permission.
+There is no production synthetic execution entry or caller-supplied invocation seam.
+The ordinary adapter always validates live authorization and calls the public Research
+API. It rejects `source_kind=synthetic_test`. No synthetic artifact is reusable as live permission.
 It also rejects frozen workflows with synthetic input-resolution provenance; example
 planning Runs cannot become live execution requests by supplying an approval record.
-Tests must install public-service fakes and prohibit provider/default-cache access.
-This is process-local testing, not a security sandbox or hostile-caller protection.
+Tests simulate the trusted host interaction only within the test harness, install
+public-service fakes and prohibit provider/default-cache access. Historical synthetic
+execution evidence remains readable; accepting its context during read grants no
+execution permission. Workbench is not a security sandbox and cannot prevent arbitrary
+Python callers from bypassing the official Agent workflow.
 
 ## One attempt, durable evidence and uncertainty
 
@@ -106,12 +114,19 @@ Failure free-text and blocking/skip text are omitted to avoid leaking arbitrary 
 messages; public UnitFailure reasons are likewise omitted while identities/counters remain.
 This deliberate safety limitation is explicit in each projection, never invented diagnostics.
 
-Fresh `--read` verifies store integrity, exact Task/G4, authorization challenge,
+Fresh `--read` verifies the entire current store's integrity, then validates exact
+Task/G4 and their bound prerequisites against the committed record prefix strictly
+before the historical intent. The same strict G4 verifier checks that prefix's latest
+suitable G1/G2/G3 and sole accepted latest G4, including frozen artifacts and references.
+No caller-supplied cutoff can relax the ordinary pre-execution latest-Gate check.
+Read also verifies authorization challenge,
 intent ordering/references, result and completion/report/Gate associations, plan and
 ordered Job/analysis linkage, accounting and correct G5 outcome. It never invokes
 Research or asks for authorization. An unfinished intent reports uncertainty even if
-the caller did not record BLOCKED. Later failed prerequisites revoke eligibility but
-never erase preserved results. CLI PASS=0, FAIL=1, BLOCKED=2; corrupt/busy storage=1.
+the caller did not record BLOCKED. Later failed G1/G3 (or other Gate attempts) revoke
+current eligibility but do not invalidate intact historical evidence. They never erase
+preserved results. Corrupt evidence still fails closed, including in the historical
+prefix. CLI PASS=0, FAIL=1, BLOCKED=2; corrupt/busy storage=1.
 
 ## Reconciliation
 

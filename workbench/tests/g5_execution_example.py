@@ -54,7 +54,7 @@ def run(root, scenario):
             "workflow_artifact": read["workflow_artifact"],
             "authorization_artifact": read["authorization"],
             "result_artifact": read["result_artifact"], "report_artifact": read["report_artifact"],
-            "result_path": str(root / run_id / read["result_artifact"]["stored_path"]),
+            "result_path": f"{run_id}/{read['result_artifact']['stored_path']}",
             "batch_status": output["status"],
             "counts": {k: output[k] for k in (
                 "planned_count", "success_count", "failed_count", "skipped_count")},

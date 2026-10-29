@@ -44,7 +44,8 @@ approval JSON file, Task approval or synthetic authorization cannot grant live p
 If the host cannot establish genuine consent, return None and G5 blocks. Local storage
 verifies integrity, not the identity of a speaker; this is explicitly a trusted host duty.
 
-Acceptance instead calls the private test seam, with `source_kind=synthetic_test`,
+At WB-05 delivery, acceptance called the private test seam, with
+`source_kind=synthetic_test`,
 explicit isolated invocation function, public Calendar/Index fakes and forbidden socket /
 SQLite access during execution. The live wrapper rejects both synthetic authorizations
 and frozen synthetic planning provenance. A separate temporary test simulates the trusted
@@ -63,7 +64,10 @@ and an independent fresh-process read reproducing the complete output projection
 
 All artifacts below live in ignored `workbench/.runs/<run_id>/blobs/<artifact_id>`.
 Their registration contains hashes and byte lengths; RunStore verifies the actual bytes.
-The snapshot also retains authorization/report references and absolute output paths.
+The snapshot also retains authorization/report references. WB-05R changes only its
+displayed output paths to store-relative paths; Run IDs, artifact references/hashes and
+actual runtime evidence are retained. The private seam above is historical; the
+WB-05R reconciliation below removes it from production.
 The four Runs have G4 PASS at sequence 10, authorization artifact 11, intent 12,
 actual result 13, completion 14, report 15 and G5 outcome 16. The frozen G4 still
 records authorization pending; separate authorization evidence never edits it.
@@ -150,3 +154,83 @@ Local hashes provide integrity, not cryptographic approval provenance or hostile
 protection. Publication retains the shared local hard-link/locking limitations.
 Exception objects/free text are deliberately omitted; public failure classifications,
 requests, counts and safe structural evidence remain locatable.
+
+## WB-05R execution safety and historical read reconciliation
+
+Reconciled 2026-10-29 (Asia/Shanghai), on `develop` from required baseline
+`d179f717dcbeacbf6ef1a1a650d4c62fdae3575d`. This section records the current
+implementation; the WB-05 results and private-seam description above remain historical.
+Delivery followed authority reconciliation, minimal implementation, regression tests
+and final review. WB-06 is not implemented or accepted.
+
+The narrow [G5 authority](AUTHORIZED_EXECUTION.md) now distinguishes current execution
+eligibility from historical evidence retrieval. `record_g4.read_frozen` still checks
+all latest operational prerequisites. G5 read validates the entire store, derives the
+committed prefix strictly before its sole stored intent, and applies the same G4
+verifier to that prefix. The exact prerequisite sequences, workflow, Preview, approval,
+intent, result, completion and report remain bound and verified. Later Gate failures
+cannot revoke an intact historical result. No execution cutoff option was added.
+
+The production `_record_g5(..., invoke=..., context=...)` seam and its callable-identity
+guard were removed. The ordinary adapter always validates live authorization and invokes
+the public `execution.execute_batch` once. Historical `synthetic_test` authorization is
+accepted only when validating stored evidence, never by the execution entry. Tests now
+simulate the host's user interaction and input provenance in the test directory;
+public Calendar/Index service fakes still drive actual Research and Statistics.
+Fault injection is confined to test monkeypatches. The simulated-host helper refuses
+to reach Research unless its isolated service-fake context is active. It supplies no
+real user consent.
+
+Changed files are `AUTHORIZED_EXECUTION.md`, `WORKFLOW_PLANNING.md`, `record_g4.py`,
+`record_g5.py`, `README.md`, this acceptance, `examples/g5-acceptance.json`, and
+`workbench/tests/{g5_fixtures.py,g5_execution_example.py,test_historical_return_g5.py}`.
+No business source, Research/Statistics meaning or calculations, Task JSON, shared
+storage, dependencies, official CLI or HTTP contract changed. Root navigation already
+reaches these narrow owners; no new authority layer or execution framework is needed.
+
+Concrete new regressions in `test_historical_return_g5.py`:
+
+- `test_completed_execution_survives_later_failed_gate_without_reinvocation`: four
+  cases, later G1/G2/G3/G4 FAIL; exact original result in-process and fresh-process,
+  unchanged store, no Research invocation, current G4 eligibility still rejected.
+- `test_historical_read_fails_closed_on_corrupt_bound_evidence_after_later_g3_fail`:
+  five cases, altered Workflow, Preview, authorization, Intent challenge or Result.
+- `test_synthetic_authorization_cannot_invoke_public_api_through_wrappers`: direct
+  and wrapped public function both remain uncalled with synthetic authorization.
+- `test_synthetic_planning_cannot_be_promoted_by_live_style_authorization`: synthetic
+  planning blocks before authorization or invocation.
+- `test_simulated_host_harness_cannot_execute_without_active_service_fakes`: the
+  simulated-host helper cannot call Research outside its isolated fake-service context.
+
+Existing regressions continue to check latest failed/missing/ambiguous prerequisites,
+exact frozen Plan and public API, actual numerical output, strict approval, corruption,
+concurrency, failed/partial batches, uncertainty and one intent with no automatic retry.
+
+| Verification | Actual result |
+| --- | --- |
+| `poetry run pytest workbench/tests market_research/tests market_statistics/tests data_snapshot/tests/test_authority_topology.py ui_http/tests/test_architecture.py data_lake/tests/test_boundary.py -q` | 1270 passed in 85.54s; existing Starlette TestClient deprecation warning |
+| G5 module within that final combined suite | 54 passing cases, including 13 added cases |
+| `poetry run ruff check workbench` | Passed |
+| `poetry run mypy workbench/run_store.py workbench/tasks/historical_return_observation` | Passed, 8 source files |
+| `poetry run python workbench/tests/acceptance_example.py` | Passed; WB-01 synthetic storage acceptance |
+| `poetry run python workbench/tests/g5_execution_example.py` | Four expected outcomes and fresh-process reads; one public Batch call per scenario; provider calls 0, default-cache access false |
+| Original four WB-05 Runs above, read with execution/socket/SQLite access forbidden | PASS/FAIL/PASS/PASS; all 16 referenced artifact hashes and original statistical outputs verified; all 100 historical files unchanged |
+| Baseline comparison of committed example and Task | Only four displayed result paths changed to store-relative paths; Run IDs, references, hashes, outputs and Task bytes unchanged |
+| Final diff and documentation navigation | `git diff --check` passed; 42 local link targets verified |
+
+New ignored example Runs, in success/partial-batch/partial-facts/long-window order:
+`ce90389204e54f9fae5045fc191b41e3`, `c3b5e2cbe9904d70a7ddad0a96c62e06`,
+`021b6649118044688ef22a8968766ce4`, `3f2aab8c64904ef2a3e5cf7c0ffc7e33`.
+Their `execution_context=live` identifies the ordinary adapter exercised with service
+fakes and a simulated host, not a real provider invocation or actual user authorization.
+The committed snapshot remains the original WB-05 evidence; it was not regenerated.
+
+`resource_budget` and `data_isolation` remain declarations, not resource controls.
+Prompts and usage no longer imply that nonempty strings establish safe isolation.
+Long-history live acceptance requires operator verification of isolation and bounded
+acquisition through existing owner-approved facilities. If controls cannot be verified,
+do not attempt full-history live execution. This reconciliation performed no real
+provider call, paid acquisition or default-cache mutation. Live controls, real-market
+readiness and separately approved WB-06 E2E acceptance remain unverified. Workbench
+is not a security sandbox and cannot stop arbitrary Python callers bypassing the
+official Agent workflow; trusted-host consent and local integrity limits remain.

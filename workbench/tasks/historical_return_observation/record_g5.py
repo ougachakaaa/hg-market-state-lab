@@ -34,6 +34,7 @@ def challenge_for(frozen: dict) -> dict:
 
 
 def validate_authorization(value: Any, challenge: dict, context: str) -> dict:
+    """Validate evidence; synthetic context is retained solely for historical reads."""
     if context not in ("live", "synthetic_test"):
         raise ValueError("Unknown execution context")
     a = G4["exact"](value, {"source_kind", "source_reference", "user_statement",
@@ -67,9 +68,10 @@ def interactive_authorization(challenge: dict) -> dict | None:
     supplied = input()
     if supplied != sentence:
         return None
-    print("Explicit resource budget (limits on calls/cost/history):", file=sys.stderr)
+    print("Resource budget declaration (calls/cost/history; not enforced here):", file=sys.stderr)
     budget = input()
-    print("Confirmed safe data/cache isolation for this invocation:", file=sys.stderr)
+    print("Isolation declaration (verify owner-approved controls before long-history live use; "
+          "not enforced here):", file=sys.stderr)
     isolation = input()
     return {"source_kind": "interactive_terminal",
             "source_reference": "current terminal interaction",
@@ -101,16 +103,6 @@ def finish(store: Any, run_id: str, directory: str, report: dict) -> dict:
 def record_g5(root: Path, run_id: str, *,
               authorize: Callable[[dict], Any] = interactive_authorization) -> dict:
     """Live adapter. Authorizer must resolve genuine user approval in its trusted host context."""
-    return _record_g5(root, run_id, authorize=authorize, invoke=execution.execute_batch,
-                      context="live")
-
-
-def _record_g5(root: Path, run_id: str, *, authorize: Callable[[dict], Any],
-               invoke: Callable, context: str) -> dict:
-    """Private test seam: synthetic context requires an explicitly isolated invocation function."""
-    if context not in ("live", "synthetic_test") or (
-            context == "synthetic_test" and invoke is execution.execute_batch):
-        raise ValueError("Synthetic authorization cannot invoke the live execution surface")
     store = RunStore(root)
     before = store.read(run_id)
     G4["require_task"](before)
@@ -131,8 +123,8 @@ def _record_g5(root: Path, run_id: str, *, authorize: Callable[[dict], Any],
                 report.update(status="BLOCKED", reason="Verified eligible frozen G4 required")
                 return finish(store, run_id, directory, report)
             challenge = challenge_for(frozen)
-            report.update(workflow=frozen["workflow_artifact"], execution_context=context)
-            if context == "live" and frozen["workflow"]["resolved_inputs"]["provenance"][
+            report.update(workflow=frozen["workflow_artifact"], execution_context="live")
+            if frozen["workflow"]["resolved_inputs"]["provenance"][
                     "kind"] == "synthetic_test":
                 report.update(status="BLOCKED", reason="Synthetic planning fixtures cannot be "
                               "executed through the live surface; create a real authorized Run")
@@ -142,7 +134,7 @@ def _record_g5(root: Path, run_id: str, *, authorize: Callable[[dict], Any],
                 raise ValueError("Reconstructed plan/Preview mismatch")
             try:
                 authorization = validate_authorization(authorize(copy.deepcopy(challenge)),
-                                                       challenge, context)
+                                                       challenge, "live")
             except Exception:
                 report.update(status="BLOCKED", reason="Explicit trustworthy user authorization "
                               "for this frozen workflow is missing or inappropriate")
@@ -156,7 +148,7 @@ def _record_g5(root: Path, run_id: str, *, authorize: Callable[[dict], Any],
                     or current["records"][-1]["payload"] != auth):
                 raise ValueError("Run changed before intent; no invocation")
             attempt_id = uuid.uuid4().hex
-            details = {"attempt_id": attempt_id, "execution_context": context,
+            details = {"attempt_id": attempt_id, "execution_context": "live",
                        "challenge": challenge, "authorization": reference(auth)}
             intent = store.event(run_id, {"operation": INTENT, "details": details})
             report.update(intent_sequence=intent["sequence"], attempt_id=attempt_id)
@@ -164,7 +156,8 @@ def _record_g5(root: Path, run_id: str, *, authorize: Callable[[dict], Any],
             if prefix["records"] != current["records"] + [intent]:
                 raise ValueError("Run changed at intent; reconciliation required")
             try:
-                batch = invoke(plan)  # The sole invocation, after durable authorization and intent.
+                # The sole invocation, after durable authorization and intent.
+                batch = execution.execute_batch(plan)
                 output = OUTPUT["batch_json"](batch, plan)
                 status = OUTPUT["validate_output"](output, frozen["preview"])
             except Exception:
@@ -204,8 +197,12 @@ def read_execution(root: Path, run_id: str) -> dict:
                 "integrity_verified": True}
     if len(attempts) != 1:
         raise ValueError("Exactly one execution intent is permitted")
-    frozen = G4["read_frozen"](root, run_id)
     intent = attempts[0]
+    # Validate the exact operational state bound to this historical invocation.
+    # RunStore has already checked the integrity of every currently committed record.
+    prefix = {**state, **{key: [r for r in state[key] if r["sequence"] < intent["sequence"]]
+                         for key in ("records", "gate_outcomes", "events", "artifacts")}}
+    frozen = G4["_read_frozen"](prefix, root)
     d = intent["payload"]["details"]
     challenge = challenge_for(frozen)
     if JSON(d["challenge"]) != JSON(challenge) or intent["sequence"] <= frozen["g4_sequence"]:

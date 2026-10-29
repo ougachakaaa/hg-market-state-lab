@@ -100,6 +100,9 @@ verifies same-Run registration/digests, report/Preview/plan/prerequisite associa
 and returns that exact artifact reference. It does not accept a mutable candidate as
 execution input or treat manifest.workflow (the preliminary G1 steps) as research authority.
 Current failed prerequisites or a later G4 failure make read-back ineligible.
+This is the current operational eligibility read. For completed G5 evidence retrieval,
+the [G5 contract](AUTHORIZED_EXECUTION.md) applies the same verifier to the committed
+prefix before that invocation's intent, preserving its exact bound prerequisites.
 
 After any accepted G4 PASS this recorder refuses another planning attempt; changed
 plans need a new Run. A Task-local exclusive `.g4-writer` directory serializes G4

@@ -350,7 +350,13 @@ def record_g4(root: Path, run_id: str, candidate: Any) -> dict[str, Any]:
 
 
 def read_frozen(root: Path, run_id: str) -> dict[str, Any]:
-    state = RunStore(root).read(run_id)
+    """Verify current operational eligibility against all committed records."""
+    return _read_frozen(RunStore(root).read(run_id), root)
+
+
+def _read_frozen(state: dict[str, Any], root: Path) -> dict[str, Any]:
+    """Verify a store-validated state; G5 historical reads supply their pre-intent prefix."""
+    run_id = state["manifest"]["run_id"]
     require_task(state)
     gates = [r for r in state["gate_outcomes"] if r["payload"]["gate_id"] == "G4"]
     passes = [r for r in gates if r["payload"]["status"] == "PASS"]
