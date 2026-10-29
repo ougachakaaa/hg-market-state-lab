@@ -24,6 +24,10 @@ explicit planning disposition; see that contract's reconciliation. WB-05 impleme
 [G5 authorized execution and delivery](AUTHORIZED_EXECUTION.md) under
 [its request](EXECUTION_REQUEST.md), with [separate acceptance](EXECUTION_ACCEPTANCE.md).
 Live execution still requires approval of the exact frozen artifact and side effects.
+WB-06 records [natural-language E2E acceptance](wb06/ACCEPTANCE.md), its
+[human research report](wb06/REPORT.md), [live readiness](wb06/LIVE_READINESS.md)
+and [problem log](wb06/problems.json). Deterministic acceptance and full-history live
+acceptance have separate conclusions; these records grant no execution permission.
 
 Business meaning remains with the [Research publication](../../../market_research/descriptive/RESEARCH_CAPABILITY.md),
 [trailing-return case](../../../market_research/descriptive/cases/trailing_return/ARCHITECTURE.md)

@@ -1,0 +1,2 @@
+# Preserve hashes of authored inputs and public acceptance snapshots across checkouts.
+*.json -text whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol

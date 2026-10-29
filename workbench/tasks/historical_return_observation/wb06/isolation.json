@@ -1,0 +1,33 @@
+{
+  "goal": "LIVE-E2E-01",
+  "verdict": "Blocked",
+  "tested_sha": "2611c18e21208282f3b7da130e67160998816509",
+  "executed_at_utc": "2026-10-29T14:58:27.446208+00:00",
+  "python": "3.13.11",
+  "platform": "Windows",
+  "root_poetry_environment": true,
+  "target": "000852.SH",
+  "window": {
+    "start_date": "2024-01-10",
+    "end_date": "2024-01-16"
+  },
+  "horizon": 2,
+  "historical_default_cache_repaired": false,
+  "isolation": {
+    "established_before_source": true,
+    "fresh_external_temporary_directory": true,
+    "separate_dataset_files": true,
+    "index_calendar_dependency_isolated": true,
+    "factory_storage_free": true,
+    "runtime_schema_generation": 3,
+    "repository_bindings": {
+      "tushare_trade_calendar": 2,
+      "tushare_index_daily": 1
+    },
+    "sqlite_connections": {},
+    "materialized_files": [],
+    "default_cache_metadata_unchanged": true
+  },
+  "blocker": "Source I/O not requested; isolation check only",
+  "provider_calls": {}
+}

@@ -197,3 +197,27 @@ no synthetic execution seam; historical synthetic Runs remain readable. Reported
 in historical examples. See [WB-05 acceptance](EXECUTION_ACCEPTANCE.md)
 for actual artifacts/checks. No full-history live readiness or WB-06 interactive
 natural-language acceptance is claimed.
+
+## WB-06 natural-language E2E acceptance
+
+The [acceptance record](wb06/ACCEPTANCE.md) traces an Agent-authored natural-language
+request through actual backend discovery, full-window Python Preview, frozen G4 and
+isolated G5. Read the [ordinary-language result report](wb06/REPORT.md) and
+[problem log](wb06/problems.json). Full-history live research remains BLOCKED; see
+[live prerequisites and exact remaining work](wb06/LIVE_READINESS.md).
+
+To replay the saved example, start a backend using the existing launcher on an
+available loopback port, then run from repository root:
+
+```powershell
+poetry run python ui_http/scripts/api.py --host 127.0.0.1 --port 18061
+# In another terminal, after the backend is ready:
+poetry run python workbench/tests/wb06_e2e_example.py --base-url http://127.0.0.1:18061 --candidate workbench/tasks/historical_return_observation/wb06/candidate.json --output workbench/.runs/wb06-replay.json
+```
+
+Stop only the backend created for this session. This script has no live mode:
+it uses public-service fakes and the existing guarded simulated-host test helper.
+Replaying its saved candidate proves repeatability, not a new natural-language planning
+evaluation. For a new question Codex must interpret the user's actual request, discover
+capabilities, resolve missing intent, compose the candidate and separately obtain real
+workflow-bound consent before any live invocation. Users need not author JSON.
