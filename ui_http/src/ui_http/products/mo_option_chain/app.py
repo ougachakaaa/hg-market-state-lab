@@ -16,6 +16,8 @@ from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
+from ui_http.auth._http import install_auth
+
 from .endpoint import ROUTE_PATH, router
 from .errors import (
     CONTRACT_QUERY_PARAMS,
@@ -180,6 +182,7 @@ def create_app() -> FastAPI:
             )
         )
 
+    install_auth(application)
     application.include_router(router)
     return application
 

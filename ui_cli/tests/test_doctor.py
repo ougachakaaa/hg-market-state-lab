@@ -61,3 +61,34 @@ def test_doctor_rejects_another_python_environment(
 
     assert doctor.doctor() == 1
     assert "current Python is not root .venv" in capsys.readouterr().out
+
+
+@pytest.mark.parametrize(
+    "body,expected",
+    [
+        (
+            b'{"error":{"kind":"authentication_required",'
+            b'"detail":"Authentication required.","param":null}}',
+            "running / authentication required",
+        ),
+        (b'{"detail":"Unauthorized"}', "port occupied / unhealthy"),
+        (b"not-json", "port occupied / unhealthy"),
+    ],
+)
+def test_doctor_recognizes_only_expected_protected_schema_error(
+    monkeypatch: pytest.MonkeyPatch,
+    body: bytes,
+    expected: str,
+) -> None:
+    from email.message import Message
+    from io import BytesIO
+    from urllib.error import HTTPError
+
+    def protected(*args: Any, **kwargs: Any) -> Any:
+        raise HTTPError(
+            "http://127.0.0.1:8011/openapi.json", 401, "Unauthorized", Message(), BytesIO(body)
+        )
+
+    monkeypatch.setattr(doctor, "urlopen", protected)
+    monkeypatch.setattr(doctor, "_port_listening", lambda _: True)
+    assert doctor._backend_status() == expected

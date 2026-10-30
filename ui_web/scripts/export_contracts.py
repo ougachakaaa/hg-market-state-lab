@@ -16,6 +16,7 @@ BACKEND_API_ROOT = REPOSITORY_ROOT / "ui_http"
 
 sys.path.insert(0, str(BACKEND_API_ROOT / "src"))
 
+from ui_http.app import create_app as create_application  # noqa: E402
 from ui_http.products.mo_option_chain.app import (  # noqa: E402
     create_app as create_chain_app,
 )
@@ -23,7 +24,45 @@ from ui_http.products.mo_option_premium.app import (  # noqa: E402
     create_app as create_premium_app,
 )
 
+
+def create_auth_app() -> FastAPI:
+    """Project Auth operations and their transitive schemas from the offline runtime."""
+    app = create_application()
+    document = app.openapi()
+    document["paths"] = {
+        path: operations for path, operations in document["paths"].items()
+        if path in {"/auth/register", "/auth/login", "/auth/me", "/auth/logout"}
+    }
+    schemas = document["components"]["schemas"]
+    needed: set[str] = set()
+
+    def collect(value: object) -> None:
+        if isinstance(value, dict):
+            ref = value.get("$ref", "")
+            prefix = "#/components/schemas/"
+            if isinstance(ref, str) and ref.startswith(prefix):
+                name = ref.removeprefix(prefix)
+                if name not in needed:
+                    needed.add(name)
+                    collect(schemas[name])
+            for child in value.values():
+                collect(child)
+        elif isinstance(value, list):
+            for child in value:
+                collect(child)
+
+    collect(document["paths"])
+    document["components"]["schemas"] = {name: schemas[name] for name in sorted(needed)}
+    app.openapi = lambda: document  # type: ignore[method-assign]
+    return app
+
+
 CONTRACTS: tuple[tuple[str, Callable[[], FastAPI], Path], ...] = (
+    (
+        "Application Authentication",
+        create_auth_app,
+        WEB_UI_ROOT / "src/app/auth/api/auth.openapi.json",
+    ),
     (
         "MO Option Chain",
         create_chain_app,

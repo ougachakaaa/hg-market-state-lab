@@ -1,7 +1,12 @@
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { cleanup, fireEvent, render, screen, within } from '@testing-library/react'
 import type { PremiumPlane } from '../api/moOptionPremium'
 import PremiumPlanePage from './PremiumPlanePage'
+import { createRequestBoundary, installRequestBoundary } from '../../../shared/http/protectedRequest'
+
+let releaseBoundary: () => void
+beforeEach(() => { releaseBoundary = installRequestBoundary(createRequestBoundary(() => {})) })
+afterEach(() => releaseBoundary())
 
 function leaf(points: number | null, yieldValue: number | null) {
   return { points, yield: yieldValue }

@@ -23,6 +23,7 @@ HTTP error envelope projection and status mapping
 OpenAPI publication
 repository HTTP runtime composition
 HTTP launcher/runtime concerns
+technical identity, authentication persistence and HTTP access control
 ```
 
 核心 invariant：
@@ -70,9 +71,13 @@ Research and Statistics never depend on ui_http.
 
 本模块只专门拥有 HTTP inbound delivery，不建立“所有 delivery 都必须迁移到 ui_http”的规则。
 
+HTTP access 的 Auth 能力由本模块独立拥有，公开 Python service 允许 canonical `lab auth` 委托 Operator 审批。该 service 不要求启动 HTTP server；它不属于市场产品 application semantics，也不成为跨产品业务层。所有实际 HTTP app surfaces 服从统一认证边界，产品自己的 response projection 与 semantic failure classification 继续独立。
+
 ## 5. Authority Routing
 
 Published HTTP products (including agent-facing Research)、endpoint/query、DTO projection、wire ordering、error envelope 与 status mapping 从 [HTTP product catalog](HTTP_PRODUCTS.md) 进入对应 specialized contract。
+
+Repository-wide 用户、审批、JWT Cookie、同源验证、限流、Auth HTTP contract 与 G1–G4 验收由 [Authentication MVP V1 authority](AUTHENTICATION.md) 唯一拥有；它是 access concern，不是市场 HTTP product。Application-level 登录交互归 [Web application authority](../ui_web/application.md)。
 
 Owning module authority 仍唯一拥有 application/product semantics：
 

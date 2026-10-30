@@ -75,6 +75,8 @@ Repository-wide inbound HTTP delivery adapter 与 HTTP composition root，负责
 
 它拥有 FastAPI application/route composition、request parsing、transport validation、HTTP DTO projection、serialization、HTTP error/status mapping、OpenAPI publication 与 HTTP runtime concerns；不拥有业务 query/command/result、semantic failure classification、产品可用性、市场语义或建模语义。模块内部边界见 [ui_http/ARCHITECTURE.md](ui_http/ARCHITECTURE.md)。
 
+Repository HTTP access 的技术身份、认证存储与访问控制由 `ui_http` 拥有，契约从其 module authority 进入；`ui_cli` 通过公开 Auth service 委托 Operator 审批，`ui_web` 拥有 application-level 认证交互。该边界不授予业务模块反向依赖 `ui_http` 的权限。
+
 ### `ui_web`
 
 展示并允许用户交互仓库产生的数据产品与市场状态结果。它不拥有 Source、Capture、业务计算或 market_modeling 语义。模块内部边界见 [ui_web/ARCHITECTURE.md](ui_web/ARCHITECTURE.md)。

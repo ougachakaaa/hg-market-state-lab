@@ -13,7 +13,7 @@
 
 ## 执行规则
 
-- `ui_http` 只拥有 HTTP transport、FastAPI composition、DTO projection、serialization、HTTP error/status mapping、OpenAPI publication 与 HTTP runtime concerns。
+- `ui_http` 拥有 HTTP transport、FastAPI composition、DTO projection、serialization、HTTP error/status mapping、OpenAPI publication 与 HTTP runtime concerns；Repository HTTP access 的技术身份、独立认证存储和 Operator 审批 service 是明确的 runtime specialization，遵循 [Authentication authority](AUTHENTICATION.md)，不扩展为市场业务 service。
 - Query、Command、Result、semantic failure classification 与产品可用性由 owning business module 定义；不得在 transport 中重算、修复或重新分类。
 - 不引入 CQRS、Command Bus、Query Bus、generic application framework 或跨产品 business service layer。
 - FastAPI implementation、HTTP product adapters 与 launcher 位于本模块；不得在 owning business module 中恢复 competing runtime。

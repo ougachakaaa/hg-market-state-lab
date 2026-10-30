@@ -15,6 +15,8 @@ from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
+from ui_http.auth._http import install_auth
+
 from .products.mo_option_chain.endpoint import router as chain_router
 from .products.mo_option_chain.errors import (
     CONTRACT_QUERY_PARAMS as CHAIN_CONTRACT_QUERY_PARAMS,
@@ -204,6 +206,7 @@ def create_app() -> FastAPI:
             )
         )
 
+    install_auth(application, auth_routes=True)
     application.include_router(chain_router)
     application.include_router(premium_router)
     application.include_router(research_router)

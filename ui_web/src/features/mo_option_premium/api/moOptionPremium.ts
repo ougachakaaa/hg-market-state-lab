@@ -1,3 +1,4 @@
+import { protectedRequest } from '../../../shared/http/protectedRequest'
 import Ajv2020 from 'ajv/dist/2020.js'
 import openApi from './moOptionPremium.openapi.json'
 import type { components, paths } from './moOptionPremium.generated'
@@ -20,11 +21,11 @@ type ErrorStatus = Exclude<keyof Operation['responses'], 200>
 type PremiumErrorResponse = Operation['responses'][ErrorStatus]['content']['application/json']
 
 export class PremiumRequestError extends Error {
-  readonly kind: PremiumErrorKind | 'network' | 'invalid_response'
+  readonly kind: PremiumErrorResponse['error']['kind'] | 'network' | 'invalid_response'
   readonly param?: PremiumError['param']
 
   constructor(
-    kind: PremiumErrorKind | 'network' | 'invalid_response',
+    kind: PremiumErrorResponse['error']['kind'] | 'network' | 'invalid_response',
     message: string,
     param?: PremiumError['param'],
   ) {
@@ -64,7 +65,7 @@ export async function loadMoOptionPremiumPlane(
 
   let response: Response
   try {
-    response = await fetch(`${path}?${query}`, { signal })
+    response = await protectedRequest(`${path}?${query}`, signal)
   } catch (error) {
     if (signal?.aborted) throw error
     throw new PremiumRequestError('network', '无法连接数据服务')

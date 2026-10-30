@@ -1,3 +1,4 @@
+import { protectedRequest } from '../../../shared/http/protectedRequest'
 import Ajv2020 from 'ajv/dist/2020.js'
 import openApi from './moOptionChain.openapi.json'
 import type { components, paths } from './moOptionChain.generated'
@@ -16,11 +17,11 @@ type ErrorStatus = Exclude<keyof Operation['responses'], 200>
 type ChainErrorResponse = Operation['responses'][ErrorStatus]['content']['application/json']
 
 export class ChainRequestError extends Error {
-  readonly kind: ChainErrorKind | 'network' | 'invalid_response'
+  readonly kind: ChainErrorResponse['error']['kind'] | 'network' | 'invalid_response'
   readonly param?: ChainError['param']
 
   constructor(
-    kind: ChainErrorKind | 'network' | 'invalid_response',
+    kind: ChainErrorResponse['error']['kind'] | 'network' | 'invalid_response',
     message: string,
     param?: ChainError['param'],
   ) {
@@ -59,7 +60,7 @@ export async function loadMoOptionChain(targetTradeDate: string, signal?: AbortS
 
   let response: Response
   try {
-    response = await fetch(`${path}?${query}`, { signal })
+    response = await protectedRequest(`${path}?${query}`, signal)
   } catch (error) {
     if (signal?.aborted) throw error
     throw new ChainRequestError('network', '无法连接数据服务')

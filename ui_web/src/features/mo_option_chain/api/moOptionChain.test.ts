@@ -1,6 +1,11 @@
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { ChainRequestError, loadMoOptionChain } from './moOptionChain'
 import type { OptionChain } from './moOptionChain'
+import { createRequestBoundary, installRequestBoundary } from '../../../shared/http/protectedRequest'
+
+let releaseBoundary: () => void
+beforeEach(() => { releaseBoundary = installRequestBoundary(createRequestBoundary(() => {})) })
+afterEach(() => releaseBoundary())
 
 const chain = {
   target_trade_date: '2026-09-17',
@@ -37,7 +42,7 @@ describe('loadMoOptionChain', () => {
       ['option_product', 'MO'],
       ['price_type', 'close'],
     ])
-    expect(options.signal).toBe(controller.signal)
+    expect(options.signal).toBeInstanceOf(AbortSignal)
     expect(result.expiries[0].calls[0].price).toBeNull()
     expect(result.expiries[0].puts[0].price).toBe(0)
     expect(result.expiries[0].futures).toEqual({ instrument_id: 'IM2609.CFE', price: 7487.6 })
@@ -114,7 +119,17 @@ describe('loadMoOptionChain', () => {
     const abortError = new DOMException('aborted', 'AbortError')
     vi.stubGlobal('fetch', vi.fn().mockRejectedValue(abortError))
 
-    await expect(loadMoOptionChain('2026-09-17', controller.signal)).rejects.toBe(abortError)
+    await expect(loadMoOptionChain('2026-09-17', controller.signal)).rejects.toMatchObject({ name: 'AbortError' })
     expect(abortError).not.toBeInstanceOf(ChainRequestError)
   })
 })
+
+
+it.each([[401, 'authentication_required'], [403, 'origin_forbidden'], [500, 'internal_error']])(
+  'preserves generated access errors for HTTP %s', async (status, kind) => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(response({
+      error: { kind, detail: 'Access failed.', param: null },
+    }, status as number)))
+    await expect(loadMoOptionChain('2026-09-17')).rejects.toMatchObject({ kind, message: 'Access failed.' })
+  },
+)

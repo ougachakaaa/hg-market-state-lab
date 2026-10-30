@@ -1,12 +1,12 @@
 import { useState } from 'react'
 import { Alert, Button, Card, Collapse, Descriptions, Empty, Flex, Space, Table, Typography } from 'antd'
 import type { TableColumnsType } from 'antd'
-import type { PremiumErrorKind, PremiumPlane } from '../api/moOptionPremium'
+import type { PremiumPlane } from '../api/moOptionPremium'
 import { PremiumRequestError } from '../api/moOptionPremium'
 import { classifyStrikeRelativeToReference, formatMetric, formatPlaneNumber } from '../model/premiumPlane'
 import type { PremiumPlaneProjection, PremiumPlaneRow, SelectedRepresentation } from '../model/premiumPlane'
 
-const errorTitles: Record<PremiumErrorKind, string> = {
+const errorTitles: Partial<Record<PremiumRequestError['kind'], string>> = {
   invalid_request: 'Invalid request',
   unsupported_query: 'Unsupported query',
   date_not_available: 'No data for this date',
@@ -20,7 +20,7 @@ export function PremiumError({ asOf, priceType, error }: {
 }) {
   const title = error.kind === 'network' ? 'Cannot reach the data service'
     : error.kind === 'invalid_response' ? 'Invalid data-service response'
-      : errorTitles[error.kind]
+      : errorTitles[error.kind] ?? 'Data-service access failed'
   return <Alert type="error" showIcon role="alert" title={title} description={<Space orientation="vertical" size={0}>
     <span>{asOf} · {priceType}</span><span>{error.message}</span>
   </Space>} />

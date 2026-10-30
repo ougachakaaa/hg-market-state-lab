@@ -7,6 +7,7 @@ export default defineConfig({
   server: {
     host: '127.0.0.1',
     proxy: {
+      '/auth': 'http://127.0.0.1:8011',
       '/mo-option-chain': 'http://127.0.0.1:8011',
       '/mo-option-premium-plane': 'http://127.0.0.1:8011',
     },

@@ -1,7 +1,12 @@
 import { act, renderHook, waitFor } from '@testing-library/react'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { PremiumPlane } from '../api/moOptionPremium'
 import { usePremiumPlane } from './usePremiumPlane'
+import { createRequestBoundary, installRequestBoundary } from '../../../shared/http/protectedRequest'
+
+let releaseBoundary: () => void
+beforeEach(() => { releaseBoundary = installRequestBoundary(createRequestBoundary(() => {})) })
+afterEach(() => releaseBoundary())
 
 const leaf = (value: number | null) => ({ points: value, yield: value })
 const plane = {

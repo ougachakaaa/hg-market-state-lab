@@ -14,6 +14,7 @@ import httpx
 import pytest
 from fastapi.testclient import TestClient
 
+from http_support.auth import authenticated_client
 from http_support.research_services import ResearchServices
 from market_research.descriptive.execution import BatchResult, ResearchPlan, execute_batch
 from market_research.descriptive.observation import ObservationConstructionFailure
@@ -60,7 +61,7 @@ def batches(monkeypatch: pytest.MonkeyPatch) -> list[BatchResult]:
 
 @pytest.fixture
 def client(services: ResearchServices, batches: list[BatchResult]) -> TestClient:
-    return TestClient(create_app())
+    return authenticated_client(create_app())
 
 
 def execute_body() -> dict[str, Any]:
@@ -377,6 +378,7 @@ def test_partial_batch_and_stop_keep_all_ordered_records(
     response = client.post("/research/execute", json=body)
     assert response.status_code == 200, response.text
     result = response.json()
+    assert "Max-Age=3600" in response.headers["set-cookie"]
     assert result["status"] == "partial_success"
     assert [j["status"] for j in result["job_results"]] == expected
     assert len(batches) == 1
@@ -429,6 +431,7 @@ def test_failed_batch_is_200_and_retains_obtained_context(
     response = client.post("/research/execute", json=body)
     assert response.status_code == 200, response.text
     result = response.json()
+    assert "Max-Age=3600" in response.headers["set-cookie"]
     assert result["status"] == "failed"
     job, skipped = result["job_results"]
     assert [job["status"], skipped["status"]] == ["Failed", "Skipped"]
@@ -516,6 +519,7 @@ def test_rejected_raw_nonfinite_results_remain_inspectable_as_valid_json(
     response = client.post("/research/execute", json=execute_body())
     assert response.status_code == 200, response.text
     result = response.json()
+    assert "Max-Age=3600" in response.headers["set-cookie"]
     assert result["status"] == "failed"
     first, second = result["job_results"][0]["analysis_outcomes"]
     assert first["status"] == "failed" and not first["associated"]
@@ -618,7 +622,7 @@ def test_guard_is_process_wide_and_discovery_responsive(
         first = pool.submit(client.post, "/research/execute", json=execute_body())
         try:
             assert entered.wait(10)
-            second_client = TestClient(create_app())
+            second_client = authenticated_client(create_app())
             assert_error(
                 second_client.post("/research/execute", json=execute_body()), 409, "execution_busy"
             )
@@ -662,7 +666,12 @@ def test_synchronous_execution_does_not_block_the_same_asgi_event_loop(
 
     async def exercise() -> None:
         transport = httpx.ASGITransport(app=create_app())
-        async with httpx.AsyncClient(transport=transport, base_url="http://testserver") as session:
+        async with httpx.AsyncClient(
+            transport=transport,
+            base_url="https://testserver",
+            cookies=client.cookies,
+            headers={"Origin": "https://testserver"},
+        ) as session:
             first = asyncio.create_task(session.post("/research/execute", json=execute_body()))
             try:
                 assert await asyncio.to_thread(entered.wait, 10)
@@ -692,7 +701,7 @@ def test_openapi_exposes_concrete_unique_operations_and_real_statuses(client: Te
     for path, (method, id, statuses) in expected.items():
         operation = doc["paths"][path][method]
         assert operation["operationId"] == id
-        assert set(operation["responses"]) == statuses
+        assert set(operation["responses"]) == statuses | {"401", "403"}
     schemas = doc["components"]["schemas"]
     assert schemas["PlanBody"]["additionalProperties"] is False
     assert (
