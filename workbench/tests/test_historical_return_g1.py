@@ -19,8 +19,8 @@ import pytest
 from support import RunStore
 
 TASK_DIR = Path(__file__).resolve().parents[1] / "tasks" / "historical_return_observation"
-CHECK_SCRIPT = TASK_DIR / "check_backend.py"
-RECORD_SCRIPT = TASK_DIR / "record_g1.py"
+CHECK_SCRIPT = TASK_DIR / "runtime" / "check_backend.py"
+RECORD_SCRIPT = TASK_DIR / "runtime" / "record_g1.py"
 CHECK = runpy.run_path(str(CHECK_SCRIPT))
 RECORD = runpy.run_path(str(RECORD_SCRIPT))
 

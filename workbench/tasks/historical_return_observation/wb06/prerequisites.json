@@ -1,7 +1,0 @@
-{
-  "credential_resolvable_without_network": true,
-  "credential_resolution_error": null,
-  "permissions_verified": false,
-  "provider_calls": 0,
-  "default_cache_metadata_unchanged": true
-}

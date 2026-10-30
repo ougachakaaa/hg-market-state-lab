@@ -14,9 +14,9 @@ import pytest
 from support import RunStore
 from test_historical_return_g3 import G3, TASK_DIR, backend, ready
 
-SCRIPT = TASK_DIR / "record_g4.py"
+SCRIPT = TASK_DIR / "runtime" / "record_g4.py"
 G4 = runpy.run_path(str(SCRIPT))
-CANDIDATE = TASK_DIR / "examples" / "g4-candidate.json"
+CANDIDATE = Path(__file__).parent / "fixtures" / "planning_candidate.json"
 
 
 def candidate():

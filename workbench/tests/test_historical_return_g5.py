@@ -142,7 +142,8 @@ def test_live_wrapper_rejects_synthetic_and_noninteractive_cli(tmp_path):
         report = G5["record_g5"](tmp_path, run_id,
                                  authorize=lambda c: authorization(c, "synthetic_test"))
     assert report["result"]["status"] == "BLOCKED"
-    done = subprocess.run([sys.executable, str(TASK_DIR / "record_g5.py"), "--root", str(tmp_path),
+    done = subprocess.run([sys.executable, str(TASK_DIR / "runtime" / "record_g5.py"), "--root",
+                   str(tmp_path),
                            "--run", run_id], capture_output=True, text=True, timeout=20)
     assert done.returncode == 2 and json.loads(done.stdout)["result"]["status"] == "BLOCKED"
     assert not G5["intents"](RunStore(tmp_path).read(run_id))

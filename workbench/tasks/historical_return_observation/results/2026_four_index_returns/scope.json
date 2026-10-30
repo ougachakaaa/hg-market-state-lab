@@ -1,0 +1,67 @@
+{
+  "schema_version": 1,
+  "objective": "统计 2026 年四个主要指数的历史累计涨跌幅分布。",
+  "subjects": [
+    "000852.SH",
+    "000905.SH",
+    "000300.SH",
+    "000016.SH"
+  ],
+  "windows": [
+    {
+      "end_date": "2026-10-29",
+      "start_date": "2026-01-01",
+      "inclusive": true
+    }
+  ],
+  "observation": {
+    "metric": "trailing_cumulative_return_v1",
+    "metric_parameters": {},
+    "horizons": [
+      1,
+      3,
+      5,
+      10
+    ],
+    "horizon_unit": "trading_sessions",
+    "calendar": "SSE",
+    "unit": "decimal_ratio",
+    "sample_anchor": "ending_open_session",
+    "lookback": "H preceding SSE open sessions, including pre-window warm-up"
+  },
+  "analysis": [
+    {
+      "request_id": "wb07_quantiles",
+      "method": "quantile",
+      "points": [
+        0.05,
+        0.1,
+        0.25,
+        0.5,
+        0.75,
+        0.9,
+        0.95
+      ]
+    },
+    {
+      "request_id": "wb07_intervals",
+      "edges": [
+        -0.15,
+        -0.1,
+        -0.05,
+        -0.03,
+        -0.02,
+        -0.01,
+        0.0,
+        0.01,
+        0.02,
+        0.03,
+        0.05,
+        0.1,
+        0.15
+      ],
+      "method": "interval_count",
+      "unit": "decimal_ratio"
+    }
+  ]
+}

@@ -20,8 +20,8 @@ from support import RunStore
 from test_historical_return_g1 import compatible_document
 
 TASK_DIR = Path(__file__).resolve().parents[1] / "tasks" / "historical_return_observation"
-G1 = runpy.run_path(str(TASK_DIR / "record_g1.py"))
-G3 = runpy.run_path(str(TASK_DIR / "record_g3.py"))
+G1 = runpy.run_path(str(TASK_DIR / "runtime" / "record_g1.py"))
+G3 = runpy.run_path(str(TASK_DIR / "runtime" / "record_g3.py"))
 CHECK = G3["CHECK"]
 FIXTURE = Path(__file__).parent / "fixtures" / "capability.json"
 REQUIRED = "trailing_cumulative_return_v1"
@@ -390,7 +390,8 @@ def test_concurrent_run_change_prevents_g3_publication(tmp_path):
 def test_cli_statuses_and_fresh_read(tmp_path):
     with backend() as (target, routes, _):
         run = ready(tmp_path, target)
-        command = [sys.executable, str(TASK_DIR / "record_g3.py"), "--root", str(tmp_path),
+        command = [sys.executable, str(TASK_DIR / "runtime" / "record_g3.py"), "--root",
+                   str(tmp_path),
                    "--run", run["run_id"]]
         for status, code in (("PASS", 0), ("FAIL", 1), ("BLOCKED", 2)):
             if status == "FAIL":

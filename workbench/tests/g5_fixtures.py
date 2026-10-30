@@ -14,7 +14,7 @@ from test_historical_return_g4 import G4, candidate, discovered
 from market_research.descriptive import execution
 
 TASK_DIR = Path(__file__).resolve().parents[1] / "tasks" / "historical_return_observation"
-G5 = runpy.run_path(str(TASK_DIR / "record_g5.py"))
+G5 = runpy.run_path(str(TASK_DIR / "runtime" / "record_g5.py"))
 FIXTURES = runpy.run_path(str(Path(__file__).resolve().parents[2]
                              / "market_research" / "tests" / "observation_fixtures.py"))
 DAYS, CODE = FIXTURES["DAYS"], FIXTURES["CODE"]
@@ -93,7 +93,8 @@ def execute(root, run_id, *, invoke=None, authorize=authorization):
 def fresh_read(root, run_id):
     import subprocess
 
-    done = subprocess.run([sys.executable, str(TASK_DIR / "record_g5.py"), "--root", str(root),
+    done = subprocess.run([sys.executable, str(TASK_DIR / "runtime" / "record_g5.py"), "--root",
+                           str(root),
                            "--run", run_id, "--read"], capture_output=True, text=True, timeout=30)
     assert done.returncode in (0, 1, 2), done.stderr
     return done, json.loads(done.stdout)

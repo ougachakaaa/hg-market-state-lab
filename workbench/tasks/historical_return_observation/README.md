@@ -1,20 +1,19 @@
 # Historical Return Observation usage
 
 Start at the [Task entry](ARCHITECTURE.md), then read [task.json](task.json) and the
-[G1 contract](BACKEND_READY.md), [G3 contract](CAPABILITY_DISCOVERY.md) and
-[G4 contract](WORKFLOW_PLANNING.md) and [G5 contract](AUTHORIZED_EXECUTION.md). This guide
-is usage-only. WB-03/WB-04 implement version `1`'s approved discovery and planning
-slices without changing its frozen definition. G1, G3, G4 and G5 are implemented; actual
+[G1 contract](authority/BACKEND_READY.md), [G3 contract](authority/CAPABILITY_DISCOVERY.md) and
+[G4 contract](authority/WORKFLOW_PLANNING.md) and [G5 contract](authority/AUTHORIZED_EXECUTION.md). This guide
+is usage-only. G1, G3, G4 and G5 are implemented; actual
 market execution requires separate authorization and resolved research inputs.
 
 From the repository root in its existing Poetry environment:
 
 ```powershell
 # Read-only check. Prints one JSON object: PASS=0, FAIL=1, BLOCKED=2.
-poetry run python workbench/tasks/historical_return_observation/check_backend.py
+poetry run python workbench/tasks/historical_return_observation/runtime/check_backend.py
 
 # Explicit target and timeout; this command does not start a server.
-poetry run python workbench/tasks/historical_return_observation/check_backend.py --base-url http://127.0.0.1:8011 --timeout 2
+poetry run python workbench/tasks/historical_return_observation/runtime/check_backend.py --base-url http://127.0.0.1:8011 --timeout 2
 
 # If the backend is stopped, explicitly start the official entry in a separate terminal.
 poetry run lab serve backend
@@ -29,7 +28,7 @@ To create an actual readiness-only Run with an exact Task snapshot, check G1, pr
 raw machine JSON, record G1 and G2/G6 deferrals, and verify the stored evidence:
 
 ```powershell
-poetry run python workbench/tasks/historical_return_observation/record_g1.py --original-request 'Verify G1 backend readiness only; no Research execution'
+poetry run python workbench/tasks/historical_return_observation/runtime/record_g1.py --original-request 'Verify G1 backend readiness only; no Research execution'
 ```
 
 `--base-url`, `--timeout` and optional `--root PATH` are accepted by this script too.
@@ -48,8 +47,7 @@ poetry run python workbench/run_store.py read --run RUN_ID
 
 The raw preserved result is under `workbench/.runs/RUN_ID/blobs/ARTIFACT_ID`. Registration
 includes byte size and SHA-256; `read` verifies integrity and same-Run ownership.
-Run storage is ignored local state. Fresh checkouts must rerun the check to generate
-their own evidence; [acceptance](ACCEPTANCE.md) records this delivery's actual examples.
+Run storage is ignored local state. Fresh checkouts must perform their own check to generate evidence.
 
 This script demonstration uses `runpy.run_path` to load `RunStore` and the Task checker
 without creating an installed package. It calls only existing `create`, `artifact`,
@@ -59,10 +57,10 @@ registered reachable tool; local HTTP alone does not provide that connection.
 
 ## G3 in the same Run
 
-Use the `run_id` returned by `record_g1.py`, including a Run created before WB-03:
+Use the `run_id` returned by `record_g1.py`, from the readiness step:
 
 ```powershell
-poetry run python workbench/tasks/historical_return_observation/record_g3.py --run RUN_ID --timeout 2
+poetry run python workbench/tasks/historical_return_observation/runtime/record_g3.py --run RUN_ID --timeout 2
 ```
 
 Add `--root PATH` if that G1 Run uses a custom store. The target is derived exclusively
@@ -82,15 +80,14 @@ retry or redirect. Repeat explicitly to append another independent attempt.
 
 The existing `run_store.py read` command above retrieves G1 and G3 from the same Run.
 `preserved_discovery_path` locates the artifact verified after temporary source removal.
-See [WB-03 acceptance](DISCOVERY_ACCEPTANCE.md) for actual PASS/failure evidence and
-the complete WB-03 changed-file/reconciliation record. That check leaves G4/G5 unexecuted.
+That check leaves G4/G5 unexecuted.
 
 ## G4 Agent planning and persistence
 
 Codex / DSH first reads the same Run's actual G3 capability descriptors, interprets
 the original research goal and resolves every missing input through user interaction.
 No guessed index, H, dates, statistical methods/parameters, units or failure policy.
-Write a candidate using the exact shape of [the synthetic example](examples/g4-candidate.json).
+Write a candidate using the exact shape of [the synthetic example](../../tests/fixtures/planning_candidate.json).
 This example explicitly requests `000852.SH`, H=21, inclusive 2010-01-01..2026-10-28,
 trailing_cumulative_return_v1, empty metric parameters, quantile quartiles and explicit
 decimal_ratio interval edges, with continue on failure. All values are test-only,
@@ -99,7 +96,7 @@ exceed HTTP caps. The public Python preflight decides whether that plan is legal
 
 Direct Agent instruction example:
 
-> Read the synthetic original_objective in examples/g4-candidate.json and the actual
+> Read the synthetic original_objective in workbench/tests/fixtures/planning_candidate.json and the actual
 > same-Run G3 descriptor. Confirm that this is the discovered supported index case,
 > preserve all explicit inputs, and compose the complete public ResearchPlan shown
 > there. Select public Python Preview for the full historical window. Freeze only
@@ -110,8 +107,8 @@ From repository root, substitute an existing Run with latest suitable G1/G3 PASS
 and explicit G2 MVP SKIPPED; do not reuse a Run whose latest G3 failed:
 
 ```powershell
-poetry run python workbench/tasks/historical_return_observation/record_g4.py --run RUN_ID --candidate workbench/tasks/historical_return_observation/examples/g4-candidate.json
-poetry run python workbench/tasks/historical_return_observation/record_g4.py --run RUN_ID --read
+poetry run python workbench/tasks/historical_return_observation/runtime/record_g4.py --run RUN_ID --candidate workbench/tests/fixtures/planning_candidate.json
+poetry run python workbench/tasks/historical_return_observation/runtime/record_g4.py --run RUN_ID --read
 ```
 
 Optional `--root PATH` selects the existing store. PASS=0, FAIL=1, BLOCKED=2; operational
@@ -125,23 +122,22 @@ authority. After PASS, a changed plan requires a new Run. Do not edit frozen evi
 Only Python is supported by this recorder; HTTP selection is explicitly rejected,
 including an oversized historical window, without a POST or request splitting.
 Long-history Calendar, warm-up, Index facts and source/cache readiness remain unproven.
-No research, acquisition, automatic partition/merge or G5 is performed. See
-[WB-04 acceptance](PLANNING_ACCEPTANCE.md) for actual artifacts and verification.
+No research, acquisition, automatic partition/merge or G5 is performed.
 Deterministic validation does not prove general natural-language planning quality;
-interactive acceptance belongs to the final Workbench E2E Goal.
+interactive interpretation remains an agent responsibility.
 
 ## G5 authorized Python execution and result delivery
 
 First retrieve the exact accepted G4 with `record_g4.py --run RUN_ID --read`.
 Use a real user-input workflow, not the synthetic example Run above. Preserve the
 returned workflow artifact ID, SHA-256 and objective. Read
-[the execution contract](AUTHORIZED_EXECUTION.md) before invoking.
+[the execution contract](authority/AUTHORIZED_EXECUTION.md) before invoking.
 
 In a human-controlled interactive terminal:
 
 ```powershell
-poetry run python workbench/tasks/historical_return_observation/record_g5.py --run RUN_ID
-poetry run python workbench/tasks/historical_return_observation/record_g5.py --run RUN_ID --read
+poetry run python workbench/tasks/historical_return_observation/runtime/record_g5.py --run RUN_ID
+poetry run python workbench/tasks/historical_return_observation/runtime/record_g5.py --run RUN_ID --read
 poetry run python workbench/run_store.py read --run RUN_ID
 ```
 
@@ -192,32 +188,14 @@ poetry run python workbench/tests/g5_execution_example.py
 
 This uses a simulated user interaction in the test harness and public-service fakes
 through the ordinary adapter. Its fixture approval is test evidence only. Production has
-no synthetic execution seam; historical synthetic Runs remain readable. Reported
-`result_path` is relative to the selected Run store, with artifact IDs/hashes unchanged
-in historical examples. See [WB-05 acceptance](EXECUTION_ACCEPTANCE.md)
-for actual artifacts/checks. No full-history live readiness or WB-06 interactive
-natural-language acceptance is claimed.
+no synthetic execution seam; historical synthetic Runs remain readable. Reported `result_path` is relative to the selected Run store. No live readiness is implied.
 
-## WB-06 natural-language E2E acceptance
+## Results and verification
 
-The [acceptance record](wb06/ACCEPTANCE.md) traces an Agent-authored natural-language
-request through actual backend discovery, full-window Python Preview, frozen G4 and
-isolated G5. Read the [ordinary-language result report](wb06/REPORT.md) and
-[problem log](wb06/problems.json). Full-history live research remains BLOCKED; see
-[live prerequisites and exact remaining work](wb06/LIVE_READINESS.md).
-
-To replay the saved example, start a backend using the existing launcher on an
-available loopback port, then run from repository root:
+Discover the [2026 four-index results](results/2026_four_index_returns/README.md) and their scope, coverage and original evidence references. Independent opt-in verification scripts live in `workbench/tests/result_verification/`; the saved-result verifier reads local original blobs and prohibits network and SQLite. For example, choose an output path outside the RunStore:
 
 ```powershell
-poetry run python ui_http/scripts/api.py --host 127.0.0.1 --port 18061
-# In another terminal, after the backend is ready:
-poetry run python workbench/tests/wb06_e2e_example.py --base-url http://127.0.0.1:18061 --candidate workbench/tasks/historical_return_observation/wb06/candidate.json --output workbench/.runs/wb06-replay.json
+poetry run python workbench/tests/result_verification/verify_saved.py --run RUN_ID --output OUTPUT_JSON
 ```
 
-Stop only the backend created for this session. This script has no live mode:
-it uses public-service fakes and the existing guarded simulated-host test helper.
-Replaying its saved candidate proves repeatability, not a new natural-language planning
-evaluation. For a new question Codex must interpret the user's actual request, discover
-capabilities, resolve missing intent, compose the candidate and separately obtain real
-workflow-bound consent before any live invocation. Users need not author JSON.
+The cache verifier depends on the original external cache and local configuration; it exercises only already-complete cache targets while denying Provider/network access. The control harness is opt-in and requires a real trusted-host authorization for execution; it is not another production runtime. Never reuse historical authorization.
