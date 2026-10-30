@@ -1,6 +1,11 @@
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { loadMoOptionPremiumPlane, PremiumRequestError } from './moOptionPremium'
 import type { PremiumPlane } from './moOptionPremium'
+import { createRequestBoundary, installRequestBoundary } from '../../../shared/http/protectedRequest'
+
+let releaseBoundary: () => void
+beforeEach(() => { releaseBoundary = installRequestBoundary(createRequestBoundary(() => {})) })
+afterEach(() => releaseBoundary())
 
 const leaf = (value: number | null) => ({ points: value, yield: value })
 const plane = {
@@ -37,7 +42,7 @@ describe('loadMoOptionPremiumPlane', () => {
     expect([...new URL(url, 'http://localhost').searchParams.entries()]).toEqual([
       ['as_of', '2026-09-21'], ['option_product', 'MO'], ['price_type', 'close'],
     ])
-    expect(options.signal).toBe(controller.signal)
+    expect(options.signal).toBeInstanceOf(AbortSignal)
   })
 
   it('rejects a response missing a structured metric leaf', async () => {
@@ -75,7 +80,7 @@ describe('loadMoOptionPremiumPlane', () => {
     const abortError = new DOMException('aborted', 'AbortError')
     vi.stubGlobal('fetch', vi.fn().mockRejectedValue(abortError))
 
-    await expect(loadMoOptionPremiumPlane('2026-09-21', 'close', controller.signal)).rejects.toBe(abortError)
+    await expect(loadMoOptionPremiumPlane('2026-09-21', 'close', controller.signal)).rejects.toMatchObject({ name: 'AbortError' })
     expect(abortError).not.toBeInstanceOf(PremiumRequestError)
   })
 })

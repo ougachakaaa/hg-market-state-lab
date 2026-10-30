@@ -68,7 +68,7 @@ poetry run lab serve backend
 
 ### 浏览器注册、审批与登录
 
-1. 在仓库根目录按上例配置 Auth 并启动 backend。可先设置 `LAB_AUTH_DB_PATH` 为隔离测试库的绝对路径；审批终端必须使用相同路径。不要把密钥、数据库或账号密码提交到 Git。
+1. 在仓库根目录按上例配置 Auth 并启动 backend。可先设置 `LAB_AUTH_DB_PATH` 为隔离测试库的绝对路径；审批终端必须使用相同路径。测试数据库与正式用户数据库必须严格隔离；不要意外删除正式数据库，也不要把密钥、数据库或账号密码提交到 Git。
 2. 另一个终端从仓库根执行 `poetry run lab serve frontend`，打开 `http://127.0.0.1:5173/`。始终使用 `127.0.0.1`，不与 `localhost` 混用。
 3. 点击 Register，输入 username/password 并提交；202 只表示等待审批，不会登录。输入规则见 [Auth authority](ui_http/AUTHENTICATION.md#2-user-identity-and-persistence)。
 4. Operator 从仓库根执行 `poetry run lab auth pending`，读取申请 ID，再执行 `poetry run lab auth approve <user-id>`。
@@ -77,13 +77,15 @@ poetry run lab serve backend
 
 所有浏览器请求走相对 URL 和 Vite 同源代理，不直接调用 `:8011`，无需 CORS 或本地认证绕过。
 
-### G3 验证
+### Authentication 验证与部署准备
 
 在 `ui_web/` 执行 `npm run contract:generate`、`npm run contract:check`、`npm run test`、`npm run build`、`npm run lint`；从仓库根执行 `poetry run pytest ui_http/tests ui_web/scripts/test_export_contracts.py`、`poetry run ruff check ui_http ui_web/scripts` 与 `poetry run mypy ui_http`。离线 contract export 不需要配置 Auth 或创建用户数据库。
 
 真实浏览器 smoke（不是 Mock UI 测试）：在 `ui_web/` 执行 `npx playwright install chromium`，然后 `npm run test:auth-browser`。Linux 还需 Chromium 系统运行库；可用 `npx playwright install-deps chromium` 安装。已有兼容 Chromium 可通过 `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH` 指定。端口 5173/8011 必须空闲；脚本拒绝连接已有开发服务。
 
-脚本创建临时 Auth 库和随机密钥，通过真实 Chromium → Vite → FastAPI → SQLite 完成注册、CLI pending/approve、登录、两个 MO 结果、刷新与退出，结束后删除临时库并停止进程。Auth/Cookie/CLI 不作 Mock；只有行情 public provider 使用 `ui_http/tests` 的确定性 fixtures，不访问外部 Source 或默认市场缓存。因此它证明浏览器认证与产品 UI/HTTP 集成，不证明真实市场数据可用，也不替代 G4 的完整安全/HTTPS 验收。浏览器测试依赖只用于开发验证。
+脚本创建临时 Auth 库和随机密钥，通过真实 Chromium → Vite → FastAPI → SQLite 完成注册、CLI pending/approve、登录、两个 MO 结果、刷新与退出，结束后删除临时库并停止进程。Auth/Cookie/CLI 不作 Mock；只有行情 public provider 使用 `ui_http/tests` 的确定性 fixtures，不访问外部 Source 或默认市场缓存。`poetry run pytest ui_http/tests/test_auth_tls.py` 使用 OpenSSL 生成临时自签名证书，通过本机真实 TLS 检查 production Cookie；它不验证正式证书或部署。浏览器测试依赖只用于开发验证。
+
+开放公网前必须完成 HTTPS、Nginx、可信代理链与入口限流配置并验证部署拓扑和 Research 路由暴露；这些属于 Deployment Gate。应用内限流仅在单进程内生效，重启清空，多个 worker 不共享，反向代理后的用户可能共享同一 IP bucket。无状态 JWT 的 logout 不撤销已复制的 token；禁用用户或轮换密钥可阻止其后续访问。正式 JWT secret 必须安全保存并在重启间保持稳定。
 
 `lab doctor` 的 frontend 诊断地址与 Vite 显式绑定的 `127.0.0.1:5173` 一致。CLI ownership 以 [lab authority](ui_cli/ARCHITECTURE.md) 为准。
 

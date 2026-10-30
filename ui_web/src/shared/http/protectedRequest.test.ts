@@ -9,6 +9,47 @@ function deferred() {
   return { promise, resolve }
 }
 
+it('refuses a request without an installed boundary', async () => {
+  const fetch = vi.fn()
+  vi.stubGlobal('fetch', fetch)
+  await expect(protectedRequest('/business')).rejects.toMatchObject({ name: 'AbortError' })
+  expect(fetch).not.toHaveBeenCalled()
+})
+
+it('propagates caller cancellation to an in-flight request', async () => {
+  release = installRequestBoundary(createRequestBoundary(vi.fn()))
+  const pending = deferred()
+  const fetch = vi.fn().mockReturnValue(pending.promise)
+  vi.stubGlobal('fetch', fetch)
+  const caller = new AbortController()
+  const request = protectedRequest('/business', caller.signal)
+  caller.abort()
+  expect(fetch.mock.calls[0][1].signal.aborted).toBe(true)
+  pending.resolve(new Response('{}'))
+  await expect(request).rejects.toMatchObject({ name: 'AbortError' })
+})
+
+it('replacing a boundary closes its pending requests', async () => {
+  const pending = deferred()
+  const oldCallback = vi.fn()
+  const old = createRequestBoundary(oldCallback)
+  const releaseOld = installRequestBoundary(old)
+  const fetch = vi.fn().mockReturnValueOnce(pending.promise).mockResolvedValueOnce(new Response('{}'))
+  vi.stubGlobal('fetch', fetch)
+  const request = protectedRequest('/old')
+  const nextCallback = vi.fn()
+  const next = createRequestBoundary(nextCallback)
+  release = installRequestBoundary(next)
+  releaseOld()
+  pending.resolve(new Response('', { status: 401 }))
+  await expect(request).rejects.toMatchObject({ name: 'AbortError' })
+  expect(old.closed).toBe(true)
+  expect(next.closed).toBe(false)
+  expect(oldCallback).not.toHaveBeenCalled()
+  expect(nextCallback).not.toHaveBeenCalled()
+  expect((await protectedRequest('/new')).status).toBe(200)
+})
+
 it('401 immediately closes the boundary, aborts concurrent requests and blocks new ones', async () => {
   const first = deferred()
   const unauthorized = vi.fn()

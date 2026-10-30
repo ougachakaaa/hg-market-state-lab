@@ -72,6 +72,7 @@ try {
   await page.goto('http://127.0.0.1:5173/')
   await page.getByRole('button', { name: 'Login', exact: true }).waitFor()
   assert.equal(await page.getByRole('button', { name: 'MO Option Chain', exact: true }).count(), 0)
+  assert.equal(evidence.some((entry) => entry.startsWith('/mo-option')), false)
   await page.getByRole('button', { name: 'Register', exact: true }).click()
   await page.getByLabel('Username', { exact: true }).fill('g3_browser_user')
   const password = randomBytes(24).toString('base64url')

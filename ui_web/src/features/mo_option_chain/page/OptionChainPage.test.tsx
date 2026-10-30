@@ -1,7 +1,12 @@
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { cleanup, fireEvent, render, screen, within } from '@testing-library/react'
 import type { PlotParams } from 'react-plotly.js'
 import OptionChainPage from './OptionChainPage'
+import { createRequestBoundary, installRequestBoundary } from '../../../shared/http/protectedRequest'
+
+let releaseBoundary: () => void
+beforeEach(() => { releaseBoundary = installRequestBoundary(createRequestBoundary(() => {})) })
+afterEach(() => releaseBoundary())
 
 vi.mock('react-plotly.js', () => ({
   default: ({ data, layout, config, useResizeHandler, style }: PlotParams) => (

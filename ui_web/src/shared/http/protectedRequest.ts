@@ -23,6 +23,7 @@ type Boundary = ReturnType<typeof createRequestBoundary>
 let current: Boundary | undefined
 
 export function installRequestBoundary(boundary: Boundary) {
+  if (current !== boundary) current?.close()
   current = boundary
   return () => {
     boundary.close()
@@ -32,8 +33,7 @@ export function installRequestBoundary(boundary: Boundary) {
 
 export async function protectedRequest(url: string, signal?: AbortSignal): Promise<Response> {
   const boundary = current
-  if (!boundary) return fetch(url, { signal, credentials: 'same-origin' })
-  if (boundary.closed || signal?.aborted) throw new DOMException('Request cancelled', 'AbortError')
+  if (!boundary || boundary.closed || signal?.aborted) throw new DOMException('Request cancelled', 'AbortError')
   const controller = new AbortController()
   const abort = () => controller.abort()
   signal?.addEventListener('abort', abort, { once: true })

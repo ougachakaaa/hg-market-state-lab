@@ -196,6 +196,33 @@ def test_response_time_renewal(
     assert AuthConfig.from_environment().subject(client.cookies[COOKIE])
 
 
+def test_me_and_real_product_success_renew_session(
+    client: TestClient, application: FastAPI, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from http_support.fake_chain_service import FakeChainReadProvider
+    from ui_http.products.mo_option_chain.endpoint import get_chain_read_provider
+
+    clock = [2_000_000_000]
+    monkeypatch.setattr(_session.time, "time", lambda: clock[0])
+    application.dependency_overrides[get_chain_read_provider] = lambda: FakeChainReadProvider()
+    active_user()
+    assert login(client).status_code == 200
+    for path in (
+        "/auth/me",
+        "/mo-option-chain?target_trade_date=2026-09-17&option_product=MO",
+    ):
+        clock[0] += 10
+        response = client.get(path)
+        assert response.status_code == 200
+        token = client.cookies[COOKIE]
+        claims = jwt.decode(
+            token, AuthConfig.from_environment().key, algorithms=["HS256"], audience=AUDIENCE,
+            options={"verify_iat": False, "verify_exp": False},
+        )
+        assert claims["iat"] == clock[0] and claims["exp"] == clock[0] + 3600
+        assert "set-cookie" in response.headers
+
+
 @pytest.mark.parametrize(
     "mutation",
     [
