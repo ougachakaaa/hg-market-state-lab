@@ -61,7 +61,9 @@ ui_http → market_statistics root public Specs/results (transport construction/
 ```
 
 Research delivery never imports private Research modules or DataLake services/internals.
-Research and Statistics never depend on ui_http.
+Research and Statistics never depend on ui_http. Future publication delivery uses only the
+[Research public reader](../market_research/PUBLICATION.md), not storage internals; reads
+never execute Research, acquire facts or recompute statistics.
 
 禁止 `data_snapshot → ui_http` 或 `market_modeling → ui_http`。Business modules 不得通过 FastAPI、HTTP DTO/status/error envelope、OpenAPI 或 frontend types 定义 semantic model。
 

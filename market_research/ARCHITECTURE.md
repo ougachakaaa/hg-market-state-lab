@@ -43,6 +43,7 @@ These are conceptual responsibilities, not prescribed Python classes or callable
 | Statistics consumption / result association | Research-owned business linkage: [Statistics integration](descriptive/STATISTICS_INTEGRATION.md). |
 | Capability discovery / pure plan preview | [Capability publication](descriptive/RESEARCH_CAPABILITY.md); HTTP belongs to ui_http. |
 | ResearchPlan / JobResult / BatchResult | Research definition, execution context, control and complete reporting: [Execution authority](descriptive/EXECUTION.md). |
+| PublishedResearchResult | Research-owned explicit immutable publication, provenance and read boundary: [Publication](PUBLICATION.md). |
 | NumericSample / StatisticalSpec / StatisticalResult / StatisticalFailure | Statistics-owned public numerical contracts: [Statistics contract](../market_statistics/CONTRACT.md). Research consumes them without defining competing types. |
 
 The previous ResearchDefinition / ResearchRun / ResearchReport conceptual inventory is
@@ -53,7 +54,8 @@ An ObservationSet can support multiple analyses through explicit conversion. Cha
 statistical parameters does not semantically require new market inputs or observations.
 ObservationSets and results are not automatically durable artifacts.
 No mandatory SQLite, content addressing, `ensure()` lifecycle, artifact registry or long-term
-persistence is required. Reproducibility requires traceable definitions, inputs, derivations,
+persistence is required for execution. Explicit publication is a separate opt-in operation
+with its own Research-owned storage and integrity boundary. Reproducibility requires traceable definitions, inputs, derivations,
 methods and execution context; a concrete case must explain how it meets that requirement.
 
 ## Module and dependency boundaries
@@ -64,8 +66,8 @@ It owns no market-data acquisition infrastructure, provider clients, upstream pe
 or canonical Snapshot Product preparation. DataLake, Snapshot and Statistics never depend
 on Research; Statistics also never depends on DataLake or Snapshot and performs no upstream I/O.
 Modeling remains a sibling, not a required downstream runtime stage; current repository
-rules grant it no Research import permission. Any eventual Modeling or UI consumption of
-published Research outputs requires its own authorized public boundary.
+rules grant it no Research import permission. UI consumption of published Research outputs is authorized only through the prospective
+[publication reader](PUBLICATION.md) and ui_http; Modeling gains no import permission.
 
 Research does not depend on inbound adapters (`ui_cli`, `ui_http`, `ui_web`), HTTP DTOs or
 frontend types. It owns empirical meanings and evidence, not UI presentation, production
