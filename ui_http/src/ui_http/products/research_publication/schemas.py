@@ -120,6 +120,32 @@ class IntervalResult(DTO):
     unit: str
 
 
+class FactCoverage(DTO):
+    expected_fact_count: int
+    available_fact_count: int
+    coverage_ratio: float | None
+
+
+class MarketFactCoverage(DTO):
+    overall: FactCoverage
+    warm_up: FactCoverage
+    sample: FactCoverage
+
+
+class Coverage(DTO):
+    candidate_count: int
+    eligible_count: int
+    unavailable_count: int
+    excluded_count: int
+    observation_coverage: float | None
+    unavailable_ratio: float | None
+    excluded_ratio: float | None
+    market_facts: MarketFactCoverage
+    observation_unit: Literal["decimal_ratio"]
+    input_profile: Literal["trailing_return_inputs_v2"]
+    input_fingerprint: str
+
+
 class Analysis(DTO):
     schema_version: Literal[1]
     publication_id: str
@@ -127,6 +153,7 @@ class Analysis(DTO):
     result: QuantileResult | IntervalResult | None
     outcome: Literal["success", "failed", "not_attempted"]
     reason: Literal["Analysis failed.", "Analysis was not attempted."] | None
+    coverage: Coverage | None
 
 
 class AnalysisResponse(DTO):
@@ -192,6 +219,7 @@ class ErrorBody(DTO):
         "inconsistent",
         "unsupported_version",
         "response_too_large",
+        "verification_budget_exceeded",
         "unavailable",
         "internal_error",
     ]

@@ -28,12 +28,18 @@ not prevent startup or other products. Reads do not create paths. A publication 
 accessible in this runtime's configured store; no synchronization is implied. Tests may
 inject a store in the app composition. Blocking reads run in worker threads.
 
-The detailed operations first inspect the selected Manifest's declared source size and
-reject sources over 2 MiB with 413. Successful JSON responses are limited to 2 MiB; excess
-returns 413 without truncation. Reader pagination limits the number of returned Manifests,
+Successful serialized JSON responses are limited to 2 MiB on all four routes; excess
+returns 413 without truncation. Detailed reads independently admit at most 4 MiB of actual
+source bytes and one concurrent verification per HTTP process; capacity exhaustion returns
+503 `verification_budget_exceeded`. This conservative V1 default allows sources beyond
+the old response limit while limiting JSON expansion: WP2 observed about 6.48 MB traced
+peak for an 854 KB source, with no process RSS or throughput guarantee. The reader bounds
+the actual source read before parsing, then retains all integrity and association checks.
+Other processes have independent capacity; deployment must size worker count accordingly.
+Reader pagination limits the number of returned Manifests,
 not their size or index scan. WP2 reads each Manifest in full and scans/sorts the entire
-index; source preflight itself requires a Manifest read, and the selected detailed reader
-then rereads it and fully verifies the retained source. These bounds do not cap the memory
+index; a detailed reader verifies its Manifest and then fully verifies the retained source.
+These bounds do not cap the memory
 or time of the initial Manifest/index read, filesystem I/O, or JSON object expansion. No
 cache, timeout, background job or silent partial delivery is implied. This is appropriate
 only for a trusted, operationally sized store; capacity must be controlled by the operator.
@@ -57,6 +63,12 @@ Quantile and IntervalCount successful numerical facts are transferred unchanged.
 is the complete Research reader materialization in canonical Visualization V1 shape, with
 no LayerDataRef or Plotly transformation.
 
+Analysis includes nullable `coverage`, a Research-owned Job summary shared by its analyses.
+It contains candidate/eligible/unavailable/excluded counts and candidate-denominator ratios,
+overall/warm-up/sample market fact counts and ratios, observation unit and input profile and
+fingerprint. Null denotes absent ObservationSet or inapplicable denominator, never complete
+coverage. Other linkage is supplied by the Analysis identity, spec, result and Manifest.
+
 ## Closed error projection
 
 Errors use `{"error":{"kind":"...","detail":"...","param":null}}`; detail
@@ -69,7 +81,8 @@ is fixed safe text. Authentication failures retain their independent Auth envelo
 | 409 | corrupt | malformed or corrupt stored artifact |
 | 409 | inconsistent | stored source/result association mismatch |
 | 409 | unsupported_version | unsupported stored schema |
-| 413 | response_too_large | source or serialized response exceeds delivery bound, or an identifier is not deliverable under V1 |
+| 413 | response_too_large | serialized response exceeds delivery bound, or an identifier is not deliverable under V1 |
+| 503 | verification_budget_exceeded | source verification bytes or concurrent capacity exceeds the per-process budget |
 | 503 | unavailable | missing/invalid configuration or unavailable storage/source |
 | 500 | internal_error | unexpected transport/runtime failure |
 

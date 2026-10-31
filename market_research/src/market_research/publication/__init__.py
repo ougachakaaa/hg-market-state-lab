@@ -8,6 +8,7 @@ from .errors import PublicationError as PublicationError
 from .errors import PublicationNotFound as PublicationNotFound
 from .errors import PublicationUnavailable as PublicationUnavailable
 from .errors import UnsupportedPublicationVersion as UnsupportedPublicationVersion
+from .errors import VerificationBudgetExceeded as VerificationBudgetExceeded
 from .source import SourceReference as SourceReference
 from .source import retain_source as retain_source
 from .store import PublicationStore as PublicationStore

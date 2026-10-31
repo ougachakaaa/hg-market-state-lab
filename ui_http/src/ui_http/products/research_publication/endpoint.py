@@ -7,6 +7,7 @@ import binascii
 import os
 import re
 from pathlib import Path
+from threading import BoundedSemaphore
 from typing import Any
 
 from fastapi import APIRouter, Request
@@ -21,6 +22,7 @@ from market_research.publication import (
     PublicationStore,
     PublicationUnavailable,
     UnsupportedPublicationVersion,
+    VerificationBudgetExceeded,
 )
 
 from .schemas import (
@@ -32,6 +34,8 @@ from .schemas import (
 )
 
 MAX_BYTES = 2 * 1024 * 1024
+MAX_SOURCE_BYTES = 4 * 1024 * 1024
+_verification_slot = BoundedSemaphore(1)
 router = APIRouter(prefix="/research/publications", tags=["Research Publication"])
 ERRORS: dict[int | str, dict[str, Any]] = {
     status: {"model": ErrorResponse, "description": description}
@@ -40,7 +44,7 @@ ERRORS: dict[int | str, dict[str, Any]] = {
         404: "not_found",
         409: "corrupt, inconsistent or unsupported_version",
         413: "response_too_large",
-        503: "unavailable",
+        503: "unavailable or verification_budget_exceeded",
         500: "internal_error",
     }.items()
 }
@@ -187,6 +191,11 @@ def error(exc: Exception) -> JSONResponse:
             "Publication version is unsupported.",
         ),
         PublicationUnavailable: (503, "unavailable", "Publication storage is unavailable."),
+        VerificationBudgetExceeded: (
+            503,
+            "verification_budget_exceeded",
+            "Publication verification capacity exceeded.",
+        ),
     }
     if isinstance(exc, DeliveryError):
         status, kind, detail = exc.status, exc.kind, exc.detail
@@ -200,10 +209,15 @@ def error(exc: Exception) -> JSONResponse:
     )
 
 
-def preflight(reader: PublicationStore, publication_id: str) -> None:
-    m = reader.get_publication_manifest(publication_id)
-    if m["source"]["size"] > MAX_BYTES:
-        raise fail(413, "response_too_large", "Publication source exceeds delivery bounds.")
+def verify_read(method: Any, *args: str) -> Any:
+    if not _verification_slot.acquire(blocking=False):
+        raise fail(
+            503, "verification_budget_exceeded", "Publication verification capacity exceeded."
+        )
+    try:
+        return method(*args, source_limit=MAX_SOURCE_BYTES)
+    finally:
+        _verification_slot.release()
 
 
 @router.get(
@@ -283,8 +297,7 @@ def get_analysis(request: Request, publication_id: str, analysis_id: str) -> JSO
     try:
         query(request, set())
         reader = store(request)
-        preflight(reader, publication_id)
-        data = reader.get_analysis(publication_id, analysis_id)
+        data = verify_read(reader.get_analysis, publication_id, analysis_id)
         status = data["summary"]["status"]
         result = decode(data["result"]) if status == "success" else None
         if result and result.get("method") == "quantile":
@@ -303,6 +316,7 @@ def get_analysis(request: Request, publication_id: str, analysis_id: str) -> JSO
                             "not_attempted": "Analysis was not attempted.",
                         }[status],
                         "result": result,
+                        "coverage": data["coverage"],
                     }
                 }
             )
@@ -321,9 +335,10 @@ def get_view(request: Request, publication_id: str, view_id: str) -> JSONRespons
     try:
         query(request, set())
         reader = store(request)
-        preflight(reader, publication_id)
         return bounded(
-            ViewResponse.model_validate({"data": reader.get_chart_view(publication_id, view_id)})
+            ViewResponse.model_validate(
+                {"data": verify_read(reader.get_chart_view, publication_id, view_id)}
+            )
         )
     except Exception as exc:
         return error(exc)

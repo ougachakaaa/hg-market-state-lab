@@ -23,6 +23,7 @@ from .errors import (
     PublicationNotFound,
     PublicationUnavailable,
     UnsupportedPublicationVersion,
+    VerificationBudgetExceeded,
 )
 from .source import SourceReference, canonical_json, digest, encode, source_bytes
 from .visualization import materialize, project, validate_layer
@@ -110,13 +111,18 @@ def _mkdir(parent: int, name: str) -> None:
             pass
 
 
-def _read(parent: int, name: str) -> bytes:
+def _read(parent: int, name: str, limit: int | None = None) -> bytes:
     try:
         fd = os.open(name, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK, dir_fd=parent)
         with os.fdopen(fd, "rb") as stream:
             if not stat.S_ISREG(os.fstat(stream.fileno()).st_mode):
                 raise PublicationCorrupt(f"not a regular file: {name}")
-            return stream.read()
+            if limit is not None and os.fstat(stream.fileno()).st_size > limit:
+                raise VerificationBudgetExceeded("source verification capacity exceeded")
+            data = stream.read() if limit is None else stream.read(limit + 1)
+            if limit is not None and len(data) > limit:
+                raise VerificationBudgetExceeded("source verification capacity exceeded")
+            return data
     except FileNotFoundError as exc:
         raise PublicationCorrupt(f"missing file: {name}") from exc
     except OSError as exc:
@@ -343,14 +349,25 @@ class PublicationStore:
     def get_publication_manifest(self, publication_id: str) -> dict[str, Any]:
         return self._envelope(publication_id)["manifest"]
 
-    def _payload(self, env: dict[str, Any], group: str, identity: str | None = None) -> Any:
+    def _payload(
+        self,
+        env: dict[str, Any],
+        group: str,
+        identity: str | None = None,
+        *,
+        source_limit: int | None = None,
+    ) -> Any:
         with (
             self._root() as root,
             _directory(root, "bundles") as bundles,
             _directory(bundles, env["bundle"]) as bundle,
         ):
             if group == "source":
-                data = _read(bundle, "source.json")
+                data = (
+                    _read(bundle, "source.json")
+                    if source_limit is None
+                    else _read(bundle, "source.json", source_limit)
+                )
                 metadata = env["payloads"]["source"]
             else:
                 assert identity is not None
@@ -363,8 +380,12 @@ class PublicationStore:
         _verified(data, metadata)
         return _json(data)
 
-    def _check_source(self, env: dict[str, Any]) -> dict[str, dict[str, Any]]:
-        source = self._payload(env, "source")
+    def _check_source(
+        self, env: dict[str, Any], source_limit: int | None = None
+    ) -> dict[str, dict[str, Any]]:
+        if source_limit is not None and env["manifest"]["source"]["size"] > source_limit:
+            raise VerificationBudgetExceeded("source verification capacity exceeded")
+        source = self._payload(env, "source", source_limit=source_limit)
         _shape(source, {"schema", "source_id", "batch"}, "source")
         _schema(source, "research-source-v1")
         summary = env["manifest"]["source"]
@@ -378,7 +399,9 @@ class PublicationStore:
         except (KeyError, TypeError, IndexError, StopIteration) as exc:
             raise PublicationCorrupt("malformed retained source evidence") from exc
 
-    def get_analysis(self, publication_id: str, analysis_id: str) -> dict[str, Any]:
+    def get_analysis(
+        self, publication_id: str, analysis_id: str, *, source_limit: int | None = None
+    ) -> dict[str, Any]:
         _id(analysis_id)
         env = self._envelope(publication_id)
         summary = next(
@@ -386,7 +409,7 @@ class PublicationStore:
         )
         if summary is None:
             raise PublicationNotFound("analysis not found")
-        source_records = self._check_source(env)
+        source_records = self._check_source(env, source_limit)
         payload = self._payload(env, "analyses", analysis_id)
         _shape(
             payload,
@@ -396,7 +419,7 @@ class PublicationStore:
         _schema(payload, "publication-analysis-v1")
         if payload["publication_id"] != publication_id or payload["summary"] != summary:
             raise InconsistentPublication("analysis association mismatch")
-        source_outcome = source_records[analysis_id]
+        source_outcome = source_records[analysis_id]["outcome"]
         if canonical_json(
             [payload["result"], payload["failure"], payload["not_attempted_reason"]]
         ) != canonical_json(
@@ -415,9 +438,11 @@ class PublicationStore:
             raise InconsistentPublication("invalid successful analysis")
         if summary["status"] != "success" and summary["views"]:
             raise InconsistentPublication("unsuccessful analysis has views")
-        return payload
+        return {**payload, "coverage": _coverage_summary(source_records[analysis_id]["job"])}
 
-    def get_chart_view(self, publication_id: str, chart_view_ref: str) -> dict[str, Any]:
+    def get_chart_view(
+        self, publication_id: str, chart_view_ref: str, *, source_limit: int | None = None
+    ) -> dict[str, Any]:
         _id(chart_view_ref)
         env = self._envelope(publication_id)
         found = [
@@ -433,7 +458,7 @@ class PublicationStore:
         analysis, ref = found[0]
         if analysis["status"] != "success":
             raise InconsistentPublication("view belongs to unsuccessful analysis")
-        source_records = self._check_source(env)
+        source_records = self._check_source(env, source_limit)
         definition = self._payload(env, "views", chart_view_ref)
         _shape(
             definition,
@@ -468,7 +493,7 @@ class PublicationStore:
         try:
             validate_layer(layer_payload["layer"])
             source_result = _decode_result(
-                source_records[analysis["analysis_id"]]["statistical_result"]
+                source_records[analysis["analysis_id"]]["outcome"]["statistical_result"]
             )
             expected_layer = project(source_result)[ref["measure"]]
             if canonical_json(layer_payload["layer"]) != canonical_json(expected_layer):
@@ -492,6 +517,72 @@ def _tuple(value: object) -> list[Any]:
     return obj["$tuple"]
 
 
+def _coverage_summary(job: dict[str, Any]) -> dict[str, Any] | None:
+    if "observation_set" not in job:
+        raise PublicationCorrupt("missing observation context")
+    if job["observation_set"] is None:
+        return None
+    try:
+        obs = _carrier(job["observation_set"], "ObservationSet")
+        if obs["job_identity"] != job["job_identity"]:
+            raise InconsistentPublication("observation identity mismatch")
+        counts = [
+            len(_tuple(obs[k]))
+            for k in (
+                "candidate_anchors",
+                "eligible_observations",
+                "unavailable_observations",
+                "excluded_observations",
+            )
+        ]
+        candidate, eligible, unavailable, excluded = counts
+        if candidate != eligible + unavailable + excluded:
+            raise InconsistentPublication("observation population mismatch")
+        market = _carrier(obs["market_fact_coverage"], "MarketFactCoverage")
+        facts = {}
+        for name in ("overall", "warm_up", "sample"):
+            part = _carrier(market[name], "FactCoverage")
+            expected, available = (
+                len(_tuple(part[k])) for k in ("expected_keys", "available_keys")
+            )
+            if available > expected:
+                raise InconsistentPublication("fact coverage mismatch")
+            facts[name] = {
+                "expected_fact_count": expected,
+                "available_fact_count": available,
+                "coverage_ratio": available / expected if expected else None,
+            }
+        definition = _carrier(obs["observation_definition"], "ObservationDefinition")
+        provenance = _carrier(obs["provenance"], "TrailingReturnProvenance")
+        unit, profile, fingerprint = (
+            definition["unit"],
+            provenance["input_profile"],
+            provenance["input_fingerprint"],
+        )
+        if (
+            unit != "decimal_ratio"
+            or profile != "trailing_return_inputs_v2"
+            or not isinstance(fingerprint, str)
+            or not _ID.fullmatch(fingerprint)
+        ):
+            raise InconsistentPublication("invalid coverage provenance")
+        return {
+            "candidate_count": candidate,
+            "eligible_count": eligible,
+            "unavailable_count": unavailable,
+            "excluded_count": excluded,
+            "observation_coverage": eligible / candidate if candidate else None,
+            "unavailable_ratio": unavailable / candidate if candidate else None,
+            "excluded_ratio": excluded / candidate if candidate else None,
+            "market_facts": facts,
+            "observation_unit": unit,
+            "input_profile": profile,
+            "input_fingerprint": fingerprint,
+        }
+    except (KeyError, TypeError, IndexError) as exc:
+        raise PublicationCorrupt("malformed observation coverage") from exc
+
+
 def _verify_source_associations(
     source: dict[str, Any], manifest: dict[str, Any]
 ) -> dict[str, dict[str, Any]]:
@@ -513,6 +604,15 @@ def _verify_source_associations(
         ):
             if job.get(field) != summary_job[field]:
                 raise InconsistentPublication("source job association mismatch")
+        if job.get("projection") is not None:
+            projection = _carrier(job["projection"], "SampleProjection")
+            binding = _carrier(projection.get("binding"), "SampleBinding")
+            if job.get("observation_set") is None or (
+                binding.get("source_observation_reference") != job["observation_set"]
+            ):
+                raise InconsistentPublication("projection observation association mismatch")
+        elif job["status"] == "Success":
+            raise InconsistentPublication("successful job missing projection")
         failure_summaries = []
         for encoded_failure in _tuple(job.get("failures")):
             failure = _carrier(encoded_failure, "FailureRecord")
@@ -546,7 +646,7 @@ def _verify_source_associations(
                     or evidence.get("projection") != job.get("projection")
                 ):
                     raise InconsistentPublication("source successful evidence mismatch")
-            records[aid] = outcome
+            records[aid] = {"outcome": outcome, "job": job}
     actual_status = (
         "success"
         if "Failed" not in statuses

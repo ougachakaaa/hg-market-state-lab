@@ -123,6 +123,17 @@ when required for detailed association; absence or corruption never triggers rec
 V1 reads the retained source file as a whole for these checks, so detailed reads do not load
 unrelated stored Analysis or Layer payloads but their cost grows with the source Batch size.
 
+Detailed reads may take a caller-supplied finite source byte budget. The reader enforces it
+on the actual opened source file and bounded read, before JSON parsing, and reports a distinct
+verification-capacity failure; this does not replace digest or association checks. Analysis
+reads include a detached Job-scoped coverage summary derived from the verified retained
+ObservationSet, or null when that evidence is absent. Counts and ratios use Observation's
+candidate denominator; fact counts retain overall, warm-up and sample partitions. The
+summary carries only the definition unit and input profile/fingerprint alongside these
+counts; Job identity, request/spec and successful sample count are already carried by the
+Analysis. Fingerprints identify inputs, not their authenticity. A malformed or inconsistent
+retained summary fails the read, never becomes zero coverage. No persistence schema changes.
+
 Failures are independent of HTTP: invalid input, not found, corrupt, unsupported version,
 inconsistent association, unavailable source/storage, and identity collision have distinct
 public categories. No reader or publisher calls Research execution, acquisition, Statistics

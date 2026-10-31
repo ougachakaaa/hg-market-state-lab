@@ -31,3 +31,7 @@ class PublicationUnavailable(PublicationError):
 
 class PublicationCollision(PublicationError):
     category = "collision"
+
+
+class VerificationBudgetExceeded(PublicationError):
+    category = "verification_budget_exceeded"
