@@ -27,7 +27,8 @@ The independent [Price Segmentation case](descriptive/cases/price_segmentation/A
 produces a structured observation without the scalar analysis path above. Research also owns
 the market-independent [PIP algorithm](algorithm/pip/ALGORITHM.md); the case depends on its
 public algorithm boundary, never the reverse. The independent PIP Python boundary is
-implemented; the Price Segmentation case remains a future capability, not a generic engine.
+implemented, as is the case's independent Input Preparation. The segmentation observation
+remains a future capability, not a generic engine.
 
 Input Preparation acquires validated facts and availability evidence through authorized
 upstream public contracts, under the selected case's completeness policy.

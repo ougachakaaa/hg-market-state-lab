@@ -8,8 +8,8 @@ forecast, backtest or trading strategy. The case owns financial input, date mapp
 segment meaning and evidence; the algorithm owns only numerical selection and diagnostics.
 [INPUTS.md](INPUTS.md) owns its upstream and completeness contract.
 
-Status: Implementation Ready as a semantic contract; neither PIP nor this observation API
-is implemented or runtime-accepted.
+Status: the independent PIP algorithm and this case's Input Preparation Python API are
+implemented. The segmentation observation API is not implemented or runtime-accepted.
 
 ## Request and identity
 
