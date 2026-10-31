@@ -8,8 +8,9 @@ forecast, backtest or trading strategy. The case owns financial input, date mapp
 segment meaning and evidence; the algorithm owns only numerical selection and diagnostics.
 [INPUTS.md](INPUTS.md) owns its upstream and completeness contract.
 
-Status: the independent PIP algorithm and this case's Input Preparation Python API are
-implemented. The segmentation observation API is not implemented or runtime-accepted.
+Status: the independent PIP algorithm, Input Preparation and segmentation observation
+Python APIs are implemented. Real-market E2E acceptance remains outstanding; Statistics,
+converter, HTTP and Workbench integration are not implemented.
 
 ## Request and identity
 
@@ -32,7 +33,7 @@ The fixed transformation is `y_t = ln(close_t)`, using the natural logarithm; th
 is not configurable. Signed amplitude is the simple return from actual endpoint prices,
 not the difference of their log prices.
 
-The future independent public Python observation entry belongs to
+The independent public Python observation entry belongs to
 `market_research.descriptive.cases.price_segmentation`; it performs input preparation
 through authorized public services and invokes the PIP public algorithm. A pure construction
 boundary consumes validated prepared inputs without I/O. The precise callable names and

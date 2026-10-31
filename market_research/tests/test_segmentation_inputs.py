@@ -369,7 +369,7 @@ def test_no_dependencies_on_other_cases_algorithm_or_statistics() -> None:
         "ui_cli",
         "workbench",
     )
-    for path in source.glob("*.py"):
+    for path in (source / "inputs.py", source / "preparation.py"):
         tree = ast.parse(path.read_text(encoding="utf-8"))
         for node in ast.walk(tree):
             if isinstance(node, ast.Import):
@@ -403,3 +403,46 @@ def test_conflicting_index_metadata_is_rejected() -> None:
     )
     with pytest.raises(InputPreparationError, match="Conflicting index metadata"):
         prepare_inputs(request(), calendar_service=cal, index_service=idx)
+
+
+@pytest.mark.parametrize("where", ["calendar", "index"])
+@pytest.mark.parametrize("phase", ["export", "ensure", "final export"])
+def test_operation_failures_preserve_stage_and_evidence(
+    where: str, phase: str, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    cal, idx = services()
+    service = cal if where == "calendar" else idx
+    error = OperationError("service unavailable")
+    original_export = service.export
+    if phase != "export":
+        if where == "calendar":
+            cal.transform = lambda v: replace(
+                v, records=v.records[:-1], coverage=CoverageResult(3, 2, 1, 0, 0, False)
+            )
+            cal.ensure_value = EnsureResult(3, 2, 1, 1, 0, 1, True, ())
+        else:
+            del idx.closes[DAYS[2]]
+            idx.ensure_value = EnsureResult(3, 2, 1, 1, 0, 1, True, ())
+
+    def export(req: Any) -> Any:
+        if phase == "export" or (phase == "final export" and service.ensured):
+            raise error
+        return original_export(req)  # type: ignore[arg-type]
+
+    def ensure(req: Any) -> Any:
+        raise error
+
+    monkeypatch.setattr(service, "export", export)
+    if phase == "ensure":
+        monkeypatch.setattr(service, "ensure", ensure)
+    with pytest.raises(InputPreparationError) as exc:
+        prepare_inputs(request(), calendar_service=cal, index_service=idx)
+    assert exc.value.category == "upstream_operation_failure"
+    assert exc.value.stage == f"{where} {phase}"
+    assert exc.value.__cause__ is error
+    attempt = exc.value.evidence[-1]
+    assert attempt.request == exc.value.request
+    assert (attempt.preliminary_export is not None) == (phase != "export")
+    assert (attempt.ensure_result is not None) == (phase == "final export")
+    if where == "index":
+        assert exc.value.evidence[0].final_export is not None
