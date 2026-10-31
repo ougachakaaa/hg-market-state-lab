@@ -1,6 +1,7 @@
 # Descriptive execution authority
 
-This entry specializes [Descriptive](ARCHITECTURE.md). It owns shared business identity,
+This entry specializes the existing scalar analysis path in [Descriptive](ARCHITECTURE.md);
+it does not govern the independent [Price Segmentation observation](cases/price_segmentation/ARCHITECTURE.md). It owns shared business identity,
 execution boundaries and navigation. Observation, conversion, association and numerics
 remain owned by [Observation](OBSERVATION.md), [Conversion](SAMPLE_CONVERSION.md),
 [Association](RESULT_ASSOCIATION.md) and [Statistics](../../market_statistics/CONTRACT.md).

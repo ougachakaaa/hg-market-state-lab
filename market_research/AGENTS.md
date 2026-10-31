@@ -8,6 +8,8 @@
 | Module ownership, concepts, dependency direction | [ARCHITECTURE.md](ARCHITECTURE.md) |
 | Human/agent usage and executable discovery → preview → execute flow | [USAGE.md](USAGE.md) (usage-only) |
 | Facts, public upstream selection, completeness, provenance or failure | [UPSTREAM.md](UPSTREAM.md) → actual Dataset / Product public contract |
+| PIP algorithm mathematics and versioning | [PIP algorithm](algorithm/pip/ALGORITHM.md) |
+| Price segmentation scope, result and input policy | [Price Segmentation](descriptive/cases/price_segmentation/ARCHITECTURE.md) |
 | Descriptive flow and evidence interpretation | [descriptive/ARCHITECTURE.md](descriptive/ARCHITECTURE.md) |
 | Fixed observation request, population, market derivation or provenance | [descriptive/OBSERVATION.md](descriptive/OBSERVATION.md) |
 | Research-owned sample conversion | [descriptive/SAMPLE_CONVERSION.md](descriptive/SAMPLE_CONVERSION.md) |

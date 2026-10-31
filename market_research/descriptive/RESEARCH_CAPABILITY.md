@@ -12,7 +12,9 @@ to the [HTTP contract](../../ui_http/products/research/http-contract.md).
 `trailing_cumulative_return_v1`, descriptive Index Trailing Cumulative Return Research.
 Unknown IDs raise `CapabilityNotFound`; never synthesize a supported capability. No
 registry, plugin/provider framework or runtime registration is authorized. Another entry
-requires Research-owned semantic admission and its case/public input contract first.
+requires Research-owned semantic admission and its case/public input contract first. The
+authority-only [Price Segmentation](cases/price_segmentation/ARCHITECTURE.md) has an
+independent future Python observation boundary and is not published by this facade or preview.
 
 Read metric, formula, units, calendar and time meaning from the existing public case
 `DEFINITION` where possible. Supported means implemented, not currently live-ready.

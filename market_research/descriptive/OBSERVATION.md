@@ -1,6 +1,7 @@
 # Descriptive observation authority
 
-This contract specializes the [Descriptive entry](ARCHITECTURE.md). It owns fixed
+This contract specializes the scalar observation path in the [Descriptive entry](ARCHITECTURE.md).
+It does not govern the independent structured [Price Segmentation observation](cases/price_segmentation/ARCHITECTURE.md). It owns fixed
 requests, population, outcomes, coverage and derivation. Public inputs follow
 [UPSTREAM.md](../UPSTREAM.md); numerical contracts remain
 [Statistics-owned](../../market_statistics/CONTRACT.md). Status: Implementation Ready for
