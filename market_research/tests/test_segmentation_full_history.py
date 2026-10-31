@@ -1,6 +1,8 @@
 """Offline full-history review exercises public validation without provider access."""
 
 import json
+import sys
+from contextlib import contextmanager
 from copy import deepcopy
 from pathlib import Path
 from unittest.mock import patch
@@ -8,6 +10,7 @@ from unittest.mock import patch
 import pytest
 
 import segmentation_full_history as full
+import segmentation_full_history_live as live
 import segmentation_review
 from data_lake.providers.tushare import TushareExecutor
 from market_research.descriptive.cases.price_segmentation import InputPreparationError
@@ -45,3 +48,44 @@ def test_offline_replay_and_corruption(tmp_path: Path, monkeypatch: pytest.Monke
         evidence.write_text(json.dumps(data), encoding="utf-8")
         with pytest.raises(AssertionError, match="Fingerprint"):
             full.replay(evidence)
+
+
+def test_live_budget_stops_before_excess_provider_call(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    @contextmanager
+    def isolated(_path: Path):
+        yield {}
+
+    calls: list[str] = []
+
+    def provider_call(_self: object, endpoint: str, **_kwargs: object) -> None:
+        calls.append(endpoint)
+
+    def prepare(_request: object) -> None:
+        executor = object.__new__(TushareExecutor)
+        executor.call("trade_cal")
+        executor.call("trade_cal")
+
+    monkeypatch.setattr(
+        sys, "argv", ["runner", "--live", "--output", str(tmp_path), "--max-calls", "1"]
+    )
+    monkeypatch.setattr(live, "isolated_storage", isolated)
+    monkeypatch.setattr(live, "prepare_inputs", prepare)
+    monkeypatch.setattr(TushareExecutor, "call", provider_call)
+    assert live.main() == 1
+    report = json.loads((tmp_path / "acquisition_status.json").read_text(encoding="utf-8"))
+    assert report["verdict"] == "BLOCKED"
+    assert report["failure"]["category"] == "provider_budget_exceeded"
+    assert report["provider_calls"] == {"trade_cal": 1}
+    assert calls == ["trade_cal"]
+    assert not (tmp_path / "input_evidence.json").exists()
+
+
+def test_live_requires_explicit_opt_in(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    output = tmp_path / "not-created"
+    monkeypatch.setattr(sys, "argv", ["runner", "--output", str(output)])
+    with patch.object(TushareExecutor, "call", side_effect=AssertionError("provider access")):
+        with pytest.raises(SystemExit):
+            live.main()
+    assert not output.exists()
