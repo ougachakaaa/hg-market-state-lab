@@ -35,7 +35,7 @@ explicit support; unknown types or versions fail validation, never guessed or co
 | `bar` | `{x, y}` | coordinates conform to x and y |
 | `point` | `{x, y}` | coordinates conform to x and y |
 | `segment` | `{x1, y1, x2, y2}` | endpoints conform to their corresponding coordinate |
-| `candlestick` | `{x, open, high, low, close}` | x conforms to x; all prices conform to numeric y; `low <= open, close <= high` and `low <= high` |
+| `candlestick` | `{x, open, high, low, close}` | x conforms to x; all prices conform to numeric y; `low <= open <= high` and `low <= close <= high` |
 | `area` | `{x, y0, y1}` | reserved extension; y is numeric and both values conform to y |
 
 Each row is the V1 public contract even where no renderer exists. `area` is reserved:
