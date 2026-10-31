@@ -155,7 +155,7 @@ def chart(facts: dict, result: dict) -> str:
         )
         ticks.append(f'<line x1="85" x2="935" y1="{y:.2f}" y2="{y:.2f}" stroke="#dbe3eb"/>')
     dots = "".join(
-        f'<circle cx="{xy(i)[0]:.2f}" cy="{xy(i)[1]:.2f}" r="4" fill="#d35400">'
+        f'<circle cx="{xy(i)[0]:.2f}" cy="{xy(i)[1]:.2f}" r="1.5" fill="#d35400">'
         f"<title>{dates[i]}: {closes[i]}</title></circle>"
         for i in result["indices"]
     )
@@ -163,9 +163,9 @@ def chart(facts: dict, result: dict) -> str:
         '<svg viewBox="0 0 1000 370" role="img" aria-label="Close and PIP points">'
         + "".join(ticks)
         + f'<polyline points="{path(range(len(dates)))}" fill="none" '
-        + 'stroke="#184a7a" stroke-width="2"/>'
+        + 'stroke="#184a7a" stroke-width="0.7"/>'
         + f'<polyline points="{path(result["indices"])}" fill="none" '
-        + 'stroke="#d35400" stroke-width="2" stroke-dasharray="6 4"/>'
+        + 'stroke="#d35400" stroke-width="1.2" stroke-dasharray="6 4"/>'
         + dots
         + '<text x="500" y="365" text-anchor="middle">Trading session index and date</text>'
         + '<text x="14" y="180" transform="rotate(-90 14 180)" text-anchor="middle">'

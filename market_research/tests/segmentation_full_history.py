@@ -25,6 +25,7 @@ from market_research.descriptive.cases.price_segmentation import (
 )
 from segmentation_live_e2e import verify
 from segmentation_review import chart
+from segmentation_review_smoothing import PROFILES, diagnostics, smooth
 
 EPSILONS = (0.01, 0.02, 0.03, 0.05)
 START_DATE = "2020-01-01"
@@ -165,31 +166,67 @@ def generate(evidence: Path, output: Path) -> None:
         writer.writerows(zip(prepared.session_dates, prepared.closes, strict=True))
     comparisons = []
     segments = []
+    views = []
     for result, runtime in zip(results, elapsed, strict=True):
         durations = [s.duration_sessions for s in result.segments]
         amplitudes = [abs(s.amplitude_ratio) for s in result.segments]
-        comparisons.append(
-            {
-                **public(result.diagnostics),
-                "runtime_seconds": runtime,
-                "average_duration": statistics.mean(durations),
-                "median_duration": statistics.median(durations),
-                "minimum_duration": min(durations),
-                "maximum_duration": max(durations),
-                "single_session_ratio": durations.count(1) / len(durations),
-                "duration_le_3_ratio": sum(d <= 3 for d in durations) / len(durations),
-                "average_absolute_amplitude": statistics.mean(amplitudes),
-                "median_absolute_amplitude": statistics.median(amplitudes),
-                **{
-                    f"{direction}_count": sum(s.direction == direction for s in result.segments)
-                    for direction in ("up", "down", "flat")
-                },
-            }
-        )
-        for segment in result.segments:
+        comparison = {
+            **public(result.diagnostics),
+            "runtime_seconds": runtime,
+            "average_duration": statistics.mean(durations),
+            "median_duration": statistics.median(durations),
+            "minimum_duration": min(durations),
+            "maximum_duration": max(durations),
+            "single_session_ratio": durations.count(1) / len(durations),
+            "duration_le_3_ratio": sum(d <= 3 for d in durations) / len(durations),
+            "average_absolute_amplitude": statistics.mean(amplitudes),
+            "median_absolute_amplitude": statistics.median(amplitudes),
+            **{
+                f"{direction}_count": sum(s.direction == direction for s in result.segments)
+                for direction in ("up", "down", "flat")
+            },
+        }
+        profile_views = {}
+        for name, profile in PROFILES.items():
+            merged = smooth(result.segments, profile)
+            profile_views[name] = merged
+            comparison.update(
+                {f"{name}_{key}": value for key, value in diagnostics(merged).items()}
+            )
+        comparisons.append(comparison)
+        views.append(profile_views)
+        for ordinal, segment in enumerate(result.segments):
             row = public(segment)
             del row["segment_identity"]
-            segments.append({"epsilon": result.request_identity.epsilon, **row})
+            segments.append(
+                {
+                    "epsilon": result.request_identity.epsilon,
+                    "profile": "base",
+                    "base_segments": str(ordinal),
+                    **row,
+                }
+            )
+        for name, merged in profile_views.items():
+            for segment in merged:
+                segments.append(
+                    {
+                        "epsilon": result.request_identity.epsilon,
+                        "profile": name,
+                        "base_segments": ";".join(map(str, segment.base_segments)),
+                        "start_index": segment.start_index,
+                        "end_index": segment.end_index,
+                        "start_date": segment.start_date.isoformat(),
+                        "end_date": segment.end_date.isoformat(),
+                        "start_close": segment.start_close,
+                        "end_close": segment.end_close,
+                        "duration_sessions": segment.duration_sessions,
+                        "amplitude_ratio": segment.amplitude_ratio,
+                        "direction": segment.direction,
+                        "touches_start_boundary": segment.start_index
+                        == result.segments[0].start_index,
+                        "touches_end_boundary": segment.end_index == result.segments[-1].end_index,
+                    }
+                )
     for name, rows in (("comparison.csv", comparisons), ("segments.csv", segments)):
         with (output / name).open("w", encoding="utf-8", newline="") as f:
             dict_writer = csv.DictWriter(f, fieldnames=list(rows[0]))
@@ -199,13 +236,24 @@ def generate(evidence: Path, output: Path) -> None:
     panels = "".join(
         f"<h2>ε = {r.request_identity.epsilon}: {len(r.segments)} segments; "
         f"max log error {r.diagnostics.max_reconstruction_error:.8f}</h2>"
-        '<div class="overview">'
-        + chart(facts, {"indices": tuple(p.index for p in r.important_points)})
-        + "</div><p>Expanded view (scroll horizontally):</p>"
-        + '<div class="zoom">'
-        + chart(facts, {"indices": tuple(p.index for p in r.important_points)})
-        + "</div>"
-        for r in results
+        + "".join(
+            f'<h3>{name} · {len(indices) - 1} segments</h3><div class="overview">'
+            + chart(facts, {"indices": indices})
+            + '</div><p>Expanded view (scroll horizontally):</p><div class="zoom">'
+            + chart(facts, {"indices": indices})
+            + "</div>"
+            for name, indices in [
+                ("Base", tuple(p.index for p in r.important_points)),
+                *[
+                    (
+                        name.title() + " experimental",
+                        (parts[0].start_index, *(s.end_index for s in parts)),
+                    )
+                    for name, parts in view.items()
+                ],
+            ]
+        )
+        for r, view in zip(results, views, strict=True)
     )
     table_rows = "".join(
         "<tr>" + "".join(f"<td>{v}</td>" for v in r.values()) + "</tr>" for r in comparisons
@@ -216,6 +264,10 @@ def generate(evidence: Path, output: Path) -> None:
         "Epsilon is not minimum segment return; segments are not necessarily complete "
         "peak-to-trough swings. Duration is measured in trading-session intervals. "
         "These are human diagnostic measures, not formal market statistics."
+        " Blue is original Close; orange dots are retained endpoints and dashed orange "
+        "lines connect them. Experimental merged views do not retain the PIP error bound "
+        "and are not canonical results. Light: duration ≤ 1 or absolute return ≤ 0.015; "
+        "medium: duration ≤ 2 or absolute return ≤ 0.025. Base segment ordinals are zero-based."
     )
     (output / "index.html").write_text(
         '<!doctype html><html lang="en"><meta charset="utf-8"><title>CSI1000 segmentation</title>'

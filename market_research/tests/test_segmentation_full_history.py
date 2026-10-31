@@ -28,7 +28,11 @@ def test_offline_replay_and_corruption(tmp_path: Path, monkeypatch: pytest.Monke
         first = (tmp_path / "review" / "result_evidence.json").read_bytes()
         full.generate(evidence, tmp_path / "review")
         assert first == (tmp_path / "review" / "result_evidence.json").read_bytes()
-        assert (tmp_path / "review" / "index.html").read_text(encoding="utf-8").count("<svg ") == 8
+        page = (tmp_path / "review" / "index.html").read_text(encoding="utf-8")
+        assert page.count("<svg ") == 24
+        assert 'stroke-width="0.7"' in page and 'stroke-width="1.2"' in page
+        assert 'r="1.5"' in page and "Light experimental" in page
+        assert "<script" not in page and "https://" not in page and "http://" not in page
         corrupt = deepcopy(data)
         corrupt["input_evidence"][0]["request"]["exchange"] = "SZSE"
         evidence.write_text(json.dumps(corrupt), encoding="utf-8")

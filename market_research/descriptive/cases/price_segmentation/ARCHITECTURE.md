@@ -7,6 +7,8 @@ adjacent important points into financial segments. It is not a peak/trough swing
 forecast, backtest or trading strategy. The case owns financial input, date mapping,
 segment meaning and evidence; the algorithm owns only numerical selection and diagnostics.
 [INPUTS.md](INPUTS.md) owns its upstream and completeness contract.
+The separate [experimental review contract](REVIEW.md) describes offline diagnostic
+views; these are not canonical segmentation observations.
 
 Status: the independent PIP algorithm, Input Preparation and segmentation observation
 Python APIs are implemented and verified. Price Segmentation V1 is accepted for the

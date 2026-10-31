@@ -335,6 +335,12 @@ are constructed from one complete input; the saved result evidence is checked on
 runs. CSV files and an offline HTML review accompany the manifest. These diagnostics do not
 establish financial swing identification quality.
 
+The full-history pack compares canonical base segments with light and medium experimental
+review-only merges, and exports profile-labeled segments with zero-based base ordinals.
+See the [review contract](descriptive/cases/price_segmentation/REVIEW.md) for rules,
+parameters and limitations. Use a separate output directory to preserve an earlier pack;
+regeneration resets the manifest's human review gate to NOT_VERIFIED.
+
 To acquire a fresh copy, explicitly opt in with `poetry run python
 market_research/tests/segmentation_full_history_live.py --live --output <empty-directory>`;
 this makes Provider calls, uses isolated temporary Dataset storage and accepts an optional
