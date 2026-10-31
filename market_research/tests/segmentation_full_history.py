@@ -14,7 +14,7 @@ from pathlib import Path
 from types import SimpleNamespace
 from typing import Any
 
-from data_lake import CoverageResult
+from data_lake import CoverageResult, EnsureResult, UnitFailure
 from data_lake.datasets.tushare_index_daily import IndexDailyRow
 from data_lake.datasets.tushare_trade_calendar import TradeCalendarRecord
 from live_e2e_acceptance import ROOT, public, require
@@ -32,9 +32,15 @@ END_DATE = "2026-10-31"
 
 
 class SavedExport:
-    """Offline service: only the retained final public export can be read."""
+    """Replay the retained public operation sequence without provider access."""
 
-    def __init__(self, value: dict[str, Any], calendar: bool):
+    def __init__(self, attempt: dict[str, Any], calendar: bool):
+        self.attempt = attempt
+        self.calendar = calendar
+        self.ensured = False
+
+    def _view(self, value: dict[str, Any]) -> Any:
+        calendar = self.calendar
         rows: list[Any] = []
         for original in value["records"]:
             row = dict(original)
@@ -46,12 +52,14 @@ class SavedExport:
             else:
                 row["trade_date"] = date.fromisoformat(row["trade_date"])
                 rows.append(IndexDailyRow(**row))
+        if calendar:
+            require(value["scope"] == ["SSE"], "Invalid saved Calendar scope")
         scope = (
             SimpleNamespace(exchange=value["scope"][0])
             if calendar
             else SimpleNamespace(index_codes=tuple(value["scope"]))
         )
-        self.view = SimpleNamespace(
+        return SimpleNamespace(
             dataset=value["dataset"],
             view=value["view"],
             export_schema_version=value["schema_version"],
@@ -65,10 +73,22 @@ class SavedExport:
         )
 
     def export(self, request: Any) -> Any:
-        return self.view
+        require(public(request) == self.attempt["request"], "Saved request mismatch")
+        value = self.attempt["final_export" if self.ensured else "preliminary_export"]
+        return self._view(value)
 
     def ensure(self, request: Any) -> Any:
-        raise ValueError("Incomplete saved public evidence")
+        require(public(request) == self.attempt["request"], "Saved request mismatch")
+        value = self.attempt["ensure_result"]
+        require(value is not None and not self.ensured, "Missing or repeated saved Ensure")
+        self.ensured = True
+        failures = tuple(
+            UnitFailure(
+                (item["identity"][0], date.fromisoformat(item["identity"][1])), item["reason"]
+            )
+            for item in value["failures"]
+        )
+        return EnsureResult(**{**value, "failures": failures})
 
 
 def replay(path: Path) -> tuple[Any, list[Any], list[float]]:
@@ -91,9 +111,10 @@ def replay(path: Path) -> tuple[Any, list[Any], list[float]]:
     require(len(attempts) == 2, "Two public input attempts required")
     prepared = prepare_inputs(
         req,
-        calendar_service=SavedExport(attempts[0]["final_export"], True),
-        index_service=SavedExport(attempts[1]["final_export"], False),
+        calendar_service=SavedExport(attempts[0], True),
+        index_service=SavedExport(attempts[1], False),
     )
+    require(public(prepared.input_provenance) == attempts, "Saved input evidence mismatch")
     require(prepared.input_fingerprint == evidence["input_fingerprint"], "Fingerprint mismatch")
     results = []
     elapsed = []
