@@ -13,6 +13,10 @@ __pycache__/
 # Workbench-owned local execution evidence
 /workbench/.runs/
 
+# Local G6 full-history research artifacts and handoff
+csi1000-segmentation-2020-2026/
+G6_ACCEPTANCE_HANDOFF.md
+
 # Frontend dependencies and build output
 ui_web/node_modules/
 ui_web/dist/
