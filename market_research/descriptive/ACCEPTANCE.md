@@ -9,7 +9,7 @@ the stated scope, not that runtime or live-data acceptance exists.
 
 | Work package / case | Semantic readiness | Runtime / remaining limitation | Canonical owner |
 | --- | --- | --- | --- |
-| Price Segmentation V1 | Authority specified; see case gaps before implementation | PIP and independent observation runtime, tests and live acceptance not implemented; no converter or execution integration | [Case](cases/price_segmentation/ARCHITECTURE.md), [PIP](../algorithm/pip/ALGORITHM.md) |
+| Price Segmentation V1 | Implementation Ready; authority only | PIP and independent observation runtime, tests and live acceptance not implemented; no converter or execution integration | [Case](cases/price_segmentation/ARCHITECTURE.md), [PIP](../algorithm/pip/ALGORITHM.md) |
 | Asset-agnostic scalar Observation | Implementation Ready as abstract contract | Immutable domain and independent Python API implemented; each new series still needs explicit fact/calendar/metric binding | [Observation](OBSERVATION.md) |
 | Index Trailing Return, complete or legal partial facts | Implementation Ready with explicit canonical index_code, dates and H | Observation runtime and deterministic contract tests implemented; isolated real-market E2E Verified by LIVE-E2E-01; historical default Calendar cache remains unresolved | [Case](cases/trailing_return/ARCHITECTURE.md), [inputs](cases/trailing_return/INPUTS.md), [identity](cases/trailing_return/INPUT_IDENTITY.md), [live evidence](LIVE_E2E_ACCEPTANCE.md) |
 | Sample Converter with missing and coverage context | Implementation Ready | Implemented; deterministic conversion and Statistics reuse verified by CONV-01; zero eligible fails explicitly | [Conversion](SAMPLE_CONVERSION.md), [evidence](CONVERSION_ACCEPTANCE.md) |

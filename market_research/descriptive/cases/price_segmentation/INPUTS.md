@@ -32,7 +32,7 @@ If a valid export is incomplete, ensure that same range once, retain and validat
 result and re-export for final proof. Final Index Export must be complete: each expected
 session has exactly one legal ordered row for the requested index, with no extra, duplicate,
 conflicting, missing, illegal or non-finite row/field. Validate the entire public record,
-not just Close; each close must be finite and strictly positive before `log(close)`.
+not just Close; each close must be finite and strictly positive before `ln(close)` (natural logarithm).
 Require each transformed value finite. A legal partial export is not acceptable for this
 case, unlike Trailing Return. Do not skip, fill, interpolate or bridge missing facts.
 
@@ -47,6 +47,6 @@ change date range or source, or infer a market explanation for absence.
 
 Preserve exact public requests, final exports and proofs, preliminary/ensure evidence
 when present, selected ordered dates and closes and their actual identity under the
-[case provenance contract](ARCHITECTURE.md#observation-result). This evidence distinguishes
+[case provenance contract](ARCHITECTURE.md#input-fingerprint-and-retained-evidence). This evidence distinguishes
 calendar natural-date units from index session units. Do not promise provider freshness or
 an atomic snapshot across calls.

@@ -10,8 +10,9 @@ may consume it; the dependency never reverses. No registry or plugin framework i
 
 ## Contract and mathematics
 
-Algorithm identity is `pip_vertical_error_bounded_v1`. Input is a finite real sequence
-`y[0..N-1]`, N >= 2, and explicit finite positive epsilon in the same units as y.
+Algorithm identity is `pip_vertical_error_bounded_v1`. Input is a finite IEEE-754 binary64
+sequence `y[0..N-1]`, N >= 2, and an explicit finite positive binary64 epsilon in the
+same units as y.
 Time x is the equally spaced original integer index, not elapsed calendar time. Reject
 invalid length, non-finite values or epsilon, and non-positive epsilon explicitly.
 
@@ -22,6 +23,14 @@ reconstruct each original position i between them by linear interpolation:
 r(i) = y[a] + (y[b] - y[a]) * (i - a) / (b - a)
 e(i) = abs(y[i] - r(i))
 ```
+
+Evaluate the displayed expression in binary64 in its written order: subtract `y[b] - y[a]`,
+multiply by binary64 `(i - a)`, divide by binary64 `(b - a)`, then add `y[a]`; calculate
+error by binary64 subtraction `y[i] - r(i)` followed by absolute value. Each arithmetic
+operation rounds to nearest, ties to even; do not fuse operations or introduce intermediate
+rounding beyond binary64. Index differences are exact integers converted to binary64; fail
+if a conversion or intermediate result is non-finite. Compare the actual computed binary64
+errors directly, with no implicit tolerance or decimal rounding.
 
 Among all unretained indices select the global maximum e(i), breaking exact equal-error
 ties by lowest original index. If its error is <= epsilon, stop; otherwise retain that
@@ -50,9 +59,9 @@ same indices and scaled error; translation leaves errors and indices invariant, 
 to representable numerical precision. Test representative cases and numerical failure
 rather than assume arbitrary floating-point operations are exact.
 
-The user-supplied design does not decide a floating-point representation, operation
-ordering, rounding/tolerance for comparisons or reproducibility across platforms. Exact
-real-number semantics above are the target; a subsequent numerical decision is required
-before claiming bitwise reproducibility or deterministic results at floating-point ties
-and threshold boundaries. This is a semantic implementation blocker, not permission to
-silently select a tolerance.
+The same valid binary64 input and epsilon in the same execution environment and these
+operation conventions produce deterministic indices and diagnostics. This does not promise
+bitwise identity across arbitrary platforms or floating-point backends. Implementation
+optimizations must preserve the specified computed output, including ties and threshold
+comparisons, under the same environment; performance changes do not change mathematical
+semantics or authorize a silent algorithm version change.

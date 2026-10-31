@@ -8,16 +8,15 @@ forecast, backtest or trading strategy. The case owns financial input, date mapp
 segment meaning and evidence; the algorithm owns only numerical selection and diagnostics.
 [INPUTS.md](INPUTS.md) owns its upstream and completeness contract.
 
-Status: authority only; neither PIP nor this observation API is implemented. The numerical
-precision decision in the algorithm authority, log base and fingerprint encoding below are
-open before implementation-ready status can be claimed.
+Status: Implementation Ready as a semantic contract; neither PIP nor this observation API
+is implemented or runtime-accepted.
 
 ## Request and identity
 
 Research identity is `price_segmentation_v1`. The explicit request fixes one canonical
-Index Daily index_code, inclusive date-only start/end, Close, log-price fitting,
+Index Daily index_code, inclusive date-only start/end, Close, natural-log-price fitting,
 trading-session index time, `pip_vertical_error_bounded_v1`, and a finite positive epsilon
-in log-price units. Dates and subject are required; there is no default or automatic window,
+in natural-log price difference units. Dates and subject are required; there is no default or automatic window,
 and no horizon or rolling window. The actual series must contain at least two sessions.
 Index Daily's public date and code validation applies. Stocks are not supported; future
 stock cases require an authorized upstream and explicit adjusted-price semantics.
@@ -29,8 +28,9 @@ identifiers. Structural equality must not silently collapse distinct requests. A
 window or epsilon may change every segment. Request identity is not input identity or
 proof that two results used the same facts.
 
-The approved design does not specify the logarithm base; it changes epsilon
-calibration and must be explicitly decided before implementing the transform.
+The fixed transformation is `y_t = ln(close_t)`, using the natural logarithm; the base
+is not configurable. Signed amplitude is the simple return from actual endpoint prices,
+not the difference of their log prices.
 
 The future independent public Python observation entry belongs to
 `market_research.descriptive.cases.price_segmentation`; it performs input preparation
@@ -65,13 +65,43 @@ the same direction. Scope boundary flags only indicate contact with the selected
 they do not assert complete market swings. Amplitude always uses actual closes, never a
 reconstructed line. Fail explicitly if derived numbers are non-finite or invariants fail.
 
-Input identity must distinguish changed ordered dates or actual close values and retain
-sufficient immutable evidence to reproduce and validate the result; a mutable cache, request
-or date window is insufficient. The exact canonical encoding, numerical value representation
-and fingerprint algorithm were not specified by the approved design. Choose and document a
-versioned collision-resistant encoding before implementation; do not invent a digest or
-claim interoperability here. Preserve public provenance and no credentials or private data.
-No mandatory persistence is introduced.
+## Input fingerprint and retained evidence
+
+Input fingerprint identifies the actual ordered price facts, independently of the request
+identity and PIP algorithm version. Retain the final consumed public exports, coverage proofs,
+actual requests and preliminary/ensure diagnostics as specified by [INPUTS.md](INPUTS.md),
+or adequate immutable references; a hash alone cannot reconstruct the inputs. Failed
+preparation retains available diagnostics without claiming a successful fingerprint.
+
+`price_segmentation_inputs_v1` is SHA-256 of the UTF-8 bytes, without BOM, of compact
+JSON with `ensure_ascii=true` and separators `(',', ':')`, encoding this ordered array:
+
+```text
+["price_segmentation_inputs_v1", "tushare_index_daily", "index_daily", 1,
+ index_code, [[trade_date, close_hex], ...]]
+```
+
+Use the validated selected index's complete final public Index Export and complete SSE
+Calendar proof. Include exactly one pair per consumed session, in strictly ascending calendar
+order, after validating that the final rows match those sessions. `trade_date` is a
+`YYYY-MM-DD` string and `close_hex` is Python binary64 `float.hex()` of the actual consumed
+finite positive Close; never hash its logarithm or a reconstructed price. The encoding retains
+unchanged canonical index_code and has no unordered objects. Do not reorder invalid data to
+make it pass validation. The version literal identifies this encoding, not the algorithm.
+The digest is the lowercase hexadecimal SHA-256 representation of those bytes.
+
+Different consumed dates, Close binary64 values or index identity change the canonical
+payload; SHA-256 supplies collision-resistant identification, not mathematical proof of
+inequality. Calendar/export proofs and other source fields remain retained evidence, not
+part of this minimal fingerprint. Request dates, epsilon, algorithm version and transform
+are recorded separately in request/result provenance; changed requests can consume identical
+facts. Acquisition attempts, runtime, random IDs, credentials and internal database paths
+are excluded. No persistence, cache lifecycle or general fingerprint framework is imposed.
+
+Verify exact canonical bytes and digest against an independent fixture, deterministic repeats,
+changed date/close/index sensitivity, request/algorithm separation and unchanged fingerprint
+for different preliminary diagnostics with identical final consumed facts. Verify retained
+proof and failure evidence separately.
 
 ## Reconciliation and acceptance
 
