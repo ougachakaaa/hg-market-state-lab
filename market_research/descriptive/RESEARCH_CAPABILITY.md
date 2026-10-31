@@ -13,8 +13,11 @@ to the [HTTP contract](../../ui_http/products/research/http-contract.md).
 Unknown IDs raise `CapabilityNotFound`; never synthesize a supported capability. No
 registry, plugin/provider framework or runtime registration is authorized. Another entry
 requires Research-owned semantic admission and its case/public input contract first. The
-authority-only [Price Segmentation](cases/price_segmentation/ARCHITECTURE.md) has an
-independent future Python observation boundary and is not published by this facade or preview.
+[Price Segmentation](cases/price_segmentation/ARCHITECTURE.md) case implements an
+independent `price_segmentation_v1` Python Observation API. Its specified real-market
+scope passed [G4 acceptance](cases/price_segmentation/LIVE_E2E_ACCEPTANCE.md). It is not
+published by this facade, ResearchPlan, preview or HTTP; these remain Trailing Return only.
+Offline human review does not extend Capability Publication.
 
 Read metric, formula, units, calendar and time meaning from the existing public case
 `DEFINITION` where possible. Supported means implemented, not currently live-ready.

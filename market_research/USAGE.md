@@ -304,3 +304,19 @@ acceptance does not pass a live HTTP gate.
 There is no Research persistence/replay/result cache, historical-run retrieval, persistent
 run ID, durable result URL, scheduler, polling/cancellation API, frontend Research page,
 prediction/signal feature or new engine. An HTTP server does not add these capabilities.
+
+## Offline Price Segmentation human review
+
+Generate a standalone review from the retained G4 long-window public input evidence,
+without provider or cache access, from the repository root:
+
+```powershell
+poetry run python market_research/tests/segmentation_review.py --output <local-output-directory> --epsilon 0.005 0.010 0.020 0.030
+```
+
+Open `index.html` in a browser; `comparison.csv` and `README.md` accompany it. The
+parameters are examples for sensitivity review, not research defaults. The tool verifies
+the source fingerprint and replays G4 at 0.01, recomputes PIP for every requested epsilon,
+and reports visual-review diagnostics. It does not perform a new live acceptance or create
+Statistics product results. Close-space connecting lines are visual guides; reconstruction
+error is measured in natural-log price space.
