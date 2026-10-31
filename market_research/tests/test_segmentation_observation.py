@@ -219,3 +219,20 @@ def test_case_dependency_and_pure_construction_boundaries() -> None:
                     "pathlib",
                 )
             )
+
+
+def test_forged_small_reconstruction_error_is_rejected(monkeypatch: pytest.MonkeyPatch) -> None:
+    request, inputs = prepare((100.0, 200.0, 100.0), 0.01)
+    monkeypatch.setattr(construction, "find_pips", lambda *args, **kwargs: PipResult((0, 2), 0.0))
+    with pytest.raises(ObservationConstructionError) as exc:
+        construct_observations(request, inputs)
+    assert exc.value.category == "invalid_algorithm_result"
+    assert exc.value.stage == "pip result validation"
+
+
+def test_forged_error_within_epsilon_is_rejected(monkeypatch: pytest.MonkeyPatch) -> None:
+    request, inputs = prepare((100.0, 110.0, 121.0), 0.1)
+    monkeypatch.setattr(construction, "find_pips", lambda *args, **kwargs: PipResult((0, 2), 0.01))
+    with pytest.raises(ObservationConstructionError, match="error is inconsistent") as exc:
+        construct_observations(request, inputs)
+    assert exc.value.category == "invalid_algorithm_result"

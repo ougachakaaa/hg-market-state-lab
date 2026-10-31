@@ -39,7 +39,9 @@ Descriptive association does not establish causality, predictive validity or a t
 
 The [Price Segmentation case](cases/price_segmentation/ARCHITECTURE.md) independently
 observes one complete price series and does not require horizon, scalar ObservationSet,
-conversion or Statistics. It is authority-only; existing scalar runtime remains unchanged.
+conversion or Statistics. Its independent Python observation API is implemented and
+[live acceptance](cases/price_segmentation/LIVE_E2E_ACCEPTANCE.md) is recorded separately;
+the existing scalar runtime remains unchanged.
 
 ## First case and readiness
 

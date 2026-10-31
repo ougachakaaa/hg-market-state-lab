@@ -2,7 +2,7 @@
 
 from datetime import date
 from math import isfinite, log
-from typing import NoReturn
+from typing import Literal, NoReturn
 
 from data_lake import CoverageResult
 from data_lake.datasets.tushare_index_daily import IndexDailyRange, IndexDailyRow
@@ -168,13 +168,29 @@ def construct_observations(
         or error > epsilon
     ):
         fail("invalid_algorithm_result", stage, "Invalid PIP indices, identity or error")
+    actual_error = 0.0
+    for a, b in zip(indices, indices[1:], strict=False):
+        delta = logs[b] - logs[a]
+        width = float(b - a)
+        if not isfinite(delta) or not isfinite(width):
+            fail("invalid_algorithm_result", stage, "Non-finite reconstruction intermediate")
+        for i in range(a + 1, b):
+            product = delta * float(i - a)
+            fraction = product / width
+            reconstructed = logs[a] + fraction
+            difference = logs[i] - reconstructed
+            if not all(isfinite(v) for v in (product, fraction, reconstructed, difference)):
+                fail("invalid_algorithm_result", stage, "Non-finite reconstruction intermediate")
+            actual_error = max(actual_error, abs(difference))
+    if actual_error != error or actual_error > epsilon:
+        fail("invalid_algorithm_result", stage, "PIP reconstruction error is inconsistent")
     points = tuple(ImportantPoint(i, dates[i], closes[i]) for i in indices)
     segments = []
     for start, end in zip(points, points[1:], strict=False):
         amplitude = end.close / start.close - 1.0
         if not isfinite(amplitude):
             fail("numerical_failure", "segment construction", "Non-finite segment amplitude")
-        direction = (
+        direction: Literal["up", "down", "flat"] = (
             "up" if end.close > start.close else "down" if end.close < start.close else "flat"
         )
         segments.append(

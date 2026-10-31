@@ -9,8 +9,9 @@ segment meaning and evidence; the algorithm owns only numerical selection and di
 [INPUTS.md](INPUTS.md) owns its upstream and completeness contract.
 
 Status: the independent PIP algorithm, Input Preparation and segmentation observation
-Python APIs are implemented. Real-market E2E acceptance remains outstanding; Statistics,
-converter, HTTP and Workbench integration are not implemented.
+Python APIs are implemented and verified. Price Segmentation V1 is accepted for the
+[isolated real-market E2E scopes](LIVE_E2E_ACCEPTANCE.md); Statistics, converter, HTTP and
+Workbench integration are not implemented.
 
 ## Request and identity
 
