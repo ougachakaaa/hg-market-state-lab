@@ -1,5 +1,6 @@
 """Local immutable publication snapshots and read-only granular access."""
 
+import errno
 import json
 import math
 import os
@@ -92,7 +93,9 @@ def _directory(parent: int, name: str) -> Iterator[int]:
     except FileNotFoundError as exc:
         raise PublicationCorrupt(f"missing directory {name}") from exc
     except OSError as exc:
-        raise PublicationCorrupt(f"invalid directory {name}") from exc
+        if exc.errno in (errno.ELOOP, errno.ENOTDIR):
+            raise PublicationCorrupt(f"invalid directory {name}") from exc
+        raise PublicationUnavailable(f"cannot open directory {name}") from exc
     try:
         yield fd
     finally:
@@ -117,7 +120,9 @@ def _read(parent: int, name: str) -> bytes:
     except FileNotFoundError as exc:
         raise PublicationCorrupt(f"missing file: {name}") from exc
     except OSError as exc:
-        raise PublicationCorrupt(f"cannot read file: {name}") from exc
+        if exc.errno in (errno.ELOOP, errno.ENOTDIR):
+            raise PublicationCorrupt(f"invalid file: {name}") from exc
+        raise PublicationUnavailable(f"cannot read file: {name}") from exc
 
 
 def _write(parent: int, name: str, content: bytes) -> None:
@@ -175,17 +180,85 @@ class PublicationStore:
     """A configurable local store. Constructing it does not create or modify files."""
 
     def __init__(self, root: str | Path):
-        self.root = Path(root).absolute()
+        raw = os.fspath(root)
+        if not raw or "\x00" in raw or ".." in Path(raw).parts:
+            raise InvalidPublicationInput("invalid publication store path")
+        self.root = Path(raw).absolute()
+
+    @contextmanager
+    def _existing_root(self) -> Iterator[int | None]:
+        """Open every existing component without following symlinks; never create paths."""
+        try:
+            fd = os.open(self.root.anchor, _DIR)
+        except OSError as exc:
+            raise PublicationUnavailable("publication store path unavailable") from exc
+        try:
+            for part in self.root.parts[1:]:
+                try:
+                    child = os.open(part, _DIR, dir_fd=fd)
+                except FileNotFoundError:
+                    yield None
+                    return
+                except OSError as exc:
+                    if exc.errno in (errno.ELOOP, errno.ENOTDIR):
+                        raise PublicationCorrupt("invalid or symlink store path") from exc
+                    raise PublicationUnavailable("publication store path unavailable") from exc
+                os.close(fd)
+                fd = child
+            yield fd
+        finally:
+            os.close(fd)
+
+    @contextmanager
+    def _index(self) -> Iterator[int | None]:
+        """Inspect one read-only snapshot of the index initialization state."""
+        with self._existing_root() as root:
+            if root is None:
+                yield None
+                return
+            try:
+                names = set(os.listdir(root))
+            except OSError as exc:
+                raise PublicationUnavailable("cannot inspect publication store") from exc
+            if "publications" not in names:
+                if names - {"bundles"}:
+                    raise PublicationCorrupt("invalid uninitialized store structure")
+                if "bundles" in names:
+                    with _directory(root, "bundles"):
+                        pass
+                yield None
+                return
+            if "bundles" not in names:
+                raise PublicationCorrupt("publication store has no bundles directory")
+            with _directory(root, "bundles"), _directory(root, "publications") as pubs:
+                yield pubs
 
     @contextmanager
     def _root(self, *, create: bool = False) -> Iterator[int]:
+        if not create:
+            with self._existing_root() as fd:
+                if fd is None:
+                    raise PublicationUnavailable("publication store unavailable")
+                yield fd
+            return
         try:
-            if create:
-                self.root.mkdir(parents=True, exist_ok=True)
-            fd = os.open(self.root, _DIR)
+            fd = os.open(self.root.anchor, _DIR)
         except OSError as exc:
             raise PublicationUnavailable("publication store unavailable") from exc
         try:
+            for part in self.root.parts[1:]:
+                try:
+                    try:
+                        os.mkdir(part, mode=0o700, dir_fd=fd)
+                    except FileExistsError:
+                        pass
+                    child = os.open(part, _DIR, dir_fd=fd)
+                except OSError as exc:
+                    if exc.errno in (errno.ELOOP, errno.ENOTDIR):
+                        raise PublicationCorrupt("invalid or symlink store path") from exc
+                    raise PublicationUnavailable("publication store unavailable") from exc
+                os.close(fd)
+                fd = child
             yield fd
         finally:
             os.close(fd)
@@ -197,17 +270,49 @@ class PublicationStore:
             raise InvalidPublicationInput("limit must be between 1 and 100")
         if after is not None:
             _uuid(after)
-        with self._root() as root, _directory(root, "publications") as pubs:
-            names = sorted(
-                name[:-5] for name in os.listdir(pubs) if re.fullmatch(r"[0-9a-f]{32}\.json", name)
-            )
+        with self._index() as pubs:
+            if pubs is None:
+                return []
+            try:
+                names = []
+                for name in os.listdir(pubs):
+                    if re.fullmatch(r"[0-9a-f]{32}\.json", name):
+                        try:
+                            _uuid(name[:-5])
+                        except InvalidPublicationInput as exc:
+                            raise PublicationCorrupt("invalid publication filename") from exc
+                        try:
+                            mode = os.stat(name, dir_fd=pubs, follow_symlinks=False).st_mode
+                        except FileNotFoundError as exc:
+                            raise PublicationCorrupt("publication entry disappeared") from exc
+                        if not stat.S_ISREG(mode):
+                            raise PublicationCorrupt("invalid publication file")
+                        names.append(name[:-5])
+                    elif re.fullmatch(r"\.tmp-[0-9a-f]{32}", name):
+                        try:
+                            _uuid(name[5:])
+                            mode = os.stat(name, dir_fd=pubs, follow_symlinks=False).st_mode
+                        except FileNotFoundError:
+                            # An in-progress publisher may have removed its temporary name.
+                            continue
+                        except InvalidPublicationInput as exc:
+                            raise PublicationCorrupt("invalid staging filename") from exc
+                        if not stat.S_ISREG(mode):
+                            raise PublicationCorrupt("invalid staging file")
+                    else:
+                        raise PublicationCorrupt("unexpected publication index entry")
+                names.sort()
+            except OSError as exc:
+                raise PublicationUnavailable("cannot list publications") from exc
         selected = [name for name in names if after is None or name > after][:limit]
         return [self.get_publication_manifest(name) for name in selected]
 
     def _envelope(self, publication_id: str) -> dict[str, Any]:
         _uuid(publication_id)
         try:
-            with self._root() as root, _directory(root, "publications") as pubs:
+            with self._index() as pubs:
+                if pubs is None:
+                    raise PublicationNotFound("publication not found")
                 try:
                     raw = _read(pubs, f"{publication_id}.json")
                 except PublicationCorrupt as exc:
@@ -215,6 +320,8 @@ class PublicationStore:
                         os.stat(f"{publication_id}.json", dir_fd=pubs, follow_symlinks=False)
                     except FileNotFoundError:
                         raise PublicationNotFound("publication not found") from exc
+                    except OSError as stat_error:
+                        raise PublicationUnavailable("cannot inspect publication") from stat_error
                     raise
         except PublicationCorrupt:
             raise
@@ -771,6 +878,9 @@ def publish(
         "payloads": payloads,
     }
     try:
+        # Do not turn an already malformed root into an apparently valid store.
+        with store._index():
+            pass
         with store._root(create=True) as root:
             _mkdir(root, "bundles")
             _mkdir(root, "publications")

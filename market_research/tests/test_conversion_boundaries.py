@@ -118,6 +118,7 @@ def check_imports(text: str, package: str, *, publication: bool = False) -> None
                 allowed = {
                     "base64",
                     "collections.abc",
+                    "errno",
                     "hashlib",
                     "json",
                     "math",

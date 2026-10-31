@@ -161,3 +161,58 @@ view = store.get_chart_view(publication_id, manifest["analyses"][0]["views"][0][
 
 For a self-contained example using explicitly synthetic market facts, run
 `poetry run python market_research/tests/publication_example.py` from the repository root.
+
+### Empty store and initialization
+
+Listing and exact-identity lookup are read-only, including before the first publish. A
+configured root whose existing path components are accessible, real directories and whose
+remaining suffix does not yet exist is an uninitialized store: listing returns `[]` and an
+exact lookup returns `PublicationNotFound`. An existing empty root, or a root containing
+only a real `bundles` directory, is also uninitialized. The latter is a possible transient
+or interrupted prefix of the publisher's existing `bundles`-then-`publications` setup;
+its orphan bundles are never visible. Listing may observe the state immediately before a
+concurrent commit and need not include it.
+
+Once `publications` exists, both it and `bundles` must be real accessible directories.
+A root with unrelated entries but no `publications`, a `publications` directory without
+`bundles`, a non-directory or a symlink in the configured path or store structure is corrupt;
+it is not treated as empty. Permission and other I/O failures are unavailable, not empty.
+Empty path, NUL and parent traversal are invalid input. Reads create nothing. An absent
+commit in a valid initialized store remains `PublicationNotFound`; malformed existing
+commit records remain failures. In the publication index, only UUID4 commit filenames and
+regular `.tmp-<UUID4 hex>` staging files are admitted; malformed entries and symlinks
+are corrupt, while a staging file removed concurrently may be ignored. These checks do not
+claim protection from hostile concurrent filesystem mutation or change the atomic commit
+protocol.
+
+### Workbench source handoff
+
+The current G5 result artifact is a Workbench-owned delivery projection, not the original
+in-memory Research `BatchResult`. It preserves many public facts and explicit associations,
+but deliberately omits exception objects/chains, arbitrary malformed inputs and unknown
+values, failure and skip free text, and UnitFailure reasons. RunStore can verify retained
+artifact bytes and G5 linkage, but these omissions prevent treating its JSON as the complete
+Research V1 source or automatically rebuilding the original typed carriers. Neither artifact
+hashes nor an apparently successful report prove historical execution or upstream fact
+truth. `retain_source` requires the actual completed public BatchResult and captures the
+admitted complete typed evidence; `publish` re-encodes that same evidence and verifies it
+against the external retained file before committing. After commit, readers verify the copied
+source inside the publication and remain usable if the original external source is removed.
+
+Before WP5 can publish a previously completed Run, it must establish a separately authorized,
+versioned ingestion contract that identifies a retained source containing every required
+Research V1 carrier, typed failure and association, verifies that source's identity/digest
+and its binding to the exact Run and completed execution, and defines explicit failures
+when evidence is missing or lossy. A G5 projection alone must be rejected; it cannot be
+upgraded by inventing omitted evidence, reconstructing typed results or automatically
+re-executing. This requirement does not alter Task v1 or grant authorization to execute.
+
+### HTTP delivery boundary
+
+The Research Manifest and Analysis are internal semantic read models, not approved
+browser-facing DTOs. They can contain absolute source locations, filesystem details,
+retained source material, original exception messages and provider diagnostics. WP3 must
+own an explicit allowlisted safe HTTP projection and error mapping; it must not automatically
+serialize the Research Manifest, raw source, credentials, private provider diagnostics,
+arbitrary exception text or internal filesystem paths. This rule introduces no transport
+fields into Research and does not itself define routes or HTTP DTOs.
