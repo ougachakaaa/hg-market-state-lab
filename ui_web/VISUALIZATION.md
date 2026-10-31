@@ -15,14 +15,17 @@ coordinate descriptors and data. V1's JSON-compatible semantic shape is:
 
 ```text
 Layer = {type, version: 1, x: Coordinate, y: Coordinate, data: [Mark, ...]}
-Coordinate = {kind: "number" | "date", unit: nonempty string}
+Coordinate = {kind: "number" | "date" | "category", unit: nonempty string}
 ```
 
 `type` is one of the types below. `x` and `y` describe the coordinate values used by
 the corresponding mark fields. `date` is a valid ISO 8601 calendar date in canonical
-`YYYY-MM-DD` form; `number` is a finite JSON number. A coordinate's unit is an explicit,
+`YYYY-MM-DD` form; `number` is a finite JSON number; `category` is a nonempty string
+whose identity is exact string equality. A category is never parsed as a number or date,
+trimmed, case-folded or otherwise normalized. A coordinate's unit is an explicit,
 case-sensitive producer-defined string; equality is exact, never inferred from a label
-or converted. A date coordinate uses unit `date`; numeric units must name their meaning
+or converted. A date coordinate uses unit `date`, and the generic category descriptor is
+`{kind: "category", unit: "category"}`. Numeric units must name their meaning
 (e.g. `decimal_ratio`, `count`), and must not be silently rescaled. All objects have
 exactly the fields listed; no missing fields, nulls, non-finite values or extra fields
 are accepted. Empty data is valid and expresses no marks. Data order is retained; a
@@ -32,7 +35,7 @@ explicit support; unknown types or versions fail validation, never guessed or co
 | type | Mark fields | Additional validation |
 | --- | --- | --- |
 | `line` | `{x, y}` | coordinates conform to x and y |
-| `bar` | `{x, y}` | coordinates conform to x and y |
+| `bar` | `{x, y}` | coordinates conform to x and y; when x is category, y is number and x values are unique within the Layer |
 | `point` | `{x, y}` | coordinates conform to x and y |
 | `segment` | `{x1, y1, x2, y2}` | endpoints conform to their corresponding coordinate |
 | `candlestick` | `{x, open, high, low, close}` | x conforms to x; all prices conform to numeric y; `low <= open <= high` and `low <= close <= high` |
@@ -44,6 +47,12 @@ contract does not promise implementation of any renderer. Validation rejects inv
 inputs before publication or rendering and reports failure rather than dropping marks.
 Layer identity for composition is supplied by the View binding, not inferred from data.
 No Layer computes a statistic, discovers a business relationship or knows its producer.
+
+A categorical bar maps one category to one finite numerical value in its declared y unit.
+The renderer preserves supplied values, including zero; it never fills, combines, scales,
+normalizes or computes them. Categories need not be numerical intervals. Equal visual
+bar widths express categories, not numerical interval widths or density. Numeric-width
+histograms are not part of V1; a future range Layer requires its own contract.
 
 ## View composition and presentation
 
@@ -63,6 +72,12 @@ both referenced axes exist, have the correct orientation, and have the same kind
 exact unit as the corresponding Layer coordinate. Layer order is rendering order. An
 empty View is valid. Unknown versions, duplicate IDs or incompatible bindings fail
 validation. No implicit axis selection, unit conversion or normalization is permitted.
+For each category axis, visit bound Layers in View order, then marks in their supplied
+order; within a mark visit that axis's coordinate fields in the order listed in its
+Layer row (for example x1 before x2). The axis displays each distinct exact category at
+its first occurrence. Later occurrences share that position, including across Layers;
+no alphabetical sorting, value parsing or category normalization occurs. This defines
+axis positions only: marks are never removed, reordered, merged or deduplicated.
 Further presentation controls may control visibility, labels, colors, viewport and interaction
 but must not modify data, calculate business values or infer mappings. Additional public
 layout or style fields require a new explicitly validated contract version; this authority does not define a chart programming language.
@@ -84,6 +99,13 @@ numerical and UI-independent. HTTP projects the canonical Layer meaning without 
 an alternative schema; OpenAPI generates consumer TypeScript through the
 [feedback loop](contracts.md). Feature-specific presentation stays in the feature;
 only domain-neutral mechanisms may be shared.
+
+The V1 Binding contains inline Layer data, not a reference. A renderer accepts a complete,
+validated ChartView and does not resolve publication IDs, storage paths, URLs or artifacts.
+Producer-aware readers or authorized delivery projections resolve and validate their own
+references before supplying the View. Python and HTTP representations and generated
+TypeScript implement this single semantic contract; a Plotly trace is an internal rendering
+structure, not another public Layer schema.
 
 Implementation order: WP1 core contracts/renderer; WP2 Research publication; WP3 read-only
 HTTP delivery; WP4 Research Explorer; WP5 authorized Workbench integration and real E2E;

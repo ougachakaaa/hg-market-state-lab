@@ -54,13 +54,97 @@ integrity on read. Storage paths, exact serialization, digest algorithm, API sig
 failure types must be specified in a lower-level implementation contract before WP2 coding;
 those choices must preserve these invariants and the public Layer contract.
 
-Research exposes a public read-only boundary to enumerate available publication identities
-and retrieve one complete snapshot by exact identity. Reads return validated stored content or
-an explicit missing, unsupported-version, corrupt or unavailable failure; they never execute,
-acquire, recompute, mutate or silently repair. Query filtering, ordering, pagination and
-transport mappings require explicit contract decisions before exposure; no defaults are
-inferred here. References are not permission to read internal producer storage. Retention
-and access to source evidence must be stated for each published source.
+## Granular reader and Analysis identity
+
+Research exposes these independent logical read capabilities; names do not prescribe
+Python signatures or HTTP routes:
+
+```text
+list_publications()
+get_publication_manifest(publication_id)
+get_analysis(publication_id, analysis_id)
+```
+
+A complete validated snapshot may also be retrieved by exact identity. The Manifest is a
+navigation summary of publication identity, scope and status, Job summaries with Analysis
+references, available ChartView references, and source/provenance summary. It must not
+require returning every Observation, StatisticalResult or Layer payload. The reader must
+also support materializing an available ChartView independently, without returning all
+other analyses or Layers in the publication. A read of one Analysis returns its detailed
+payload independently of unrelated payloads.
+
+Each published Analysis has a publication-scoped, unique and stable `analysis_id`, and
+explicitly records its original full structural Job identity, exact AnalysisRequest
+`request_id` and spec, and source evidence reference. These associations are preserved on
+every read. Repeated `request_id` values on different Jobs are distinct Analyses; neither
+request ID alone nor array position identifies an Analysis. If multiple source executions
+contain the same Job and request, their respective source identities remain explicit and
+distinct Analyses cannot collide. Publication owns this address, not the ResearchPlan,
+JobResult, BatchResult, Statistics result or Workbench Run identity. Its generation algorithm
+is a WP2 storage decision. Different publication IDs do not share an identity namespace.
+
+Manifest references and detailed results resolve only within the specified immutable
+publication. The reader validates publication and Analysis identity, exact original
+request/spec, Job and evidence association, status and integrity before returning success;
+failed, skipped or not-attempted analyses cannot be presented as successful results.
+Each read returns validated stored content or an explicit missing, unsupported-version,
+corrupt or unavailable failure. A missing Analysis is distinct from a recorded failed or
+not-attempted Analysis. No reference grants arbitrary filesystem access, resolves against
+another publication, or authorizes access to internal producer storage.
+
+Granular verification must bind the retrieved payload and its references to the same
+immutable publication and its validated Manifest, and verify the relevant stored integrity
+evidence without requiring transfer of unrelated payloads. It must not silently accept
+missing or inconsistent evidence, repair or recompute data. Reads never execute Research,
+acquire DataLake facts or invoke Statistics. Query filtering, ordering, pagination, transport
+mappings, reference encoding and retention/access to source evidence require explicit
+lower-level contracts; no defaults are inferred here.
+
+## IntervalCount projection
+
+The producer-aware adapter may project a successful
+[IntervalCountResult](../market_statistics/INTERVAL_COUNT.md#result-and-accounting) to a
+categorical BarLayer under the [Visualization contract](../ui_web/VISUALIZATION.md).
+The published Analysis retains the complete original StatisticalResult, exact edges, ordered
+bin boundaries and inclusion flags, bin counts and frequencies, underflow and overflow
+counts and frequencies, `sample_count`, original result association and source evidence.
+These facts are not replaced by chart labels or reconstructed from bar data.
+
+One category corresponds to each bin, plus explicit underflow and overflow categories,
+in their original statistical order: underflow, bins in edge order, overflow. Include both
+outside categories even when their value is zero. Labels must uniquely and unambiguously
+identify the exact boundaries and inclusion rules, including the outside inequalities;
+display formatting must not round distinct boundaries into an ambiguous label or change
+their meaning. The original exact boundaries remain independently accessible with the
+Analysis. A projection selects either the published counts or the published frequencies
+unchanged, with an explicit y unit. Separate projections must each refer to the same
+original published Analysis/result and identify which measure they display. The frontend
+may select between such projections without recalculating statistics, changing the
+full-sample denominator, or treating missing results as zero.
+
+For example, irregular edges `[0, 1, 3]` yield ordered labels such as `< 0`, `[0, 1)`,
+`[1, 3]`, `> 3`, with their actual returned values, including both outside categories.
+Equal-width categorical bars express these categories; they do not imply numeric-width
+geometry or a density histogram. Statistics remains the sole owner of partition and
+frequency semantics; no new numerical method is defined here.
+
+## Stored references and render-ready Views
+
+Publication may store Layer data and View definitions separately and expose publication-
+scoped `LayerDataRef` and `ChartViewRef` as opaque references. They are Research-owned
+references, not Visualization Layer types, HTTP identities or filesystem paths. Each must
+resolve only to the intended immutable publication and its declared object; reject missing,
+cross-publication, mismatched or corrupt references explicitly. The Manifest's available
+ChartView references must identify the relevant published Analysis associations.
+
+The producer-aware Publication Reader or an explicitly authorized producer-aware delivery
+projection resolves the selected View and only its required Layer references, validates
+the referenced content and associations, and materializes a complete inline-data ChartView
+that conforms to the single [Visualization contract](../ui_web/VISUALIZATION.md). Any
+failed resolution or validation fails the View read; do not omit or substitute Layers.
+The renderer receives that complete View and never reads Publication references or locations.
+This boundary does not grant Visualization knowledge of Research or storage and does not
+establish a second Python, HTTP, TypeScript or Plotly Layer schema.
 
 ## Consumers and readiness
 
