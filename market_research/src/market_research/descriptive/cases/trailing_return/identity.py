@@ -156,3 +156,80 @@ def input_provenance(
         canonical,
         hashlib.sha256(canonical).hexdigest(),
     )
+
+
+def verify_input_provenance(job: ObservationJobSpec, provenance: TrailingReturnProvenance) -> None:
+    """Verify retained final inputs and V2 bytes without constructing observations."""
+    from .inputs import job_identity, resolve_calendar, validate_index, validate_job
+
+    def require(condition: bool, message: str) -> None:
+        if not condition:
+            raise ValueError(message)
+
+    require(type(provenance) is TrailingReturnProvenance, "invalid input provenance")
+    validate_job(job, check_current_date=False)
+    prepared = provenance.prepared_inputs
+    require(
+        type(prepared) is PreparedInputs and prepared.job_identity == job_identity(job),
+        "prepared input identity mismatch",
+    )
+    anchors, sessions = resolve_calendar(job, prepared.calendar_slices)
+    if anchors:
+        item = prepared.index_slice
+        require(item is not None, "missing index slice")
+        assert item is not None
+        require(
+            tuple(item.request.index_codes) == (job.subject,)
+            and item.request.start_date == sessions[0]
+            and item.request.end_date == anchors[-1],
+            "index slice scope mismatch",
+        )
+        rows = validate_index(item.final_export, item.request, sessions).records
+    else:
+        require(prepared.index_slice is None, "unexpected index slice")
+        rows = ()
+    expected = tuple((job.subject, day) for day in sessions)
+    available = tuple((row.index_code, row.trade_date) for row in rows)
+    absent = tuple(key for key in expected if key not in set(available))
+    require(
+        provenance.expected_daily_keys == expected
+        and provenance.available_daily_keys == available
+        and provenance.absent_daily_keys == absent,
+        "daily key evidence mismatch",
+    )
+    require(len(provenance.endpoint_requirements) == len(anchors), "endpoint count mismatch")
+    positions = {day: index for index, day in enumerate(sessions)}
+    for anchor, endpoint in zip(anchors, provenance.endpoint_requirements, strict=True):
+        lookback = sessions[positions[anchor] - job.horizon]
+        anchor_key, lookback_key = (job.subject, anchor), (job.subject, lookback)
+        require(
+            endpoint.anchor == anchor
+            and endpoint.anchor_daily_key == anchor_key
+            and endpoint.lookback_daily_key == lookback_key,
+            "endpoint identity mismatch",
+        )
+        missing = [
+            (role, key)
+            for role, key in (("anchor", anchor_key), ("lookback", lookback_key))
+            if key not in set(available)
+        ]
+        require(len(endpoint.missing_required_facts) == len(missing), "endpoint absence mismatch")
+        for dep, (role, key) in zip(endpoint.missing_required_facts, missing, strict=True):
+            fact = dep.fact
+            require(
+                dep.endpoint_role == role
+                and fact.daily_key == key
+                and fact.dataset == "tushare_index_daily"
+                and fact.view == "index_daily"
+                and fact.export_schema_version == 1
+                and fact.field == "close"
+                and dep.reason == "daily_fact_unavailable",
+                "missing fact mismatch",
+            )
+    rebuilt = input_provenance(job, prepared, expected, available, provenance.endpoint_requirements)
+    require(
+        provenance.input_profile == PROFILE
+        and provenance.canonical_input_bytes == rebuilt.canonical_input_bytes
+        and provenance.input_fingerprint == rebuilt.input_fingerprint,
+        "input fingerprint mismatch",
+    )

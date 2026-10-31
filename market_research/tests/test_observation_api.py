@@ -193,6 +193,7 @@ def test_only_published_datalake_imports_and_no_forbidden_dependency_edges() -> 
                         "conversion",
                         "association",
                         "execution",
+                        "publication",
                     } & set(path.relative_to(SOURCE).parts), (
                         path,
                         name,

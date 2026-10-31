@@ -1,0 +1,190 @@
+[
+  {
+    "version": 1,
+    "axes": [
+      {
+        "id": "x",
+        "orientation": "x",
+        "coordinate": {
+          "kind": "number",
+          "unit": "probability"
+        }
+      },
+      {
+        "id": "y",
+        "orientation": "y",
+        "coordinate": {
+          "kind": "number",
+          "unit": "decimal_ratio"
+        }
+      }
+    ],
+    "layers": [
+      {
+        "id": "quantile",
+        "layer": {
+          "type": "line",
+          "version": 1,
+          "x": {
+            "kind": "number",
+            "unit": "probability"
+          },
+          "y": {
+            "kind": "number",
+            "unit": "decimal_ratio"
+          },
+          "data": [
+            {
+              "x": 0.0,
+              "y": -1.0
+            },
+            {
+              "x": 0.5,
+              "y": 0.0
+            },
+            {
+              "x": 1.0,
+              "y": 3.25
+            }
+          ]
+        },
+        "x_axis": "x",
+        "y_axis": "y"
+      }
+    ],
+    "layout": {
+      "title": ""
+    },
+    "presentation": {
+      "show_legend": false
+    }
+  },
+  {
+    "version": 1,
+    "axes": [
+      {
+        "id": "x",
+        "orientation": "x",
+        "coordinate": {
+          "kind": "category",
+          "unit": "category"
+        }
+      },
+      {
+        "id": "y",
+        "orientation": "y",
+        "coordinate": {
+          "kind": "number",
+          "unit": "count"
+        }
+      }
+    ],
+    "layers": [
+      {
+        "id": "count",
+        "layer": {
+          "type": "bar",
+          "version": 1,
+          "x": {
+            "kind": "category",
+            "unit": "category"
+          },
+          "y": {
+            "kind": "number",
+            "unit": "count"
+          },
+          "data": [
+            {
+              "x": "< 0.0",
+              "y": 1
+            },
+            {
+              "x": "[0.0, 1.0)",
+              "y": 1
+            },
+            {
+              "x": "[1.0, 3.0]",
+              "y": 1
+            },
+            {
+              "x": "> 3.0",
+              "y": 1
+            }
+          ]
+        },
+        "x_axis": "x",
+        "y_axis": "y"
+      }
+    ],
+    "layout": {
+      "title": ""
+    },
+    "presentation": {
+      "show_legend": false
+    }
+  },
+  {
+    "version": 1,
+    "axes": [
+      {
+        "id": "x",
+        "orientation": "x",
+        "coordinate": {
+          "kind": "category",
+          "unit": "category"
+        }
+      },
+      {
+        "id": "y",
+        "orientation": "y",
+        "coordinate": {
+          "kind": "number",
+          "unit": "frequency"
+        }
+      }
+    ],
+    "layers": [
+      {
+        "id": "frequency",
+        "layer": {
+          "type": "bar",
+          "version": 1,
+          "x": {
+            "kind": "category",
+            "unit": "category"
+          },
+          "y": {
+            "kind": "number",
+            "unit": "frequency"
+          },
+          "data": [
+            {
+              "x": "< 0.0",
+              "y": 0.25
+            },
+            {
+              "x": "[0.0, 1.0)",
+              "y": 0.25
+            },
+            {
+              "x": "[1.0, 3.0]",
+              "y": 0.25
+            },
+            {
+              "x": "> 3.0",
+              "y": 0.25
+            }
+          ]
+        },
+        "x_axis": "x",
+        "y_axis": "y"
+      }
+    ],
+    "layout": {
+      "title": ""
+    },
+    "presentation": {
+      "show_legend": false
+    }
+  }
+]

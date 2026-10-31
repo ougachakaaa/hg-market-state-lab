@@ -66,7 +66,7 @@ It owns no market-data acquisition infrastructure, provider clients, upstream pe
 or canonical Snapshot Product preparation. DataLake, Snapshot and Statistics never depend
 on Research; Statistics also never depends on DataLake or Snapshot and performs no upstream I/O.
 Modeling remains a sibling, not a required downstream runtime stage; current repository
-rules grant it no Research import permission. UI consumption of published Research outputs is authorized only through the prospective
+rules grant it no Research import permission. UI consumption of published Research outputs is authorized only through the
 [publication reader](PUBLICATION.md) and ui_http; Modeling gains no import permission.
 
 Research does not depend on inbound adapters (`ui_cli`, `ui_http`, `ui_web`), HTTP DTOs or
@@ -96,6 +96,9 @@ Single Job execution is implemented under `market_research.descriptive.execution
 composing these public components under [its contract](descriptive/JOB_EXECUTION.md).
 ResearchPlan / Batch execution is implemented in the same facade, composing Single Job
 under the [Batch contract](descriptive/BATCH_EXECUTION.md).
+The independent `market_research.publication` facade implements explicit source retention,
+publication and granular read under [its contract](PUBLICATION_STORAGE.md); it does not
+provide an HTTP endpoint or automatically publish execution results.
 The [capability publication](descriptive/RESEARCH_CAPABILITY.md) and pure preview facade
 publish this one case; bounded HTTP delivery belongs to
 [ui_http](../ui_http/products/research/http-contract.md). Human/agent usage is in

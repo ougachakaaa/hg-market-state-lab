@@ -73,7 +73,40 @@ def check_imports(text: str, package: str, *, publication: bool = False) -> None
     conversion = package == CONVERSION or package.startswith(CONVERSION + ".")
     association = package == ASSOCIATION or package.startswith(ASSOCIATION + ".")
     execution = package == EXECUTION or package.startswith(EXECUTION + ".")
+    research_publication = package == "market_research.publication"
     for node in ast.walk(ast.parse(text)):
+        if research_publication and isinstance(node, ast.Call):
+            called = node.func
+            assert not (
+                isinstance(called, ast.Attribute)
+                and called.attr
+                in {
+                    "execute_batch",
+                    "execute_job",
+                    "compute",
+                    "ensure",
+                    "prepare_inputs",
+                    "convert",
+                    "construct_observations",
+                    "observe",
+                    "create_service",
+                }
+            ), "Publication cannot execute or acquire"
+            assert not (
+                isinstance(called, ast.Name)
+                and called.id
+                in {
+                    "execute_batch",
+                    "execute_job",
+                    "compute",
+                    "ensure",
+                    "prepare_inputs",
+                    "convert",
+                    "construct_observations",
+                    "observe",
+                    "create_service",
+                }
+            ), "Publication cannot execute or acquire"
         if isinstance(node, ast.ImportFrom):
             names = [resolve_name("." * node.level + (node.module or ""), package)]
         elif isinstance(node, ast.Import):
@@ -81,6 +114,49 @@ def check_imports(text: str, package: str, *, publication: bool = False) -> None
         else:
             continue
         for name in names:
+            if research_publication:
+                allowed = {
+                    "base64",
+                    "collections.abc",
+                    "hashlib",
+                    "json",
+                    "math",
+                    "os",
+                    "re",
+                    "stat",
+                    "uuid",
+                    "contextlib",
+                    "dataclasses",
+                    "datetime",
+                    "pathlib",
+                    "types",
+                    "typing",
+                    "data_lake",
+                    "data_lake.datasets.tushare_index_daily",
+                    "data_lake.datasets.tushare_trade_calendar",
+                    "market_statistics",
+                    "market_research.descriptive",
+                    "market_research.descriptive.execution",
+                    "market_research.descriptive.cases",
+                    "market_research.publication.errors",
+                    "market_research.publication.source",
+                    "market_research.publication.store",
+                    "market_research.publication.visualization",
+                }
+                assert name in allowed, name
+                if isinstance(node, ast.ImportFrom):
+                    assert not {a.name for a in node.names} & {
+                        "execute_batch",
+                        "execute_job",
+                        "compute",
+                        "ensure",
+                        "prepare_inputs",
+                        "convert",
+                        "construct_observations",
+                        "observe",
+                        "create_service",
+                    }, name
+                continue
             if publication:
                 allowed_publication = {
                     "dataclasses": {"dataclass"},
@@ -234,3 +310,18 @@ def test_capability_publication_cannot_execute_or_acquire(text: str) -> None:
 def test_boundary_check_rejects_extra_permissions(text: str, package: str) -> None:
     with pytest.raises(AssertionError):
         check_imports(text, package)
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        "from market_statistics import compute",
+        "from market_research.descriptive.execution import execute_batch",
+        "import market_statistics as st\nst.compute(None, None)",
+        "from market_research.descriptive import execution as ex\nex.execute_batch(None)",
+        "import requests",
+    ],
+)
+def test_research_publication_cannot_execute_compute_or_fetch(text: str) -> None:
+    with pytest.raises(AssertionError):
+        check_imports(text, "market_research.publication")

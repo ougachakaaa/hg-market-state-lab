@@ -87,3 +87,14 @@ missing endpoint ordering, all-unavailable versus no-candidate distinction, and 
 hash for different preliminary diagnostics with identical final inputs. Verify v1/v2
 separation and no acquisition of private provenance. Retention/export beyond in-memory
 result lifetime remains outside this design.
+
+## Pure retained-input verification
+
+The case public facade additionally exposes `verify_input_provenance(job, provenance)` for
+consumers that must verify retained evidence without execution. It validates the fixed Job
+and retained final public inputs, rechecks calendar discovery, exact expected/available and
+absent keys and endpoint identity/absence, then reconstructs the existing V2 canonical
+bytes and digest and requires exact equality. It does not construct observations, calculate
+returns, acquire inputs or compute Statistics. An invalid or unsupported retained provenance
+fails explicitly. Preliminary attempts and diagnostics remain retained but are still outside
+the fingerprint and are not promoted into authenticated historical claims.

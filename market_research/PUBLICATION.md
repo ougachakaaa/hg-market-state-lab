@@ -2,7 +2,8 @@
 
 This contract specializes [Research architecture](ARCHITECTURE.md) and owns the
 publication lifecycle, semantic identity, provenance, integrity and read boundary.
-It is prospective authority; no publication runtime or HTTP endpoint is implied.
+The concrete V1 publication implementation and storage contract is
+[Publication storage](PUBLICATION_STORAGE.md); no HTTP endpoint is implied.
 Execution and result association remain under [Descriptive execution](descriptive/EXECUTION.md)
 and [association](descriptive/RESULT_ASSOCIATION.md). The domain-neutral Layer contract
 is owned by [Visualization](../ui_web/VISUALIZATION.md).
@@ -48,11 +49,11 @@ scope, result linkage, provenance and integrity, creates producer-owned projecti
 validates every Layer before making the whole immutable snapshot visible. It fails explicitly
 on malformed, inconsistent, missing or unverifiable input and never repairs or recomputes it.
 Publication has no authority to execute Research, acquire DataLake facts or invoke Statistics.
-The initial intended store is JSON-based and Research-owned, separate from Workbench RunStore;
+The V1 store is JSON-based and Research-owned, separate from Workbench RunStore;
 publication must be atomically visible as a complete snapshot, refuse overwrite and verify
 integrity on read. Storage paths, exact serialization, digest algorithm, API signatures and
-failure types must be specified in a lower-level implementation contract before WP2 coding;
-those choices must preserve these invariants and the public Layer contract.
+failure types are specified by the lower-level implementation contract;
+those choices preserve these invariants and the public Layer contract.
 
 ## Granular reader and Analysis identity
 
@@ -155,8 +156,7 @@ recomputation. The producer-aware adapter belongs to Research publication, never
 or Visualization. A Workbench Task may separately request publication only with the appropriate
 approved operational authority; Workbench evidence is not publication storage.
 
-WP2 must specify concrete JSON schema, reference resolution/retention, digest and atomic
-storage semantics, source eligibility, identity generation and exact public API/failures
-before implementation. WP3 must define HTTP routes, DTO projection and status mappings,
+Concrete V1 JSON, source eligibility, identity, integrity and reader semantics are specified
+in [Publication storage](PUBLICATION_STORAGE.md). WP3 must define HTTP routes, DTO projection and status mappings,
 then WP4 must generate consumer artifacts. These details are not established by WP0, and
-this prospective boundary does not change current execution behavior.
+this publication boundary does not change current execution behavior.

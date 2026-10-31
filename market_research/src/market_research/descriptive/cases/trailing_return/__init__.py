@@ -4,6 +4,7 @@ from .construction import DEFINITION as DEFINITION
 from .construction import construct_observations as construct_observations
 from .identity import EndpointRequirement as EndpointRequirement
 from .identity import TrailingReturnProvenance as TrailingReturnProvenance
+from .identity import verify_input_provenance as verify_input_provenance
 from .inputs import CalendarInput as CalendarInput
 from .inputs import HistoryInsufficient as HistoryInsufficient
 from .inputs import IncompleteInput as IncompleteInput
