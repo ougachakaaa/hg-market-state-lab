@@ -320,3 +320,23 @@ the source fingerprint and replays G4 at 0.01, recomputes PIP for every requeste
 and reports visual-review diagnostics. It does not perform a new live acceptance or create
 Statistics product results. Close-space connecting lines are visual guides; reconstruction
 error is measured in natural-log price space.
+
+## CSI1000 full-history offline review
+
+The G6 acceptance helper consumes retained validated public input evidence and never calls
+Provider during replay. From the repository root:
+
+```powershell
+poetry run python market_research/tests/segmentation_full_history.py --evidence <input_evidence.json> --output <local-output-directory>
+```
+
+The fixed scope is 000852.SH, 2020-01-01 through 2026-10-31, inclusive. Four epsilons
+are constructed from one complete input; the saved result evidence is checked on repeated
+runs. CSV files and an offline HTML review accompany the manifest. These diagnostics do not
+establish financial swing identification quality.
+
+To acquire a fresh copy, explicitly opt in with `poetry run python
+market_research/tests/segmentation_full_history_live.py --live --output <empty-directory>`;
+this makes Provider calls, uses isolated temporary Dataset storage and accepts an optional
+`--max-calls` cap. Account permissions, rate limits and complete published facts remain
+necessary. Do not commit generated historical data or the review pack.
