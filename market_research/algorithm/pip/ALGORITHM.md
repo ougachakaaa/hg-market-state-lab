@@ -1,6 +1,6 @@
 # PIP vertical-error-bounded algorithm V1
 
-This is the canonical numerical contract for the future public Python boundary
+This is the canonical numerical contract for the public Python boundary
 `market_research.algorithm.pip`, owned by [Research](../../ARCHITECTURE.md). It is a
 PIP greedy important-point selection variant with maximum-error stopping, not the
 original fixed-K formulation. It accepts ordered numerical values only: it knows no
