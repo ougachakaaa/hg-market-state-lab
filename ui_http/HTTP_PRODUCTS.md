@@ -6,9 +6,8 @@
 | --- | --- | --- |
 | MO Option Chain | `data_snapshot` | [HTTP contract](products/mo_option_chain/http-contract.md) |
 | Descriptive Research | `market_research` | [HTTP contract](products/research/http-contract.md) |
+| Research Publication | `market_research` | [HTTP contract](products/research_publication/http-contract.md) |
 | MO Premium Plane | `data_snapshot` | [HTTP contract](products/mo_option_premium/http-contract.md) |
-
-未来 Research Publication 的只读 delivery 在实现前必须新增专门 HTTP contract，定义 reader projection、routes、errors 与认证映射，并将 OpenAPI 交给 [frontend feedback loop](../ui_web/contracts.md)。它目前不是已实现 endpoint；业务与 Layer 语义分别由 [Research](../market_research/PUBLICATION.md) 与 [Visualization](../ui_web/VISUALIZATION.md) 拥有。
 
 Owning business module 定义 query/result 与 classified semantic failures；本 catalog 只导航 HTTP transport authority，不创建 repository product catalog、shared DTO schema 或通用 API framework。
 
