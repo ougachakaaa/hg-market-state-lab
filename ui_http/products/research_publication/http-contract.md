@@ -89,4 +89,4 @@ is fixed safe text. Authentication failures retain their independent Auth envelo
 No exception text, storage location or source bytes enter errors. Reader calls never execute
 Research, Statistics, acquisition or Workbench and never write the Publication Store.
 OpenAPI publishes the four concrete operations, DTOs, Cookie security and these outcomes;
-there is no Research Explorer frontend consumer or generated client in WP3.
+Research Explorer owns its projected OpenAPI and generated consumer contract.

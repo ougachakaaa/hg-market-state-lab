@@ -58,6 +58,17 @@ describe('application authentication lifecycle', () => {
     await loggedIn()
   })
 
+  it('navigates to Research Explorer and isolates its 401 at the application gate', async () => {
+    const fetch = vi.fn().mockResolvedValueOnce(response(identity)).mockResolvedValueOnce(authError(401))
+    vi.stubGlobal('fetch', fetch)
+    render(<App />)
+    await loggedIn()
+    fireEvent.click(screen.getByRole('button', { name: 'Research Explorer' }))
+    await loginForm()
+    expect(fetch.mock.calls[1][0]).toBe('/research/publications')
+    expect(screen.queryByRole('heading', { name: 'Research Explorer' })).toBeNull()
+  })
+
   it('logs in to default Option Chain without persisting tokens', async () => {
     const local = vi.spyOn(Storage.prototype, 'setItem')
     const fetch = vi.fn().mockResolvedValueOnce(authError(401)).mockResolvedValueOnce(response(identity))

@@ -105,3 +105,9 @@ Association, Single Job and Batch execution, using this same root environment. D
 public API acceptance runs with `poetry run python market_research/tests/job_execution_example.py`
 and `poetry run python market_research/tests/batch_execution_example.py`.
 There is no Research execution CLI command. The previous Study CLI is retired.
+
+### Research Explorer
+
+登录后选择 Research Explorer，浏览 Publication 列表并按需翻页；选择 Publication 查看声明 scope 和 Jobs，再选择 Analysis 检查原始结果、Coverage 与 provenance。点击 quantile、count 或 frequency 才读取对应 View。浏览不会执行 Research；服务端验证容量不足时可手动重试。
+
+真实浏览器合成数据验收：在 `ui_web/` 执行 `npm run test:research-browser`，需要 Playwright Chromium 及系统运行库、空闲的 5173 和 8011 端口。脚本建立临时 Auth 数据库和合成 Publication Store，不访问真实行情。

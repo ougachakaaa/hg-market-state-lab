@@ -25,13 +25,13 @@ from ui_http.products.mo_option_premium.app import (  # noqa: E402
 )
 
 
-def create_auth_app() -> FastAPI:
-    """Project Auth operations and their transitive schemas from the offline runtime."""
+def create_projection(paths: set[str]) -> FastAPI:
+    """Project selected operations and their transitive schemas from the offline runtime."""
     app = create_application()
     document = app.openapi()
     document["paths"] = {
         path: operations for path, operations in document["paths"].items()
-        if path in {"/auth/register", "/auth/login", "/auth/me", "/auth/logout"}
+        if path in paths
     }
     schemas = document["components"]["schemas"]
     needed: set[str] = set()
@@ -57,11 +57,29 @@ def create_auth_app() -> FastAPI:
     return app
 
 
+def create_auth_app() -> FastAPI:
+    return create_projection({"/auth/register", "/auth/login", "/auth/me", "/auth/logout"})
+
+
+def create_research_app() -> FastAPI:
+    return create_projection({
+        "/research/publications",
+        "/research/publications/{publication_id}",
+        "/research/publications/{publication_id}/analyses/{analysis_id}",
+        "/research/publications/{publication_id}/views/{view_id}",
+    })
+
+
 CONTRACTS: tuple[tuple[str, Callable[[], FastAPI], Path], ...] = (
     (
         "Application Authentication",
         create_auth_app,
         WEB_UI_ROOT / "src/app/auth/api/auth.openapi.json",
+    ),
+    (
+        "Research Publication",
+        create_research_app,
+        WEB_UI_ROOT / "src/features/research_explorer/api/research.openapi.json",
     ),
     (
         "MO Option Chain",
