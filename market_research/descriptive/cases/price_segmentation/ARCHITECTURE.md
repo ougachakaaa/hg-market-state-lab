@@ -9,6 +9,8 @@ segment meaning and evidence; the algorithm owns only numerical selection and di
 [INPUTS.md](INPUTS.md) owns its upstream and completeness contract.
 The separate [experimental review contract](REVIEW.md) describes offline diagnostic
 views; these are not canonical segmentation observations.
+[SAMPLES.md](SAMPLES.md) owns the formal Base-segment sample semantics and the
+future Research-owned numerical adaptation boundary.
 
 Status: the independent PIP algorithm, Input Preparation and segmentation observation
 Python APIs are implemented and verified. Price Segmentation V1 is accepted for the
