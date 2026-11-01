@@ -34,3 +34,16 @@ it('requests details only on selection and ignores obsolete view completions', a
   act(() => result.current.selectAnalysis('other'))
   expect(result.current.chart.status).toBe('idle')
 })
+it('isolates late Analysis responses when changing selection within a Publication', async () => {
+  const pending: { signal: AbortSignal; finish: (value: unknown) => void }[] = []
+  vi.mocked(getAnalysis).mockImplementation((_p, _a, signal) => new Promise(resolve => pending.push({ signal, finish: resolve as (v: unknown) => void })))
+  const { result } = renderHook(() => useExplorer())
+  act(() => result.current.selectPublication('p'))
+  act(() => result.current.selectAnalysis('first'))
+  act(() => result.current.selectAnalysis('second'))
+  expect(pending[0].signal.aborted).toBe(true)
+  await act(async () => pending[1].finish({ publication_id: 'p', summary: { analysis_id: 'second' } }))
+  await waitFor(() => expect(result.current.result.status).toBe('success'))
+  await act(async () => pending[0].finish({ publication_id: 'p', summary: { analysis_id: 'first' } }))
+  expect(result.current.result.status === 'success' && result.current.result.data.summary.analysis_id).toBe('second')
+})

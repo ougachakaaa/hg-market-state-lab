@@ -186,6 +186,24 @@ describe('application authentication lifecycle', () => {
     expect(screen.queryByText('alice')).toBeNull()
   })
 
+  it('aborts and isolates an in-flight Explorer list on logout', async () => {
+    const old = deferred<Response>()
+    let signal: AbortSignal | undefined
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValueOnce(response(identity))
+      .mockImplementationOnce((_url, init) => { signal = init.signal; return old.promise })
+      .mockResolvedValueOnce(response(null, 204)))
+    render(<App />)
+    await loggedIn()
+    fireEvent.click(screen.getByRole('button', { name: 'Research Explorer' }))
+    await waitFor(() => expect(signal).toBeDefined())
+    fireEvent.click(screen.getByRole('button', { name: 'Logout' }))
+    expect(signal?.aborted).toBe(true)
+    await loginForm()
+    await act(async () => old.resolve(response({ data: [{ publication_id: 'stale', status: 'success' }], next_cursor: null })))
+    expect(screen.queryByText('stale')).toBeNull()
+    expect(screen.queryByRole('heading', { name: 'Research Explorer' })).toBeNull()
+  })
+
   it('keeps logout failure explicit and retryable', async () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValueOnce(response(identity))
       .mockRejectedValueOnce(new TypeError('offline')).mockResolvedValueOnce(response(null, 204)))

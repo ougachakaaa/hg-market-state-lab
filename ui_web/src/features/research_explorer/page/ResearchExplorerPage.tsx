@@ -49,7 +49,7 @@ export default function ResearchExplorerPage() {
     <Typography.Title level={2}>Research Explorer</Typography.Title>
     <Card title="Publications" extra={<Button onClick={e.retryList}>刷新</Button>}>
       {e.list.status === 'loading' && <Spin />}
-      {e.list.status === 'error' && <ErrorState context="Publication 列表" error={e.list.error} retry={e.retryList} />}
+      {e.list.status === 'error' && <Space orientation="vertical"><ErrorState context="Publication 列表" error={e.list.error} retry={e.retryList} />{e.page > 0 && <Button onClick={e.previous}>上一页</Button>}</Space>}
       {e.list.status === 'success' && <>
         {e.list.data.data.length === 0 ? <Typography.Text>{e.page === 0 ? 'Publication Store 为空。' : '此页没有 Publication。'}</Typography.Text> : <List dataSource={e.list.data.data} renderItem={item => <List.Item actions={[<Button key="open" onClick={() => e.selectPublication(item.publication_id)}>选择</Button>]}><List.Item.Meta title={item.publication_id} description={<Tag>{item.status}</Tag>} /></List.Item>} />}
         <Flex gap="small"><Button disabled={e.page === 0} onClick={e.previous}>上一页</Button><Button disabled={e.list.data.next_cursor === null} onClick={() => e.next(e.list.status === 'success' ? e.list.data.next_cursor! : '')}>下一页</Button></Flex>

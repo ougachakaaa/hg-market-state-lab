@@ -30,3 +30,22 @@ it.each(['failed', 'not_attempted'] as const)('shows %s outcome without a fabric
   expect(screen.getByText(new RegExp(outcome))).toBeTruthy()
   expect(screen.queryByText('原始统计结果')).toBeNull()
 })
+
+it('renders zero-denominator observation ratios as N/A and keeps zero population counts', () => {
+  const fact = { expected_fact_count: 0, available_fact_count: 0, coverage_ratio: null }
+  render(<AnalysisDetails analysis={{ ...base, coverage: { candidate_count: 0, eligible_count: 0, unavailable_count: 0, excluded_count: 0, observation_coverage: null, unavailable_ratio: null, excluded_ratio: null, observation_unit: 'decimal_ratio', input_profile: 'trailing_return_inputs_v2', input_fingerprint: 'zero', market_facts: { overall: fact, warm_up: fact, sample: fact } } }} />)
+  expect(screen.getAllByText('N/A')).toHaveLength(6)
+  expect(screen.getAllByText('0')).toHaveLength(10)
+})
+
+it('retains complete coverage as published without using sample count to derive it', () => {
+  const fact = { expected_fact_count: 5, available_fact_count: 5, coverage_ratio: 1 }
+  const coverage: NonNullable<Analysis['coverage']> = { candidate_count: 3, eligible_count: 3, unavailable_count: 0, excluded_count: 0, observation_coverage: 1, unavailable_ratio: 0, excluded_ratio: 0, observation_unit: 'decimal_ratio', input_profile: 'trailing_return_inputs_v2', input_fingerprint: 'shared-job', market_facts: { overall: fact, warm_up: fact, sample: fact } }
+  const first = { ...base, coverage, result: { method: 'quantile' as const, sample_count: 3, unit: 'decimal_ratio', estimator: 'linear', points_and_values: [[0.5, 0] as [number, number]] } }
+  const { rerender } = render(<AnalysisDetails analysis={first} />)
+  expect(screen.getByText('shared-job')).toBeTruthy()
+  rerender(<AnalysisDetails analysis={{ ...first, summary: { ...summary, analysis_id: 'other' }, result: { ...first.result, sample_count: 17 } }} />)
+  expect(screen.getByText('shared-job')).toBeTruthy()
+  expect(screen.getByText('17')).toBeTruthy()
+  expect(screen.getByText('candidate_count').closest('tr')?.textContent).toContain('3')
+})

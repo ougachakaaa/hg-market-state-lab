@@ -25,10 +25,11 @@ async function request<T>(route: Route, url: string, signal: AbortSignal): Promi
     if (signal.aborted || (e instanceof DOMException && e.name === 'AbortError')) throw e
     throw new ResearchError('network')
   }
+  const badResponse: FailureKind = response.ok && route === '/research/publications/{publication_id}/views/{view_id}' ? 'invalid_view' : 'invalid_response'
   let body: unknown
-  try { body = await response.json() } catch { throw new ResearchError('invalid_response') }
+  try { body = await response.json() } catch { throw new ResearchError(badResponse) }
   const validator = (validators[route] as Record<string, ((v: unknown) => boolean)>)[response.status]
-  if (!validator?.(body)) throw new ResearchError('invalid_response')
+  if (!validator?.(body)) throw new ResearchError(badResponse)
   if (!response.ok) throw new ResearchError((body as Schemas['ErrorResponse'] | Schemas['AuthErrorResponse']).error.kind)
   return body as T
 }

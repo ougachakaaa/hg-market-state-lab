@@ -2,7 +2,7 @@ import { vi } from 'vitest'
 vi.mock('react-plotly.js', () => ({ default: () => null }))
 import { afterEach, beforeEach, expect, it } from 'vitest'
 import { createRequestBoundary, installRequestBoundary } from '../../../shared/http/protectedRequest'
-import { getChartView, listPublications } from './research'
+import { getAnalysis, getChartView, getPublication, listPublications } from './research'
 import views from '../../../../../market_research/tests/fixtures/publication_visualization_v1.json'
 let release: () => void
 const unauthorized = vi.fn()
@@ -37,4 +37,24 @@ it('401 invalidates application boundary; 403 does not', async () => {
   expect(unauthorized).not.toHaveBeenCalled()
   await expect(listPublications(null, new AbortController().signal)).rejects.toMatchObject({ kind: 'authentication_required' })
   expect(unauthorized).toHaveBeenCalledOnce()
+})
+it('classifies a malformed View payload distinctly from other malformed responses', async () => {
+  vi.stubGlobal('fetch', vi.fn().mockResolvedValue(response({ data: { version: 2 } })))
+  await expect(getChartView('pub', 'view', new AbortController().signal)).rejects.toMatchObject({ kind: 'invalid_view' })
+})
+
+it.each([
+  ['list', (s: AbortSignal) => listPublications(null, s)],
+  ['manifest', (s: AbortSignal) => getPublication('pub', s)],
+  ['analysis', (s: AbortSignal) => getAnalysis('pub', 'analysis', s)],
+  ['view', (s: AbortSignal) => getChartView('pub', 'view', s)],
+])('%s 401 closes the active application boundary', async (_name, call) => {
+  vi.stubGlobal('fetch', vi.fn().mockResolvedValue(response({ error: { kind: 'authentication_required', detail: '', param: null } }, 401)))
+  await expect(call(new AbortController().signal)).rejects.toMatchObject({ kind: 'authentication_required' })
+  expect(unauthorized).toHaveBeenCalledOnce()
+})
+
+it('classifies unreadable successful View JSON as an incompatible View', async () => {
+  vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ status: 200, ok: true, json: async () => { throw new SyntaxError('invalid') } }))
+  await expect(getChartView('pub', 'view', new AbortController().signal)).rejects.toMatchObject({ kind: 'invalid_view' })
 })
