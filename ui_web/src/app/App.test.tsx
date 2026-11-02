@@ -58,6 +58,17 @@ describe('application authentication lifecycle', () => {
     await loggedIn()
   })
 
+  it('navigates to Research Explorer and isolates its 401 at the application gate', async () => {
+    const fetch = vi.fn().mockResolvedValueOnce(response(identity)).mockResolvedValueOnce(authError(401))
+    vi.stubGlobal('fetch', fetch)
+    render(<App />)
+    await loggedIn()
+    fireEvent.click(screen.getByRole('button', { name: 'Research Explorer' }))
+    await loginForm()
+    expect(fetch.mock.calls[1][0]).toBe('/research/publications')
+    expect(screen.queryByRole('heading', { name: 'Research Explorer' })).toBeNull()
+  })
+
   it('logs in to default Option Chain without persisting tokens', async () => {
     const local = vi.spyOn(Storage.prototype, 'setItem')
     const fetch = vi.fn().mockResolvedValueOnce(authError(401)).mockResolvedValueOnce(response(identity))
@@ -173,6 +184,24 @@ describe('application authentication lifecycle', () => {
     exiting.resolve(response(null, 204))
     await loginForm()
     expect(screen.queryByText('alice')).toBeNull()
+  })
+
+  it('aborts and isolates an in-flight Explorer list on logout', async () => {
+    const old = deferred<Response>()
+    let signal: AbortSignal | undefined
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValueOnce(response(identity))
+      .mockImplementationOnce((_url, init) => { signal = init.signal; return old.promise })
+      .mockResolvedValueOnce(response(null, 204)))
+    render(<App />)
+    await loggedIn()
+    fireEvent.click(screen.getByRole('button', { name: 'Research Explorer' }))
+    await waitFor(() => expect(signal).toBeDefined())
+    fireEvent.click(screen.getByRole('button', { name: 'Logout' }))
+    expect(signal?.aborted).toBe(true)
+    await loginForm()
+    await act(async () => old.resolve(response({ data: [{ publication_id: 'stale', status: 'success' }], next_cursor: null })))
+    expect(screen.queryByText('stale')).toBeNull()
+    expect(screen.queryByRole('heading', { name: 'Research Explorer' })).toBeNull()
   })
 
   it('keeps logout failure explicit and retryable', async () => {

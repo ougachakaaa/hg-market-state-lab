@@ -77,6 +77,14 @@ Repository-wide inbound HTTP delivery adapter 与 HTTP composition root，负责
 
 Repository HTTP access 的技术身份、认证存储与访问控制由 `ui_http` 拥有，契约从其 module authority 进入；`ui_cli` 通过公开 Auth service 委托 Operator 审批，`ui_web` 拥有 application-level 认证交互。该边界不授予业务模块反向依赖 `ui_http` 的权限。
 
+### Visualization (logical capability)
+
+Visualization is domain-agnostic and initially a logical capability, not a new top-level
+module. Its cross-language Layer, View and Template semantic contract is
+[Visualization authority](ui_web/VISUALIZATION.md); producers conform without importing
+frontend code. Research owns [publication](market_research/PUBLICATION.md) and its
+producer-aware adaptation. HTTP owns transport, and `ui_web` owns rendering.
+
 ### `ui_web`
 
 展示并允许用户交互仓库产生的数据产品与市场状态结果。它不拥有 Source、Capture、业务计算或 market_modeling 语义。模块内部边界见 [ui_web/ARCHITECTURE.md](ui_web/ARCHITECTURE.md)。
@@ -206,6 +214,8 @@ ARCHITECTURE.md（本文件）
     │      ↓
     │  co-located product / capability ARCHITECTURE.md
     ├─ market_research/ARCHITECTURE.md
+    │      ↓
+    │  market_research/PUBLICATION.md
     ├─ market_statistics/ARCHITECTURE.md
     │      ↓
     │  market_statistics/CONTRACT.md
@@ -216,6 +226,7 @@ ARCHITECTURE.md（本文件）
     │  HTTP product contract
     │
     └─ ui_web/ARCHITECTURE.md
+           ├─ ui_web/VISUALIZATION.md (cross-language Layer contract)
            ├─ ui_web/application.md
            │      ↓
            │  ui_web/FEATURES.md

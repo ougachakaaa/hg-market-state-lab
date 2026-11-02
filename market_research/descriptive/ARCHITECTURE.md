@@ -61,7 +61,8 @@ verification. No unresolved implicit default is authorized.
 Beyond the implemented index Observation slice, Conditional Research and its contracts,
 Condition Engine, forward evaluation, backtesting, strategy/model/signal design, generic runner or
 pipeline DSL, research database, artifact registry, automatic hypothesis discovery, Web
-visualization, full report rendering and new Research CLI are out of scope. No mandatory
-durable storage or class hierarchy is required for the first version. Descriptive and
+visualization within Research, full report rendering and new Research CLI are out of scope. Execution requires no mandatory
+durable storage or class hierarchy; separate opt-in [publication](../PUBLICATION.md) owns
+its own persistence and does not alter execution. Descriptive and
 Conditional remain independent under the module invariant; no cross-paradigm framework
 or shared execution engine is authorized.

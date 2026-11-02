@@ -9,6 +9,11 @@ const contracts = [
     output: 'src/app/auth/api/auth.generated.ts',
   },
   {
+    name: 'Research Publication',
+    input: 'src/features/research_explorer/api/research.openapi.json',
+    output: 'src/features/research_explorer/api/research.generated.ts',
+  },
+  {
     name: 'MO Option Chain',
     input: 'src/features/mo_option_chain/api/moOptionChain.openapi.json',
     output: 'src/features/mo_option_chain/api/moOptionChain.generated.ts',

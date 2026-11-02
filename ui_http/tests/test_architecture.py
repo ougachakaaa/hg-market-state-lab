@@ -115,7 +115,8 @@ def test_research_transport_uses_only_admitted_public_boundaries() -> None:
     allowed = {
         "market_research.descriptive.capabilities", "market_research.descriptive.execution",
         "market_research.descriptive.association", "market_research.descriptive.observation",
-        "market_research.descriptive.cases.trailing_return", "market_statistics",
+        "market_research.descriptive.cases.trailing_return", "market_research.publication",
+        "market_statistics",
     }
     violations = [
         f"{source.relative_to(REPOSITORY_ROOT)} -> {name}"

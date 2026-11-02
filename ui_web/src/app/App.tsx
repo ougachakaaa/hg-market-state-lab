@@ -2,12 +2,13 @@ import { Alert, Button, Flex, Layout, Spin, Typography, theme } from 'antd'
 import { useState } from 'react'
 import OptionChainPage from '../features/mo_option_chain'
 import PremiumPlanePage from '../features/mo_option_premium'
+import ResearchExplorerPage from '../features/research_explorer/page/ResearchExplorerPage'
 import AppUiProvider from './AppUiProvider'
 import AuthForm from './auth/AuthForm'
 import { useAuthentication } from './auth/useAuthentication'
 import type { CurrentUser } from './auth/api/auth'
 
-type Feature = 'option-chain' | 'premium-plane'
+type Feature = 'option-chain' | 'premium-plane' | 'research'
 
 function ApplicationShell({ user, signOut }: { user: CurrentUser; signOut: () => Promise<void> }) {
   const [feature, setFeature] = useState<Feature>('option-chain')
@@ -26,12 +27,16 @@ function ApplicationShell({ user, signOut }: { user: CurrentUser; signOut: () =>
             aria-pressed={feature === 'premium-plane'} onClick={() => setFeature('premium-plane')}>
             MO Premium Plane
           </Button>
+          <Button type={feature === 'research' ? 'primary' : 'default'}
+            aria-pressed={feature === 'research'} onClick={() => setFeature('research')}>
+            Research Explorer
+          </Button>
           <Typography.Text>{user.username}</Typography.Text>
           <Button onClick={() => void signOut()}>Logout</Button>
         </Flex>
       </Layout.Header>
       <Layout.Content style={{ width: '100%', maxWidth: 1400, margin: '0 auto', padding: token.paddingLG, boxSizing: 'border-box' }}>
-        {feature === 'option-chain' ? <OptionChainPage /> : <PremiumPlanePage />}
+        {feature === 'option-chain' ? <OptionChainPage /> : feature === 'premium-plane' ? <PremiumPlanePage /> : <ResearchExplorerPage />}
       </Layout.Content>
     </Layout>
   )

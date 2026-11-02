@@ -59,7 +59,7 @@ Repository-level frontend `contract:check` 必须覆盖所有 frontend-consumed 
 
 任一 product 缺失、stale 或 generation drift 都必须使整体 check 失败。一个 product 通过不能替代或掩盖 sibling product 的失败。
 
-Contract export 使用离线 `.openapi()`，不通过受保护的 HTTP schema endpoint、不需要真实 secret/用户库，也不创建生产状态。Offline builder 不能发布一份删除 security metadata 的竞争性 contract；可被 HTTP 服务的任何 app 都遵循 Auth gate。Research 仍无 Web consumer，不因增加认证自动新增 Research generated types。
+Contract export 使用离线 `.openapi()`，不通过受保护的 HTTP schema endpoint、不需要真实 secret/用户库，也不创建生产状态。Offline builder 不能发布一份删除 security metadata 的竞争性 contract；可被 HTTP 服务的任何 app 都遵循 Auth gate。Research 目前无 Web consumer，不因增加认证或 authority-only WP0 自动新增 generated types。未来 Research Explorer 首次消费 Publication HTTP contract 时，必须生成其共址 OpenAPI / TypeScript artifacts，加入全部 consumer 的 `contract:check`；Layer 的语义来源仍是 [Visualization authority](VISUALIZATION.md)，wire 表达来源于 ui_http OpenAPI，不手写竞争 schema。
 
 ## 5. Tooling Boundary
 

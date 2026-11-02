@@ -28,5 +28,8 @@ The first Task implements its own backend-readiness and read-only capability-dis
 checks and Task-specific validation/persistence of Agent-authored workflows through
 pure public Python Research Preview, followed by separately authorized execution and
 result retention through the public Research Python Batch boundary. Authentication,
-visualization, scheduling and agent orchestration are not implemented by Workbench. Discovery consumes
+visualization, scheduling and agent orchestration are not implemented by Workbench.
+Research [publication](../market_research/PUBLICATION.md) has separate ownership and
+storage; RunStore preserves operational evidence and is not a publication repository.
+Workbench does not generate application-specific HTML or host a separate research Web server. Discovery consumes
 published HTTP responses; Workbench owns no capability registry or business validation.

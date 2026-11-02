@@ -52,6 +52,7 @@ from .products.research.endpoint import is_research_path
 from .products.research.endpoint import router as research_router
 from .products.research.errors import ResearchApiError
 from .products.research.errors import error_response as research_error_response
+from .products.research_publication.endpoint import router as publication_router
 
 TITLE = "hg-market-state-lab Market Snapshot API"
 VERSION = "0.1.0"
@@ -210,6 +211,7 @@ def create_app() -> FastAPI:
     application.include_router(chain_router)
     application.include_router(premium_router)
     application.include_router(research_router)
+    application.include_router(publication_router)
     return application
 
 
