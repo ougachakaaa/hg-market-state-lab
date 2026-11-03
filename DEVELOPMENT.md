@@ -30,6 +30,14 @@ PowerShell 脚本使用 Python 3.13、Poetry、Node 与 npm 达到相同终态�
 
 手工执行 `git worktree add` 不会触发 Codex Local Environment，可以在新 worktree 根目录运行对应平台的 bootstrap 命令。
 
+## Windows One-Click Development Startup
+
+在 Windows 上双击仓库根目录的 `start-market-lab.cmd`。需要预先安装 Python 3.13、Poetry、Node.js（20.19+ 或 22.12+）和 npm，并使其可从 PATH 使用；首次启动或依赖不完整时会运行现有 Windows bootstrap，安装需要网络连接。启动成功后会自动打开 `http://127.0.0.1:5173/`。
+
+首次使用时在网页注册，然后在仓库根目录的另一个终端运行 `poetry run lab auth pending`，取得用户 ID 后运行 `poetry run lab auth approve <user-id>`，再返回网页登录。若设置了 `LAB_AUTH_DB_PATH`，审批终端也必须使用相同的值。
+
+保持启动窗口打开，按任意键停止两个服务。启动失败时查看窗口提示和 `ui_http/data/one-click/` 中的日志；检查工具是否在 PATH、依赖安装是否成功、默认端口 8011 和 5173 是否被占用，以及显式 Auth 配置是否与本地 loopback 模式匹配。可在仓库根运行 `poetry run lab doctor` 进一步诊断。启动器在该已忽略目录中保存本机 JWT 密钥以便重启复用，不会清空用户库或行情缓存。
+
 ## 当前可运行命令
 
 ```bash
