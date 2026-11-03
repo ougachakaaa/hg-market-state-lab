@@ -29,7 +29,7 @@ from market_statistics import CalculationFailure, compute
 @pytest.fixture(autouse=True)
 def no_default_services(monkeypatch):
     def forbidden(*args, **kwargs):
-        pytest.fail("No real service factory or default cache is permitted in WB-05")
+        pytest.fail("No real service factory or default cache is permitted in this test")
     preparation = sys.modules["market_research.descriptive.cases.trailing_return.preparation"]
     monkeypatch.setattr(preparation, "create_calendar_service", forbidden)
     monkeypatch.setattr(preparation, "create_index_service", forbidden)

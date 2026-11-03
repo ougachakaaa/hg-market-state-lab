@@ -1,4 +1,4 @@
-"""Isolated WB-05 harness. Never import this as an operational authorizer."""
+"""Isolated G5 harness. Never import this as an operational authorizer."""
 
 import json
 import runpy
@@ -18,13 +18,13 @@ G5 = runpy.run_path(str(TASK_DIR / "runtime" / "record_g5.py"))
 FIXTURES = runpy.run_path(str(Path(__file__).resolve().parents[2]
                              / "market_research" / "tests" / "observation_fixtures.py"))
 DAYS, CODE = FIXTURES["DAYS"], FIXTURES["CODE"]
-SERVICES_ACTIVE = ContextVar("wb05_isolated_services_active", default=False)
+SERVICES_ACTIVE = ContextVar("g5_isolated_services_active", default=False)
 
 
 def frozen_run(root, *, long=False, subjects=None, policy="continue"):
     run_id = discovered(root)
     draft = candidate()
-    draft["original_objective"] = "Synthetic WB-05 isolated trailing return observation"
+    draft["original_objective"] = "Synthetic isolated trailing return observation"
     draft["input_resolution"] = {"kind": "user_interaction",
                                  "reference": "isolated simulated test; no real consent"}
     plan = draft["research_plan"]
@@ -36,7 +36,7 @@ def frozen_run(root, *, long=False, subjects=None, policy="continue"):
 
 
 def authorization(challenge, kind="user_message"):
-    return {"source_kind": kind, "source_reference": "isolated deterministic WB-05 fixture",
+    return {"source_kind": kind, "source_reference": "isolated deterministic G5 fixture",
             "user_statement": (G5["approval_sentence"](challenge) if kind == "user_message" else
                                "SYNTHETIC ONLY: approve this exact challenge for service fakes"),
             "approved_challenge": challenge, "resource_budget": "zero provider calls and charges",

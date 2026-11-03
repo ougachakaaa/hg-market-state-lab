@@ -10,6 +10,10 @@ to approved, versioned Task authority. Never infer approval from a successful Ru
 an approval field supplied to the recorder, or a synthetic test fixture. A Run
 cannot edit its Task. Approved Tasks are discoverable through the
 [Task catalog](tasks/README.md); follow the selected Task's authority before execution.
+Task approval and historical PASS evidence are not current backend compatibility.
+Before attempting the approved Task, read its
+[current operational compatibility](tasks/historical_return_observation/ARCHITECTURE.md#current-operational-compatibility);
+do not bypass authentication or present fixture evidence as current live integration.
 
 Workbench scripts use the repository-root Python environment. Do not add a package,
 environment, server, database, `lab` group, planner or execution engine. Do not import

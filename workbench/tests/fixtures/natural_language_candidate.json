@@ -3,7 +3,7 @@
   "original_objective": "Study the 10-trading-session trailing cumulative returns of index 000852.SH for inclusive dates 2010-01-01 through 2026-10-28. Compute quantiles at 0.1, 0.5 and 0.9, and interval counts with decimal_ratio edges [-0.15, -0.05, 0, 0.05, 0.15]. Use trailing_cumulative_return_v1, empty metric parameters and continue-on-failure policy. Preserve all results and limitations.",
   "input_resolution": {
     "kind": "explicit_user_request",
-    "reference": "WB-06 user request, Phase A fully specified synthetic acceptance example; test inputs only, no live authorization. Agent composed after actual G3 discovery; see wb06/SCENARIO.md."
+    "reference": "Synthetic fully specified acceptance request; test inputs only, no live authorization. Agent composed after deterministic G3 fixture discovery."
   },
   "capability_id": "trailing_cumulative_return_v1",
   "execution_surface": "python",
@@ -14,8 +14,8 @@
     "horizons": [10],
     "windows": [{"start_date": "2010-01-01", "end_date": "2026-10-28"}],
     "analysis_requests": [
-      {"request_id": "wb06_quantiles", "spec": {"method": "quantile", "points": [0.1, 0.5, 0.9]}},
-      {"request_id": "wb06_intervals", "spec": {"method": "interval_count", "edges": [-0.15, -0.05, 0, 0.05, 0.15], "unit": "decimal_ratio"}}
+      {"request_id": "quantiles", "spec": {"method": "quantile", "points": [0.1, 0.5, 0.9]}},
+      {"request_id": "intervals", "spec": {"method": "interval_count", "edges": [-0.15, -0.05, 0, 0.05, 0.15], "unit": "decimal_ratio"}}
     ],
     "on_job_failure": "continue"
   }

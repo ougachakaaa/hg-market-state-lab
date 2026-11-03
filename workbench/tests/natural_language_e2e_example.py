@@ -1,12 +1,10 @@
-"""WB-06 isolated acceptance only. No live mode and no real execution consent.
+"""Isolated deterministic end-to-end harness for the approved Task.
 
-Replays an Agent-authored candidate; this script is not a natural-language planner.
-G1/G3 use the supplied backend. G5 uses only guarded public-service fixtures.
+No live mode and no real execution consent. Replays an Agent-authored candidate; this
+module is not a natural-language planner. G1/G3 use a supplied backend fixture; G5 uses
+guarded public-service fixtures and an isolated simulated host.
 """
 
-import argparse
-import copy
-import hashlib
 import json
 import runpy
 import subprocess
@@ -39,7 +37,7 @@ def save(root, run_id, label, value):
 
 
 def discover(root, target):
-    result = G1["record_g1"](root, "WB-06 G1 readiness only; isolated acceptance follows; "
+    result = G1["record_g1"](root, "Isolated G1 readiness only; full harness follows; "
                               "no live authorization", target, 5)
     assert result["result"]["status"] == "PASS"
     run_id = result["run_id"]
@@ -171,10 +169,10 @@ def run_case(root, run_id, draft, *, missing=False):
         "input_requests": {"calendar": G4["plain"](cal.calls), "index": G4["plain"](idx.calls)},
     }
     summary["inspection_artifact"] = save(root, run_id,
-        "WB-06 independent output inspection", summary)
+        "Isolated independent output inspection", summary)
     # Expected injected failure is evidence of historical-read behavior, not a product defect.
     RunStore(root).gate(run_id, {"gate_id": "G3", "status": "FAIL", "evidence": [],
-        "reason": "WB-06 expected injected later discovery failure; no production defect"})
+        "reason": "Expected injected later discovery failure; no production defect"})
     try:
         G4["read_frozen"](root, run_id)
     except ValueError:
@@ -188,7 +186,7 @@ def run_case(root, run_id, draft, *, missing=False):
     assert calls == 1
     summary["later_g3_failure"] = "expected test injection; current eligibility revoked"
     summary["historical_result_still_readable"] = True
-    summary["history_check_artifact"] = save(root, run_id, "WB-06 historical read verification", {
+    summary["history_check_artifact"] = save(root, run_id, "Historical read verification", {
         "expected_injected_g3_fail": True, "current_g4_ineligible": True,
         "fresh_process_g5_read": "PASS", "original_result_unchanged": True,
         "execute_batch_calls": calls})
@@ -205,30 +203,3 @@ def no_consent(root, target, draft):
     return {"run_id": run_id, "status": result["result"]["status"],
             "reason": result["result"]["reason"], "workflow_artifact": frozen["workflow_artifact"],
             "intent_count": 0, "execute_batch_calls": 0, "real_user_consent": False}
-
-
-def main():
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--base-url", required=True)
-    parser.add_argument("--candidate", type=Path, required=True)
-    parser.add_argument("--run", help="Already G1/G3-verified Run; never an executed Run")
-    parser.add_argument("--root", type=Path, default=ROOT / "workbench" / ".runs")
-    parser.add_argument("--output", type=Path, required=True)
-    args = parser.parse_args()
-    draft = json.loads(args.candidate.read_text(encoding="utf-8"))
-    original = copy.deepcopy(draft)
-    result = {"goal": "WB-06", "synthetic_only": True,
-        "baseline": subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip(),
-        "candidate_sha256": hashlib.sha256(args.candidate.read_bytes()).hexdigest(),
-        "cases": [run_case(args.root, args.run or discover(args.root, args.base_url), draft),
-                  run_case(args.root, discover(args.root, args.base_url), draft, missing=True)],
-        "authorization_boundary": no_consent(args.root, args.base_url, draft),
-        "live_full_history": "BLOCKED; operational budget and real consent not established"}
-    assert draft == original
-    args.output.write_text(json.dumps(result, ensure_ascii=True, indent=2) + "\n", encoding="utf-8")
-    print(json.dumps({"output": str(args.output), "runs": [c["run_id"] for c in result["cases"]],
-                      "deterministic_e2e": "PASS", "live_full_history": "BLOCKED"}))
-
-
-if __name__ == "__main__":
-    main()

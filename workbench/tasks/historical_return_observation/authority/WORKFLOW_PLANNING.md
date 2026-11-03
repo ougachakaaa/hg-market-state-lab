@@ -8,6 +8,12 @@ Research owns
 owns [spec validation](../../../../market_statistics/CONTRACT.md). Workbench owns no
 planner, calculation, acquisition, scheduler or general workflow language.
 
+Current eligibility: this G4 mechanism is implemented and historical/fixture Runs
+remain readable, but a new PASS requires current G1 and G3 PASS evidence. V1's anonymous
+readiness/discovery path cannot pass against the authenticated backend, so a fresh live
+G4 is currently blocked. No G4 semantics change; see the
+[Task compatibility entry](../ARCHITECTURE.md#current-operational-compatibility).
+
 ## Authorization reconciliation
 
 Task v1's required authorization is explicitly **before research execution**; its
@@ -18,7 +24,7 @@ G4 records `pending`, identifying future execution, acquisition, cache writes an
 possible paid-data access as requiring explicit user authorization for the exact
 frozen artifact identity/hash. Preview grants none. This reconciles the existing
 clauses without changing the approved JSON or historical Run snapshots. No Task
-amendment is required. WB-02/WB-03 implementation-state statements remain historical.
+amendment is required. Historical Task V1 implementation-state statements remain historical.
 G5 execution and authorization are governed by the separate G5 contract.
 
 ## Agent-authored candidate

@@ -14,7 +14,10 @@ def synthetic_request() -> dict[str, Any]:
         "task": {
             "task_id": "synthetic-file-check",
             "version": "1",
-            "approval": {"kind": "synthetic", "reference": "WB-01 test only; no business approval"},
+            "approval": {
+                "kind": "synthetic",
+                "reference": "Synthetic test fixture only; no business approval",
+            },
             "goal": "Exercise generic evidence storage",
             "scope": "Synthetic local files only",
             "required_inputs": ["Synthetic check text", "Inspection enabled flag"],

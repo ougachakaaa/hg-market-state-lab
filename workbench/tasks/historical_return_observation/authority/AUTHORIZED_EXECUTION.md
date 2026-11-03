@@ -9,6 +9,13 @@ and shared [Run](../../../contracts/RUN.md), [Gate](../../../contracts/GATE.md) 
 [input identity](../../../../market_research/descriptive/cases/trailing_return/INPUT_IDENTITY.md).
 Statistics owns numerical results. Workbench only authorizes, delegates and preserves.
 
+Current eligibility: this G5 adapter is implemented and completed historical Runs
+remain readable, but new execution requires a current G4 PASS, which in turn requires
+current G1/G3. V1's anonymous readiness path is blocked by repository authentication, so
+a fresh live G5 is currently unreachable. This changes no G5 semantics or historical
+evidence; see the
+[Task compatibility entry](../ARCHITECTURE.md#current-operational-compatibility).
+
 ## Prerequisites and authorization
 
 Before execution, `record_g5.py` consumes `record_g4.read_frozen`: exact canonical Task v1,
@@ -70,7 +77,7 @@ attempt ID, context, exact frozen workflow/Preview and authorization artifact re
 Once any intent exists, this adapter permanently refuses another invocation in that
 Run, even if there is no result or a later BLOCKED outcome. Operator reconciliation
 must establish the actual outcome; deleting evidence or rerunning is not recovery.
-WB-05 supplies no retry or reconciliation override. A new execution requires separate
+This adapter supplies no retry or reconciliation override. A new execution requires separate
 operator reconciliation and fresh authorization/planning in a new Run.
 
 Call the published `market_research.descriptive.execution.execute_batch(plan)` once.
@@ -130,7 +137,7 @@ prefix. CLI PASS=0, FAIL=1, BLOCKED=2; corrupt/busy storage=1.
 ## Reconciliation
 
 Task v1 already requires separate authorization and all requested computation; the
-historical WB-02 implementation-state clauses do not prohibit later commissioned slices.
+historical Task V1 implementation-state clauses do not prohibit later commissioned slices.
 The G5 long-history availability clause means preserve/report actual coverage under the
 case policy, not invent a strict-completeness rule. No approved semantic amendment or
 Task JSON change is needed. G2/G6 remain deferred. Deterministic acceptance proves the mechanism only, not live readiness or general natural-language planning quality. See [usage](../README.md).

@@ -2,10 +2,16 @@
 
 Start agents at [AGENTS.md](AGENTS.md). [Architecture](ARCHITECTURE.md) routes to the
 canonical Task / Run / Gate / storage contracts. This guide supplies usage only.
-Approved Tasks enter through the [Task catalog](tasks/README.md). The WB-01
-acceptance fixture below remains synthetic. For WB-02 readiness, WB-03 discovery, WB-04
-planning/persistence, WB-05 authorized execution and actual Run evidence, use the
-[Historical Return Observation guide](tasks/historical_return_observation/README.md).
+Approved Tasks enter through the [Task catalog](tasks/README.md).
+
+**Current status:** the approved Historical Return Observation Task recorders implement
+G1, G3, G4 and G5, and deterministic fixture acceptance remains supported. A fresh
+end-to-end Workbench path against the current backend is blocked at G1 because repository
+HTTP now requires authentication while Task V1's readiness and discovery contracts are
+anonymous.
+Existing Runs and retained results remain readable historical evidence. See the
+[Task compatibility entry](tasks/historical_return_observation/ARCHITECTURE.md#current-operational-compatibility)
+before attempting the Task. Do not bypass authentication.
 
 From repository root, using the existing Python 3.13 environment:
 
@@ -82,7 +88,7 @@ For in-process use without packaging, load this standalone script with standard-
 and call `create(request)`, `artifact(run_id, request)`, `gate(run_id, outcome)`,
 `event(run_id, event)` or `read(run_id)`. The CLI uses the same methods.
 
-Run the independently reproducible acceptance example:
+Run the independently reproducible synthetic acceptance example:
 
 ```powershell
 poetry run python workbench/tests/acceptance_example.py
@@ -91,4 +97,7 @@ poetry run python workbench/tests/acceptance_example.py
 It creates one synthetic Task version and two distinct Runs, checks all four Gate
 statuses, preserves evidence after temporary source removal and prints identities,
 locations and verification results. It writes only ignored Workbench evidence.
-Recorded delivery checks and known limits are in [WB-01 acceptance](ACCEPTANCE.md).
+Storage limits and known failure modes are in the
+[storage contract](contracts/STORAGE.md). The approved Task's usage and current
+compatibility are in the
+[Historical Return Observation guide](tasks/historical_return_observation/README.md).

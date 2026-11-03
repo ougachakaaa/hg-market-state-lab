@@ -1,4 +1,4 @@
-"""WB-07 opt-in operational controls; no standalone live authorization surface.
+"""Opt-in operational controls; no standalone live authorization surface.
 
 Use prepare() without Source I/O. A trusted session host may call execute() only
 after resolving the real user's exact G5 challenge approval. Never load consent
@@ -266,7 +266,7 @@ def controls(cache, run_id, audit):
             if sum(calls.values()) >= LIMITS["provider_calls"] or check():
                 audit["ceiling_reached"] = True
                 snapshot()
-                raise OperationError("WB-07 operational ceiling reached; no retry")
+                raise OperationError("Operational acceptance ceiling reached; no retry")
             if endpoint not in {"trade_cal", "index_basic", "index_daily"}:
                 raise OperationError("Unexpected acceptance endpoint")
             calls[endpoint] += 1
@@ -305,7 +305,7 @@ def execute(run_id, authorize):
 if __name__ == "__main__":
     import argparse
 
-    parser = argparse.ArgumentParser(description="WB-07 no-Source readiness only")
+    parser = argparse.ArgumentParser(description="No-Source readiness only")
     parser.add_argument("--prepare-run", required=True)
     args = parser.parse_args()
     print(json.dumps(prepare(args.prepare_run), ensure_ascii=True, indent=2))

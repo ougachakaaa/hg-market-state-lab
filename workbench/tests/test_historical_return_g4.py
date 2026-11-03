@@ -1,4 +1,4 @@
-"""WB-04 deterministic planning acceptance, with public owner validation and no market I/O."""
+"""Deterministic planning acceptance, with public owner validation and no market I/O."""
 
 import copy
 import hashlib

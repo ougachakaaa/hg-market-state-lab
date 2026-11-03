@@ -1,13 +1,38 @@
 # G3 Capability Discovery contract
 
 This specializes [Task version 1](../task.json), its prospective G3 criteria and the
-shared [Gate](../../../contracts/GATE.md) contract. The approved discovery slice preserves the existing Task definition. Version 1 and
-existing Run snapshots remain byte-for-byte unchanged: WB-02 implementation-state
-statements in that snapshot describe WB-02, not a permanent prohibition on G3.
-[G4 planning](WORKFLOW_PLANNING.md) and [G5 execution](AUTHORIZED_EXECUTION.md) are implemented.
+shared [Gate](../../../contracts/GATE.md) contract. The approved discovery slice preserves
+the existing Task definition. Version 1 and existing Run snapshots remain byte-for-byte
+unchanged: historical Task V1 implementation-state text describes V1 at approval time,
+not a permanent prohibition on G3. The [G4 planning](WORKFLOW_PLANNING.md) and
+[G5 execution](AUTHORIZED_EXECUTION.md) mechanisms are implemented; their current
+eligibility is subject to the
+[Task compatibility entry](../ARCHITECTURE.md#current-operational-compatibility).
 Research owns capability meaning and publication under
 [its contract](../../../../market_research/descriptive/RESEARCH_CAPABILITY.md);
 [HTTP authority](../../../../ui_http/products/research/http-contract.md) owns transport.
+
+## Current repository compatibility
+
+G3 performs anonymous GET requests and has no Cookie or credential handling. Under
+current [repository authentication](../../../../ui_http/AUTHENTICATION.md), both Research
+discovery endpoints return HTTP 401 before routing. A fresh G3 attempt is also blocked
+before HTTP because it requires the latest G1 to PASS, which the anonymous G1 checker
+cannot establish against the authenticated backend. Fixture tests exercise discovery
+transparency, validation and evidence handling; they do not prove current authenticated
+integration.
+
+The exact prerequisite literal
+`Authentication deferred in current MVP; loopback backend has no authentication.` is
+frozen Task V1 approval/provenance text and remains required for reading existing
+evidence. It is not a current assertion that the backend is unauthenticated and must not
+be changed in place. A future Task version must define a new authentication disposition.
+
+The composed-contract test obtains the published schema offline and uses an
+authenticated in-process client only to fetch representative response bytes, then serves
+those bytes from an unauthenticated local fixture. It validates the public contract
+shape, not the current authenticated deployment. Do not bypass authentication, fabricate
+G1 evidence, or substitute fixtures for current live integration.
 
 ## Prerequisites and outcomes
 

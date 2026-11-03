@@ -1,4 +1,4 @@
-"""No-Source safety tests for the explicitly commissioned WB-07 acceptance tool."""
+"""No-Source safety tests for the explicitly commissioned acceptance-control tool."""
 
 import json
 import runpy
