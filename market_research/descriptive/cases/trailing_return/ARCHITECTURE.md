@@ -11,7 +11,7 @@ and the live-data gate are recorded in [Acceptance](../../ACCEPTANCE.md).
 | Fixed question, identity, formula and eligibility | This document |
 | Public binding, Calendar discovery, partial Export validation and fact coverage | [INPUTS.md](INPUTS.md) |
 | Retained evidence and versioned deterministic fingerprint | [INPUT_IDENTITY.md](INPUT_IDENTITY.md) |
-| Cross-contract scenarios, reconciliation and readiness | [Acceptance](../../ACCEPTANCE.md) |
+| Cross-contract acceptance scenarios and readiness | [Acceptance](../../ACCEPTANCE.md) |
 
 ## Fixed question and observation identity
 

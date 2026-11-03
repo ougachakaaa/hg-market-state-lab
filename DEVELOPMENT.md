@@ -72,7 +72,7 @@ poetry run lab serve backend
 `lab serve backend` 从 repository root 使用当前 Python interpreter 前台执行 `ui_http/scripts/api.py`。`lab serve frontend` 在 `ui_web/` 前台执行系统解析到的 npm `run dev`；首次启动前需在 `ui_web/` 自行执行 `npm install`。两个命令继承标准输入输出、传递子进程退出码，Ctrl+C 结束前台进程。缺少启动前提时明确报错，不自动修复环境。
 
 
-`ui_web/` 是独立 npm project，使用 Vite + React + TypeScript。Node.js 需满足当前 Vite 要求（20.19+ 或 22.12+）。`npm run dev` 在 `http://127.0.0.1:5173/` 提供认证入口和两个 MO 页面，与 `doctor` 的本地诊断地址一致；`npm run build` 执行 TypeScript 检查及 production build，`npm run lint` 运行 Oxlint，`npm run test` 运行前端测试。Vite dev proxy 将 frontend origin 的 `/auth`、`/mo-option-chain`、`/mo-option-premium-plane` 原路径和 query 转发到 `http://127.0.0.1:8011`，不需要 backend CORS policy。默认 provider 已接入真实读取链路；具体响应取决于目标日期与 Source 数据。
+`ui_web/` 是独立 npm project，使用 Vite + React + TypeScript。Node.js 需满足当前 Vite 要求（20.19+ 或 22.12+）。`npm run dev` 在 `http://127.0.0.1:5173/` 提供认证入口和三个业务 surface（MO Option Chain、MO Premium Plane、Research Explorer），与 `doctor` 的本地诊断地址一致；`npm run build` 执行 TypeScript 检查及 production build，`npm run lint` 运行 Oxlint，`npm run test` 运行前端测试。Vite dev proxy 将 frontend origin 的 `/research`、`/auth`、`/mo-option-chain`、`/mo-option-premium-plane` 原路径和 query 转发到 `http://127.0.0.1:8011`，不需要 backend CORS policy。默认 provider 已接入真实读取链路；具体响应取决于目标日期与 Source 数据。
 
 ### 浏览器注册、审批与登录
 
@@ -80,7 +80,7 @@ poetry run lab serve backend
 2. 另一个终端从仓库根执行 `poetry run lab serve frontend`，打开 `http://127.0.0.1:5173/`。始终使用 `127.0.0.1`，不与 `localhost` 混用。
 3. 点击 Register，输入 username/password 并提交；202 只表示等待审批，不会登录。输入规则见 [Auth authority](ui_http/AUTHENTICATION.md#2-user-identity-and-persistence)。
 4. Operator 从仓库根执行 `poetry run lab auth pending`，读取申请 ID，再执行 `poetry run lab auth approve <user-id>`。
-5. 返回 Login，使用已审批账号登录。默认进入 MO Option Chain，可切换 MO Premium Plane；选择日期才发起行情请求。行情仍依赖其 Source 配置和数据可用性。
+5. 返回 Login，使用已审批账号登录。默认进入 MO Option Chain，可切换 MO Premium Plane 或 Research Explorer；MO 页面选择日期才发起行情请求。行情仍依赖其 Source 配置和数据可用性。
 6. 刷新时由 `/auth/me` 检查 HttpOnly Cookie 恢复身份。Logout 期间卸载业务页面；成功返回登录，失败显示重试退出。登录过期的业务 401 同样返回登录。
 
 所有浏览器请求走相对 URL 和 Vite 同源代理，不直接调用 `:8011`，无需 CORS 或本地认证绕过。

@@ -70,7 +70,7 @@ evidence were reconciled. No unresolved contract deviations were found.
 | Root wheel build and isolated installed public imports | Passed |
 | `git diff --check` and full change review | Passed |
 
-All requested Statistics checks executed. Historical Observation/DataLake live-data
-acceptance remains blocked as previously recorded in the
-[Research acceptance evidence](../market_research/descriptive/ACCEPTANCE.md);
-this purely numerical implementation makes no live-data acceptance claim.
+All requested Statistics checks executed. The historical default Trade Calendar cache
+limitation remains unresolved; bounded isolated Research real-market validation is recorded
+in [Research acceptance evidence](../market_research/descriptive/ACCEPTANCE.md). This
+purely numerical implementation makes no live-data acceptance claim.

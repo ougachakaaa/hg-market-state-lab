@@ -89,7 +89,7 @@ Windows 上可直接双击仓库根目录的 `start-market-lab.cmd` 一键启动
 Start with the stable [Research human/agent usage guide](market_research/USAGE.md).
 One admitted descriptive capability is discoverable through the existing backend;
 its [HTTP contract](ui_http/products/research/http-contract.md) owns the four operations.
-Actual checks and release limits are in [Research entry acceptance](market_research/descriptive/RESEARCH_ENTRY_ACCEPTANCE.md).
+Current checks, bounded real-market evidence and release limits are in [Research acceptance and validation evidence](market_research/descriptive/ACCEPTANCE.md).
 
 The [Research semantic foundation](market_research/ARCHITECTURE.md) starts with
 Descriptive Research. The independent Python [Single Job Executor](market_research/descriptive/JOB_EXECUTION.md)
@@ -124,7 +124,7 @@ poetry run python ui_http/scripts/api.py --host 127.0.0.1 --port 8012
 npm run dev
 ```
 
-默认开发地址为 `http://127.0.0.1:5173/`。Vite 将 `/auth`、`/mo-option-chain` 与 `/mo-option-premium-plane` 转发到默认 backend 地址；具体视觉与交互语义见 [MO Option Chain visualization authority](ui_web/src/features/mo_option_chain/ARCHITECTURE.md)。
+默认开发地址为 `http://127.0.0.1:5173/`。Vite 将 `/research`、`/auth`、`/mo-option-chain` 与 `/mo-option-premium-plane` 转发到默认 backend 地址；具体视觉与交互语义见 [MO Option Chain visualization authority](ui_web/src/features/mo_option_chain/ARCHITECTURE.md)。
 
 ## 验证命令
 

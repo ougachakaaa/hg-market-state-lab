@@ -27,8 +27,7 @@ ObservationJobSpec → validated prepared facts / availability evidence → Obse
 | Independent structured segmentation observation | [Price Segmentation](cases/price_segmentation/ARCHITECTURE.md) |
 | First case: formula, public input binding, warm-up, validity and fingerprint | [Trailing Return](cases/trailing_return/ARCHITECTURE.md) |
 | Admitted capability publication and pure preview | [RESEARCH_CAPABILITY.md](RESEARCH_CAPABILITY.md) |
-| Discovery / agent guide / HTTP delivery verification | [RESEARCH_ENTRY_ACCEPTANCE.md](RESEARCH_ENTRY_ACCEPTANCE.md) |
-| Implementation readiness and cross-contract acceptance gates | [ACCEPTANCE.md](ACCEPTANCE.md) |
+| Implementation status, cross-stage acceptance scenarios and validation evidence | [ACCEPTANCE.md](ACCEPTANCE.md) |
 
 An ObservationSet may support multiple analyses after conversion. Method parameter changes
 do not require upstream acquisition or observation reconstruction as a semantic prerequisite.
@@ -40,7 +39,7 @@ Descriptive association does not establish causality, predictive validity or a t
 The [Price Segmentation case](cases/price_segmentation/ARCHITECTURE.md) independently
 observes one complete price series and does not require horizon, scalar ObservationSet,
 conversion or Statistics. Its independent Python observation API is implemented and
-[live acceptance](cases/price_segmentation/LIVE_E2E_ACCEPTANCE.md) is recorded separately;
+[real-market validation](ACCEPTANCE.md#real-market-validation-evidence) is recorded separately;
 the existing scalar runtime remains unchanged.
 
 ## First case and readiness
@@ -53,16 +52,16 @@ The Observation subject is asset-agnostic; this case binds only Index Daily. Its
 missing-tolerant policy preserves calendar candidates and records unavailable facts.
 Individual stocks and other series require their own published fact/calendar binding
 and price semantics; their gaps do not block the index case. See the capability and
-reconciliation matrices in [ACCEPTANCE.md](ACCEPTANCE.md).
+readiness matrix in [ACCEPTANCE.md](ACCEPTANCE.md).
 Observation production for this case is implemented with independent public preparation
 and pure construction. The reusable scalar converter and independent Result Association
 are implemented. The [Single Job Executor](JOB_EXECUTION.md) composes them through public
 boundaries. [ResearchPlan / Batch](BATCH_EXECUTION.md) composes Single Job with whole-plan
-preflight and deterministic continue/stop accounting; [Batch acceptance](BATCH_EXECUTION_ACCEPTANCE.md)
-records actual verification. The independent Statistics public numerical API is implemented
-by STAT-IMP-01.
-[Acceptance gates](ACCEPTANCE.md) distinguish semantic readiness from runtime and live-data
-verification. No unresolved implicit default is authorized.
+preflight and deterministic continue/stop accounting; the Batch contract and
+deterministic tests record actual verification. The independent Statistics public
+numerical API is implemented by STAT-IMP-01.
+[Acceptance](ACCEPTANCE.md) records current readiness and bounded real-market validation.
+No unresolved implicit default is authorized.
 
 ## Deferred scope
 

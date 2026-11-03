@@ -111,10 +111,8 @@ publish this one case; bounded HTTP delivery belongs to
 [ui_http](../ui_http/products/research/http-contract.md). Human/agent usage is in
 [USAGE.md](USAGE.md), not a competing semantic authority.
 No Research CLI or report renderer is published. The independent Statistics
-public API is implemented; deterministic Single Job and
-[Batch acceptance](descriptive/BATCH_EXECUTION_ACCEPTANCE.md) are recorded separately
-from the [isolated real-market E2E acceptance](descriptive/LIVE_E2E_ACCEPTANCE.md).
-Actual verification and live-data limitations are recorded in
+public API is implemented; deterministic execution and bounded isolated real-market
+validation evidence, including current limitations, are recorded in
 [Acceptance](descriptive/ACCEPTANCE.md).
 The concrete first case and implementation acceptance gates are reached through the
 Descriptive entry; semantic readiness alone does not establish runtime or live acceptance. Agent

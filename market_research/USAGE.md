@@ -3,8 +3,8 @@
 This is the stable usage entry, not semantic authority. Start with the Research-owned
 [capability contract](descriptive/RESEARCH_CAPABILITY.md), [Plan/Batch contract](descriptive/BATCH_EXECUTION.md)
 or [HTTP transport contract](../ui_http/products/research/http-contract.md) for authoritative rules.
-Executed verification and live HTTP limits are recorded in
-[Research entry acceptance](descriptive/RESEARCH_ENTRY_ACCEPTANCE.md).
+Executed verification, bounded real-market validation and live HTTP limits are recorded in
+[Acceptance](descriptive/ACCEPTANCE.md).
 
 ## What is available
 
@@ -16,7 +16,7 @@ The first is descriptive **`trailing_cumulative_return_v1`**:
 index trailing cumulative return `close(T) / close(T-H) - 1`, in `decimal_ratio`.
 `0.1` means 10%, without percentage conversion in the API. It uses full canonical
 index_code identities and the SSE trading-session calendar. `000852.SH` is CSI1000,
-verified against public metadata in [isolated Live E2E](descriptive/LIVE_E2E_ACCEPTANCE.md).
+verified against public metadata in [bounded real-market validation](descriptive/ACCEPTANCE.md#real-market-validation-evidence).
 It is an example, never a default. A syntactically legal code does not prove current
 upstream membership or readiness. Stock returns and Conditional Research are not supported.
 
@@ -46,7 +46,7 @@ subject, provider, parameters or policy. Bool and numeric strings are not coordi
 
 `price_segmentation_v1` observes one complete Index Daily Close series over an explicit
 inclusive date range. Its independent Python API is implemented and has passed the isolated
-[real-market acceptance](descriptive/cases/price_segmentation/LIVE_E2E_ACCEPTANCE.md).
+[real-market validation](descriptive/ACCEPTANCE.md#real-market-validation-evidence).
 It is not published by the existing capability/preview API and is not integrated with
 ResearchPlan, Statistics, the scalar converter, HTTP or Workbench.
 
@@ -293,10 +293,10 @@ Discovery remains responsive while the synchronous worker runs off the event loo
 
 ## Operational limits and current evidence
 
-The existing **isolated Live E2E is Verified** for the Python research chain. The historical
+The existing **isolated real-market validation is Verified** for the Python research chain. The historical
 default Trade Calendar cache was incompatible; **default-cache recovery was NOT performed**.
 It remains unchanged by this work. Do not test or repair that user cache implicitly. See
-[live evidence](descriptive/LIVE_E2E_ACCEPTANCE.md), [DataLake lifecycle](../data_lake/PERSISTENCE.md)
+[validation evidence](descriptive/ACCEPTANCE.md#real-market-validation-evidence), [DataLake lifecycle](../data_lake/PERSISTENCE.md)
 and [local environment](../DEVELOPMENT.md). Upstream availability, credentials, Calendar
 completeness and partial Index facts remain operational dependencies. Deterministic HTTP
 acceptance does not pass a live HTTP gate.
@@ -307,23 +307,23 @@ polling/cancellation API, prediction/signal feature or new engine.
 
 ## Offline Price Segmentation human review
 
-Generate a standalone review from the retained G4 long-window public input evidence,
+Generate a standalone review from the retained long-window public input evidence,
 without provider or cache access, from the repository root:
 
 ```powershell
-poetry run python market_research/tests/segmentation_review.py --evidence <G4-result.json> --output <local-output-directory> --epsilon 0.005 0.010 0.020 0.030
+poetry run python market_research/tests/segmentation_review.py --evidence <retained-evidence.json> --output <local-output-directory> --epsilon 0.005 0.010 0.020 0.030
 ```
 
 Open `index.html` in a browser; `comparison.csv` and `README.md` accompany it. The
 parameters are examples for sensitivity review, not research defaults. The tool verifies
-the source fingerprint and replays G4 at 0.01, recomputes PIP for every requested epsilon,
+the source fingerprint and replays the retained 0.01 request, recomputes PIP for every requested epsilon,
 and reports visual-review diagnostics. It does not perform a new live acceptance or create
 Statistics product results. Close-space connecting lines are visual guides; reconstruction
 error is measured in natural-log price space.
 
 ## CSI1000 full-history offline review
 
-The G6 acceptance helper consumes retained validated public input evidence and never calls
+The full-history review helper consumes retained validated public input evidence and never calls
 Provider during replay. From the repository root:
 
 ```powershell

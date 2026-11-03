@@ -1,46 +1,33 @@
-# Descriptive implementation acceptance authority
+# Research implementation status and validation evidence
 
-This document specializes the [Descriptive entry](ARCHITECTURE.md). It owns readiness,
-reconciliation and cross-contract acceptance gates; detailed contracts remain with their
-linked owners. Implementation Ready means no further business decision is required for
-the stated scope, not that runtime or live-data acceptance exists.
+This is a non-authority status and evidence record for [Descriptive Research](ARCHITECTURE.md).
+Contracts, formulas and workflow semantics remain with their owning documents; ordinary
+implementation work starts from the Descriptive entry and the relevant contract, not this
+file. Previous stage-by-stage reports and commit sequences remain in Git history. Read this
+document for current capability status, release boundaries or the recorded real-market
+validation evidence.
 
-## Implementation readiness matrix
+## Current status
 
-| Work package / case | Semantic readiness | Runtime / remaining limitation | Canonical owner |
-| --- | --- | --- | --- |
-| Price Segmentation V1 | Accepted for V1 | PIP, preparation and independent observation verified; isolated real-market E2E passed; no converter, Statistics, HTTP or Workbench integration | [Case](cases/price_segmentation/ARCHITECTURE.md), [live evidence](cases/price_segmentation/LIVE_E2E_ACCEPTANCE.md) |
-| Asset-agnostic scalar Observation | Implementation Ready as abstract contract | Immutable domain and independent Python API implemented; each new series still needs explicit fact/calendar/metric binding | [Observation](OBSERVATION.md) |
-| Index Trailing Return, complete or legal partial facts | Implementation Ready with explicit canonical index_code, dates and H | Observation runtime and deterministic contract tests implemented; isolated real-market E2E Verified by LIVE-E2E-01; historical default Calendar cache remains unresolved | [Case](cases/trailing_return/ARCHITECTURE.md), [inputs](cases/trailing_return/INPUTS.md), [identity](cases/trailing_return/INPUT_IDENTITY.md), [live evidence](LIVE_E2E_ACCEPTANCE.md) |
-| Sample Converter with missing and coverage context | Implementation Ready | Implemented; deterministic conversion and Statistics reuse verified by CONV-01; zero eligible fails explicitly | [Conversion](SAMPLE_CONVERSION.md), [evidence](CONVERSION_ACCEPTANCE.md) |
-| Result Association | Implementation Ready; exact linkage, bounded structure and non-attestation limits | Implemented by ASSOC-01; deterministic component flow and negative checks passed | [Integration](STATISTICS_INTEGRATION.md) → [association](RESULT_ASSOCIATION.md), [evidence](ASSOCIATION_ACCEPTANCE.md) |
-| Research Job Executor | Implementation Ready | Implemented by EXEC-01 for Index Trailing Return; every required analysis/association must succeed; deterministic acceptance passed | [Execution](EXECUTION.md) → [Single Job](JOB_EXECUTION.md), [evidence](JOB_EXECUTION_ACCEPTANCE.md) |
-| Research Batch Executor | Implementation Ready | Implemented by EXEC-02; immutable ResearchPlan, full preflight, ordered Single Job composition, continue/stop and Skipped accounting; deterministic acceptance passed | [Execution](EXECUTION.md) → [Batch](BATCH_EXECUTION.md), [evidence](BATCH_EXECUTION_ACCEPTANCE.md) |
-| Research capability / agent guide / HTTP entry | Implementation Ready for the single admitted index case | RESEARCH-ENTRY-01 Verified with deterministic HTTP acceptance; live HTTP Not Run; default Calendar recovery not performed | [Publication](RESEARCH_CAPABILITY.md), [guide](../USAGE.md), [HTTP acceptance](RESEARCH_ENTRY_ACCEPTANCE.md) |
-| Research Evidence Storage / Result Reuse / Cache | Deferred; no persistence or reuse protocol published | Not Implemented | [Association scope](RESULT_ASSOCIATION.md#failures-scope-and-non-guarantees) |
-| Statistics NumericSample, Quantile, IntervalCount | Existing contracts remain Implementation Ready | Independent installed Python API and both methods implemented (STAT-IMP-01); no market missing-value responsibility | [Public contract](../../market_statistics/CONTRACT.md), [Quantile](../../market_statistics/QUANTILE.md), [IntervalCount](../../market_statistics/INTERVAL_COUNT.md) |
-| Individual-stock return Observation | Abstractly allowed; not ready as concrete case | Upstream Capability Gap: no stock daily Public Service in current DataLake catalog. Semantic Gap: identity/calendar binding and raw versus adjusted return/corporate-action convention require formal case decisions | [Subject contract](OBSERVATION.md), [published catalog](../../data_lake/DATASETS.md), [selection policy](../UPSTREAM.md) |
-| Index futures, commodity futures, other market series | Abstractly allowed; no return case declared | Existing index-futures Dataset alone does not decide contract selection/roll/price-return/calendar semantics. Commodity/other bindings unreviewed, not claimed supported | [Subject contract](OBSERVATION.md), [selection policy](../UPSTREAM.md) |
+| Area | Status | Canonical entry |
+| --- | --- | --- |
+| `trailing_cumulative_return_v1` observation | Implemented; deterministic contract tests; bounded isolated real-market E2E verified | [Observation](OBSERVATION.md), [case](cases/trailing_return/ARCHITECTURE.md) |
+| Sample converter | Implemented; deterministic contract tests | [Sample conversion](SAMPLE_CONVERSION.md) |
+| Result association | Implemented; deterministic contract tests; observable linkage only, no execution-origin attestation | [Result association](RESULT_ASSOCIATION.md) |
+| Single Job executor | Implemented for Index Trailing Return; deterministic contract tests | [Single Job](JOB_EXECUTION.md) |
+| ResearchPlan / Batch executor | Implemented; deterministic contract tests | [Batch](BATCH_EXECUTION.md) |
+| Capability publication / HTTP entry | One admitted capability; deterministic HTTP acceptance passed; live HTTP not run | [Capability](RESEARCH_CAPABILITY.md), [HTTP contract](../../ui_http/products/research/http-contract.md) |
+| Price Segmentation V1 | Implemented as an independent Python observation; isolated real-market E2E verified; not admitted to capability publication, preview, Statistics, HTTP or Workbench | [Price Segmentation](cases/price_segmentation/ARCHITECTURE.md) |
+| Publication storage / reader | Implemented; Research Explorer consumes the read-only HTTP delivery | [Publication](../PUBLICATION.md), [storage](../PUBLICATION_STORAGE.md) |
+| Individual-stock, futures and other-series cases | Not declared; stock daily public service, adjusted-return policy, futures contract selection and roll semantics remain gaps | [Observation](OBSERVATION.md), [upstream policy](../UPSTREAM.md) |
+| Persistence / replay / result cache / CLI / report | Deferred or not implemented | [Deferred scope](ARCHITECTURE.md#deferred-scope) |
+| Statistics NumericSample / Quantile / IntervalCount | Independent public Python API implemented; numerical semantics remain Statistics-owned | [Statistics contract](../../market_statistics/CONTRACT.md) |
 
-Stock fact-service capability belongs to DataLake; stock research price/calendar binding
-belongs to its future Research case. No private Tushare/SDK/SQLite workaround or stock
-service implementation is authorized here. These gaps do not block the index case.
-Required caller inputs are not missing semantic defaults. Conditional, new metrics/sample
-shapes, optional analyses, retries, adjustment engines and durable outputs are outside scope.
+## Deterministic acceptance scenarios
 
-## Mandatory scenarios A-H
-
-These are cross-stage acceptance specifications. Observation checks are recorded below;
-conversion and independent Statistics reuse are verified in [CONV-01 evidence](CONVERSION_ACCEPTANCE.md).
-Independent result association is verified in [ASSOC-01 evidence](ASSOCIATION_ACCEPTANCE.md).
-Single Job deterministic execution is verified in [EXEC-01 evidence](JOB_EXECUTION_ACCEPTANCE.md).
-ResearchPlan/Batch deterministic execution is verified in [EXEC-02 evidence](BATCH_EXECUTION_ACCEPTANCE.md).
-The bounded isolated real-market end-to-end gate is Verified by
-[LIVE-E2E-01](LIVE_E2E_ACCEPTANCE.md), including verified CSI1000 metadata, both numerical
-methods, Single Job and Batch. The historical incompatible default Trade Calendar
-cache limitation below is unchanged; its blocked attempt is not reclassified.
-Each successful construction verifies unique ordered keys, exactly one outcome per
-candidate, all missing dependencies and derived counts/ratios.
+These are cross-stage acceptance specifications; deterministic coverage is exercised by
+the Research test suite. They are not separate business contracts; detailed obligations
+remain with the owning contracts and tests.
 
 | Scenario | Fixture and expected behavior |
 | --- | --- |
@@ -68,111 +55,59 @@ candidate, all missing dependencies and derived counts/ratios.
 | Statistics | Existing owner fixtures for types, empty/non-finite sample, duplicates, immutability, unit, quantile estimator/extreme arithmetic and interval endpoints/count conservation remain required. |
 | Live data | Explicit metadata-verified CSI1000 code, dates/H and both method parameters; independently check input pairing/returns, sample/binding, analyses/associations and retained fingerprint through authorized public services. No experiments on real user caches. |
 
-## OBS-02 authority reconciliation report
+## Real-market validation evidence
 
-Historical records below retain the Analyze identity used by those goals. The current
-numerical owner is [Market Statistics](../../market_statistics/ARCHITECTURE.md), including
-its [backend conformance policy](../../market_statistics/BACKEND.md); historical names
-and previously executed checks do not publish a competing authority or prove this runtime.
+Both runs used fresh isolated Dataset storage. Default Dataset caches were not opened,
+migrated or repaired. Each result is bounded to its stated scope and does not establish
+provider freshness or coverage outside it.
 
-Baseline reviewed: d158b1f5879491a78a3c3afda807606014632a78. The following classification
-records reconciliation of the frozen decisions; linked current authorities are canonical,
-and superseded rules are not alternate valid policies.
+### Index Trailing Return
 
-| Existing decision | Classification | Resolution / owner |
-| --- | --- | --- |
-| ObservationJobSpec fixed subject/metric/parameters/H/window, scalar grain and deterministic keys | Remain Valid | Observation and execution retain the core request and identity separation. |
-| First case's subject is canonical index_code | Needs Specialization | It remains the index case binding; the general subject is asset-agnostic with case-owned identity/time/public-source obligations. |
-| Every required Index unit must succeed or whole Job fails | Superseded | Only this declared missing-tolerant case accepts validated partial Export; retain all calendar candidates and explicit Unavailable dependencies. Other consumption remains fail-closed. |
-| Eligible/Excluded-only conservation | Superseded | Observation adds Unavailable and three-way derived accounting; coverage has fixed candidate denominator. |
-| H-session SSE basis and adjacent backward discovery | Remain Valid | Input authority preserves exact discovery and calendar offsets, independent of missing price rows. |
-| Required input validation and failure rules | Needs Specialization | Calendar/illegal public input/operation failures still fail; legal missing daily units are availability evidence. Normal partial EnsureResult is retained, then final Export validated. |
-| Public source selection, no private access/fallback, DataLake complete semantics | Remain Valid | UPSTREAM narrowly permits the case policy; no DataLake authority or implementation changes. |
-| Non-positive endpoint business exclusion | Remain Valid | Available legal endpoints retain exclusion rule; missing-first precedence is now explicit. |
-| Complete-input trailing_return_inputs_v1 hash | Superseded | New construction uses explicit v2 profile with final coverage, expected/absent keys and endpoint requirements; historical v1 semantics unchanged. |
-| Converter maps every eligible scalar, Analyze pure and market-agnostic | Remain Valid | Integration specializes SampleBinding to retain missing/coverage context; no NumericSample change. |
-| Valid zero-eligible set versus successful analysis / Job | Remain Valid | All-unavailable is newly admissible construction; zero-eligible conversion failure and all-required-analysis Success rule stay independent. |
-| Research producers/converters/executors and Analyze API | Implementation Gap at OBS-02 | OBS-IMP-01 implements only the Observation producer; converters, executors and Analyze remain authority-only. Stock and other-asset gaps are scoped separately in the readiness matrix. |
+- 2026-10-27, PASS: `000852.SH` (CSI1000) confirmed through public metadata, H=2,
+  inclusive anchor window 2024-01-10..2024-01-16, explicit `metric_parameters={}`.
+- Five Eligible observations, zero Unavailable/Excluded; overall Index fact coverage 7/7,
+  warm-up 2/2, sample 5/5; observation coverage 5/5.
+- Quantiles `0.1 / 0.5 / 0.9` = `-0.008045239512030821 / -0.005683318588033837 / 0.010959089549401701`.
+- Interval counts for `[-0.2, 0.0, 0.2]` = `3` and `2`; frequencies 0.6 and 0.4; count conservation 5.
+- Input profile `trailing_return_inputs_v2`; fingerprint
+  `5bbb52782df680da17036420bdee777b9c3febaf19cd08e8f09c383b8ecf2bfc`.
+- Direct Single Job and one-Job Batch both succeeded with two successful analyses.
+- Harness: `poetry run python market_research/tests/live_e2e_acceptance.py --live --output <output.json>`.
 
-## Authority topology and handoff
+### Price Segmentation
 
-The root module boundary is unchanged. Research entry leads to Descriptive and the
-Observation/integration/execution/acceptance owners. The case entry retains identity,
-formula and eligibility, and routes separately to public preparation/coverage and input
-identity contracts. These are independently consumed stable concerns; each has one owner
-and inherits upper invariants. No duplicate Observation framework or generic financial
-object framework is introduced. Earlier statistical/research retirement decisions remain
-valid; Conditional stays independent and unimplemented.
+- 2026-10-31, PASS: explicit `000852.SH` scopes in isolated storage; every calendar date,
+  open session, public close, PIP point, segment endpoint and fingerprint was checked by an
+  independent oracle.
+- Short-scope important points `(index, date, close)` are `(0, 2024-01-08, 5543.5745)`,
+  `(2, 2024-01-10, 5512.0686)`, `(3, 2024-01-11, 5611.1149)` and
+  `(6, 2024-01-16, 5539.4741)`.
 
-Repository checks establish navigation, boundary and tooling consistency only; they do
-not prove missing-aware runtime, numerical correctness or live-data success. Report actual
-check outcomes at handoff. OBS-02 stopped at semantic encoding; the separately requested
-OBS-IMP-01 implementation is recorded below.
+| Scope (inclusive) | epsilon | Calendar | Sessions | Points | Segments | Maximum log error | Fingerprint |
+| --- | ---: | --- | --- | ---: | ---: | ---: | --- |
+| 2024-01-08–2024-01-16 | 0.005 | 9/9 natural days | 7/7 sessions | 4 | 3 | 0.004603231652222206 | `64b2b9cc9ab212442a248cedd1188c3ba0b372f2404674ba7b7baf09bbc49103` |
+| 2024-01-08–2024-02-29 | 0.01 | 53/53 natural days | 33/33 sessions | 21 | 20 | 0.0087081168442662 | `bfc446b97e0422c276920605049651cacb311cf523ec2aa39916b53b3c195095` |
 
-## OBS-IMP-01 implementation and reconciliation
+| Start | End | Session intervals | Signed amplitude | Direction | Boundary |
+| --- | --- | ---: | ---: | --- | --- |
+| 2024-01-08 | 2024-01-10 | 2 | -0.005683318588033837 | down | start |
+| 2024-01-10 | 2024-01-11 | 1 | 0.017968988992626 | up | neither |
+| 2024-01-11 | 2024-01-16 | 3 | -0.01276765870540264 | down | end |
 
-Implemented against exact baseline `31ad726211069a673fe973bc1a924bf67881e0f2` on
-`reset/market-research-descriptive`, starting from a clean worktree. The scope ends at
-an independently executable ObservationSet; Converter, Analyze and Executor work remains
-outside this implementation.
+- Harness: `poetry run python market_research/tests/segmentation_live_e2e.py --live --long --output <output.json>`.
 
-| Authority | Runtime / evidence |
-| --- | --- |
-| [Observation](OBSERVATION.md): fixed request, keys, three outcomes and accounting | [Public models](../src/market_research/descriptive/observation/models.py), [observe](../src/market_research/descriptive/observation/api.py), [API tests](../tests/test_observation_api.py) |
-| [Inputs](cases/trailing_return/INPUTS.md): export-first public acquisition, complete Calendar, partial Index, discovery and explicit failures | [Public validation / evidence](../src/market_research/descriptive/cases/trailing_return/inputs.py), [preparation](../src/market_research/descriptive/cases/trailing_return/preparation.py), [input tests](../tests/test_observation_inputs.py) |
-| [Case](cases/trailing_return/ARCHITECTURE.md): calendar endpoints, binary64 formula, precedence, coverage and dependence | [Pure construction](../src/market_research/descriptive/cases/trailing_return/construction.py), [behavior tests](../tests/test_observation_construction.py) |
-| [Input identity](cases/trailing_return/INPUT_IDENTITY.md): retained final views, v2 payload and SHA-256 | [Canonical identity](../src/market_research/descriptive/cases/trailing_return/identity.py), [independent golden bytes and sensitivity tests](../tests/test_observation_identity.py) |
+## Operational limits
 
-The public Python names, immutable carriers and Not Applicable representation are encoded
-in the Observation owner. Inputs explicitly clarifies rejection of contradictory facts
-where backward discovery overlaps the sample's closed-date prefix. Formula, population,
-partial-input policy, canonical v2 bytes and upstream contracts are unchanged; no semantic
-or upstream public capability gap was found for this implementation. Runtime registration
-adds only the real Research source root to the root project/tooling; the corresponding
-repository packaging invariant test was updated.
-
-Production imports consume only the shared public `data_lake` results and the selected
-Calendar / Index public facades. Public service calls occur only in preparation. AST and
-execution tests enforce no Analyze, Converter, Executor, Snapshot, provider, Repository,
-SQLite, CLI or HTTP dependency in this slice. Complete inputs, missing intermediate and
-warm-up facts, holidays, all-unavailable / all-excluded / mixed sets, both-missing and
-mixed missing/non-positive endpoints, no candidates, malformed public fields and proofs,
-date.min exhaustion, adjacent doubling, overflow and fingerprint cases are covered.
-
-### Verification evidence (2026-10-25)
-
-- `poetry install --only-root`: passed; direct import from installed root environment passed.
-- `poetry run pytest market_research/tests -q`: 192 passed, including 189 new tests and
-  the 3 existing repository boundary checks.
-- `poetry run pytest data_snapshot/tests/test_authority_topology.py ui_http/tests/test_architecture.py -q`:
-  18 passed.
-- `poetry run pytest -q`: 1338 passed; one existing FastAPI/Starlette TestClient
-  deprecation warning, no failures.
-- `poetry run ruff check market_research ui_http`: passed.
-- `poetry run mypy market_research/src market_research/tests ui_http`: passed.
-- `poetry check --lock`: passed; no dependency/lock change required.
-- `git diff --check`: passed; full tracked diff and new runtime/tests reviewed.
-
-Historical live-data Observation acceptance (2026-10-25): **Blocked**, not passed. An actual call through the
-public Observation API requested 2024-01-10..2024-01-16 with H=2, using candidate subject
-`000852.SH`; its CSI1000 metadata was not confirmed because preparation was blocked.
-The initial public SSE
-Calendar export raised `OperationError`: `Dataset 'tushare_trade_calendar' cache is
-incompatible (storage structure: fetch_unit); rebuild required for this owning Dataset`.
-Research exposed `UpstreamFailure` at `input_preparation`, retaining the request and
-attempt evidence. No ensure, Index acquisition, public CSI1000 metadata confirmation or
-real endpoint/return verification was reached. No cache was rebuilt, edited or replaced,
-and no private access or source fallback was used. Repairing existing Dataset runtime
-state is separate from this implementation. Downstream end-to-end analysis acceptance
-also remains unperformed because those runtimes are not in scope.
-
-| Delivery component | Status |
-| --- | --- |
-| Observation Domain | Complete |
-| Input Preparation | Complete |
-| Trailing Return Construction | Complete |
-| Missing-data Coverage | Complete |
-| Fingerprint / Provenance | Complete |
-| Public API | Complete |
-| Deterministic Tests | Passed |
-| Live-data Acceptance | Blocked |
+- Live HTTP acceptance was not performed. Deterministic HTTP acceptance does not establish
+  live HTTP readiness.
+- The historical default Trade Calendar cache remained incompatible; default-cache recovery
+  was not performed. Verified runs used fresh isolated storage.
+- No execution persistence/replay/result cache, retry/queue/scheduler, CLI, report
+  renderer, Research frontend or Conditional implementation is published; explicit opt-in
+  Publication storage is separate.
+- Upstream availability, credentials, Calendar completeness and partial Index facts remain
+  operational dependencies.
+- Price Segmentation remains a Python observation only; it is not admitted to capability
+  publication, preview, Statistics, HTTP or Workbench.
+- Validation is bounded to the stated scopes and does not establish financial swing quality,
+  provider freshness or general market readiness.

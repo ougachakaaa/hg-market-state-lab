@@ -179,20 +179,11 @@ it. Cancellation and process termination do not promise a complete BatchResult.
 No concurrent/async batch, retry, scheduler, queue, persistence, replay, cache, CLI, HTTP,
 report rendering, new case/numerical algorithm or Live Market E2E is introduced.
 
-## Authority-to-baseline reconciliation
-
-Baseline `78b2a6ed3e3e87c718a142a032c90928acf8a345` includes completed ASSOC-HARD-01
-and EXEC-01. ResearchPlan, BatchResult, expansion and actual Skipped generation are
-Expected Implementation Gaps; JobResult already reserves optional skip fields. The existing
-pure execution preflight is the shared validation owner. Only its literal unit dependency
-changes to the case-published immutable definition already used by construction. Actual
-unit, identity, formula, dates, population, conversion, numerical methods, association and
-upstream contracts remain valid and unchanged. No upstream modification is needed.
-
 Deterministic acceptance additionally covers eighth-Job rejection before any I/O, all
 container/duplicate/ID/spec/unit/policy failures, reordering and overlapping windows,
 complete attempted analyses before stop, every skipped invariant/trigger, conservation,
 retained partial raw results/Evidence/Coverage/Provenance, immutable snapshots and separate
 run objects. Architecture checks forbid Batch from directly executing components.
 Use public-service fakes/narrow patches and an independent public API example, never real
-market/default caches. Acceptance records own actual verification, not business semantics.
+market/default caches. The Research test suite owns actual verification; it does not create
+business semantics.
