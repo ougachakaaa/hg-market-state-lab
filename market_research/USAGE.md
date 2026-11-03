@@ -8,7 +8,11 @@ Executed verification and live HTTP limits are recorded in
 
 ## What is available
 
-The first and only admitted Research is descriptive **`trailing_cumulative_return_v1`**:
+Two independent Python Research capabilities are implemented: `trailing_cumulative_return_v1`
+and [`price_segmentation_v1`](#python-price-segmentation). The existing capability
+publication, ResearchPlan, Statistics and HTTP path admits only Trailing Return.
+
+The first is descriptive **`trailing_cumulative_return_v1`**:
 index trailing cumulative return `close(T) / close(T-H) - 1`, in `decimal_ratio`.
 `0.1` means 10%, without percentage conversion in the API. It uses full canonical
 index_code identities and the SSE trading-session calendar. `000852.SH` is CSI1000,
@@ -37,6 +41,50 @@ Exactly two Statistics specs are available, validated by the public
 
 No automatic binning, sorting, deduplication, clipping, unit conversion, implicit dates,
 subject, provider, parameters or policy. Bool and numeric strings are not coordinates.
+
+## Python: Price Segmentation
+
+`price_segmentation_v1` observes one complete Index Daily Close series over an explicit
+inclusive date range. Its independent Python API is implemented and has passed the isolated
+[real-market acceptance](descriptive/cases/price_segmentation/LIVE_E2E_ACCEPTANCE.md).
+It is not published by the existing capability/preview API and is not integrated with
+ResearchPlan, Statistics, the scalar converter, HTTP or Workbench.
+
+From the repository root with the root Poetry environment and authorized DataLake provider
+configuration, choose an explicit canonical index code, dates and finite positive `epsilon`:
+
+```python
+from datetime import date
+from market_research.descriptive.cases.price_segmentation import (
+    SegmentationRequest,
+    observe_price_segments,
+)
+
+request = SegmentationRequest(
+    index_code="000852.SH", start_date=date(2024, 1, 8),
+    end_date=date(2024, 1, 16), epsilon=0.005,
+)
+result = observe_price_segments(request)
+print(result.diagnostics)
+for segment in result.segments:
+    print(segment.start_date, segment.end_date, segment.duration_sessions,
+          segment.amplitude_ratio, segment.direction)
+```
+
+**This call can perform DataLake Ensure, make Provider requests and write the normal
+Dataset caches.** It is not read-only. Credentials, provider limits, complete Calendar and
+Index facts, and compatible caches are required; the historical default Calendar cache
+limitation below remains applicable. The example is an explicit scope, not a default.
+
+Important points map retained indices to actual session dates and Close values. Adjacent
+points form segments whose duration is measured in session intervals and whose signed
+amplitude is the simple endpoint return in decimal ratio. `epsilon` bounds the maximum
+vertical reconstruction error in natural-log Close units, not a percentage or segment
+amplitude. It can change the selected points. The result retains diagnostics, input
+fingerprint, request and public input evidence. To construct from previously prepared
+inputs without I/O, use `construct_observations(request, prepared_inputs)`.
+Financial semantics, constraints and provenance are owned by the [case authority](descriptive/cases/price_segmentation/ARCHITECTURE.md)
+and [input contract](descriptive/cases/price_segmentation/INPUTS.md).
 
 ## Python: pure preview and explicit execution
 
@@ -90,8 +138,8 @@ poetry run lab serve backend
 ```
 
 Base URL: `http://127.0.0.1:8011`; OpenAPI: `/openapi.json`; interactive docs: `/docs`.
-Default exposure is loopback only, with no authentication. Acknowledgment is not a security
-boundary. No new server/port, CORS, internet deployment or Research CLI command is added.
+Default exposure is loopback only and uses the configured HTTP authentication.
+Acknowledgment is not a security boundary. No new server/port, CORS, internet deployment or Research CLI command is added.
 
 ```text
 GET /research/capabilities
@@ -175,7 +223,8 @@ Actual upstream execution can return different numbers, coverage or failures.
 
 ## Agent tool flow
 
-1. Discover with `list_research_capabilities`, then inspect `get_research_capability`.
+1. For the scalar execution path, discover with `list_research_capabilities`, then inspect `get_research_capability`.
+   For segmentation use the [independent Python entry](#python-price-segmentation); it is not in that API.
    Do not treat implementation support as a live-readiness check.
 2. Translate the user's question into explicit canonical subject, dates, trading-session
    horizons, method parameters, request IDs and failure policy. Ask for missing inputs or
@@ -252,6 +301,48 @@ and [local environment](../DEVELOPMENT.md). Upstream availability, credentials, 
 completeness and partial Index facts remain operational dependencies. Deterministic HTTP
 acceptance does not pass a live HTTP gate.
 
-There is no Research persistence/replay/result cache, historical-run retrieval, persistent
-run ID, durable result URL, scheduler, polling/cancellation API, frontend Research page,
-prediction/signal feature or new engine. An HTTP server does not add these capabilities.
+Explicit Research publication and its read-only Research Explorer are available as described
+in the publication authority. Execution has no automatic result cache, scheduler,
+polling/cancellation API, prediction/signal feature or new engine.
+
+## Offline Price Segmentation human review
+
+Generate a standalone review from the retained G4 long-window public input evidence,
+without provider or cache access, from the repository root:
+
+```powershell
+poetry run python market_research/tests/segmentation_review.py --evidence <G4-result.json> --output <local-output-directory> --epsilon 0.005 0.010 0.020 0.030
+```
+
+Open `index.html` in a browser; `comparison.csv` and `README.md` accompany it. The
+parameters are examples for sensitivity review, not research defaults. The tool verifies
+the source fingerprint and replays G4 at 0.01, recomputes PIP for every requested epsilon,
+and reports visual-review diagnostics. It does not perform a new live acceptance or create
+Statistics product results. Close-space connecting lines are visual guides; reconstruction
+error is measured in natural-log price space.
+
+## CSI1000 full-history offline review
+
+The G6 acceptance helper consumes retained validated public input evidence and never calls
+Provider during replay. From the repository root:
+
+```powershell
+poetry run python market_research/tests/segmentation_full_history.py --evidence <input_evidence.json> --output <local-output-directory>
+```
+
+The fixed scope is 000852.SH, 2020-01-01 through 2026-10-31, inclusive. Four epsilons
+are constructed from one complete input; the saved result evidence is checked on repeated
+runs. CSV files and an offline HTML review accompany the manifest. These diagnostics do not
+establish financial swing identification quality.
+
+The full-history pack compares canonical base segments with light and medium experimental
+review-only merges, and exports profile-labeled segments with zero-based base ordinals.
+See the [review contract](descriptive/cases/price_segmentation/REVIEW.md) for rules,
+parameters and limitations. Use a separate output directory to preserve an earlier pack;
+regeneration resets the manifest's human review gate to NOT_VERIFIED.
+
+To acquire a fresh copy, explicitly opt in with `poetry run python
+market_research/tests/segmentation_full_history_live.py --live --output <empty-directory>`;
+this makes Provider calls, uses isolated temporary Dataset storage and accepts an optional
+`--max-calls` cap. Account permissions, rate limits and complete published facts remain
+necessary. Do not commit generated historical data or the review pack.

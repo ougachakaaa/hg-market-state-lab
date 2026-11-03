@@ -23,6 +23,13 @@ ResearchPlan → fixed-parameter ObservationJobSpecs
     → Research result association → JobResult / BatchResult → Evidence / Interpretation
 ```
 
+The independent [Price Segmentation case](descriptive/cases/price_segmentation/ARCHITECTURE.md)
+produces a structured observation without the scalar analysis path above. Research also owns
+the market-independent [PIP algorithm](algorithm/pip/ALGORITHM.md); the case depends on its
+public algorithm boundary, never the reverse. The independent PIP Python boundary is
+implemented, as are the case's independent Input Preparation and segmentation observation
+Python APIs; this does not introduce a generic engine.
+
 Input Preparation acquires validated facts and availability evidence through authorized
 upstream public contracts, under the selected case's completeness policy.
 Observation Construction owns market indicator formulas and empirical variables derived

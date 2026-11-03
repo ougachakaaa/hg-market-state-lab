@@ -192,7 +192,7 @@ no synthetic execution seam; historical synthetic Runs remain readable. Reported
 
 ## Results and verification
 
-Discover the [2026 four-index results](results/2026_four_index_returns/README.md) and their scope, coverage and original evidence references. Independent opt-in verification scripts live in `workbench/tests/result_verification/`; the saved-result verifier reads local original blobs and prohibits network and SQLite. For example, choose an output path outside the RunStore:
+Discover the [2026 four-index results](results/2026_four_index_returns/README.md) and their scope and historical summary. Complete results and evidence are retained outside the repository. Independent opt-in verification scripts live in `workbench/tests/result_verification/`; the saved-result verifier reads local original blobs and prohibits network and SQLite. For example, choose an output path outside the RunStore:
 
 ```powershell
 poetry run python workbench/tests/result_verification/verify_saved.py --run RUN_ID --output OUTPUT_JSON

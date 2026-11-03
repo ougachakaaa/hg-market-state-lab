@@ -23,6 +23,8 @@ ObservationJobSpec → validated prepared facts / availability evidence → Obse
 | AnalysisRequest, immutable evidence, exact result linkage and association failures | [RESULT_ASSOCIATION.md](RESULT_ASSOCIATION.md) via Statistics integration |
 | ResearchPlan, single Job / Batch control, statuses and results | [EXECUTION.md](EXECUTION.md) |
 | Numerical input, method parameters, results and failures | [Statistics CONTRACT.md](../../market_statistics/CONTRACT.md) |
+| PIP numerical algorithm | [PIP algorithm](../algorithm/pip/ALGORITHM.md) |
+| Independent structured segmentation observation | [Price Segmentation](cases/price_segmentation/ARCHITECTURE.md) |
 | First case: formula, public input binding, warm-up, validity and fingerprint | [Trailing Return](cases/trailing_return/ARCHITECTURE.md) |
 | Admitted capability publication and pure preview | [RESEARCH_CAPABILITY.md](RESEARCH_CAPABILITY.md) |
 | Discovery / agent guide / HTTP delivery verification | [RESEARCH_ENTRY_ACCEPTANCE.md](RESEARCH_ENTRY_ACCEPTANCE.md) |
@@ -30,10 +32,16 @@ ObservationJobSpec → validated prepared facts / availability evidence → Obse
 
 An ObservationSet may support multiple analyses after conversion. Method parameter changes
 do not require upstream acquisition or observation reconstruction as a semantic prerequisite.
-Research interpretation must state its population, subject, horizon, historical window,
+For the scalar analysis path, Research interpretation must state its population, subject, horizon, historical window,
 input/derivation provenance, statistical method and limitations. It consumes computed
 results without recalculating statistics or silently filtering the analyzed population.
 Descriptive association does not establish causality, predictive validity or a trading signal.
+
+The [Price Segmentation case](cases/price_segmentation/ARCHITECTURE.md) independently
+observes one complete price series and does not require horizon, scalar ObservationSet,
+conversion or Statistics. Its independent Python observation API is implemented and
+[live acceptance](cases/price_segmentation/LIVE_E2E_ACCEPTANCE.md) is recorded separately;
+the existing scalar runtime remains unchanged.
 
 ## First case and readiness
 

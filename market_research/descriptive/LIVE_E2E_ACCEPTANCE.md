@@ -2,9 +2,8 @@
 
 Verdict: **Verified** on 2026-10-27 at 23:29 Asia/Shanghai (15:29 UTC).
 This is execution evidence for the existing contracts, not a second business authority.
-The [readiness entry](ACCEPTANCE.md) owns current reconciliation. Complete retained public
-requests, preliminary/final Exports, EnsureResults, numerical results and audit counters
-are in [the machine-readable execution record](LIVE_E2E_RESULT.json).
+The [readiness entry](ACCEPTANCE.md) owns current reconciliation. The full machine-readable execution record is retained outside the repository; the
+summary and bounded verification below are historical evidence.
 
 ## Baseline and environment
 

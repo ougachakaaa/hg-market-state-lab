@@ -157,6 +157,7 @@ or Visualization. A Workbench Task may separately request publication only with 
 approved operational authority; Workbench evidence is not publication storage.
 
 Concrete V1 JSON, source eligibility, identity, integrity and reader semantics are specified
-in [Publication storage](PUBLICATION_STORAGE.md). WP3 must define HTTP routes, DTO projection and status mappings,
-then WP4 must generate consumer artifacts. These details are not established by WP0, and
-this publication boundary does not change current execution behavior.
+in [Publication storage](PUBLICATION_STORAGE.md). The implemented read-only delivery is
+defined by the [HTTP publication contract](../ui_http/products/research_publication/http-contract.md);
+Research Explorer consumes its generated contract. This publication boundary does not change
+current execution behavior.

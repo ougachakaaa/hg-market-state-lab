@@ -13,6 +13,10 @@ __pycache__/
 # Workbench-owned local execution evidence
 /workbench/.runs/
 
+# Local G6 full-history research artifacts and handoff
+csi1000-segmentation-2020-2026/
+G6_ACCEPTANCE_HANDOFF.md
+
 # Frontend dependencies and build output
 ui_web/node_modules/
 ui_web/dist/
@@ -48,3 +52,10 @@ ui_http/data/
 # Experimental runtime artifacts (never formal Dataset state)
 data_lake/experiments/**/data/
 data_lake/experiments/**/output/
+
+# Locally retained research outputs, never source fixtures
+**/LIVE_E2E_RESULT.json
+/workbench/tasks/historical_return_observation/results/2026_four_index_returns/DISTRIBUTIONS.md
+/workbench/tasks/historical_return_observation/results/2026_four_index_returns/MATRIX.md
+/workbench/tasks/historical_return_observation/results/2026_four_index_returns/results.json
+/workbench/tasks/historical_return_observation/results/2026_four_index_returns/evidence/

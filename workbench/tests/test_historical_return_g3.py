@@ -414,8 +414,8 @@ def test_cli_statuses_and_fresh_read(tmp_path):
 
 
 def test_actual_composed_contract_and_zero_market_side_effects(tmp_path, monkeypatch):
-    from fastapi.testclient import TestClient
-
+    monkeypatch.syspath_prepend(str(Path(__file__).resolve().parents[2] / "ui_http" / "tests"))
+    from http_support.auth import authenticated_client
     from market_research.descriptive import capabilities
     from market_research.descriptive.cases import trailing_return
     from ui_http import app
@@ -439,7 +439,11 @@ def test_actual_composed_contract_and_zero_market_side_effects(tmp_path, monkeyp
     assert document["paths"]["/research/capabilities/{id}"]["get"]["responses"]["200"][
         "content"]["application/json"]["schema"] == {
             "$ref": "#/components/schemas/CapabilityDescription"}
-    client = TestClient(app)
+    monkeypatch.setenv("LAB_AUTH_DB_PATH", str(tmp_path.parent / f"{tmp_path.name}-auth.sqlite3"))
+    monkeypatch.setenv("LAB_AUTH_JWT_SECRET", base64.urlsafe_b64encode(bytes(range(32))).decode())
+    monkeypatch.setenv("LAB_AUTH_MODE", "production")
+    monkeypatch.setenv("LAB_AUTH_ORIGIN", "https://testserver")
+    client = authenticated_client(app)
     with backend() as (target, routes, calls):
         routes["/openapi.json"] = response(document)
         for path in ("/research/capabilities", "/research/capabilities/" + REQUIRED):

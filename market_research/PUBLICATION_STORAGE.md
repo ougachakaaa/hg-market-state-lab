@@ -137,7 +137,7 @@ retained summary fails the read, never becomes zero coverage. No persistence sch
 Failures are independent of HTTP: invalid input, not found, corrupt, unsupported version,
 inconsistent association, unavailable source/storage, and identity collision have distinct
 public categories. No reader or publisher calls Research execution, acquisition, Statistics
-computation, HTTP or Workbench. A future HTTP delivery may consume this facade only.
+computation, HTTP or Workbench. The implemented HTTP delivery consumes this public facade only.
 
 V1 source encoding uses JSON primitives for null, booleans, strings, integers and finite
 binary64 numbers; dates use `{"$date": "YYYY-MM-DD"}`, bytes use
@@ -222,8 +222,8 @@ re-executing. This requirement does not alter Task v1 or grant authorization to 
 
 The Research Manifest and Analysis are internal semantic read models, not approved
 browser-facing DTOs. They can contain absolute source locations, filesystem details,
-retained source material, original exception messages and provider diagnostics. WP3 must
-own an explicit allowlisted safe HTTP projection and error mapping; it must not automatically
+retained source material, original exception messages and provider diagnostics. HTTP owns
+an explicit allowlisted safe projection and error mapping; it must not automatically
 serialize the Research Manifest, raw source, credentials, private provider diagnostics,
 arbitrary exception text or internal filesystem paths. This rule introduces no transport
 fields into Research and does not itself define routes or HTTP DTOs.
