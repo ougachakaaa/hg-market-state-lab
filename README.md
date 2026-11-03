@@ -5,7 +5,7 @@
 ```text
 data_lake         → reusable source facts and Dataset-owned caches
 data_snapshot     → market state data preparation
-market_modeling   → market state modeling
+market_modeling   → market state modeling (reserved; no module authority yet)
 market_research   → exploratory and statistical research
 market_statistics → independent numerical statistics Python API
 ui_cli            → repository CLI (lab)
@@ -15,7 +15,7 @@ ui_web            → presentation and interaction
 
 ## Canonical module layout
 
-Directories, imports and disposable local runtime state follow [repository authority](ARCHITECTURE.md#naming-and-transition-authority). Run directly with canonical paths; no local data or token migration is required. Configure credentials in the current environment or `data_snapshot/.env` as needed. The executable remains `lab`.
+Directories and imports follow [repository authority](ARCHITECTURE.md#naming-and-transition-authority). Run directly with canonical paths: local runtime state is disposable and has no migration or compatibility mechanism. Configure credentials in the current environment or `data_snapshot/.env` as needed. The executable remains `lab`.
 
 ## Authority 与开发文档
 
@@ -61,7 +61,7 @@ Windows native PowerShell：
 poetry install
 ```
 
-Python package namespaces 保持独立，包括 `data_snapshot`、`market_modeling`、`market_research` 与 `ui_http`。共享环境不改变 module ownership 或 cross-module dependency rules。
+Python packages 由各 owning module 独立拥有，canonical namespace 见 [repository architecture](ARCHITECTURE.md#3-python-runtime-与-module-boundary)。共享环境不改变 module ownership 或 cross-module dependency rules。
 
 Frontend 需要满足当前 Vite 要求的 Node.js 与 npm：
 
@@ -70,7 +70,7 @@ cd ui_web
 npm install
 ```
 
-本地 Source 访问凭据写入 `data_snapshot/.env`，可从 `.env.example` 复制模板：
+本地 Source 访问凭据写入 `data_snapshot/.env`，可从 `data_snapshot/.env.example` 复制模板：
 
 ```text
 TUSHARE_TOKEN=<your-token>
@@ -81,6 +81,8 @@ TUSHARE_TOKEN=<your-token>
 ## 当前根开发命令
 
 正式 CLI 由根 canonical Python project 安装，从 repository root 使用。命令发现、服务启动与 DataLake lifecycle 的可复制示例统一见 [lab usage guide](ui_cli/README.md)；当前环境和 readiness 见 [DEVELOPMENT.md](DEVELOPMENT.md)，CLI contract 见 [lab authority](ui_cli/ARCHITECTURE.md)。
+
+Windows 上可直接双击仓库根目录的 `start-market-lab.cmd` 一键启动 backend 与 Web；前置条件、审批与日志说明见 [Windows One-Click Development Startup](DEVELOPMENT.md#windows-one-click-development-startup)。
 
 ## Research status
 
@@ -110,7 +112,7 @@ poetry run python ui_http/scripts/api.py
 poetry run python ui_http/scripts/api.py --host 127.0.0.1 --port 8012
 ```
 
-启动前按 [Auth 本机配置](DEVELOPMENT.md) 设置 `LAB_AUTH_JWT_SECRET`、`LAB_AUTH_MODE` 和 `LAB_AUTH_ORIGIN`。所有业务 API、OpenAPI 和交互文档都要求有效登录 Cookie；注册需经 `lab auth approve` 审批，G3 尚未提供 Web 登录界面。
+启动前按 [Auth 本机配置](DEVELOPMENT.md) 设置 `LAB_AUTH_JWT_SECRET`、`LAB_AUTH_MODE` 和 `LAB_AUTH_ORIGIN`。所有业务 API、OpenAPI 和交互文档都要求有效登录 Cookie；注册需经 `lab auth approve` 审批，Web 登录/注册流程见 [浏览器注册、审批与登录](DEVELOPMENT.md#浏览器注册审批与登录)。
 
 默认地址为 `127.0.0.1:8011`，OpenAPI 位于 `/openapi.json`，交互文档位于 `/docs`。MO Option Chain 的 HTTP 契约见 [Option Chain authority](ui_http/products/mo_option_chain/http-contract.md)；MO Premium Plane 的 HTTP 契约见 [Premium Plane authority](ui_http/products/mo_option_premium/http-contract.md)。
 
@@ -122,7 +124,7 @@ poetry run python ui_http/scripts/api.py --host 127.0.0.1 --port 8012
 npm run dev
 ```
 
-默认开发地址为 `http://127.0.0.1:5173/`。Vite 将 `/mo-option-chain` 转发到默认 backend 地址；具体视觉与交互语义见 [MO Option Chain visualization authority](ui_web/src/features/mo_option_chain/ARCHITECTURE.md)。
+默认开发地址为 `http://127.0.0.1:5173/`。Vite 将 `/auth`、`/mo-option-chain` 与 `/mo-option-premium-plane` 转发到默认 backend 地址；具体视觉与交互语义见 [MO Option Chain visualization authority](ui_web/src/features/mo_option_chain/ARCHITECTURE.md)。
 
 ## 验证命令
 
