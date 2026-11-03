@@ -4,8 +4,7 @@ This module holds what the captures genuinely share:
 
 * the Capture failure type and the Source-query signature;
 * Raw record construction (minimal normalization of a Source frame);
-* the Raw-representation date helpers the captures use on Source facts;
-* the Source-fact filters of the CSI1000 analysis scenario captures.
+* the Raw-representation date helpers the captures use on Source facts.
 
 It holds no endpoint binding and no analysis logic: concrete endpoint calls,
 query parameters and Capture scope live in the individual ``capture`` modules,
@@ -15,7 +14,7 @@ and analyzer-specific transformation is not known here at all
 
 from __future__ import annotations
 
-from collections.abc import Callable, Collection, Iterator, Sequence
+from collections.abc import Callable, Sequence
 from typing import Any
 
 import numpy as np
@@ -88,17 +87,3 @@ def require_target_trade_date(records: Sequence[RawRecord], trade_date: str) -> 
                 f"{record.get(tushare.TRADE_DATE_FIELD)!r} "
                 f"for requested trade_date={trade_date}."
             )
-
-
-def fetch_source_frames(
-    query: QueryFunc, codes: Collection[str], **params: str
-) -> Iterator[tuple[str, pd.DataFrame]]:
-    """Call one Source endpoint per code, keeping the requested code alongside.
-
-    Iterating a Source DataFrame must not be done by position: a DataFrame with
-    duplicate index labels yields a Series instead of a row whenever a label
-    repeats. Going through the requested code keeps the contract identity
-    explicit and de-duplicated.
-    """
-    for code in sorted(codes):
-        yield code, query(ts_code=code, **params)

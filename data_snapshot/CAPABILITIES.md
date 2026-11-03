@@ -8,7 +8,6 @@
 
 | Capability / Product | 定位 | 入口 authority |
 | --- | --- | --- |
-| Daily Market Snapshot | 以最小日行情数据验证其选择的 persisted Raw → Preparation 路径的独立场景 | [product authority](src/data_snapshot/products/daily_market_snapshot/ARCHITECTURE.md) |
 | CSI1000 IM Basis History | 为 Research 提供显式日期区间内完整的 CSI1000 / IM 年化基差历史 panel | [product authority](src/data_snapshot/products/csi1000_im_basis_history/ARCHITECTURE.md) |
 | CFFEX Equity Index Futures Basis History | 对单个 IF/IH/IC/IM family 与显式日期区间提供完整历史基差期限结构 | [product authority](src/data_snapshot/products/cffex_equity_index_basis_history/ARCHITECTURE.md) |
 | Index Daily History | 为 Research 提供指定指数、显式日期区间及精确观测条数 warm-up 的日线历史 | [product authority](src/data_snapshot/products/index_daily_history/ARCHITECTURE.md) |

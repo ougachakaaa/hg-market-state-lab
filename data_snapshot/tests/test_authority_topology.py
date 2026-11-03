@@ -53,10 +53,6 @@ CONTEXT_ENTRIES = {
     Path("data_lake/datasets/tushare_trade_calendar/ARCHITECTURE.md"),
     Path("data_lake/datasets/tushare_trade_calendar/SERVICE.md"),
     Path("data_snapshot/src/data_snapshot/capture/ARCHITECTURE.md"),
-    Path(
-        "data_snapshot/src/data_snapshot/products/"
-        "daily_market_snapshot/ARCHITECTURE.md"
-    ),
     Path("data_snapshot/src/data_snapshot/products/csi1000_im_basis_history/ARCHITECTURE.md"),
     Path("data_snapshot/src/data_snapshot/cffex_equity_index_basis/ARCHITECTURE.md"),
     Path(
@@ -143,6 +139,7 @@ def test_retired_snapshot_implementation_is_absent() -> None:
         snapshot_root / "scripts/dms.py",
         package_root / "cli.py",
         snapshot_root / "output/.gitkeep",
+        package_root / "products/daily_market_snapshot",
     )
     assert not any(path.exists() for path in retired_paths)
     assert not list((package_root / "services").glob("*.py"))

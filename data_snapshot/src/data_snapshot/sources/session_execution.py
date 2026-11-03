@@ -140,6 +140,3 @@ class BudgetedApi:
 
     def fut_daily(self, **kwargs: Any) -> pd.DataFrame:
         return self._query("fut_daily", kwargs)
-
-    def daily(self, **kwargs: Any) -> pd.DataFrame:
-        return self.api.daily(**kwargs)
