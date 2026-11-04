@@ -61,7 +61,7 @@ ui_http → market_statistics root public Specs/results (transport construction/
 ```
 
 Research delivery never imports private Research modules or DataLake services/internals.
-Research and Statistics never depend on ui_http. Future publication delivery uses only the
+Research and Statistics never depend on ui_http. Publication delivery uses only the
 [Research public reader](../market_research/PUBLICATION.md), not storage internals; reads
 never execute Research, acquire facts or recompute statistics.
 

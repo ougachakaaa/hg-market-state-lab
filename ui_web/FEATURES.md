@@ -6,7 +6,6 @@
 | --- | --- | --- |
 | MO Option Chain | 展示指定交易日的完整 MO 期权链价格分布 | [mo_option_chain/ARCHITECTURE.md](src/features/mo_option_chain/ARCHITECTURE.md) |
 | MO Premium Plane | 检视指定 observation 与取价口径下的 MO 稀疏年化权利金数值平面 | [mo_option_premium/ARCHITECTURE.md](src/features/mo_option_premium/ARCHITECTURE.md) |
-
 | Research Explorer | 浏览已发布的 Research scope、结果与可视化 | [research_explorer/ARCHITECTURE.md](src/features/research_explorer/ARCHITECTURE.md) |
 
 本 catalog 不拥有 input、table/chart、metric、formatting、interaction、empty/error 或其他 visualization semantics。新增、删除或重命名正式 frontend slice 时更新本文件；slice 内部语义变化只更新其 canonical authority。

@@ -32,9 +32,10 @@ OpenAPI 与 TypeScript artifacts 是 backend HTTP contract 的生成表示，不
 | --- | --- | --- |
 | MO Option Chain | [`GET /mo-option-chain`](../ui_http/products/mo_option_chain/http-contract.md) | `mo_option_chain` frontend bounded context |
 | MO Premium Plane | [`GET /mo-option-premium-plane`](../ui_http/products/mo_option_premium/http-contract.md) | `mo_option_premium` frontend bounded context |
+| Research Explorer | [Publication HTTP contract](../ui_http/products/research_publication/http-contract.md) | `research_explorer` frontend bounded context |
 | Application Authentication | [Auth HTTP contract](../ui_http/AUTHENTICATION.md#4-http-contract-and-access-order) | application Auth boundary，独立于 MO features |
 
-两个 MO Product contract boundaries 与一个 Application Authentication contract boundary 平级且独立；三者各自拥有独立的 generated artifacts 和 ownership。Backend runtime 可以组合多个 product routes，但 runtime composition 不得把 sibling frontend features 强制耦合进共享业务 schema、共享 DTO ownership 或共享 feature-local contract boundary。
+两个 MO Product、Research Publication 与 Application Authentication 的 contract boundaries 平级且独立；各自拥有独立的 generated artifacts 和 ownership。Backend runtime 可以组合多个 product routes，但 runtime composition 不得把 sibling frontend features 强制耦合进共享业务 schema、共享 DTO ownership 或共享 feature-local contract boundary。
 
 Application Auth 不是市场 feature；其 committed OpenAPI / TypeScript 与 application Auth consumer 共址（例如 `src/app/auth/api/`），不进入 MO feature 或 shared DTO。G2 实际改变 security scheme / access responses 时，更新已有产品 artifacts；G3 首次实现 Auth consumer 时生成其独立 artifacts 并纳入同一 generation/freshness loop。所有 consumer 的发布表示必须忠实反映运行时 access requirement；产品 DTO 不因此合并。G0 无实际 OpenAPI 变更，不生成这些 artifacts。
 
@@ -59,7 +60,7 @@ Repository-level frontend `contract:check` 必须覆盖所有 frontend-consumed 
 
 任一 product 缺失、stale 或 generation drift 都必须使整体 check 失败。一个 product 通过不能替代或掩盖 sibling product 的失败。
 
-Contract export 使用离线 `.openapi()`，不通过受保护的 HTTP schema endpoint、不需要真实 secret/用户库，也不创建生产状态。Offline builder 不能发布一份删除 security metadata 的竞争性 contract；可被 HTTP 服务的任何 app 都遵循 Auth gate。Research 目前无 Web consumer，不因增加认证或 authority-only WP0 自动新增 generated types。未来 Research Explorer 首次消费 Publication HTTP contract 时，必须生成其共址 OpenAPI / TypeScript artifacts，加入全部 consumer 的 `contract:check`；Layer 的语义来源仍是 [Visualization authority](VISUALIZATION.md)，wire 表达来源于 ui_http OpenAPI，不手写竞争 schema。
+Contract export 使用离线 `.openapi()`，不通过受保护的 HTTP schema endpoint、不需要真实 secret/用户库，也不创建生产状态。Offline builder 不能发布一份删除 security metadata 的竞争性 contract；可被 HTTP 服务的任何 app 都遵循 Auth gate。Research Explorer 通过其共址 OpenAPI / TypeScript artifacts 消费 Publication HTTP contract，并纳入全部 consumer 的 `contract:check`；Layer 的语义来源仍是 [Visualization authority](VISUALIZATION.md)，wire 表达来源于 ui_http OpenAPI，不手写竞争 schema。
 
 ## 5. Tooling Boundary
 

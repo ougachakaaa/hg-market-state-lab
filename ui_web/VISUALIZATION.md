@@ -106,8 +106,3 @@ Producer-aware readers or authorized delivery projections resolve and validate t
 references before supplying the View. Python and HTTP representations and generated
 TypeScript implement this single semantic contract; a Plotly trace is an internal rendering
 structure, not another public Layer schema.
-
-Implementation order: WP1 core contracts/renderer; WP2 Research publication; WP3 read-only
-HTTP delivery; WP4 Research Explorer; WP5 authorized Workbench integration and real E2E;
-WP6 multi-layer/time-series extension. Each WP must preserve these boundaries and publish
-its actual runtime readiness separately. This authority alone implements none of them.
