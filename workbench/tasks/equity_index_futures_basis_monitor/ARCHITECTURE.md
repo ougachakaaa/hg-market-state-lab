@@ -76,7 +76,12 @@ product result; a divergence requires a new Task version.
 
 ## Versioning and status
 
-Task version 1 defines authority and the G2 implementation contract only. No runtime
-script, Run, Gate outcome or live Tushare request is part of the current
-implementation. Any semantic change requires a new version and user approval; existing
-Run snapshots remain frozen.
+Task version 1 defines the authority and the G2 implementation contract. The Task-local
+runtime at [`runtime/run_monitor.py`](runtime/run_monitor.py) implements that contract:
+it freezes resolved inputs, invokes the public basis product once per family, checks
+expected CFFEX sessions through the public Calendar service, writes the three required
+outputs and records the three Gates with same-Run evidence. Deterministic verification
+uses fake public services. Live acceptance requires separate, explicit user
+authorization and is not implied by Task approval or by a successful synthetic test.
+Any semantic change requires a new version and user approval; existing Run snapshots
+remain frozen.

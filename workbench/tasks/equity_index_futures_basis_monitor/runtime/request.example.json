@@ -1,0 +1,7 @@
+{
+  "original_request": "查询 IM 最近两周的年化基差",
+  "futures_families": [
+    "IM"
+  ],
+  "date_expression": "最近两周"
+}
