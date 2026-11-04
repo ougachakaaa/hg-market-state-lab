@@ -292,8 +292,8 @@ def _calendar_failure(exc: Exception) -> str:
 
 def _product_failure(exc: Exception) -> str:
     if isinstance(exc, CFFEXEquityIndexBasisHistoryError):
-        message = str(exc).strip()
-        return message[:500] if message else exc.reason
+        # Public errors may wrap a Source exception containing credentials.
+        return f"Public product failed ({exc.reason}); see the classified reason."
     return f"{type(exc).__name__}: public product invocation failed"
 
 
@@ -1550,7 +1550,7 @@ def _csv_sort_key(row: tuple[str, ...]) -> tuple[str, int, int, str]:
         row[0],
         FAMILY_ORDER.get(row[1], 99),
         SLOT_ORDER.get(row[4], 99),
-        row[5],
+        row[3],
     )
 
 
@@ -1837,6 +1837,116 @@ def _read_artifact(store: Any, run_id: str, registration: dict[str, Any]) -> byt
     return data
 
 
+def _persisted_artifact_issues(
+    acquisition: dict[str, Any],
+    result: dict[str, Any],
+    csv_rows: list[tuple[str, ...]],
+    report: str,
+    manifest: dict[str, Any],
+) -> list[str]:
+    """Compare saved delivery with saved public observations, without Source access."""
+    issues: list[str] = []
+    families = acquisition["families"]
+    result_families = {item["futures_family"]: item for item in result["families"]}
+    if (
+        acquisition["run_id"] != manifest["run_id"]
+        or acquisition["task_sha256"] != manifest["task_sha256"]
+        or result["run_id"] != manifest["run_id"]
+        or result["task_sha256"] != manifest["task_sha256"]
+        or result["original_request"] != manifest["original_request"]
+        or result["resolved_inputs"] != manifest["resolved_inputs"]
+    ):
+        issues.append("saved identity or frozen inputs differ")
+    if set(result_families) != {item["futures_family"] for item in families}:
+        issues.append("saved family set differs")
+
+    expected_rows: list[tuple[str, ...]] = []
+    for family in families:
+        name = family["futures_family"]
+        summary = result_families.get(name)
+        if summary is None:
+            continue
+        public_result = family["result"]
+        coverage = family["coverage"]
+        if family["status"] == "success" and public_result is not None:
+            observations = public_result["observations"]
+            expected_rows.extend(
+                (
+                    str(item["trade_date"]),
+                    str(item["futures_family"]),
+                    str(item["underlying_code"]),
+                    str(item["contract_code"]),
+                    str(item["contract_slot"]),
+                    str(item["delist_date"]),
+                    str(item["days_to_delist"]),
+                    _decimal(item["underlying_close"]),
+                    _decimal(item["futures_close"]),
+                    _decimal(item["basis_pct"]),
+                    _decimal(item["annualized_basis_pct"]),
+                )
+                for item in observations
+            )
+            dates = {item["trade_date"] for item in observations}
+            for key, expected in (
+                ("source_identity", public_result["source_identity"]),
+                ("underlying_code", public_result["underlying_code"]),
+                ("family_listing_date", public_result["family_listing_date"]),
+                ("first_observation_date", public_result["first_observation_date"]),
+                ("last_observation_date", public_result["last_observation_date"]),
+                ("observation_count", len(observations)),
+                ("observed_trade_date_count", len(dates)),
+            ):
+                if summary[key] != expected:
+                    issues.append(f"{name}: saved {key} differs")
+            if dates:
+                latest = max(dates)
+                if f"### {name} - latest observation {latest}" not in report:
+                    issues.append(f"{name}: saved latest date missing from report")
+                for slot in SLOTS:
+                    slot_rows = [
+                        item for item in observations
+                        if item["trade_date"] == latest and item["contract_slot"] == slot
+                    ]
+                    if len(slot_rows) != 1:
+                        issues.append(f"{name}: saved latest {slot} is not unique")
+                        continue
+                    item = slot_rows[0]
+                    line = (
+                        f"| {slot} | {item['contract_code']} | {item['days_to_delist']} | "
+                        f"{_decimal(item['annualized_basis_pct'])} |"
+                    )
+                    if line not in report:
+                        issues.append(f"{name}: saved latest {slot} differs from report")
+        elif family["status"] != "failed" or public_result is not None:
+            issues.append(f"{name}: saved acquisition status is inconsistent")
+        for key, expected in (
+            ("status", family["status"]),
+            ("product_request", family["request"]),
+            ("coverage_status", coverage["status"]),
+            ("missing_expected_trade_dates", coverage["missing_expected_trade_dates"]),
+            ("unexpected_observed_trade_dates", coverage["unexpected_observed_trade_dates"]),
+            ("latest_expected_trade_date", coverage["latest_expected_trade_date"]),
+            ("latest_expected_session_observed", coverage["latest_expected_session_observed"]),
+        ):
+            if summary[key] != expected:
+                issues.append(f"{name}: saved {key} differs")
+        if summary["product_error_reason"] != (
+            family["error"]["reason"] if family["error"] is not None else None
+        ):
+            issues.append(f"{name}: saved error reason differs")
+
+    expected_rows.sort(key=_csv_sort_key)
+    if csv_rows != expected_rows:
+        issues.append("saved CSV differs from saved public observations")
+    if result["detail_file"]["row_count"] != len(expected_rows):
+        issues.append("saved CSV row count differs from result")
+    if f"Overall status: {result['overall_status']}" not in report:
+        issues.append("saved overall status differs from report")
+    if f"Coverage status: {result['coverage_status']}" not in report:
+        issues.append("saved coverage status differs from report")
+    return issues
+
+
 def _verification(
     *,
     store: Any,
@@ -1912,6 +2022,23 @@ def _verification(
         {"csv": len(data_rows), "acquisition": len(expected_rows)},
     )
     add("csv_deterministic_order", data_rows == expected_rows, {})
+
+    persisted_issues: list[str]
+    try:
+        saved_acquisition = json.loads(
+            _read_artifact(store, run_id, acquisition_registration).decode("utf-8")
+        )
+        saved_result = json.loads(
+            _read_artifact(store, run_id, result_registration).decode("utf-8")
+        )
+        saved_report = _read_artifact(store, run_id, report_registration).decode("utf-8")
+        persisted_issues = _persisted_artifact_issues(
+            saved_acquisition, saved_result, data_rows, saved_report, state["manifest"]
+        )
+    except (KeyError, TypeError, ValueError, IndexError) as exc:
+        persisted_issues = [f"saved artifact cannot be verified: {type(exc).__name__}"]
+    add("persisted_artifact_consistency", not persisted_issues,
+        {"issues": persisted_issues[:20]})
 
     slot_issues: list[str] = []
     for acquisition in acquisitions:

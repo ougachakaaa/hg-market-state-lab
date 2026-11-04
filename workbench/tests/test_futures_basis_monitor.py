@@ -9,6 +9,7 @@ from pathlib import Path
 
 import pytest
 from futures_basis_support import (
+    RUN_MONITOR,
     RUNTIME,
     TASK_PATH,
     FakeCalendar,
@@ -203,6 +204,69 @@ def test_four_family_complete_query_and_csv_order(tmp_path):
     assert sum(item["observation_count"] for item in result["families"]) == 160
 
 
+def test_csv_contract_code_is_final_tie_breaker():
+    sort_key = RUNTIME["_csv_sort_key"]
+    later_code = ("2026-11-03", "IC", "000905.SH", "ICZ.CFX", "M0", "2026-12-01")
+    earlier_code = ("2026-11-03", "IC", "000905.SH", "ICA.CFX", "M0", "2027-01-01")
+    assert sorted([later_code, earlier_code], key=sort_key) == [earlier_code, later_code]
+
+
+def test_ic_im_twenty_calendar_sessions_and_saved_authorization(tmp_path):
+    sessions = weekdays("2026-10-01", "2026-11-03", {"2026-10-01", "2026-10-02"})
+    assert len(sessions) > 20
+    selected = sessions[-20:]
+    calendar = FakeCalendar(sessions)
+    product = FakeProduct({
+        family: make_result(family, selected, start=selected[0], end=selected[-1])
+        for family in ("IC", "IM")
+    })
+    authorization = "用户授权：IC 和 IM 最近20个 CFFEX 交易日"
+    outcome = run_case(
+        tmp_path,
+        relative_params("最近20个交易日", ("IC", "IM")),
+        product=product,
+        calendar=calendar,
+        authorization=authorization,
+    )
+    assert [gate["status"] for gate in outcome["gates"]] == ["PASS"] * 3
+    assert len(product.requests) == 2
+    assert [item.futures_family for item in product.requests] == ["IC", "IM"]
+    assert all(item.start_trade_date == selected[0].isoformat() for item in product.requests)
+    assert all(item.end_trade_date == selected[-1].isoformat() for item in product.requests)
+    result = artifact_json(tmp_path, outcome, outcome["result"])
+    assert result["resolved_inputs"]["resolution"]["anchor_date"] == selected[-1].isoformat()
+    assert result["resolved_inputs"]["resolution"]["authorization_reference"] == authorization
+    assert [item["observation_count"] for item in result["families"]] == [80, 80]
+    assert len(csv_rows(tmp_path, outcome)) == 161
+    state = read_state(tmp_path, outcome)
+    saved_resolution = state["manifest"]["resolved_inputs"]["resolution"]
+    assert saved_resolution["authorization_reference"] == authorization
+    assert all(item["payload"]["evidence"] for item in state["gate_outcomes"])
+    assert any(item["payload"]["details"].get("authorization_reference") == authorization
+               for item in state["events"])
+
+
+def test_saved_acquisition_mismatch_fails_delivery(tmp_path, monkeypatch):
+    original = RUNTIME["_acquisition_payload"]
+
+    def altered(**kwargs):
+        payload = original(**kwargs)
+        payload["families"][0]["result"]["observations"][0]["annualized_basis_pct"] = 999.0
+        return payload
+
+    monkeypatch.setitem(RUN_MONITOR.__globals__, "_acquisition_payload", altered)
+    outcome = run_case(
+        tmp_path,
+        explicit_params(("IM",)),
+        product=make_products(("IM",)),
+        calendar=FakeCalendar(CALENDAR_DAYS),
+    )
+    assert outcome["gates"][-1]["status"] == "FAIL"
+    verification = artifact_json(tmp_path, outcome, outcome["verification"])
+    assert any(item["check"] == "persisted_artifact_consistency"
+               and item["status"] == "fail" for item in verification["checks"])
+
+
 def test_one_family_failure_preserves_successful_data(tmp_path):
     product = make_products(
         overrides={
@@ -234,7 +298,7 @@ def test_one_family_failure_preserves_successful_data(tmp_path):
             "stage": "acquisition",
             "futures_family": "IC",
             "reason": "source_failure",
-            "message": "synthetic IC source unavailable",
+            "message": "Public product failed (source_failure); see the classified reason.",
             "scope": "family IC requested window 2026-10-21..2026-11-03",
         }
     ]
@@ -733,6 +797,27 @@ def test_unexpected_product_exception_is_safely_classified(tmp_path):
     assert result["failures"][0]["reason"] == "source_failure"
     assert "SECRET_TOKEN" not in message
     assert "RuntimeError" in message
+
+
+def test_classified_product_error_does_not_publish_source_message(tmp_path):
+    product = FakeProduct({
+        "IM": CFFEXEquityIndexBasisHistoryError(
+            "source_failure", "credential=SECRET_TOKEN source failed"
+        )
+    })
+    outcome = run_case(
+        tmp_path,
+        explicit_params(("IM",)),
+        product=product,
+        calendar=FakeCalendar(CALENDAR_DAYS),
+    )
+    assert outcome["gates"][-1]["status"] == "BLOCKED"
+    run_path = tmp_path / "runs" / outcome["run_id"]
+    for path in run_path.rglob("*"):
+        if path.is_file():
+            assert b"SECRET_TOKEN" not in path.read_bytes()
+    result = artifact_json(tmp_path, outcome, outcome["result"])
+    assert result["failures"][0]["reason"] == "source_failure"
 
 
 def test_different_latest_dates_are_explicitly_identified(tmp_path):
