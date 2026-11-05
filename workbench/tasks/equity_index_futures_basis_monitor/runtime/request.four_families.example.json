@@ -1,0 +1,11 @@
+{
+  "original_request": "查询 IF、IH、IC、IM 自 2026-10-20 至 2026-10-31 的年化基差",
+  "futures_families": [
+    "IF",
+    "IH",
+    "IC",
+    "IM"
+  ],
+  "start_date": "2026-10-20",
+  "end_date": "2026-10-31"
+}

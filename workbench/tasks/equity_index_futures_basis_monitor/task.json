@@ -1,0 +1,203 @@
+{
+  "task_id": "equity_index_futures_basis_monitor",
+  "version": "1",
+  "approval": {
+    "kind": "user_approved",
+    "reference": "workbench/tasks/equity_index_futures_basis_monitor/DESIGN_REQUEST.md: user-supplied Goal G1 on 2026-11-03; Task definition only; no live Tushare or Calendar execution authorization"
+  },
+  "goal": "For an explicitly resolved set of CFFEX equity-index futures families and an explicit inclusive date window, obtain the existing public annualized basis history once per family and deliver Run-scoped machine-readable data, a concise report and execution evidence without reimplementing contract, basis, annualization or coverage semantics.",
+  "scope": "CFFEX IF/IH/IC/IM ordinary monthly equity-index futures and the published cffex_equity_index_basis_history public product only. Task version 1 defines the approved authority and the G2 implementation contract. The current G1 stage implements no runtime and performs no Tushare or Calendar request; no Dataset, endpoint, UI, scheduler or Research publication is created. Actual G2 execution requires separate user authorization.",
+  "specialized_contract": "authority/QUERY_AND_RESULT.md",
+  "supported_families": [
+    {
+      "futures_family": "IF",
+      "underlying_code": "000300.SH",
+      "aliases": ["沪深300", "沪深300指数"]
+    },
+    {
+      "futures_family": "IH",
+      "underlying_code": "000016.SH",
+      "aliases": ["上证50", "上证50指数"]
+    },
+    {
+      "futures_family": "IC",
+      "underlying_code": "000905.SH",
+      "aliases": ["中证500", "中证500指数"]
+    },
+    {
+      "futures_family": "IM",
+      "underlying_code": "000852.SH",
+      "aliases": ["中证1000", "中证1000指数"]
+    }
+  ],
+  "basis_semantics": {
+    "canonical_owner": "data_snapshot/src/data_snapshot/cffex_equity_index_basis/ARCHITECTURE.md",
+    "public_product": "data_snapshot/src/data_snapshot/products/cffex_equity_index_basis_history/read-contract.md",
+    "observation_model": "CFFEXEquityIndexBasisObservation from data_snapshot.products.cffex_equity_index_basis_history",
+    "inheritance": "Consume the public CFFEXEquityIndexBasisObservation fields verbatim. The Task does not recompute, filter, rename or add contract, slot, basis or annualization semantics.",
+    "sign_convention": "negative = 贴水 (discount); positive = 升水 (premium)",
+    "annualization": "Inherited from the shared authority: annualized_basis_pct = basis_pct * 365 / max(days_to_delist, 1). This is simple linear calendar-day annualization in percentage points; near-expiry values are highly sensitive; it is not an executable arbitrage yield or rolling-hold return.",
+    "limitations": [
+      "Market price difference only; no fair value, prediction, trading advice, transaction-cost, dividend, financing or roll-strategy meaning.",
+      "All active CFFEX ordinary-monthly contracts in the public result are retained per observed day; no volume, open-interest, main-contract or liquidity filter.",
+      "Slot names are M0/M1/Q1/Q2 exactly; no alternate M1/M2 naming."
+    ]
+  },
+  "input_contract": {
+    "canonical_request": {
+      "futures_families": ["IM"],
+      "start_date": "YYYY-MM-DD",
+      "end_date": "YYYY-MM-DD"
+    },
+    "family_rules": [
+      "Nonempty unique set of IF/IH/IC/IM or unambiguous documented aliases; family codes are case-insensitive and normalized to uppercase.",
+      "所有股指期货 and 全部股指期货 resolve to all four families in canonical order IF, IH, IC, IM.",
+      "Unknown, unsupported or ambiguous names must fail input_resolution; never guess from a partial name, contract code, index code or sibling family."
+    ],
+    "date_rules": [
+      "Real YYYY-MM-DD calendar dates; inclusive at both ends; start_date <= end_date.",
+      "end_date must not be later than the execution date in Asia/Shanghai; a future end date is invalid.",
+      "The requested window is passed to each product call unchanged; no automatic expansion, contraction, trading-day snapping or holiday fill.",
+      "effective_start = max(start_date, family_listing_date) is product semantics and is recorded, not used to rewrite the request."
+    ],
+    "relative_time_rules": [
+      "Every relative expression is resolved to absolute inclusive dates before any market request; the original phrase and resolution basis are frozen in the Run.",
+      "最近两周: 14 consecutive natural days ending at the resolved anchor, inclusive.",
+      "最近 N 个交易日: N CFFEX open dates ending at the resolved anchor, inclusive, using the published CFFEX calendar; never N natural days. The documented 最近十个交易日 is N=10 trading sessions, not 10 natural days.",
+      "Specified dates are preserved exactly; no snapping to a nearby trading day.",
+      "The default anchor is the latest CFFEX open date strictly before the execution date in Asia/Shanghai. This V1 rule does not assume that the current day's session or data is complete, because no owner publishes a session-completion fact.",
+      "An explicitly supplied anchor date is allowed if it is a CFFEX open date and not later than the execution date; it is recorded as user-supplied.",
+      "If the published calendar cannot prove the anchor or its coverage, input_resolution is BLOCKED; never infer from weekdays, price rows or pretrade_date."
+    ],
+    "freeze": [
+      "Resolve and freeze all inputs before acquisition; persist the verbatim original_request and resolved_inputs in the Run.",
+      "No post-hoc change of family, date window, N or anchor after acquisition begins; a changed request needs a new Run."
+    ],
+    "no_defaults": "No default family, date window, anchor or N; missing inputs require explicit resolution."
+  },
+  "coverage_semantics": {
+    "requested_window": "The exact inclusive [start_date, end_date] supplied by the user; never rewritten.",
+    "effective_window": "[max(start_date, family_listing_date), end_date] per family; dates before listing are not missing observations.",
+    "observed_window": "Unique trade_date values in the successful public result; first/last are actual observations, never requested bounds.",
+    "expected_sessions_source": "data_lake.datasets.tushare_trade_calendar public Application Service, exchange=CFFEX, view=calendar, export_schema_version=1; filter is_open == 1 within the effective window.",
+    "product_success_boundary": "A successful public product result proves a complete M0/M1/Q1/Q2 panel only on its actual observation dates. It does not prove that every expected CFFEX session in the requested window was observed.",
+    "states": [
+      "verified_complete: calendar coverage is complete and the expected and observed trade-date sets match, with no unexpected observed dates.",
+      "verified_partial: calendar coverage is complete but expected dates are missing or unexpected observed dates exist.",
+      "unverified: calendar coverage, authorization or completeness cannot prove the expected sessions; no completeness claim may be made.",
+      "not_applicable: family failed or the effective window is empty."
+    ],
+    "recent_gap": "If the latest expected CFFEX session in the requested window is absent from a successful family's observations, it must be reported explicitly.",
+    "coverage_status_rule": "not_applicable if no requested family succeeded; verified_complete iff every requested family succeeded and is verified_complete; verified_partial iff every requested family succeeded and all are verified with at least one verified_partial; unverified iff every requested family succeeded and all are unverified; mixed otherwise.",
+    "overall_status": "complete iff every requested family succeeds and every family coverage is verified_complete; partial if at least one family succeeds but the run is not complete; failed if no family succeeds. A partial or unverified run must never be marked complete.",
+    "verification": "Prefer the existing published Calendar capability; preserve its exact semantics and do not redefine completeness. If verification is unavailable, mark unverified rather than inferring a calendar."
+  },
+  "output_contract": {
+    "files": ["result.json", "basis_daily.csv", "REPORT.md"],
+    "basis_daily_columns": [
+      "trade_date",
+      "futures_family",
+      "underlying_code",
+      "contract_code",
+      "contract_slot",
+      "delist_date",
+      "days_to_delist",
+      "underlying_close",
+      "futures_close",
+      "basis_pct",
+      "annualized_basis_pct"
+    ],
+    "basis_daily_ordering": "trade_date ascending, then canonical family order IF/IH/IC/IM, then M0/M1/Q1/Q2, then contract_code ascending.",
+    "basis_daily_values": "Copy public observation values verbatim; one row per observed trade_date x family x contract; no filtering, derived indicator, rounding or recomputation; preserve signed zero.",
+    "report_sections": [
+      "Query target, original request, resolved families, requested window, resolution anchor/basis, and per-family actual first/last observation dates.",
+      "Latest actual observation date per family and its M0/M1/Q1/Q2 annualized basis, contract code and days_to_delist; differing family dates must be explicitly identified as different sessions.",
+      "Coverage and failures: expected-session source/status, missing dates, recent gap, family failures, and exact overall/coverage status lines matching result.json.",
+      "Source identity, inherited basis and annualization formulas (attributed to the shared authority), percentage-point units and sign convention.",
+      "Near-expiry annualization sensitivity.",
+      "Limitations: no arbitrage/roll-return meaning, no chart, distribution, prediction, trading advice or backtest."
+    ],
+    "run_evidence": [
+      "resolution.json: frozen raw/resolved inputs, resolution basis, calendar export/coverage evidence and execution intent/authorization reference.",
+      "acquisition evidence: lossless actual public result payloads (or an equivalent lossless artifact) per successful family, plus classified failures; sufficient to verify every CSV row and summary without re-invoking the product.",
+      "verification.json: CSV/result/report/acquisition consistency checks and artifact digests.",
+      "All three result files and evidence are registered as same-Run artifacts."
+    ],
+    "storage": "Run-scoped Workbench artifacts only; market data is never committed to Git and is not a Research publication or Dataset."
+  },
+  "failure_semantics": {
+    "product_errors": {
+      "invalid_request": "Invalid request fields or dates; never repaired by changing the request.",
+      "source_failure": "Credential or client construction, Source invocation or Source range service failure; record a safe message.",
+      "no_observations": "No underlying observation in the effective interval; never interpret as zero basis.",
+      "incomplete_panel": "Missing, duplicate, conflicting or unusable facts prevent a complete panel; never delete or fill to pass."
+    },
+    "family_isolation": "Each requested family is invoked independently. A failed family does not invalidate successful family results, but the run cannot be complete and basis_acquisition is FAIL.",
+    "prohibitions": [
+      "Do not delete missing contracts, synthesize prices, auto-replace contracts, substitute another family or interpret failure as zero basis.",
+      "Do not truncate or expand the window, change N, snap dates or retry with different inputs to manufacture completeness.",
+      "Do not recompute basis or annualization; copy the public product values."
+    ],
+    "partial_runs": "Partial successes are preserved as Run artifacts with explicit failures, but result_delivery cannot PASS while any requested family failed; partial success is never a complete PASS."
+  },
+  "required_inputs": [
+    "Explicit nonempty unique CFFEX futures family set: IF, IH, IC or IM, or an unambiguous documented Chinese alias; 所有股指期货/全部股指期货 maps to all four; unknown or ambiguous names must fail.",
+    "Explicit inclusive start_date/end_date in YYYY-MM-DD, or a supported relative expression resolved to absolute dates before execution; start <= end; end_date must not be later than the execution date in Asia/Shanghai.",
+    "For relative expressions: a published CFFEX calendar basis and a resolved anchor (latest completed CFFEX trading day); record the original phrase, anchor rule, calendar source/coverage and execution instant; if the anchor cannot be established from published facts, stop.",
+    "Explicit execution intent for this Task version and, for actual acquisition, separate user authorization covering public product and Calendar data access; Task approval alone does not authorize market requests.",
+    "For G2: the verbatim original_request and frozen resolved_inputs before any market request; no post-hoc adjustment of family, window, N or anchor."
+  ],
+  "allowed_capabilities": [
+    "G1: authority files, task.json and Markdown only; no runtime, Run, market data, Tushare request or Gate outcome.",
+    "G2 future, separately authorized: data_snapshot.products.cffex_equity_index_basis_history.run_cffex_equity_index_basis_history(CFFEXEquityIndexBasisHistoryRequest) exactly once per family; consume only CFFEXEquityIndexBasisHistoryResult and CFFEXEquityIndexBasisHistoryError.",
+    "G2 future: data_lake.datasets.tushare_trade_calendar public Application Service via create_service(), TradeCalendarRange(exchange=\"CFFEX\", ...), coverage/ensure/export; only for anchor resolution and expected-session coverage; no direct trade_cal call, no cache repair and no calendar redefinition.",
+    "G2 future: workbench/run_store.py create, artifact, event, gate and read for same-Run evidence; do not modify the generic recorder.",
+    "G2 future: existing root Python environment and Run-scoped local filesystem outputs; no new package, service, database, endpoint, UI, scheduler or framework."
+  ],
+  "planning_constraints": [
+    "Resolve and freeze every input before any market request; no default family, date, N or anchor; unknown or ambiguous names fail rather than guess.",
+    "Use only the published product API, one family per call; do not modify the product, add a parallel basis calculator, or import Capture, Source, Raw, credential or private internals.",
+    "Use the published CFFEX calendar capability only for anchor resolution and expected-session coverage; its semantics remain owned by its module; never infer a calendar from weekdays, price rows or pretrade_date.",
+    "Acquire each requested family independently; preserve successful family results and classify failures; never stop, substitute or synthesize to make a complete panel.",
+    "A successful product result does not prove every expected session was observed; verify coverage explicitly and mark unverified when proof is unavailable.",
+    "Persist outputs and evidence only as same-Run artifacts; never commit market data; never mix Run evidence with Research Publication or Dataset storage.",
+    "Actual Tushare or Calendar access requires separate execution authorization; Task approval alone authorizes no market request.",
+    "Any semantic change requires a new Task version and user approval; existing Runs and snapshots remain frozen."
+  ],
+  "expected_outputs": [
+    "G1: Task authority files, catalog entry and G2 implementation contract only; no Run, market output or Gate outcome.",
+    "G2: result.json with task/version, task digest, run id, verbatim original request, resolved inputs, per-family status, requested versus actual observed ranges, source identity, coverage/limitations, failures/unfinished scope and a stable CSV reference.",
+    "G2: basis_daily.csv with the exact 11 columns, one row per observed trade_date x family x contract, deterministic order and verbatim public values; no filtering or derived indicators.",
+    "G2: REPORT.md with requested/actual ranges, per-family latest-session four-slot annualized basis and dates, coverage/failures, source/formula/units, near-expiry caveat and limitations.",
+    "G2: same-Run resolution, acquisition and delivery verification evidence, including lossless actual product results; Gate outcomes only from actual checks."
+  ],
+  "acceptance_criteria": [
+    "A complete run or result_delivery PASS requires every requested family to return a successful public product result and every family coverage to be verified_complete; partial family or coverage outcomes are not complete.",
+    "CSV rows and result.json summaries match the lossless public product results exactly; no deleted missing contracts, synthetic prices, contract or family substitution, zero-fill, window truncation or expansion, slot renaming or recomputed basis/annualization.",
+    "Requested window, per-family effective window and actual observed window are distinct; the requested end date is never reported as the last observation.",
+    "Per-family latest observation dates are reported independently; differing dates are explicitly identified as different sessions.",
+    "Calendar unavailability or incompleteness yields unverified coverage and no completeness claim; relative inputs without a calendar anchor are BLOCKED; no weekday, price-row or pretrade_date inference.",
+    "All outputs and evidence belong to one Run; market data remains in ignored RunStore, never Git; no Research publication or new Dataset.",
+    "G1: task.json validates against the shared Task contract; approval reference is traceable; links and navigation resolve; existing historical_return_observation is unchanged; no runtime, live request or full-repo test."
+  ],
+  "gates": [
+    {
+      "gate_id": "input_resolution",
+      "name": "Input Resolution",
+      "criteria": "PASS iff the verbatim original request, resolved unique family set, absolute inclusive dates, resolution basis (original phrase, anchor rule, calendar source/coverage and execution instant) and execution intent are frozen in resolved_inputs and a same-Run evidence artifact; dates are real, start <= end, end is not in the future in Asia/Shanghai, any anchor used for a relative resolution is a CFFEX open date not later than the execution date, and every family is an explicitly supported or unambiguous alias-resolved IF/IH/IC/IM. FAIL if a supplied family is invalid, unsupported or ambiguous, a date is invalid, a relative anchor is not a CFFEX open date, the end date is in the future, or a required input is invalid. BLOCKED if relative resolution lacks a complete published CFFEX calendar or anchor, a required input is unresolved, or execution intent is not established; never guess.",
+      "depends_on": []
+    },
+    {
+      "gate_id": "basis_acquisition",
+      "name": "Basis Acquisition",
+      "criteria": "PASS iff every requested family was invoked through the published product API exactly once, returned a successful result, the separate execution authorization reference is recorded, and the Run preserves lossless actual results plus source_identity, actual first and last observation dates, observation counts, coverage status/evidence (including an explicit unverified reason) and any family-level failures. FAIL if any family returns a classified product error or the acquisition evidence is missing or inconsistent; successful families remain preserved. BLOCKED if input_resolution is not PASS, separate execution authorization is absent, or a prerequisite prevents an authorized attempt. No fabricated, zero-filled or substituted result.",
+      "depends_on": ["input_resolution"]
+    },
+    {
+      "gate_id": "result_delivery",
+      "name": "Result Delivery",
+      "criteria": "PASS iff result.json, basis_daily.csv and REPORT.md exist in the same Run, are mutually consistent and consistent with the acquisition evidence; every requested family succeeded and every family coverage is verified_complete against the published CFFEX calendar; the report shows per-family actual date ranges and latest sessions, source, inherited formula, units and near-expiry caveat; and no incomplete or unverified scope is presented as complete. FAIL if outputs are missing or inconsistent, coverage is verified_partial, slots or rows are inconsistent, or the report claims unsupported completeness. BLOCKED if basis_acquisition is not PASS or expected-session verification is unavailable (coverage unverified). When basis_acquisition PASS and both a known verified_partial family and an unverified family exist, FAIL takes precedence over BLOCKED.",
+      "depends_on": ["basis_acquisition"]
+    }
+  ]
+}
