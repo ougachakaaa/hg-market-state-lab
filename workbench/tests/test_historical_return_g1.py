@@ -237,7 +237,7 @@ def test_invalid_timeout_blocks(timeout):
 def test_actual_check_run_evidence_round_trip_and_same_run_ownership(tmp_path, body, status):
     root = tmp_path / "runs"
     with http_fixture(body) as (target, calls):
-        report = RECORD["record_g1"](root, "WB-02 G1 acceptance only", target, 2)
+        report = RECORD["record_g1"](root, "G1 acceptance only", target, 2)
         assert calls == [("GET", "/openapi.json")]
     assert report["result"]["status"] == status
     assert report["evidence_verified"] is True

@@ -14,8 +14,8 @@ Unknown IDs raise `CapabilityNotFound`; never synthesize a supported capability.
 registry, plugin/provider framework or runtime registration is authorized. Another entry
 requires Research-owned semantic admission and its case/public input contract first. The
 [Price Segmentation](cases/price_segmentation/ARCHITECTURE.md) case implements an
-independent `price_segmentation_v1` Python Observation API. Its specified real-market
-scope passed [G4 acceptance](cases/price_segmentation/LIVE_E2E_ACCEPTANCE.md). It is not
+independent `price_segmentation_v1` Python Observation API. Its specified isolated
+real-market scopes are recorded as passed in [Acceptance](ACCEPTANCE.md). It is not
 published by this facade, ResearchPlan, preview or HTTP; these remain Trailing Return only.
 Offline human review does not extend Capability Publication.
 
@@ -26,7 +26,8 @@ Descriptors perform no service creation, export, ensure, provider probing or mar
 The descriptor publishes these explicit constraints, without defaults:
 
 - Full canonical index_code, pattern `[0-9]{6}\.(SH|SZ|CSI)`; `000852.SH` is the
-  metadata-verified CSI1000 example from [isolated live acceptance](LIVE_E2E_ACCEPTANCE.md),
+  metadata-verified CSI1000 example from
+  [bounded real-market validation](ACCEPTANCE.md#real-market-validation-evidence),
   never a subject default. Syntax validation does not prove provider membership.
 - Exact versioned metric and explicit `metric_parameters={}`. Ordered non-empty unique
   subjects, horizons and windows; ordered non-empty analyses with unique unchanged IDs.

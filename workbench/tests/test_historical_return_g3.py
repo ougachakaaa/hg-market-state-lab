@@ -93,7 +93,7 @@ def backend(catalog=None):
 
 
 def ready(root, target):
-    return G1["record_g1"](root, "G1 readiness; subsequent WB-03 read-only discovery", target, 2)
+    return G1["record_g1"](root, "G1 readiness; subsequent read-only discovery", target, 2)
 
 
 def inspect(root, run_id, timeout=2):

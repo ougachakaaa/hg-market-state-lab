@@ -7,6 +7,23 @@ Research/capability invocation, provider access or cache I/O. Operational defaul
 `http://127.0.0.1:8011`, timeout 2 seconds (finite, > 0 and <= 30). An explicit target may use HTTP or HTTPS,
 with hostname/IP and optional port only: no credentials, path prefix, query or fragment.
 
+## Current repository compatibility
+
+This contract was approved for the earlier anonymous loopback runtime. Repository HTTP
+now applies [Authentication MVP V1](../../../../ui_http/AUTHENTICATION.md) to all paths
+except the three public Auth POSTs, including `GET /openapi.json`. A correctly configured
+current backend therefore returns HTTP 401 with the Auth error envelope to this checker.
+
+`check_backend.py` deliberately sends no Cookie and has no credential option. It requires
+HTTP 200, so the current backend produces `FAIL` with reason code `http_status`; the raw
+401 observation is preserved if a Run is recorded. A 401 is not treated as readiness
+success. Deterministic fixtures and historical G1 PASS evidence prove checker mechanics
+only, not current authenticated integration. The Task itself remains immutable; changing
+this readiness semantics requires a new Task version or separate authorization decision
+as described in the [Task compatibility entry](../ARCHITECTURE.md#current-operational-compatibility).
+Do not add an unauthenticated OpenAPI route, disable authentication, or persist
+credentials to make this V1 check pass.
+
 ## Compatibility and result
 
 PASS requires HTTP 200, JSON media type, strict JSON object, OpenAPI 3.0.x or 3.1.x,

@@ -24,12 +24,16 @@ root runtime, not an installed Python package or official `lab` command.
 
 No universal Gate count or ordering exists. Approved Tasks enter through the narrow
 [Task catalog](tasks/README.md); their Gates have no global authority here.
-The first Task implements its own backend-readiness and read-only capability-discovery
-checks and Task-specific validation/persistence of Agent-authored workflows through
-pure public Python Research Preview, followed by separately authorized execution and
-result retention through the public Research Python Batch boundary. Authentication,
-visualization, scheduling and agent orchestration are not implemented by Workbench.
-Research [publication](../market_research/PUBLICATION.md) has separate ownership and
-storage; RunStore preserves operational evidence and is not a publication repository.
-Workbench does not generate application-specific HTML or host a separate research Web server. Discovery consumes
-published HTTP responses; Workbench owns no capability registry or business validation.
+Task-local runtime, Gate prerequisites, implementation status and operational
+compatibility belong to each selected Task's authority and usage entry in that
+catalog. Task approval and historical PASS evidence do not establish current
+compatibility or authorize a new execution.
+
+Authentication, visualization, scheduling and agent orchestration are not implemented
+by Workbench; repository HTTP authentication is owned by
+[`ui_http`](../ui_http/AUTHENTICATION.md). Research
+[publication](../market_research/PUBLICATION.md) has separate ownership and storage;
+RunStore preserves operational evidence and is not a publication repository.
+Workbench does not generate application-specific HTML or host a separate research Web
+server. Discovery consumes published HTTP responses; Workbench owns no capability
+registry or business validation.

@@ -1,4 +1,4 @@
-"""WB-07 public-service reuse audit; deny all Provider/network access."""
+"""Public-service reuse audit; deny all Provider/network access."""
 
 import hashlib
 import json

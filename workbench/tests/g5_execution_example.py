@@ -1,4 +1,4 @@
-"""Standalone isolated deterministic WB-05 execution; no providers or default user caches."""
+"""Standalone isolated deterministic G5 execution; no providers or default user caches."""
 
 import json
 from pathlib import Path

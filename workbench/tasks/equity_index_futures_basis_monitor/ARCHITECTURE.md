@@ -76,6 +76,10 @@ product result; a divergence requires a new Task version.
 
 ## Versioning and status
 
+The frozen `task.json` scope records the G1 approval-stage status (no runtime at
+that stage); it is approval/provenance text, not the current implementation status.
+It remains unchanged, as do existing Run snapshots.
+
 Task version 1 defines the authority and the G2 implementation contract. The Task-local
 runtime at [`runtime/run_monitor.py`](runtime/run_monitor.py) implements that contract:
 it freezes resolved inputs, invokes the public basis product once per family, checks

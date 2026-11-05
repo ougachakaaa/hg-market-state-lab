@@ -17,3 +17,8 @@ research results are not separate Task definitions.
 [RunStore](../contracts/STORAGE.md) preserves original execution evidence. A Task's
 results package organizes research findings and references that evidence; it does not
 replace the frozen Run artifacts or authorize another execution.
+
+`historical_return_observation` V1 only: its anonymous G1/G3 path is blocked by
+current repository HTTP authentication. Read its [current operational compatibility](historical_return_observation/ARCHITECTURE.md#current-operational-compatibility)
+before a new Run. Existing Runs and historical results remain valid evidence. This
+restriction does not apply to the Futures Basis Task, which uses public Python services.

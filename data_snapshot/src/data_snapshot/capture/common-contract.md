@@ -7,7 +7,6 @@
 | Source Capture | Tushare endpoint | Source fact |
 | --- | --- | --- |
 | `index_daily` | `index_daily` | 指数日行情 |
-| `stock_daily` | `daily` | A 股未复权日行情 |
 | `mo_option_basic` | `opt_basic` | MO 期权合约静态与生命周期事实 |
 | `mo_option_daily` | `opt_daily` | MO 期权合约日行情事实 |
 | CFFEX equity-index futures basic（当前实现为 `im_futures_basic`） | `fut_basic` | IF/IH/IC/IM 普通月度合约静态与生命周期 Source facts |

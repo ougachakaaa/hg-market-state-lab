@@ -74,8 +74,6 @@ class TushareApi(Protocol):
         end_date: str | None = ...,
     ) -> pd.DataFrame: ...
 
-    def daily(self, *, trade_date: str) -> pd.DataFrame: ...
-
     def opt_basic(
         self, *, exchange: str, list_date: str | None = ..., fields: str | None = ...
     ) -> pd.DataFrame: ...
@@ -183,7 +181,8 @@ def to_tushare_date(trade_date: str) -> str:
 
     The input must be exactly ``YYYY-MM-DD``; ``strptime`` alone would also
     accept forms such as ``2026-9-17``, which are not the project-level format
-    defined in ``products/daily_market_snapshot/data.md`` section 3.
+    defined by the shared Capture contract (``capture/common-contract.md``
+    section 2).
     """
     if not ISO_DATE_PATTERN.fullmatch(trade_date):
         raise TushareDateError(f"trade_date must use YYYY-MM-DD, got {trade_date!r}.")

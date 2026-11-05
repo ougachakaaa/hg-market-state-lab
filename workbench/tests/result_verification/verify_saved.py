@@ -1,4 +1,4 @@
-"""WB-07 independent oracle over immutable saved public Exports; no market I/O."""
+"""Independent oracle over immutable saved public Exports; no market I/O."""
 
 import base64
 import hashlib

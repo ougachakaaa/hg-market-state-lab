@@ -538,11 +538,13 @@ A Gate PASS is valid only with same-Run registered evidence. The recorder hashes
 the executor remains responsible for truthfulness and criteria evaluation. No Gate
 outcome is created by G1.
 
-## 7. G2 implementation readiness
+## 7. G2 implementation contract and status
 
-G2 may add Task-local runtime scripts under
-`workbench/tasks/equity_index_futures_basis_monitor/runtime/` and tests under the
-existing `workbench/tests/` layout. Use the existing root Python environment; do not
+G2 implements Task-local `runtime/run_monitor.py` and deterministic tests under
+the existing `workbench/tests/` layout. Live acceptance has not been performed.
+The frozen Task scope retains the G1 approval-stage status; it does not deny the
+subsequent G2 implementation or authorize live execution.
+Use the existing root Python environment; do not
 create a package, environment, server, database, CLI command or scheduler.
 
 Required sequence:
@@ -590,10 +592,14 @@ separate, explicitly authorized activity and is not part of G1.
 
 ## 8. Non-goals and versioning
 
+The G1 approval stage implemented no runtime and authorized no Tushare request
+or Calendar cache write. G2 implements only the Task-local runtime described in
+section 7; actual market access still requires separate explicit user authorization.
+These stage distinctions do not modify the frozen `task.json` or existing Runs.
+
 V1 does not implement or authorize:
 
-- a Task runtime, command, HTTP endpoint or UI;
-- a Tushare request or Calendar cache write;
+- a repository CLI command, HTTP endpoint or UI;
 - a new Dataset, Snapshot Product, generic Task engine, scheduler or orchestration
   framework;
 - charts, statistical distributions, predictions, trading advice, backtests or

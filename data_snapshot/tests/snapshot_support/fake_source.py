@@ -179,52 +179,6 @@ def index_history_frame(
     return as_source_frame(rows, INDEX_FIELDS, ("trade_date",))
 
 
-def stock_daily_frame(trade_date: str = "20260917") -> pd.DataFrame:
-    """Build Tushare ``daily`` rows for the given Source date."""
-    rows = [
-        {
-            "ts_code": "000001.SZ",
-            "trade_date": trade_date,
-            "open": 10.0,
-            "high": 11.0,
-            "low": 9.5,
-            "close": 10.5,
-            "pre_close": 10.0,
-            "change": 0.5,
-            "pct_chg": 5.0,
-            "vol": 100.0,
-            "amount": 50.0,
-        },
-        {
-            "ts_code": "600000.SH",
-            "trade_date": trade_date,
-            "open": 8.0,
-            "high": 8.1,
-            "low": 7.5,
-            "close": 7.6,
-            "pre_close": 8.2,
-            "change": -0.6,
-            "pct_chg": -7.3171,
-            "vol": 200.0,
-            "amount": 60.0,
-        },
-        {
-            "ts_code": "000002.SZ",
-            "trade_date": trade_date,
-            "open": 5.0,
-            "high": 5.0,
-            "low": 5.0,
-            "close": 5.0,
-            "pre_close": 5.0,
-            "change": 0.0,
-            "pct_chg": 0.0,
-            "vol": 10.0,
-            "amount": 5.0,
-        },
-    ]
-    return pd.DataFrame(rows)
-
-
 def option_basic_frame(contracts: list[dict[str, Any]]) -> pd.DataFrame:
     """Build Tushare ``opt_basic`` rows from partial contract facts."""
     rows = [
@@ -374,21 +328,18 @@ class FakeTushareApi:
     def __init__(
         self,
         index_frames: dict[str, pd.DataFrame] | None = None,
-        stock_frame: pd.DataFrame | None = None,
         option_basic: pd.DataFrame | None = None,
         option_daily: pd.DataFrame | None = None,
         futures_basic: pd.DataFrame | None = None,
         futures_daily: dict[str, pd.DataFrame] | None = None,
     ) -> None:
         self.index_frames = index_frames if index_frames is not None else {}
-        self.stock_frame = stock_frame if stock_frame is not None else pd.DataFrame()
         self.option_basic = option_basic if option_basic is not None else pd.DataFrame()
         self.option_daily = option_daily if option_daily is not None else pd.DataFrame()
         self.futures_basic = futures_basic if futures_basic is not None else pd.DataFrame()
         self.futures_daily = futures_daily if futures_daily is not None else {}
         self.calls: list[tuple[str, dict[str, str]]] = []
         self.index_calls: list[dict[str, str]] = []
-        self.daily_calls: list[dict[str, str]] = []
         self.opt_basic_calls: list[dict[str, str]] = []
         self.opt_daily_calls: list[dict[str, str]] = []
         self.fut_basic_calls: list[dict[str, str]] = []
@@ -413,11 +364,6 @@ class FakeTushareApi:
         self.index_calls.append(call)
         frame = self.index_frames.get(ts_code, pd.DataFrame())
         return self._slice(frame, "trade_date", trade_date, start_date, end_date)
-
-    def daily(self, *, trade_date: str) -> pd.DataFrame:
-        self.calls.append(("daily", {"trade_date": trade_date}))
-        self.daily_calls.append({"trade_date": trade_date})
-        return self.stock_frame
 
     def opt_basic(
         self, *, exchange: str, list_date: str | None = None, fields: str | None = None
@@ -503,13 +449,3 @@ class FakeTushareApi:
         if start_date is not None and end_date is not None:
             return frame[(source_dates >= start_date) & (source_dates <= end_date)]
         return frame
-
-
-def index_frames_for_all(
-    codes: tuple[str, ...], trade_date: str = "20260917"
-) -> dict[str, pd.DataFrame]:
-    """Build an ``index_daily`` frame for every code in the universe."""
-    return {
-        code: index_daily_frame(code, trade_date, close=100.0 + offset)
-        for offset, code in enumerate(codes)
-    }

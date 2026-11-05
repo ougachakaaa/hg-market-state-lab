@@ -48,19 +48,3 @@ Conversion obligations belong to [Sample conversion](SAMPLE_CONVERSION.md).
 Association tests cover every retained business field, method/count/unit mismatches,
 preservation of Statistics error categories and no recomputation. Cross-stage scenarios
 are in [EXECUTION.md](EXECUTION.md).
-
-## ASSOC-01 authority reconciliation
-
-The expanded association is an independently consumable bounded contract, so its fields,
-validation and failure rules live below this integration entry in RESULT_ASSOCIATION.md.
-This keeps conversion, association and orchestration details with unique owners.
-
-| Existing boundary | Reconciled decision |
-| --- | --- |
-| Execution's ordered request_id/spec pairs | One public AnalysisRequest; EXEC-01 implements direct Job uniqueness and InvalidPlan; whole-plan preflight remains future scope |
-| Observation Job identity | Existing full structural tuple, accepting equivalent fixed Jobs; no new ID |
-| Binding/source provenance | Exact source-object identity and original typed references, no copied context |
-| Execution failure taxonomy | ResultAssociationFailure at result_association; caller retains raw results |
-| Statistics numerical validation | Public validate_spec/NumericSample legality plus bounded linkage/shape/accounting checks; no recomputation or origin attestation |
-| Architecture tests forbidding Association | ASSOC-01 opened precise public facade permissions; EXEC-01 separately authorizes [execution](JOB_EXECUTION.md) public component edges, with no reverse dependency |
-| Readiness | Authority only at this commit; implementation and factual acceptance recorded separately |

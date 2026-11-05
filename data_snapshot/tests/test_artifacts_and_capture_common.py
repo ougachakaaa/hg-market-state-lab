@@ -194,15 +194,3 @@ def test_in_date_range_uses_inclusive_iso_bounds() -> None:
     assert common.in_date_range(record, "trade_date", "2026-09-17", "2026-09-17")
     assert not common.in_date_range(record, "trade_date", "2026-01-01", "2026-09-16")
     assert not common.in_date_range({"trade_date": None}, "trade_date", "2026-01-01", "2026-12-31")
-
-
-def test_fetch_source_frames_keeps_the_requested_code() -> None:
-    import pandas as pd
-
-    def query(*, ts_code: str, start_date: str) -> pd.DataFrame:
-        return pd.DataFrame([{"ts_code": ts_code, "start_date": start_date}])
-
-    frames = list(common.fetch_source_frames(query, ["B", "A"], start_date="20260101"))
-
-    assert [code for code, _ in frames] == ["A", "B"]
-    assert [frame.iloc[0]["ts_code"] for _, frame in frames] == ["A", "B"]

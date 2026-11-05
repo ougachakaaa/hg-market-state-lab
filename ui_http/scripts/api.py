@@ -1,11 +1,10 @@
 """Thin executable shim that runs the repository backend HTTP runtime.
 
-The neutral composition root includes the independent MO Option Chain and MO
-Premium Plane adapters. This script only makes it runnable without packaging
-the project without packaging another executable.
+The composition root includes the independently owned published product
+adapters. This script only makes the runtime runnable without installing another
+executable.
 
-Authority: ``products/mo_option_chain/http-contract.md`` and
-``products/mo_option_premium/http-contract.md``.
+Authority: ``ARCHITECTURE.md`` and the contracts under ``products/``.
 
 The adapter binds ``127.0.0.1:8011`` by default, which the repository README
 documents as the local HTTP API address. The bind address is a launcher detail,

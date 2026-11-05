@@ -4,8 +4,8 @@ This contract specializes [Execution](EXECUTION.md), which owns business identit
 [Plan/Batch control](BATCH_EXECUTION.md). It owns EXEC-01: the direct single Job public boundary,
 preflight, immutable execution records and stage accounting. It does not own market
 formulas, acquisition, conversion, numerical algorithms or association validation.
-Status: EXEC-01 implemented. Actual verification belongs to
-[Single Job acceptance](JOB_EXECUTION_ACCEPTANCE.md) and [readiness](ACCEPTANCE.md).
+Status: implemented. Current verification and readiness are recorded in
+[Acceptance](ACCEPTANCE.md); deterministic coverage belongs to the execution tests.
 
 ## Public operation and preflight
 
@@ -118,17 +118,8 @@ BaseException: system exit, KeyboardInterrupt and cancellation propagate. Failur
 follow occurrence order and request-attributable failures use the original request ID.
 The analyze stage name remains Research-owned while computation stays Statistics-owned.
 
-## Authority reconciliation
-
-| Existing owner | EXEC-01 resolution |
-| --- | --- |
-| Execution identity and all-required-analysis rule | Remain valid; direct Job preflight and complete ordered carriers specialize them here |
-| Observation/case preparation and construction | Remain valid; expose minimal pure case validator returning existing identity; Executor never imports private inputs or duplicates case rules |
-| Conversion and association | Remain independent, pure, case-agnostic public capabilities; failures/objects retained without changing algorithms |
-| Statistics public contract | Root facade only: validate_spec, compute, public spec/result variants and errors; no numerical implementation copied |
-| Prior tests forbidding execution | Superseded only for the precise execution-to-public-component edges; components and Statistics cannot depend on execution |
-| Plan/Batch | Specialized by [EXEC-02](BATCH_EXECUTION.md); direct Job still returns Success/Failed only |
-| Persistence, cache/replay, CLI/HTTP and live-data gate | Deferred; no new runtime/API or live acceptance claim |
+Persistence, cache/replay, CLI/HTTP and a live-market gate remain outside the Single Job
+contract.
 
 Deterministic acceptance must cover complete/partial populations, zero eligible, all
 preflight rejection classes with zero upstream I/O, distinct preparation/construction

@@ -26,11 +26,13 @@ Windows native 手工初始化从仓库根目录运行：
 
 PowerShell 脚本使用 Python 3.13、Poetry、Node 与 npm 达到相同终态。Codex Local Environment 仍调用上面的 Bash 脚本；WSL 使用 Bash 入口。两个脚本只负责 bootstrap，正式操作均使用 `lab`。
 
-每个 worktree 分别使用自己的根 `.venv` 与 `ui_web/node_modules`，不与其他 worktree 共享依赖目录。所有 repository Python packages 与 Python tools 共用该根 `.venv`；module directory 不拥有独立 Poetry environment。Codex managed worktree 会按根目录 `.worktreeinclude` 复制 source checkout 中已忽略的 `data_snapshot/.env`；如果 source checkout 没有该文件，setup 从 `.env.example` 复制一份空模板，不会生成或猜测 secret。
+每个 worktree 分别使用自己的根 `.venv` 与 `ui_web/node_modules`，不与其他 worktree 共享依赖目录。所有 repository Python packages 与 Python tools 共用该根 `.venv`；module directory 不拥有独立 Poetry environment。Codex managed worktree 会按根目录 `.worktreeinclude` 复制 source checkout 中已忽略的 `data_snapshot/.env`；如果 source checkout 没有该文件，setup 从 `data_snapshot/.env.example` 复制一份空模板，不会生成或猜测 secret。
 
 手工执行 `git worktree add` 不会触发 Codex Local Environment，可以在新 worktree 根目录运行对应平台的 bootstrap 命令。
 
 ## Windows One-Click Development Startup
+
+当前原生 Windows backend 受 [Publication 平台限制](market_research/descriptive/ACCEPTANCE.md#native-windows-publication-limitation) 阻断；一键启动器不解决该既有 import 问题。当前集成验证以 Linux 为准，WSL 仍需满足相同文件系统能力要求。
 
 在 Windows 上双击仓库根目录的 `start-market-lab.cmd`。需要预先安装 Python 3.13、Poetry、Node.js（20.19+ 或 22.12+）和 npm，并使其可从 PATH 使用；首次启动或依赖不完整时会运行现有 Windows bootstrap，安装需要网络连接。启动成功后会自动打开 `http://127.0.0.1:5173/`。
 
@@ -52,7 +54,7 @@ poetry run lab auth pending
 
 ## 当前命令与状态
 
-G1 Auth 已提供持久化注册 Python service 与 `lab auth pending/approve/reject/disable`，使用方式见 [CLI usage guide](ui_cli/README.md#authentication注册申请与-operator-审批)。默认独立数据库为 `ui_http/data/auth.sqlite3`；`LAB_AUTH_DB_PATH` 只接受绝对路径，CLI 与 HTTP Auth 使用相同 composition，不依赖当前目录。整个 `ui_http/data/`（含 journal/WAL）已忽略。首次操作创建数据库；既有不兼容或损坏 schema 明确失败，不自动恢复。Auth CLI 不需要 JWT 配置；G2 HTTP runtime 已强制认证，包括 docs/schema 与独立 product app。注册、登录、身份查询、退出见 [Auth HTTP contract](ui_http/AUTHENTICATION.md#4-http-contract-and-access-order)。G3 已提供登录/注册、启动 Cookie 身份检查、退出及 `/auth` Vite proxy。
+Auth 已提供持久化注册 Python service 与 `lab auth pending/approve/reject/disable`，使用方式见 [CLI usage guide](ui_cli/README.md#authentication注册申请与-operator-审批)。默认独立数据库为 `ui_http/data/auth.sqlite3`；`LAB_AUTH_DB_PATH` 只接受绝对路径，CLI 与 HTTP Auth 使用相同 composition，不依赖当前目录。整个 `ui_http/data/`（含 journal/WAL）已忽略。首次操作创建数据库；既有不兼容或损坏 schema 明确失败，不自动恢复。Auth CLI 不需要 JWT 配置；HTTP runtime 已强制认证，包括 docs/schema 与独立 product app。注册、登录、身份查询、退出见 [Auth HTTP contract](ui_http/AUTHENTICATION.md#4-http-contract-and-access-order)。Web 已提供登录/注册、启动 Cookie 身份检查、退出及 `/auth` Vite proxy。
 
 `doctor` 检查仓库结构、backend launcher、当前 Python 3.13 runtime 是否位于根 `.venv`，以及 Node 和 npm。它报告默认本地地址 `127.0.0.1:8011` 的 backend 状态：未监听为 `stopped`，监听且 `/openapi.json` 返回预期认证 401 为 `running / authentication required`，旧版有效 schema 200 为 `running / healthy`，否则为 `port occupied / unhealthy`。服务未启动是正常状态。若 `ui_web/package.json` 不存在，frontend 报告 `not initialized`；存在后检查默认 `127.0.0.1:5173` 是否监听，不要求专用 health endpoint。
 
@@ -72,7 +74,7 @@ poetry run lab serve backend
 `lab serve backend` 从 repository root 使用当前 Python interpreter 前台执行 `ui_http/scripts/api.py`。`lab serve frontend` 在 `ui_web/` 前台执行系统解析到的 npm `run dev`；首次启动前需在 `ui_web/` 自行执行 `npm install`。两个命令继承标准输入输出、传递子进程退出码，Ctrl+C 结束前台进程。缺少启动前提时明确报错，不自动修复环境。
 
 
-`ui_web/` 是独立 npm project，使用 Vite + React + TypeScript。Node.js 需满足当前 Vite 要求（20.19+ 或 22.12+）。`npm run dev` 在 `http://127.0.0.1:5173/` 提供认证入口和两个 MO 页面，与 `doctor` 的本地诊断地址一致；`npm run build` 执行 TypeScript 检查及 production build，`npm run lint` 运行 Oxlint，`npm run test` 运行前端测试。Vite dev proxy 将 frontend origin 的 `/auth`、`/mo-option-chain`、`/mo-option-premium-plane` 原路径和 query 转发到 `http://127.0.0.1:8011`，不需要 backend CORS policy。默认 provider 已接入真实读取链路；具体响应取决于目标日期与 Source 数据。
+`ui_web/` 是独立 npm project，使用 Vite + React + TypeScript。Node.js 需满足当前 Vite 要求（20.19+ 或 22.12+）。`npm run dev` 在 `http://127.0.0.1:5173/` 提供认证入口和三个业务 surface（MO Option Chain、MO Premium Plane、Research Explorer），与 `doctor` 的本地诊断地址一致；`npm run build` 执行 TypeScript 检查及 production build，`npm run lint` 运行 Oxlint，`npm run test` 运行前端测试。Vite dev proxy 将 frontend origin 的 `/research`、`/auth`、`/mo-option-chain`、`/mo-option-premium-plane` 原路径和 query 转发到 `http://127.0.0.1:8011`，不需要 backend CORS policy。默认 provider 已接入真实读取链路；具体响应取决于目标日期与 Source 数据。
 
 ### 浏览器注册、审批与登录
 
@@ -80,7 +82,7 @@ poetry run lab serve backend
 2. 另一个终端从仓库根执行 `poetry run lab serve frontend`，打开 `http://127.0.0.1:5173/`。始终使用 `127.0.0.1`，不与 `localhost` 混用。
 3. 点击 Register，输入 username/password 并提交；202 只表示等待审批，不会登录。输入规则见 [Auth authority](ui_http/AUTHENTICATION.md#2-user-identity-and-persistence)。
 4. Operator 从仓库根执行 `poetry run lab auth pending`，读取申请 ID，再执行 `poetry run lab auth approve <user-id>`。
-5. 返回 Login，使用已审批账号登录。默认进入 MO Option Chain，可切换 MO Premium Plane；选择日期才发起行情请求。行情仍依赖其 Source 配置和数据可用性。
+5. 返回 Login，使用已审批账号登录。默认进入 MO Option Chain，可切换 MO Premium Plane 或 Research Explorer；MO 页面选择日期才发起行情请求。行情仍依赖其 Source 配置和数据可用性。
 6. 刷新时由 `/auth/me` 检查 HttpOnly Cookie 恢复身份。Logout 期间卸载业务页面；成功返回登录，失败显示重试退出。登录过期的业务 401 同样返回登录。
 
 所有浏览器请求走相对 URL 和 Vite 同源代理，不直接调用 `:8011`，无需 CORS 或本地认证绕过。

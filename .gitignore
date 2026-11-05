@@ -32,9 +32,8 @@ ui_web/dist-ssr/
 data_snapshot/data/raw/**
 !data_snapshot/data/raw/.gitkeep
 
-# Daily Market Snapshot output (runtime artifacts)
+# Retired Daily Market Snapshot runtime artifacts (obsolete; never commit)
 data_snapshot/data/snapshots/**
-!data_snapshot/data/snapshots/.gitkeep
 
 # Temporary Documents
 _temp_docs/**

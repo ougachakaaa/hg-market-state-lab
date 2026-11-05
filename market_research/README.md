@@ -3,8 +3,8 @@
 The stable human/agent entry is [USAGE.md](USAGE.md): the one admitted capability,
 Python plan, HTTP discovery → preview → execute, evidence interpretation and operational limits.
 This README retains component-level Python examples.
-The [Research entry acceptance](descriptive/RESEARCH_ENTRY_ACCEPTANCE.md) records actual
-HTTP/schema checks; its deterministic gate does not claim live HTTP acceptance.
+Deterministic HTTP acceptance, bounded real-market validation and current limits are
+recorded in [Acceptance](descriptive/ACCEPTANCE.md); live HTTP remains unverified.
 
 This is usage documentation. Contracts are owned by [the module authority](ARCHITECTURE.md)
 and its [Observation boundary](descriptive/OBSERVATION.md).
@@ -59,13 +59,13 @@ Preparation failures expose `stage`, `category`, `request` and obtained `evidenc
 fails preparation; a validated partial Index Export can produce unavailable outcomes.
 Construction makes no upstream calls. This API requires no Statistics, Converter or Executor.
 
-Verification commands and actual live-data status are in [Acceptance](descriptive/ACCEPTANCE.md).
+Current status, validation evidence and limitations are in [Acceptance](descriptive/ACCEPTANCE.md).
 
-The bounded [LIVE-E2E-01 acceptance](descriptive/LIVE_E2E_ACCEPTANCE.md) is Verified for
-metadata-confirmed CSI1000, using fresh isolated Dataset storage. Its
-[opt-in harness](tests/live_e2e_acceptance.py) runs only when explicitly invoked;
-ordinary pytest remains deterministic. The historical incompatible default Calendar
-cache was neither repaired nor changed.
+The bounded isolated real-market validation is recorded in
+[Acceptance](descriptive/ACCEPTANCE.md#real-market-validation-evidence) and uses fresh
+isolated Dataset storage. Its [opt-in harness](tests/live_e2e_acceptance.py) runs only
+when explicitly invoked; ordinary pytest remains deterministic. The historical
+incompatible default Calendar cache was neither repaired nor changed.
 
 ## Pure scalar conversion and Statistics reuse
 
@@ -105,7 +105,9 @@ Conversion raises `InvalidObservationSet` for malformed sources, then
 `UnmappableSample` for Statistics sample-construction rejection. All expose stage
 `conversion`, category and readable exception text; translated failures retain their cause.
 The caller retains the source and diagnostics when conversion fails. No JobResult or
-business result association is produced. See [deterministic outputs and reconciliation](descriptive/CONVERSION_ACCEPTANCE.md).
+business result association is produced. See the
+[conversion contract](descriptive/SAMPLE_CONVERSION.md#deterministic-acceptance) and
+[Acceptance](descriptive/ACCEPTANCE.md).
 
 ## Pure statistical result association
 
@@ -133,8 +135,7 @@ A bare result has no sample identity: association cannot prove its hidden comput
 origin or independently certify its mathematical payload. Use the actual corresponding
 public compute result. This pure component does not execute Jobs or persist/cache evidence.
 See the
-[contract](descriptive/RESULT_ASSOCIATION.md) and
-[deterministic acceptance](descriptive/ASSOCIATION_ACCEPTANCE.md).
+[contract](descriptive/RESULT_ASSOCIATION.md) and [Acceptance](descriptive/ACCEPTANCE.md).
 
 ## Single Job execution
 
@@ -171,8 +172,8 @@ poetry run python market_research/tests/job_execution_example.py
 
 It asserts and prints both Success (two successful evidences, no failures) and Failed
 (quantile failure followed by successful distribution evidence) with complete ordered
-outcomes and retained source/projection. The [contract](descriptive/JOB_EXECUTION.md)
-and [actual acceptance](descriptive/JOB_EXECUTION_ACCEPTANCE.md) record the exact scope.
+outcomes and retained source/projection. The [contract](descriptive/JOB_EXECUTION.md) and
+[Acceptance](descriptive/ACCEPTANCE.md) record the exact scope.
 
 ## Batch execution
 
@@ -226,4 +227,4 @@ It asserts eight successful independent Jobs, then injects failure in Job two:
 continue yields 7 Success / 1 Failed / 0 Skipped; stop yields 1 Success / 1 Failed /
 6 Skipped. Each attempted Job still completes both required analysis attempts.
 See the [Batch contract](descriptive/BATCH_EXECUTION.md) and
-[actual acceptance](descriptive/BATCH_EXECUTION_ACCEPTANCE.md).
+[Acceptance](descriptive/ACCEPTANCE.md).

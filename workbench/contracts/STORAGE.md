@@ -23,7 +23,8 @@ string, path: local file path}`; relative paths resolve from invocation cwd. It
 copies bytes and records generated `artifact_id`, label, absolute `source_location`,
 Run-relative `stored_path`, `sha256`, and `size_bytes`. The returned registration
 can be used as Gate evidence. The preserved copy remains locatable if the source
-changes or disappears. URI-only artifacts and directories are not supported in WB-01.
+changes or disappears. URI-only artifacts and directories are not supported by this
+storage contract.
 
 All writes publish a completely written, flushed/fsynced temporary file via an
 exclusive hard link, then remove the temporary name. Publication never replaces an
@@ -43,7 +44,8 @@ if a manifest is missing or committed content is inconsistent. A crash while hol
 remove only that stale lock; the recorder never guesses or deletes evidence to recover.
 Atomic visibility is provided; power-loss recovery/directory fsync, hostile-writer
 protection, cryptographic authenticity and distributed/network filesystem guarantees
-are outside WB-01. Hashes detect corruption, not malicious coordinated rewriting.
+are outside this storage contract. Hashes detect corruption, not malicious coordinated
+rewriting.
 
 Invalid requests raise `ValueError`; inconsistent stored content raises `ValueError`;
 busy/collision/unsupported-filesystem/I/O failures remain explicit OS errors. Script

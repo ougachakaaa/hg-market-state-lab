@@ -8,8 +8,8 @@ expected outputs and acceptance criteria. It must respect repository/module auth
 Agents may propose designs; explicit user approval is required to promote them to
 Task authority. Changes require a new version and approval. Runs never update their
 parent definition. There is no Task registry, approval service or executable Task
-engine in WB-01; approval evidence is supplied by the caller and remains subject
-to human/agent verification, not certified by storage.
+engine in the current implementation; approval evidence is supplied by the caller and
+remains subject to human/agent verification, not certified by storage.
 
 The recorder accepts a complete JSON snapshot with these required fields:
 

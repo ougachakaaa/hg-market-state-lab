@@ -1,6 +1,6 @@
 # Index Daily History data authority
 
-本文档从属于 [product authority](ARCHITECTURE.md)，拥有本产品的 Source scope、实际观测集合、warm-up selection 与 completeness。`index_daily` endpoint、`ts_code + start_date + end_date` 历史查询、Source 字段及 Raw normalization 由 [shared Capture authority](../../capture/index-stock-contract.md) 与 [common contract](../../capture/common-contract.md) 拥有。
+本文档从属于 [product authority](ARCHITECTURE.md)，拥有本产品的 Source scope、实际观测集合、warm-up selection 与 completeness。`index_daily` endpoint、`ts_code + start_date + end_date` 历史查询、Source 字段及 Raw normalization 由 [shared Capture authority](../../capture/index-daily-contract.md) 与 [common contract](../../capture/common-contract.md) 拥有。
 
 ## Source scope and sample
 

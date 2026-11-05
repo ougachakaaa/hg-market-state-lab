@@ -23,8 +23,8 @@ dates, horizon, failure policy, normalization or deduplication are authorized. I
 precedes all service creation and DataLake I/O.
 
 Status: EXEC-01 and EXEC-02 are implemented for Index Trailing Return. Deterministic
-verification is recorded separately in [Single Job acceptance](JOB_EXECUTION_ACCEPTANCE.md)
-and [Batch acceptance](BATCH_EXECUTION_ACCEPTANCE.md). Live-data acceptance remains separate.
+verification belongs to the affected contract tests; current readiness and bounded
+real-market validation are recorded in [Acceptance](ACCEPTANCE.md).
 
 ## Business identity and execution scope
 

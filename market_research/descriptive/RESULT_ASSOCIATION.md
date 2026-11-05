@@ -3,8 +3,8 @@
 This contract specializes [Statistics integration](STATISTICS_INTEGRATION.md) under
 [Descriptive](ARCHITECTURE.md). It owns ASSOC-01 only: a synchronous, pure, case-agnostic
 association of a published scalar observation population, projection, request and result.
-Status: implemented by ASSOC-01; actual verification is recorded in
-[Association acceptance](ASSOCIATION_ACCEPTANCE.md) and [readiness](ACCEPTANCE.md).
+Status: implemented; current verification and readiness are recorded in
+[Acceptance](ACCEPTANCE.md); deterministic coverage belongs to the association tests.
 [Observation](OBSERVATION.md) owns the question/population/market derivation/provenance;
 [conversion](SAMPLE_CONVERSION.md) owns NumericSample mapping and SampleBinding;
 [Statistics](../../market_statistics/CONTRACT.md) owns numerical types and calculations;
@@ -170,6 +170,6 @@ edges/bin geometry/closures/counts/frequencies. Assert attributable failures, ca
 unchanged raw results/inputs, immutable evidence and negative no-I/O/no-convert/no-compute
 guards. A distinct legal scalar case with another typed provenance must pass without
 Trailing Return assumptions. Explicitly accept metadata-identical payloads whose hidden
-computation origin cannot be inferred. Executor verification is recorded in
-[Single Job acceptance](JOB_EXECUTION_ACCEPTANCE.md); persistence and live acceptance remain
-separate gates.
+computation origin cannot be inferred. Executor verification belongs to the
+[Single Job contract](JOB_EXECUTION.md) and its tests; persistence and live-market
+validation remain separate gates.
