@@ -1,0 +1,11 @@
+/* Embedded, OFL-licensed subset for readable Chinese in a fontless offline OS. */
+@font-face {
+  font-family: 'R01A CJK';
+  src: url('./assets/report-cjk.woff') format('woff');
+  font-weight: 100 900;
+  font-display: swap;
+}
+/* Plotly supplies its own SVG font-family; use the offline reader's font fallback. */
+.r01a-report .js-plotly-plot text {
+  font-family: system-ui, 'R01A CJK', sans-serif !important;
+}

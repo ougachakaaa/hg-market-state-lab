@@ -83,3 +83,42 @@ complete local assets, event/segment/tooltip fidelity and opening without backen
 or network. Acquisition failure cannot be replaced by a synthetic real-market report.
 Actual inputs and reports remain disposable runtime output outside Git under the
 [repository runtime invariant](../../../../ARCHITECTURE.md#naming-and-transition-authority).
+
+## WP5 executable delivery
+
+The case facade publishes `ReportRequest`, `compose_report`, `project_history`,
+`write_evidence`, `load_prepared_inputs`, `verify_delivery` and `replay_delivery`.
+A ReportRequest contains the fixed observation request, explicit QuantileSpec and
+three ordered IntervalCountSpecs (basis value, ratio, annualized ratio). Validate
+all parameters before upstream I/O. Composition consumes one existing WP3 result
+and calls the unchanged WP4 APIs for 12 distributions, 18 comparisons and four
+persistence summaries. Method failures remain visible; no eligible sample is an
+empty finding, not a statistical execution failure. Any actual method failure
+makes report status partial. Input/construction failure produces diagnostics only,
+never a successful study or chart. Details and summary prose are Research-owned.
+
+`market_research/scripts/futures_basis_report.py` is a case-specific offline
+operator script, not `lab`, a Research CLI framework or business package dependency
+on ui_web. It validates an external new output directory and explicit parameters,
+prepares/composes evidence, invokes the ui_web Node packager and seals the delivery.
+`--inputs` optionally supplies the retained canonical input file for offline
+construction, with the same exact request association and validation. Dedicated
+`verify` and `replay` operations consume an existing delivery without market I/O.
+Replay verifies the package before construction and compares scientific payloads;
+failed methods remain auditable but cannot promise deterministic replay of a
+transient numerical failure. Nonzero exit reports a mismatch or operation failure.
+
+The standalone ui_web report is separate from application navigation and uses
+existing theme, Ant Design and generic ChartView rendering. Six reader sections
+cover overview, history, distributions, paired term comparisons, persistence and
+evidence/limitations. Metric and Slot selection changes presentation only.
+All scripts/styles/data are embedded in one HTML, with no fetch or dynamic chunks.
+Plain producer text is escaped at JSON-to-HTML and chart text boundaries.
+Evidence and packaging are specified in [Evidence](EVIDENCE.md), not test fixtures.
+The operator supplies explicit runtime context to `write_evidence`; the Research
+package does not inspect frontend files or launch runtime/tooling processes.
+
+Report composition and evidence decoding may import only the public Statistics
+QuantileSpec/IntervalCountSpec and spec validation; numerical `compute` remains
+confined to the existing case statistics adapter. Offline operator scripts may
+invoke ui_web packaging as a subprocess; the Research package does not do so.

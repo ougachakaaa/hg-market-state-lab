@@ -1,6 +1,10 @@
 """Futures Basis public preparation, pure observations and independent Slot resolution."""
 
 from .construction import construct_observations as construct_observations
+from .evidence import load_prepared_inputs as load_prepared_inputs
+from .evidence import replay_delivery as replay_delivery
+from .evidence import verify_delivery as verify_delivery
+from .evidence import write_evidence as write_evidence
 from .inputs import FuturesBasisRequest as FuturesBasisRequest
 from .inputs import InputAttempt as InputAttempt
 from .inputs import InputPreparationError as InputPreparationError
@@ -26,6 +30,10 @@ from .observations import SlotDayObservation as SlotDayObservation
 from .observations import SourceIssue as SourceIssue
 from .observations import SourceReference as SourceReference
 from .preparation import prepare_inputs as prepare_inputs
+from .report import ReportRequest as ReportRequest
+from .report import ReportResult as ReportResult
+from .report import compose_report as compose_report
+from .report import project_history as project_history
 from .resolution import detect_contract_transitions as detect_contract_transitions
 from .resolution import resolve_daily_slots as resolve_daily_slots
 from .service import observe_futures_basis as observe_futures_basis

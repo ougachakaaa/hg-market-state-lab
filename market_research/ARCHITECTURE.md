@@ -33,7 +33,7 @@ Python APIs; this does not introduce a generic engine.
 The independent [Futures Basis case](descriptive/cases/futures_basis/ARCHITECTURE.md)
 defines same-day contract/relative-tenor observations without Horizon and owns its
 case-specific numerical adaptation. Its [roadmap](descriptive/cases/futures_basis/ROADMAP.md)
-separates authority readiness from future runtime and offline delivery; it does
+separates authority readiness from runtime and offline delivery acceptance; it does
 not extend the existing scalar execution or capability dispatch.
 
 Input Preparation acquires validated facts and availability evidence through authorized
@@ -120,7 +120,8 @@ The [capability publication](descriptive/RESEARCH_CAPABILITY.md) and pure previe
 publish this one case; bounded HTTP delivery belongs to
 [ui_http](../ui_http/products/research/http-contract.md). Human/agent usage is in
 [USAGE.md](USAGE.md), not a competing semantic authority.
-No Research CLI or report renderer is published. The independent Statistics
+No Research CLI is published. R01-A has a separately bounded
+[offline report workflow](descriptive/cases/futures_basis/DELIVERY.md); ui_web owns rendering. The independent Statistics
 public API is implemented; deterministic execution and bounded isolated real-market
 validation evidence, including current limitations, are recorded in
 [Acceptance](descriptive/ACCEPTANCE.md).

@@ -16,7 +16,8 @@ Authority status: WP0 is complete; WP1 has passed independent artificial-data
 runtime and real Chromium acceptance under the exact V2 contract and fixed fixture.
 WP2 has passed independent synthetic Slot/Transition acceptance. WP3 has passed
 synthetic runtime and bounded real IM acceptance under [its evidence](WP3_ACCEPTANCE.md).
-WP4 statistics passed synthetic and bounded real IM acceptance; WP5 report acceptance remains pending. WP1 does not admit V2
+WP4 statistics passed synthetic and bounded real IM acceptance; WP5 offline report and
+longer-window delivery are recorded in [WP5 acceptance](WP5_ACCEPTANCE.md). WP1 does not admit V2
 into existing Publication/HTTP consumers or implement the offline packager.
 
 | WP | Deliverable and boundary | Dependencies / acceptance |
@@ -61,18 +62,19 @@ converted into the new metric by sign change or division by 100 alone.
   [Mean authority](../../../../market_statistics/MEAN.md).
 - **V2 renderer:** WP1 is implemented and independently accepted; see
   [Visualization implementation and verification](../../../../ui_web/src/shared/visualization/README.md).
-  Producer projection and offline packaging remain WP5 work.
+  Producer projection and offline packaging are delivered under
+  [WP5 acceptance](WP5_ACCEPTANCE.md).
 - **Independent Case runtime and offline packager:** WP2 pure Slot resolution is
   implemented; WP3 preparation/observation and WP4 statistics are accepted.
-  WP5 packaging remains pending. Their owner, input/output meaning and bounded acceptance are defined
-  here; no generic framework is pre-created.
+  WP5 implements the bounded packager and evidence reader. Acceptance is recorded
+  separately; no generic framework is introduced.
 - **Publication / HTTP / capability integration:** deferred beyond this offline
   delivery. Would need versioned Case evidence admission, V2 read/transport/safe
   projection and generated-contract work. Existing quotas/authentication do not
   disappear and no new routes are implied.
 - **Actual study dates/data:** WP3/WP4 real IM validation uses explicit dates,
-  public-source inputs and retained evidence. WP5 must preserve that evidence for
-  its report. No default historical window is introduced.
+  public-source inputs and retained evidence. WP5 preserves the original short-window evidence and adds the explicit
+  2024-01-01..2026-10-30 candidate. No default historical window is introduced.
 
 ## WP0 verification and handoff
 
@@ -186,3 +188,30 @@ IM evidence; [usage](USAGE.md) provides a minimal Python example.
 WP5 is **Implementation Ready** to consume the frozen results, original statistical
 objects, source association, dropped-date reasons and run boundaries. No WP5
 projection, visualization, offline report, CLI/HTTP or persistence is implemented.
+
+
+## WP5 verification and handoff
+
+WP5 **PASS** (2026-11-06), from baseline
+`1b656d7919580a5b668b71d83088574737a37d48`, on the same branch with no develop merge.
+[Delivery](DELIVERY.md) and [Evidence](EVIDENCE.md) own the case-specific production
+composition, projection, evidence and replay interfaces; [usage](USAGE.md) owns
+single-command instructions. ui_web owns the independent offline reader/packager.
+No Basis/Slot/Statistics algorithm, generic engine, CLI routing, HTTP/Auth,
+Publication admission or backtest was added.
+
+The original 2026-10-12..2026-10-23 IM evidence exactly matches all WP4 statistical
+requests/results. The explicit 2024-01-01..2026-10-30 IM candidate also passed full
+Calendar/Futures/Index completeness in isolated external storage (683 sessions).
+Both report sizes, numerical findings, external paths and reproduction are in
+[WP5 acceptance](WP5_ACCEPTANCE.md). Browser verification uses actual Chromium
+with file://, offline context and zero external requests; evidence replay forbids
+Source/cache access. Synthetic empty/failed/malicious-text reports also pass.
+
+Verification: 1,249 Research/topology/architecture tests and 252 Web tests passed,
+as did Ruff, MyPy, contract freshness, TypeScript/Vite build, lint and generic
+V1/V2 Chromium regression. The report embeds a licensed Chinese font and uses a
+larger generic plot frame; screenshots confirm readable text and four Slot legends.
+Links/anchors, full diff and whitespace checks complete the bounded reconciliation.
+WP1–WP5 now satisfy R01-A Week 1's descriptive offline delivery gate. HTTP
+publication and Week 2 remain outside this acceptance.

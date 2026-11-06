@@ -360,10 +360,16 @@ def test_case_dependencies_and_pure_construction() -> None:
             for node in ast.walk(tree)
             if isinstance(node, ast.ImportFrom) and node.level == 0 and node.module
         ]
-        assert not any(
-            name.startswith(("market_statistics", "data_snapshot", "ui_", "tushare"))
-            for name in imports
-        )
+        assert not any(name.startswith(("data_snapshot", "ui_", "tushare")) for name in imports)
+        if "market_statistics" in imports:
+            assert path.name in {"report.py", "evidence.py"}
+            for node in ast.walk(tree):
+                if isinstance(node, ast.ImportFrom) and node.module == "market_statistics":
+                    assert {a.name for a in node.names} <= {
+                        "QuantileSpec",
+                        "IntervalCountSpec",
+                        "validate_spec",
+                    }
         assert all(
             not name.startswith("data_lake.")
             or name

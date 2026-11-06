@@ -11,7 +11,7 @@ function DetailList({ details }: { details: Detail[] }) {
   return <>{details.map((detail, i) => <div key={i}>{detail.label}: {detail.value}</div>)}</>
 }
 
-function V2Chart({ view }: { view: ViewV2 }) {
+function V2Chart({ view, minPlotHeight }: { view: ViewV2; minPlotHeight: number }) {
   const figure = viewV2ToPlotly(view)
   const missing = view.layers.flatMap(b => b.layer.data.filter(m => m.y === null).map(m => ({ key: `${b.id}:${m.x}`, label: `${b.label} — ${m.x} — No value`, children: <DetailList details={m.details} /> })))
   const events = view.events.map(e => ({ key: e.id, label: `${e.id} — ${e.x} — ${e.label}`, children: <DetailList details={e.details} /> }))
@@ -32,7 +32,7 @@ function V2Chart({ view }: { view: ViewV2 }) {
   }
   return <Flex vertical gap="small" style={{ height: '100%', width: '100%' }}>
     {!view.layers.some(b => b.layer.data.some(m => m.y !== null)) && <Alert title="No numeric data" type="info" />}
-    <div onMouseDownCapture={guardDrag} onTouchStartCapture={guardDrag} style={{ flex: '1 0 320px', minHeight: 320 }}>
+    <div onMouseDownCapture={guardDrag} onTouchStartCapture={guardDrag} style={{ flex: `1 0 ${minPlotHeight}px`, minHeight: minPlotHeight }}>
       <Plot {...figure} style={{ width: '100%', height: '100%' }} useResizeHandler />
     </div>
     {missing.length > 0 && <section aria-label="Missing values"><Typography.Title level={5}>Missing values</Typography.Title><Collapse items={missing} /></section>}
@@ -41,9 +41,9 @@ function V2Chart({ view }: { view: ViewV2 }) {
 }
 
 /** Renders a complete inline View; validation errors are thrown to the caller. */
-export function ChartView({ view }: { view: VisualizationView }) {
+export function ChartView({ view, minPlotHeight = 320 }: { view: VisualizationView; minPlotHeight?: number }) {
   validateVisualizationView(view)
-  if (view.version === 2) return <V2Chart view={view} />
+  if (view.version === 2) return <V2Chart view={view} minPlotHeight={minPlotHeight} />
   return <V1Chart view={view} />
 }
 

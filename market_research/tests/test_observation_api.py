@@ -193,6 +193,8 @@ def test_only_published_datalake_imports_and_no_forbidden_dependency_edges() -> 
                     assert path.relative_to(SOURCE).as_posix() in {
                         "descriptive/capabilities.py",
                         "descriptive/cases/futures_basis/statistics.py",
+                        "descriptive/cases/futures_basis/report.py",
+                        "descriptive/cases/futures_basis/evidence.py",
                     } or {
                         "conversion",
                         "association",

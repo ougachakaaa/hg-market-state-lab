@@ -81,3 +81,8 @@ passed for the fixed fixture, literal hover/details, null readout, date events,
 legend grouping, multi-axis interaction, disabled interactions, empty/all-null
 content and V1 line/point/bar rendering. Vite reports a non-blocking large-bundle
 build warning; bundling/layout redesign and offline packaging are outside WP1.
+
+`ChartView` accepts optional `minPlotHeight` (default 320 CSS pixels) for the V2
+plot frame, independently of missing/event disclosure height. This is frontend
+sizing only, not a new Visualization semantic field. The offline report uses a
+larger frame so same-date event annotations leave room for all four legends.

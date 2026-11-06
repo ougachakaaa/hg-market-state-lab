@@ -70,7 +70,12 @@ ASSOCIATION_STATISTICS = {
 
 
 def check_imports(
-    text: str, package: str, *, publication: bool = False, basis_statistics: bool = False
+    text: str,
+    package: str,
+    *,
+    publication: bool = False,
+    basis_statistics: bool = False,
+    basis_delivery: bool = False,
 ) -> None:
     conversion = package == CONVERSION or package.startswith(CONVERSION + ".")
     association = package == ASSOCIATION or package.startswith(ASSOCIATION + ".")
@@ -191,6 +196,14 @@ def check_imports(
             ):
                 assert name == "market_statistics", name
                 continue
+            if basis_delivery and name == "market_statistics":
+                assert isinstance(node, ast.ImportFrom)
+                assert {a.name for a in node.names} <= {
+                    "QuantileSpec",
+                    "IntervalCountSpec",
+                    "validate_spec",
+                }
+                continue
             if name == "market_statistics" or name.startswith("market_statistics."):
                 assert (conversion or association) and name == "market_statistics", name
                 assert isinstance(node, ast.ImportFrom), "Import only the required public types"
@@ -248,6 +261,11 @@ def test_conversion_imports_only_public_contracts_and_has_no_effectful_dependenc
             publication=path.relative_to(SOURCE).as_posix() == "descriptive/capabilities.py",
             basis_statistics=path.relative_to(SOURCE).as_posix()
             == "descriptive/cases/futures_basis/statistics.py",
+            basis_delivery=path.relative_to(SOURCE).as_posix()
+            in {
+                "descriptive/cases/futures_basis/report.py",
+                "descriptive/cases/futures_basis/evidence.py",
+            },
         )
 
 
