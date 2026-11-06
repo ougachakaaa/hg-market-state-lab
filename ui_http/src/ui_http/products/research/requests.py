@@ -162,6 +162,8 @@ def to_spec(body: SpecBody) -> StatisticalSpec:
 def spec_body(spec: StatisticalSpec) -> SpecBody:
     if isinstance(spec, QuantileSpec):
         return QuantileBody(method=spec.method, points=list(spec.points))
+    if not isinstance(spec, IntervalCountSpec):
+        raise TypeError("Unsupported statistical spec for research projection")
     return IntervalCountBody.model_validate(
         {
             "method": spec.method,
