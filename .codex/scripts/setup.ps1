@@ -27,7 +27,7 @@ if (-not $poetry -or -not $node -or -not $npm) {
     throw 'Poetry, Node, and npm must be installed and available on PATH.'
 }
 
-$pythonVersion = & $pythonCommand @pythonArgs -c 'import sys; print(f"{sys.version_info.major}.{sys.version_info.minor}")'
+$pythonVersion = & $pythonCommand @pythonArgs -c 'import sys; print(sys.version_info.major, sys.version_info.minor, sep=chr(46))'
 if ($LASTEXITCODE -ne 0 -or -not $pythonVersion) {
     throw 'Python 3.13 is required and could not be executed.'
 }

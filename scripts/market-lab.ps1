@@ -140,10 +140,10 @@ function Start-MarketLab {
         }
         $ErrorActionPreference = 'Continue'
         $python = Get-Command py -ErrorAction SilentlyContinue
-        if ($python) { $version = & $python.Source -3.13 -c 'import sys; print(\"%d.%d\" % sys.version_info[:2])' 2>$null }
+        if ($python) { $version = & $python.Source -3.13 -c 'import sys; print(sys.version_info.major, sys.version_info.minor, sep=chr(46))' 2>$null }
         else {
             $python = Get-Command python3.13 -ErrorAction SilentlyContinue
-            if ($python) { $version = & $python.Source -c 'import sys; print(\"%d.%d\" % sys.version_info[:2])' 2>$null }
+            if ($python) { $version = & $python.Source -c 'import sys; print(sys.version_info.major, sys.version_info.minor, sep=chr(46))' 2>$null }
         }
         $ErrorActionPreference = 'Stop'
         if (-not $python -or $LASTEXITCODE -ne 0 -or $version -ne '3.13') { throw 'Environment missing: Python 3.13 is required (py -3.13 or python3.13).' }
