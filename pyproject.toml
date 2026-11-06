@@ -8,6 +8,7 @@ dependencies = [
     "pandas (>=3.0.6,<4.0.0)",
     "numpy (>=2.5.3,<2.6.0)",
     "python-dotenv (>=1.2.3,<2.0.0)",
+    "pydantic-settings (>=2.16.2,<3.0.0)",
     "fastapi (>=0.141.1,<0.142.0)",
     "uvicorn (>=0.53.0,<0.54.0)",
     "argon2-cffi (>=25.1.0,<26.0.0)",
@@ -20,6 +21,7 @@ lab = "ui_cli.cli:main"
 [tool.poetry]
 packages = [
     { include = "ui_cli" },
+    { include = "lab_config", from = "config/src" },
     { include = "data_lake", from = "data_lake/src" },
     { include = "data_lake", from = "data_lake/providers/tushare/src" },
     { include = "data_lake", from = "data_lake/datasets/tushare_trade_calendar/src" },
@@ -45,6 +47,7 @@ build-backend = "poetry.core.masonry.api"
 [tool.pytest.ini_options]
 testpaths = [
     "ui_cli/tests",
+    "config/tests",
     "data_lake/tests",
     "data_lake/providers/tushare/tests",
     "data_lake/datasets/tushare_index_daily/tests",
@@ -58,6 +61,7 @@ testpaths = [
     "workbench/tests",
 ]
 pythonpath = [
+    "config/src",
     "data_lake/src",
     "data_lake/providers/tushare/src",
     "data_lake/datasets/tushare_index_daily/src",
@@ -74,6 +78,8 @@ pythonpath = [
 target-version = "py313"
 line-length = 100
 src = [
+    "config/src",
+    "config/tests",
     "data_lake/src",
     "data_lake/providers/tushare/src",
     "data_lake/tests",
@@ -103,13 +109,16 @@ src = [
 select = ["E", "F", "I", "UP", "B"]
 
 [tool.ruff.lint.isort]
-known-first-party = ["ui_http", "data_lake", "ui_cli", "market_research", "market_statistics", "data_snapshot"]
+known-first-party = ["ui_http", "data_lake", "ui_cli", "market_research", "market_statistics", "data_snapshot", "lab_config"]
 
 [tool.mypy]
 python_version = "3.13"
 namespace_packages = true
 explicit_package_bases = true
+exclude = ['(^|/)conftest\.py$']
 files = [
+    "config/src",
+    "config/tests",
     "data_lake/src",
     "data_lake/providers/tushare/src",
     "data_lake/tests",
@@ -134,6 +143,7 @@ files = [
     "market_statistics/src",
 ]
 mypy_path = [
+    "config/src",
     "market_research/src",
     "market_statistics/src",
     "data_snapshot/tests",

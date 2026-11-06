@@ -53,6 +53,7 @@ def test_root_project_installs_the_independent_package_namespaces() -> None:
 
     assert manifest["tool"]["poetry"]["packages"] == [
         {"include": "ui_cli"},
+        {"include": "lab_config", "from": "config/src"},
         {"include": "data_lake", "from": "data_lake/src"},
         {"include": "data_lake", "from": "data_lake/providers/tushare/src"},
         {"include": "data_lake", "from": "data_lake/datasets/tushare_trade_calendar/src"},
