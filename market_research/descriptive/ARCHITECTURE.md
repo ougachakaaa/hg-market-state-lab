@@ -25,6 +25,7 @@ ObservationJobSpec → validated prepared facts / availability evidence → Obse
 | Numerical input, method parameters, results and failures | [Statistics CONTRACT.md](../../market_statistics/CONTRACT.md) |
 | PIP numerical algorithm | [PIP algorithm](../algorithm/pip/ALGORITHM.md) |
 | Independent structured segmentation observation | [Price Segmentation](cases/price_segmentation/ARCHITECTURE.md) |
+| Independent same-day Futures Basis, relative Slots and case-owned numerical adaptation | [Futures Basis / R01-A](cases/futures_basis/ARCHITECTURE.md) → [work packages/readiness](cases/futures_basis/ROADMAP.md) |
 | First case: formula, public input binding, warm-up, validity and fingerprint | [Trailing Return](cases/trailing_return/ARCHITECTURE.md) |
 | Admitted capability publication and pure preview | [RESEARCH_CAPABILITY.md](RESEARCH_CAPABILITY.md) |
 | Implementation status, cross-stage acceptance scenarios and validation evidence | [ACCEPTANCE.md](ACCEPTANCE.md) |
@@ -41,6 +42,12 @@ observes one complete price series and does not require horizon, scalar Observat
 conversion or Statistics. Its independent Python observation API is implemented and
 [real-market validation](ACCEPTANCE.md#real-market-validation-evidence) is recorded separately;
 the existing scalar runtime remains unchanged.
+
+The independent [Futures Basis case](cases/futures_basis/ARCHITECTURE.md) defines
+Contract-day and Slot-day observations with no Horizon. It uses its own population,
+adaptation and result association while consuming the Statistics public numerical
+contract. Its authority does not admit it to the current scalar runtime or public
+capability facade. Implementation readiness is tracked in its own roadmap.
 
 ## First case and readiness
 
@@ -68,7 +75,10 @@ No unresolved implicit default is authorized.
 Beyond the implemented index Observation slice, Conditional Research and its contracts,
 Condition Engine, forward evaluation, backtesting, strategy/model/signal design, generic runner or
 pipeline DSL, research database, artifact registry, automatic hypothesis discovery, Web
-visualization within Research, full report rendering and new Research CLI are out of scope. Execution requires no mandatory
+visualization within Research, general report rendering and new Research CLI are out of scope.
+The narrowly defined [R01-A offline report](cases/futures_basis/DELIVERY.md) is future
+WP5 work: Research owns business projection/evidence and ui_web owns rendering.
+Execution requires no mandatory
 durable storage or class hierarchy; separate opt-in [publication](../PUBLICATION.md) owns
 its own persistence and does not alter execution. Descriptive and
 Conditional remain independent under the module invariant; no cross-paradigm framework

@@ -23,6 +23,10 @@ visualization
 
 前端只消费 owning module 明确发布的 application/product result 与 `ui_http` HTTP contract。它不得为了绘图重新推导产品身份、contract universe、价格 fallback、业务 completeness 或金融指标。
 
+上述 online 产品消费路径之外，已明确契约化的 offline report 可以渲染 producer 提供的完整通用 Visualization Views；
+例如 [R01-A offline delivery](../market_research/descriptive/cases/futures_basis/DELIVERY.md)。ui_web 只拥有渲染及静态资源封装，
+不直接 import Research/business internals、执行研究、获取市场数据或绕过 HTTP authentication；该离线路径不发布新的 HTTP product。
+
 ## 3. 数据依赖方向
 
 ```text
@@ -44,6 +48,7 @@ Owning module Markdown authority 定义业务语义，`ui_http` authority 定义
 Application entry、认证交互与 gate、feature discovery/navigation 与 composition boundary 由 [application authority](application.md) 拥有；它通过 [frontend feature catalog](FEATURES.md) 导航到各 vertical slice，但不拥有 feature-local 语义。
 
 跨语言 domain-neutral Layer / View / Template contract 由 [Visualization authority](VISUALIZATION.md) 拥有；它不建立新的顶层模块或要求 producer 依赖 UI。
+该稳定入口按版本导航到 [V2 date-series contract](VISUALIZATION_V2.md)；V1 与现有 online consumer 的契约不因新版本设计而改变。
 
 Frontend 内部 application、Page、API、React hooks、pure model、component、chart 与 shared infrastructure 的 ownership、依赖方向和状态边界由 [presentation architecture](presentation-architecture.md) 拥有。具体 feature 的产品展示与 visualization 语义仍由 co-located feature authority 拥有。
 

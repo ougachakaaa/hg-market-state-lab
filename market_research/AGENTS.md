@@ -10,6 +10,7 @@
 | Facts, public upstream selection, completeness, provenance or failure | [UPSTREAM.md](UPSTREAM.md) → actual Dataset / Product public contract |
 | PIP algorithm mathematics and versioning | [PIP algorithm](algorithm/pip/ALGORITHM.md) |
 | Price segmentation scope, result and input policy | [Price Segmentation](descriptive/cases/price_segmentation/ARCHITECTURE.md) |
+| R01-A Futures Basis definition, Slots, observations, statistics or offline delivery | [Futures Basis](descriptive/cases/futures_basis/ARCHITECTURE.md) → task-specific authority; [work packages/readiness](descriptive/cases/futures_basis/ROADMAP.md) |
 | Descriptive flow and evidence interpretation | [descriptive/ARCHITECTURE.md](descriptive/ARCHITECTURE.md) |
 | Fixed observation request, population, market derivation or provenance | [descriptive/OBSERVATION.md](descriptive/OBSERVATION.md) |
 | Research-owned sample conversion | [descriptive/SAMPLE_CONVERSION.md](descriptive/SAMPLE_CONVERSION.md) |

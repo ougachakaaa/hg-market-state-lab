@@ -30,6 +30,12 @@ public algorithm boundary, never the reverse. The independent PIP Python boundar
 implemented, as are the case's independent Input Preparation and segmentation observation
 Python APIs; this does not introduce a generic engine.
 
+The independent [Futures Basis case](descriptive/cases/futures_basis/ARCHITECTURE.md)
+defines same-day contract/relative-tenor observations without Horizon and owns its
+case-specific numerical adaptation. Its [roadmap](descriptive/cases/futures_basis/ROADMAP.md)
+separates authority readiness from future runtime and offline delivery; it does
+not extend the existing scalar execution or capability dispatch.
+
 Input Preparation acquires validated facts and availability evidence through authorized
 upstream public contracts, under the selected case's completeness policy.
 Observation Construction owns market indicator formulas and empirical variables derived
@@ -73,8 +79,12 @@ It owns no market-data acquisition infrastructure, provider clients, upstream pe
 or canonical Snapshot Product preparation. DataLake, Snapshot and Statistics never depend
 on Research; Statistics also never depends on DataLake or Snapshot and performs no upstream I/O.
 Modeling remains a sibling, not a required downstream runtime stage; current repository
-rules grant it no Research import permission. UI consumption of published Research outputs is authorized only through the
-[publication reader](PUBLICATION.md) and ui_http; Modeling gains no import permission.
+rules grant it no Research import permission. Online UI consumption of
+PublishedResearchResult is authorized only through the [publication reader](PUBLICATION.md)
+and ui_http. The separately defined [Futures Basis offline delivery](descriptive/cases/futures_basis/DELIVERY.md)
+supplies producer-projected generic Views and retained evidence to ui_web rendering;
+it grants no frontend access to Research internals, upstream storage or execution.
+Modeling gains no import permission.
 
 Research does not depend on inbound adapters (`ui_cli`, `ui_http`, `ui_web`), HTTP DTOs or
 frontend types. It owns empirical meanings and evidence, not UI presentation, production

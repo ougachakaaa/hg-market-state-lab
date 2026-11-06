@@ -8,6 +8,14 @@ Frontend implementation belongs to [presentation architecture](presentation-arch
 transport serialization belongs to ui_http. Producers may conform to this contract without
 importing any UI code. No schema in Python, OpenAPI, or TypeScript is a competing owner.
 
+## Version navigation
+
+The V1 Layer and View contracts below remain unchanged. The independently defined
+[V2 date-series extension](VISUALIZATION_V2.md) owns exact date-line, point-detail,
+event, segmentation, missing-value and interaction shapes for future implementation.
+Version support is explicit; V2 does not authorize extra fields/nulls in V1, imply
+current renderer support, or extend a producer's publication/HTTP admission.
+
 ## Layer data contract V1
 
 A Layer is an ordered collection of marks of one declared type, its version, explicit

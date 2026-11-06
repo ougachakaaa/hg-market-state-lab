@@ -161,3 +161,10 @@ in [Publication storage](PUBLICATION_STORAGE.md). The implemented read-only deli
 defined by the [HTTP publication contract](../ui_http/products/research_publication/http-contract.md);
 Research Explorer consumes its generated contract. This publication boundary does not change
 current execution behavior.
+
+The independent [Futures Basis case](descriptive/cases/futures_basis/ARCHITECTURE.md)
+is not admitted to Publication V1 or its current HTTP transport. Its planned
+[offline report](descriptive/cases/futures_basis/DELIVERY.md) supplies separate
+case evidence and generic Views to ui_web rendering; it is not a
+PublishedResearchResult and does not weaken publication admission or integrity.
+Future publication/HTTP integration requires explicit versioned extensions.

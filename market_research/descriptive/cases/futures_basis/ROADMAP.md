@@ -1,0 +1,84 @@
+# R01-A work packages, reconciliation and readiness
+
+This document specializes the [case entry](ARCHITECTURE.md). It owns delivery
+boundaries and reconciliation, not duplicate formulas, schemas or runtime results.
+Baseline: `develop` at `3c7db37714443d7717218ee602218e7abfd911ab`.
+Working branch: `feat/r01-futures-basis-research`; WP1–WP5 continue on that branch.
+
+## Work packages
+
+Every WP must be independently reviewable, committable and verifiable. Runtime
+readiness requires its own evidence; later unfinished WPs never fail an earlier
+WP's bounded acceptance. These identifiers belong to R01-A, not the unrelated
+historical publication project that also used WP numbering.
+
+Authority status: WP0 is complete; WP1 is Implementation Ready under the exact V2
+contract and fixed fixture. All WP1–WP5 runtime and real-market acceptance remain
+pending. This status makes no claim that the future APIs/renderers already exist.
+
+| WP | Deliverable and boundary | Dependencies / acceptance |
+| --- | --- | --- |
+| WP0 — Semantic Authority | This Case topology, SD01–SD09, generic Visualization V2, navigation and reconciliation; documents only | Links/anchors/reachability, unique ownership, formulas/units/accounting, complete diff; no production code, data acquisition or runtime acceptance |
+| WP1 — Visualization Enhancement | [V2](../../../../ui_web/VISUALIZATION_V2.md) validation/rendering in the existing generic frontend boundary | WP0; fixed artificial multi-line data, literal details, events, segmentation, null gaps, Zoom/Pan/Reset and V1 regression; no market dependency |
+| WP2 — Contract Slot Resolution | Pure metadata/evidence→daily real-contract roles under [Slot resolution](SLOT_RESOLUTION.md) | WP0; independent synthetic lifecycle/month/quarter/expiry/empty-proof fixtures and quote-availability invariance; no visualization or acquisition |
+| WP3 — Basis Observation | Independent public preparation and pure Contract-day/Slot-day construction under [Inputs](INPUTS.md) and [Observation](OBSERVATION.md) | WP2; contract fakes, formulas, accounting/provenance/transition tests plus retained real IM validation; no Statistics or charts required |
+| WP4 — Descriptive Statistics | [Case adaptation and findings](STATISTICS.md), with Statistics-owned Mean authority/API/backend extension | WP3; independent numerical Mean conformance, Research binding/population/run tests and three-metric results; no renderer required |
+| WP5 — Integration & Research Delivery | [Research projection and offline report](DELIVERY.md), with local assets and reproducible real IM evidence | WP1 + WP3 + WP4; offline interaction and evidence/reconstruction verification; no Publication/HTTP admission required |
+
+Default implementation order is WP1 → WP2 → WP3 → WP4 → WP5; WP1 and WP2 have
+no dependency on each other's runtime. New runtime tooling/dependencies, if
+needed, follow their owning module's normal authority and verification rules.
+
+## Reconciliation
+
+| Reviewed boundary | Finding and resolution |
+| --- | --- |
+| [DataLake Futures architecture](../../../../data_lake/datasets/tushare_equity_index_futures/ARCHITECTURE.md), facts, universe and service | Publishes source Close/metadata and complete product-day sets, not Basis/DTE/Slots. Research derives those downstream. Complete final Futures evidence is mandatory; no new catalog API, private access or frozen upstream edit. |
+| [Snapshot shared basis](../../../../data_snapshot/src/data_snapshot/cffex_equity_index_basis/ARCHITECTURE.md) and [Basis Monitor Task](../../../../workbench/tasks/equity_index_futures_basis_monitor/ARCHITECTURE.md) / [output contract](../../../../workbench/tasks/equity_index_futures_basis_monitor/authority/QUERY_AND_RESULT.md) | Both already use futures-minus-underlying, not positive discount. Their simple percentage/linear annualization and D=0 clamp differ from the Research log/decimal/D=0 Not Applicable convention. Old outputs are not admitted Research inputs or renamed/recomputed in place; historical Task/results remain frozen. |
+| Existing Slot names | M0/M1/Q1/Q2 already mean front active near months and subsequent unoccupied quarters. New Case explicitly uses that role meaning, including post-expiry dates; internal aliases cannot change it. Slot identity is not contract identity. |
+| [Scalar Observation](../../OBSERVATION.md) / [conversion](../../SAMPLE_CONVERSION.md) | Positive integer Horizon is incompatible with this instantaneous Case. Use independent Case carriers/adaptation; no fake Horizon, generic contract weakening or automatic Job/Batch/capability admission. |
+| [Research upstream](../../../UPSTREAM.md) | Case-specific partial Index permission is explicit. Calendar/Futures remain fail-closed; no runtime Snapshot fallback. CFFEX candidates and independently proven SSE Index dates are not silently conflated. |
+| [Statistics public contract](../../../../market_statistics/CONTRACT.md) | Quantile/IntervalCount are reusable scalar capabilities. Required Mean is a WP4 Statistics extension; no Research-owned generic mean, automatic bins or temporal sample framework. |
+| [Visualization V1](../../../../ui_web/VISUALIZATION.md) | Strict V1 marks cannot accept details, nulls or segments as extra fields. Separate [V2](../../../../ui_web/VISUALIZATION_V2.md) defines exact shapes/dispatch; no financial fields enter the generic schema. |
+| [Publication storage](../../../PUBLICATION_STORAGE.md), [HTTP](../../../../ui_http/products/research_publication/http-contract.md) | Existing source admission is Trailing Return Batch only and transport Views are V1 only. Neither becomes compatible by adding this Authority. WP5 uses an independent offline report; current storage/HTTP/generated contracts remain unchanged. |
+
+There is one canonical owner per new concern, reached through the Case entry.
+Snapshot owns its frozen Product computations; Research owns this distinct Case
+version, not a replacement implementation of those Product contracts. Unit/formula
+labels must accompany any human comparison; old annualized percentages cannot be
+converted into the new metric by sign change or division by 100 alone.
+
+## Known gaps and defer
+
+- **Futures partial-date metadata proof:** the public service does not separately
+  expose active catalogs for failed dates. Resolved for this version by requiring
+  complete Futures; supporting partial Futures would require a future explicit
+  upstream capability/consumption decision, never inferred empty sets.
+- **Mean runtime:** absent from Statistics V1. Required WP4 work under the Statistics
+  owner, not a WP0 blocker or permission to implement the algorithm in Research.
+- **V2 renderer:** WP1 runtime is pending. The exact contract, fixture, implementation
+  boundary and acceptance are defined; WP1 is Implementation Ready after WP0.
+- **Independent Case runtime and offline packager:** WP2–WP5 are pending, including
+  exact implementation carriers/packaging. Their owner, input/output meaning and
+  bounded acceptance are defined here; no generic framework is pre-created.
+- **Publication / HTTP / capability integration:** deferred beyond this offline
+  delivery. Would need versioned Case evidence admission, V2 read/transport/safe
+  projection and generated-contract work. Existing quotas/authentication do not
+  disappear and no new routes are implied.
+- **Actual study dates/data:** later real IM validation/report uses explicit dates,
+  public-source inputs and retained evidence. No default historical window or
+  claimed live PASS is created by WP0.
+
+## WP0 verification and handoff
+
+The documentation-only gate checks navigation/relative links/anchors from stable
+entries, ownership and upper/lower consistency, formula/sign/unit terminology,
+per-metric populations, Gap/Defer location and WP dependencies. Review all changed
+and new documents and run `git diff --check`. No full pytest, MyPy/Ruff, frontend
+build/E2E, database tests, live acquisition or Research execution is required.
+
+The WP0 commit is independent and contains only necessary Authority/Contract/
+Navigation Markdown. Final handoff records branch, baseline, final commit, file
+inventory, SD01–SD09, reconciliation, remaining work and WP1 readiness. Mark WP0
+`PASS` only after these document checks pass; use `PARTIAL` only for an actual
+unresolved semantic/contract blocker, not missing WP1–WP5 implementation.
