@@ -114,17 +114,17 @@ provider freshness or coverage outside it.
 
 ### Native Windows Publication limitation
 
-Publication V1 currently depends on POSIX directory descriptors, `dir_fd`,
-`O_DIRECTORY` and `O_NOFOLLOW` to enforce the [storage contract](../PUBLICATION_STORAGE.md).
-Native Windows lacks these primitives: importing Publication can fail before a
-store is opened. Because the combined HTTP app imports Publication delivery, this
-also blocks backend startup and Web contract export on native Windows. This
-limitation predates the final integration baseline; neither integration source
-changes Publication storage. A native Windows runtime has not been validated.
+Publication V1 storage depends on POSIX directory descriptors, `dir_fd`, `O_DIRECTORY` and
+`O_NOFOLLOW` to enforce the [storage contract](../PUBLICATION_STORAGE.md). Native Windows
+lacks these primitives: the public facade remains importable and the combined HTTP app
+starts, but every Publication read and every `retain_source`/`publish` call fails as
+unavailable (HTTP 503 `unavailable`) before touching the filesystem. It does not create a
+native Windows store, and a native Windows Publication runtime is not validated.
 
-The Windows one-click launcher does not resolve this limitation. Portfolio work
-can use a validated Linux runtime (or WSL with the same required filesystem
-capabilities); native Windows HTTP integration remains unavailable pending a
-separately verified secure implementation. Do not remove no-follow checks or
-substitute zero-valued flags to claim compatibility. This integration performs no
-live market acceptance or default-cache recovery.
+The Windows one-click launcher starts the backend and Web with that limitation; the
+Research Explorer reports the unavailable Publication storage. Full Publication use
+requires a validated Linux runtime (or WSL with the same required filesystem capabilities)
+and an explicitly configured `LAB_RESEARCH_PUBLICATION_ROOT`. Native Windows Publication
+remains unavailable pending a separately verified secure implementation. Do not remove
+no-follow checks or substitute zero-valued flags to claim compatibility. This integration
+performs no live market acceptance or default-cache recovery.

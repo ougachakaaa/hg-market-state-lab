@@ -96,6 +96,22 @@ function Stop-ServiceTree($Service) {
     }
 }
 
+function Get-ExitStatus($Process) {
+    if (-not $Process -or -not $Process.HasExited) { return $null }
+    try {
+        $Process.WaitForExit()
+        return $Process.ExitCode
+    } catch {
+        return $null
+    }
+}
+
+function Get-ExitLabel($Process) {
+    $code = Get-ExitStatus $Process
+    if ($null -eq $code) { return 'unknown' }
+    return [string]$code
+}
+
 try {
     Set-Location -LiteralPath $repoRoot
     Write-Host 'Checking Windows development prerequisites...'
@@ -161,6 +177,16 @@ try {
     $authCheck = 'from ui_http.auth._session import AuthConfig; c = AuthConfig.from_environment(); c.validate_listener(\"127.0.0.1\"); assert not c.secure and c.browser_origin == (\"http\", \"127.0.0.1\", 5173)'
     if (-not (Test-NativeCommand 'poetry' @('run', 'python', '-c', $authCheck))) { throw 'Auth configuration error: invalid JWT secret or local settings; existing values were not changed.' }
 
+    Write-Host 'Checking backend imports...'
+    $ErrorActionPreference = 'Continue'
+    $probe = & poetry run python -c "import ui_http.app" 2>&1 | Out-String
+    $probeCode = $LASTEXITCODE
+    $ErrorActionPreference = 'Stop'
+    if ($probeCode -ne 0) {
+        $detail = if ($probe) { $probe.Trim() } else { 'no output' }
+        throw "Backend import preflight failed:`n$detail"
+    }
+
     Assert-FreePorts
     $runId = [Guid]::NewGuid().ToString('N')
     Write-Host "Starting services. Logs: $runtimeDir"
@@ -170,8 +196,8 @@ try {
     $ready = $false
     while ([DateTime]::UtcNow -lt $deadline) {
         Show-Logs $backend; Show-Logs $frontend
-        if ($backend.Process.HasExited) { throw "Backend startup failed (exit $($backend.Process.ExitCode)); see logs above and in $runtimeDir." }
-        if ($frontend.Process.HasExited) { throw "Frontend startup failed (exit $($frontend.Process.ExitCode)); see logs above and in $runtimeDir." }
+        if ($backend.Process.HasExited) { throw "Backend startup failed (exit $(Get-ExitLabel $backend.Process)); see logs above and in $runtimeDir." }
+        if ($frontend.Process.HasExited) { throw "Frontend startup failed (exit $(Get-ExitLabel $frontend.Process)); see logs above and in $runtimeDir." }
         $backendOwned = Test-OwnedListener 8011 $backend.Process.Id
         $frontendOwned = Test-OwnedListener 5173 $frontend.Process.Id
         if ($backendOwned -and $frontendOwned -and (Test-Http 'http://127.0.0.1:8011/openapi.json' $true) -and
@@ -186,8 +212,8 @@ try {
     Write-Host 'Keep this window open. Press any key to stop both services.'
     while (-not [Console]::KeyAvailable) {
         Show-Logs $backend; Show-Logs $frontend
-        if ($backend.Process.HasExited) { throw "Backend exited unexpectedly (exit $($backend.Process.ExitCode))." }
-        if ($frontend.Process.HasExited) { throw "Frontend exited unexpectedly (exit $($frontend.Process.ExitCode))." }
+        if ($backend.Process.HasExited) { throw "Backend exited unexpectedly (exit $(Get-ExitLabel $backend.Process))." }
+        if ($frontend.Process.HasExited) { throw "Frontend exited unexpectedly (exit $(Get-ExitLabel $frontend.Process))." }
         Start-Sleep -Milliseconds 500
     }
     [void][Console]::ReadKey($true)

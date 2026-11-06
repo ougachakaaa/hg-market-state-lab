@@ -23,7 +23,13 @@ from market_research.publication import (
     publish,
     retain_source,
 )
+from market_research.publication._platform import supports_descriptor_relative_io
 from market_research.publication.source import canonical_json, digest
+
+pytestmark = pytest.mark.skipif(
+    not supports_descriptor_relative_io(),
+    reason="Publication storage requires POSIX descriptor-relative operations",
+)
 
 
 @pytest.fixture(scope="module")

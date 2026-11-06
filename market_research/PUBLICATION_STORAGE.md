@@ -105,6 +105,17 @@ before any result is returned. SHA-256 detects accidental corruption, not coordi
 malicious rewriting of both content and metadata. JSON parsing rejects duplicate object keys,
 non-finite values, invalid shapes and unknown versions. Reads do not repair or rewrite.
 
+### Platform capability
+
+The descriptor-relative requirement is part of the storage contract, not an implementation
+detail. V1 requires `O_DIRECTORY`, `O_NOFOLLOW` and `dir_fd` support for `os.open`,
+`os.mkdir`, `os.stat`, `os.unlink` and `os.link`. On a platform without these primitives, the
+public facade must remain importable and the composed HTTP app must still start, but every
+store read and every `retain_source`/`publish` call fails with `PublicationUnavailable`
+before any file or directory is created. A path-based approximation, zero-valued flags or
+removal of the no-follow checks is not an admissible fallback. Native Windows storage is
+not implemented or validated.
+
 ## Public facade and reads
 
 The Research-owned `market_research.publication` facade exposes `retain_source`, `publish`,

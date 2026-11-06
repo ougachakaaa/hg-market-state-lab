@@ -15,6 +15,7 @@ from typing import Any
 from market_research.descriptive.execution import BatchResult
 from market_statistics import IntervalBin, IntervalCountResult, QuantileResult
 
+from ._platform import os_flag, require_descriptor_relative_io
 from .errors import (
     InconsistentPublication,
     InvalidPublicationInput,
@@ -30,7 +31,11 @@ from .visualization import materialize, project, validate_layer
 
 _ID = re.compile(r"[0-9a-f]{64}\Z")
 _UUID = re.compile(r"[0-9a-f]{32}\Z")
-_DIR = os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW
+
+
+def _dir_flags() -> int:
+    require_descriptor_relative_io()
+    return os.O_RDONLY | os_flag("O_DIRECTORY") | os_flag("O_NOFOLLOW")
 
 
 def _uuid(value: object) -> str:
@@ -90,7 +95,7 @@ def _schema(obj: dict[str, Any], expected: str) -> None:
 @contextmanager
 def _directory(parent: int, name: str) -> Iterator[int]:
     try:
-        fd = os.open(name, _DIR, dir_fd=parent)
+        fd = os.open(name, _dir_flags(), dir_fd=parent)
     except FileNotFoundError as exc:
         raise PublicationCorrupt(f"missing directory {name}") from exc
     except OSError as exc:
@@ -104,6 +109,7 @@ def _directory(parent: int, name: str) -> Iterator[int]:
 
 
 def _mkdir(parent: int, name: str) -> None:
+    require_descriptor_relative_io()
     try:
         os.mkdir(name, mode=0o700, dir_fd=parent)
     except FileExistsError:
@@ -112,8 +118,11 @@ def _mkdir(parent: int, name: str) -> None:
 
 
 def _read(parent: int, name: str, limit: int | None = None) -> bytes:
+    require_descriptor_relative_io()
     try:
-        fd = os.open(name, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK, dir_fd=parent)
+        fd = os.open(
+            name, os.O_RDONLY | os_flag("O_NOFOLLOW") | os_flag("O_NONBLOCK"), dir_fd=parent
+        )
         with os.fdopen(fd, "rb") as stream:
             if not stat.S_ISREG(os.fstat(stream.fileno()).st_mode):
                 raise PublicationCorrupt(f"not a regular file: {name}")
@@ -132,7 +141,10 @@ def _read(parent: int, name: str, limit: int | None = None) -> bytes:
 
 
 def _write(parent: int, name: str, content: bytes) -> None:
-    fd = os.open(name, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o600, dir_fd=parent)
+    require_descriptor_relative_io()
+    fd = os.open(
+        name, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os_flag("O_NOFOLLOW"), 0o600, dir_fd=parent
+    )
     with os.fdopen(fd, "wb") as stream:
         stream.write(content)
         stream.flush()
@@ -163,8 +175,11 @@ def _source(ref: SourceReference, expected: bytes) -> bytes:
         or not os.path.isabs(ref.location)
     ):
         raise InvalidPublicationInput("invalid source reference")
+    require_descriptor_relative_io()
     try:
-        fd = os.open(ref.location, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK)
+        fd = os.open(
+            ref.location, os.O_RDONLY | os_flag("O_NOFOLLOW") | os_flag("O_NONBLOCK")
+        )
         with os.fdopen(fd, "rb") as stream:
             if not stat.S_ISREG(os.fstat(stream.fileno()).st_mode):
                 raise PublicationUnavailable("source is not a regular file")
@@ -195,13 +210,13 @@ class PublicationStore:
     def _existing_root(self) -> Iterator[int | None]:
         """Open every existing component without following symlinks; never create paths."""
         try:
-            fd = os.open(self.root.anchor, _DIR)
+            fd = os.open(self.root.anchor, _dir_flags())
         except OSError as exc:
             raise PublicationUnavailable("publication store path unavailable") from exc
         try:
             for part in self.root.parts[1:]:
                 try:
-                    child = os.open(part, _DIR, dir_fd=fd)
+                    child = os.open(part, _dir_flags(), dir_fd=fd)
                 except FileNotFoundError:
                     yield None
                     return
@@ -248,7 +263,7 @@ class PublicationStore:
                 yield fd
             return
         try:
-            fd = os.open(self.root.anchor, _DIR)
+            fd = os.open(self.root.anchor, _dir_flags())
         except OSError as exc:
             raise PublicationUnavailable("publication store unavailable") from exc
         try:
@@ -258,7 +273,7 @@ class PublicationStore:
                         os.mkdir(part, mode=0o700, dir_fd=fd)
                     except FileExistsError:
                         pass
-                    child = os.open(part, _DIR, dir_fd=fd)
+                    child = os.open(part, _dir_flags(), dir_fd=fd)
                 except OSError as exc:
                     if exc.errno in (errno.ELOOP, errno.ENOTDIR):
                         raise PublicationCorrupt("invalid or symlink store path") from exc

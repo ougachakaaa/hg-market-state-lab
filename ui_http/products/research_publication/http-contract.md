@@ -23,9 +23,10 @@ Research reader cursor; clients must not interpret it. There is no promise that 
 non-null cursor has a subsequent result.
 
 `LAB_RESEARCH_PUBLICATION_ROOT` is an absolute server-owned path without parent traversal.
-Missing or invalid configuration is isolated to these operations and returns 503; it does
-not prevent startup or other products. Reads do not create paths. A publication must be
-accessible in this runtime's configured store; no synchronization is implied. Tests may
+Missing or invalid configuration and a runtime platform without the required
+descriptor-relative filesystem capability are isolated to these operations and return 503;
+they do not prevent startup or other products. Reads do not create paths. A publication must
+be accessible in this runtime's configured store; no synchronization is implied. Tests may
 inject a store in the app composition. Blocking reads run in worker threads.
 
 Successful serialized JSON responses are limited to 2 MiB on all four routes; excess
@@ -83,7 +84,7 @@ is fixed safe text. Authentication failures retain their independent Auth envelo
 | 409 | unsupported_version | unsupported stored schema |
 | 413 | response_too_large | serialized response exceeds delivery bound, or an identifier is not deliverable under V1 |
 | 503 | verification_budget_exceeded | source verification bytes or concurrent capacity exceeds the per-process budget |
-| 503 | unavailable | missing/invalid configuration or unavailable storage/source |
+| 503 | unavailable | missing/invalid configuration, missing platform capability, or unavailable storage/source |
 | 500 | internal_error | unexpected transport/runtime failure |
 
 No exception text, storage location or source bytes enter errors. Reader calls never execute

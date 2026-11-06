@@ -32,9 +32,9 @@ PowerShell 脚本使用 Python 3.13、Poetry、Node 与 npm 达到相同终态�
 
 ## Windows One-Click Development Startup
 
-当前原生 Windows backend 受 [Publication 平台限制](market_research/descriptive/ACCEPTANCE.md#native-windows-publication-limitation) 阻断；一键启动器不解决该既有 import 问题。当前集成验证以 Linux 为准，WSL 仍需满足相同文件系统能力要求。
+在 Windows 上双击仓库根目录的 `start-market-lab.cmd`。需要预先安装 Python 3.13、Poetry、Node.js（20.19+ 或 22.12+）和 npm，并使其可从 PATH 使用；首次启动或依赖不完整时会运行现有 Windows bootstrap，安装需要网络连接。启动前会检查 backend import；启动成功后会自动打开 `http://127.0.0.1:5173/`。
 
-在 Windows 上双击仓库根目录的 `start-market-lab.cmd`。需要预先安装 Python 3.13、Poetry、Node.js（20.19+ 或 22.12+）和 npm，并使其可从 PATH 使用；首次启动或依赖不完整时会运行现有 Windows bootstrap，安装需要网络连接。启动成功后会自动打开 `http://127.0.0.1:5173/`。
+原生 Windows 缺少 Publication V1 存储所需的 POSIX `dir_fd`、`O_DIRECTORY` 与 `O_NOFOLLOW` 能力。backend 与其他产品可正常启动，但 Publication 读操作及 `retain_source`/`publish` 返回 503 `unavailable`，Research Explorer 显示 Publication 存储不可用。完整 Publication 仍需 Linux 或满足相同文件系统能力的 WSL，并显式配置 `LAB_RESEARCH_PUBLICATION_ROOT`；详见 [Publication 平台限制](market_research/descriptive/ACCEPTANCE.md#native-windows-publication-limitation)。当前集成验证以 Linux 为准，WSL 仍需满足相同文件系统能力要求。
 
 首次使用时在网页注册，然后在仓库根目录的另一个终端运行 `poetry run lab auth pending`，取得用户 ID 后运行 `poetry run lab auth approve <user-id>`，再返回网页登录。若设置了 `LAB_AUTH_DB_PATH`，审批终端也必须使用相同的值。
 

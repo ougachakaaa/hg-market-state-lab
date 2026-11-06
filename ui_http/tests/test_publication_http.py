@@ -8,8 +8,14 @@ from fastapi.testclient import TestClient
 
 from http_support.auth import authenticated_client
 from market_research.publication import PublicationStore, publish, retain_source
+from market_research.publication._platform import supports_descriptor_relative_io
 from market_research.publication.visualization import validate_view
 from ui_http.app import create_app
+
+pytestmark = pytest.mark.skipif(
+    not supports_descriptor_relative_io(),
+    reason="Publication storage requires POSIX descriptor-relative operations",
+)
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "market_research" / "tests"))
 from batch_execution_example import run  # noqa: E402

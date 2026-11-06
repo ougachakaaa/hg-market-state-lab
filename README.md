@@ -82,7 +82,7 @@ TUSHARE_TOKEN=<your-token>
 
 正式 CLI 由根 canonical Python project 安装，从 repository root 使用。命令发现、服务启动与 DataLake lifecycle 的可复制示例统一见 [lab usage guide](ui_cli/README.md)；当前环境和 readiness 见 [DEVELOPMENT.md](DEVELOPMENT.md)，CLI contract 见 [lab authority](ui_cli/ARCHITECTURE.md)。
 
-Windows 上可直接双击仓库根目录的 `start-market-lab.cmd` 一键启动 backend 与 Web；前置条件、审批与日志说明见 [Windows One-Click Development Startup](DEVELOPMENT.md#windows-one-click-development-startup)。
+Windows 上可直接双击仓库根目录的 `start-market-lab.cmd` 一键启动 backend 与 Web；原生 Windows 下 Publication 存储返回 503，完整 Publication 需 Linux/WSL。前置条件、审批与日志说明见 [Windows One-Click Development Startup](DEVELOPMENT.md#windows-one-click-development-startup)。
 
 ## Research status
 

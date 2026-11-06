@@ -21,6 +21,7 @@ from market_research.descriptive import execution as ex
 from market_research.descriptive import observation as obs
 from market_research.descriptive.cases import trailing_return as case
 
+from ._platform import os_flag, require_descriptor_relative_io
 from .errors import InvalidPublicationInput, PublicationCollision, PublicationUnavailable
 
 # Explicit fields for the admitted public vocabulary; adding a type requires a V1
@@ -267,8 +268,13 @@ def retain_source(batch: ex.BatchResult, source_id: str, path: str | Path) -> So
     """Exclusively retain a completed Batch; caller controls the source location."""
     data = source_bytes(batch, source_id)
     location = os.path.abspath(os.fspath(path))
+    require_descriptor_relative_io()
     try:
-        fd = os.open(location, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o600)
+        fd = os.open(
+            location,
+            os.O_WRONLY | os.O_CREAT | os.O_EXCL | os_flag("O_NOFOLLOW"),
+            0o600,
+        )
         with os.fdopen(fd, "wb") as stream:
             stream.write(data)
             stream.flush()

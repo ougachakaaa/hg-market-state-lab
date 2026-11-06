@@ -146,6 +146,7 @@ def check_imports(
                     "market_research.descriptive",
                     "market_research.descriptive.execution",
                     "market_research.descriptive.cases",
+                    "market_research.publication._platform",
                     "market_research.publication.errors",
                     "market_research.publication.source",
                     "market_research.publication.store",
