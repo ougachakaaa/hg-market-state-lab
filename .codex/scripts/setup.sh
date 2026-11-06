@@ -35,7 +35,7 @@ required_files=(
     "${repo_root}/pyproject.toml"
     "${repo_root}/poetry.lock"
     "${repo_root}/poetry.toml"
-    "${snapshot_dir}/.env.example"
+    "${repo_root}/.env.example"
     "${frontend_dir}/package.json"
     "${frontend_dir}/package-lock.json"
 )
@@ -46,11 +46,16 @@ for required_file in "${required_files[@]}"; do
     fi
 done
 
-if [[ ! -e "${snapshot_dir}/.env" ]]; then
-    cp -- "${snapshot_dir}/.env.example" "${snapshot_dir}/.env"
-    printf 'Created data_snapshot/.env from .env.example.\n'
+local_env="${repo_root}/.env"
+legacy_env="${snapshot_dir}/.env"
+if [[ ! -e "${local_env}" ]]; then
+    cp -- "${repo_root}/.env.example" "${local_env}"
+    printf 'Created .env from .env.example.\n'
 else
-    printf 'Using existing data_snapshot/.env.\n'
+    printf 'Using existing repository-root .env.\n'
+fi
+if [[ -e "${legacy_env}" ]]; then
+    printf 'warning: data_snapshot/.env is no longer read; move its contents to root .env and remove the legacy file.\n' >&2
 fi
 
 printf 'Installing repository Python dependencies into .venv...\n'

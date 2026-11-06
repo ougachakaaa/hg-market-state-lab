@@ -9,6 +9,19 @@ $repoRoot = Split-Path -Parent $PSScriptRoot
 $runtimeDir = Join-Path $repoRoot 'ui_http\data\one-click'
 $ports = @(8011, 5173)
 
+function Get-LocalSettingNames([string]$Path) {
+    $names = @{}
+    if (-not (Test-Path -LiteralPath $Path -PathType Leaf)) { return $names }
+    foreach ($line in Get-Content -LiteralPath $Path -Encoding UTF8) {
+        $trimmed = $line.Trim()
+        if (-not $trimmed -or $trimmed.StartsWith('#')) { continue }
+        if ($trimmed -match '^(?:export\s+)?([A-Za-z_][A-Za-z0-9_]*)\s*=') {
+            $names[$Matches[1]] = $true
+        }
+    }
+    return $names
+}
+
 function Test-NativeCommand([string]$Command, [string[]]$Arguments) {
     $ErrorActionPreference = 'Continue'
     & $Command @Arguments *> $null
@@ -134,6 +147,7 @@ function Start-MarketLab {
 
     try {
         Set-Location -LiteralPath $repoRoot
+        $localSettings = Get-LocalSettingNames (Join-Path $repoRoot '.env')
         Write-Host 'Checking Windows development prerequisites...'
         foreach ($name in @('poetry', 'node', 'npm', 'powershell.exe', 'taskkill.exe')) {
             if (-not (Get-Command $name -ErrorAction SilentlyContinue)) { throw "Environment missing: $name is not available on PATH." }
@@ -176,10 +190,10 @@ function Start-MarketLab {
             throw 'Project dependency error: Poetry must use the repository root .venv. Run .codex\scripts\setup.ps1.'
         }
 
-        if ($null -eq $env:LAB_AUTH_MODE) { $env:LAB_AUTH_MODE = 'loopback-http' }
-        if ($null -eq $env:LAB_AUTH_ORIGIN) { $env:LAB_AUTH_ORIGIN = 'http://127.0.0.1:5173' }
+        if ($null -eq $env:LAB_AUTH_MODE -and -not $localSettings.ContainsKey('LAB_AUTH_MODE')) { $env:LAB_AUTH_MODE = 'loopback-http' }
+        if ($null -eq $env:LAB_AUTH_ORIGIN -and -not $localSettings.ContainsKey('LAB_AUTH_ORIGIN')) { $env:LAB_AUTH_ORIGIN = 'http://127.0.0.1:5173' }
         New-Item -ItemType Directory -Force -Path $runtimeDir | Out-Null
-        if ($null -eq $env:LAB_AUTH_JWT_SECRET) {
+        if ($null -eq $env:LAB_AUTH_JWT_SECRET -and -not $localSettings.ContainsKey('LAB_AUTH_JWT_SECRET')) {
             $secretPath = Join-Path $runtimeDir 'jwt-secret'
             if (-not (Test-Path -LiteralPath $secretPath)) {
                 $bytes = New-Object byte[] 32

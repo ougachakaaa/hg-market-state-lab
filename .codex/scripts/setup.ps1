@@ -48,7 +48,7 @@ foreach ($required in @(
     (Join-Path $repoRoot 'pyproject.toml'),
     (Join-Path $repoRoot 'poetry.lock'),
     (Join-Path $repoRoot 'poetry.toml'),
-    (Join-Path $snapshotDir '.env.example'),
+    (Join-Path $repoRoot '.env.example'),
     (Join-Path $frontendDir 'package.json'),
     (Join-Path $frontendDir 'package-lock.json')
 )) {
@@ -57,12 +57,16 @@ foreach ($required in @(
     }
 }
 
-$localEnv = Join-Path $snapshotDir '.env'
+$localEnv = Join-Path $repoRoot '.env'
+$legacyEnv = Join-Path $snapshotDir '.env'
 if (-not (Test-Path -LiteralPath $localEnv)) {
-    Copy-Item -LiteralPath (Join-Path $snapshotDir '.env.example') -Destination $localEnv
-    Write-Host 'Created data_snapshot/.env from .env.example.'
+    Copy-Item -LiteralPath (Join-Path $repoRoot '.env.example') -Destination $localEnv
+    Write-Host 'Created .env from .env.example.'
 } else {
-    Write-Host 'Using existing data_snapshot/.env.'
+    Write-Host 'Using existing repository-root .env.'
+}
+if (Test-Path -LiteralPath $legacyEnv) {
+    Write-Warning 'data_snapshot/.env is no longer read; move its contents to root .env and remove the legacy file.'
 }
 
 Push-Location $repoRoot
