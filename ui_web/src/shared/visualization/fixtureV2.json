@@ -1,0 +1,28 @@
+{
+  "version": 2,
+  "axes": [
+    {"id": "time", "orientation": "x", "coordinate": {"kind": "date", "unit": "date"}},
+    {"id": "value", "orientation": "y", "coordinate": {"kind": "number", "unit": "count"}}
+  ],
+  "layers": [
+    {"id": "a", "label": "Series A", "x_axis": "time", "y_axis": "value",
+     "layer": {"type": "line", "version": 2,
+       "x": {"kind": "date", "unit": "date"}, "y": {"kind": "number", "unit": "count"},
+       "data": [
+         {"x": "2026-01-02", "y": 1, "segment_id": "a1", "details": [{"label": "Note", "value": "<b>literal text</b>"}]},
+         {"x": "2026-01-05", "y": 2, "segment_id": "a2", "details": []},
+         {"x": "2026-01-06", "y": null, "segment_id": "a2", "details": [{"label": "Reason", "value": "Not supplied"}]},
+         {"x": "2026-01-07", "y": 3, "segment_id": "a3", "details": []}
+       ]}},
+    {"id": "b", "label": "Series B", "x_axis": "time", "y_axis": "value",
+     "layer": {"type": "line", "version": 2,
+       "x": {"kind": "date", "unit": "date"}, "y": {"kind": "number", "unit": "count"},
+       "data": [
+         {"x": "2026-01-02", "y": 4, "segment_id": "b1", "details": []},
+         {"x": "2026-01-05", "y": 5, "segment_id": "b1", "details": []}
+       ]}}
+  ],
+  "events": [{"id": "e1", "x_axis": "time", "x": "2026-01-05", "label": "Boundary", "details": []}],
+  "layout": {"title": "Artificial date-series fixture"},
+  "presentation": {"show_legend": true, "zoom": true, "pan": true, "reset": true}
+}

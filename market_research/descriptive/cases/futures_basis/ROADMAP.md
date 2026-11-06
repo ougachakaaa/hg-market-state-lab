@@ -12,9 +12,10 @@ readiness requires its own evidence; later unfinished WPs never fail an earlier
 WP's bounded acceptance. These identifiers belong to R01-A, not the unrelated
 historical publication project that also used WP numbering.
 
-Authority status: WP0 is complete; WP1 is Implementation Ready under the exact V2
-contract and fixed fixture. All WP1–WP5 runtime and real-market acceptance remain
-pending. This status makes no claim that the future APIs/renderers already exist.
+Authority status: WP0 is complete; WP1 has passed independent artificial-data
+runtime and real Chromium acceptance under the exact V2 contract and fixed fixture.
+WP2–WP5 runtime and real-market acceptance remain pending. WP1 does not admit V2
+into existing Publication/HTTP consumers or implement the offline packager.
 
 | WP | Deliverable and boundary | Dependencies / acceptance |
 | --- | --- | --- |
@@ -56,8 +57,9 @@ converted into the new metric by sign change or division by 100 alone.
   upstream capability/consumption decision, never inferred empty sets.
 - **Mean runtime:** absent from Statistics V1. Required WP4 work under the Statistics
   owner, not a WP0 blocker or permission to implement the algorithm in Research.
-- **V2 renderer:** WP1 runtime is pending. The exact contract, fixture, implementation
-  boundary and acceptance are defined; WP1 is Implementation Ready after WP0.
+- **V2 renderer:** WP1 is implemented and independently accepted; see
+  [Visualization implementation and verification](../../../../ui_web/src/shared/visualization/README.md).
+  Producer projection and offline packaging remain WP5 work.
 - **Independent Case runtime and offline packager:** WP2–WP5 are pending, including
   exact implementation carriers/packaging. Their owner, input/output meaning and
   bounded acceptance are defined here; no generic framework is pre-created.
@@ -82,3 +84,28 @@ Navigation Markdown. Final handoff records branch, baseline, final commit, file
 inventory, SD01–SD09, reconciliation, remaining work and WP1 readiness. Mark WP0
 `PASS` only after these document checks pass; use `PARTIAL` only for an actual
 unresolved semantic/contract blocker, not missing WP1–WP5 implementation.
+
+## WP1 verification and handoff
+
+WP1 **PASS** (2026-11-06), continuing on `feat/r01-futures-basis-research` from
+`93536652e3adc807dac91c08afddc6f17c733654`. Implementation is confined to generic
+Visualization and its standalone artificial-fixture browser harness; no Research
+runtime, financial field, HTTP route, generated contract or Publication change.
+
+Reconciliation against V2: strict explicit-version validation preserves supplied
+order, units, references and null/segment semantics; each Binding remains one
+legend group, Details remain literal ordered text, and Events remain independent
+date annotations with individual detail access. Null readouts and empty/all-null
+presentation never invent numeric points. Viewport interactions preserve data and
+legend selection. Existing V1 validation and rendering remain supported unchanged.
+
+Verification: 94 focused contract/projection/React/V1 tests, TypeScript/Vite build,
+Web lint and real Chromium 156.0.8078.4 acceptance passed. Browser assertions cover
+actual curves, point hover, null reason, same-day/event-only annotations, grouped
+legends, zoom/pan/reset, multiple y axes, disabled shortcuts, empty content and V1.
+Reproduction and local screenshot/JSON evidence paths are documented in the
+[Visualization README](../../../../ui_web/src/shared/visualization/README.md).
+No business-data acquisition or Python test matrix was needed for this WP.
+
+WP2 may start directly under its existing authority: it is independent of WP1
+runtime. WP2–WP5 incompleteness does not reduce the bounded WP1 result.

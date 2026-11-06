@@ -1,6 +1,8 @@
-import type { Data, Layout } from 'plotly.js'
+import type { Config, Data, Layout } from 'plotly.js'
 import { validateChartView } from './contract'
 import type { Axis, ChartView, Layer } from './contract'
+import { validateVisualizationView } from './contractV2'
+import { viewV2ToPlotly } from './figureV2'
 
 export class UnsupportedLayerError extends Error {
   constructor(message: string) { super(message); this.name = 'UnsupportedLayerError' }
@@ -21,7 +23,9 @@ function categories(view: ChartView, axis: Axis): string[] {
   return [...seen]
 }
 /** Validates first, then deterministically projects to an internal Plotly figure. */
-export function chartViewToPlotly(input: unknown): { data: Data[]; layout: Partial<Layout> } {
+export function chartViewToPlotly(input: unknown): { data: Data[]; layout: Partial<Layout>; config?: Partial<Config> } {
+  validateVisualizationView(input)
+  if (input.version === 2) return viewV2ToPlotly(input)
   validateChartView(input)
   const view = input
   const ids = new Map<string, string>()

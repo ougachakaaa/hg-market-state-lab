@@ -12,7 +12,8 @@
     "test": "vitest run",
     "preview": "vite preview",
     "test:auth-browser": "node scripts/auth_browser_smoke.mjs",
-    "test:research-browser": "node scripts/research_browser_smoke.mjs"
+    "test:research-browser": "node scripts/research_browser_smoke.mjs",
+    "test:visualization-browser": "node scripts/visualization_browser_smoke.mjs"
   },
   "dependencies": {
     "ajv": "^8.20.0",
