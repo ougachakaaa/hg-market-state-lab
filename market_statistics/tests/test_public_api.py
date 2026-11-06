@@ -37,6 +37,8 @@ def test_interval_count_example() -> None:
 def test_complete_facade_exports() -> None:
     for name in (
         "NumericSample",
+        "MeanSpec",
+        "MeanResult",
         "QuantileSpec",
         "IntervalCountSpec",
         "QuantileResult",
@@ -71,6 +73,7 @@ def test_public_result_tree_contains_only_immutable_python_values() -> None:
 
     sample = statistics.NumericSample([1, 2, 3], "u")
     for spec in (
+        statistics.MeanSpec(),
         statistics.QuantileSpec([0, 0.25, 0.75, 1]),
         statistics.IntervalCountSpec([0, 2, 4], "u"),
     ):

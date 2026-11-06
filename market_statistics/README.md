@@ -74,3 +74,12 @@ All requested Statistics checks executed. The historical default Trade Calendar 
 limitation remains unresolved; bounded isolated Research real-market validation is recorded
 in [Research acceptance evidence](../market_research/descriptive/ACCEPTANCE.md). This
 purely numerical implementation makes no live-data acceptance claim.
+
+## Mean extension (R01-A WP4)
+
+[Mean](MEAN.md) adds `MeanSpec` and `MeanResult` to the public unions without changing
+Quantile or IntervalCount. `compute(NumericSample([1, 3], "u"), MeanSpec())` returns
+`MeanResult(value=2.0, sample_count=2, unit="u")`. NumPy float64 accumulation may
+fail on intermediate overflow even when a mathematical average is finite.
+Numerical conformance and injected backend failures: `tests/test_mean.py`.
+Bounded integration/verification evidence: [WP4 acceptance](../market_research/descriptive/cases/futures_basis/WP4_ACCEPTANCE.md).

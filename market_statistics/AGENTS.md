@@ -4,7 +4,7 @@ Inherit the root [AGENTS.md](../AGENTS.md). Read the
 [repository architecture](../ARCHITECTURE.md), then [module authority](ARCHITECTURE.md)
 for identity/dependencies and [public contract](CONTRACT.md) for numerical semantics.
 Read only the relevant method authority, [Quantile](QUANTILE.md) or
-[IntervalCount](INTERVAL_COUNT.md), and [BACKEND.md](BACKEND.md) for numerical library
+[IntervalCount](INTERVAL_COUNT.md) or [Mean](MEAN.md), and [BACKEND.md](BACKEND.md) for numerical library
 selection, adaptation, result validation and upgrades. Libraries are implementation
 dependencies, not an alternate source of public statistical meaning.
 

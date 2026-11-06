@@ -22,8 +22,10 @@ from market_research.descriptive.association import (
 ```
 
 Research owns these four names, exported with explicit aliases and no `__all__`.
-Statistics continues to own NumericSample, StatisticalSpec = QuantileSpec | IntervalCountSpec,
-StatisticalResult = QuantileResult | IntervalCountResult, validate_spec and compute.
+Statistics continues to own NumericSample, StatisticalSpec, StatisticalResult, validate_spec
+and compute under its current public contract. This scalar association continues to
+admit Quantile/IntervalCount only; the Mean extension is consumed by the independent
+[Futures Basis analysis](cases/futures_basis/STATISTICS_API.md).
 Association consumes only public Research observation/conversion facades and the root
 Statistics facade; no private imports, Execution dependency or new acquisition permission.
 Observation stays Statistics-independent; Converter never depends on Association;

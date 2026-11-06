@@ -3,7 +3,7 @@
 This contract specializes the [module authority](ARCHITECTURE.md) and inherits the
 [public contract](CONTRACT.md). It owns numerical library selection, conformance,
 failure adaptation and upgrade policy. Method meaning belongs only to
-[Quantile](QUANTILE.md) and [IntervalCount](INTERVAL_COUNT.md).
+[Quantile](QUANTILE.md) and [IntervalCount](INTERVAL_COUNT.md) and [Mean](MEAN.md).
 
 ## Selection and runtime boundary
 
@@ -85,3 +85,5 @@ frequencies use the actual full sample count. Backend RuntimeWarnings and floati
 invalid/overflow/division errors become CalculationFailure within a scoped context;
 no process-global warning policy is modified. Failure-injection tests cover malformed
 outputs, exceptions and finite-looking results after invalid numerical execution.
+
+Mean uses `numpy.mean(array, dtype=numpy.float64)` with finite scalar/type/range validation under the same scoped warning/error boundary. See [Mean](MEAN.md) for intermediate overflow semantics.

@@ -2,7 +2,7 @@
 
 This contract specializes the [module authority](ARCHITECTURE.md). It owns the public
 sample (STAT-03), operation, method/result unions and failures (STAT-02). Independently
-readable method contracts are [Quantile](QUANTILE.md) and [IntervalCount](INTERVAL_COUNT.md).
+readable method contracts are [Quantile](QUANTILE.md) and [IntervalCount](INTERVAL_COUNT.md) and [Mean](MEAN.md).
 STAT-IMP-01 implements these contracts through the public `market_statistics` facade.
 
 ## Public API and validation
@@ -10,8 +10,8 @@ STAT-IMP-01 implements these contracts through the public `market_statistics` fa
 ```text
 compute(sample: NumericSample, spec: StatisticalSpec) -> StatisticalResult
 validate_spec(spec: StatisticalSpec) -> None
-StatisticalSpec = QuantileSpec | IntervalCountSpec
-StatisticalResult = QuantileResult | IntervalCountResult
+StatisticalSpec = QuantileSpec | IntervalCountSpec | MeanSpec
+StatisticalResult = QuantileResult | IntervalCountResult | MeanResult
 ```
 
 The public Python semantic operation is synchronous, pure computation: no I/O,
@@ -20,16 +20,18 @@ raise Statistics-owned errors, never fabricated successful results. Python class
 and internal file organization are implementation choices; named fields and typed
 variants below are public obligations, not an unconstrained dictionary protocol.
 The `method` tag discriminates specs/results:
-`quantile` or `interval_count`. Unknown tags are invalid specs.
+`quantile`, `interval_count` or `mean`. Unknown tags are invalid specs.
 
 The public facade is `market_statistics`: consumers must be able to import
-NumericSample, both Spec variants, both Result variants, the StatisticalSpec/StatisticalResult
+NumericSample, all three Spec variants, all three Result variants, the StatisticalSpec/StatisticalResult
 unions, compute, validate_spec and the three public error categories from it. The package
 is registered in the repository root project; no separate environment is required.
 
 ```python
 from market_statistics import (
     NumericSample,
+    MeanSpec,
+    MeanResult,
     QuantileSpec,
     IntervalCountSpec,
     QuantileResult,
@@ -114,7 +116,7 @@ Test invalid types/shapes, bool, empty sample/unit, NaN and both infinities; fin
 representation conversion and overflow; duplicates; input immutability; unchanged opaque
 units; unknown-tag preflight; compute-time revalidation and validation precedence.
 Verify sample-free validate_spec returning None, compatibility failure only at compute
-when a standalone spec is legal, both typed dispatch/result variants, derived count,
+when a standalone spec is legal, all three typed dispatch/result variants, derived count,
 unchanged unit and stable failure categories, including invalid public object variants.
 Method fixtures belong to the linked method contracts. Facade re-exports use
 explicit aliases (`from pkg.module import Name as Name`); verify expected attributes

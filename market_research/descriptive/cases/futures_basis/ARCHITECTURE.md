@@ -43,6 +43,7 @@ Contract-day/Slot-day observations under [Inputs](INPUTS.md) and [Observation](O
 | Exact public bindings, dual calendars, completeness and reproducibility (SD06) | [Inputs](INPUTS.md) |
 | Observation grain, validity, accounting and continuity (SD05, SD07–SD08) | [Observation](OBSERVATION.md) |
 | Populations, distributions, paired comparisons, runs and numerical ownership (SD09) | [Statistics scope](STATISTICS.md) |
+| Python statistics usage and acceptance | [Usage](USAGE.md), [WP4 acceptance](WP4_ACCEPTANCE.md) |
 | Business projection and offline report evidence | [Delivery](DELIVERY.md) |
 | WP3 runtime/real-market evidence and reproduction | [WP3 acceptance](WP3_ACCEPTANCE.md) |
 | Work packages, readiness, reconciliation and known gaps | [Roadmap](ROADMAP.md) |
@@ -70,6 +71,6 @@ Existing Snapshot/Workbench semantics stay frozen; see [reconciliation](ROADMAP.
 
 Status: WP0 is authority-only; WP1–WP3 have independent runtime acceptance.
 WP3 also passed bounded real IM acceptance; evidence and reproduction instructions
-are in [WP3 acceptance](WP3_ACCEPTANCE.md). WP4 statistics and WP5 report
-acceptance remain separate work under the roadmap. No new CLI, HTTP route, Research
+are in [WP3 acceptance](WP3_ACCEPTANCE.md). WP4 statistics have independent runtime and real IM acceptance; WP5 report
+acceptance remains separate work under the roadmap. No new CLI, HTTP route, Research
 database, publication lifecycle or Modeling import permission is introduced.

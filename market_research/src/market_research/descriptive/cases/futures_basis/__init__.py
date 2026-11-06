@@ -29,3 +29,14 @@ from .preparation import prepare_inputs as prepare_inputs
 from .resolution import detect_contract_transitions as detect_contract_transitions
 from .resolution import resolve_daily_slots as resolve_daily_slots
 from .service import observe_futures_basis as observe_futures_basis
+from .statistics import AnalysisRequestError as AnalysisRequestError
+from .statistics import ComparisonRequest as ComparisonRequest
+from .statistics import ComparisonResult as ComparisonResult
+from .statistics import DiscountRun as DiscountRun
+from .statistics import DiscountSummary as DiscountSummary
+from .statistics import DistributionRequest as DistributionRequest
+from .statistics import DistributionResult as DistributionResult
+from .statistics import MethodOutcome as MethodOutcome
+from .statistics import analyze_distribution as analyze_distribution
+from .statistics import compare_terms as compare_terms
+from .statistics import discount_runs as discount_runs

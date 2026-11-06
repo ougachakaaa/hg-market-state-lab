@@ -6,14 +6,15 @@
 statistics bounded module under the [repository architecture](../ARCHITECTURE.md).
 It owns statistical sample legality, method parameters, computation contracts, typed
 results, numerical failure semantics and validation of statistical backend results.
-V1 contains Quantile and IntervalCount only. This is the canonical identity decision
+The current methods are Quantile, IntervalCount and Mean. This is the canonical identity decision
 STAT-01; the former authority namespace is retired without a compatibility alias.
 
 The [public numerical contract](CONTRACT.md) is the canonical owner of `NumericSample`,
 `StatisticalSpec`, `StatisticalResult`, `StatisticalFailure`, `compute` and `validate_spec`
 (STAT-02 and STAT-03). Its public API is a Python semantic boundary; it does not imply
 an HTTP service or a separately deployed application. Method contracts specialize it:
-[Quantile](QUANTILE.md) (STAT-05) and [IntervalCount](INTERVAL_COUNT.md) (STAT-06).
+[Quantile](QUANTILE.md) (STAT-05), [IntervalCount](INTERVAL_COUNT.md) (STAT-06)
+and [Mean](MEAN.md) (STAT-09).
 [Backend policy](BACKEND.md) owns library selection, conformance and upgrades (STAT-04);
 libraries supply numerical implementations, never public semantic authority.
 
@@ -46,9 +47,9 @@ quantile-based or established histogram estimators are possible future strategie
 separately generated data-driven edges do not support direct cross-sample comparison
 unless the actual final edges are shared. There is no implicit `auto` binning.
 
-Extend methods before sample shapes. Future Mean, Variance, StandardDeviation, ECDF,
+Extend methods before sample shapes. Future Variance, StandardDeviation, ECDF,
 ThresholdFrequency or TailStatistics requires its own semantics/ownership, typed Spec
-and Result, explicit backend policy and deterministic acceptance tests. None is added now.
+and Result, explicit backend policy and deterministic acceptance tests. Mean is extended under STAT-09; other methods remain deferred.
 Paired, temporal, grouped or weighted samples require a method with a demonstrated
 different mathematical input structure; no such types or scaffold are introduced.
 Input ordering alone is not an equally spaced temporal axis. Do not infer independence
@@ -63,7 +64,7 @@ method recommendation is authorized.
 
 STAT-IMP-01 publishes the independently installable `market_statistics` Python facade
 under `src/market_statistics/`, with immutable NumericSample, typed specs/results,
-standalone validation, both V1 methods and stable statistical failures. NumPy is an
+standalone validation, the two original V1 methods and Mean and stable statistical failures. NumPy is an
 explicit root dependency; method-local adapters and deterministic tests enforce the
 published contracts. Public usage and verification entry points are in [README](README.md).
 

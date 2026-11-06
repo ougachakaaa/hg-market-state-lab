@@ -21,8 +21,7 @@ distributions and an arithmetic mean. Mean is a required WP4 addition to Statist
 not an algorithm to copy into Research. The Statistics owner must define its
 method contract, typed spec/result, backend and numerical failure/conformance
 tests before runtime extension, under its [extension policy](../../../../market_statistics/ARCHITECTURE.md#extension-boundaries-stat-07-and-stat-08).
-WP0 freezes this responsibility and requirement only; it does not admit a Mean
-variant to the current public API or prescribe competing arithmetic semantics.
+WP4 implements Mean under its independent Statistics authority and public API.
 
 No distribution pools Slots, products or metrics. Histogram frequencies retain
 Statistics' full eligible-sample denominator, underflow and overflow; the chart
@@ -35,7 +34,7 @@ Each analysis fixes a unique caller-supplied analysis ID, case request and actua
 input identity, metric, Slot (or ordered pair), inclusive window, requested
 numerical methods and parameters. Quantile points and IntervalCount edges are
 explicit; there are no automatic bins, method recommendations or hidden default
-parameters. Means have no consumer-selected market estimator; their future legal
+parameters. Means have no consumer-selected market estimator; their legal
 spec is Statistics-owned. Comparative distributions use identical points and
 actual edges for both members of a metric/pair.
 
@@ -109,3 +108,5 @@ association. Run fixtures cover negative→zero/positive, contract switches with
 run, holidays, missing/excluded days, both window boundaries, all-negative windows,
 no negative days and complete versus censored samples. Numerical algorithm tests
 belong to Statistics; Research tests verify population, invocation and association.
+
+WP4 typed runtime contract: [Python analysis API](STATISTICS_API.md). Mean is now owned by [Mean authority](../../../../market_statistics/MEAN.md).

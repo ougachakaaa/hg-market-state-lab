@@ -5,6 +5,7 @@ from math import isfinite
 from market_statistics import (
     IntervalBin,
     IntervalCountResult,
+    IntervalCountSpec,
     NumericSample,
     QuantileResult,
     QuantileSpec,
@@ -43,6 +44,9 @@ def validate_result(
     spec: StatisticalSpec,
     result: StatisticalResult,
 ) -> None:
+    require(
+        isinstance(spec, QuantileSpec | IntervalCountSpec), "Unsupported scalar association method"
+    )
     require(type(result) in (QuantileResult, IntervalCountResult), "Wrong public result variant")
     require(
         type(result.sample_count) is int and result.sample_count == sample.sample_count,
@@ -74,6 +78,7 @@ def validate_result(
     require(type(result) is IntervalCountResult, "Interval request requires IntervalCountResult")
     assert isinstance(result, IntervalCountResult)
     require(result.method == "interval_count", "Wrong IntervalCount method tag")
+    assert isinstance(spec, IntervalCountSpec)
     require(spec.unit == sample.unit, "Interval spec/sample unit mismatch")
     require(
         _coordinates(result.edges, spec.edges), "Result edges differ from exact requested edges"

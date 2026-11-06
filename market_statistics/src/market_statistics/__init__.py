@@ -8,6 +8,8 @@ from .failures import StatisticalFailure as StatisticalFailure
 from .models import IntervalBin as IntervalBin
 from .models import IntervalCountResult as IntervalCountResult
 from .models import IntervalCountSpec as IntervalCountSpec
+from .models import MeanResult as MeanResult
+from .models import MeanSpec as MeanSpec
 from .models import NumericSample as NumericSample
 from .models import QuantileResult as QuantileResult
 from .models import QuantileSpec as QuantileSpec

@@ -16,7 +16,7 @@ Authority status: WP0 is complete; WP1 has passed independent artificial-data
 runtime and real Chromium acceptance under the exact V2 contract and fixed fixture.
 WP2 has passed independent synthetic Slot/Transition acceptance. WP3 has passed
 synthetic runtime and bounded real IM acceptance under [its evidence](WP3_ACCEPTANCE.md).
-WP4/WP5 runtime and report acceptance remain pending. WP1 does not admit V2
+WP4 statistics passed synthetic and bounded real IM acceptance; WP5 report acceptance remains pending. WP1 does not admit V2
 into existing Publication/HTTP consumers or implement the offline packager.
 
 | WP | Deliverable and boundary | Dependencies / acceptance |
@@ -57,22 +57,22 @@ converted into the new metric by sign change or division by 100 alone.
   expose active catalogs for failed dates. Resolved for this version by requiring
   complete Futures; supporting partial Futures would require a future explicit
   upstream capability/consumption decision, never inferred empty sets.
-- **Mean runtime:** absent from Statistics V1. Required WP4 work under the Statistics
-  owner, not a WP0 blocker or permission to implement the algorithm in Research.
+- **Mean runtime:** implemented and independently tested by Statistics under
+  [Mean authority](../../../../market_statistics/MEAN.md).
 - **V2 renderer:** WP1 is implemented and independently accepted; see
   [Visualization implementation and verification](../../../../ui_web/src/shared/visualization/README.md).
   Producer projection and offline packaging remain WP5 work.
 - **Independent Case runtime and offline packager:** WP2 pure Slot resolution is
-  implemented; WP3–WP5 preparation, observation, statistics and packaging remain
-  pending. Their owner, input/output meaning and bounded acceptance are defined
+  implemented; WP3 preparation/observation and WP4 statistics are accepted.
+  WP5 packaging remains pending. Their owner, input/output meaning and bounded acceptance are defined
   here; no generic framework is pre-created.
 - **Publication / HTTP / capability integration:** deferred beyond this offline
   delivery. Would need versioned Case evidence admission, V2 read/transport/safe
   projection and generated-contract work. Existing quotas/authentication do not
   disappear and no new routes are implied.
-- **Actual study dates/data:** later real IM validation/report uses explicit dates,
-  public-source inputs and retained evidence. No default historical window or
-  claimed live PASS is created by WP0.
+- **Actual study dates/data:** WP3/WP4 real IM validation uses explicit dates,
+  public-source inputs and retained evidence. WP5 must preserve that evidence for
+  its report. No default historical window is introduced.
 
 ## WP0 verification and handoff
 
@@ -171,4 +171,18 @@ remain outside Git. WP2 resolution and transition APIs are reused unchanged.
 WP4 is **Implementation Ready** to consume the retained three-metric outcomes,
 Slot-day references, per-Slot accounting and input evidence. WP3 does not implement
 sample conversion/statistics, chart segmentation, offline reports or publication.
-The pending WP4 Statistics-owned Mean extension remains WP4 work.
+The Statistics-owned Mean extension and Case statistics are completed in WP4 below.
+
+## WP4 verification and handoff
+
+WP4 **PASS** (2026-11-06), from baseline
+`cc4c4f0212ffd72d356f6476418e7285f56818e7` on the same working branch.
+The [typed analysis API](STATISTICS_API.md) implements explicit three-metric
+Mean/Quantile/IntervalCount distributions, all six common-date comparisons per
+metric, coverage association and complete/censored Slot discount spans.
+[WP4 acceptance](WP4_ACCEPTANCE.md) records numerical/synthetic and retained real
+IM evidence; [usage](USAGE.md) provides a minimal Python example.
+
+WP5 is **Implementation Ready** to consume the frozen results, original statistical
+objects, source association, dropped-date reasons and run boundaries. No WP5
+projection, visualization, offline report, CLI/HTTP or persistence is implemented.

@@ -1193,3 +1193,13 @@ def test_nested_legal_evidence_is_retained_without_case_revalidation(
     assert retained.missing_dependencies[0] is missing
     assert retained.available_endpoints[0] is endpoint
     assert endpoint.value.hex() == "-0x0.0p+0"
+
+
+def test_mean_extension_does_not_admit_scalar_association() -> None:
+    from market_statistics import MeanSpec
+
+    source, projection, _, _ = quantile_bundle()
+    request = AnalysisRequest("unsupported-scalar-mean", MeanSpec())
+    result = compute(projection.numeric_sample, request.spec)
+    with pytest.raises(ResultAssociationFailure, match="Unsupported scalar association method"):
+        associate(source.fixed_job_spec, source, projection, request, result)

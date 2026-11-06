@@ -69,7 +69,9 @@ ASSOCIATION_STATISTICS = {
 }
 
 
-def check_imports(text: str, package: str, *, publication: bool = False) -> None:
+def check_imports(
+    text: str, package: str, *, publication: bool = False, basis_statistics: bool = False
+) -> None:
     conversion = package == CONVERSION or package.startswith(CONVERSION + ".")
     association = package == ASSOCIATION or package.startswith(ASSOCIATION + ".")
     execution = package == EXECUTION or package.startswith(EXECUTION + ".")
@@ -184,6 +186,11 @@ def check_imports(text: str, package: str, *, publication: bool = False) -> None
                 assert all(f"{name}.{alias.name}" != EXECUTION for alias in node.names), (
                     "Components cannot import execution through its parent package"
                 )
+            if basis_statistics and (
+                name == "market_statistics" or name.startswith("market_statistics.")
+            ):
+                assert name == "market_statistics", name
+                continue
             if name == "market_statistics" or name.startswith("market_statistics."):
                 assert (conversion or association) and name == "market_statistics", name
                 assert isinstance(node, ast.ImportFrom), "Import only the required public types"
@@ -239,6 +246,8 @@ def test_conversion_imports_only_public_contracts_and_has_no_effectful_dependenc
             path.read_text(encoding="utf-8"),
             package,
             publication=path.relative_to(SOURCE).as_posix() == "descriptive/capabilities.py",
+            basis_statistics=path.relative_to(SOURCE).as_posix()
+            == "descriptive/cases/futures_basis/statistics.py",
         )
 
 

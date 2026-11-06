@@ -190,7 +190,10 @@ def test_only_published_datalake_imports_and_no_forbidden_dependency_edges() -> 
             )
             for name in modules:
                 if name == "market_statistics" or name.startswith("market_statistics."):
-                    assert path.relative_to(SOURCE).as_posix() == "descriptive/capabilities.py" or {
+                    assert path.relative_to(SOURCE).as_posix() in {
+                        "descriptive/capabilities.py",
+                        "descriptive/cases/futures_basis/statistics.py",
+                    } or {
                         "conversion",
                         "association",
                         "execution",
@@ -206,8 +209,10 @@ def test_only_published_datalake_imports_and_no_forbidden_dependency_edges() -> 
                 if name.startswith("data_lake"):
                     assert name in public, (path, name)
                     if name == "data_lake.datasets.tushare_equity_index_futures":
-                        assert path.relative_to(SOURCE).as_posix().startswith(
-                            "descriptive/cases/futures_basis/"
+                        assert (
+                            path.relative_to(SOURCE)
+                            .as_posix()
+                            .startswith("descriptive/cases/futures_basis/")
                         ), (path, name)
             if isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute):
                 if node.func.attr in {"export", "ensure", "coverage"}:

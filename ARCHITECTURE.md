@@ -61,7 +61,7 @@ Research result 是 evidence / finding，不是 production market-state output�
 
 ### `market_statistics`
 
-独立、业务无关的 contract-driven 数值统计 bounded module，拥有 statistical sample legality、统计方法参数、计算契约、typed results、统计失败语义及 numerical backend result validation；第一阶段仅包含 Quantile 与 IntervalCount。它不理解市场标的、金融公式、Research ObservationSet / Job / Batch，也不获取市场数据。Research 仅通过其 public Python semantic boundary 消费统计能力；Statistics 不依赖 Research、DataLake、Snapshot、Modeling 或 inbound UI，该 boundary 不表示 HTTP 服务。
+独立、业务无关的 contract-driven 数值统计 bounded module，拥有 statistical sample legality、统计方法参数、计算契约、typed results、统计失败语义及 numerical backend result validation；当前包含 Quantile、IntervalCount 与 Mean。它不理解市场标的、金融公式、Research ObservationSet / Job / Batch，也不获取市场数据。Research 仅通过其 public Python semantic boundary 消费统计能力；Statistics 不依赖 Research、DataLake、Snapshot、Modeling 或 inbound UI，该 boundary 不表示 HTTP 服务。
 
 独立 Python 数值 API 由根项目安装。模块边界与公共数值契约入口见 [market_statistics/ARCHITECTURE.md](market_statistics/ARCHITECTURE.md)。
 

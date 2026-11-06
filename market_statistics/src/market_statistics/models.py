@@ -71,7 +71,25 @@ class IntervalCountSpec:
         unit(self.unit, InvalidStatisticalSpec)
 
 
-type StatisticalSpec = QuantileSpec | IntervalCountSpec
+@dataclass(frozen=True, slots=True)
+class MeanSpec:
+    method: Literal["mean"] = "mean"
+
+    def _validate(self) -> None:
+        if type(self.method) is not str or self.method != "mean":
+            raise InvalidStatisticalSpec("Unknown Mean method tag")
+
+
+@dataclass(frozen=True, slots=True)
+class MeanResult:
+    value: float
+    sample_count: int
+    unit: str
+    method: Literal["mean"] = "mean"
+    estimator: Literal["arithmetic_binary64_v1"] = "arithmetic_binary64_v1"
+
+
+type StatisticalSpec = QuantileSpec | IntervalCountSpec | MeanSpec
 
 
 @dataclass(frozen=True, slots=True)
@@ -106,4 +124,4 @@ class IntervalCountResult:
     method: Literal["interval_count"] = "interval_count"
 
 
-type StatisticalResult = QuantileResult | IntervalCountResult
+type StatisticalResult = QuantileResult | IntervalCountResult | MeanResult
