@@ -28,9 +28,10 @@ explicit product + window
 ```
 
 These are responsibility boundaries, not a generic engine, inheritance hierarchy
-or mandatory sequence of separately persisted artifacts. The future independent
-Python boundary belongs to `market_research.descriptive.cases.futures_basis`;
-preparation alone performs upstream I/O, and construction/resolution are pure.
+or mandatory sequence of separately persisted artifacts. The independent Python
+boundary is `market_research.descriptive.cases.futures_basis`; its pure Slot
+resolver and transition detection are implemented under [Slot resolution](SLOT_RESOLUTION.md).
+Preparation alone performs upstream I/O; preparation and observation runtime remain WP3 work.
 
 ## Authority navigation
 
@@ -65,6 +66,7 @@ claim admission to those APIs. Case-owned adaptation consumes only the root
 [Statistics public API](../../../../market_statistics/CONTRACT.md).
 Existing Snapshot/Workbench semantics stay frozen; see [reconciliation](ROADMAP.md#reconciliation).
 
-Status: WP0 is authority-only. WP1–WP5 runtime, real-data acquisition and report
-acceptance are separate work under the roadmap. No new CLI, HTTP route, Research
+Status: WP0 is authority-only; WP1 and WP2 have independent runtime acceptance.
+WP3–WP5 runtime, real-data acquisition and report acceptance remain separate work
+under the roadmap. No new CLI, HTTP route, Research
 database, publication lifecycle or Modeling import permission is introduced.

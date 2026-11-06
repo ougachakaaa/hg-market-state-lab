@@ -72,3 +72,50 @@ WP2 must test expiry-day inclusion, next-open-day changes across holidays,
 year/month rollover, near/quarter overlap, empty proof, invalid month structures,
 duplicate identities/months, missing proof and unchanged mapping when quote
 availability/volume/open interest changes. No live market data is needed for WP2.
+
+## Python boundary and evidence handoff
+
+The public boundary is `market_research.descriptive.cases.futures_basis`:
+`resolve_daily_slots(product_code, trade_date, contracts, *, evidence)` returns
+`DailySlotResolution`; `detect_contract_transitions(product_code,
+candidate_sessions, resolutions)` returns `TransitionResult`. Carriers are frozen
+dataclasses with ordered tuples; calls perform no I/O and do not mutate inputs.
+
+`ContractMetadata` contains exactly contract_code, product_code,
+underlying_index_code, delivery_month, list_date and delist_date; trade_date is
+supplied separately. The caller supplies the day's complete active
+metadata, not a union/catalog to filter. Inactive/unlisted entries, duplicate codes
+or months, malformed ordinary identity, product/underlying conflicts and evidence
+membership mismatches fail explicitly. Only validated maturity sorting is allowed.
+
+`DailyUniverseEvidence` binds product_code, trade_date, `complete=True`, the exact
+unique `active_contract_codes` tuple and a nonempty `source_export_ref` to the
+caller's retained final Futures Export. This is a Research handoff from already
+validated producer evidence, not a new DataLake proof API or an assertion that a
+boolean/reference authenticates completeness. Input Preparation alone constructs
+it after validating the complete final Export and Calendar under [Inputs](INPUTS.md).
+WP3 must retain that full Export; references/digests alone cannot reproduce inputs.
+No coverage, catalog, cache, price or source acquisition is reimplemented here.
+
+Each daily result has product/date, four `SlotMapping` entries in public order
+and the evidence. A mapping carries slot, actual metadata (or None), evidence,
+`resolved`/`not_applicable` status and None/`no_active_contract` reason. Source
+metadata and evidence remain associated independently on each date; a changed
+metadata version alone does not create a contract-code Transition.
+
+`CandidateSessions` carries the complete already-validated CFFEX `dates` tuple
+and a nonempty `calendar_export_ref`. Transition detection requires strictly
+increasing unique dates and exactly one valid daily result per candidate, for
+one product. Missing, extra, unordered or mismatched results fail the whole call;
+no transitions bridge an omitted candidate. It trusts the caller's validated
+Calendar, never infers openings from weekdays or an exchange holiday formula.
+An empty candidate sequence with no results is legal.
+
+Real-to-real code changes produce `ContractTransition` with product, slot, both
+dates/codes, metadata and evidence. Proven absent-to-present/present-to-absent
+changes instead produce `AbsenceBoundary` with `appeared`/`disappeared` direction
+and both Slot mappings. Both output tuples retain date then public Slot order.
+Same-code and absent-to-absent pairs produce neither record. These records do not
+define execution, returns or chart segments. `SlotResolutionError` retains category,
+product/date, reason, metadata and available evidence; invalid inputs never yield
+a partial successful result.

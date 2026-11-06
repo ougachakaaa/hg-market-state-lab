@@ -14,7 +14,8 @@ historical publication project that also used WP numbering.
 
 Authority status: WP0 is complete; WP1 has passed independent artificial-data
 runtime and real Chromium acceptance under the exact V2 contract and fixed fixture.
-WP2–WP5 runtime and real-market acceptance remain pending. WP1 does not admit V2
+WP2 has passed independent synthetic Slot/Transition acceptance; WP3 is Implementation Ready.
+WP3–WP5 runtime and real-market acceptance remain pending. WP1 does not admit V2
 into existing Publication/HTTP consumers or implement the offline packager.
 
 | WP | Deliverable and boundary | Dependencies / acceptance |
@@ -60,9 +61,10 @@ converted into the new metric by sign change or division by 100 alone.
 - **V2 renderer:** WP1 is implemented and independently accepted; see
   [Visualization implementation and verification](../../../../ui_web/src/shared/visualization/README.md).
   Producer projection and offline packaging remain WP5 work.
-- **Independent Case runtime and offline packager:** WP2–WP5 are pending, including
-  exact implementation carriers/packaging. Their owner, input/output meaning and
-  bounded acceptance are defined here; no generic framework is pre-created.
+- **Independent Case runtime and offline packager:** WP2 pure Slot resolution is
+  implemented; WP3–WP5 preparation, observation, statistics and packaging remain
+  pending. Their owner, input/output meaning and bounded acceptance are defined
+  here; no generic framework is pre-created.
 - **Publication / HTTP / capability integration:** deferred beyond this offline
   delivery. Would need versioned Case evidence admission, V2 read/transport/safe
   projection and generated-contract work. Existing quotas/authentication do not
@@ -109,3 +111,45 @@ No business-data acquisition or Python test matrix was needed for this WP.
 
 WP2 may start directly under its existing authority: it is independent of WP1
 runtime. WP2–WP5 incompleteness does not reduce the bounded WP1 result.
+
+## WP2 verification and handoff
+
+WP2 **PASS** (2026-11-06), on `feat/r01-futures-basis-research` from baseline
+`3787252299144b7e87fa248f345b2bc84d62ed13`. Public pure Python entry:
+`market_research.descriptive.cases.futures_basis`, with `resolve_daily_slots`
+and `detect_contract_transitions`; immutable carriers and evidence handoff are
+specified in [Slot resolution](SLOT_RESOLUTION.md#python-boundary-and-evidence-handoff).
+
+Reconciliation: the resolver consumes the day's complete proven active metadata,
+checks inclusive lifecycle/identity and exact four-month structure, and retains
+per-day metadata and source references. It never truncates, filters, fills,
+infers expiry, chooses a main contract or obtains a catalog. The evidence carrier
+is a caller-validated Research handoff, not a new DataLake proof or cache check.
+WP3 must validate and retain the full final Futures and Calendar Exports before
+constructing these carriers; reference strings/complete flags alone are not proof.
+
+Daily results preserve all four ordered Slots, including explicit
+`not_applicable / no_active_contract` outcomes. Transition detection requires a
+result for every supplied CFFEX candidate; any gap fails the entire call. Real
+code changes and proven absence boundaries have separate typed outputs with both
+endpoints and evidence. No quote/volume/open-interest input, business derivation,
+execution claim, chart segment or Observation outcome computation is introduced.
+
+Verification: 70 WP2 synthetic tests passed. The final required Research suite
+and architecture/topology checks passed together (1133 tests):
+
+```bash
+poetry run pytest -q market_research/tests data_snapshot/tests/test_authority_topology.py ui_http/tests/test_architecture.py
+poetry run ruff check market_research
+poetry run mypy market_research/src/market_research/descriptive/cases/futures_basis market_research/tests
+```
+
+Direct MyPy of the new package and its two test/fixture files also passed, as did
+root-environment public imports, Markdown links/anchors and `git diff --check`.
+All acceptance data is synthetic; no live acquisition, historical study run or
+Web/browser gate is part of WP2. Existing Case behavior passed regression.
+
+WP3 is **Implementation Ready** under [Inputs](INPUTS.md) and
+[Observation](OBSERVATION.md), consuming this public resolver. Its input acquisition,
+retention/fingerprint, Basis calculations and real IM acceptance are still required
+WP3 work; Statistics and offline report packaging remain WP4/WP5 respectively.
