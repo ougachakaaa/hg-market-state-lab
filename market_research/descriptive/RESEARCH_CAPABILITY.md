@@ -17,6 +17,10 @@ requires Research-owned semantic admission and its case/public input contract fi
 independent `price_segmentation_v1` Python Observation API. Its specified isolated
 real-market scopes are recorded as passed in [Acceptance](ACCEPTANCE.md). It is not
 published by this facade, ResearchPlan, preview or HTTP; these remain Trailing Return only.
+The R01-A [Futures Basis case](cases/futures_basis/ARCHITECTURE.md) is likewise not a
+published capability. Its separate [online application](cases/futures_basis/ONLINE_APPLICATION.md)
+is a case-specific HTTP/Web workflow that does not extend capability discovery,
+ResearchPlan, preview, Batch or Publication.
 Offline human review does not extend Capability Publication.
 
 Read metric, formula, units, calendar and time meaning from the existing public case

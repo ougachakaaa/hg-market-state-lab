@@ -4,6 +4,10 @@ This document specializes the [case entry](ARCHITECTURE.md). It owns delivery
 boundaries and reconciliation, not duplicate formulas, schemas or runtime results.
 Baseline: `develop` at `3c7db37714443d7717218ee602218e7abfd911ab`.
 Working branch: `feat/r01-futures-basis-research`; WP1–WP5 continue on that branch.
+R01-A WP5 baseline is `60d607786c3490ae728ccc3493857ef5d0d71f3e`. R02 starts from
+the current R01 branch head `e7cc700cb08404bc37b1013697aab2a2e8204f1a`
+(WP5 plus the Publication platform isolation fix) on
+`feat/r02-futures-basis-online`; no `develop` merge is used.
 
 ## Work packages
 
@@ -18,7 +22,9 @@ WP2 has passed independent synthetic Slot/Transition acceptance. WP3 has passed
 synthetic runtime and bounded real IM acceptance under [its evidence](WP3_ACCEPTANCE.md).
 WP4 statistics passed synthetic and bounded real IM acceptance; WP5 offline report and
 longer-window delivery are recorded in [WP5 acceptance](WP5_ACCEPTANCE.md). WP1 does not admit V2
-into existing Publication/HTTP consumers or implement the offline packager.
+into existing Publication/HTTP consumers or implement the offline packager. WP6 encodes
+the online application, HTTP and frontend authority in
+[Online application](ONLINE_APPLICATION.md); WP7–WP9 runtime is pending.
 
 | WP | Deliverable and boundary | Dependencies / acceptance |
 | --- | --- | --- |
@@ -28,10 +34,16 @@ into existing Publication/HTTP consumers or implement the offline packager.
 | WP3 — Basis Observation | Independent public preparation and pure Contract-day/Slot-day construction under [Inputs](INPUTS.md) and [Observation](OBSERVATION.md) | WP2; contract fakes, formulas, accounting/provenance/transition tests plus retained real IM validation; no Statistics or charts required |
 | WP4 — Descriptive Statistics | [Case adaptation and findings](STATISTICS.md), with Statistics-owned Mean authority/API/backend extension | WP3; independent numerical Mean conformance, Research binding/population/run tests and three-metric results; no renderer required |
 | WP5 — Integration & Research Delivery | [Research projection and offline report](DELIVERY.md), with local assets and reproducible real IM evidence | WP1 + WP3 + WP4; offline interaction and evidence/reconstruction verification; no Publication/HTTP admission required |
+| WP6 — Online Semantic Authority | [Online application](ONLINE_APPLICATION.md), [HTTP contract](../../../../ui_http/products/futures_basis_research/http-contract.md), [frontend slice](../../../../ui_web/src/features/futures_basis_research/ARCHITECTURE.md), catalogs and this roadmap; documents only | WP5; links/anchors, ownership, DTO/state/error and frontend completeness, reconciliation, `git diff --check`; no runtime code, live data or full matrices |
+| WP7 — Online Research Application & Store | Case-specific online facade: standard profile, semantic validation, run lifecycle, single worker, file store, owner scope, atomic result publication, restart recovery and reader projection reuse | WP6; synthetic/fake-service tests, state/recovery/owner/size/corruption acceptance; no HTTP/UI/generated artifacts |
+| WP8 — HTTP Product & Web Slice | HTTP adapter/OpenAPI/generated contract; authenticated four-surface navigation, query controls, polling and shared W1 reader; offline reader regression | WP7; strict HTTP/auth/error/limit tests, Vitest/build/lint, deterministic browser tests, `contract:check`; no live data or Publication |
+| WP9 — Integrated Acceptance | WSL FastAPI + Vite + Windows Chrome end-to-end: login, query, run, refresh, report, restart interruption, busy, ownership and failure states | WP8; external evidence and bounded real IM acceptance; no performance/SLA promise |
 
 Default implementation order is WP1 → WP2 → WP3 → WP4 → WP5; WP1 and WP2 have
 no dependency on each other's runtime. New runtime tooling/dependencies, if
 needed, follow their owning module's normal authority and verification rules.
+The R02 online order is WP6 → WP7 → WP8 → WP9. WP6 is an authority gate; its PASS
+does not depend on WP7–WP9 being implemented.
 
 ## Reconciliation
 
@@ -68,10 +80,19 @@ converted into the new metric by sign change or division by 100 alone.
   implemented; WP3 preparation/observation and WP4 statistics are accepted.
   WP5 implements the bounded packager and evidence reader. Acceptance is recorded
   separately; no generic framework is introduced.
-- **Publication / HTTP / capability integration:** deferred beyond this offline
-  delivery. Would need versioned Case evidence admission, V2 read/transport/safe
-  projection and generated-contract work. Existing quotas/authentication do not
-  disappear and no new routes are implied.
+- **Publication / capability integration:** R01-A is still not admitted to
+  PublishedResearchResult, Publication V1, Research Explorer or the generic
+  capability/Plan/Batch path. The separate [online application](ONLINE_APPLICATION.md)
+  and [HTTP product](../../../../ui_http/products/futures_basis_research/http-contract.md)
+  are defined by WP6 but implemented in WP7–WP9. Existing quotas, authentication,
+  execution guards and source semantics do not disappear.
+- **Online evidence/replay:** the online MVP retains the versioned reader projection,
+  input fingerprint and coverage; full `evidence.json` / canonical inputs /
+  associations / verify-replay remain the WP5 offline package. An online evidence or
+  replay endpoint is deferred and requires its own authority.
+- **Online operations:** run list/history, delete/cancel, queue/fair scheduling,
+  multi-process execution, automatic cleanup and POST idempotency are deferred; the
+  first release has one active run and URL-based refresh only.
 - **Actual study dates/data:** WP3/WP4 real IM validation uses explicit dates,
   public-source inputs and retained evidence. WP5 preserves the original short-window evidence and adds the explicit
   2024-01-01..2026-10-30 candidate. No default historical window is introduced.
@@ -215,3 +236,72 @@ larger generic plot frame; screenshots confirm readable text and four Slot legen
 Links/anchors, full diff and whitespace checks complete the bounded reconciliation.
 WP1–WP5 now satisfy R01-A Week 1's descriptive offline delivery gate. HTTP
 publication and Week 2 remain outside this acceptance.
+
+## R02 online extension and WP6 handoff
+
+R02 starts from `e7cc700cb08404bc37b1013697aab2a2e8204f1a` on
+`feat/r02-futures-basis-online` (WP5 plus the Publication platform isolation fix),
+with no `develop` merge. WP6 is authority-only; WP7–WP9 are not implemented by this
+change.
+
+WP6 **PASS** (2026-11-06): the online request/profile, lifecycle and storage boundary
+are owned by [Online application](ONLINE_APPLICATION.md); transport is owned by the
+[HTTP contract](../../../../ui_http/products/futures_basis_research/http-contract.md);
+browser interaction and reader reuse are owned by the
+[frontend slice](../../../../ui_web/src/features/futures_basis_research/ARCHITECTURE.md).
+Existing R01-A formulas, Slot resolution, observations, Statistics and Visualization
+semantics are unchanged, and the offline delivery remains valid.
+
+### Reconciliation
+
+Classifications are **Compatible**, **Requires authority extension**, **Implementation gap**
+or **Deferred**; parentheticals record secondary consequences for the same finding.
+
+| Reviewed boundary | Finding and classification |
+| --- | --- |
+| Online Research boundary vs `POST /research/execute` | R01-A remains outside the generic capability/Plan/Batch path. The new specialized routes are independent; existing endpoint semantics are unchanged. **Requires authority extension** (new product; existing compatible). |
+| Online results vs Publication V1 | An online run is not a `PublishedResearchResult`, uses no Publication Store and does not alter the Trailing Return-only admission. Publication of R01-A remains deferred. **Compatible** (publication admission deferred). |
+| Offline reader vs online reader | Both consume the same `futures_basis_report_evidence_v1` reader projection and six sections. ui_web extracts shared reader presentation while the offline entry remains standalone. **Requires authority extension** (ui_web reader ownership; WP8 implementation gap). |
+| Online run vs Workbench Run | The online run is product application execution; Workbench Run is agent operational evidence. IDs, storage, evidence and lifecycle are distinct and unshared. **Compatible**. |
+| Existing authentication and ownership | All endpoints use the existing Cookie/same-origin/sliding gate. The Research application receives the authenticated user ID as an opaque owner scope; foreign and unknown runs are both `run_not_found`. Auth contract is unchanged. **Requires authority extension** (application ownership; Auth compatible). |
+| DataLake acquisition and retry | The case `prepare_inputs` export/ensure/export sequence, completeness policy and fail-closed behavior are reused unchanged. No new retry, fallback or queue exists. **Compatible**. |
+| Result storage, integrity and evidence | A case-specific file-based external runtime store retains request/state/reader payload with atomic publication and digests; it is not a database, Publication or Workbench store. Full offline evidence/replay stays with WP5. **Requires authority extension** (online store; full evidence/replay deferred; WP7 implementation gap). |
+| Visualization V1/V2 compatibility | Online reads the existing V2 history and V1 histogram Views through the unchanged generic ChartView contract. Zoom/Pan/Reset, events, hover, null and segment semantics are preserved. **Compatible**. |
+
+The generic `descriptive/JOB_EXECUTION.md` and `BATCH_EXECUTION.md` no-durable-ID /
+no-persistence / no-HTTP statements continue to govern the Trailing Return scalar
+path. The online run identity is case-specific and does not create a generic Research
+execution identity, reopen generic persistence or make ObservationSets/results
+generally durable.
+
+### WP6 verification
+
+- Markdown links and relative targets checked across all authority Markdown; new
+  documents are reachable from the root through Research, HTTP and Web entries.
+- Ownership checked: Research owns online request/profile/lifecycle/report semantics;
+  ui_http owns parsing/status/DTO/OpenAPI; ui_web owns interaction/presentation; no
+  reverse dependency or duplicated financial interpretation.
+- HTTP DTO, status/error, size and authentication obligations checked for
+  completeness; execution and scientific status remain separate.
+- Frontend controls, polling, refresh, six-section reader reuse, requested-vs-observed
+  distinction and empty/failed/partial presentation checked.
+- No conflict with existing `POST /research/execute`, Publication V1, Research
+  Explorer or the existing authentication boundary. No live market data, runtime
+  code or generated artifacts were produced.
+- WP6 is PASS even though WP7–WP9 are not implemented. WP7 is
+  **Implementation Ready: YES**.
+
+### WP7–WP9
+
+- **WP7 — Online Research Application & Store:** case-owned facade implementing
+  `r01a_standard_v1`, semantic request validation, run lifecycle, single worker,
+  file store, owner scope, atomic result publication, restart recovery and reader
+  projection reuse. Tests use fake public services; no HTTP/UI/live data.
+- **WP8 — HTTP Product & Web Slice:** strict adapter/OpenAPI/generated contract,
+  authenticated four-surface navigation, query controls, polling/refresh and shared
+  W1 reader; offline reader regression and contract freshness. No live data.
+- **WP9 — Integrated Acceptance:** WSL FastAPI + Vite + Windows Chrome end-to-end,
+  including refresh, restart interruption, busy, ownership and bounded real IM
+  acceptance; external evidence only, no performance/SLA promise.
+
+WP7 can start immediately under [Online application](ONLINE_APPLICATION.md).

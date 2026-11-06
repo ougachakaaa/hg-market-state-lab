@@ -77,6 +77,11 @@ not a PublishedResearchResult, Workbench Run artifact or new capability/HTTP end
 Future integration requires explicit versioned admission and safe transport rules;
 it is optional beyond this delivery, not a WP0/WP5 blocker.
 
+The separately authored [online application](ONLINE_APPLICATION.md) reuses the
+same reader projection for browser delivery; it does not change this offline
+evidence package, its verify/replay behavior or its Publication boundary. Full
+online evidence/replay remains deferred.
+
 WP5 verifies real IM evidence linkage and offline reconstruction, all five research
 outputs, no recomputation on rendering, honest partial/empty/failed analysis status,
 complete local assets, event/segment/tooltip fidelity and opening without backend

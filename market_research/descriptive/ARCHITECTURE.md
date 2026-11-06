@@ -26,6 +26,7 @@ ObservationJobSpec → validated prepared facts / availability evidence → Obse
 | PIP numerical algorithm | [PIP algorithm](../algorithm/pip/ALGORITHM.md) |
 | Independent structured segmentation observation | [Price Segmentation](cases/price_segmentation/ARCHITECTURE.md) |
 | Independent same-day Futures Basis, relative Slots and case-owned numerical adaptation | [Futures Basis / R01-A](cases/futures_basis/ARCHITECTURE.md) → [work packages/readiness](cases/futures_basis/ROADMAP.md) |
+| Online Futures Basis application, standard profile, run lifecycle and read boundary | [R01-A online application](cases/futures_basis/ONLINE_APPLICATION.md) |
 | First case: formula, public input binding, warm-up, validity and fingerprint | [Trailing Return](cases/trailing_return/ARCHITECTURE.md) |
 | Admitted capability publication and pure preview | [RESEARCH_CAPABILITY.md](RESEARCH_CAPABILITY.md) |
 | Implementation status, cross-stage acceptance scenarios and validation evidence | [ACCEPTANCE.md](ACCEPTANCE.md) |
@@ -47,7 +48,10 @@ The independent [Futures Basis case](cases/futures_basis/ARCHITECTURE.md) define
 Contract-day and Slot-day observations with no Horizon. It uses its own population,
 adaptation and result association while consuming the Statistics public numerical
 contract. Its authority does not admit it to the current scalar runtime or public
-capability facade. Implementation readiness is tracked in its own roadmap.
+capability facade. Implementation readiness is tracked in its own roadmap. Its
+[online application authority](cases/futures_basis/ONLINE_APPLICATION.md) is a
+separate case-specific interactive boundary; it does not extend the scalar runtime,
+create a generic execution engine or change this paradigm's contracts.
 
 ## First case and readiness
 
@@ -76,10 +80,13 @@ Beyond the implemented index Observation slice, Conditional Research and its con
 Condition Engine, forward evaluation, backtesting, strategy/model/signal design, generic runner or
 pipeline DSL, research database, artifact registry, automatic hypothesis discovery, Web
 visualization within Research, general report rendering and new Research CLI are out of scope.
-The narrowly defined [R01-A offline report](cases/futures_basis/DELIVERY.md) is future
-WP5 work: Research owns business projection/evidence and ui_web owns rendering.
-Execution requires no mandatory
-durable storage or class hierarchy; separate opt-in [publication](../PUBLICATION.md) owns
-its own persistence and does not alter execution. Descriptive and
-Conditional remain independent under the module invariant; no cross-paradigm framework
-or shared execution engine is authorized.
+The narrowly defined [R01-A offline report](cases/futures_basis/DELIVERY.md) is
+implemented WP5 delivery; Research owns business projection/evidence and ui_web
+owns rendering. [R01-A online application](cases/futures_basis/ONLINE_APPLICATION.md)
+is WP6 authority for WP7–WP9 runtime; it remains HTTP/Web transport, not a new
+Research engine or capability. Execution requires no mandatory
+durable storage or class hierarchy; separate opt-in [publication](../PUBLICATION.md)
+owns its own persistence and does not alter execution. The case-specific online run
+store is disposable runtime state, not Publication or generic Research durability.
+Descriptive and Conditional remain independent under the module invariant; no
+cross-paradigm framework or shared execution engine is authorized.

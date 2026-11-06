@@ -45,6 +45,7 @@ Contract-day/Slot-day observations under [Inputs](INPUTS.md) and [Observation](O
 | Populations, distributions, paired comparisons, runs and numerical ownership (SD09) | [Statistics scope](STATISTICS.md) |
 | Python statistics usage and acceptance | [Usage](USAGE.md), [WP4 acceptance](WP4_ACCEPTANCE.md) |
 | Business projection and offline report evidence | [Delivery](DELIVERY.md) |
+| Online application, standard profile, run lifecycle, result store and reader boundary | [Online application](ONLINE_APPLICATION.md) |
 | WP3 runtime/real-market evidence and reproduction | [WP3 acceptance](WP3_ACCEPTANCE.md) |
 | Offline evidence encoding and replay | [Evidence](EVIDENCE.md) |
 | Offline report acceptance and reproduction | [WP5 acceptance](WP5_ACCEPTANCE.md) |
@@ -74,5 +75,10 @@ Existing Snapshot/Workbench semantics stay frozen; see [reconciliation](ROADMAP.
 Status: WP0 is authority-only; WP1–WP3 have independent runtime acceptance.
 WP3 also passed bounded real IM acceptance; evidence and reproduction instructions
 are in [WP3 acceptance](WP3_ACCEPTANCE.md). WP4 statistics have independent runtime and real IM acceptance; WP5 report
-acceptance is recorded separately in [WP5 acceptance](WP5_ACCEPTANCE.md). No new CLI, HTTP route, Research
-database, publication lifecycle or Modeling import permission is introduced.
+acceptance is recorded separately in [WP5 acceptance](WP5_ACCEPTANCE.md). WP6 adds
+the online application, HTTP and Web authority in
+[Online application](ONLINE_APPLICATION.md); WP7–WP9 runtime implementation is not
+yet claimed. The offline path and its scientific contracts remain unchanged. No new CLI,
+Research database, publication lifecycle or Modeling import permission is introduced;
+the online run store is case-specific disposable runtime state, not Publication or a
+generic Research execution identity.

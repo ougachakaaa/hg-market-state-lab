@@ -70,6 +70,10 @@ No mandatory SQLite, content addressing, `ensure()` lifecycle, artifact registry
 persistence is required for execution. Explicit publication is a separate opt-in operation
 with its own Research-owned storage and integrity boundary. Reproducibility requires traceable definitions, inputs, derivations,
 methods and execution context; a concrete case must explain how it meets that requirement.
+The case-specific [R01-A online application](descriptive/cases/futures_basis/ONLINE_APPLICATION.md)
+defines an explicitly bounded disposable run result store for interactive browser replay;
+it does not make ObservationSets or results generally durable, create a generic Research
+execution identity or constitute Publication.
 
 ## Module and dependency boundaries
 
@@ -84,6 +88,9 @@ PublishedResearchResult is authorized only through the [publication reader](PUBL
 and ui_http. The separately defined [Futures Basis offline delivery](descriptive/cases/futures_basis/DELIVERY.md)
 supplies producer-projected generic Views and retained evidence to ui_web rendering;
 it grants no frontend access to Research internals, upstream storage or execution.
+The case-specific [R01-A online application](descriptive/cases/futures_basis/ONLINE_APPLICATION.md)
+is likewise not a Publication: it defines its own bounded run store and reader
+projection, delivered through ui_http and rendered by ui_web without importing Research.
 Modeling gains no import permission.
 
 Research does not depend on inbound adapters (`ui_cli`, `ui_http`, `ui_web`), HTTP DTOs or
@@ -121,7 +128,9 @@ publish this one case; bounded HTTP delivery belongs to
 [ui_http](../ui_http/products/research/http-contract.md). Human/agent usage is in
 [USAGE.md](USAGE.md), not a competing semantic authority.
 No Research CLI is published. R01-A has a separately bounded
-[offline report workflow](descriptive/cases/futures_basis/DELIVERY.md); ui_web owns rendering. The independent Statistics
+[offline report workflow](descriptive/cases/futures_basis/DELIVERY.md); ui_web owns rendering. Its
+[online application authority](descriptive/cases/futures_basis/ONLINE_APPLICATION.md) is
+WP6 documentation only; later HTTP/UI/runtime work remains WP7–WP9. The independent Statistics
 public API is implemented; deterministic execution and bounded isolated real-market
 validation evidence, including current limitations, are recorded in
 [Acceptance](descriptive/ACCEPTANCE.md).

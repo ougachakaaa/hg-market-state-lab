@@ -161,7 +161,7 @@ SameSite 是额外防护，不能替代来源校验。不引入 CSRF session/tok
 
 G2 在 composed runtime 和 product contract builders 中发布 Cookie security scheme、protected operation security requirement、公共操作的 `security: []`、Auth schemas 及真实 access failure responses；Auth envelope 用独立 component，与产品 error enum 分离。MO / Research request/response DTO、原 failure classification 和 Research HTTP bounds / process-wide execution guard 不变。
 
-离线 `.openapi()` 与 contract exporter 不通过实际 HTTP、不需要真实密码/secret、不创建默认用户库；它们生成的 security contract 与 serving 相同。HTTP schema/docs tests 必须使用显式合成认证，或在仅检查 schema 时直接 `.openapi()`；不得为现有匿名 TestClient 测试保留 bypass。Research 无 Web consumer，继续不生成 Research TypeScript。
+离线 `.openapi()` 与 contract exporter 不通过实际 HTTP、不需要真实密码/secret、不创建默认用户库；它们生成的 security contract 与 serving 相同。HTTP schema/docs tests 必须使用显式合成认证，或在仅检查 schema 时直接 `.openapi()`；不得为现有匿名 TestClient 测试保留 bypass。Descriptive Research HTTP 仍无 Web consumer，继续不生成该产品的 Research TypeScript；单独的 [Online Futures Basis Research](products/futures_basis_research/http-contract.md) 是另一个 HTTP product，由自己的 frontend feature 拥有 generated OpenAPI/TypeScript，不改变这里的 Auth 语义。
 
 现有 `lab doctor` 用匿名 `/openapi.json` 判定 healthy，与新访问策略冲突。G2 将其 readiness 改为识别受保护 OpenAPI 的预期 401 Auth envelope，报告 `running / authentication required`（非失败）；不读取凭据、不登录、不新开 public health route。200 OpenAPI 只作为 G0/G1 旧运行状态识别；受认证的 G2 runtime 不得匿名返回 200。实际 schema 生成与 freshness 继续走离线 builder。
 

@@ -7,6 +7,10 @@ Plan/Batch, observations and evidence. Statistics owns numerical rules. HTTP own
 strict parsing, bounded synchronous invocation, wire projection and status/error mapping.
 Usage belongs to [Research USAGE](../../../market_research/USAGE.md).
 
+R01-A Futures Basis is not admitted to this product. Its independent online workflow is
+specified by the [Online Futures Basis Research HTTP contract](../futures_basis_research/http-contract.md);
+this document's operations, DTOs, bounds, execution guard and error map remain unchanged.
+
 ## Operations and dependency boundary
 
 | Method/path | Stable operationId | 200 body |
@@ -144,7 +148,9 @@ preflight, guard acquisition or execution. Auth errors remain separate from the 
 product error map above. G0 encodes this target; G2 implements the gate. Acquisition
 acknowledgment, HTTP bounds and the single-process execution guard remain required;
 authentication does not approve public exposure of execute. No CORS or public deployment
-is introduced. No frontend Research consumer is admitted: run sibling generation
-and freshness checks but create no Research TypeScript artifacts. OpenAPI/local HTTP alone
+is introduced. No frontend consumer is admitted for this Descriptive Research product:
+run sibling generation and freshness checks but create no TypeScript artifacts for these
+four operations. The separate Online Futures Basis Research product owns its own
+frontend consumer and generated contract. OpenAPI/local HTTP alone
 does not connect a cloud agent; registered reachable tooling is required. No MCP, cloud
 hosting, cache repair, historical-run retrieval or additional Research engine is introduced.

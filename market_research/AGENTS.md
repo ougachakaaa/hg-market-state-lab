@@ -10,7 +10,7 @@
 | Facts, public upstream selection, completeness, provenance or failure | [UPSTREAM.md](UPSTREAM.md) → actual Dataset / Product public contract |
 | PIP algorithm mathematics and versioning | [PIP algorithm](algorithm/pip/ALGORITHM.md) |
 | Price segmentation scope, result and input policy | [Price Segmentation](descriptive/cases/price_segmentation/ARCHITECTURE.md) |
-| R01-A Futures Basis definition, Slots, observations, statistics or offline delivery | [Futures Basis](descriptive/cases/futures_basis/ARCHITECTURE.md) → task-specific authority; [work packages/readiness](descriptive/cases/futures_basis/ROADMAP.md) |
+| R01-A Futures Basis definition, Slots, observations, statistics, offline delivery or online run lifecycle | [Futures Basis](descriptive/cases/futures_basis/ARCHITECTURE.md) → task-specific authority; [online application](descriptive/cases/futures_basis/ONLINE_APPLICATION.md); [work packages/readiness](descriptive/cases/futures_basis/ROADMAP.md) |
 | Descriptive flow and evidence interpretation | [descriptive/ARCHITECTURE.md](descriptive/ARCHITECTURE.md) |
 | Fixed observation request, population, market derivation or provenance | [descriptive/OBSERVATION.md](descriptive/OBSERVATION.md) |
 | Research-owned sample conversion | [descriptive/SAMPLE_CONVERSION.md](descriptive/SAMPLE_CONVERSION.md) |
@@ -25,7 +25,9 @@
 Authority readiness 不等于 runtime readiness；当前有独立 Observation、Sample Conversion、Result Association
 与 [Single Job Executor](descriptive/JOB_EXECUTION.md) Python API。
 ResearchPlan / [Batch execution](descriptive/BATCH_EXECUTION.md) 已实现；bounded HTTP delivery
-由 ui_http 发布，入口见 [USAGE.md](USAGE.md)。No Research CLI is implemented.
+由 ui_http 发布，入口见 [USAGE.md](USAGE.md)。R01-A 另有 case-specific
+[online application](descriptive/cases/futures_basis/ONLINE_APPLICATION.md)（WP6 authority，
+WP7–WP9 未实现）；它不属于 generic capability/Plan/Batch，也不创建通用持久执行身份。No Research CLI is implemented.
 不恢复旧 framework、compatibility、mandatory persistence 或 generic engine。
 Descriptive / Conditional 不相互 import，不通过共享基类或执行引擎耦合；不创建 Conditional 空框架。
 Research 仅消费 Statistics public contract；不在 Research 重定义其类型或通用统计公式。

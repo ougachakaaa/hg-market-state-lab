@@ -33,9 +33,10 @@ OpenAPI 与 TypeScript artifacts 是 backend HTTP contract 的生成表示，不
 | MO Option Chain | [`GET /mo-option-chain`](../ui_http/products/mo_option_chain/http-contract.md) | `mo_option_chain` frontend bounded context |
 | MO Premium Plane | [`GET /mo-option-premium-plane`](../ui_http/products/mo_option_premium/http-contract.md) | `mo_option_premium` frontend bounded context |
 | Research Explorer | [Publication HTTP contract](../ui_http/products/research_publication/http-contract.md) | `research_explorer` frontend bounded context |
+| Futures Basis Research | [Online Futures Basis Research HTTP contract](../ui_http/products/futures_basis_research/http-contract.md) | `futures_basis_research` frontend bounded context |
 | Application Authentication | [Auth HTTP contract](../ui_http/AUTHENTICATION.md#4-http-contract-and-access-order) | application Auth boundary，独立于 MO features |
 
-两个 MO Product、Research Publication 与 Application Authentication 的 contract boundaries 平级且独立；各自拥有独立的 generated artifacts 和 ownership。Backend runtime 可以组合多个 product routes，但 runtime composition 不得把 sibling frontend features 强制耦合进共享业务 schema、共享 DTO ownership 或共享 feature-local contract boundary。
+两个 MO Product、Research Publication、Futures Basis Research 与 Application Authentication 的 contract boundaries 平级且独立；各自拥有独立的 generated artifacts 和 ownership。Backend runtime 可以组合多个 product routes，但 runtime composition 不得把 sibling frontend features 强制耦合进共享业务 schema、共享 DTO ownership 或共享 feature-local contract boundary。
 
 Application Auth 不是市场 feature；其 committed OpenAPI / TypeScript 与 application Auth consumer 共址（例如 `src/app/auth/api/`），不进入 MO feature 或 shared DTO。G2 实际改变 security scheme / access responses 时，更新已有产品 artifacts；G3 首次实现 Auth consumer 时生成其独立 artifacts 并纳入同一 generation/freshness loop。所有 consumer 的发布表示必须忠实反映运行时 access requirement；产品 DTO 不因此合并。G0 无实际 OpenAPI 变更，不生成这些 artifacts。
 
