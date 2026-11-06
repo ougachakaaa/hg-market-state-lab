@@ -15,6 +15,7 @@ from argon2 import PasswordHasher, extract_parameters
 from argon2.exceptions import HashingError, VerifyMismatchError
 from argon2.low_level import Type
 
+import lab_config
 from ui_http.auth import (
     AuthFailureKind,
     AuthServiceError,
@@ -299,7 +300,11 @@ def test_invalid_storage_configuration_is_operational_failure(
 ) -> None:
     # Environment cannot hold NUL, but the config resolver still rejects it explicitly.
     if "\x00" in configured:
-        monkeypatch.setattr("ui_http.auth._service.os.environ", {"LAB_AUTH_DB_PATH": configured})
+        monkeypatch.setattr(
+            lab_config,
+            "auth_settings",
+            lambda: lab_config.AuthSettings(lab_auth_db_path=configured),
+        )
     else:
         monkeypatch.setenv("LAB_AUTH_DB_PATH", configured)
     with pytest.raises(AuthServiceError) as failure:

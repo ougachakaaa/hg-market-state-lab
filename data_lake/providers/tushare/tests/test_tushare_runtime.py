@@ -9,6 +9,7 @@ from typing import Any
 
 import pytest
 
+import lab_config
 from data_lake import OperationError
 from data_lake.domain import ExecutionFailure
 from data_lake.providers.tushare import TushareExecutor, _executor
@@ -77,7 +78,6 @@ def test_failure_counts_as_start_without_retry_or_secret_leak(
 def test_missing_credentials_never_create_client(
     monkeypatch: pytest.MonkeyPatch, token: str | None
 ) -> None:
-    monkeypatch.setattr(_executor, "dotenv_values", lambda path: {})
     if token is None:
         monkeypatch.delenv("TUSHARE_TOKEN")
     else:
@@ -88,30 +88,34 @@ def test_missing_credentials_never_create_client(
         executor.call("query")
 
 
-def test_blank_environment_does_not_use_fallback(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_blank_environment_does_not_use_fallback(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    env_file = tmp_path / ".env"
+    env_file.write_text("TUSHARE_TOKEN=fallback\n", encoding="utf-8")
+    monkeypatch.setattr(lab_config, "ENV_FILE", env_file)
     monkeypatch.setenv("TUSHARE_TOKEN", " ")
-    monkeypatch.setattr(_executor, "dotenv_values", lambda path: pytest.fail("no fallback"))
     with pytest.raises(OperationError):
         TushareExecutor().prepare()
 
 
-def test_fallback_path_and_initialization_failure(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_fallback_path_and_initialization_failure(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
     monkeypatch.delenv("TUSHARE_TOKEN")
-    paths = []
-
-    def dotenv(path: Path) -> dict[str, str]:
-        paths.append(path)
-        return {"TUSHARE_TOKEN": "fallback"}
-
-    monkeypatch.setattr(_executor, "dotenv_values", dotenv)
+    env_file = tmp_path / ".env"
+    env_file.write_text("TUSHARE_TOKEN=fallback\n", encoding="utf-8")
+    monkeypatch.setattr(lab_config, "ENV_FILE", env_file)
+    tokens: list[str] = []
 
     def broken(token: str) -> object:
+        tokens.append(token)
         raise RuntimeError("SDK initialization")
 
     monkeypatch.setattr(_executor, "create_client", broken)
     with pytest.raises(OperationError, match="initialized"):
         TushareExecutor().prepare()
-    assert paths == [Path(__file__).resolve().parents[4] / "data_snapshot/.env"]
+    assert tokens == ["fallback"]
 
 
 @pytest.mark.parametrize("rate", ["0", "501", "abc", "200.0"])

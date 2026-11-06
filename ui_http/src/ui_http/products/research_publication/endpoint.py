@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import base64
 import binascii
-import os
 import re
 from pathlib import Path
 from threading import BoundedSemaphore
@@ -14,6 +13,7 @@ from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
+import lab_config
 from market_research.publication import (
     InconsistentPublication,
     InvalidPublicationInput,
@@ -63,7 +63,10 @@ def store(request: Request) -> PublicationStore:
     injected = getattr(request.app.state, "publication_store", None)
     if injected is not None:
         return injected  # type: ignore[no-any-return]
-    root = os.environ.get("LAB_RESEARCH_PUBLICATION_ROOT", "")
+    try:
+        root = lab_config.publication_root() or ""
+    except lab_config.ConfigError:
+        raise fail(503, "unavailable", "Publication storage is unavailable.") from None
     if not root or not Path(root).is_absolute() or ".." in Path(root).parts or "\x00" in root:
         raise fail(503, "unavailable", "Publication storage is unavailable.")
     return PublicationStore(root)

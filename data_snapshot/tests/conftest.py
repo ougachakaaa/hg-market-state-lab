@@ -10,7 +10,6 @@ import shutil
 import tempfile
 from collections.abc import Iterator
 from pathlib import Path
-from typing import Any
 
 import pytest
 
@@ -47,13 +46,3 @@ def raw_dir_in_test_workdir(
 ) -> None:
     """Keep Capture output out of the repository's real ``data/raw``."""
     monkeypatch.setattr(artifacts, "RAW_DIR", test_workdir / "raw")
-
-
-@pytest.fixture(autouse=True)
-def no_local_dotenv(monkeypatch: pytest.MonkeyPatch) -> None:
-    """Never read the developer's real ``.env`` during tests."""
-
-    def fake_load_dotenv(*args: Any, **kwargs: Any) -> bool:
-        return False
-
-    monkeypatch.setattr(tushare, "load_dotenv", fake_load_dotenv)

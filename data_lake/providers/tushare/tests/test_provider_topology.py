@@ -42,7 +42,10 @@ def test_installed_provider_and_dataset_imports_and_fallback_from_independent_cw
 import importlib
 import json
 import os
+from pathlib import Path
+
 import data_lake
+import lab_config
 from data_lake.providers import tushare
 from data_lake.providers.tushare import _client, _executor
 
@@ -50,12 +53,10 @@ datasets = [importlib.import_module('data_lake.datasets.' + name) for name in (
     'tushare_trade_calendar', 'tushare_index_daily',
     'tushare_equity_index_futures', 'tushare_equity_index_options',
 )]
-paths = []
-def fake_dotenv(path):
-    paths.append(str(path))
-    return {'TUSHARE_TOKEN': 'test-fallback'}
+env_file = Path.cwd() / '.env'
+env_file.write_text('TUSHARE_TOKEN=test-fallback\\n', encoding='utf-8')
+lab_config.ENV_FILE = env_file
 os.environ.pop('TUSHARE_TOKEN', None)
-_executor.dotenv_values = fake_dotenv
 assert _executor.resolve_credential() == 'test-fallback'
 assert tushare.TushareExecutor is _executor.TushareExecutor
 assert tushare.Executor is _executor.Executor
@@ -63,9 +64,10 @@ assert not _executor._states
 assert all(callable(module.create_service) for module in datasets)
 print(json.dumps({
     'kernel': data_lake.__file__,
+    'config': lab_config.__file__,
     'provider': [tushare.__file__, _executor.__file__, _client.__file__],
     'datasets': [module.__file__ for module in datasets],
-    'fallback': paths,
+    'fallback': str(env_file),
 }))
 """
     result = subprocess.run(
@@ -77,6 +79,7 @@ print(json.dumps({
     )
     paths = json.loads(result.stdout)
     assert Path(paths["kernel"]).resolve() == ROOT / "data_lake/src/data_lake/__init__.py"
+    assert Path(paths["config"]).resolve() == ROOT / "config/src/lab_config/__init__.py"
     assert [Path(path).resolve() for path in paths["provider"]] == [
         SOURCE / name for name in ("__init__.py", "_executor.py", "_client.py")
     ]
@@ -89,4 +92,4 @@ print(json.dumps({
             "tushare_equity_index_options",
         )
     ]
-    assert paths["fallback"] == [str(ROOT / "data_snapshot/.env")]
+    assert paths["fallback"] == str(tmp_path / ".env")

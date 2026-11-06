@@ -13,6 +13,7 @@ from argon2 import PasswordHasher
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
+import lab_config
 from http_support.auth import ORIGIN, PASSWORD
 from ui_cli.cli import main as cli_main
 from ui_http.app import create_app
@@ -503,6 +504,32 @@ def test_loopback_origin_listener_and_cookie(monkeypatch: pytest.MonkeyPatch) ->
     monkeypatch.setenv("LAB_AUTH_ORIGIN", "http://192.0.2.1:5173")
     with pytest.raises(RuntimeError):
         AuthConfig.from_environment()
+
+
+def test_auth_config_reads_repository_env_file(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    secret = base64.urlsafe_b64encode(bytes(range(32))).decode()
+    env_file = tmp_path / ".env"
+    env_file.write_text(
+        "\n".join(
+            (
+                f"LAB_AUTH_JWT_SECRET={secret}",
+                "LAB_AUTH_MODE=production",
+                "LAB_AUTH_ORIGIN=https://testserver",
+            )
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    for name in ("LAB_AUTH_JWT_SECRET", "LAB_AUTH_MODE", "LAB_AUTH_ORIGIN"):
+        monkeypatch.delenv(name, raising=False)
+    monkeypatch.setattr(lab_config, "ENV_FILE", env_file)
+
+    config = AuthConfig.from_environment()
+
+    assert config.browser_origin == ("https", "testserver", 443)
+    assert config.secure is True
 
 
 def test_database_failure_is_operational_not_bad_password(

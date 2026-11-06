@@ -1,6 +1,5 @@
 """User lifecycle service, independent of HTTP app and CLI parsing."""
 
-import os
 import re
 from datetime import UTC, datetime
 from pathlib import Path
@@ -9,6 +8,8 @@ from uuid import UUID, uuid4
 from argon2 import PasswordHasher
 from argon2.exceptions import HashingError, InvalidHashError, VerificationError, VerifyMismatchError
 from argon2.low_level import Type
+
+import lab_config
 
 from ._models import (
     AuthFailureKind,
@@ -121,8 +122,8 @@ class AuthService:
 
 def create_service() -> AuthService:
     """Resolve the Auth DB once, without CWD, JWT config or HTTP initialization."""
-    configured = os.environ.get("LAB_AUTH_DB_PATH")
     try:
+        configured = lab_config.auth_settings().lab_auth_db_path
         if configured is None:
             path = Path(__file__).resolve().parents[3] / "data" / "auth.sqlite3"
         else:
@@ -130,5 +131,5 @@ def create_service() -> AuthService:
             if not path.is_absolute() or "\x00" in configured:
                 raise ValueError("Invalid Auth storage configuration")
         return AuthService(UserStore(path))
-    except (ValueError, OSError):
+    except (lab_config.ConfigError, ValueError, OSError):
         raise AuthServiceError(AuthFailureKind.OPERATIONAL_FAILURE) from None

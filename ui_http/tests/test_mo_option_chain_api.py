@@ -31,6 +31,7 @@ from typing import Any
 import pytest
 from fastapi.testclient import TestClient
 
+import lab_config
 from data_snapshot.products.mo_option_chain import service
 from http_support.auth import authenticated_client
 from http_support.fake_chain_service import (
@@ -504,7 +505,7 @@ def test_default_application_uses_real_provider(
 ) -> None:
     """Without credentials, the real provider fails as unavailable, not unwired."""
     monkeypatch.delenv("TUSHARE_TOKEN", raising=False)
-    monkeypatch.setattr(service.tushare, "ENV_FILE", tmp_path / ".env")
+    monkeypatch.setattr(lab_config, "ENV_FILE", tmp_path / ".env")
     response = default_client.get(QUERY)
 
     assert response.status_code == 503

@@ -10,6 +10,7 @@ from pathlib import Path
 
 import pytest
 
+import lab_config
 from data_snapshot import artifacts
 from data_snapshot.capture import common
 from data_snapshot.sources import tushare
@@ -61,6 +62,29 @@ def test_get_tushare_token_fails_without_token(
 
 def test_get_tushare_token_fails_when_unset(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.delenv(tushare.TOKEN_ENV_VAR, raising=False)
+
+    with pytest.raises(tushare.TushareCredentialError, match=tushare.TOKEN_ENV_VAR):
+        tushare.get_tushare_token()
+
+
+def test_get_tushare_token_reads_repository_env_file(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    env_file = tmp_path / ".env"
+    env_file.write_text("TUSHARE_TOKEN=file-token\n", encoding="utf-8")
+    monkeypatch.delenv(tushare.TOKEN_ENV_VAR, raising=False)
+    monkeypatch.setattr(lab_config, "ENV_FILE", env_file)
+
+    assert tushare.get_tushare_token() == "file-token"
+
+
+def test_get_tushare_token_blank_environment_does_not_fall_back(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    env_file = tmp_path / ".env"
+    env_file.write_text("TUSHARE_TOKEN=file-token\n", encoding="utf-8")
+    monkeypatch.setenv(tushare.TOKEN_ENV_VAR, "   ")
+    monkeypatch.setattr(lab_config, "ENV_FILE", env_file)
 
     with pytest.raises(tushare.TushareCredentialError, match=tushare.TOKEN_ENV_VAR):
         tushare.get_tushare_token()

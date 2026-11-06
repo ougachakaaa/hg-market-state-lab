@@ -1,17 +1,14 @@
 """Lazy credential-local client and process-local request-start schedule."""
 
 import logging
-import os
 import re
 import threading
 import time
 from collections.abc import Iterator
 from contextlib import contextmanager
-from pathlib import Path
 from typing import Any, Protocol
 
-from dotenv import dotenv_values
-
+import lab_config
 from data_lake.domain import ExecutionFailure
 from data_lake.results import OperationError
 
@@ -35,11 +32,9 @@ SELECTORS = {
 
 def request_interval() -> float:
     try:
-        rate = int(os.environ.get("TUSHARE_CALLS_PER_MINUTE", "180"))
-        if not 1 <= rate <= 500:
-            raise ValueError
-    except ValueError:
-        raise OperationError("TUSHARE_CALLS_PER_MINUTE must be an integer in 1..500") from None
+        rate = lab_config.tushare_calls_per_minute()
+    except lab_config.ConfigError as exc:
+        raise OperationError(str(exc)) from None
     return 60 / rate
 
 
@@ -68,11 +63,11 @@ class CancellableExecutor:
 
 
 def resolve_credential() -> str:
-    token = os.environ.get("TUSHARE_TOKEN")
-    if token is None:
-        root = Path(__file__).resolve().parents[7]
-        token = dotenv_values(root / "data_snapshot/.env").get("TUSHARE_TOKEN")
-    if not token or not token.strip():
+    try:
+        token = lab_config.tushare_token()
+    except lab_config.ConfigError as exc:
+        raise OperationError(str(exc)) from None
+    if not token:
         raise OperationError("TUSHARE_TOKEN credential is required for Source I/O")
     return token
 

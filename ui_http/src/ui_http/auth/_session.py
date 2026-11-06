@@ -3,7 +3,6 @@
 import base64
 import binascii
 import ipaddress
-import os
 import re
 import time
 from dataclasses import dataclass
@@ -11,6 +10,8 @@ from urllib.parse import urlsplit
 from uuid import UUID
 
 import jwt
+
+import lab_config
 
 ISSUER = "hg-market-state-lab"
 AUDIENCE = "hg-market-state-lab:http"
@@ -70,14 +71,18 @@ class AuthConfig:
     @classmethod
     def from_environment(cls) -> "AuthConfig":
         try:
-            secret = os.environ["LAB_AUTH_JWT_SECRET"]
-            if not re.fullmatch(r"[A-Za-z0-9_-]+={0,2}", secret):
+            settings = lab_config.auth_settings()
+            secret = settings.lab_auth_jwt_secret
+            if secret is None or not re.fullmatch(r"[A-Za-z0-9_-]+={0,2}", secret):
                 raise ValueError
             key = base64.b64decode(secret + "=" * (-len(secret) % 4), altchars=b"-_", validate=True)
             if len(key) < 32:
                 raise ValueError
-            mode = os.environ.get("LAB_AUTH_MODE", "production")
-            target = origin(os.environ["LAB_AUTH_ORIGIN"])
+            origin_value = settings.lab_auth_origin
+            if origin_value is None:
+                raise ValueError
+            target = origin(origin_value)
+            mode = settings.lab_auth_mode
             if mode == "production":
                 if target[0] != "https":
                     raise ValueError
@@ -87,7 +92,7 @@ class AuthConfig:
             else:
                 raise ValueError
             return cls(key, target, mode == "production")
-        except (KeyError, ValueError, binascii.Error):
+        except (lab_config.ConfigError, ValueError, binascii.Error):
             raise RuntimeError("Invalid authentication serving configuration.") from None
 
     def validate_listener(self, host: str) -> None:

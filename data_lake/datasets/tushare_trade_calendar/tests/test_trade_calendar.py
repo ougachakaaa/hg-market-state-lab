@@ -10,6 +10,7 @@ from typing import cast
 import pytest
 
 import data_lake
+import lab_config
 from data_lake import CoverageResult, EnsureResult, InvalidRequestError, OperationError
 from data_lake._serialization import Json, record_hash
 from data_lake.adapters.outbound.sqlite import Repository
@@ -370,7 +371,6 @@ def test_missing_credentials_before_mutation(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     monkeypatch.delenv("TUSHARE_TOKEN", raising=False)
-    monkeypatch.setattr(_executor, "dotenv_values", lambda _: {})
     repository = Repository(tmp_path / "cache/calendar.sqlite3", DATASET, "tushare")
     service = _create_service(repository, _source.prepare_source)
     with pytest.raises(OperationError, match="credential"):
@@ -386,7 +386,6 @@ def test_cached_ensure_without_token_uses_real_lazy_composition(
     client.rows = [row(), row("20240102"), row("20240103")]
     assert service.ensure(REQUEST).complete
     monkeypatch.delenv("TUSHARE_TOKEN", raising=False)
-    monkeypatch.setattr(_executor, "dotenv_values", lambda _: {})
     cached = _create_service(repository, _source.prepare_source)
     assert cached.ensure(REQUEST) == EnsureResult(3, 3, 0, 0, 0, 0, True, ())
 
@@ -410,10 +409,14 @@ def test_actual_dataframe_normalization(
 
 
 @pytest.mark.parametrize("environment", ["environment-token", "", None])
-def test_environment_precedence_and_snapshot_env_fallback(
+def test_environment_precedence_and_root_env_fallback(
+    tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
     environment: str | None,
 ) -> None:
+    env_file = tmp_path / ".env"
+    env_file.write_text("TUSHARE_TOKEN=fallback-token\n", encoding="utf-8")
+    monkeypatch.setattr(lab_config, "ENV_FILE", env_file)
     calls: list[object] = []
     monkeypatch.setattr(_executor, "_states", {})
     if environment is None:
@@ -421,11 +424,6 @@ def test_environment_precedence_and_snapshot_env_fallback(
     else:
         monkeypatch.setenv("TUSHARE_TOKEN", environment)
 
-    def dotenv(path: Path) -> dict[str, str]:
-        calls.append(path)
-        return {"TUSHARE_TOKEN": "fallback-token"}
-
-    monkeypatch.setattr(_executor, "dotenv_values", dotenv)
     client = Client()
 
     def pro_api(token: str) -> Client:
@@ -439,13 +437,7 @@ def test_environment_precedence_and_snapshot_env_fallback(
         assert calls == []
     else:
         _source.prepare_source()
-        if environment is None:
-            assert calls == [
-                Path(__file__).resolve().parents[4] / "data_snapshot/.env",
-                "fallback-token",
-            ]
-        else:
-            assert calls == [environment]
+        assert calls == [environment if environment is not None else "fallback-token"]
 
 
 @pytest.mark.parametrize("operation", ["coverage", "ensure", "export"])

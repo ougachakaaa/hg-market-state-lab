@@ -10,6 +10,8 @@ from pathlib import Path
 from urllib.error import HTTPError
 from urllib.request import urlopen
 
+import lab_config
+
 from . import ROOT
 from .process import resolve_executable
 
@@ -95,6 +97,23 @@ def doctor() -> int:
         print(f"  {label:<20} {'OK' if exists else 'FAIL (missing)'}")
         failed |= not exists
 
+    print("\nconfiguration")
+    env_file = lab_config.ENV_FILE
+    print(
+        f"  {'root .env':<20} "
+        f"{'OK' if env_file.is_file() else 'missing (copy .env.example)'}"
+    )
+    try:
+        token = lab_config.tushare_token()
+    except lab_config.ConfigError:
+        print(f"  {'TUSHARE_TOKEN':<20} FAIL (invalid configuration)")
+        failed = True
+    else:
+        print(
+            f"  {'TUSHARE_TOKEN':<20} "
+            f"{'OK (configured)' if token else 'not configured (Source I/O unavailable)'}"
+        )
+
     print("\nPython runtime")
     _, poetry_version = _tool_version("poetry")
     poetry_status = f"OK ({poetry_version})" if poetry_version else "FAIL (unavailable)"
@@ -110,6 +129,19 @@ def doctor() -> int:
         python_status = f"FAIL (expected 3.13, found {python_version})"
     print(f"  {'root Python 3.13':<20} {python_status}")
     failed |= not python_status.startswith("OK")
+
+    module_envs = sorted(
+        path.relative_to(ROOT).as_posix()
+        for path in ROOT.iterdir()
+        if path.is_dir()
+        and path.name not in {".venv", ".git"}
+        and (path / ".venv").exists()
+    )
+    if module_envs:
+        print(f"  {'module-local .venv':<20} FAIL ({', '.join(module_envs)})")
+        failed = True
+    else:
+        print(f"  {'module-local .venv':<20} OK (none)")
 
     launcher = BACKEND_API / "scripts" / "api.py"
     launcher_exists = launcher.is_file()

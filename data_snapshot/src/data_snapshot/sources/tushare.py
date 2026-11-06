@@ -13,7 +13,6 @@ registry here (see ``ARCHITECTURE.md`` 9 and 10).
 
 from __future__ import annotations
 
-import os
 import re
 import time
 from collections.abc import Callable
@@ -22,13 +21,10 @@ from threading import Lock
 from typing import Protocol
 
 import pandas as pd
-from dotenv import load_dotenv
 
-from ..artifacts import REPO_ROOT
+import lab_config
 
-ENV_FILE = REPO_ROOT / ".env"
-
-TOKEN_ENV_VAR = "TUSHARE_TOKEN"
+TOKEN_ENV_VAR = lab_config.TUSHARE_TOKEN_ENV
 
 TRADE_DATE_FIELD = "trade_date"
 TRADE_DATE_ISO_FORMAT = "%Y-%m-%d"
@@ -152,18 +148,19 @@ def call_fut_daily(call: Callable[[], pd.DataFrame]) -> pd.DataFrame:
 
 
 def get_tushare_token() -> str:
-    """Return ``TUSHARE_TOKEN``, loading the local ``.env`` if present.
+    """Return ``TUSHARE_TOKEN`` from the environment or repository-root ``.env``.
 
     Raises ``TushareCredentialError`` instead of returning an empty token, so a
     missing credential fails before any Source request is made.
     """
-    if ENV_FILE.is_file():
-        load_dotenv(ENV_FILE, override=False)
-
-    token = os.environ.get(TOKEN_ENV_VAR, "").strip()
+    try:
+        token = lab_config.tushare_token()
+    except lab_config.ConfigError as exc:
+        raise TushareCredentialError(str(exc)) from None
     if not token:
         raise TushareCredentialError(
-            f"{TOKEN_ENV_VAR} is not set. Set it in the environment or in {ENV_FILE}."
+            f"{TOKEN_ENV_VAR} is not set. Set it in the environment or in "
+            f"{lab_config.ENV_FILE}."
         )
     return token
 
