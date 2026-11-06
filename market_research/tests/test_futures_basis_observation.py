@@ -354,7 +354,7 @@ def test_tampered_preparation_and_invalid_resolution_fail() -> None:
 def test_case_dependencies_and_pure_construction() -> None:
     root = Path(futures_basis.__file__).parent
     for path in root.glob("*.py"):
-        tree = ast.parse(path.read_text())
+        tree = ast.parse(path.read_text(encoding="utf-8"))
         imports = [
             node.module
             for node in ast.walk(tree)

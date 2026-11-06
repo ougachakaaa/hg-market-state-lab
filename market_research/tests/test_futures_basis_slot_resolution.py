@@ -370,7 +370,7 @@ def test_mapping_evidence_cannot_exploit_bool_integer_equality() -> None:
 def test_public_boundary_has_no_io_or_sibling_dependencies() -> None:
     root = Path(futures_basis.__file__).parent
     for source in (root / "models.py", root / "resolution.py"):
-        tree = ast.parse(source.read_text())
+        tree = ast.parse(source.read_text(encoding="utf-8"))
         for node in ast.walk(tree):
             if isinstance(node, ast.Import):
                 assert all(n.name in {"dataclasses", "datetime", "typing"} for n in node.names)

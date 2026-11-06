@@ -56,11 +56,12 @@ def package(tmp_path: Path, result):
             locks={},
         ),
     )
-    reader = (tmp_path / "report-data.json").read_text()
+    reader = (tmp_path / "report-data.json").read_text(encoding="utf-8")
     (tmp_path / "report.html").write_text(
-        '<script id="report-data" type="application/json">' + reader + "</script>"
+        '<script id="report-data" type="application/json">' + reader + "</script>",
+        encoding="utf-8",
     )
-    (tmp_path / "REPRODUCE.md").write_text("test reproduction")
+    (tmp_path / "REPRODUCE.md").write_text("test reproduction", encoding="utf-8")
     seal_delivery(tmp_path, result.status, result.source.prepared.input_fingerprint)
 
 
@@ -159,7 +160,7 @@ def test_evidence_cache_free_replay_and_corruption_rejection(tmp_path):
             replay_delivery(tmp_path)["input_fingerprint"]
             == result.source.prepared.input_fingerprint
         )
-    (tmp_path / "views.json").write_text("{}")
+    (tmp_path / "views.json").write_text("{}", encoding="utf-8")
     with pytest.raises(ValueError, match="digest"):
         verify_delivery(tmp_path)
 
@@ -184,7 +185,7 @@ def test_canonical_reader_rejects_altered_profile_and_request(tmp_path):
         load_prepared_inputs(p, replace(result.request.observation, product_code="IF"))
     data = json.loads(p.read_bytes())
     data["profile"] = "unknown"
-    p.write_text(json.dumps(data))
+    p.write_text(json.dumps(data), encoding="utf-8")
     with pytest.raises(ValueError, match="profile"):
         load_prepared_inputs(p, result.request.observation)
 
@@ -192,12 +193,15 @@ def test_canonical_reader_rejects_altered_profile_and_request(tmp_path):
 def test_manifest_rejects_traversal_symlink_and_extra_files(tmp_path):
     result = report()
     package(tmp_path, result)
-    (tmp_path / "extra").write_text("unexpected")
+    (tmp_path / "extra").write_text("unexpected", encoding="utf-8")
     with pytest.raises(ValueError, match="Unexpected"):
         verify_delivery(tmp_path)
     (tmp_path / "extra").unlink()
     (tmp_path / "report.html").unlink()
-    (tmp_path / "report.html").symlink_to(tmp_path / "REPRODUCE.md")
+    try:
+        (tmp_path / "report.html").symlink_to(tmp_path / "REPRODUCE.md")
+    except OSError as exc:
+        pytest.skip(f"symbolic links are unavailable: {exc}")
     with pytest.raises(ValueError, match="Unsafe"):
         verify_delivery(tmp_path)
 

@@ -11,6 +11,9 @@ ORIGIN = "https://testserver"
 
 
 def authenticated_client(application: FastAPI) -> TestClient:
+    # A module-level app can retain a runtime created under an earlier test's
+    # environment. Reset it so login and target requests use the same configuration.
+    application.state.auth = None
     service = create_service()
     service.register("consumer", PASSWORD)
     for pending in service.list_pending():
