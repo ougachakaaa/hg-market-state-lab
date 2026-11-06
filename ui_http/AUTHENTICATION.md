@@ -76,7 +76,7 @@ Logout 不撤销已经复制的 JWT；若用户仍 active，泄露的 JWT 在过
 
 ### Runtime configuration
 
-Auth 配置来自服务器环境，不复用 `data_snapshot/.env` 的市场 Source credentials，也不向浏览器暴露 secret：
+Auth 配置来自 process environment；本地开发也可写入 repository root `.env`（process environment 优先），统一经 repository-level `lab_config` 读取。它不向浏览器暴露 secret，也不得写入 module-local `.env`：
 
 | Setting | Contract |
 | --- | --- |
@@ -84,6 +84,8 @@ Auth 配置来自服务器环境，不复用 `data_snapshot/.env` 的市场 Sour
 | `LAB_AUTH_MODE` | `production`（默认）或显式 `loopback-http`；未知值拒绝启动 |
 | `LAB_AUTH_ORIGIN` | 必填，唯一 browser-facing origin，scheme/host/effective port，无 path/query/fragment；同源验证的可信目标 |
 | `LAB_AUTH_DB_PATH` | 可选，语义见 storage section |
+
+`.env` 只提供本地文件来源，不改变上表的 required / validation 语义；缺失或非法配置仍在 serving startup fail closed。`.env` 不进入 Git，production 应显式使用 server environment 变量。
 
 Production origin 必须 HTTPS，Cookie Secure 固定开启，不接受环境变量单独关闭。`loopback-http` 仅允许 loopback listener 和显式 loopback HTTP origin，Cookie 可 `Secure=false`；默认本地前端 origin 为配置值 `http://127.0.0.1:5173`，后端 listener 为 `127.0.0.1:8011`。不允许非 loopback bind 套用该模式。所有模式仍要求 secret、数据库状态检查及登录。配置缺失/不安全时 serving startup fail closed，不回退到 no-auth。
 

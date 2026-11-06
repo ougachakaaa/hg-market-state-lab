@@ -22,8 +22,7 @@ uses nullable `next_cursor`. A cursor is an opaque transport encoding of the exc
 Research reader cursor; clients must not interpret it. There is no promise that a
 non-null cursor has a subsequent result.
 
-`LAB_RESEARCH_PUBLICATION_ROOT` is an absolute server-owned path without parent traversal.
-Missing or invalid configuration and a runtime platform without the required
+`LAB_RESEARCH_PUBLICATION_ROOT` is an absolute server-owned path without parent traversal; it may come from the process environment or, for local development, the repository-root `.env` (process environment wins). Missing or invalid configuration and a runtime platform without the required
 descriptor-relative filesystem capability are isolated to these operations and return 503;
 they do not prevent startup or other products. Reads do not create paths. A publication must
 be accessible in this runtime's configured store; no synchronization is implied. Tests may

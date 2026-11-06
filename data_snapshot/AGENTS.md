@@ -24,7 +24,7 @@
 - 用户或 Agent 请求 Product 结果时，从 [CAPABILITIES.md](CAPABILITIES.md) 进入 owning Product，并遵循其支持的 public/application boundary；不自行逐个编排 Capture。
 - 不读取 sibling product 的 Raw Artifact 或最终产物，除非对应产品 authority 明确声明该依赖。
 - 不在 Source Capture 中实现 analyzer-specific filtering、join、formula 或市场判断；不在 delivery adapter 中重算 domain semantics。
-- `.env` 与 `data/raw/**` 是本地 runtime artifacts，不得提交；只保留仓库已跟踪的 placeholder。
+- Repository 本地配置统一位于 repository root `.env`（tracked template 为根 `.env.example`），经 `lab_config` 读取；`.env` 与 `data/raw/**` 是本地 runtime artifacts，不得提交。不在 `data_snapshot/` 建立独立 `.env`。
 
 ## 验证
 

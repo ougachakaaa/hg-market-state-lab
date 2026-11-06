@@ -99,7 +99,7 @@ JSON file 是 operator delivery，不是内部 Python consumer 的数据接口�
 
 Terminal 只报告 output path、exported record count 与 coverage summary，不 dump 完整 records。Coverage incomplete 不触发 ensure 或 Source I/O；只要 view 正常生成并成功写入，incomplete 本身不属于 export execution failure，完整性由 envelope 明确表达。写文件失败按 delivery failure 返回，不将其报告为成功导出。
 
-Source credential 与 SQLite location 由 owning Dataset 内部 composition 使用 DataLake shared runtime/storage machinery 解析；Dataset-local state ownership 由 [DataLake architecture](../data_lake/ARCHITECTURE.md) 定义，lab 不解析缓存路径，也不要求 DataLake runtime facade。不接受 `--token`、`--db`，也不要求 coverage/export 配置 Source credential。普通 caller 只能指定 semantic range 和 lab 的 export output path。
+Source credential（值由 repository `lab_config` 提供）与 SQLite location 由 owning Dataset 内部 composition 使用 DataLake shared runtime/storage machinery 解析；Dataset-local state ownership 由 [DataLake architecture](../data_lake/ARCHITECTURE.md) 定义，lab 不解析缓存路径，也不要求 DataLake runtime facade。不接受 `--token`、`--db`，也不要求 coverage/export 配置 Source credential。普通 caller 只能指定 semantic range 和 lab 的 export output path。
 
 V1 DataLake 不提供 describe、read、query、fetch-unit、db、refresh 或 repair，不添加 force、TTL、generic query language、多 view selection 或 terminal record dump。
 

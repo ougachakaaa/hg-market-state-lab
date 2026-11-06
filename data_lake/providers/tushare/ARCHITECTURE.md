@@ -1,6 +1,6 @@
 # DataLake Tushare Provider Runtime authority
 
-本文件是 DataLake 内 Tushare provider execution 的唯一 canonical authority，拥有 credential resolution、client creation、request rate limiting、provider request execution、provider-level exception normalization 与 shared runtime lifecycle。继承 [模块架构](../../ARCHITECTURE.md) 的 ownership / dependency boundary 与 [公共 Application authority](../../APPLICATION.md) 的 lazy Source I/O、read-only 和 failure invariants。具体 Dataset 经 [catalog](../../DATASETS.md) 进入其 Source / domain authority。
+本文件是 DataLake 内 Tushare provider execution 的唯一 canonical authority，拥有 credential 使用与缺失分类、client creation、request rate limiting、provider request execution、provider-level exception normalization 与 shared runtime lifecycle。Repository configuration 的文件位置、来源优先级与格式校验由 repository-level `lab_config` 拥有；Provider 不解析 `.env`。继承 [模块架构](../../ARCHITECTURE.md) 的 ownership / dependency boundary 与 [公共 Application authority](../../APPLICATION.md) 的 lazy Source I/O、read-only 和 failure invariants。具体 Dataset 经 [catalog](../../DATASETS.md) 进入其 Source / domain authority。
 
 ## 1. Ownership 与 execution boundary
 
@@ -43,13 +43,13 @@ Executor 不拥有 retry policy、FetchUnit generation、Dataset batching / pagi
 
 ## 3. Credential、client 与 shared lifecycle
 
-Credential resolution 仅在 Provider Runtime 实现一次，稳定 credential identity 为 `TUSHARE_TOKEN`，保持现有 repository convention：
+Credential 的文件位置、来源优先级与格式校验由 repository-level `lab_config` 统一拥有；Provider Runtime 只消费稳定 credential identity `TUSHARE_TOKEN`，不自行解析 `.env`：
 
 1. 优先读取 process environment 中的 `TUSHARE_TOKEN`。
-2. 仅该环境变量不存在时，读取 repository `data_snapshot/.env` 中同名值；不覆盖已有环境变量。
+2. 仅该环境变量不存在时，读取 repository root `.env` 中同名值；不覆盖已有环境变量。
 3. 缺失、空字符串或全空白值均为 required credential failure。环境变量存在但为空白时不改用 fallback。
 
-`data_snapshot/.env` 是 repository runtime compatibility convention，不表示 Provider Runtime 属于 Snapshot，也不授权 import Snapshot 私有 Source client / artifact helper。未来 credential source 可独立迁移，Dataset 不自行解析或感知 resolution mechanics；不得为各 Dataset 建立另一套 secret convention。
+Root `.env` 是 repository runtime convention，不表示 Provider Runtime 属于任何 consumer module，也不授权 import Snapshot / Dataset 私有 Source client 或 artifact helper。Provider 通过 `lab_config` 的 public API 取得 credential；Dataset 不自行解析或感知 resolution mechanics；不得为各 Dataset 建立另一套 secret convention。
 
 Provider Runtime 独自创建 Tushare client；Dataset 不直接读取 `TUSHARE_TOKEN` / `.env`，不自行调用 `tushare.pro_api(token)`。Dataset composition 仍组合自己的 adapter / storage / 已声明 prerequisites，通过内部 provider boundary 获取 execution 能力，不把 token 或 Executor 暴露为 consumer semantic argument。
 
@@ -59,7 +59,7 @@ Credential resolution 与 client initialization 遵守 [APPLICATION.md](../../AP
 
 ## 4. 平滑限流与并发边界
 
-V1 最大 request-start 频率为 **500 calls / minute**；实际运行额度由 provider runtime 的 `TUSHARE_CALLS_PER_MINUTE` 配置（整数 1..500），默认 **180 calls / minute**，为 2000 积分账号的 200/min 留出余量。配置不是 Dataset semantic argument，不自动推断账号积分或权限。所有 endpoint 合并消费同一 process/credential 额度，统一采用平滑限流：
+V1 最大 request-start 频率为 **500 calls / minute**；实际运行额度由 provider runtime 的 `TUSHARE_CALLS_PER_MINUTE` 配置（整数 1..500），默认 **180 calls / minute**，为 2000 积分账号的 200/min 留出余量。该值从 process environment 或 repository root `.env` 经 `lab_config` 读取。配置不是 Dataset semantic argument，不自动推断账号积分或权限。所有 endpoint 合并消费同一 process/credential 额度，统一采用平滑限流：
 
 ```text
 minimum interval = 60 seconds / configured calls per minute >= 120 ms

@@ -58,6 +58,7 @@ implementation details
 - 实现必须遵循当前 authority；发现代码、同级文档或上下层 authority 不一致时，显式 reconciliation，不得静默选择或创建另一套语义。
 - 下层 semantic authority 只能在上层边界内 specialize 或 constrain，不能静默推翻上层 invariant。
 - Python dependency installation、resolution 与 Poetry tooling 必须从 repository root 使用唯一环境；进入 owning module 只切换 semantic authority，不切换 Python project 或虚拟环境。
-- 共享 dependency graph 或根 `.venv` 不构成 cross-module import permission；跨模块依赖仍必须遵守 public boundary、稳定依赖方向与 architecture tests。
+- Repository runtime configuration（`TUSHARE_*`、`LAB_AUTH_*`、`LAB_RESEARCH_PUBLICATION_ROOT` 等）只从 process environment 或 repository root `.env` 经 `lab_config` 读取；process environment 优先。不得在模块内建立 `.env`、独立 dotenv 读取或直接 `os.environ` 配置读取；tracked template 是根 `.env.example`。细节与验证见 [config Agent Rules](config/AGENTS.md)。
+- 根 `.venv` 是 repository 唯一 Python environment；不得保留 module-local `.venv`。共享 dependency graph 或根 `.venv` 不构成 cross-module import permission；跨模块依赖仍必须遵守 public boundary、稳定依赖方向与 architecture tests。
 - 优先采用满足当前 authority 与任务要求的最小实现，不为假设需求引入框架、抽象或业务概念。
 - 修改后按受影响模块的 local `AGENTS.md` 验证；跨模块 contract 变更同时执行 producer 与 consumer 的相关检查，并在提交前审阅完整 diff。

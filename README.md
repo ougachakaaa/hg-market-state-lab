@@ -15,7 +15,7 @@ ui_web            → presentation and interaction
 
 ## Canonical module layout
 
-Directories and imports follow [repository authority](ARCHITECTURE.md#naming-and-transition-authority). Run directly with canonical paths: local runtime state is disposable and has no migration or compatibility mechanism. Configure credentials in the current environment or `data_snapshot/.env` as needed. The executable remains `lab`.
+Directories and imports follow [repository authority](ARCHITECTURE.md#naming-and-transition-authority). Run directly with canonical paths: local runtime state is disposable and has no migration or compatibility mechanism. Configure credentials and runtime settings in the current environment or the repository-root `.env` as needed. The executable remains `lab`.
 
 ## Authority 与开发文档
 
@@ -61,7 +61,7 @@ Windows native PowerShell：
 poetry install
 ```
 
-Python packages 由各 owning module 独立拥有，canonical namespace 见 [repository architecture](ARCHITECTURE.md#3-python-runtime-与-module-boundary)。共享环境不改变 module ownership 或 cross-module dependency rules。
+Python packages 由各 owning module 独立拥有，canonical namespace 见 [repository architecture](ARCHITECTURE.md#3-python-runtime-与-module-boundary)。共享环境不改变 module ownership 或 cross-module dependency rules。每个 worktree 只使用根 `.venv`；module 目录不拥有独立 `.venv` 或 `.env`。
 
 Frontend 需要满足当前 Vite 要求的 Node.js 与 npm：
 
@@ -70,13 +70,13 @@ cd ui_web
 npm install
 ```
 
-本地 Source 访问凭据写入 `data_snapshot/.env`，可从 `data_snapshot/.env.example` 复制模板：
+本地 Source 访问凭据与 runtime 配置统一写入 **repository root `.env`**，可从根 `.env.example` 复制模板：
 
 ```text
 TUSHARE_TOKEN=<your-token>
 ```
 
-`.env` 与运行产生的市场数据不进入版本控制。
+process environment 优先于 `.env`。`.env` 与运行产生的市场数据不进入版本控制；不要在 module 目录建立独立 `.env`。完整 key 与 Auth 配置见 [Repository configuration](DEVELOPMENT.md#repository-configuration)。
 
 ## 当前根开发命令
 

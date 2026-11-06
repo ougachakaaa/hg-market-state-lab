@@ -21,7 +21,7 @@ Owning module directories use `snake_case`; Python namespaces match their owning
 
 These identities are the canonical filesystem and import paths. Historical names are not supported import surfaces. Internal co-location and public business contracts are unchanged.
 
-All local running data, including SQLite caches, Raw Artifacts and any explicitly defined Research runtime outputs, is disposable runtime state. Each module directly uses its canonical runtime paths; historical directories and their contents must not affect current execution. Directory changes require no state migration, inheritance, compatibility or preservation mechanism. Repository tooling neither copies nor deletes historical local state. Credentials are configured afresh through the current environment or canonical `.env`; historical tokens are not migrated and credentials never enter Git. This filesystem policy does not relax Dataset cache compatibility/integrity or Product Raw contracts. The Research clean-slate reset retires its previous Observation persistence and Study output lifecycle; its current module authority defines the replacement boundary.
+All local running data, including SQLite caches, Raw Artifacts and any explicitly defined Research runtime outputs, is disposable runtime state. Each module directly uses its canonical runtime paths; historical directories and their contents must not affect current execution. Directory changes require no state migration, inheritance, compatibility or preservation mechanism. Repository tooling neither copies nor deletes historical local state. Credentials and repository runtime configuration are configured afresh through the current environment or the repository-root `.env` (tracked template `.env.example`); historical tokens are not migrated and credentials never enter Git. This filesystem policy does not relax Dataset cache compatibility/integrity or Product Raw contracts. The Research clean-slate reset retires its previous Observation persistence and Study output lifecycle; its current module authority defines the replacement boundary.
 
 The root Python project/distribution remains `hg-market-state-lab`, with one root Poetry environment, dependency graph and worktree-local root `.venv`. Naming changes do not alter business functions, data meaning, Product identity, application services, request/result, formulas, completeness or failure semantics. `lab` remains the executable even after its owning module/package becomes `ui_cli`.
 
@@ -99,8 +99,11 @@ Python runtime ownership is repository-level; semantic and package ownership rem
 Repository
     pyproject.toml
     poetry.lock
-    .venv/                 # worktree-local
+    poetry.toml
+    .env / .env.example    # local configuration / tracked template
+    .venv/                 # worktree-local; the only Python environment
 
+    config/                # repository-level configuration support (lab_config)
     data_lake/             # data_lake
     data_snapshot/         # data_snapshot
     market_modeling/       # market_modeling; no new implementation implied
@@ -112,6 +115,8 @@ Repository
 ```
 
 根 `pyproject.toml`、根 `poetry.lock` 与每个 worktree 的根 `.venv` 是唯一 canonical Python runtime surface。Module-local `pyproject.toml`、module-local `poetry.lock`、module-local `.venv`、Poetry editable/path dependency，以及分别进入 Python module 目录执行 Poetry workflow 均不属于目标 architecture。
+
+Repository runtime configuration 属于 repository-level support，不是业务模块。根 `.env` 是唯一 canonical local configuration file，根 `.env.example` 是其 tracked template；`config/src/lab_config` 拥有 repository environment configuration 的加载与校验，稳定优先级为 `process environment > root .env > defaults`。`lab_config` 可被各模块通过 public API 使用，但本身不得 import 任何业务模块，也不拥有 Auth、Tushare、Dataset、Product 或 HTTP semantics；`TUSHARE_TOKEN`、`TUSHARE_CALLS_PER_MINUTE`、`LAB_AUTH_*` 与 `LAB_RESEARCH_PUBLICATION_ROOT` 只经该 package 读取。Module-local `.env` 与各模块独立 env loader 不属于目标 architecture。
 
 `data_lake` 拥有 canonical Python namespace `data_lake`；shared kernel 源码归顶层 `data_lake/src/`，具体 Provider 与 Dataset 的 authority、source、tests 分别 colocate 于 `data_lake/providers/<provider-id>/` 与 `data_lake/datasets/<dataset-id>/`，persistent state 仍由 Dataset 拥有，topology 由 [DataLake authority](data_lake/ARCHITECTURE.md) 拥有。Provider-local / Dataset-local source roots 同样使用 repository root 唯一 Python project、dependency graph 与根 `.venv`，不创建独立 Python runtime。Consumer 可以直接依赖具体 Dataset public Application Service；shared kernel 不依赖具体 Provider 或 Dataset，Dataset 间只允许 DataLake authority 明确声明的单向 public Application Service dependency，不开放 internal persistence。Public boundary 与 source registration / import compatibility 约束进入 DataLake authority。
 
@@ -187,6 +192,10 @@ taxonomy. It is not a business module or Agent Runtime. Start at
 [Workbench agent entry](workbench/AGENTS.md) and [Workbench authority](workbench/ARCHITECTURE.md);
 its scripts use the existing root Python runtime without a new package or `lab` command.
 Task-specific permission never expands a business module's published boundary.
+
+Repository runtime configuration support is documented from [config Agent Rules](config/AGENTS.md)
+and anchored by the root `.env` / `.env.example` files described in section 3. It is not a
+business module and grants no business or cross-module import permission.
 
 `hg-market-state-lab` 是 repository / system identity；`lab` 是安装于根 canonical Python project 的正式 repository-level CLI/operator interface。它只负责 repository-level command routing、orchestration、delegation 与已声明的 delivery，不是业务模块，也不拥有 DataSet、Snapshot、Research、Modeling、HTTP product 或 frontend 语义。其命令与转发边界见 [lab CLI authority](ui_cli/ARCHITECTURE.md)；当前本地操作方式见 [DEVELOPMENT.md](DEVELOPMENT.md)。
 
