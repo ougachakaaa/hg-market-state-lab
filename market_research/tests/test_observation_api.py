@@ -166,6 +166,7 @@ def test_only_published_datalake_imports_and_no_forbidden_dependency_edges() -> 
         "data_lake",
         "data_lake.datasets.tushare_trade_calendar",
         "data_lake.datasets.tushare_index_daily",
+        "data_lake.datasets.tushare_equity_index_futures",
     }
     forbidden = (
         "data_snapshot",
@@ -204,6 +205,10 @@ def test_only_published_datalake_imports_and_no_forbidden_dependency_edges() -> 
                 ), (path, name)
                 if name.startswith("data_lake"):
                     assert name in public, (path, name)
+                    if name == "data_lake.datasets.tushare_equity_index_futures":
+                        assert path.relative_to(SOURCE).as_posix().startswith(
+                            "descriptive/cases/futures_basis/"
+                        ), (path, name)
             if isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute):
                 if node.func.attr in {"export", "ensure", "coverage"}:
                     assert path.name == "preparation.py", path

@@ -105,3 +105,22 @@ legal partial Index accounting, same-date alignment, empty populations, calendar
 mismatch, metadata consistency, retained failures and an independent canonical
 bytes/digest fixture. Real IM acceptance records exact window, facts and evidence;
 it must not be replaced by synthetic fixture evidence.
+
+## WP3 Python preparation boundary
+
+The case facade publishes `FuturesBasisRequest(product_code, start_date, end_date,
+case="futures_basis_v1")`, `PreparedFuturesBasisInputs` and `prepare_inputs`.
+The latter accepts optional calendar/futures/index public-service implementations
+for deterministic tests; omitted services use their published factories. Frozen
+copies retain all public Export fields, ordered records, actual requests and
+preliminary/ensure/final attempts. The prepared value also retains canonical bytes,
+SHA-256 fingerprint, CFFEX/SSE sessions and definition version
+`futures_basis_definition_v1` (the current Definition contract).
+
+`InputPreparationError` exposes stage `input_preparation`, category, dependency,
+reason and obtained attempts; it does not publish a successful fingerprint.
+Malformed preliminary inputs are never repaired by ensure. A legal incomplete
+final Index remains usable; incomplete final calendars/Futures fail. Request
+validation runs again on each preparation call before creating services.
+Construction verifies request association and prepared evidence integrity without
+acquisition; callers must retain the full prepared value for reproduction.

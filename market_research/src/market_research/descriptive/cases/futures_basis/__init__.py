@@ -1,5 +1,10 @@
-"""Futures Basis Case: pure relative-tenor Slot resolution public boundary."""
+"""Futures Basis public preparation, pure observations and independent Slot resolution."""
 
+from .construction import construct_observations as construct_observations
+from .inputs import FuturesBasisRequest as FuturesBasisRequest
+from .inputs import InputAttempt as InputAttempt
+from .inputs import InputPreparationError as InputPreparationError
+from .inputs import PreparedFuturesBasisInputs as PreparedFuturesBasisInputs
 from .models import SLOTS as SLOTS
 from .models import AbsenceBoundary as AbsenceBoundary
 from .models import CandidateSessions as CandidateSessions
@@ -11,5 +16,16 @@ from .models import Slot as Slot
 from .models import SlotMapping as SlotMapping
 from .models import SlotResolutionError as SlotResolutionError
 from .models import TransitionResult as TransitionResult
+from .observations import ContractDayObservation as ContractDayObservation
+from .observations import FuturesBasisResult as FuturesBasisResult
+from .observations import ObservationConstructionError as ObservationConstructionError
+from .observations import ObservationOutcome as ObservationOutcome
+from .observations import OutcomeAccounting as OutcomeAccounting
+from .observations import OutcomeCollection as OutcomeCollection
+from .observations import SlotDayObservation as SlotDayObservation
+from .observations import SourceIssue as SourceIssue
+from .observations import SourceReference as SourceReference
+from .preparation import prepare_inputs as prepare_inputs
 from .resolution import detect_contract_transitions as detect_contract_transitions
 from .resolution import resolve_daily_slots as resolve_daily_slots
+from .service import observe_futures_basis as observe_futures_basis

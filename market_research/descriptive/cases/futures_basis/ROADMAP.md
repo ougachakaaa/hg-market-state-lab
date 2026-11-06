@@ -14,8 +14,9 @@ historical publication project that also used WP numbering.
 
 Authority status: WP0 is complete; WP1 has passed independent artificial-data
 runtime and real Chromium acceptance under the exact V2 contract and fixed fixture.
-WP2 has passed independent synthetic Slot/Transition acceptance; WP3 is Implementation Ready.
-WP3–WP5 runtime and real-market acceptance remain pending. WP1 does not admit V2
+WP2 has passed independent synthetic Slot/Transition acceptance. WP3 has passed
+synthetic runtime and bounded real IM acceptance under [its evidence](WP3_ACCEPTANCE.md).
+WP4/WP5 runtime and report acceptance remain pending. WP1 does not admit V2
 into existing Publication/HTTP consumers or implement the offline packager.
 
 | WP | Deliverable and boundary | Dependencies / acceptance |
@@ -149,7 +150,25 @@ root-environment public imports, Markdown links/anchors and `git diff --check`.
 All acceptance data is synthetic; no live acquisition, historical study run or
 Web/browser gate is part of WP2. Existing Case behavior passed regression.
 
-WP3 is **Implementation Ready** under [Inputs](INPUTS.md) and
-[Observation](OBSERVATION.md), consuming this public resolver. Its input acquisition,
-retention/fingerprint, Basis calculations and real IM acceptance are still required
-WP3 work; Statistics and offline report packaging remain WP4/WP5 respectively.
+At the WP2 handoff, WP3 was **Implementation Ready** under [Inputs](INPUTS.md) and
+[Observation](OBSERVATION.md), consuming this public resolver. Input acquisition,
+retention/fingerprint, Basis calculations and real IM acceptance were the remaining
+WP3 work, completed below; Statistics and offline packaging remain WP4/WP5.
+
+## WP3 verification and handoff
+
+WP3 **PASS** (2026-11-06), from required baseline
+`c741c7ca49944b236c999e6b89193c435f3b322c` on this working branch.
+The independent public preparation / pure observation / orchestration interfaces
+and failure contracts are specified in [Inputs](INPUTS.md#wp3-python-preparation-boundary)
+and [Observation](OBSERVATION.md#wp3-python-observation-boundary).
+
+Runtime acceptance and real-market acceptance both passed independently; exact
+coverage, counts, fingerprint, external evidence and reproduction commands are
+recorded in [WP3 acceptance](WP3_ACCEPTANCE.md). All market rows and runtime caches
+remain outside Git. WP2 resolution and transition APIs are reused unchanged.
+
+WP4 is **Implementation Ready** to consume the retained three-metric outcomes,
+Slot-day references, per-Slot accounting and input evidence. WP3 does not implement
+sample conversion/statistics, chart segmentation, offline reports or publication.
+The pending WP4 Statistics-owned Mean extension remains WP4 work.

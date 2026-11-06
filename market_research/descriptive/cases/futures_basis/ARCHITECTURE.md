@@ -31,7 +31,8 @@ These are responsibility boundaries, not a generic engine, inheritance hierarchy
 or mandatory sequence of separately persisted artifacts. The independent Python
 boundary is `market_research.descriptive.cases.futures_basis`; its pure Slot
 resolver and transition detection are implemented under [Slot resolution](SLOT_RESOLUTION.md).
-Preparation alone performs upstream I/O; preparation and observation runtime remain WP3 work.
+Preparation alone performs upstream I/O; WP3 implements public preparation and pure
+Contract-day/Slot-day observations under [Inputs](INPUTS.md) and [Observation](OBSERVATION.md).
 
 ## Authority navigation
 
@@ -43,6 +44,7 @@ Preparation alone performs upstream I/O; preparation and observation runtime rem
 | Observation grain, validity, accounting and continuity (SD05, SD07–SD08) | [Observation](OBSERVATION.md) |
 | Populations, distributions, paired comparisons, runs and numerical ownership (SD09) | [Statistics scope](STATISTICS.md) |
 | Business projection and offline report evidence | [Delivery](DELIVERY.md) |
+| WP3 runtime/real-market evidence and reproduction | [WP3 acceptance](WP3_ACCEPTANCE.md) |
 | Work packages, readiness, reconciliation and known gaps | [Roadmap](ROADMAP.md) |
 
 ## Request and compatibility
@@ -66,7 +68,8 @@ claim admission to those APIs. Case-owned adaptation consumes only the root
 [Statistics public API](../../../../market_statistics/CONTRACT.md).
 Existing Snapshot/Workbench semantics stay frozen; see [reconciliation](ROADMAP.md#reconciliation).
 
-Status: WP0 is authority-only; WP1 and WP2 have independent runtime acceptance.
-WP3–WP5 runtime, real-data acquisition and report acceptance remain separate work
-under the roadmap. No new CLI, HTTP route, Research
+Status: WP0 is authority-only; WP1–WP3 have independent runtime acceptance.
+WP3 also passed bounded real IM acceptance; evidence and reproduction instructions
+are in [WP3 acceptance](WP3_ACCEPTANCE.md). WP4 statistics and WP5 report
+acceptance remain separate work under the roadmap. No new CLI, HTTP route, Research
 database, publication lifecycle or Modeling import permission is introduced.

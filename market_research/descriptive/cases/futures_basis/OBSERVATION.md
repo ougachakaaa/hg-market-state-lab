@@ -96,3 +96,24 @@ Visualization receives only generic segments, events and point details under
 prices or date gaps. WP3 acceptance verifies references, per-metric total accounting,
 expiry-only inapplicability, mixed invalid/missing precedence, strict zero state,
 contract transitions with unavailable prices and non-interpolated gaps.
+
+## WP3 Python observation boundary
+
+`construct_observations(request, prepared)` returns a frozen `FuturesBasisResult`;
+`observe_futures_basis` composes preparation and construction with the same optional
+public service injection. Results retain prepared inputs, definition version,
+ordered Contract-day/Slot-day records, daily resolutions, TransitionResult and
+per-Slot accounting for base and each metric. No Statistics API is invoked.
+
+Each Contract-day retains its actual Futures row and optional same-day Index row
+through source references into the prepared Exports. Metric outcomes carry status,
+value, unit and reason; the containing Contract-day retains associated source issues
+and all missing/offending facts even when exclusion takes precedence. Slot-days reference the actual frozen
+Contract-day object, exposing its metrics without another calculation. Empty sets
+have no Contract-day and four explicit no-active-contract Slot-days.
+
+Accounting retains ordered Slot-day keys for each disjoint outcome, derives counts
+and candidate-denominator ratios, and uses None for zero-denominator ratios.
+`ObservationConstructionError` exposes stage `observation_construction`, category,
+reason, prepared evidence and optional contract/date identity. Invalid preparation,
+resolution and numerical failures abort the call, never returning partial success.
