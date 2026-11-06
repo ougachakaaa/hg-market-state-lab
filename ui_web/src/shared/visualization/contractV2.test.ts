@@ -8,8 +8,9 @@ import { extendedFixtureV2, fixtureV2 } from './fixturesV2'
 
 const copy = () => structuredClone(fixtureV2)
 describe('V2 strict contract', () => {
-  it('keeps the acceptance fixture identical to authority', () => {
-    expect(fixtureV2).toEqual(JSON.parse(authority.split('```json\n')[1].split('\n```')[0]))
+  it.each(['\n', '\r\n'])('keeps the acceptance fixture identical to authority with %j newlines', newline => {
+    const document = authority.replace(/\r?\n/g, newline)
+    expect(fixtureV2).toEqual(JSON.parse(document.split(/```json\r?\n/)[1].split(/\r?\n```/)[0]))
   })
   it('accepts supplied order, empty/all-null content and independent ID namespaces without mutation', () => {
     const v = extendedFixtureV2(); const before = structuredClone(v)

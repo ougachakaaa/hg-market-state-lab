@@ -26,10 +26,7 @@ ui_web/dist-ssr/
 .vscode/
 
 # Local environment / secrets (canonical: repository-root .env)
-/.env
-
-# Legacy local environment location; no longer read.
-/data_snapshot/.env
+.env
 
 # Raw Dataset (internal runtime artifacts)
 data_snapshot/data/raw/**

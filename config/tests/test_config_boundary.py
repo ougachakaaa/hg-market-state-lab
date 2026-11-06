@@ -125,17 +125,35 @@ def test_only_the_root_owns_a_python_virtual_environment() -> None:
 def test_local_configuration_is_ignored_and_the_template_is_tracked() -> None:
     local = [
         subprocess.run(
-            ["git", "check-ignore", "-q", "--", path],
+            ["git", "check-ignore", "--no-index", "-q", "--", path],
             cwd=REPO_ROOT,
             check=False,
         ).returncode
-        for path in (".env", "data_snapshot/.env")
+        for path in (
+            ".env",
+            "data_snapshot/.env",
+            "config/.env",
+            "ui_http/.env",
+            "market_research/.env",
+            "arbitrary/deep/directory/.env",
+        )
     ]
     template = subprocess.run(
-        ["git", "check-ignore", "-q", "--", ".env.example"],
+        ["git", "check-ignore", "--no-index", "-q", "--", ".env.example"],
         cwd=REPO_ROOT,
         check=False,
     )
 
-    assert local == [0, 0]
+    assert all(code == 0 for code in local)
     assert template.returncode == 1
+
+    tracked = subprocess.run(
+        ["git", "ls-files", "-z"],
+        cwd=REPO_ROOT,
+        check=True,
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+    ).stdout.split("\0")
+    assert ".env.example" in tracked
+    assert not any(Path(path).name == ".env" for path in tracked)

@@ -38,6 +38,10 @@ OpenAPI 与 TypeScript artifacts 是 backend HTTP contract 的生成表示，不
 
 两个 MO Product、Research Publication、Futures Basis Research 与 Application Authentication 的 contract boundaries 平级且独立；各自拥有独立的 generated artifacts 和 ownership。Backend runtime 可以组合多个 product routes，但 runtime composition 不得把 sibling frontend features 强制耦合进共享业务 schema、共享 DTO ownership 或共享 feature-local contract boundary。
 
+Futures Basis Research 当前仅完成 WP6 authority；上表声明其未来 generated-contract ownership，
+不表示已有 HTTP runtime、frontend consumer 或 generated artifacts。WP7–WP9 尚未实现；
+WP8 首次实现 consumer 时才生成该产品 artifacts 并纳入 `contract:check`。
+
 Application Auth 不是市场 feature；其 committed OpenAPI / TypeScript 与 application Auth consumer 共址（例如 `src/app/auth/api/`），不进入 MO feature 或 shared DTO。G2 实际改变 security scheme / access responses 时，更新已有产品 artifacts；G3 首次实现 Auth consumer 时生成其独立 artifacts 并纳入同一 generation/freshness loop。所有 consumer 的发布表示必须忠实反映运行时 access requirement；产品 DTO 不因此合并。G0 无实际 OpenAPI 变更，不生成这些 artifacts。
 
 ## 3. Generation and Freshness Obligations
