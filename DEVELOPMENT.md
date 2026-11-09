@@ -61,6 +61,20 @@ PowerShell 脚本使用 Python 3.13、Poetry、Node 与 npm 达到相同终态�
 
 手工执行 `git worktree add` 不会触发 Codex Local Environment，可以在新 worktree 根目录运行对应平台的 bootstrap 命令。
 
+## Linux One-Click Development Startup
+
+Linux（含 WSL）可从仓库根目录运行 Bash 启动器：
+
+```bash
+bash scripts/market-lab.sh start   # 省略 start 时同样启动
+bash scripts/market-lab.sh status  # 查看本启动器的 backend/frontend
+bash scripts/market-lab.sh stop    # 从另一终端停止两个服务
+```
+
+`start` 在前台运行，检查 Python 3.13、Poetry、Node.js（20.19+ 或 22.12+）、npm、Linux 进程工具和默认端口 8011/5173。项目依赖缺失或不完整时，它调用现有 `.codex/scripts/setup.sh` 在仓库根目录安装依赖；首次安装可能需要网络。启动器通过 `poetry run lab serve backend/frontend` 启动服务，确认后端认证响应与 Web 首页就绪后打印 `http://127.0.0.1:5173/`，不自动打开浏览器。按 Ctrl+C 会停止本次启动的两个服务。
+
+启动器使用根 `.env` 或进程环境的 Auth 设置，进程环境优先。未显式设置时使用 `loopback-http` 和 `http://127.0.0.1:5173`；JWT 密钥仅在缺失时生成并保存于已忽略的 `ui_http/data/one-click/jwt-secret`，供重启复用，不覆盖现有配置。日志与进程状态也位于 `ui_http/data/one-click/`。`status` 和 `stop` 只操作经进程身份核验的本启动器实例；端口被其他程序占用时启动失败，不会终止该程序。启动失败可查看该目录日志并运行 `poetry run lab doctor`。首次注册及审批步骤见下文。
+
 ## Windows One-Click Development Startup
 
 在 Windows 上双击仓库根目录的 `market-lab.cmd`（无参数等价于 `start`）。需要预先安装 Python 3.13、Poetry、Node.js（20.19+ 或 22.12+）和 npm，并使其可从 PATH 使用；首次启动或依赖不完整时会运行现有 Windows bootstrap，安装需要网络连接。启动前会检查 backend import；启动成功后会自动打开 `http://127.0.0.1:5173/`。

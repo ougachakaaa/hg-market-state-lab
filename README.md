@@ -84,6 +84,8 @@ process environment 优先于 `.env`。`.env` 与运行产生的市场数据不�
 
 Windows 上可直接双击仓库根目录的 `market-lab.cmd`，或在仓库根运行 `.\market-lab.cmd start` 一键启动 backend 与 Web；`market-lab.cmd stop` 停止服务，`market-lab.cmd status` 查看状态。实际逻辑位于 `scripts/market-lab.ps1`。原生 Windows 下 Publication 存储返回 503，完整 Publication 需 Linux/WSL。前置条件、审批与日志说明见 [Windows One-Click Development Startup](DEVELOPMENT.md#windows-one-click-development-startup)。
 
+Linux/WSL 可运行 `bash scripts/market-lab.sh start` 一键启动；`status` 查看状态，`stop` 从另一终端停止服务。前置条件与日志说明见 [Linux One-Click Development Startup](DEVELOPMENT.md#linux-one-click-development-startup)。
+
 ## Research status
 
 Start with the stable [Research human/agent usage guide](market_research/USAGE.md).
