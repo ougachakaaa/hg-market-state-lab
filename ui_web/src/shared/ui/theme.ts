@@ -1,15 +1,16 @@
 import { theme, type ThemeConfig } from 'antd'
 
 export const applicationTheme: ThemeConfig = {
-  algorithm: theme.compactAlgorithm,
+  algorithm: theme.darkAlgorithm,
   token: {
-    colorPrimary: '#2563eb',
-    colorBgLayout: '#f8fafc',
-    colorText: '#1f2937',
-    colorTextSecondary: '#475569',
-    borderRadius: 6,
-    controlHeight: 32,
-    fontFamily: 'system-ui, sans-serif',
+    colorPrimary: '#8da9db',
+    colorBgBase: '#0b0d10',
+    colorBgLayout: '#090b0e',
+    colorTextBase: '#f3f4f6',
+    colorBorder: '#30343b',
+    borderRadius: 8,
+    controlHeight: 36,
+    fontFamily: 'Inter, system-ui, sans-serif',
     fontSize: 14,
   },
 }
