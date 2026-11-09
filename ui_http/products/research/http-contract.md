@@ -151,7 +151,7 @@ authentication does not approve public exposure of execute. No CORS or public de
 is introduced. WP3 admits one read-only frontend consumer for the two Capability GET
 operations only: Research Catalog owns its projected OpenAPI and generated TypeScript
 artifacts and freshness check. Preview and execute have no Web consumer in WP3. The
-separate Online Futures Basis Research product owns its own future frontend consumer
-and generated contract. OpenAPI/local HTTP alone
+separate Online Futures Basis Research product owns its implemented WP8-B frontend
+consumer and generated contract under [its HTTP contract](../futures_basis_research/http-contract.md). OpenAPI/local HTTP alone
 does not connect a cloud agent; registered reachable tooling is required. No MCP, cloud
 hosting, cache repair, historical-run retrieval or additional Research engine is introduced.
