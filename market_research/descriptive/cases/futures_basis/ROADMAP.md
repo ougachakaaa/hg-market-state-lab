@@ -326,3 +326,17 @@ the stable `OnlineError.kind` values under the existing HTTP contract. It must
 keep a single worker process for this store and deliver the existing reader
 projection without recomputation. WP9 remains responsible for the real browser,
 restart and bounded live integration gate.
+
+### WP7-R acceptance (2026-11-09)
+
+PASS on `feat/web-ui-workspace-redesign`, baseline
+`cec5627dd30387e1daccb3e2293fb5fbd1dff2b5`. Status reads now inspect result
+metadata only; full report reads retain integrity/association validation and classify
+stored oversize as `response_too_large`. Synthetic tests cover concurrent submissions
+and readers, status independence, atomic publication/failure, recovery with orphan
+results, ownership, versions, corruption and nonregular files. No market I/O occurred.
+
+Verification: `poetry run pytest market_research/tests` — 1,254 passed, 1 skipped;
+`poetry run pytest data_snapshot/tests/test_authority_topology.py ui_http/tests/test_architecture.py`
+— 21 passed; `poetry run ruff check market_research`, `poetry run mypy market_research`
+(106 files), and `git diff --check` passed. WP8 HTTP delivery remains pending.

@@ -220,3 +220,174 @@ def test_empty_samples_complete_and_report_size_bound(tmp_path, monkeypatch):
     assert state["status"] == "FAILED"
     assert state["failure"]["category"] == "result_too_large"
     error("result_unavailable", lambda: app.get_report(oversized, "owner-a"))
+
+
+def test_status_is_lightweight_even_with_reader_occupied(tmp_path, monkeypatch):
+    from market_research.descriptive.cases.futures_basis import online
+
+    app = application(tmp_path)
+    run_id = app.submit(REQUEST, "owner-a")["run_id"]
+    settled(app, run_id)
+    original_decode = online._decode
+
+    def metadata_only(payload):
+        assert len(payload) <= 8192, "Status parsed the report"
+        return original_decode(payload)
+
+    monkeypatch.setattr(online, "_decode", metadata_only)
+    app._report = lambda *args: pytest.fail("Status called full reader")
+    app.observe = app.compose = lambda *args: pytest.fail("Status executed Research")
+    assert online._READ_PERMIT.acquire(blocking=False)
+    try:
+        for _ in range(3):
+            assert app.get_run(run_id, "owner-a")["result_available"]
+        error("read_busy", lambda: app.get_report(run_id, "owner-a"))
+    finally:
+        online._READ_PERMIT.release()
+
+
+def test_stored_size_and_unknown_versions(tmp_path, monkeypatch):
+    from market_research.descriptive.cases.futures_basis import online
+
+    app = application(tmp_path)
+    run_id = app.submit(REQUEST, "owner-a")["run_id"]
+    settled(app, run_id)
+    report = tmp_path / run_id / "report.json"
+    monkeypatch.setattr(online, "MAX_REPORT_BYTES", report.stat().st_size - 1)
+    error("response_too_large", lambda: app.get_report(run_id, "owner-a"))
+    error("corrupt", lambda: app.get_run(run_id, "owner-a"))
+    monkeypatch.undo()
+    state_path = tmp_path / run_id / "state.json"
+    state = json.loads(state_path.read_text())
+    state["version"] = 2
+    state_path.write_text(json.dumps(state))
+    error("unsupported_version", lambda: app.get_run(run_id, "owner-a"))
+
+
+def test_simultaneous_submit_accepts_only_one(tmp_path):
+    from concurrent.futures import ThreadPoolExecutor
+
+    entered, release = threading.Event(), threading.Event()
+
+    def observe(*args, **kwargs):
+        entered.set()
+        assert release.wait(5)
+        raise RuntimeError("synthetic")
+
+    app = application(tmp_path, observe=observe)
+    barrier = threading.Barrier(4)
+
+    def submit():
+        barrier.wait()
+        try:
+            return app.submit(REQUEST, "owner-a")
+        except OnlineError as exc:
+            return exc.kind
+
+    try:
+        with ThreadPoolExecutor(max_workers=4) as pool:
+            results = list(pool.map(lambda _: submit(), range(4)))
+        assert entered.wait(1)
+        accepted = [result for result in results if isinstance(result, dict)]
+        assert len(accepted) == 1 and results.count("run_busy") == 3
+        assert len(list(tmp_path.iterdir())) == 1
+    finally:
+        release.set()
+    settled(app, accepted[0]["run_id"])
+
+
+def test_atomic_publication_and_write_failure(tmp_path, monkeypatch):
+    from market_research.descriptive.cases.futures_basis import online
+
+    app = application(tmp_path)
+    original_write = online._write
+    published, release = threading.Event(), threading.Event()
+
+    def paused_write(fd, name, payload):
+        original_write(fd, name, payload)
+        if name == "report.json":
+            published.set()
+            assert release.wait(5)
+            raise OnlineError("unavailable")
+
+    monkeypatch.setattr(online, "_write", paused_write)
+    run_id = app.submit(REQUEST, "owner-a")["run_id"]
+    try:
+        assert published.wait(3)
+        assert app.get_run(run_id, "owner-a")["result_available"] is False
+        error("result_not_ready", lambda: app.get_report(run_id, "owner-a"))
+    finally:
+        release.set()
+    assert settled(app, run_id)["status"] == "FAILED"
+    assert not (tmp_path / run_id / "report.json").exists()
+
+
+@pytest.mark.parametrize("status", ["PENDING", "RUNNING"])
+def test_recover_abandoned_states_and_orphan_report(tmp_path, status):
+    app = application(tmp_path)
+    run_id = app.submit(REQUEST, "owner-a")["run_id"]
+    settled(app, run_id)
+    path = tmp_path / run_id / "state.json"
+    state = json.loads(path.read_text())
+    state.update(status=status, finished_at=None, result_status=None, result_digest=None)
+    if status == "PENDING":
+        state["started_at"] = None
+    path.write_text(json.dumps(state))
+    recovered = application(tmp_path)
+    assert recovered.get_run(run_id, "owner-a")["status"] == "INTERRUPTED"
+    error("result_unavailable", lambda: recovered.get_report(run_id, "owner-a"))
+
+
+def test_nonregular_result_and_status_missing_result(tmp_path):
+    app = application(tmp_path)
+    run_id = app.submit(REQUEST, "owner-a")["run_id"]
+    settled(app, run_id)
+    path = tmp_path / run_id / "report.json"
+    path.unlink()
+    error("corrupt", lambda: app.get_run(run_id, "owner-a"))
+    path.mkdir()
+    error("corrupt", lambda: app.get_run(run_id, "owner-a"))
+    error("corrupt", lambda: app.get_report(run_id, "owner-a"))
+
+
+def test_concurrent_report_reader_and_payload_associations(tmp_path, monkeypatch):
+    import hashlib
+    from concurrent.futures import ThreadPoolExecutor
+
+    app = application(tmp_path)
+    run_id = app.submit(REQUEST, "owner-a")["run_id"]
+    settled(app, run_id)
+    entered, release = threading.Event(), threading.Event()
+    original = app._report
+
+    def blocked(*args):
+        entered.set()
+        assert release.wait(5)
+        return original(*args)
+
+    monkeypatch.setattr(app, "_report", blocked)
+    with ThreadPoolExecutor(max_workers=1) as pool:
+        future = pool.submit(app.get_report, run_id, "owner-a")
+        try:
+            assert entered.wait(1)
+            error("read_busy", lambda: app.get_report(run_id, "owner-a"))
+            assert app.get_run(run_id, "owner-a")["result_available"]
+        finally:
+            release.set()
+        assert future.result()["status"] == "complete"
+    monkeypatch.undo()
+    report_path = tmp_path / run_id / "report.json"
+    state_path = tmp_path / run_id / "state.json"
+    reader = json.loads(report_path.read_bytes())
+    state = json.loads(state_path.read_bytes())
+    for key, value, kind in [
+        ("profile", "unknown_v2", "unsupported_version"),
+        ("status", "partial", "corrupt"),
+        ("fingerprint", "invalid", "corrupt"),
+    ]:
+        changed = dict(reader, **{key: value})
+        payload = json.dumps(changed).encode()
+        report_path.write_bytes(payload)
+        state["result_digest"] = hashlib.sha256(payload).hexdigest()
+        state_path.write_text(json.dumps(state))
+        error(kind, lambda: app.get_report(run_id, "owner-a"))

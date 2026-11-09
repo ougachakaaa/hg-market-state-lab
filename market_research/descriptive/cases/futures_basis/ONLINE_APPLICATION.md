@@ -212,7 +212,16 @@ root are unsupported because the in-process active-run guard and restart recover
 would conflict. No distributed lock, external queue or durable worker is
 introduced.
 
-Read-path checks cover run ID format, containment in the root, no symlink,
+Run status reads check run ID format, containment, no symlink, request/state schema,
+owner scope and state consistency. For COMPLETED they open the result safely and
+check only presence, regular-file type and size (at most 32 MiB); an invalid result
+file is `corrupt`. They never read report bytes, verify a digest, parse the report
+or acquire a report-reader permit. Full report reads alone perform digest and
+payload association validation. Stored reports above 32 MiB classify as
+`response_too_large`; publication above that bound remains the execution failure
+`result_publication/result_too_large`. Neither path truncates.
+
+Full report read-path checks cover run ID format, containment in the root, no symlink,
 request/state schema, owner scope, state consistency, result presence, size and
 SHA-256, reader profile, status and request association. Corrupt or unknown state
 is never silently repaired and never recomputed. A report read is bounded to one

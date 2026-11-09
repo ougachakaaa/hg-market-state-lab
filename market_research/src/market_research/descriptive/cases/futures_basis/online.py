@@ -554,7 +554,7 @@ class FuturesBasisOnlineApplication:
         fd, metadata, state = self._owned(run_id, owner_scope)
         try:
             if state["status"] == "COMPLETED":
-                self._report(fd, metadata, state)
+                self._check_report_file(fd)
             return dict(
                 run_id=run_id,
                 request=metadata["request"],
@@ -587,22 +587,36 @@ class FuturesBasisOnlineApplication:
         finally:
             _READ_PERMIT.release()
 
+    def _check_report_file(self, fd: int) -> None:
+        try:
+            file_fd = os.open("report.json", os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK, dir_fd=fd)
+            try:
+                info = os.fstat(file_fd)
+                if not stat.S_ISREG(info.st_mode) or not 0 < info.st_size <= MAX_REPORT_BYTES:
+                    raise OnlineError("corrupt")
+            finally:
+                os.close(file_fd)
+        except OSError:
+            raise OnlineError("corrupt") from None
+
     def _report(self, fd: int, metadata: dict[str, Any], state: dict[str, Any]) -> dict[str, Any]:
         # Read bytes once for digest validation; JSON parsing follows only after integrity checks.
         try:
             file_fd = os.open("report.json", os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK, dir_fd=fd)
             try:
-                if not stat.S_ISREG(os.fstat(file_fd).st_mode):
+                info = os.fstat(file_fd)
+                if not stat.S_ISREG(info.st_mode):
                     raise OnlineError("corrupt")
+                if info.st_size > MAX_REPORT_BYTES:
+                    raise OnlineError("response_too_large")
                 payload = os.read(file_fd, MAX_REPORT_BYTES + 1)
             finally:
                 os.close(file_fd)
         except OSError:
             raise OnlineError("corrupt") from None
-        if (
-            len(payload) > MAX_REPORT_BYTES
-            or hashlib.sha256(payload).hexdigest() != state["result_digest"]
-        ):
+        if len(payload) > MAX_REPORT_BYTES:
+            raise OnlineError("response_too_large")
+        if hashlib.sha256(payload).hexdigest() != state["result_digest"]:
             raise OnlineError("corrupt")
         try:
             reader = _decode(payload)
