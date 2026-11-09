@@ -14,6 +14,11 @@ const contracts = [
     output: 'src/features/research_explorer/api/research.generated.ts',
   },
   {
+    name: 'Research Catalog',
+    input: 'src/features/research_catalog/api/catalog.openapi.json',
+    output: 'src/features/research_catalog/api/catalog.generated.ts',
+  },
+  {
     name: 'MO Option Chain',
     input: 'src/features/mo_option_chain/api/moOptionChain.openapi.json',
     output: 'src/features/mo_option_chain/api/moOptionChain.generated.ts',

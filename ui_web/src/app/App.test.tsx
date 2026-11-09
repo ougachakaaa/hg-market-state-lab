@@ -47,7 +47,8 @@ describe('workspace shell and authentication', () => {
 
   it('restores deep route, navigates with history and logs out', async () => {
     window.history.replaceState(null, '', '/backtesting')
-    vi.stubGlobal('fetch', vi.fn().mockResolvedValueOnce(response(identity)).mockResolvedValueOnce(response(null, 204)))
+    vi.stubGlobal('fetch', vi.fn((url: string) => Promise.resolve(url === '/auth/me' ? response(identity)
+      : url === '/api/research/capabilities' ? response([]) : response(null, 204))))
     render(<App />)
     await screen.findByText(/策略模拟与历史验证尚未实现/)
     expect(window.location.pathname).toBe('/backtesting')
@@ -61,8 +62,14 @@ describe('workspace shell and authentication', () => {
   })
 
   it('keeps logout failure explicit and retryable', async () => {
-    vi.stubGlobal('fetch', vi.fn().mockResolvedValueOnce(unauthorized()).mockResolvedValueOnce(response(identity))
-      .mockRejectedValueOnce(new TypeError('offline')).mockResolvedValueOnce(response(null, 204)))
+    let logoutAttempts = 0
+    vi.stubGlobal('fetch', vi.fn((url: string) => {
+      if (url === '/auth/me') return Promise.resolve(unauthorized())
+      if (url === '/auth/login') return Promise.resolve(response(identity))
+      if (url === '/api/research/capabilities') return Promise.resolve(response([]))
+      if (url === '/auth/logout' && logoutAttempts++ === 0) return Promise.reject(new TypeError('offline'))
+      return Promise.resolve(response(null, 204))
+    }))
     render(<App />)
     await screen.findByRole('button', { name: 'Login' })
     await submitLogin()
@@ -82,13 +89,14 @@ describe('workspace shell and authentication', () => {
 
 describe('integrated feature routes', () => {
   it('opens all three pages and restores a direct Explorer URL', async () => {
-    const fetch = vi.fn().mockResolvedValueOnce(response(identity)).mockResolvedValueOnce(response({ data: [], next_cursor: null }))
+    const fetch = vi.fn((url: string) => Promise.resolve(url === '/auth/me' ? response(identity)
+      : url === '/api/research/capabilities' ? response([]) : response({ data: [], next_cursor: null })))
     vi.stubGlobal('fetch', fetch)
     render(<App />)
-    fireEvent.click(await screen.findByRole('button', { name: 'Research Explorer →' }))
+    fireEvent.click(await screen.findByRole('button', { name: 'Open Research Explorer' }))
     await screen.findByText('Publication Store 为空。')
     expect(window.location.pathname).toBe('/research/publications')
-    expect(fetch.mock.calls[1][0]).toBe('/api/research/publications')
+    expect(fetch.mock.calls.some(([url]) => url === '/api/research/publications')).toBe(true)
     fireEvent.click(screen.getByRole('button', { name: 'Daily Data overview' }))
     expect(window.location.pathname).toBe('/data')
     fireEvent.click(screen.getByRole('button', { name: 'MO Option Chain →' }))
@@ -128,6 +136,31 @@ describe('integrated feature routes', () => {
     await screen.findByRole('button', { name: 'Login' })
     old.resolve(response({ data: [{ publication_id: 'stale', status: 'success' }], next_cursor: null }))
     expect(screen.queryByText('stale')).toBeNull()
+  })
+
+  it('closes the workspace on a Catalog 401 and discards a late catalog result', async () => {
+    const old = deferred<Response>()
+    const fetch = vi.fn().mockResolvedValueOnce(response(identity)).mockImplementationOnce(() => old.promise)
+    vi.stubGlobal('fetch', fetch)
+    render(<App />)
+    await screen.findByRole('heading', { name: 'Research Workspace' })
+    old.resolve(unauthorized())
+    await screen.findByRole('button', { name: 'Login' })
+    expect(screen.queryByText('Price Segmentation')).toBeNull()
+    expect(screen.queryByText('alice')).toBeNull()
+  })
+
+  it('restores the Workspace on direct reload and browser history', async () => {
+    window.history.replaceState(null, '', '/research')
+    vi.stubGlobal('fetch', vi.fn((url: string) => Promise.resolve(url === '/auth/me' ? response(identity)
+      : url === '/api/research/capabilities' ? response([]) : response({ data: [], next_cursor: null }))))
+    render(<App />)
+    await screen.findByText('No published online capabilities.')
+    fireEvent.click(screen.getByRole('button', { name: 'Open Research Explorer' }))
+    await screen.findByText('Publication Store 为空。')
+    await act(async () => { window.history.replaceState(null, '', '/research'); window.dispatchEvent(new PopStateEvent('popstate')) })
+    await screen.findByText('No published online capabilities.')
+    expect(window.location.pathname).toBe('/research')
   })
 })
 

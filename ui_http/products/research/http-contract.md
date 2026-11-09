@@ -148,9 +148,10 @@ preflight, guard acquisition or execution. Auth errors remain separate from the 
 product error map above. G0 encodes this target; G2 implements the gate. Acquisition
 acknowledgment, HTTP bounds and the single-process execution guard remain required;
 authentication does not approve public exposure of execute. No CORS or public deployment
-is introduced. No frontend consumer is admitted for this Descriptive Research product:
-run sibling generation and freshness checks but create no TypeScript artifacts for these
-four operations. The separate Online Futures Basis Research product owns its own
-frontend consumer and generated contract. OpenAPI/local HTTP alone
+is introduced. WP3 admits one read-only frontend consumer for the two Capability GET
+operations only: Research Catalog owns its projected OpenAPI and generated TypeScript
+artifacts and freshness check. Preview and execute have no Web consumer in WP3. The
+separate Online Futures Basis Research product owns its own future frontend consumer
+and generated contract. OpenAPI/local HTTP alone
 does not connect a cloud agent; registered reachable tooling is required. No MCP, cloud
 hosting, cache repair, historical-run retrieval or additional Research engine is introduced.

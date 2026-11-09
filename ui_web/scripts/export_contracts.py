@@ -70,6 +70,13 @@ def create_research_app() -> FastAPI:
     })
 
 
+def create_research_catalog_app() -> FastAPI:
+    return create_projection({
+        "/research/capabilities",
+        "/research/capabilities/{id}",
+    })
+
+
 CONTRACTS: tuple[tuple[str, Callable[[], FastAPI], Path], ...] = (
     (
         "Application Authentication",
@@ -80,6 +87,11 @@ CONTRACTS: tuple[tuple[str, Callable[[], FastAPI], Path], ...] = (
         "Research Publication",
         create_research_app,
         WEB_UI_ROOT / "src/features/research_explorer/api/research.openapi.json",
+    ),
+    (
+        "Research Catalog",
+        create_research_catalog_app,
+        WEB_UI_ROOT / "src/features/research_catalog/api/catalog.openapi.json",
     ),
     (
         "MO Option Chain",

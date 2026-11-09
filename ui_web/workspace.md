@@ -5,17 +5,17 @@ This specialized authority follows [application.md](application.md) and [ui-syst
 ## Business areas and readiness
 
 - **Daily Data** exposes the implemented MO Option Chain and MO Premium Plane pages for daily data inspection. It may consume published raw or derived products but never calculates their business values in React. Futures Basis Data Product integration is future work.
-- **Research** is the authenticated default workspace. Research Explorer browses existing Publications, evidence and views; it does not execute Research. Futures Basis Online Research has frontend authority but no implemented page in this baseline. R01-A offline report remains independently readable.
+- **Research** is the authenticated default workspace. WP3 Catalog discovers published descriptors, local Python cases and offline report workflow with separate readiness claims. Research Explorer browses existing Publications, evidence and views; it does not execute Research. Futures Basis Online Research has frontend authority but no implemented page. R01-A offline report remains independently readable when generated locally.
 - **Backtesting** is a Planned destination. It has no strategy engine, simulated trades, or result data.
 
-A later online capability may be shown as available only after its actual consumer and backend are implemented. No false execution controls or mock results are part of these landing pages.
+An online descriptor may be shown as discoverable after its authenticated read consumer is implemented; this does not claim Web execution or live provider readiness. An online execution surface may be shown as available only after its actual consumer and backend are implemented. No false execution controls or mock results are part of these pages.
 
 ## URLs and shell
 
 | Path | Surface |
 | --- | --- |
 | `/` | Authentication gate, then redirect to `/research` |
-| `/research` | Research workspace landing |
+| `/research` | Read-only Research Catalog & Workspace |
 | `/research/publications` | Research Explorer |
 | `/data` | Daily Data landing |
 | `/data/mo-option-chain` | MO Option Chain |

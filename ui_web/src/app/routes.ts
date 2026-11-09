@@ -1,22 +1,26 @@
 import { useCallback, useEffect, useState } from 'react'
 
-export type WorkspacePath = '/research' | '/research/publications' | '/data' | '/data/mo-option-chain' | '/data/mo-premium-plane' | '/backtesting'
-
-const known = new Set<WorkspacePath>([
+const knownPaths = [
   '/research', '/research/publications', '/data', '/data/mo-option-chain',
   '/data/mo-premium-plane', '/backtesting',
-])
+] as const
+export type WorkspacePath = typeof knownPaths[number]
+const known = new Set<string>(knownPaths)
+
+export function isWorkspacePath(path: string): path is WorkspacePath {
+  return known.has(path)
+}
 
 export function currentWorkspacePath(): WorkspacePath {
-  return known.has(window.location.pathname as WorkspacePath)
-    ? window.location.pathname as WorkspacePath : '/research'
+  return isWorkspacePath(window.location.pathname)
+    ? window.location.pathname : '/research'
 }
 
 export function useWorkspaceRoute() {
   const [path, setPath] = useState(currentWorkspacePath)
   useEffect(() => {
     const sync = () => {
-      if (!known.has(window.location.pathname as WorkspacePath)) window.history.replaceState(null, '', '/research')
+      if (!isWorkspacePath(window.location.pathname)) window.history.replaceState(null, '', '/research')
       setPath(currentWorkspacePath())
     }
     window.addEventListener('popstate', sync)

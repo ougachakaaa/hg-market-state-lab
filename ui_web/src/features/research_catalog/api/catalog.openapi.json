@@ -1,0 +1,590 @@
+{
+  "components": {
+    "schemas": {
+      "AuthErrorBody": {
+        "properties": {
+          "detail": {
+            "title": "Detail",
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "invalid_request",
+              "authentication_required",
+              "invalid_credentials",
+              "origin_forbidden",
+              "rate_limited",
+              "internal_error"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "param": {
+            "default": null,
+            "title": "Param",
+            "type": "null"
+          }
+        },
+        "required": [
+          "kind",
+          "detail"
+        ],
+        "title": "AuthErrorBody",
+        "type": "object"
+      },
+      "AuthErrorResponse": {
+        "properties": {
+          "error": {
+            "$ref": "#/components/schemas/AuthErrorBody"
+          }
+        },
+        "required": [
+          "error"
+        ],
+        "title": "AuthErrorResponse",
+        "type": "object"
+      },
+      "CapabilityDescription": {
+        "properties": {
+          "analysis_methods": {
+            "maxItems": 2,
+            "minItems": 2,
+            "prefixItems": [
+              {
+                "$ref": "#/components/schemas/QuantileDescription"
+              },
+              {
+                "$ref": "#/components/schemas/IntervalCountDescription"
+              }
+            ],
+            "title": "Analysis Methods",
+            "type": "array"
+          },
+          "anchor_meaning": {
+            "title": "Anchor Meaning",
+            "type": "string"
+          },
+          "bounds": {
+            "title": "Bounds",
+            "type": "string"
+          },
+          "calendar": {
+            "title": "Calendar",
+            "type": "string"
+          },
+          "formula": {
+            "title": "Formula",
+            "type": "string"
+          },
+          "horizon_type": {
+            "const": "positive_integer_excluding_bool",
+            "title": "Horizon Type",
+            "type": "string"
+          },
+          "horizon_unit": {
+            "title": "Horizon Unit",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "limitations": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Limitations",
+            "type": "array"
+          },
+          "live_readiness": {
+            "const": "not_probed",
+            "title": "Live Readiness",
+            "type": "string"
+          },
+          "metric_parameters": {
+            "$ref": "#/components/schemas/EmptyMetricParameters"
+          },
+          "metric_parameters_requirement": {
+            "const": "explicit_empty_object",
+            "title": "Metric Parameters Requirement",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "on_job_failure_required": {
+            "const": true,
+            "title": "On Job Failure Required",
+            "type": "boolean"
+          },
+          "on_job_failure_values": {
+            "maxItems": 2,
+            "minItems": 2,
+            "prefixItems": [
+              {
+                "const": "continue",
+                "type": "string"
+              },
+              {
+                "const": "stop",
+                "type": "string"
+              }
+            ],
+            "title": "On Job Failure Values",
+            "type": "array"
+          },
+          "ordered_nonempty_fields": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Ordered Nonempty Fields",
+            "type": "array"
+          },
+          "paradigm": {
+            "const": "descriptive",
+            "title": "Paradigm",
+            "type": "string"
+          },
+          "purpose": {
+            "title": "Purpose",
+            "type": "string"
+          },
+          "statistics_validator": {
+            "const": "market_statistics.validate_spec",
+            "title": "Statistics Validator",
+            "type": "string"
+          },
+          "status": {
+            "const": "supported",
+            "title": "Status",
+            "type": "string"
+          },
+          "status_semantics": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Status Semantics",
+            "type": "array"
+          },
+          "subject": {
+            "$ref": "#/components/schemas/SubjectDescription"
+          },
+          "unique_fields": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Unique Fields",
+            "type": "array"
+          },
+          "unit": {
+            "title": "Unit",
+            "type": "string"
+          },
+          "window_constraints": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Window Constraints",
+            "type": "array"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "paradigm",
+          "purpose",
+          "status",
+          "live_readiness",
+          "subject",
+          "metric_parameters",
+          "metric_parameters_requirement",
+          "ordered_nonempty_fields",
+          "unique_fields",
+          "horizon_type",
+          "horizon_unit",
+          "window_constraints",
+          "formula",
+          "unit",
+          "calendar",
+          "anchor_meaning",
+          "bounds",
+          "analysis_methods",
+          "statistics_validator",
+          "on_job_failure_required",
+          "on_job_failure_values",
+          "status_semantics",
+          "limitations"
+        ],
+        "title": "CapabilityDescription",
+        "type": "object"
+      },
+      "EmptyMetricParameters": {
+        "description": "This admitted case has no legal metric parameter fields.",
+        "properties": {},
+        "title": "EmptyMetricParameters",
+        "type": "object"
+      },
+      "ErrorKind": {
+        "enum": [
+          "invalid_request",
+          "capability_not_found",
+          "request_too_large",
+          "execution_busy",
+          "internal_error"
+        ],
+        "type": "string"
+      },
+      "IntervalCountDescription": {
+        "properties": {
+          "bins": {
+            "title": "Bins",
+            "type": "string"
+          },
+          "coordinates": {
+            "title": "Coordinates",
+            "type": "string"
+          },
+          "method": {
+            "const": "interval_count",
+            "title": "Method",
+            "type": "string"
+          },
+          "minimum_edges": {
+            "title": "Minimum Edges",
+            "type": "integer"
+          },
+          "required_parameters": {
+            "items": {
+              "enum": [
+                "edges",
+                "unit"
+              ],
+              "type": "string"
+            },
+            "title": "Required Parameters",
+            "type": "array"
+          },
+          "unit": {
+            "title": "Unit",
+            "type": "string"
+          }
+        },
+        "required": [
+          "method",
+          "required_parameters",
+          "minimum_edges",
+          "coordinates",
+          "unit",
+          "bins"
+        ],
+        "title": "IntervalCountDescription",
+        "type": "object"
+      },
+      "QuantileDescription": {
+        "properties": {
+          "coordinates": {
+            "title": "Coordinates",
+            "type": "string"
+          },
+          "estimator": {
+            "const": "type7_linear_v1",
+            "title": "Estimator",
+            "type": "string"
+          },
+          "method": {
+            "const": "quantile",
+            "title": "Method",
+            "type": "string"
+          },
+          "minimum_points": {
+            "title": "Minimum Points",
+            "type": "integer"
+          },
+          "probability_bounds": {
+            "maxItems": 2,
+            "minItems": 2,
+            "prefixItems": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "number"
+              }
+            ],
+            "title": "Probability Bounds",
+            "type": "array"
+          },
+          "required_parameters": {
+            "items": {
+              "const": "points",
+              "type": "string"
+            },
+            "title": "Required Parameters",
+            "type": "array"
+          }
+        },
+        "required": [
+          "method",
+          "required_parameters",
+          "minimum_points",
+          "probability_bounds",
+          "coordinates",
+          "estimator"
+        ],
+        "title": "QuantileDescription",
+        "type": "object"
+      },
+      "ResearchErrorBody": {
+        "additionalProperties": false,
+        "properties": {
+          "detail": {
+            "title": "Detail",
+            "type": "string"
+          },
+          "kind": {
+            "$ref": "#/components/schemas/ErrorKind"
+          },
+          "param": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Param"
+          }
+        },
+        "required": [
+          "kind",
+          "detail",
+          "param"
+        ],
+        "title": "ResearchErrorBody",
+        "type": "object"
+      },
+      "ResearchErrorResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "error": {
+            "$ref": "#/components/schemas/ResearchErrorBody"
+          }
+        },
+        "required": [
+          "error"
+        ],
+        "title": "ResearchErrorResponse",
+        "type": "object"
+      },
+      "SubjectDescription": {
+        "properties": {
+          "example_is_default": {
+            "const": false,
+            "title": "Example Is Default",
+            "type": "boolean"
+          },
+          "example_name": {
+            "title": "Example Name",
+            "type": "string"
+          },
+          "kind": {
+            "const": "canonical_full_index_code",
+            "title": "Kind",
+            "type": "string"
+          },
+          "membership_note": {
+            "title": "Membership Note",
+            "type": "string"
+          },
+          "pattern": {
+            "title": "Pattern",
+            "type": "string"
+          },
+          "verified_example": {
+            "title": "Verified Example",
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "pattern",
+          "verified_example",
+          "example_name",
+          "example_is_default",
+          "membership_note"
+        ],
+        "title": "SubjectDescription",
+        "type": "object"
+      }
+    },
+    "securitySchemes": {
+      "CookieSession": {
+        "in": "cookie",
+        "name": "lab_access_token",
+        "type": "apiKey"
+      }
+    }
+  },
+  "info": {
+    "summary": "HTTP delivery runtime for market-snapshot products.",
+    "title": "hg-market-state-lab Market Snapshot API",
+    "version": "0.1.0"
+  },
+  "openapi": "3.1.0",
+  "paths": {
+    "/research/capabilities": {
+      "get": {
+        "description": "Read-only admitted capabilities. No service creation, market I/O or readiness probe.",
+        "operationId": "list_research_capabilities",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/CapabilityDescription"
+                  },
+                  "title": "Response List Research Capabilities",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthErrorResponse"
+                }
+              }
+            },
+            "description": "HTTP access error"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthErrorResponse"
+                }
+              }
+            },
+            "description": "HTTP access error"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ResearchErrorResponse"
+                    },
+                    {
+                      "$ref": "#/components/schemas/AuthErrorResponse"
+                    }
+                  ]
+                }
+              }
+            },
+            "description": "internal_error; safe detail"
+          }
+        },
+        "security": [
+          {
+            "CookieSession": []
+          }
+        ],
+        "summary": "Capabilities",
+        "tags": [
+          "Research"
+        ]
+      }
+    },
+    "/research/capabilities/{id}": {
+      "get": {
+        "operationId": "get_research_capability",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "title": "Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CapabilityDescription"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthErrorResponse"
+                }
+              }
+            },
+            "description": "HTTP access error"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthErrorResponse"
+                }
+              }
+            },
+            "description": "HTTP access error"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResearchErrorResponse"
+                }
+              }
+            },
+            "description": "capability_not_found"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ResearchErrorResponse"
+                    },
+                    {
+                      "$ref": "#/components/schemas/AuthErrorResponse"
+                    }
+                  ]
+                }
+              }
+            },
+            "description": "internal_error; safe detail"
+          }
+        },
+        "security": [
+          {
+            "CookieSession": []
+          }
+        ],
+        "summary": "Capability",
+        "tags": [
+          "Research"
+        ]
+      }
+    }
+  }
+}

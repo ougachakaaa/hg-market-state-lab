@@ -1,6 +1,6 @@
 # Web Workspace work packages
 
-This execution plan follows [Workspace authority](workspace.md). Implement WP0–WP2 on a branch from `2d0cfcff6d61bfd6a557dd578aa272437eabcf70`, with one reviewed commit per WP. Do not implement WP3–WP6 in this round.
+This execution plan follows [Workspace authority](workspace.md). WP0–WP2 were implemented on the workspace branch from `2d0cfcff6d61bfd6a557dd578aa272437eabcf70`, with one reviewed commit per WP. WP3 implements the read-only Research Catalog on the same branch; WP4–WP6 remain future work.
 
 | WP | Work | Acceptance |
 | --- | --- | --- |

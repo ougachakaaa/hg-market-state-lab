@@ -42,3 +42,16 @@ def test_research_export_has_only_protected_publication_operations():
     assert document['components']['securitySchemes']['CookieSession']['in'] == 'cookie'
     assert 'Manifest' in document['components']['schemas']
     assert 'ChartView' in document['components']['schemas']
+
+
+def test_catalog_export_has_only_protected_capability_reads():
+    exporter = runpy.run_path(str(ROOT / 'ui_web/scripts/export_contracts.py'))
+    document = exporter['create_research_catalog_app']().openapi()
+    assert set(document['paths']) == {
+        '/research/capabilities', '/research/capabilities/{id}',
+    }
+    for path in document['paths'].values():
+        assert set(path) == {'get'}
+        assert path['get']['security'] == [{'CookieSession': []}]
+    assert 'CapabilityDescription' in document['components']['schemas']
+    assert 'PlanBody' not in document['components']['schemas']

@@ -3,11 +3,12 @@ import { useEffect, useState } from 'react'
 import OptionChainPage from '../features/mo_option_chain'
 import PremiumPlanePage from '../features/mo_option_premium'
 import ResearchExplorerPage from '../features/research_explorer/page/ResearchExplorerPage'
+import ResearchWorkspacePage from '../features/research_catalog/page/ResearchWorkspacePage'
 import AppUiProvider from './AppUiProvider'
 import AuthForm from './auth/AuthForm'
 import { useAuthentication } from './auth/useAuthentication'
 import type { CurrentUser, LoginRequest } from './auth/api/auth'
-import { useWorkspaceRoute, type WorkspacePath } from './routes'
+import { isWorkspacePath, useWorkspaceRoute, type WorkspacePath } from './routes'
 
 const titles: Record<WorkspacePath, string> = {
   '/research': 'Research Workspace',
@@ -18,9 +19,8 @@ const titles: Record<WorkspacePath, string> = {
   '/backtesting': 'Backtesting',
 }
 
-function Landing({ area, navigate }: { area: 'research' | 'data' | 'backtesting'; navigate: (path: WorkspacePath) => void }) {
+function Landing({ area, navigate }: { area: 'data' | 'backtesting'; navigate: (path: WorkspacePath) => void }) {
   const content = {
-    research: { title: 'Research Workspace', description: '浏览已发布的研究结果与可复现证据。在线研究目录和执行能力将在后续阶段接入。', next: 'Research Explorer', path: '/research/publications' as WorkspacePath },
     data: { title: 'Daily Data', description: '查看现有的 MO 数据产品。查询与导出体验将在后续阶段完善。', next: 'MO Option Chain', path: '/data/mo-option-chain' as WorkspacePath },
     backtesting: { title: 'Backtesting', description: 'Planned：策略模拟与历史验证尚未实现，目前没有回测结果。', next: '', path: '/backtesting' as WorkspacePath },
   }[area]
@@ -78,7 +78,7 @@ function ApplicationShell({ user, signOut, path, navigate }: {
       </Layout.Header>
       <Layout.Content style={{ minWidth: 0, width: '100%', maxWidth: 1500, margin: '0 auto',
         padding: token.paddingLG, boxSizing: 'border-box' }}>
-        {path === '/research' ? <Landing area="research" navigate={navigate} />
+        {path === '/research' ? <ResearchWorkspacePage openExplorer={() => navigate('/research/publications')} />
           : path === '/research/publications' ? <ResearchExplorerPage />
             : path === '/data' ? <Landing area="data" navigate={navigate} />
               : path === '/data/mo-option-chain' ? <OptionChainPage />
@@ -93,13 +93,13 @@ function AuthenticationGate() {
   const { state, check, signIn, signOut } = useAuthentication()
   const { path, navigate } = useWorkspaceRoute()
   useEffect(() => {
-    if (state.status === 'authenticated' && !['/research', '/research/publications', '/data', '/data/mo-option-chain', '/data/mo-premium-plane', '/backtesting'].includes(window.location.pathname)) {
+    if (state.status === 'authenticated' && !isWorkspacePath(window.location.pathname)) {
       navigate('/research', true)
     }
   }, [state.status, navigate])
   const login = async (credentials: LoginRequest) => {
     await signIn(credentials)
-    if (window.location.pathname === '/' || currentPathIsUnknown()) navigate('/research', true)
+    if (!isWorkspacePath(window.location.pathname)) navigate('/research', true)
   }
   if (state.status === 'authenticated') return <ApplicationShell user={state.user} signOut={signOut} path={path} navigate={navigate} />
   if (state.status === 'anonymous') return <AuthForm signIn={login} />
@@ -109,10 +109,6 @@ function AuthenticationGate() {
     {state.status === 'logging_out' && (state.pending ? <><Spin /><Typography.Text>正在退出…</Typography.Text></>
       : <><Alert type="error" title={state.message} /><Button onClick={() => void signOut()}>重试退出</Button></>)}
   </Flex>
-}
-
-function currentPathIsUnknown() {
-  return !['/research', '/research/publications', '/data', '/data/mo-option-chain', '/data/mo-premium-plane', '/backtesting'].includes(window.location.pathname)
 }
 
 function App() {

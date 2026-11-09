@@ -33,10 +33,11 @@ OpenAPI 与 TypeScript artifacts 是 backend HTTP contract 的生成表示，不
 | MO Option Chain | [`GET /mo-option-chain`](../ui_http/products/mo_option_chain/http-contract.md) | `mo_option_chain` frontend bounded context |
 | MO Premium Plane | [`GET /mo-option-premium-plane`](../ui_http/products/mo_option_premium/http-contract.md) | `mo_option_premium` frontend bounded context |
 | Research Explorer | [Publication HTTP contract](../ui_http/products/research_publication/http-contract.md) | `research_explorer` frontend bounded context |
+| Research Catalog & Workspace | [Research Capability GET contract](../ui_http/products/research/http-contract.md) | `research_catalog` frontend bounded context |
 | Futures Basis Research | [Online Futures Basis Research HTTP contract](../ui_http/products/futures_basis_research/http-contract.md) | `futures_basis_research` frontend bounded context |
 | Application Authentication | [Auth HTTP contract](../ui_http/AUTHENTICATION.md#4-http-contract-and-access-order) | application Auth boundary，独立于 MO features |
 
-两个 MO Product、Research Publication、Futures Basis Research 与 Application Authentication 的 contract boundaries 平级且独立；各自拥有独立的 generated artifacts 和 ownership。Backend runtime 可以组合多个 product routes，但 runtime composition 不得把 sibling frontend features 强制耦合进共享业务 schema、共享 DTO ownership 或共享 feature-local contract boundary。
+两个 MO Product、Research Publication、Research Capability GET、Futures Basis Research 与 Application Authentication 的 contract boundaries 平级且独立；已实现的 consumer 各自拥有独立的 generated artifacts 和 ownership。Backend runtime 可以组合多个 product routes，但 runtime composition 不得把 sibling frontend features 强制耦合进共享业务 schema、共享 DTO ownership 或共享 feature-local contract boundary。
 
 Futures Basis Research 当前仅完成 WP6 authority；上表声明其未来 generated-contract ownership，
 不表示已有 HTTP runtime、frontend consumer 或 generated artifacts。WP7–WP9 尚未实现；
@@ -65,7 +66,7 @@ Repository-level frontend `contract:check` 必须覆盖所有 frontend-consumed 
 
 任一 product 缺失、stale 或 generation drift 都必须使整体 check 失败。一个 product 通过不能替代或掩盖 sibling product 的失败。
 
-Contract export 使用离线 `.openapi()`，不通过受保护的 HTTP schema endpoint、不需要真实 secret/用户库，也不创建生产状态。Offline builder 不能发布一份删除 security metadata 的竞争性 contract；可被 HTTP 服务的任何 app 都遵循 Auth gate。Research Explorer 通过其共址 OpenAPI / TypeScript artifacts 消费 Publication HTTP contract，并纳入全部 consumer 的 `contract:check`；Layer 的语义来源仍是 [Visualization authority](VISUALIZATION.md)，wire 表达来源于 ui_http OpenAPI，不手写竞争 schema。
+Contract export 使用离线 `.openapi()`，不通过受保护的 HTTP schema endpoint、不需要真实 secret/用户库，也不创建生产状态。Offline builder 不能发布一份删除 security metadata 的竞争性 contract；可被 HTTP 服务的任何 app 都遵循 Auth gate。Research Explorer 消费 Publication HTTP contract；Research Catalog 独立消费 Capability 的两个 GET operation。二者共址的 OpenAPI / TypeScript artifacts 均纳入 `contract:check`；Layer 的语义来源仍是 [Visualization authority](VISUALIZATION.md)，wire 表达来源于 ui_http OpenAPI，不手写竞争 schema。
 
 ## 5. Tooling Boundary
 
