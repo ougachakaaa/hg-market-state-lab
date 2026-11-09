@@ -79,6 +79,8 @@ Web UI 中所有用户可见的 price-domain 数值统一显示 **1 位小数**�
 
 这是 presentation formatting，不是 data rounding。不得修改 backend / read model / HTTP 的 numeric fact，也不得影响计算、排序、chart coordinate 或 contract identity。
 
+本节精度仅适用于页面展示；第 10 节的数据复制保留响应中的原始 numeric values，不应用上述 formatting。
+
 ## 4. Visualization scope
 
 目标日期全部处于有效生命周期内的 MO option contracts 都属于目标展示范围。
@@ -195,3 +197,15 @@ React component tree
 state-management
 chart library
 ```
+
+## 10. Daily Data Copy / Export
+
+两种复制的格式、成功状态限制、顶部入口、Clipboard 反馈与安全边界遵循 [Daily Data Copy / Export authority](../../../data-copy-export.md)。本节只拥有 Option Chain 特有的 source 与 context；这些是 WP1 的实现要求，当前缺口见共同 authority 的静态 reconciliation。
+
+Copy JSON 与 Copy for GPT 的 JSON 均使用当前成功状态中的完整 `OptionChain` 对象，即本次 HTTP request 收到且通过 runtime contract validation 的响应。不得使用 `selectedGroups`、chart traces、可见 strike viewport 或合约明细的展示投影；隐藏的 expiry、Call/Put 合约、视窗外合约和 `price=null` 的合约都必须保留。
+
+Copy for GPT 的产品名称为 `MO Option Chain`；上下文读取同一响应中的 `target_trade_date`、`option_product`、resolved `price_type` 和 `underlying.instrument_id`。当前页面固定请求 MO/close 不构成硬编码复制身份的依据。
+
+简短阅读说明限定为 [HTTP contract](../../../../ui_http/products/mo_option_chain/http-contract.md#3-success-response) 已确认的事实：`price=null` 表示缺价，numeric `0` 是合法数据，二者不等价；无结构性匹配的同到期 IM 合约时 `futures` 为 `null`，不得推断替代 reference。Expiry 与 Call/Put identity 保持响应的父级 grouping，不生成另一套 option DTO。
+
+WP2 CSV 按响应中的真实 option contract 展平，保留其父级 expiry 与 Call/Put 归属，不生成虚构合约；其余 CSV 决策遵循共同 authority 的 deferred boundary。
