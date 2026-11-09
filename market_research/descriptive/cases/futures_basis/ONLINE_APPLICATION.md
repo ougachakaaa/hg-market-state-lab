@@ -196,7 +196,11 @@ runtime directory `market_research/.runtime/futures_basis_online/` (WP7 must ens
 the runtime tree is outside Git); it is resolved without depending on the process
 working directory. Invalid, unavailable
 or unwritable storage makes the online product unavailable; it does not prevent
-server startup or other products. Server paths, owner scopes and storage
+server startup or other products. The store requires POSIX descriptor-relative
+file operations, no-follow directory/file opens and user ownership checks. Missing
+platform capabilities (including native Windows) classify as `unavailable` before
+creating the runtime tree; WSL/Linux must provide those capabilities. No Windows
+filesystem emulation is provided. Server paths, owner scopes and storage
 configuration are never exposed.
 
 The store is deliberately disposable runtime state under the

@@ -102,6 +102,15 @@ def _validate_reader(reader: Any, report: ReportResult, request: FuturesBasisReq
         raise ValueError("Invalid input fingerprint or definition")
 
 
+def _supports_storage() -> bool:
+    return (
+        all(hasattr(os, name) for name in ("getuid", "O_DIRECTORY", "O_NOFOLLOW", "O_NONBLOCK"))
+        and all(operation in os.supports_dir_fd for operation in (os.open, os.mkdir, os.unlink))
+        and os.rename in os.supports_dir_fd
+        and os.listdir in os.supports_fd
+    )
+
+
 def _safe_root(path: Path) -> Path:
     if not path.is_absolute() or ".." in path.parts:
         raise OnlineError("unavailable")
@@ -317,6 +326,8 @@ class FuturesBasisOnlineApplication:
         observe: Callable[..., Any] = observe_futures_basis,
         compose: Callable[..., ReportResult] = compose_report,
     ) -> None:
+        if not _supports_storage():
+            raise OnlineError("unavailable")
         try:
             configured = futures_basis_run_root() if root is None else None
         except ConfigError:

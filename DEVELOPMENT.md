@@ -29,6 +29,7 @@ process environment > repository-root .env > built-in defaults
 | `LAB_AUTH_ORIGIN` | Auth serving 必填的 browser-facing origin |
 | `LAB_AUTH_DB_PATH` | 可选，Auth SQLite 绝对路径；默认 `ui_http/data/auth.sqlite3` |
 | `LAB_RESEARCH_PUBLICATION_ROOT` | 可选，Publication storage 绝对路径 |
+| `LAB_FUTURES_BASIS_RUN_ROOT` | 可选，Futures Basis Online Run Store 绝对路径；默认 `market_research/.runtime/futures_basis_online/` |
 
 首次准备：
 
@@ -89,7 +90,7 @@ bash scripts/market-lab.sh stop    # 从另一终端停止两个服务
 
 `start` 会保持前台运行并等待按键；`stop` 和 `status` 可在另一个终端执行。
 
-原生 Windows 缺少 Publication V1 存储所需的 POSIX `dir_fd`、`O_DIRECTORY` 与 `O_NOFOLLOW` 能力。backend 与其他产品可正常启动，但 Publication 读操作及 `retain_source`/`publish` 返回 503 `unavailable`，Research Explorer 显示 Publication 存储不可用。完整 Publication 仍需 Linux 或满足相同文件系统能力的 WSL，并显式配置 `LAB_RESEARCH_PUBLICATION_ROOT`；详见 [Publication 平台限制](market_research/descriptive/ACCEPTANCE.md#native-windows-publication-limitation)。当前集成验证以 Linux 为准，WSL 仍需满足相同文件系统能力要求。
+原生 Windows 缺少 Publication V1 存储所需的 POSIX `dir_fd`、`O_DIRECTORY` 与 `O_NOFOLLOW` 能力。backend 与其他产品可正常启动，但 Publication 读操作及 `retain_source`/`publish` 返回 503 `unavailable`，Research Explorer 显示 Publication 存储不可用。Futures Basis Online Run Store 同样依赖 POSIX descriptor-relative I/O 与 ownership 检查；原生 Windows 上三个 `/research/futures-basis/runs` 操作返回 503 `unavailable`，不影响其他产品启动。该产品仅支持单进程，配置和平台能力失败在初始化时隔离；修复后需重启 backend。完整 Publication 仍需 Linux 或满足相同文件系统能力的 WSL，并显式配置 `LAB_RESEARCH_PUBLICATION_ROOT`；详见 [Publication 平台限制](market_research/descriptive/ACCEPTANCE.md#native-windows-publication-limitation)。当前集成验证以 Linux 为准，WSL 仍需满足相同文件系统能力要求。
 
 首次使用时在网页注册，然后在仓库根目录的另一个终端运行 `poetry run lab auth pending`，取得用户 ID 后运行 `poetry run lab auth approve <user-id>`，再返回网页登录。若在 process environment 或根 `.env` 设置了 `LAB_AUTH_DB_PATH`，审批终端也必须使用相同的值。
 

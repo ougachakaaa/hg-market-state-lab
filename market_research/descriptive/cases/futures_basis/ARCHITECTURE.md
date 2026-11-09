@@ -77,8 +77,10 @@ WP3 also passed bounded real IM acceptance; evidence and reproduction instructio
 are in [WP3 acceptance](WP3_ACCEPTANCE.md). WP4 statistics have independent runtime and real IM acceptance; WP5 report
 acceptance is recorded separately in [WP5 acceptance](WP5_ACCEPTANCE.md). WP6 adds
 the online application, HTTP and Web authority in
-[Online application](ONLINE_APPLICATION.md); WP7–WP9 runtime implementation is not
-yet claimed. The offline path and its scientific contracts remain unchanged. No new CLI,
+[Online application](ONLINE_APPLICATION.md); WP7 Python application/store and
+WP8-A HTTP delivery are implemented; WP8-B Web integration and WP9 integrated
+acceptance remain pending. The offline path and its scientific contracts remain
+unchanged. No new CLI,
 Research database, publication lifecycle or Modeling import permission is introduced;
 the online run store is case-specific disposable runtime state, not Publication or a
 generic Research execution identity.

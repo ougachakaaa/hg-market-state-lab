@@ -340,3 +340,27 @@ Verification: `poetry run pytest market_research/tests` — 1,254 passed, 1 skip
 `poetry run pytest data_snapshot/tests/test_authority_topology.py ui_http/tests/test_architecture.py`
 — 21 passed; `poetry run ruff check market_research`, `poetry run mypy market_research`
 (106 files), and `git diff --check` passed. WP8 HTTP delivery remains pending.
+
+
+### WP8-A HTTP handoff (2026-11-09)
+
+WP8 is delivered in two independent parts: **WP8-A HTTP Product** and **WP8-B Web
+Consumer**. WP8-A is PASS under synthetic Linux acceptance; WP8-B remains pending.
+The [HTTP acceptance](../../../../ui_http/products/futures_basis_research/ACCEPTANCE.md)
+records all 13 acceptance items, error mapping, authentication/ownership, singleton
+startup, storage/platform isolation, OpenAPI/DTO reconciliation and exact checks.
+HTTP verification passed 476 tests; Research passed 1,255 tests with one existing
+platform-specific skip; topology/architecture/export checks passed 24 tests.
+Ruff, MyPy (160 files), existing frontend contract freshness and whitespace checks
+passed. Native Windows capability failure is simulated, not a native-platform run.
+
+The adapter uses the public case facade only. Repeated status reads do not execute
+Research or parse full reports. All responses are no-store; HTTP publication and
+response bounds remain independent, and report capacity includes serialization.
+The existing prohibition on GET query parameters now has explicit 400 rejection
+rows in the HTTP status matrix. Existing product contracts/artifacts did not drift.
+
+WP8-B first introduces the consumer, its generated OpenAPI/TypeScript artifacts and
+freshness coverage; React interaction, polling and shared reader migration remain
+unimplemented. No offline reader or live market workflow changed. WP9 retains the
+real browser and bounded live integration gates.

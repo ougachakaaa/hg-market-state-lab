@@ -391,3 +391,12 @@ def test_concurrent_report_reader_and_payload_associations(tmp_path, monkeypatch
         state["result_digest"] = hashlib.sha256(payload).hexdigest()
         state_path.write_text(json.dumps(state))
         error(kind, lambda: app.get_report(run_id, "owner-a"))
+
+
+def test_native_storage_capability_failure_is_side_effect_free(tmp_path, monkeypatch):
+    from market_research.descriptive.cases.futures_basis import online
+
+    monkeypatch.setattr(online, "_supports_storage", lambda: False)
+    root = tmp_path / "unsupported"
+    error("unavailable", lambda: application(root))
+    assert not root.exists()

@@ -186,7 +186,7 @@ def test_classified_failures_map_without_partial_plane(
     assert set(response.json()) == {"error"}
 
 
-def test_runtime_openapi_publishes_both_products_without_422() -> None:
+def test_runtime_openapi_publishes_composed_products_without_422() -> None:
     document = authenticated_client(runtime_app).get("/openapi.json").json()
 
     assert set(document["paths"]) == {
@@ -196,6 +196,9 @@ def test_runtime_openapi_publishes_both_products_without_422() -> None:
         "/research/capabilities/{id}",
         "/research/preview",
         "/research/execute",
+        "/research/futures-basis/runs",
+        "/research/futures-basis/runs/{run_id}",
+        "/research/futures-basis/runs/{run_id}/report",
         "/research/publications",
         "/research/publications/{publication_id}",
         "/research/publications/{publication_id}/analyses/{analysis_id}",

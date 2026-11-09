@@ -1,13 +1,14 @@
 """Repository FastAPI composition root for owning-module product adapters.
 
-This module composes the independent MO Option Chain, MO Premium Plane and Research
-adapters. It owns runtime wiring only; each product-local bounded context keeps
-ownership of its router, query contract, DTOs and error envelope.
+This module composes the independent MO Option Chain, MO Premium Plane, Research
+and Futures Basis Research adapters. It owns runtime wiring only; each product-local
+bounded context keeps ownership of its router, query contract, DTOs and error envelope.
 """
 
 from __future__ import annotations
 
-from collections.abc import Callable
+from collections.abc import AsyncIterator, Callable
+from contextlib import asynccontextmanager
 from copy import deepcopy
 from typing import Any
 
@@ -17,6 +18,11 @@ from fastapi.responses import JSONResponse
 
 from ui_http.auth._http import install_auth
 
+from .products.futures_basis_research.endpoint import (
+    install_contract as install_futures_basis_contract,
+)
+from .products.futures_basis_research.endpoint import router as futures_basis_router
+from .products.futures_basis_research.runtime import initialize as initialize_futures_basis
 from .products.mo_option_chain.endpoint import router as chain_router
 from .products.mo_option_chain.errors import (
     CONTRACT_QUERY_PARAMS as CHAIN_CONTRACT_QUERY_PARAMS,
@@ -161,9 +167,16 @@ def contract_openapi(application: FastAPI) -> Callable[[], dict[str, Any]]:
     return openapi
 
 
+@asynccontextmanager
+async def lifespan(application: FastAPI) -> AsyncIterator[None]:
+    initialize_futures_basis(application)
+    yield
+
+
 def create_app() -> FastAPI:
     """Build the repository runtime with independent product adapters."""
     application = FastAPI(
+        lifespan=lifespan,
         title=TITLE,
         version=VERSION,
         summary="HTTP delivery runtime for market-snapshot products.",
@@ -212,6 +225,8 @@ def create_app() -> FastAPI:
     application.include_router(premium_router)
     application.include_router(research_router)
     application.include_router(publication_router)
+    application.include_router(futures_basis_router)
+    install_futures_basis_contract(application)
     return application
 
 
