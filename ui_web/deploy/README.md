@@ -50,3 +50,7 @@
 - 站点目录由部署工具管理，发布会删除其中不属于新构建的文件。不要把其他站点、Docker 配置或用户数据放在该目录；不要并发使用其他工具修改它。部署树中的符号链接不受支持。
 - 若检查失败，依次检查发行版名称、Linux 目录权限、Node/npm 和依赖、build 输出、网关挂载及本机 URL。可检查 `docker compose ps`、容器日志和 `curl.exe -i http://localhost:8080/healthz`。HTTP 检查从 WSL 发起，因此 URL 也必须能从目标发行版访问。
 - 脚本针对本项目的 npm 静态构建，不能证明任意其他框架不存在 SSR；使用其他构建工具或 Node 服务端渲染需要重新评估，不能直接套用。不要把秘密或本机配置注入前端构建产物，静态文件会公开提供。
+
+## Workspace 路由前提
+
+`/research/publications` 是浏览器页面路径，也是后端 Publication API 路径。站点网关需把 `/research`、`/research/publications`、`/data/*`、`/backtesting` 的 HTML navigation 回退到 `index.html`，并把同源 `/api/research/*` 去除 `/api` 后转发至原后端路径，保留 Cookie、query、状态码与响应体。此仓库不包含实际 Nginx 站点配置；发布前应在目标网关验证这两类请求，不能仅以普通 SPA fallback 检查代替。

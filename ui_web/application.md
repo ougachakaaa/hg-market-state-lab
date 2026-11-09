@@ -4,21 +4,15 @@
 
 ## 1. Application Surfaces
 
-当前 Web application 组合四个 sibling feature surfaces：
+Web application 以 Research 为登录后默认入口，包含三个一级业务区：
 
 ```text
-ui_web application
-        │
-        ├── MO Option Chain
-        │
-        ├── MO Premium Plane
-        │
-        ├── Research Explorer
-        │
-        └── Futures Basis Research
+Daily Data → MO Option Chain / MO Premium Plane（已实现）
+Research → Research Explorer（已实现）；Futures Basis Research（仅有 Authority）
+Backtesting → Planned（没有策略引擎或结果）
 ```
 
-MO Option Chain 是默认 application entry。用户必须能够通过显式 feature navigation 发现并在四个 surface 之间切换；新增 surface 不得替换、隐藏或破坏现有 surface。Futures Basis Research 由 WP6 authority 定义，运行实现属于 WP8。
+登录后默认进入 `/research`，不提供独立宣传首页。三个已实现的在线 feature 保持可发现、可访问且相互独立；Futures Basis Research 由既有 WP6 authority 定义，本轮不把它当作已实现页面。导航和 URL 由 [Workspace authority](workspace.md) 细化。
 
 ## 2. Application Ownership
 
@@ -54,13 +48,13 @@ Application composition 不改变各 feature 的 backend dependencies，也不�
 
 ## 4. Implementation Boundary
 
-本 authority 不规定 React Router、navigation control 的精确 component/props、URL scheme、component tree、mounting strategy、CSS filename、state-management library 或 generic feature framework；这些实现选择仍须遵循 `ui-system.md` 规定的 Ant Design、theme 与 custom CSS boundary。实现只需满足默认 entry、显式 navigation、四个 surface 可访问及 bounded-context independence，不为假设中的未来 feature 引入 plugin 或 routing abstraction。
+本 authority 不规定 router library、精确 component/props、component tree、mounting strategy、CSS filename 或 state-management library；实现选择遵循 `ui-system.md` 和 [Workspace authority](workspace.md)，不得为未来 feature 引入 plugin 或 generic runtime。
 
 ## 5. Application Authentication (G3 implemented)
 
 认证 HTTP、用户状态、审批、Cookie、限流与同源协议唯一归 [Authentication MVP V1](../ui_http/AUTHENTICATION.md)。本节只拥有 application 交互和 gate；G3 已实现下述交互，G4 已完成本地跨层验收。
 
-Login / Registration 是 application-level 入口；认证通过后的默认 surface 仍为 MO Option Chain，用户可切换 MO Premium Plane、Research Explorer 或 Futures Basis Research。登录状态不属于各 feature 的 local query/presentation state，不经 sibling feature 共享；shell 不因此接管产品 query、DTO 或图表语义。
+Login / Registration 是 application-level 入口；普通登录进入 Research Workspace，直接访问已知深层页面且认证成功时保留该页面。用户可切换三个已实现的在线 feature；Futures Basis Research 仍仅有 Authority。登录状态不属于各 feature 的 local query/presentation state，不经 sibling feature 共享；shell 不因此接管产品 query、DTO 或图表语义。
 
 Application 管理以下状态及行为：
 

@@ -1,6 +1,6 @@
 # Futures Basis Research frontend authority
 
-This is the fourth sibling Web feature surface. It specializes the
+This is an authority-only future sibling Web feature, with no online page implementation in this baseline. It specializes the
 [ui_web architecture](../../../ARCHITECTURE.md) and
 [presentation architecture](../../../presentation-architecture.md), consumes the
 [Online Futures Basis Research HTTP contract](../../../../ui_http/products/futures_basis_research/http-contract.md)
@@ -13,9 +13,8 @@ slice; WP8 implements it and the offline reader regression.
 
 ## Application composition
 
-The surface is discovered from the existing authenticated application navigation
-as `Futures Basis Research`, alongside MO Option Chain, MO Premium Plane and
-Research Explorer. MO Option Chain remains the default entry. Adding this surface
+When implemented, the surface is discovered from the authenticated Research workspace
+as `Futures Basis Research`, alongside Research Explorer. Research remains the default entry. Adding this surface
 must not replace, hide or break an existing surface. It is a sibling bounded
 context: it does not read or reinterpret another feature's DTO, state, chart or
 result.

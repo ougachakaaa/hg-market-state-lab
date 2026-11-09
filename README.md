@@ -124,7 +124,7 @@ poetry run python ui_http/scripts/api.py --host 127.0.0.1 --port 8012
 npm run dev
 ```
 
-默认开发地址为 `http://127.0.0.1:5173/`。Vite 将 `/research`、`/auth`、`/mo-option-chain` 与 `/mo-option-premium-plane` 转发到默认 backend 地址；具体视觉与交互语义见 [MO Option Chain visualization authority](ui_web/src/features/mo_option_chain/ARCHITECTURE.md)。
+默认开发地址为 `http://127.0.0.1:5173/`；登录后进入 `/research` 工作台。Vite 将 `/api/research/*`（去除 `/api` 前缀）、`/auth`、`/mo-option-chain` 与 `/mo-option-premium-plane` 转发到默认 backend 地址；部署网关也需同样转发 `/api` 并为页面路由提供 SPA fallback。导航见 [Workspace authority](ui_web/workspace.md)。
 
 ## 验证命令
 
