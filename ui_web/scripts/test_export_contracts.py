@@ -42,3 +42,36 @@ def test_research_export_has_only_protected_publication_operations():
     assert document['components']['securitySchemes']['CookieSession']['in'] == 'cookie'
     assert 'Manifest' in document['components']['schemas']
     assert 'ChartView' in document['components']['schemas']
+
+
+def test_catalog_export_has_only_protected_capability_reads():
+    exporter = runpy.run_path(str(ROOT / 'ui_web/scripts/export_contracts.py'))
+    document = exporter['create_research_catalog_app']().openapi()
+    assert set(document['paths']) == {
+        '/research/capabilities', '/research/capabilities/{id}',
+    }
+    for path in document['paths'].values():
+        assert set(path) == {'get'}
+        assert path['get']['security'] == [{'CookieSession': []}]
+    assert 'CapabilityDescription' in document['components']['schemas']
+    assert 'PlanBody' not in document['components']['schemas']
+
+
+def test_futures_basis_export_is_protected_complete_and_storage_free(monkeypatch):
+    from ui_http.products.futures_basis_research import runtime
+
+    def forbidden():
+        raise AssertionError("Offline export initialized runtime storage")
+
+    monkeypatch.setattr(runtime._runtime, "get", forbidden)
+    exporter = runpy.run_path(str(ROOT / "ui_web/scripts/export_contracts.py"))
+    document = exporter["create_futures_basis_app"]().openapi()
+    base = "/research/futures-basis/runs"
+    assert set(document["paths"]) == {base, base + "/{run_id}", base + "/{run_id}/report"}
+    for operations in document["paths"].values():
+        for operation in operations.values():
+            assert operation["security"] == [{"CookieSession": []}]
+            assert "422" not in operation["responses"]
+    schema = document["components"]["schemas"]["FuturesBasisRunRequest"]
+    product = schema["properties"]["product_code"]
+    assert product["enum"] == ["IM", "IC", "IF", "IH"]

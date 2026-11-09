@@ -3,6 +3,7 @@ import { resolve } from 'node:path'
 import openapiTS, { astToString, COMMENT_HEADER } from 'openapi-typescript'
 
 const contracts = [
+  { name: 'Futures Basis Research', input: 'src/features/futures_basis_research/api/futuresBasis.openapi.json', output: 'src/features/futures_basis_research/api/futuresBasis.generated.ts' },
   {
     name: 'Application Authentication',
     input: 'src/app/auth/api/auth.openapi.json',
@@ -12,6 +13,11 @@ const contracts = [
     name: 'Research Publication',
     input: 'src/features/research_explorer/api/research.openapi.json',
     output: 'src/features/research_explorer/api/research.generated.ts',
+  },
+  {
+    name: 'Research Catalog',
+    input: 'src/features/research_catalog/api/catalog.openapi.json',
+    output: 'src/features/research_catalog/api/catalog.generated.ts',
   },
   {
     name: 'MO Option Chain',

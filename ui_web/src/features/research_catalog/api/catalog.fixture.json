@@ -1,0 +1,88 @@
+{
+  "id": "trailing_cumulative_return_v1",
+  "name": "Index Trailing Cumulative Return Research",
+  "paradigm": "descriptive",
+  "purpose": "Describe historical index end-session trailing returns with explicit analyses.",
+  "status": "supported",
+  "live_readiness": "not_probed",
+  "subject": {
+    "kind": "canonical_full_index_code",
+    "pattern": "[0-9]{6}\\.(SH|SZ|CSI)",
+    "verified_example": "000852.SH",
+    "example_name": "CSI1000",
+    "example_is_default": false,
+    "membership_note": "Example verified in isolated LIVE-E2E-01; syntax does not establish source membership."
+  },
+  "metric_parameters": {},
+  "metric_parameters_requirement": "explicit_empty_object",
+  "ordered_nonempty_fields": [
+    "subjects",
+    "horizons",
+    "windows",
+    "analysis_requests"
+  ],
+  "unique_fields": [
+    "subjects",
+    "horizons",
+    "windows",
+    "analysis_requests.request_id"
+  ],
+  "horizon_type": "positive_integer_excluding_bool",
+  "horizon_unit": "trading_sessions",
+  "window_constraints": [
+    "YYYY-MM-DD date-only",
+    "inclusive start_date <= end_date",
+    "end_date <= today in Asia/Shanghai"
+  ],
+  "formula": "close(T) / close(T-H) - 1",
+  "unit": "decimal_ratio",
+  "calendar": "SSE",
+  "anchor_meaning": "end_session",
+  "bounds": "inclusive",
+  "analysis_methods": [
+    {
+      "method": "quantile",
+      "required_parameters": [
+        "points"
+      ],
+      "minimum_points": 1,
+      "probability_bounds": [
+        0.0,
+        1.0
+      ],
+      "coordinates": "finite binary64, strictly increasing and unique; bool/text rejected",
+      "estimator": "type7_linear_v1"
+    },
+    {
+      "method": "interval_count",
+      "required_parameters": [
+        "edges",
+        "unit"
+      ],
+      "minimum_edges": 2,
+      "coordinates": "finite binary64, strictly increasing; bool/text rejected",
+      "unit": "decimal_ratio",
+      "bins": "[left,right), final [left,right]; underflow/overflow use full sample denominator"
+    }
+  ],
+  "statistics_validator": "market_statistics.validate_spec",
+  "on_job_failure_required": true,
+  "on_job_failure_values": [
+    "continue",
+    "stop"
+  ],
+  "status_semantics": [
+    "continue attempts all Jobs; stop skips later Jobs after the complete first Failed Job",
+    "Batch success: all Success; partial_success: successes and failures; failed: no Success",
+    "Job Success: every required analysis associated; Failed: a stage/analysis failed",
+    "Skipped: stop policy only; analyses success|failed|not_attempted retain original order"
+  ],
+  "limitations": [
+    "Supported implementation is not a live provider/credential/cache readiness claim.",
+    "Live upstream may be unavailable; partial Index facts retain coverage and may succeed.",
+    "Missing Calendar or no eligible observations may fail; no implicit defaults or provider.",
+    "Historical default Calendar cache recovery was not performed; isolated Live E2E verified.",
+    "No persistent Research Run, replay, result cache or historical-run retrieval.",
+    "Index case only; no stocks, Conditional Research, predictions or trading signals."
+  ]
+}

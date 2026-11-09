@@ -29,6 +29,10 @@ from .observations import OutcomeCollection as OutcomeCollection
 from .observations import SlotDayObservation as SlotDayObservation
 from .observations import SourceIssue as SourceIssue
 from .observations import SourceReference as SourceReference
+from .online import FuturesBasisOnlineApplication as FuturesBasisOnlineApplication
+from .online import OnlineError as OnlineError
+from .online import OnlineServices as OnlineServices
+from .online import standard_report_request as standard_report_request
 from .preparation import prepare_inputs as prepare_inputs
 from .report import ReportRequest as ReportRequest
 from .report import ReportResult as ReportResult

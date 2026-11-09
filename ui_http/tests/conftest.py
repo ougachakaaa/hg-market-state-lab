@@ -15,3 +15,11 @@ def http_auth_environment(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> No
     monkeypatch.setenv("LAB_AUTH_MODE", "production")
     monkeypatch.setenv("LAB_AUTH_ORIGIN", "https://testserver")
     monkeypatch.setattr(_limiter, "limiter", _limiter.RateLimiter())
+
+
+@pytest.fixture(autouse=True)
+def futures_basis_environment(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    from ui_http.products.futures_basis_research import runtime
+
+    monkeypatch.setenv("LAB_FUTURES_BASIS_RUN_ROOT", str(tmp_path / "futures-basis-runs"))
+    monkeypatch.setattr(runtime, "_runtime", runtime.OnlineRuntime())

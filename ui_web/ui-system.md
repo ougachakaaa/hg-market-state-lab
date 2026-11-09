@@ -38,7 +38,7 @@ shared/ui/
     theme                  domain-neutral UI policy
 ```
 
-精确文件名与 component tree 属于实现细节。Shared theme 可以拥有 primary color、background、text hierarchy、font、font size、control sizing、spacing、border radius、component density，以及未来需要的 light/dark algorithm 等 domain-neutral policy。
+精确文件名与 component tree 属于实现细节。Shared theme 拥有深色优先的近黑背景、克制的黑白灰层级、primary accent、font、control sizing、spacing、border radius 与 component density；使用 Ant Design Dark Algorithm 和 theme tokens。
 
 Shared theme 不得拥有 MO、expiry、Call / Put、premium、market-state、chart-series identity 或 analytical classification 语义。Feature semantic colors 与 visual encodings 必须留在 owning feature/model/chart/visualization boundary。
 

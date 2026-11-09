@@ -202,12 +202,14 @@ successful HTTP read with a partial scientific status.
 | POST | 503 | `unavailable` | Run storage configuration or I/O is unavailable |
 | POST | 500 | `internal_error` | Unexpected transport/runtime defect |
 | GET run | 200 | — | Existing owned run in any state |
+| GET run | 400 | `invalid_request` | Query parameters are forbidden |
 | GET run | 404 | `run_not_found` | Unknown, malformed or foreign run |
 | GET run | 409 | `corrupt` | Stored request/state/result association is corrupt |
 | GET run | 409 | `unsupported_version` | Unknown stored run schema |
 | GET run | 503 | `unavailable` | Run storage unavailable |
 | GET run | 500 | `internal_error` | Unexpected transport/runtime defect |
 | GET report | 200 | — | `COMPLETED` result with `complete` or `partial` status |
+| GET report | 400 | `invalid_request` | Query parameters are forbidden |
 | GET report | 404 | `run_not_found` | Unknown, malformed or foreign run |
 | GET report | 409 | `result_not_ready` | Run is `PENDING` or `RUNNING` |
 | GET report | 409 | `result_unavailable` | Run is `FAILED` or `INTERRUPTED` |
@@ -239,7 +241,9 @@ echo unknown fields, paths, credentials, raw exception text or provider payloads
 - One active execution per process; no queue. POST busy is `409 run_busy`.
 - GET run is a small state read and may proceed concurrently.
 - GET report is bounded to one reader permit per process; contention returns
-  `503 read_busy` without queueing. No report is cached across requests.
+  `503 read_busy` without queueing. HTTP delivery holds its permit through envelope
+  validation and serialization; Research retains its independent full-reader guard.
+  No report is cached across requests.
 - GET run checks result presence/size before advertising availability; GET report
   verifies digest and associations before serving.
 - All responses are `Cache-Control: no-store`; no shared/browser caching, ETag or
@@ -257,7 +261,14 @@ foreign owner and an unknown ID are indistinguishable as `run_not_found`.
 
 OpenAPI publishes the three operations, the Cookie security requirement, the
 accepted/run/report/failure/error DTOs, concrete statuses and `no-store` behavior;
-it removes the unused framework `422`. The new frontend feature owns its committed
+it removes the unused framework `422`. The HTTP composition initializes and reuses
+one process-wide online application.
+Initialization is attempted once per process. Failure makes only this product
+unavailable until backend restart. Offline OpenAPI export does not initialize run
+storage.
+
+WP8-A implements HTTP delivery only; WP8-B introduces the first Web consumer and
+its generated artifacts and freshness checks. The new frontend feature owns its committed
 OpenAPI representation and generated TypeScript contract under
 [ui_web/contracts.md](../../../ui_web/contracts.md). The reader payload remains
 the versioned producer projection and must not be replaced by a hand-written
@@ -275,3 +286,7 @@ competing backend schema.
   selection, full offline evidence download or report HTML endpoint is introduced.
 - Deployment, HTTPS termination, proxy trust and public exposure remain outside
   this contract and follow the existing Auth deployment boundary.
+
+## Runtime acceptance
+
+WP8-A synthetic runtime evidence and handoff are recorded in [HTTP acceptance](ACCEPTANCE.md).

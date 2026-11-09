@@ -11,6 +11,7 @@
     "lint": "oxlint",
     "test": "vitest run",
     "preview": "vite preview",
+    "test:futures-basis-online-browser": "node scripts/futures_basis_online_browser.mjs",
     "test:auth-browser": "node scripts/auth_browser_smoke.mjs",
     "test:research-browser": "node scripts/research_browser_smoke.mjs",
     "test:visualization-browser": "node scripts/visualization_browser_smoke.mjs",

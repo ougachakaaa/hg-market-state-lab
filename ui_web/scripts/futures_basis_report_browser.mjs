@@ -1,10 +1,31 @@
 // Actual offline file:// acceptance. Never starts a server or permits network I/O.
 import assert from 'node:assert/strict'
-import { mkdir, readFile, writeFile } from 'node:fs/promises'
+import { mkdir, mkdtemp, readFile, writeFile } from 'node:fs/promises'
 import { resolve } from 'node:path'
-import { pathToFileURL } from 'node:url'
+import { tmpdir } from 'node:os'
+import { spawnSync } from 'node:child_process'
+import { pathToFileURL, fileURLToPath } from 'node:url'
 import { chromium } from 'playwright'
 
+// The no-argument npm command is a self-contained synthetic regression gate.
+if (!process.argv[2]) {
+  const repository = fileURLToPath(new URL('../../', import.meta.url))
+  const web = resolve(repository, 'ui_web')
+  const temporary = await mkdtemp(resolve(tmpdir(), 'r01a-offline-browser-'))
+  const report = resolve(temporary, 'report')
+  const commands = [
+    ['poetry', ['run', 'python', 'ui_web/scripts/futures_basis_offline_fixture.py', report], repository],
+    [process.execPath, ['scripts/package_futures_basis_report.mjs', report], web],
+    [process.execPath, [fileURLToPath(import.meta.url), report], web],
+  ]
+  for (const [command, args, cwd] of commands) {
+    const result = spawnSync(command, args, { cwd, env: process.env, stdio: 'inherit' })
+    if (result.error) throw result.error
+    if (result.status !== 0) process.exit(result.status ?? 1)
+  }
+  console.log(`Offline regression artifacts: ${temporary}`)
+  process.exit(0)
+}
 const directory = resolve(process.argv[2])
 const output = resolve(process.argv[3] || `${directory}-browser`)
 await mkdir(output, { recursive: true })

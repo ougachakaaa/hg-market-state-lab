@@ -70,7 +70,27 @@ def create_research_app() -> FastAPI:
     })
 
 
+def create_research_catalog_app() -> FastAPI:
+    return create_projection({
+        "/research/capabilities",
+        "/research/capabilities/{id}",
+    })
+
+
+def create_futures_basis_app() -> FastAPI:
+    return create_projection({
+        "/research/futures-basis/runs",
+        "/research/futures-basis/runs/{run_id}",
+        "/research/futures-basis/runs/{run_id}/report",
+    })
+
+
 CONTRACTS: tuple[tuple[str, Callable[[], FastAPI], Path], ...] = (
+    (
+        "Futures Basis Research",
+        create_futures_basis_app,
+        WEB_UI_ROOT / "src/features/futures_basis_research/api/futuresBasis.openapi.json",
+    ),
     (
         "Application Authentication",
         create_auth_app,
@@ -80,6 +100,11 @@ CONTRACTS: tuple[tuple[str, Callable[[], FastAPI], Path], ...] = (
         "Research Publication",
         create_research_app,
         WEB_UI_ROOT / "src/features/research_explorer/api/research.openapi.json",
+    ),
+    (
+        "Research Catalog",
+        create_research_catalog_app,
+        WEB_UI_ROOT / "src/features/research_catalog/api/catalog.openapi.json",
     ),
     (
         "MO Option Chain",

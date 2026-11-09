@@ -29,6 +29,7 @@ process environment > repository-root .env > built-in defaults
 | `LAB_AUTH_ORIGIN` | Auth serving 必填的 browser-facing origin |
 | `LAB_AUTH_DB_PATH` | 可选，Auth SQLite 绝对路径；默认 `ui_http/data/auth.sqlite3` |
 | `LAB_RESEARCH_PUBLICATION_ROOT` | 可选，Publication storage 绝对路径 |
+| `LAB_FUTURES_BASIS_RUN_ROOT` | 可选，Futures Basis Online Run Store 绝对路径；默认 `market_research/.runtime/futures_basis_online/` |
 
 首次准备：
 
@@ -61,6 +62,20 @@ PowerShell 脚本使用 Python 3.13、Poetry、Node 与 npm 达到相同终态�
 
 手工执行 `git worktree add` 不会触发 Codex Local Environment，可以在新 worktree 根目录运行对应平台的 bootstrap 命令。
 
+## Linux One-Click Development Startup
+
+Linux（含 WSL）可从仓库根目录运行 Bash 启动器：
+
+```bash
+bash scripts/market-lab.sh start   # 省略 start 时同样启动
+bash scripts/market-lab.sh status  # 查看本启动器的 backend/frontend
+bash scripts/market-lab.sh stop    # 从另一终端停止两个服务
+```
+
+`start` 在前台运行，检查 Python 3.13、Poetry、Node.js（20.19+ 或 22.12+）、npm、Linux 进程工具和默认端口 8011/5173。项目依赖缺失或不完整时，它调用现有 `.codex/scripts/setup.sh` 在仓库根目录安装依赖；首次安装可能需要网络。启动器通过 `poetry run lab serve backend/frontend` 启动服务，确认后端认证响应与 Web 首页就绪后打印 `http://127.0.0.1:5173/`，不自动打开浏览器。按 Ctrl+C 会停止本次启动的两个服务。
+
+启动器使用根 `.env` 或进程环境的 Auth 设置，进程环境优先。未显式设置时使用 `loopback-http` 和 `http://127.0.0.1:5173`；JWT 密钥仅在缺失时生成并保存于已忽略的 `ui_http/data/one-click/jwt-secret`，供重启复用，不覆盖现有配置。日志与进程状态也位于 `ui_http/data/one-click/`。`status` 和 `stop` 只操作经进程身份核验的本启动器实例；端口被其他程序占用时启动失败，不会终止该程序。启动失败可查看该目录日志并运行 `poetry run lab doctor`。首次注册及审批步骤见下文。
+
 ## Windows One-Click Development Startup
 
 在 Windows 上双击仓库根目录的 `market-lab.cmd`（无参数等价于 `start`）。需要预先安装 Python 3.13、Poetry、Node.js（20.19+ 或 22.12+）和 npm，并使其可从 PATH 使用；首次启动或依赖不完整时会运行现有 Windows bootstrap，安装需要网络连接。启动前会检查 backend import；启动成功后会自动打开 `http://127.0.0.1:5173/`。
@@ -75,7 +90,7 @@ PowerShell 脚本使用 Python 3.13、Poetry、Node 与 npm 达到相同终态�
 
 `start` 会保持前台运行并等待按键；`stop` 和 `status` 可在另一个终端执行。
 
-原生 Windows 缺少 Publication V1 存储所需的 POSIX `dir_fd`、`O_DIRECTORY` 与 `O_NOFOLLOW` 能力。backend 与其他产品可正常启动，但 Publication 读操作及 `retain_source`/`publish` 返回 503 `unavailable`，Research Explorer 显示 Publication 存储不可用。完整 Publication 仍需 Linux 或满足相同文件系统能力的 WSL，并显式配置 `LAB_RESEARCH_PUBLICATION_ROOT`；详见 [Publication 平台限制](market_research/descriptive/ACCEPTANCE.md#native-windows-publication-limitation)。当前集成验证以 Linux 为准，WSL 仍需满足相同文件系统能力要求。
+原生 Windows 缺少 Publication V1 存储所需的 POSIX `dir_fd`、`O_DIRECTORY` 与 `O_NOFOLLOW` 能力。backend 与其他产品可正常启动，但 Publication 读操作及 `retain_source`/`publish` 返回 503 `unavailable`，Research Explorer 显示 Publication 存储不可用。Futures Basis Online Run Store 同样依赖 POSIX descriptor-relative I/O 与 ownership 检查；原生 Windows 上三个 `/research/futures-basis/runs` 操作返回 503 `unavailable`，不影响其他产品启动。该产品仅支持单进程，配置和平台能力失败在初始化时隔离；修复后需重启 backend。完整 Publication 仍需 Linux 或满足相同文件系统能力的 WSL，并显式配置 `LAB_RESEARCH_PUBLICATION_ROOT`；详见 [Publication 平台限制](market_research/descriptive/ACCEPTANCE.md#native-windows-publication-limitation)。当前集成验证以 Linux 为准，WSL 仍需满足相同文件系统能力要求。
 
 首次使用时在网页注册，然后在仓库根目录的另一个终端运行 `poetry run lab auth pending`，取得用户 ID 后运行 `poetry run lab auth approve <user-id>`，再返回网页登录。若在 process environment 或根 `.env` 设置了 `LAB_AUTH_DB_PATH`，审批终端也必须使用相同的值。
 
@@ -123,7 +138,7 @@ poetry run python -c 'import secrets; print(secrets.token_urlsafe(32))'
 `lab serve backend` 从 repository root 使用当前 Python interpreter 前台执行 `ui_http/scripts/api.py`。`lab serve frontend` 在 `ui_web/` 前台执行系统解析到的 npm `run dev`；首次启动前需在 `ui_web/` 自行执行 `npm install`。两个命令继承标准输入输出、传递子进程退出码，Ctrl+C 结束前台进程。缺少启动前提时明确报错，不自动修复环境。
 
 
-`ui_web/` 是独立 npm project，使用 Vite + React + TypeScript。Node.js 需满足当前 Vite 要求（20.19+ 或 22.12+）。`npm run dev` 在 `http://127.0.0.1:5173/` 提供认证入口和三个业务 surface（MO Option Chain、MO Premium Plane、Research Explorer），与 `doctor` 的本地诊断地址一致；`npm run build` 执行 TypeScript 检查及 production build，`npm run lint` 运行 Oxlint，`npm run test` 运行前端测试。Vite dev proxy 将 frontend origin 的 `/research`、`/auth`、`/mo-option-chain`、`/mo-option-premium-plane` 原路径和 query 转发到 `http://127.0.0.1:8011`，不需要 backend CORS policy。默认 provider 已接入真实读取链路；具体响应取决于目标日期与 Source 数据。
+`ui_web/` 是独立 npm project，使用 Vite + React + TypeScript。Node.js 需满足当前 Vite 要求（20.19+ 或 22.12+）。`npm run dev` 在 `http://127.0.0.1:5173/` 提供认证入口、Research Workspace、Futures Basis Research、Research Explorer 与两个 MO 页面，与 `doctor` 的本地诊断地址一致；`npm run build` 执行 TypeScript 检查及 production build，`npm run lint` 运行 Oxlint，`npm run test` 运行前端测试。Vite dev proxy 将 frontend origin 的 `/api/research/*` 去除 `/api` 前缀后转发到 `http://127.0.0.1:8011`，并原样转发 `/auth`、`/mo-option-chain`、`/mo-option-premium-plane`，不需要 backend CORS policy。默认 provider 已接入真实读取链路；具体响应取决于目标日期与 Source 数据。
 
 ### 浏览器注册、审批与登录
 
@@ -131,7 +146,7 @@ poetry run python -c 'import secrets; print(secrets.token_urlsafe(32))'
 2. 另一个终端从仓库根执行 `poetry run lab serve frontend`，打开 `http://127.0.0.1:5173/`。始终使用 `127.0.0.1`，不与 `localhost` 混用。
 3. 点击 Register，输入 username/password 并提交；202 只表示等待审批，不会登录。输入规则见 [Auth authority](ui_http/AUTHENTICATION.md#2-user-identity-and-persistence)。
 4. Operator 从仓库根执行 `poetry run lab auth pending`，读取申请 ID，再执行 `poetry run lab auth approve <user-id>`。
-5. 返回 Login，使用已审批账号登录。默认进入 MO Option Chain，可切换 MO Premium Plane 或 Research Explorer；MO 页面选择日期才发起行情请求。行情仍依赖其 Source 配置和数据可用性。
+5. 返回 Login，使用已审批账号登录。默认进入 Research Workspace，可切换 MO Option Chain、MO Premium Plane 或 Research Explorer；MO 页面选择日期才发起行情请求。行情仍依赖其 Source 配置和数据可用性。
 6. 刷新时由 `/auth/me` 检查 HttpOnly Cookie 恢复身份。Logout 期间卸载业务页面；成功返回登录，失败显示重试退出。登录过期的业务 401 同样返回登录。
 
 所有浏览器请求走相对 URL 和 Vite 同源代理，不直接调用 `:8011`，无需 CORS 或本地认证绕过。
@@ -164,6 +179,20 @@ Association, Single Job and Batch execution, using this same root environment. D
 public API acceptance runs with `poetry run python market_research/tests/job_execution_example.py`
 and `poetry run python market_research/tests/batch_execution_example.py`.
 There is no Research execution CLI command. The previous Study CLI is retired.
+
+### Futures Basis Research
+
+登录后从 Research Workspace 选择 R01-A 并打开 Futures Basis Research，或从侧栏进入
+`/research/futures-basis`。显式选择 IM / IC / IF / IH、开始日期和结束日期，再点击
+Generate Research。Run ID 写入 URL；刷新和浏览器前进/后退会重新读取服务器状态。
+在线 consumer 可用不代表 Provider / Cache Ready。离线报告仍通过既有本地生成入口交付。
+
+确定性在线浏览器验收：在 `ui_web/` 执行 `npm run test:futures-basis-online-browser`。
+它使用临时 Auth / Run Store 和 synthetic public services，经过真实 Cookie、Vite、FastAPI
+和 Plotly，不访问真实行情或默认缓存。端口和 Chromium 前提同下文 Auth/Research 测试。
+`npm run test:futures-basis-report-browser` 无参数时自动生成合成离线报告并验证；也保留
+显式传入已有报告目录的用法。运行结果见
+[WP8-B acceptance](ui_web/src/features/futures_basis_research/ACCEPTANCE.md)。
 
 ### Research Explorer
 

@@ -24,7 +24,10 @@ WP4 statistics passed synthetic and bounded real IM acceptance; WP5 offline repo
 longer-window delivery are recorded in [WP5 acceptance](WP5_ACCEPTANCE.md). WP1 does not admit V2
 into existing Publication/HTTP consumers or implement the offline packager. WP6 encodes
 the online application, HTTP and frontend authority in
-[Online application](ONLINE_APPLICATION.md); WP7–WP9 runtime is pending.
+[Online application](ONLINE_APPLICATION.md); WP7 Python runtime is implemented,
+WP8-A HTTP and WP8-B Web Consumer are implemented under synthetic acceptance;
+WP9 WSL/real-market acceptance passed; overall WP9 remains PARTIAL because Windows
+Chrome has not been run. Deployment is NOT RUN. See [WP9 acceptance](WP9_ACCEPTANCE.md).
 
 | WP | Deliverable and boundary | Dependencies / acceptance |
 | --- | --- | --- |
@@ -84,7 +87,9 @@ converted into the new metric by sign change or division by 100 alone.
   PublishedResearchResult, Publication V1, Research Explorer or the generic
   capability/Plan/Batch path. The separate [online application](ONLINE_APPLICATION.md)
   and [HTTP product](../../../../ui_http/products/futures_basis_research/http-contract.md)
-  are defined by WP6 but implemented in WP7–WP9. Existing quotas, authentication,
+  are defined by WP6; the Python application is implemented in WP7, HTTP/Web delivery in WP8-A/WP8-B,
+  and WSL/real-market integrated acceptance is recorded in [WP9 acceptance](WP9_ACCEPTANCE.md),
+  with Windows and deployment unverified. Existing quotas, authentication,
   execution guards and source semantics do not disappear.
 - **Online evidence/replay:** the online MVP retains the versioned reader projection,
   input fingerprint and coverage; full `evidence.json` / canonical inputs /
@@ -304,4 +309,82 @@ generally durable.
   including refresh, restart interruption, busy, ownership and bounded real IM
   acceptance; external evidence only, no performance/SLA promise.
 
-WP7 can start immediately under [Online application](ONLINE_APPLICATION.md).
+WP7 was implemented under [Online application](ONLINE_APPLICATION.md).
+
+## WP7 handoff
+
+WP7 implements the case-owned `FuturesBasisOnlineApplication` and its bounded file
+store. The server-selected `r01a_standard_v1` builds the formal `ReportRequest`;
+the worker reuses `observe_futures_basis`, `compose_report` and the WP5 reader
+projection. The public Python operations are `submit`, `get_run` and `get_report`.
+The store is separate from Publication and Workbench, with one active worker per
+application process, owner-scoped reads, startup interruption, bounded atomic
+report publication and SHA-256 verification. Its default root is ignored runtime
+state; `LAB_FUTURES_BASIS_RUN_ROOT` may select an absolute server-owned root through
+`lab_config`.
+
+WP8 must compose one application instance in the backend process, pass the
+authenticated user ID as `owner_scope`, strictly parse the HTTP request, and map
+the stable `OnlineError.kind` values under the existing HTTP contract. It must
+keep a single worker process for this store and deliver the existing reader
+projection without recomputation. WP9 remains responsible for the real browser,
+restart and bounded live integration gate.
+
+### WP7-R acceptance (2026-11-09)
+
+PASS on `feat/web-ui-workspace-redesign`, baseline
+`cec5627dd30387e1daccb3e2293fb5fbd1dff2b5`. Status reads now inspect result
+metadata only; full report reads retain integrity/association validation and classify
+stored oversize as `response_too_large`. Synthetic tests cover concurrent submissions
+and readers, status independence, atomic publication/failure, recovery with orphan
+results, ownership, versions, corruption and nonregular files. No market I/O occurred.
+
+Verification: `poetry run pytest market_research/tests` — 1,254 passed, 1 skipped;
+`poetry run pytest data_snapshot/tests/test_authority_topology.py ui_http/tests/test_architecture.py`
+— 21 passed; `poetry run ruff check market_research`, `poetry run mypy market_research`
+(106 files), and `git diff --check` passed. WP8 HTTP delivery remains pending.
+
+
+### WP8-A HTTP handoff (2026-11-09)
+
+WP8 is delivered in two independent parts: **WP8-A HTTP Product** and **WP8-B Web
+Consumer**. WP8-A is PASS under synthetic Linux acceptance; WP8-B remains pending.
+The [HTTP acceptance](../../../../ui_http/products/futures_basis_research/ACCEPTANCE.md)
+records all 13 acceptance items, error mapping, authentication/ownership, singleton
+startup, storage/platform isolation, OpenAPI/DTO reconciliation and exact checks.
+HTTP verification passed 476 tests; Research passed 1,255 tests with one existing
+platform-specific skip; topology/architecture/export checks passed 24 tests.
+Ruff, MyPy (160 files), existing frontend contract freshness and whitespace checks
+passed. Native Windows capability failure is simulated, not a native-platform run.
+
+The adapter uses the public case facade only. Repeated status reads do not execute
+Research or parse full reports. All responses are no-store; HTTP publication and
+response bounds remain independent, and report capacity includes serialization.
+The existing prohibition on GET query parameters now has explicit 400 rejection
+rows in the HTTP status matrix. Existing product contracts/artifacts did not drift.
+
+WP8-B first introduces the consumer, its generated OpenAPI/TypeScript artifacts and
+freshness coverage; React interaction, polling and shared reader migration remain
+unimplemented. No offline reader or live market workflow changed. WP9 retains the
+real browser and bounded live integration gates.
+
+### WP8-B Web handoff (2026-11-09)
+
+WP8-B implements the authenticated `/research/futures-basis` consumer, its generated
+OpenAPI/TypeScript freshness loop, query form, bounded status polling, URL restoration
+and the shared six-section online/offline reader. Research numerical semantics and
+HTTP contracts are unchanged. The frontend-owned
+[WP8-B acceptance](../../../../ui_web/src/features/futures_basis_research/ACCEPTANCE.md)
+records synthetic Chromium/Vite/FastAPI acceptance, offline regressions and exact
+checks. Online execution availability does not establish Provider/Cache readiness.
+WP9 remains unexecuted; no real market data, production cache, Daily Data WP5 or
+Backtesting work is part of this handoff.
+
+### WP9 integrated acceptance (2026-11-09)
+
+[WP9 acceptance](WP9_ACCEPTANCE.md) records current WSL2 FastAPI/Vite/Chromium
+integration, bounded real IM execution, original Python-path equivalence, restart
+recovery, authentication/isolation and synthetic failure acceptance. Windows Chrome
+and Nginx/Docker deployment are NOT RUN; overall WP9 is PARTIAL, with the WSL scope
+PASS. The changes add process-restart/lost-response regression coverage and fix a
+test synchronization race; no product, financial, lifecycle or HTTP contract changes.

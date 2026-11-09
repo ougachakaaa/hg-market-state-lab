@@ -228,3 +228,20 @@ continue yields 7 Success / 1 Failed / 0 Skipped; stop yields 1 Success / 1 Fail
 6 Skipped. Each attempted Job still completes both required analysis attempts.
 See the [Batch contract](descriptive/BATCH_EXECUTION.md) and
 [Acceptance](descriptive/ACCEPTANCE.md).
+
+## Futures Basis online Python application
+
+The independent case facade exposes `FuturesBasisOnlineApplication`,
+`OnlineServices`, `OnlineError` and `standard_report_request`. Create one application
+instance per backend process. `submit(FuturesBasisRequest(...), owner_scope)` returns
+the accepted `PENDING` snapshot immediately; `get_run(run_id, owner_scope)` returns
+the persisted status, and `get_report(run_id, owner_scope)` reads the completed WP5
+reader projection without running research. `OnlineError.kind` is the safe application
+error for the HTTP adapter to map. The server selects `r01a_standard_v1`; callers
+cannot supply statistical parameters.
+
+The default store is `market_research/.runtime/futures_basis_online/` (Git ignored).
+An absolute server-owned `LAB_FUTURES_BASIS_RUN_ROOT` can be supplied through the
+repository root `.env` or process environment. Single-process operation is required;
+no queue, cancellation, HTTP route or Publication admission is provided by this API.
+See the [online authority](descriptive/cases/futures_basis/ONLINE_APPLICATION.md).

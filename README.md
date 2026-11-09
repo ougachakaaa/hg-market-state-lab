@@ -84,6 +84,8 @@ process environment 优先于 `.env`。`.env` 与运行产生的市场数据不�
 
 Windows 上可直接双击仓库根目录的 `market-lab.cmd`，或在仓库根运行 `.\market-lab.cmd start` 一键启动 backend 与 Web；`market-lab.cmd stop` 停止服务，`market-lab.cmd status` 查看状态。实际逻辑位于 `scripts/market-lab.ps1`。原生 Windows 下 Publication 存储返回 503，完整 Publication 需 Linux/WSL。前置条件、审批与日志说明见 [Windows One-Click Development Startup](DEVELOPMENT.md#windows-one-click-development-startup)。
 
+Linux/WSL 可运行 `bash scripts/market-lab.sh start` 一键启动；`status` 查看状态，`stop` 从另一终端停止服务。前置条件与日志说明见 [Linux One-Click Development Startup](DEVELOPMENT.md#linux-one-click-development-startup)。
+
 ## Research status
 
 Start with the stable [Research human/agent usage guide](market_research/USAGE.md).
@@ -124,7 +126,7 @@ poetry run python ui_http/scripts/api.py --host 127.0.0.1 --port 8012
 npm run dev
 ```
 
-默认开发地址为 `http://127.0.0.1:5173/`。Vite 将 `/research`、`/auth`、`/mo-option-chain` 与 `/mo-option-premium-plane` 转发到默认 backend 地址；具体视觉与交互语义见 [MO Option Chain visualization authority](ui_web/src/features/mo_option_chain/ARCHITECTURE.md)。
+默认开发地址为 `http://127.0.0.1:5173/`；登录后进入 `/research` 工作台。Vite 将 `/api/research/*`（去除 `/api` 前缀）、`/auth`、`/mo-option-chain` 与 `/mo-option-premium-plane` 转发到默认 backend 地址；部署网关也需同样转发 `/api` 并为页面路由提供 SPA fallback。导航见 [Workspace authority](ui_web/workspace.md)。
 
 ## 验证命令
 

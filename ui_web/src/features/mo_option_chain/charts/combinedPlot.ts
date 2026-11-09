@@ -40,13 +40,13 @@ export function buildCombinedPlot(
     margin: { t: 24, r: 24, b: 76, l: 62 },
     xaxis: {
       title: { text: 'Strike' }, type: 'linear', range: xDomain, fixedrange: true,
-      tickformat: '.1f', tick0: 0, dtick: 200, showgrid: true, gridcolor: '#e5e7eb',
+      tickformat: '.1f', tick0: 0, dtick: 200, showgrid: true, gridcolor: '#30343b',
     },
     yaxis: {
       title: { text: 'Price' }, type: 'linear', range: projection.yDomain, fixedrange: true,
       tickformat: '.1f', tick0: 0, dtick: 200, showgrid: true,
-      gridcolor: '#e5e7eb', griddash: 'dash', side: 'left',
-      minor: { tick0: 0, dtick: 100, showgrid: true, gridcolor: '#e5e7eb', griddash: 'dash' },
+      gridcolor: '#30343b', griddash: 'dash', side: 'left',
+      minor: { tick0: 0, dtick: 100, showgrid: true, gridcolor: '#30343b', griddash: 'dash' },
     },
     shapes: [
       {
@@ -64,7 +64,7 @@ export function buildCombinedPlot(
       {
         xref: 'x', yref: 'paper', x: chain.underlying.price, y: 0,
         text: `Spot ${formatPrice(chain.underlying.price)}`, showarrow: false,
-        xanchor: 'right', yanchor: 'top', font: { color: '#475569' },
+        xanchor: 'right', yanchor: 'top', font: { color: '#aab4c1' },
       },
     ],
   }

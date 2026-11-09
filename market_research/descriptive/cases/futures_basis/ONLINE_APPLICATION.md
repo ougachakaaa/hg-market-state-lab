@@ -196,7 +196,11 @@ runtime directory `market_research/.runtime/futures_basis_online/` (WP7 must ens
 the runtime tree is outside Git); it is resolved without depending on the process
 working directory. Invalid, unavailable
 or unwritable storage makes the online product unavailable; it does not prevent
-server startup or other products. Server paths, owner scopes and storage
+server startup or other products. The store requires POSIX descriptor-relative
+file operations, no-follow directory/file opens and user ownership checks. Missing
+platform capabilities (including native Windows) classify as `unavailable` before
+creating the runtime tree; WSL/Linux must provide those capabilities. No Windows
+filesystem emulation is provided. Server paths, owner scopes and storage
 configuration are never exposed.
 
 The store is deliberately disposable runtime state under the
@@ -212,7 +216,16 @@ root are unsupported because the in-process active-run guard and restart recover
 would conflict. No distributed lock, external queue or durable worker is
 introduced.
 
-Read-path checks cover run ID format, containment in the root, no symlink,
+Run status reads check run ID format, containment, no symlink, request/state schema,
+owner scope and state consistency. For COMPLETED they open the result safely and
+check only presence, regular-file type and size (at most 32 MiB); an invalid result
+file is `corrupt`. They never read report bytes, verify a digest, parse the report
+or acquire a report-reader permit. Full report reads alone perform digest and
+payload association validation. Stored reports above 32 MiB classify as
+`response_too_large`; publication above that bound remains the execution failure
+`result_publication/result_too_large`. Neither path truncates.
+
+Full report read-path checks cover run ID format, containment in the root, no symlink,
 request/state schema, owner scope, state consistency, result presence, size and
 SHA-256, reader profile, status and request association. Corrupt or unknown state
 is never silently repaired and never recomputed. A report read is bounded to one

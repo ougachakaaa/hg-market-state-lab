@@ -34,18 +34,19 @@ async function request<T>(route: Route, url: string, signal: AbortSignal): Promi
   return body as T
 }
 const base = '/research/publications'
+const apiBase = `/api${base}`
 const part = encodeURIComponent
 export function listPublications(after: string | null, signal: AbortSignal) {
-  return request<PublicationList>(base, after === null ? base : `${base}?${new URLSearchParams({ after })}`, signal)
+  return request<PublicationList>(base, after === null ? apiBase : `${apiBase}?${new URLSearchParams({ after })}`, signal)
 }
 export async function getPublication(id: string, signal: AbortSignal) {
-  return (await request<Schemas['ManifestResponse']>('/research/publications/{publication_id}', `${base}/${part(id)}`, signal)).data
+  return (await request<Schemas['ManifestResponse']>('/research/publications/{publication_id}', `${apiBase}/${part(id)}`, signal)).data
 }
 export async function getAnalysis(id: string, analysis: string, signal: AbortSignal) {
-  return (await request<Schemas['AnalysisResponse']>('/research/publications/{publication_id}/analyses/{analysis_id}', `${base}/${part(id)}/analyses/${part(analysis)}`, signal)).data
+  return (await request<Schemas['AnalysisResponse']>('/research/publications/{publication_id}/analyses/{analysis_id}', `${apiBase}/${part(id)}/analyses/${part(analysis)}`, signal)).data
 }
 export async function getChartView(id: string, view: string, signal: AbortSignal): Promise<ChartViewContract> {
-  const data = (await request<Schemas['ViewResponse']>('/research/publications/{publication_id}/views/{view_id}', `${base}/${part(id)}/views/${part(view)}`, signal)).data
+  const data = (await request<Schemas['ViewResponse']>('/research/publications/{publication_id}/views/{view_id}', `${apiBase}/${part(id)}/views/${part(view)}`, signal)).data
   try { validateChartView(data) } catch { throw new ResearchError('invalid_view') }
   return data
 }

@@ -13,7 +13,7 @@ it('uses opaque cursor and same-origin credentials, validates response', async (
   const fetch = vi.fn().mockResolvedValue(response({ data: [], next_cursor: null }))
   vi.stubGlobal('fetch', fetch)
   await expect(listPublications('a+/=', new AbortController().signal)).resolves.toEqual({ data: [], next_cursor: null })
-  expect(fetch.mock.calls[0][0]).toBe('/research/publications?after=a%2B%2F%3D')
+  expect(fetch.mock.calls[0][0]).toBe('/api/research/publications?after=a%2B%2F%3D')
   expect(fetch.mock.calls[0][1].credentials).toBe('same-origin')
 })
 it.each(['corrupt', 'inconsistent', 'unsupported_version', 'response_too_large', 'verification_budget_exceeded', 'unavailable'] as const)('preserves safe %s failure', async kind => {

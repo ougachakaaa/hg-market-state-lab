@@ -10,7 +10,7 @@ const response = (body: unknown) => ({ status: 200, ok: true, json: async () => 
 it('loads only list initially and aborts obsolete publication on selection changes', async () => {
   release = installRequestBoundary(createRequestBoundary(() => {}))
   const pending: { signal: AbortSignal; finish: (r: Response) => void }[] = []
-  const fetch = vi.fn().mockImplementation((url: string, options: RequestInit) => url === '/research/publications' ? Promise.resolve(response({ data: [], next_cursor: null })) : new Promise<Response>(finish => pending.push({ signal: options.signal!, finish })))
+  const fetch = vi.fn().mockImplementation((url: string, options: RequestInit) => url === '/api/research/publications' ? Promise.resolve(response({ data: [], next_cursor: null })) : new Promise<Response>(finish => pending.push({ signal: options.signal!, finish })))
   vi.stubGlobal('fetch', fetch)
   const { result, unmount } = renderHook(() => useExplorer())
   await waitFor(() => expect(result.current.list.status).toBe('success'))

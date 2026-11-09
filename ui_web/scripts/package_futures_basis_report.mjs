@@ -20,6 +20,8 @@ const result = await build({
 const bundles = Array.isArray(result) ? result : [result]
 const files = bundles.flatMap(b => b.output)
 const chunks = files.filter(f => f.type === 'chunk')
+const forbidden = chunks.flatMap(chunk => Object.keys(chunk.modules)).filter(id => /\/src\/(app\/|shared\/http\/|features\/[^/]+\/(api|hooks|page)\/)/.test(id))
+if (forbidden.length) throw new Error(`Offline bundle imports online runtime: ${forbidden.join(', ')}`)
 if (chunks.length !== 1 || chunks[0].imports.length || chunks[0].dynamicImports.length) throw new Error('Report must have one self-contained script')
 const css = files.filter(f => f.type === 'asset' && f.fileName.endsWith('.css')).map(f => String(f.source)).join('\n')
 if (files.some(f => f.type === 'asset' && !f.fileName.endsWith('.css'))) throw new Error('Unexpected external asset')

@@ -14,7 +14,8 @@ const temporary = await mkdtemp(resolve(tmpdir(), 'g3-auth-'))
 const env = { ...process.env, LAB_AUTH_MODE: 'loopback-http',
   LAB_AUTH_ORIGIN: 'http://127.0.0.1:5173',
   LAB_AUTH_JWT_SECRET: randomBytes(32).toString('base64url'),
-  LAB_AUTH_DB_PATH: resolve(temporary, 'auth.sqlite3') }
+  LAB_AUTH_DB_PATH: resolve(temporary, 'auth.sqlite3'),
+  LAB_FUTURES_BASIS_RUN_ROOT: resolve(temporary, 'futures-basis-runs') }
 const processes = []
 let browser
 let page
@@ -93,6 +94,9 @@ try {
   await page.getByLabel('Username', { exact: true }).fill('g3_browser_user')
   await page.getByLabel('Password', { exact: true }).fill(password)
   await page.getByRole('button', { name: 'Login', exact: true }).click()
+  await page.getByRole('button', { name: 'Research Workspace', exact: true }).waitFor()
+  await page.getByRole('button', { name: 'Daily Data overview', exact: true }).click()
+  await page.getByRole('button', { name: 'MO Option Chain →', exact: true }).click()
   await page.getByRole('heading', { name: 'MO 期权链', exact: true }).waitFor()
   const cookie = (await context.cookies()).find((value) => value.name === 'lab_access_token')
   assert.ok(cookie?.httpOnly)
@@ -102,12 +106,12 @@ try {
   assert.deepEqual(await page.evaluate(() => [localStorage.length, sessionStorage.length]), [0, 0])
   await page.getByLabel('目标交易日', { exact: true }).fill('2026-09-17')
   await page.getByRole('region', { name: '期权链结果', exact: true }).waitFor()
-  await page.getByRole('button', { name: 'MO Premium Plane', exact: true }).click()
+  await page.locator('.ant-menu-title-content').getByText('MO Premium Plane', { exact: true }).click()
   await page.getByLabel('Observation 日期', { exact: true }).fill('2026-09-17')
   await page.getByRole('region', { name: 'Premium plane results', exact: true }).waitFor()
   await page.waitForLoadState('networkidle')
   await page.reload()
-  await page.getByRole('heading', { name: 'MO 期权链', exact: true }).waitFor()
+  await page.getByRole('heading', { name: 'MO 年化权利金平面', exact: true }).waitFor()
   await page.getByRole('button', { name: 'Logout', exact: true }).click()
   await page.getByRole('button', { name: 'Login', exact: true }).waitFor()
   assert.equal((await context.cookies()).length, 0)

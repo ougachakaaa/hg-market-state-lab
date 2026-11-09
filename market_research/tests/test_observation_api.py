@@ -195,6 +195,7 @@ def test_only_published_datalake_imports_and_no_forbidden_dependency_edges() -> 
                         "descriptive/cases/futures_basis/statistics.py",
                         "descriptive/cases/futures_basis/report.py",
                         "descriptive/cases/futures_basis/evidence.py",
+                        "descriptive/cases/futures_basis/online.py",
                     } or {
                         "conversion",
                         "association",
