@@ -19,8 +19,10 @@ The catalog distinguishes independently evidenced states:
 - `futures_basis_v1`: implemented local Python case and offline report generation and
   standalone reading workflow, owned by [R01-A](../../../../market_research/descriptive/cases/futures_basis/ARCHITECTURE.md)
   and its [delivery](../../../../market_research/descriptive/cases/futures_basis/DELIVERY.md).
-  The catalog does not imply that a report instance or browser URL exists. Its separate
-  online application remains authority-only; no online run control is presented.
+  Its independent online Web Consumer is available at `/research/futures-basis`.
+  Selecting the case offers navigation to that sibling page, not execution inside
+  this catalog. Offline generation remains independent; provider/cache readiness
+  is not established by the existence of an online consumer.
 
 Local descriptions are bounded presentation summaries of those published contracts,
 with explicit Python or operator entry instructions. They are not a second backend DTO,

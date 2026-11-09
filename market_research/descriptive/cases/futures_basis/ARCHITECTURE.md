@@ -78,8 +78,8 @@ are in [WP3 acceptance](WP3_ACCEPTANCE.md). WP4 statistics have independent runt
 acceptance is recorded separately in [WP5 acceptance](WP5_ACCEPTANCE.md). WP6 adds
 the online application, HTTP and Web authority in
 [Online application](ONLINE_APPLICATION.md); WP7 Python application/store and
-WP8-A HTTP delivery are implemented; WP8-B Web integration and WP9 integrated
-acceptance remain pending. The offline path and its scientific contracts remain
+WP8-A HTTP delivery and WP8-B Web integration are implemented under synthetic
+acceptance; WP9 real-market/platform integrated acceptance remains pending. The offline path and its scientific contracts remain
 unchanged. No new CLI,
 Research database, publication lifecycle or Modeling import permission is introduced;
 the online run store is case-specific disposable runtime state, not Publication or a

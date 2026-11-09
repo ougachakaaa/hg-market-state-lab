@@ -25,7 +25,8 @@ longer-window delivery are recorded in [WP5 acceptance](WP5_ACCEPTANCE.md). WP1 
 into existing Publication/HTTP consumers or implement the offline packager. WP6 encodes
 the online application, HTTP and frontend authority in
 [Online application](ONLINE_APPLICATION.md); WP7 Python runtime is implemented,
-while WP8–WP9 remain pending.
+WP8-A HTTP and WP8-B Web Consumer are implemented under synthetic acceptance;
+WP9 real-market/platform acceptance remains pending.
 
 | WP | Deliverable and boundary | Dependencies / acceptance |
 | --- | --- | --- |
@@ -85,8 +86,8 @@ converted into the new metric by sign change or division by 100 alone.
   PublishedResearchResult, Publication V1, Research Explorer or the generic
   capability/Plan/Batch path. The separate [online application](ONLINE_APPLICATION.md)
   and [HTTP product](../../../../ui_http/products/futures_basis_research/http-contract.md)
-  are defined by WP6; the Python application is implemented in WP7 and HTTP/Web
-  delivery remains WP8–WP9. Existing quotas, authentication,
+  are defined by WP6; the Python application is implemented in WP7, HTTP/Web delivery in WP8-A/WP8-B,
+  and real-market/platform integrated acceptance remains WP9. Existing quotas, authentication,
   execution guards and source semantics do not disappear.
 - **Online evidence/replay:** the online MVP retains the versioned reader projection,
   input fingerprint and coverage; full `evidence.json` / canonical inputs /
@@ -364,3 +365,15 @@ WP8-B first introduces the consumer, its generated OpenAPI/TypeScript artifacts 
 freshness coverage; React interaction, polling and shared reader migration remain
 unimplemented. No offline reader or live market workflow changed. WP9 retains the
 real browser and bounded live integration gates.
+
+### WP8-B Web handoff (2026-11-09)
+
+WP8-B implements the authenticated `/research/futures-basis` consumer, its generated
+OpenAPI/TypeScript freshness loop, query form, bounded status polling, URL restoration
+and the shared six-section online/offline reader. Research numerical semantics and
+HTTP contracts are unchanged. The frontend-owned
+[WP8-B acceptance](../../../../ui_web/src/features/futures_basis_research/ACCEPTANCE.md)
+records synthetic Chromium/Vite/FastAPI acceptance, offline regressions and exact
+checks. Online execution availability does not establish Provider/Cache readiness.
+WP9 remains unexecuted; no real market data, production cache, Daily Data WP5 or
+Backtesting work is part of this handoff.

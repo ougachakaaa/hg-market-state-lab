@@ -138,7 +138,7 @@ poetry run python -c 'import secrets; print(secrets.token_urlsafe(32))'
 `lab serve backend` 从 repository root 使用当前 Python interpreter 前台执行 `ui_http/scripts/api.py`。`lab serve frontend` 在 `ui_web/` 前台执行系统解析到的 npm `run dev`；首次启动前需在 `ui_web/` 自行执行 `npm install`。两个命令继承标准输入输出、传递子进程退出码，Ctrl+C 结束前台进程。缺少启动前提时明确报错，不自动修复环境。
 
 
-`ui_web/` 是独立 npm project，使用 Vite + React + TypeScript。Node.js 需满足当前 Vite 要求（20.19+ 或 22.12+）。`npm run dev` 在 `http://127.0.0.1:5173/` 提供认证入口和三个业务 surface（MO Option Chain、MO Premium Plane、Research Explorer），与 `doctor` 的本地诊断地址一致；`npm run build` 执行 TypeScript 检查及 production build，`npm run lint` 运行 Oxlint，`npm run test` 运行前端测试。Vite dev proxy 将 frontend origin 的 `/api/research/*` 去除 `/api` 前缀后转发到 `http://127.0.0.1:8011`，并原样转发 `/auth`、`/mo-option-chain`、`/mo-option-premium-plane`，不需要 backend CORS policy。默认 provider 已接入真实读取链路；具体响应取决于目标日期与 Source 数据。
+`ui_web/` 是独立 npm project，使用 Vite + React + TypeScript。Node.js 需满足当前 Vite 要求（20.19+ 或 22.12+）。`npm run dev` 在 `http://127.0.0.1:5173/` 提供认证入口、Research Workspace、Futures Basis Research、Research Explorer 与两个 MO 页面，与 `doctor` 的本地诊断地址一致；`npm run build` 执行 TypeScript 检查及 production build，`npm run lint` 运行 Oxlint，`npm run test` 运行前端测试。Vite dev proxy 将 frontend origin 的 `/api/research/*` 去除 `/api` 前缀后转发到 `http://127.0.0.1:8011`，并原样转发 `/auth`、`/mo-option-chain`、`/mo-option-premium-plane`，不需要 backend CORS policy。默认 provider 已接入真实读取链路；具体响应取决于目标日期与 Source 数据。
 
 ### 浏览器注册、审批与登录
 
@@ -179,6 +179,20 @@ Association, Single Job and Batch execution, using this same root environment. D
 public API acceptance runs with `poetry run python market_research/tests/job_execution_example.py`
 and `poetry run python market_research/tests/batch_execution_example.py`.
 There is no Research execution CLI command. The previous Study CLI is retired.
+
+### Futures Basis Research
+
+登录后从 Research Workspace 选择 R01-A 并打开 Futures Basis Research，或从侧栏进入
+`/research/futures-basis`。显式选择 IM / IC / IF / IH、开始日期和结束日期，再点击
+Generate Research。Run ID 写入 URL；刷新和浏览器前进/后退会重新读取服务器状态。
+在线 consumer 可用不代表 Provider / Cache Ready。离线报告仍通过既有本地生成入口交付。
+
+确定性在线浏览器验收：在 `ui_web/` 执行 `npm run test:futures-basis-online-browser`。
+它使用临时 Auth / Run Store 和 synthetic public services，经过真实 Cookie、Vite、FastAPI
+和 Plotly，不访问真实行情或默认缓存。端口和 Chromium 前提同下文 Auth/Research 测试。
+`npm run test:futures-basis-report-browser` 无参数时自动生成合成离线报告并验证；也保留
+显式传入已有报告目录的用法。运行结果见
+[WP8-B acceptance](ui_web/src/features/futures_basis_research/ACCEPTANCE.md)。
 
 ### Research Explorer
 

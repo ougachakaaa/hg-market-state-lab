@@ -92,3 +92,16 @@ it.each([403, 429, 500])('does not close the request boundary for HTTP %i', asyn
   expect((await protectedRequest('/business')).status).toBe(status)
   expect(callback).not.toHaveBeenCalled()
 })
+
+it('a cancelled feature request returning 401 still closes its current auth lifetime', async () => {
+  const late = deferred()
+  const unauthorized = vi.fn()
+  release = installRequestBoundary(createRequestBoundary(unauthorized))
+  vi.stubGlobal('fetch', vi.fn().mockReturnValue(late.promise))
+  const caller = new AbortController()
+  const request = protectedRequest('/cancelled-feature', caller.signal, { method: 'POST', body: '{}' })
+  caller.abort()
+  late.resolve(new Response('', { status: 401 }))
+  expect((await request).status).toBe(401)
+  expect(unauthorized).toHaveBeenCalledOnce()
+})

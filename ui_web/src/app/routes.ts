@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 
 const knownPaths = [
-  '/research', '/research/publications', '/data', '/data/mo-option-chain',
+  '/research', '/research/futures-basis', '/research/publications', '/data', '/data/mo-option-chain',
   '/data/mo-premium-plane', '/backtesting',
 ] as const
 export type WorkspacePath = typeof knownPaths[number]

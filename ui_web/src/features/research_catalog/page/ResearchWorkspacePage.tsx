@@ -30,7 +30,7 @@ function CapabilityDetails({ capability }: { capability: Capability }) {
   </Flex>
 }
 
-export default function ResearchWorkspacePage({ openExplorer }: { openExplorer: () => void }) {
+export default function ResearchWorkspacePage({ openExplorer, openFuturesBasis }: { openExplorer: () => void; openFuturesBasis: () => void }) {
   const catalog = useCatalog()
   const [selection, setSelection] = useState<Selection>(null)
   const selectedLocal = selection?.kind === 'local' ? localCases.find(item => item.id === selection.id) : undefined
@@ -83,6 +83,7 @@ export default function ResearchWorkspacePage({ openExplorer }: { openExplorer: 
           { key: 'access', label: 'Available entry', children: selectedLocal.access },
         ]} />
         <Alert type="info" title="Availability" description={selectedLocal.note} showIcon />
+        {selectedLocal.id === 'futures_basis_v1' && <Button type="primary" onClick={openFuturesBasis}>Open Futures Basis Research</Button>}
       </Flex>}
       {selectedOnline && catalog.detail.status === 'loading' && <Skeleton active paragraph={{ rows: 5 }} />}
       {selectedOnline && catalog.detail.status === 'error' && <Alert type="error" title="Capability detail unavailable" description="The selected description could not be loaded." action={<Button onClick={catalog.retryDetail}>Retry detail</Button>} showIcon />}

@@ -228,3 +228,34 @@ describe('authentication regressions across the workspace', () => {
     expect(screen.getByText('alice')).toBeTruthy()
   })
 })
+
+it('preserves the Futures Basis deep link through login and clears its result on logout', async () => {
+  const { readerFixture } = await import('../features/futures_basis_research/report/reader.fixture')
+  const id = 'a'.repeat(32)
+  window.history.replaceState(null, '', `/research/futures-basis?run_id=${id}`)
+  const data = readerFixture()
+  const request = { ...data.request.observation, case: 'futures_basis_v1', analysis_profile: 'r01a_standard_v1' }
+  let signedIn = false
+  vi.stubGlobal('fetch', vi.fn((url: string) => {
+    if (url === '/auth/me') return Promise.resolve(signedIn ? response(identity) : unauthorized())
+    if (url === '/auth/login') { signedIn = true; return Promise.resolve(response(identity)) }
+    if (url === '/auth/logout') return Promise.resolve(response(null, 204))
+    if (url.endsWith('/report')) return Promise.resolve(response({ run_id: id, request, result_status: 'complete', data }))
+    return Promise.resolve(response({ run_id: id, request, status: 'COMPLETED', created_at: '2026-11-09T00:00:00Z', started_at: '2026-11-09T00:00:00Z', finished_at: '2026-11-09T00:00:01Z', result_available: true, result_status: 'complete', failure: null }))
+  }))
+  render(<App />)
+  await screen.findByRole('button', { name: 'Login' }); await submitLogin()
+  await screen.findByText('Synthetic empty research')
+  expect(window.location.search).toBe(`?run_id=${id}`)
+  fireEvent.click(screen.getByRole('button', { name: 'Logout' }))
+  await screen.findByRole('button', { name: 'Login' })
+  expect(screen.queryByText('Synthetic empty research')).toBeNull()
+})
+
+it('returns a restored Futures Basis run to the authentication gate on a protected 401', async () => {
+  window.history.replaceState(null, '', `/research/futures-basis?run_id=${'a'.repeat(32)}`)
+  vi.stubGlobal('fetch', vi.fn((url: string) => Promise.resolve(url === '/auth/me' ? response(identity) : unauthorized())))
+  render(<App />)
+  await screen.findByRole('button', { name: 'Login' })
+  expect(screen.queryByRole('heading', { name: 'Futures Basis Research' })).toBeNull()
+})

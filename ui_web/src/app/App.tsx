@@ -1,5 +1,6 @@
 import { Alert, Breadcrumb, Button, Card, Flex, Layout, Menu, Spin, Typography, theme } from 'antd'
 import { useEffect, useState } from 'react'
+import FuturesBasisPage from '../features/futures_basis_research/page/FuturesBasisPage'
 import OptionChainPage from '../features/mo_option_chain'
 import PremiumPlanePage from '../features/mo_option_premium'
 import ResearchExplorerPage from '../features/research_explorer/page/ResearchExplorerPage'
@@ -12,6 +13,7 @@ import { isWorkspacePath, useWorkspaceRoute, type WorkspacePath } from './routes
 
 const titles: Record<WorkspacePath, string> = {
   '/research': 'Research Workspace',
+  '/research/futures-basis': 'Futures Basis Research',
   '/research/publications': 'Research Explorer',
   '/data': 'Daily Data',
   '/data/mo-option-chain': 'MO Option Chain',
@@ -54,6 +56,7 @@ function ApplicationShell({ user, signOut, path, navigate }: {
           ] },
           { key: '/research', label: 'Research', children: [
             { key: '/research/publications', label: 'Research Explorer' },
+            { key: '/research/futures-basis', label: 'Futures Basis Research' },
           ] },
           { key: '/backtesting', label: 'Backtesting' },
         ]} />
@@ -78,7 +81,8 @@ function ApplicationShell({ user, signOut, path, navigate }: {
       </Layout.Header>
       <Layout.Content style={{ minWidth: 0, width: '100%', maxWidth: 1500, margin: '0 auto',
         padding: token.paddingLG, boxSizing: 'border-box' }}>
-        {path === '/research' ? <ResearchWorkspacePage openExplorer={() => navigate('/research/publications')} />
+        {path === '/research' ? <ResearchWorkspacePage openExplorer={() => navigate('/research/publications')} openFuturesBasis={() => navigate('/research/futures-basis')} />
+          : path === '/research/futures-basis' ? <FuturesBasisPage />
           : path === '/research/publications' ? <ResearchExplorerPage />
             : path === '/data' ? <Landing area="data" navigate={navigate} />
               : path === '/data/mo-option-chain' ? <OptionChainPage />

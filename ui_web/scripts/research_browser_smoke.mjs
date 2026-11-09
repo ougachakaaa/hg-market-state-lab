@@ -17,6 +17,7 @@ const env = { ...process.env, LAB_AUTH_MODE: 'loopback-http',
   LAB_AUTH_ORIGIN: 'http://127.0.0.1:5173',
   LAB_AUTH_JWT_SECRET: randomBytes(32).toString('base64url'),
   LAB_AUTH_DB_PATH: resolve(temporary, 'auth.sqlite3'),
+  LAB_FUTURES_BASIS_RUN_ROOT: resolve(temporary, 'futures-basis-runs'),
   LAB_RESEARCH_PUBLICATION_ROOT: resolve(temporary, 'publications') }
 const processes = []
 let browser
@@ -105,7 +106,7 @@ try {
   await page.getByText('Index Trailing Cumulative Return Research', { exact: true }).waitFor()
   assert.ok(evidence.includes('/api/research/capabilities 200'))
   assert.equal(await page.getByText('Local / Python only').count(), 1)
-  assert.equal(await page.getByText('Local / Python only · Report generation available').count(), 1)
+  assert.equal(await page.getByText('Online Web Consumer · Independent offline report generation').count(), 1)
   await page.getByRole('region', { name: 'Available online' }).getByRole('button', { name: 'View details' }).click()
   await page.getByText(/live readiness: not_probed/).waitFor()
   assert.ok(evidence.includes('/api/research/capabilities/trailing_cumulative_return_v1 200'))

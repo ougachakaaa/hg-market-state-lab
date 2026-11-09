@@ -15,12 +15,12 @@ export const localCases = [
   {
     id: 'futures_basis_v1',
     name: 'Futures Basis Research (R01-A)',
-    readiness: 'Local / Python only · Report generation available',
-    planned: 'Authority / implementation pending: online application',
+    readiness: 'Online Web Consumer · Independent offline report generation',
+    planned: 'Online execution available; Provider / Cache readiness unverified',
     purpose: 'Describe historical same-day futures basis, relative tenor structure, distributions and persistence.',
-    scope: 'One explicit IM, IC, IF or IH product and inclusive date window; report generation also requires explicit statistical parameters.',
-    output: 'Case observations and findings; a self-contained offline HTML report with adjacent evidence when generation succeeds.',
+    scope: 'One explicit IM, IC, IF or IH product and inclusive date window. Online execution uses the server-owned standard profile; offline generation requires explicit statistical parameters.',
+    output: 'Online Run status and interactive report; independently generated self-contained offline HTML with adjacent evidence.',
     access: 'From repository root: poetry run python market_research/scripts/futures_basis_report.py with explicit product, dates, statistical parameters and a new output directory. Open the generated report.html locally.',
-    note: 'No report instance is served by this workspace. The separate online application has authority only; its runtime and page are pending.',
+    note: 'Open Futures Basis Research to submit an online Run. Offline reports remain independently generated locally. Online execution availability does not establish actual Provider / Cache readiness.',
   },
 ] as const

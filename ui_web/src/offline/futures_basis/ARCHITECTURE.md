@@ -27,3 +27,7 @@ The offline package remains self-contained and network-free; moving the pure rea
 presentation into the sibling feature must not import application/auth/network code
 into this entry. WP8 preserves the existing offline tests, build and Chromium
 acceptance.
+
+WP8-B implements the shared reader under the feature `report/` subpath. The
+offline `Report` is now only the standalone theme/font shell, with explicit
+`offline` disclosure mode; online composition uses the application theme.

@@ -130,8 +130,8 @@ publish this one case; bounded HTTP delivery belongs to
 No Research CLI is published. R01-A has a separately bounded
 [offline report workflow](descriptive/cases/futures_basis/DELIVERY.md); ui_web owns rendering. Its
 [online application authority](descriptive/cases/futures_basis/ONLINE_APPLICATION.md) has
-its case-owned Python application and run store implemented in WP7; HTTP/UI and integrated
-acceptance remain WP8–WP9. The independent Statistics
+its case-owned Python application and run store implemented in WP7, HTTP delivery
+in WP8-A and Web Consumer in WP8-B; integrated real-market/platform acceptance remains WP9. The independent Statistics
 public API is implemented; deterministic execution and bounded isolated real-market
 validation evidence, including current limitations, are recorded in
 [Acceptance](descriptive/ACCEPTANCE.md).

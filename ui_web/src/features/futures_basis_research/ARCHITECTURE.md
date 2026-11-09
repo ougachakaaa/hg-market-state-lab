@@ -1,6 +1,6 @@
 # Futures Basis Research frontend authority
 
-This is an authority-only future sibling Web feature, with no online page implementation in this baseline. It specializes the
+This is the implemented WP8-B online Web feature. It specializes the
 [ui_web architecture](../../../ARCHITECTURE.md) and
 [presentation architecture](../../../presentation-architecture.md), consumes the
 [Online Futures Basis Research HTTP contract](../../../../ui_http/products/futures_basis_research/http-contract.md)
@@ -13,7 +13,7 @@ slice; WP8 implements it and the offline reader regression.
 
 ## Application composition
 
-When implemented, the surface is discovered from the authenticated Research workspace
+The surface is discovered from the authenticated Research workspace
 as `Futures Basis Research`, alongside Research Explorer. Research remains the default entry. Adding this surface
 must not replace, hide or break an existing surface. It is a sibling bounded
 context: it does not read or reinterpret another feature's DTO, state, chart or
@@ -209,3 +209,13 @@ Non-goals: executing Research in the browser, recomputing statistics or progress
 storing tokens/results, adding a router/query framework, adding a second
 visualization DSL, exposing offline evidence files through the Web app, and
 changing sibling features or the HTTP contract.
+
+## WP8-B implementation reconciliation
+
+URL search changes and popstate replace the active run lifecycle. A valid 202 pushes
+a new run identity; unknown IDs remove the query with replace. Submission feedback
+is independent of the current terminal report, which survives rejected submissions.
+The shared reader accepts explicit online/offline disclosure mode; only the offline
+shell supplies standalone theme, font and adjacent-file evidence instructions.
+
+Execution evidence and reproduction: [WP8-B acceptance](ACCEPTANCE.md).

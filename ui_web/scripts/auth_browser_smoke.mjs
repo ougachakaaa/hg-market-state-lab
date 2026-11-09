@@ -14,7 +14,8 @@ const temporary = await mkdtemp(resolve(tmpdir(), 'g3-auth-'))
 const env = { ...process.env, LAB_AUTH_MODE: 'loopback-http',
   LAB_AUTH_ORIGIN: 'http://127.0.0.1:5173',
   LAB_AUTH_JWT_SECRET: randomBytes(32).toString('base64url'),
-  LAB_AUTH_DB_PATH: resolve(temporary, 'auth.sqlite3') }
+  LAB_AUTH_DB_PATH: resolve(temporary, 'auth.sqlite3'),
+  LAB_FUTURES_BASIS_RUN_ROOT: resolve(temporary, 'futures-basis-runs') }
 const processes = []
 let browser
 let page

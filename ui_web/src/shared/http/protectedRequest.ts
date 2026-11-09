@@ -31,7 +31,7 @@ export function installRequestBoundary(boundary: Boundary) {
   }
 }
 
-export async function protectedRequest(url: string, signal?: AbortSignal): Promise<Response> {
+export async function protectedRequest(url: string, signal?: AbortSignal, init?: Omit<RequestInit, 'signal' | 'credentials'>): Promise<Response> {
   const boundary = current
   if (!boundary || boundary.closed || signal?.aborted) throw new DOMException('Request cancelled', 'AbortError')
   const controller = new AbortController()
@@ -39,9 +39,11 @@ export async function protectedRequest(url: string, signal?: AbortSignal): Promi
   signal?.addEventListener('abort', abort, { once: true })
   boundary?.pending.add(controller)
   try {
-    const response = await fetch(url, { signal: controller.signal, credentials: 'same-origin' })
-    if (controller.signal.aborted || boundary?.closed) throw new DOMException('Request cancelled', 'AbortError')
-    if (response.status === 401) boundary?.unauthorized()
+    const response = await fetch(url, { ...init, signal: controller.signal, credentials: 'same-origin' })
+    // A cancelled feature request can still prove this session expired. A closed
+    // boundary belongs to an old auth lifetime and cannot affect a later login.
+    if (response.status === 401 && !boundary.closed) { boundary.unauthorized(); return response }
+    if (controller.signal.aborted || boundary.closed) throw new DOMException('Request cancelled', 'AbortError')
     return response
   } finally {
     signal?.removeEventListener('abort', abort)
