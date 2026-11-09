@@ -3,7 +3,7 @@
 import assert from 'node:assert/strict'
 import { spawn, spawnSync } from 'node:child_process'
 import { randomBytes } from 'node:crypto'
-import { mkdtemp, rm, mkdir, writeFile } from 'node:fs/promises'
+import { mkdtemp, rm, mkdir, readdir, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -171,6 +171,33 @@ try {
   await page.goForward()
   await page.locator('#section-5').waitFor()
   assert.ok(page.url().includes(secondId))
+  // Deliver the POST to the real backend, then lose its response in this browser.
+  // The prior report must survive and the client must not create another Run.
+  const runDirectories = () => readdir(env.LAB_FUTURES_BASIS_RUN_ROOT)
+  assert.equal((await runDirectories()).length, 2)
+  let lostAccepted
+  await page.route('**/api/research/futures-basis/runs', async route => {
+    assert.equal(route.request().method(), 'POST')
+    const response = await route.fetch()
+    assert.equal(response.status(), 202)
+    lostAccepted = await response.json()
+    await route.abort('failed')
+  })
+  // Explicitly select the synthetic candidate after history restoration.
+  await page.getByRole('combobox', { name: 'Product', exact: true }).click()
+  await page.locator('.ant-select-item-option[title="IM"]').click()
+  for (const [label, value] of [['Start Date', '2024-10-18'], ['End Date', '2024-10-21']]) {
+    await page.getByRole('textbox', { name: label, exact: true }).fill(value)
+    await page.getByRole('textbox', { name: label, exact: true }).press('Enter')
+  }
+  await page.getByRole('button', { name: 'Generate Research' }).click()
+  await page.getByText(/网络响应丢失。提交结果可能已被服务器接受/).waitFor()
+  await page.waitForTimeout(2000)
+  assert.ok(lostAccepted?.run_id)
+  assert.equal((await runDirectories()).length, 3)
+  assert.ok(page.url().includes(secondId))
+  assert.equal(await page.locator('#section-5').count(), 1)
+  await page.unroute('**/api/research/futures-basis/runs')
   assert.deepEqual(await page.evaluate(() => [localStorage.length, sessionStorage.length]), [0, 0])
   await page.getByRole('button', { name: 'Logout', exact: true }).click()
   await page.getByRole('button', { name: 'Login', exact: true }).waitFor()
@@ -183,7 +210,7 @@ try {
   })
   assert.equal(again.status(), 204)
   assert.deepEqual(errors, [])
-  await writeFile(resolve(output, 'http-evidence.json'), JSON.stringify({ status: 'PASS', evidence, states, errors }, null, 2))
+  await writeFile(resolve(output, 'http-evidence.json'), JSON.stringify({ status: 'PASS', evidence, states, errors, lostAccepted, runsAfterLostResponse: 3 }, null, 2))
   console.log('PASS: real Chromium -> Vite -> FastAPI -> synthetic public services; login -> catalog -> Generate -> poll -> Plotly report -> refresh -> Back/Forward -> logout')
   console.log('PASS: HttpOnly / SameSite Cookie; no JS token/storage; anonymous business gate; repeated logout')
   console.log(evidence.join('\n'))

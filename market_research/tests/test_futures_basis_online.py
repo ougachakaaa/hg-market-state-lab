@@ -209,9 +209,21 @@ def test_empty_samples_complete_and_report_size_bound(tmp_path, monkeypatch):
     app = FuturesBasisOnlineApplication(
         root=tmp_path, services=OnlineServices(services, services, services)
     )
+    finished = threading.Event()
+    execute = app._execute
+
+    def execute_and_signal(*args):
+        try:
+            execute(*args)
+        finally:
+            finished.set()
+
+    monkeypatch.setattr(app, "_execute", execute_and_signal)
     run_id = app.submit(REQUEST, "owner-a")["run_id"]
     assert settled(app, run_id)["result_status"] == "complete"
     assert app.get_report(run_id, "owner-a")["views"]["histograms"] == {}
+    # Terminal publication precedes worker cleanup and release of the active permit.
+    assert finished.wait(2)
     monkeypatch.setattr(
         "market_research.descriptive.cases.futures_basis.online.MAX_REPORT_BYTES", 100
     )

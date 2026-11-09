@@ -26,7 +26,8 @@ into existing Publication/HTTP consumers or implement the offline packager. WP6 
 the online application, HTTP and frontend authority in
 [Online application](ONLINE_APPLICATION.md); WP7 Python runtime is implemented,
 WP8-A HTTP and WP8-B Web Consumer are implemented under synthetic acceptance;
-WP9 real-market/platform acceptance remains pending.
+WP9 WSL/real-market acceptance passed; overall WP9 remains PARTIAL because Windows
+Chrome has not been run. Deployment is NOT RUN. See [WP9 acceptance](WP9_ACCEPTANCE.md).
 
 | WP | Deliverable and boundary | Dependencies / acceptance |
 | --- | --- | --- |
@@ -87,7 +88,8 @@ converted into the new metric by sign change or division by 100 alone.
   capability/Plan/Batch path. The separate [online application](ONLINE_APPLICATION.md)
   and [HTTP product](../../../../ui_http/products/futures_basis_research/http-contract.md)
   are defined by WP6; the Python application is implemented in WP7, HTTP/Web delivery in WP8-A/WP8-B,
-  and real-market/platform integrated acceptance remains WP9. Existing quotas, authentication,
+  and WSL/real-market integrated acceptance is recorded in [WP9 acceptance](WP9_ACCEPTANCE.md),
+  with Windows and deployment unverified. Existing quotas, authentication,
   execution guards and source semantics do not disappear.
 - **Online evidence/replay:** the online MVP retains the versioned reader projection,
   input fingerprint and coverage; full `evidence.json` / canonical inputs /
@@ -377,3 +379,12 @@ records synthetic Chromium/Vite/FastAPI acceptance, offline regressions and exac
 checks. Online execution availability does not establish Provider/Cache readiness.
 WP9 remains unexecuted; no real market data, production cache, Daily Data WP5 or
 Backtesting work is part of this handoff.
+
+### WP9 integrated acceptance (2026-11-09)
+
+[WP9 acceptance](WP9_ACCEPTANCE.md) records current WSL2 FastAPI/Vite/Chromium
+integration, bounded real IM execution, original Python-path equivalence, restart
+recovery, authentication/isolation and synthetic failure acceptance. Windows Chrome
+and Nginx/Docker deployment are NOT RUN; overall WP9 is PARTIAL, with the WSL scope
+PASS. The changes add process-restart/lost-response regression coverage and fix a
+test synchronization race; no product, financial, lifecycle or HTTP contract changes.

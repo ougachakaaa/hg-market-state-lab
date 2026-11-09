@@ -49,6 +49,7 @@ Contract-day/Slot-day observations under [Inputs](INPUTS.md) and [Observation](O
 | WP3 runtime/real-market evidence and reproduction | [WP3 acceptance](WP3_ACCEPTANCE.md) |
 | Offline evidence encoding and replay | [Evidence](EVIDENCE.md) |
 | Offline report acceptance and reproduction | [WP5 acceptance](WP5_ACCEPTANCE.md) |
+| WSL online integration, real IM evidence and unverified platform/deployment boundaries | [WP9 acceptance](WP9_ACCEPTANCE.md) |
 | Work packages, readiness, reconciliation and known gaps | [Roadmap](ROADMAP.md) |
 
 ## Request and compatibility
@@ -79,7 +80,8 @@ acceptance is recorded separately in [WP5 acceptance](WP5_ACCEPTANCE.md). WP6 ad
 the online application, HTTP and Web authority in
 [Online application](ONLINE_APPLICATION.md); WP7 Python application/store and
 WP8-A HTTP delivery and WP8-B Web integration are implemented under synthetic
-acceptance; WP9 real-market/platform integrated acceptance remains pending. The offline path and its scientific contracts remain
+acceptance; WP9 WSL/real-market integrated acceptance and outstanding platform
+boundaries are recorded in [WP9 acceptance](WP9_ACCEPTANCE.md). The offline path and its scientific contracts remain
 unchanged. No new CLI,
 Research database, publication lifecycle or Modeling import permission is introduced;
 the online run store is case-specific disposable runtime state, not Publication or a

@@ -131,7 +131,9 @@ No Research CLI is published. R01-A has a separately bounded
 [offline report workflow](descriptive/cases/futures_basis/DELIVERY.md); ui_web owns rendering. Its
 [online application authority](descriptive/cases/futures_basis/ONLINE_APPLICATION.md) has
 its case-owned Python application and run store implemented in WP7, HTTP delivery
-in WP8-A and Web Consumer in WP8-B; integrated real-market/platform acceptance remains WP9. The independent Statistics
+in WP8-A and Web Consumer in WP8-B; bounded WSL/real-market acceptance and the
+unverified Windows/deployment boundaries are recorded in
+[WP9 acceptance](descriptive/cases/futures_basis/WP9_ACCEPTANCE.md). The independent Statistics
 public API is implemented; deterministic execution and bounded isolated real-market
 validation evidence, including current limitations, are recorded in
 [Acceptance](descriptive/ACCEPTANCE.md).
