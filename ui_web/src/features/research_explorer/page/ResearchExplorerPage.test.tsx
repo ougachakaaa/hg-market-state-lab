@@ -35,11 +35,11 @@ describe('publication discovery', () => {
     expect(fetch).toHaveBeenCalledTimes(1)
     fireEvent.click(screen.getByRole('button', { name: '下一页' }))
     await screen.findByText('此页没有 Publication。')
-    expect(fetch.mock.calls[1][0]).toBe('/research/publications?after=a%2B%2F%3D')
+    expect(fetch.mock.calls[1][0]).toBe('/api/research/publications?after=a%2B%2F%3D')
     expect((screen.getByRole('button', { name: '下一页' }) as HTMLButtonElement).disabled).toBe(true)
     fireEvent.click(screen.getByRole('button', { name: '上一页' }))
     await screen.findByText('pub-one')
-    expect(fetch.mock.calls[2][0]).toBe('/research/publications')
+    expect(fetch.mock.calls[2][0]).toBe('/api/research/publications')
   })
   it('can return to the prior page when an opaque cursor has expired', async () => {
     const first = { data: [{ publication_id: 'pub-one', status: 'success' }], next_cursor: 'expired' }
@@ -51,7 +51,7 @@ describe('publication discovery', () => {
     await screen.findByText('请求无效或游标已失效。')
     fireEvent.click(screen.getByRole('button', { name: '上一页' }))
     await screen.findByText('pub-one')
-    expect(fetch.mock.calls[2][0]).toBe('/research/publications')
+    expect(fetch.mock.calls[2][0]).toBe('/api/research/publications')
   })
   it('shows an empty store as empty', async () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(reply({ data: [], next_cursor: null })))
@@ -87,7 +87,7 @@ describe('manifest and failures', () => {
     const secondJob = screen.getByText('Job 2 — Failed').closest('.ant-card')!
     fireEvent.click(within(secondJob as HTMLElement).getAllByRole('button', { name: '选择 Analysis' })[0])
     await screen.findByText(/实际结果状态：failed/)
-    expect(fetch.mock.calls[2][0]).toBe('/research/publications/pub-one/analyses/analysis-b')
+    expect(fetch.mock.calls[2][0]).toBe('/api/research/publications/pub-one/analyses/analysis-b')
     expect(screen.getByText('Coverage unavailable')).toBeTruthy()
     expect(screen.getByText('没有可用的 ChartView')).toBeTruthy()
     expect(fetch).toHaveBeenCalledTimes(3)
@@ -106,7 +106,7 @@ describe('manifest and failures', () => {
     expect(fetch).toHaveBeenCalledTimes(3)
     fireEvent.click(screen.getByRole('button', { name: /重\s*试/ }))
     await screen.findByText(/实际结果状态：failed/)
-    expect(fetch.mock.calls[3][0]).toBe('/research/publications/pub-one/analyses/analysis-b')
+    expect(fetch.mock.calls[3][0]).toBe('/api/research/publications/pub-one/analyses/analysis-b')
   })
   it.each([
     ['not_found', 404, '未找到所选 Publication。'], ['corrupt', 409, '已存储的内容无效或损坏。'],
@@ -152,11 +152,11 @@ describe('selected results and views', () => {
     expect(fetch).toHaveBeenCalledTimes(3)
     fireEvent.click(screen.getByRole('button', { name: 'count' }))
     await screen.findByTestId('plot')
-    expect(fetch.mock.calls[3][0]).toBe('/research/publications/pub-one/views/count-id')
+    expect(fetch.mock.calls[3][0]).toBe('/api/research/publications/pub-one/views/count-id')
     fireEvent.click(screen.getByRole('button', { name: 'frequency' }))
     await waitFor(() => expect(fetch).toHaveBeenCalledTimes(5))
     await screen.findByTestId('plot')
-    expect(fetch.mock.calls[4][0]).toBe('/research/publications/pub-one/views/frequency-id')
+    expect(fetch.mock.calls[4][0]).toBe('/api/research/publications/pub-one/views/frequency-id')
     expect(screen.getByText('Bin 1')).toBeTruthy()
     expect(screen.getByText('Underflow')).toBeTruthy()
   })
@@ -178,7 +178,7 @@ describe('selected results and views', () => {
     fireEvent.click(screen.getByRole('button', { name: /重\s*试/ }))
     await screen.findByTestId('plot')
     expect(fetch).toHaveBeenCalledTimes(5)
-    expect(fetch.mock.calls[4][0]).toBe('/research/publications/pub-one/views/count-id')
+    expect(fetch.mock.calls[4][0]).toBe('/api/research/publications/pub-one/views/count-id')
   })
   it.each([
     [error('not_found', 404), '未找到所选 View。'],

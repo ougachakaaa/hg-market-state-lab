@@ -15,7 +15,10 @@ export function currentWorkspacePath(): WorkspacePath {
 export function useWorkspaceRoute() {
   const [path, setPath] = useState(currentWorkspacePath)
   useEffect(() => {
-    const sync = () => setPath(currentWorkspacePath())
+    const sync = () => {
+      if (!known.has(window.location.pathname as WorkspacePath)) window.history.replaceState(null, '', '/research')
+      setPath(currentWorkspacePath())
+    }
     window.addEventListener('popstate', sync)
     return () => window.removeEventListener('popstate', sync)
   }, [])

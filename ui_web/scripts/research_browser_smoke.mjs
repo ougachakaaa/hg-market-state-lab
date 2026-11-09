@@ -3,7 +3,7 @@
 import assert from 'node:assert/strict'
 import { spawn, spawnSync } from 'node:child_process'
 import { randomBytes } from 'node:crypto'
-import { mkdtemp, rm } from 'node:fs/promises'
+import { mkdir, mkdtemp, rm } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -11,6 +11,8 @@ import { chromium } from 'playwright'
 
 const root = fileURLToPath(new URL('../../', import.meta.url))
 const temporary = await mkdtemp(resolve(tmpdir(), 'g3-auth-'))
+const screenshots = resolve(tmpdir(), 'hg-market-state-lab-web-workspace')
+await mkdir(screenshots, { recursive: true })
 const env = { ...process.env, LAB_AUTH_MODE: 'loopback-http',
   LAB_AUTH_ORIGIN: 'http://127.0.0.1:5173',
   LAB_AUTH_JWT_SECRET: randomBytes(32).toString('base64url'),
@@ -64,17 +66,18 @@ try {
   browser = await chromium.launch({ headless: true,
     ...(process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH
       ? { executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH } : {}) })
-  const context = await browser.newContext()
+  const context = await browser.newContext({ viewport: { width: 1440, height: 900 } })
   page = await context.newPage()
   page.setDefaultTimeout(15000)
   page.on('response', (res) => {
     const path = new URL(res.url()).pathname
-    if (path.startsWith('/auth/') || path.startsWith('/mo-option') || path.startsWith('/research')) evidence.push(`${path} ${res.status()}`)
+    if (path.startsWith('/auth/') || path.startsWith('/mo-option') || path.startsWith('/api/research')) evidence.push(`${path} ${res.status()}`)
   })
   const anonymous = await context.request.get('http://127.0.0.1:5173/mo-option-chain')
   assert.equal(anonymous.status(), 401)
   await page.goto('http://127.0.0.1:5173/')
   await page.getByRole('button', { name: 'Login', exact: true }).waitFor()
+  await page.screenshot({ path: resolve(screenshots, 'login.png'), fullPage: true })
   assert.equal(await page.getByRole('button', { name: 'MO Option Chain', exact: true }).count(), 0)
   assert.equal(evidence.some((entry) => entry.startsWith('/mo-option')), false)
   await page.getByRole('button', { name: 'Register', exact: true }).click()
@@ -97,15 +100,19 @@ try {
   await page.getByLabel('Username', { exact: true }).fill('g3_browser_user')
   await page.getByLabel('Password', { exact: true }).fill(password)
   await page.getByRole('button', { name: 'Login', exact: true }).click()
-  await page.getByRole('heading', { name: 'MO 期权链', exact: true }).waitFor()
+  await page.getByRole('button', { name: 'Research Workspace', exact: true }).waitFor()
+  assert.equal(new URL(page.url()).pathname, '/research')
+  await page.screenshot({ path: resolve(screenshots, 'research.png'), fullPage: true })
   const cookie = (await context.cookies()).find((value) => value.name === 'lab_access_token')
   assert.ok(cookie?.httpOnly)
   assert.equal(cookie.sameSite, 'Strict')
   assert.equal(cookie.secure, false)
   assert.equal(await page.evaluate(() => document.cookie.includes('lab_access_token')), false)
   assert.deepEqual(await page.evaluate(() => [localStorage.length, sessionStorage.length]), [0, 0])
-  await page.getByRole('button', { name: 'Research Explorer', exact: true }).click()
+  await page.getByRole('button', { name: 'Research Explorer →', exact: true }).click()
+  assert.equal(new URL(page.url()).pathname, '/research/publications')
   await page.getByText(publicationId, { exact: true }).waitFor()
+  await page.screenshot({ path: resolve(screenshots, 'research-explorer.png'), fullPage: true })
   await page.getByRole('button', { name: /选\s*择/ }).first().click()
   await page.getByText('声明的 Research scope').waitFor()
   const distribution = page.locator('.ant-list-item').filter({ hasText: 'distribution' }).first()
@@ -131,15 +138,40 @@ try {
   await page.getByRole('button', { name: 'quantile', exact: true }).click()
   assert.equal((await quantileView).status(), 200)
   await page.locator('.js-plotly-plot').waitFor()
-  await page.getByRole('button', { name: 'MO Option Chain', exact: true }).click()
+  const researchPlotBounds = await page.locator('.js-plotly-plot').first().boundingBox()
+  assert.ok(researchPlotBounds && researchPlotBounds.x >= 0 && researchPlotBounds.x + researchPlotBounds.width <= 1441, 'Research chart fits the viewport')
+  await page.screenshot({ path: resolve(screenshots, 'research-chart.png'), fullPage: true })
+  await page.getByRole('button', { name: 'Daily Data overview', exact: true }).click()
+  assert.equal(new URL(page.url()).pathname, '/data')
+  await page.screenshot({ path: resolve(screenshots, 'daily-data.png'), fullPage: true })
+  await page.getByRole('button', { name: 'MO Option Chain →', exact: true }).click()
   await page.getByLabel('目标交易日', { exact: true }).fill('2026-09-17')
   await page.getByRole('region', { name: '期权链结果', exact: true }).waitFor()
-  await page.getByRole('button', { name: 'MO Premium Plane', exact: true }).click()
+  await page.locator('.option-chain-page .js-plotly-plot').waitFor()
+  const chainBounds = await page.locator('.option-chain-page .js-plotly-plot').boundingBox()
+  assert.ok(chainBounds && chainBounds.x >= 0 && chainBounds.x + chainBounds.width <= 1441, 'Option chart fits the viewport')
+  await page.screenshot({ path: resolve(screenshots, 'mo-option-chain.png'), fullPage: true })
+  await page.locator('.ant-menu-title-content').getByText('MO Premium Plane', { exact: true }).click()
   await page.getByLabel('Observation 日期', { exact: true }).fill('2026-09-17')
   await page.getByRole('region', { name: 'Premium plane results', exact: true }).waitFor()
+  await page.screenshot({ path: resolve(screenshots, 'mo-premium-plane.png'), fullPage: true })
+  const sider = page.locator('.ant-layout-sider')
+  const expandedWidth = (await sider.boundingBox()).width
+  await page.locator('.ant-layout-sider-trigger').click()
+  await page.waitForFunction(width => document.querySelector('.ant-layout-sider')?.getBoundingClientRect().width < width, expandedWidth)
+  await page.locator('.ant-layout-sider-trigger').click()
+  await page.waitForFunction(width => document.querySelector('.ant-layout-sider')?.getBoundingClientRect().width === width, expandedWidth)
   await page.waitForLoadState('networkidle')
   await page.reload()
+  await page.getByRole('heading', { name: 'MO 年化权利金平面', exact: true }).waitFor()
+  assert.equal(new URL(page.url()).pathname, '/data/mo-premium-plane')
+  await page.goBack()
   await page.getByRole('heading', { name: 'MO 期权链', exact: true }).waitFor()
+  await page.goForward()
+  await page.getByRole('heading', { name: 'MO 年化权利金平面', exact: true }).waitFor()
+  await page.goto('http://127.0.0.1:5173/research/publications')
+  await page.getByRole('heading', { name: 'Research Explorer', exact: true }).waitFor()
+  await page.getByText(publicationId, { exact: true }).waitFor()
   await page.getByRole('button', { name: 'Logout', exact: true }).click()
   await page.getByRole('button', { name: 'Login', exact: true }).waitFor()
   assert.equal((await context.cookies()).length, 0)
@@ -149,7 +181,8 @@ try {
     headers: { Origin: env.LAB_AUTH_ORIGIN },
   })
   assert.equal(again.status(), 204)
-  console.log('PASS: real Chromium registration -> login -> synthetic Publication -> multiple Jobs -> Analysis/Coverage -> Count/Frequency and Quantile Plotly -> both MO results -> logout')
+  console.log('PASS: real Chromium login -> Research Workspace -> Daily Data -> both MO pages -> Research Explorer -> logout; direct URL, reload and history')
+  console.log(`Screenshots: ${screenshots}`)
   console.log('PASS: HttpOnly / SameSite Cookie; no JS token/storage; anonymous business gate; repeated logout')
   console.log(evidence.join('\n'))
 } catch (error) {

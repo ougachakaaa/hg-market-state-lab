@@ -1,5 +1,8 @@
 import { Alert, Breadcrumb, Button, Card, Flex, Layout, Menu, Spin, Typography, theme } from 'antd'
 import { useEffect, useState } from 'react'
+import OptionChainPage from '../features/mo_option_chain'
+import PremiumPlanePage from '../features/mo_option_premium'
+import ResearchExplorerPage from '../features/research_explorer/page/ResearchExplorerPage'
 import AppUiProvider from './AppUiProvider'
 import AuthForm from './auth/AuthForm'
 import { useAuthentication } from './auth/useAuthentication'
@@ -75,9 +78,12 @@ function ApplicationShell({ user, signOut, path, navigate }: {
       </Layout.Header>
       <Layout.Content style={{ minWidth: 0, width: '100%', maxWidth: 1500, margin: '0 auto',
         padding: token.paddingLG, boxSizing: 'border-box' }}>
-        {path === '/research' || path === '/research/publications' ? <Landing area="research" navigate={navigate} />
-          : path === '/data' || path === '/data/mo-option-chain' || path === '/data/mo-premium-plane' ? <Landing area="data" navigate={navigate} />
-            : <Landing area="backtesting" navigate={navigate} />}
+        {path === '/research' ? <Landing area="research" navigate={navigate} />
+          : path === '/research/publications' ? <ResearchExplorerPage />
+            : path === '/data' ? <Landing area="data" navigate={navigate} />
+              : path === '/data/mo-option-chain' ? <OptionChainPage />
+                : path === '/data/mo-premium-plane' ? <PremiumPlanePage />
+                  : <Landing area="backtesting" navigate={navigate} />}
       </Layout.Content>
     </Layout>
   </Layout>

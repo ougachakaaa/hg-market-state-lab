@@ -4,7 +4,7 @@ import { chartViewToPlotly } from './figure'
 import type { ViewV2, VisualizationView, Detail } from './contractV2'
 import { validateVisualizationView } from './contractV2'
 import { viewV2ToPlotly } from './figureV2'
-import { Alert, Collapse, Flex, Typography } from 'antd'
+import { Alert, Collapse, Flex, Typography, theme } from 'antd'
 import type { MouseEvent, TouchEvent } from 'react'
 
 function DetailList({ details }: { details: Detail[] }) {
@@ -12,6 +12,7 @@ function DetailList({ details }: { details: Detail[] }) {
 }
 
 function V2Chart({ view, minPlotHeight }: { view: ViewV2; minPlotHeight: number }) {
+  const { token } = theme.useToken()
   const figure = viewV2ToPlotly(view)
   const missing = view.layers.flatMap(b => b.layer.data.filter(m => m.y === null).map(m => ({ key: `${b.id}:${m.x}`, label: `${b.label} — ${m.x} — No value`, children: <DetailList details={m.details} /> })))
   const events = view.events.map(e => ({ key: e.id, label: `${e.id} — ${e.x} — ${e.label}`, children: <DetailList details={e.details} /> }))
@@ -33,7 +34,9 @@ function V2Chart({ view, minPlotHeight }: { view: ViewV2; minPlotHeight: number 
   return <Flex vertical gap="small" style={{ height: '100%', width: '100%' }}>
     {!view.layers.some(b => b.layer.data.some(m => m.y !== null)) && <Alert title="No numeric data" type="info" />}
     <div onMouseDownCapture={guardDrag} onTouchStartCapture={guardDrag} style={{ flex: `1 0 ${minPlotHeight}px`, minHeight: minPlotHeight }}>
-      <Plot {...figure} style={{ width: '100%', height: '100%' }} useResizeHandler />
+      <Plot {...figure} layout={{ ...figure.layout, paper_bgcolor: token.colorBgContainer,
+        plot_bgcolor: token.colorBgContainer, font: { color: token.colorText } }}
+        style={{ width: '100%', height: '100%' }} useResizeHandler />
     </div>
     {missing.length > 0 && <section aria-label="Missing values"><Typography.Title level={5}>Missing values</Typography.Title><Collapse items={missing} /></section>}
     {events.length > 0 && <section aria-label="Date events"><Typography.Title level={5}>Date events</Typography.Title><Collapse items={events} /></section>}
@@ -48,6 +51,9 @@ export function ChartView({ view, minPlotHeight = 320 }: { view: VisualizationVi
 }
 
 function V1Chart({ view }: { view: ChartViewContract }) {
+  const { token } = theme.useToken()
   const figure = chartViewToPlotly(view)
-  return <Plot {...figure} style={{ width: '100%', height: '100%' }} useResizeHandler />
+  return <Plot {...figure} layout={{ ...figure.layout, paper_bgcolor: token.colorBgContainer,
+    plot_bgcolor: token.colorBgContainer, font: { color: token.colorText } }}
+    style={{ width: '100%', height: '100%' }} useResizeHandler />
 }
