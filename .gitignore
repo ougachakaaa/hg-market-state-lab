@@ -48,6 +48,7 @@ data_lake/datasets/*/data/
 
 # Auth-owned users and all SQLite journal / WAL files
 ui_http/data/
+/market_research/.runtime/
 
 # Experimental runtime artifacts (never formal Dataset state)
 data_lake/experiments/**/data/

@@ -30,6 +30,7 @@ LAB_AUTH_MODE_ENV = "LAB_AUTH_MODE"
 LAB_AUTH_ORIGIN_ENV = "LAB_AUTH_ORIGIN"
 LAB_AUTH_DB_PATH_ENV = "LAB_AUTH_DB_PATH"
 LAB_RESEARCH_PUBLICATION_ROOT_ENV = "LAB_RESEARCH_PUBLICATION_ROOT"
+LAB_FUTURES_BASIS_RUN_ROOT_ENV = "LAB_FUTURES_BASIS_RUN_ROOT"
 
 
 class ConfigError(Exception):
@@ -70,6 +71,10 @@ class AuthSettings(_RepositorySettings):
 
 class PublicationSettings(_RepositorySettings):
     lab_research_publication_root: str | None = None
+
+
+class FuturesBasisRunSettings(_RepositorySettings):
+    lab_futures_basis_run_root: str | None = None
 
 
 _SettingsT = TypeVar("_SettingsT", bound=_RepositorySettings)
@@ -125,6 +130,11 @@ def publication_root() -> str | None:
     return _load(PublicationSettings).lab_research_publication_root
 
 
+def futures_basis_run_root() -> str | None:
+    """Return the optional case-owned run storage root."""
+    return _load(FuturesBasisRunSettings).lab_futures_basis_run_root
+
+
 __all__ = [
     "AuthSettings",
     "ConfigError",
@@ -136,6 +146,7 @@ __all__ = [
     "LAB_AUTH_MODE_ENV",
     "LAB_AUTH_ORIGIN_ENV",
     "LAB_RESEARCH_PUBLICATION_ROOT_ENV",
+    "LAB_FUTURES_BASIS_RUN_ROOT_ENV",
     "PublicationSettings",
     "REPO_ROOT",
     "TUSHARE_CALLS_PER_MINUTE_ENV",
@@ -144,6 +155,7 @@ __all__ = [
     "TushareTokenSettings",
     "auth_settings",
     "publication_root",
+    "futures_basis_run_root",
     "tushare_calls_per_minute",
     "tushare_token",
 ]

@@ -26,8 +26,8 @@ Authority readiness 不等于 runtime readiness；当前有独立 Observation、
 与 [Single Job Executor](descriptive/JOB_EXECUTION.md) Python API。
 ResearchPlan / [Batch execution](descriptive/BATCH_EXECUTION.md) 已实现；bounded HTTP delivery
 由 ui_http 发布，入口见 [USAGE.md](USAGE.md)。R01-A 另有 case-specific
-[online application](descriptive/cases/futures_basis/ONLINE_APPLICATION.md)（WP6 authority，
-WP7–WP9 未实现）；它不属于 generic capability/Plan/Batch，也不创建通用持久执行身份。No Research CLI is implemented.
+[online application](descriptive/cases/futures_basis/ONLINE_APPLICATION.md)（WP7 Python
+application/store 已实现，WP8–WP9 未实现）；它不属于 generic capability/Plan/Batch，也不创建通用持久执行身份。No Research CLI is implemented.
 不恢复旧 framework、compatibility、mandatory persistence 或 generic engine。
 Descriptive / Conditional 不相互 import，不通过共享基类或执行引擎耦合；不创建 Conditional 空框架。
 Research 仅消费 Statistics public contract；不在 Research 重定义其类型或通用统计公式。

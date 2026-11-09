@@ -24,7 +24,8 @@ WP4 statistics passed synthetic and bounded real IM acceptance; WP5 offline repo
 longer-window delivery are recorded in [WP5 acceptance](WP5_ACCEPTANCE.md). WP1 does not admit V2
 into existing Publication/HTTP consumers or implement the offline packager. WP6 encodes
 the online application, HTTP and frontend authority in
-[Online application](ONLINE_APPLICATION.md); WP7–WP9 runtime is pending.
+[Online application](ONLINE_APPLICATION.md); WP7 Python runtime is implemented,
+while WP8–WP9 remain pending.
 
 | WP | Deliverable and boundary | Dependencies / acceptance |
 | --- | --- | --- |
@@ -84,7 +85,8 @@ converted into the new metric by sign change or division by 100 alone.
   PublishedResearchResult, Publication V1, Research Explorer or the generic
   capability/Plan/Batch path. The separate [online application](ONLINE_APPLICATION.md)
   and [HTTP product](../../../../ui_http/products/futures_basis_research/http-contract.md)
-  are defined by WP6 but implemented in WP7–WP9. Existing quotas, authentication,
+  are defined by WP6; the Python application is implemented in WP7 and HTTP/Web
+  delivery remains WP8–WP9. Existing quotas, authentication,
   execution guards and source semantics do not disappear.
 - **Online evidence/replay:** the online MVP retains the versioned reader projection,
   input fingerprint and coverage; full `evidence.json` / canonical inputs /
@@ -304,4 +306,23 @@ generally durable.
   including refresh, restart interruption, busy, ownership and bounded real IM
   acceptance; external evidence only, no performance/SLA promise.
 
-WP7 can start immediately under [Online application](ONLINE_APPLICATION.md).
+WP7 was implemented under [Online application](ONLINE_APPLICATION.md).
+
+## WP7 handoff
+
+WP7 implements the case-owned `FuturesBasisOnlineApplication` and its bounded file
+store. The server-selected `r01a_standard_v1` builds the formal `ReportRequest`;
+the worker reuses `observe_futures_basis`, `compose_report` and the WP5 reader
+projection. The public Python operations are `submit`, `get_run` and `get_report`.
+The store is separate from Publication and Workbench, with one active worker per
+application process, owner-scoped reads, startup interruption, bounded atomic
+report publication and SHA-256 verification. Its default root is ignored runtime
+state; `LAB_FUTURES_BASIS_RUN_ROOT` may select an absolute server-owned root through
+`lab_config`.
+
+WP8 must compose one application instance in the backend process, pass the
+authenticated user ID as `owner_scope`, strictly parse the HTTP request, and map
+the stable `OnlineError.kind` values under the existing HTTP contract. It must
+keep a single worker process for this store and deliver the existing reader
+projection without recomputation. WP9 remains responsible for the real browser,
+restart and bounded live integration gate.
