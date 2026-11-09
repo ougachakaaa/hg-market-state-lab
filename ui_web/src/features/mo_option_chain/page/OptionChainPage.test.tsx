@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { cleanup, fireEvent, render, screen, within } from '@testing-library/react'
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import type { PlotParams } from 'react-plotly.js'
 import OptionChainPage from './OptionChainPage'
 import { createRequestBoundary, installRequestBoundary } from '../../../shared/http/protectedRequest'
@@ -60,6 +60,8 @@ async function load(body: unknown = chain) {
 afterEach(() => {
   cleanup()
   vi.unstubAllGlobals()
+  vi.restoreAllMocks()
+  Reflect.deleteProperty(navigator, 'clipboard')
 })
 
 describe('MO option chain combined page', () => {
@@ -286,4 +288,107 @@ describe('MO option chain combined page', () => {
     const alert = await screen.findByRole('alert')
     expect(within(alert).getByText('无法连接数据服务')).toBeTruthy()
   })
+})
+
+function clipboard(writeText = vi.fn().mockResolvedValue(undefined)) {
+  Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText } })
+  return writeText
+}
+function copyActions() { return within(screen.getByRole('group', { name: 'MO Option Chain copy actions' })) }
+async function copied(button: string) {
+  fireEvent.click(copyActions().getByRole('button', { name: button }))
+  await waitFor(() => expect(copyActions().getByRole('status').textContent).toBe('Copied'))
+}
+
+describe('complete current-result copy', () => {
+  it.each(['missing', 'reject', 'resolve'])('reports Clipboard %s without internal errors', async (mode) => {
+    const write = clipboard(mode === 'reject' ? vi.fn().mockRejectedValue(new Error('private permission details')) : vi.fn().mockResolvedValue(undefined))
+    if (mode === 'missing') Reflect.deleteProperty(navigator, 'clipboard')
+    await load()
+    fireEvent.click(copyActions().getByRole('button', { name: 'Copy JSON' }))
+    await waitFor(() => expect(copyActions().getByRole('status').textContent).toBe(mode === 'resolve' ? 'Copied' : 'Copy failed'))
+    expect(screen.queryByText(/private permission details/)).toBeNull()
+    if (mode !== 'missing') expect(write).toHaveBeenCalledWith(JSON.stringify(chain, null, 2))
+  })
+  it.each([[false, false], [false, true], [true, false], [true, true]])('ignores old copy feedback after a new query (reject=%s, whileLoading=%s)', async (rejects, whileLoading) => {
+    let finish!: () => void
+    let fail!: (error: Error) => void
+    const write = clipboard(vi.fn().mockImplementationOnce(() => new Promise<void>((resolve, reject) => { finish = resolve; fail = reject })).mockResolvedValue(undefined))
+    await load()
+    let finishQuery!: (value: Response) => void
+    vi.mocked(fetch).mockImplementationOnce(() => new Promise<Response>((resolve) => { finishQuery = resolve }))
+    fireEvent.click(copyActions().getByRole('button', { name: 'Copy JSON' }))
+    expect(copyActions().queryByRole('status')).toBeNull()
+    expect(copyActions().getAllByRole<HTMLButtonElement>('button').every((b) => b.disabled)).toBe(true)
+    fireEvent.change(screen.getByLabelText('目标交易日'), { target: { value: '2026-09-22' } })
+    expect(screen.queryByRole('group', { name: 'MO Option Chain copy actions' })).toBeNull()
+    if (!whileLoading) await act(async () => { finishQuery(response(chain)) })
+    await act(async () => { if (rejects) fail(new Error('denied')); else finish() })
+    if (whileLoading) await act(async () => { finishQuery(response(chain)) })
+    await screen.findByRole('region', { name: '期权链结果' })
+    expect(copyActions().queryByRole('status')).toBeNull()
+    await copied('Copy for GPT')
+    expect(write).toHaveBeenCalledTimes(2)
+    fireEvent.change(screen.getByLabelText('目标交易日'), { target: { value: '' } })
+    expect(screen.queryByRole('button', { name: 'Copy JSON' })).toBeNull()
+  })
+  it.each(['invalid', 'network'])('has no copy source in idle/loading/%s states', async (mode) => {
+    let finish!: (value: Response) => void
+    let fail!: (error: Error) => void
+    vi.stubGlobal('fetch', vi.fn().mockImplementation(() => new Promise<Response>((resolve, reject) => { finish = resolve; fail = reject })))
+    render(<OptionChainPage />)
+    expect(screen.queryByRole('button', { name: 'Copy JSON' })).toBeNull()
+    fireEvent.change(screen.getByLabelText('目标交易日'), { target: { value: '2026-09-17' } })
+    expect(screen.queryByRole('button', { name: 'Copy JSON' })).toBeNull()
+    await act(async () => { if (mode === 'network') fail(new Error('offline')); else finish(response({ invalid: true })) })
+    await screen.findByRole('alert')
+    expect(screen.queryByRole('button', { name: 'Copy JSON' })).toBeNull()
+    expect(screen.queryByRole('button', { name: 'Copy for GPT' })).toBeNull()
+  })
+  it('copies only the newer response even if an older request completes late', async () => {
+    const write = clipboard()
+    const pending: Array<(value: Response) => void> = []
+    const fetch = vi.fn().mockImplementation(() => new Promise<Response>((resolve) => pending.push(resolve)))
+    vi.stubGlobal('fetch', fetch)
+    render(<OptionChainPage />)
+    fireEvent.change(screen.getByLabelText('目标交易日'), { target: { value: '2026-09-17' } })
+    fireEvent.change(screen.getByLabelText('目标交易日'), { target: { value: '2026-09-22' } })
+    const current = { ...chain, target_trade_date: '2026-09-22' }
+    await act(async () => { pending[1](response(current)) })
+    await screen.findByRole('region', { name: '期权链结果' })
+    await act(async () => { pending[0](response(chain)) })
+    await copied('Copy JSON')
+    expect(write).toHaveBeenLastCalledWith(JSON.stringify(current, null, 2))
+    expect(fetch).toHaveBeenCalledTimes(2)
+  })
+})
+
+it('copies full chain and response context independently of all display controls', async () => {
+  const write = clipboard()
+  await load()
+  const raw = JSON.stringify(chain, null, 2)
+  await copied('Copy JSON')
+  expect(write).toHaveBeenLastCalledWith(raw)
+  const controls = [
+    () => fireEvent.click(screen.getByRole('checkbox', { name: '2026-10-23' })),
+    () => fireEvent.click(screen.getByRole('button', { name: '扩大行权价视窗' })),
+    () => changeSeriesColor('Call 颜色', '#e11d48'),
+    () => changeSeriesColor('Put 颜色', '#00ff00'),
+    () => changeSeriesColor('Futures 颜色', '#ff00ff'),
+  ]
+  for (const change of controls) {
+    change()
+    await copied('Copy JSON')
+    expect(write).toHaveBeenLastCalledWith(raw)
+  }
+  await copied('Copy for GPT')
+  const markdown = write.mock.calls.at(-1)![0] as string
+  expect(markdown.startsWith('# MO Option Chain\n')).toBe(true)
+  for (const identity of ['target_trade_date: 2026-09-17', 'option_product: MO', 'price_type: close', 'underlying.instrument_id: 000852.SH']) expect(markdown).toContain(identity)
+  expect(markdown).toContain('null price')
+  expect(markdown).toContain('numeric zero')
+  expect(markdown).toContain('futures: null')
+  expect(markdown).toContain('Call/Put grouping')
+  expect(markdown.split('```json\n')[1].split('\n```')[0]).toBe(raw)
+  expect(fetch).toHaveBeenCalledTimes(1)
 })

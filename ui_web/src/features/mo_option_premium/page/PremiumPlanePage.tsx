@@ -1,4 +1,5 @@
 import { Empty, Flex, Space, Spin, Typography } from 'antd'
+import { PremiumCopyActions } from '../components/PremiumCopyActions'
 import { PremiumExpirySelector, PremiumPresentationControls, PremiumQueryControls } from '../components/PremiumControls'
 import { PremiumError, PremiumPlaneTable, PremiumSummary, RawResponseInspector } from '../components/PremiumResults'
 import { usePremiumPlane } from '../hooks/usePremiumPlane'
@@ -24,6 +25,7 @@ export default function PremiumPlanePage() {
           <section aria-label="Premium plane results">
             <Space orientation="vertical" size="middle" style={{ display: 'flex' }}>
               <PremiumSummary plane={state.page.plane} />
+              <PremiumCopyActions plane={state.page.plane} rawPayload={state.page.rawPayload} />
               <PremiumPresentationControls optionType={state.selectedOptionType}
                 referenceBasis={state.selectedReferenceBasis} valueBasis={state.selectedValueBasis}
                 timeNormalization={state.selectedTimeNormalization} representation={state.selectedRepresentation}

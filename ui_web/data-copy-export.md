@@ -45,17 +45,3 @@ Premium 的完整 Raw HTTP Response Inspector 继续遵循其 feature authority�
 CSV 是独立的衍生导出视图，不要求与完整 JSON 可逆，也不代替完整证据。各 feature 指定真实的展平对象；不得生成虚构合约或 sparse plane 中不存在的 Point。
 
 字段展开、空值编码、排序、CSV escape 与下载编码必须在 WP2 实施前进一步收束。WP0 只编码本边界，不实现 CSV。
-
-## 6. WP0 Static Reconciliation
-
-以下是 baseline `cd48734941792b218d8186b2b60db829ab35a3a8` 的实现证据与 WP1 差距，不是新的 HTTP contract，也不表示复制目标已经实现：
-
-| Concern | Existing implementation / evidence | Remaining implementation drift |
-| --- | --- | --- |
-| Validated complete source | 两个 feature API 均基于 generated OpenAPI 做 runtime validation；Option Chain 返回完整 body，Premium 返回同一次 body 的 `plane` 与 `rawPayload`；相关 API tests 覆盖校验、null/zero 与无效响应 | 无需新增 response schema 或再次请求 |
-| Current-result lifecycle | 两个 hooks 使用 request id 与 abort 防止 stale completion；page/hooks tests 覆盖新请求清除旧结果及失败状态 | WP1 必须让新复制入口服从既有 lifecycle |
-| Presentation independence | Option Chain 完整 `chain` 与 selected groups 分离；Premium Inspector 使用 `rawPayload`，page test 覆盖切换展示仍保留完整 JSON | WP1 两种复制都必须使用完整 source，不能取图表或 table projection |
-| Copy JSON UX | Premium Inspector 已有完整 pretty JSON 复制和成功/拒绝反馈，`PremiumResults.test.tsx` 覆盖 resolve/reject | Option Chain 无复制入口；Premium 入口仅在折叠 Inspector 内，尚缺顶部入口 |
-| Copy for GPT | 两个页面均无此入口或 Markdown 生成行为 | WP1 实现响应身份上下文、阅读说明与完整 JSON fence |
-
-现有行为与这些目标之间的差距留给 WP1，WP0 不修复生产代码或测试。Clipboard 不可用、大 payload 不截断、两种复制不发请求，以及切换全部 presentation controls 后的复制完整性，需要 WP1 补充验证；不能把既有 Inspector 的 resolve/reject tests 视为完整验收。

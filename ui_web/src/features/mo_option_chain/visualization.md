@@ -200,7 +200,7 @@ chart library
 
 ## 10. Daily Data Copy / Export
 
-两种复制的格式、成功状态限制、顶部入口、Clipboard 反馈与安全边界遵循 [Daily Data Copy / Export authority](../../../data-copy-export.md)。本节只拥有 Option Chain 特有的 source 与 context；这些是 WP1 的实现要求，当前缺口见共同 authority 的静态 reconciliation。
+两种复制的格式、成功状态限制、顶部入口、Clipboard 反馈与安全边界遵循 [Daily Data Copy / Export authority](../../../data-copy-export.md)。本节只拥有 Option Chain 特有的 source 与 context。
 
 Copy JSON 与 Copy for GPT 的 JSON 均使用当前成功状态中的完整 `OptionChain` 对象，即本次 HTTP request 收到且通过 runtime contract validation 的响应。不得使用 `selectedGroups`、chart traces、可见 strike viewport 或合约明细的展示投影；隐藏的 expiry、Call/Put 合约、视窗外合约和 `price=null` 的合约都必须保留。
 

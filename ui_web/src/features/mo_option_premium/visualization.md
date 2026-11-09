@@ -232,7 +232,7 @@ MO Option Chain 与 Premium Plane 保持两个独立 frontend vertical slices；
 
 ## 10. Daily Data Copy / Export
 
-两种复制的格式、成功状态限制、顶部入口、Clipboard 反馈与安全边界遵循 [Daily Data Copy / Export authority](../../../data-copy-export.md)。本节只拥有 Premium Plane 特有的 source 与 context；新增顶部入口和 Copy for GPT 是 WP1 的实现要求，当前缺口见共同 authority 的静态 reconciliation。
+两种复制的格式、成功状态限制、顶部入口、Clipboard 反馈与安全边界遵循 [Daily Data Copy / Export authority](../../../data-copy-export.md)。本节只拥有 Premium Plane 特有的 source 与 context。
 
 Copy JSON 与 Copy for GPT 的 JSON 均使用第 7 节中当前成功状态保留的完整 `rawPayload`，不使用 `projection` 或重建的 table/grid。Copy for GPT 上下文取同一次成功响应的 validated plane；二者必须对应同一 payload。Call/Put、四个 metric selections、expiry visibility、颜色和 display formatting 不改变任何复制内容；全部 Points、全部 expiries 与全部 metric leaves 均保留。
 

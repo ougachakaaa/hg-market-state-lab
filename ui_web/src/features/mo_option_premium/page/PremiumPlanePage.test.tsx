@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { cleanup, fireEvent, render, screen, within } from '@testing-library/react'
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import type { PremiumPlane } from '../api/moOptionPremium'
 import PremiumPlanePage from './PremiumPlanePage'
 import { createRequestBoundary, installRequestBoundary } from '../../../shared/http/protectedRequest'
@@ -48,7 +48,12 @@ async function load() {
   return { fetch, results }
 }
 
-afterEach(() => { cleanup(); vi.unstubAllGlobals() })
+afterEach(() => {
+  cleanup()
+  vi.unstubAllGlobals()
+  vi.restoreAllMocks()
+  Reflect.deleteProperty(navigator, 'clipboard')
+})
 
 describe('MO Premium Plane page', () => {
   it('defaults to the authority-defined four-axis presentation', async () => {
@@ -85,4 +90,127 @@ describe('MO Premium Plane page', () => {
     expect(results.querySelector('pre')?.textContent).toBe(raw)
     expect(fetch).toHaveBeenCalledTimes(1)
   })
+})
+
+function clipboard(writeText = vi.fn().mockResolvedValue(undefined)) {
+  Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText } })
+  return writeText
+}
+function copyActions() { return within(screen.getByRole('group', { name: 'MO Premium Plane copy actions' })) }
+async function copied(button: string) {
+  fireEvent.click(copyActions().getByRole('button', { name: button }))
+  await waitFor(() => expect(copyActions().getByRole('status').textContent).toBe('Copied'))
+}
+
+describe('complete current-result copy', () => {
+  it.each(['missing', 'reject', 'resolve'])('reports Clipboard %s without internal errors', async (mode) => {
+    const write = clipboard(mode === 'reject' ? vi.fn().mockRejectedValue(new Error('private permission details')) : vi.fn().mockResolvedValue(undefined))
+    if (mode === 'missing') Reflect.deleteProperty(navigator, 'clipboard')
+    await load()
+    fireEvent.click(copyActions().getByRole('button', { name: 'Copy JSON' }))
+    await waitFor(() => expect(copyActions().getByRole('status').textContent).toBe(mode === 'resolve' ? 'Copied' : 'Copy failed'))
+    expect(screen.queryByText(/private permission details/)).toBeNull()
+    if (mode !== 'missing') expect(write).toHaveBeenCalledWith(JSON.stringify(plane, null, 2))
+  })
+  it.each([[false, false], [false, true], [true, false], [true, true]])('ignores old copy feedback after a new query (reject=%s, whileLoading=%s)', async (rejects, whileLoading) => {
+    let finish!: () => void
+    let fail!: (error: Error) => void
+    const write = clipboard(vi.fn().mockImplementationOnce(() => new Promise<void>((resolve, reject) => { finish = resolve; fail = reject })).mockResolvedValue(undefined))
+    await load()
+    let finishQuery!: (value: Response) => void
+    vi.mocked(fetch).mockImplementationOnce(() => new Promise<Response>((resolve) => { finishQuery = resolve }))
+    fireEvent.click(copyActions().getByRole('button', { name: 'Copy JSON' }))
+    expect(copyActions().queryByRole('status')).toBeNull()
+    expect(copyActions().getAllByRole<HTMLButtonElement>('button').every((b) => b.disabled)).toBe(true)
+    fireEvent.change(screen.getByLabelText('Observation 日期'), { target: { value: '2026-09-22' } })
+    expect(screen.queryByRole('group', { name: 'MO Premium Plane copy actions' })).toBeNull()
+    if (!whileLoading) await act(async () => { finishQuery(response(plane)) })
+    await act(async () => { if (rejects) fail(new Error('denied')); else finish() })
+    if (whileLoading) await act(async () => { finishQuery(response(plane)) })
+    await screen.findByRole('region', { name: 'Premium plane results' })
+    expect(copyActions().queryByRole('status')).toBeNull()
+    await copied('Copy for GPT')
+    expect(write).toHaveBeenCalledTimes(2)
+    fireEvent.change(screen.getByLabelText('Observation 日期'), { target: { value: '' } })
+    expect(screen.queryByRole('button', { name: 'Copy JSON' })).toBeNull()
+  })
+  it.each(['invalid', 'network'])('has no copy source in idle/loading/%s states', async (mode) => {
+    let finish!: (value: Response) => void
+    let fail!: (error: Error) => void
+    vi.stubGlobal('fetch', vi.fn().mockImplementation(() => new Promise<Response>((resolve, reject) => { finish = resolve; fail = reject })))
+    render(<PremiumPlanePage />)
+    expect(screen.queryByRole('button', { name: 'Copy JSON' })).toBeNull()
+    fireEvent.change(screen.getByLabelText('Observation 日期'), { target: { value: '2026-09-21' } })
+    expect(screen.queryByRole('button', { name: 'Copy JSON' })).toBeNull()
+    await act(async () => { if (mode === 'network') fail(new Error('offline')); else finish(response({ invalid: true })) })
+    await screen.findByRole('alert')
+    expect(screen.queryByRole('button', { name: 'Copy JSON' })).toBeNull()
+    expect(screen.queryByRole('button', { name: 'Copy for GPT' })).toBeNull()
+  })
+  it('copies only the newer response even if an older request completes late', async () => {
+    const write = clipboard()
+    const pending: Array<(value: Response) => void> = []
+    const fetch = vi.fn().mockImplementation(() => new Promise<Response>((resolve) => pending.push(resolve)))
+    vi.stubGlobal('fetch', fetch)
+    render(<PremiumPlanePage />)
+    fireEvent.change(screen.getByLabelText('Observation 日期'), { target: { value: '2026-09-21' } })
+    fireEvent.change(screen.getByLabelText('Observation 日期'), { target: { value: '2026-09-22' } })
+    const current = { ...plane, observation: { kind: 'trade_date', value: '2026-09-22' } }
+    await act(async () => { pending[1](response(current)) })
+    await screen.findByRole('region', { name: 'Premium plane results' })
+    await act(async () => { pending[0](response(plane)) })
+    await copied('Copy JSON')
+    expect(write).toHaveBeenLastCalledWith(JSON.stringify(current, null, 2))
+    expect(fetch).toHaveBeenCalledTimes(2)
+  })
+})
+
+it('copies complete sparse response, response identity and Inspector JSON across every presentation axis', async () => {
+  const write = clipboard()
+  const { fetch, results } = await load()
+  const raw = JSON.stringify(plane, null, 2)
+  await copied('Copy JSON')
+  expect(write).toHaveBeenLastCalledWith(raw)
+  for (const name of ['Put', 'Same-expiry futures', 'Time value', 'Unannualized', 'Yield']) {
+    fireEvent.click(within(results).getByRole('radio', { name }))
+    await copied('Copy JSON')
+    expect(write).toHaveBeenLastCalledWith(raw)
+  }
+  fireEvent.click(within(results).getByRole('checkbox', { name: '2026-10-23' }))
+  await copied('Copy JSON')
+  expect(write).toHaveBeenLastCalledWith(raw)
+  await copied('Copy for GPT')
+  const markdown = write.mock.calls.at(-1)![0] as string
+  expect(markdown.startsWith('# MO Premium Plane\n')).toBe(true)
+  for (const identity of ['observation.kind: trade_date', 'observation.value: 2026-09-21', 'option_product: MO', 'price_type: close', 'underlying.instrument_id: 000852.SH']) expect(markdown).toContain(identity)
+  expect(markdown).toContain('sparse Points')
+  expect(markdown).toContain('absent Point')
+  expect(markdown).toContain('null metric')
+  expect(markdown).toContain('numeric zero')
+  expect(markdown).toContain('futures: null')
+  expect(markdown.split('```json\n')[1].split('\n```')[0]).toBe(raw)
+  fireEvent.click(within(results).getByRole('button', { name: 'View raw response' }))
+  expect(results.querySelector('pre')?.textContent).toBe(raw)
+  const inspectorCopy = within(results).getAllByRole('button', { name: 'Copy JSON' }).find((b) => !screen.getByRole('group', { name: 'MO Premium Plane copy actions' }).contains(b))!
+  fireEvent.click(inspectorCopy)
+  await waitFor(() => expect(write).toHaveBeenLastCalledWith(raw))
+  expect(fetch).toHaveBeenCalledTimes(1)
+})
+
+it('uses the validated response identity and removes copy actions on a price-type query', async () => {
+  const write = clipboard()
+  const current = { ...plane, observation: { kind: 'trade_date', value: '2026-09-23' }, price_type: 'high' }
+  vi.stubGlobal('fetch', vi.fn().mockResolvedValue(response(current)))
+  render(<PremiumPlanePage />)
+  fireEvent.change(screen.getByLabelText('Observation 日期'), { target: { value: '2026-09-21' } })
+  await screen.findByRole('region', { name: 'Premium plane results' })
+  await copied('Copy for GPT')
+  expect(write.mock.calls[0][0]).toContain('observation.value: 2026-09-23')
+  expect(write.mock.calls[0][0]).toContain('price_type: high')
+  expect(write.mock.calls[0][0]).toContain(JSON.stringify(current, null, 2))
+  fireEvent.mouseDown(screen.getByRole('combobox', { name: '价格口径' }))
+  fireEvent.click(await screen.findByText('open', { selector: '.ant-select-item-option-content' }))
+  expect(screen.queryByRole('group', { name: 'MO Premium Plane copy actions' })).toBeNull()
+  await screen.findByRole('region', { name: 'Premium plane results' })
+  expect(copyActions().queryByRole('status')).toBeNull()
 })
