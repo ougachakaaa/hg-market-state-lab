@@ -161,7 +161,7 @@ selection_slot        # M1 or Q1 on entry/expiry_open; null on close legs
 ```text
 trade_date
 old_contract_code
-old_slot              # M0 on the expiry session
+old_slot              # actual resolved Slot of the old contract; validated M0 on a roll
 old_close
 new_contract_code
 new_slot              # profile target M1 or Q1
@@ -182,6 +182,14 @@ Rules:
   contract metadata refresh.
 - `selection_slot` is present only for opens; close legs use null. The roll event carries
   the old session slot and the profile target slot.
+- `old_slot` is the Slot mapping whose `contract_code` is `old_contract_code` in the
+  same decision-session resolution used to select the new target. It is not inferred
+  from the delivery month, contract code or a recalled role.
+- A valid roll requires the expiring held contract to be present in the complete active
+  set and to map to `M0`; this follows from the expiring contract being the front
+  contract. If it is absent or maps elsewhere, the simulation fails
+  `invalid_contract_lifecycle` and publishes no result. Thus `old_slot = M0` is a
+  validated invariant, not an unconditional assumption.
 
 ## Summary
 

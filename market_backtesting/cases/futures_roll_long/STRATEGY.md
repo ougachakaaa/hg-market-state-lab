@@ -47,8 +47,10 @@ validated by [Inputs](INPUTS.md).
 
 For each CFFEX session in strictly increasing order:
 
-1. Validate the session's required Futures rows, the currently held contract's row
-   and lifecycle, the benchmark Index close, and all price legality.
+1. Validate the session's required Futures facts: the currently held contract's row,
+   lifecycle and legal Close, and on a decision session the target's row and legal
+   Close. Export completeness/public-fact validity and benchmark Index data are not
+   strategy inputs; this stage performs no market I/O.
 2. Attribute the session's PnL to the contract held from the previous session's
    close. Entry day PnL is zero. On a roll or final session, the PnL belongs to the
    old, still-held contract.
@@ -116,6 +118,11 @@ occurs inside the window).
 - The trigger is `session == held_contract.delist_date`, inclusive. The expiry session
   is still a valid trading session and must contain the expiring contract's row and
   Close.
+- The old contract must be present in the same complete decision-session active set
+  and must resolve to `M0`. This is the validated consequence of the expiring contract
+  being the front contract; it is not inferred from the contract code, delivery month
+  or a previous role. If the old contract is absent or maps to another Slot, fail
+  `invalid_contract_lifecycle`; do not emit a roll from a role change.
 - The target Slot is determined by the strategy profile using that same session's
   complete active set: `M1` for `expiry_to_M1_v1`, `Q1` for `expiry_to_Q1_v1`.
 - The target must be active on the decision session, have a legal `Close > 0`, a

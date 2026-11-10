@@ -43,7 +43,7 @@ Pure request validation, before run creation or upstream I/O:
 - product is exactly one canonical member of `IM / IC / IF / IH`;
 - dates are date-only, inclusive, with `start_date <= end_date`;
 - `end_date` is not after the current date in `Asia/Shanghai`;
-- inclusive span is at most 20 calendar years (7,305 days);
+- inclusive span `(end_date - start_date).days + 1` is at most 1,096 days;
 - profile is exactly one of the two named profiles.
 
 The request does not carry a session count; whether the window contains at least two
@@ -156,11 +156,31 @@ application meaning.
 
 | Stage | Categories | Dependency | Meaning |
 | --- | --- | --- | --- |
-| `input_preparation` | `upstream_operation`, `incomplete_required_input`, `invalid_public_input`, `insufficient_sessions`, `invalid_contract_lifecycle` | `calendar_cffex`, `futures`, `index`, or null | Public acquisition/completeness/metadata failure, fewer than two sessions, invalid lifecycle evidence |
-| `holding_simulation` | `slot_resolution`, `missing_market_fact`, `invalid_price`, `roll_target_invalid` | null | Authorized Slot resolution or real-contract simulation failure |
-| `accounting` | `non_positive_equity`, `non_finite_result` | null | Invalid normalized equity or non-finite arithmetic |
+| `input_preparation` | `upstream_operation`, `incomplete_required_input`, `invalid_public_input`, `insufficient_sessions`, `invalid_contract_lifecycle` | `calendar_cffex`, `futures`, `index`, or null | Public acquisition/completeness/metadata failure, fewer than two sessions, invalid lifecycle evidence discovered before simulation |
+| `holding_simulation` | `invalid_holding_input`, `slot_resolution`, `missing_market_fact`, `invalid_price`, `roll_target_invalid`, `invalid_contract_lifecycle`, `invalid_position_state` | null | Invalid simulation input, authorized Slot resolution, real-contract target/lifecycle failure or illegal position state |
+| `accounting` | `non_positive_equity`, `non_finite_result`, `multiplier_mismatch` | null | Invalid normalized equity, non-finite arithmetic or cross-contract multiplier inconsistency |
 | `result_publication` | `result_too_large`, `serialization_failure` | null | Bounded result publication failure |
 | `execution` | `interrupted`, `internal_failure` | null | Process interruption or unexpected worker failure |
+
+The stage, category and reason are stable classification fields. Representative reason
+mapping:
+
+| Category | Representative stable reasons |
+| --- | --- |
+| `invalid_holding_input` | `invalid_product_code`, `invalid_strategy_profile`, `insufficient_sessions`, `session_order_not_increasing`, `duplicate_session`, `invalid_session_facts`, `duplicate_session_facts`, `unknown_contract_fact` |
+| `slot_resolution` | `missing_decision_evidence`, `invalid_decision_evidence`, `w1_slot_resolution_error`, `resolved_target_missing` |
+| `missing_market_fact` | `missing_session_facts`, `missing_contract_row`, `missing_active_contract_metadata` |
+| `invalid_price` | `missing_close`, `non_finite_close`, `non_positive_close` |
+| `roll_target_invalid` | `target_not_resolved`, `target_expired`, `target_without_holding_period`, `target_equal_held_contract`, `target_inactive` |
+| `invalid_contract_lifecycle` | `invalid_contract_metadata`, `duplicate_contract_code`, `duplicate_delivery_month`, `conflicting_product`, `conflicting_underlying`, `held_contract_inactive`, `held_contract_missing_from_active_set`, `expiring_held_contract_not_m0` |
+| `invalid_position_state` | `held_contract_expired_without_roll`, `no_position_on_final_session`, `unexpected_flat_state`, `final_state_not_flat` |
+| `accounting` | `multiplier_mismatch` (WP2), `non_positive_equity`, `non_finite_result` |
+
+`no_position_on_final_session` is unreachable under valid v1 input and remains a
+defensive failure guard, consistent with [Strategy](STRATEGY.md). A
+`held_contract_expired_without_roll` failure is reachable when the observed session set
+skips the held contract's actual last trading day. Missing data, an illegal target or an
+illegal state is always a classified failure; it never becomes a partial result.
 
 Reasons are fixed safe text or sanitized with the case policy. No filesystem path,
 provider credential, URL, raw exception, traceback, SQL or private metadata enters a

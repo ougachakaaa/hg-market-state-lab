@@ -22,15 +22,16 @@ an earlier WP's bounded acceptance, but no WP may claim another WP's deliverable
 | WP5 — Online Backtest Application & Run Store | Online composition of the WP3 preflight plus submit/status/result application; owner scope; single worker/busy; disposable file store; atomic result publication; startup recovery; bounded result reads | WP4 | Fake-service state matrix; busy/no queue; owner isolation; restart interruption; orphan result handling; size/corruption/unsupported platform; no HTTP/UI | HTTP/UI, Publication, Workbench, multi-process/queue, W1 store reuse |
 | WP6 — HTTP Product & OpenAPI | HTTP contract; strict parsing/limits; run/result DTO projection; Auth/owner/error mapping; OpenAPI; no financial recomputation | WP5 | Strict request/auth/error/limit tests; OpenAPI/freshness prerequisites; result/run/request association; preflight and no-store behavior; Web untouched | Web UI, business logic, W1 product changes, financial recomputation |
 | WP7 — Web UI Backtesting Integration | `/backtesting` page: Ant Design controls, preflight/readiness, submit/poll, V2 return/drawdown charts, trades/rolls, evidence/limitations, busy/error/failed/interrupted states; generated contracts | WP6 | `npm run contract:check`, Vitest, build, lint; deterministic browser tests; no fake result/control; no React financial computation; planned page honestly replaced | Financial calculation, backend bypass, generic chart DSL, CSV/export/copy not authorized by W2 v1 |
-| WP8 — Real-Market E2E Acceptance & Reconciliation | WSL2 FastAPI + Vite + Chromium real IM workflow; login → preflight → submit → poll → result → charts → trades → evidence; restart/busy/ownership/failure; final reconciliation | WP7 | Explicit real IM window with at least one roll and final exit; real data not substituted by synthetic; all workflow states; W1 regression; no W3 features; external evidence; WP8 PASS permits W2 completion | W3 fees/slippage/ETF/margin/funding/optimization; production deployment promise; unverified platform claims |
+| WP8 — Real-Market E2E Acceptance & Reconciliation | WSL2 FastAPI + Vite + Windows Chrome real IM workflow; login → preflight → submit → poll → result → charts → trades → evidence; restart/busy/ownership/failure; final reconciliation | WP7 | Explicit real IM window with at least one roll and final exit; real data not substituted by synthetic; all workflow states; Windows Chrome browser → WSL HTTP/Web local end-to-end acceptance; W1 regression; no W3 features; external evidence; WP8 PASS permits W2 completion | W3 fees/slippage/ETF/margin/funding/optimization; production deployment promise; unverified platform claims |
 
 ### Work-package boundaries
 
 - WP4 PASS means the core research capability is complete. It does not mean the HTTP
   product or Web workflow is complete.
-- WP8 PASS is required before W2 is declared complete. Windows-native Chrome and
-  Nginx/Docker production deployment are recorded as NOT RUN/Deferred and are not part
-  of the W2 completion claim.
+- WP8 PASS is required before W2 is declared complete. It includes a Windows Chrome
+  browser accessing the WSL-hosted HTTP/Web service in a local end-to-end workflow.
+  Running the backend natively on Windows is not required. Nginx/Docker production
+  deployment is recorded as NOT RUN/Deferred and is not part of the W2 completion claim.
 - WP1 creates the Python package and must update the root package manifest, pytest
   testpaths/pythonpath, Ruff/Mypy source lists and the repository package-list
   architecture assertion at that time. WP0 intentionally does not pre-create these.
@@ -75,8 +76,9 @@ without guessing business semantics.
 - Full online evidence/replay is not part of W2 v1. The result carries evidence summary,
   fingerprint, coverage and limitations; the complete canonical package/replay belongs
   to the WP4 case-owned evidence boundary.
-- Windows-native online store, Windows Chrome and Nginx/Docker deployment are not W2
-  completion requirements; they are recorded as NOT RUN/Deferred.
+- Windows-native backend/online-store execution and Nginx/Docker production deployment
+  are not W2 completion requirements; they are recorded as NOT RUN/Deferred. Windows
+  Chrome accessing the WSL service is required by WP8.
 - Run list/history, cancel, delete, retry, idempotency keys, queueing, multi-process
   execution, automatic cleanup/TTL and production SLA remain out of scope.
 - CSV/copy/export of backtest results, strategy optimization, ETF comparison, margin

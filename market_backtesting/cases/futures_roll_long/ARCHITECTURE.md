@@ -47,9 +47,11 @@ request identity is `(case, product_code, start_date, end_date, strategy_profile
 the actual input fingerprint is separate and defined by [Inputs](INPUTS.md).
 
 Dates are validated as date-only, `start_date <= end_date`, `end_date` not after the
-current date in `Asia/Shanghai`, and inclusive span at most 20 calendar years
-(operationally 7,305 days). The window must contain at least two CFFEX open sessions;
-session discovery and completeness are input-preparation responsibilities.
+current date in `Asia/Shanghai`, and inclusive span
+`(end_date - start_date).days + 1 <= 1,096`. This restores the W2 V1 inclusive
+1,096-day limit; there is no third window rule. The window must contain at least two
+CFFEX open sessions; session discovery and completeness are input-preparation
+responsibilities.
 
 The two profiles differ only in the target of a roll triggered by a held contract's
 actual last trading day:
@@ -78,6 +80,30 @@ mandatory sequence of separately persisted artifacts. Input preparation alone pe
 public service I/O. Holding simulation performs no I/O. Accounting consumes a validated
 position/price timeline. Result projection consumes accounting output without
 recomputing it.
+
+## Validation ownership
+
+Input preparation, strategy simulation and accounting validate different things and do
+not repeat each other's checks:
+
+- **Input preparation** owns market-data completeness and public-fact validity:
+  Calendar scope/completeness, Futures/Index export schema, scope, counters and rows,
+  ordered sessions, unique identities, final-export metadata/lifecycle consistency,
+  underlying derivation and the canonical input fingerprint. It does not decide
+  positions, roll targets or PnL.
+- **Strategy simulation** owns the real-contract position: entry/hold/roll/exit state
+  transitions, held-contract identity and lifecycle while held, decision-day Slot
+  evidence and target legality, and terminal flatness. It consumes retained validated
+  facts without market I/O, does not revalidate export completeness and does not
+  compute PnL.
+- **Accounting** owns PnL/return/equity legality: close-to-close PnL attribution,
+  multiplier consistency with the entry contract, finite arithmetic, benchmark,
+  positive equity and drawdown. It consumes the validated position/price timeline and
+  does not re-decide positions or repair prices.
+
+WP1 consumes already-validated synthetic market facts and implements only the strategy
+simulation boundary. It adds no real DataLake I/O and produces no WP2 PnL, return,
+benchmark or equity value.
 
 ## Authority navigation
 
