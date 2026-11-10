@@ -1,7 +1,7 @@
 import { StrictMode } from 'react'
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, expect, it, vi } from 'vitest'
-import { jsonFence, serializeJson } from './text'
+import { serializeJson } from './text'
 import { useClipboardWrite } from './useClipboardWrite'
 
 function Harness({ payload }: { payload: unknown }) {
@@ -22,11 +22,4 @@ it('preserves a large JSON value and writes the complete text in StrictMode', as
   expect(expected.length).toBeGreaterThan(1_000_000)
   expect(writeText).toHaveBeenCalledExactlyOnceWith(expected)
   expect(screen.getByRole('status').textContent).toBe('Copied')
-})
-
-it('protects Markdown fences without changing JSON containing Markdown characters', () => {
-  const json = serializeJson({ id: '```json\n# heading\n`````\n~~~\n**text**', many: '` '.repeat(100000) })
-  const fenced = jsonFence(json)
-  expect(fenced).toBe('``````json\n' + json + '\n``````')
-  expect(JSON.parse(json).id).toContain('`````')
 })

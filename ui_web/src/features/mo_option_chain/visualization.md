@@ -200,13 +200,19 @@ chart library
 
 ## 10. Daily Data Copy / Export
 
-两种复制的格式、成功状态限制、顶部入口、Clipboard 反馈与安全边界遵循 [Daily Data Copy / Export authority](../../../data-copy-export.md)。本节只拥有 Option Chain 特有的 source 与 context。
+Raw / Context JSON 复制与 CSV / Context JSON 导出的格式、成功状态限制、顶部入口、Clipboard 反馈与安全边界遵循 [Daily Data Copy / Export authority](../../../data-copy-export.md)。本节只拥有 Option Chain 特有的 source 与 context。
 
-Copy JSON 与 Copy for GPT 的 JSON 均使用当前成功状态中的完整 `OptionChain` 对象，即本次 HTTP request 收到且通过 runtime contract validation 的响应。不得使用 `selectedGroups`、chart traces、可见 strike viewport 或合约明细的展示投影；隐藏的 expiry、Call/Put 合约、视窗外合约和 `price=null` 的合约都必须保留。
+Copy Raw JSON 与 Context JSON 的 data 均使用当前成功状态中的完整 `OptionChain` 对象，即本次 HTTP request 收到且通过 runtime contract validation 的响应。不得使用 `selectedGroups`、chart traces、可见 strike viewport 或合约明细的展示投影；隐藏的 expiry、Call/Put 合约、视窗外合约和 `price=null` 的合约都必须保留。
 
-Copy for GPT 的产品名称为 `MO Option Chain`；上下文读取同一响应中的 `target_trade_date`、`option_product`、resolved `price_type` 和 `underlying.instrument_id`。当前页面固定请求 MO/close 不构成硬编码复制身份的依据。
+Context JSON 的产品名称为 `MO Option Chain`；上下文读取同一响应中的 `target_trade_date`、`option_product`、resolved `price_type` 和 `underlying.instrument_id`。当前页面固定请求 MO/close 不构成硬编码复制身份的依据。
 
 简短阅读说明限定为 [HTTP contract](../../../../ui_http/products/mo_option_chain/http-contract.md#3-success-response) 已确认的事实：`price=null` 表示缺价，numeric `0` 是合法数据，二者不等价；无结构性匹配的同到期 IM 合约时 `futures` 为 `null`，不得推断替代 reference。Expiry 与 Call/Put identity 保持响应的父级 grouping，不生成另一套 option DTO。
+
+### Context JSON V1
+
+`metadata.product` 为 `MO Option Chain`，`metadata.response_identity` 包含 `target_trade_date`、`option_product`、`price_type` 与 `underlying_instrument_id`（取 `underlying.instrument_id`）。`metadata.reading_notes` 将上述既有阅读说明组织为字符串数组，保留原解释，不新增业务推断。Context envelope 与格式版本遵循共同 authority。
+
+`Copy Context JSON` 与 `Export Context JSON` 必须使用同一个 feature-local serializer；文件名为 `mo-option-chain_{target_trade_date}_{price_type}_context.json`。身份来自同次 validated response；安全文件名、UTF-8、下载反馈与资源清理遵循共同 authority。
 
 ### CSV V1
 

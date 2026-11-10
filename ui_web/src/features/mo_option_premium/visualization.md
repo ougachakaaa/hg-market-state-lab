@@ -185,7 +185,7 @@ runtime contract validation
 validated PremiumPlane
 ```
 
-只有 validation 成功时，validated plane 与其对应 raw payload 才共同进入 complete-result state。contract-invalid payload 继续进入既有 invalid-response failure path，不得作为 Inspector success data。完整 JSON serialization 遵循 [Daily Data Copy / Export authority](../../../data-copy-export.md#1-copy-json)，无需恢复 byte-identical HTTP body。
+只有 validation 成功时，validated plane 与其对应 raw payload 才共同进入 complete-result state。contract-invalid payload 继续进入既有 invalid-response failure path，不得作为 Inspector success data。完整 JSON serialization 遵循 [Daily Data Copy / Export authority](../../../data-copy-export.md#1-copy-raw-json)，无需恢复 byte-identical HTTP body。
 
 Inspector 展开后继续使用可读的完整 pretty JSON，并保留明确的“复制 JSON”能力。它与第 10 节顶部复制入口使用同一成功状态中的 `rawPayload`；复制反馈与失败边界遵循共同 authority，不另行维护过滤后的 JSON。顶部入口不要求展开 Inspector，也不替代其完整查看能力。
 
@@ -232,17 +232,23 @@ MO Option Chain 与 Premium Plane 保持两个独立 frontend vertical slices；
 
 ## 10. Daily Data Copy / Export
 
-两种复制的格式、成功状态限制、顶部入口、Clipboard 反馈与安全边界遵循 [Daily Data Copy / Export authority](../../../data-copy-export.md)。本节只拥有 Premium Plane 特有的 source 与 context。
+Raw / Context JSON 复制与 CSV / Context JSON 导出的格式、成功状态限制、顶部入口、Clipboard 反馈与安全边界遵循 [Daily Data Copy / Export authority](../../../data-copy-export.md)。本节只拥有 Premium Plane 特有的 source 与 context。
 
-Copy JSON 与 Copy for GPT 的 JSON 均使用第 7 节中当前成功状态保留的完整 `rawPayload`，不使用 `projection` 或重建的 table/grid。Copy for GPT 上下文取同一次成功响应的 validated plane；二者必须对应同一 payload。Call/Put、四个 metric selections、expiry visibility、颜色和 display formatting 不改变任何复制内容；全部 Points、全部 expiries 与全部 metric leaves 均保留。
+Copy Raw JSON 与 Context JSON 的 data 均使用第 7 节中当前成功状态保留的完整 `rawPayload`，不使用 `projection` 或重建的 table/grid。Context JSON 上下文取同一次成功响应的 validated plane；二者必须对应同一 payload。Call/Put、四个 metric selections、expiry visibility、颜色和 display formatting 不改变任何复制内容；全部 Points、全部 expiries 与全部 metric leaves 均保留。
 
-Copy for GPT 的产品名称为 `MO Premium Plane`；上下文读取响应中的 `observation.kind`、`observation.value`、`option_product`、resolved `price_type` 和 `underlying.instrument_id`，不得把当前 `as_of` 或 price-type 控件当作响应身份。
+Context JSON 的产品名称为 `MO Premium Plane`；上下文读取响应中的 `observation.kind`、`observation.value`、`option_product`、resolved `price_type` 和 `underlying.instrument_id`，不得把当前 `as_of` 或 price-type 控件当作响应身份。
 
 简短阅读说明限定为 [HTTP contract](../../../../ui_http/products/mo_option_premium/http-contract.md#5-absence-null-and-zero) 已确认的事实：plane 是 sparse Points；不存在的 Point 与真实 Point 内的 null metric 不等价，numeric `0` 也不等于 `null`；没有合法同到期期货 reference 时 `futures` 可以为 `null`，不得寻找替代 reference。说明不重新计算 metric 或补齐 plane。
 
+### Context JSON V1
+
+`metadata.product` 为 `MO Premium Plane`，`metadata.response_identity` 包含 `observation: { kind, value }`、`option_product`、`price_type` 与 `underlying_instrument_id`（取 `underlying.instrument_id`）。`metadata.reading_notes` 将上述既有阅读说明组织为字符串数组，保留原解释，不新增业务推断。Context envelope 与格式版本遵循共同 authority。
+
+`Copy Context JSON` 与 `Export Context JSON` 必须使用同一个 feature-local serializer；文件名为 `mo-premium-plane_{observation.value}_{price_type}_context.json`。身份来自同次 validated response；安全文件名、UTF-8、下载反馈与资源清理遵循共同 authority。
+
 ### CSV V1
 
-Source 为当前成功状态的完整 validated `plane`，JSON 复制仍使用同次响应 rawPayload。每个真实 `points[]` item 生成一行，不使用 projection.rows、selected metric、strike union 或 displayed cells。固定前 15 列：
+Source 为当前成功状态的完整 validated `plane`，Raw JSON 与 Context JSON 的 data 仍使用同次响应 rawPayload。每个真实 `points[]` item 生成一行，不使用 projection.rows、selected metric、strike union 或 displayed cells。固定前 15 列：
 
 ```text
 observation_kind, observation_value, option_product, price_type,

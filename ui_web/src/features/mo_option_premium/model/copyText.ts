@@ -1,11 +1,26 @@
 import type { PremiumPlane } from '../api/moOptionPremium'
-import { jsonFence, serializeJson } from '../../../shared/clipboard/text'
+import { serializeJson } from '../../../shared/clipboard/text'
 
-export function premiumPlaneForGpt(plane: PremiumPlane, rawPayload: unknown): string {
-  return [
-    '# MO Premium Plane',
-    `- observation.kind: ${plane.observation.kind}\n- observation.value: ${plane.observation.value}\n- option_product: ${plane.option_product}\n- price_type: ${plane.price_type}\n- underlying.instrument_id: ${plane.underlying.instrument_id}`,
-    'The plane contains sparse Points. An absent Point is no analytical observation; a null metric is an unavailable fact in a real Point; numeric zero is a valid value. These states differ. futures: null means no eligible same-expiry futures reference exists; no substitute reference is implied.',
-    jsonFence(serializeJson(rawPayload)),
-  ].join('\n\n')
+export function premiumPlaneContextJson(plane: PremiumPlane, rawPayload: unknown): string {
+  return serializeJson({
+    format_version: 'daily-data-context-v1',
+    metadata: {
+      product: 'MO Premium Plane',
+      response_identity: {
+        observation: { kind: plane.observation.kind, value: plane.observation.value },
+        option_product: plane.option_product,
+        price_type: plane.price_type,
+        underlying_instrument_id: plane.underlying.instrument_id,
+      },
+      reading_notes: [
+        'The plane contains sparse Points. An absent Point is no analytical observation; a null metric is an unavailable fact in a real Point; numeric zero is a valid value. These states differ.',
+        'futures: null means no eligible same-expiry futures reference exists; no substitute reference is implied.',
+      ],
+    },
+    data: rawPayload,
+  })
+}
+
+export function premiumPlaneContextFilename(plane: PremiumPlane): string {
+  return `mo-premium-plane_${plane.observation.value}_${plane.price_type}_context.json`
 }

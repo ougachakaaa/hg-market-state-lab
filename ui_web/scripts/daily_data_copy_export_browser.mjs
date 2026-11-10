@@ -68,8 +68,8 @@ try {
   const context = await browser.newContext({ permissions: ['clipboard-read', 'clipboard-write'], viewport: { width: 1440, height: 1100 }, timezoneId: 'Asia/Shanghai' })
   await context.addInitScript(() => {
     const create = URL.createObjectURL.bind(URL), revoke = URL.revokeObjectURL.bind(URL)
-    window.__urls = { created: 0, revoked: 0 }
-    URL.createObjectURL = (...args) => { const url = create(...args); window.__urls.created++; return url }
+    window.__urls = { created: 0, revoked: 0, types: [] }
+    URL.createObjectURL = (...args) => { const url = create(...args); window.__urls.created++; window.__urls.types.push(args[0].type); return url }
     URL.revokeObjectURL = url => { window.__urls.revoked++; revoke(url) }
   })
   page = await context.newPage()
@@ -157,19 +157,40 @@ try {
   async function copy(product, data) {
     const requestsBefore = requestCount
     const group = page.getByRole('group', { name: product.group, exact: true })
-    await group.getByRole('button', { name: 'Copy JSON', exact: true }).click()
+    await group.getByRole('button', { name: 'Copy Raw JSON', exact: true }).click()
     await group.getByRole('status').filter({ hasText: /^Copied$/ }).waitFor()
     const json = await page.evaluate(() => navigator.clipboard.readText())
     assert.equal(json, JSON.stringify(data, null, 2)); safeContent(json)
-    await group.getByRole('button', { name: 'Copy for GPT', exact: true }).click()
+    await group.getByRole('button', { name: 'Copy Context JSON', exact: true }).click()
     await group.getByRole('status').filter({ hasText: /^Copied$/ }).waitFor()
-    const markdown = await page.evaluate(() => navigator.clipboard.readText())
-    assert.ok(markdown.startsWith(`# ${product.title}\n`))
-    const fields = product.columns === 31 ? { 'observation.kind': data.observation.kind, 'observation.value': data.observation.value } : { target_trade_date: data.target_trade_date }
-    for (const [key, value] of Object.entries({ ...fields, option_product: data.option_product, price_type: data.price_type, 'underlying.instrument_id': data.underlying.instrument_id })) assert.ok(markdown.includes(`- ${key}: ${value}`))
-    assert.equal(markdown.match(/```json\n([\s\S]*)\n```/)[1], json)
-    for (const phrase of product.columns === 31 ? ['sparse Points', 'absent Point', 'null metric', 'numeric zero', 'futures: null'] : ['null price', 'numeric zero', 'futures: null', 'Call/Put grouping']) assert.ok(markdown.includes(phrase))
-    safeContent(markdown)
+    const contextText = await page.evaluate(() => navigator.clipboard.readText())
+    const contextJson = JSON.parse(contextText)
+    assert.deepEqual(Object.keys(contextJson), ['format_version', 'metadata', 'data'])
+    assert.equal(contextJson.format_version, 'daily-data-context-v1')
+    assert.equal(contextJson.metadata.product, product.title)
+    const fields = product.columns === 31 ? { observation: data.observation } : { target_trade_date: data.target_trade_date }
+    assert.deepEqual(contextJson.metadata.response_identity, { ...fields, option_product: data.option_product, price_type: data.price_type, underlying_instrument_id: data.underlying.instrument_id })
+    assert.deepEqual(contextJson.data, JSON.parse(json))
+    assert.ok(contextJson.metadata.reading_notes.every(note => typeof note === 'string'))
+    for (const phrase of product.columns === 31 ? ['sparse Points', 'absent Point', 'null metric', 'numeric zero', 'futures: null'] : ['null price', 'numeric zero', 'futures: null', 'Call/Put grouping']) assert.ok(contextJson.metadata.reading_notes.join(' ').includes(phrase))
+    assert.equal(contextText, JSON.stringify(contextJson, null, 2))
+    safeContent(contextText)
+    const event = page.waitForEvent('download')
+    await group.getByRole('button', { name: 'Export Context JSON', exact: true }).click()
+    const file = await event
+    const filename = `${product.prefix}_${data.target_trade_date ?? data.observation.value}_${data.price_type}_context.json`
+    assert.equal(file.suggestedFilename(), filename)
+    const destination = resolve(output, `${report.downloads.length}-${filename}`)
+    await file.saveAs(destination); assert.equal(await file.failure(), null)
+    const bytes = await readFile(destination)
+    const text = new TextDecoder('utf-8', { fatal: true, ignoreBOM: true }).decode(bytes)
+    assert.equal(text, contextText)
+    assert.deepEqual(bytes, Buffer.from(contextText, 'utf8'))
+    assert.deepEqual(JSON.parse(text).data, data)
+    safeContent(text)
+    await page.waitForFunction(() => !document.querySelector('a[download]') && window.__urls.created === window.__urls.revoked)
+    assert.equal(await page.evaluate(() => window.__urls.types.at(-1)), 'application/json;charset=utf-8')
+    report.downloads.push({ filename, bytes: bytes.length, format: 'Context JSON V1', matchesClipboard: true })
     assert.equal(requestCount, requestsBefore)
     report.clipboardChecks = (report.clipboardChecks ?? 0) + 2
     return json
@@ -206,7 +227,7 @@ try {
     await page.getByRole('region', { name: product.region, exact: true }).waitFor()
     return data
   }
-  async function noActions() { assert.equal(await page.getByRole('button', { name: 'Export CSV', exact: true }).count(), 0); assert.equal(await page.getByRole('button', { name: 'Copy JSON', exact: true }).count(), 0); assert.equal(await page.getByRole('button', { name: 'Copy for GPT', exact: true }).count(), 0) }
+  async function noActions() { assert.equal(await page.getByRole('button', { name: 'Export Context JSON', exact: true }).count(), 0); assert.equal(await page.getByRole('button', { name: 'Export CSV', exact: true }).count(), 0); assert.equal(await page.getByRole('button', { name: 'Copy Raw JSON', exact: true }).count(), 0); assert.equal(await page.getByRole('button', { name: 'Copy Context JSON', exact: true }).count(), 0) }
   for (const product of products) {
     if (product.columns === 13) {
       await page.getByRole('button', { name: 'Daily Data overview', exact: true }).click()
@@ -242,7 +263,7 @@ try {
       await page.getByText('View raw response', { exact: true }).click()
       await page.locator('.raw-response-code').waitFor()
       assert.equal(await page.locator('.raw-response-code').innerText(), json)
-      await page.getByRole('button', { name: 'Copy JSON', exact: true }).last().click()
+      await page.getByRole('button', { name: 'Copy JSON', exact: true }).click()
       assert.equal(await page.evaluate(() => navigator.clipboard.readText()), json)
       assert.equal(requestCount, before)
       // Query input actually changes the resolved response price type.
@@ -253,7 +274,7 @@ try {
       await page.getByRole('region', { name: product.region, exact: true }).waitFor()
       await copy(product, high); await download(product, high)
     }
-    passed(`${product.title}: real clipboard, GPT context, independent CSV fields, presentation independence and URL cleanup`)
+    passed(`${product.title}: real clipboard, identical Context JSON download, independent CSV fields, presentation independence and URL cleanup`)
 
     // Failure instrumentation is restricted to explicit failure scenarios.
     await page.evaluate(() => {
@@ -261,18 +282,20 @@ try {
       navigator.clipboard.writeText = async () => { throw new Error('private fixture failure') }
     })
     const group = page.getByRole('group', { name: product.group })
-    await group.getByRole('button', { name: 'Copy JSON', exact: true }).click()
+    await group.getByRole('button', { name: 'Copy Raw JSON', exact: true }).click()
     await group.getByText('Copy failed', { exact: true }).waitFor()
     await page.evaluate(() => { navigator.clipboard.writeText = window.__originalWrite; window.__originalCreate = URL.createObjectURL; URL.createObjectURL = () => { throw new Error('private fixture failure') } })
     const unexpectedDownloads = []
     const failedDownload = download => unexpectedDownloads.push(download.suggestedFilename())
     page.on('download', failedDownload)
-    await group.getByRole('button', { name: 'Export CSV', exact: true }).click()
-    await group.getByText('Export failed', { exact: true }).waitFor()
-    assert.equal(await group.getByText('Download started', { exact: true }).count(), 0)
+    for (const name of ['Export CSV', 'Export Context JSON']) {
+      await group.getByRole('button', { name, exact: true }).click()
+      await group.getByText('Export failed', { exact: true }).waitFor()
+      assert.equal(await group.getByText('Download started', { exact: true }).count(), 0)
+    }
     await page.evaluate(() => { URL.createObjectURL = window.__originalCreate; navigator.clipboard.writeText = () => new Promise(resolve => { window.__finishCopy = resolve }) })
-    await group.getByRole('button', { name: 'Copy JSON', exact: true }).click()
-    for (const name of ['Copy JSON', 'Copy for GPT', 'Export CSV']) assert.equal(await group.getByRole('button', { name, exact: true }).isDisabled(), true)
+    await group.getByRole('button', { name: 'Copy Raw JSON', exact: true }).click()
+    for (const name of ['Copy Raw JSON', 'Copy Context JSON', 'Export CSV', 'Export Context JSON']) assert.equal(await group.getByRole('button', { name, exact: true }).isDisabled(), true)
     await query(product, '2026-09-18')
     await page.evaluate(() => { window.__finishCopy(); navigator.clipboard.writeText = window.__originalWrite })
     assert.equal(await page.getByRole('group', { name: product.group }).getByRole('status').count(), 0)

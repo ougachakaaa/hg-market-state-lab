@@ -1,3 +1,5 @@
+import { downloadText, safeDownloadFilename } from '../download/download'
+
 export type CsvCell = string | number | boolean | null
 
 function encodeCell(value: CsvCell): string {
@@ -17,30 +19,8 @@ export function serializeCsv(header: readonly string[], rows: readonly (readonly
   }).join('')
 }
 
-export function safeCsvFilename(filename: string): string {
-  // Control characters are invalid filename content.
-  // oxlint-disable-next-line no-control-regex
-  return filename.replace(/[<>:"/\\|?*\u0000-\u001f\u007f]/g, '_').replace(/[. ]+$/g, '_')
-}
+export const safeCsvFilename = safeDownloadFilename
 
 export function downloadCsv(csv: string, filename: string): void {
-  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' })
-  let url: string | undefined
-  let anchor: HTMLAnchorElement | undefined
-  const cleanup = () => {
-    try { anchor?.remove() } finally { if (url !== undefined) URL.revokeObjectURL(url) }
-  }
-  try {
-    url = URL.createObjectURL(blob)
-    anchor = document.createElement('a')
-    anchor.href = url
-    anchor.download = safeCsvFilename(filename)
-    anchor.hidden = true
-    document.body.appendChild(anchor)
-    anchor.click()
-    setTimeout(cleanup, 0)
-  } catch (error) {
-    cleanup()
-    throw error
-  }
+  downloadText(csv, filename, 'text/csv;charset=utf-8')
 }
