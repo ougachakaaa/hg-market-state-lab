@@ -1,3 +1,4 @@
+import { commitDate } from '../../../test/datePicker'
 import { captureCsvDownloads } from '../../../test/csvDownload'
 import { optionChainCsv } from '../model/csvExport'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
@@ -42,7 +43,7 @@ function plot() {
 }
 
 function dateInput(): HTMLInputElement {
-  return screen.getByLabelText('目标交易日') as HTMLInputElement
+  return screen.getByLabelText('观察日期') as HTMLInputElement
 }
 
 function changeSeriesColor(label: string, color: string) {
@@ -56,7 +57,7 @@ function changeSeriesColor(label: string, color: string) {
 async function load(body: unknown = chain) {
   vi.stubGlobal('fetch', vi.fn().mockResolvedValue(response(body)))
   render(<OptionChainPage />)
-  fireEvent.change(dateInput(), { target: { value: '2026-09-17' } })
+  commitDate(dateInput(), '2026-09-17')
   return screen.findByRole('region', { name: '期权链结果' })
 }
 
@@ -72,9 +73,9 @@ describe('MO option chain combined page', () => {
     const fetch = vi.fn()
     vi.stubGlobal('fetch', fetch)
     render(<OptionChainPage />)
-    expect(screen.getByRole('status').textContent).toContain('请选择目标交易日')
+    expect(screen.getByRole('status').textContent).toContain('请选择观察日期')
     expect(fetch).not.toHaveBeenCalled()
-    fireEvent.change(dateInput(), { target: { value: '' } })
+    commitDate(dateInput(), '')
     expect(screen.queryByRole('region', { name: '期权链结果' })).toBeNull()
   })
 
@@ -223,12 +224,12 @@ describe('MO option chain combined page', () => {
     const fetch = vi.fn().mockResolvedValueOnce(response(chain)).mockResolvedValueOnce(response({ ...chain, target_trade_date: '2026-09-18' }))
     vi.stubGlobal('fetch', fetch)
     render(<OptionChainPage />)
-    fireEvent.change(dateInput(), { target: { value: '2026-09-17' } })
+    commitDate(dateInput(), '2026-09-17')
     await screen.findByRole('region', { name: '期权链结果' })
     fireEvent.click(screen.getByRole('checkbox', { name: '2026-10-23' }))
     changeSeriesColor('Call 颜色', '#e11d48')
     fireEvent.click(screen.getByRole('button', { name: '扩大行权价视窗' }))
-    fireEvent.change(dateInput(), { target: { value: '2026-09-18' } })
+    commitDate(dateInput(), '2026-09-18')
     await screen.findByText('2026-09-18 · MO')
     expect(screen.getAllByRole<HTMLInputElement>('checkbox').every((checkbox) => checkbox.checked)).toBe(true)
     expect(screen.getByRole('button', { name: 'Call 颜色' }).textContent).toContain('#e11d48')
@@ -240,9 +241,9 @@ describe('MO option chain combined page', () => {
     const fetch = vi.fn().mockResolvedValueOnce(response(chain)).mockResolvedValueOnce(response({ error: { kind: 'date_not_available', detail: 'backend detail' } }, 404))
     vi.stubGlobal('fetch', fetch)
     render(<OptionChainPage />)
-    fireEvent.change(dateInput(), { target: { value: '2026-09-17' } })
+    commitDate(dateInput(), '2026-09-17')
     await screen.findByRole('region', { name: '期权链结果' })
-    fireEvent.change(dateInput(), { target: { value: '2026-09-18' } })
+    commitDate(dateInput(), '2026-09-18')
     expect(screen.queryByRole('region', { name: '期权链结果' })).toBeNull()
     expect(within(await screen.findByRole('alert')).getByText('该日期无可用数据')).toBeTruthy()
   })
@@ -257,7 +258,7 @@ describe('MO option chain combined page', () => {
     const status = kind === 'date_not_available' ? 404 : kind === 'invalid_request' || kind === 'unsupported_query' ? 400 : 503
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(response({ error: { kind, detail: 'backend detail' } }, status)))
     render(<OptionChainPage />)
-    fireEvent.change(dateInput(), { target: { value: '2026-09-17' } })
+    commitDate(dateInput(), '2026-09-17')
     const alert = await screen.findByRole('alert')
     expect(within(alert).getByText(title)).toBeTruthy()
     expect(within(alert).getByText('backend detail')).toBeTruthy()
@@ -269,8 +270,8 @@ describe('MO option chain combined page', () => {
       new Promise<Response>((resolve) => pending.push({ signal: options.signal!, finish: resolve }))
     )))
     render(<OptionChainPage />)
-    fireEvent.change(dateInput(), { target: { value: '2026-09-17' } })
-    fireEvent.change(dateInput(), { target: { value: '2026-09-18' } })
+    commitDate(dateInput(), '2026-09-17')
+    commitDate(dateInput(), '2026-09-18')
     expect(pending[0].signal.aborted).toBe(true)
     pending[1].finish(response({ ...chain, target_trade_date: '2026-09-18' }))
     await screen.findByText('2026-09-18 · MO')
@@ -284,9 +285,9 @@ describe('MO option chain combined page', () => {
     const fetch = vi.fn().mockResolvedValueOnce(response(chain)).mockRejectedValueOnce(new TypeError('offline'))
     vi.stubGlobal('fetch', fetch)
     render(<OptionChainPage />)
-    fireEvent.change(dateInput(), { target: { value: '2026-09-17' } })
+    commitDate(dateInput(), '2026-09-17')
     await screen.findByRole('region', { name: '期权链结果' })
-    fireEvent.change(dateInput(), { target: { value: '2026-09-18' } })
+    commitDate(dateInput(), '2026-09-18')
     expect(screen.queryByRole('region', { name: '期权链结果' })).toBeNull()
     const alert = await screen.findByRole('alert')
     expect(within(alert).getByText('无法连接数据服务')).toBeTruthy()
@@ -323,7 +324,7 @@ describe('complete current-result copy', () => {
     fireEvent.click(copyActions().getByRole('button', { name: 'Copy Raw JSON' }))
     expect(copyActions().queryByRole('status')).toBeNull()
     expect(copyActions().getAllByRole<HTMLButtonElement>('button').every((b) => b.disabled)).toBe(true)
-    fireEvent.change(screen.getByLabelText('目标交易日'), { target: { value: '2026-09-22' } })
+    commitDate(screen.getByLabelText('观察日期'), '2026-09-22')
     expect(screen.queryByRole('group', { name: 'MO Option Chain copy actions' })).toBeNull()
     if (!whileLoading) await act(async () => { finishQuery(response(chain)) })
     await act(async () => { if (rejects) fail(new Error('denied')); else finish() })
@@ -332,7 +333,7 @@ describe('complete current-result copy', () => {
     expect(copyActions().queryByRole('status')).toBeNull()
     await copied('Copy Context JSON')
     expect(write).toHaveBeenCalledTimes(2)
-    fireEvent.change(screen.getByLabelText('目标交易日'), { target: { value: '' } })
+    commitDate(screen.getByLabelText('观察日期'), '')
     expect(screen.queryByRole('button', { name: 'Copy Raw JSON' })).toBeNull()
     expect(screen.queryByRole('button', { name: 'Export CSV' })).toBeNull()
     expect(screen.queryByRole('button', { name: 'Export Context JSON' })).toBeNull()
@@ -345,7 +346,7 @@ describe('complete current-result copy', () => {
     expect(screen.queryByRole('button', { name: 'Copy Raw JSON' })).toBeNull()
     expect(screen.queryByRole('button', { name: 'Export CSV' })).toBeNull()
     expect(screen.queryByRole('button', { name: 'Export Context JSON' })).toBeNull()
-    fireEvent.change(screen.getByLabelText('目标交易日'), { target: { value: '2026-09-17' } })
+    commitDate(screen.getByLabelText('观察日期'), '2026-09-17')
     expect(screen.queryByRole('button', { name: 'Copy Raw JSON' })).toBeNull()
     expect(screen.queryByRole('button', { name: 'Export CSV' })).toBeNull()
     expect(screen.queryByRole('button', { name: 'Export Context JSON' })).toBeNull()
@@ -363,8 +364,8 @@ describe('complete current-result copy', () => {
     const fetch = vi.fn().mockImplementation(() => new Promise<Response>((resolve) => pending.push(resolve)))
     vi.stubGlobal('fetch', fetch)
     render(<OptionChainPage />)
-    fireEvent.change(screen.getByLabelText('目标交易日'), { target: { value: '2026-09-17' } })
-    fireEvent.change(screen.getByLabelText('目标交易日'), { target: { value: '2026-09-22' } })
+    commitDate(screen.getByLabelText('观察日期'), '2026-09-17')
+    commitDate(screen.getByLabelText('观察日期'), '2026-09-22')
     const current = { ...chain, target_trade_date: '2026-09-22' }
     await act(async () => { pending[1](response(current)) })
     await screen.findByRole('region', { name: '期权链结果' })
@@ -473,11 +474,28 @@ it('removes CSV actions immediately on a new query and keeps them absent on HTTP
   await load()
   let finish!: (value: Response) => void
   vi.mocked(fetch).mockImplementationOnce(() => new Promise<Response>((resolve) => { finish = resolve }))
-  fireEvent.change(dateInput(), { target: { value: '2026-09-18' } })
+  commitDate(dateInput(), '2026-09-18')
   expect(screen.queryByRole('button', { name: 'Export CSV' })).toBeNull()
   expect(screen.queryByRole('button', { name: 'Export Context JSON' })).toBeNull()
   await act(async () => finish(response({ error: { kind: 'date_not_available', detail: 'Unavailable', param: 'target_trade_date' } }, 404)))
   await screen.findByRole('alert')
   expect(screen.queryByRole('button', { name: 'Export CSV' })).toBeNull()
   expect(screen.queryByRole('button', { name: 'Export Context JSON' })).toBeNull()
+})
+
+it('does not request incomplete or invalid calendar input, and supports keyboard commit', async () => {
+  const fetch = vi.fn().mockImplementation((_url: string) => new Promise<Response>(() => {}))
+  vi.stubGlobal('fetch', fetch)
+  render(<OptionChainPage />)
+  for (const value of ['2026-09-', '2026-02-30', 'invalid']) {
+    commitDate(dateInput(), value)
+    expect(fetch).not.toHaveBeenCalled()
+    expect(screen.getByRole('status').textContent).toContain('请选择观察日期')
+  }
+  commitDate(dateInput(), '2026-09-17')
+  expect(fetch).toHaveBeenCalledTimes(1)
+  expect(String(fetch.mock.calls[0][0])).toContain('target_trade_date=2026-09-17')
+  expect(screen.getByRole('status').textContent).toContain('正在加载 2026-09-17')
+  commitDate(dateInput(), '')
+  expect(screen.getByRole('status').textContent).toContain('请选择观察日期')
 })

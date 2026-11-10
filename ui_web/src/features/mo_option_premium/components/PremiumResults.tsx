@@ -8,10 +8,10 @@ import { classifyStrikeRelativeToReference, formatMetric, formatPlaneNumber } fr
 import type { PremiumPlaneProjection, PremiumPlaneRow, SelectedRepresentation } from '../model/premiumPlane'
 
 const errorTitles: Partial<Record<PremiumRequestError['kind'], string>> = {
-  invalid_request: 'Invalid request',
-  unsupported_query: 'Unsupported query',
-  date_not_available: 'No data for this date',
-  premium_plane_unavailable: 'Premium plane unavailable',
+  invalid_request: '请求日期或参数无效',
+  unsupported_query: '当前不支持此查询',
+  date_not_available: '该日期无可用数据',
+  premium_plane_unavailable: '当前无法生成完整权利金平面',
 }
 
 export function PremiumError({ asOf, priceType, error }: {
@@ -19,11 +19,13 @@ export function PremiumError({ asOf, priceType, error }: {
   priceType: string
   error: PremiumRequestError
 }) {
-  const title = error.kind === 'network' ? 'Cannot reach the data service'
-    : error.kind === 'invalid_response' ? 'Invalid data-service response'
-      : errorTitles[error.kind] ?? 'Data-service access failed'
+  const title = error.kind === 'network' ? '无法连接数据服务'
+    : error.kind === 'invalid_response' ? '数据服务响应异常'
+      : errorTitles[error.kind] ?? '数据服务访问失败'
   return <Alert type="error" showIcon role="alert" title={title} description={<Space orientation="vertical" size={0}>
-    <span>{asOf} · {priceType}</span><span>{error.message}</span>
+    <span>观察日期：{asOf} · {priceType}</span>
+    {error.kind !== 'network' && error.kind !== 'invalid_response' && <span>{error.message}</span>}
+    <span>请检查日期或数据服务；恢复后可清空日期并重新选择。</span>
   </Space>} />
 }
 
@@ -46,7 +48,7 @@ export function PremiumPlaneTable({ plane, projection, representation }: {
   representation: SelectedRepresentation
 }) {
   if (projection.rows.length === 0) {
-    return <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="No analytical observation for this presentation." />
+    return <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="当前选择下无 analytical observation；可调整期权类型或显示到期日。" />
   }
 
   const columns: TableColumnsType<PremiumPlaneRow> = [

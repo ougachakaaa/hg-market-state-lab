@@ -9,21 +9,22 @@ export default function PremiumPlanePage() {
 
   return (
     <div className="premium-page">
-      <Space orientation="vertical" size="large" style={{ display: 'flex' }}>
+      <Space orientation="vertical" size="middle" style={{ display: 'flex' }}>
         <header>
           <Typography.Text type="secondary">hg-market-state-lab</Typography.Text>
           <Typography.Title level={1}>MO 年化权利金平面</Typography.Title>
-          <Typography.Paragraph>Select an observation and price type to inspect real, sparse option observations.</Typography.Paragraph>
+          <Typography.Paragraph>选择观察日期与价格口径，查看稀疏期权权利金数据。</Typography.Paragraph>
         </header>
         <PremiumQueryControls selectedDate={state.selectedDate} priceType={state.priceType}
           selectDate={state.selectDate} selectPriceType={state.selectPriceType} />
 
-        {state.page.status === 'idle' && <div role="status"><Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="Select an observation date." /></div>}
-        {state.page.status === 'loading' && <Flex gap="small" align="center" role="status"><Spin size="small" />Loading {state.page.asOf} · {state.page.priceType} premium plane…</Flex>}
+        {state.page.status === 'idle' && <div role="status"><Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="请选择观察日期，选择后自动加载。" /></div>}
+        {state.page.status === 'loading' && <Flex gap="small" align="center" role="status" aria-live="polite" aria-busy="true"><Spin size="small" />正在加载 {state.page.asOf} · {state.page.priceType} 的权利金平面…</Flex>}
         {state.page.status === 'error' && <PremiumError asOf={state.page.asOf} priceType={state.page.priceType} error={state.page.error} />}
         {state.page.status === 'success' && state.projection !== null && (
           <section aria-label="Premium plane results">
             <Space orientation="vertical" size="middle" style={{ display: 'flex' }}>
+              <Typography.Text type="secondary" role="status" aria-live="polite">已加载 {state.page.plane.observation.value} · {state.page.plane.price_type}</Typography.Text>
               <PremiumSummary plane={state.page.plane} />
               <PremiumCopyActions plane={state.page.plane} rawPayload={state.page.rawPayload} />
               <PremiumPresentationControls optionType={state.selectedOptionType}

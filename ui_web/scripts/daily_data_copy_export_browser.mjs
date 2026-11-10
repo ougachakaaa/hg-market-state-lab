@@ -111,8 +111,8 @@ try {
   let requestCount = 0
   page.on('request', req => { if (/\/mo-option-(chain|premium-plane)\?/.test(req.url())) requestCount++ })
   const products = [
-    { title: 'MO Option Chain', path: '/mo-option-chain', date: '目标交易日', region: '期权链结果', group: 'MO Option Chain copy actions', prefix: 'mo-option-chain', columns: 13 },
-    { title: 'MO Premium Plane', path: '/mo-option-premium-plane', date: 'Observation 日期', region: 'Premium plane results', group: 'MO Premium Plane copy actions', prefix: 'mo-premium-plane', columns: 31 },
+    { title: 'MO Option Chain', path: '/mo-option-chain', date: '观察日期', region: '期权链结果', group: 'MO Option Chain copy actions', prefix: 'mo-option-chain', columns: 13 },
+    { title: 'MO Premium Plane', path: '/mo-option-premium-plane', date: '观察日期', region: 'Premium plane results', group: 'MO Premium Plane copy actions', prefix: 'mo-premium-plane', columns: 31 },
   ]
   const secrets = [password, env.LAB_AUTH_JWT_SECRET, env.LAB_AUTH_DB_PATH, ...(await context.cookies()).map(cookie => cookie.value)]
   const scalar = value => value === null ? 'null' : String(value)
@@ -219,9 +219,31 @@ try {
     report.downloads.push({ filename, bytes: bytes.length, columns: header.length, rows: rows.length, bom: 'EF BB BF' })
     return text
   }
+  async function enterDate(product, date) {
+    const input = page.getByLabel(product.date, { exact: true })
+    if (!date) {
+      await input.hover()
+      await page.getByRole('button', { name: '清除', exact: true }).click()
+    } else {
+      await input.fill(date)
+      await input.press('Enter')
+    }
+  }
+  async function screenshots(product, state) {
+    for (const [width, height] of [[1440, 900], [1024, 768]]) {
+      await page.setViewportSize({ width, height })
+      await page.keyboard.press('Escape')
+      await page.waitForTimeout(350) // Ant Design popup/sidebar transitions.
+      await page.evaluate(() => window.scrollTo(0, 0))
+      await page.waitForFunction(() => document.documentElement.scrollWidth <= innerWidth)
+      const path = resolve(output, `${product.prefix}-${state}-${width}.png`)
+      await page.screenshot({ path })
+      report.screenshots = [...(report.screenshots ?? []), path]
+    }
+  }
   async function query(product, date) {
     const result = page.waitForResponse(res => new URL(res.url()).pathname === product.path && res.status() === 200)
-    await page.getByLabel(product.date, { exact: true }).fill(date)
+    await enterDate(product, date)
     const response = await result
     const data = await response.json()
     await page.getByRole('region', { name: product.region, exact: true }).waitFor()
@@ -229,13 +251,62 @@ try {
   }
   async function noActions() { assert.equal(await page.getByRole('button', { name: 'Export Context JSON', exact: true }).count(), 0); assert.equal(await page.getByRole('button', { name: 'Export CSV', exact: true }).count(), 0); assert.equal(await page.getByRole('button', { name: 'Copy Raw JSON', exact: true }).count(), 0); assert.equal(await page.getByRole('button', { name: 'Copy Context JSON', exact: true }).count(), 0) }
   for (const product of products) {
+    await page.setViewportSize({ width: 1440, height: 900 })
+    const expand = page.getByRole('button', { name: '展开', exact: true })
+    if (await expand.isVisible()) await expand.click()
     if (product.columns === 13) {
       if (!(await page.getByRole('menuitem', { name: '数据总览', exact: true }).isVisible())) await page.getByRole('menuitem', { name: '日常数据', exact: true }).click()
       await page.getByRole('menuitem', { name: '数据总览', exact: true }).click()
       await page.getByRole('button', { name: '打开 MO Option Chain', exact: true }).click()
     } else await page.locator('.ant-menu-title-content').getByText(product.title, { exact: true }).click()
     await noActions()
+    await screenshots(product, 'idle')
+    const idleRequests = requestCount
+    if (product.columns === 31) {
+      await page.getByRole('combobox', { name: '价格口径', exact: true }).click()
+      await page.getByText('开盘（Open）', { exact: true }).click()
+      assert.equal(requestCount, idleRequests)
+      await page.getByRole('combobox', { name: '价格口径', exact: true }).click()
+      await page.getByText('收盘（Close）', { exact: true }).click()
+    }
+    const input = page.getByLabel(product.date, { exact: true })
+    for (const invalid of ['2026-09-', '2026-02-30', 'invalid']) {
+      await input.fill(invalid)
+      await input.press('Enter')
+      await input.press('Tab')
+      assert.equal(requestCount, idleRequests)
+    }
+    for (const [width, height] of [[1440, 900], [1024, 768]]) {
+      await page.setViewportSize({ width, height })
+      const beforeCalendar = requestCount
+      // Open a known month without committing the typed date.
+      await input.fill('2026-09-16')
+      await input.click()
+      const calendar = page.locator('.ant-picker-dropdown:not(.ant-picker-dropdown-hidden)')
+      await calendar.waitFor()
+      await page.waitForTimeout(350)
+      await page.screenshot({ path: resolve(output, `${product.prefix}-calendar-${width}.png`) })
+      await calendar.locator('td[title="2026-09-17"]').click()
+      await page.getByRole('region', { name: product.region, exact: true }).waitFor()
+      assert.equal(requestCount, beforeCalendar + 1)
+      if (product.columns === 31) {
+        const response = page.waitForResponse(res => new URL(res.url()).pathname === product.path && res.status() === 200)
+        await page.getByRole('combobox', { name: '价格口径', exact: true }).click()
+        await page.getByText('开盘（Open）', { exact: true }).click()
+        assert.equal((await (await response).json()).price_type, 'open')
+        await page.getByRole('region', { name: product.region, exact: true }).waitFor()
+        const close = page.waitForResponse(res => new URL(res.url()).pathname === product.path && res.status() === 200)
+        await page.getByRole('combobox', { name: '价格口径', exact: true }).click()
+        await page.getByText('收盘（Close）', { exact: true }).click()
+        await close
+        await page.getByRole('region', { name: product.region, exact: true }).waitFor()
+      }
+      await enterDate(product, '')
+      await page.getByRole('status').filter({ hasText: '请选择观察日期' }).waitFor()
+      await noActions()
+    }
     const data = await query(product, '2026-09-17')
+    await screenshots(product, 'success')
     assert.equal(data.expiries.length, 2)
     assert.equal(data.expiries[1].futures, null)
     const facts = product.columns === 31 ? data.points : data.expiries.flatMap(e => [...e.calls, ...e.puts])
@@ -270,7 +341,7 @@ try {
       // Query input actually changes the resolved response price type.
       const result = page.waitForResponse(res => new URL(res.url()).pathname === product.path && res.status() === 200)
       await page.getByRole('combobox', { name: '价格口径', exact: true }).click()
-      await page.locator('.ant-select-item-option-content').getByText('high', { exact: true }).click()
+      await page.locator('.ant-select-item-option-content').getByText('最高（High）', { exact: true }).click()
       const high = await (await result).json(); assert.equal(high.price_type, 'high')
       await page.getByRole('region', { name: product.region, exact: true }).waitFor()
       await copy(product, high); await download(product, high)
@@ -320,12 +391,14 @@ try {
     }
     const oldPattern = `**${product.path}?*${product.columns === 13 ? 'target_trade_date' : 'as_of'}=2026-09-21*`
     await page.route(oldPattern, delayed)
-    await page.getByLabel(product.date, { exact: true }).fill('2026-09-21')
+    await enterDate(product, '2026-09-21')
     let timeout
     try {
       await Promise.race([waiting, new Promise((_, reject) => { timeout = setTimeout(() => reject(new Error('Delayed fixture did not arrive')), 15000) })])
     } finally { clearTimeout(timeout) }
     await noActions()
+    assert.match(await page.getByRole('status').innerText(), /正在加载.*2026-09-21/)
+    await screenshots(product, 'loading')
     const newer = await query(product, '2026-09-22')
     const late = page.waitForResponse(res => res.url().includes('2026-09-21') && new URL(res.url()).pathname === product.path)
     release(); await late
@@ -340,11 +413,13 @@ try {
     if (product.columns === 31) failures.push([200, { ...newer, points: [] }])
     for (const [index, [status, body]] of failures.entries()) {
       await page.route(pattern, route => route.fulfill({ status, json: body }))
-      await page.getByLabel(product.date, { exact: true }).fill(['2026-09-23', '2026-09-24', '2026-09-25'][index])
+      await enterDate(product, ['2026-09-23', '2026-09-24', '2026-09-25'][index])
       await page.getByRole('alert').waitFor(); await noActions()
+      assert.match(await page.getByRole('alert').innerText(), /清空日期并重新选择/)
+      if (index === 0) await screenshots(product, 'error')
       await page.unroute(pattern)
     }
-    await page.getByLabel(product.date, { exact: true }).fill(''); await noActions()
+    await enterDate(product, ''); await noActions()
     const recovered = await query(product, '2026-09-17')
     await copy(product, recovered); await download(product, recovered)
     passed(`${product.title}: idle/loading/error/invalid, late response, stale clipboard, failure feedback and recovery`)

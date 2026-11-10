@@ -1,3 +1,4 @@
+import { commitDate } from '../../../test/datePicker'
 import { captureCsvDownloads } from '../../../test/csvDownload'
 import { premiumPlaneCsv } from '../model/csvExport'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
@@ -45,7 +46,7 @@ async function load() {
   const fetch = vi.fn().mockResolvedValue(response(plane))
   vi.stubGlobal('fetch', fetch)
   render(<PremiumPlanePage />)
-  fireEvent.change(screen.getByLabelText('Observation 日期'), { target: { value: '2026-09-21' } })
+  commitDate(screen.getByLabelText('观察日期'), '2026-09-21')
   const results = await screen.findByRole('region', { name: 'Premium plane results' })
   return { fetch, results }
 }
@@ -124,7 +125,7 @@ describe('complete current-result copy', () => {
     fireEvent.click(copyActions().getByRole('button', { name: 'Copy Raw JSON' }))
     expect(copyActions().queryByRole('status')).toBeNull()
     expect(copyActions().getAllByRole<HTMLButtonElement>('button').every((b) => b.disabled)).toBe(true)
-    fireEvent.change(screen.getByLabelText('Observation 日期'), { target: { value: '2026-09-22' } })
+    commitDate(screen.getByLabelText('观察日期'), '2026-09-22')
     expect(screen.queryByRole('group', { name: 'MO Premium Plane copy actions' })).toBeNull()
     if (!whileLoading) await act(async () => { finishQuery(response(plane)) })
     await act(async () => { if (rejects) fail(new Error('denied')); else finish() })
@@ -133,7 +134,7 @@ describe('complete current-result copy', () => {
     expect(copyActions().queryByRole('status')).toBeNull()
     await copied('Copy Context JSON')
     expect(write).toHaveBeenCalledTimes(2)
-    fireEvent.change(screen.getByLabelText('Observation 日期'), { target: { value: '' } })
+    commitDate(screen.getByLabelText('观察日期'), '')
     expect(screen.queryByRole('button', { name: 'Copy Raw JSON' })).toBeNull()
     expect(screen.queryByRole('button', { name: 'Export CSV' })).toBeNull()
     expect(screen.queryByRole('button', { name: 'Export Context JSON' })).toBeNull()
@@ -146,7 +147,7 @@ describe('complete current-result copy', () => {
     expect(screen.queryByRole('button', { name: 'Copy Raw JSON' })).toBeNull()
     expect(screen.queryByRole('button', { name: 'Export CSV' })).toBeNull()
     expect(screen.queryByRole('button', { name: 'Export Context JSON' })).toBeNull()
-    fireEvent.change(screen.getByLabelText('Observation 日期'), { target: { value: '2026-09-21' } })
+    commitDate(screen.getByLabelText('观察日期'), '2026-09-21')
     expect(screen.queryByRole('button', { name: 'Copy Raw JSON' })).toBeNull()
     expect(screen.queryByRole('button', { name: 'Export CSV' })).toBeNull()
     expect(screen.queryByRole('button', { name: 'Export Context JSON' })).toBeNull()
@@ -164,8 +165,8 @@ describe('complete current-result copy', () => {
     const fetch = vi.fn().mockImplementation(() => new Promise<Response>((resolve) => pending.push(resolve)))
     vi.stubGlobal('fetch', fetch)
     render(<PremiumPlanePage />)
-    fireEvent.change(screen.getByLabelText('Observation 日期'), { target: { value: '2026-09-21' } })
-    fireEvent.change(screen.getByLabelText('Observation 日期'), { target: { value: '2026-09-22' } })
+    commitDate(screen.getByLabelText('观察日期'), '2026-09-21')
+    commitDate(screen.getByLabelText('观察日期'), '2026-09-22')
     const current: PremiumPlane = { ...plane, observation: { kind: 'trade_date', value: '2026-09-22' } }
     await act(async () => { pending[1](response(current)) })
     await screen.findByRole('region', { name: 'Premium plane results' })
@@ -217,7 +218,7 @@ it('uses the validated response identity and removes copy actions on a price-typ
   const current = { ...plane, observation: { kind: 'trade_date', value: '2026-09-23' }, price_type: 'high' }
   vi.stubGlobal('fetch', vi.fn().mockResolvedValue(response(current)))
   render(<PremiumPlanePage />)
-  fireEvent.change(screen.getByLabelText('Observation 日期'), { target: { value: '2026-09-21' } })
+  commitDate(screen.getByLabelText('观察日期'), '2026-09-21')
   await screen.findByRole('region', { name: 'Premium plane results' })
   await copied('Copy Context JSON')
   const context = JSON.parse(write.mock.calls[0][0])
@@ -225,7 +226,7 @@ it('uses the validated response identity and removes copy actions on a price-typ
   expect(context.metadata.response_identity.price_type).toBe('high')
   expect(context.data).toEqual(current)
   fireEvent.mouseDown(screen.getByRole('combobox', { name: '价格口径' }))
-  fireEvent.click(await screen.findByText('open', { selector: '.ant-select-item-option-content' }))
+  fireEvent.click(await screen.findByText('开盘（Open）', { selector: '.ant-select-item-option-content' }))
   expect(screen.queryByRole('group', { name: 'MO Premium Plane copy actions' })).toBeNull()
   await screen.findByRole('region', { name: 'Premium plane results' })
   expect(copyActions().queryByRole('status')).toBeNull()
@@ -268,7 +269,7 @@ it('exports a nonempty plane using response identity', async () => {
   const current = { ...plane, price_type: 'high' as const }
   vi.stubGlobal('fetch', vi.fn().mockResolvedValue(response(current)))
   render(<PremiumPlanePage />)
-  fireEvent.change(screen.getByLabelText('Observation 日期'), { target: { value: '2026-09-19' } })
+  commitDate(screen.getByLabelText('观察日期'), '2026-09-19')
   await screen.findByRole('region', { name: 'Premium plane results' })
   fireEvent.click(copyActions().getByRole('button', { name: 'Export CSV' }))
   expect(await download.text()).toBe(premiumPlaneCsv(current).csv)
@@ -298,7 +299,7 @@ it('removes CSV actions on a price-type query and leaves none after HTTP failure
   let finish!: (value: Response) => void
   vi.mocked(fetch).mockImplementationOnce(() => new Promise<Response>((resolve) => { finish = resolve }))
   fireEvent.mouseDown(screen.getByRole('combobox', { name: '价格口径' }))
-  fireEvent.click(await screen.findByText('open', { selector: '.ant-select-item-option-content' }))
+  fireEvent.click(await screen.findByText('开盘（Open）', { selector: '.ant-select-item-option-content' }))
   expect(screen.queryByRole('button', { name: 'Export CSV' })).toBeNull()
   expect(screen.queryByRole('button', { name: 'Export Context JSON' })).toBeNull()
   await act(async () => finish({ ok: false, status: 404, json: async () => ({ error: { kind: 'date_not_available', detail: 'Unavailable', param: 'as_of' } }) } as Response))
@@ -312,7 +313,7 @@ it('offers no copy or export actions for premium_plane_unavailable', async () =>
   vi.mocked(fetch).mockResolvedValueOnce({ ok: false, status: 503, json: async () => ({ error: {
     kind: 'premium_plane_unavailable', detail: 'No real analytical Points', param: null,
   } }) } as Response)
-  fireEvent.change(screen.getByLabelText('Observation 日期'), { target: { value: '2026-09-22' } })
+  commitDate(screen.getByLabelText('观察日期'), '2026-09-22')
   await screen.findByRole('alert')
   expect(screen.queryByRole('button', { name: 'Export CSV' })).toBeNull()
   expect(screen.queryByRole('button', { name: 'Export Context JSON' })).toBeNull()
@@ -323,10 +324,32 @@ it('offers no copy or export actions for premium_plane_unavailable', async () =>
 it('rejects HTTP 200 with no real Points instead of offering copy or export', async () => {
   await load()
   vi.mocked(fetch).mockResolvedValueOnce(response({ ...plane, points: [] }))
-  fireEvent.change(screen.getByLabelText('Observation 日期'), { target: { value: '2026-09-22' } })
+  commitDate(screen.getByLabelText('观察日期'), '2026-09-22')
   await screen.findByRole('alert')
   expect(screen.queryByRole('button', { name: 'Export CSV' })).toBeNull()
   expect(screen.queryByRole('button', { name: 'Export Context JSON' })).toBeNull()
   expect(screen.queryByRole('button', { name: 'Copy Raw JSON' })).toBeNull()
   expect(screen.queryByRole('button', { name: 'Copy Context JSON' })).toBeNull()
+})
+
+it('keeps price selection local until a valid date is committed and announces the request identity', async () => {
+  const fetch = vi.fn().mockImplementation((_url: string) => new Promise<Response>(() => {}))
+  vi.stubGlobal('fetch', fetch)
+  render(<PremiumPlanePage />)
+  fireEvent.mouseDown(screen.getByRole('combobox', { name: '价格口径' }))
+  fireEvent.click(await screen.findByText('开盘（Open）', { selector: '.ant-select-item-option-content' }))
+  expect(fetch).not.toHaveBeenCalled()
+  const input = screen.getByLabelText('观察日期')
+  for (const value of ['2026-09-', '2026-02-30', 'invalid']) {
+    commitDate(input, value)
+    expect(fetch).not.toHaveBeenCalled()
+  }
+  commitDate(input, '2026-09-21')
+  expect(fetch).toHaveBeenCalledTimes(1)
+  expect(String(fetch.mock.calls[0][0])).toContain('as_of=2026-09-21')
+  expect(String(fetch.mock.calls[0][0])).toContain('price_type=open')
+  expect(screen.getByRole('status').textContent).toContain('正在加载 2026-09-21 · open')
+  commitDate(input, '')
+  expect(screen.getByRole('status').textContent).toContain('请选择观察日期')
+  expect(fetch).toHaveBeenCalledTimes(1)
 })

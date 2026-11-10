@@ -20,7 +20,8 @@ export function OptionChainError({ date, error }: { date: string; error: ChainRe
   return (
     <Alert type="error" showIcon role="alert" title={title}
       description={<Space orientation="vertical" size={0}>
-        <span>目标日期：{date}</span>
+        <span>观察日期：{date} · close</span>
+        <span>请检查日期或数据服务；恢复后可清空日期并重新选择。</span>
         {error.kind !== 'network' && error.kind !== 'invalid_response' && <span>{error.message}</span>}
       </Space>} />
   )

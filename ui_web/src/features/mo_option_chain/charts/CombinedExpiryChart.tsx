@@ -1,3 +1,4 @@
+import { useEffect, useRef, useState } from 'react'
 import { Card, Empty, Typography, theme } from 'antd'
 import Plot from 'react-plotly.js'
 import type { OptionChain } from '../api/moOptionChain'
@@ -64,6 +65,17 @@ export default function CombinedExpiryChart({ chain, selectedExpiries, xDomain, 
   xDomain: [number, number]
   palette: Record<string, ExpiryColors>
 }) {
+  const frame = useRef<HTMLDivElement>(null)
+  const [width, setWidth] = useState<number>()
+  useEffect(() => {
+    if (!frame.current) return
+    // Sidebar transitions resize the container after the window resize event.
+    const observer = new ResizeObserver(([entry]) => {
+      if (entry.contentRect.width > 0) setWidth(entry.contentRect.width)
+    })
+    observer.observe(frame.current)
+    return () => observer.disconnect()
+  }, [])
   const { token } = theme.useToken()
   const projection = projectCombinedChain(chain, selectedExpiries, xDomain)
   const figure = buildCombinedPlot(chain, projection, xDomain, palette)
@@ -74,8 +86,8 @@ export default function CombinedExpiryChart({ chain, selectedExpiries, xDomain, 
       </Typography.Paragraph>
       {!projection.hasDrawablePrice && <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="选中的到期日没有可绘制的价格。" />}
       <ChartLegends projection={projection} palette={palette} />
-      <div className="chart-frame" role="group" aria-label="所选到期日 Call 与 Put 价格散点图；横轴 Strike，纵轴 Price">
-        <Plot {...figure} layout={{ ...figure.layout, paper_bgcolor: token.colorBgContainer,
+      <div ref={frame} className="chart-frame" role="group" aria-label="所选到期日 Call 与 Put 价格散点图；横轴 Strike，纵轴 Price">
+        <Plot {...figure} layout={{ ...figure.layout, width, paper_bgcolor: token.colorBgContainer,
           plot_bgcolor: token.colorBgContainer, font: { color: token.colorText } }}
           style={{ width: '100%', height: '100%' }} useResizeHandler />
       </div>

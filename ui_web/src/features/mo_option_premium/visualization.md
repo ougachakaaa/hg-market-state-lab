@@ -42,6 +42,8 @@ price_type = open | high | low | close
 
 只有 `as_of`、`option_product` 或 `price_type` 的 resolved value 改变才产生新 query。请求必须遵循 [ui_http HTTP contract](../../../../ui_http/products/mo_option_premium/http-contract.md)，不得增加 presentation filters。
 
+日期输入按本地日历日期显示为 `YYYY-MM-DD`，只在有效完整日期被确认后自动查询；未完成或无效的键盘输入不触发请求。查询区明确说明自动加载行为，清空日期回到待选择状态。状态反馈使用对应 request identity；成功身份取 validated response。失败允许检查服务后清空并重新选择日期，不将未知可用性表述为确认无数据。
+
 ## 3. Presentation State
 
 ```text

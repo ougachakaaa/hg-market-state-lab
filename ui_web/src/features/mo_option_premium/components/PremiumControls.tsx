@@ -1,4 +1,7 @@
-import { Card, Checkbox, Flex, Form, Input, Radio, Select, Space, Typography } from 'antd'
+import dayjs from 'dayjs'
+import 'dayjs/locale/zh-cn'
+import zhCN from 'antd/es/date-picker/locale/zh_CN'
+import { Card, Checkbox, Flex, Form, DatePicker, Radio, Select, Space, Typography } from 'antd'
 import type { PremiumExpiry, PremiumPriceType } from '../api/moOptionPremium'
 import type {
   SelectedOptionType,
@@ -15,22 +18,28 @@ export function PremiumQueryControls({ selectedDate, priceType, selectDate, sele
   selectPriceType: (priceType: PremiumPriceType) => void
 }) {
   return (
-    <Form layout="vertical">
-      <Flex gap="middle" wrap>
-        <Form.Item label="Observation 日期" htmlFor="premium-as-of" style={{ marginBottom: 0 }}>
-          <Input id="premium-as-of" type="date" value={selectedDate}
-            onChange={(event) => selectDate(event.currentTarget.value)} style={{ width: 200 }} />
-        </Form.Item>
-        <Form.Item label="价格口径" htmlFor="premium-price-type" style={{ marginBottom: 0 }}>
-          <Select id="premium-price-type" aria-label="价格口径" value={priceType} style={{ width: 160 }}
-            onChange={(value: PremiumPriceType) => selectPriceType(value)} options={[
-              { value: 'open', label: 'open' },
-              { value: 'high', label: 'high' },
-              { value: 'low', label: 'low' },
-              { value: 'close', label: 'close' },
-            ]} />
-        </Form.Item>
-      </Flex>
+    <Form layout="vertical" onSubmitCapture={(event) => event.preventDefault()} aria-label="权利金平面查询">
+      <Space orientation="vertical" size="small">
+        <Flex gap="middle" wrap>
+          <Form.Item label="观察日期" htmlFor="premium-as-of" style={{ marginBottom: 0 }}>
+            <DatePicker id="premium-as-of" value={selectedDate ? dayjs(selectedDate) : null}
+              locale={zhCN} format="YYYY-MM-DD" placeholder="YYYY-MM-DD" preserveInvalidOnBlur
+              allowClear
+              onChange={(date) => selectDate(date?.isValid() ? date.format('YYYY-MM-DD') : '')}
+              style={{ width: 200 }} aria-describedby="premium-query-help" />
+          </Form.Item>
+          <Form.Item label="价格口径" htmlFor="premium-price-type" style={{ marginBottom: 0 }}>
+            <Select id="premium-price-type" aria-label="价格口径" value={priceType} style={{ width: 160 }}
+              onChange={(value: PremiumPriceType) => selectPriceType(value)} options={[
+                { value: 'open', label: '开盘（Open）' },
+                { value: 'high', label: '最高（High）' },
+                { value: 'low', label: '最低（Low）' },
+                { value: 'close', label: '收盘（Close）' },
+              ]} />
+          </Form.Item>
+        </Flex>
+        <Typography.Text type="secondary" id="premium-query-help">选择有效日期后自动加载；更改价格口径会重新查询，清空日期可重置查询。</Typography.Text>
+      </Space>
     </Form>
   )
 }

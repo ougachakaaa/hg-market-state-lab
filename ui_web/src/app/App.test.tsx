@@ -1,3 +1,4 @@
+import { commitDate } from '../test/datePicker'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { StrictMode } from 'react'
 import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
@@ -117,7 +118,7 @@ describe('integrated feature routes', () => {
     vi.stubGlobal('fetch', fetch)
     render(<App />)
     await screen.findByRole('heading', { name: 'MO 期权链' })
-    fireEvent.change(screen.getByLabelText('目标交易日'), { target: { value: '2026-09-21' } })
+    commitDate(screen.getByLabelText('观察日期'), '2026-09-21')
     await screen.findByRole('button', { name: '登录' })
     expect(screen.queryByRole('heading', { name: 'MO 期权链' })).toBeNull()
     expect(screen.queryByText('alice')).toBeNull()
@@ -212,7 +213,7 @@ describe('authentication regressions across the workspace', () => {
       .mockResolvedValueOnce(response({ error: { kind: 'internal_error', detail: '', param: null } }, status)))
     render(<App />)
     await screen.findByRole('heading', { name: 'MO 期权链' })
-    fireEvent.change(screen.getByLabelText('目标交易日'), { target: { value: '2026-09-21' } })
+    commitDate(screen.getByLabelText('观察日期'), '2026-09-21')
     await screen.findByRole('alert')
     expect(screen.getByRole('button', { name: '退出登录' })).toBeTruthy()
   })
