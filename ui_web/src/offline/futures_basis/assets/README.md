@@ -6,7 +6,7 @@ https://github.com/notofonts/noto-cjk/blob/main/Sans/OTF/SimplifiedChinese/NotoS
 
 The subset includes printable ASCII and all characters in the production
 Research `report.py` / `evidence.py`, offline `Report.tsx` and generic `ChartView.tsx`
-as of WP5. The derived font family is renamed R01A Report CJK; original
+as of WP5, plus the shared reader’s WP3-B fixed presentation copy. Existing glyph coverage is retained. The derived font family is renamed R01A Report CJK; original
 copyright/license/designer records are retained. It is a checked-in rendering asset, not market data. Add any new reader
 copy's characters when updating the font; arbitrary external text can fall back
 to the operating system's fonts. No runtime font-generation dependency is added.

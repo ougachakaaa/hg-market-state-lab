@@ -36,7 +36,7 @@ function pass(message) { evidence.checks.push(message); console.log(`PASS: ${mes
 try {
   browser = await chromium.launch({ headless: true, ...(process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH ? { executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH } : {}) })
   evidence.browser = browser.version()
-  const context = await browser.newContext({ offline: true, viewport: { width: 1440, height: 1100 }, timezoneId: 'Asia/Shanghai' })
+  const context = await browser.newContext({ offline: true, viewport: { width: 1440, height: 900 }, timezoneId: 'Asia/Shanghai' })
   page = await context.newPage()
   page.setDefaultTimeout(20000)
   page.on('pageerror', e => evidence.errors.push(String(e)))
@@ -143,6 +143,23 @@ try {
   await page.locator('#section-5').scrollIntoViewIfNeeded()
   await page.screenshot({ path: resolve(output, 'report.png'), fullPage: true })
   pass('Transition, unavailable reason, paired population and evidence/limitations are reader-accessible')
+  assert.equal(await page.getByRole('heading', { level: 1, name: `${expected.request.observation.product_code} 历史基差研究报告` }).count(), 1)
+  for (const close of await page.locator('.notifier-close').all()) await close.click()
+  for (const viewport of [{ width: 1440, height: 900 }, { width: 1024, height: 768 }]) {
+    await page.setViewportSize(viewport)
+    await page.getByRole('navigation', { name: '报告章节' }).getByRole('link').first().click()
+    await page.evaluate(() => window.scrollTo(0, 0))
+    assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false)
+    await page.screenshot({ path: resolve(output, `${viewport.width}x${viewport.height}-overview.png`) })
+    await page.locator('#section-1 .js-plotly-plot').first().scrollIntoViewIfNeeded()
+    await page.screenshot({ path: resolve(output, `${viewport.width}x${viewport.height}-chart.png`) })
+    await page.locator('#section-5').getByText('研究参数与逐日结果定位', { exact: true }).click()
+    await page.locator('#section-5').scrollIntoViewIfNeeded()
+    await page.screenshot({ path: resolve(output, `${viewport.width}x${viewport.height}-evidence.png`) })
+    await page.screenshot({ path: resolve(output, `${viewport.width}x${viewport.height}-full.png`), fullPage: true })
+    await page.locator('#section-5').getByText('研究参数与逐日结果定位', { exact: true }).click()
+  }
+  pass('Standalone heading, section navigation, expanded offline evidence and containment at 1440×900 and 1024×768')
   assert.deepEqual(evidence.requests, [])
   assert.deepEqual(evidence.errors, [])
   evidence.status = 'PASS'

@@ -35,3 +35,15 @@ describe('shared reader', () => {
     }
   })
 })
+
+it('composes a standalone offline title and subordinate online report title without mutating producer data', () => {
+  const data = readerFixture()
+  const before = structuredClone(data)
+  const online = render(<Report data={data} mode="online" />)
+  expect(screen.queryByRole('heading', { level: 1 })).toBeNull()
+  expect(screen.getByRole('heading', { level: 3, name: '研究报告' })).toBeTruthy()
+  online.unmount()
+  render(<Report data={data} mode="offline" />)
+  expect(screen.getByRole('heading', { level: 1, name: 'IM 历史基差研究报告' })).toBeTruthy()
+  expect(data).toEqual(before)
+})

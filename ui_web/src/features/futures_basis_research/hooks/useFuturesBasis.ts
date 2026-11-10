@@ -3,7 +3,7 @@ import { getReport, getRun, ResearchError, submitRun } from '../api/futuresBasis
 import type { Accepted, ReportResponse, Run, RunRequest } from '../api/futuresBasis'
 
 type Phase = 'IDLE' | 'PENDING' | 'RUNNING' | 'REPORT_LOADING' | 'COMPLETED' | 'FAILED' | 'INTERRUPTED' | 'STATUS_ERROR' | 'REPORT_ERROR' | 'UNKNOWN_RUN' | 'UNAVAILABLE'
-type State = { phase: Phase; run?: Run | Accepted; report?: ReportResponse; error?: ResearchError }
+type State = { phase: Phase; run?: Run | Accepted; report?: ReportResponse; error?: ResearchError; errorRead?: 'status' | 'report' }
 function identity() { return new URLSearchParams(window.location.search).get('run_id') ?? '' }
 function asError(error: unknown) { return error instanceof ResearchError ? error : new ResearchError('invalid_response') }
 function cancelled(error: unknown) { return error instanceof DOMException && error.name === 'AbortError' }
@@ -57,7 +57,7 @@ export function useFuturesBasis() {
       if (e.kind === 'run_not_found') {
         lastRun.current = undefined
         setState({ phase: 'UNKNOWN_RUN', error: e }); writeId('', true)
-      } else setState({ phase: e.kind === 'unavailable' ? 'UNAVAILABLE' : report ? 'REPORT_ERROR' : 'STATUS_ERROR', run, error: e })
+      } else setState({ phase: e.kind === 'unavailable' ? 'UNAVAILABLE' : report ? 'REPORT_ERROR' : 'STATUS_ERROR', run, error: e, errorRead: report ? 'report' : 'status' })
     }
     async function poll() {
       try {

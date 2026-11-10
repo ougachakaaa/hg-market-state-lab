@@ -8,6 +8,7 @@ import { tmpdir } from 'node:os'
 import { resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { chromium } from 'playwright'
+import { polishAcceptance } from './futures_basis_polish_acceptance.mjs'
 
 const root = fileURLToPath(new URL('../../', import.meta.url))
 const temporary = await mkdtemp(resolve(tmpdir(), 'wp8b-online-'))
@@ -105,24 +106,24 @@ try {
   assert.equal(await page.evaluate(() => document.cookie.includes('lab_access_token')), false)
   const output = resolve(process.argv[2] || '/tmp/wp8b-online-browser')
   await mkdir(output, { recursive: true })
-  await page.getByRole('region', { name: 'Local and offline' }).getByRole('button', { name: 'View details' }).nth(1).click()
-  await page.getByRole('button', { name: 'Open Futures Basis Research', exact: true }).click()
+  await page.getByRole('region', { name: '本地研究与离线工作流' }).getByRole('button', { name: '查看详情' }).nth(1).click()
+  await page.getByRole('button', { name: '打开 Futures Basis Research', exact: true }).click()
   await page.getByRole('heading', { name: 'Futures Basis Research', exact: true }).waitFor()
-  assert.equal(await page.getByRole('button', { name: 'Generate Research' }).isEnabled(), false)
-  await page.getByRole('combobox', { name: 'Product', exact: true }).click()
+  assert.equal(await page.getByRole('button', { name: '生成研究' }).isEnabled(), false)
+  await page.getByRole('combobox', { name: '品种', exact: true }).click()
   await page.getByTitle('IM', { exact: true }).click()
-  for (const [label, value] of [['Start Date', '2024-10-18'], ['End Date', '2024-10-21']]) {
+  for (const [label, value] of [['开始日期', '2024-10-18'], ['结束日期', '2024-10-21']]) {
     await page.getByRole('textbox', { name: label, exact: true }).fill(value)
     await page.getByRole('textbox', { name: label, exact: true }).press('Enter')
   }
   assert.equal(evidence.filter(entry => entry.startsWith('/api/research/futures-basis/runs ')).length, 0)
   const acceptedResponse = page.waitForResponse(r => r.request().method() === 'POST' && r.url().endsWith('/api/research/futures-basis/runs'))
-  await page.getByRole('button', { name: 'Generate Research' }).click()
+  await page.getByRole('button', { name: '生成研究' }).click()
   const accepted = await acceptedResponse
   assert.equal(accepted.status(), 202)
   const firstId = (await accepted.json()).run_id
   const busyResponse = page.waitForResponse(r => r.request().method() === 'POST' && r.url().endsWith('/api/research/futures-basis/runs'))
-  await page.getByRole('button', { name: 'Generate Research' }).click()
+  await page.getByRole('button', { name: '生成研究' }).click()
   assert.equal((await busyResponse).status(), 409)
   await page.getByText(/BUSY：/).waitFor()
   await page.locator('#section-5').waitFor()
@@ -138,13 +139,13 @@ try {
   await page.screenshot({ path: resolve(output, 'online-report.png'), fullPage: true })
   await page.screenshot({ path: resolve(output, 'online-overview.png') })
   // An invalid future request must preserve the existing terminal report and URL.
-  for (const [label, value] of [['Start Date', '2099-01-01'], ['End Date', '2099-01-02']]) {
+  for (const [label, value] of [['开始日期', '2099-01-01'], ['结束日期', '2099-01-02']]) {
     await page.getByRole('textbox', { name: label, exact: true }).fill(value)
     await page.getByRole('textbox', { name: label, exact: true }).press('Enter')
   }
   assert.equal(evidence.filter(entry => entry.startsWith('/api/research/futures-basis/runs ')).length, 2)
   const rejected = page.waitForResponse(r => r.request().method() === 'POST' && r.url().endsWith('/api/research/futures-basis/runs'))
-  await page.getByRole('button', { name: 'Generate Research' }).click()
+  await page.getByRole('button', { name: '生成研究' }).click()
   assert.equal((await rejected).status(), 400)
   await page.getByText(/FORM_ERROR：/).waitFor()
   assert.equal(await page.locator('#section-5').count(), 1)
@@ -154,13 +155,13 @@ try {
   assert.ok(page.url().includes(firstId))
   const againAccepted = page.waitForResponse(r => r.request().method() === 'POST' && r.url().endsWith('/api/research/futures-basis/runs'))
   // Refresh restores the immutable run but deliberately leaves new query controls empty.
-  await page.getByRole('combobox', { name: 'Product', exact: true }).click()
+  await page.getByRole('combobox', { name: '品种', exact: true }).click()
   await page.getByTitle('IM', { exact: true }).click()
-  for (const [label, value] of [['Start Date', '2024-10-18'], ['End Date', '2024-10-21']]) {
+  for (const [label, value] of [['开始日期', '2024-10-18'], ['结束日期', '2024-10-21']]) {
     await page.getByRole('textbox', { name: label, exact: true }).fill(value)
     await page.getByRole('textbox', { name: label, exact: true }).press('Enter')
   }
-  await page.getByRole('button', { name: 'Generate Research' }).click()
+  await page.getByRole('button', { name: '生成研究' }).click()
   const secondId = (await (await againAccepted).json()).run_id
   assert.notEqual(secondId, firstId)
   await page.waitForFunction(id => new URLSearchParams(location.search).get('run_id') === id, secondId)
@@ -184,13 +185,13 @@ try {
     await route.abort('failed')
   })
   // Explicitly select the synthetic candidate after history restoration.
-  await page.getByRole('combobox', { name: 'Product', exact: true }).click()
+  await page.getByRole('combobox', { name: '品种', exact: true }).click()
   await page.locator('.ant-select-item-option[title="IM"]').click()
-  for (const [label, value] of [['Start Date', '2024-10-18'], ['End Date', '2024-10-21']]) {
+  for (const [label, value] of [['开始日期', '2024-10-18'], ['结束日期', '2024-10-21']]) {
     await page.getByRole('textbox', { name: label, exact: true }).fill(value)
     await page.getByRole('textbox', { name: label, exact: true }).press('Enter')
   }
-  await page.getByRole('button', { name: 'Generate Research' }).click()
+  await page.getByRole('button', { name: '生成研究' }).click()
   await page.getByText(/网络响应丢失。提交结果可能已被服务器接受/).waitFor()
   await page.waitForTimeout(2000)
   assert.ok(lostAccepted?.run_id)
@@ -199,6 +200,7 @@ try {
   assert.equal(await page.locator('#section-5').count(), 1)
   await page.unroute('**/api/research/futures-basis/runs')
   assert.deepEqual(await page.evaluate(() => [localStorage.length, sessionStorage.length]), [0, 0])
+  await polishAcceptance(page, context, output, secondId)
   await page.getByRole('button', { name: '退出登录', exact: true }).click()
   await page.getByRole('button', { name: '登录', exact: true }).waitFor()
   assert.equal((await context.cookies()).length, 0)

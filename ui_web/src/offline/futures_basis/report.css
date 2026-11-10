@@ -1,3 +1,5 @@
+/* Standalone browser reset; the Layout supplies the shared theme background. */
+body { margin: 0; }
 /* Embedded, OFL-licensed subset for readable Chinese in a fontless offline OS. */
 @font-face {
   font-family: 'R01A CJK';

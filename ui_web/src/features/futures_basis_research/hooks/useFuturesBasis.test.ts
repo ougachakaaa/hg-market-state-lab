@@ -87,3 +87,16 @@ it('keeps failed immutable request for an explicit new Run and aborts submission
   post.resolve({ ...accepted, run_id: other }); await flush()
   expect(window.location.search).toBe(`?run_id=${id}`)
 })
+
+it('retains the failed read context independently of a previously completed Run', async () => {
+  window.history.replaceState(null, '', `?run_id=${id}`)
+  vi.mocked(getRun).mockResolvedValueOnce(completed).mockRejectedValueOnce(new ResearchError('unavailable'))
+  vi.mocked(getReport).mockResolvedValueOnce(report)
+  const { result } = renderHook(useFuturesBasis); await flush()
+  expect(result.current.phase).toBe('COMPLETED')
+  act(() => window.dispatchEvent(new PopStateEvent('popstate'))); await flush()
+  expect(result.current.phase).toBe('UNAVAILABLE')
+  expect(result.current.run?.status).toBe('COMPLETED')
+  expect(result.current.errorRead).toBe('status')
+  expect(submitRun).not.toHaveBeenCalled()
+})
