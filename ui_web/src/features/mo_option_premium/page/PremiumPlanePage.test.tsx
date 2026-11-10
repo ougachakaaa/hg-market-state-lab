@@ -249,17 +249,17 @@ it('downloads all real Points and all metrics independently of every presentatio
   expect(fetch).toHaveBeenCalledTimes(1)
 })
 
-it('exports response identity and header-only plane without manufacturing observations', async () => {
+it('exports a nonempty plane using response identity', async () => {
   const download = captureCsvDownloads()
-  const current = { ...plane, observation: { kind: 'trade_date' as const, value: '2026-09-23' }, price_type: 'high' as const, points: [] }
+  const current = { ...plane, price_type: 'high' as const }
   vi.stubGlobal('fetch', vi.fn().mockResolvedValue(response(current)))
   render(<PremiumPlanePage />)
-  fireEvent.change(screen.getByLabelText('Observation 日期'), { target: { value: '2026-09-21' } })
+  fireEvent.change(screen.getByLabelText('Observation 日期'), { target: { value: '2026-09-19' } })
   await screen.findByRole('region', { name: 'Premium plane results' })
   fireEvent.click(copyActions().getByRole('button', { name: 'Export CSV' }))
   expect(await download.text()).toBe(premiumPlaneCsv(current).csv)
-  expect((await download.text()).split('\r\n')).toHaveLength(2)
-  expect(download.filenames).toEqual(['mo-premium-plane_2026-09-23_high.csv'])
+  expect((await download.text()).split('\r\n')).toHaveLength(current.points.length + 2)
+  expect(download.filenames).toEqual(['mo-premium-plane_2026-09-21_high.csv'])
   expect(fetch).toHaveBeenCalledTimes(1)
 })
 
@@ -288,4 +288,26 @@ it('removes CSV actions on a price-type query and leaves none after HTTP failure
   await act(async () => finish({ ok: false, status: 404, json: async () => ({ error: { kind: 'date_not_available', detail: 'Unavailable', param: 'as_of' } }) } as Response))
   await screen.findByRole('alert')
   expect(screen.queryByRole('button', { name: 'Export CSV' })).toBeNull()
+})
+
+it('offers no copy or export actions for premium_plane_unavailable', async () => {
+  await load()
+  vi.mocked(fetch).mockResolvedValueOnce({ ok: false, status: 503, json: async () => ({ error: {
+    kind: 'premium_plane_unavailable', detail: 'No real analytical Points', param: null,
+  } }) } as Response)
+  fireEvent.change(screen.getByLabelText('Observation 日期'), { target: { value: '2026-09-22' } })
+  await screen.findByRole('alert')
+  expect(screen.queryByRole('button', { name: 'Export CSV' })).toBeNull()
+  expect(screen.queryByRole('button', { name: 'Copy JSON' })).toBeNull()
+  expect(screen.queryByRole('button', { name: 'Copy for GPT' })).toBeNull()
+})
+
+it('rejects HTTP 200 with no real Points instead of offering copy or export', async () => {
+  await load()
+  vi.mocked(fetch).mockResolvedValueOnce(response({ ...plane, points: [] }))
+  fireEvent.change(screen.getByLabelText('Observation 日期'), { target: { value: '2026-09-22' } })
+  await screen.findByRole('alert')
+  expect(screen.queryByRole('button', { name: 'Export CSV' })).toBeNull()
+  expect(screen.queryByRole('button', { name: 'Copy JSON' })).toBeNull()
+  expect(screen.queryByRole('button', { name: 'Copy for GPT' })).toBeNull()
 })

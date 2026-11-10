@@ -262,6 +262,6 @@ time_normalization: unannualized, annualized
 representation: points, yield
 ```
 
-直接读取 backend leaf，不计算 premium/time value/annualization/yield，yield 保持原始 ratio。总计 31 列。保留 backend points 顺序：expiry_date ascending → call before put → strike ascending → instrument_id ascending。行数恰为 plane.points.length；无 Point expiry 不生成行，全无 Point 为 header-only。Null、zero 与 Point absence 不混淆，不按 expiry × strike × side 生成行。
+直接读取 backend leaf，不计算 premium/time value/annualization/yield，yield 保持原始 ratio。总计 31 列。保留 backend points 顺序：expiry_date ascending → call before put → strike ascending → instrument_id ascending。行数恰为 plane.points.length；无 Point expiry 不生成行。纯 CSV serializer 对全无 Point 的输入防御性输出 header-only；这不表示合法 HTTP 成功，HTTP contract §5.4 要求成功至少包含一个真实 Point，否则返回 `503 premium_plane_unavailable`。若收到结构可解析但 `points=[]` 的 HTTP 200，frontend 按 `invalid_response` 失败呈现，不暴露复制或导出入口，也不自行重分类为 backend 503。Null、zero 与 Point absence 不混淆，不按 expiry × strike × side 生成行。
 
 文件名为 `mo-premium-plane_{observation.value}_{price_type}.csv`，身份来自响应；编码、安全与下载遵循共同 authority。

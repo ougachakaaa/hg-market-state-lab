@@ -80,7 +80,10 @@ export async function loadMoOptionPremiumPlane(
   }
 
   if (response.ok && response.status === 200 && matchesResponse(200, body)) {
-    return { plane: body as PremiumPlane, rawPayload: body }
+    const plane = body as PremiumPlane
+    // HTTP contract §5.4: a successful plane contains a real analytical Point.
+    // The generated structural schema alone does not encode this invariant.
+    if (plane.points.length > 0) return { plane, rawPayload: body }
   }
   if (!response.ok && matchesResponse(response.status, body)) {
     const { error } = body as PremiumErrorResponse
