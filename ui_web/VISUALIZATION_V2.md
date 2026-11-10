@@ -87,8 +87,9 @@ several rendered segments. Legend visibility applies to all its segments/points.
 With show_legend=false no entries are shown. Tooltip content identifies Binding
 label, supplied date/value and unit, then its ordered Detail labels/values;
 null is described as no value, never zero. Text is escaped/literal. Retain
-coordinates unchanged; do not calculate or format business percentages in the
-generic renderer. Duplicate Detail labels are legal ordered text, not map keys.
+coordinates unchanged; explicit numeric unit formatting follows the Visualization
+entry, while business-specific detail adaptation belongs to the caller. Duplicate
+Detail labels are legal ordered text, not map keys.
 
 An Event renders a vertical date-axis annotation across the plot with its label
 and inspectable ordered details. Multiple events may share a date and must all
@@ -160,3 +161,15 @@ WP1 implementation belongs in the existing `ui_web/src/shared/visualization/`
 boundary, extending explicit version dispatch without financial or feature imports.
 No CDN/report packager, frontend feature, generated OpenAPI/TypeScript artifact or
 WP2–WP5 implementation is needed for its independent acceptance.
+
+## Optional frontend date mapping
+
+Natural date spacing remains the default. A caller may explicitly provide an
+ordered unique date domain for ordinal presentation. Every domain date occupies
+a position, including dates without finite marks. Every mark and event must
+belong to that domain or rendering fails. Marks, shapes and annotations share
+the mapping; hover and readouts retain real dates. Labels adapt to the visible
+window with bounded density. Changing mapping resets the horizontal viewport
+and retains legend selection; Reset restores the full domain. Numeric units and
+feature detail adapters follow the Visualization entry's presentation rules.
+These frontend options do not change the serialized contract.

@@ -114,3 +114,12 @@ Producer-aware readers or authorized delivery projections resolve and validate t
 references before supplying the View. Python and HTTP representations and generated
 TypeScript implement this single semantic contract; a Plotly trace is an internal rendering
 structure, not another public Layer schema.
+
+## Frontend presentation adapters
+
+Renderer-only options may supply ordinal date positions, axis grid styling,
+category display labels and point-detail presentation. They are not serialized
+View fields and introduce no financial semantics. Explicit numeric decimal_ratio
+coordinates display as one-decimal percentages without negative zero; original
+coordinate values remain unchanged. Other units retain their scale. Category
+labels never replace identities or reorder marks. Details stay literal by default.

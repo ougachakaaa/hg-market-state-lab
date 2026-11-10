@@ -4,3 +4,5 @@ export type { Axis, Binding, ChartView as ChartViewContract, Coordinate, Layer, 
 export { chartViewToPlotly, UnsupportedLayerError } from './figure'
 export { validateLineV2, validateViewV2, validateVisualizationView, validateVisualizationLayer } from './contractV2'
 export type { DateCoordinate, NumberCoordinate, Detail, DateMark, LineV2, AxisV2, BindingV2, EventV2, PresentationV2, ViewV2, VisualizationView, VisualizationLayer } from './contractV2'
+
+export type { RenderOptions } from './presentation'

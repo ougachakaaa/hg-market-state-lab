@@ -7,3 +7,9 @@ The user discovers publications in explicitly requested cursor pages, selects a 
 A selected Analysis presents its original statistical result and Job coverage/provenance, preserving nulls and zeroes. Quantile probability/value pairs and estimator and IntervalCount boundaries, inclusion flags, counts and frequencies are displayed without recomputation. Published Quantile and categorical IntervalCount ChartViews use the shared renderer; Count and Frequency select their respective published View IDs. Unsupported results or Views are explicit.
 
 List, Manifest, Analysis and View each expose loading, success and failure states; the list distinguishes empty store and empty pages, and missing coverage or views is explicit. Safe transport failures, including integrity, size and capacity failures, remain distinguishable and manually retryable. Detail reads are lazy: only an explicit selection requests its Manifest, Analysis or View; no bulk prefetch or automatic retry. Changing selection or unmounting cancels or invalidates obsolete requests so source identity and visible results remain consistent. The application authentication boundary controls 401 and session isolation.
+
+Explicit result-unit decimal_ratio values and IntervalCount boundaries display as
+one-decimal percentages with the shared formatter. Probability, frequency, counts
+and coverage retain their own semantics; observation_unit does not assign units
+to coverage fields. Histogram labels preserve category identity, order and
+inclusion. Raw request and evidence payloads remain unchanged.

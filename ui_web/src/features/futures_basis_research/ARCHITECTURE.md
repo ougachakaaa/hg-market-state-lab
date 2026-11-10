@@ -219,3 +219,20 @@ The shared reader accepts explicit online/offline disclosure mode; only the offl
 shell supplies standalone theme, font and adjacent-file evidence instructions.
 
 Execution evidence and reproduction: [WP8-B acceptance](ACCEPTANCE.md).
+
+## Historical presentation controls
+
+The shared online/offline reader defaults to Trading Days: all candidate_dates
+define equally spaced positions, including missing sessions. Calendar Days retains
+natural spacing. One local control changes all three charts, resets the horizontal
+viewport and preserves legend selection. Marks and events share the mapping; dates
+absent from the domain are errors. Null and segment boundaries remain unchanged.
+Only basis_value requests a zero-anchored 100 index_points dashed axis grid.
+Explicit decimal_ratio values display as one-decimal percentages without negative
+zero. Layer/result units determine formatting; probabilities, frequency, count and
+prices retain their own semantics. The feature adapts result details using mark
+values and units. Histogram labels use supplied IntervalCount boundaries and
+inclusion flags; rounded labels never replace category identity or order.
+Raw Views, reader projection, evidence, exports and fingerprints remain unchanged.
+
+Verification and reproduction: [Historical presentation acceptance](HISTORICAL_PRESENTATION_ACCEPTANCE.md).

@@ -1,3 +1,6 @@
+import { intervalLabels } from '../../../shared/format/interval'
+import { categoryLabelOptions } from '../../../shared/visualization/presentation'
+import { formatUnit } from '../../../shared/format/unit'
 import { Alert, Button, Card, Collapse, Descriptions, Flex, List, Skeleton, Space, Table, Tag, Typography } from 'antd'
 import { ChartView, chartViewToPlotly, UnsupportedLayerError } from '../../../shared/visualization'
 import { ResearchError, type Analysis, type FailureKind } from '../api/research'
@@ -26,10 +29,11 @@ export function AnalysisDetails({ analysis }: { analysis: Analysis }) {
     <Typography.Text>实际结果状态：{analysis.outcome}{analysis.reason ? ` — ${analysis.reason}` : ''}</Typography.Text>
     {result && <>
       <Facts title="原始统计结果" data={{ method: result.method, sample_count: result.sample_count, unit: result.unit, ...(result.method === 'quantile' ? { estimator: result.estimator } : {}) }} />
-      {result.method === 'quantile' ? <Table size="small" pagination={false} rowKey="key" dataSource={result.points_and_values.map(([probability, resultValue], key) => ({ key, probability, resultValue }))} columns={[{ title: '概率 Probability', dataIndex: 'probability' }, { title: '数值 Value', dataIndex: 'resultValue' }]} /> : <Table size="small" pagination={false} rowKey="label" dataSource={[
-        { label: 'Underflow', left: '−∞', right: value(result.edges[0]), left_inclusive: 'N/A', right_inclusive: 'N/A', count: result.underflow_count, frequency: result.underflow_frequency },
-        ...result.bins.map((bin, i) => ({ ...bin, label: `Bin ${i + 1}`, left: value(bin.left), right: value(bin.right), left_inclusive: value(bin.left_inclusive), right_inclusive: value(bin.right_inclusive) })),
-        { label: 'Overflow', left: value(result.edges.at(-1)), right: '+∞', left_inclusive: 'N/A', right_inclusive: 'N/A', count: result.overflow_count, frequency: result.overflow_frequency },
+      {result.unit === 'decimal_ratio' && <Typography.Text type="secondary">数值以一位小数百分比展示；原始单位与证据保持 decimal_ratio。</Typography.Text>}
+      {result.method === 'quantile' ? <Table size="small" pagination={false} rowKey="key" dataSource={result.points_and_values.map(([probability, resultValue], key) => ({ key, probability, resultValue }))} columns={[{ title: '概率 Probability', dataIndex: 'probability' }, { title: '数值 Value', dataIndex: 'resultValue', render: v => formatUnit(v, result.unit) }]} /> : <Table size="small" pagination={false} rowKey="label" dataSource={[
+        { label: 'Underflow', left: '−∞', right: formatUnit(result.edges[0], result.unit), left_inclusive: 'N/A', right_inclusive: 'N/A', count: result.underflow_count, frequency: result.underflow_frequency },
+        ...result.bins.map((bin, i) => ({ ...bin, label: `Bin ${i + 1}`, left: formatUnit(bin.left, result.unit), right: formatUnit(bin.right, result.unit), left_inclusive: value(bin.left_inclusive), right_inclusive: value(bin.right_inclusive) })),
+        { label: 'Overflow', left: formatUnit(result.edges.at(-1), result.unit), right: '+∞', left_inclusive: 'N/A', right_inclusive: 'N/A', count: result.overflow_count, frequency: result.overflow_frequency },
       ]} columns={['label', 'left', 'right', 'left_inclusive', 'right_inclusive', 'count', 'frequency'].map(field => ({ title: ({ label: '区间', left: '左边界', right: '右边界', left_inclusive: '包含左边界', right_inclusive: '包含右边界', count: '计数 Count', frequency: '频率 Frequency' } as Record<string, string>)[field], dataIndex: field }))} scroll={{ x: 820 }} />}
     </>}
     {coverage ? <>
@@ -82,7 +86,7 @@ export default function ResearchExplorerPage() {
         {e.view && <Typography.Text code>View ID: {e.view}</Typography.Text>}
         {e.chart.status === 'loading' && <Skeleton active paragraph={{ rows: 2 }} />}
         {e.chart.status === 'error' && <ErrorState context="View" error={e.chart.error} retry={e.retryChart} />}
-        {e.chart.status === 'success' && (unsupported ? <Alert type="warning" title="当前渲染器不支持此 View。" /> : <div style={{ height: 450, minWidth: 0, width: '100%' }}><ChartView view={e.chart.data} /></div>)}
+        {e.chart.status === 'success' && (unsupported ? <Alert type="warning" title="当前渲染器不支持此 View。" /> : <div style={{ height: 450, minWidth: 0, width: '100%' }}><ChartView view={e.chart.data} options={e.result.status === 'success' && e.result.data.result?.method === 'interval_count' && e.result.data.result.unit === 'decimal_ratio' ? categoryLabelOptions(e.chart.data, intervalLabels(e.result.data.result)) : undefined} /></div>)}
       </Space>}
     </Card>}
   </Flex>

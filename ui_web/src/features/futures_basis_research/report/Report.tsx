@@ -1,5 +1,8 @@
+import { formatUnit } from '../../../shared/format/unit'
+import { intervalLabels } from '../../../shared/format/interval'
+import { historyOptions, histogramOptions } from './presentation'
 import { useState } from 'react'
-import { Alert, Card, Collapse, Descriptions, Flex, Select, Table, Tag, Typography, theme } from 'antd'
+import { Alert, Card, Collapse, Descriptions, Flex, Select, Segmented, Table, Tag, Typography, theme } from 'antd'
 import { ChartView } from '../../../shared/visualization'
 import type { Method, ReportData, Run } from './types'
 
@@ -8,18 +11,20 @@ const sections = ['研究概览', '历史基差', '基差分布', '期限结构'
 const text = (value: unknown) => value === undefined || value === null ? '不适用' : String(value)
 
 function Methods({ methods }: { methods: Method[] }) {
-  return <Flex vertical gap="small">{methods.map((m, i) => <Card key={i} size="small" title={m.spec.method}>
+  return <Flex vertical gap="small">{methods.map((m, i) => {
+    const labels = m.result?.bins ? intervalLabels(m.result) : []
+    return <Card key={i} size="small" title={m.spec.method}>
     {m.failure_category ? <Alert type={m.failure_category === 'no_eligible_sample' ? 'info' : 'error'} title={m.failure_category} description={m.reason} /> : m.result && <>
       <Typography.Paragraph>单位：{m.result.unit} · 有效样本数：{m.result.sample_count} · {m.result.estimator}</Typography.Paragraph>
-      {m.spec.method === 'mean' && <Typography.Text>Mean：{text(m.result.value)}</Typography.Text>}
-      {m.result.points_and_values && <Table scroll={{ x: 'max-content' }} pagination={false} size="small" rowKey="point" dataSource={m.result.points_and_values.map(([point, value]) => ({ point, value }))} columns={[{ title: 'Quantile Point', dataIndex: 'point' }, { title: '原始值', dataIndex: 'value', render: text }]} />}
-      {m.result.bins && <Table scroll={{ x: 'max-content' }} pagination={false} size="small" rowKey="interval" dataSource={[
-        { interval: `< ${text(m.result.edges?.[0])}`, count: m.result.underflow_count, frequency: m.result.underflow_frequency },
-        ...m.result.bins.map(b => ({ interval: `${b.left_inclusive ? '[' : '('}${b.left}, ${b.right}${b.right_inclusive ? ']' : ')'}`, count: b.count, frequency: b.frequency })),
-        { interval: `> ${text(m.result.edges?.at(-1))}`, count: m.result.overflow_count, frequency: m.result.overflow_frequency },
-      ]} columns={[{ title: '区间（原始单位）', dataIndex: 'interval' }, { title: 'IntervalCount', dataIndex: 'count' }, { title: 'Frequency（有效样本分母）', dataIndex: 'frequency', render: text }]} />}
+      {m.spec.method === 'mean' && <Typography.Text>Mean：{formatUnit(m.result.value, m.result.unit)}</Typography.Text>}
+      {m.result.points_and_values && <Table scroll={{ x: 'max-content' }} pagination={false} size="small" rowKey="point" dataSource={m.result.points_and_values.map(([point, value]) => ({ point, value }))} columns={[{ title: 'Quantile Point', dataIndex: 'point' }, { title: '数值', dataIndex: 'value', render: value => formatUnit(value, m.result?.unit) }]} />}
+      {m.result.bins && <Table scroll={{ x: 'max-content' }} pagination={false} size="small" rowKey="key" dataSource={[
+        { key: 'underflow', interval: labels[0], count: m.result.underflow_count, frequency: m.result.underflow_frequency },
+        ...m.result.bins.map((b, i) => ({ key: `bin-${i}`, interval: labels[i + 1], count: b.count, frequency: b.frequency })),
+        { key: 'overflow', interval: labels.at(-1), count: m.result.overflow_count, frequency: m.result.overflow_frequency },
+      ]} columns={[{ title: '区间（按单位展示）', dataIndex: 'interval' }, { title: 'IntervalCount', dataIndex: 'count' }, { title: 'Frequency（有效样本分母）', dataIndex: 'frequency', render: text }]} />}
     </>}
-  </Card>)}</Flex>
+  </Card>})}</Flex>
 }
 
 function RunTable({ runs }: { runs: Run[] }) {
@@ -35,6 +40,7 @@ export function Report({ data, mode }: { data: ReportData; mode: 'online' | 'off
   const { token } = theme.useToken()
   const [metric, setMetric] = useState(metrics[0])
   const [slot, setSlot] = useState('M0')
+  const [timeScale, setTimeScale] = useState('Trading Days')
   if (data.profile !== 'futures_basis_report_evidence_v1') throw new Error('Unsupported report version')
   const distribution = data.distributions.find(d => d.request.metric === metric && d.request.slot === slot)
   const obs = data.request.observation
@@ -56,10 +62,10 @@ export function Report({ data, mode }: { data: ReportData; mode: 'online' | 'off
           { key: 'fingerprint', label: '输入 SHA-256', children: <Typography.Text copyable>{data.fingerprint}</Typography.Text> },
         ]} />
         <Collapse items={[{ key: 'formulas', label: '指标定义与公式（Producer）', children: data.formulas.map(f => <Typography.Paragraph key={f}><Typography.Text code>{f}</Typography.Text></Typography.Paragraph>) }]} />
-        <Typography.Title level={mode === 'offline' ? 3 : 5} style={{ margin: 0, fontSize: token.fontSizeHeading5 }}>各 Slot 原始统计均值</Typography.Title>
+        <Typography.Title level={mode === 'offline' ? 3 : 5} style={{ margin: 0, fontSize: token.fontSizeHeading5 }}>各 Slot 统计均值</Typography.Title>
         <Table scroll={{ x: 'max-content' }} pagination={false} size="small" rowKey={r => r.request.analysis_id} dataSource={data.distributions} columns={[
           { title: 'Slot', render: (_, r) => r.request.slot }, { title: 'Metric', render: (_, r) => r.request.metric },
-          { title: 'Mean / 状态', render: (_, r) => r.methods[0].failure_category ?? text(r.methods[0].result?.value) },
+          { title: 'Mean / 状态', render: (_, r) => r.methods[0].failure_category ?? formatUnit(r.methods[0].result?.value, r.methods[0].result?.unit) },
           { title: '有效样本数', render: (_, r) => r.binding.length }, { title: '单位', render: (_, r) => r.methods[0].result?.unit ?? (r.request.histogram?.unit ?? '见证据') },
         ]} />
         <Typography.Title level={mode === 'offline' ? 3 : 5} style={{ margin: 0, fontSize: token.fontSizeHeading5 }}>数据完整性（各自单位，不相加）</Typography.Title>
@@ -74,8 +80,9 @@ export function Report({ data, mode }: { data: ReportData; mode: 'online' | 'off
         ]} /> }]} />
       </Card>
       <Card id="section-1" title={<Typography.Title level={mode === 'offline' ? 2 : 4} style={{ margin: 0, fontSize: token.fontSizeHeading4, lineHeight: token.lineHeightHeading4 }}>B. 历史基差</Typography.Title>} styles={{ body: { display: 'flex', flexDirection: 'column', gap: token.padding, minWidth: 0 } }} style={{ scrollMarginTop: token.paddingLG }}>
-        <Typography.Paragraph>四个 Slot 是相对期限角色。合约转换由竖线和事件详情标注；缺失与转换断线。拖拽放大，工具栏切换 Pan、Reset；图例控制系列显示。两种 ratio 均使用原始 decimal_ratio。</Typography.Paragraph>
-        {metrics.map(m => <div key={m} style={{ minWidth: 0, overflow: 'hidden' }}><ChartView view={data.views.history[m]} minPlotHeight={480} /></div>)}
+        <Typography.Paragraph>四个 Slot 是相对期限角色。合约转换由竖线和事件详情标注；缺失与转换断线。拖拽放大，工具栏切换 Pan、Reset；图例控制系列显示。decimal_ratio 以一位小数百分比展示；原始数据及证据单位保持不变。</Typography.Paragraph>
+        <Segmented style={{ alignSelf: 'flex-start' }} aria-label="历史基差时间轴" value={timeScale} onChange={setTimeScale} options={['Trading Days', 'Calendar Days']} />
+        {metrics.map(m => <div key={m} style={{ minWidth: 0, overflow: 'hidden' }}><ChartView view={data.views.history[m]} minPlotHeight={480} options={historyOptions(data.views.history[m], data.candidate_dates, timeScale === 'Trading Days', m === 'basis_value')} /></div>)}
       </Card>
       <Card id="section-2" title={<Typography.Title level={mode === 'offline' ? 2 : 4} style={{ margin: 0, fontSize: token.fontSizeHeading4, lineHeight: token.lineHeightHeading4 }}>C. 基差分布</Typography.Title>} styles={{ body: { display: 'flex', flexDirection: 'column', gap: token.padding, minWidth: 0 } }} style={{ scrollMarginTop: token.paddingLG }}>
         <Typography.Text type="secondary">以下为本地展示设置，仅切换已有结果，不会提交请求或重新计算统计。</Typography.Text>
@@ -84,7 +91,7 @@ export function Report({ data, mode }: { data: ReportData; mode: 'online' | 'off
           <Typography.Paragraph>候选交易日：{distribution.candidates.length}；有效样本数：{distribution.binding.length}。分类柱等宽，不表示区间宽度或密度；区间边界及两侧外部区间全部保留。</Typography.Paragraph>
           {['count', 'frequency'].map(measure => {
             const view = data.views.histograms[`${distribution.request.analysis_id}/${measure}`]
-            return view && <div key={measure} style={{ minWidth: 0, height: 340, overflow: 'hidden' }}><ChartView view={view} /></div>
+            return view && <div key={measure} style={{ minWidth: 0, height: 340, overflow: 'hidden' }}><ChartView view={view} options={histogramOptions(view, distribution.methods.find(m => m.result?.bins)?.result)} /></div>
           })}
           <Methods methods={distribution.methods} />
         </>}

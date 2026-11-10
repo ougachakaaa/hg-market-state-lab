@@ -1,3 +1,4 @@
+import { historicalBasisAcceptance } from './historical_basis_acceptance.mjs'
 // Actual offline file:// acceptance. Never starts a server or permits network I/O.
 import assert from 'node:assert/strict'
 import { mkdir, mkdtemp, readFile, writeFile } from 'node:fs/promises'
@@ -66,6 +67,7 @@ try {
     assert.equal(points, view.layers.flatMap(b => b.layer.data).filter(m => m.y !== null).length)
   }
   pass('Three independent metrics render all supplied finite points, four Slot legends and every real transition')
+  await historicalBasisAcceptance(page, expected, output)
   const hasNumeric = expected.views.history.basis_value.layers.some(b => b.layer.data.some(m => m.y !== null))
   if (hasNumeric) {
     const plot = plots.first()

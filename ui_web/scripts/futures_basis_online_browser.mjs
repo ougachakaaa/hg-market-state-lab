@@ -1,3 +1,4 @@
+import { historicalBasisAcceptance } from './historical_basis_acceptance.mjs'
 // Real browser -> Vite proxy -> FastAPI -> temporary SQLite. Only market public
 // providers are deterministic fixtures; Auth, Cookie and CLI are real.
 import assert from 'node:assert/strict'
@@ -136,6 +137,8 @@ try {
   assert.equal(await plots.first().locator('.legend .traces').count(), 4)
   assert.ok(states.includes('RUNNING'))
   assert.ok(states.includes('COMPLETED'))
+  const presentationReport = await (await context.request.get(`http://127.0.0.1:5173/api/research/futures-basis/runs/${firstId}/report`)).json()
+  await historicalBasisAcceptance(page, presentationReport.data, output)
   await page.screenshot({ path: resolve(output, 'online-report.png'), fullPage: true })
   await page.screenshot({ path: resolve(output, 'online-overview.png') })
   // An invalid future request must preserve the existing terminal report and URL.

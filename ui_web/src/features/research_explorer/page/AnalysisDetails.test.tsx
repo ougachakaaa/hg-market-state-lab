@@ -8,14 +8,14 @@ const summary: Analysis['summary'] = { analysis_id: 'a', request_id: 'same', sta
 const base: Analysis = { schema_version: 1, publication_id: 'p', summary, outcome: 'success', reason: null, result: null, coverage: null }
 it('displays original quantile values and reports missing coverage', () => {
   render(<AnalysisDetails analysis={{ ...base, result: { method: 'quantile', sample_count: 2, unit: 'decimal_ratio', estimator: 'linear', points_and_values: [[0.5, 0.123456789]] } }} />)
-  expect(screen.getByText('0.123456789')).toBeTruthy()
+  expect(screen.getByText('12.3%')).toBeTruthy()
   expect(screen.getByText('linear')).toBeTruthy()
   expect(screen.getByText('Coverage 不可用')).toBeTruthy()
 })
 it('preserves interval boundaries, inclusion flags, zero and tail counts', () => {
   render(<AnalysisDetails analysis={{ ...base, result: { method: 'interval_count', sample_count: 2, unit: 'decimal_ratio', edges: [-1, 0], bins: [{ left: -1, right: 0, left_inclusive: true, right_inclusive: false, count: 0, frequency: 0 }], underflow_count: 1, underflow_frequency: 0.5, overflow_count: 1, overflow_frequency: 0.5 } }} />)
   for (const text of ['Underflow', 'Overflow', 'Bin 1', 'true', 'false']) expect(screen.getByText(text)).toBeTruthy()
-  expect(screen.getAllByText('-1')).toHaveLength(2)
+  expect(screen.getAllByText('-100.0%')).toHaveLength(2)
   expect(screen.getAllByText('0').length).toBeGreaterThan(1)
   expect(screen.getAllByText('0.5')).toHaveLength(2)
 })
