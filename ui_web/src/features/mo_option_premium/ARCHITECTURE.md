@@ -46,7 +46,7 @@ user-visible empty, loading and error presentation
 
 ## 3. Stable Invariants
 
-1. 一个成功 response 是当前 query 的完整 backend sparse plane；frontend 只做可逆的 presentation projection。
+1. 一个成功 response 是当前 query 的完整 backend sparse plane；frontend 展示只做可逆的 presentation projection；CSV 是遵循 [Copy / Export authority](../../../data-copy-export.md) 的衍生表示，不要求可逆。
 2. HTTP query identity 与 local presentation state 分离；Call/Put、`Reference Basis`、`Value Basis`、`Time Normalization`、`Representation` 与 expiry visibility 不触发 backend recomputation 或新请求。
 3. Table coordinate 必须对应真实 Point 才拥有 analytical observation；frontend grid 本身不创造事实。
 4. Backend ordering、identity、null/zero/absence 与 reference availability 必须保留；formatting 不改变 numeric facts。

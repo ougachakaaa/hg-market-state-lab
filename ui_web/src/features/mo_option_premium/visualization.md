@@ -240,4 +240,28 @@ Copy for GPT 的产品名称为 `MO Premium Plane`；上下文读取响应中的
 
 简短阅读说明限定为 [HTTP contract](../../../../ui_http/products/mo_option_premium/http-contract.md#5-absence-null-and-zero) 已确认的事实：plane 是 sparse Points；不存在的 Point 与真实 Point 内的 null metric 不等价，numeric `0` 也不等于 `null`；没有合法同到期期货 reference 时 `futures` 可以为 `null`，不得寻找替代 reference。说明不重新计算 metric 或补齐 plane。
 
-WP2 CSV 按响应中的真实 `points[]` item 展平，不按 table strike union 生成矩形网格，也不生成缺席的 Point；其余 CSV 决策遵循共同 authority 的 deferred boundary。
+### CSV V1
+
+Source 为当前成功状态的完整 validated `plane`，JSON 复制仍使用同次响应 rawPayload。每个真实 `points[]` item 生成一行，不使用 projection.rows、selected metric、strike union 或 displayed cells。固定前 15 列：
+
+```text
+observation_kind, observation_value, option_product, price_type,
+underlying_instrument_id, underlying_price,
+expiry_date, dte, futures_present, futures_instrument_id, futures_price,
+instrument_id, option_type, strike, premium
+```
+
+Observation/product/price type/underlying 来自 response-level context；expiry_date、instrument_id、option_type、strike、premium 直接取 Point。以 Point.expiry_date 查同次响应唯一 expiry context 取得 dte/futures，不重新计算 DTE；缺失或重复 context 明确失败，不补值或丢行。
+
+随后展开全部 16 个 metric leaves，列名为 `metric_{reference_basis}_{value_basis}_{time_normalization}_{representation}`，按下列各轴嵌套顺序生成：
+
+```text
+reference_basis: underlying_spot, expiry_futures
+value_basis: total, time_value
+time_normalization: unannualized, annualized
+representation: points, yield
+```
+
+直接读取 backend leaf，不计算 premium/time value/annualization/yield，yield 保持原始 ratio。总计 31 列。保留 backend points 顺序：expiry_date ascending → call before put → strike ascending → instrument_id ascending。行数恰为 plane.points.length；无 Point expiry 不生成行，全无 Point 为 header-only。Null、zero 与 Point absence 不混淆，不按 expiry × strike × side 生成行。
+
+文件名为 `mo-premium-plane_{observation.value}_{price_type}.csv`，身份来自响应；编码、安全与下载遵循共同 authority。

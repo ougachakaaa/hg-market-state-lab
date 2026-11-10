@@ -1,3 +1,5 @@
+import { captureCsvDownloads } from '../../../test/csvDownload'
+import { premiumPlaneCsv } from '../model/csvExport'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import type { PremiumPlane } from '../api/moOptionPremium'
@@ -133,6 +135,7 @@ describe('complete current-result copy', () => {
     expect(write).toHaveBeenCalledTimes(2)
     fireEvent.change(screen.getByLabelText('Observation 日期'), { target: { value: '' } })
     expect(screen.queryByRole('button', { name: 'Copy JSON' })).toBeNull()
+    expect(screen.queryByRole('button', { name: 'Export CSV' })).toBeNull()
   })
   it.each(['invalid', 'network'])('has no copy source in idle/loading/%s states', async (mode) => {
     let finish!: (value: Response) => void
@@ -140,27 +143,34 @@ describe('complete current-result copy', () => {
     vi.stubGlobal('fetch', vi.fn().mockImplementation(() => new Promise<Response>((resolve, reject) => { finish = resolve; fail = reject })))
     render(<PremiumPlanePage />)
     expect(screen.queryByRole('button', { name: 'Copy JSON' })).toBeNull()
+    expect(screen.queryByRole('button', { name: 'Export CSV' })).toBeNull()
     fireEvent.change(screen.getByLabelText('Observation 日期'), { target: { value: '2026-09-21' } })
     expect(screen.queryByRole('button', { name: 'Copy JSON' })).toBeNull()
+    expect(screen.queryByRole('button', { name: 'Export CSV' })).toBeNull()
     await act(async () => { if (mode === 'network') fail(new Error('offline')); else finish(response({ invalid: true })) })
     await screen.findByRole('alert')
     expect(screen.queryByRole('button', { name: 'Copy JSON' })).toBeNull()
+    expect(screen.queryByRole('button', { name: 'Export CSV' })).toBeNull()
     expect(screen.queryByRole('button', { name: 'Copy for GPT' })).toBeNull()
   })
   it('copies only the newer response even if an older request completes late', async () => {
     const write = clipboard()
+    const download = captureCsvDownloads()
     const pending: Array<(value: Response) => void> = []
     const fetch = vi.fn().mockImplementation(() => new Promise<Response>((resolve) => pending.push(resolve)))
     vi.stubGlobal('fetch', fetch)
     render(<PremiumPlanePage />)
     fireEvent.change(screen.getByLabelText('Observation 日期'), { target: { value: '2026-09-21' } })
     fireEvent.change(screen.getByLabelText('Observation 日期'), { target: { value: '2026-09-22' } })
-    const current = { ...plane, observation: { kind: 'trade_date', value: '2026-09-22' } }
+    const current: PremiumPlane = { ...plane, observation: { kind: 'trade_date', value: '2026-09-22' } }
     await act(async () => { pending[1](response(current)) })
     await screen.findByRole('region', { name: 'Premium plane results' })
     await act(async () => { pending[0](response(plane)) })
     await copied('Copy JSON')
     expect(write).toHaveBeenLastCalledWith(JSON.stringify(current, null, 2))
+    fireEvent.click(copyActions().getByRole('button', { name: 'Export CSV' }))
+    expect(await download.text()).toBe(premiumPlaneCsv(current).csv)
+    expect(download.filenames).toEqual([premiumPlaneCsv(current).filename])
     expect(fetch).toHaveBeenCalledTimes(2)
   })
 })
@@ -213,4 +223,69 @@ it('uses the validated response identity and removes copy actions on a price-typ
   expect(screen.queryByRole('group', { name: 'MO Premium Plane copy actions' })).toBeNull()
   await screen.findByRole('region', { name: 'Premium plane results' })
   expect(copyActions().queryByRole('status')).toBeNull()
+})
+
+it('downloads all real Points and all metrics independently of every presentation selector', async () => {
+  const download = captureCsvDownloads()
+  const { fetch, results } = await load()
+  expect(copyActions().getAllByRole('button').map((b) => b.textContent)).toEqual(['Copy JSON', 'Copy for GPT', 'Export CSV'])
+  const controls = [
+    () => {},
+    ...['Put', 'Same-expiry futures', 'Time value', 'Unannualized', 'Yield'].map((name) =>
+      () => fireEvent.click(within(results).getByRole('radio', { name }))),
+    () => fireEvent.click(within(results).getByRole('checkbox', { name: '2026-10-23' })),
+  ]
+  for (const change of controls) {
+    change()
+    fireEvent.click(copyActions().getByRole('button', { name: 'Export CSV' }))
+    const csv = await download.text()
+    expect(csv).toBe(premiumPlaneCsv(plane).csv)
+    expect(csv.split('\r\n').length - 2).toBe(plane.points.length)
+    expect(csv).toContain('2026-10-23,33,false,null,null,B,call,7300,1,')
+    expect(csv).toContain(',-3,-0.003,-30,-0.03,')
+    expect(csv).not.toContain('%')
+    expect(copyActions().getByRole('status').textContent).toBe('Download started')
+  }
+  expect(fetch).toHaveBeenCalledTimes(1)
+})
+
+it('exports response identity and header-only plane without manufacturing observations', async () => {
+  const download = captureCsvDownloads()
+  const current = { ...plane, observation: { kind: 'trade_date' as const, value: '2026-09-23' }, price_type: 'high' as const, points: [] }
+  vi.stubGlobal('fetch', vi.fn().mockResolvedValue(response(current)))
+  render(<PremiumPlanePage />)
+  fireEvent.change(screen.getByLabelText('Observation 日期'), { target: { value: '2026-09-21' } })
+  await screen.findByRole('region', { name: 'Premium plane results' })
+  fireEvent.click(copyActions().getByRole('button', { name: 'Export CSV' }))
+  expect(await download.text()).toBe(premiumPlaneCsv(current).csv)
+  expect((await download.text()).split('\r\n')).toHaveLength(2)
+  expect(download.filenames).toEqual(['mo-premium-plane_2026-09-23_high.csv'])
+  expect(fetch).toHaveBeenCalledTimes(1)
+})
+
+it('reports download failure with cleanup and safe feedback, then permits retry', async () => {
+  const download = captureCsvDownloads()
+  vi.mocked(HTMLAnchorElement.prototype.click).mockImplementationOnce(() => { throw new Error('private detail') })
+  await load()
+  fireEvent.click(copyActions().getByRole('button', { name: 'Export CSV' }))
+  expect(copyActions().getByRole('status').textContent).toBe('Export failed')
+  expect(download.revoke).toHaveBeenCalledWith('blob:csv-1')
+  expect(document.querySelector('a[download]')).toBeNull()
+  expect(screen.queryByText(/private detail/)).toBeNull()
+  fireEvent.click(copyActions().getByRole('button', { name: 'Export CSV' }))
+  expect(await download.text()).toBe(premiumPlaneCsv(plane).csv)
+  expect(copyActions().getByRole('status').textContent).toBe('Download started')
+  expect(fetch).toHaveBeenCalledTimes(1)
+})
+
+it('removes CSV actions on a price-type query and leaves none after HTTP failure', async () => {
+  await load()
+  let finish!: (value: Response) => void
+  vi.mocked(fetch).mockImplementationOnce(() => new Promise<Response>((resolve) => { finish = resolve }))
+  fireEvent.mouseDown(screen.getByRole('combobox', { name: '价格口径' }))
+  fireEvent.click(await screen.findByText('open', { selector: '.ant-select-item-option-content' }))
+  expect(screen.queryByRole('button', { name: 'Export CSV' })).toBeNull()
+  await act(async () => finish({ ok: false, status: 404, json: async () => ({ error: { kind: 'date_not_available', detail: 'Unavailable', param: 'as_of' } }) } as Response))
+  await screen.findByRole('alert')
+  expect(screen.queryByRole('button', { name: 'Export CSV' })).toBeNull()
 })

@@ -208,4 +208,19 @@ Copy for GPT 的产品名称为 `MO Option Chain`；上下文读取同一响应�
 
 简短阅读说明限定为 [HTTP contract](../../../../ui_http/products/mo_option_chain/http-contract.md#3-success-response) 已确认的事实：`price=null` 表示缺价，numeric `0` 是合法数据，二者不等价；无结构性匹配的同到期 IM 合约时 `futures` 为 `null`，不得推断替代 reference。Expiry 与 Call/Put identity 保持响应的父级 grouping，不生成另一套 option DTO。
 
-WP2 CSV 按响应中的真实 option contract 展平，保留其父级 expiry 与 Call/Put 归属，不生成虚构合约；其余 CSV 决策遵循共同 authority 的 deferred boundary。
+### CSV V1
+
+Source 为当前成功状态的完整 `OptionChain`，不使用 selectedGroups、chart、viewport 或控件身份。固定列顺序：
+
+```text
+target_trade_date, option_product, price_type,
+underlying_instrument_id, underlying_price,
+expiry_date, futures_present, futures_instrument_id, futures_price,
+option_type, instrument_id, strike, price
+```
+
+前三列来自 response，underlying 来自 response-level context，expiry/futures 来自父级 expiry。每个真实 calls/puts item 生成一行，option_type 分别为 `call`/`put`，后三列直接取 Point。Null price、zero price、futures absence 均不删除合约。
+
+遍历 backend expiry 顺序，先 calls 后 puts，保留 expiry_date ascending、side 内 strike ascending / instrument_id ascending tie-break。行数恰为 `sum(expiry.calls.length + expiry.puts.length)`；空 expiry 无行，全无合约为 header-only。
+
+文件名为 `mo-option-chain_{target_trade_date}_{price_type}.csv`，身份来自响应；编码、安全与下载遵循共同 authority。
