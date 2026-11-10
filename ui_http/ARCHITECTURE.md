@@ -57,15 +57,17 @@ ui_http HTTP projection
 ui_http → data_snapshot application/product boundaries
 ui_http → market_modeling application/product boundaries
 ui_http → market_research public capabilities / execution / observation / association / case facades
+ui_http → market_backtesting public application boundary (W2; HTTP contract authored by WP6)
 ui_http → market_statistics root public Specs/results (transport construction/projection only)
 ```
 
 Research delivery never imports private Research modules or DataLake services/internals.
-Research and Statistics never depend on ui_http. Publication delivery uses only the
+Research and Statistics never depend on ui_http. Backtesting never depends on ui_http and
+does not receive a reverse import permission. Publication delivery uses only the
 [Research public reader](../market_research/PUBLICATION.md), not storage internals; reads
 never execute Research, acquire facts or recompute statistics.
 
-禁止 `data_snapshot → ui_http` 或 `market_modeling → ui_http`。Business modules 不得通过 FastAPI、HTTP DTO/status/error envelope、OpenAPI 或 frontend types 定义 semantic model。
+禁止 `data_snapshot → ui_http`、`market_backtesting → ui_http` 或 `market_modeling → ui_http`。Business modules 不得通过 FastAPI、HTTP DTO/status/error envelope、OpenAPI 或 frontend types 定义 semantic model。W2 的 HTTP product contract、DTO 与 catalog entry 由 WP6 创建；本 authority gate 不发布 fake endpoint。
 
 ## 4. Composition Boundary
 
@@ -85,6 +87,7 @@ Owning module authority 仍唯一拥有 application/product semantics：
 
 - Data Snapshot 产品与 application boundary：[data_snapshot architecture](../data_snapshot/ARCHITECTURE.md)
 - Research capability and pure preview: [Research publication](../market_research/descriptive/RESEARCH_CAPABILITY.md)
+- Backtesting application/result and online semantics: [W2 Futures Roll Long case authority](../market_backtesting/cases/futures_roll_long/ARCHITECTURE.md)
 - Web presentation 与 generated-contract feedback loop：[ui_web architecture](../ui_web/ARCHITECTURE.md)
 
 本文件不复制 endpoint、DTO、Premium metric tree、error table 或 FastAPI implementation 细节。

@@ -7,6 +7,7 @@ data_lake         → reusable source facts and Dataset-owned caches
 data_snapshot     → market state data preparation
 market_modeling   → market state modeling (reserved; no module authority yet)
 market_research   → exploratory and statistical research
+market_backtesting → futures roll long strategy backtesting (W2; authority-only in WP0)
 market_statistics → independent numerical statistics Python API
 ui_cli            → repository CLI (lab)
 ui_http           → repository-wide HTTP inbound delivery and composition
@@ -32,6 +33,7 @@ Workbench is a repository-root operational facility, separate from the modules a
 - `data_snapshot` 稳定分层：[data_snapshot/ARCHITECTURE.md](data_snapshot/ARCHITECTURE.md)
 - `data_snapshot` capability/product catalog：[data_snapshot/CAPABILITIES.md](data_snapshot/CAPABILITIES.md)
 - `market_research` exploratory/statistical research 边界：[market_research/ARCHITECTURE.md](market_research/ARCHITECTURE.md)
+- `market_backtesting` 策略回测边界与 W2 case authority：[market_backtesting/ARCHITECTURE.md](market_backtesting/ARCHITECTURE.md)
 - `market_statistics` 独立数值统计边界：[market_statistics/ARCHITECTURE.md](market_statistics/ARCHITECTURE.md)
 - `ui_http` HTTP boundary 与 product catalog：[ui_http/ARCHITECTURE.md](ui_http/ARCHITECTURE.md)
 - `ui_web` 边界与 visualization 路由：[ui_web/ARCHITECTURE.md](ui_web/ARCHITECTURE.md)
@@ -104,6 +106,14 @@ Research owns observation, sample conversion, execution and interpretation; the 
 [Statistics authority](market_statistics/ARCHITECTURE.md) owns generic numerical statistics.
 Statistics publishes an independently installed Python API for Quantile and IntervalCount;
 see [public examples](market_statistics/README.md). It has no CLI or HTTP service.
+
+## Backtesting status
+
+W2 Futures Roll Long is in WP0 Semantic Authority only. There is no Python backtest API,
+online run, HTTP product or Web workflow yet; `/backtesting` remains a planned page with
+no results. Start from the [W2 case authority](market_backtesting/cases/futures_roll_long/ARCHITECTURE.md)
+and its [roadmap](market_backtesting/cases/futures_roll_long/ROADMAP.md). Backtesting is
+not a Research capability, Publication or Workbench Run.
 
 ## HTTP API
 

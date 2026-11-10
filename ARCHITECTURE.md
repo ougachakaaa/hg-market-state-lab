@@ -4,7 +4,7 @@
 
 ## Naming and transition authority
 
-Top-level business and interaction modules belong to three families: `data_*` owns data acquisition, persistence, deterministic preparation and data products; `market_*` owns research, statistical analysis and market-state modeling; `ui_*` owns CLI, HTTP and Web interaction/transport boundaries. A family grants no additional import permission and does not merge bounded modules.
+Top-level business and interaction modules belong to three families: `data_*` owns data acquisition, persistence, deterministic preparation and data products; `market_*` owns research, statistical analysis, market-state modeling and strategy backtesting; `ui_*` owns CLI, HTTP and Web interaction/transport boundaries. A family grants no additional import permission and does not merge bounded modules.
 
 Owning module directories use `snake_case`; Python namespaces match their owning module where possible. This table is the canonical mapping. Names already aligned remain unchanged; `ui_web` remains an npm project without a Python namespace. Internal co-location and Product / Dataset / Provider identities remain unchanged.
 
@@ -13,6 +13,7 @@ Owning module directories use `snake_case`; Python namespaces match their owning
 | `data_lake/` | `data_lake` |
 | `data_snapshot/` | `data_snapshot` |
 | `market_research/` | `market_research` |
+| `market_backtesting/` | `market_backtesting` |
 | `market_statistics/` | `market_statistics` |
 | `market_modeling/` | Reserved; no package or module authority yet |
 | `ui_cli/` | `ui_cli` (executable `lab`) |
@@ -29,9 +30,11 @@ Data Snapshot directly succeeds Market Snapshot as an independent bounded module
 
 Stable dependencies continue to follow published boundaries: `ui_cli` delegates to owning modules; `ui_http` consumes owning module public application/product boundaries; `ui_web` consumes the published HTTP/OpenAPI contract. Business modules do not depend on these inbound adapters. Research consumes only authorized Dataset / Snapshot public contracts for market inputs, with detailed caller permissions in its UPSTREAM authority, and the independent Statistics public numerical contract for statistics. DataLake / Snapshot / Statistics / Modeling do not depend on Research; Statistics also does not depend on DataLake or Snapshot. Snapshot may consume explicitly authorized Dataset public services, never internals. Modeling remains a sibling of Research with no new internal design or import permissions inferred from renaming.
 
+`market_backtesting` consumes DataLake public Application Services and the published pure Slot-resolution boundary of `market_research`, exactly as authorized by its case Inputs authority. It consumes no other Research semantics: not Observations, Sample Conversion, Statistics adaptation, Job/Batch execution, reports, evidence, Publication, Preflight or online runs. Research does not depend on Backtesting; DataLake / Snapshot / Research / Statistics / Modeling do not depend on Backtesting. `ui_http` may consume Backtesting's public application boundary only, and `ui_web` consumes the published HTTP/OpenAPI contract. Backtesting does not use or authorize `market_modeling`.
+
 ## 1. 仓库定位
 
-`hg-market-state-lab` 是用于市场状态数据准备、探索研究、市场状态建模与结果展示的实验性系统。
+`hg-market-state-lab` 是用于市场状态数据准备、探索研究、策略回测、市场状态建模与结果展示的实验性系统。
 
 ## 2. 顶层模块
 
@@ -58,6 +61,12 @@ DataLake 不拥有 Snapshot Product semantics、Preparation、analysis-ready com
 独立的 exploratory / statistical research bounded module，消费授权的 DataLake public facts、Snapshot analysis-ready artifacts 与 Statistics public numerical capability，拥有市场指标、empirical observations、Sample Converter、Research Executor、统计结果的业务关联与 research evidence / interpretation。Descriptive 与 Conditional 是独立演化的范式，当前只细化 Descriptive；Research 不拥有 UI presentation 或通用数值统计公式。
 
 Research result 是 evidence / finding，不是 production market-state output。模块内部边界见 [market_research/ARCHITECTURE.md](market_research/ARCHITECTURE.md)。
+
+### `market_backtesting`
+
+独立的策略回测业务模块，拥有固定 strategy definition、真实合约持仓模拟、PnL 与基准核算、回测结果/证据/可视化投影，以及 case-specific read-only readiness 与 online execution。首期只实现 `futures_roll_long_v1`，不建立 generic backtesting engine、plugin/registry、multi-strategy framework 或未来策略抽象。
+
+它消费 DataLake public Application Services 与 Research 已发布的 pure Slot-resolution public boundary；不拥有市场数据获取、Slot formula、Research observation/report/statistics、generic Visualization schema、HTTP DTO、Auth 或 UI。WP0 是 authority-only，不创建 Python package、运行时、HTTP product 或 Web feature。模块边界、case 语义与 WP 计划从 [market_backtesting/ARCHITECTURE.md](market_backtesting/ARCHITECTURE.md) 进入。
 
 ### `market_statistics`
 
@@ -108,6 +117,7 @@ Repository
     data_snapshot/         # data_snapshot
     market_modeling/       # market_modeling; no new implementation implied
     market_research/       # market_research
+    market_backtesting/    # market_backtesting; package introduced by W2 WP1/WP3
     market_statistics/     # market_statistics
     ui_cli/                # ui_cli; executable remains lab
     ui_http/               # ui_http
@@ -120,7 +130,7 @@ Repository runtime configuration 属于 repository-level support，不是业务�
 
 `data_lake` 拥有 canonical Python namespace `data_lake`；shared kernel 源码归顶层 `data_lake/src/`，具体 Provider 与 Dataset 的 authority、source、tests 分别 colocate 于 `data_lake/providers/<provider-id>/` 与 `data_lake/datasets/<dataset-id>/`，persistent state 仍由 Dataset 拥有，topology 由 [DataLake authority](data_lake/ARCHITECTURE.md) 拥有。Provider-local / Dataset-local source roots 同样使用 repository root 唯一 Python project、dependency graph 与根 `.venv`，不创建独立 Python runtime。Consumer 可以直接依赖具体 Dataset public Application Service；shared kernel 不依赖具体 Provider 或 Dataset，Dataset 间只允许 DataLake authority 明确声明的单向 public Application Service dependency，不开放 internal persistence。Public boundary 与 source registration / import compatibility 约束进入 DataLake authority。
 
-Runtime unification 不合并模块、不改变源码目录 ownership，也不把所有 Python source 移入统一 `src/`。`data_lake`、`data_snapshot`、`market_modeling`、`market_research`、`ui_cli` 与 `ui_http` 是独立 namespace，由各自 semantic module 拥有。`market_statistics` 同样拥有独立 namespace 与 module-owned source root，由根项目统一安装。
+Runtime unification 不合并模块、不改变源码目录 ownership，也不把所有 Python source 移入统一 `src/`。`data_lake`、`data_snapshot`、`market_modeling`、`market_research`、`ui_cli` 与 `ui_http` 是独立 namespace，由各自 semantic module 拥有。`market_statistics` 同样拥有独立 namespace 与 module-owned source root，由根项目统一安装。`market_backtesting` 将同样拥有独立 namespace 与 module-owned source root；WP0 只建立 authority，package 由 W2 WP1/WP3 引入。
 
 共享 dependency graph 或 `.venv` 不构成 cross-module import permission。模块依赖方向必须由 repository/module authority、被依赖模块发布的 public boundary 与 architecture tests 共同约束；不得因为 package 在同一环境中可 import 就绕过这些边界。
 
@@ -144,6 +154,14 @@ External Market Sources
 ```
 
 该图表达业务职责与 analytical data flow，不强制 runtime deployment topology 或 package import dependency。Dataset Facts → Snapshot 仅指明确授权的 public service consumption，不强制替换 Snapshot Capture；Research 的具体 producer 权限见 UPSTREAM。`market_research` 与 `market_modeling` 是 sibling analytical modules；Research 不是 Modeling pipeline 的强制 stage。`data_snapshot` 的产物也可以被仓库外的 analyzer 直接消费。
+
+```text
+data_lake public facts ───→ market_backtesting ───→ Backtest Results / Evidence
+                                    ↑
+market_research public pure Slot resolution boundary
+```
+
+`market_backtesting` 是独立 sibling analytical module，不是 Research pipeline stage，也不是 Modeling 子模块。它通过 DataLake public Application Service 获取 Calendar / Futures / Index facts，并通过 W1 case Inputs 明确授权的 symbol-level public boundary 复用 pure Slot resolution，不复制第二份算法。它不读取 Research Observation/Report、不调用 Statistics、不建立第二套行情缓存或 Provider；UI 只能经其 public application/HTTP boundary 消费结果。
 
 `market_research` 通过 `data_snapshot` 明确支持的 public application/product boundary 消费 analysis-ready result，也可通过 DataLake public Application Service 消费 source facts；不依赖 Source Capture、Raw Artifact、product-private Preparation、upstream persistence、Dataset / Snapshot SQLite、`ui_http`、FastAPI 或 HTTP DTO。Research 内部 composition 由其 module authority 拥有，upstream producer 权限与 selection 见 [Research upstream authority](market_research/UPSTREAM.md)，具体 integration implementation 遵循该 contract。`data_lake`、`data_snapshot`、`market_statistics` 与 `market_modeling` 不得依赖 `market_research`。
 
@@ -178,11 +196,11 @@ Modeling
 data_snapshot ───────┐
                      │
 market_modeling ─────┼──→ ui_http ───→ ui_web
-                     │
+market_backtesting ──┤   (W2 application boundary; HTTP contract in WP6)
 future modules ──────┘
 ```
 
-`ui_http` 是 inbound delivery boundary，不是 analytical pipeline stage。稳定依赖方向是 `ui_http` 依赖 owning module 的 public application/product boundary；`data_snapshot`、`market_research`、`market_statistics` 与 `market_modeling` 不得依赖 `ui_http`，也不得用 FastAPI、HTTP DTO/status/error envelope、OpenAPI 或 frontend types 定义自己的 semantic model。Research publishes Python analytical boundaries; bounded HTTP delivery belongs to `ui_http` through [its catalog](ui_http/HTTP_PRODUCTS.md), never to a Research server. Statistics 已发布独立的 public Python numerical API，不提供 HTTP 发布。
+`ui_http` 是 inbound delivery boundary，不是 analytical pipeline stage。稳定依赖方向是 `ui_http` 依赖 owning module 的 public application/product boundary；`data_snapshot`、`market_research`、`market_statistics`、`market_backtesting` 与 `market_modeling` 不得依赖 `ui_http`，也不得用 FastAPI、HTTP DTO/status/error envelope、OpenAPI 或 frontend types 定义自己的 semantic model。Research publishes Python analytical boundaries; bounded HTTP delivery belongs to `ui_http` through [its catalog](ui_http/HTTP_PRODUCTS.md), never to a Research server. Statistics 已发布独立的 public Python numerical API，不提供 HTTP 发布。Backtesting 的首个 HTTP product 与 catalog entry 由 W2 WP6 建立；WP0 不创建 fake contract。
 
 ## 5. Authority 导航
 
@@ -225,6 +243,15 @@ ARCHITECTURE.md（本文件）
     ├─ market_research/ARCHITECTURE.md
     │      ↓
     │  market_research/PUBLICATION.md
+    ├─ market_backtesting/ARCHITECTURE.md
+    │      ↓
+    │  market_backtesting/cases/futures_roll_long/ARCHITECTURE.md
+    │      ├─ STRATEGY.md
+    │      ├─ ACCOUNTING.md
+    │      ├─ INPUTS.md
+    │      ├─ RESULT.md
+    │      ├─ ONLINE_APPLICATION.md
+    │      └─ ROADMAP.md
     ├─ market_statistics/ARCHITECTURE.md
     │      ↓
     │  market_statistics/CONTRACT.md
@@ -245,7 +272,7 @@ ARCHITECTURE.md（本文件）
            └─ ui_web/contracts.md
 ```
 
-CLI 语义从本文档进入 `ui_cli/ARCHITECTURE.md`；Python dependency resolution 与当前本地操作进入 `DEVELOPMENT.md`；业务语义仍进入对应 owning module。`market_modeling` 当前没有下层 authority，不得从 runtime layout 或 Research authority 推导其内部设计。
+CLI 语义从本文档进入 `ui_cli/ARCHITECTURE.md`；Python dependency resolution 与当前本地操作进入 `DEVELOPMENT.md`；业务语义仍进入对应 owning module。`market_modeling` 当前没有下层 authority，不得从 runtime layout、Research authority 或 Backtesting authority 推导其内部设计。`market_backtesting` 的 case/strategy/accounting/result/online 语义从其 module authority 进入；WP0 authority 不等于 runtime readiness。
 
 上层只提供选择下一份文档所需的上下文，不复制下层语义。新增或删除单个产品通常只更新模块 catalog，不改变本文档。
 
