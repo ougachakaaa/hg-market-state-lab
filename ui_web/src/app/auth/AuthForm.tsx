@@ -1,10 +1,11 @@
-import { Alert, Button, Card, Flex, Form, Input, Typography } from 'antd'
+import { Alert, Button, Card, Flex, Form, Input, Typography, theme } from 'antd'
 import { useEffect, useRef, useState } from 'react'
 import { register } from './api/auth'
 import type { LoginRequest } from './api/auth'
 import { authErrorMessage } from './api/authError'
 
 export default function AuthForm({ signIn }: { signIn: (credentials: LoginRequest) => Promise<void> }) {
+  const { token } = theme.useToken()
   const [mode, setMode] = useState<'login' | 'register'>('login')
   const [pending, setPending] = useState(false)
   const [error, setError] = useState<string>()
@@ -32,25 +33,26 @@ export default function AuthForm({ signIn }: { signIn: (credentials: LoginReques
       if (alive.current) setPending(false)
     }
   }
-  return <Flex justify="center" align="center" style={{ minHeight: '100vh', padding: 24 }}>
+  return <Flex justify="center" align="center" style={{ minHeight: '100vh', padding: 24,
+    boxSizing: 'border-box', background: token.colorBgLayout }}>
     <Card style={{ width: '100%', maxWidth: 420 }}>
-      <Typography.Title level={2}>{mode === 'login' ? '登录' : '注册'}</Typography.Title>
+      <Typography.Title level={1} style={{ fontSize: 24, marginTop: 0 }}>{mode === 'login' ? '登录' : '注册'}</Typography.Title>
       <Typography.Paragraph>Market State Lab</Typography.Paragraph>
       {error && <Alert type="error" title={error} showIcon />}
       {accepted ? <Alert type="success" title="注册申请已提交，请等待管理员审批后登录。" showIcon /> :
-        <Form key={mode} layout="vertical" onFinish={submit} disabled={pending}>
-          <Form.Item name="username" label="Username" rules={[{ required: true, message: '请输入用户名' }]}>
+        <Form key={mode} layout="vertical" size="middle" onFinish={submit} disabled={pending}>
+          <Form.Item name="username" label="用户名" rules={[{ required: true, message: '请输入用户名' }]}>
             <Input autoComplete="username" />
           </Form.Item>
-          <Form.Item name="password" label="Password" rules={[{ required: true, message: '请输入密码' }]}>
+          <Form.Item name="password" label="密码" rules={[{ required: true, message: '请输入密码' }]}>
             <Input.Password autoComplete={mode === 'login' ? 'current-password' : 'new-password'} />
           </Form.Item>
-          {mode === 'register' && <Typography.Paragraph>用户名为 3–64 个 ASCII 字符；密码为 12–128 个字符。具体输入规则由服务端校验。</Typography.Paragraph>}
-          <Button type="primary" htmlType="submit" loading={pending} block>{mode === 'login' ? 'Login' : 'Submit Registration'}</Button>
+          {mode === 'register' && <Typography.Paragraph>用户名为 3–64 个 ASCII 字符；密码为 12–128 个字符。</Typography.Paragraph>}
+          <Button type="primary" htmlType="submit" loading={pending} block>{mode === 'login' ? '登录' : '提交注册申请'}</Button>
         </Form>}
       <Button type="link" disabled={pending} onClick={() => {
         setMode(mode === 'login' ? 'register' : 'login'); setError(undefined); setAccepted(false)
-      }}>{mode === 'login' ? 'Register' : '返回 Login'}</Button>
+      }}>{mode === 'login' ? '注册' : '返回登录'}</Button>
     </Card>
   </Flex>
 }

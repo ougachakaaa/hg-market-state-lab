@@ -40,6 +40,10 @@ shared/ui/
 
 精确文件名与 component tree 属于实现细节。Shared theme 拥有深色优先的近黑背景、克制的黑白灰层级、primary accent、font、control sizing、spacing、border radius 与 component density；使用 Ant Design Dark Algorithm 和 theme tokens。
 
+普通操作、说明与反馈使用中文，保留有辨识度的产品名、技术和金融术语，例如 Call、Put、Run ID、JSON 与 CSV。该语言原则不重命名 API 字段、枚举、序列化内容或 producer 提供的语义文本。
+
+每个 surface 应有一个明确的内容主标题；Shell breadcrumb 表达导航位置，不重复建立页面标题。Feature 保留自身标题、说明与状态的 ownership。页面按查询/业务动作、当前结果、展示设置、分析主体、详细证据组织阅读顺序；必须区分会触发 I/O 的交互与仅调整当前结果的本地设置，不要求各 feature 使用相同组件树。既有 surface 按各自工作包逐步落实这一展示原则，不因此改变其请求或业务语义。
+
 Shared theme 不得拥有 MO、expiry、Call / Put、premium、market-state、chart-series identity 或 analytical classification 语义。Feature semantic colors 与 visual encodings 必须留在 owning feature/model/chart/visualization boundary。
 
 `features/<feature>/components/` 继续拥有 feature-specific React presentation。Feature components 可以直接组合 Ant Design primitives，同时拥有 `ExpirySelector`、`PremiumMetricControls`、`OptionChainSummary` 或 `RawResponseInspector` 等 feature meaning。不得仅因组件使用 Ant Design 或在多个 feature 中结构相似，就把 feature semantics 移入 `shared/ui`。

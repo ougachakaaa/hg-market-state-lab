@@ -61,6 +61,7 @@ try {
   browser = await chromium.launch({ headless: true,
     ...(process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH
       ? { executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH } : {}) })
+  const screenshots = await mkdtemp(resolve(tmpdir(), 's2-wp1-shell-'))
   const context = await browser.newContext()
   page = await context.newPage()
   page.setDefaultTimeout(15000)
@@ -71,15 +72,27 @@ try {
   const anonymous = await context.request.get('http://127.0.0.1:5173/mo-option-chain')
   assert.equal(anonymous.status(), 401)
   await page.goto('http://127.0.0.1:5173/')
-  await page.getByRole('button', { name: 'Login', exact: true }).waitFor()
+  await page.getByRole('button', { name: '登录', exact: true }).waitFor()
+  for (const [width, height] of [[1440, 900], [1024, 768]]) {
+    await page.setViewportSize({ width, height })
+    assert.ok(await page.evaluate(() => {
+      const background = getComputedStyle(document.elementFromPoint(1, 1)).backgroundColor
+      const channels = background.match(/[\d.]+/g)?.map(Number)
+      return channels?.length >= 3 && channels.slice(0, 3).every(value => value < 80)
+        && (channels.length === 3 || channels[3] > 0)
+    }), 'Authentication page has an opaque dark backdrop')
+    assert.ok(await page.evaluate(() => document.documentElement.scrollHeight <= innerHeight), 'Login fits the viewport vertically')
+    await page.screenshot({ path: resolve(screenshots, `login-${width}.png`) })
+  }
+  await page.setViewportSize({ width: 1440, height: 900 })
   assert.equal(await page.getByRole('button', { name: 'MO Option Chain', exact: true }).count(), 0)
   assert.equal(evidence.some((entry) => entry.startsWith('/mo-option')), false)
-  await page.getByRole('button', { name: 'Register', exact: true }).click()
-  await page.getByLabel('Username', { exact: true }).fill('g3_browser_user')
+  await page.getByRole('button', { name: '注册', exact: true }).click()
+  await page.getByLabel('用户名', { exact: true }).fill('g3_browser_user')
   const password = randomBytes(24).toString('base64url')
-  await page.getByLabel('Password', { exact: true }).fill(password)
+  await page.getByLabel('密码', { exact: true }).fill(password)
   const registration = page.waitForResponse((res) => res.url().endsWith('/auth/register'))
-  await page.getByRole('button', { name: 'Submit Registration', exact: true }).click()
+  await page.getByRole('button', { name: '提交注册申请', exact: true }).click()
   const registered = await registration
   assert.equal(registered.status(), 202)
   assert.equal((await registered.allHeaders())['set-cookie'], undefined)
@@ -90,13 +103,14 @@ try {
   const userId = pending.match(/[0-9a-f]{8}-[0-9a-f-]{27,}/i)?.[0]
   assert.ok(userId, 'CLI pending must expose an approval identity')
   cli('approve', userId)
-  await page.getByRole('button', { name: '返回 Login', exact: true }).click()
-  await page.getByLabel('Username', { exact: true }).fill('g3_browser_user')
-  await page.getByLabel('Password', { exact: true }).fill(password)
-  await page.getByRole('button', { name: 'Login', exact: true }).click()
-  await page.getByRole('button', { name: 'Research Workspace', exact: true }).waitFor()
-  await page.getByRole('button', { name: 'Daily Data overview', exact: true }).click()
-  await page.getByRole('button', { name: 'MO Option Chain →', exact: true }).click()
+  await page.getByRole('button', { name: '返回登录', exact: true }).click()
+  await page.getByLabel('用户名', { exact: true }).fill('g3_browser_user')
+  await page.getByLabel('密码', { exact: true }).fill(password)
+  await page.getByRole('button', { name: '登录', exact: true }).click()
+  await page.getByRole('menuitem', { name: '研究工作台', exact: true }).waitFor()
+  if (!(await page.getByRole('menuitem', { name: '数据总览', exact: true }).isVisible())) await page.getByRole('menuitem', { name: '日常数据', exact: true }).click()
+  await page.getByRole('menuitem', { name: '数据总览', exact: true }).click()
+  await page.getByRole('button', { name: '打开 MO Option Chain', exact: true }).click()
   await page.getByRole('heading', { name: 'MO 期权链', exact: true }).waitFor()
   const cookie = (await context.cookies()).find((value) => value.name === 'lab_access_token')
   assert.ok(cookie?.httpOnly)
@@ -112,8 +126,56 @@ try {
   await page.waitForLoadState('networkidle')
   await page.reload()
   await page.getByRole('heading', { name: 'MO 年化权利金平面', exact: true }).waitFor()
-  await page.getByRole('button', { name: 'Logout', exact: true }).click()
-  await page.getByRole('button', { name: 'Login', exact: true }).waitFor()
+
+  const surfaces = [
+    ['/research', 'Research Workspace', '研究', '研究工作台'],
+    ['/research/publications', 'Research Explorer', '研究', 'Research Explorer'],
+    ['/research/futures-basis', 'Futures Basis Research', '研究', 'Futures Basis Research'],
+    ['/data', '数据总览', '日常数据', '数据总览'],
+    ['/data/mo-option-chain', 'MO 期权链', '日常数据', 'MO Option Chain'],
+    ['/data/mo-premium-plane', 'MO 年化权利金平面', '日常数据', 'MO Premium Plane'],
+    ['/backtesting', '回测', null, '回测 · 规划中'],
+  ]
+  for (const [width, height] of [[1440, 900], [1024, 768]]) {
+    await page.setViewportSize({ width, height })
+    for (const [path, heading, group, selectedLabel] of surfaces) {
+      await page.goto(`http://127.0.0.1:5173${path}`)
+      await page.getByRole('heading', { name: heading, exact: true }).waitFor()
+      assert.equal(await page.getByRole('heading', { name: heading, exact: true }).count(), 1, 'One primary page heading')
+      const collapsed = width < 1200
+      await page.getByRole('button', { name: collapsed ? '展开导航' : '折叠导航', exact: true }).waitFor()
+      if (collapsed && group) await page.getByRole('menuitem', { name: group, exact: true }).click()
+      await page.locator('.ant-menu-item-selected').waitFor({ state: 'visible' })
+      assert.equal(await page.locator('.ant-menu-item-selected').count(), 1, `${path}: one selected leaf`)
+      assert.ok((await page.getByRole('menuitem', { name: selectedLabel, exact: true }).getAttribute('class')).split(' ').includes('ant-menu-item-selected'), `${path}: the selected leaf matches the route`)
+      if (collapsed && group) {
+        await page.getByRole('menuitem', { name: group, exact: true }).click()
+        await page.locator('.ant-menu-submenu-popup').waitFor({ state: 'hidden' })
+      }
+      assert.equal(await page.locator('.ant-layout-header h1, .ant-layout-header h2, .ant-layout-header h3').count(), 0, 'Shell header has no duplicate title')
+      assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), `${path}: no document overflow`)
+      await page.screenshot({ path: resolve(screenshots, `${path.slice(1).replaceAll('/', '-')}-${width}.png`), fullPage: true })
+      await page.getByRole('button', { name: collapsed ? '展开导航' : '折叠导航', exact: true }).click()
+      await page.getByRole('button', { name: collapsed ? '折叠导航' : '展开导航', exact: true }).waitFor()
+      assert.equal(new URL(page.url()).pathname, path, 'Collapse does not navigate')
+    }
+  }
+  await page.setViewportSize({ width: 1440, height: 900 })
+  await page.goto('http://127.0.0.1:5173/research')
+  await page.getByRole('menuitem', { name: '研究工作台', exact: true }).waitFor()
+  await page.getByRole('menuitem', { name: '日常数据', exact: true }).click()
+  await page.getByRole('menuitem', { name: '数据总览', exact: true }).click()
+  await page.getByRole('button', { name: '打开 MO Premium Plane', exact: true }).click()
+  await page.goBack()
+  await page.getByRole('heading', { name: '数据总览', exact: true }).waitFor()
+  await page.goForward()
+  await page.getByRole('heading', { name: 'MO 年化权利金平面', exact: true }).waitFor()
+  await page.getByRole('link', { name: '日常数据', exact: true }).click()
+  await page.getByRole('heading', { name: '数据总览', exact: true }).waitFor()
+  assert.equal(new URL(page.url()).pathname, '/data', 'Breadcrumb returns to its overview')
+  console.log(`PASS: WP1 routes, collapse, history and overflow at both desktop sizes; screenshots: ${screenshots}`)
+  await page.getByRole('button', { name: '退出登录', exact: true }).click()
+  await page.getByRole('button', { name: '登录', exact: true }).waitFor()
   assert.equal((await context.cookies()).length, 0)
   assert.equal((await context.request.get('http://127.0.0.1:5173/auth/me')).status(), 401)
   assert.equal((await context.request.get('http://127.0.0.1:5173/mo-option-premium-plane')).status(), 401)

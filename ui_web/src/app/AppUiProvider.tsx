@@ -4,7 +4,7 @@ import { applicationTheme } from '../shared/ui/theme'
 
 export default function AppUiProvider({ children }: PropsWithChildren) {
   return (
-    <ConfigProvider componentSize="small" theme={applicationTheme}>
+    <ConfigProvider componentSize="small" button={{ autoInsertSpace: false }} theme={applicationTheme}>
       {children}
     </ConfigProvider>
   )

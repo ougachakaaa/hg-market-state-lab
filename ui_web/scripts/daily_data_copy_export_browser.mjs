@@ -83,15 +83,15 @@ try {
   assert.equal(anonymous.status(), 401)
   assert.equal((await context.request.get('http://127.0.0.1:5173/mo-option-premium-plane')).status(), 401)
   await page.goto('http://127.0.0.1:5173/')
-  await page.getByRole('button', { name: 'Login', exact: true }).waitFor()
+  await page.getByRole('button', { name: '登录', exact: true }).waitFor()
   assert.equal(await page.getByRole('button', { name: 'MO Option Chain', exact: true }).count(), 0)
   assert.equal(evidence.some((entry) => entry.startsWith('/mo-option')), false)
-  await page.getByRole('button', { name: 'Register', exact: true }).click()
-  await page.getByLabel('Username', { exact: true }).fill('wp3_browser_user')
+  await page.getByRole('button', { name: '注册', exact: true }).click()
+  await page.getByLabel('用户名', { exact: true }).fill('wp3_browser_user')
   const password = randomBytes(24).toString('base64url')
-  await page.getByLabel('Password', { exact: true }).fill(password)
+  await page.getByLabel('密码', { exact: true }).fill(password)
   const registration = page.waitForResponse((res) => res.url().endsWith('/auth/register'))
-  await page.getByRole('button', { name: 'Submit Registration', exact: true }).click()
+  await page.getByRole('button', { name: '提交注册申请', exact: true }).click()
   const registered = await registration
   assert.equal(registered.status(), 202)
   assert.equal((await registered.allHeaders())['set-cookie'], undefined)
@@ -102,11 +102,11 @@ try {
   const userId = pending.match(/[0-9a-f]{8}-[0-9a-f-]{27,}/i)?.[0]
   assert.ok(userId, 'CLI pending must expose an approval identity')
   cli('approve', userId)
-  await page.getByRole('button', { name: '返回 Login', exact: true }).click()
-  await page.getByLabel('Username', { exact: true }).fill('wp3_browser_user')
-  await page.getByLabel('Password', { exact: true }).fill(password)
-  await page.getByRole('button', { name: 'Login', exact: true }).click()
-  await page.getByRole('button', { name: 'Research Workspace', exact: true }).waitFor()
+  await page.getByRole('button', { name: '返回登录', exact: true }).click()
+  await page.getByLabel('用户名', { exact: true }).fill('wp3_browser_user')
+  await page.getByLabel('密码', { exact: true }).fill(password)
+  await page.getByRole('button', { name: '登录', exact: true }).click()
+  await page.getByRole('menuitem', { name: '研究工作台', exact: true }).waitFor()
   const passed = text => { report.checks.push(text); console.log(`PASS: ${text}`) }
   let requestCount = 0
   page.on('request', req => { if (/\/mo-option-(chain|premium-plane)\?/.test(req.url())) requestCount++ })
@@ -230,8 +230,9 @@ try {
   async function noActions() { assert.equal(await page.getByRole('button', { name: 'Export Context JSON', exact: true }).count(), 0); assert.equal(await page.getByRole('button', { name: 'Export CSV', exact: true }).count(), 0); assert.equal(await page.getByRole('button', { name: 'Copy Raw JSON', exact: true }).count(), 0); assert.equal(await page.getByRole('button', { name: 'Copy Context JSON', exact: true }).count(), 0) }
   for (const product of products) {
     if (product.columns === 13) {
-      await page.getByRole('button', { name: 'Daily Data overview', exact: true }).click()
-      await page.getByRole('button', { name: 'MO Option Chain →', exact: true }).click()
+      if (!(await page.getByRole('menuitem', { name: '数据总览', exact: true }).isVisible())) await page.getByRole('menuitem', { name: '日常数据', exact: true }).click()
+      await page.getByRole('menuitem', { name: '数据总览', exact: true }).click()
+      await page.getByRole('button', { name: '打开 MO Option Chain', exact: true }).click()
     } else await page.locator('.ant-menu-title-content').getByText(product.title, { exact: true }).click()
     await noActions()
     const data = await query(product, '2026-09-17')
@@ -348,8 +349,8 @@ try {
     await copy(product, recovered); await download(product, recovered)
     passed(`${product.title}: idle/loading/error/invalid, late response, stale clipboard, failure feedback and recovery`)
   }
-  await page.getByRole('button', { name: 'Logout', exact: true }).click()
-  await page.getByRole('button', { name: 'Login', exact: true }).waitFor()
+  await page.getByRole('button', { name: '退出登录', exact: true }).click()
+  await page.getByRole('button', { name: '登录', exact: true }).waitFor()
   for (const product of products) assert.equal((await context.request.get(`http://127.0.0.1:5173${product.path}`)).status(), 401)
   assert.deepEqual(report.errors, [])
   report.productRequests = requestCount

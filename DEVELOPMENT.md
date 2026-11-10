@@ -157,6 +157,12 @@ poetry run python -c 'import secrets; print(secrets.token_urlsafe(32))'
 
 真实浏览器 smoke（不是 Mock UI 测试）：在 `ui_web/` 执行 `npx playwright install chromium`，然后 `npm run test:auth-browser`。Linux 还需 Chromium 系统运行库；可用 `npx playwright install-deps chromium` 安装。已有兼容 Chromium 可通过 `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH` 指定。端口 5173/8011 必须空闲；脚本拒绝连接已有开发服务。
 
+依赖诊断须在实际执行测试的 Linux / WSL distribution 中进行，使用项目已安装的版本。在 `ui_web/` 运行 `node node_modules/playwright/cli.js install-deps --dry-run chromium` 可只读检查系统包，`node node_modules/playwright/cli.js install-deps chromium` 安装完整支持依赖集。
+
+系统包安装需要 root / sudo 权限，不向 Agent 提供密码。无免密码 sudo 时，由用户在本机终端执行；WSL 官方 `wsl.exe --distribution <distribution> --user root --exec ...` 入口可用时，也可以在核对同一发行版与仓库文件系统后安装，不改变 sudo 配置。Ubuntu 22.04 若 `ldd` 确认仅缺 NSPR、NSS、ALSA 共享库，可使用 `sudo apt-get update` 和 `sudo apt-get install --no-install-recommends -y libnspr4 libnss3 libasound2` 作最小修复。中文截图还需可用的中文字体（`fc-list :lang=zh` 可检查，缺失时可安装 `fonts-wqy-microhei`）。
+
+安装后必须重新启动 Chromium 并运行 smoke，不能仅凭包安装成功声称浏览器验收通过；无需升级 Playwright、改 lockfile 或设置 `LD_LIBRARY_PATH`。
+
 脚本创建临时 Auth 库和随机密钥，通过真实 Chromium → Vite → FastAPI → SQLite 完成注册、CLI pending/approve、登录、两个 MO 结果、刷新与退出，结束后删除临时库并停止进程。Auth/Cookie/CLI 不作 Mock；只有行情 public provider 使用 `ui_http/tests` 的确定性 fixtures，不访问外部 Source 或默认市场缓存。`poetry run pytest ui_http/tests/test_auth_tls.py` 使用 OpenSSL 生成临时自签名证书，通过本机真实 TLS 检查 production Cookie；它不验证正式证书或部署。浏览器测试依赖只用于开发验证。
 
 开放公网前必须完成 HTTPS、Nginx、可信代理链与入口限流配置并验证部署拓扑和 Research 路由暴露；这些属于 Deployment Gate。应用内限流仅在单进程内生效，重启清空，多个 worker 不共享，反向代理后的用户可能共享同一 IP bucket。无状态 JWT 的 logout 不撤销已复制的 token；禁用用户或轮换密钥可阻止其后续访问。正式 JWT secret 必须安全保存并在重启间保持稳定。
