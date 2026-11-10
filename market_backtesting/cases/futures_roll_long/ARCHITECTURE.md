@@ -125,7 +125,8 @@ role changes, not W2 roll trades.
 
 ## Status
 
-WP0 is a documentation/authority gate. This case has no Python package, runtime,
-market-data acquisition, HTTP product or Web feature yet. WP1 starts with the pure
-holding simulation; WP4 PASS completes the core research capability; WP8 PASS is
-required before W2 is declared complete. See the [roadmap](ROADMAP.md).
+WP0 is a documentation/authority gate. WP1 implements the pure holding simulation and
+its synthetic test suite; the case still has no PnL/accounting, DataLake acquisition,
+online run, HTTP product or Web feature. WP2 starts accounting; WP4 PASS completes the
+core research capability; WP8 PASS is required before W2 is declared complete. See the
+[roadmap](ROADMAP.md).

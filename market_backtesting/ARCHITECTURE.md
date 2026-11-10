@@ -7,9 +7,10 @@ authority owns module identity, ownership boundaries, dependency direction, case
 navigation and implementation status. Strategy, accounting, input, result and online
 semantics are owned by the concrete case reached through the navigation table below.
 
-WP0 establishes this module as authority-only. It creates no Python package, runtime,
-HTTP product, Web feature or market-data cache. The first Python package and tests are
-introduced by W2 WP1/WP3 under their own review gates.
+WP0 established this module as authority-only. WP1 introduces the first Python package:
+a pure, deterministic holding-simulation boundary with synthetic tests. It adds no
+DataLake integration, PnL accounting, HTTP product, Web feature, online run or
+market-data cache; WP2–WP8 remain later gates.
 
 ## Purpose
 
@@ -123,8 +124,10 @@ framework from it.
 
 WP0 is a documentation/authority gate. It runs link, anchor, reachability and topology
 checks only; no full Python/HTTP/Web test matrix or real-market acquisition is claimed.
-WP1–WP8 are sequential, independently reviewable work packages. WP4 PASS marks the
-completion of the core research capability; W2 is not complete until WP8 real-market
-end-to-end acceptance passes. See the [roadmap](cases/futures_roll_long/ROADMAP.md).
+WP1 adds the pure holding-simulation package and synthetic tests only; it claims no PnL,
+DataLake integration, HTTP/Web surface or real-market acceptance. WP1–WP8 are
+sequential, independently reviewable work packages. WP4 PASS marks the completion of the
+core research capability; W2 is not complete until WP8 real-market end-to-end acceptance
+passes. See the [roadmap](cases/futures_roll_long/ROADMAP.md).
 
 Agent execution policy for this module is in [AGENTS.md](AGENTS.md).

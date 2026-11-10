@@ -7,7 +7,7 @@ data_lake         → reusable source facts and Dataset-owned caches
 data_snapshot     → market state data preparation
 market_modeling   → market state modeling (reserved; no module authority yet)
 market_research   → exploratory and statistical research
-market_backtesting → futures roll long strategy backtesting (W2; authority-only in WP0)
+market_backtesting → futures roll long strategy backtesting (W2; WP1 pure holding simulation)
 market_statistics → independent numerical statistics Python API
 ui_cli            → repository CLI (lab)
 ui_http           → repository-wide HTTP inbound delivery and composition
@@ -109,9 +109,12 @@ see [public examples](market_statistics/README.md). It has no CLI or HTTP servic
 
 ## Backtesting status
 
-W2 Futures Roll Long is in WP0 Semantic Authority only. There is no Python backtest API,
-online run, HTTP product or Web workflow yet; `/backtesting` remains a planned page with
-no results. Start from the [W2 case authority](market_backtesting/cases/futures_roll_long/ARCHITECTURE.md)
+W2 Futures Roll Long has completed WP1 Strategy & Holding Simulation: a pure Python
+boundary resolves real-contract entry, holding, expiry rolls and final exit from
+validated synthetic facts, with both `expiry_to_M1_v1` and `expiry_to_Q1_v1`. There is
+still no PnL/accounting (WP2), DataLake integration (WP3), result/evidence (WP4),
+online run (WP5), HTTP product (WP6) or Web workflow (WP7); `/backtesting` remains a
+planned page with no results. Start from the [W2 case authority](market_backtesting/cases/futures_roll_long/ARCHITECTURE.md)
 and its [roadmap](market_backtesting/cases/futures_roll_long/ROADMAP.md). Backtesting is
 not a Research capability, Publication or Workbench Run.
 
