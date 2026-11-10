@@ -130,8 +130,8 @@ try {
   await page.getByRole('heading', { name: 'MO 年化权利金平面', exact: true }).waitFor()
 
   const surfaces = [
-    ['/research', 'Research Workspace', '研究', '研究工作台'],
-    ['/research/publications', 'Research Explorer', '研究', 'Research Explorer'],
+    ['/research', '研究工作台', '研究', '研究工作台'],
+    ['/research/publications', '研究结果浏览', '研究', 'Research Explorer'],
     ['/research/futures-basis', 'Futures Basis Research', '研究', 'Futures Basis Research'],
     ['/data', '数据总览', '日常数据', '数据总览'],
     ['/data/mo-option-chain', 'MO 期权链', '日常数据', 'MO Option Chain'],
