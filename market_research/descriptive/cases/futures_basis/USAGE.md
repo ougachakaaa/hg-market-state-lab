@@ -92,3 +92,31 @@ verify 校验包内摘要、版本、指纹与关联；replay 从保留的公共
 统计并比较结果。都不访问 Source、HTTP 或 SQLite。篡改、未知版本、缺文件或重放差异返回非零。
 实际方法失败可能不可重复；其原始失败仍保留。详细契约见 [Evidence](EVIDENCE.md)，
 真实验收及作品集路径见 [WP5 acceptance](WP5_ACCEPTANCE.md)。
+
+## Online input preflight
+
+The Web query defaults only its end date to Shanghai today. Select product and
+start date; after editing stops the page checks local input coverage. Historical
+gaps require an explicit acquisition-risk confirmation. Today requires complete
+local calendars, Futures and Index coverage (zero session targets are legal).
+If blocked, change the end date or prepare data through a separate existing
+DataLake workflow, then select “重新检查输入”. Checking does not fetch data or
+create a Run; only “生成研究” creates one. A failed Run's request-reuse action
+loads/checks the original query and still requires a subsequent Generate.
+
+The independent Python check also performs no Source access or writes:
+
+```python
+from datetime import date
+from market_research.descriptive.cases.futures_basis import FuturesBasisRequest, preflight_inputs
+
+assessment = preflight_inputs(FuturesBasisRequest("IM", date(2026, 11, 1), date(2026, 11, 10)))
+print(assessment.submission, assessment.today_gate)
+for dependency in assessment.dependencies:
+    print(dependency.scope, dependency.dependency, dependency.state, dependency.coverage)
+```
+
+The HTTP equivalent is `POST /research/futures-basis/preflight` with the existing
+three-field query body and authenticated Cookie/same-origin access. The assessment
+never replaces final preparation. Cache gaps do not prove upstream absence. See
+[Preflight semantics](PREFLIGHT.md) and [acceptance](PREFLIGHT_ACCEPTANCE.md).

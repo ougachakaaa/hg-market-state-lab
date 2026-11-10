@@ -79,6 +79,7 @@ def create_research_catalog_app() -> FastAPI:
 
 def create_futures_basis_app() -> FastAPI:
     return create_projection({
+        "/research/futures-basis/preflight",
         "/research/futures-basis/runs",
         "/research/futures-basis/runs/{run_id}",
         "/research/futures-basis/runs/{run_id}/report",

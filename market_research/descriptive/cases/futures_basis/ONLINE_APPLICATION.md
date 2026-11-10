@@ -69,8 +69,11 @@ Validation before any run creation or upstream I/O:
   calendar days, i.e. at most three calendar years including leap days;
 - the accepted `2024-01-01..2026-10-30` candidate is `1,034` inclusive days and is
   supported;
-- no minimum start date, coverage pre-check, source default, window split,
+- no minimum start date, source default, window split,
   multi-product expansion or client-controlled method selection exists.
+
+Read-only [Preflight](PREFLIGHT.md) supplies Web admission guidance before explicit
+submission; it does not gate the Run API or change final preparation.
 
 The source-data and completeness rules are unchanged from [Inputs](INPUTS.md) and
 [Observation](OBSERVATION.md). A legal partial Index export may produce

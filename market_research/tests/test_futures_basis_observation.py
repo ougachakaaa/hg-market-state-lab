@@ -387,6 +387,10 @@ def test_case_dependencies_and_pure_construction() -> None:
                         node.func.attr not in {"export", "ensure", "coverage", "now"}
                         or path.name == "validation.py"
                         or (path.name == "online.py" and node.func.attr == "now")
+                        or (
+                            path.name == "preflight.py"
+                            and node.func.attr in {"export", "coverage", "now"}
+                        )
                     )
 
 

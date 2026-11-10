@@ -67,7 +67,10 @@ def test_futures_basis_export_is_protected_complete_and_storage_free(monkeypatch
     exporter = runpy.run_path(str(ROOT / "ui_web/scripts/export_contracts.py"))
     document = exporter["create_futures_basis_app"]().openapi()
     base = "/research/futures-basis/runs"
-    assert set(document["paths"]) == {base, base + "/{run_id}", base + "/{run_id}/report"}
+    assert set(document["paths"]) == {
+        base, base + "/{run_id}", base + "/{run_id}/report",
+        "/research/futures-basis/preflight",
+    }
     for operations in document["paths"].values():
         for operation in operations.values():
             assert operation["security"] == [{"CookieSession": []}]

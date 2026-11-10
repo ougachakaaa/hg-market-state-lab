@@ -105,3 +105,39 @@ class FuturesBasisError(DTO):
 
 class FuturesBasisErrorResponse(DTO):
     error: FuturesBasisError
+
+
+class FuturesBasisCoverage(DTO):
+    requested_units: int = Field(ge=0)
+    successful_units: int = Field(ge=0)
+    missing_units: int = Field(ge=0)
+    pending_units: int = Field(ge=0)
+    failed_units: int = Field(ge=0)
+    complete: bool
+
+
+class FuturesBasisPreflightDependency(DTO):
+    dependency: Literal["calendar_cffex", "calendar_sse", "futures", "index"]
+    scope: Literal["window", "today"]
+    state: Literal["complete", "needs_fetch", "unknown", "operation_error", "contract_error"]
+    coverage: FuturesBasisCoverage | None
+    reason_code: (
+        Literal[
+            "cache_incomplete",
+            "prerequisite_incomplete",
+            "prerequisite_unavailable",
+            "operation_failed",
+            "invalid_evidence",
+        ]
+        | None
+    )
+    message: str
+
+
+class FuturesBasisPreflightResponse(DTO):
+    request: FuturesBasisImmutableRequest
+    checked_at: str = Field(json_schema_extra={"format": "date-time"})
+    market_date: date
+    submission: Literal["allowed", "confirm_required", "blocked"]
+    today_gate: Literal["not_applicable", "ready", "not_ready", "unknown"]
+    dependencies: list[FuturesBasisPreflightDependency]

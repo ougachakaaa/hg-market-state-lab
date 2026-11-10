@@ -219,7 +219,11 @@ def test_only_published_datalake_imports_and_no_forbidden_dependency_edges() -> 
                         ), (path, name)
             if isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute):
                 if node.func.attr in {"export", "ensure", "coverage"}:
-                    assert path.name == "preparation.py", path
+                    assert path.name == "preparation.py" or (
+                        path.relative_to(SOURCE).as_posix()
+                        == "descriptive/cases/futures_basis/preflight.py"
+                        and node.func.attr in {"export", "coverage"}
+                    ), path
 
 
 def test_public_facades_export_attributes_directly_without_all() -> None:

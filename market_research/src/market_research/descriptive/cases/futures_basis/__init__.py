@@ -33,6 +33,9 @@ from .online import FuturesBasisOnlineApplication as FuturesBasisOnlineApplicati
 from .online import OnlineError as OnlineError
 from .online import OnlineServices as OnlineServices
 from .online import standard_report_request as standard_report_request
+from .preflight import FuturesBasisPreflight as FuturesBasisPreflight
+from .preflight import PreflightDependency as PreflightDependency
+from .preflight import preflight_inputs as preflight_inputs
 from .preparation import prepare_inputs as prepare_inputs
 from .report import ReportRequest as ReportRequest
 from .report import ReportResult as ReportResult
@@ -52,3 +55,5 @@ from .statistics import MethodOutcome as MethodOutcome
 from .statistics import analyze_distribution as analyze_distribution
 from .statistics import compare_terms as compare_terms
 from .statistics import discount_runs as discount_runs
+from .validation import RequestValidationError as RequestValidationError
+from .validation import validate_online_request as validate_online_request

@@ -3,6 +3,7 @@
 import json
 from collections.abc import Callable, Coroutine
 from copy import deepcopy
+from dataclasses import asdict
 from datetime import date
 from threading import BoundedSemaphore
 from typing import Any
@@ -12,11 +13,18 @@ from fastapi.routing import APIRoute
 from pydantic import BaseModel, ValidationError
 from starlette.concurrency import run_in_threadpool
 
-from market_research.descriptive.cases.futures_basis import FuturesBasisRequest, OnlineError
+from market_research.descriptive.cases.futures_basis import (
+    FuturesBasisRequest,
+    OnlineError,
+    RequestValidationError,
+    preflight_inputs,
+    validate_online_request,
+)
 
 from .runtime import application
 from .schemas import (
     FuturesBasisErrorResponse,
+    FuturesBasisPreflightResponse,
     FuturesBasisReportResponse,
     FuturesBasisRun,
     FuturesBasisRunAccepted,
@@ -80,7 +88,7 @@ class FuturesBasisRoute(APIRoute):
 
 
 router = APIRouter(
-    prefix="/research/futures-basis/runs",
+    prefix="/research/futures-basis",
     tags=["Futures Basis Research"],
     route_class=FuturesBasisRoute,
 )
@@ -149,7 +157,47 @@ def serialize(
 
 
 @router.post(
-    "",
+    "/preflight",
+    operation_id="preflight_futures_basis_research",
+    response_model=FuturesBasisPreflightResponse,
+    responses=responses("invalid_request", "request_too_large"),
+    openapi_extra={
+        "requestBody": {
+            "required": True,
+            "content": {
+                "application/json": {
+                    "schema": {"$ref": "#/components/schemas/FuturesBasisRunRequest"}
+                }
+            },
+        }
+    },
+)
+async def preflight(request: Request) -> Response:
+    body = await parse_request(request)
+    try:
+        validate_online_request(body)
+    except RequestValidationError as exc:
+        return serialize(
+            FuturesBasisErrorResponse,
+            {
+                "error": {
+                    "kind": "invalid_request",
+                    "detail": str(exc),
+                    "param": exc.param,
+                }
+            },
+            MAX_RUN_BYTES,
+            400,
+        )
+    assess = getattr(request.app.state, "futures_basis_preflight", preflight_inputs)
+    result = await run_in_threadpool(assess, body)
+    payload = asdict(result)
+    payload["market_date"] = result.market_date.isoformat()
+    return serialize(FuturesBasisPreflightResponse, payload, MAX_RUN_BYTES)
+
+
+@router.post(
+    "/runs",
     operation_id="submit_futures_basis_research_run",
     status_code=202,
     response_model=FuturesBasisRunAccepted,
@@ -178,7 +226,7 @@ async def submit_run(request: Request) -> Response:
 
 
 @router.get(
-    "/{run_id}",
+    "/runs/{run_id}",
     operation_id="get_futures_basis_research_run",
     response_model=FuturesBasisRun,
     responses=responses(
@@ -191,7 +239,7 @@ def get_run(run_id: str, request: Request) -> Response:
 
 
 @router.get(
-    "/{run_id}/report",
+    "/runs/{run_id}/report",
     operation_id="get_futures_basis_research_report",
     response_model=FuturesBasisReportResponse,
     responses=responses(
@@ -232,7 +280,7 @@ def install_contract(app: FastAPI) -> None:
             FuturesBasisRunRequest.model_json_schema()
         )
         for path, methods in document["paths"].items():
-            if path.startswith("/research/futures-basis/runs"):
+            if path.startswith("/research/futures-basis/"):
                 for operation in methods.values():
                     for response in operation["responses"].values():
                         response.setdefault("headers", {}).update(deepcopy(CACHE_HEADER))

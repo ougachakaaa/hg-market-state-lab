@@ -23,7 +23,7 @@ from .inputs import DEFINITION_VERSION, FuturesBasisRequest, InputPreparationErr
 from .observations import ObservationConstructionError
 from .report import ReportRequest, ReportResult, compose_report
 from .service import observe_futures_basis
-from .validation import validate_request
+from .validation import validate_online_request, validate_request
 
 PROFILE = "r01a_standard_v1"
 MAX_REPORT_BYTES = 32 * 1024 * 1024
@@ -55,9 +55,7 @@ def _now() -> str:
 
 def standard_report_request(request: FuturesBasisRequest) -> ReportRequest:
     """Construct the frozen server-selected R01-A analysis profile."""
-    validate_request(request)
-    if (request.end_date - request.start_date).days + 1 > 1096:
-        raise ValueError("Online window exceeds 1096 days")
+    validate_online_request(request)
     result = ReportRequest(
         request,
         QuantileSpec((0.0, 0.25, 0.5, 0.75, 1.0)),

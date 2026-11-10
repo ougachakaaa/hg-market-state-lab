@@ -7,7 +7,7 @@ from collections.abc import Sequence
 from dataclasses import dataclass, fields, is_dataclass
 from datetime import date, datetime
 from math import isfinite
-from typing import Any, cast
+from typing import Any, Literal, cast
 from zoneinfo import ZoneInfo
 
 from data_lake import CoverageResult, EnsureResult, UnitFailure
@@ -48,23 +48,57 @@ def require(ok: bool, reason: str) -> None:
         raise ValueError(reason)
 
 
-def validate_request(request: FuturesBasisRequest, *, check_today: bool = True) -> None:
-    require(isinstance(request, FuturesBasisRequest), "Expected FuturesBasisRequest")
-    require(type(request.case) is str and request.case == "futures_basis_v1", "Invalid case")
-    require(
+class RequestValidationError(ValueError):
+    """Fixed safe L1 feedback; upstream failures never use this type."""
+
+    def __init__(
+        self, message: str, param: Literal["product_code", "start_date", "end_date"] | None = None
+    ) -> None:
+        super().__init__(message)
+        self.param = param
+
+
+def _request_require(
+    ok: bool, message: str, param: Literal["product_code", "start_date", "end_date"] | None = None
+) -> None:
+    if not ok:
+        raise RequestValidationError(message, param)
+
+
+def validate_request(
+    request: FuturesBasisRequest, *, check_today: bool = True, today: date | None = None
+) -> None:
+    _request_require(isinstance(request, FuturesBasisRequest), "Expected FuturesBasisRequest")
+    _request_require(
+        type(request.case) is str and request.case == "futures_basis_v1", "Invalid case"
+    )
+    _request_require(
         type(request.product_code) is str and request.product_code in UNDERLYING,
-        "Invalid canonical product",
+        "请选择合法产品 IM、IC、IF 或 IH。",
+        "product_code",
     )
-    require(
-        type(request.start_date) is date and type(request.end_date) is date,
-        "Expected date-only window",
+    _request_require(type(request.start_date) is date, "开始日期必须为日期。", "start_date")
+    _request_require(type(request.end_date) is date, "结束日期必须为日期。", "end_date")
+    _request_require(
+        request.start_date <= request.end_date, "结束日期不能早于开始日期。", "end_date"
     )
-    require(request.start_date <= request.end_date, "Inverted window")
     if check_today:
-        require(
-            request.end_date <= datetime.now(ZoneInfo("Asia/Shanghai")).date(),
-            "Future market end date",
+        _request_require(
+            request.end_date
+            <= (today if today is not None else datetime.now(ZoneInfo("Asia/Shanghai")).date()),
+            "结束日期不能晚于上海当天。",
+            "end_date",
         )
+
+
+def validate_online_request(request: FuturesBasisRequest, *, today: date | None = None) -> None:
+    """Online-only L1; offline observation requests retain their existing bounds."""
+    validate_request(request, today=today)
+    _request_require(
+        (request.end_date - request.start_date).days + 1 <= 1096,
+        "在线研究范围最多为 1,096 个自然日（含首尾）。",
+        "end_date",
+    )
 
 
 def coverage(raw: Any, expected: int) -> CoverageResult:

@@ -16,6 +16,7 @@ Plan/Batch or Publication paths.
 
 | Method / path | Stable operationId | Success |
 | --- | --- | --- |
+| `POST /research/futures-basis/preflight` | `preflight_futures_basis_research` | `200` assessment |
 | `POST /research/futures-basis/runs` | `submit_futures_basis_research_run` | `202` accepted run |
 | `GET /research/futures-basis/runs/{run_id}` | `get_futures_basis_research_run` | `200` run status |
 | `GET /research/futures-basis/runs/{run_id}/report` | `get_futures_basis_research_report` | `200` validated report |
@@ -259,7 +260,7 @@ never accepts an owner, user or scope from the request. Authentication and
 same-origin checks happen before body parsing, run lookup or Research calls. A
 foreign owner and an unknown ID are indistinguishable as `run_not_found`.
 
-OpenAPI publishes the three operations, the Cookie security requirement, the
+OpenAPI publishes the four operations, the Cookie security requirement, the
 accepted/run/report/failure/error DTOs, concrete statuses and `no-store` behavior;
 it removes the unused framework `422`. The HTTP composition initializes and reuses
 one process-wide online application.
@@ -290,3 +291,25 @@ competing backend schema.
 ## Runtime acceptance
 
 WP8-A synthetic runtime evidence and handoff are recorded in [HTTP acceptance](ACCEPTANCE.md).
+
+## Input preflight delivery
+
+`POST /research/futures-basis/preflight` consumes the same strict three-field body,
+4 KiB bound, authentication/same-origin gate and no-query rule as submission. It
+invokes Research [Preflight](../../../market_research/descriptive/cases/futures_basis/PREFLIGHT.md)
+without initializing Run storage. Success, including a blocked assessment or a
+classified dependency failure, is 200. L1/body failures are 400 invalid_request
+(or request_too_large); semantic L1 errors include the safe Research-owned field
+param and message. Unexpected defects are 500 internal_error. Auth errors
+remain independent; no 422 is published. Responses are no-store and bounded to
+64 KiB. There is no Run ID or preflight ticket.
+
+The response is `{request, checked_at, market_date, submission, today_gate,
+dependencies}`. Request is FuturesBasisImmutableRequest; checked_at is UTC ISO
+timestamp and market_date an ISO date. submission is allowed/confirm_required/blocked;
+today_gate is not_applicable/ready/not_ready/unknown. Each dependency has
+`dependency` (calendar_cffex/calendar_sse/futures/index), `scope` (window/today),
+`state` (complete/needs_fetch/unknown/operation_error/contract_error), `coverage`
+(public six-field Coverage or null), `reason_code` (null/cache_incomplete/
+prerequisite_incomplete/prerequisite_unavailable/operation_failed/invalid_evidence),
+and fixed safe `message`. Research owns all classification and aggregation.

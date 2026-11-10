@@ -52,8 +52,9 @@ Futures Basis Research
 
 - The product options come from the published generated enum; the UI does not
   maintain a second product-to-underlying mapping.
-- No date has an implicit default. Generate is unavailable until product, start and
-  end are explicitly selected.
+- End date initially uses today in Asia/Shanghai; product and start date require
+  explicit selection. The default is not a latest-available-date claim. Generate
+  requires complete parameters and a matching successful Preflight result.
 - Date controls produce date-only `YYYY-MM-DD` values. Browser local time must not
   be treated as the business authority; the server applies the Asia/Shanghai
   future-date rule and the inclusive window bound.
@@ -82,7 +83,8 @@ IDLE → SUBMITTING → PENDING → RUNNING → REPORT_LOADING → COMPLETED
 - `COMPLETED`: fetch the report; `partial` is a completed scientific result and is
   presented as such, never as an execution failure.
 - `FAILED` / `INTERRUPTED`: show the safe failure stage/category/dependency and a
-  manual Retry. Retry creates a new run with the failed run's immutable request; it
+  manual Retry. Retry loads the failed run's immutable request into the query and checks it;
+  a subsequent explicit Generate creates a new run. It
   does not reuse the old run ID or silently resubmit.
 - `BUSY`: a 409 means another run is active. Show a clear retry-later message; do
   not auto-loop the POST and do not create a local run.
@@ -236,3 +238,20 @@ inclusion flags; rounded labels never replace category identity or order.
 Raw Views, reader projection, evidence, exports and fingerprints remain unchanged.
 
 Verification and reproduction: [Historical presentation acceptance](HISTORICAL_PRESENTATION_ACCEPTANCE.md).
+
+## Read-only input preflight
+
+Consume Research [Preflight](../../../../market_research/descriptive/cases/futures_basis/PREFLIGHT.md)
+through generated HTTP types. Check complete, format/order-valid queries after
+400ms without edits and support manual refresh. Query changes immediately invalidate
+results and confirmation, cancel requests and ignore stale responses. Recheck on
+window focus and Shanghai date rollover. The server market_date is authoritative.
+Inspection state is independent of Run/report state; checking never clears a report.
+
+Show all window dependencies and the today gate; disclose that no data was acquired
+and execution can still fail. Disable Generate while unchecked/checking/blocked or
+on check failure. confirm_required needs an explicit checkbox acknowledging that
+execution will attempt acquisition; reset it on query/result changes. Only an
+explicit Generate posts a Run; check completion never submits. End-date changes
+remain user-controlled; today blocks offer editing and recheck, no hidden ensure
+or automatic shift to yesterday. Failed-Run retry first loads/checks its request.

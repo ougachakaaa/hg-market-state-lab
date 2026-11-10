@@ -45,6 +45,7 @@ Contract-day/Slot-day observations under [Inputs](INPUTS.md) and [Observation](O
 | Populations, distributions, paired comparisons, runs and numerical ownership (SD09) | [Statistics scope](STATISTICS.md) |
 | Python statistics usage and acceptance | [Usage](USAGE.md), [WP4 acceptance](WP4_ACCEPTANCE.md) |
 | Business projection and offline report evidence | [Delivery](DELIVERY.md) |
+| Read-only online input assessment and Web admission | [Preflight](PREFLIGHT.md) |
 | Online application, standard profile, run lifecycle, result store and reader boundary | [Online application](ONLINE_APPLICATION.md) |
 | WP3 runtime/real-market evidence and reproduction | [WP3 acceptance](WP3_ACCEPTANCE.md) |
 | Offline evidence encoding and replay | [Evidence](EVIDENCE.md) |

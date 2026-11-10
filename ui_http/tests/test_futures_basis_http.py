@@ -482,3 +482,92 @@ def test_report_capacity_includes_serialization_and_releases_after_error(product
         assert_error(future.result(), 500, "internal_error")
     monkeypatch.setattr(endpoint, "serialize", original)
     assert client.get(f"{PATH}/{run_id}/report").status_code == 200
+
+
+PREFLIGHT_PATH = "/research/futures-basis/preflight"
+
+
+def test_preflight_auth_and_strict_request_do_not_initialize_storage(monkeypatch):
+    app = create_app()
+    monkeypatch.setattr(endpoint, "application", Mock(side_effect=AssertionError("Run storage")))
+    check = Mock(side_effect=AssertionError("unexpected check"))
+    monkeypatch.setattr(endpoint, "preflight_inputs", check)
+    anonymous = TestClient(app, base_url=ORIGIN)
+    assert_error(anonymous.post(PREFLIGHT_PATH, content=b"bad"), 401, "authentication_required")
+    client = authenticated_client(app)
+    assert_error(
+        client.post(PREFLIGHT_PATH, json=BODY, headers={"Origin": "https://foreign.test"}),
+        403,
+        "origin_forbidden",
+    )
+    for body in (
+        {**BODY, "source": "x"},
+        {**BODY, "end_date": "2099-01-01"},
+        {**BODY, "product_code": "invalid"},
+        {**BODY, "start_date": "2000-01-01"},
+    ):
+        assert_error(client.post(PREFLIGHT_PATH, json=body), 400, "invalid_request")
+    assert_error(client.post(PREFLIGHT_PATH + "?ensure=true", json=BODY), 400, "invalid_request")
+    assert_error(
+        client.post(
+            PREFLIGHT_PATH, content=b"x" * 4097, headers={"Content-Type": "application/json"}
+        ),
+        400,
+        "request_too_large",
+    )
+    check.assert_not_called()
+    response = client.post(PREFLIGHT_PATH, json={**BODY, "end_date": "2099-01-01"})
+    assert response.json()["error"]["param"] == "end_date"
+    assert "上海当天" in response.json()["error"]["detail"]
+
+
+def test_preflight_returns_assessment_even_when_run_storage_unavailable(monkeypatch):
+    from dataclasses import replace
+    from datetime import UTC, date, datetime
+
+    from data_lake import OperationError
+    from market_research.descriptive.cases.futures_basis import (
+        FuturesBasisRequest,
+        preflight_inputs,
+    )
+
+    app = create_app()
+    monkeypatch.setattr(endpoint, "application", Mock(side_effect=OnlineError("unavailable")))
+    services = Services()
+    # Calendar read failure is classified by Research and returned as 200 blocked.
+    services.export = Mock(side_effect=OperationError("/private credential failure"))
+    request = FuturesBasisRequest("IM", date(2024, 10, 18), date(2024, 10, 21))
+    result = preflight_inputs(
+        request,
+        calendar_service=services,
+        futures_service=Mock(),
+        index_service=Mock(),
+        clock=lambda: datetime(2026, 11, 10, tzinfo=UTC),
+    )
+    monkeypatch.setattr(endpoint, "preflight_inputs", Mock(return_value=result))
+    client = authenticated_client(app)
+    response = client.post(PREFLIGHT_PATH, json=BODY)
+    assert response.status_code == 200, response.text
+    assert response.json()["submission"] == "blocked"
+    assert response.json()["dependencies"][0]["state"] == "operation_error"
+    assert response.headers["cache-control"] == "no-store"
+    assert "/private" not in response.text and "run_id" not in response.json()
+    # All success decisions use the same typed transport projection.
+    for submission in ("allowed", "confirm_required"):
+        monkeypatch.setattr(
+            endpoint, "preflight_inputs", Mock(return_value=replace(result, submission=submission))
+        )
+        assert client.post(PREFLIGHT_PATH, json=BODY).json()["submission"] == submission
+    monkeypatch.setattr(endpoint, "preflight_inputs", Mock(side_effect=RuntimeError("/private")))
+    assert_error(client.post(PREFLIGHT_PATH, json=BODY), 500, "internal_error")
+
+
+def test_preflight_openapi_is_bounded_authenticated_and_has_no_422():
+    document = create_app().openapi()
+    operation = document["paths"][PREFLIGHT_PATH]["post"]
+    assert operation["operationId"] == "preflight_futures_basis_research"
+    assert operation["security"]
+    assert "422" not in operation["responses"]
+    assert {"200", "400", "401", "403", "500"} == set(operation["responses"])
+    for response in operation["responses"].values():
+        assert response["headers"]["Cache-Control"]["schema"]["const"] == "no-store"

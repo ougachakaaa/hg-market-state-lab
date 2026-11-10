@@ -44,6 +44,50 @@
         "title": "AuthErrorResponse",
         "type": "object"
       },
+      "FuturesBasisCoverage": {
+        "additionalProperties": false,
+        "properties": {
+          "complete": {
+            "title": "Complete",
+            "type": "boolean"
+          },
+          "failed_units": {
+            "minimum": 0.0,
+            "title": "Failed Units",
+            "type": "integer"
+          },
+          "missing_units": {
+            "minimum": 0.0,
+            "title": "Missing Units",
+            "type": "integer"
+          },
+          "pending_units": {
+            "minimum": 0.0,
+            "title": "Pending Units",
+            "type": "integer"
+          },
+          "requested_units": {
+            "minimum": 0.0,
+            "title": "Requested Units",
+            "type": "integer"
+          },
+          "successful_units": {
+            "minimum": 0.0,
+            "title": "Successful Units",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "requested_units",
+          "successful_units",
+          "missing_units",
+          "pending_units",
+          "failed_units",
+          "complete"
+        ],
+        "title": "FuturesBasisCoverage",
+        "type": "object"
+      },
       "FuturesBasisError": {
         "additionalProperties": false,
         "properties": {
@@ -212,6 +256,136 @@
           "analysis_profile"
         ],
         "title": "FuturesBasisImmutableRequest",
+        "type": "object"
+      },
+      "FuturesBasisPreflightDependency": {
+        "additionalProperties": false,
+        "properties": {
+          "coverage": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/FuturesBasisCoverage"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "dependency": {
+            "enum": [
+              "calendar_cffex",
+              "calendar_sse",
+              "futures",
+              "index"
+            ],
+            "title": "Dependency",
+            "type": "string"
+          },
+          "message": {
+            "title": "Message",
+            "type": "string"
+          },
+          "reason_code": {
+            "anyOf": [
+              {
+                "enum": [
+                  "cache_incomplete",
+                  "prerequisite_incomplete",
+                  "prerequisite_unavailable",
+                  "operation_failed",
+                  "invalid_evidence"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason Code"
+          },
+          "scope": {
+            "enum": [
+              "window",
+              "today"
+            ],
+            "title": "Scope",
+            "type": "string"
+          },
+          "state": {
+            "enum": [
+              "complete",
+              "needs_fetch",
+              "unknown",
+              "operation_error",
+              "contract_error"
+            ],
+            "title": "State",
+            "type": "string"
+          }
+        },
+        "required": [
+          "dependency",
+          "scope",
+          "state",
+          "coverage",
+          "reason_code",
+          "message"
+        ],
+        "title": "FuturesBasisPreflightDependency",
+        "type": "object"
+      },
+      "FuturesBasisPreflightResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "checked_at": {
+            "format": "date-time",
+            "title": "Checked At",
+            "type": "string"
+          },
+          "dependencies": {
+            "items": {
+              "$ref": "#/components/schemas/FuturesBasisPreflightDependency"
+            },
+            "title": "Dependencies",
+            "type": "array"
+          },
+          "market_date": {
+            "format": "date",
+            "title": "Market Date",
+            "type": "string"
+          },
+          "request": {
+            "$ref": "#/components/schemas/FuturesBasisImmutableRequest"
+          },
+          "submission": {
+            "enum": [
+              "allowed",
+              "confirm_required",
+              "blocked"
+            ],
+            "title": "Submission",
+            "type": "string"
+          },
+          "today_gate": {
+            "enum": [
+              "not_applicable",
+              "ready",
+              "not_ready",
+              "unknown"
+            ],
+            "title": "Today Gate",
+            "type": "string"
+          }
+        },
+        "required": [
+          "request",
+          "checked_at",
+          "market_date",
+          "submission",
+          "today_gate",
+          "dependencies"
+        ],
+        "title": "FuturesBasisPreflightResponse",
         "type": "object"
       },
       "FuturesBasisReportResponse": {
@@ -426,6 +600,134 @@
   },
   "openapi": "3.1.0",
   "paths": {
+    "/research/futures-basis/preflight": {
+      "post": {
+        "operationId": "preflight_futures_basis_research",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FuturesBasisRunRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FuturesBasisPreflightResponse"
+                }
+              }
+            },
+            "description": "Successful Response",
+            "headers": {
+              "Cache-Control": {
+                "description": "Responses must not be cached.",
+                "schema": {
+                  "const": "no-store",
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FuturesBasisErrorResponse"
+                }
+              }
+            },
+            "description": "invalid_request, request_too_large",
+            "headers": {
+              "Cache-Control": {
+                "description": "Responses must not be cached.",
+                "schema": {
+                  "const": "no-store",
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthErrorResponse"
+                }
+              }
+            },
+            "description": "HTTP access error",
+            "headers": {
+              "Cache-Control": {
+                "description": "Responses must not be cached.",
+                "schema": {
+                  "const": "no-store",
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthErrorResponse"
+                }
+              }
+            },
+            "description": "HTTP access error",
+            "headers": {
+              "Cache-Control": {
+                "description": "Responses must not be cached.",
+                "schema": {
+                  "const": "no-store",
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/FuturesBasisErrorResponse"
+                    },
+                    {
+                      "$ref": "#/components/schemas/AuthErrorResponse"
+                    }
+                  ]
+                }
+              }
+            },
+            "description": "internal_error",
+            "headers": {
+              "Cache-Control": {
+                "description": "Responses must not be cached.",
+                "schema": {
+                  "const": "no-store",
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "CookieSession": []
+          }
+        ],
+        "summary": "Preflight",
+        "tags": [
+          "Futures Basis Research"
+        ]
+      }
+    },
     "/research/futures-basis/runs": {
       "post": {
         "operationId": "submit_futures_basis_research_run",

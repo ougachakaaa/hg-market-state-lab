@@ -30,6 +30,10 @@ SSE session has unavailable same-day underlying Close with reason
 `underlying_session_closed`. An SSE-only session is retained upstream evidence
 but not a Basis candidate. No prior-date alignment or silent calendar intersection.
 
+The online [Preflight](PREFLIGHT.md) is a separate read-only input assessment. It
+uses public Calendar Export and market Coverage without acquisition; its evidence
+never substitutes for the final Export proof below.
+
 ## Acquisition and final proof
 
 Validate the explicit request first. Prepare both exact-window calendars before

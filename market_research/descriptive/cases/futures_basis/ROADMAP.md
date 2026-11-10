@@ -388,3 +388,14 @@ recovery, authentication/isolation and synthetic failure acceptance. Windows Chr
 and Nginx/Docker deployment are NOT RUN; overall WP9 is PARTIAL, with the WSL scope
 PASS. The changes add process-restart/lost-response regression coverage and fix a
 test synchronization race; no product, financial, lifecycle or HTTP contract changes.
+
+## Input preflight work packages
+
+[PREFLIGHT.md](PREFLIGHT.md) owns the approved bounded semantics. WP-P0 encodes
+authority; WP-P1 publishes Research assessment and shared online L1; WP-P2 exposes
+HTTP/OpenAPI; WP-P3 implements Web admission and generated contracts; WP-P4 records
+integrated synthetic acceptance. No live-source check occurs implicitly.
+
+WP-P0–WP-P4 are implemented under synthetic Linux acceptance; see
+[verification evidence](PREFLIGHT_ACCEPTANCE.md). This adds no live Source or
+platform/deployment acceptance claim beyond existing WP9 evidence.

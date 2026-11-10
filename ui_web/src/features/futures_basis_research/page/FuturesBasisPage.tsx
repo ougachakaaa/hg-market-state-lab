@@ -1,7 +1,10 @@
-import { Alert, Button, Card, DatePicker, Descriptions, Flex, Form, Empty, Select, Badge, Tag, Typography } from 'antd'
-import { useEffect } from 'react'
+import { Alert, Checkbox, Button, Card, DatePicker, Descriptions, Flex, Form, Empty, Select, Badge, Tag, Typography } from 'antd'
+import { useEffect, useState } from 'react'
 import { products } from '../api/futuresBasis'
 import type { RunRequest } from '../api/futuresBasis'
+import dayjs from 'dayjs'
+import type { Dayjs } from 'dayjs'
+import { shanghaiDate, usePreflight } from '../hooks/usePreflight'
 import { useFuturesBasis } from '../hooks/useFuturesBasis'
 import { Report } from '../report/Report'
 
@@ -39,8 +42,13 @@ export default function FuturesBasisPage() {
     const error = research.feedback
     if (error?.kind === 'invalid_request' && error.param) form.setFields([{ name: error.param, errors: [error.detail] }])
   }, [research.feedback, form])
-  const values = Form.useWatch([], form)
-  const ready = values?.product_code && values?.start_date && values?.end_date
+  const [values, setValues] = useState<{ product_code?: RunRequest['product_code']; start_date?: Dayjs; end_date?: Dayjs }>(() => ({ end_date: dayjs(shanghaiDate()) }))
+  const query: RunRequest | undefined = values?.product_code && values?.start_date?.isValid() && values?.end_date?.isValid() && !values.start_date.isAfter(values.end_date, 'day')
+    ? { product_code: values.product_code, start_date: values.start_date.format('YYYY-MM-DD'), end_date: values.end_date.format('YYYY-MM-DD') } : undefined
+  const preflight = usePreflight(query)
+  useEffect(() => {
+    if (preflight.error?.param) form.setFields([{ name: preflight.error.param, errors: [preflight.error.detail] }])
+  }, [preflight.error, form])
   const phase = phases[research.phase]
   const retryReport = research.phase === 'REPORT_ERROR' || research.errorRead === 'report'
   return <Flex vertical gap="large" style={{ minWidth: 0 }}>
@@ -49,18 +57,37 @@ export default function FuturesBasisPage() {
       <Typography.Text type="secondary">期货基差研究 · 选择参数、提交 Run，再阅读报告与证据。</Typography.Text>
     </Flex>
     <Card title="研究参数" size="small">
-      <Form form={form} layout="vertical" onKeyDown={event => {
+      <Form form={form} initialValues={{ end_date: dayjs(shanghaiDate()) }} layout="vertical" onValuesChange={(_, next) => setValues(next)} onKeyDown={event => {
         // Enter commits a date/selection; only the explicit button submits a non-idempotent Run.
         if (event.key === 'Enter' && event.target instanceof HTMLInputElement) event.preventDefault()
-      }} onFinish={v => void research.submit({ product_code: v.product_code, start_date: v.start_date.format('YYYY-MM-DD'), end_date: v.end_date.format('YYYY-MM-DD') })}>
+      }} onFinish={() => { if (query && preflight.canSubmit) void research.submit(query) }}>
         <Flex gap="middle" wrap align="end">
           <Form.Item label="品种" name="product_code" rules={[{ required: true, message: '请选择品种' }]}><Select aria-label="品种" options={products.map(value => ({ value, label: value }))} placeholder="选择品种" style={{ width: 140 }} /></Form.Item>
           <Form.Item label="开始日期" name="start_date" rules={[{ required: true, message: '请选择开始日期' }]}><DatePicker aria-label="开始日期" format="YYYY-MM-DD" placeholder="YYYY-MM-DD" /></Form.Item>
-          <Form.Item label="结束日期" name="end_date" rules={[{ required: true, message: '请选择结束日期' }]}><DatePicker aria-label="结束日期" format="YYYY-MM-DD" placeholder="YYYY-MM-DD" /></Form.Item>
-          <Form.Item><Button type="primary" htmlType="button" onClick={() => form.submit()} disabled={!ready || research.submitting} loading={research.submitting}>生成研究</Button></Form.Item>
+          <Form.Item label="结束日期" name="end_date" dependencies={['start_date']} rules={[{ required: true, message: '请选择结束日期' }, ({ getFieldValue }) => ({ validator(_, value) { const start = getFieldValue('start_date'); return !start || !value || !start.isAfter(value, 'day') ? Promise.resolve() : Promise.reject(new Error('结束日期不能早于开始日期')) } })]}><DatePicker aria-label="结束日期" format="YYYY-MM-DD" placeholder="YYYY-MM-DD" /></Form.Item>
+          <Form.Item><Button type="primary" htmlType="button" onClick={() => form.submit()} disabled={!query || !preflight.canSubmit || research.submitting} loading={research.submitting}>生成研究</Button></Form.Item>
         </Flex>
       </Form>
-      <Typography.Text type="secondary">仅点击「生成研究」才会创建新 Run；修改参数或按 Enter 不会执行。日期包含首尾，范围由服务器验证。在线入口可用不代表 Provider / Cache Ready；年化基差率是研究指标。</Typography.Text>
+      <Typography.Text type="secondary">仅点击「生成研究」才会创建新 Run；修改参数或按 Enter 不会执行。输入检查不会获取数据，执行仍可能失败。日期包含首尾，范围由服务器验证。年化基差率是研究指标。</Typography.Text>
+      <Flex vertical gap="small">
+        <Button onClick={preflight.refresh} disabled={!query || preflight.checking}>重新检查输入</Button>
+        {preflight.checking && <Alert type="info" showIcon title="正在检查本地数据覆盖" />}
+        {preflight.error && <Alert type="error" showIcon title="输入检查失败，请重新检查" description={preflight.error.detail || '网络或响应异常；尚未创建 Run。'} />}
+        {preflight.result && <>
+          <Alert showIcon type={preflight.result.submission === 'blocked' ? 'warning' : 'info'}
+            title={preflight.result.today_gate === 'not_ready' || preflight.result.today_gate === 'unknown'
+              ? '本地当日数据未就绪，请先完成数据准备，再重新检查。'
+              : preflight.result.submission === 'blocked' ? '输入检查发现数据操作或契约异常，请重查或联系维护者。'
+              : preflight.result.today_gate === 'ready' ? '本地当日数据已就绪。' : '历史输入检查已完成。'}
+            description={`检查时间：${preflight.result.checked_at}；上海日期：${preflight.result.market_date}。可修改结束日期或重新检查；本检查不保证执行成功。`} />
+          <Descriptions size="small" column={1} items={preflight.result.dependencies.map(item => ({
+            key: `${item.scope}-${item.dependency}`,
+            label: `${item.scope === 'today' ? '当日' : '整段'} / ${{ calendar_cffex: '中金所日历', calendar_sse: '上交所日历', futures: '期货日线', index: '指数日线' }[item.dependency]}`,
+            children: `${item.message}${item.coverage ? ` 完整目标 ${item.coverage.successful_units}/${item.coverage.requested_units}；缺失 ${item.coverage.missing_units}，待处理 ${item.coverage.pending_units}，失败 ${item.coverage.failed_units}。` : ''}`,
+          }))} />
+          {preflight.result.submission === 'confirm_required' && <Checkbox checked={preflight.confirmed} onChange={event => preflight.confirm(event.target.checked)}>我理解正式执行将尝试获取缺失数据，仍可能失败。</Checkbox>}
+        </>}
+      </Flex>
       {research.submitting && <Alert showIcon type="info" title="正在提交 · SUBMITTING" description="等待服务器确认 Run；已有结果仍可阅读。" />}
       {research.feedback && <Alert showIcon type="warning" title={messages[research.feedback.kind] ?? '提交未被确认。'} description={research.feedback.kind === 'invalid_request' ? research.feedback.detail : undefined} />}
     </Card>
@@ -88,8 +115,8 @@ export default function FuturesBasisPage() {
       {['STATUS_ERROR', 'REPORT_ERROR', 'UNAVAILABLE'].includes(research.phase) && <Flex><Button disabled={research.submitting} onClick={() => research.retry(retryReport)}>{retryReport ? '重新读取报告' : '重新读取状态'}</Button></Flex>}
       {research.run && ['FAILED', 'INTERRUPTED'].includes(research.phase) && <Flex vertical gap="small">
         {'failure' in research.run && research.run.failure && <Alert showIcon type="error" title={`${research.run.failure.stage} / ${research.run.failure.category} / ${research.run.failure.dependency ?? '—'}`} description={research.run.failure.reason} />}
-        <Typography.Text type="secondary">再次执行会使用此 Run 的固定请求创建新 Run。</Typography.Text>
-        <Flex><Button disabled={research.submitting} onClick={() => { const r = research.run!.request; void research.submit({ product_code: r.product_code, start_date: r.start_date, end_date: r.end_date } as RunRequest) }}>使用原请求创建新 Run</Button></Flex>
+        <Typography.Text type="secondary">此操作先将原请求填入参数并检查；之后点击「生成研究」才会创建新 Run。</Typography.Text>
+        <Flex><Button disabled={research.submitting} onClick={() => { const r = research.run!.request; const next = { product_code: r.product_code, start_date: dayjs(r.start_date), end_date: dayjs(r.end_date) }; form.setFieldsValue(next); setValues(next); preflight.refresh() }}>使用原请求创建新 Run</Button></Flex>
       </Flex>}
     </Card>
     {research.report && <Report key={research.report.run_id} data={research.report.data} mode="online" />}

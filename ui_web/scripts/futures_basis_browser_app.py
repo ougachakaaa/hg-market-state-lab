@@ -11,6 +11,7 @@ from lab_config import futures_basis_run_root  # noqa: E402
 from market_research.descriptive.cases.futures_basis import (  # noqa: E402
     FuturesBasisOnlineApplication,
     OnlineServices,
+    preflight_inputs,
 )
 from ui_http.app import create_app as create_runtime  # noqa: E402
 
@@ -33,4 +34,10 @@ def create_app():
     app.state.futures_basis_application = FuturesBasisOnlineApplication(
         root=root, services=OnlineServices(services, services, services)
     )
+    def assess(request):
+        readers = Services(request)
+        return preflight_inputs(request, calendar_service=readers,
+                                futures_service=readers, index_service=readers)
+
+    app.state.futures_basis_preflight = assess
     return app

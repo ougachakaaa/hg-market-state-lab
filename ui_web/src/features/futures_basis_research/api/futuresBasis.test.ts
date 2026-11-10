@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { createRequestBoundary, installRequestBoundary } from '../../../shared/http/protectedRequest'
-import { getReport, getRun, products, submitRun } from './futuresBasis'
+import { checkInputs, getReport, getRun, products, submitRun } from './futuresBasis'
 const id = 'a'.repeat(32)
 const request = { product_code: 'IM' as const, start_date: '2024-10-18', end_date: '2024-10-21' }
 const immutable = { ...request, case: 'futures_basis_v1', analysis_profile: 'r01a_standard_v1' }
@@ -58,4 +58,14 @@ it('validates complete producer payload association and every View', async () =>
   expect((await getReport(id, signal())).data.fingerprint).toBe(data.fingerprint)
   await expect(getReport(id, signal())).rejects.toMatchObject({ kind: 'invalid_response' })
   await expect(getReport(id, signal())).rejects.toMatchObject({ kind: 'invalid_response' })
+})
+
+
+it('uses the independent Preflight endpoint and rejects mismatched query responses', async () => {
+  const value = { request: immutable, checked_at: '2026-11-10T14:00:00Z', market_date: '2026-11-10', submission: 'blocked', today_gate: 'not_ready', dependencies: [] }
+  const fetch = vi.fn().mockResolvedValueOnce(response(value)).mockResolvedValueOnce(response({ ...value, request: { ...immutable, product_code: 'IC' } }))
+  vi.stubGlobal('fetch', fetch)
+  expect(await checkInputs(request, signal())).toEqual(value)
+  expect(fetch.mock.calls[0][0]).toBe('/api/research/futures-basis/preflight')
+  await expect(checkInputs(request, signal())).rejects.toMatchObject({ kind: 'invalid_response' })
 })

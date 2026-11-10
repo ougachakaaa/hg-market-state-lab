@@ -196,6 +196,7 @@ def test_runtime_openapi_publishes_composed_products_without_422() -> None:
         "/research/capabilities/{id}",
         "/research/preview",
         "/research/execute",
+        "/research/futures-basis/preflight",
         "/research/futures-basis/runs",
         "/research/futures-basis/runs/{run_id}",
         "/research/futures-basis/runs/{run_id}/report",

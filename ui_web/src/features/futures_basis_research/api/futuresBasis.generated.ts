@@ -4,6 +4,23 @@
  */
 
 export interface paths {
+    "/research/futures-basis/preflight": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Preflight */
+        post: operations["preflight_futures_basis_research"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/research/futures-basis/runs": {
         parameters: {
             query?: never;
@@ -78,6 +95,21 @@ export interface components {
         AuthErrorResponse: {
             error: components["schemas"]["AuthErrorBody"];
         };
+        /** FuturesBasisCoverage */
+        FuturesBasisCoverage: {
+            /** Complete */
+            complete: boolean;
+            /** Failed Units */
+            failed_units: number;
+            /** Missing Units */
+            missing_units: number;
+            /** Pending Units */
+            pending_units: number;
+            /** Requested Units */
+            requested_units: number;
+            /** Successful Units */
+            successful_units: number;
+        };
         /** FuturesBasisError */
         FuturesBasisError: {
             /** Detail */
@@ -138,6 +170,55 @@ export interface components {
              * Format: date
              */
             start_date: string;
+        };
+        /** FuturesBasisPreflightDependency */
+        FuturesBasisPreflightDependency: {
+            coverage: components["schemas"]["FuturesBasisCoverage"] | null;
+            /**
+             * Dependency
+             * @enum {string}
+             */
+            dependency: "calendar_cffex" | "calendar_sse" | "futures" | "index";
+            /** Message */
+            message: string;
+            /** Reason Code */
+            reason_code: ("cache_incomplete" | "prerequisite_incomplete" | "prerequisite_unavailable" | "operation_failed" | "invalid_evidence") | null;
+            /**
+             * Scope
+             * @enum {string}
+             */
+            scope: "window" | "today";
+            /**
+             * State
+             * @enum {string}
+             */
+            state: "complete" | "needs_fetch" | "unknown" | "operation_error" | "contract_error";
+        };
+        /** FuturesBasisPreflightResponse */
+        FuturesBasisPreflightResponse: {
+            /**
+             * Checked At
+             * Format: date-time
+             */
+            checked_at: string;
+            /** Dependencies */
+            dependencies: components["schemas"]["FuturesBasisPreflightDependency"][];
+            /**
+             * Market Date
+             * Format: date
+             */
+            market_date: string;
+            request: components["schemas"]["FuturesBasisImmutableRequest"];
+            /**
+             * Submission
+             * @enum {string}
+             */
+            submission: "allowed" | "confirm_required" | "blocked";
+            /**
+             * Today Gate
+             * @enum {string}
+             */
+            today_gate: "not_applicable" | "ready" | "not_ready" | "unknown";
         };
         /** FuturesBasisReportResponse */
         FuturesBasisReportResponse: {
@@ -232,6 +313,76 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    preflight_futures_basis_research: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["FuturesBasisRunRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    /** @description Responses must not be cached. */
+                    "Cache-Control"?: "no-store";
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FuturesBasisPreflightResponse"];
+                };
+            };
+            /** @description invalid_request, request_too_large */
+            400: {
+                headers: {
+                    /** @description Responses must not be cached. */
+                    "Cache-Control"?: "no-store";
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FuturesBasisErrorResponse"];
+                };
+            };
+            /** @description HTTP access error */
+            401: {
+                headers: {
+                    /** @description Responses must not be cached. */
+                    "Cache-Control"?: "no-store";
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AuthErrorResponse"];
+                };
+            };
+            /** @description HTTP access error */
+            403: {
+                headers: {
+                    /** @description Responses must not be cached. */
+                    "Cache-Control"?: "no-store";
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AuthErrorResponse"];
+                };
+            };
+            /** @description internal_error */
+            500: {
+                headers: {
+                    /** @description Responses must not be cached. */
+                    "Cache-Control"?: "no-store";
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FuturesBasisErrorResponse"] | components["schemas"]["AuthErrorResponse"];
+                };
+            };
+        };
+    };
     submit_futures_basis_research_run: {
         parameters: {
             query?: never;

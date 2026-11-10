@@ -122,6 +122,11 @@ class Services:
         self.calls.append((name, "export"))
         return self.calendars[name] if name in self.calendars else getattr(self, name)
 
+    def coverage(self, request):
+        name = "futures" if hasattr(request, "product_codes") else "index"
+        self.calls.append((name, "coverage"))
+        return getattr(self, name).coverage
+
     def ensure(self, request):
         name = getattr(
             request, "exchange", "futures" if hasattr(request, "product_codes") else "index"

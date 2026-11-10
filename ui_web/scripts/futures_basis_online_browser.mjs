@@ -141,23 +141,39 @@ try {
   await historicalBasisAcceptance(page, presentationReport.data, output)
   await page.screenshot({ path: resolve(output, 'online-report.png'), fullPage: true })
   await page.screenshot({ path: resolve(output, 'online-overview.png') })
+  // Verify the Web-only today gate using a blocked public assessment without
+  // acquiring Source data or creating a Run.
+  await page.route('**/api/research/futures-basis/preflight', async route => {
+    const r = await route.fetch()
+    const result = await r.json()
+    result.submission = 'blocked'; result.today_gate = 'not_ready'
+    for (const item of result.dependencies) if (item.dependency === 'futures') {
+      item.state = 'needs_fetch'; item.reason_code = 'cache_incomplete'
+      item.message = '本地数据覆盖不完整，正式执行可能需要获取数据。'
+    }
+    await route.fulfill({ response: r, json: result })
+  })
+  await page.getByRole('button', { name: '重新检查输入' }).click()
+  await page.getByText('本地当日数据未就绪，请先完成数据准备，再重新检查。', { exact: true }).waitFor()
+  assert.equal(await page.getByRole('button', { name: '生成研究' }).isEnabled(), false)
+  assert.equal(evidence.filter(entry => entry.startsWith('/api/research/futures-basis/runs ')).length, 2)
+  await page.unroute('**/api/research/futures-basis/preflight')
   // An invalid future request must preserve the existing terminal report and URL.
   for (const [label, value] of [['开始日期', '2099-01-01'], ['结束日期', '2099-01-02']]) {
     await page.getByRole('textbox', { name: label, exact: true }).fill(value)
     await page.getByRole('textbox', { name: label, exact: true }).press('Enter')
   }
   assert.equal(evidence.filter(entry => entry.startsWith('/api/research/futures-basis/runs ')).length, 2)
-  const rejected = page.waitForResponse(r => r.request().method() === 'POST' && r.url().endsWith('/api/research/futures-basis/runs'))
-  await page.getByRole('button', { name: '生成研究' }).click()
-  assert.equal((await rejected).status(), 400)
-  await page.getByText(/FORM_ERROR：/).waitFor()
+  await page.getByText('输入检查失败，请重新检查').waitFor()
+  assert.equal(await page.getByRole('button', { name: '生成研究' }).isEnabled(), false)
+  assert.equal(evidence.filter(entry => entry.startsWith('/api/research/futures-basis/runs ')).length, 2)
   assert.equal(await page.locator('#section-5').count(), 1)
   assert.ok(page.url().includes(firstId))
   await page.reload()
   await page.locator('#section-5').waitFor()
   assert.ok(page.url().includes(firstId))
   const againAccepted = page.waitForResponse(r => r.request().method() === 'POST' && r.url().endsWith('/api/research/futures-basis/runs'))
-  // Refresh restores the immutable run but deliberately leaves new query controls empty.
+  // Refresh restores the immutable run; only the end date defaults to Shanghai today.
   await page.getByRole('combobox', { name: '品种', exact: true }).click()
   await page.getByTitle('IM', { exact: true }).click()
   for (const [label, value] of [['开始日期', '2024-10-18'], ['结束日期', '2024-10-21']]) {
