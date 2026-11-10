@@ -11,10 +11,14 @@ import { chromium } from 'playwright'
 
 const root = fileURLToPath(new URL('../../', import.meta.url))
 const output = await mkdtemp(resolve(tmpdir(), 'daily-data-evidence-'))
+const frontendPort = Number(process.env.DAILY_DATA_FRONTEND_PORT ?? 5173)
+const backendPort = Number(process.env.DAILY_DATA_BACKEND_PORT ?? 8011)
+const origin = `http://127.0.0.1:${frontendPort}`
+const backendOrigin = `http://127.0.0.1:${backendPort}`
 const report = { checks: [], downloads: [], errors: [], status: 'RUNNING' }
 const temporary = await mkdtemp(resolve(tmpdir(), 'daily-data-auth-'))
 const env = { ...process.env, LAB_AUTH_MODE: 'loopback-http',
-  LAB_AUTH_ORIGIN: 'http://127.0.0.1:5173',
+  LAB_AUTH_ORIGIN: origin,
   LAB_AUTH_JWT_SECRET: randomBytes(32).toString('base64url'),
   LAB_AUTH_DB_PATH: resolve(temporary, 'auth.sqlite3'),
   LAB_FUTURES_BASIS_RUN_ROOT: resolve(temporary, 'futures-basis-runs') }
@@ -50,16 +54,18 @@ function cli(...args) {
 try {
   // Fail instead of attaching to an unrelated developer's running servers.
   const { createServer } = await import('node:net')
-  for (const port of [8011, 5173]) {
+  for (const port of [backendPort, frontendPort]) {
     const server = createServer()
     await new Promise((done, reject) => server.once('error', reject).listen(port, '127.0.0.1', done))
     await new Promise((done) => server.close(done))
   }
   const backend = start('poetry', ['run', 'python', '-m', 'uvicorn', '--app-dir', 'ui_http/tests',
-    'http_support.daily_data_browser_app:create_app', '--factory', '--host', '127.0.0.1', '--port', '8011', '--no-proxy-headers'])
-  const frontend = start(process.execPath, ['node_modules/vite/bin/vite.js', '--strictPort'], resolve(root, 'ui_web'))
-  await ready('http://127.0.0.1:8011/auth/me', backend, 401)
-  await ready('http://127.0.0.1:5173/', frontend, 200)
+    'http_support.daily_data_browser_app:create_app', '--factory', '--host', '127.0.0.1', '--port', String(backendPort), '--no-proxy-headers'])
+  const configPath = resolve(temporary, 'vite.config.mjs')
+  await writeFile(configPath, `import react from '${resolve(root, 'ui_web/node_modules/@vitejs/plugin-react/dist/index.js')}'; export default { plugins: [react()], server: { host: '127.0.0.1', proxy: Object.fromEntries(['/auth', '/mo-option-chain', '/mo-option-premium-plane'].map(path => [path, '${backendOrigin}'])) } }`)
+  const frontend = start(process.execPath, ['node_modules/vite/bin/vite.js', '--strictPort', '--port', String(frontendPort), '--config', configPath], resolve(root, 'ui_web'))
+  await ready(`${backendOrigin}/auth/me`, backend, 401)
+  await ready(`${origin}/`, frontend, 200)
   browser = await chromium.launch({ headless: true,
     ...(process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH
       ? { executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH } : {}) })
@@ -79,10 +85,10 @@ try {
     const path = new URL(res.url()).pathname
     if (path.startsWith('/auth/') || path.startsWith('/mo-option')) evidence.push(`${path} ${res.status()}`)
   })
-  const anonymous = await context.request.get('http://127.0.0.1:5173/mo-option-chain')
+  const anonymous = await context.request.get(`${origin}/mo-option-chain`)
   assert.equal(anonymous.status(), 401)
-  assert.equal((await context.request.get('http://127.0.0.1:5173/mo-option-premium-plane')).status(), 401)
-  await page.goto('http://127.0.0.1:5173/')
+  assert.equal((await context.request.get(`${origin}/mo-option-premium-plane`)).status(), 401)
+  await page.goto(`${origin}/`)
   await page.getByRole('button', { name: '登录', exact: true }).waitFor()
   assert.equal(await page.getByRole('button', { name: 'MO Option Chain', exact: true }).count(), 0)
   assert.equal(evidence.some((entry) => entry.startsWith('/mo-option')), false)
@@ -175,6 +181,7 @@ try {
     for (const phrase of product.columns === 31 ? ['sparse Points', 'absent Point', 'null metric', 'numeric zero', 'futures: null'] : ['null price', 'numeric zero', 'futures: null', 'Call/Put grouping']) assert.ok(contextJson.metadata.reading_notes.join(' ').includes(phrase))
     assert.equal(contextText, JSON.stringify(contextJson, null, 2))
     safeContent(contextText)
+    await writeFile(resolve(output, `${product.prefix}-context.json`), contextText)
     const event = page.waitForEvent('download')
     await group.getByRole('button', { name: 'Export Context JSON', exact: true }).click()
     const file = await event
@@ -205,6 +212,7 @@ try {
     const destination = resolve(output, `${report.downloads.length}-${filename}`)
     await file.saveAs(destination); assert.equal(await file.failure(), null)
     const bytes = await readFile(destination)
+    await writeFile(resolve(output, `${product.prefix}.csv`), bytes)
     assert.deepEqual([...bytes.subarray(0, 3)], [239, 187, 191])
     const text = bytes.subarray(3).toString('utf8'); safeContent(text)
     assert.ok(text.endsWith('\r\n')); assert.ok(!/(?<!\r)\n|\r(?!\n)/.test(text))
@@ -236,6 +244,14 @@ try {
       await page.waitForTimeout(350) // Ant Design popup/sidebar transitions.
       await page.evaluate(() => window.scrollTo(0, 0))
       await page.waitForFunction(() => document.documentElement.scrollWidth <= innerWidth)
+      const actions = page.getByRole('group', { name: product.group, exact: true })
+      if (await actions.count()) {
+        assert.deepEqual(await actions.getByRole('button').allTextContents(), ['Copy Raw JSON', 'Copy Context JSON', 'Export CSV', 'Export Context JSON'])
+        for (const button of await actions.getByRole('button').all()) {
+          const box = await button.boundingBox()
+          assert.ok(box && box.x >= 0 && box.x + box.width <= width)
+        }
+      }
       const path = resolve(output, `${product.prefix}-${state}-${width}.png`)
       await page.screenshot({ path })
       report.screenshots = [...(report.screenshots ?? []), path]
@@ -250,7 +266,7 @@ try {
     return data
   }
   async function noActions() { assert.equal(await page.getByRole('button', { name: 'Export Context JSON', exact: true }).count(), 0); assert.equal(await page.getByRole('button', { name: 'Export CSV', exact: true }).count(), 0); assert.equal(await page.getByRole('button', { name: 'Copy Raw JSON', exact: true }).count(), 0); assert.equal(await page.getByRole('button', { name: 'Copy Context JSON', exact: true }).count(), 0) }
-  for (const product of products) {
+  for (const product of process.env.DAILY_DATA_LAYOUT_ONLY ? [] : products) {
     await page.setViewportSize({ width: 1440, height: 900 })
     const expand = page.getByRole('button', { name: '展开', exact: true })
     if (await expand.isVisible()) await expand.click()
@@ -280,8 +296,9 @@ try {
       await page.setViewportSize({ width, height })
       const beforeCalendar = requestCount
       // Open a known month without committing the typed date.
-      await input.fill('2026-09-16')
       await input.click()
+      await input.fill('2026-09-16')
+      await page.locator('.ant-picker-dropdown:not(.ant-picker-dropdown-hidden) td[title="2026-09-17"]').waitFor()
       const calendar = page.locator('.ant-picker-dropdown:not(.ant-picker-dropdown-hidden)')
       await calendar.waitFor()
       await page.waitForTimeout(350)
@@ -321,12 +338,15 @@ try {
     await page.getByRole('checkbox', { name: '2026-10-23', exact: true }).uncheck(); await unchanged()
     if (product.columns === 13) {
       await page.getByRole('button', { name: '扩大行权价视窗', exact: true }).click(); await unchanged()
+      const advanced = page.getByText('高级设置 · 图表颜色', { exact: true })
+      if (await advanced.count()) await advanced.click()
       const color = page.getByRole('button', { name: 'Call 颜色', exact: true })
       const previous = await color.innerText()
       await color.click()
       const hex = page.locator('.ant-color-picker-hex-input input')
       await hex.fill('123456'); await hex.press('Enter'); await page.keyboard.press('Escape')
       assert.notEqual(await color.innerText(), previous); await unchanged()
+      await screenshots(product, 'colors-expanded')
     } else {
       for (const name of ['Put', 'Same-expiry futures', 'Time value', 'Unannualized', 'Yield']) {
         const radio = page.getByRole('radio', { name, exact: true })
@@ -424,9 +444,84 @@ try {
     await copy(product, recovered); await download(product, recovered)
     passed(`${product.title}: idle/loading/error/invalid, late response, stale clipboard, failure feedback and recovery`)
   }
+  // Layout stress uses validated deterministic HTTP-shaped facts, never market I/O.
+  for (const product of products) {
+    await page.goto(`${origin}/data/${product.columns === 13 ? 'mo-option-chain' : 'mo-premium-plane'}`)
+    const seed = await (await context.request.get(`${origin}${product.path}?${product.columns === 13 ? 'target_trade_date' : 'as_of'}=2026-09-17&option_product=MO&price_type=close`)).json()
+    const dense = structuredClone(seed)
+    const dates = ['2026-09-25', '2026-10-23', '2026-11-27', '2026-12-25', '2027-01-22', '2027-02-26', '2027-03-26', '2027-04-23']
+    dense.expiries = dates.map((date, index) => ({ ...structuredClone(seed.expiries[index % seed.expiries.length]), expiry_date: date,
+      ...(product.columns === 31 ? { dte: 8 + index * 28 } : {}) }))
+    if (product.columns === 31) dense.points = dates.flatMap((date, index) => ['call', 'put'].flatMap(side => Array.from({ length: 80 }, (_, row) => ({
+      ...structuredClone(seed.points.find(point => point.option_type === side) ?? seed.points[0]),
+      expiry_date: date, option_type: side, strike: 6500 + row * 25,
+      instrument_id: `MO-${index}-${side}-${row}`,
+    }))))
+    const pattern = `**${product.path}?*`
+    await page.route(pattern, route => route.fulfill({ json: dense }))
+    await query(product, '2026-09-17')
+    const before = requestCount
+    await screenshots(product, 'dense')
+    for (const [width, height] of [[1440, 900], [1024, 768]]) {
+      await page.setViewportSize({ width, height })
+      await page.waitForTimeout(350) // Let the responsive breakpoint settle before selecting the toggle.
+      for (let transition = 0; transition < 2; transition++) {
+        await page.getByRole('button', { name: /^(展开导航|折叠导航)$/ }).click()
+        await page.waitForTimeout(350)
+        assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth))
+        if (product.columns === 13) {
+          await page.waitForFunction(() => {
+            const frame = document.querySelector('.chart-frame'), plot = frame?.querySelector('.js-plotly-plot')
+            return plot?._fullLayout && Math.abs(plot._fullLayout.width - frame.clientWidth) < 2
+          })
+        }
+      }
+      if (product.columns === 31) {
+        const body = page.locator('.premium-table .ant-table-body')
+        if (process.env.DAILY_DATA_LAYOUT_PHASE !== 'before') {
+          assert.ok(await body.evaluate(node => node.scrollHeight > node.clientHeight && node.scrollWidth > node.clientWidth))
+          await body.evaluate(node => { node.scrollTop = 500; node.scrollLeft = 700 })
+          assert.ok(await body.evaluate(node => {
+            const strike = node.querySelector('tr[data-row-key] > th')
+            return strike && getComputedStyle(strike).position === 'sticky' && Math.abs(strike.getBoundingClientRect().left - node.getBoundingClientRect().left) < 2
+          }))
+        }
+      }
+      await page.screenshot({ path: resolve(output, `${product.prefix}-dense-scrolled-${width}.png`), fullPage: true })
+    }
+    if (product.columns === 13) {
+      const plotFacts = await page.locator('.js-plotly-plot').evaluate(plot => ({ data: plot.data, shapes: plot.layout.shapes, annotations: plot.layout.annotations, xaxis: plot.layout.xaxis, yaxis: plot.layout.yaxis }))
+      await writeFile(resolve(output, 'chain-plot-facts.json'), JSON.stringify(plotFacts, null, 2))
+      await page.getByText('合约明细', { exact: true }).first().click()
+    } else {
+      await page.getByText('View raw response', { exact: true }).click()
+      assert.equal(await page.locator('.raw-response-code').innerText(), JSON.stringify(dense, null, 2))
+    }
+    await page.screenshot({ path: resolve(output, `${product.prefix}-evidence-expanded.png`), fullPage: true })
+    const raw = await copy(product, dense)
+    await writeFile(resolve(output, `${product.prefix}-raw.json`), raw)
+    await download(product, dense)
+    if (process.env.DAILY_DATA_BASELINE_EVIDENCE) {
+      const files = [`${product.prefix}-raw.json`, `${product.prefix}-context.json`, `${product.prefix}.csv`, ...(product.columns === 13 ? ['chain-plot-facts.json'] : [])]
+      for (const file of files) assert.deepEqual(await readFile(resolve(output, file)), await readFile(resolve(process.env.DAILY_DATA_BASELINE_EVIDENCE, file)), `Baseline bytes: ${file}`)
+      passed(`${product.title}: baseline Raw/Context/CSV bytes${product.columns === 13 ? ' and Plotly facts' : ''} unchanged`)
+    }
+    // Empty presentation remains successful with controls and complete copy sources.
+    const empty = structuredClone(dense)
+    if (product.columns === 13) empty.expiries.forEach(expiry => [...expiry.calls, ...expiry.puts].forEach(point => { point.price = null }))
+    else empty.points = empty.points.filter(point => point.option_type === 'put')
+    await page.unroute(pattern)
+    await page.route(pattern, route => route.fulfill({ json: empty }))
+    await query(product, '2026-09-18')
+    await screenshots(product, 'presentation-empty')
+    assert.ok(await page.getByText(product.columns === 13 ? '选中的到期日没有可绘制的价格。' : '当前选择下无 analytical observation；可调整期权类型或显示到期日。', { exact: true }).isVisible())
+    assert.equal(requestCount, before + 1)
+    await page.unroute(pattern)
+    passed(`${product.title}: dense layout, sidebar resizing, expanded evidence and legal presentation empty state`)
+  }
   await page.getByRole('button', { name: '退出登录', exact: true }).click()
   await page.getByRole('button', { name: '登录', exact: true }).waitFor()
-  for (const product of products) assert.equal((await context.request.get(`http://127.0.0.1:5173${product.path}`)).status(), 401)
+  for (const product of products) assert.equal((await context.request.get(`${origin}${product.path}`)).status(), 401)
   assert.deepEqual(report.errors, [])
   report.productRequests = requestCount
   passed('Logout protects both products; no page errors or credential leakage')

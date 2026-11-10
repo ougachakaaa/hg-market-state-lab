@@ -1,4 +1,4 @@
-import { Alert, Button, Card, Collapse, Descriptions, Empty, Flex, Space, Table, Typography } from 'antd'
+import { Alert, Button, Collapse, Empty, Flex, Space, Table, Typography } from 'antd'
 import type { TableColumnsType } from 'antd'
 import { serializeJson } from '../../../shared/clipboard/text'
 import { useClipboardWrite } from '../../../shared/clipboard/useClipboardWrite'
@@ -31,14 +31,10 @@ export function PremiumError({ asOf, priceType, error }: {
 
 export function PremiumSummary({ plane }: { plane: PremiumPlane }) {
   return (
-    <Card size="small" title={`${plane.observation.value} · ${plane.option_product}`}>
-      <Descriptions size="small" column={{ xs: 1, sm: 2, lg: 4 }} items={[
-        { key: 'observation', label: 'Observation', children: plane.observation.value },
-        { key: 'price-type', label: 'Price type', children: plane.price_type },
-        { key: 'underlying', label: 'Underlying', children: plane.underlying.instrument_id },
-        { key: 'spot', label: 'Spot', children: formatPlaneNumber(plane.underlying.price) },
-      ]} />
-    </Card>
+    <Space size="middle" wrap>
+      <Typography.Text strong>{plane.option_product} · {plane.underlying.instrument_id} · Spot {formatPlaneNumber(plane.underlying.price)}</Typography.Text>
+      <Typography.Text type="secondary">{plane.expiries.length} 个到期日</Typography.Text>
+    </Space>
   )
 }
 
@@ -53,7 +49,7 @@ export function PremiumPlaneTable({ plane, projection, representation }: {
 
   const columns: TableColumnsType<PremiumPlaneRow> = [
     {
-      key: 'strike', dataIndex: 'strike', fixed: 'left', width: 140, rowScope: 'row',
+      key: 'strike', dataIndex: 'strike', fixed: 'left', width: 140, align: 'right', rowScope: 'row',
       title: <Space orientation="vertical" size={0}><span>Strike</span><Typography.Text type="secondary">
         Spot · {formatPlaneNumber(plane.underlying.price)}
       </Typography.Text></Space>,
@@ -63,8 +59,9 @@ export function PremiumPlaneTable({ plane, projection, representation }: {
     ...projection.expiries.map((expiry, index) => ({
       key: expiry.expiry_date,
       width: 180,
+      align: 'right' as const,
       title: <Space orientation="vertical" size={0}>
-        <span>{expiry.expiry_date}</span>
+        <Typography.Text strong>{expiry.expiry_date}</Typography.Text>
         <Typography.Text type="secondary">DTE {expiry.dte}</Typography.Text>
         <Typography.Text type="secondary">{expiry.futures === null
           ? 'No eligible futures reference'
@@ -90,7 +87,7 @@ export function PremiumPlaneTable({ plane, projection, representation }: {
 
   return <Table className="premium-table" size="small" bordered columns={columns}
     dataSource={projection.rows} rowKey={(row) => String(row.strike)} pagination={false}
-    scroll={{ x: 'max-content' }} />
+    scroll={{ x: 'max-content', y: 'clamp(320px, 52vh, 600px)' }} />
 }
 
 export function RawResponseInspector({ payload }: { payload: unknown }) {

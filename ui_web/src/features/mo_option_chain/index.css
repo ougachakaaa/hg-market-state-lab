@@ -4,7 +4,6 @@
 .option-chain-page .spot-reference { border-left: 3px dashed #64748b; padding-left: .5rem; }
 .option-chain-page .chart-legends { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: start; gap: 1rem 2rem; margin: 1rem 0 .25rem; }
 .option-chain-page .chart-legend { min-width: 0; }
-.option-chain-page .chart-legend h4 { margin: 0 0 .4rem; font-size: .85rem; color: #475569; }
 .option-chain-page .chart-legend-items { display: flex; flex-wrap: wrap; gap: .35rem 1rem; margin: 0; padding: 0; list-style: none; font-size: .8rem; }
 .option-chain-page .chart-legend-items li { display: inline-flex; align-items: center; gap: .35rem; white-space: nowrap; }
 .option-chain-page .chart-futures-legend { justify-self: end; text-align: right; }

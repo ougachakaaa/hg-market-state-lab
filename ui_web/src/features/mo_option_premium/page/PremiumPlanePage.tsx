@@ -9,11 +9,10 @@ export default function PremiumPlanePage() {
 
   return (
     <div className="premium-page">
-      <Space orientation="vertical" size="middle" style={{ display: 'flex' }}>
+      <Space orientation="vertical" size="small" style={{ display: 'flex', minWidth: 0 }}>
         <header>
-          <Typography.Text type="secondary">hg-market-state-lab</Typography.Text>
-          <Typography.Title level={1}>MO 年化权利金平面</Typography.Title>
-          <Typography.Paragraph>选择观察日期与价格口径，查看稀疏期权权利金数据。</Typography.Paragraph>
+          <Typography.Title level={1} style={{ margin: 0, fontSize: 24 }}>MO 年化权利金平面</Typography.Title>
+          <Typography.Paragraph type="secondary" style={{ marginBottom: 0 }}>选择观察日期与价格口径，查看稀疏期权权利金数据。</Typography.Paragraph>
         </header>
         <PremiumQueryControls selectedDate={state.selectedDate} priceType={state.priceType}
           selectDate={state.selectDate} selectPriceType={state.selectPriceType} />
@@ -23,10 +22,12 @@ export default function PremiumPlanePage() {
         {state.page.status === 'error' && <PremiumError asOf={state.page.asOf} priceType={state.page.priceType} error={state.page.error} />}
         {state.page.status === 'success' && state.projection !== null && (
           <section aria-label="Premium plane results">
-            <Space orientation="vertical" size="middle" style={{ display: 'flex' }}>
+            <Space orientation="vertical" size="small" style={{ display: 'flex', minWidth: 0 }}>
               <Typography.Text type="secondary" role="status" aria-live="polite">已加载 {state.page.plane.observation.value} · {state.page.plane.price_type}</Typography.Text>
-              <PremiumSummary plane={state.page.plane} />
-              <PremiumCopyActions plane={state.page.plane} rawPayload={state.page.rawPayload} />
+              <Flex gap="small" wrap align="center" justify="space-between">
+                <PremiumSummary plane={state.page.plane} />
+                <PremiumCopyActions plane={state.page.plane} rawPayload={state.page.rawPayload} />
+              </Flex>
               <PremiumPresentationControls optionType={state.selectedOptionType}
                 referenceBasis={state.selectedReferenceBasis} valueBasis={state.selectedValueBasis}
                 timeNormalization={state.selectedTimeNormalization} representation={state.selectedRepresentation}
@@ -37,7 +38,7 @@ export default function PremiumPlanePage() {
                 toggleExpiry={state.toggleExpiry} />
               <PremiumPlaneTable plane={state.page.plane} projection={state.projection}
                 representation={state.selectedRepresentation} />
-              <Typography.Text type="secondary">Blank = no Point; — = metric unavailable for a real Point.</Typography.Text>
+              <Typography.Text type="secondary">空白 = 无 Point；— = 真实 Point 的指标不可用。</Typography.Text>
               <RawResponseInspector key={`${state.page.plane.observation.value}-${state.page.plane.price_type}`}
                 payload={state.page.rawPayload} />
             </Space>

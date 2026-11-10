@@ -1,7 +1,7 @@
 import dayjs from 'dayjs'
 import 'dayjs/locale/zh-cn'
 import zhCN from 'antd/es/date-picker/locale/zh_CN'
-import { Button, Card, Checkbox, ColorPicker, Flex, Form, DatePicker, Space, Typography } from 'antd'
+import { Button, Checkbox, ColorPicker, Flex, Form, DatePicker, Space, Typography } from 'antd'
 import type { ExpiryGroup } from '../api/moOptionChain'
 import type { ExpiryColors } from '../charts/expiryPalette'
 import type { SeriesColors } from '../model/presentationState'
@@ -62,7 +62,8 @@ export function ExpirySelector({ expiries, selectedExpiries, palette, toggleExpi
 }) {
   const selectedSet = new Set(selectedExpiries)
   return (
-    <Card size="small" title="显示到期日">
+    <Space orientation="vertical" size="small" role="group" aria-label="显示到期日">
+      <Typography.Text strong>显示到期日</Typography.Text>
       <Flex gap="small" wrap>
         {expiries.map((group) => (
           <Checkbox key={group.expiry_date} checked={selectedSet.has(group.expiry_date)}
@@ -73,7 +74,7 @@ export function ExpirySelector({ expiries, selectedExpiries, palette, toggleExpi
           </Checkbox>
         ))}
       </Flex>
-    </Card>
+    </Space>
   )
 }
 
@@ -82,7 +83,7 @@ export function SeriesColorControls({ colors, changeColor }: {
   changeColor: (side: keyof SeriesColors, color: string) => void
 }) {
   return (
-    <Card size="small" title="图表颜色">
+    <div>
       <Space size="large" wrap role="group" aria-label="图表颜色">
         {(['call', 'put', 'futures'] as const).map((side) => (
           <Flex key={side} align="center" gap="small">
@@ -96,6 +97,6 @@ export function SeriesColorControls({ colors, changeColor }: {
           </Flex>
         ))}
       </Space>
-    </Card>
+    </div>
   )
 }

@@ -32,7 +32,7 @@ function ChartLegends({ projection, palette }: {
   return (
     <div className="chart-legends" aria-label="图表图例">
       <section className="chart-legend chart-option-legend" aria-label="Call 与 Put 图例">
-        <h4>Call / Put</h4>
+        <Typography.Text type="secondary">Call / Put</Typography.Text>
         <ul className="chart-legend-items">
           {optionSeries.map(({ expiryDate, side }) => (
             <li key={`${expiryDate}-${side}`}>
@@ -44,7 +44,7 @@ function ChartLegends({ projection, palette }: {
       </section>
       {futuresGroups.length > 0 && (
         <section className="chart-legend chart-futures-legend" aria-label="Futures 图例">
-          <h4>Futures</h4>
+          <Typography.Text type="secondary">Futures</Typography.Text>
           <ul className="chart-legend-items">
             {futuresGroups.map((group) => (
               <li key={group.expiry_date}>
@@ -80,7 +80,7 @@ export default function CombinedExpiryChart({ chain, selectedExpiries, xDomain, 
   const projection = projectCombinedChain(chain, selectedExpiries, xDomain)
   const figure = buildCombinedPlot(chain, projection, xDomain, palette)
   return (
-    <Card size="small" role="region" aria-label="合并到期日分析图" title="价格分布">
+    <Card size="small" role="region" aria-label="合并到期日分析图" title="价格分布" styles={{ body: { padding: token.paddingXS } }}>
       <Typography.Paragraph className="spot-reference">
         Spot：{chain.underlying.instrument_id} · {formatPrice(chain.underlying.price)}
       </Typography.Paragraph>

@@ -353,3 +353,16 @@ it('keeps price selection local until a valid date is committed and announces th
   expect(screen.getByRole('status').textContent).toContain('请选择观察日期')
   expect(fetch).toHaveBeenCalledTimes(1)
 })
+
+it('keeps four metric dimensions cohesive and separates side, expiries and evidence', async () => {
+  const { fetch, results } = await load()
+  const metrics = within(results).getByRole('group', { name: '指标设置' })
+  expect(within(metrics).getAllByRole('radio')).toHaveLength(8)
+  expect(within(within(results).getByRole('group', { name: '期权类型' })).getAllByRole('radio')).toHaveLength(2)
+  expect(within(within(results).getByRole('group', { name: '显示到期日' })).getAllByRole('checkbox')).toHaveLength(2)
+  expect(results.querySelector('.ant-table-body')).toBeTruthy()
+  expect(results.querySelector('.raw-response-code')).toBeNull()
+  expect(within(results).getByRole('group', { name: 'MO Premium Plane copy actions' })
+    .compareDocumentPosition(metrics) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+  expect(fetch).toHaveBeenCalledTimes(1)
+})

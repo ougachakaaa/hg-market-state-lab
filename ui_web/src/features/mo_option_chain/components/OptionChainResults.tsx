@@ -29,14 +29,10 @@ export function OptionChainError({ date, error }: { date: string; error: ChainRe
 
 export function OptionChainSummary({ chain }: { chain: OptionChain }) {
   return (
-    <Card size="small" title={`${chain.target_trade_date} · ${chain.option_product}`}>
-      <Descriptions size="small" column={{ xs: 1, sm: 2, lg: 4 }} items={[
-        { key: 'price-type', label: '价格口径', children: chain.price_type },
-        { key: 'underlying', label: '标的指数', children: chain.underlying.instrument_id },
-        { key: 'reference', label: '参考价', children: formatPrice(chain.underlying.price) },
-        { key: 'expiries', label: '到期日数量', children: chain.expiries.length },
-      ]} />
-    </Card>
+    <Space size="middle" wrap>
+      <Typography.Text strong>{chain.option_product} · {chain.underlying.instrument_id} · Spot {formatPrice(chain.underlying.price)}</Typography.Text>
+      <Typography.Text type="secondary">{chain.expiries.length} 个到期日</Typography.Text>
+    </Space>
   )
 }
 
@@ -92,5 +88,5 @@ export function ExpiryDetails({ groups, palette }: {
     </Space>
   )
 }
-import { Alert, Card, Collapse, Descriptions, Empty, Flex, Space, Table, Typography } from 'antd'
+import { Alert, Card, Collapse, Empty, Flex, Space, Table, Typography } from 'antd'
 import type { TableColumnsType } from 'antd'
