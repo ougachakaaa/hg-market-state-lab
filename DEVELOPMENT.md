@@ -194,6 +194,10 @@ Generate Research。Run ID 写入 URL；刷新和浏览器前进/后退会重新
 显式传入已有报告目录的用法。运行结果见
 [WP8-B acceptance](ui_web/src/features/futures_basis_research/ACCEPTANCE.md)。
 
+### Daily Data Copy / Export browser acceptance
+
+在 `ui_web/` 执行 `npm run test:daily-data-copy-export-browser`，Chromium、系统库与空闲端口要求同 Auth browser smoke。脚本经过真实注册、审批、登录与应用页面，使用独立 synthetic providers 和临时 Auth 库，验证真实 Clipboard、CSV download、presentation independence 与 failure/stale lifecycle。下载文件和 `acceptance.json` 保留在输出所示的系统临时目录；认证材料删除，服务和浏览器关闭。成功路径不 mock Clipboard 或 download。
+
 ### Research Explorer
 
 登录后选择 Research Explorer，浏览 Publication 列表并按需翻页；选择 Publication 查看声明 scope 和 Jobs，再选择 Analysis 检查原始结果、Coverage 与 provenance。点击 quantile、count 或 frequency 才读取对应 View。浏览不会执行 Research；服务端验证容量不足时可手动重试。

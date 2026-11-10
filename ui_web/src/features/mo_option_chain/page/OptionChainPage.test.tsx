@@ -1,5 +1,8 @@
+import { captureCsvDownloads } from '../../../test/csvDownload'
+import { optionChainCsv } from '../model/csvExport'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { cleanup, fireEvent, render, screen, within } from '@testing-library/react'
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
+import type { OptionChain } from '../api/moOptionChain'
 import type { PlotParams } from 'react-plotly.js'
 import OptionChainPage from './OptionChainPage'
 import { createRequestBoundary, installRequestBoundary } from '../../../shared/http/protectedRequest'
@@ -14,7 +17,7 @@ vi.mock('react-plotly.js', () => ({
   ),
 }))
 
-const chain = {
+const chain: OptionChain = {
   target_trade_date: '2026-09-17', option_product: 'MO', price_type: 'close',
   underlying: { instrument_id: '000852.SH', price: 7312.45 },
   expiries: [
@@ -60,6 +63,8 @@ async function load(body: unknown = chain) {
 afterEach(() => {
   cleanup()
   vi.unstubAllGlobals()
+  vi.restoreAllMocks()
+  Reflect.deleteProperty(navigator, 'clipboard')
 })
 
 describe('MO option chain combined page', () => {
@@ -286,4 +291,193 @@ describe('MO option chain combined page', () => {
     const alert = await screen.findByRole('alert')
     expect(within(alert).getByText('无法连接数据服务')).toBeTruthy()
   })
+})
+
+function clipboard(writeText = vi.fn().mockResolvedValue(undefined)) {
+  Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText } })
+  return writeText
+}
+function copyActions() { return within(screen.getByRole('group', { name: 'MO Option Chain copy actions' })) }
+async function copied(button: string) {
+  fireEvent.click(copyActions().getByRole('button', { name: button }))
+  await waitFor(() => expect(copyActions().getAllByRole('status').some((node) => node.textContent === 'Copied')).toBe(true))
+}
+
+describe('complete current-result copy', () => {
+  it.each(['missing', 'reject', 'resolve'])('reports Clipboard %s without internal errors', async (mode) => {
+    const write = clipboard(mode === 'reject' ? vi.fn().mockRejectedValue(new Error('private permission details')) : vi.fn().mockResolvedValue(undefined))
+    if (mode === 'missing') Reflect.deleteProperty(navigator, 'clipboard')
+    await load()
+    fireEvent.click(copyActions().getByRole('button', { name: 'Copy Raw JSON' }))
+    await waitFor(() => expect(copyActions().getByRole('status').textContent).toBe(mode === 'resolve' ? 'Copied' : 'Copy failed'))
+    expect(screen.queryByText(/private permission details/)).toBeNull()
+    if (mode !== 'missing') expect(write).toHaveBeenCalledWith(JSON.stringify(chain, null, 2))
+  })
+  it.each([[false, false], [false, true], [true, false], [true, true]])('ignores old copy feedback after a new query (reject=%s, whileLoading=%s)', async (rejects, whileLoading) => {
+    let finish!: () => void
+    let fail!: (error: Error) => void
+    const write = clipboard(vi.fn().mockImplementationOnce(() => new Promise<void>((resolve, reject) => { finish = resolve; fail = reject })).mockResolvedValue(undefined))
+    await load()
+    let finishQuery!: (value: Response) => void
+    vi.mocked(fetch).mockImplementationOnce(() => new Promise<Response>((resolve) => { finishQuery = resolve }))
+    fireEvent.click(copyActions().getByRole('button', { name: 'Copy Raw JSON' }))
+    expect(copyActions().queryByRole('status')).toBeNull()
+    expect(copyActions().getAllByRole<HTMLButtonElement>('button').every((b) => b.disabled)).toBe(true)
+    fireEvent.change(screen.getByLabelText('目标交易日'), { target: { value: '2026-09-22' } })
+    expect(screen.queryByRole('group', { name: 'MO Option Chain copy actions' })).toBeNull()
+    if (!whileLoading) await act(async () => { finishQuery(response(chain)) })
+    await act(async () => { if (rejects) fail(new Error('denied')); else finish() })
+    if (whileLoading) await act(async () => { finishQuery(response(chain)) })
+    await screen.findByRole('region', { name: '期权链结果' })
+    expect(copyActions().queryByRole('status')).toBeNull()
+    await copied('Copy Context JSON')
+    expect(write).toHaveBeenCalledTimes(2)
+    fireEvent.change(screen.getByLabelText('目标交易日'), { target: { value: '' } })
+    expect(screen.queryByRole('button', { name: 'Copy Raw JSON' })).toBeNull()
+    expect(screen.queryByRole('button', { name: 'Export CSV' })).toBeNull()
+    expect(screen.queryByRole('button', { name: 'Export Context JSON' })).toBeNull()
+  })
+  it.each(['invalid', 'network'])('has no copy source in idle/loading/%s states', async (mode) => {
+    let finish!: (value: Response) => void
+    let fail!: (error: Error) => void
+    vi.stubGlobal('fetch', vi.fn().mockImplementation(() => new Promise<Response>((resolve, reject) => { finish = resolve; fail = reject })))
+    render(<OptionChainPage />)
+    expect(screen.queryByRole('button', { name: 'Copy Raw JSON' })).toBeNull()
+    expect(screen.queryByRole('button', { name: 'Export CSV' })).toBeNull()
+    expect(screen.queryByRole('button', { name: 'Export Context JSON' })).toBeNull()
+    fireEvent.change(screen.getByLabelText('目标交易日'), { target: { value: '2026-09-17' } })
+    expect(screen.queryByRole('button', { name: 'Copy Raw JSON' })).toBeNull()
+    expect(screen.queryByRole('button', { name: 'Export CSV' })).toBeNull()
+    expect(screen.queryByRole('button', { name: 'Export Context JSON' })).toBeNull()
+    await act(async () => { if (mode === 'network') fail(new Error('offline')); else finish(response({ invalid: true })) })
+    await screen.findByRole('alert')
+    expect(screen.queryByRole('button', { name: 'Copy Raw JSON' })).toBeNull()
+    expect(screen.queryByRole('button', { name: 'Export CSV' })).toBeNull()
+    expect(screen.queryByRole('button', { name: 'Export Context JSON' })).toBeNull()
+    expect(screen.queryByRole('button', { name: 'Copy Context JSON' })).toBeNull()
+  })
+  it('copies only the newer response even if an older request completes late', async () => {
+    const write = clipboard()
+    const download = captureCsvDownloads()
+    const pending: Array<(value: Response) => void> = []
+    const fetch = vi.fn().mockImplementation(() => new Promise<Response>((resolve) => pending.push(resolve)))
+    vi.stubGlobal('fetch', fetch)
+    render(<OptionChainPage />)
+    fireEvent.change(screen.getByLabelText('目标交易日'), { target: { value: '2026-09-17' } })
+    fireEvent.change(screen.getByLabelText('目标交易日'), { target: { value: '2026-09-22' } })
+    const current = { ...chain, target_trade_date: '2026-09-22' }
+    await act(async () => { pending[1](response(current)) })
+    await screen.findByRole('region', { name: '期权链结果' })
+    await act(async () => { pending[0](response(chain)) })
+    await copied('Copy Raw JSON')
+    expect(write).toHaveBeenLastCalledWith(JSON.stringify(current, null, 2))
+    fireEvent.click(copyActions().getByRole('button', { name: 'Export CSV' }))
+    expect(await download.text()).toBe(optionChainCsv(current).csv)
+    expect(download.filenames).toEqual([optionChainCsv(current).filename])
+    expect(fetch).toHaveBeenCalledTimes(2)
+  })
+})
+
+it('copies full chain and response context independently of all display controls', async () => {
+  const write = clipboard()
+  await load()
+  const raw = JSON.stringify(chain, null, 2)
+  await copied('Copy Raw JSON')
+  expect(write).toHaveBeenLastCalledWith(raw)
+  const controls = [
+    () => fireEvent.click(screen.getByRole('checkbox', { name: '2026-10-23' })),
+    () => fireEvent.click(screen.getByRole('button', { name: '扩大行权价视窗' })),
+    () => changeSeriesColor('Call 颜色', '#e11d48'),
+    () => changeSeriesColor('Put 颜色', '#00ff00'),
+    () => changeSeriesColor('Futures 颜色', '#ff00ff'),
+  ]
+  for (const change of controls) {
+    change()
+    await copied('Copy Raw JSON')
+    expect(write).toHaveBeenLastCalledWith(raw)
+  }
+  await copied('Copy Context JSON')
+  const context = JSON.parse(write.mock.calls.at(-1)![0] as string)
+  expect(context.format_version).toBe('daily-data-context-v1')
+  expect(context.metadata.product).toBe('MO Option Chain')
+  expect(context.metadata.response_identity).toEqual({ target_trade_date: chain.target_trade_date, option_product: chain.option_product, price_type: chain.price_type, underlying_instrument_id: chain.underlying.instrument_id })
+  expect(context.data).toEqual(JSON.parse(raw))
+  expect(context.metadata.reading_notes.join(' ')).toContain('null price')
+  expect(context.metadata.reading_notes.join(' ')).toContain('numeric zero')
+  expect(context.metadata.reading_notes.join(' ')).toContain('futures: null')
+  expect(context.metadata.reading_notes.join(' ')).toContain('Call/Put grouping')
+  expect(fetch).toHaveBeenCalledTimes(1)
+})
+
+it('downloads complete CSV across viewport, hidden expiry and every color control without refetching', async () => {
+  const write = clipboard()
+  const download = captureCsvDownloads()
+  await load()
+  expect(copyActions().getAllByRole('button').map((b) => b.textContent)).toEqual(['Copy Raw JSON', 'Copy Context JSON', 'Export CSV', 'Export Context JSON'])
+  const controls = [
+    () => {},
+    () => fireEvent.click(screen.getByRole('checkbox', { name: '2026-10-23' })),
+    () => fireEvent.click(screen.getByRole('button', { name: '扩大行权价视窗' })),
+    () => changeSeriesColor('Call 颜色', '#e11d48'),
+    () => changeSeriesColor('Put 颜色', '#00ff00'),
+    () => changeSeriesColor('Futures 颜色', '#ff00ff'),
+  ]
+  for (const change of controls) {
+    change()
+    fireEvent.click(copyActions().getByRole('button', { name: 'Export CSV' }))
+    const csv = await download.text()
+    expect(csv).toBe(optionChainCsv(chain).csv)
+    expect(csv.split('\r\n').length - 2).toBe(8)
+    expect(csv).toContain(',call,A-out,8000,2000\r\n')
+    expect(csv).toContain(',put,A-null,7300,null\r\n')
+    expect(csv).toContain(',put,A-zero,7100,0\r\n')
+    expect(csv).toContain('2026-11-27,false,null,null,call,C-call')
+    expect(copyActions().getAllByRole('status').some((node) => node.textContent === 'Download started')).toBe(true)
+    await copied('Copy Context JSON')
+    const contextText = write.mock.calls.at(-1)![0] as string
+    expect(JSON.parse(contextText).data).toEqual(chain)
+    fireEvent.click(copyActions().getByRole('button', { name: 'Export Context JSON' }))
+    expect(await download.text()).toBe(contextText)
+    expect(download.blobs.at(-1)!.type).toBe('application/json;charset=utf-8')
+    expect(download.filenames.at(-1)).toBe(`mo-option-chain_${chain.target_trade_date}_${chain.price_type}_context.json`)
+  }
+  expect(fetch).toHaveBeenCalledTimes(1)
+})
+
+it('uses returned chain identity for CSV and filename, including header-only success', async () => {
+  const download = captureCsvDownloads()
+  const current = { ...chain, target_trade_date: '2026-09-23', price_type: 'high' as const, expiries: [] }
+  await load(current)
+  fireEvent.click(copyActions().getByRole('button', { name: 'Export CSV' }))
+  expect(await download.text()).toBe(optionChainCsv(current).csv)
+  expect((await download.text()).split('\r\n')).toHaveLength(2)
+  expect(download.filenames).toEqual(['mo-option-chain_2026-09-23_high.csv'])
+  expect(fetch).toHaveBeenCalledTimes(1)
+})
+
+it.each(['Export CSV', 'Export Context JSON'])('reports failed export without false success or internal detail and allows retry', async (button) => {
+  const download = captureCsvDownloads()
+  download.create.mockImplementationOnce(() => { throw new Error('private detail') })
+  await load()
+  fireEvent.click(copyActions().getByRole('button', { name: button }))
+  expect(copyActions().getByRole('status').textContent).toBe('Export failed')
+  expect(screen.queryByText(/private detail/)).toBeNull()
+  fireEvent.click(copyActions().getByRole('button', { name: button }))
+  if (button === 'Export CSV') expect(await download.text()).toBe(optionChainCsv(chain).csv)
+  else expect(JSON.parse(await download.text()).data).toEqual(chain)
+  expect(copyActions().getAllByRole('status').some((node) => node.textContent === 'Download started')).toBe(true)
+  expect(fetch).toHaveBeenCalledTimes(1)
+})
+
+it('removes CSV actions immediately on a new query and keeps them absent on HTTP failure', async () => {
+  await load()
+  let finish!: (value: Response) => void
+  vi.mocked(fetch).mockImplementationOnce(() => new Promise<Response>((resolve) => { finish = resolve }))
+  fireEvent.change(dateInput(), { target: { value: '2026-09-18' } })
+  expect(screen.queryByRole('button', { name: 'Export CSV' })).toBeNull()
+  expect(screen.queryByRole('button', { name: 'Export Context JSON' })).toBeNull()
+  await act(async () => finish(response({ error: { kind: 'date_not_available', detail: 'Unavailable', param: 'target_trade_date' } }, 404)))
+  await screen.findByRole('alert')
+  expect(screen.queryByRole('button', { name: 'Export CSV' })).toBeNull()
+  expect(screen.queryByRole('button', { name: 'Export Context JSON' })).toBeNull()
 })

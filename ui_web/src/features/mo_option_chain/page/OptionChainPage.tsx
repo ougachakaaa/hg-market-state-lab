@@ -1,4 +1,5 @@
 import { Empty, Flex, Space, Spin, Typography } from 'antd'
+import { OptionChainCopyActions } from '../components/OptionChainCopyActions'
 import { OptionChainQueryControl, StrikeViewportControl } from '../components/OptionChainControls'
 import { OptionChainError, OptionChainSummary } from '../components/OptionChainResults'
 import { OptionChainVisualization } from '../components/OptionChainVisualization'
@@ -24,6 +25,7 @@ export default function OptionChainPage() {
           <section aria-label="期权链结果">
             <Space orientation="vertical" size="middle" style={{ display: 'flex' }}>
               <OptionChainSummary chain={state.page.chain} />
+              <OptionChainCopyActions chain={state.page.chain} />
               <StrikeViewportControl halfRangePoints={state.strikeHalfRangePoints}
                 shrink={state.shrinkViewport} expand={state.expandViewport} />
               {state.page.chain.expiries.length === 0

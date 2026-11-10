@@ -143,6 +143,8 @@ V1 formatting：
 
 Representation 唯一决定 metric formatting：points 使用 1 decimal，yield 使用 percentage 2 decimals。negative yield 保留负号，zero 按 `0.0` 或 `0.00%` 显示，null 显示 `—`。例如 `7312.45 → 7312.5`、`3825.24 → 3825.2`、`-12.34 → -12.3`、`0.0998 → 9.98%`。Formatting 只影响 display，不改变排序、reference comparison、identity、request 或 backend numeric facts。
 
+第 7、10 节的完整 JSON 查看与复制不应用这些 display formatting；yield 保持响应 numeric ratio，不转换为百分数字符串。
+
 Premium table 最左侧 strike header 同时显示 `response.underlying.price`，语义为“行权价 / 标的现价 · {formatted price}”。它复用上述 underlying price formatting，只是 presentation context，不重新请求或计算 market fact。
 
 ## 6. Strike Relative-to-Reference Coloring
@@ -183,11 +185,11 @@ runtime contract validation
 validated PremiumPlane
 ```
 
-只有 validation 成功时，validated plane 与其对应 raw payload 才共同进入 complete-result state。contract-invalid payload 继续进入既有 invalid-response failure path，不得作为 Inspector success data。无需为 byte-identical HTTP body 引入复杂度；`JSON.stringify(payload, null, 2)` 形式的完整 payload 即满足边界。
+只有 validation 成功时，validated plane 与其对应 raw payload 才共同进入 complete-result state。contract-invalid payload 继续进入既有 invalid-response failure path，不得作为 Inspector success data。完整 JSON serialization 遵循 [Daily Data Copy / Export authority](../../../data-copy-export.md#1-copy-raw-json)，无需恢复 byte-identical HTTP body。
 
-Inspector 展开后使用可读的 pretty JSON，并提供明确的“复制 JSON”能力与轻量可见反馈。复制内容必须是完整 payload，不是 filtered expiries、selected side、selected metric、formatted number 或其他 derived presentation。
+Inspector 展开后继续使用可读的完整 pretty JSON，并保留明确的“复制 JSON”能力。它与第 10 节顶部复制入口使用同一成功状态中的 `rawPayload`；复制反馈与失败边界遵循共同 authority，不另行维护过滤后的 JSON。顶部入口不要求展开 Inspector，也不替代其完整查看能力。
 
-Raw payload 的 current identity 与 `as_of + resolved price_type` query identity 一致。新 query 开始时，旧 validated response 与旧 raw payload 必须同时退出 current-result state；idle、loading 或 failure 不显示上一笔 payload 为当前响应。V1 不要求展示 backend error body、历史 payload 或发起第二次请求获取 raw data。
+Raw payload 对应第 2 节完整 query identity（含固定的 `option_product=MO`）；当前结果身份由返回的 `observation.kind/value`、`option_product`、resolved `price_type` 与 underlying identity 确定，而不是读取可能已变化的输入控件。Current-result lifecycle 遵循共同 authority 与第 8 节；旧 validated response 与旧 raw payload 必须同时退出当前结果。V1 不要求展示 backend error body、历史 payload 或发起第二次请求获取 raw data。
 
 ## 8. Loading, Complete and Failure States
 
@@ -227,3 +229,45 @@ market interpretation, Premium Edge, forecast or decision system
 ```
 
 MO Option Chain 与 Premium Plane 保持两个独立 frontend vertical slices；本 slice 只展示 backend facts，不推导推荐 strike、cheap/expensive、交易信号或交易建议。
+
+## 10. Daily Data Copy / Export
+
+Raw / Context JSON 复制与 CSV / Context JSON 导出的格式、成功状态限制、顶部入口、Clipboard 反馈与安全边界遵循 [Daily Data Copy / Export authority](../../../data-copy-export.md)。本节只拥有 Premium Plane 特有的 source 与 context。
+
+Copy Raw JSON 与 Context JSON 的 data 均使用第 7 节中当前成功状态保留的完整 `rawPayload`，不使用 `projection` 或重建的 table/grid。Context JSON 上下文取同一次成功响应的 validated plane；二者必须对应同一 payload。Call/Put、四个 metric selections、expiry visibility、颜色和 display formatting 不改变任何复制内容；全部 Points、全部 expiries 与全部 metric leaves 均保留。
+
+Context JSON 的产品名称为 `MO Premium Plane`；上下文读取响应中的 `observation.kind`、`observation.value`、`option_product`、resolved `price_type` 和 `underlying.instrument_id`，不得把当前 `as_of` 或 price-type 控件当作响应身份。
+
+简短阅读说明限定为 [HTTP contract](../../../../ui_http/products/mo_option_premium/http-contract.md#5-absence-null-and-zero) 已确认的事实：plane 是 sparse Points；不存在的 Point 与真实 Point 内的 null metric 不等价，numeric `0` 也不等于 `null`；没有合法同到期期货 reference 时 `futures` 可以为 `null`，不得寻找替代 reference。说明不重新计算 metric 或补齐 plane。
+
+### Context JSON V1
+
+`metadata.product` 为 `MO Premium Plane`，`metadata.response_identity` 包含 `observation: { kind, value }`、`option_product`、`price_type` 与 `underlying_instrument_id`（取 `underlying.instrument_id`）。`metadata.reading_notes` 将上述既有阅读说明组织为字符串数组，保留原解释，不新增业务推断。Context envelope 与格式版本遵循共同 authority。
+
+`Copy Context JSON` 与 `Export Context JSON` 必须使用同一个 feature-local serializer；文件名为 `mo-premium-plane_{observation.value}_{price_type}_context.json`。身份来自同次 validated response；安全文件名、UTF-8、下载反馈与资源清理遵循共同 authority。
+
+### CSV V1
+
+Source 为当前成功状态的完整 validated `plane`，Raw JSON 与 Context JSON 的 data 仍使用同次响应 rawPayload。每个真实 `points[]` item 生成一行，不使用 projection.rows、selected metric、strike union 或 displayed cells。固定前 15 列：
+
+```text
+observation_kind, observation_value, option_product, price_type,
+underlying_instrument_id, underlying_price,
+expiry_date, dte, futures_present, futures_instrument_id, futures_price,
+instrument_id, option_type, strike, premium
+```
+
+Observation/product/price type/underlying 来自 response-level context；expiry_date、instrument_id、option_type、strike、premium 直接取 Point。以 Point.expiry_date 查同次响应唯一 expiry context 取得 dte/futures，不重新计算 DTE；缺失或重复 context 明确失败，不补值或丢行。
+
+随后展开全部 16 个 metric leaves，列名为 `metric_{reference_basis}_{value_basis}_{time_normalization}_{representation}`，按下列各轴嵌套顺序生成：
+
+```text
+reference_basis: underlying_spot, expiry_futures
+value_basis: total, time_value
+time_normalization: unannualized, annualized
+representation: points, yield
+```
+
+直接读取 backend leaf，不计算 premium/time value/annualization/yield，yield 保持原始 ratio。总计 31 列。保留 backend points 顺序：expiry_date ascending → call before put → strike ascending → instrument_id ascending。行数恰为 plane.points.length；无 Point expiry 不生成行。纯 CSV serializer 对全无 Point 的输入防御性输出 header-only；这不表示合法 HTTP 成功，HTTP contract §5.4 要求成功至少包含一个真实 Point，否则返回 `503 premium_plane_unavailable`。若收到结构可解析但 `points=[]` 的 HTTP 200，frontend 按 `invalid_response` 失败呈现，不暴露复制或导出入口，也不自行重分类为 backend 503。Null、zero 与 Point absence 不混淆，不按 expiry × strike × side 生成行。
+
+文件名为 `mo-premium-plane_{observation.value}_{price_type}.csv`，身份来自响应；编码、安全与下载遵循共同 authority。

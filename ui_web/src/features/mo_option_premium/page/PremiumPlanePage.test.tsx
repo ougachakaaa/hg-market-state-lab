@@ -1,5 +1,7 @@
+import { captureCsvDownloads } from '../../../test/csvDownload'
+import { premiumPlaneCsv } from '../model/csvExport'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { cleanup, fireEvent, render, screen, within } from '@testing-library/react'
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import type { PremiumPlane } from '../api/moOptionPremium'
 import PremiumPlanePage from './PremiumPlanePage'
 import { createRequestBoundary, installRequestBoundary } from '../../../shared/http/protectedRequest'
@@ -48,7 +50,12 @@ async function load() {
   return { fetch, results }
 }
 
-afterEach(() => { cleanup(); vi.unstubAllGlobals() })
+afterEach(() => {
+  cleanup()
+  vi.unstubAllGlobals()
+  vi.restoreAllMocks()
+  Reflect.deleteProperty(navigator, 'clipboard')
+})
 
 describe('MO Premium Plane page', () => {
   it('defaults to the authority-defined four-axis presentation', async () => {
@@ -85,4 +92,241 @@ describe('MO Premium Plane page', () => {
     expect(results.querySelector('pre')?.textContent).toBe(raw)
     expect(fetch).toHaveBeenCalledTimes(1)
   })
+})
+
+function clipboard(writeText = vi.fn().mockResolvedValue(undefined)) {
+  Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText } })
+  return writeText
+}
+function copyActions() { return within(screen.getByRole('group', { name: 'MO Premium Plane copy actions' })) }
+async function copied(button: string) {
+  fireEvent.click(copyActions().getByRole('button', { name: button }))
+  await waitFor(() => expect(copyActions().getAllByRole('status').some((node) => node.textContent === 'Copied')).toBe(true))
+}
+
+describe('complete current-result copy', () => {
+  it.each(['missing', 'reject', 'resolve'])('reports Clipboard %s without internal errors', async (mode) => {
+    const write = clipboard(mode === 'reject' ? vi.fn().mockRejectedValue(new Error('private permission details')) : vi.fn().mockResolvedValue(undefined))
+    if (mode === 'missing') Reflect.deleteProperty(navigator, 'clipboard')
+    await load()
+    fireEvent.click(copyActions().getByRole('button', { name: 'Copy Raw JSON' }))
+    await waitFor(() => expect(copyActions().getByRole('status').textContent).toBe(mode === 'resolve' ? 'Copied' : 'Copy failed'))
+    expect(screen.queryByText(/private permission details/)).toBeNull()
+    if (mode !== 'missing') expect(write).toHaveBeenCalledWith(JSON.stringify(plane, null, 2))
+  })
+  it.each([[false, false], [false, true], [true, false], [true, true]])('ignores old copy feedback after a new query (reject=%s, whileLoading=%s)', async (rejects, whileLoading) => {
+    let finish!: () => void
+    let fail!: (error: Error) => void
+    const write = clipboard(vi.fn().mockImplementationOnce(() => new Promise<void>((resolve, reject) => { finish = resolve; fail = reject })).mockResolvedValue(undefined))
+    await load()
+    let finishQuery!: (value: Response) => void
+    vi.mocked(fetch).mockImplementationOnce(() => new Promise<Response>((resolve) => { finishQuery = resolve }))
+    fireEvent.click(copyActions().getByRole('button', { name: 'Copy Raw JSON' }))
+    expect(copyActions().queryByRole('status')).toBeNull()
+    expect(copyActions().getAllByRole<HTMLButtonElement>('button').every((b) => b.disabled)).toBe(true)
+    fireEvent.change(screen.getByLabelText('Observation 日期'), { target: { value: '2026-09-22' } })
+    expect(screen.queryByRole('group', { name: 'MO Premium Plane copy actions' })).toBeNull()
+    if (!whileLoading) await act(async () => { finishQuery(response(plane)) })
+    await act(async () => { if (rejects) fail(new Error('denied')); else finish() })
+    if (whileLoading) await act(async () => { finishQuery(response(plane)) })
+    await screen.findByRole('region', { name: 'Premium plane results' })
+    expect(copyActions().queryByRole('status')).toBeNull()
+    await copied('Copy Context JSON')
+    expect(write).toHaveBeenCalledTimes(2)
+    fireEvent.change(screen.getByLabelText('Observation 日期'), { target: { value: '' } })
+    expect(screen.queryByRole('button', { name: 'Copy Raw JSON' })).toBeNull()
+    expect(screen.queryByRole('button', { name: 'Export CSV' })).toBeNull()
+    expect(screen.queryByRole('button', { name: 'Export Context JSON' })).toBeNull()
+  })
+  it.each(['invalid', 'network'])('has no copy source in idle/loading/%s states', async (mode) => {
+    let finish!: (value: Response) => void
+    let fail!: (error: Error) => void
+    vi.stubGlobal('fetch', vi.fn().mockImplementation(() => new Promise<Response>((resolve, reject) => { finish = resolve; fail = reject })))
+    render(<PremiumPlanePage />)
+    expect(screen.queryByRole('button', { name: 'Copy Raw JSON' })).toBeNull()
+    expect(screen.queryByRole('button', { name: 'Export CSV' })).toBeNull()
+    expect(screen.queryByRole('button', { name: 'Export Context JSON' })).toBeNull()
+    fireEvent.change(screen.getByLabelText('Observation 日期'), { target: { value: '2026-09-21' } })
+    expect(screen.queryByRole('button', { name: 'Copy Raw JSON' })).toBeNull()
+    expect(screen.queryByRole('button', { name: 'Export CSV' })).toBeNull()
+    expect(screen.queryByRole('button', { name: 'Export Context JSON' })).toBeNull()
+    await act(async () => { if (mode === 'network') fail(new Error('offline')); else finish(response({ invalid: true })) })
+    await screen.findByRole('alert')
+    expect(screen.queryByRole('button', { name: 'Copy Raw JSON' })).toBeNull()
+    expect(screen.queryByRole('button', { name: 'Export CSV' })).toBeNull()
+    expect(screen.queryByRole('button', { name: 'Export Context JSON' })).toBeNull()
+    expect(screen.queryByRole('button', { name: 'Copy Context JSON' })).toBeNull()
+  })
+  it('copies only the newer response even if an older request completes late', async () => {
+    const write = clipboard()
+    const download = captureCsvDownloads()
+    const pending: Array<(value: Response) => void> = []
+    const fetch = vi.fn().mockImplementation(() => new Promise<Response>((resolve) => pending.push(resolve)))
+    vi.stubGlobal('fetch', fetch)
+    render(<PremiumPlanePage />)
+    fireEvent.change(screen.getByLabelText('Observation 日期'), { target: { value: '2026-09-21' } })
+    fireEvent.change(screen.getByLabelText('Observation 日期'), { target: { value: '2026-09-22' } })
+    const current: PremiumPlane = { ...plane, observation: { kind: 'trade_date', value: '2026-09-22' } }
+    await act(async () => { pending[1](response(current)) })
+    await screen.findByRole('region', { name: 'Premium plane results' })
+    await act(async () => { pending[0](response(plane)) })
+    await copied('Copy Raw JSON')
+    expect(write).toHaveBeenLastCalledWith(JSON.stringify(current, null, 2))
+    fireEvent.click(copyActions().getByRole('button', { name: 'Export CSV' }))
+    expect(await download.text()).toBe(premiumPlaneCsv(current).csv)
+    expect(download.filenames).toEqual([premiumPlaneCsv(current).filename])
+    expect(fetch).toHaveBeenCalledTimes(2)
+  })
+})
+
+it('copies complete sparse response, response identity and Inspector JSON across every presentation axis', async () => {
+  const write = clipboard()
+  const { fetch, results } = await load()
+  const raw = JSON.stringify(plane, null, 2)
+  await copied('Copy Raw JSON')
+  expect(write).toHaveBeenLastCalledWith(raw)
+  for (const name of ['Put', 'Same-expiry futures', 'Time value', 'Unannualized', 'Yield']) {
+    fireEvent.click(within(results).getByRole('radio', { name }))
+    await copied('Copy Raw JSON')
+    expect(write).toHaveBeenLastCalledWith(raw)
+  }
+  fireEvent.click(within(results).getByRole('checkbox', { name: '2026-10-23' }))
+  await copied('Copy Raw JSON')
+  expect(write).toHaveBeenLastCalledWith(raw)
+  await copied('Copy Context JSON')
+  const context = JSON.parse(write.mock.calls.at(-1)![0] as string)
+  expect(context.format_version).toBe('daily-data-context-v1')
+  expect(context.metadata.product).toBe('MO Premium Plane')
+  expect(context.metadata.response_identity).toEqual({ observation: plane.observation, option_product: plane.option_product, price_type: plane.price_type, underlying_instrument_id: plane.underlying.instrument_id })
+  expect(context.data).toEqual(JSON.parse(raw))
+  expect(context.metadata.reading_notes.join(' ')).toContain('sparse Points')
+  expect(context.metadata.reading_notes.join(' ')).toContain('absent Point')
+  expect(context.metadata.reading_notes.join(' ')).toContain('null metric')
+  expect(context.metadata.reading_notes.join(' ')).toContain('numeric zero')
+  expect(context.metadata.reading_notes.join(' ')).toContain('futures: null')
+  fireEvent.click(within(results).getByRole('button', { name: 'View raw response' }))
+  expect(results.querySelector('pre')?.textContent).toBe(raw)
+  const inspectorCopy = within(results).getAllByRole('button', { name: 'Copy JSON' }).find((b) => !screen.getByRole('group', { name: 'MO Premium Plane copy actions' }).contains(b))!
+  fireEvent.click(inspectorCopy)
+  await waitFor(() => expect(write).toHaveBeenLastCalledWith(raw))
+  expect(fetch).toHaveBeenCalledTimes(1)
+})
+
+it('uses the validated response identity and removes copy actions on a price-type query', async () => {
+  const write = clipboard()
+  const current = { ...plane, observation: { kind: 'trade_date', value: '2026-09-23' }, price_type: 'high' }
+  vi.stubGlobal('fetch', vi.fn().mockResolvedValue(response(current)))
+  render(<PremiumPlanePage />)
+  fireEvent.change(screen.getByLabelText('Observation 日期'), { target: { value: '2026-09-21' } })
+  await screen.findByRole('region', { name: 'Premium plane results' })
+  await copied('Copy Context JSON')
+  const context = JSON.parse(write.mock.calls[0][0])
+  expect(context.metadata.response_identity.observation.value).toBe('2026-09-23')
+  expect(context.metadata.response_identity.price_type).toBe('high')
+  expect(context.data).toEqual(current)
+  fireEvent.mouseDown(screen.getByRole('combobox', { name: '价格口径' }))
+  fireEvent.click(await screen.findByText('open', { selector: '.ant-select-item-option-content' }))
+  expect(screen.queryByRole('group', { name: 'MO Premium Plane copy actions' })).toBeNull()
+  await screen.findByRole('region', { name: 'Premium plane results' })
+  expect(copyActions().queryByRole('status')).toBeNull()
+})
+
+it('downloads all real Points and all metrics independently of every presentation selector', async () => {
+  const write = clipboard()
+  const download = captureCsvDownloads()
+  const { fetch, results } = await load()
+  expect(copyActions().getAllByRole('button').map((b) => b.textContent)).toEqual(['Copy Raw JSON', 'Copy Context JSON', 'Export CSV', 'Export Context JSON'])
+  const controls = [
+    () => {},
+    ...['Put', 'Same-expiry futures', 'Time value', 'Unannualized', 'Yield'].map((name) =>
+      () => fireEvent.click(within(results).getByRole('radio', { name }))),
+    () => fireEvent.click(within(results).getByRole('checkbox', { name: '2026-10-23' })),
+  ]
+  for (const change of controls) {
+    change()
+    fireEvent.click(copyActions().getByRole('button', { name: 'Export CSV' }))
+    const csv = await download.text()
+    expect(csv).toBe(premiumPlaneCsv(plane).csv)
+    expect(csv.split('\r\n').length - 2).toBe(plane.points.length)
+    expect(csv).toContain('2026-10-23,33,false,null,null,B,call,7300,1,')
+    expect(csv).toContain(',-3,-0.003,-30,-0.03,')
+    expect(csv).not.toContain('%')
+    expect(copyActions().getAllByRole('status').some((node) => node.textContent === 'Download started')).toBe(true)
+    await copied('Copy Context JSON')
+    const contextText = write.mock.calls.at(-1)![0] as string
+    expect(JSON.parse(contextText).data).toEqual(plane)
+    fireEvent.click(copyActions().getByRole('button', { name: 'Export Context JSON' }))
+    expect(await download.text()).toBe(contextText)
+    expect(download.blobs.at(-1)!.type).toBe('application/json;charset=utf-8')
+    expect(download.filenames.at(-1)).toBe(`mo-premium-plane_${plane.observation.value}_${plane.price_type}_context.json`)
+  }
+  expect(fetch).toHaveBeenCalledTimes(1)
+})
+
+it('exports a nonempty plane using response identity', async () => {
+  const download = captureCsvDownloads()
+  const current = { ...plane, price_type: 'high' as const }
+  vi.stubGlobal('fetch', vi.fn().mockResolvedValue(response(current)))
+  render(<PremiumPlanePage />)
+  fireEvent.change(screen.getByLabelText('Observation 日期'), { target: { value: '2026-09-19' } })
+  await screen.findByRole('region', { name: 'Premium plane results' })
+  fireEvent.click(copyActions().getByRole('button', { name: 'Export CSV' }))
+  expect(await download.text()).toBe(premiumPlaneCsv(current).csv)
+  expect((await download.text()).split('\r\n')).toHaveLength(current.points.length + 2)
+  expect(download.filenames).toEqual(['mo-premium-plane_2026-09-21_high.csv'])
+  expect(fetch).toHaveBeenCalledTimes(1)
+})
+
+it.each(['Export CSV', 'Export Context JSON'])('reports download failure with cleanup and safe feedback, then permits retry', async (button) => {
+  const download = captureCsvDownloads()
+  vi.mocked(HTMLAnchorElement.prototype.click).mockImplementationOnce(() => { throw new Error('private detail') })
+  await load()
+  fireEvent.click(copyActions().getByRole('button', { name: button }))
+  expect(copyActions().getByRole('status').textContent).toBe('Export failed')
+  expect(download.revoke).toHaveBeenCalledWith('blob:csv-1')
+  expect(document.querySelector('a[download]')).toBeNull()
+  expect(screen.queryByText(/private detail/)).toBeNull()
+  fireEvent.click(copyActions().getByRole('button', { name: button }))
+  if (button === 'Export CSV') expect(await download.text()).toBe(premiumPlaneCsv(plane).csv)
+  else expect(JSON.parse(await download.text()).data).toEqual(plane)
+  expect(copyActions().getAllByRole('status').some((node) => node.textContent === 'Download started')).toBe(true)
+  expect(fetch).toHaveBeenCalledTimes(1)
+})
+
+it('removes CSV actions on a price-type query and leaves none after HTTP failure', async () => {
+  await load()
+  let finish!: (value: Response) => void
+  vi.mocked(fetch).mockImplementationOnce(() => new Promise<Response>((resolve) => { finish = resolve }))
+  fireEvent.mouseDown(screen.getByRole('combobox', { name: '价格口径' }))
+  fireEvent.click(await screen.findByText('open', { selector: '.ant-select-item-option-content' }))
+  expect(screen.queryByRole('button', { name: 'Export CSV' })).toBeNull()
+  expect(screen.queryByRole('button', { name: 'Export Context JSON' })).toBeNull()
+  await act(async () => finish({ ok: false, status: 404, json: async () => ({ error: { kind: 'date_not_available', detail: 'Unavailable', param: 'as_of' } }) } as Response))
+  await screen.findByRole('alert')
+  expect(screen.queryByRole('button', { name: 'Export CSV' })).toBeNull()
+  expect(screen.queryByRole('button', { name: 'Export Context JSON' })).toBeNull()
+})
+
+it('offers no copy or export actions for premium_plane_unavailable', async () => {
+  await load()
+  vi.mocked(fetch).mockResolvedValueOnce({ ok: false, status: 503, json: async () => ({ error: {
+    kind: 'premium_plane_unavailable', detail: 'No real analytical Points', param: null,
+  } }) } as Response)
+  fireEvent.change(screen.getByLabelText('Observation 日期'), { target: { value: '2026-09-22' } })
+  await screen.findByRole('alert')
+  expect(screen.queryByRole('button', { name: 'Export CSV' })).toBeNull()
+  expect(screen.queryByRole('button', { name: 'Export Context JSON' })).toBeNull()
+  expect(screen.queryByRole('button', { name: 'Copy Raw JSON' })).toBeNull()
+  expect(screen.queryByRole('button', { name: 'Copy Context JSON' })).toBeNull()
+})
+
+it('rejects HTTP 200 with no real Points instead of offering copy or export', async () => {
+  await load()
+  vi.mocked(fetch).mockResolvedValueOnce(response({ ...plane, points: [] }))
+  fireEvent.change(screen.getByLabelText('Observation 日期'), { target: { value: '2026-09-22' } })
+  await screen.findByRole('alert')
+  expect(screen.queryByRole('button', { name: 'Export CSV' })).toBeNull()
+  expect(screen.queryByRole('button', { name: 'Export Context JSON' })).toBeNull()
+  expect(screen.queryByRole('button', { name: 'Copy Raw JSON' })).toBeNull()
+  expect(screen.queryByRole('button', { name: 'Copy Context JSON' })).toBeNull()
 })

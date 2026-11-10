@@ -1,6 +1,7 @@
-import { useState } from 'react'
 import { Alert, Button, Card, Collapse, Descriptions, Empty, Flex, Space, Table, Typography } from 'antd'
 import type { TableColumnsType } from 'antd'
+import { serializeJson } from '../../../shared/clipboard/text'
+import { useClipboardWrite } from '../../../shared/clipboard/useClipboardWrite'
 import type { PremiumPlane } from '../api/moOptionPremium'
 import { PremiumRequestError } from '../api/moOptionPremium'
 import { classifyStrikeRelativeToReference, formatMetric, formatPlaneNumber } from '../model/premiumPlane'
@@ -91,17 +92,8 @@ export function PremiumPlaneTable({ plane, projection, representation }: {
 }
 
 export function RawResponseInspector({ payload }: { payload: unknown }) {
-  const [copyFeedback, setCopyFeedback] = useState('')
-  const prettyJson = JSON.stringify(payload, null, 2)
-
-  async function copyJson() {
-    try {
-      await navigator.clipboard.writeText(prettyJson)
-      setCopyFeedback('Copied')
-    } catch {
-      setCopyFeedback('Copy failed')
-    }
-  }
+  const { copy, pending, feedback: copyFeedback } = useClipboardWrite()
+  const prettyJson = serializeJson(payload)
 
   return (
     <Collapse size="small" items={[{
@@ -110,7 +102,7 @@ export function RawResponseInspector({ payload }: { payload: unknown }) {
       children: <Space orientation="vertical" style={{ display: 'flex' }}>
         <Flex align="center" gap="small" wrap>
           <Typography.Text strong>Raw backend response</Typography.Text>
-          <Button onClick={() => void copyJson()}>Copy JSON</Button>
+          <Button disabled={pending} onClick={() => void copy(() => serializeJson(payload))}>Copy JSON</Button>
           {copyFeedback && <Typography.Text role="status" type={copyFeedback === 'Copied' ? 'success' : 'danger'}>{copyFeedback}</Typography.Text>}
         </Flex>
         <pre className="raw-response-code">{prettyJson}</pre>

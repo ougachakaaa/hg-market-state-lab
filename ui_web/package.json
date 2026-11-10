@@ -16,7 +16,8 @@
     "test:research-browser": "node scripts/research_browser_smoke.mjs",
     "test:visualization-browser": "node scripts/visualization_browser_smoke.mjs",
     "report:futures-basis": "node scripts/package_futures_basis_report.mjs",
-    "test:futures-basis-report-browser": "node scripts/futures_basis_report_browser.mjs"
+    "test:futures-basis-report-browser": "node scripts/futures_basis_report_browser.mjs",
+    "test:daily-data-copy-export-browser": "node scripts/daily_data_copy_export_browser.mjs"
   },
   "dependencies": {
     "ajv": "^8.20.0",

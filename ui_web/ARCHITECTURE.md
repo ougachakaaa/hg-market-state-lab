@@ -57,6 +57,8 @@ Ordinary application UI、Ant Design、application-level theme、generic UI comp
 
 Frontend-consumed HTTP products 与 application Auth 的 generated OpenAPI / TypeScript ownership、generation obligation 与 freshness feedback loop 由 [contract feedback-loop authority](contracts.md) 拥有。
 
+MO Option Chain 与 MO Premium Plane 的完整业务 Raw / Context JSON 复制、Clipboard 交互与 CSV / Context JSON 导出由 [Daily Data Copy / Export authority](data-copy-export.md) 拥有；产品特有的 source、response identity 与阅读说明仍归各 feature visualization authority。
+
 ### Vertical Slice Authority
 
 `ui_web/src/features/*` 中的 feature authority 只拥有对应 vertical slice 的：
