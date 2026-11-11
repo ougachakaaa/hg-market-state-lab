@@ -1,4 +1,4 @@
-"""Synthetic W2 input adapter and projections over the single Core execution path."""
+"""W2 input adapter and projections over the single Core execution path."""
 
 from datetime import date
 from typing import cast
@@ -67,7 +67,11 @@ def replay_futures_roll(inputs: FuturesRollInput) -> FuturesRollReplay:
             DailyMarketSnapshot(
                 day,
                 tuple(CloseQuote(code, close) for code, close in validated.facts[day].items()),
-                f"synthetic-close:{day.isoformat()}",
+                (
+                    validated.decision_evidence[day].source_export_ref
+                    if day in validated.decision_evidence
+                    else f"synthetic-close:{day.isoformat()}"
+                ),
             ),
         )
         for index, day in enumerate(validated.sessions)

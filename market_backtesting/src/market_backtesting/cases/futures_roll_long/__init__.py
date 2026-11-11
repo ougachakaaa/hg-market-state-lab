@@ -1,5 +1,17 @@
-"""Public synthetic W2 Policy/replay/performance boundary; real-market API belongs to WP3."""
+"""Public W2 preparation, execution, readiness and pure calculation boundary."""
 
+from .application import FuturesRollService as FuturesRollService
+from .application import create_futures_roll_service as create_futures_roll_service
+from .application_models import DependencyReadiness as DependencyReadiness
+from .application_models import EnsureDiagnostic as EnsureDiagnostic
+from .application_models import FuturesRollApplicationError as FuturesRollApplicationError
+from .application_models import FuturesRollExecution as FuturesRollExecution
+from .application_models import FuturesRollReadiness as FuturesRollReadiness
+from .application_models import FuturesRollRequest as FuturesRollRequest
+from .application_models import PreparedFuturesRollInputs as PreparedFuturesRollInputs
+from .application_models import PublicInputExports as PublicInputExports
+from .application_models import PublicInputRequests as PublicInputRequests
+from .application_models import validate_futures_roll_request as validate_futures_roll_request
 from .failures import FuturesRollError as FuturesRollError
 from .models import PRODUCT_CODES as PRODUCT_CODES
 from .models import STRATEGY_PROFILES as STRATEGY_PROFILES
