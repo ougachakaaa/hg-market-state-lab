@@ -42,11 +42,20 @@ backtest may start. There is no partial-input BacktestResult in v1.
    underlying is present, fail input preparation.
 5. Acquire the mapped Index export in the same pattern. Validate the final envelope and
    completeness for the whole window.
-6. Build the ordered CFFEX session sequence, the per-session active contract sets and
-   the decision-day Slot resolutions. All required facts are now retained as one
-   semantic input identity.
-7. Compute the canonical input fingerprint and begin the pure Core Replay.
-   No further market I/O occurs after this point.
+6. Build read-only, date-queryable market facts: ordered CFFEX sessions, per-session
+   active contract evidence, metadata/instrument references, Futures Close snapshots
+   and Index Close facts. All required facts are retained as one semantic input identity.
+7. Compute the canonical input fingerprint. The adapter builds price-free decision
+   contexts and `ReplaySession.snapshot` inputs from these retained facts. Policy calls
+   the authorized Slot resolver only for entry/roll decisions. Begin pure Core Replay;
+   no further market I/O occurs after preparation.
+
+Input Adapter owns validation and preparation of the market-fact set. Replay owns
+clock advancement, Policy invocation and the handoff of each retained snapshot.
+[Transition](../../core/PORTFOLIO_TRANSITION.md) determines necessary valuation and
+execution quotes by Previous/Target real instrument IDs inside that snapshot. Neither
+Accounting nor Analyzer queries a market service or reselects a PnL instrument by Slot.
+No additional market-data framework or selection owner is required.
 
 `ensure` is not a repair mechanism for a malformed export. A malformed envelope,
 counter set, scope/window, row identity or public fact fails immediately; it is never
@@ -137,8 +146,9 @@ turn it into a roll.
 
 This is a symbol-level consumer grant in the repository and module authority, not a
 general permission to consume Research. If the W1 public facade cannot provide the
-required isolation, WP1 must escalate an authority change; it must not copy the Slot
-algorithm into W2.
+required isolation, stop and report the boundary conflict; do not copy the Slot
+algorithm into W2. Current isolation is checked by the Backtesting architecture tests;
+WP3 must preserve that boundary.
 
 ## The synthetic `DailyUniverseEvidence` contract
 

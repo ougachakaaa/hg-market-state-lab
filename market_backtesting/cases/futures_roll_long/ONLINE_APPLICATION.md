@@ -38,13 +38,9 @@ client cannot select a different case, benchmark, multiplier, roll rule, fee mod
 strategy parameter. The case is bound by the application; only the four client
 parameters above are accepted under the WP6 wire contract.
 
-Pure request validation, before run creation or upstream I/O:
-
-- product is exactly one canonical member of `IM / IC / IF / IH`;
-- dates are date-only, inclusive, with `start_date <= end_date`;
-- `end_date` is not after the current date in `Asia/Shanghai`;
-- inclusive span `(end_date - start_date).days + 1` is at most 1,096 days;
-- profile is exactly one of the two named profiles.
+Pure request validation delegates to the [case request contract](ARCHITECTURE.md#request-and-identity)
+before run creation or upstream I/O. It applies the canonical product/profile,
+date-only, inclusive-window, Asia/Shanghai future-date and maximum-span rules.
 
 The request does not carry a session count; whether the window contains at least two
 CFFEX sessions is established during input preparation and fails as
@@ -127,9 +123,9 @@ The worker executes the accepted public path:
 validated semantic request
   → public input preparation (Calendar / Futures / Index)
   → complete input validation + canonical fingerprint
-  → decision-day Slot resolution (authorized W1 pure boundary)
-  → real-contract entry / hold / roll / exit simulation
-  → PnL + benchmark + drawdown accounting
+  → price-free W2 Policy targets (authorized W1 Slots on entry/roll only)
+  → Core Replay: Transition → Accounting → Recorder on every session
+  → W2 Performance Analyzer: Core consumption + benchmark / excess / drawdown
   → immutable BacktestResult + evidence summary + V2 views
   → validate profile, request association, coverage, invariants and finite JSON
   → atomically publish result bytes
@@ -156,25 +152,37 @@ application meaning.
 
 | Stage | Categories | Dependency | Meaning |
 | --- | --- | --- | --- |
-| `input_preparation` | `upstream_operation`, `incomplete_required_input`, `invalid_public_input`, `insufficient_sessions`, `invalid_contract_lifecycle` | `calendar_cffex`, `futures`, `index`, or null | Public acquisition/completeness/metadata failure, fewer than two sessions, invalid lifecycle evidence discovered before simulation |
-| `holding_simulation` | `invalid_holding_input`, `slot_resolution`, `missing_market_fact`, `invalid_price`, `roll_target_invalid`, `invalid_contract_lifecycle`, `invalid_position_state` | null | Invalid simulation input, authorized Slot resolution, real-contract target/lifecycle failure or illegal position state |
-| `accounting` | `non_positive_equity`, `non_finite_result`, `multiplier_mismatch` | null | Invalid normalized equity, non-finite arithmetic or cross-contract multiplier inconsistency |
+| `input_preparation` | `upstream_operation`, `incomplete_required_input`, `invalid_public_input`, `insufficient_sessions`, `invalid_contract_lifecycle` | `calendar_cffex`, `futures`, `index`, or null | Public acquisition/completeness/metadata failure, fewer than two sessions, invalid lifecycle evidence discovered during public input preparation |
+| `position_replay` | `invalid_case_input`, `slot_resolution`, `missing_market_fact`, `invalid_price`, `roll_target_invalid`, `invalid_contract_lifecycle`, `invalid_position_state`, `invalid_input`, `invalid_target`, `invalid_numeric` | null | Input-adapter/Policy/Core replay validation, real-instrument price/target/lifecycle failure or illegal state |
+| `accounting` | `accounting_failure`, `invalid_accounting`, `invalid_numeric` | null | Core accounting or case capital/performance validation failure, including non-positive equity or multiplier inconsistency |
 | `result_publication` | `result_too_large`, `serialization_failure` | null | Bounded result publication failure |
 | `execution` | `interrupted`, `internal_failure` | null | Process interruption or unexpected worker failure |
+
+Stage identifies the failing operation, not a separate executor. Core Transition owns
+Daily PnL; Core Accounting consumes it; the Case Analyzer never repeats either.
+`position_replay` includes policy and transition failures. `accounting` includes Core
+Accounting and case capital/performance checks, even when a multiplier check occurs
+inside Policy. For numeric failures, stage follows the operation that rejected the
+value. Category/reason preserve the public Core/case failure meaning; the W2 adapter's
+`missing_instrument_quote` to `missing_contract_row` translation remains applicable.
+WP5 must test this composition; no online mapper exists yet. HTTP only projects it.
 
 The stage, category and reason are stable classification fields. Representative reason
 mapping:
 
 | Category | Representative stable reasons |
 | --- | --- |
-| `invalid_holding_input` | `invalid_product_code`, `invalid_strategy_profile`, `insufficient_sessions`, `session_order_not_increasing`, `duplicate_session`, `invalid_session_facts`, `duplicate_session_facts`, `unknown_contract_fact` |
-| `slot_resolution` | `missing_decision_evidence`, `invalid_decision_evidence`, `w1_slot_resolution_error`, `resolved_target_missing` |
+| `invalid_case_input` | `invalid_product_code`, `invalid_strategy_profile`, `insufficient_sessions`, `session_order_not_increasing`, `duplicate_session`, `invalid_session_facts`, `duplicate_session_facts`, `unknown_contract_fact` |
+| `slot_resolution` | `missing_decision_evidence`, `invalid_decision_evidence`, `w1_slot_resolution_error` |
 | `missing_market_fact` | `missing_session_facts`, `missing_contract_row`, `missing_active_contract_metadata` |
-| `invalid_price` | `missing_close`, `non_finite_close`, `non_positive_close` |
+| `invalid_price` | `non_finite_close`, `non_positive_close` |
 | `roll_target_invalid` | `target_not_resolved`, `target_expired`, `target_without_holding_period`, `target_equal_held_contract`, `target_inactive` |
 | `invalid_contract_lifecycle` | `invalid_contract_metadata`, `duplicate_contract_code`, `duplicate_delivery_month`, `conflicting_product`, `conflicting_underlying`, `held_contract_inactive`, `held_contract_missing_from_active_set`, `expiring_held_contract_not_m0` |
 | `invalid_position_state` | `held_contract_expired_without_roll`, `no_position_on_final_session`, `unexpected_flat_state`, `final_state_not_flat` |
-| `accounting` | `multiplier_mismatch` (WP2), `non_positive_equity`, `non_finite_result` |
+| `accounting_failure` | `multiplier_mismatch`, `non_positive_equity` |
+| `invalid_input` / `invalid_target` | Core validation reasons such as `sessions_not_increasing`, `snapshot_date_mismatch`, `instrument_reference_conflict`, `quantity_change_unsupported` |
+| `invalid_accounting` | `inconsistent_previous_accounting`, `session_already_accounted` |
+| `invalid_numeric` | Name of the rejected numeric value, such as `initial_capital`, `daily_pnl`, `equity` or `cumulative_return` |
 
 `no_position_on_final_session` is unreachable under valid v1 input and remains a
 defensive failure guard, consistent with [Strategy](STRATEGY.md). A

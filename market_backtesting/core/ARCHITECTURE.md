@@ -2,7 +2,7 @@
 
 This authority specializes the [module](../ARCHITECTURE.md). Core owns daily
 clock-driven replay, actual Portfolio State, Target Portfolio consumption, position
-transition, Gross Daily PnL, cumulative accounting and immutable in-memory recording.
+transition, Gross Daily PnL, daily/cumulative accounting and immutable in-memory recording.
 W2 is its first consumer, not its definition.
 
 ## Boundaries and navigation
@@ -11,7 +11,7 @@ W2 is its first consumer, not its definition.
 | --- | --- |
 | Replay, policy handoff, time causality, recorder, failures | [Replay](REPLAY.md) |
 | Portfolio, target, snapshot, state events and Daily PnL | [Portfolio transition](PORTFOLIO_TRANSITION.md) |
-| Capital, cumulative PnL, equity and normalized return | [Accounting](ACCOUNTING.md) |
+| Explicit capital, cumulative PnL, equity, daily and cumulative return | [Accounting](ACCOUNTING.md) |
 
 Public Python entry is `market_backtesting.core`. Core and the package root import
 no case or business module. Core has no W1 Slot, W2 profile/product, Research,

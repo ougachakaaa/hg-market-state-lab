@@ -19,6 +19,10 @@ Real-market end-to-end acceptance (WP8) is required for `IM`; the other products
 be semantically and synthetically verified and may receive bounded real evidence in a
 later accepted scope.
 
+The first real research compares both profiles against CSI 1000 index Buy & Hold for
+`IM`, requested window `2024-01-01` through `2026-10-30` inclusive, under the one-lot,
+ideal Close and gross assumptions below. This acceptance window is not a request default.
+
 The strategy is long only, holds exactly one real futures contract, and is normalized
 by a fixed initial index-equivalent notional. It is intentionally idealized:
 
@@ -48,8 +52,7 @@ the actual input fingerprint is separate and defined by [Inputs](INPUTS.md).
 
 Dates are validated as date-only, `start_date <= end_date`, `end_date` not after the
 current date in `Asia/Shanghai`, and inclusive span
-`(end_date - start_date).days + 1 <= 1,096`. This restores the W2 V1 inclusive
-1,096-day limit; there is no third window rule. The window must contain at least two
+`(end_date - start_date).days + 1 <= 1,096`. The window must contain at least two
 CFFEX open sessions; session discovery and completeness are input-preparation
 responsibilities.
 
@@ -74,7 +77,7 @@ W2 Performance Analyzer → BacktestResult/evidence/projections (remaining work)
 Input preparation owns public-fact completeness, metadata consistency and input identity.
 W2 Policy owns product/profile, M1/Q1 selection, expiry decisions, one-lot constraints
 and final flat target. Core owns actual state, daily valuation/execution, PnL,
-cumulative accounting and recording. W2 derives initial index-equivalent capital and
+daily/cumulative accounting and recording. W2 derives initial index-equivalent capital and
 requires consistent contract multipliers and positive equity. Benchmark/drawdown and
 BacktestResult remain case concerns. Only input preparation may perform market I/O.
 
@@ -88,7 +91,8 @@ BacktestResult remain case concerns. Only input preparation may perform market I
 | Exact DataLake public bindings, completeness, W1 Slot reuse, underlying derivation, fingerprint, readiness | [Inputs](INPUTS.md) |
 | BacktestResult, evidence, limitations, result-version and V2 projection | [Result](RESULT.md) |
 | Online request, run lifecycle, ownership, store, concurrency, HTTP/Web ownership | [Online application](ONLINE_APPLICATION.md) |
-| WP0–WP8, acceptance, reconciliation, deferred scope | [Roadmap](ROADMAP.md) |
+| Current delivery, remaining WP2–WP8, acceptance and deferred scope | [Roadmap](ROADMAP.md) |
+| Concern/consumer inventory, current semantic review and implementation drift | [Reconciliation](RECONCILIATION.md) |
 
 W1's descriptive futures-basis work remains owned by
 [`market_research`](../../../market_research/descriptive/cases/futures_basis/ARCHITECTURE.md).
@@ -99,8 +103,7 @@ role changes, not W2 roll trades.
 
 ## Status
 
-WP0/WP1 completed the original authority and holding simulation. This reconciliation
-directly replaces the latter with Position-Driven Core plus W2 Policy and minimal
-Gross PnL/accounting. Core implementation acceptance is tracked separately from
-remaining WP2 Performance Analyzer/Benchmark and full W2 WP8 acceptance in the
-[roadmap](ROADMAP.md). No DataLake integration, online run or HTTP/Web is added here.
+Current completion, remaining work and acceptance boundaries belong to the
+[roadmap](ROADMAP.md). Contract-to-code differences are tracked separately in the
+[current reconciliation](RECONCILIATION.md); declared authority is not implementation
+or real-market acceptance evidence.

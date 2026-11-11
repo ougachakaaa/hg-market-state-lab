@@ -40,9 +40,9 @@ is part of the basis and is not decomposed in W2.
 ## Core accounting consumption
 
 Core Transition exclusively owns Daily PnL, reference updates and roll gap exclusion.
-Core Accounting exclusively owns cumulative PnL, equity and cumulative return. W2
-projects these values unchanged. Entry has zero PnL; roll/final attribution belongs
-to the incoming held contract. Entry-row `pnl_contract_code` is a case projection of
+Core Accounting exclusively owns cumulative PnL, equity, daily return and cumulative
+return. W2 supplies `N0` as Core InitialCapital and projects these values unchanged.
+Entry has zero PnL; roll/final attribution belongs to the incoming held contract. Entry-row `pnl_contract_code` is a case projection of
 the newly opened contract, despite no incoming position. End-of-session identity is
 new/held instrument or null after final close.
 
@@ -66,14 +66,19 @@ tradable as one lot or that an ETF would reproduce it.
 
 ## Strategy returns and equity
 
-Core cumulative return is W2 `gross_return_t`, normalized by fixed N0. Case daily
-return is `daily_return_t = pnl_t / N0`. It is simple, gross and not reinvested.
+W2 `daily_return_t` is the unchanged Core daily return; W2 `gross_return_t` is the
+unchanged Core cumulative return. Both use the fixed `N0` supplied as InitialCapital,
+as defined solely by [Core Accounting](../../core/ACCOUNTING.md). They are simple,
+gross and not reinvested. The Analyzer must not fill a missing Core daily-return
+output by calculating it itself; the current gap is tracked in
+[reconciliation](RECONCILIATION.md#implementation-drift-register).
 
 Final `gross_return` is the final Core cumulative return. Final `benchmark_return` is
 `benchmark_cumulative_return_final`. Final `excess_return` is:
 
 ```text
-excess_return = gross_return - benchmark_return
+excess_cumulative_return_t = gross_return_t - benchmark_cumulative_return_t
+excess_return = excess_cumulative_return_final
 ```
 
 Daily excess, when projected, is `daily_return_t - benchmark_daily_return_t`. It is

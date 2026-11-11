@@ -66,7 +66,7 @@ Research result 是 evidence / finding，不是 production market-state output�
 
 独立的策略回测业务模块，拥有固定 strategy definition、真实合约持仓模拟、PnL 与基准核算、回测结果/证据/可视化投影，以及 case-specific read-only readiness 与 online execution。首期包含 strategy-independent Position-Driven Core V1 与唯一 case `futures_roll_long_v1`；不建立 order-driven trading framework、plugin/registry、multi-strategy framework 或未来策略 scaffold。
 
-它的 W2 case adapter 消费 DataLake public Application Services 与 Research 已发布的 pure Slot-resolution public boundary；Core 不依赖这两个上游模块。它不拥有市场数据获取、Slot formula、Research observation/report/statistics、generic Visualization schema、HTTP DTO、Auth 或 UI。WP0 为历史 authority gate，WP1 建立 pure holding package；本次 reconciliation 将其直接替换为 Position-Driven Core 与 W2 Policy，不引入 DataLake integration、HTTP 或 Web。模块边界、case 语义与 WP 计划从 [market_backtesting/ARCHITECTURE.md](market_backtesting/ARCHITECTURE.md) 进入。
+它的 W2 case adapter 消费 DataLake public Application Services 与 Research 已发布的 pure Slot-resolution public boundary；Core 不依赖这两个上游模块。它不拥有市场数据获取、Slot formula、Research observation/report/statistics、generic Visualization schema、HTTP DTO、Auth 或 UI。当前交付状态与剩余工作由模块 Roadmap 拥有。模块边界、case 语义与导航从 [market_backtesting/ARCHITECTURE.md](market_backtesting/ARCHITECTURE.md) 进入。
 
 ### `market_statistics`
 
@@ -117,7 +117,7 @@ Repository
     data_snapshot/         # data_snapshot
     market_modeling/       # market_modeling; no new implementation implied
     market_research/       # market_research
-    market_backtesting/    # market_backtesting; package introduced by W2 WP1/WP3
+    market_backtesting/    # market_backtesting; module-owned Python package
     market_statistics/     # market_statistics
     ui_cli/                # ui_cli; executable remains lab
     ui_http/               # ui_http
@@ -130,7 +130,7 @@ Repository runtime configuration 属于 repository-level support，不是业务�
 
 `data_lake` 拥有 canonical Python namespace `data_lake`；shared kernel 源码归顶层 `data_lake/src/`，具体 Provider 与 Dataset 的 authority、source、tests 分别 colocate 于 `data_lake/providers/<provider-id>/` 与 `data_lake/datasets/<dataset-id>/`，persistent state 仍由 Dataset 拥有，topology 由 [DataLake authority](data_lake/ARCHITECTURE.md) 拥有。Provider-local / Dataset-local source roots 同样使用 repository root 唯一 Python project、dependency graph 与根 `.venv`，不创建独立 Python runtime。Consumer 可以直接依赖具体 Dataset public Application Service；shared kernel 不依赖具体 Provider 或 Dataset，Dataset 间只允许 DataLake authority 明确声明的单向 public Application Service dependency，不开放 internal persistence。Public boundary 与 source registration / import compatibility 约束进入 DataLake authority。
 
-Runtime unification 不合并模块、不改变源码目录 ownership，也不把所有 Python source 移入统一 `src/`。`data_lake`、`data_snapshot`、`market_modeling`、`market_research`、`ui_cli` 与 `ui_http` 是独立 namespace，由各自 semantic module 拥有。`market_statistics` 同样拥有独立 namespace 与 module-owned source root，由根项目统一安装。`market_backtesting` 将同样拥有独立 namespace 与 module-owned source root；WP0 只建立 authority，package 由 W2 WP1/WP3 引入。
+Runtime unification 不合并模块、不改变源码目录 ownership，也不把所有 Python source 移入统一 `src/`。`data_lake`、`data_snapshot`、`market_modeling`、`market_research`、`ui_cli` 与 `ui_http` 是独立 namespace，由各自 semantic module 拥有。`market_statistics` 同样拥有独立 namespace 与 module-owned source root，由根项目统一安装。`market_backtesting` 同样拥有独立 namespace 与 module-owned source root，由根项目统一安装。
 
 共享 dependency graph 或 `.venv` 不构成 cross-module import permission。模块依赖方向必须由 repository/module authority、被依赖模块发布的 public boundary 与 architecture tests 共同约束；不得因为 package 在同一环境中可 import 就绕过这些边界。
 
@@ -200,7 +200,7 @@ market_backtesting ──┤   (W2 application boundary; HTTP contract in WP6)
 future modules ──────┘
 ```
 
-`ui_http` 是 inbound delivery boundary，不是 analytical pipeline stage。稳定依赖方向是 `ui_http` 依赖 owning module 的 public application/product boundary；`data_snapshot`、`market_research`、`market_statistics`、`market_backtesting` 与 `market_modeling` 不得依赖 `ui_http`，也不得用 FastAPI、HTTP DTO/status/error envelope、OpenAPI 或 frontend types 定义自己的 semantic model。Research publishes Python analytical boundaries; bounded HTTP delivery belongs to `ui_http` through [its catalog](ui_http/HTTP_PRODUCTS.md), never to a Research server. Statistics 已发布独立的 public Python numerical API，不提供 HTTP 发布。Backtesting 的首个 HTTP product 与 catalog entry 由 W2 WP6 建立；WP0 不创建 fake contract。
+`ui_http` 是 inbound delivery boundary，不是 analytical pipeline stage。稳定依赖方向是 `ui_http` 依赖 owning module 的 public application/product boundary；`data_snapshot`、`market_research`、`market_statistics`、`market_backtesting` 与 `market_modeling` 不得依赖 `ui_http`，也不得用 FastAPI、HTTP DTO/status/error envelope、OpenAPI 或 frontend types 定义自己的 semantic model。Research publishes Python analytical boundaries; bounded HTTP delivery belongs to `ui_http` through [its catalog](ui_http/HTTP_PRODUCTS.md), never to a Research server. Statistics 已发布独立的 public Python numerical API，不提供 HTTP 发布。Backtesting 的首个 HTTP product 与 catalog entry 由 W2 WP6 建立；不以 authority 声明代替实际 contract 发布。
 
 ## 5. Authority 导航
 
@@ -273,7 +273,7 @@ ARCHITECTURE.md（本文件）
            └─ ui_web/contracts.md
 ```
 
-CLI 语义从本文档进入 `ui_cli/ARCHITECTURE.md`；Python dependency resolution 与当前本地操作进入 `DEVELOPMENT.md`；业务语义仍进入对应 owning module。`market_modeling` 当前没有下层 authority，不得从 runtime layout、Research authority 或 Backtesting authority 推导其内部设计。`market_backtesting` 的 Core 与 case/policy/performance/result/online 语义从其 module authority 进入；WP0 authority 不等于 runtime readiness。
+CLI 语义从本文档进入 `ui_cli/ARCHITECTURE.md`；Python dependency resolution 与当前本地操作进入 `DEVELOPMENT.md`；业务语义仍进入对应 owning module。`market_modeling` 当前没有下层 authority，不得从 runtime layout、Research authority 或 Backtesting authority 推导其内部设计。`market_backtesting` 的 Core 与 case/policy/performance/result/online 语义从其 module authority 进入；authority 不等于 runtime readiness，当前状态由模块 Roadmap 记录。
 
 上层只提供选择下一份文档所需的上下文，不复制下层语义。新增或删除单个产品通常只更新模块 catalog，不改变本文档。
 

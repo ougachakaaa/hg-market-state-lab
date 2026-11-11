@@ -162,14 +162,14 @@ repair or continue when any of the following is true:
   export;
 - Session count, price, equity or result arithmetic becomes non-finite or invalid.
 
-A failure is classified by the online application
-([Online application](ONLINE_APPLICATION.md)); it never degrades into a partial
-BacktestResult. Missing data is never treated as a closed session, zero price, zero
-volume or an implicit empty active set.
+Pure Policy/replay failures retain the public Core/case category and reason. The
+[Online application](ONLINE_APPLICATION.md) projects them with execution-stage context;
+a failure never degrades into a partial BacktestResult. Missing data is never treated
+as a closed session, zero price, zero volume or an implicit empty active set.
 
 ## Required tests
 
-Preserve original WP1 regressions across Policy/Core/integration tests:
+Required Policy/Core/integration coverage:
 
 - first-session entry at M1; both profiles;
 - normal holding and final-session exit;
@@ -183,8 +183,9 @@ Preserve original WP1 regressions across Policy/Core/integration tests:
 - Calendar/Futures/Index scope, completeness and underlying inconsistencies;
 - deterministic ordering and immutable inputs.
 
-No market data acquisition is required for WP1. Synthetic fixtures are sufficient and
-preferred; WP3 adds the public-service integration and bounded real IM acceptance.
+Pure policy/replay acceptance uses synthetic fixtures without market acquisition.
+WP3 adds public-service integration and bounded real IM acceptance; current completion
+is recorded in the [roadmap](ROADMAP.md).
 
 ## Decision evidence and Python boundary
 

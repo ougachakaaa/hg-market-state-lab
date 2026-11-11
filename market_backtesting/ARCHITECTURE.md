@@ -4,14 +4,12 @@
 backtesting over authorized market facts. It is a sibling analytical module, not a
 Research paradigm, a Modeling implementation or an inbound delivery adapter. This
 authority owns module identity, ownership boundaries, dependency direction, case
-navigation and implementation status. Strategy, accounting, input, result and online
-semantics are divided between Core and concrete case through the navigation below.
+navigation. Strategy, accounting, input, result and online semantics are divided between Core and concrete case through the navigation below.
 
-WP0/WP1 established the original authority and pure holding simulator. The approved
-Position-Driven Core reconciliation directly replaces that simulator with a generic
-single-position Core plus W2 Policy. No DataLake integration, HTTP/Web, online run or
-full Performance Analyzer is included. Historical completion and current gates are in
-the [roadmap](cases/futures_roll_long/ROADMAP.md).
+The module separates strategy-independent Core from the W2 case adapter and analysis.
+Current implementation readiness and remaining delivery gates belong to the
+[roadmap](cases/futures_roll_long/ROADMAP.md); current authority review and implementation
+differences belong to [reconciliation](cases/futures_roll_long/RECONCILIATION.md).
 
 ## Purpose
 
@@ -102,7 +100,8 @@ framework from it.
 | Public upstream bindings, completeness, slot reuse, fingerprint and readiness | [Inputs](cases/futures_roll_long/INPUTS.md) |
 | BacktestResult, evidence, limitations and Visualization projection | [Result](cases/futures_roll_long/RESULT.md) |
 | Online request, run lifecycle, storage, concurrency and delivery ownership | [Online application](cases/futures_roll_long/ONLINE_APPLICATION.md) |
-| WP0–WP8, acceptance and reconciliation | [Roadmap](cases/futures_roll_long/ROADMAP.md) |
+| Delivery status, remaining work packages and acceptance | [Roadmap](cases/futures_roll_long/ROADMAP.md) |
+| Concern/consumer inventory, current semantic review and implementation drift | [Reconciliation](cases/futures_roll_long/RECONCILIATION.md) |
 
 Core imports neither W1 nor W2; only the W2 case adapter may consume authorized W1 symbols.
 The package root must not eagerly import the case, so Core can load without Research.
@@ -111,31 +110,19 @@ The package root must not eagerly import the case, so Core can load without Rese
 
 Core-wide invariants are immutable single-position state, daily transition before
 accounting, explicit price assumptions and failure without partial success. The
-strategy-specific constraints below apply to W2 only; Core must not encode them.
+case constraints belong to W2; Core must not encode them.
 
-- The unit of strategy exposure is one lot of an immutable real `contract_code`, not
-  a daily re-selected M1 Slot. Slot identity is only a decision-day role.
-- Entry and roll decisions happen at the close of a CFFEX session. The roll day's PnL
-  belongs to the old contract; the new contract begins at that same close. No
-  cross-contract price difference creates PnL.
-- The last study session closes all exposure and never opens a position without a
-  holding period.
-- Missing calendar, contract, metadata, price or lifecycle evidence fails the
-  operation. No silent skipping, filling, expiry guessing, contract substitution or
-  second market cache is permitted.
-- The Web layer displays producer-owned values. It never recalculates PnL, returns,
-  benchmark, drawdown or trade decisions in React.
-- Backtesting is not Research evidence and not Publication. The case-specific online
-  run is disposable application execution state, not a Workbench Run, ResearchPlan,
-  Job/BatchResult or durable research identity.
+W2 owns real-contract selection, expiry-driven rolls and terminal closure through its
+[Strategy](cases/futures_roll_long/STRATEGY.md), within Core's generic single-position
+boundary. Input failures cannot become successful partial results. HTTP/Web consume
+producer-owned results without financial recomputation. Online execution state remains
+independent of Research Publication, Job/Batch and Workbench identities.
 
 ## Status and verification
 
-WP0 is a documentation/authority gate. It runs link, anchor, reachability and topology
-checks only; no full Python/HTTP/Web test matrix or real-market acquisition is claimed.
-WP1 historically added pure holding simulation. Reconciliation introduces the executable
-Core subset under a separate acceptance gate; remaining WP2 owns Performance Analyzer
-and benchmark. WP4 PASS means W2 research capability, while WP8 PASS remains required
-for full W2 completion. See the [roadmap](cases/futures_roll_long/ROADMAP.md).
+The [roadmap](cases/futures_roll_long/ROADMAP.md) is the sole current delivery/status
+entry. Synthetic Core checks, full research capability and end-to-end W2 completion
+are separate acceptance gates. A passing implementation test does not close an
+[implementation drift](cases/futures_roll_long/RECONCILIATION.md#implementation-drift-register).
 
 Agent execution policy is in [AGENTS.md](AGENTS.md).
