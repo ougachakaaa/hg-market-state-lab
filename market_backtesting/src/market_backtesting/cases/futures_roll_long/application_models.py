@@ -132,7 +132,7 @@ class PreparedFuturesRollInputs:
     index_calendar_request: TradeCalendarRange
     index_calendar_export: TradeCalendarExport
     fingerprint_profile: str = field(default="futures_roll_long_inputs_v1", init=False)
-    definition_version: str = field(default="futures_roll_long_v1", init=False)
+    definition_version: str = field(default="futures_roll_long_definition_v1", init=False)
 
 
 @dataclass(frozen=True, slots=True)

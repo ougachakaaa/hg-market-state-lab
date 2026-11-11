@@ -255,6 +255,8 @@ limitations
   of the trade projection. The online result carries this evidence summary; an online evidence/replay endpoint is
   not part of W2 v1 unless a later authority adds it.
 
+The portable format and offline API are owned by [Evidence](EVIDENCE.md).
+
 ## Visualization projection
 
 The result carries producer-owned generic V2 Views under `views`. They conform to the
@@ -292,6 +294,10 @@ A result is invalid unless all of the following hold:
 
 1. `daily` dates equal the observed CFFEX sessions exactly, strictly increasing.
 2. `summary.total_pnl == Σ daily.daily_pnl == last daily.cumulative_pnl`.
+   Here Σ follows Core's chronological binary64 accumulation, starting at `0.0`
+   and adding each recorded Daily PnL in session order. A compensated/reassociated
+   library sum is not an alternative accounting value; no rounding or tolerance
+   repairs a mismatch in recorded projections.
 3. Each daily equity equals its recorded Core Accounting equity.
 4. `summary.gross_return == last daily.cumulative_return`.
 5. `summary.benchmark_return == last daily.benchmark_cumulative_return`.

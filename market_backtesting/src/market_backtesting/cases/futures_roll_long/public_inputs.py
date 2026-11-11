@@ -2,10 +2,13 @@
 
 from __future__ import annotations
 
+from data_lake.datasets.tushare_equity_index_futures import FuturesDailyRange
+from data_lake.datasets.tushare_index_daily import IndexDailyRange
+from data_lake.datasets.tushare_trade_calendar import TradeCalendarExport, TradeCalendarRange
 from market_research.descriptive.cases.futures_basis import ContractMetadata, DailyUniverseEvidence
 
 from ...core import InstrumentReference
-from .application_models import FuturesRollRequest, PublicInputExports
+from .application_models import FuturesRollRequest, PublicInputExports, PublicInputRequests
 from .models import ContractClose, DecisionSlotEvidence, FuturesRollInput, IndexClose, SessionFacts
 
 
@@ -57,3 +60,42 @@ def build_replay_input(
         instrument_refs=tuple(references.values()),
         index_closes=tuple(IndexClose(day, closes[day]) for day in sessions),
     )
+
+
+def validate_retained_exports(
+    request: FuturesRollRequest, exports: PublicInputExports, auxiliary: TradeCalendarExport
+) -> None:
+    """Offline validation of the same final public inputs used by preparation."""
+    from .application_models import validate_futures_roll_request
+    from .failures import FuturesRollError
+    from .input_validation import validate_calendar, validate_futures, validate_index
+
+    validate_futures_roll_request(request)
+    sessions = validate_calendar(exports.calendar_cffex, request)
+    sse = validate_calendar(auxiliary, request, exchange="SSE")
+    underlying = validate_futures(exports.futures, request, sessions)
+    if (
+        len(sessions) < 2
+        or underlying is None
+        or not all(
+            export.coverage.complete
+            for export in (exports.calendar_cffex, exports.futures, exports.index, auxiliary)
+        )
+    ):
+        raise FuturesRollError("invalid_evidence", "incomplete_retained_inputs")
+    validate_index(exports.index, request, sessions, underlying, sse)
+
+
+def public_requests_for(
+    request: FuturesRollRequest, exports: PublicInputExports
+) -> tuple[PublicInputRequests, TradeCalendarRange]:
+    """Recover exact public requests from validated retained scope/window facts."""
+    return PublicInputRequests(
+        TradeCalendarRange("CFFEX", request.start_date, request.end_date),
+        FuturesDailyRange((request.product_code,), request.start_date, request.end_date),
+        IndexDailyRange(
+            (exports.futures.records[0].underlying_index_code,),
+            request.start_date,
+            request.end_date,
+        ),
+    ), TradeCalendarRange("SSE", request.start_date, request.end_date)

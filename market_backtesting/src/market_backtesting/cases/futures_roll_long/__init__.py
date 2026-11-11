@@ -12,6 +12,12 @@ from .application_models import PreparedFuturesRollInputs as PreparedFuturesRoll
 from .application_models import PublicInputExports as PublicInputExports
 from .application_models import PublicInputRequests as PublicInputRequests
 from .application_models import validate_futures_roll_request as validate_futures_roll_request
+from .evidence import build_evidence_package as build_evidence_package
+from .evidence import decode_evidence_package as decode_evidence_package
+from .evidence import encode_evidence_package as encode_evidence_package
+from .evidence import reproduce_futures_roll_evidence as reproduce_futures_roll_evidence
+from .evidence_models import EvidenceVerification as EvidenceVerification
+from .evidence_models import FuturesRollEvidencePackage as FuturesRollEvidencePackage
 from .failures import FuturesRollError as FuturesRollError
 from .models import PRODUCT_CODES as PRODUCT_CODES
 from .models import STRATEGY_PROFILES as STRATEGY_PROFILES
@@ -33,3 +39,6 @@ from .models import StrategyProfile as StrategyProfile
 from .performance import analyze_futures_roll as analyze_futures_roll
 from .policy import MechanicalRollPolicy as MechanicalRollPolicy
 from .replay import replay_futures_roll as replay_futures_roll
+from .result import build_backtest_result as build_backtest_result
+from .result_models import BacktestResult as BacktestResult
+from .result_validation import validate_backtest_result as validate_backtest_result
