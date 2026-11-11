@@ -28,7 +28,7 @@ consumers have no runtime/API yet.
 | Calendar / Futures / Index public facts and operations | [Calendar Service](../../../data_lake/datasets/tushare_trade_calendar/SERVICE.md), [Futures Service](../../../data_lake/datasets/tushare_equity_index_futures/SERVICE.md), [Index Service](../../../data_lake/datasets/tushare_index_daily/SERVICE.md) | `application.py::prepare` through the three published factories; retained final exports and separate SSE Calendar prerequisite |
 | W2 InitialCapital derivation, multiplier consistency, Benchmark/Excess/Drawdown, case oracles | [Performance](PERFORMANCE.md) | Synthetic capital/equity checks in `cases/futures_roll_long/replay.py`, multiplier checks in `cases/futures_roll_long/policy.py`; `cases/futures_roll_long/performance.py::analyze_futures_roll`; both five-day oracles accepted |
 | BacktestResult, trades/roll projections, full evidence/replay, limitations and V2 views | [Result](RESULT.md) | `result_models.py`, `result.py`, `result_validation.py`, `visualization.py`; full portable format under [Evidence](EVIDENCE.md), `evidence_models.py` and `evidence.py` |
-| Independent online request/run/store, owner isolation and failure composition | [Online Application](ONLINE_APPLICATION.md) | Pending WP5; consumes Core + Analyzer + Result |
+| Independent online request/run/store, owner isolation and failure composition | [Online Application](ONLINE_APPLICATION.md) | WP5 implemented; composes existing WP3 + WP4 pipeline |
 | HTTP/OpenAPI and Web presentation | [HTTP architecture](../../../ui_http/ARCHITECTURE.md), [HTTP catalog](../../../ui_http/HTTP_PRODUCTS.md), [Web workspace](../../../ui_web/workspace.md) | Pending WP6/WP7; no W2 endpoint, DTO or active feature claimed |
 | Current completion, remaining WPs and acceptance boundaries | [Roadmap](ROADMAP.md) | Subsequent implementation tasks; no business runtime consumer |
 | Execution policy and task navigation | [Root AGENTS](../../../AGENTS.md), [Module AGENTS](../../AGENTS.md) | Agents working in this module |
@@ -76,15 +76,15 @@ capabilities are Deferred delivery; a mandatory mismatch in existing code is Dri
 | 6 | Case repeats Core accounting | Requires Authority Change | Performance references Core daily/cumulative outputs; Result checks projection equality. Financial formulas have one canonical owner; worked oracles are verification examples. |
 | 7 | W1 Slot transitions versus W2 rolls | Compatible | Policy resolves Slots on entry/expiry decisions only. A role change alone is no trade; authorized facade symbols and architecture tests preserve isolation. |
 | 8 | Look-ahead risk | Compatible | Price-free current context, configuration-only Policy and current/future Close perturbation tests enforce price isolation. Metadata/active-set point-in-time availability is an explicit assumption, not a historical freshness proof. |
-| 9 | Result / Online execution model | Requires Authority Change | Result consumes Core evidence plus Analyzer; Online composes the same path. Failure stage/category vocabulary follows Policy/Core/case ownership. No separate holding executor or ledger. WP4 Result is implemented; Online remains WP5. |
-| 10 | Completed work versus future Roadmap | Requires Authority Change | Package, Core and W2 synthetic adapter are present. WP2–WP4 are accepted and WP5–WP8 remain pending; no package/simulator recreation or dual roadmap. |
+| 9 | Result / Online execution model | Requires Authority Change | Result consumes Core evidence plus Analyzer; Online composes the same path. Failure stage/category vocabulary follows Policy/Core/case ownership. No separate holding executor or ledger. WP4 Result and WP5 Online are implemented; HTTP remains WP6. |
+| 10 | Completed work versus future Roadmap | Requires Authority Change | Package, Core and W2 synthetic adapter are present. WP2–WP5 are accepted and WP6–WP8 remain pending; no package/simulator recreation or dual roadmap. |
 | 11 | Duplicate / contradictory authority | Requires Authority Change | Entries navigate; specialized contracts own formulas and workflows. Current audit is separate from Roadmap. No previous-version authority or compatibility chain is maintained. |
 | 12 | Residual implementation mismatch | Requires Authority Change | D1 is closed with independent daily-return tests and both Performance oracles. Missing later-WP deliverables are not mislabeled as regressions. |
 
 No Blocking semantic decision is identified. DataLake integration and bounded real
 IM input acceptance are complete in WP3. Formal Result/Evidence/Views and retained-real
-reproduction are complete in WP4. Online, HTTP/Web and full-window real E2E acceptance
-remain **Deferred** to WP5–WP8, not evidence of completed W2.
+reproduction are complete in WP4. Online is implemented in WP5. HTTP/Web and full-window real E2E acceptance
+remain **Deferred** to WP6–WP8, not evidence of completed W2.
 Existing DataLake/W1 contracts and HTTP/Web planned boundaries suffice; this reconciliation changes no producer contract or sibling code.
 
 ## Implementation drift register
@@ -106,7 +106,7 @@ Existing DataLake/W1 contracts and HTTP/Web planned boundaries suffice; this rec
 `futures_roll_long_definition_v1`. Case, definition, result and input identities are
 explicitly tested as four distinct values; no compatibility adapter exists.
 
-No open mandatory mismatch is identified in the implemented Core/W2/WP4 subset.
+No open mandatory mismatch is identified in the implemented Core/W2/WP5 subset.
 The Index SSE Calendar prerequisite discovered in fresh-cache real acceptance is
 explicitly reconciled in [Inputs](INPUTS.md#reconciled-index-calendar-prerequisite)
 and implemented through the Calendar public service, without producer changes.
@@ -115,9 +115,8 @@ real-instrument attribution or fail-without-partial-success requirements.
 
 ## Deferred and blocking decisions
 
-- **Blocking: none.** D1/D2 are closed; WP2–WP4 are accepted; WP5 may start.
-- **Deferred delivery:** Online mapping/store (WP5),
-  HTTP/OpenAPI (WP6), Web (WP7), real IM and Windows Chrome → WSL acceptance (WP8).
+- **Blocking: none.** D1/D2 are closed; WP2–WP5 are accepted; WP6 may start.
+- **Deferred delivery:** HTTP/OpenAPI (WP6), Web (WP7), real IM and Windows Chrome → WSL acceptance (WP8).
 - Historical metadata availability stays an explicit research limitation. Proving
   point-in-time availability or provider-current freshness is not implied by replay.
 - Excluded features and platform/deployment limitations remain in
@@ -284,3 +283,83 @@ public-symbol whitelist. No sibling production code or frontend schema changed.
 Reconciliation Summary: **WP4 PASS**. No open Implementation Drift or blocking
 semantic decision. **WP5 may start**; this delivery stops before WP5. W2 remains
 incomplete pending Online/HTTP/Web and full-window WP8 acceptance.
+
+
+## WP5 online application acceptance — 2026-11-11
+
+**WP5 PASS.** The independent case-owned online facade composes the unchanged
+`FuturesRollService.run` → `build_backtest_result` → `validate_backtest_result` path.
+It adds no replay, PnL, return or drawdown engine. RESULT/EVIDENCE, Policy/Core,
+DataLake and W1 implementation/contracts are unchanged.
+
+### Failure reconciliation and implementation drift
+
+The preliminary reconciliation is encoded only in [Online Application](ONLINE_APPLICATION.md#failure-classification):
+`incomplete_input` retains its published name; `calendar_sse` is legal; actual
+`request/export/ensure/prepare/replay/analysis` stages are retained rather than guessed
+from category. Result construction/validation adds `result_validation`, publication
+adds `result_publication`. Core/Case category/reason, including `invalid_numeric`,
+`invalid_accounting`, `invalid_result` and `invalid_evidence`, survive safe projection.
+Unknown failures become fixed `execution/internal_failure` without diagnostics/text.
+There is no remaining WP5 Implementation Drift or blocking semantic decision.
+
+### Public boundary and runtime behavior
+
+The case package exports `FuturesRollOnlineApplication`, its factory,
+`OnlineRunStatus`, `OnlineFailure` and `FuturesRollOnlineError`.
+The four operations accept caller owner_scope; result returns the existing immutable
+BacktestResult. Preflight remains read-only and available independently of store failure.
+One process-wide guard admits one active thread across application instances; excess
+submissions return run_busy before run directory creation. No queue/retry/cancel exists.
+Full-result reads have one nonblocking permit; status never parses result/digest or
+holds an execution-duration lock. Unknown/malformed/foreign IDs share run_not_found;
+owner is excluded from public carriers and errors.
+
+`lab_config.backtesting_run_root()` reads optional `LAB_BACKTESTING_RUN_ROOT` using
+existing root configuration precedence. The CWD-independent default is the ignored
+`market_backtesting/.runtime/futures_roll_long_online/` directory. POSIX capabilities
+are checked before tree creation. Descriptor-relative/no-follow opens, ownership,
+permissions, regular-file/nlink validation and bounded reads protect private records.
+Strict JSON preserves full Result/V2 shape; the exact limit is 33,554,432 bytes.
+Result bytes and SHA-256 are committed before COMPLETED, with file and directory fsync.
+Terminal writes are immutable. Unpersistable failure makes reads unavailable instead
+of reporting a dead worker as RUNNING; restart interrupts unfinished runs.
+
+### Acceptance evidence
+
+- Actual thread + fake public services + temporary POSIX store: PENDING → RUNNING →
+  COMPLETED, both financial oracles (M1 22,000 / Q1 19,000 CNY), unchanged real-contract
+  PnL attribution and full V2 projections; historical reads perform no service call.
+- Concurrency: cross-instance busy/no directory (including admission before metadata creation), guard release, thread-start failure,
+  status during execution/publication, one full reader, read_busy without queuing.
+- Privacy/security: foreign/missing consistency, foreign corrupt-state isolation,
+  malformed IDs before filesystem access, no public owner, root/run/result/request/state
+  symlinks and unsafe permissions, wrong uid, FIFO/directory/hardlink, corrupt JSON/schema/
+  versions, missing/oversized result, digest mismatch and malformed full Result/V2.
+- Recovery: persisted PENDING/RUNNING interruption, all terminal states unchanged,
+  orphan result hidden, failed atomic replace retains old state, terminal-persistence
+  failure unavailable until restart. A separate Python process executes the actual
+  pipeline and exits after result write before COMPLETED; fresh initialization reports
+  INTERRUPTED and refuses the orphan result without recomputation.
+- Platform/config: missing flags/dir_fd/native-Windows capability simulation before
+  tree creation, absolute/no-traversal root, configuration precedence and CWD-independent
+  default. Actual runtime verification is Linux; native Windows/WSL deployment NOT RUN.
+
+### Final validation
+
+| Command | Result |
+| --- | --- |
+| `poetry run pytest market_backtesting/tests -q` | PASS — 527 tests |
+| `poetry run pytest data_snapshot/tests/test_authority_topology.py ui_http/tests/test_architecture.py -q` | PASS — 21 tests |
+| `poetry run pytest data_lake/tests/test_boundary.py market_research/tests/test_boundaries.py -q` | PASS — 15 tests |
+| `poetry run pytest config/tests -q` | PASS — 26 tests |
+| `poetry run ruff check market_backtesting config` | PASS |
+| `poetry run ruff check config conftest.py` | PASS |
+| `poetry run mypy market_backtesting` | PASS — 48 files |
+| `poetry run mypy config/src config/tests` | PASS — 3 files |
+| `git diff --check` | PASS |
+| Local Markdown links/anchors and full-diff ownership review | PASS |
+
+WP6 Python application prerequisites are satisfied. HTTP/OpenAPI, Web, real-market
+online E2E and Windows Chrome → WSL acceptance remain WP6–WP8, NOT RUN here. No runtime
+results, secrets or personal paths are committed. This delivery stops after WP5.

@@ -36,6 +36,11 @@ from .models import ProductCode as ProductCode
 from .models import RollEvent as RollEvent
 from .models import SessionFacts as SessionFacts
 from .models import StrategyProfile as StrategyProfile
+from .online import FuturesRollOnlineApplication as FuturesRollOnlineApplication
+from .online import create_futures_roll_online_application as create_futures_roll_online_application
+from .online_models import FuturesRollOnlineError as FuturesRollOnlineError
+from .online_models import OnlineFailure as OnlineFailure
+from .online_models import OnlineRunStatus as OnlineRunStatus
 from .performance import analyze_futures_roll as analyze_futures_roll
 from .policy import MechanicalRollPolicy as MechanicalRollPolicy
 from .replay import replay_futures_roll as replay_futures_roll

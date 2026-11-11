@@ -60,3 +60,5 @@ data_lake/experiments/**/output/
 /workbench/tasks/historical_return_observation/results/2026_four_index_returns/MATRIX.md
 /workbench/tasks/historical_return_observation/results/2026_four_index_returns/results.json
 /workbench/tasks/historical_return_observation/results/2026_four_index_returns/evidence/
+
+/market_backtesting/.runtime/

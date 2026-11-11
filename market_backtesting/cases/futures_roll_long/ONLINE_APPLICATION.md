@@ -44,7 +44,7 @@ date-only, inclusive-window, Asia/Shanghai future-date and maximum-span rules.
 
 The request does not carry a session count; whether the window contains at least two
 CFFEX sessions is established during input preparation and fails as
-`input_preparation/insufficient_sessions` if not. The HTTP layer strictly parses the
+`prepare/invalid_case_input/insufficient_sessions` if not. The HTTP layer strictly parses the
 request and maps the owning application's classified failure; it does not duplicate a
 second semantic validator.
 
@@ -150,25 +150,33 @@ Run failures expose a safe `{stage, category, dependency, reason}` record. HTTP 
 map the category to a transport status/body, but must not reclassify the financial or
 application meaning.
 
-| Stage | Categories | Dependency | Meaning |
-| --- | --- | --- | --- |
-| `input_preparation` | `upstream_operation`, `incomplete_required_input`, `invalid_public_input`, `insufficient_sessions`, `invalid_contract_lifecycle` | `calendar_cffex`, `futures`, `index`, or null | Public acquisition/completeness/metadata failure, fewer than two sessions, invalid lifecycle evidence discovered during public input preparation |
-| `position_replay` | `invalid_case_input`, `slot_resolution`, `missing_market_fact`, `invalid_price`, `roll_target_invalid`, `invalid_contract_lifecycle`, `invalid_position_state`, `invalid_input`, `invalid_target`, `invalid_numeric` | null | Input-adapter/Policy/Core replay validation, real-instrument price/target/lifecycle failure or illegal state |
-| `accounting` | `accounting_failure`, `invalid_accounting`, `invalid_numeric` | null | Core accounting or case capital/performance validation failure, including non-positive equity or multiplier inconsistency |
-| `result_publication` | `result_too_large`, `serialization_failure` | null | Bounded result publication failure |
-| `execution` | `interrupted`, `internal_failure` | null | Process interruption or unexpected worker failure |
+| Stage | Meaning |
+| --- | --- |
+| `request` | WP3 pure request validation |
+| `export`, `ensure`, `prepare` | Actual WP3 public input operation |
+| `replay` | Actual WP3 replay operation, including Policy, Transition and Accounting |
+| `analysis` | Actual WP3 Analyzer operation |
+| `result_validation` | WP4 result construction and validation |
+| `result_publication` | Bounded serialization and atomic publication |
+| `execution` | Thread startup, recovery or unknown failure |
 
-Stage identifies the failing operation, not a separate executor. Core Transition owns
-Daily PnL; Core Accounting consumes it; the Case Analyzer never repeats either.
-`position_replay` includes policy and transition failures. `accounting` includes Core
-Accounting and case capital/performance checks, even when a multiplier check occurs
-inside Policy. For numeric failures, stage follows the operation that rejected the
-value. Category/reason preserve the public Core/case failure meaning; the W2 adapter's
-`missing_instrument_quote` to `missing_contract_row` translation remains applicable.
-WP5 must test this composition; no online mapper exists yet. HTTP only projects it.
+Preserve recognized `FuturesRollApplicationError.stage`, category, reason and dependency.
+Dependencies are `calendar_cffex`, `calendar_sse`, `futures`, `index` or null.
+The already public category is `incomplete_input`, not `incomplete_required_input`;
+fewer than two sessions remains `invalid_case_input/insufficient_sessions`.
+Core/Case `invalid_numeric`, `invalid_accounting`, `accounting_failure`, `invalid_result`
+and `invalid_evidence` retain their category/reason. Stage follows the actual operation:
+accounting failure during replay is `replay`, not synthetic `accounting`.
+The existing `missing_instrument_quote` to `missing_contract_row` translation remains.
 
-The stage, category and reason are stable classification fields. Representative reason
-mapping:
+An explicit safe category/reason allowlist excludes arbitrary exception text.
+Unknown exceptions/classifications become fixed `{stage: execution, category:
+internal_failure, dependency: null, reason: internal_failure}`.
+Publication uses fixed category/reason `result_too_large`, `serialization_failure` or
+`storage_failure`; recovery uses `execution/interrupted/interrupted`.
+Diagnostics, detail, provider messages, credentials and paths are never projected.
+
+Representative preserved Core/Case reasons:
 
 | Category | Representative stable reasons |
 | --- | --- |
@@ -207,7 +215,7 @@ and Workbench storage. The semantic records are:
     validated result: only when COMPLETED
 ```
 
-Incidental filenames and state schema versions are implementation choices for WP5;
+Private records use `request.json`, `state.json`, `result.json` and schema version 1;
 the semantic records and atomicity above are canonical.
 
 Configuration and platform:
@@ -298,3 +306,40 @@ Explicitly deferred or out of scope for W2 v1:
 
 These are not implied by a successful WP5/WP6/WP7 run. WP8 records the actual integrated
 acceptance and any NOT RUN platform/deployment boundaries.
+
+## WP5 public Python facade
+
+The case package exports `create_futures_roll_online_application`,
+`FuturesRollOnlineApplication`, `OnlineRunStatus`, `OnlineFailure` and
+`FuturesRollOnlineError`. Operations are `preflight(request, owner_scope)`,
+`submit(request, owner_scope)`, `get_status(run_id, owner_scope)` and
+`get_result(run_id, owner_scope)`. Status/failure carriers are frozen; result is the
+existing BacktestResult. Preflight delegates to WP3 independently of store availability.
+Every operation requires a nonempty string owner. Public operation errors classify as
+`invalid_request`, `run_busy`, `read_busy`, `run_not_found`, `result_not_ready`,
+`unavailable` or `corrupt`; messages contain only that fixed classification.
+
+Private records bind run ID, immutable request/owner, UTC ISO timestamps and version 1.
+Store-owned directories/files use 0700/0600 and current-uid ownership; existing objects
+must forbid group/other writes. Ancestors are opened without following symlinks;
+shared writable ancestors require sticky-directory protection. Runtime roots must be
+absolute without parent traversal. All reads validate opened descriptors and bounds.
+Atomic publication fsyncs the file, replaces it relative to the directory descriptor,
+then fsyncs the directory; result precedes COMPLETED. Terminal states cannot change.
+Process-wide admission also serializes initialization/recovery; recovery skips the
+actual current-process active run. Terminal-persistence failure makes the application
+unavailable until restart, preventing stale RUNNING responses. Corruption fails closed.
+
+Minimal single-process usage:
+
+```python
+app = create_futures_roll_online_application()
+readiness = app.preflight(request, owner_scope)
+accepted = app.submit(request, owner_scope)
+status = app.get_status(accepted.run_id, owner_scope)
+# Poll status; only COMPLETED permits:
+result = app.get_result(accepted.run_id, owner_scope)
+```
+
+Optional `LAB_BACKTESTING_RUN_ROOT` uses lab_config and root `.env`/process environment.
+Native Windows or missing POSIX capabilities is unavailable before runtime creation.

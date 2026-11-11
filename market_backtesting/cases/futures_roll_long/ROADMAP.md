@@ -40,32 +40,35 @@ single-instrument accounting kernel; W2 is its first case.
   and producer-owned V2 returns/drawdown Views are implemented. Bounded retained-real
   IM verification passes for both profiles, including frontend V2 conformance and
   complete event reconstruction, without Source acquisition.
-- WP5 may start. Online and HTTP/Web remain pending; Python research capability
-  completion does not complete W2 or replace full-window WP8 acceptance.
+- **WP5 — PASS (2026-11-11).** Independent online Python facade, actual single-thread
+  execution, owner-isolated POSIX runtime store, bounded validated result encoding,
+  result-before-COMPLETED atomic publication and startup interruption recovery are
+  implemented. Real process-crash recovery and both unchanged financial oracles pass.
+  WP6 may start; HTTP/Web and full-window WP8 acceptance remain pending.
 
 ## Remaining work packages
 
-Each WP is independently reviewable, committable and accepted. WP2 through WP4 are accepted;
-dependencies proceed from WP5 through WP8. No later deliverable is implied by a prior gate.
+Each WP is independently reviewable, committable and accepted. WP2 through WP5 are accepted;
+remaining dependencies proceed from WP6 through WP8. No later deliverable is implied by a prior gate.
 
 | WP | Scope and required deliverables | Dependency | Definition of Done / acceptance | Forbidden scope |
 | --- | --- | --- | --- | --- |
 | Remaining WP2 — Core daily return and W2 Performance (**PASS**) | Closed D1; consume Core daily/cumulative accounting; Analyzer for benchmark/equity, excess and both drawdowns | Existing Core and W2 Policy | Both five-day Performance oracles; Core daily-return acceptance; benchmark first-day and positive-equity checks; running peaks; final excess; deterministic finite outputs; multiplier/strategy-equity failures preserved | Reimplementing Core PnL/accounting in Case, changing Policy, DataLake I/O, Result/Views, Online, HTTP/Web |
 | WP3 — DataLake Integration & Real Backtest Python API (**PASS**) | Public Calendar/Futures/Index preparation; exact completeness validation; authorized Slot adapter; canonical input fingerprint; read-only preflight; public Python backtest API; bounded real IM acceptance | WP2 | Fake-service completeness/failure matrix; exact scope/window/counters; deterministic fingerprint; public import boundary; complete final exports; bounded real IM evidence; no Snapshot/private access or second cache | W1 observation/report consumption, second provider/cache, HTTP/Web, online store |
 | WP4 — Backtest Result, Evidence & Visualization Projection (**PASS**) | Stable result profile; evidence summary/package; V2 returns/drawdown views; reader projection; limitations; cross-field invariants | WP3 | Result schema/version; all invariants; V2 validation; manual oracle; deterministic evidence/replay; WP4 PASS = core research capability complete | HTTP/Web, online store, generic visualization schema, W3 financial features |
-| WP5 — Online Backtest Application & Run Store | Online composition of the WP3 preflight plus submit/status/result application; owner scope; single worker/busy; disposable file store; atomic result publication; startup recovery; bounded result reads | WP4 | Fake-service state matrix; busy/no queue; owner isolation; restart interruption; orphan result handling; size/corruption/unsupported platform; no HTTP/UI | HTTP/UI, Publication, Workbench, multi-process/queue, W1 store reuse |
+| WP5 — Online Backtest Application & Run Store (**PASS**) | Online composition of the WP3 preflight plus submit/status/result application; owner scope; single worker/busy; disposable file store; atomic result publication; startup recovery; bounded result reads | WP4 | Fake-service state matrix; busy/no queue; owner isolation; restart interruption; orphan result handling; size/corruption/unsupported platform; no HTTP/UI | HTTP/UI, Publication, Workbench, multi-process/queue, W1 store reuse |
 | WP6 — HTTP Product & OpenAPI | HTTP contract; strict parsing/limits; run/result DTO projection; Auth/owner/error mapping; OpenAPI; no financial recomputation | WP5 | Strict request/auth/error/limit tests; OpenAPI/freshness prerequisites; result/run/request association; preflight and no-store behavior; Web untouched | Web UI, business logic, W1 product changes, financial recomputation |
 | WP7 — Web UI Backtesting Integration | `/backtesting` page: Ant Design controls, preflight/readiness, submit/poll, V2 return/drawdown charts, trades/rolls, evidence/limitations, busy/error/failed/interrupted states; generated contracts | WP6 | `npm run contract:check`, Vitest, build, lint; deterministic browser tests; no fake result/control; no React financial computation; planned page honestly replaced | Financial calculation, backend bypass, generic chart DSL, CSV/export/copy not authorized by W2 v1 |
 | WP8 — Real-Market E2E Acceptance & Reconciliation | WSL2 FastAPI + Vite + Windows Chrome real IM workflow; login → preflight → submit → poll → result → charts → trades → evidence; restart/busy/ownership/failure; final reconciliation | WP7 | Both profiles for IM, 2024-01-01 through 2026-10-30, with real rolls and final exit; real data not substituted by synthetic; all workflow states; Windows Chrome browser → WSL HTTP/Web local end-to-end acceptance; W1 regression; no W3 features; external evidence; WP8 PASS permits W2 completion | W3 fees/slippage/ETF/margin/funding/optimization; production deployment promise; unverified platform claims |
 
-## Next implementation entry — WP5
+## Next implementation entry — WP6
 
-Start at [Online application](ONLINE_APPLICATION.md). Consume the accepted WP3
-preparation/execution/read-only readiness boundary and WP4's validated immutable
-Result. Portable evidence and offline verification are discoverable through
-[Result](RESULT.md) → [Evidence](EVIDENCE.md). WP5 owns the independent online run
-lifecycle/store; it does not create another executor, accounting path or evidence
-serializer. This WP4 delivery stops before implementing WP5.
+Start at [Online application](ONLINE_APPLICATION.md). WP5 publishes the case-owned
+`create_futures_roll_online_application` facade with preflight/submit/status/result,
+frozen status/failure values and existing BacktestResult. WP6 supplies authenticated
+owner identity and owns HTTP mapping, strict DTO/OpenAPI, no-store and transport limits.
+It must preserve the actual WP3 execution stages and Core/Case failure meanings.
+This delivery stops at WP5; no HTTP contract or Web integration is claimed.
 
 ## Acceptance boundaries
 

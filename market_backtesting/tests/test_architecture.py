@@ -40,6 +40,12 @@ ALLOWED_W1_NAMES = {
     "SlotResolutionError",
     "SLOTS",
 }
+ONLINE_IMPORTS = {
+    "online.py": {"pathlib", "threading", "lab_config"},
+    "online_store.py": {"os", "pathlib", "stat", "secrets", "contextlib"},
+    "online_codec.py": {"types"},
+}
+
 ALLOWED_TOP_LEVEL = {
     "__future__",
     "dataclasses",
@@ -70,6 +76,12 @@ FORBIDDEN_W1_SEMANTICS = {
 
 def source_files() -> list[Path]:
     return sorted(SOURCE.rglob("*.py"))
+
+
+def online_imports(path: Path) -> set[str]:
+    if path.parent == SOURCE / "cases/futures_roll_long":
+        return ONLINE_IMPORTS.get(path.name, set())
+    return set()
 
 
 def imported_modules(path: Path) -> list[str]:
@@ -116,11 +128,11 @@ def test_dependencies_are_limited_to_public_market_inputs_and_standard_library()
             if isinstance(node, ast.Import):
                 for alias in node.names:
                     root = alias.name.split(".", 1)[0]
-                    if root not in ALLOWED_TOP_LEVEL:
+                    if root not in ALLOWED_TOP_LEVEL | online_imports(path):
                         violations.append(f"{path}: import {alias.name}")
             elif isinstance(node, ast.ImportFrom) and not node.level:
                 root = (node.module or "").split(".", 1)[0]
-                if root not in ALLOWED_TOP_LEVEL:
+                if root not in ALLOWED_TOP_LEVEL | online_imports(path):
                     violations.append(f"{path}: from {node.module}")
             elif isinstance(node, ast.Call) and isinstance(node.func, ast.Name):
                 if node.func.id in {"open", "eval", "exec", "__import__"}:
@@ -238,7 +250,9 @@ def test_source_uses_only_authorized_datalake_public_boundaries() -> None:
                     or not path.is_relative_to(SOURCE / "cases/futures_roll_long")
                 ):
                     violations.append(f"{path}: {name}")
-            if name.split(".", 1)[0] in forbidden_roots:
+            if name.split(".", 1)[0] in forbidden_roots and name.split(".", 1)[
+                0
+            ] not in online_imports(path):
                 violations.append(f"{path}: {name}")
     assert not violations, "\n".join(violations)
 

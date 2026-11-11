@@ -186,3 +186,16 @@ def test_working_directory_does_not_change_the_configuration_path(
     monkeypatch.chdir(tmp_path)
 
     assert lab_config.tushare_token() == "file-token"
+
+
+def test_backtesting_root_configuration_precedence(
+    env_file: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.delenv(lab_config.LAB_BACKTESTING_RUN_ROOT_ENV, raising=False)
+    assert lab_config.backtesting_run_root() is None
+    env_file.write_text("LAB_BACKTESTING_RUN_ROOT=/example/file/runs\n", encoding="utf-8")
+    assert lab_config.backtesting_run_root() == "/example/file/runs"
+    monkeypatch.setenv(lab_config.LAB_BACKTESTING_RUN_ROOT_ENV, "/example/process/runs")
+    assert lab_config.backtesting_run_root() == "/example/process/runs"
+    monkeypatch.setenv(lab_config.LAB_BACKTESTING_RUN_ROOT_ENV, "")
+    assert lab_config.backtesting_run_root() == ""
