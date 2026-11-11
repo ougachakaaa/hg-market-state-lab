@@ -1,3 +1,4 @@
+import '../../shared/visualization/plotly.css'
 import { createRoot } from 'react-dom/client'
 import { Component, type ReactNode } from 'react'
 import { Alert } from 'antd'

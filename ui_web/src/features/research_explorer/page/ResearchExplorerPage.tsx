@@ -1,3 +1,4 @@
+import { ReloadOutlined } from '@ant-design/icons'
 import { intervalLabels } from '../../../shared/format/interval'
 import { categoryLabelOptions } from '../../../shared/visualization/presentation'
 import { formatUnit } from '../../../shared/format/unit'
@@ -16,7 +17,7 @@ const messages: Record<FailureKind, string> = {
   invalid_response: '服务返回了无法识别的响应。', invalid_view: 'ChartView 格式无效或不兼容。',
 }
 function ErrorState({ error, retry, context }: { error: unknown; retry: () => void; context: string }) {
-  return <Alert type="error" showIcon title={error instanceof ResearchError && error.kind === 'not_found' ? `未找到所选 ${context}。` : error instanceof ResearchError ? messages[error.kind] : '请求失败。'} action={<Button onClick={retry}>重试</Button>} />
+  return <Alert type="error" showIcon title={error instanceof ResearchError && error.kind === 'not_found' ? `未找到所选 ${context}。` : error instanceof ResearchError ? messages[error.kind] : '请求失败。'} action={<Button icon={<ReloadOutlined aria-hidden="true" />} onClick={retry}>重试</Button>} />
 }
 const value = (v: unknown) => v === null || v === undefined ? 'N/A' : typeof v === 'object' ? JSON.stringify(v) : String(v)
 function Facts({ title, data }: { title: string; data: object }) {

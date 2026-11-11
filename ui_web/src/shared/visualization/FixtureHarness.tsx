@@ -1,3 +1,4 @@
+import './plotly.css'
 /** Development/test entry only. No application navigation or HTTP consumer. */
 import { useState } from 'react'
 import { createRoot } from 'react-dom/client'

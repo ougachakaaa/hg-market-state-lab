@@ -1,3 +1,4 @@
+import { AppstoreOutlined, DatabaseOutlined, DotChartOutlined, ExperimentOutlined, FileSearchOutlined, HistoryOutlined, LineChartOutlined, LogoutOutlined, MenuFoldOutlined, MenuUnfoldOutlined, ReloadOutlined, TableOutlined } from '@ant-design/icons'
 import { Alert, Breadcrumb, Button, Card, Flex, Layout, Menu, Spin, Typography, theme } from 'antd'
 import { useEffect, useState } from 'react'
 import FuturesBasisPage from '../features/futures_basis_research/page/FuturesBasisPage'
@@ -33,11 +34,11 @@ function Landing({ area, navigate }: { area: 'data' | 'backtesting'; navigate: (
     {area === 'data' && <Flex gap="middle" wrap>
       <Card title="MO Option Chain" style={{ flex: '1 1 280px', minWidth: 0 }}>
         <Typography.Paragraph type="secondary">查看期权链价格分布与同到期 Futures 参考。</Typography.Paragraph>
-        <Button onClick={() => navigate('/data/mo-option-chain')}>打开 MO Option Chain</Button>
+        <Button icon={<DotChartOutlined aria-hidden="true" />} onClick={() => navigate('/data/mo-option-chain')}>打开 MO Option Chain</Button>
       </Card>
       <Card title="MO Premium Plane" style={{ flex: '1 1 280px', minWidth: 0 }}>
         <Typography.Paragraph type="secondary">查看多维权利金稀疏数值平面。</Typography.Paragraph>
-        <Button onClick={() => navigate('/data/mo-premium-plane')}>打开 MO Premium Plane</Button>
+        <Button icon={<TableOutlined aria-hidden="true" />} onClick={() => navigate('/data/mo-premium-plane')}>打开 MO Premium Plane</Button>
       </Card>
     </Flex>}
   </Flex>
@@ -69,7 +70,7 @@ function ApplicationShell({ user, signOut, path, navigate }: {
   return <Layout style={{ minHeight: '100vh', background: token.colorBgLayout }}>
     <Layout.Sider collapsed={collapsed} collapsedWidth={64} width={232} breakpoint="xl"
       onBreakpoint={broken => { setCollapsed(broken); setPopupKeys([]) }} trigger={null}
-      theme="dark" style={{ background: token.colorBgContainer, borderRight: `1px solid ${token.colorBorderSecondary}` }}>
+      theme="dark" style={{ borderRight: `1px solid ${token.colorBorderSecondary}` }}>
       <Flex align="center" justify="center" style={{ minHeight: 64, paddingInline: token.paddingSM }}>
         <Typography.Text strong aria-label="Market State Lab">{collapsed ? 'MSL' : 'Market State Lab'}</Typography.Text>
       </Flex>
@@ -79,26 +80,26 @@ function ApplicationShell({ user, signOut, path, navigate }: {
         style={{ background: 'transparent', borderInlineEnd: 0 }}
         onClick={({ key }) => { if (isWorkspacePath(key)) navigate(key) }}
         items={[
-          { key: 'area:/research', label: '研究', icon: <span aria-hidden="true">研</span>, children: [
-            { key: '/research', label: '研究工作台' },
-            { key: '/research/publications', label: 'Research Explorer' },
-            { key: '/research/futures-basis', label: 'Futures Basis Research' },
+          { key: 'area:/research', label: '研究', icon: <ExperimentOutlined aria-hidden="true" />, children: [
+            { key: '/research', icon: <AppstoreOutlined aria-hidden="true" />, label: '研究工作台' },
+            { key: '/research/publications', icon: <FileSearchOutlined aria-hidden="true" />, label: 'Research Explorer' },
+            { key: '/research/futures-basis', icon: <LineChartOutlined aria-hidden="true" />, label: 'Futures Basis Research' },
           ] },
-          { key: 'area:/data', label: '日常数据', icon: <span aria-hidden="true">数</span>, children: [
-            { key: '/data', label: '数据总览' },
-            { key: '/data/mo-option-chain', label: 'MO Option Chain' },
-            { key: '/data/mo-premium-plane', label: 'MO Premium Plane' },
+          { key: 'area:/data', label: '日常数据', icon: <DatabaseOutlined aria-hidden="true" />, children: [
+            { key: '/data', icon: <DatabaseOutlined aria-hidden="true" />, label: '数据总览' },
+            { key: '/data/mo-option-chain', icon: <DotChartOutlined aria-hidden="true" />, label: 'MO Option Chain' },
+            { key: '/data/mo-premium-plane', icon: <TableOutlined aria-hidden="true" />, label: 'MO Premium Plane' },
           ] },
-          { key: '/backtesting', label: '回测 · 规划中', icon: <span aria-hidden="true">测</span> },
+          { key: '/backtesting', label: '回测 · 规划中', icon: <HistoryOutlined aria-hidden="true" /> },
         ]} />
     </Layout.Sider>
     <Layout style={{ minWidth: 0 }}>
       <Layout.Header style={{ paddingInline: token.paddingLG, paddingBlock: token.paddingSM,
-        background: token.colorBgContainer, lineHeight: 'normal',
+        lineHeight: 'normal',
         borderBottom: `1px solid ${token.colorBorderSecondary}`, height: 'auto', minHeight: 64 }}>
         <Flex justify="space-between" align="center" wrap gap="small">
           <Flex align="center" gap="middle" style={{ minWidth: 0 }}>
-            <Button aria-label={collapsed ? '展开导航' : '折叠导航'} aria-expanded={!collapsed}
+            <Button icon={collapsed ? <MenuUnfoldOutlined aria-hidden="true" /> : <MenuFoldOutlined aria-hidden="true" />} aria-label={collapsed ? '展开导航' : '折叠导航'} aria-expanded={!collapsed}
               onClick={toggleSidebar}>{collapsed ? '展开' : '折叠'}</Button>
             <Breadcrumb items={path === '/backtesting' ? [{ title: '回测' }] : [
               { title: path === area ? areaTitle : <a href={area} onClick={(event) => { event.preventDefault(); navigate(area) }}>{areaTitle}</a> },
@@ -107,7 +108,7 @@ function ApplicationShell({ user, signOut, path, navigate }: {
           </Flex>
           <Flex align="center" gap="middle" wrap>
             <Typography.Text type="secondary" style={{ overflowWrap: 'anywhere' }}>{user.username}</Typography.Text>
-            <Button onClick={() => void signOut()}>退出登录</Button>
+            <Button icon={<LogoutOutlined aria-hidden="true" />} onClick={() => void signOut()}>退出登录</Button>
           </Flex>
         </Flex>
       </Layout.Header>
@@ -143,9 +144,9 @@ function AuthenticationGate() {
   return <Flex vertical align="center" justify="center" gap="middle" style={{ minHeight: '100vh', padding: 24,
     boxSizing: 'border-box', background: token.colorBgLayout }}>
     {state.status === 'checking' && <><Spin /><Typography.Text>正在检查登录状态…</Typography.Text></>}
-    {state.status === 'error' && <><Alert type="error" title={state.message} /><Button onClick={() => void check()}>重试登录状态检查</Button></>}
+    {state.status === 'error' && <><Alert type="error" title={state.message} /><Button icon={<ReloadOutlined aria-hidden="true" />} onClick={() => void check()}>重试登录状态检查</Button></>}
     {state.status === 'logging_out' && (state.pending ? <><Spin /><Typography.Text>正在退出…</Typography.Text></>
-      : <><Alert type="error" title={state.message} /><Button onClick={() => void signOut()}>重试退出</Button></>)}
+      : <><Alert type="error" title={state.message} /><Button icon={<ReloadOutlined aria-hidden="true" />} onClick={() => void signOut()}>重试退出</Button></>)}
   </Flex>
 }
 

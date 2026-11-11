@@ -1,3 +1,4 @@
+import { FileSearchOutlined, LineChartOutlined, ReloadOutlined } from '@ant-design/icons'
 import { Alert, Button, Card, Collapse, Descriptions, Empty, Flex, List, Skeleton, Tag, Typography } from 'antd'
 import { useState } from 'react'
 import type { Capability } from '../api/catalog'
@@ -54,7 +55,7 @@ export default function ResearchWorkspacePage({ openExplorer, openFuturesBasis }
           <Typography.Title level={4}>在线能力发现</Typography.Title>
           <Typography.Paragraph type="secondary">通过认证接口发现能力。实现支持不代表 Provider、凭据或缓存已就绪。</Typography.Paragraph>
           {catalog.list.status === 'loading' && <Skeleton active paragraph={{ rows: 2 }} />}
-          {catalog.list.status === 'error' && <Alert type="error" title="在线能力目录暂不可用" description="未能读取在线列表；本地案例仍可查看。" action={<Button onClick={catalog.retryList}>重试目录</Button>} showIcon />}
+          {catalog.list.status === 'error' && <Alert type="error" title="在线能力目录暂不可用" description="未能读取在线列表；本地案例仍可查看。" action={<Button icon={<ReloadOutlined aria-hidden="true" />} onClick={catalog.retryList}>重试目录</Button>} showIcon />}
           {catalog.list.status === 'success' && (catalog.list.data.length === 0
             ? <Empty description="暂无已发布的在线能力。" />
             : <List rowKey="id" dataSource={catalog.list.data} renderItem={item => <List.Item actions={[
@@ -88,10 +89,10 @@ export default function ResearchWorkspacePage({ openExplorer, openFuturesBasis }
           { key: 'access', label: '访问路径', children: selectedLocal.access },
         ]} />
         <Alert type="info" title="可用性说明" description={selectedLocal.note} showIcon />
-        {selectedLocal.id === 'futures_basis_v1' && <Button type="primary" onClick={openFuturesBasis}>打开 Futures Basis Research</Button>}
+        {selectedLocal.id === 'futures_basis_v1' && <Button icon={<LineChartOutlined aria-hidden="true" />} type="primary" onClick={openFuturesBasis}>打开 Futures Basis Research</Button>}
       </Flex>}
       {selectedOnline && catalog.detail.status === 'loading' && <Skeleton active paragraph={{ rows: 5 }} />}
-      {selectedOnline && catalog.detail.status === 'error' && <Alert type="error" title="能力详情暂不可用" description="未能读取所选能力描述。" action={<Button onClick={catalog.retryDetail}>重试详情</Button>} showIcon />}
+      {selectedOnline && catalog.detail.status === 'error' && <Alert type="error" title="能力详情暂不可用" description="未能读取所选能力描述。" action={<Button icon={<ReloadOutlined aria-hidden="true" />} onClick={catalog.retryDetail}>重试详情</Button>} showIcon />}
       {selectedOnline && catalog.detail.status === 'success' && (catalog.detail.data.id === selection.id
         ? <CapabilityDetails capability={catalog.detail.data} />
         : <Alert type="error" title="能力身份不匹配" showIcon />)}
@@ -100,7 +101,7 @@ export default function ResearchWorkspacePage({ openExplorer, openFuturesBasis }
     <Card title="已有研究结果">
       <Flex vertical gap="small" align="start">
         <Typography.Text type="secondary">浏览已发布的 Publications、Analyses、研究证据和 ChartViews。</Typography.Text>
-        <Button type="primary" onClick={openExplorer}>打开研究结果浏览</Button>
+        <Button icon={<FileSearchOutlined aria-hidden="true" />} type="primary" onClick={openExplorer}>打开研究结果浏览</Button>
       </Flex>
     </Card>
   </Flex>

@@ -1,4 +1,5 @@
-import { Alert, Button, Collapse, Empty, Flex, Space, Table, Typography } from 'antd'
+import { CopyOutlined } from '@ant-design/icons'
+import { Alert, Button, Collapse, Empty, Flex, Space, Table, Typography, theme } from 'antd'
 import type { TableColumnsType } from 'antd'
 import { serializeJson } from '../../../shared/clipboard/text'
 import { useClipboardWrite } from '../../../shared/clipboard/useClipboardWrite'
@@ -93,6 +94,7 @@ export function PremiumPlaneTable({ plane, projection, representation }: {
 export function RawResponseInspector({ payload }: { payload: unknown }) {
   const { copy, pending, feedback: copyFeedback } = useClipboardWrite()
   const prettyJson = serializeJson(payload)
+  const { token } = theme.useToken()
 
   return (
     <Collapse size="small" items={[{
@@ -101,10 +103,10 @@ export function RawResponseInspector({ payload }: { payload: unknown }) {
       children: <Space orientation="vertical" style={{ display: 'flex' }}>
         <Flex align="center" gap="small" wrap>
           <Typography.Text strong>Raw backend response</Typography.Text>
-          <Button disabled={pending} onClick={() => void copy(() => serializeJson(payload))}>Copy JSON</Button>
+          <Button icon={<CopyOutlined aria-hidden="true" />} disabled={pending} onClick={() => void copy(() => serializeJson(payload))}>Copy JSON</Button>
           {copyFeedback && <Typography.Text role="status" type={copyFeedback === 'Copied' ? 'success' : 'danger'}>{copyFeedback}</Typography.Text>}
         </Flex>
-        <pre className="raw-response-code">{prettyJson}</pre>
+        <pre className="raw-response-code" style={{ background: token.colorBgLayout, color: token.colorText }}>{prettyJson}</pre>
       </Space>,
     }]} />
   )

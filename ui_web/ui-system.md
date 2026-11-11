@@ -40,6 +40,8 @@ shared/ui/
 
 精确文件名与 component tree 属于实现细节。Shared theme 拥有深色优先的近黑背景、克制的黑白灰层级、primary accent、font、control sizing、spacing、border radius 与 component density；使用 Ant Design Dark Algorithm 和 theme tokens。
 
+普通 UI 的背景、表面、边框、主操作、选择、悬停与链接采用中性黑白灰，通过亮度和细边框建立层级；键盘焦点、禁用状态及必要的 Error / Warning / Success 信号必须保持可辨识。导航与关键操作使用一致的单色线性图标；装饰图标不参与 accessible name，纯图标操作必须有可访问名称。图标由 Shell 或 owning feature 组合，不建立另一套 UI framework。此策略不改变 feature-owned analytical colors，具体色值属于实现选择。
+
 普通操作、说明与反馈使用中文，保留有辨识度的产品名、技术和金融术语，例如 Call、Put、Run ID、JSON 与 CSV。该语言原则不重命名 API 字段、枚举、序列化内容或 producer 提供的语义文本。
 
 每个 surface 应有一个明确的内容主标题；Shell breadcrumb 表达导航位置，不重复建立页面标题。Feature 保留自身标题、说明与状态的 ownership。页面按查询/业务动作、当前结果、展示设置、分析主体、详细证据组织阅读顺序；必须区分会触发 I/O 的交互与仅调整当前结果的本地设置，不要求各 feature 使用相同组件树。既有 surface 按各自工作包逐步落实这一展示原则，不因此改变其请求或业务语义。

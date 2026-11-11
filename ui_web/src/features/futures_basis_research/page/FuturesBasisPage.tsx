@@ -1,3 +1,4 @@
+import { PlayCircleOutlined, ReloadOutlined } from '@ant-design/icons'
 import { Alert, Checkbox, Button, Card, DatePicker, Descriptions, Flex, Form, Empty, Select, Badge, Tag, Typography } from 'antd'
 import { useEffect, useState } from 'react'
 import { products } from '../api/futuresBasis'
@@ -65,12 +66,12 @@ export default function FuturesBasisPage() {
           <Form.Item label="品种" name="product_code" rules={[{ required: true, message: '请选择品种' }]}><Select aria-label="品种" options={products.map(value => ({ value, label: value }))} placeholder="选择品种" style={{ width: 140 }} /></Form.Item>
           <Form.Item label="开始日期" name="start_date" rules={[{ required: true, message: '请选择开始日期' }]}><DatePicker aria-label="开始日期" format="YYYY-MM-DD" placeholder="YYYY-MM-DD" /></Form.Item>
           <Form.Item label="结束日期" name="end_date" dependencies={['start_date']} rules={[{ required: true, message: '请选择结束日期' }, ({ getFieldValue }) => ({ validator(_, value) { const start = getFieldValue('start_date'); return !start || !value || !start.isAfter(value, 'day') ? Promise.resolve() : Promise.reject(new Error('结束日期不能早于开始日期')) } })]}><DatePicker aria-label="结束日期" format="YYYY-MM-DD" placeholder="YYYY-MM-DD" /></Form.Item>
-          <Form.Item><Button type="primary" htmlType="button" onClick={() => form.submit()} disabled={!query || !preflight.canSubmit || research.submitting} loading={research.submitting}>生成研究</Button></Form.Item>
+          <Form.Item><Button icon={<PlayCircleOutlined aria-hidden="true" />} type="primary" htmlType="button" onClick={() => form.submit()} disabled={!query || !preflight.canSubmit || research.submitting} loading={research.submitting}>生成研究</Button></Form.Item>
         </Flex>
       </Form>
       <Typography.Text type="secondary">仅点击「生成研究」才会创建新 Run；修改参数或按 Enter 不会执行。输入检查不会获取数据，执行仍可能失败。日期包含首尾，范围由服务器验证。年化基差率是研究指标。</Typography.Text>
       <Flex vertical gap="small">
-        <Button onClick={preflight.refresh} disabled={!query || preflight.checking}>重新检查输入</Button>
+        <Button icon={<ReloadOutlined aria-hidden="true" />} onClick={preflight.refresh} disabled={!query || preflight.checking}>重新检查输入</Button>
         {preflight.checking && <Alert type="info" showIcon title="正在检查本地数据覆盖" />}
         {preflight.error && <Alert type="error" showIcon title="输入检查失败，请重新检查" description={preflight.error.detail || '网络或响应异常；尚未创建 Run。'} />}
         {preflight.result && <>
@@ -112,7 +113,7 @@ export default function FuturesBasisPage() {
       {research.error && research.phase !== 'UNKNOWN_RUN' && <Alert showIcon type="error"
         title={retryReport ? '报告读取失败' : '状态读取失败'}
         description={research.error.kind === 'network' ? '网络读取失败，请手动重试；不会创建新 Run。' : research.error.kind === 'invalid_response' ? '读取响应无法验证，请手动重试。' : messages[research.error.kind] ?? '读取失败，请手动重试。'} />}
-      {['STATUS_ERROR', 'REPORT_ERROR', 'UNAVAILABLE'].includes(research.phase) && <Flex><Button disabled={research.submitting} onClick={() => research.retry(retryReport)}>{retryReport ? '重新读取报告' : '重新读取状态'}</Button></Flex>}
+      {['STATUS_ERROR', 'REPORT_ERROR', 'UNAVAILABLE'].includes(research.phase) && <Flex><Button icon={<ReloadOutlined aria-hidden="true" />} disabled={research.submitting} onClick={() => research.retry(retryReport)}>{retryReport ? '重新读取报告' : '重新读取状态'}</Button></Flex>}
       {research.run && ['FAILED', 'INTERRUPTED'].includes(research.phase) && <Flex vertical gap="small">
         {'failure' in research.run && research.run.failure && <Alert showIcon type="error" title={`${research.run.failure.stage} / ${research.run.failure.category} / ${research.run.failure.dependency ?? '—'}`} description={research.run.failure.reason} />}
         <Typography.Text type="secondary">此操作先将原请求填入参数并检查；之后点击「生成研究」才会创建新 Run。</Typography.Text>

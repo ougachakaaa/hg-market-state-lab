@@ -1,0 +1,10 @@
+/* Plotly mounts these generic interaction tips on body, outside Ant Design's
+   component tree. Keep this chrome neutral; analytical marks are not styled here. */
+body .plotly-notifier .notifier-note {
+  background: #202020;
+  color: #ececec;
+  border-color: #454545;
+}
+body .plotly-notifier .notifier-close { color: inherit; }
+body .plotly-notifier .notifier-close:hover { color: #ffffff; }
+body .plotly-notifier .notifier-close:focus-visible { outline: 2px solid #a3a3a3; }

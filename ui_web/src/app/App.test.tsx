@@ -269,6 +269,12 @@ describe('WP1 navigation composition', () => {
     vi.stubGlobal('fetch', vi.fn((url: string) => Promise.resolve(url === '/auth/me' ? response(identity) : response([]))))
     const { container } = render(<App />)
     await screen.findByRole('button', { name: '退出登录' })
+    const navigation = screen.getByRole('menu', { name: '业务导航' })
+    const icons = navigation.querySelectorAll('.anticon')
+    expect(icons.length).toBeGreaterThan(0)
+    expect([...icons].every(icon => icon.getAttribute('aria-hidden') === 'true')).toBe(true)
+    expect(within(navigation).queryByRole('img')).toBeNull()
+    expect(screen.getByRole('button', { name: '退出登录' })).toBeTruthy()
     const historyLength = window.history.length
     fireEvent.click(screen.getByRole('menuitem', { name: '日常数据' }))
     expect(window.location.pathname).toBe('/research')

@@ -1,3 +1,4 @@
+import { CopyOutlined, DownloadOutlined } from '@ant-design/icons'
 import { downloadText } from '../../../shared/download/download'
 import { useState } from 'react'
 import { downloadCsv } from '../../../shared/csv/csv'
@@ -32,10 +33,10 @@ export function PremiumCopyActions({ plane, rawPayload }: { plane: PremiumPlane;
   }
   return (
     <Flex role="group" aria-label="MO Premium Plane copy actions" align="center" gap="small" wrap>
-      <Button disabled={pending} onClick={() => void copy(() => serializeJson(rawPayload))}>Copy Raw JSON</Button>
-      <Button disabled={pending} onClick={() => void copy(() => premiumPlaneContextJson(plane, rawPayload))}>Copy Context JSON</Button>
-      <Button disabled={pending} onClick={exportCsv}>Export CSV</Button>
-      <Button disabled={pending} onClick={exportContextJson}>Export Context JSON</Button>
+      <Button icon={<CopyOutlined aria-hidden="true" />} disabled={pending} onClick={() => void copy(() => serializeJson(rawPayload))}>Copy Raw JSON</Button>
+      <Button icon={<CopyOutlined aria-hidden="true" />} disabled={pending} onClick={() => void copy(() => premiumPlaneContextJson(plane, rawPayload))}>Copy Context JSON</Button>
+      <Button icon={<DownloadOutlined aria-hidden="true" />} disabled={pending} onClick={exportCsv}>Export CSV</Button>
+      <Button icon={<DownloadOutlined aria-hidden="true" />} disabled={pending} onClick={exportContextJson}>Export Context JSON</Button>
       {exportFeedback && <Typography.Text role="status" type={exportFeedback === 'Export failed' ? 'danger' : 'success'}>{exportFeedback}</Typography.Text>}
       {feedback && <Typography.Text role="status" type={feedback === 'Copied' ? 'success' : 'danger'}>{feedback}</Typography.Text>}
     </Flex>

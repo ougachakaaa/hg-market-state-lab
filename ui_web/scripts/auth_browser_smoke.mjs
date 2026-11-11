@@ -1,3 +1,4 @@
+import { neutralDarkAcceptance } from './neutral_dark_acceptance.mjs'
 // Real browser -> Vite proxy -> FastAPI -> temporary SQLite. Only market public
 // providers are deterministic fixtures; Auth, Cookie and CLI are real.
 import assert from 'node:assert/strict'
@@ -175,6 +176,7 @@ try {
   await page.getByRole('link', { name: '日常数据', exact: true }).click()
   await page.getByRole('heading', { name: '数据总览', exact: true }).waitFor()
   assert.equal(new URL(page.url()).pathname, '/data', 'Breadcrumb returns to its overview')
+  await neutralDarkAcceptance(page, screenshots)
   console.log(`PASS: WP1 routes, collapse, history and overflow at both desktop sizes; screenshots: ${screenshots}`)
   await page.getByRole('button', { name: '退出登录', exact: true }).click()
   await page.getByRole('button', { name: '登录', exact: true }).waitFor()
