@@ -15,11 +15,15 @@ import market_backtesting.cases.futures_roll_long as case_api
 import market_backtesting.core as core_api
 from market_backtesting.cases.futures_roll_long import (
     ContractClose,
+    DailyPerformance,
     DailyProjection,
     DecisionSlotEvidence,
     Execution,
     FuturesRollInput,
+    FuturesRollPerformance,
     FuturesRollReplay,
+    IndexClose,
+    PerformanceSummary,
     RollEvent,
     SessionFacts,
 )
@@ -135,6 +139,10 @@ def test_public_api_tree_is_frozen() -> None:
         Execution,
         RollEvent,
         FuturesRollReplay,
+        IndexClose,
+        DailyPerformance,
+        PerformanceSummary,
+        FuturesRollPerformance,
     )
     for carrier in expected:
         assert is_dataclass(carrier)
@@ -143,6 +151,7 @@ def test_public_api_tree_is_frozen() -> None:
         assert all(field.name for field in fields(carrier))
     for name in (
         "replay_futures_roll",
+        "analyze_futures_roll",
         "FuturesRollError",
         "PRODUCT_CODES",
         "STRATEGY_PROFILES",

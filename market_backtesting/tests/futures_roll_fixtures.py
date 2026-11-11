@@ -10,6 +10,7 @@ from market_backtesting.cases.futures_roll_long.models import (
     ContractClose,
     DecisionSlotEvidence,
     FuturesRollInput,
+    IndexClose,
     SessionFacts,
 )
 from market_backtesting.core import InstrumentReference
@@ -440,5 +441,46 @@ def make_input(**kwargs: Any) -> FuturesRollInput:
         instrument_refs=tuple(
             InstrumentReference(c.contract_code, 200.0, "synthetic-metadata") for c in contracts
         ),
-        initial_index_close=6000.0,
+        index_closes=tuple(IndexClose(day, 6000.0) for day in kwargs["sessions"]),
+    )
+
+
+def performance_oracle_input(profile: str = "expiry_to_M1_v1") -> FuturesRollInput:
+    """Five artificial sessions with legal W1 entry/expiry universes; no real-calendar claim."""
+    days = (JAN5, FEB5, FEB20, FEB25, date(2026, 2, 26))
+    entry_months = ("202601", "202602", "202603", "202606")
+    roll_months = ("202602", "202603", "202606", "202609")
+    after_months = ("202603", "202604", "202606", "202609")
+    months_by_day = (entry_months, roll_months, roll_months, after_months, after_months)
+    prices = (
+        {"202602": 5900},
+        {"202602": 5950},
+        {"202602": 6000, "202603": 6010, "202606": 6025},
+        {"202603": 6030, "202606": 6030},
+        {"202603": 6020, "202606": 6020},
+    )
+    inputs = make_input(
+        product_code="IM",
+        sessions=days,
+        contracts=contracts_for(),
+        session_facts=tuple(
+            SessionFacts(
+                day,
+                tuple(
+                    ContractClose(f"IM{month[2:]}.CFX", closes.get(month, 6000)) for month in months
+                ),
+            )
+            for day, months, closes in zip(days, months_by_day, prices, strict=True)
+        ),
+        decision_slots=tuple(
+            decision_for(day, months) for day, months in zip(days, months_by_day, strict=True)
+        ),
+        strategy_profile=profile,
+    )
+    return replace(
+        inputs,
+        index_closes=tuple(
+            IndexClose(day, close)
+            for day, close in zip(days, (6000, 6060, 6030, 6090, 6075), strict=True)
+        ),
     )

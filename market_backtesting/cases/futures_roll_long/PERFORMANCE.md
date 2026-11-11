@@ -70,7 +70,7 @@ W2 `daily_return_t` is the unchanged Core daily return; W2 `gross_return_t` is t
 unchanged Core cumulative return. Both use the fixed `N0` supplied as InitialCapital,
 as defined solely by [Core Accounting](../../core/ACCOUNTING.md). They are simple,
 gross and not reinvested. The Analyzer must not fill a missing Core daily-return
-output by calculating it itself; the current gap is tracked in
+output by calculating it itself. D1 closure evidence is recorded in
 [reconciliation](RECONCILIATION.md#implementation-drift-register).
 
 Final `gross_return` is the final Core cumulative return. Final `benchmark_return` is
@@ -104,6 +104,35 @@ drawdown.
 A strategy equity value `<= 0` at any session, or a benchmark equity `<= 0`, is an
 accounting failure (`non_positive_equity`). W2 does not publish a result with an
 undefined/negative drawdown denominator or silently clamp the value.
+
+## Pure Analyzer boundary (WP2)
+
+`analyze_futures_roll(result: FuturesRollReplay) -> FuturesRollPerformance` is a
+case-owned, deterministic, no-I/O computation over a completed W2 replay. Its sole
+benchmark source is the validated `index_closes` retained by that replay under
+[Inputs](INPUTS.md); callers cannot independently supply another first Close.
+The Analyzer checks exact date alignment of sessions, index rows and Core records,
+final flat state, and N0 consistency with the first target's entry multiplier and
+Core InitialCapital. Every record must retain that same InitialCapital. Invalid
+input or arithmetic raises `FuturesRollError`, with no partial successful result.
+
+Frozen typed output carriers are:
+
+- `FuturesRollPerformance`: product code, strategy profile, benchmark index code,
+  entry multiplier, immutable daily tuple and summary.
+- `DailyPerformance`: trade_date, daily_pnl, cumulative_pnl, equity, daily_return,
+  cumulative_return, benchmark_close, benchmark_daily_return,
+  benchmark_cumulative_return, benchmark_equity, excess_cumulative_return,
+  drawdown and benchmark_drawdown.
+- `PerformanceSummary`: initial_notional, total_pnl, gross_return, benchmark_return,
+  excess_return, strategy_max_drawdown and benchmark_max_drawdown.
+
+Daily strategy fields project Transition/Accounting unchanged; summary PnL and
+returns project the final daily row. All consumed and generated numbers must be
+finite; strategy and benchmark equity must be positive on every session. Peaks
+start at N0 and evolve independently. These carriers are not `BacktestResult` and
+have no result profile, Evidence Package, visualization, serialization or online
+lifecycle. [Result](RESULT.md) remains the WP4 owner of those contracts.
 
 ## Manual independent oracle
 

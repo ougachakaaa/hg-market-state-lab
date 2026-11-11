@@ -12,39 +12,49 @@ W2 has three deliverables: strategy-independent Position-Driven Core V1, real Fu
 Roll Long research, and the Online/Web workflow. Core is a general finite daily
 single-instrument accounting kernel; W2 is its first case.
 
-- Core Authority is established and semantically consolidated. Its contracts include
-  daily return; [D1](RECONCILIATION.md#implementation-drift-register) records the current
-  implementation gap. There is no unresolved Blocking semantic decision.
-- Core Replay, immutable Portfolio/Target/Transition, ordered StateEvents, cumulative
-  accounting and in-memory Recorder are implemented. W2 MechanicalRollPolicy and its
-  synthetic Replay adapter are implemented; the package and root tooling registration
-  already exist. WP0/WP1 require no further implementation.
-- Existing Core synthetic acceptance passes: the four-session oracle produces daily
-  PnL 0 / 20,000 / 4,000 / 2,000 CNY, total 26,000, replacement entry reference 6080,
-  and a final held position. Separate checks cover final closure, full event state
-  reconstruction, independent PnL reconstruction, causality and import isolation.
-  This bounded PASS does not cover D1 or the full W2 Performance Analyzer.
-- Remaining WP2 is implementation-ready under [Performance](PERFORMANCE.md) and
-  [Core Accounting](../../core/ACCOUNTING.md). Close D1 in Core before projecting
-  daily return into the Analyzer. Do not implement a second accounting path.
-- DataLake integration, complete case performance, BacktestResult/evidence, Online,
-  HTTP and Web remain pending. Current verification is recorded in
+- Core Authority and implementation include immutable daily return, cumulative PnL,
+  equity and cumulative return. D1 is **CLOSED**; there is no open Implementation
+  Drift or Blocking semantic decision in the implemented Core/W2 synthetic subset.
+- Core Replay, Portfolio/Target/Transition, ordered StateEvents, Accounting and
+  Recorder, W2 MechanicalRollPolicy and its synthetic adapter are implemented.
+  WP0/WP1 require no further implementation. The original four-session Core oracle
+  still passes with daily PnL 0 / 20,000 / 4,000 / 2,000 CNY and total 26,000.
+- **Remaining WP2 — PASS (2026-11-11).** The input retains one exactly session-aligned
+  immutable Index Close series for both N0 and benchmark. The pure W2 Analyzer
+  projects Core accounting and computes benchmark/equity, excess and independent
+  drawdowns. Both five-day oracles pass: M1 total PnL 22,000 CNY; Q1 19,000 CNY;
+  N0 1,200,000 CNY and benchmark return approximately 0.0125 for both profiles.
+- Verification: 213 Backtesting tests, 21 topology/HTTP architecture checks, Ruff
+  and Mypy pass. Detailed commands, oracle values and boundaries are recorded in
   [Reconciliation](RECONCILIATION.md#validation-evidence).
+- WP3 is the next implementation entry. DataLake integration, full BacktestResult /
+  evidence, Online, HTTP/Web and real-market acceptance remain pending; synthetic
+  Performance acceptance does not complete W2.
 
 ## Remaining work packages
 
-Each WP is independently reviewable, committable and accepted. Dependencies proceed
-from remaining WP2 through WP8. No later deliverable is implied by a prior gate.
+Each WP is independently reviewable, committable and accepted. WP2 is accepted;
+dependencies proceed from WP3 through WP8. No later deliverable is implied by a prior gate.
 
 | WP | Scope and required deliverables | Dependency | Definition of Done / acceptance | Forbidden scope |
 | --- | --- | --- | --- | --- |
-| Remaining WP2 — Core daily return and W2 Performance | Close D1; consume Core daily/cumulative accounting; Analyzer for benchmark/equity, excess and both drawdowns | Existing Core and W2 Policy | Both five-day Performance oracles; Core daily-return acceptance; benchmark first-day and positive-equity checks; running peaks; final excess; deterministic finite outputs; multiplier/strategy-equity failures preserved | Reimplementing Core PnL/accounting in Case, changing Policy, DataLake I/O, Result/Views, Online, HTTP/Web |
+| Remaining WP2 — Core daily return and W2 Performance (**PASS**) | Closed D1; consume Core daily/cumulative accounting; Analyzer for benchmark/equity, excess and both drawdowns | Existing Core and W2 Policy | Both five-day Performance oracles; Core daily-return acceptance; benchmark first-day and positive-equity checks; running peaks; final excess; deterministic finite outputs; multiplier/strategy-equity failures preserved | Reimplementing Core PnL/accounting in Case, changing Policy, DataLake I/O, Result/Views, Online, HTTP/Web |
 | WP3 — DataLake Integration & Real Backtest Python API | Public Calendar/Futures/Index preparation; exact completeness validation; authorized Slot adapter; canonical input fingerprint; read-only preflight; public Python backtest API; bounded real IM acceptance | WP2 | Fake-service completeness/failure matrix; exact scope/window/counters; deterministic fingerprint; public import boundary; complete final exports; bounded real IM evidence; no Snapshot/private access or second cache | W1 observation/report consumption, second provider/cache, HTTP/Web, online store |
 | WP4 — Backtest Result, Evidence & Visualization Projection | Stable result profile; evidence summary/package; V2 returns/drawdown views; reader projection; limitations; cross-field invariants | WP3 | Result schema/version; all invariants; V2 validation; manual oracle; deterministic evidence/replay; WP4 PASS = core research capability complete | HTTP/Web, online store, generic visualization schema, W3 financial features |
 | WP5 — Online Backtest Application & Run Store | Online composition of the WP3 preflight plus submit/status/result application; owner scope; single worker/busy; disposable file store; atomic result publication; startup recovery; bounded result reads | WP4 | Fake-service state matrix; busy/no queue; owner isolation; restart interruption; orphan result handling; size/corruption/unsupported platform; no HTTP/UI | HTTP/UI, Publication, Workbench, multi-process/queue, W1 store reuse |
 | WP6 — HTTP Product & OpenAPI | HTTP contract; strict parsing/limits; run/result DTO projection; Auth/owner/error mapping; OpenAPI; no financial recomputation | WP5 | Strict request/auth/error/limit tests; OpenAPI/freshness prerequisites; result/run/request association; preflight and no-store behavior; Web untouched | Web UI, business logic, W1 product changes, financial recomputation |
 | WP7 — Web UI Backtesting Integration | `/backtesting` page: Ant Design controls, preflight/readiness, submit/poll, V2 return/drawdown charts, trades/rolls, evidence/limitations, busy/error/failed/interrupted states; generated contracts | WP6 | `npm run contract:check`, Vitest, build, lint; deterministic browser tests; no fake result/control; no React financial computation; planned page honestly replaced | Financial calculation, backend bypass, generic chart DSL, CSV/export/copy not authorized by W2 v1 |
 | WP8 — Real-Market E2E Acceptance & Reconciliation | WSL2 FastAPI + Vite + Windows Chrome real IM workflow; login → preflight → submit → poll → result → charts → trades → evidence; restart/busy/ownership/failure; final reconciliation | WP7 | Both profiles for IM, 2024-01-01 through 2026-10-30, with real rolls and final exit; real data not substituted by synthetic; all workflow states; Windows Chrome browser → WSL HTTP/Web local end-to-end acceptance; W1 regression; no W3 features; external evidence; WP8 PASS permits W2 completion | W3 fees/slippage/ETF/margin/funding/optimization; production deployment promise; unverified platform claims |
+
+## Next implementation entry — WP3
+
+Start at [Inputs](INPUTS.md), then follow its exact public Calendar/Futures/Index
+service bindings. Prepare complete final exports, derive the single underlying,
+and map validated CFFEX-session Index rows to `IndexClose` tuples. Feed the existing
+`replay_futures_roll` and `analyze_futures_roll` path; do not create another executor
+or ledger. WP3 additionally owns canonical fingerprinting, read-only preflight,
+public Python request/API and bounded real IM acceptance. It depends on the now
+accepted WP2 typed performance boundary; real inputs and WP3 are not yet verified.
 
 ## Acceptance boundaries
 

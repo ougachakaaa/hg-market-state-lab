@@ -19,8 +19,7 @@ CumulativeReturn_t = CumPnL_t / InitialCapital
 Daily return uses fixed initial capital, not prior equity, and is not compounded.
 The supplied initial capital never changes during a replay. An Analyzer or result
 projection consumes both returns unchanged; it does not supply a second daily-return
-calculation. This contract is required even when the current implementation has an
-outstanding delivery gap.
+calculation.
 
 All arithmetic must remain finite. No rounding occurs between sessions; fractional
 fixtures use declared test tolerance. Accounting never fetches prices, decides targets,

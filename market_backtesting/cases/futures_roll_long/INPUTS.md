@@ -244,11 +244,23 @@ retry framework, date shift or alternate calendar is authorized.
 ## Decision context versus Close snapshot
 
 W2 synthetic `FuturesRollInput` retains sessions, W1 metadata, session Close facts,
-active-set evidence, explicit contract multiplier references and initial underlying
-index Close. W1 ContractMetadata has no multiplier; W2 associates it separately and
+active-set evidence, explicit contract multiplier references and the underlying
+index Close series. W1 ContractMetadata has no multiplier; W2 associates it separately and
 never changes the W1 carrier. Multipliers are supplied, not guessed from product codes.
 The adapter requires exact metadata-to-instrument identity associations; used contracts
-must match the entry multiplier. Initial index Close is finite and strictly positive.
+must match the entry multiplier.
+
+`FuturesRollInput.index_closes` is an immutable tuple of frozen
+`IndexClose(trade_date, close)` rows. Its date sequence must equal the supplied CFFEX
+sessions exactly, in order, with no missing, extra, duplicate or reordered row.
+Dates are date-only; every Close is numeric (not bool), finite and strictly positive.
+There is no separate initial-index-price input: the first row is the sole index
+price used for N0, and the same series supplies the benchmark.
+`FuturesRollReplay` retains this validated series and `benchmark_index_code`, derived
+from the single underlying in validated contract metadata. Neither enters Policy or
+DecisionContext. WP3's public Index adapter must map its validated CFFEX-session
+rows into this same boundary; extra SSE-only dates are filtered during preparation,
+not silently accepted by the synthetic boundary or Analyzer.
 
 For each session the adapter exposes only current metadata/instrument references and
 that date's evidence to Policy. Historical metadata are supplied as assumed known at

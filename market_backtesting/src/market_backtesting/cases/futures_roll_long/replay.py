@@ -78,9 +78,7 @@ def replay_futures_roll(inputs: FuturesRollInput) -> FuturesRollReplay:
         entry = policy(sessions[0].trade_date, Portfolio(), sessions[0].decision_context)
         if entry.position is None:
             _fail("invalid_position_state", "missing_entry_target")
-        initial_close = finite_number(
-            inputs.initial_index_close, "initial_index_close", positive=True
-        )
+        initial_close = validated.index_closes[0].close
         capital = finite_number(
             initial_close * entry.position.instrument.multiplier, "initial_capital", positive=True
         )
@@ -166,4 +164,6 @@ def replay_futures_roll(inputs: FuturesRollInput) -> FuturesRollReplay:
         tuple(executions),
         tuple(rolls),
         result,
+        next(iter(validated.metadata.values())).underlying_index_code,
+        validated.index_closes,
     )

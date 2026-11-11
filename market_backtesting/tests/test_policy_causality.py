@@ -11,6 +11,7 @@ from market_backtesting.cases.futures_roll_long import (
     DecisionContext,
     FuturesRollError,
     FuturesRollInput,
+    IndexClose,
     MechanicalRollPolicy,
     replay_futures_roll,
 )
@@ -65,9 +66,14 @@ def test_current_and_future_close_changes_never_change_mechanical_targets(profil
 
 
 @pytest.mark.parametrize("index_close", (0, -1, float("nan"), float("inf"), True))
-def test_initial_index_close_fails_explicitly(index_close: Any) -> None:
-    with pytest.raises(FuturesRollError, match="initial_index_close"):
-        replay_futures_roll(replace(simple_input(), initial_index_close=index_close))
+def test_index_close_fails_explicitly(index_close: Any) -> None:
+    with pytest.raises(FuturesRollError, match="non_.*close"):
+        inputs = simple_input()
+        replay_futures_roll(
+            replace(
+                inputs, index_closes=tuple(IndexClose(day, index_close) for day in inputs.sessions)
+            )
+        )
 
 
 def test_multiplier_mismatch_on_used_contract_and_reference_scope() -> None:
@@ -91,7 +97,7 @@ def test_w2_initial_capital_uses_index_and_nonpositive_equity_fails() -> None:
     result = replay_futures_roll(inputs)
     assert result.replay.initial_capital == 6000 * 200
     assert result.replay.initial_capital != result.entry_execution.price * 200
-    inputs = replace(inputs, initial_index_close=1)
+    inputs = replace(inputs, index_closes=tuple(IndexClose(day, 1) for day in inputs.sessions))
     inputs = set_contract_close(inputs, JAN20, "IM2602.CFX", 1)
     with pytest.raises(FuturesRollError, match="non_positive_equity"):
         replay_futures_roll(inputs)

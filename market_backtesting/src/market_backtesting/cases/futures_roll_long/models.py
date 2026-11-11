@@ -1,4 +1,4 @@
-"""Immutable W2 synthetic inputs, decision context and Core event projections."""
+"""Immutable W2 inputs, decision context and replay/performance projections."""
 
 from __future__ import annotations
 
@@ -54,6 +54,14 @@ class DecisionSlotEvidence:
 
 
 @dataclass(frozen=True, slots=True)
+class IndexClose:
+    """One underlying index Close for exactly one CFFEX session."""
+
+    trade_date: date
+    close: float
+
+
+@dataclass(frozen=True, slots=True)
 class FuturesRollInput:
     """Explicit synthetic inputs for W2 Policy-driven Core Replay."""
 
@@ -64,7 +72,7 @@ class FuturesRollInput:
     decision_slots: tuple[DecisionSlotEvidence, ...]
     strategy_profile: StrategyProfile
     instrument_refs: tuple[InstrumentReference, ...]
-    initial_index_close: float
+    index_closes: tuple[IndexClose, ...]
 
 
 @dataclass(frozen=True, slots=True)
@@ -113,6 +121,8 @@ class FuturesRollReplay:
     executions: tuple[Execution, ...]
     rolls: tuple[RollEvent, ...]
     replay: ReplayResult
+    benchmark_index_code: str
+    index_closes: tuple[IndexClose, ...]
 
     @property
     def entry_execution(self) -> Execution:
@@ -132,3 +142,47 @@ class DecisionContext:
     contracts: tuple[ContractMetadata, ...]
     instrument_refs: tuple[InstrumentReference, ...]
     evidence: DailyUniverseEvidence | None
+
+
+@dataclass(frozen=True, slots=True)
+class DailyPerformance:
+    """Core accounting projections plus case-owned benchmark and risk measures."""
+
+    trade_date: date
+    daily_pnl: float
+    cumulative_pnl: float
+    equity: float
+    daily_return: float
+    cumulative_return: float
+    benchmark_close: float
+    benchmark_daily_return: float
+    benchmark_cumulative_return: float
+    benchmark_equity: float
+    excess_cumulative_return: float
+    drawdown: float
+    benchmark_drawdown: float
+
+
+@dataclass(frozen=True, slots=True)
+class PerformanceSummary:
+    """Final holding-period measures and minimum daily drawdowns."""
+
+    initial_notional: float
+    total_pnl: float
+    gross_return: float
+    benchmark_return: float
+    excess_return: float
+    strategy_max_drawdown: float
+    benchmark_max_drawdown: float
+
+
+@dataclass(frozen=True, slots=True)
+class FuturesRollPerformance:
+    """Immutable WP2 calculation result, not a full BacktestResult."""
+
+    product_code: ProductCode
+    strategy_profile: StrategyProfile
+    benchmark_index_code: str
+    entry_multiplier: float
+    daily: tuple[DailyPerformance, ...]
+    summary: PerformanceSummary

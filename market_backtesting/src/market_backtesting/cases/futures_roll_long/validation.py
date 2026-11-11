@@ -19,6 +19,7 @@ from .models import (
     ContractClose,
     DecisionSlotEvidence,
     FuturesRollInput,
+    IndexClose,
     ProductCode,
     SessionFacts,
     StrategyProfile,
@@ -36,6 +37,7 @@ class _ValidatedInputs:
     facts: dict[date, dict[str, float]]
     decision_evidence: dict[date, DailyUniverseEvidence]
     strategy_profile: StrategyProfile
+    index_closes: tuple[IndexClose, ...]
 
 
 def _fail(
@@ -328,6 +330,29 @@ def _validate_decision_slots(
     return by_day
 
 
+def _validate_index_closes(
+    sessions: tuple[date, ...], index_closes: object
+) -> tuple[IndexClose, ...]:
+    """Validate the sole, immutable capital/benchmark price source without repairing it."""
+    if not isinstance(index_closes, tuple):
+        _fail("invalid_case_input", "invalid_index_closes")
+    rows = cast(tuple[object, ...], index_closes)
+    for row in rows:
+        if not isinstance(row, IndexClose) or not _is_date_only(row.trade_date):
+            _fail("invalid_case_input", "invalid_index_closes")
+    typed_rows = cast(tuple[IndexClose, ...], rows)
+    if tuple(row.trade_date for row in typed_rows) != sessions:
+        _fail("missing_market_fact", "benchmark_session_mismatch")
+    for row in typed_rows:
+        try:
+            _validated_close("benchmark", row.close)
+        except FuturesRollError as exc:
+            raise FuturesRollError(
+                exc.category, exc.reason, trade_date=row.trade_date, detail="index_close"
+            ) from exc
+    return typed_rows
+
+
 def _validate_inputs(inputs: object) -> _ValidatedInputs:
     if not isinstance(inputs, FuturesRollInput):
         _fail(
@@ -344,6 +369,7 @@ def _validate_inputs(inputs: object) -> _ValidatedInputs:
         _fail("invalid_case_input", "invalid_strategy_profile")
     strategy_profile = cast(StrategyProfile, profile)
     sessions = _validate_sessions(inputs.sessions)
+    index_closes = _validate_index_closes(sessions, inputs.index_closes)
     metadata = _validate_contracts(product_code, inputs.contracts)
     facts = _validate_session_facts(sessions, metadata, inputs.session_facts)
     decision_evidence = _validate_decision_slots(
@@ -359,4 +385,5 @@ def _validate_inputs(inputs: object) -> _ValidatedInputs:
         facts=facts,
         decision_evidence=decision_evidence,
         strategy_profile=strategy_profile,
+        index_closes=index_closes,
     )

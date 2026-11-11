@@ -212,6 +212,7 @@ class AccountingState:
     equity: float = 0.0
     cumulative_return: float = 0.0
     trade_date: date | None = None
+    daily_return: float = 0.0
 
     @classmethod
     def start(cls, initial_capital: float) -> AccountingState:
