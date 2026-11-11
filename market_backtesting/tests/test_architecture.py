@@ -48,6 +48,11 @@ ALLOWED_TOP_LEVEL = {
     "typing",
     "market_research",
     "collections",
+    "data_lake",
+    "hashlib",
+    "json",
+    "re",
+    "zoneinfo",
 }
 FORBIDDEN_W1_SEMANTICS = {
     "detect_contract_transitions",
@@ -192,9 +197,8 @@ def test_no_module_local_python_project_or_environment() -> None:
     assert not (package_root / ".venv").exists()
 
 
-def test_source_has_no_datalake_or_http_imports() -> None:
+def test_source_uses_only_authorized_datalake_public_boundaries() -> None:
     forbidden_roots = {
-        "data_lake",
         "data_snapshot",
         "market_statistics",
         "market_modeling",
@@ -210,9 +214,30 @@ def test_source_has_no_datalake_or_http_imports() -> None:
         "urllib",
         "httpx",
     }
+    allowed_datalake = {
+        "data_lake",
+        "data_lake.datasets.tushare_trade_calendar",
+        "data_lake.datasets.tushare_equity_index_futures",
+        "data_lake.datasets.tushare_index_daily",
+    }
+    input_modules = {
+        "application_models.py",
+        "input_validation.py",
+        "public_inputs.py",
+        "fingerprint.py",
+        "application.py",
+        "preflight.py",
+    }
     violations: list[str] = []
     for path in source_files():
         for name in imported_modules(path):
+            if name.split(".", 1)[0] == "data_lake":
+                if (
+                    name not in allowed_datalake
+                    or path.name not in input_modules
+                    or not path.is_relative_to(SOURCE / "cases/futures_roll_long")
+                ):
+                    violations.append(f"{path}: {name}")
             if name.split(".", 1)[0] in forbidden_roots:
                 violations.append(f"{path}: {name}")
     assert not violations, "\n".join(violations)

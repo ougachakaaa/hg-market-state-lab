@@ -275,3 +275,48 @@ multiplier for capital derivation. Its callable returns that same immutable targ
 Replay on the first session; subsequent decisions invoke MechanicalRollPolicy using
 Replay's actual previous Portfolio. This does not perform an execution or introduce
 a second clock; W1 Slot resolution still occurs once per entry/roll decision date.
+
+## WP3 public Python application boundary
+
+The canonical facade is `market_backtesting.cases.futures_roll_long`.
+`FuturesRollRequest(product_code, start_date, end_date, strategy_profile)` is frozen,
+has fixed `case="futures_roll_long_v1"`, and no business defaults.
+`validate_futures_roll_request(request)` validates without I/O before any service
+operation; application operations repeat validation (including the Shanghai today limit).
+
+`create_futures_roll_service()` composes the three published Dataset factories.
+Tests may inject the three public service dependencies by keyword (`calendar`,
+`futures`, `index`); these are case-specific structural dependencies, not a generic
+service framework. Neither factories nor read-only operations require credentials.
+
+- `service.prepare(request) -> PreparedFuturesRollInputs` retains the exact public
+  requests, three frozen final exports, ensure diagnostics, canonical fingerprint and
+  existing `FuturesRollInput`. It does not resolve Slots or run the strategy.
+- `service.run(request) -> FuturesRollExecution` prepares once, then calls the existing
+  Replay and Analyzer once each. The frozen execution contains request, observed
+  session bounds, replay, performance and prepared inputs. This is **not** the WP4
+  `BacktestResult` or full Evidence Package; no run ID, persistence or transport is added.
+- `service.preflight(request) -> FuturesRollReadiness` uses exports only. Each dependency
+  has a state, safe reason and optional public coverage. Unknown dependencies are not
+  queried. This operation does not invoke full row/Slot/strategy validation.
+
+`FuturesRollApplicationError` specializes `FuturesRollError` with `stage`, optional
+`dependency`, and retained safe ensure diagnostics. Input/acquisition failures use
+case-owned categories/reasons; replay/analysis failures preserve the original
+category/reason/date/contract. No error carries a successful partial execution or a
+successful input fingerprint. Upstream exception text is not copied into diagnostics,
+because public operation failures can contain runtime paths or provider details.
+
+Legal incomplete exports must pass the same envelope, counters, public-field,
+identity/order and payload accounting checks before ensure is permitted. Missing
+Calendar records are legal only when accounted for by incomplete coverage; a complete
+Calendar must contain every natural day. A complete Index export must have one row
+per successful unit and a Close for every CFFEX session. Its own SSE target count is
+producer-owned; W2 does not substitute the CFFEX count for it. Futures successful
+zero-row units remain legal producer proofs, but cannot satisfy missing strategy facts.
+
+Ensure results are retained as diagnostics, not fingerprint inputs. A returned
+incomplete ensure is always followed by the final export; only that export determines
+whether preparation can continue. All retained export sequences must be immutable
+public tuples. The case-specific canonical encoder explicitly enumerates published
+fields, rejecting illegal values rather than serializing internal object state.
