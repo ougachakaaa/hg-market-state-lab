@@ -1,4 +1,4 @@
-import { AppstoreOutlined, DatabaseOutlined, DotChartOutlined, ExperimentOutlined, FileSearchOutlined, HistoryOutlined, LineChartOutlined, LogoutOutlined, MenuFoldOutlined, MenuUnfoldOutlined, ReloadOutlined, TableOutlined } from '@ant-design/icons'
+import { AppstoreOutlined, DatabaseOutlined, DotChartOutlined, ExperimentOutlined, HistoryOutlined, LineChartOutlined, LogoutOutlined, MenuFoldOutlined, MenuUnfoldOutlined, ReloadOutlined, TableOutlined } from '@ant-design/icons'
 import { Alert, Breadcrumb, Button, Card, Flex, Layout, Menu, Spin, Typography, theme } from 'antd'
 import { useEffect, useState } from 'react'
 import FuturesBasisPage from '../features/futures_basis_research/page/FuturesBasisPage'
@@ -13,8 +13,8 @@ import type { CurrentUser, LoginRequest } from './auth/api/auth'
 import { isWorkspacePath, useWorkspaceRoute, type WorkspacePath } from './routes'
 
 const titles: Record<WorkspacePath, string> = {
-  '/research': '研究工作台',
-  '/research/futures-basis': 'Futures Basis Research',
+  '/research': '研究总览',
+  '/research/futures-basis': '历史基差研究',
   '/research/publications': 'Research Explorer',
   '/data': '数据总览',
   '/data/mo-option-chain': 'MO Option Chain',
@@ -80,10 +80,11 @@ function ApplicationShell({ user, signOut, path, navigate }: {
         style={{ background: 'transparent', borderInlineEnd: 0 }}
         onClick={({ key }) => { if (isWorkspacePath(key)) navigate(key) }}
         items={[
-          { key: 'area:/research', label: '研究', icon: <ExperimentOutlined aria-hidden="true" />, children: [
-            { key: '/research', icon: <AppstoreOutlined aria-hidden="true" />, label: '研究工作台' },
-            { key: '/research/publications', icon: <FileSearchOutlined aria-hidden="true" />, label: 'Research Explorer' },
-            { key: '/research/futures-basis', icon: <LineChartOutlined aria-hidden="true" />, label: 'Futures Basis Research' },
+          { key: 'area:/research', label: '研究', className: path === '/research/publications' ? 'ant-menu-submenu-selected' : undefined, icon: <ExperimentOutlined aria-hidden="true" />, children: [
+            { key: '/research', icon: <AppstoreOutlined aria-hidden="true" />, label: '研究总览' },
+            { type: 'group', key: 'descriptive-research', label: 'DESCRIPTIVE RESEARCH', children: [
+              { key: '/research/futures-basis', icon: <LineChartOutlined aria-hidden="true" />, label: '历史基差研究' },
+            ] },
           ] },
           { key: 'area:/data', label: '日常数据', icon: <DatabaseOutlined aria-hidden="true" />, children: [
             { key: '/data', icon: <DatabaseOutlined aria-hidden="true" />, label: '数据总览' },

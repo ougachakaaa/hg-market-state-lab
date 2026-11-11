@@ -13,9 +13,9 @@ slice; WP8 implements it and the offline reader regression.
 
 ## Application composition
 
-The surface is discovered from the authenticated Research workspace
-as `Futures Basis Research`, alongside Research Explorer. Research remains the default entry. Adding this surface
-must not replace, hide or break an existing surface. It is a sibling bounded
+The surface is discovered from Research Overview and the Descriptive Research navigation
+category. Research Explorer remains available as a secondary result reader. Research remains the default entry.
+This is a sibling bounded
 context: it does not read or reinterpret another feature's DTO, state, chart or
 result.
 

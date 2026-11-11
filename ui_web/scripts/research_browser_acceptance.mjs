@@ -53,7 +53,7 @@ export async function researchAcceptance(page, output) {
     await capture('workspace-local', detail)
     await local.getByRole('button', { name: '查看详情' }).nth(1).click()
     await detail.getByText(/futures_basis_report.py/).waitFor()
-    assert.ok(await detail.getByRole('button', { name: '打开 Futures Basis Research' }).isVisible())
+    assert.ok(await page.getByRole('button', { name: '进入历史基差研究' }).isVisible())
     await capture('workspace-offline', detail)
     for (const [name, body, status] of [
       ['catalog-empty', [], 200],
@@ -66,7 +66,7 @@ export async function researchAcceptance(page, output) {
       await capture(name)
       await page.unroute('**/api/research/capabilities')
     }
-    await page.getByRole('button', { name: '打开研究结果浏览' }).click()
+    await page.getByRole('button', { name: '浏览已发布研究结果' }).click()
     const publicationList = page.locator('.ant-card').filter({ has: page.getByText('Publications', { exact: true }) }).first()
     await publicationList.getByRole('button', { name: '选择', exact: true }).first().waitFor()
     await capture('explorer-list')

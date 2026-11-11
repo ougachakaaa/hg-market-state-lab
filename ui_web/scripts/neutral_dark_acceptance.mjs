@@ -28,7 +28,7 @@ export async function neutralDarkAcceptance(page, output) {
   for (const [width, height] of [[1440, 900], [1024, 768]]) {
     await page.setViewportSize({ width, height })
     await page.goto('http://127.0.0.1:5173/research')
-    const open = page.getByRole('button', { name: '打开研究结果浏览', exact: true })
+    const open = page.getByRole('button', { name: '浏览已发布研究结果', exact: true })
     await open.waitFor()
     const card = page.locator('.ant-card').last()
     const shell = await style(page.locator('.ant-layout-header'))
@@ -62,7 +62,7 @@ export async function neutralDarkAcceptance(page, output) {
     const popup = page.locator('.ant-menu-submenu-popup:visible')
     await popup.waitFor()
     await popup.evaluate(el => Promise.all(el.getAnimations({ subtree: true }).map(a => a.finished)))
-    await page.getByRole('menuitem', { name: 'Research Explorer', exact: true }).waitFor()
+    await page.getByRole('menuitem', { name: '历史基差研究', exact: true }).waitFor()
     const selected = await style(page.locator('.ant-menu-item-selected:visible'))
     neutral(selected.background)
     assert.ok(contrast(selected.color, selected.background) >= 4.5)

@@ -45,15 +45,13 @@ export default function ResearchWorkspacePage({ openExplorer, openFuturesBasis }
 
   return <Flex vertical gap="large" style={{ minWidth: 0, overflowWrap: 'anywhere' }}>
     <Flex vertical gap={0}>
-      <Typography.Title level={2} style={{ margin: 0 }}>研究工作台</Typography.Title>
-      <Typography.Paragraph type="secondary">发现已发布能力、本地案例与已有研究结果。本工作台只读，不执行研究。</Typography.Paragraph>
+      <Typography.Title level={2} style={{ margin: 0 }}>研究总览</Typography.Title>
+      <Typography.Paragraph type="secondary">探索研究主题、可用能力与访问方式。研究结果是否发布独立于实现能力。</Typography.Paragraph>
     </Flex>
 
-    <Card title="研究发现">
-      <Flex vertical gap="large">
+    <Card title="描述性研究主题">
+      <Flex vertical gap="small">
         <section aria-label="在线能力发现">
-          <Typography.Title level={4}>在线能力发现</Typography.Title>
-          <Typography.Paragraph type="secondary">通过认证接口发现能力。实现支持不代表 Provider、凭据或缓存已就绪。</Typography.Paragraph>
           {catalog.list.status === 'loading' && <Skeleton active paragraph={{ rows: 2 }} />}
           {catalog.list.status === 'error' && <Alert type="error" title="在线能力目录暂不可用" description="未能读取在线列表；本地案例仍可查看。" action={<Button icon={<ReloadOutlined aria-hidden="true" />} onClick={catalog.retryList}>重试目录</Button>} showIcon />}
           {catalog.list.status === 'success' && (catalog.list.data.length === 0
@@ -66,9 +64,9 @@ export default function ResearchWorkspacePage({ openExplorer, openFuturesBasis }
             </List.Item>} />)}
         </section>
         <section aria-label="本地研究与离线工作流">
-          <Typography.Title level={4}>本地研究与离线工作流</Typography.Title>
           <List rowKey="id" dataSource={[...localCases]} renderItem={item => <List.Item actions={[
             <Button key="details" aria-pressed={selection?.kind === 'local' && selection.id === item.id} type={selection?.kind === 'local' && selection.id === item.id ? 'primary' : 'default'} onClick={() => { catalog.clearDetail(); setSelection({ kind: 'local', id: item.id }) }}>查看详情</Button>,
+            ...(item.id === 'futures_basis_v1' ? [<Button key="open" type="primary" icon={<LineChartOutlined aria-hidden="true" />} onClick={openFuturesBasis}>进入历史基差研究</Button>] : []),
           ]}>
             <List.Item.Meta title={<Flex align="center" gap="small" wrap><Typography.Text strong>{item.name}</Typography.Text><Tag>{item.readiness}</Tag>{item.planned && <Tag>{item.planned}</Tag>}</Flex>}
               description={<><Typography.Text code>{item.id}</Typography.Text><br />{item.purpose}<br />访问路径：{item.id === 'price_segmentation_v1' ? '本地 Python' : '独立在线页面 / 本地离线报告'}</>} />
@@ -89,7 +87,6 @@ export default function ResearchWorkspacePage({ openExplorer, openFuturesBasis }
           { key: 'access', label: '访问路径', children: selectedLocal.access },
         ]} />
         <Alert type="info" title="可用性说明" description={selectedLocal.note} showIcon />
-        {selectedLocal.id === 'futures_basis_v1' && <Button icon={<LineChartOutlined aria-hidden="true" />} type="primary" onClick={openFuturesBasis}>打开 Futures Basis Research</Button>}
       </Flex>}
       {selectedOnline && catalog.detail.status === 'loading' && <Skeleton active paragraph={{ rows: 5 }} />}
       {selectedOnline && catalog.detail.status === 'error' && <Alert type="error" title="能力详情暂不可用" description="未能读取所选能力描述。" action={<Button icon={<ReloadOutlined aria-hidden="true" />} onClick={catalog.retryDetail}>重试详情</Button>} showIcon />}
@@ -101,7 +98,7 @@ export default function ResearchWorkspacePage({ openExplorer, openFuturesBasis }
     <Card title="已有研究结果">
       <Flex vertical gap="small" align="start">
         <Typography.Text type="secondary">浏览已发布的 Publications、Analyses、研究证据和 ChartViews。</Typography.Text>
-        <Button icon={<FileSearchOutlined aria-hidden="true" />} type="primary" onClick={openExplorer}>打开研究结果浏览</Button>
+        <Button icon={<FileSearchOutlined aria-hidden="true" />} onClick={openExplorer}>浏览已发布研究结果</Button>
       </Flex>
     </Card>
   </Flex>

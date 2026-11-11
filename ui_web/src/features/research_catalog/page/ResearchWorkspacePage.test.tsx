@@ -51,7 +51,7 @@ describe('Research Workspace catalog', () => {
     expect(screen.getByText(/futures_basis_report.py/)).toBeTruthy()
     expect(screen.getByText(/在线入口可用不代表/)).toBeTruthy()
     expect(screen.queryByRole('link', { name: /report/i })).toBeNull()
-    fireEvent.click(screen.getByRole('button', { name: '打开 Futures Basis Research' }))
+    fireEvent.click(within(local).getByRole('button', { name: '进入历史基差研究' }))
     expect(openFuturesBasis).toHaveBeenCalledOnce()
   })
 
@@ -61,7 +61,7 @@ describe('Research Workspace catalog', () => {
     render(<ResearchWorkspacePage openFuturesBasis={vi.fn()} openExplorer={openExplorer} />)
     await screen.findByText('暂无已发布的在线能力。')
     expect(screen.getByText('Price Segmentation')).toBeTruthy()
-    fireEvent.click(screen.getByRole('button', { name: '打开研究结果浏览' }))
+    fireEvent.click(screen.getByRole('button', { name: '浏览已发布研究结果' }))
     expect(openExplorer).toHaveBeenCalledOnce()
   })
 

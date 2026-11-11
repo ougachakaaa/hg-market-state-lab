@@ -1,6 +1,6 @@
 # Research Catalog & Workspace authority
 
-This read-only frontend slice owns discovery and presentation at `/research`. Research
+This read-only frontend slice owns the topic-oriented Research Overview and discovery at `/research`. Research
 owns case and capability semantics; [Research capability publication](../../../../market_research/descriptive/RESEARCH_CAPABILITY.md)
 and the [HTTP contract](../../../../ui_http/products/research/http-contract.md) own the
 online descriptor. This slice consumes only the two Capability GET operations through

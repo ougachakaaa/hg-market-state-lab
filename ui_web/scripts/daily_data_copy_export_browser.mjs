@@ -112,7 +112,7 @@ try {
   await page.getByLabel('用户名', { exact: true }).fill('wp3_browser_user')
   await page.getByLabel('密码', { exact: true }).fill(password)
   await page.getByRole('button', { name: '登录', exact: true }).click()
-  await page.getByRole('menuitem', { name: '研究工作台', exact: true }).waitFor()
+  await page.getByRole('menuitem', { name: '研究总览', exact: true }).waitFor()
   const passed = text => { report.checks.push(text); console.log(`PASS: ${text}`) }
   let requestCount = 0
   page.on('request', req => { if (/\/mo-option-(chain|premium-plane)\?/.test(req.url())) requestCount++ })

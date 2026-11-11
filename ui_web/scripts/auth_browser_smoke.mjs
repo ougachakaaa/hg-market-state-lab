@@ -108,7 +108,7 @@ try {
   await page.getByLabel('用户名', { exact: true }).fill('g3_browser_user')
   await page.getByLabel('密码', { exact: true }).fill(password)
   await page.getByRole('button', { name: '登录', exact: true }).click()
-  await page.getByRole('menuitem', { name: '研究工作台', exact: true }).waitFor()
+  await page.getByRole('menuitem', { name: '研究总览', exact: true }).waitFor()
   if (!(await page.getByRole('menuitem', { name: '数据总览', exact: true }).isVisible())) await page.getByRole('menuitem', { name: '日常数据', exact: true }).click()
   await page.getByRole('menuitem', { name: '数据总览', exact: true }).click()
   await page.getByRole('button', { name: '打开 MO Option Chain', exact: true }).click()
@@ -131,9 +131,9 @@ try {
   await page.getByRole('heading', { name: 'MO 年化权利金平面', exact: true }).waitFor()
 
   const surfaces = [
-    ['/research', '研究工作台', '研究', '研究工作台'],
-    ['/research/publications', '研究结果浏览', '研究', 'Research Explorer'],
-    ['/research/futures-basis', 'Futures Basis Research', '研究', 'Futures Basis Research'],
+    ['/research', '研究总览', '研究', '研究总览'],
+    ['/research/publications', '研究结果浏览', '研究', null],
+    ['/research/futures-basis', 'Futures Basis Research', '研究', '历史基差研究'],
     ['/data', '数据总览', '日常数据', '数据总览'],
     ['/data/mo-option-chain', 'MO 期权链', '日常数据', 'MO Option Chain'],
     ['/data/mo-premium-plane', 'MO 年化权利金平面', '日常数据', 'MO Premium Plane'],
@@ -148,9 +148,22 @@ try {
       const collapsed = width < 1200
       await page.getByRole('button', { name: collapsed ? '展开导航' : '折叠导航', exact: true }).waitFor()
       if (collapsed && group) await page.getByRole('menuitem', { name: group, exact: true }).click()
-      await page.locator('.ant-menu-item-selected').waitFor({ state: 'visible' })
-      assert.equal(await page.locator('.ant-menu-item-selected').count(), 1, `${path}: one selected leaf`)
-      assert.ok((await page.getByRole('menuitem', { name: selectedLabel, exact: true }).getAttribute('class')).split(' ').includes('ant-menu-item-selected'), `${path}: the selected leaf matches the route`)
+      if (path === '/research') {
+        const navigation = collapsed ? page.locator('.ant-menu-submenu-popup:visible') : page.getByRole('menu', { name: '业务导航' })
+        assert.equal(await navigation.getByRole('menuitem', { name: 'Research Explorer', exact: true }).count(), 0)
+        assert.equal(await navigation.getByRole('menuitem', { name: 'DESCRIPTIVE RESEARCH', exact: true }).count(), 0)
+        await navigation.getByText('DESCRIPTIVE RESEARCH', { exact: true }).click()
+        assert.equal(new URL(page.url()).pathname, '/research')
+        await page.screenshot({ path: resolve(screenshots, `research-navigation-${collapsed ? 'collapsed' : 'expanded'}-${width}.png`) })
+      }
+      if (selectedLabel) {
+        await page.locator('.ant-menu-item-selected').waitFor({ state: 'visible' })
+        assert.equal(await page.locator('.ant-menu-item-selected').count(), 1, `${path}: one selected leaf`)
+        assert.ok((await page.getByRole('menuitem', { name: selectedLabel, exact: true }).getAttribute('class')).split(' ').includes('ant-menu-item-selected'), `${path}: the selected leaf matches the route`)
+      } else {
+        assert.equal(await page.locator('.ant-menu-item-selected').count(), 0, 'Explorer has no selected sidebar leaf')
+        assert.ok(await page.locator('.ant-menu-submenu-selected').count(), 'Research parent remains active')
+      }
       if (collapsed && group) {
         await page.getByRole('menuitem', { name: group, exact: true }).click()
         await page.locator('.ant-menu-submenu-popup').waitFor({ state: 'hidden' })
@@ -161,11 +174,18 @@ try {
       await page.getByRole('button', { name: collapsed ? '展开导航' : '折叠导航', exact: true }).click()
       await page.getByRole('button', { name: collapsed ? '折叠导航' : '展开导航', exact: true }).waitFor()
       assert.equal(new URL(page.url()).pathname, path, 'Collapse does not navigate')
+      if (path === '/research') {
+        if (!collapsed) {
+          await page.getByRole('menuitem', { name: '研究', exact: true }).click()
+          await page.locator('.ant-menu-submenu-popup:visible').waitFor()
+        }
+        await page.screenshot({ path: resolve(screenshots, `research-navigation-${collapsed ? 'expanded' : 'collapsed'}-${width}.png`), animations: 'disabled' })
+      }
     }
   }
   await page.setViewportSize({ width: 1440, height: 900 })
   await page.goto('http://127.0.0.1:5173/research')
-  await page.getByRole('menuitem', { name: '研究工作台', exact: true }).waitFor()
+  await page.getByRole('menuitem', { name: '研究总览', exact: true }).waitFor()
   await page.getByRole('menuitem', { name: '日常数据', exact: true }).click()
   await page.getByRole('menuitem', { name: '数据总览', exact: true }).click()
   await page.getByRole('button', { name: '打开 MO Premium Plane', exact: true }).click()
