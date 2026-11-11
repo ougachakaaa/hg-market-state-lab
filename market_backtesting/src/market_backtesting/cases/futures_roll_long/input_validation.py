@@ -5,7 +5,7 @@ from __future__ import annotations
 import re
 from datetime import date
 from math import isfinite
-from typing import NoReturn
+from typing import NoReturn, cast
 
 from data_lake import CoverageResult, ExportEnvelope
 from data_lake.datasets.tushare_equity_index_futures import FuturesDailyExport, FuturesDailyRow
@@ -81,8 +81,13 @@ def number(value: object, *, positive: bool = False, nonnegative: bool = False) 
     if type(value) not in (float, int):
         return False
     try:
-        return isfinite(value) and (not positive or value > 0) and (not nonnegative or value >= 0)  # type: ignore[arg-type, operator]
-    except OverflowError:
+        numeric = float(cast(float, value))
+        return (
+            isfinite(numeric)
+            and (not positive or numeric > 0)
+            and (not nonnegative or numeric >= 0)
+        )
+    except (OverflowError, ValueError):
         return False
 
 
@@ -97,6 +102,7 @@ def envelope(
     """Minimum proof validation also used by advisory preflight."""
     dataset, view, schema, scope_field, scope = {
         "calendar_cffex": ("tushare_trade_calendar", "calendar", 1, "exchange", "CFFEX"),
+        "calendar_sse": ("tushare_trade_calendar", "calendar", 1, "exchange", "SSE"),
         "futures": (
             "tushare_equity_index_futures",
             "futures_daily",
@@ -108,6 +114,7 @@ def envelope(
     }[dependency]
     expected_type = {
         "calendar_cffex": TradeCalendarExport,
+        "calendar_sse": TradeCalendarExport,
         "futures": FuturesDailyExport,
         "index": IndexDailyExport,
     }[dependency]
@@ -148,8 +155,10 @@ def envelope(
     return coverage
 
 
-def validate_calendar(export: TradeCalendarExport, request: FuturesRollRequest) -> tuple[date, ...]:
-    dep: Dependency = "calendar_cffex"
+def validate_calendar(
+    export: TradeCalendarExport, request: FuturesRollRequest, *, exchange: str = "CFFEX"
+) -> tuple[date, ...]:
+    dep: Dependency = "calendar_cffex" if exchange == "CFFEX" else "calendar_sse"
     coverage = envelope(
         export, dep, request, requested_units=(request.end_date - request.start_date).days + 1
     )
@@ -159,7 +168,7 @@ def validate_calendar(export: TradeCalendarExport, request: FuturesRollRequest) 
         if not isinstance(row, TradeCalendarRecord):
             invalid(dep, "invalid_calendar_record")
         if (
-            row.exchange != "CFFEX"
+            row.exchange != exchange
             or type(row.cal_date) is not date
             or not request.start_date <= row.cal_date <= request.end_date
         ):
@@ -259,9 +268,16 @@ def validate_index(
     request: FuturesRollRequest,
     sessions: tuple[date, ...],
     underlying: str,
+    index_sessions: tuple[date, ...] | None = None,
 ) -> None:
     dep: Dependency = "index"
-    coverage = envelope(export, dep, request, underlying=underlying)
+    coverage = envelope(
+        export,
+        dep,
+        request,
+        underlying=underlying,
+        requested_units=None if index_sessions is None else len(index_sessions),
+    )
     previous: tuple[str, date] | None = None
     days: set[date] = set()
     metadata: tuple[object, ...] | None = None
@@ -274,6 +290,8 @@ def validate_index(
             or not request.start_date <= row.trade_date <= request.end_date
         ):
             invalid(dep, "invalid_index_identity")
+        if index_sessions is not None and row.trade_date not in index_sessions:
+            invalid(dep, "index_date_outside_sse_sessions")
         for name in INDEX_TEXT:
             value = getattr(row, name)
             if value is None and name in ("publisher", "category"):
@@ -286,7 +304,14 @@ def validate_index(
         if metadata is not None and metadata != identity:
             invalid(dep, "conflicting_index_metadata")
         metadata = identity
-        if any(not number(getattr(row, name), positive=name == "close") for name in INDEX_FLOATS):
+        if any(
+            not number(
+                getattr(row, name),
+                positive=name == "close",
+                nonnegative=name in ("volume", "amount"),
+            )
+            for name in INDEX_FLOATS
+        ):
             invalid(dep, "invalid_index_numeric")
         key = (row.index_code, row.trade_date)
         if previous is not None and key <= previous:

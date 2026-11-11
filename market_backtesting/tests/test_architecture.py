@@ -108,7 +108,7 @@ def test_only_authorized_w1_symbols_are_imported() -> None:
     assert not violations, "\n".join(violations)
 
 
-def test_no_market_io_or_generic_framework_dependencies() -> None:
+def test_dependencies_are_limited_to_public_market_inputs_and_standard_library() -> None:
     violations: list[str] = []
     for path in source_files():
         tree = ast.parse(path.read_text(encoding="utf-8"))
@@ -331,3 +331,63 @@ def test_core_public_carriers_are_frozen_and_legacy_pipeline_is_absent() -> None
     for name in ("replay", "transition_portfolio", "account"):
         assert definitions.count(name) == 1
     assert "simulate_holding" not in definitions
+
+
+def test_pure_case_computation_does_not_depend_on_public_input_orchestration() -> None:
+    pure = ("policy.py", "replay.py", "performance.py", "validation.py", "models.py")
+    input_concerns = (
+        "application",
+        "application_models",
+        "input_validation",
+        "public_inputs",
+        "preflight",
+        "fingerprint",
+    )
+    for filename in pure:
+        path = SOURCE / "cases/futures_roll_long" / filename
+        for imported in resolved_dependencies(path):
+            assert not imported.startswith("data_lake"), (path, imported)
+            assert not any(
+                imported == f"market_backtesting.cases.futures_roll_long.{concern}"
+                or imported.startswith(f"market_backtesting.cases.futures_roll_long.{concern}.")
+                for concern in input_concerns
+            ), (path, imported)
+
+
+def test_datalake_imports_name_only_published_symbols() -> None:
+    published = {
+        "data_lake": {
+            "CoverageResult",
+            "EnsureResult",
+            "UnitFailure",
+            "ExportEnvelope",
+            "InvalidRequestError",
+            "OperationError",
+        },
+        "data_lake.datasets.tushare_trade_calendar": {
+            "TradeCalendarExport",
+            "TradeCalendarRange",
+            "TradeCalendarRecord",
+            "create_service",
+        },
+        "data_lake.datasets.tushare_equity_index_futures": {
+            "FuturesDailyExport",
+            "FuturesDailyRange",
+            "FuturesDailyRow",
+            "create_service",
+        },
+        "data_lake.datasets.tushare_index_daily": {
+            "IndexDailyExport",
+            "IndexDailyRange",
+            "IndexDailyRow",
+            "create_service",
+        },
+    }
+    for path in source_files():
+        for node in ast.walk(ast.parse(path.read_text())):
+            if isinstance(node, ast.Import):
+                assert not any(alias.name.startswith("data_lake") for alias in node.names), path
+            elif isinstance(node, ast.ImportFrom) and (node.module or "").startswith("data_lake"):
+                assert {alias.name for alias in node.names} <= published.get(
+                    node.module or "", set()
+                ), path

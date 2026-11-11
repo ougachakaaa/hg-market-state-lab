@@ -21,11 +21,11 @@ consumers have no runtime/API yet.
 | Time advancement, Policy invocation, failure propagation, Recorder | [Core Replay](../../core/REPLAY.md) | `core/replay.py::replay`; `core/models.py::ReplaySession`, `DailyRecord`, `ReplayResult` |
 | Actual/Target Portfolio, market quote selection, unique Daily PnL, reference updates, StateEvents | [Portfolio Transition](../../core/PORTFOLIO_TRANSITION.md) | `core/transition.py::transition_portfolio`; `core/models.py::Portfolio`, `TargetPortfolio`, `TransitionResult` |
 | Explicit InitialCapital, Daily Return, cumulative PnL/Equity/Return | [Core Accounting](../../core/ACCOUNTING.md) | `core/accounting.py::account`; `core/models.py::AccountingState`; D1 closed below |
-| W2 identity, request constraints and first real research | [Case architecture](ARCHITECTURE.md) | Synthetic product/profile validation; public request/API pending WP3 |
+| W2 identity, request constraints and first real research | [Case architecture](ARCHITECTURE.md) | `application_models.py::FuturesRollRequest`, `validate_futures_roll_request`; `application.py::FuturesRollService` |
 | One-lot M1 entry, expiry M1/Q1 targets, final close, real contract versus Slot | [Strategy](STRATEGY.md) | `cases/futures_roll_long/policy.py::MechanicalRollPolicy`; `cases/futures_roll_long/models.py::DecisionContext` |
-| Public market facts, completeness, date-indexed facts, W1 import grant, causality assumptions | [Inputs](INPUTS.md) | Synthetic `cases/futures_roll_long/replay.py::replay_futures_roll`, `cases/futures_roll_long/validation.py`; retained `IndexClose` series; DataLake preparation/preflight pending WP3 |
+| Public market facts, completeness, date-indexed facts, W1 import grant, causality assumptions | [Inputs](INPUTS.md) | Synthetic `cases/futures_roll_long/replay.py::replay_futures_roll`, `cases/futures_roll_long/validation.py`; retained `IndexClose` series; `input_validation.py`, `public_inputs.py`, `fingerprint.py`, `preflight.py` |
 | W1 pure Slot semantics | [W1 Slot Resolution](../../../market_research/descriptive/cases/futures_basis/SLOT_RESOLUTION.md) | `cases/futures_roll_long/policy.py::_resolve` via the public facade only |
-| Calendar / Futures / Index public facts and operations | [Calendar Service](../../../data_lake/datasets/tushare_trade_calendar/SERVICE.md), [Futures Service](../../../data_lake/datasets/tushare_equity_index_futures/SERVICE.md), [Index Service](../../../data_lake/datasets/tushare_index_daily/SERVICE.md) | W2 public Input Adapter pending WP3 |
+| Calendar / Futures / Index public facts and operations | [Calendar Service](../../../data_lake/datasets/tushare_trade_calendar/SERVICE.md), [Futures Service](../../../data_lake/datasets/tushare_equity_index_futures/SERVICE.md), [Index Service](../../../data_lake/datasets/tushare_index_daily/SERVICE.md) | `application.py::prepare` through the three published factories; retained final exports and separate SSE Calendar prerequisite |
 | W2 InitialCapital derivation, multiplier consistency, Benchmark/Excess/Drawdown, case oracles | [Performance](PERFORMANCE.md) | Synthetic capital/equity checks in `cases/futures_roll_long/replay.py`, multiplier checks in `cases/futures_roll_long/policy.py`; `cases/futures_roll_long/performance.py::analyze_futures_roll`; both five-day oracles accepted |
 | BacktestResult, trades/roll projections, full evidence/replay, limitations and V2 views | [Result](RESULT.md) | Existing synthetic `DailyProjection`/`Execution`/`RollEvent`; full result/evidence/projection pending WP4 |
 | Independent online request/run/store, owner isolation and failure composition | [Online Application](ONLINE_APPLICATION.md) | Pending WP5; consumes Core + Analyzer + Result |
@@ -77,14 +77,14 @@ capabilities are Deferred delivery; a mandatory mismatch in existing code is Dri
 | 7 | W1 Slot transitions versus W2 rolls | Compatible | Policy resolves Slots on entry/expiry decisions only. A role change alone is no trade; authorized facade symbols and architecture tests preserve isolation. |
 | 8 | Look-ahead risk | Compatible | Price-free current context, configuration-only Policy and current/future Close perturbation tests enforce price isolation. Metadata/active-set point-in-time availability is an explicit assumption, not a historical freshness proof. |
 | 9 | Result / Online execution model | Requires Authority Change | Result consumes Core evidence plus Analyzer; Online composes the same path. Failure stage/category vocabulary follows Policy/Core/case ownership. No separate holding executor or ledger. Implementation remains WP4/WP5. |
-| 10 | Completed work versus future Roadmap | Requires Authority Change | Package, Core and W2 synthetic adapter are present. WP2 is accepted and WP3–WP8 remain pending; no package/simulator recreation or dual roadmap. |
+| 10 | Completed work versus future Roadmap | Requires Authority Change | Package, Core and W2 synthetic adapter are present. WP2/WP3 are accepted and WP4–WP8 remain pending; no package/simulator recreation or dual roadmap. |
 | 11 | Duplicate / contradictory authority | Requires Authority Change | Entries navigate; specialized contracts own formulas and workflows. Current audit is separate from Roadmap. No previous-version authority or compatibility chain is maintained. |
 | 12 | Residual implementation mismatch | Requires Authority Change | D1 is closed with independent daily-return tests and both Performance oracles. Missing later-WP deliverables are not mislabeled as regressions. |
 
-No Blocking semantic decision is identified. DataLake integration,
-Result/Evidence, Online, HTTP/Web and real acceptance are **Deferred** to their assigned
-WPs, not evidence of completed W2. Existing DataLake/W1 contracts and HTTP/Web planned
-boundaries suffice; this reconciliation changes no producer contract or sibling code.
+No Blocking semantic decision is identified. DataLake integration and bounded real
+IM acceptance are complete in WP3. Result/Evidence, Online, HTTP/Web and full-window
+real E2E acceptance remain **Deferred** to WP4–WP8, not evidence of completed W2.
+Existing DataLake/W1 contracts and HTTP/Web planned boundaries suffice; this reconciliation changes no producer contract or sibling code.
 
 ## Implementation drift register
 
@@ -99,14 +99,17 @@ boundaries suffice; this reconciliation changes no producer contract or sibling 
 | Acceptance / Test Evidence | `test_core_accounting.py`: initial/flat/entry, positive/negative/zero/roll, fixed capital, immutability, invalid values, cumulative/equity/daily-return overflow and simple-return sum. `test_futures_roll_performance.py`: unchanged Core projections, finite/positive equity and both independent five-day oracles. |
 | Remaining Action | None for D1. No other open Implementation Drift is identified in the implemented synthetic subset. |
 
-No other mandatory mismatch is identified in the existing Core/W2 synthetic subset.
+No open mandatory mismatch is identified in the implemented Core/W2/WP3 subset.
+The Index SSE Calendar prerequisite discovered in fresh-cache real acceptance is
+explicitly reconciled in [Inputs](INPUTS.md#reconciled-index-calendar-prerequisite)
+and implemented through the Calendar public service, without producer changes.
 The register does not weaken full StateEvent reconstruction, causal price isolation,
 real-instrument attribution or fail-without-partial-success requirements.
 
 ## Deferred and blocking decisions
 
-- **Blocking: none.** D1 is closed and Remaining WP2 is accepted; WP3 can start.
-- **Deferred delivery:** public facts integration/preflight (WP3), full Result/Evidence (WP4), Online mapping/store (WP5),
+- **Blocking: none.** D1 is closed; WP2 and WP3 are accepted; WP4 can start.
+- **Deferred delivery:** full Result/Evidence (WP4), Online mapping/store (WP5),
   HTTP/OpenAPI (WP6), Web (WP7), real IM and Windows Chrome → WSL acceptance (WP8).
 - Historical metadata availability stays an explicit research limitation. Proving
   point-in-time availability or provider-current freshness is not implied by replay.
@@ -115,23 +118,23 @@ real-instrument attribution or fail-without-partial-success requirements.
 
 ## Validation evidence
 
-Actual Remaining WP2 validation on 2026-11-11, using the repository-root Poetry
+Actual WP3 validation on 2026-11-11, using the repository-root Poetry
 environment. Synthetic fixtures use the real W1 Slot resolver and MechanicalRollPolicy;
 they do not claim real Calendar completeness or real-market acceptance.
 
 | Command / review | Actual result |
 | --- | --- |
-| `poetry run pytest market_backtesting/tests` | PASS — 213 tests, including original Core/Policy regressions, daily accounting, five-day oracles, input validation, causality and architecture/import isolation |
+| `poetry run pytest market_backtesting/tests` | PASS — 319 tests, including all 213 prior tests, public-service failure matrix, SSE prerequisite, canonical fingerprint, read-only preflight and both financial oracles |
 | `poetry run pytest data_snapshot/tests/test_authority_topology.py ui_http/tests/test_architecture.py` | PASS — 21 tests |
 | `poetry run ruff check market_backtesting` | PASS |
-| `poetry run mypy market_backtesting` | PASS — 22 source files |
+| `poetry run mypy market_backtesting` | PASS — 32 source files |
+| `poetry run pytest data_lake/tests/test_boundary.py market_research/tests/test_boundaries.py` | PASS — 15 tests |
 | `git diff --check` | PASS |
-| Read-only Markdown link/anchor and navigation audit | PASS — 145 local links/anchors; Root → module → case → Inputs/Performance reachable |
-| Full diff and ownership review | PASS — Core owns strategy accounting; case owns benchmark/risk; changes confined to `market_backtesting`, with no W1/DataLake producer or Policy changes |
+| Read-only Markdown link/anchor and navigation audit | PASS — 127 local links/anchors; Root → module → case → Inputs navigation checked |
+| Full diff and ownership review | PASS — Core owns strategy accounting; case owns benchmark/risk; changes confined to `market_backtesting`, with no W1/DataLake producer, Core or Policy changes |
 
-An initial Mypy run identified a missing type annotation in the new accounting test;
-it was corrected before the passing run above. Ruff formatting/import fixes were
-also applied before final acceptance. No test was skipped or assertion weakened.
+All 213 prior Core/Policy/Performance tests remain in the passing suite. No test was
+skipped and no financial oracle or isolation assertion was removed.
 
 ### Actual five-day oracle results
 
@@ -156,9 +159,68 @@ absolute tolerance 1e-9 CNY, with no intermediate rounding. Tests verify roll ga
 exclusion, replacement reference prices, final-session PnL and flat termination,
 separate running peaks and holding-period excess rather than summed daily excess.
 
-Real DataLake acquisition/integration, complete BacktestResult/Evidence/Views,
-Online/HTTP/Web and Windows Chrome → WSL E2E are **NOT RUN**, pending WP3–WP8.
+## WP3 fake-service failure matrix
 
-Reconciliation Summary: **PASS** for Remaining WP2. D1 is closed, no open
-Implementation Drift is identified in the implemented subset, and WP3 is the next
-implementation entry under [Inputs](INPUTS.md). W2 delivery remains incomplete.
+Tests use real published Export/Row/Coverage/Ensure types and documented immutable
+scope/window shapes, with the actual W1 resolver and MechanicalRollPolicy.
+`test_public_inputs.py` and `test_readiness.py` cover every requested matrix entry:
+
+| Requested cases | Actual coverage |
+| --- | --- |
+| 1, 22 — complete inputs, M1/Q1 real-ID roll attribution | Five-session public-service executions: 22,000 / 19,000 CNY; old-contract roll PnL; replacement Close reference; terminal Flat |
+| 2–3 — missing Calendar, scope/schema | Missing/duplicate dates, wrong exchange/window/schema, bool flags/counters, inconsistent coverage |
+| 4–7 — Futures completeness/duplicates/metadata/delist | Final incomplete export; duplicate contract/date; identity/month/product conflicts; invalid/non-session expiry |
+| 8–10 — entry/roll/Slot/Close | Missing decision/held rows, irregular active set, missing/non-finite/non-positive Close; no ensure for malformed facts |
+| 11–14 — Index | Incomplete proof; wrong underlying/scope/row identity; missing CFFEX Close; duplicate/date/numeric failures; SSE-only rows retained but not replayed |
+| 15–17 — operation/ensure/final export | Both public error types; ensure OperationError; malformed EnsureResult; incomplete ensure retained; final complete succeeds, final incomplete/malformed fails |
+| 18–19 — fingerprint | Golden synthetic digest; full public field enumeration; ISO/float64 hex/Unicode; signed-zero and fact/proof changes; profile-independent input identity |
+| 20–21 — read-only/no credential | Read-only services without ensure; poisoned preparation/replay/analyzer; missing real public caches for each dependency; Source initialization forbidden, no cache directory created |
+| 23 — no successful partial result | Every failure raises typed error without replay/fingerprint success; pure category/reason/date/contract preserved |
+| Additional prerequisite/boundary checks | SSE exact-window export/ensure/export; malformed SSE fails without ensure; at most one ensure; no redundant coverage; request/span validation before I/O; frozen retained inputs; authorized symbols only |
+
+## WP3 bounded real IM acceptance
+
+**PASS — 2026-11-11**, public production factories and API, fresh isolated temporary
+Dataset storage, real Tushare data. The first attempt exposed the missing independent
+SSE Calendar prerequisite; that contract gap is closed in Inputs and the successful
+fresh-cache acceptance includes it. No default cache was read, changed or rebuilt.
+
+| Proof | Actual result |
+| --- | --- |
+| Requested / observed window | 2025-02-17 through 2025-03-24, inclusive |
+| CFFEX Calendar / auxiliary SSE Calendar | 36/36 natural-day units each, complete, zero missing/pending/failed |
+| Futures / Index coverage | 26/26 product-day / index-day units, complete, zero missing/pending/failed |
+| Futures rows / replay sessions | 104 real contract rows / 26 actual CFFEX sessions |
+| Actual held expiry / old Close | IM2503.CFX, Source delist_date 2025-03-21, Close 6414.2 |
+| M1 replacement / roll Close | IM2504.CFX / 6318.2 |
+| Q1 replacement / roll Close | IM2506.CFX / 6177.4 |
+| Fixed initial notional | 1,256,313.1600000001 CNY |
+| M1 total PnL / gross return | 31,360.00000000003 CNY / 0.024961929078256274 |
+| Q1 total PnL / gross return | 32,080.000000000102 CNY / 0.025535034592808134 |
+| Benchmark return, both profiles | 0.012540726708617722 |
+| Roll attribution / replacement reference / final Flat | PASS for both profiles |
+| Retained-input replay and Analyzer / repeated cached execution | PASS, identical replay/performance/fingerprint |
+
+Real canonical fingerprint (both profiles):
+`0ff0446fa3f534139dc1c1d4ed3c1667fce68821e9670aa9a7116f96c9022e7b`.
+Synthetic golden fingerprint:
+`5edcf4bad7ff0232471cda6d83bfbf423ac27ad659bd04659863d9621377b480`.
+The profile is `futures_roll_long_inputs_v1`; credentials, local paths and ensure
+outcomes do not enter canonical bytes. Full final public facts were retained locally
+as canonical JSON along with the acceptance summary at
+`/tmp/w2-wp3-real-im-24g0cxfw/` (disposable local evidence); API results also retain typed
+exports and the separate SSE prerequisite. This is not a WP4 Evidence Package.
+
+Reproduce bounded real acceptance from the root with
+`poetry run python market_backtesting/tests/real_market_acceptance.py`.
+This explicit opt-in script prints its temporary artifact location, uses test-only
+storage redirection permitted by DEVELOPMENT.md, and never runs in pytest. Missing
+credential/Source/network yields a truthful NOT RUN report. Synthetic tests remain
+independent of that environment.
+
+Formal BacktestResult/Evidence/Views, Online/HTTP/Web and full-window Windows Chrome
+→ WSL E2E remain **NOT RUN**, assigned to WP4–WP8.
+
+Reconciliation Summary: **WP3 PASS**. No open Implementation Drift or blocking
+semantic decision; **WP4 may start**. W2 delivery remains incomplete, and this task
+stops before WP4.

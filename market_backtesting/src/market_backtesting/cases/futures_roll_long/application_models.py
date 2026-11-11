@@ -23,7 +23,7 @@ from .models import (
     StrategyProfile,
 )
 
-Dependency = Literal["calendar_cffex", "futures", "index"]
+Dependency = Literal["calendar_cffex", "calendar_sse", "futures", "index"]
 ReadinessState = Literal["complete", "incomplete", "unavailable", "unknown"]
 
 
@@ -129,6 +129,8 @@ class PreparedFuturesRollInputs:
     public_requests: PublicInputRequests
     diagnostics: tuple[EnsureDiagnostic, ...]
     input_fingerprint: str
+    index_calendar_request: TradeCalendarRange
+    index_calendar_export: TradeCalendarExport
     fingerprint_profile: str = field(default="futures_roll_long_inputs_v1", init=False)
     definition_version: str = field(default="futures_roll_long_v1", init=False)
 

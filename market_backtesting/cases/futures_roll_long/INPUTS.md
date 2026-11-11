@@ -40,12 +40,14 @@ backtest may start. There is no partial-input BacktestResult in v1.
 4. Derive the benchmark `underlying_index_code` from the validated Futures rows. All
    retained rows for the product must agree. If no row exists or more than one distinct
    underlying is present, fail input preparation.
-5. Acquire the mapped Index export in the same pattern. Validate the final envelope and
-   completeness for the whole window.
-6. Build read-only, date-queryable market facts: ordered CFFEX sessions, per-session
+5. Prepare the exact-window SSE Calendar prerequisite through the Calendar public
+   service in the same pattern; retain its final export separately as described below.
+6. Acquire the mapped Index export in the same pattern. Validate its target against
+   the SSE sessions and its completeness for the whole window.
+7. Build read-only, date-queryable market facts: ordered CFFEX sessions, per-session
    active contract evidence, metadata/instrument references, Futures Close snapshots
    and Index Close facts. All required facts are retained as one semantic input identity.
-7. Compute the canonical input fingerprint. The adapter builds price-free decision
+8. Compute the canonical input fingerprint. The adapter builds price-free decision
    contexts and `ReplaySession.snapshot` inputs from these retained facts. Policy calls
    the authorized Slot resolver only for entry/roll decisions. Begin pure Core Replay;
    no further market I/O occurs after preparation.
@@ -320,3 +322,57 @@ incomplete ensure is always followed by the final export; only that export deter
 whether preparation can continue. All retained export sequences must be immutable
 public tuples. The case-specific canonical encoder explicitly enumerates published
 fields, rejecting illegal values rather than serializing internal object state.
+
+### Reconciled Index Calendar prerequisite
+
+Bounded real acceptance identified a necessary operational prerequisite in the
+published [Index trading-days contract](../../../data_lake/datasets/tushare_index_daily/TRADING_DAYS.md):
+Index export requires a complete exact-window **SSE** Calendar, independently of
+CFFEX. With a fresh cache, an Index export cannot report its own incomplete coverage
+until that prerequisite exists. An arbitrary Index OperationError does not authorize
+ensure or retry.
+
+After deriving the underlying and before the first Index export, preparation therefore
+uses the same Calendar public service for `TradeCalendarRange(exchange="SSE", ...same
+window...)`. It applies the same legal-export / at-most-once ensure / final-export
+validation as for CFFEX, and retains this final prerequisite export and its request
+separately as `index_calendar_export` / `index_calendar_request`. Its ensure diagnostics
+use dependency `calendar_sse`. Index coverage targets and records must match this
+public SSE session set; CFFEX alone continues to define replay sessions.
+
+This is an operational prerequisite reconciliation, not a fourth strategy input or
+another calendar algorithm. The fingerprint profile remains exactly the three declared
+final exports: CFFEX Calendar, Futures, Index. The final Index export already retains
+its complete target coverage and all SSE-session rows. Auxiliary prerequisite evidence
+is retained separately and is not added to that canonical payload. Preflight remains
+strictly read-only: it calls Index export and reports unavailable if the owning
+Dataset cannot resolve its SSE prerequisite; it does not initialize that prerequisite.
+
+
+### Public Python usage
+
+```python
+from datetime import date
+from market_backtesting.cases.futures_roll_long import (
+    FuturesRollRequest,
+    create_futures_roll_service,
+)
+
+request = FuturesRollRequest(
+    product_code="IM",
+    start_date=date(2025, 2, 17),
+    end_date=date(2025, 3, 24),
+    strategy_profile="expiry_to_M1_v1",
+)
+service = create_futures_roll_service()
+readiness = service.preflight(request)  # read-only advisory, not an execution gate
+execution = service.run(request)        # may ensure legally incomplete inputs
+summary = execution.performance.summary
+fingerprint = execution.input_fingerprint
+retained_exports = execution.inputs.exports
+```
+
+`execution.inputs.replay_input` can be passed to `replay_futures_roll`, followed by
+`analyze_futures_roll`, without market I/O. `prepare` exposes the same retained inputs
+without running either computation. A semantic/operation failure raises the typed
+error; callers never receive a successful partial execution.

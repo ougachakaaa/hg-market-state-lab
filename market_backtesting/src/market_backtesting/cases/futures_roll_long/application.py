@@ -166,11 +166,21 @@ class FuturesRollService:
                 dependency="futures",
                 diagnostics=tuple(diagnostics),
             )
+        index_calendar_request = TradeCalendarRange("SSE", request.start_date, request.end_date)
+        index_calendar = _acquire(
+            lambda: self._calendar.export(index_calendar_request),
+            lambda: self._calendar.ensure(index_calendar_request),
+            lambda value: validate_calendar(value, request, exchange="SSE"),
+            lambda value: value.coverage.complete,
+            "calendar_sse",
+            diagnostics,
+        )
+        index_sessions = validate_calendar(index_calendar, request, exchange="SSE")
         index_request = IndexDailyRange((underlying,), request.start_date, request.end_date)
         index = _acquire(
             lambda: self._index.export(index_request),
             lambda: self._index.ensure(index_request),
-            lambda value: validate_index(value, request, sessions, underlying),
+            lambda value: validate_index(value, request, sessions, underlying, index_sessions),
             lambda value: value.coverage.complete,
             "index",
             diagnostics,
@@ -184,6 +194,8 @@ class FuturesRollService:
             PublicInputRequests(calendar_request, futures_request, index_request),
             tuple(diagnostics),
             fingerprint,
+            index_calendar_request,
+            index_calendar,
         )
 
     def run(self, request: FuturesRollRequest) -> FuturesRollExecution:

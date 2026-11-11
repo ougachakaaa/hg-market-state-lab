@@ -24,37 +24,42 @@ single-instrument accounting kernel; W2 is its first case.
   projects Core accounting and computes benchmark/equity, excess and independent
   drawdowns. Both five-day oracles pass: M1 total PnL 22,000 CNY; Q1 19,000 CNY;
   N0 1,200,000 CNY and benchmark return approximately 0.0125 for both profiles.
-- Verification: 213 Backtesting tests, 21 topology/HTTP architecture checks, Ruff
-  and Mypy pass. Detailed commands, oracle values and boundaries are recorded in
+- **WP3 — PASS (2026-11-11).** Public Python request/preparation/execution and
+  read-only readiness are implemented. Complete public Calendar/Futures/Index exports
+  feed the existing Replay → Analyzer path; canonical inputs and ensure diagnostics
+  are retained. The published Index SSE Calendar prerequisite is prepared through the
+  same public Calendar service, separately from CFFEX replay sessions.
+- Bounded real IM acceptance passed for both profiles over 2025-02-17 through
+  2025-03-24: 26 real CFFEX sessions, 104 Futures rows, real 2025-03-21 expiry rolls,
+  final Flat, reproducible replay and identical input fingerprint across profiles.
+  Default caches were not touched. Full-window research/Web acceptance remains WP8.
+- Current verification and real/synthetic evidence are in
   [Reconciliation](RECONCILIATION.md#validation-evidence).
-- WP3 is the next implementation entry. DataLake integration, full BacktestResult /
-  evidence, Online, HTTP/Web and real-market acceptance remain pending; synthetic
-  Performance acceptance does not complete W2.
+- WP4 is the next implementation entry. Formal BacktestResult/Evidence/Views,
+  Online and HTTP/Web remain pending; WP3 does not complete W2.
 
 ## Remaining work packages
 
-Each WP is independently reviewable, committable and accepted. WP2 is accepted;
-dependencies proceed from WP3 through WP8. No later deliverable is implied by a prior gate.
+Each WP is independently reviewable, committable and accepted. WP2 and WP3 are accepted;
+dependencies proceed from WP4 through WP8. No later deliverable is implied by a prior gate.
 
 | WP | Scope and required deliverables | Dependency | Definition of Done / acceptance | Forbidden scope |
 | --- | --- | --- | --- | --- |
 | Remaining WP2 — Core daily return and W2 Performance (**PASS**) | Closed D1; consume Core daily/cumulative accounting; Analyzer for benchmark/equity, excess and both drawdowns | Existing Core and W2 Policy | Both five-day Performance oracles; Core daily-return acceptance; benchmark first-day and positive-equity checks; running peaks; final excess; deterministic finite outputs; multiplier/strategy-equity failures preserved | Reimplementing Core PnL/accounting in Case, changing Policy, DataLake I/O, Result/Views, Online, HTTP/Web |
-| WP3 — DataLake Integration & Real Backtest Python API | Public Calendar/Futures/Index preparation; exact completeness validation; authorized Slot adapter; canonical input fingerprint; read-only preflight; public Python backtest API; bounded real IM acceptance | WP2 | Fake-service completeness/failure matrix; exact scope/window/counters; deterministic fingerprint; public import boundary; complete final exports; bounded real IM evidence; no Snapshot/private access or second cache | W1 observation/report consumption, second provider/cache, HTTP/Web, online store |
+| WP3 — DataLake Integration & Real Backtest Python API (**PASS**) | Public Calendar/Futures/Index preparation; exact completeness validation; authorized Slot adapter; canonical input fingerprint; read-only preflight; public Python backtest API; bounded real IM acceptance | WP2 | Fake-service completeness/failure matrix; exact scope/window/counters; deterministic fingerprint; public import boundary; complete final exports; bounded real IM evidence; no Snapshot/private access or second cache | W1 observation/report consumption, second provider/cache, HTTP/Web, online store |
 | WP4 — Backtest Result, Evidence & Visualization Projection | Stable result profile; evidence summary/package; V2 returns/drawdown views; reader projection; limitations; cross-field invariants | WP3 | Result schema/version; all invariants; V2 validation; manual oracle; deterministic evidence/replay; WP4 PASS = core research capability complete | HTTP/Web, online store, generic visualization schema, W3 financial features |
 | WP5 — Online Backtest Application & Run Store | Online composition of the WP3 preflight plus submit/status/result application; owner scope; single worker/busy; disposable file store; atomic result publication; startup recovery; bounded result reads | WP4 | Fake-service state matrix; busy/no queue; owner isolation; restart interruption; orphan result handling; size/corruption/unsupported platform; no HTTP/UI | HTTP/UI, Publication, Workbench, multi-process/queue, W1 store reuse |
 | WP6 — HTTP Product & OpenAPI | HTTP contract; strict parsing/limits; run/result DTO projection; Auth/owner/error mapping; OpenAPI; no financial recomputation | WP5 | Strict request/auth/error/limit tests; OpenAPI/freshness prerequisites; result/run/request association; preflight and no-store behavior; Web untouched | Web UI, business logic, W1 product changes, financial recomputation |
 | WP7 — Web UI Backtesting Integration | `/backtesting` page: Ant Design controls, preflight/readiness, submit/poll, V2 return/drawdown charts, trades/rolls, evidence/limitations, busy/error/failed/interrupted states; generated contracts | WP6 | `npm run contract:check`, Vitest, build, lint; deterministic browser tests; no fake result/control; no React financial computation; planned page honestly replaced | Financial calculation, backend bypass, generic chart DSL, CSV/export/copy not authorized by W2 v1 |
 | WP8 — Real-Market E2E Acceptance & Reconciliation | WSL2 FastAPI + Vite + Windows Chrome real IM workflow; login → preflight → submit → poll → result → charts → trades → evidence; restart/busy/ownership/failure; final reconciliation | WP7 | Both profiles for IM, 2024-01-01 through 2026-10-30, with real rolls and final exit; real data not substituted by synthetic; all workflow states; Windows Chrome browser → WSL HTTP/Web local end-to-end acceptance; W1 regression; no W3 features; external evidence; WP8 PASS permits W2 completion | W3 fees/slippage/ETF/margin/funding/optimization; production deployment promise; unverified platform claims |
 
-## Next implementation entry — WP3
+## Next implementation entry — WP4
 
-Start at [Inputs](INPUTS.md), then follow its exact public Calendar/Futures/Index
-service bindings. Prepare complete final exports, derive the single underlying,
-and map validated CFFEX-session Index rows to `IndexClose` tuples. Feed the existing
-`replay_futures_roll` and `analyze_futures_roll` path; do not create another executor
-or ledger. WP3 additionally owns canonical fingerprinting, read-only preflight,
-public Python request/API and bounded real IM acceptance. It depends on the now
-accepted WP2 typed performance boundary; real inputs and WP3 are not yet verified.
+Start at [Result](RESULT.md). Consume WP3's frozen execution/prepared-input boundary,
+complete retained public exports and `futures_roll_long_inputs_v1` fingerprint.
+The existing replay/performance and read-only preflight remain canonical; WP4 adds
+the formal BacktestResult, Evidence Package/reproduction and producer-owned V2 views.
+WP3's bounded real evidence does not replace WP8's full-window authenticated workflow.
 
 ## Acceptance boundaries
 
