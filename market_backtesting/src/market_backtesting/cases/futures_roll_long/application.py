@@ -20,6 +20,7 @@ from .application_models import (
     FuturesPublicService,
     FuturesRollApplicationError,
     FuturesRollExecution,
+    FuturesRollReadiness,
     FuturesRollRequest,
     IndexPublicService,
     PreparedFuturesRollInputs,
@@ -209,6 +210,12 @@ class FuturesRollService:
             performance,
             inputs,
         )
+
+    def preflight(self, request: FuturesRollRequest) -> FuturesRollReadiness:
+        # Local import keeps the read-only assessment separate from preparation.
+        from .preflight import assess_readiness
+
+        return assess_readiness(request, self._calendar, self._futures, self._index)
 
 
 def create_futures_roll_service(
