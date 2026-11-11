@@ -2,8 +2,8 @@
 
 This contract owns the immutable `BacktestResult` semantic payload and its
 producer-owned evidence/visualization projection for the [case](ARCHITECTURE.md).
-Position decisions are owned by [Strategy](STRATEGY.md); accounting values and their
-canonical formulas are owned by [Accounting](ACCOUNTING.md). This document defines the
+Position decisions are owned by [Strategy](STRATEGY.md); Daily PnL and cumulative accounting are owned by [Core](../../core/ARCHITECTURE.md);
+case performance formulas are owned by [Performance](PERFORMANCE.md). This document defines the
 result fields and required cross-field consistency; it does not create a second
 accounting formula. Web transport and rendering are separate contracts.
 
@@ -133,7 +133,7 @@ Semantics:
 - On the final row: `pnl_contract_code` is the held contract; `position_contract_code`
   is null after the close.
 - `daily_pnl`, `cumulative_pnl`, `equity`, returns and drawdowns follow
-  [Accounting](ACCOUNTING.md) exactly; no value is recomputed by a consumer.
+  [Performance](PERFORMANCE.md) exactly; no value is recomputed by a consumer.
 - `benchmark_equity = initial_notional.value × (1 + benchmark_cumulative_return)`.
 - `excess_cumulative_return = cumulative_return - benchmark_cumulative_return`.
 - `drawdown`/`benchmark_drawdown` use each series' running peak; they are `<= 0`.

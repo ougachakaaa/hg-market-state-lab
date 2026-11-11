@@ -8,9 +8,10 @@
 | Task | Next authority |
 | --- | --- |
 | Module ownership、依赖方向、case 边界 | [ARCHITECTURE.md](ARCHITECTURE.md) |
+| Replay、Portfolio、Transition、Daily PnL、累计核算 | [Core](core/ARCHITECTURE.md) |
 | Case identity、request、strategy profile、scope/status | [Futures Roll Long case](cases/futures_roll_long/ARCHITECTURE.md) |
 | Real-contract position、entry/hold/roll/exit、contract vs slot、failure matrix | [Strategy](cases/futures_roll_long/STRATEGY.md) |
-| Initial notional、daily PnL、benchmark、returns、equity、drawdown | [Accounting](cases/futures_roll_long/ACCOUNTING.md) |
+| Initial notional、benchmark、drawdown、case performance | [Performance](cases/futures_roll_long/PERFORMANCE.md) |
 | DataLake public bindings、completeness、W1 slot 复用、fingerprint/readiness | [Inputs](cases/futures_roll_long/INPUTS.md) |
 | BacktestResult、evidence、limitations、V2 projection | [Result](cases/futures_roll_long/RESULT.md) |
 | Online request、run lifecycle、store、concurrency、HTTP/Web ownership | [Online application](cases/futures_roll_long/ONLINE_APPLICATION.md) |
@@ -19,8 +20,8 @@
 ## 执行规则
 
 - `market_backtesting` 只实现当前已确认的 `futures_roll_long_v1`；不得预先建立
-  generic strategy engine、plugin/registry、multi-strategy portfolio、optimizer 或未来
-  strategy abstraction。
+  order-driven trading framework、broker/matching、plugin/registry、multi-strategy portfolio、optimizer 或未来
+  strategy scaffold；允许 [Core V1](core/ARCHITECTURE.md) 明确授权的策略无关日频回放。
 - Strategy/accounting/input/result/online 语义分别只属于上述 narrowest authority。
   修改行为前先更新对应 authority；下层只能 specialize 或 constrain 上层 invariant。
 - 不修改 W1 Research 的代码、公式或 public contract。只允许通过 case Inputs 明确列出的

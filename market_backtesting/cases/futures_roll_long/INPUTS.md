@@ -1,8 +1,7 @@
 # Futures Roll Long public inputs, completeness and reproduction
 
 This contract specializes the [case](ARCHITECTURE.md) and the repository's public
-upstream boundaries. Only input preparation acquires market facts. Holding simulation,
-accounting and result projection consume retained validated inputs and perform no
+upstream boundaries. Only input preparation acquires market facts. Policy, Core Replay and result projection consume retained validated inputs and perform no
 market I/O.
 
 ## DataLake-first selection
@@ -46,7 +45,7 @@ backtest may start. There is no partial-input BacktestResult in v1.
 6. Build the ordered CFFEX session sequence, the per-session active contract sets and
    the decision-day Slot resolutions. All required facts are now retained as one
    semantic input identity.
-7. Compute the canonical input fingerprint and begin the pure strategy simulation.
+7. Compute the canonical input fingerprint and begin the pure Core Replay.
    No further market I/O occurs after this point.
 
 `ensure` is not a repair mechanism for a malformed export. A malformed envelope,
@@ -231,3 +230,20 @@ A failure may retain safe diagnostics and public evidence obtained so far. It mu
 publish a successful input fingerprint, a partial BacktestResult, a filled price, a
 guessed contract or a silently shortened window. No Snapshot fallback, second Source,
 retry framework, date shift or alternate calendar is authorized.
+
+## Decision context versus Close snapshot
+
+W2 synthetic `FuturesRollInput` retains sessions, W1 metadata, session Close facts,
+active-set evidence, explicit contract multiplier references and initial underlying
+index Close. W1 ContractMetadata has no multiplier; W2 associates it separately and
+never changes the W1 carrier. Multipliers are supplied, not guessed from product codes.
+The adapter requires exact metadata-to-instrument identity associations; used contracts
+must match the entry multiplier. Initial index Close is finite and strictly positive.
+
+For each session the adapter exposes only current metadata/instrument references and
+that date's evidence to Policy. Historical metadata are supplied as assumed known at
+decision time; current export completeness does not prove a historically versioned
+pre-close active set or metadata freshness. This limitation must remain explicit.
+Current-session Close and future prices are exclusively Replay/Transition inputs;
+Policy configuration retains no market input collection. Perturbing current/future
+Close values must not change mechanical targets when price inputs remain legal.

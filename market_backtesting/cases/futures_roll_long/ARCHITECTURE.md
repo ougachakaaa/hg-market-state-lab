@@ -62,55 +62,29 @@ actual last trading day:
 Both enter initially at the first session's `M1`. The profile name is immutable: a
 changed roll rule requires a new profile version and a new request identity.
 
-## Responsibility flow
+## Responsibility flow and validation ownership
 
 ```text
-explicit request
-  → public input preparation (Calendar / Futures / Index)
-  → ordered CFFEX sessions + complete real contract facts
-  → decision-day Slot resolution (authorized W1 pure boundary)
-  → real-contract entry / hold / roll / exit simulation
-  → gross PnL + benchmark + drawdown
-  → immutable BacktestResult / evidence / V2 projection
-  → case-specific online application / HTTP / Web (later WPs)
+W2 input preparation → price-free Decision Context + Close Snapshot
+W2 Mechanical Roll Policy → Target Portfolio
+Core Replay → Transition/Daily PnL → Accounting → immutable Daily Records
+W2 Performance Analyzer → BacktestResult/evidence/projections (remaining work)
 ```
 
-These are responsibility boundaries, not a generic engine, inheritance hierarchy or
-mandatory sequence of separately persisted artifacts. Input preparation alone performs
-public service I/O. Holding simulation performs no I/O. Accounting consumes a validated
-position/price timeline. Result projection consumes accounting output without
-recomputing it.
-
-## Validation ownership
-
-Input preparation, strategy simulation and accounting validate different things and do
-not repeat each other's checks:
-
-- **Input preparation** owns market-data completeness and public-fact validity:
-  Calendar scope/completeness, Futures/Index export schema, scope, counters and rows,
-  ordered sessions, unique identities, final-export metadata/lifecycle consistency,
-  underlying derivation and the canonical input fingerprint. It does not decide
-  positions, roll targets or PnL.
-- **Strategy simulation** owns the real-contract position: entry/hold/roll/exit state
-  transitions, held-contract identity and lifecycle while held, decision-day Slot
-  evidence and target legality, and terminal flatness. It consumes retained validated
-  facts without market I/O, does not revalidate export completeness and does not
-  compute PnL.
-- **Accounting** owns PnL/return/equity legality: close-to-close PnL attribution,
-  multiplier consistency with the entry contract, finite arithmetic, benchmark,
-  positive equity and drawdown. It consumes the validated position/price timeline and
-  does not re-decide positions or repair prices.
-
-WP1 consumes already-validated synthetic market facts and implements only the strategy
-simulation boundary. It adds no real DataLake I/O and produces no WP2 PnL, return,
-benchmark or equity value.
+Input preparation owns public-fact completeness, metadata consistency and input identity.
+W2 Policy owns product/profile, M1/Q1 selection, expiry decisions, one-lot constraints
+and final flat target. Core owns actual state, daily valuation/execution, PnL,
+cumulative accounting and recording. W2 derives initial index-equivalent capital and
+requires consistent contract multipliers and positive equity. Benchmark/drawdown and
+BacktestResult remain case concerns. Only input preparation may perform market I/O.
 
 ## Authority navigation
 
 | Concern | Canonical owner |
 | --- | --- |
-| Real-contract position state machine, session order, entry/hold/roll/exit, contract vs Slot, failure rules | [Strategy](STRATEGY.md) |
-| Initial notional, daily PnL, roll accounting, benchmark, returns, equity, drawdown, manual oracle | [Accounting](ACCOUNTING.md) |
+| Replay, actual Portfolio, Transition/PnL, cumulative accounting and Recorder | [Core](../../core/ARCHITECTURE.md) |
+| Real-contract target policy, session order, entry/hold/roll/exit, contract vs Slot, failure rules | [Strategy](STRATEGY.md) |
+| Initial notional, benchmark, drawdown, case performance and five-day oracle | [Performance](PERFORMANCE.md) |
 | Exact DataLake public bindings, completeness, W1 Slot reuse, underlying derivation, fingerprint, readiness | [Inputs](INPUTS.md) |
 | BacktestResult, evidence, limitations, result-version and V2 projection | [Result](RESULT.md) |
 | Online request, run lifecycle, ownership, store, concurrency, HTTP/Web ownership | [Online application](ONLINE_APPLICATION.md) |
@@ -125,8 +99,8 @@ role changes, not W2 roll trades.
 
 ## Status
 
-WP0 is a documentation/authority gate. WP1 implements the pure holding simulation and
-its synthetic test suite; the case still has no PnL/accounting, DataLake acquisition,
-online run, HTTP product or Web feature. WP2 starts accounting; WP4 PASS completes the
-core research capability; WP8 PASS is required before W2 is declared complete. See the
-[roadmap](ROADMAP.md).
+WP0/WP1 completed the original authority and holding simulation. This reconciliation
+directly replaces the latter with Position-Driven Core plus W2 Policy and minimal
+Gross PnL/accounting. Core implementation acceptance is tracked separately from
+remaining WP2 Performance Analyzer/Benchmark and full W2 WP8 acceptance in the
+[roadmap](ROADMAP.md). No DataLake integration, online run or HTTP/Web is added here.

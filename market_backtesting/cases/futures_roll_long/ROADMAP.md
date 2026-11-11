@@ -10,7 +10,31 @@ WP0 is a documentation/authority gate. WP0–WP8 are sequential; every WP must b
 independently reviewable, committable and accepted. A later unfinished WP never fails
 an earlier WP's bounded acceptance, but no WP may claim another WP's deliverables.
 
-## Work packages
+## Position-Driven Core reconciliation gate
+
+Original WP0 and WP1 are completed historical work; their table below records the
+original delivery split. Baseline `42cfd38ba4bfbedf3cd37ee975557dfc3be7793d` contains
+WP1 and 72 passing synthetic tests. The new semantic decision explicitly supersedes
+the monolithic holding simulator and case ownership of generic PnL/accounting.
+Reconciliation branch: `feat/w2-position-driven-core-reconciliation`.
+
+- Commit A encodes Core authority, W2 Policy/performance boundaries and navigation.
+- Commit B directly replaces the old API with Core Replay and W2 Policy, adds minimal
+  Daily PnL/cumulative accounting and migrates WP1 behavioral/architecture tests.
+- Core gate requires immutable states/events, independent PnL reconstruction, causality,
+  explicit failure and the four-session oracle: 0 / 20,000 / 4,000 / 2,000 CNY,
+  total 26,000, B reference 6080, with the final position still held. A separate final
+  close test is mandatory. This oracle belongs to Core acceptance, separate from the
+  case five-day benchmark oracle in [Performance](PERFORMANCE.md).
+- Authority verification: PASS (relative links/anchors, 13 topology checks and diff whitespace).
+  Implementation acceptance: NOT RUN at Commit A; no implementation readiness claim.
+- The reconciliation completes only the Core portion formerly allocated to WP2.
+  Remaining WP2 must implement case Performance Analyzer, benchmark/excess/drawdown,
+  positive-equity validation in full analysis and both five-day case oracles.
+- WP3 depends on remaining WP2; WP4–WP8 dependencies and Web completion goal remain
+  unchanged. Core PASS, WP4 research capability and WP8 W2 completion are distinct gates.
+
+## Original work packages
 
 | WP | Scope and required deliverables | Dependency | Definition of Done / acceptance | Forbidden scope |
 | --- | --- | --- | --- | --- |
@@ -40,8 +64,8 @@ an earlier WP's bounded acceptance, but no WP may claim another WP's deliverable
 - WP6 creates the HTTP product contract and catalog entry. WP7 creates the frontend
   feature, generated OpenAPI/TypeScript artifacts and contract-freshness coverage.
   WP0 creates neither a fake contract nor a fake feature.
-- No WP may introduce a generic backtesting engine, plugin/registry, portfolio
-  framework, multi-strategy abstraction or future strategy scaffold.
+- Only the approved single-position Position-Driven Core is authorized; no WP may introduce
+  order-driven/broker/matching frameworks, plugin/registry, multi-asset portfolios or future scaffold.
 - Every WP must keep W1 public contracts, DataLake public contracts, Snapshot,
   Statistics and Modeling behavior unchanged unless its own explicit authority change
   is approved.
@@ -107,10 +131,9 @@ browser E2E and WP1–WP8 implementation tests are **NOT RUN** in WP0 and must n
 reported as passing.
 
 WP0 PASS means this authority gate is complete and WP1 is implementation-ready. It does
-not mean any runtime, HTTP, Web or real-market capability exists. WP0 stops after its
-independent commit; WP1 is not started automatically.
+not mean any runtime, HTTP, Web or real-market capability exists. This was the historical WP0 handoff; it does not block the explicitly approved reconciliation.
 
-## WP1 implementation readiness
+## Historical WP1 implementation readiness
 
 WP1 is **Implementation Ready** once WP0 passes. Its minimal starting point is:
 

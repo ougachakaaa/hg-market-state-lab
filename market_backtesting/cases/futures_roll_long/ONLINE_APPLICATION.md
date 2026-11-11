@@ -4,7 +4,7 @@ This contract owns the case-specific online request, read-only readiness assessm
 run lifecycle, runtime result store, owner boundary and read semantics for the
 [case](ARCHITECTURE.md). HTTP transport belongs to `ui_http` (WP6); browser interaction
 belongs to `ui_web` (WP7). This document does not define the HTTP DTO/OpenAPI or the Web
-layout, and does not own Strategy, Accounting, Inputs or Result semantics.
+layout, and does not own Policy, Core, Performance, Inputs or Result semantics.
 
 The design deliberately reuses operational principles validated by
 [W1 R01-A online application](../../../market_research/descriptive/cases/futures_basis/ONLINE_APPLICATION.md),
@@ -106,7 +106,7 @@ state in v1.
   created; there is no queue and no waiting list.
 - Submission returns immediately (the HTTP request is accepted; no request remains open
   during acquisition or computation). A single in-process worker performs input
-  preparation, holding simulation and accounting; the browser polls status.
+  preparation, Policy-driven Core Replay and case performance analysis; the browser polls status.
 - Status reads are cheap and may proceed concurrently. They inspect stored metadata
   only; they do not execute the backtest, parse the result or acquire a result-read
   permit.

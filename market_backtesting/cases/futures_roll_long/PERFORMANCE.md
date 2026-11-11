@@ -1,9 +1,9 @@
-# Futures Roll Long PnL and benchmark accounting
+# Futures Roll Long performance analysis
 
-This contract owns the numerical accounting of the [case](ARCHITECTURE.md). Position
-decisions are owned by [Strategy](STRATEGY.md). This document freezes units, the
-initial notional denominator, close-to-close PnL, roll treatment, benchmark comparison,
-return curves, drawdown and the manual oracle.
+This contract owns W2 initial index-equivalent capital, multiplier consistency,
+benchmark, return projections and drawdown. It consumes [Core daily transitions](../../core/PORTFOLIO_TRANSITION.md)
+and [Core accounting](../../core/ACCOUNTING.md); it never recomputes their values.
+Position decisions belong to [Strategy](STRATEGY.md).
 
 ## Units and value semantics
 
@@ -37,48 +37,14 @@ multiplier. It gives strategy return and index benchmark return the same initial
 If the entry futures price differs from the index level, that difference is not PnL; it
 is part of the basis and is not decomposed in W2.
 
-## Daily PnL
+## Core accounting consumption
 
-For a session `t` with PnL-attribution contract `c_t`:
-
-```text
-entry session:          pnl_t = 0
-normal/roll/final:      pnl_t = (Close(c_t, t) - Close(c_t, t-1)) × M
-```
-
-`Close(c_t, t-1)` is the same real contract's immediately preceding CFFEX session
-close. Weekends and holidays create no rows and no interpolation. `t-1` means the
-previous supplied session, not `t` minus one calendar day.
-
-Attribution rules:
-
-- entry session: `c_t` is the newly opened M1, but PnL is zero because the position was
-  opened at that session's close;
-- ordinary holding session: `c_t` is the held contract;
-- roll session: `c_t` is the old contract; the new contract's PnL starts next session;
-- final session: `c_t` is the old/held contract; its close-to-close move is included and
-  the position is then closed.
-
-The result's `pnl_contract_code` records `c_t`. The result's
-`position_contract_code` records the contract held at the end of the session: the new
-contract after entry or roll, null after the final close.
-
-## Roll accounting invariant
-
-On a roll session:
-
-```text
-old contract PnL = (old Close_t - old Close_{t-1}) × M
-new contract PnL = 0
-```
-
-The old contract is sold at `old Close_t`; the new contract is bought at
-`new Close_t`. The price difference between the two contracts is never a PnL term. If
-the implementation adds `(new Close_t - old Close_t) × M`, it double-counts a contract
-switch as profit or loss and violates this contract.
-
-This is the accounting reason W2 uses real contract close-to-close variation instead of
-daily Slot returns or a synthetic continuous series.
+Core Transition exclusively owns Daily PnL, reference updates and roll gap exclusion.
+Core Accounting exclusively owns cumulative PnL, equity and cumulative return. W2
+projects these values unchanged. Entry has zero PnL; roll/final attribution belongs
+to the incoming held contract. Entry-row `pnl_contract_code` is a case projection of
+the newly opened contract, despite no incoming position. End-of-session identity is
+new/held instrument or null after final close.
 
 ## Benchmark
 
@@ -100,18 +66,10 @@ tradable as one lot or that an ETF would reproduce it.
 
 ## Strategy returns and equity
 
-```text
-cum_pnl_t      = Σ pnl_i
-equity_t       = N0 + cum_pnl_t
-gross_return_t = cum_pnl_t / N0
-daily_return_t = pnl_t / N0
-```
+Core cumulative return is W2 `gross_return_t`, normalized by fixed N0. Case daily
+return is `daily_return_t = pnl_t / N0`. It is simple, gross and not reinvested.
 
-`gross_return_t` is a simple cumulative gross return on the fixed initial notional. It
-is not compounded, annualized or reinvested. The equity curve is linear in cumulative
-PnL because the position is always exactly one lot.
-
-Final `gross_return` is `cum_pnl_final / N0`. Final `benchmark_return` is
+Final `gross_return` is the final Core cumulative return. Final `benchmark_return` is
 `benchmark_cumulative_return_final`. Final `excess_return` is:
 
 ```text

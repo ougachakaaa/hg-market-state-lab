@@ -7,7 +7,7 @@ data_lake         → reusable source facts and Dataset-owned caches
 data_snapshot     → market state data preparation
 market_modeling   → market state modeling (reserved; no module authority yet)
 market_research   → exploratory and statistical research
-market_backtesting → futures roll long strategy backtesting (W2; WP1 pure holding simulation)
+market_backtesting → futures roll long strategy backtesting (W2; Position-Driven Core reconciliation)
 market_statistics → independent numerical statistics Python API
 ui_cli            → repository CLI (lab)
 ui_http           → repository-wide HTTP inbound delivery and composition

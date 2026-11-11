@@ -64,9 +64,9 @@ Research result 是 evidence / finding，不是 production market-state output�
 
 ### `market_backtesting`
 
-独立的策略回测业务模块，拥有固定 strategy definition、真实合约持仓模拟、PnL 与基准核算、回测结果/证据/可视化投影，以及 case-specific read-only readiness 与 online execution。首期只实现 `futures_roll_long_v1`，不建立 generic backtesting engine、plugin/registry、multi-strategy framework 或未来策略抽象。
+独立的策略回测业务模块，拥有固定 strategy definition、真实合约持仓模拟、PnL 与基准核算、回测结果/证据/可视化投影，以及 case-specific read-only readiness 与 online execution。首期包含 strategy-independent Position-Driven Core V1 与唯一 case `futures_roll_long_v1`；不建立 order-driven trading framework、plugin/registry、multi-strategy framework 或未来策略 scaffold。
 
-它消费 DataLake public Application Services 与 Research 已发布的 pure Slot-resolution public boundary；不拥有市场数据获取、Slot formula、Research observation/report/statistics、generic Visualization schema、HTTP DTO、Auth 或 UI。WP0 是 authority-only，不创建 Python package、运行时、HTTP product 或 Web feature。模块边界、case 语义与 WP 计划从 [market_backtesting/ARCHITECTURE.md](market_backtesting/ARCHITECTURE.md) 进入。
+它消费 DataLake public Application Services 与 Research 已发布的 pure Slot-resolution public boundary；不拥有市场数据获取、Slot formula、Research observation/report/statistics、generic Visualization schema、HTTP DTO、Auth 或 UI。WP0 为历史 authority gate，WP1 建立 pure holding package；本次 reconciliation 将其直接替换为 Position-Driven Core 与 W2 Policy，不引入 DataLake integration、HTTP 或 Web。模块边界、case 语义与 WP 计划从 [market_backtesting/ARCHITECTURE.md](market_backtesting/ARCHITECTURE.md) 进入。
 
 ### `market_statistics`
 
@@ -244,10 +244,11 @@ ARCHITECTURE.md（本文件）
     │      ↓
     │  market_research/PUBLICATION.md
     ├─ market_backtesting/ARCHITECTURE.md
+    │      ├─ market_backtesting/core/ARCHITECTURE.md
     │      ↓
     │  market_backtesting/cases/futures_roll_long/ARCHITECTURE.md
     │      ├─ STRATEGY.md
-    │      ├─ ACCOUNTING.md
+    │      ├─ PERFORMANCE.md
     │      ├─ INPUTS.md
     │      ├─ RESULT.md
     │      ├─ ONLINE_APPLICATION.md
@@ -272,7 +273,7 @@ ARCHITECTURE.md（本文件）
            └─ ui_web/contracts.md
 ```
 
-CLI 语义从本文档进入 `ui_cli/ARCHITECTURE.md`；Python dependency resolution 与当前本地操作进入 `DEVELOPMENT.md`；业务语义仍进入对应 owning module。`market_modeling` 当前没有下层 authority，不得从 runtime layout、Research authority 或 Backtesting authority 推导其内部设计。`market_backtesting` 的 case/strategy/accounting/result/online 语义从其 module authority 进入；WP0 authority 不等于 runtime readiness。
+CLI 语义从本文档进入 `ui_cli/ARCHITECTURE.md`；Python dependency resolution 与当前本地操作进入 `DEVELOPMENT.md`；业务语义仍进入对应 owning module。`market_modeling` 当前没有下层 authority，不得从 runtime layout、Research authority 或 Backtesting authority 推导其内部设计。`market_backtesting` 的 Core 与 case/policy/performance/result/online 语义从其 module authority 进入；WP0 authority 不等于 runtime readiness。
 
 上层只提供选择下一份文档所需的上下文，不复制下层语义。新增或删除单个产品通常只更新模块 catalog，不改变本文档。
 
