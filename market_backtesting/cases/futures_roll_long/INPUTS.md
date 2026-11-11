@@ -247,3 +247,9 @@ pre-close active set or metadata freshness. This limitation must remain explicit
 Current-session Close and future prices are exclusively Replay/Transition inputs;
 Policy configuration retains no market input collection. Perturbing current/future
 Close values must not change mechanical targets when price inputs remain legal.
+
+The synthetic adapter computes the first price-free target once to obtain the entry
+multiplier for capital derivation. Its callable returns that same immutable target to
+Replay on the first session; subsequent decisions invoke MechanicalRollPolicy using
+Replay's actual previous Portfolio. This does not perform an execution or introduce
+a second clock; W1 Slot resolution still occurs once per entry/roll decision date.

@@ -4,8 +4,8 @@ This document specializes the [case](ARCHITECTURE.md). It owns W2 delivery bound
 work-package acceptance, reconciliation and deferred scope. It does not duplicate
 strategy formulas, accounting formulas, result schemas or run internals.
 
-Baseline: `46046ff9159824321c39441e89915327711eeb1f`.
-Working branch: `feat/w2-futures-roll-backtest`.
+Original WP0 baseline: `46046ff9159824321c39441e89915327711eeb1f`.
+Original WP0/WP1 branch: `feat/w2-futures-roll-backtest` (historical).
 WP0 is a documentation/authority gate. WP0–WP8 are sequential; every WP must be
 independently reviewable, committable and accepted. A later unfinished WP never fails
 an earlier WP's bounded acceptance, but no WP may claim another WP's deliverables.
@@ -27,12 +27,44 @@ Reconciliation branch: `feat/w2-position-driven-core-reconciliation`.
   close test is mandatory. This oracle belongs to Core acceptance, separate from the
   case five-day benchmark oracle in [Performance](PERFORMANCE.md).
 - Authority verification: PASS (relative links/anchors, 13 topology checks and diff whitespace).
-  Implementation acceptance: NOT RUN at Commit A; no implementation readiness claim.
+  At Commit A implementation acceptance was NOT RUN; current evidence follows below.
 - The reconciliation completes only the Core portion formerly allocated to WP2.
   Remaining WP2 must implement case Performance Analyzer, benchmark/excess/drawdown,
-  positive-equity validation in full analysis and both five-day case oracles.
+  benchmark-equity validation in full analysis and both five-day case oracles.
 - WP3 depends on remaining WP2; WP4–WP8 dependencies and Web completion goal remain
   unchanged. Core PASS, WP4 research capability and WP8 W2 completion are distinct gates.
+
+### Core implementation reconciliation acceptance
+
+Core V1 synthetic acceptance: **PASS**. No unresolved Blocking design or implementation
+gap within the approved Core subset. Original WP1 behavior is preserved through the
+same Core Replay used by the new W2 adapter; obsolete `simulate_holding`,
+`HoldingSimulationInput`, `StrategyTimeline` and `HoldingSimulationError` are retired.
+
+| Check | Actual result |
+| --- | --- |
+| `poetry run pytest market_backtesting/tests` | PASS — 105 tests, including migrated WP1 regressions, Core oracle, causality, accounting and import isolation |
+| `poetry run pytest data_snapshot/tests/test_authority_topology.py ui_http/tests/test_architecture.py` | PASS — 21 tests |
+| `poetry run ruff check market_backtesting` | PASS |
+| `poetry run mypy market_backtesting` | PASS — 19 source files |
+| Changed authority links/anchors and Backtesting reachability from root | PASS |
+| Independent Python Core import with upstream business imports blocked | PASS — actual exported types/functions loaded |
+| Four-session manual Replay Oracle | PASS — daily 0 / 20,000 / 4,000 / 2,000; cumulative 26,000 CNY; B entry reference 6080; no gap PnL; final position held |
+| Separate final close, event reconstruction and independent PnL recomputation | PASS |
+| `git diff --check` | PASS |
+| Real DataLake acquisition, full W2 Analyzer/benchmark, HTTP/Web, Online Store and real-market acceptance | NOT RUN — outside this reconciliation |
+
+The existing root editable installation needed `poetry install --only-root` to include
+the already-declared Backtesting source root; no dependency or lockfile change was needed.
+W2 already derives synthetic capital, validates used multiplier consistency and rejects
+non-positive strategy equity. The remaining WP2 work is case Performance Analyzer,
+benchmark/daily-return/excess/drawdown projections, benchmark equity checks and both
+five-day case oracles. Then proceed to WP3 public DataLake integration.
+
+Point-in-time metadata/active-set availability remains an explicit historical replay
+assumption; no proven historical Source freshness is claimed. Core readiness is bounded
+to deterministic single-position fixed-positive-quantity long Close replay and accounting,
+not full W2 readiness. WP4 and WP8 gates remain pending.
 
 ## Original work packages
 

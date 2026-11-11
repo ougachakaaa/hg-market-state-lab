@@ -109,6 +109,10 @@ The package root must not eagerly import the case, so Core can load without Rese
 
 ## Critical invariants
 
+Core-wide invariants are immutable single-position state, daily transition before
+accounting, explicit price assumptions and failure without partial success. The
+strategy-specific constraints below apply to W2 only; Core must not encode them.
+
 - The unit of strategy exposure is one lot of an immutable real `contract_code`, not
   a daily re-selected M1 Slot. Slot identity is only a decision-day role.
 - Entry and roll decisions happen at the close of a CFFEX session. The roll day's PnL

@@ -1,12 +1,12 @@
-"""Stable public failure classification for the pure holding simulation."""
+"""Stable public failure classification for the W2 case adapter."""
 
 from __future__ import annotations
 
 from datetime import date
 
 
-class HoldingSimulationError(Exception):
-    """A classified simulation failure that never carries a partial timeline."""
+class FuturesRollError(Exception):
+    """A classified simulation failure that never carries a partial successful result."""
 
     def __init__(
         self,

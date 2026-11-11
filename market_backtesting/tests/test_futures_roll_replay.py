@@ -1,4 +1,4 @@
-"""Deterministic WP1 acceptance tests over artificial holding facts."""
+"""WP1 business regressions migrated onto the W2/Core replay boundary."""
 
 from __future__ import annotations
 
@@ -8,8 +8,8 @@ from datetime import date
 
 import pytest
 
-import market_backtesting.holding as holding_module
-from holding_fixtures import (
+import market_backtesting.cases.futures_roll_long.policy as policy_module
+from futures_roll_fixtures import (
     APR20,
     EXPECTED_DAILY,
     EXPECTED_RESOLVER_CALLS,
@@ -28,7 +28,11 @@ from holding_fixtures import (
     resolution_for,
     simple_input,
 )
-from market_backtesting import HoldingSimulationInput, StrategyTimeline, simulate_holding
+from market_backtesting.cases.futures_roll_long import (
+    FuturesRollInput,
+    FuturesRollReplay,
+    replay_futures_roll,
+)
 from market_research.descriptive.cases.futures_basis import (
     ContractMetadata,
     DailySlotResolution,
@@ -38,13 +42,13 @@ from market_research.descriptive.cases.futures_basis import (
 PROFILES = ("expiry_to_M1_v1", "expiry_to_Q1_v1")
 
 
-def executions_on(timeline: StrategyTimeline, day: date):
+def executions_on(timeline: FuturesRollReplay, day: date):
     return tuple(execution for execution in timeline.executions if execution.trade_date == day)
 
 
 @pytest.mark.parametrize("profile", PROFILES)
 def test_initial_entry_uses_first_session_m1(profile: str) -> None:
-    timeline = simulate_holding(long_input(profile))
+    timeline = replay_futures_roll(long_input(profile))
     entry = timeline.entry_execution
 
     assert entry.trade_date == JAN5
@@ -60,7 +64,7 @@ def test_initial_entry_uses_first_session_m1(profile: str) -> None:
 
 @pytest.mark.parametrize("profile", PROFILES)
 def test_ordinary_holding_session_has_no_execution(profile: str) -> None:
-    timeline = simulate_holding(long_input(profile))
+    timeline = replay_futures_roll(long_input(profile))
 
     assert executions_on(timeline, JAN20) == ()
     session_row = next(row for row in timeline.daily if row.trade_date == JAN20)
@@ -69,7 +73,7 @@ def test_ordinary_holding_session_has_no_execution(profile: str) -> None:
 
 
 def test_m1_to_m0_role_change_does_not_trade() -> None:
-    timeline = simulate_holding(long_input("expiry_to_M1_v1"))
+    timeline = replay_futures_roll(long_input("expiry_to_M1_v1"))
 
     entry_resolution = resolution_for(JAN5)
     role_change_resolution = resolution_for(FEB5)
@@ -85,7 +89,7 @@ def test_m1_to_m0_role_change_does_not_trade() -> None:
 
 
 def test_q1_to_m1_role_change_does_not_trade() -> None:
-    timeline = simulate_holding(long_input("expiry_to_Q1_v1"))
+    timeline = replay_futures_roll(long_input("expiry_to_Q1_v1"))
 
     assert resolution_for(FEB20).mappings[2].contract_code == "IM2606.CFX"
     assert resolution_for(MAY6).mappings[1].contract_code == "IM2606.CFX"
@@ -96,7 +100,7 @@ def test_q1_to_m1_role_change_does_not_trade() -> None:
 
 
 def test_expiry_roll_to_m1() -> None:
-    timeline = simulate_holding(long_input("expiry_to_M1_v1"))
+    timeline = replay_futures_roll(long_input("expiry_to_M1_v1"))
     roll = next(item for item in timeline.rolls if item.trade_date == FEB20)
     legs = executions_on(timeline, FEB20)
 
@@ -112,7 +116,7 @@ def test_expiry_roll_to_m1() -> None:
 
 
 def test_expiry_roll_to_q1() -> None:
-    timeline = simulate_holding(long_input("expiry_to_Q1_v1"))
+    timeline = replay_futures_roll(long_input("expiry_to_Q1_v1"))
     roll = next(item for item in timeline.rolls if item.trade_date == FEB20)
     legs = executions_on(timeline, FEB20)
 
@@ -129,7 +133,7 @@ def test_expiry_roll_to_q1() -> None:
 
 @pytest.mark.parametrize("profile", PROFILES)
 def test_roll_day_attribution_and_next_session(profile: str) -> None:
-    timeline = simulate_holding(long_input(profile))
+    timeline = replay_futures_roll(long_input(profile))
     daily = {row.trade_date: row for row in timeline.daily}
 
     for roll in timeline.rolls:
@@ -142,7 +146,7 @@ def test_roll_day_attribution_and_next_session(profile: str) -> None:
 
 
 def test_final_day_expiry_closes_only() -> None:
-    timeline = simulate_holding(expiry_on_final_input())
+    timeline = replay_futures_roll(expiry_on_final_input())
 
     assert timeline.executions == (
         timeline.entry_execution,
@@ -159,7 +163,7 @@ def test_final_day_expiry_closes_only() -> None:
 
 
 def test_expiry_after_window_does_not_roll() -> None:
-    timeline = simulate_holding(expiry_after_final_input())
+    timeline = replay_futures_roll(expiry_after_final_input())
 
     assert timeline.rolls == ()
     assert len(timeline.executions) == 2
@@ -170,7 +174,7 @@ def test_expiry_after_window_does_not_roll() -> None:
 
 @pytest.mark.parametrize("profile", PROFILES)
 def test_multi_month_daily_identities_and_roll_events(profile: str) -> None:
-    timeline = simulate_holding(long_input(profile))
+    timeline = replay_futures_roll(long_input(profile))
 
     actual_daily = tuple(
         (row.trade_date, row.pnl_contract_code, row.position_contract_code)
@@ -193,14 +197,12 @@ def test_multi_month_daily_identities_and_roll_events(profile: str) -> None:
     assert timeline.exit_execution.side == "SELL"
     assert timeline.exit_execution.reason == "study_end_close"
     assert timeline.daily[-1].position_contract_code is None
-    assert all(
-        execution.trade_date <= JUN22 for execution in timeline.executions
-    )
+    assert all(execution.trade_date <= JUN22 for execution in timeline.executions)
 
 
 @pytest.mark.parametrize("profile", PROFILES)
 def test_execution_order_explains_each_roll(profile: str) -> None:
-    timeline = simulate_holding(long_input(profile))
+    timeline = replay_futures_roll(long_input(profile))
     index_by_id = {id(execution): index for index, execution in enumerate(timeline.executions)}
 
     for roll in timeline.rolls:
@@ -225,7 +227,7 @@ def test_resolver_is_called_only_on_entry_and_actual_roll_days(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     calls: list[date] = []
-    real_resolver = holding_module.resolve_daily_slots
+    real_resolver = policy_module.resolve_daily_slots
 
     def wrapper(
         product_code: str,
@@ -237,15 +239,15 @@ def test_resolver_is_called_only_on_entry_and_actual_roll_days(
         calls.append(trade_date)
         return real_resolver(product_code, trade_date, contracts, evidence=evidence)
 
-    monkeypatch.setattr(holding_module, "resolve_daily_slots", wrapper)
-    simulate_holding(long_input(profile))
+    monkeypatch.setattr(policy_module, "resolve_daily_slots", wrapper)
+    replay_futures_roll(long_input(profile))
     assert tuple(calls) == EXPECTED_RESOLVER_CALLS[profile]
 
 
 def test_determinism_same_input_same_timeline() -> None:
     inputs = long_input("expiry_to_Q1_v1")
-    first = simulate_holding(inputs)
-    second = simulate_holding(inputs)
+    first = replay_futures_roll(inputs)
+    second = replay_futures_roll(inputs)
 
     assert first == second
     assert hash(first) == hash(second)
@@ -256,11 +258,11 @@ def test_determinism_same_input_same_timeline() -> None:
 def test_inputs_and_timeline_are_immutable() -> None:
     inputs = long_input("expiry_to_M1_v1")
     snapshot = deepcopy(inputs)
-    timeline = simulate_holding(inputs)
+    timeline = replay_futures_roll(inputs)
 
     assert inputs == snapshot
-    assert isinstance(inputs, HoldingSimulationInput)
-    assert isinstance(timeline, StrategyTimeline)
+    assert isinstance(inputs, FuturesRollInput)
+    assert isinstance(timeline, FuturesRollReplay)
     with pytest.raises(FrozenInstanceError):
         inputs.sessions = ()  # type: ignore[misc]
     with pytest.raises(FrozenInstanceError):
@@ -271,7 +273,7 @@ def test_inputs_and_timeline_are_immutable() -> None:
 
 @pytest.mark.parametrize("product", ("IF", "IH", "IC", "IM"))
 def test_every_canonical_product_can_enter_and_exit(product: str) -> None:
-    timeline = simulate_holding(simple_input(product))
+    timeline = replay_futures_roll(simple_input(product))
 
     assert timeline.product_code == product
     assert timeline.entry_execution.contract_code == f"{product}2602.CFX"
@@ -281,7 +283,7 @@ def test_every_canonical_product_can_enter_and_exit(product: str) -> None:
 
 
 def test_final_exit_is_last_execution_and_final_position_is_flat() -> None:
-    timeline = simulate_holding(long_input("expiry_to_M1_v1"))
+    timeline = replay_futures_roll(long_input("expiry_to_M1_v1"))
 
     assert timeline.executions[-1].trade_date == JUN22
     assert timeline.executions[-1] is timeline.exit_execution
@@ -289,3 +291,25 @@ def test_final_exit_is_last_execution_and_final_position_is_flat() -> None:
     assert timeline.daily[-1].position_contract_code is None
     assert all(execution.trade_date <= JUN22 for execution in timeline.executions)
     assert APR20 in {roll.trade_date for roll in timeline.rolls}
+
+
+@pytest.mark.parametrize("profile", PROFILES)
+def test_case_core_pnl_is_independently_recomputable(profile: str) -> None:
+    inputs = long_input(profile)
+    result = replay_futures_roll(inputs)
+    prices = {
+        (row.trade_date, quote.contract_code): quote.close
+        for row in inputs.session_facts
+        for quote in row.closes
+    }
+    expected_total = 0.0
+    for record in result.replay.daily:
+        held = record.previous_portfolio.position
+        expected = 0.0
+        if held is not None:
+            code = held.instrument.instrument_id
+            expected = (prices[record.trade_date, code] - prices[held.valuation_date, code]) * 200
+        assert record.transition.daily_pnl == expected
+        expected_total += expected
+        assert record.accounting.cumulative_pnl == expected_total
+    assert result.replay.final_portfolio.position is None

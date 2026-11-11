@@ -1,4 +1,4 @@
-"""Immutable synthetic inputs and real-contract holding timeline carriers."""
+"""Immutable W2 synthetic inputs, decision context and Core event projections."""
 
 from __future__ import annotations
 
@@ -10,6 +10,8 @@ from market_research.descriptive.cases.futures_basis import (
     ContractMetadata,
     DailyUniverseEvidence,
 )
+
+from ...core import InstrumentReference, ReplayResult
 
 ProductCode = Literal["IF", "IH", "IC", "IM"]
 PRODUCT_CODES: tuple[ProductCode, ...] = ("IF", "IH", "IC", "IM")
@@ -52,8 +54,8 @@ class DecisionSlotEvidence:
 
 
 @dataclass(frozen=True, slots=True)
-class HoldingSimulationInput:
-    """Everything the pure holding simulation may consume."""
+class FuturesRollInput:
+    """Explicit synthetic inputs for W2 Policy-driven Core Replay."""
 
     product_code: ProductCode
     sessions: tuple[date, ...]
@@ -61,10 +63,12 @@ class HoldingSimulationInput:
     session_facts: tuple[SessionFacts, ...]
     decision_slots: tuple[DecisionSlotEvidence, ...]
     strategy_profile: StrategyProfile
+    instrument_refs: tuple[InstrumentReference, ...]
+    initial_index_close: float
 
 
 @dataclass(frozen=True, slots=True)
-class DailyHolding:
+class DailyProjection:
     """Session-level identities, not PnL values."""
 
     trade_date: date
@@ -99,15 +103,16 @@ class RollEvent:
 
 
 @dataclass(frozen=True, slots=True)
-class StrategyTimeline:
-    """The complete immutable result of one holding simulation."""
+class FuturesRollReplay:
+    """W2 projections of Core records, not a full BacktestResult."""
 
     product_code: ProductCode
     strategy_profile: StrategyProfile
     sessions: tuple[date, ...]
-    daily: tuple[DailyHolding, ...]
+    daily: tuple[DailyProjection, ...]
     executions: tuple[Execution, ...]
     rolls: tuple[RollEvent, ...]
+    replay: ReplayResult
 
     @property
     def entry_execution(self) -> Execution:
@@ -116,3 +121,14 @@ class StrategyTimeline:
     @property
     def exit_execution(self) -> Execution:
         return self.executions[-1]
+
+
+@dataclass(frozen=True, slots=True)
+class DecisionContext:
+    """Current metadata and evidence only; deliberately has no market prices."""
+
+    is_first: bool
+    is_final: bool
+    contracts: tuple[ContractMetadata, ...]
+    instrument_refs: tuple[InstrumentReference, ...]
+    evidence: DailyUniverseEvidence | None

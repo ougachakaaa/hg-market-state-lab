@@ -66,7 +66,7 @@ Research result 是 evidence / finding，不是 production market-state output�
 
 独立的策略回测业务模块，拥有固定 strategy definition、真实合约持仓模拟、PnL 与基准核算、回测结果/证据/可视化投影，以及 case-specific read-only readiness 与 online execution。首期包含 strategy-independent Position-Driven Core V1 与唯一 case `futures_roll_long_v1`；不建立 order-driven trading framework、plugin/registry、multi-strategy framework 或未来策略 scaffold。
 
-它消费 DataLake public Application Services 与 Research 已发布的 pure Slot-resolution public boundary；不拥有市场数据获取、Slot formula、Research observation/report/statistics、generic Visualization schema、HTTP DTO、Auth 或 UI。WP0 为历史 authority gate，WP1 建立 pure holding package；本次 reconciliation 将其直接替换为 Position-Driven Core 与 W2 Policy，不引入 DataLake integration、HTTP 或 Web。模块边界、case 语义与 WP 计划从 [market_backtesting/ARCHITECTURE.md](market_backtesting/ARCHITECTURE.md) 进入。
+它的 W2 case adapter 消费 DataLake public Application Services 与 Research 已发布的 pure Slot-resolution public boundary；Core 不依赖这两个上游模块。它不拥有市场数据获取、Slot formula、Research observation/report/statistics、generic Visualization schema、HTTP DTO、Auth 或 UI。WP0 为历史 authority gate，WP1 建立 pure holding package；本次 reconciliation 将其直接替换为 Position-Driven Core 与 W2 Policy，不引入 DataLake integration、HTTP 或 Web。模块边界、case 语义与 WP 计划从 [market_backtesting/ARCHITECTURE.md](market_backtesting/ARCHITECTURE.md) 进入。
 
 ### `market_statistics`
 
