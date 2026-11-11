@@ -23,3 +23,11 @@ def futures_basis_environment(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -
 
     monkeypatch.setenv("LAB_FUTURES_BASIS_RUN_ROOT", str(tmp_path / "futures-basis-runs"))
     monkeypatch.setattr(runtime, "_runtime", runtime.OnlineRuntime())
+
+
+@pytest.fixture(autouse=True)
+def backtesting_environment(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    from ui_http.products.backtesting import runtime
+
+    monkeypatch.setenv("LAB_BACKTESTING_RUN_ROOT", str(tmp_path / "backtesting-runs"))
+    monkeypatch.setattr(runtime, "_runtime", runtime.OnlineRuntime())
