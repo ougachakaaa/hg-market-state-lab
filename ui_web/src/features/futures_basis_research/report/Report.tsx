@@ -2,7 +2,7 @@ import { formatUnit } from '../../../shared/format/unit'
 import { intervalLabels } from '../../../shared/format/interval'
 import { historyOptions, histogramOptions } from './presentation'
 import { useState } from 'react'
-import { Alert, Card, Collapse, Descriptions, Flex, Select, Segmented, Table, Tag, Typography, theme } from 'antd'
+import { Alert, Card, Collapse, Descriptions, Flex, Select, Segmented, Table, Tag, Typography, Button, theme } from 'antd'
 import { ChartView } from '../../../shared/visualization'
 import type { Method, ReportData, Run } from './types'
 
@@ -36,7 +36,15 @@ function RunTable({ runs }: { runs: Run[] }) {
   ]} />
 }
 
-export function Report({ data, mode }: { data: ReportData; mode: 'online' | 'offline' | 'demo' }) {
+export function Report({ data, mode, sectionNavigation = 'fragment' }: {
+  data: ReportData
+  mode: 'online' | 'offline' | 'demo'
+  /**
+   * `fragment` keeps the standalone/online section links. `local` scrolls without any
+   * fragment or history change, so a hash-routed static page keeps its active route.
+   */
+  sectionNavigation?: 'fragment' | 'local'
+}) {
   const { token } = theme.useToken()
   const [metric, setMetric] = useState(metrics[0])
   const [slot, setSlot] = useState('M0')
@@ -44,13 +52,17 @@ export function Report({ data, mode }: { data: ReportData; mode: 'online' | 'off
   if (data.profile !== 'futures_basis_report_evidence_v1') throw new Error('Unsupported report version')
   const distribution = data.distributions.find(d => d.request.metric === metric && d.request.slot === slot)
   const obs = data.request.observation
+  const sectionTitle = (title: string, index: number) => `${String(index + 1).padStart(2, '0')} · ${title}`
+  const jump = (index: number) => document.getElementById(`section-${index}`)?.scrollIntoView({ block: 'start' })
   return <>
     <Flex vertical gap="large" style={{ width: '100%', minWidth: 0, maxWidth: 1400, margin: '0 auto' }}>
       <Typography.Title level={mode === 'offline' ? 1 : 3} style={{ margin: 0 }}>{mode === 'offline' ? `${obs.product_code} 历史基差研究报告` : '研究报告'}</Typography.Title>
       <Typography.Paragraph>{obs.product_code} · {obs.start_date} 至 {obs.end_date} · <Tag color={data.status === 'partial' ? 'orange' : 'default'}>{data.status}</Tag></Typography.Paragraph>
       {data.status === 'partial' && <Alert showIcon type="warning" title="Partial：研究执行已完成；部分统计方法失败，原始失败证据保留在报告中。" />}
       <Flex component="nav" aria-label="报告章节" gap="middle" wrap style={{ paddingBlock: token.paddingSM }}>
-        {sections.map((title, i) => <Typography.Link key={i} href={`#section-${i}`} onClick={event => { event.preventDefault(); document.getElementById(`section-${i}`)?.scrollIntoView({ block: 'start' }) }}>{String(i + 1).padStart(2, '0')} · {title}</Typography.Link>)}
+        {sections.map((title, i) => sectionNavigation === 'local'
+          ? <Button key={i} type="link" style={{ padding: 0, height: 'auto' }} onClick={() => jump(i)}>{sectionTitle(title, i)}</Button>
+          : <Typography.Link key={i} href={`#section-${i}`} onClick={event => { event.preventDefault(); jump(i) }}>{sectionTitle(title, i)}</Typography.Link>)}
       </Flex>
       <Card id="section-0" title={<Typography.Title level={mode === 'offline' ? 2 : 4} style={{ margin: 0, fontSize: token.fontSizeHeading4, lineHeight: token.lineHeightHeading4 }}>A. 研究概览</Typography.Title>} styles={{ body: { display: 'flex', flexDirection: 'column', gap: token.padding, minWidth: 0 } }} style={{ scrollMarginTop: token.paddingLG }}>
         <Typography.Paragraph>{data.summary}</Typography.Paragraph>
