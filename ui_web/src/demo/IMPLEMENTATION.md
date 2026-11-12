@@ -179,3 +179,24 @@ heading anchors), and ran `git diff --check`. No repository Markdown-specific ch
 was found in the existing npm scripts, Python tooling or workflows. No business code,
 dependencies, generated contract, workflow or historical acceptance record changed;
 production/fixture/browser suites were not rerun for this authority-only package.
+
+## D1 shell implementation boundary
+
+D1 extracts `app/ApplicationShell.tsx`, `app/DailyDataLanding.tsx` and pure
+`app/routeInventory.ts`. Production `App.tsx` retains Auth and online Page composition;
+`app/routes.ts` retains the pathname/history adapter and server query behavior.
+`demo/shell/` is a verification harness using the same Shell/theme/Landing and an
+independent hash adapter. All other content is explicitly neutral verification content,
+not business Presentation or V2 page readiness. Hash route queries, including server
+`run_id`, normalize away; report section scrolling remains D2/D4 work and must not
+replace a route hash.
+
+The harness uses `vite.shell.config.ts`, inheriting the V1 Vite settings with a separate
+entry/output. Its build rejects nonliteral dynamic imports in project code and checks
+all loaded project modules and their static/dynamic edges before tree shaking against
+an explicit shell-only allowlist. The emitted dependency evidence and real static-file
+browser checks are D1 shell isolation evidence only. `demo:build`, V1 fixtures and Pages
+workflow remain unchanged. Harness commands: `test:static-shell` (typecheck/build/import
+graph) and `test:static-shell-browser` (build plus Chromium against static files).
+
+D1 implementation results and remaining handoff: [Shell acceptance](shell/ACCEPTANCE.md).
