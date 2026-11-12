@@ -1,4 +1,4 @@
-import type { PremiumPlane } from '../api/moOptionPremium'
+import type { PremiumPlane } from '../api/validatePremiumPlane'
 import { serializeJson } from '../../../shared/clipboard/text'
 
 export function premiumPlaneContextJson(plane: PremiumPlane, rawPayload: unknown): string {

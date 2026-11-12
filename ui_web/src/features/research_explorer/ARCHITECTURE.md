@@ -13,3 +13,27 @@ one-decimal percentages with the shared formatter. Probability, frequency, count
 and coverage retain their own semantics; observation_unit does not assign units
 to coverage fields. Histogram labels preserve category identity, order and
 inclusion. Raw request and evidence payloads remain unchanged.
+
+## Runtime scope
+
+Query inputs, protected HTTP reads, preflight, retries and Run lifecycle in this feature authority describe the Production controller. The same feature-owned Presentation also serves [Static Demo Runtime](../../demo/ARCHITECTURE.md) using [validated embedded Examples](../../demo/EXAMPLES.md), fixed visible request parameters and local presentation state. Static composition never mounts the production controller or fabricates its lifecycle; it preserves this feature’s result/visualization semantics and applicable local Copy/Export. Shared presentation remains here, not in parallel Demo pages.
+
+D2-D implements this boundary. `presentation.ts` exposes the feature-owned `ResearchExplorerPresentation`, `AnalysisDetails`, pure generated-contract validators (`validateResearch`, `validateEmbeddedPublication`) and a feature-local `useStaticExplorer` controller. Production `useExplorer` retains the initial list GET, opaque cursor pagination, lazy Manifest/Analysis/View GETs, four independent load states, manual retry, cancellation plus request-token stale isolation, protected Auth and HTTP error mapping; `ResearchExplorerPage` is a thin composition root. The View validator preserves the distinct `invalid_view` failure while requiring both the generated response shape and the shared ChartView contract. Static composition validates the embedded list/pages, Manifests, Analyses and ChartViews plus their cross-record identities, then performs only local pagination and Publication/Analysis/View selection. A missing embedded Manifest, Analysis or ChartView is an explicit missing state, never a fabricated success or HTTP fallback. Static disclosure distinguishes the embedded Example from the online Publication Store and does not treat source metadata as market-source authenticity. `testing/static/` is a verification harness using test-only regression data, not an official D3 Example or public Demo entry.
+
+The embedded page set is a contiguous prefix of the online cursor chain: every non-final
+page must declare continuation, no embedded page may follow a page whose `next_cursor` is
+null, and declared opaque cursor bytes are preserved unchanged. A non-null cursor on the
+final embedded page means subsequent online pages are not embedded; it is presented as an
+explicit unembedded continuation and never as the online list's last page. Every embedded
+ChartView must have a formal View reference in its own Publication Manifest; a published
+reference without an embedded View stays an explicit missing detail, while an embedded View
+without a published reference rejects the embedded set.
+
+## V2 origin policy reconciliation
+
+[Demo Example authority](../../demo/EXAMPLES.md) owns formal V2 real-market dates and
+packaging; [authenticity and rights](../../demo/AUTHENTICITY.md) owns evidence and admission.
+This feature owns only their presentation. Static delivery is not a Synthetic source label
+or proof of authenticity. Preserve historical V1/test disclosures, use actual real-market
+origin for V2, and never promote regression inputs to formal Examples. Pending origin-code
+changes are tracked in the [D3 handoff](../../demo/IMPLEMENTATION.md); R0 changes no code.

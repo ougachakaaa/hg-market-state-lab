@@ -42,19 +42,49 @@ checks Views. Errors use safe local text, never raw diagnostics, paths or creden
 
 ## Readout ownership
 
-Page composes hooks/components; API owns validation/association; hooks own admission,
-abort/history/polling; model owns display formatting. React never recomputes financial
-metrics, curves, trades or slots. Summary/Trades/Rolls/Evidence project Result unchanged.
+Page composes hooks/components; pure validators own generated schema, immutable request,
+Run-state coherence, Result association and V2 View checks; the Production API owns
+protected transport and safe error mapping; hooks own explicit submission, abort/history,
+and polling; model owns display formatting. React never recomputes financial metrics,
+curves, trades or slots. Summary/Trades/Rolls/Evidence project Result unchanged.
 Shared ChartView renders returns/drawdown, date/decimal_ratio, producer event details
 and Zoom/Pan/Reset. Requested and observed windows remain distinct. Evidence is an
 expandable online summary, not the full offline package. Explain ideal Close gross
 execution, no fees/slippage/margin, index price benchmark, historical metadata
-assumptions, and cache completeness versus freshness. No export/copy/download capability.
+assumptions, and cache completeness versus freshness. Evidence wording is origin-aware:
+Static labels the actual embedded origin under the [Example contract](../../demo/EXAMPLES.md),
+with real-market provenance for formal V2 and Synthetic disclosure for test-only results, and does not claim server execution, a full
+offline evidence package, or current market/cache/Provider readiness. No export/copy/download
+capability.
 
 ## Verification
 
 API, hook and page tests are feature-local. Real Chromium acceptance uses Vite,
-FastAPI, actual Auth/worker/temporary Store and synthetic public services. Actual
-results and remaining gates are recorded in [acceptance](ACCEPTANCE.md).
+FastAPI, actual Auth/worker/temporary Store and synthetic public services. The feature-local
+Shared Presentation and Static Controller also have a test-only static build/browser harness
+that validates the committed producer regression Result without Production transport.
+Actual results and remaining gates are recorded in [acceptance](ACCEPTANCE.md) and the
+[D2-F acceptance](testing/ACCEPTANCE.md).
 Full-window real-market and Windows Chrome evidence is owned by the independent
 [WP8 acceptance record](../../../../market_backtesting/cases/futures_roll_long/WP8_ACCEPTANCE.md).
+
+## Runtime scope
+
+Query inputs, protected HTTP reads, preflight, retries and Run lifecycle in this feature
+authority describe the Production controller. `page/BacktestingPage.tsx` is that Production
+composition root; `page/BacktestingPresentation.tsx` is the single formal page Presentation
+shared with [Static Demo Runtime](../../demo/ARCHITECTURE.md). The transport-free public
+entry is `presentation.ts`; `api/validateResult.ts` owns pure generated-contract validation;
+`static/useStaticBacktesting.ts` validates a fixed request plus complete Embedded Backtest
+Result once. Static composition never mounts the production controller or fabricates its
+lifecycle, Run ID or phase, and it preserves this feature's Result/visualization semantics.
+Shared presentation remains here, not in parallel Demo pages.
+
+## V2 origin policy reconciliation
+
+[Demo Example authority](../../demo/EXAMPLES.md) owns formal V2 real-market dates and
+packaging; [authenticity and rights](../../demo/AUTHENTICITY.md) owns evidence and admission.
+This feature owns only their presentation. Static delivery is not a Synthetic source label
+or proof of authenticity. Preserve historical V1/test disclosures, use actual real-market
+origin for V2, and never promote regression inputs to formal Examples. Pending origin-code
+changes are tracked in the [D3 handoff](../../demo/IMPLEMENTATION.md); R0 changes no code.

@@ -1,4 +1,4 @@
-import type { ExpiryGroup } from '../api/moOptionChain'
+import type { ExpiryGroup } from '../api/validateOptionChain'
 import type { SeriesColors } from '../model/presentationState'
 
 export type ExpiryColors = SeriesColors & { opacity: number }

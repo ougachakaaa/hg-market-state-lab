@@ -2,26 +2,29 @@ import dayjs from 'dayjs'
 import 'dayjs/locale/zh-cn'
 import zhCN from 'antd/es/date-picker/locale/zh_CN'
 import { Button, Checkbox, ColorPicker, Flex, Form, DatePicker, Space, Typography } from 'antd'
-import type { ExpiryGroup } from '../api/moOptionChain'
+import type { ExpiryGroup } from '../api/validateOptionChain'
 import type { ExpiryColors } from '../charts/expiryPalette'
 import type { SeriesColors } from '../model/presentationState'
 import { MIN_STRIKE_HALF_RANGE_POINTS } from '../model/strikeViewport'
 
-export function OptionChainQueryControl({ selectedDate, selectDate }: {
-  selectedDate: string
-  selectDate: (date: string) => void
-}) {
+export type OptionChainQuery =
+  | { mode: 'production'; selectedDate: string; selectDate: (date: string) => void }
+  | { mode: 'static'; selectedDate: string; sourceDisclosure: string }
+
+export function OptionChainQueryControl({ query }: { query: OptionChainQuery }) {
+  const { selectedDate } = query
   return (
     <Form layout="vertical" onSubmitCapture={(event) => event.preventDefault()} aria-label="期权链查询">
       <Space orientation="vertical" size="small">
         <Form.Item label="观察日期" htmlFor="target-date" style={{ marginBottom: 0 }}>
           <DatePicker id="target-date" value={selectedDate ? dayjs(selectedDate) : null}
             locale={zhCN} format="YYYY-MM-DD" placeholder="YYYY-MM-DD" preserveInvalidOnBlur
-            allowClear
-            onChange={(date) => selectDate(date?.isValid() ? date.format('YYYY-MM-DD') : '')}
+            disabled={query.mode === 'static'}
+            allowClear={query.mode === 'production'}
+            onChange={(date) => { if (query.mode === 'production') query.selectDate(date?.isValid() ? date.format('YYYY-MM-DD') : '') }}
             style={{ width: 200 }} aria-describedby="chain-query-help" />
         </Form.Item>
-        <Typography.Text type="secondary" id="chain-query-help">选择有效日期后自动加载；清空日期可重置查询。</Typography.Text>
+        <Typography.Text type="secondary" id="chain-query-help">{query.mode === 'static' ? '固定观察日期 · MO · close；静态展示不支持查询。' : '选择有效日期后自动加载；清空日期可重置查询。'}</Typography.Text>
       </Space>
     </Form>
   )

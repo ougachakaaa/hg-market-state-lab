@@ -20,6 +20,14 @@ G6_ACCEPTANCE_HANDOFF.md
 # Frontend dependencies and build output
 ui_web/node_modules/
 ui_web/dist/
+ui_web/dist-demo/
+ui_web/dist-demo-shell/
+ui_web/dist-option-chain-test/
+ui_web/dist-premium-test/
+ui_web/dist-catalog-test/
+ui_web/dist-explorer-test/
+ui_web/dist-futures-basis-test/
+ui_web/dist-backtesting-test/
 ui_web/dist-ssr/
 /ui_web/deploy/deploy.config.psd1
 

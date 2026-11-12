@@ -42,7 +42,8 @@ describe('Research Workspace catalog', () => {
 
   it('describes local Python and offline report access without a fake link', async () => {
     const openFuturesBasis = vi.fn()
-    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(reply([])))
+    const fetch = vi.fn().mockResolvedValue(reply([]))
+    vi.stubGlobal('fetch', fetch)
     render(<ResearchWorkspacePage openFuturesBasis={openFuturesBasis} openExplorer={vi.fn()} />)
     const local = screen.getByRole('region', { name: '本地研究与离线工作流' })
     fireEvent.click(within(local).getAllByRole('button', { name: '查看详情' })[0])
@@ -53,6 +54,7 @@ describe('Research Workspace catalog', () => {
     expect(screen.queryByRole('link', { name: /report/i })).toBeNull()
     fireEvent.click(within(local).getByRole('button', { name: '进入历史基差研究' }))
     expect(openFuturesBasis).toHaveBeenCalledOnce()
+    expect(fetch).toHaveBeenCalledTimes(1)
   })
 
   it('shows empty online state while keeping local cases and Explorer action', async () => {

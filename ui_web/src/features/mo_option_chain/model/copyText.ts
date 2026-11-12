@@ -1,4 +1,4 @@
-import type { OptionChain } from '../api/moOptionChain'
+import type { OptionChain } from '../api/validateOptionChain'
 import { serializeJson } from '../../../shared/clipboard/text'
 
 export function optionChainContextJson(chain: OptionChain): string {

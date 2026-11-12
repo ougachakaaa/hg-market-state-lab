@@ -6,7 +6,7 @@
 
 ## 1. Copy Raw JSON
 
-复制来源只能是当前成功请求实际收到、通过 runtime contract validation 的完整 HTTP 业务响应。各 feature 指定其成功状态中的 canonical copy source；不得使用展示投影、当前图表可见子集或按控件重建的对象。
+Production 复制来源只能是当前成功请求实际收到、通过 runtime contract validation 的完整 HTTP 业务响应。各 feature 指定其成功状态中的 canonical copy source；不得使用展示投影、当前图表可见子集或按控件重建的对象。
 
 Raw JSON 不添加 envelope、metadata、reading notes、analysis prompt、request/auth information 或 presentation state。
 
@@ -74,3 +74,13 @@ Shared CSV utility 仅拥有 ordered header、scalar encoding、quoting、BOM/CR
 以指定 MIME 构建 Blob、Object URL 和临时 anchor，触发一次下载；正常触发后下一事件循环释放 URL/DOM，失败也清理资源。正常触发反馈 `Download started`，异常反馈 `Export failed`，不声称浏览器已保存文件，不暴露内部异常。当前成功结果退出时反馈一同退出；旧操作反馈不得进入新结果。
 
 共享下载层只接受文本、MIME 与文件名，不持有产品 metadata、HTTP DTO、金融语义或 projection。CSV 和 Context JSON 复用同一 browser download 生命周期，不建立通用 Export Framework。
+
+## 7. Static Example specialization
+
+[Static Demo](src/demo/ARCHITECTURE.md) 保留正式 UI 已具备的本地 Copy/Export：source 是完整、通过同一正式契约校验的当前 embedded Example 业务 payload，不是浏览器实际收到的 HTTP response。上述 successful-response/current-result 条款在 Demo 对应 validated Example ready 状态；静态 loading/invalid/error 不暴露旧 source，不创建假的 Query/Run lifecycle。Premium Inspector 和结果旁必须明确 static origin (V2 real_market; Synthetic only for historical V1/test data) 来源，复制/下载入口的说明同样可见；不能把 Example 声称为实时市场或在线请求结果。Raw、Context V1、CSV 内容/字段、precision、完整性与下载反馈规则不变，不把 Demo metadata 加入 Raw 或扩展 Context schema；来源披露由相邻 UI 承担。Presentation filters 不改变完整 Example source，复制导出仍不发请求。两个 feature 的 visualization authority 中 actual-response 要求均按此区分 Production 与 Static 来源。
+
+V2 provenance and local development/public admission follow the
+[Example contract](src/demo/EXAMPLES.md) and [Authenticity / Rights](src/demo/AUTHENTICITY.md).
+Private local Copy/Export does not grant public redistribution permission; review the actual
+download content before public inclusion. Pending source wording changes belong to the
+[implementation handoff](src/demo/IMPLEMENTATION.md); R0 changes authority only.

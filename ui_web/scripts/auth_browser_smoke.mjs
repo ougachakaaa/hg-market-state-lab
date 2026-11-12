@@ -132,7 +132,7 @@ try {
 
   const surfaces = [
     ['/research', '研究总览', '研究', '研究总览'],
-    ['/research/publications', '研究结果浏览', '研究', null],
+    ['/research/publications', '研究结果浏览', '研究', 'Research Explorer'],
     ['/research/futures-basis', 'Futures Basis Research', '研究', '历史基差研究'],
     ['/data', '数据总览', '日常数据', '数据总览'],
     ['/data/mo-option-chain', 'MO 期权链', '日常数据', 'MO Option Chain'],
@@ -149,21 +149,19 @@ try {
       await page.getByRole('button', { name: collapsed ? '展开导航' : '折叠导航', exact: true }).waitFor()
       if (collapsed && group) await page.getByRole('menuitem', { name: group, exact: true }).click()
       if (path === '/research') {
-        const navigation = collapsed ? page.locator('.ant-menu-submenu-popup:visible') : page.getByRole('menu', { name: '业务导航' })
-        assert.equal(await navigation.getByRole('menuitem', { name: 'Research Explorer', exact: true }).count(), 0)
+        // During the popup animation its container can briefly have zero bounds.
+        // Wait on the actual leaf below instead of re-filtering the container.
+        const navigation = collapsed ? page.locator('.ant-menu-submenu-popup') : page.getByRole('menu', { name: '业务导航' })
+        await navigation.getByRole('menuitem', { name: 'Research Explorer', exact: true }).waitFor({ state: 'visible' })
+        assert.equal(await navigation.getByRole('menuitem', { name: 'Research Explorer', exact: true }).count(), 1)
         assert.equal(await navigation.getByRole('menuitem', { name: 'DESCRIPTIVE RESEARCH', exact: true }).count(), 0)
         await navigation.getByText('DESCRIPTIVE RESEARCH', { exact: true }).click()
         assert.equal(new URL(page.url()).pathname, '/research')
         await page.screenshot({ path: resolve(screenshots, `research-navigation-${collapsed ? 'collapsed' : 'expanded'}-${width}.png`) })
       }
-      if (selectedLabel) {
-        await page.locator('.ant-menu-item-selected').waitFor({ state: 'visible' })
-        assert.equal(await page.locator('.ant-menu-item-selected').count(), 1, `${path}: one selected leaf`)
-        assert.ok((await page.getByRole('menuitem', { name: selectedLabel, exact: true }).getAttribute('class')).split(' ').includes('ant-menu-item-selected'), `${path}: the selected leaf matches the route`)
-      } else {
-        assert.equal(await page.locator('.ant-menu-item-selected').count(), 0, 'Explorer has no selected sidebar leaf')
-        assert.ok(await page.locator('.ant-menu-submenu-selected').count(), 'Research parent remains active')
-      }
+      await page.locator('.ant-menu-item-selected').waitFor({ state: 'visible' })
+      assert.equal(await page.locator('.ant-menu-item-selected').count(), 1, `${path}: one selected leaf`)
+      assert.ok((await page.getByRole('menuitem', { name: selectedLabel, exact: true }).getAttribute('class')).split(' ').includes('ant-menu-item-selected'), `${path}: the selected leaf matches the route`)
       if (collapsed && group) {
         await page.getByRole('menuitem', { name: group, exact: true }).click()
         await page.locator('.ant-menu-submenu-popup').waitFor({ state: 'hidden' })
