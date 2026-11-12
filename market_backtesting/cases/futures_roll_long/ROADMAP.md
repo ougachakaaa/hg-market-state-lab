@@ -51,12 +51,19 @@ single-instrument accounting kernel; W2 is its first case.
   The [HTTP contract](../../../ui_http/products/backtesting/http-contract.md) owns
   transport details; actual acceptance evidence is in
   [WP6 reconciliation](RECONCILIATION.md#wp6-http-product-acceptance--2026-11-11).
-  WP7 may start; Web and full-window WP8 acceptance remain pending.
+  WP7 Web delivery is recorded below; full-window WP8 acceptance remains pending.
+- **WP7 — PASS (2026-11-12).** The independent authenticated
+  [Web consumer](../../../ui_web/src/features/backtesting/ARCHITECTURE.md) provides
+  explicit four-field input, advisory preflight, non-replayed submission, polling,
+  URL restoration, formal summary, V2 curves, trades/rolls and evidence summary.
+  Generated contract belongs to the Web feature. Actual synthetic Chromium and
+  regression evidence is recorded in [WP7 acceptance](../../../ui_web/src/features/backtesting/ACCEPTANCE.md).
+  No producer financial calculation or HTTP wire contract changed.
 
 ## Remaining work packages
 
-Each WP is independently reviewable, committable and accepted. WP2 through WP6 are accepted;
-remaining dependencies proceed from WP7 through WP8. No later deliverable is implied by a prior gate.
+Each WP is independently reviewable, committable and accepted. WP2 through WP7 are accepted;
+WP8 remains an independent gate. No later deliverable is implied by a prior gate.
 
 | WP | Scope and required deliverables | Dependency | Definition of Done / acceptance | Forbidden scope |
 | --- | --- | --- | --- | --- |
@@ -65,17 +72,16 @@ remaining dependencies proceed from WP7 through WP8. No later deliverable is imp
 | WP4 — Backtest Result, Evidence & Visualization Projection (**PASS**) | Stable result profile; evidence summary/package; V2 returns/drawdown views; reader projection; limitations; cross-field invariants | WP3 | Result schema/version; all invariants; V2 validation; manual oracle; deterministic evidence/replay; WP4 PASS = core research capability complete | HTTP/Web, online store, generic visualization schema, W3 financial features |
 | WP5 — Online Backtest Application & Run Store (**PASS**) | Online composition of the WP3 preflight plus submit/status/result application; owner scope; single worker/busy; disposable file store; atomic result publication; startup recovery; bounded result reads | WP4 | Fake-service state matrix; busy/no queue; owner isolation; restart interruption; orphan result handling; size/corruption/unsupported platform; no HTTP/UI | HTTP/UI, Publication, Workbench, multi-process/queue, W1 store reuse |
 | WP6 — HTTP Product & OpenAPI (**PASS**) | HTTP contract; strict parsing/limits; run/result DTO projection; Auth/owner/error mapping; OpenAPI; no financial recomputation | WP5 | Strict request/auth/error/limit tests; OpenAPI/freshness prerequisites; result/run/request association; preflight and no-store behavior; Web untouched | Web UI, business logic, W1 product changes, financial recomputation |
-| WP7 — Web UI Backtesting Integration | `/backtesting` page: Ant Design controls, preflight/readiness, submit/poll, V2 return/drawdown charts, trades/rolls, evidence/limitations, busy/error/failed/interrupted states; generated contracts | WP6 | `npm run contract:check`, Vitest, build, lint; deterministic browser tests; no fake result/control; no React financial computation; planned page honestly replaced | Financial calculation, backend bypass, generic chart DSL, CSV/export/copy not authorized by W2 v1 |
+| WP7 — Web UI Backtesting Integration (**PASS**) | `/backtesting` page: Ant Design controls, preflight/readiness, submit/poll, V2 return/drawdown charts, trades/rolls, evidence/limitations, busy/error/failed/interrupted states; generated contracts | WP6 | `npm run contract:check`, Vitest, build, lint; deterministic browser tests; no fake result/control; no React financial computation; planned page honestly replaced | Financial calculation, backend bypass, generic chart DSL, CSV/export/copy not authorized by W2 v1 |
 | WP8 — Real-Market E2E Acceptance & Reconciliation | WSL2 FastAPI + Vite + Windows Chrome real IM workflow; login → preflight → submit → poll → result → charts → trades → evidence; restart/busy/ownership/failure; final reconciliation | WP7 | Both profiles for IM, 2024-01-01 through 2026-10-30, with real rolls and final exit; real data not substituted by synthetic; all workflow states; Windows Chrome browser → WSL HTTP/Web local end-to-end acceptance; W1 regression; no W3 features; external evidence; WP8 PASS permits W2 completion | W3 fees/slippage/ETF/margin/funding/optimization; production deployment promise; unverified platform claims |
 
-## Next implementation entry — WP7
+## Next delivery gate — WP8
 
-Start at the [HTTP contract](../../../ui_http/products/backtesting/http-contract.md)
-and [Web contract ownership](../../../ui_web/contracts.md). WP6 publishes the four
-authenticated operations and concrete DTO/OpenAPI, preserving the case-owned result,
-readiness and failure meanings. WP7 owns the first Web consumer and its committed
-OpenAPI/TypeScript artifacts, generated from that published contract.
-This delivery stops at WP6; no Backtesting Web integration or full-window E2E is claimed.
+WP7's [feature authority](../../../ui_web/src/features/backtesting/ARCHITECTURE.md)
+and [acceptance evidence](../../../ui_web/src/features/backtesting/ACCEPTANCE.md)
+record its first Web consumer and independent generated contract. WP8 must verify
+the real IM window and Windows Chrome → WSL topology below; synthetic browser
+acceptance does not close that gate. WP7 delivery stops before executing WP8.
 
 ## Acceptance boundaries
 
@@ -109,7 +115,7 @@ This delivery stops at WP6; no Backtesting Web integration or full-window E2E is
 - Online list/history, cancel/delete/retry, idempotency keys, queueing, multi-process
   execution, automatic cleanup/TTL, standalone online evidence/replay endpoints,
   result CSV/copy/export and production SLA remain outside this release.
-- Full canonical evidence/replay is implemented in WP4; the planned online result exposes its summary.
+- Full canonical evidence/replay is implemented in WP4; the online result exposes its summary.
 - Native Windows store/backend support and Nginx/Docker production deployment are
   Deferred / NOT RUN. Windows Chrome to WSL acceptance remains required by WP8.
 - Provider freshness/correction/TTL semantics remain DataLake-owned. HTTP wire details

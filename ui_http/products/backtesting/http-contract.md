@@ -131,6 +131,7 @@ HTTP does not import private Store/Codec or acquire market facts itself.
 Offline create_app().openapi() publishes all operations, exact DTOs, CookieSession
 security, declared statuses and no-store headers without Auth configuration,
 Tushare credentials, runtime directory or active worker. Existing products remain
-unchanged. [WP7 contract ownership](../../../ui_web/contracts.md) will add Backtesting's
-generated OpenAPI/TypeScript when its first Web consumer exists; WP6 only checks
-existing consumers. Single-process/POSIX storage limitations remain producer-owned.
+unchanged. [WP7 contract ownership](../../../ui_web/contracts.md) now assigns Backtesting's
+generated OpenAPI/TypeScript to the independent Web consumer, included in the
+complete generation/freshness loop. WP6's original acceptance checked the six
+pre-existing consumers; WP7 adds the seventh. Single-process/POSIX storage limitations remain producer-owned.

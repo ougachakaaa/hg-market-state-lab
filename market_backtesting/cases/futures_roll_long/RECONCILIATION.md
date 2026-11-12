@@ -29,7 +29,7 @@ consumers have no runtime/API yet.
 | W2 InitialCapital derivation, multiplier consistency, Benchmark/Excess/Drawdown, case oracles | [Performance](PERFORMANCE.md) | Synthetic capital/equity checks in `cases/futures_roll_long/replay.py`, multiplier checks in `cases/futures_roll_long/policy.py`; `cases/futures_roll_long/performance.py::analyze_futures_roll`; both five-day oracles accepted |
 | BacktestResult, trades/roll projections, full evidence/replay, limitations and V2 views | [Result](RESULT.md) | `result_models.py`, `result.py`, `result_validation.py`, `visualization.py`; full portable format under [Evidence](EVIDENCE.md), `evidence_models.py` and `evidence.py` |
 | Independent online request/run/store, owner isolation and failure composition | [Online Application](ONLINE_APPLICATION.md) | WP5 implemented; composes existing WP3 + WP4 pipeline |
-| HTTP/OpenAPI and Web presentation | [HTTP contract](../../../ui_http/products/backtesting/http-contract.md), [HTTP catalog](../../../ui_http/HTTP_PRODUCTS.md), [Web workspace](../../../ui_web/workspace.md) | WP6 implemented in `ui_http/products/backtesting`; Web consumer/generated artifacts remain WP7 |
+| HTTP/OpenAPI and Web presentation | [HTTP contract](../../../ui_http/products/backtesting/http-contract.md), [HTTP catalog](../../../ui_http/HTTP_PRODUCTS.md), [Web workspace](../../../ui_web/workspace.md) | WP6 implemented in `ui_http/products/backtesting`; WP7 consumer/generated artifacts in `ui_web/src/features/backtesting` |
 | Current completion, remaining WPs and acceptance boundaries | [Roadmap](ROADMAP.md) | Subsequent implementation tasks; no business runtime consumer |
 | Execution policy and task navigation | [Root AGENTS](../../../AGENTS.md), [Module AGENTS](../../AGENTS.md) | Agents working in this module |
 
@@ -77,15 +77,15 @@ capabilities are Deferred delivery; a mandatory mismatch in existing code is Dri
 | 7 | W1 Slot transitions versus W2 rolls | Compatible | Policy resolves Slots on entry/expiry decisions only. A role change alone is no trade; authorized facade symbols and architecture tests preserve isolation. |
 | 8 | Look-ahead risk | Compatible | Price-free current context, configuration-only Policy and current/future Close perturbation tests enforce price isolation. Metadata/active-set point-in-time availability is an explicit assumption, not a historical freshness proof. |
 | 9 | Result / Online execution model | Requires Authority Change | Result consumes Core evidence plus Analyzer; Online composes the same path. Failure stage/category vocabulary follows Policy/Core/case ownership. No separate holding executor or ledger. WP4 Result, WP5 Online and WP6 HTTP are implemented. |
-| 10 | Completed work versus future Roadmap | Requires Authority Change | Package, Core and W2 synthetic adapter are present. WP2–WP6 are accepted and WP7–WP8 remain pending; no package/simulator recreation or dual roadmap. |
+| 10 | Completed work versus future Roadmap | Requires Authority Change | Package, Core and W2 synthetic adapter are present. WP2–WP7 are accepted and WP8 remains pending; no package/simulator recreation or dual roadmap. |
 | 11 | Duplicate / contradictory authority | Requires Authority Change | Entries navigate; specialized contracts own formulas and workflows. Current audit is separate from Roadmap. No previous-version authority or compatibility chain is maintained. |
 | 12 | Residual implementation mismatch | Requires Authority Change | D1 is closed with independent daily-return tests and both Performance oracles. Missing later-WP deliverables are not mislabeled as regressions. |
 
 No Blocking semantic decision is identified. DataLake integration and bounded real
 IM input acceptance are complete in WP3. Formal Result/Evidence/Views and retained-real
 reproduction are complete in WP4. Online is implemented in WP5 and HTTP in WP6.
-Web and full-window real E2E acceptance remain **Deferred** to WP7–WP8, not evidence
-of completed W2. Existing DataLake/W1 contracts suffice; WP6 changes no producer
+Web is implemented in WP7; full-window real E2E acceptance remains **Deferred** to
+WP8, so W2 is not complete. Existing DataLake/W1 contracts suffice; WP6 changes no producer
 contract, financial implementation or sibling HTTP business semantics.
 
 ## Implementation drift register
@@ -107,7 +107,7 @@ contract, financial implementation or sibling HTTP business semantics.
 `futures_roll_long_definition_v1`. Case, definition, result and input identities are
 explicitly tested as four distinct values; no compatibility adapter exists.
 
-No open mandatory mismatch is identified in the implemented Core/W2/WP6 subset.
+No open mandatory mismatch is identified in the implemented Core/W2/WP7 subset.
 The Index SSE Calendar prerequisite discovered in fresh-cache real acceptance is
 explicitly reconciled in [Inputs](INPUTS.md#reconciled-index-calendar-prerequisite)
 and implemented through the Calendar public service, without producer changes.
@@ -116,8 +116,8 @@ real-instrument attribution or fail-without-partial-success requirements.
 
 ## Deferred and blocking decisions
 
-- **Blocking: none.** D1/D2 are closed; WP2–WP6 are accepted; WP7 may start.
-- **Deferred delivery:** Web (WP7), real IM and Windows Chrome → WSL acceptance (WP8).
+- **Blocking: none.** D1/D2 are closed; WP2–WP7 are accepted; WP7 consumer verification is recorded below.
+- **Deferred delivery:** real IM and Windows Chrome → WSL acceptance (WP8).
 - Historical metadata availability stays an explicit research limitation. Proving
   point-in-time availability or provider-current freshness is not implied by replay.
 - Excluded features and platform/deployment limitations remain in
@@ -440,3 +440,32 @@ acceptance are not claimed; the latter delivery gates remain WP7/WP8. Existing
 Starlette/httpx and browser Ant Design deprecation notices do not affect acceptance.
 No open WP6 implementation drift or blocking semantic decision remains.
 **WP7 may begin.** This delivery stops after WP6.
+
+
+## WP7 Web integration — 2026-11-12
+
+**WP7 PASS.** No open WP7 implementation drift or blocking semantic decision remains.
+
+The formal [Backtesting Web feature](../../../ui_web/src/features/backtesting/ARCHITECTURE.md)
+now owns interaction and rendering at `/backtesting`. It independently consumes the
+four unchanged WP6 endpoints through same-origin protectedRequest and feature-owned
+generated OpenAPI/TypeScript. The other six consumers retain byte-current artifacts.
+No Core/Policy/Performance/Input/Result/Online implementation, W1 business semantics,
+DataLake boundary or generic V2 schema was changed.
+
+Reconciliation explicitly keeps preflight advisory: unlike the Research consumer,
+ready=false never gates Submit. Form state and accepted immutable Run request stay
+separate. Only an explicit click submits; admission is guarded synchronously and
+POST is never replayed. Status/result failures have separate manual GET recovery.
+URL refresh/history cancel obsolete reads; request, Run, profile/definition and V2
+validation precede rendering. 401 belongs to the application authentication boundary.
+
+Result Summary, returns/drawdown, formal executions/rolls and online evidence are
+producer-owned projections. The Web formats ratios/CNY without financial computation.
+Evidence is a read-only summary; no full offline package/download is implied.
+
+Actual commands, counts, synthetic Chromium evidence and known limits are recorded
+once in [WP7 acceptance](../../../ui_web/src/features/backtesting/ACCEPTANCE.md).
+WP8 full-window real IM and Windows Chrome → WSL acceptance remain NOT RUN; no W2
+completion or provider freshness claim is made. No new semantic decision is needed
+for this consumer.

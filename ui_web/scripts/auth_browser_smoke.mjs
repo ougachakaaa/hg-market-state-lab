@@ -137,7 +137,7 @@ try {
     ['/data', '数据总览', '日常数据', '数据总览'],
     ['/data/mo-option-chain', 'MO 期权链', '日常数据', 'MO Option Chain'],
     ['/data/mo-premium-plane', 'MO 年化权利金平面', '日常数据', 'MO Premium Plane'],
-    ['/backtesting', '回测', null, '回测 · 规划中'],
+    ['/backtesting', '期货展期做多回测', null, '回测'],
   ]
   for (const [width, height] of [[1440, 900], [1024, 768]]) {
     await page.setViewportSize({ width, height })

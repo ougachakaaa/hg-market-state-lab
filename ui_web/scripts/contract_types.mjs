@@ -3,6 +3,7 @@ import { resolve } from 'node:path'
 import openapiTS, { astToString, COMMENT_HEADER } from 'openapi-typescript'
 
 const contracts = [
+  { name: 'Backtesting', input: 'src/features/backtesting/api/backtesting.openapi.json', output: 'src/features/backtesting/api/backtesting.generated.ts' },
   { name: 'Futures Basis Research', input: 'src/features/futures_basis_research/api/futuresBasis.openapi.json', output: 'src/features/futures_basis_research/api/futuresBasis.generated.ts' },
   {
     name: 'Application Authentication',

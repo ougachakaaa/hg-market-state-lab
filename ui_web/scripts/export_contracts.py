@@ -86,7 +86,21 @@ def create_futures_basis_app() -> FastAPI:
     })
 
 
+def create_backtesting_app() -> FastAPI:
+    return create_projection({
+        "/backtesting/futures-roll/preflight",
+        "/backtesting/futures-roll/runs",
+        "/backtesting/futures-roll/runs/{run_id}",
+        "/backtesting/futures-roll/runs/{run_id}/result",
+    })
+
+
 CONTRACTS: tuple[tuple[str, Callable[[], FastAPI], Path], ...] = (
+    (
+        "Backtesting",
+        create_backtesting_app,
+        WEB_UI_ROOT / "src/features/backtesting/api/backtesting.openapi.json",
+    ),
     (
         "Futures Basis Research",
         create_futures_basis_app,

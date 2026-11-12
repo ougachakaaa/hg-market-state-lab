@@ -78,3 +78,26 @@ def test_futures_basis_export_is_protected_complete_and_storage_free(monkeypatch
     schema = document["components"]["schemas"]["FuturesBasisRunRequest"]
     product = schema["properties"]["product_code"]
     assert product["enum"] == ["IM", "IC", "IF", "IH"]
+
+
+def test_backtesting_export_is_independent_protected_and_concrete(monkeypatch, tmp_path):
+    root = tmp_path / "must-not-exist"
+    monkeypatch.setenv("LAB_BACKTESTING_RUN_ROOT", str(root))
+    exporter = runpy.run_path(str(ROOT / "ui_web/scripts/export_contracts.py"))
+    document = exporter["create_backtesting_app"]().openapi()
+    assert not root.exists()
+    assert set(document["paths"]) == {
+        "/backtesting/futures-roll/preflight", "/backtesting/futures-roll/runs",
+        "/backtesting/futures-roll/runs/{run_id}",
+        "/backtesting/futures-roll/runs/{run_id}/result",
+    }
+    for operations in document["paths"].values():
+        for operation in operations.values():
+            assert operation["security"] == [{"CookieSession": []}]
+            assert "422" not in operation["responses"]
+    assert "FuturesRollResult" in document["components"]["schemas"]
+    assert "FuturesRollView" in document["components"]["schemas"]
+    assert all(
+        name.startswith(("FuturesRoll", "Auth"))
+        for name in document["components"]["schemas"]
+    )

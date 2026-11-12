@@ -1,0 +1,663 @@
+{
+  "profile": "futures_roll_long_result_v1",
+  "case": "futures_roll_long_v1",
+  "definition_version": "futures_roll_long_definition_v1",
+  "status": "complete",
+  "request": {
+    "product_code": "IM",
+    "start_date": "2025-02-17",
+    "end_date": "2025-03-25",
+    "strategy_profile": "expiry_to_M1_v1",
+    "case": "futures_roll_long_v1"
+  },
+  "window": {
+    "first_session": "2025-02-17",
+    "last_session": "2025-03-25",
+    "cffex_session_count": 5
+  },
+  "benchmark": {
+    "index_code": "000852.SH",
+    "index_name": "中证1000",
+    "first_close": 6000.0,
+    "last_close": 6075.0
+  },
+  "initial_notional": {
+    "index_first_close": 6000.0,
+    "multiplier": 200.0,
+    "currency": "CNY",
+    "value": 1200000.0
+  },
+  "daily": [
+    {
+      "trade_date": "2025-02-17",
+      "daily_pnl": 0.0,
+      "cumulative_pnl": 0.0,
+      "equity": 1200000.0,
+      "daily_return": 0.0,
+      "cumulative_return": 0.0,
+      "benchmark_close": 6000.0,
+      "benchmark_daily_return": 0.0,
+      "benchmark_cumulative_return": 0.0,
+      "benchmark_equity": 1200000.0,
+      "excess_cumulative_return": 0.0,
+      "drawdown": 0.0,
+      "benchmark_drawdown": 0.0,
+      "position_contract_code": "IM2503.CFX",
+      "pnl_contract_code": "IM2503.CFX",
+      "previous_close": null,
+      "close": 5900.0
+    },
+    {
+      "trade_date": "2025-03-20",
+      "daily_pnl": 10000.0,
+      "cumulative_pnl": 10000.0,
+      "equity": 1210000.0,
+      "daily_return": 0.008333333333333333,
+      "cumulative_return": 0.008333333333333333,
+      "benchmark_close": 6060.0,
+      "benchmark_daily_return": 0.010000000000000009,
+      "benchmark_cumulative_return": 0.010000000000000009,
+      "benchmark_equity": 1212000.0,
+      "excess_cumulative_return": -0.0016666666666666757,
+      "drawdown": 0.0,
+      "benchmark_drawdown": 0.0,
+      "position_contract_code": "IM2503.CFX",
+      "pnl_contract_code": "IM2503.CFX",
+      "previous_close": 5900.0,
+      "close": 5950.0
+    },
+    {
+      "trade_date": "2025-03-21",
+      "daily_pnl": 10000.0,
+      "cumulative_pnl": 20000.0,
+      "equity": 1220000.0,
+      "daily_return": 0.008333333333333333,
+      "cumulative_return": 0.016666666666666666,
+      "benchmark_close": 6030.0,
+      "benchmark_daily_return": -0.004950495049504955,
+      "benchmark_cumulative_return": 0.004999999999999893,
+      "benchmark_equity": 1205999.9999999998,
+      "excess_cumulative_return": 0.011666666666666773,
+      "drawdown": 0.0,
+      "benchmark_drawdown": -0.004950495049505177,
+      "position_contract_code": "IM2504.CFX",
+      "pnl_contract_code": "IM2503.CFX",
+      "previous_close": 5950.0,
+      "close": 6000.0
+    },
+    {
+      "trade_date": "2025-03-24",
+      "daily_pnl": 4000.0,
+      "cumulative_pnl": 24000.0,
+      "equity": 1224000.0,
+      "daily_return": 0.0033333333333333335,
+      "cumulative_return": 0.02,
+      "benchmark_close": 6090.0,
+      "benchmark_daily_return": 0.00995024875621886,
+      "benchmark_cumulative_return": 0.014999999999999902,
+      "benchmark_equity": 1217999.9999999998,
+      "excess_cumulative_return": 0.005000000000000098,
+      "drawdown": 0.0,
+      "benchmark_drawdown": 0.0,
+      "position_contract_code": "IM2504.CFX",
+      "pnl_contract_code": "IM2504.CFX",
+      "previous_close": 6010.0,
+      "close": 6030.0
+    },
+    {
+      "trade_date": "2025-03-25",
+      "daily_pnl": -2000.0,
+      "cumulative_pnl": 22000.0,
+      "equity": 1222000.0,
+      "daily_return": -0.0016666666666666668,
+      "cumulative_return": 0.018333333333333333,
+      "benchmark_close": 6075.0,
+      "benchmark_daily_return": -0.0024630541871921707,
+      "benchmark_cumulative_return": 0.012499999999999956,
+      "benchmark_equity": 1215000.0,
+      "excess_cumulative_return": 0.005833333333333378,
+      "drawdown": -0.0016339869281045694,
+      "benchmark_drawdown": -0.0024630541871919487,
+      "position_contract_code": null,
+      "pnl_contract_code": "IM2504.CFX",
+      "previous_close": 6030.0,
+      "close": 6020.0
+    }
+  ],
+  "trades": [
+    {
+      "trade_date": "2025-02-17",
+      "side": "BUY",
+      "contract_code": "IM2503.CFX",
+      "price": 5900.0,
+      "multiplier": 200.0,
+      "reason": "entry",
+      "selection_slot": "M1"
+    },
+    {
+      "trade_date": "2025-03-21",
+      "side": "SELL",
+      "contract_code": "IM2503.CFX",
+      "price": 6000.0,
+      "multiplier": 200.0,
+      "reason": "expiry_close",
+      "selection_slot": null
+    },
+    {
+      "trade_date": "2025-03-21",
+      "side": "BUY",
+      "contract_code": "IM2504.CFX",
+      "price": 6010.0,
+      "multiplier": 200.0,
+      "reason": "expiry_open",
+      "selection_slot": "M1"
+    },
+    {
+      "trade_date": "2025-03-25",
+      "side": "SELL",
+      "contract_code": "IM2504.CFX",
+      "price": 6020.0,
+      "multiplier": 200.0,
+      "reason": "study_end_close",
+      "selection_slot": null
+    }
+  ],
+  "rolls": [
+    {
+      "trade_date": "2025-03-21",
+      "old_contract_code": "IM2503.CFX",
+      "old_slot": "M0",
+      "old_close": 6000.0,
+      "new_contract_code": "IM2504.CFX",
+      "new_slot": "M1",
+      "new_close": 6010.0,
+      "reason": "expiry"
+    }
+  ],
+  "summary": {
+    "initial_notional": 1200000.0,
+    "total_pnl": 22000.0,
+    "gross_return": 0.018333333333333333,
+    "benchmark_return": 0.012499999999999956,
+    "excess_return": 0.005833333333333378,
+    "strategy_max_drawdown": -0.0016339869281045694,
+    "benchmark_max_drawdown": -0.004950495049505177,
+    "execution_count": 4,
+    "roll_count": 1
+  },
+  "evidence": {
+    "input_profile": "futures_roll_long_inputs_v1",
+    "input_fingerprint": "5edcf4bad7ff0232471cda6d83bfbf423ac27ad659bd04659863d9621377b480",
+    "public_requests": {
+      "calendar_cffex": {
+        "exchange": "CFFEX",
+        "start_date": "2025-02-17",
+        "end_date": "2025-03-25"
+      },
+      "futures": {
+        "product_codes": [
+          "IM"
+        ],
+        "start_date": "2025-02-17",
+        "end_date": "2025-03-25"
+      },
+      "index": {
+        "index_codes": [
+          "000852.SH"
+        ],
+        "start_date": "2025-02-17",
+        "end_date": "2025-03-25"
+      }
+    },
+    "coverage": [
+      {
+        "dependency": "calendar_cffex",
+        "requested_units": 37,
+        "successful_units": 37,
+        "missing_units": 0,
+        "pending_units": 0,
+        "failed_units": 0,
+        "complete": true
+      },
+      {
+        "dependency": "futures",
+        "requested_units": 5,
+        "successful_units": 5,
+        "missing_units": 0,
+        "pending_units": 0,
+        "failed_units": 0,
+        "complete": true
+      },
+      {
+        "dependency": "index",
+        "requested_units": 5,
+        "successful_units": 5,
+        "missing_units": 0,
+        "pending_units": 0,
+        "failed_units": 0,
+        "complete": true
+      }
+    ],
+    "sources": [
+      {
+        "dataset": "tushare_trade_calendar",
+        "view": "calendar",
+        "export_schema_version": 1
+      },
+      {
+        "dataset": "tushare_equity_index_futures",
+        "view": "futures_daily",
+        "export_schema_version": 2
+      },
+      {
+        "dataset": "tushare_index_daily",
+        "view": "index_daily",
+        "export_schema_version": 1
+      }
+    ],
+    "slot_resolution_authority": "market_research/descriptive/cases/futures_basis/SLOT_RESOLUTION.md",
+    "definition_version": "futures_roll_long_definition_v1",
+    "result_profile": "futures_roll_long_result_v1",
+    "limitations": [
+      "Ideal session Close execution and valuation; historical executable fills are not guaranteed.",
+      "Gross PnL excludes fees and slippage.",
+      "No margin, funding or collateral mechanics; no dividends.",
+      "One long futures contract (one lot) at a time.",
+      "Fixed initial index-equivalent notional.",
+      "Simple non-compounded strategy return.",
+      "The index price benchmark is not directly tradable.",
+      "Cache completeness is not Source freshness.",
+      "Historical decision-time metadata and active-set availability are explicit assumptions."
+    ]
+  },
+  "views": {
+    "returns": {
+      "version": 2,
+      "axes": [
+        {
+          "id": "time",
+          "orientation": "x",
+          "coordinate": {
+            "kind": "date",
+            "unit": "date"
+          }
+        },
+        {
+          "id": "ratio",
+          "orientation": "y",
+          "coordinate": {
+            "kind": "number",
+            "unit": "decimal_ratio"
+          }
+        }
+      ],
+      "layers": [
+        {
+          "id": "strategy",
+          "label": "Strategy",
+          "layer": {
+            "type": "line",
+            "version": 2,
+            "x": {
+              "kind": "date",
+              "unit": "date"
+            },
+            "y": {
+              "kind": "number",
+              "unit": "decimal_ratio"
+            },
+            "data": [
+              {
+                "x": "2025-02-17",
+                "y": 0.0,
+                "segment_id": "series",
+                "details": []
+              },
+              {
+                "x": "2025-03-20",
+                "y": 0.008333333333333333,
+                "segment_id": "series",
+                "details": []
+              },
+              {
+                "x": "2025-03-21",
+                "y": 0.016666666666666666,
+                "segment_id": "series",
+                "details": []
+              },
+              {
+                "x": "2025-03-24",
+                "y": 0.02,
+                "segment_id": "series",
+                "details": []
+              },
+              {
+                "x": "2025-03-25",
+                "y": 0.018333333333333333,
+                "segment_id": "series",
+                "details": []
+              }
+            ]
+          },
+          "x_axis": "time",
+          "y_axis": "ratio"
+        },
+        {
+          "id": "benchmark",
+          "label": "Benchmark",
+          "layer": {
+            "type": "line",
+            "version": 2,
+            "x": {
+              "kind": "date",
+              "unit": "date"
+            },
+            "y": {
+              "kind": "number",
+              "unit": "decimal_ratio"
+            },
+            "data": [
+              {
+                "x": "2025-02-17",
+                "y": 0.0,
+                "segment_id": "series",
+                "details": []
+              },
+              {
+                "x": "2025-03-20",
+                "y": 0.010000000000000009,
+                "segment_id": "series",
+                "details": []
+              },
+              {
+                "x": "2025-03-21",
+                "y": 0.004999999999999893,
+                "segment_id": "series",
+                "details": []
+              },
+              {
+                "x": "2025-03-24",
+                "y": 0.014999999999999902,
+                "segment_id": "series",
+                "details": []
+              },
+              {
+                "x": "2025-03-25",
+                "y": 0.012499999999999956,
+                "segment_id": "series",
+                "details": []
+              }
+            ]
+          },
+          "x_axis": "time",
+          "y_axis": "ratio"
+        }
+      ],
+      "events": [
+        {
+          "id": "entry",
+          "x_axis": "time",
+          "x": "2025-02-17",
+          "label": "Entry",
+          "details": [
+            {
+              "label": "Contract",
+              "value": "IM2503.CFX"
+            },
+            {
+              "label": "Profile",
+              "value": "expiry_to_M1_v1"
+            },
+            {
+              "label": "Ideal Close",
+              "value": "5900.0"
+            }
+          ]
+        },
+        {
+          "id": "roll-0",
+          "x_axis": "time",
+          "x": "2025-03-21",
+          "label": "Roll",
+          "details": [
+            {
+              "label": "Old contract",
+              "value": "IM2503.CFX"
+            },
+            {
+              "label": "New contract",
+              "value": "IM2504.CFX"
+            },
+            {
+              "label": "Old Close",
+              "value": "6000.0"
+            },
+            {
+              "label": "New Close",
+              "value": "6010.0"
+            }
+          ]
+        },
+        {
+          "id": "exit",
+          "x_axis": "time",
+          "x": "2025-03-25",
+          "label": "Exit",
+          "details": [
+            {
+              "label": "Contract",
+              "value": "IM2504.CFX"
+            },
+            {
+              "label": "Ideal Close",
+              "value": "6020.0"
+            }
+          ]
+        }
+      ],
+      "layout": {
+        "title": "Cumulative returns"
+      },
+      "presentation": {
+        "show_legend": true,
+        "zoom": true,
+        "pan": true,
+        "reset": true
+      }
+    },
+    "drawdown": {
+      "version": 2,
+      "axes": [
+        {
+          "id": "time",
+          "orientation": "x",
+          "coordinate": {
+            "kind": "date",
+            "unit": "date"
+          }
+        },
+        {
+          "id": "ratio",
+          "orientation": "y",
+          "coordinate": {
+            "kind": "number",
+            "unit": "decimal_ratio"
+          }
+        }
+      ],
+      "layers": [
+        {
+          "id": "strategy",
+          "label": "Strategy",
+          "layer": {
+            "type": "line",
+            "version": 2,
+            "x": {
+              "kind": "date",
+              "unit": "date"
+            },
+            "y": {
+              "kind": "number",
+              "unit": "decimal_ratio"
+            },
+            "data": [
+              {
+                "x": "2025-02-17",
+                "y": 0.0,
+                "segment_id": "series",
+                "details": []
+              },
+              {
+                "x": "2025-03-20",
+                "y": 0.0,
+                "segment_id": "series",
+                "details": []
+              },
+              {
+                "x": "2025-03-21",
+                "y": 0.0,
+                "segment_id": "series",
+                "details": []
+              },
+              {
+                "x": "2025-03-24",
+                "y": 0.0,
+                "segment_id": "series",
+                "details": []
+              },
+              {
+                "x": "2025-03-25",
+                "y": -0.0016339869281045694,
+                "segment_id": "series",
+                "details": []
+              }
+            ]
+          },
+          "x_axis": "time",
+          "y_axis": "ratio"
+        },
+        {
+          "id": "benchmark",
+          "label": "Benchmark",
+          "layer": {
+            "type": "line",
+            "version": 2,
+            "x": {
+              "kind": "date",
+              "unit": "date"
+            },
+            "y": {
+              "kind": "number",
+              "unit": "decimal_ratio"
+            },
+            "data": [
+              {
+                "x": "2025-02-17",
+                "y": 0.0,
+                "segment_id": "series",
+                "details": []
+              },
+              {
+                "x": "2025-03-20",
+                "y": 0.0,
+                "segment_id": "series",
+                "details": []
+              },
+              {
+                "x": "2025-03-21",
+                "y": -0.004950495049505177,
+                "segment_id": "series",
+                "details": []
+              },
+              {
+                "x": "2025-03-24",
+                "y": 0.0,
+                "segment_id": "series",
+                "details": []
+              },
+              {
+                "x": "2025-03-25",
+                "y": -0.0024630541871919487,
+                "segment_id": "series",
+                "details": []
+              }
+            ]
+          },
+          "x_axis": "time",
+          "y_axis": "ratio"
+        }
+      ],
+      "events": [
+        {
+          "id": "entry",
+          "x_axis": "time",
+          "x": "2025-02-17",
+          "label": "Entry",
+          "details": [
+            {
+              "label": "Contract",
+              "value": "IM2503.CFX"
+            },
+            {
+              "label": "Profile",
+              "value": "expiry_to_M1_v1"
+            },
+            {
+              "label": "Ideal Close",
+              "value": "5900.0"
+            }
+          ]
+        },
+        {
+          "id": "roll-0",
+          "x_axis": "time",
+          "x": "2025-03-21",
+          "label": "Roll",
+          "details": [
+            {
+              "label": "Old contract",
+              "value": "IM2503.CFX"
+            },
+            {
+              "label": "New contract",
+              "value": "IM2504.CFX"
+            },
+            {
+              "label": "Old Close",
+              "value": "6000.0"
+            },
+            {
+              "label": "New Close",
+              "value": "6010.0"
+            }
+          ]
+        },
+        {
+          "id": "exit",
+          "x_axis": "time",
+          "x": "2025-03-25",
+          "label": "Exit",
+          "details": [
+            {
+              "label": "Contract",
+              "value": "IM2504.CFX"
+            },
+            {
+              "label": "Ideal Close",
+              "value": "6020.0"
+            }
+          ]
+        }
+      ],
+      "layout": {
+        "title": "Drawdown"
+      },
+      "presentation": {
+        "show_legend": true,
+        "zoom": true,
+        "pan": true,
+        "reset": true
+      }
+    }
+  }
+}
