@@ -200,3 +200,20 @@ workflow remain unchanged. Harness commands: `test:static-shell` (typecheck/buil
 graph) and `test:static-shell-browser` (build plus Chromium against static files).
 
 D1 implementation results and remaining handoff: [Shell acceptance](shell/ACCEPTANCE.md).
+
+## D2-A Option Chain implementation handoff
+
+Option Chain now exposes its feature-owned `presentation.ts` entry: shared page layout,
+local `useOptionChainPresentation(validatedResult)` and pure `validateOptionChain`.
+Production still composes its own request/cancellation/stale-response controller;
+static composition supplies fixed query identity, disclosure and a `ready` result without
+loading that controller. The test-only static harness uses existing regression data,
+not the D3 Example target, and does not change the V1 release entry or D1 shell harness.
+Implementation and actual verification: [D2-A acceptance](../features/mo_option_chain/testing/ACCEPTANCE.md).
+
+D2-B should apply the same feature-local split to Premium: preserve its full raw payload
+and existing nonempty-Points validation, separate request lifecycle from metric/expiry
+presentation state, and expose a transport-free presentation entry. Reuse its existing
+serializers/Inspector and keep source disclosure adjacent to them. Do not import Option
+Chain state/DTOs or introduce a generic feature runtime. D2-B, official Examples and full
+static composition remain separate work.
