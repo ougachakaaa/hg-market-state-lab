@@ -52,7 +52,8 @@ and Zoom/Pan/Reset. Requested and observed windows remain distinct. Evidence is 
 expandable online summary, not the full offline package. Explain ideal Close gross
 execution, no fees/slippage/margin, index price benchmark, historical metadata
 assumptions, and cache completeness versus freshness. Evidence wording is origin-aware:
-Static labels an Embedded Synthetic Example and does not claim server execution, a full
+Static labels the actual embedded origin under the [Example contract](../../demo/EXAMPLES.md),
+with real-market provenance for formal V2 and Synthetic disclosure for test-only results, and does not claim server execution, a full
 offline evidence package, or current market/cache/Provider readiness. No export/copy/download
 capability.
 
@@ -78,3 +79,12 @@ entry is `presentation.ts`; `api/validateResult.ts` owns pure generated-contract
 Result once. Static composition never mounts the production controller or fabricates its
 lifecycle, Run ID or phase, and it preserves this feature's Result/visualization semantics.
 Shared presentation remains here, not in parallel Demo pages.
+
+## V2 origin policy reconciliation
+
+[Demo Example authority](../../demo/EXAMPLES.md) owns formal V2 real-market dates and
+packaging; [authenticity and rights](../../demo/AUTHENTICITY.md) owns evidence and admission.
+This feature owns only their presentation. Static delivery is not a Synthetic source label
+or proof of authenticity. Preserve historical V1/test disclosures, use actual real-market
+origin for V2, and never promote regression inputs to formal Examples. Pending origin-code
+changes are tracked in the [D3 handoff](../../demo/IMPLEMENTATION.md); R0 changes no code.

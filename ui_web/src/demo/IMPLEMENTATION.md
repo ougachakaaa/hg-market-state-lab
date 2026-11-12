@@ -1,9 +1,111 @@
-# D0 reconciliation and implementation handoff
+# Static Demo implementation handoff: D3-R0 cutover
 
 Execution guidance under [Demo Runtime authority](ARCHITECTURE.md) and
 [Example contract](EXAMPLES.md); feature semantics remain with their canonical owners.
-D0 is authority-only. The following gates are future implementation acceptance criteria,
-not claims that V2 has passed. Stop after D0; D1 is a separate task.
+D3-R0 is authority-only: Real Market Only replaces D0 synthetic V2 requirements, while
+Development First separates local technical delivery from public admission. D1/D2 shared
+architecture is retained. No new real-market result or publication right is verified here.
+The D0 baseline/extraction descriptions and D1/D2 handoffs below are historical records;
+they do not undo the completed extractions or authorize synthetic formal V2 Examples.
+
+## Current baseline and next package
+
+D3-R0 inspected branch `feat/github-pages-demo`, clean HEAD
+`694fa6c517218c50fbf85e52377c124d248c302f`. It changes Markdown only, not producers,
+DataLake, HTTP, UI code, JSON fixtures, generated contracts or deployment workflows.
+No provider call, token read, data generation, push or merge belongs in R0.
+Complete the independent R0 commit before starting R1 as a separate work package.
+
+## D3 real-market work packages
+
+Use [Example targets](EXAMPLES.md) and [independent gates](AUTHENTICITY.md), not historical
+D2 regression inputs. Public rights BLOCKED does not prevent lawful local development or
+technical acceptance. Private inputs, derived results and local builds stay outside Git
+tracking and public build paths until separately cleared.
+
+| Package | Work and completion evidence |
+| --- | --- |
+| D3-R0 Authority Cutover | Encode both decisions; reconcile current policies and dates; validate links/diff; independent documentation commit |
+| D3-R1 Provider Coverage / Publication Rights Feasibility | Per product: formal public Provider/Dataset/Producer path, legal access, calendar/target coverage evidence, preparation scope, Rights Matrix and separate technical/public blockers; no assumption that credentials prove redistribution rights |
+| D3-R2 Real MO Option Chain + Premium Plane | Two complete formal MO results for 2026-11-11 close with actual provenance, fingerprints, versions/digests, contract/identity/coverage evidence and private packaging |
+| D3-R3 Real Historical Futures Basis | Formal IM full-window six-section report for 2026-01-01..2026-11-11, actual observed coverage, out-of-window preparation evidence and offline validation/replay |
+| D3-R4 Real Futures Roll Long Backtesting | Formal W2 IM full-window Result, request/definition identity, both Views, retained inputs, actual sessions and verification evidence |
+| D3-R5 Real Research Catalog / Publication | Genuine Capability metadata without fabricated dates/readiness; real-input Publications within the specified observation window, with formal manifests/analyses/View references and provenance |
+| D3-R6 Result Packaging / Authenticity / Rights Audit | Audit private result set, input/result digests, repeatable offline verification, six gate records and public asset inventory; report technical acceptance separately from Publication Review |
+
+R2/R3/R4 may proceed in parallel once R1 establishes their respective lawful access,
+coverage feasibility and formal producer paths. Publication Rights is not their execution
+prerequisite. Actual results must pass the four technical gates before technical acceptance;
+all six gates are required only for public inclusion. R6 may close local technical delivery
+with public BLOCKED, retaining explicit release restrictions. An empty Explorer is honest
+presentation of an undelivered Example, not R5 completion. Test harness facts never become
+formal Examples by changing their dates or labels.
+
+### D3-R1 implementation handoff
+
+Start at each feature's existing producer/HTTP links, then follow owning-module local
+AGENTS and public Dataset/product/case/publication contracts. Establish the private output
+location and prove it cannot be tracked or swept into a public build before acquisition.
+Inventory actual access and target-day/window feasibility for MO and IM, including formal
+calendar, contract lifecycle and required preparation inputs. Record unresolved technical
+requirements explicitly; no missing data synthesis, alternate dates or new financial policy.
+Build the source/output Rights Matrix independently: unresolved redistribution rights do
+not pause lawful acquisition or local computation. Deliver per-product PASS / FAIL / BLOCKED
+with evidence and R2-R5 entry conditions; do not claim access, coverage or public approval
+from this R0 document. Any true producer-contract gap returns to its canonical owner first.
+
+### Remaining D2 Presentation origin corrections
+
+R0 changes authority only; existing code and historical test evidence remain unchanged.
+R2-R5 supply validated origin/disclosure records; D4 integrates them through feature public
+Presentation entries, including private local builds. D5 adds compatibility/negative checks;
+D6 records actual browser acceptance.
+
+| Surface | Subsequent implementation correction |
+| --- | --- |
+| Shared Shell | Static historical real-market disclosure for V2, distinct from V1 Synthetic; no live-data/server-execution claim |
+| Basis shared Report | Separate delivery/layout mode from provenance; `mode="demo"` currently hardcodes Synthetic Fixture evidence text. Preserve V1 wording, offline instructions, six sections and narrow-screen scrolling |
+| Backtesting Result | Replace unconditional Embedded Synthetic Example source wording for V2 with validated real-market origin; keep test-only Synthetic labels and no server-run claim |
+| MO Chain / Premium | Distinguish actual HTTP response, validated real-market embedded payload and test data in source labels, Premium Inspector and adjacent Copy/Export descriptions |
+| Catalog | Use genuine embedded metadata identity, preserve status/live_readiness and explain formal access instructions without implying Demo execution |
+| Explorer | Real historical input/publication disclosure; retain no online Store query/no execution wording and the warning that fingerprints alone do not prove authenticity |
+| Copy / Export | Keep provenance discoverable at reading/copy/download surfaces; Raw, Context V1 and CSV formats remain unchanged, no Demo metadata injected into business payloads |
+
+D5 must reject wrong dates/identities, synthetic formal V2 assets, missing provenance,
+digest mismatch and uncleared public asset inclusion. Test V1 Synthetic, private V2 Real
+and Production origins separately to prevent relabelling old results. D6 exercises reading,
+Inspector, local Copy/Export and static isolation; schema-validation success must never be
+presented as proof of authenticity, rights clearance or server execution.
+
+### D3-R0 reconciliation record
+
+| Retired requirement | Current owner / replacement |
+| --- | --- |
+| All initial V2 facts must be deterministic Synthetic | Example contract: real_market only; V1/test-only Synthetic preserved |
+| MO target day is preferred and another day is allowed | Example contract: required 2026-11-11 close; unavailable is FAIL / BLOCKED |
+| Every static disclosure means Synthetic | Feature presentation uses explicit origin; implementation corrections tracked above |
+| Deterministic generation requires synthetic inputs | Authenticity authority: legally retained real inputs, pinned producer replay and offline integrity checks |
+| Public rights must clear before local result work | Development First: lawful local work continues; independent Publication Review gates public inclusion |
+
+D4 full static composition, D5 automated compatibility, D6 integration acceptance and D7
+main-release switch retain the existing shared-UI/static-only boundaries. Local integration
+does not publish; D7's independent review requires all six gates PASS for the exact public
+artifact and excludes historical Synthetic V1 assets. Existing V1 publishing is unchanged.
+
+### D3-R0 verification
+
+PASS: complete documentation diff reviewed; 14 changed/new Markdown files and 133 local
+links (including referenced heading anchors) checked; `git diff --check` passed. No business
+code, fixture JSON, generated artifact, historical acceptance evidence or workflow changed.
+Business/producer/browser suites were not rerun for this documentation-only cutover. No
+market acquisition, entitlement/coverage validation or Publication Review was performed.
+The six future result gates remain unverified/BLOCKED pending evidence; this is not a
+failure of the completed R0 authority encoding and does not block lawful R1 local work.
+
+## Historical D0 record
+
+The following baseline, extraction analysis and original D1 instructions describe D0 time.
+Current implementation outcomes are recorded in the D1/D2 sections below.
 
 ## Inspected baseline
 
@@ -78,7 +180,7 @@ boundary and gate here.
 | --- | --- | --- |
 | D1 Shared Application Shell | `src/app/` shell/composition/routes, public feature entry wiring, existing AppUiProvider/theme consumption; Demo shell composition as needed | Shared shell in Production and a static shell harness; all seven route identities and Explorer menu leaf; production regression and static isolation gates below |
 | D2 Shared Feature Presentation | Six feature Page/hooks/components/model boundaries, pure validators and public presentation exports; shared infrastructure only where domain-neutral | Both controllers compose the same feature JSX; production query/Run/auth behavior unchanged; no copied Demo page or financial projection |
-| D3 Static Examples | Demo manifests/assets/loaders; producer-backed fixture generation tooling under owning-module policy and root Python environment | Required Example coverage/windows, formal validation and deterministic reproduction; disclosure and public-data review; no hand-edited outputs |
+| D3 Real Market Examples | R0-R6 above; private development packaging and separately reviewed public assets | Real provenance, required dates, formal validation/replay; technical and publication outcomes reported independently |
 | D4 Full Static Composition | Demo entry/static controllers, hash adapter/base config, fixed query/capability wiring and local state | Seven actual shared business surfaces, both overviews, anonymous reload/navigation, fixed parameters, no execution actions/network |
 | D5 Automated Compatibility Gates | `ui_web/scripts`, feature/fixture tests, npm scripts and CI validation as required | Route omission, invalid fixture/profile/request/View and contract drift fail; production regression and browser isolation pass |
 | D6 Integration/Acceptance | Runtime wiring, presentation-origin wording, browser scripts and acceptance records needed to close observed gaps | Desktop/narrow navigation/readers/interactions, local Copy/Export, negative isolation and offline Reader regression; record actual outcomes and unresolved gaps |
@@ -155,19 +257,21 @@ interactions.
 Existing `demo:dev`, `demo:build`, `demo:preview`, `test:demo-browser` remain the command
 names; evolve their implementation to V2 without a second long-term script family.
 Plan `demo:check` for route coverage, Example validation and static dependency checks,
-and `demo:fixtures:update` for explicit deterministic producer generation. These two
+and `demo:fixtures:update` for explicit producer generation/replay from retained real inputs. These two
 commands do not exist at D0. `demo:fixtures:update` may delegate to root Poetry; release
-`demo:build` must remain npm-only and consume committed Examples. `contract:check` remains
+`demo:build` must remain npm-only and consume committed rights-cleared Examples.
+Private local integration must use isolated private input/output paths, never widen this
+public release input policy; acquisition is separate from offline verification/replay. `contract:check` remains
 the independent all-product freshness check, not silently replaced by Demo validation.
 Browser acceptance uses the existing Playwright stack and must exercise the built static
 artifact. No D0 npm, dependency, workflow or business-test changes are required.
 
-## Remaining implementation risks and D0 verification
+## Historical implementation risks and D0 verification
 
-The current Shell still imports all online Pages; extracting JSX alone can accidentally
-retain Auth/transport through barrels or runtime imports. MO local state is private inside
-combined query hooks; Catalog/Explorer reader JSX lives inside querying Pages. Pure schema
-validation is currently coupled to transport. These require dependency and behavior checks,
+At D0 the Shell still imported all online Pages; extracting JSX alone can accidentally
+retain Auth/transport through barrels or runtime imports. At D0 MO local state was private inside
+combined query hooks; Catalog/Explorer reader JSX lived inside querying Pages. Pure schema
+validation was coupled to transport. These require dependency and behavior checks,
 not only component snapshots. Hash routes also compete with the V1 report disclosure/section
 anchors. New target-window Examples, all-page coverage checks and V2 browser evidence do
 not yet exist. The current feature-branch deployment trigger remains active until D7.
@@ -211,11 +315,11 @@ loading that controller. The test-only static harness uses existing regression d
 not the D3 Example target, and does not change the V1 release entry or D1 shell harness.
 Implementation and actual verification: [D2-A acceptance](../features/mo_option_chain/testing/ACCEPTANCE.md).
 
-D2-B should apply the same feature-local split to Premium: preserve its full raw payload
+The historical next-package instruction was that D2-B should apply the same feature-local split to Premium: preserve its full raw payload
 and existing nonempty-Points validation, separate request lifecycle from metric/expiry
 presentation state, and expose a transport-free presentation entry. Reuse its existing
 serializers/Inspector and keep source disclosure adjacent to them. Do not import Option
-Chain state/DTOs or introduce a generic feature runtime. D2-B, official Examples and full
+Chain state/DTOs or introduce a generic feature runtime. D2-B subsequently completed as recorded below; official Examples and full
 static composition remain separate work.
 
 ## D2-B Premium Plane implementation handoff

@@ -232,3 +232,8 @@ option_type, instrument_id, strike, price
 遍历 backend expiry 顺序，先 calls 后 puts，保留 expiry_date ascending、side 内 strike ascending / instrument_id ascending tie-break。行数恰为 `sum(expiry.calls.length + expiry.puts.length)`；空 expiry 无行，全无合约为 header-only。
 
 文件名为 `mo-option-chain_{target_trade_date}_{price_type}.csv`，身份来自响应；编码、安全与下载遵循共同 authority。
+
+Static source disclosure follows the [Example contract](../../demo/EXAMPLES.md): formal
+V2 is historical real_market, while regression data remains test-only. Keep this distinction
+visible beside local Copy/Export without changing serialized business payloads. Public
+inclusion also requires the [independent rights review](../../demo/AUTHENTICITY.md).

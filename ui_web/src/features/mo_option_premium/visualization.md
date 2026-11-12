@@ -280,7 +280,7 @@ The Production query and Raw HTTP clauses above retain their existing meaning. S
 composition uses the same Presentation with fixed MO/as_of/price_type, disabled query
 inputs and no query callbacks. A validated embedded payload and its plane enter `ready`
 state together. The Inspector says “Validated embedded Example payload”; adjacent
-static/synthetic disclosure remains visible near Copy/Export and inside the Inspector.
+static disclosure of the actual origin (V2 real_market; Synthetic for test data) remains visible near Copy/Export and inside the Inspector.
 Disclosure is UI-only and never enters Raw JSON, Context V1 or CSV. Local side, four-axis
 metric selection, expiry visibility, sparse semantics and serializers are identical.
 Replacement static results reset every presentation option to the defaults in section 3.
