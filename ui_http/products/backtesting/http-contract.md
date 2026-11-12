@@ -1,5 +1,13 @@
 # Futures Roll Backtesting HTTP contract V1
 
+## Storage transition status
+
+The approved [portable storage target](../../../market_backtesting/cases/futures_roll_long/ONLINE_STORAGE.md) is not implemented by storage WP0.
+Any POSIX/platform-unavailable statements below describe the current adapter only;
+SQLite cutover removes that capability gate while preserving endpoints, DTOs, Auth,
+owner isolation where applicable, safe error mapping and existing unavailable/corrupt
+behavior for real storage failures. No wire contract or generated artifact changes.
+
 This product specializes [HTTP ownership](../../ARCHITECTURE.md) and the existing
 [Auth gate](../../AUTHENTICATION.md). Business semantics belong exclusively to the
 [W2 Online Application](../../../market_backtesting/cases/futures_roll_long/ONLINE_APPLICATION.md)

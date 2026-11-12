@@ -1,5 +1,13 @@
 # Published Research Result authority
 
+## Storage transition status
+
+[Publication storage](PUBLICATION_STORAGE.md#portable-sqlite-target) owns the approved
+SQLite replacement. The current POSIX file store remains active until storage WP4/WP5.
+The development-time breaking cutover abandons old data without migration, dual reads or
+compatibility; it preserves all publication business operations, immutable snapshots,
+integrity and association checks, HTTP interfaces and Research Explorer.
+
 This contract specializes [Research architecture](ARCHITECTURE.md) and owns the
 publication lifecycle, semantic identity, provenance, integrity and read boundary.
 The concrete V1 publication implementation and storage contract is
@@ -49,7 +57,8 @@ scope, result linkage, provenance and integrity, creates producer-owned projecti
 validates every Layer before making the whole immutable snapshot visible. It fails explicitly
 on malformed, inconsistent, missing or unverifiable input and never repairs or recomputes it.
 Publication has no authority to execute Research, acquire DataLake facts or invoke Statistics.
-The V1 store is JSON-based and Research-owned, separate from Workbench RunStore;
+The store is Research-owned, separate from Workbench RunStore; canonical JSON payload
+encoding is independent of its physical storage backend;
 publication must be atomically visible as a complete snapshot, refuse overwrite and verify
 integrity on read. Storage paths, exact serialization, digest algorithm, API signatures and
 failure types are specified by the lower-level implementation contract;

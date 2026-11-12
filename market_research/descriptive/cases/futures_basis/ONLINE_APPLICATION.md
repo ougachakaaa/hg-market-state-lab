@@ -1,5 +1,13 @@
 # R01-A online research application and run lifecycle
 
+## Storage authority and delivery status
+
+Business lifecycle and public interfaces remain owned here. The approved portable target
+is [Online storage](ONLINE_STORAGE.md). File-layout, POSIX, UID/mode and separate-file
+publication statements below describe the **currently active legacy adapter only**;
+they cease to be normative for its SQLite replacement. The target uses one transaction
+for result plus COMPLETED. No SQLite adapter is delivered by storage WP0.
+
 This contract specializes the [Futures Basis case](ARCHITECTURE.md), its
 [offline delivery](DELIVERY.md), [evidence](EVIDENCE.md) and
 [roadmap](ROADMAP.md). It owns the case-specific online request, standard analysis

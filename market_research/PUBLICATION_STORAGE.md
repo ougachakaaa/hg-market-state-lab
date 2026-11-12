@@ -1,5 +1,14 @@
 # Publication V1 implementation and local storage contract
 
+## Contract status
+
+The approved replacement is [Portable SQLite target](#portable-sqlite-target).
+Sections from Source eligibility through HTTP delivery describe the currently active
+V1 facade and file adapter. Their payload, association, granular-read and public API
+contracts continue; their physical layout, hard-link/descriptor publication protocol,
+POSIX platform gate and file-layout initialization rules apply **only to that legacy
+adapter**, not the SQLite target. WP0 changes authority only, not the active adapter.
+
 This contract specializes [Publication](PUBLICATION.md). The latter remains the owner of
 publication semantics, and [Visualization](../ui_web/VISUALIZATION.md) remains the sole
 owner of Layer and ChartView semantics. This document specifies the initial Python and
@@ -238,3 +247,99 @@ an explicit allowlisted safe projection and error mapping; it must not automatic
 serialize the Research Manifest, raw source, credentials, private provider diagnostics,
 arbitrary exception text or internal filesystem paths. This rule introduces no transport
 fields into Research and does not itself define routes or HTTP DTOs.
+
+## Portable SQLite target
+
+Approved in storage WP0 (2026-11-12), unimplemented until storage WP4/WP5. This section
+owns Publication's target persistence only; [Publication](PUBLICATION.md) remains the
+business authority. [Storage reconciliation](STORAGE_RECONCILIATION.md) owns drift and
+work-package readiness, independently of historical Publication/Workbench WP numbering.
+
+### Independent database and breaking cutover
+
+Use standard-library `sqlite3` with no ORM, new database dependency or generic artifact
+framework. Preserve `LAB_RESEARCH_PUBLICATION_ROOT` as a directory root, supplied through
+root `lab_config` with process environment before root `.env`; Publication still requires
+explicit configuration where it does today. A caller-selected root remains supported by
+`PublicationStore`. The owned database is `<root>/publications.sqlite3`, independent of
+W1/W2 Run Stores, DataLake, Auth and Workbench.
+
+The user explicitly authorizes a development-time breaking cutover: all legacy Publication
+data may be abandoned; remove the retired file adapter and POSIX gate in WP4/WP5, without
+migration, compatibility, dual reads/writes or an importer. No old publication is visible
+in the new store. A missing database is uninitialized even when legacy bundles/publications
+remain in that controlled root; legacy contents are never followed or consulted. The new
+database may be created in the same root. There is no automatic data deletion, and WP0
+performs no filesystem cutover. This exception replaces historical-evidence preservation
+requirements for the old backend only; new SQLite publications remain immutable evidence,
+not disposable online Run state. No extra abstraction survives merely for legacy support.
+
+Listing and exact lookup remain read-only, create no directory/database, and return `[]`
+or `PublicationNotFound` for an uninitialized safe root. Writes initialize only an absent
+database: schema creation and `PRAGMA user_version=1` commit together. An existing file,
+including a zero-byte/version-0 database, must not be overwritten or silently initialized.
+Unknown versions are `UnsupportedPublicationVersion`; incompatible/corrupt structures are
+`PublicationCorrupt`; I/O/permissions/lock/capacity failures are `PublicationUnavailable`.
+Never automatically repair, upgrade, recreate or discard a database.
+
+### Atomic immutable records and integrity
+
+Store Manifest, retained Source Evidence, Analysis, Layer and View as independently
+addressable logical records, with exact existing canonical JSON bytes, original SHA-256
+and byte sizes. Schema storage version and existing payload V1 tags are distinct. Keep
+publication identity/context, ordered summaries, source identity, Job/request/spec tuple,
+analysis/view/layer identity derivation and original failure/coverage semantics unchanged.
+Validate admitted source carriers and pure Research result associations without executing
+Research, acquiring facts or computing Statistics.
+
+Build and validate the snapshot before a short write transaction. Commit all records and
+the discoverable Manifest atomically; an interrupted/failed transaction exposes nothing.
+Enforce exclusive publication identity: an existing ID is a collision even for identical
+content, never overwrite/update; keep full-tuple collision checks for hashed identities.
+A retry after uncertain commit must inspect the ID. SQLite transactions provide local
+publication visibility, not worker coordination or a new multi-process deployment model.
+
+Preserve the public `market_research.publication` facade, `retain_source`, `publish`,
+`PublicationStore`, source reference, typed errors and all store operations/signatures.
+`retain_source(batch, source_id, path)` remains an explicit, exclusive external canonical
+JSON evidence delivery to the caller-selected path. Its portable file checks protect that
+specific destination; reject traversal and unsafe aliases, and preserve no-overwrite and
+complete-write behavior. `publish` re-encodes the actual Batch, validates associations and
+matches exact retained bytes, size and digest before copying source into SQLite. Access
+only that explicitly supplied source path; a stored reference/location is metadata, never
+permission to open arbitrary external files. Post-commit reads use SQLite's retained copy
+and remain usable after the original source file is removed.
+
+Listing remains ascending ID with existing bounded limit/exclusive cursor and validates
+only selected Manifests. Manifest reads do not load Analysis/Layer/Source BLOBs. Analysis
+reads load only the selected Analysis and required Source; View reads load only the
+selected View, Layer and required Source, preserving projection equality including signed
+zero. Source may still be validated as a whole; do not promise constant-cost detailed
+reads or remove source verification capacity limits. Check actual BLOB length and enforce
+the caller's finite source byte budget before loading/parsing it. Preserve distinct
+verification-capacity failures, strict JSON/unknown-tag rejection, same-publication
+association and digest-before-parse checks. Missing, corrupt and inconsistent evidence
+must fail explicitly, not trigger repair, recomputation or empty placeholders.
+
+### Portable filesystem, trust and delivery boundaries
+
+Support native Windows, Linux, WSL2 and Linux Docker on local filesystems without requiring
+POSIX `dir_fd`, `O_DIRECTORY`, `O_NOFOLLOW`, hard links or UID checks. Use explicit controlled
+absolute roots, real directory ancestors and regular database/source files; reject traversal,
+symlinks/junctions/reparse-point aliases, unexpected database hard-link aliases and unsafe
+sidecars. Check existing components before creating/opening and recheck object identity;
+if checks cannot be enforced, fail closed. Keep database/journal/WAL/SHM inside the root;
+never accept path components or SQLite URI options from publication IDs or stored refs.
+Explicit source capture/read may access only its caller-selected destination/reference.
+
+The operator controls the OS account, root and ancestors through permissions/ACLs. This
+portable policy does not reproduce POSIX descriptor race resistance, defeat malicious
+concurrent filesystem replacement, authenticate upstream facts, protect against coordinated
+rewriting of metadata plus payload, or promise perfect power-loss durability. Shared
+network filesystems and multi-process workers are not newly supported. Disk capacity and
+retention remain operator responsibilities; errors are explicit, with no silent repair.
+
+Keep HTTP routes, DTOs, error mapping, allowlisted safe projections, budgets and Research
+Explorer behavior unchanged. Never leak source material, owner/credentials, SQL or paths
+through HTTP. Storage failure remains isolated to this product; import/backend startup
+must not require POSIX primitives. WP0 claims no native Windows runtime acceptance.

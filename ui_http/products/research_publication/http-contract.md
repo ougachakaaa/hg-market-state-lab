@@ -1,5 +1,13 @@
 # Research Publication read-only HTTP contract V1
 
+## Storage transition status
+
+The approved [portable storage target](../../../market_research/PUBLICATION_STORAGE.md#portable-sqlite-target) is not implemented by storage WP0.
+Any POSIX/platform-unavailable statements below describe the current adapter only;
+SQLite cutover removes that capability gate while preserving endpoints, DTOs, Auth,
+owner isolation where applicable, safe error mapping and existing unavailable/corrupt
+behavior for real storage failures. No wire contract or generated artifact changes.
+
 This contract specializes [HTTP ownership](../../ARCHITECTURE.md) and the
 [product catalog](../../HTTP_PRODUCTS.md). Research owns publication identities and
 read semantics; [Visualization](../../../ui_web/VISUALIZATION.md) owns ChartView V1.

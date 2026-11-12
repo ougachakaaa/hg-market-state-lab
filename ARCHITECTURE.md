@@ -1,5 +1,21 @@
 # hg-market-state-lab 仓库架构 authority
 
+## Portable structured local storage
+
+Python standard-library `sqlite3` is the approved preferred persistence for structured
+local runtime state. W1 Online Runs, W2 Online Runs and Research Publication independently
+own their databases, schema and lifecycle; this creates no shared Run Store or repository
+persistence framework. PostgreSQL, Redis, SQLAlchemy and new database dependencies are
+not introduced by this migration. DataLake SQLite, Auth SQLite and Workbench storage are outside
+this migration. Follow module entries to case storage contracts and
+[Publication storage](market_research/PUBLICATION_STORAGE.md). The
+[storage reconciliation](market_research/STORAGE_RECONCILIATION.md) distinguishes approved
+targets from current POSIX implementations; WP0 changes no runtime behavior.
+
+Publication's development-time breaking cutover may abandon the old store, without
+migration or compatibility. This does not make newly committed Publication snapshots
+disposable mutable Runs or relax their evidence, integrity or immutability contract.
+
 本文件是 repository-level architecture authority，只定义仓库定位、顶层模块、模块职责边界、repository-level Python runtime ownership、顶层数据流及下层 authority 入口。产品契约、公式、HTTP DTO、workflow 与实现状态不属于本文件。
 
 ## Naming and transition authority
