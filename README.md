@@ -4,7 +4,7 @@
 
 Market State Lab 把 Tushare 市场数据整理成可缓存、可验证的数据产品，并在其上完成描述性研究与策略回测。目标是让同一份市场事实、研究过程和策略结果都能被复核、导出和重新执行。
 
-当前：数据与 MO 数据页、描述性研究、Futures Basis 已可用；回测 Python API 已可用，但 HTTP / Web 回测仍在开发中。
+当前：数据与 MO 数据页、描述性研究、Futures Basis 与 Futures Roll Long 回测（Python API / HTTP / Web）均已可用；W2 已在声明的范围内完成真实市场端到端验收。
 
 [快速启动](#如何启动) · [三部分能力](#三部分能力) · [项目演化](#项目演化) · [架构与关键模块](#架构与关键模块) · [详细说明](#详细说明) · [在线演示（规划中）](#项目状态与-roadmap)
 
@@ -41,12 +41,12 @@ poetry run lab auth approve <user-id>
 
 | 数据 | 研究 | 回测 |
 | --- | --- | --- |
-| [<img src="docs/assets/capability-data.png" width="260" alt="数据总览">](docs/assets/capability-data.png) | [<img src="docs/assets/capability-research.png" width="260" alt="历史基差研究">](docs/assets/capability-research.png) | [<img src="docs/assets/capability-backtesting.png" width="260" alt="回测规划页">](docs/assets/capability-backtesting.png) |
-| 已可用 | 已可用 | Python API 已可用；Web 规划中 |
-| 4 个 Tushare Dataset（日历 / 指数 / 期货 / 期权）；Snapshot 提供指数日线、历史基差与 MO 数据产品。 | Futures Basis（Web / HTTP）；Trailing Return（Python / HTTP，Web 仅发现）；Price Segmentation（仅 Python）；统计与 Publication。 | Position-Driven Core + Futures Roll Long；Policy → Replay → Accounting → Result；PnL / Benchmark / Drawdown / Evidence。 |
+| [<img src="docs/assets/capability-data.png" width="260" alt="数据总览">](docs/assets/capability-data.png) | [<img src="docs/assets/capability-research.png" width="260" alt="历史基差研究">](docs/assets/capability-research.png) | [<img src="docs/assets/capability-backtesting.png" width="260" alt="期货展期做多回测页面">](docs/assets/capability-backtesting.png) |
+| 已可用 | 已可用 | 已可用（Python API / HTTP / Web） |
+| 4 个 Tushare Dataset（日历 / 指数 / 期货 / 期权）；Snapshot 提供指数日线、历史基差与 MO 数据产品。 | Futures Basis（Web / HTTP）；Trailing Return（Python / HTTP，Web 仅发现）；Price Segmentation（仅 Python）；统计与 Publication。 | Position-Driven Core + Futures Roll Long；Policy → Replay → Accounting → Result；PnL / Benchmark / Drawdown / Evidence；`/backtesting` 参数、Preflight、Run 与结果阅读。 |
 | [DataLake](data_lake/ARCHITECTURE.md)、[Snapshot](data_snapshot/CAPABILITIES.md) | [Research](market_research/ARCHITECTURE.md)、[Statistics](market_statistics/ARCHITECTURE.md) | [Backtesting](market_backtesting/ARCHITECTURE.md)、[Roadmap](market_backtesting/cases/futures_roll_long/ROADMAP.md) |
 
-三张截图均为真实页面；回测 Web 尚未完成，`/backtesting` 截图只展示当前规划状态，不包含伪造结果；数据页截图不包含行情数值。
+三张截图均来自真实页面；回测截图为已实现的 `/backtesting` 参数与数据准备状态，在本地开发环境中以项目自动化验收的受控输入截取，不含回测结果或绩效数值；数据页截图不包含行情数值。
 
 ## 项目演化
 
@@ -56,7 +56,7 @@ poetry run lab auth approve <user-id>
 
 **Reliable Market Data → Reproducible Research → Strategy Validation**
 
-**最终期望**：一个数据、研究、回测都能被复核和重新执行的研究平台；当前缺口是回测 HTTP / Web、真实市场 E2E 与静态 Demo。
+**最终期望**：一个数据、研究、回测都能被复核和重新执行的研究平台；当前缺口是 GitHub Pages 静态 Demo、更多研究 case 与生产部署加固。
 
 ## 架构与关键模块
 
@@ -89,7 +89,7 @@ flowchart TB
     ST --> RS
     RS -->|"Slot 解析"| BT
     RS --> API
-    BT -. "WP6 规划中" .-> API
+    BT -->|"HTTP / OpenAPI"| API
     API --> WEB
 ```
 
@@ -99,7 +99,7 @@ flowchart TB
 | `data_snapshot` | 确定性 preparation 与 analysis-ready 数据产品；不拥有研究解释。 |
 | `market_research` | observation、样本转换、统计关联、Evidence 与 Publication。 |
 | `market_statistics` | Quantile / IntervalCount / Mean；不获取市场数据。 |
-| `market_backtesting` | Position-Driven Core + Futures Roll Long；当前 Python API。 |
+| `market_backtesting` | Position-Driven Core + Futures Roll Long；Python API、HTTP product 与 `/backtesting` Web workflow。 |
 | `ui_cli` | `lab` 命令路由与 delegation。 |
 | `ui_http` | FastAPI、DTO、OpenAPI 与 Auth。 |
 | `ui_web` | React / Plotly 展示；不重算金融结果。 |
@@ -122,12 +122,23 @@ flowchart TB
 | Futures Basis Research | Web `/research/futures-basis`；HTTP；Python；离线报告 | 已可用；原生 Windows 在线 503 |
 | Research Publication / Explorer | Python `retain_source` / `publish`；Web / HTTP 只读 | 已可用 |
 | 通用数值统计 | `market_statistics` Python API | 仅 Python |
-| Position-Driven Core + Futures Roll Long | `market_backtesting` Python API | 仅 Python |
-| Backtesting HTTP / Web | WP6 / WP7 | 规划中 |
+| Position-Driven Core + Futures Roll Long 回测 | Web `/backtesting`；HTTP `/backtesting/futures-roll/*`；Python API | 已可用；原生 Windows 在线运行 503 |
 | Daily Data Copy / Export | MO 页面的 Copy Raw JSON / Context JSON、CSV / Context JSON Export | 已可用 |
 | CLI / OpenAPI | `lab`；FastAPI / OpenAPI | 已可用 |
 
-Research 的 execute / submit 不是纯预览：`POST /research/execute` 与 Futures Basis Run 提交都可能触发 DataLake ensure 与 Tushare 请求，并写入正常 Dataset cache；请先完成 capability / preflight 检查，再显式授权执行。
+Research 的 execute / submit 不是纯预览：`POST /research/execute` 与 Futures Basis Run 提交都可能触发 DataLake ensure 与 Tushare 请求，并写入正常 Dataset cache；请先完成 capability / preflight 检查，再显式授权执行。Backtesting 的 Submit 同理，Preflight 只读且不获取数据。
+
+### Web 页面
+
+| 页面 | 路由 | 能做什么 |
+| --- | --- | --- |
+| Research Overview | `/research` | 登录后的只读入口，集中展示在线能力、Python case 与已发布结果。 |
+| Futures Basis | `/research/futures-basis` | 提交并阅读历史基差研究；`?run_id=` 恢复服务端 run。 |
+| Backtesting | `/backtesting` | 显式选择产品、日期与策略；只读 Preflight、提交、轮询 Run，并阅读图表 / Trades / Rolls / Evidence。 |
+| Research Explorer | `/research/publications` | 只读浏览已发布的 Publication。 |
+| Daily Data | `/data`、`/data/mo-option-chain`、`/data/mo-premium-plane` | 查看 MO 期权链与年化权利金平面数据产品。 |
+
+Backtesting 不提供默认参数：四项输入必须显式选择；Preflight 只是只读提示，`ready=false` 不阻止提交；提交可能触发数据获取，`ready=true` 也不保证成功。页面只渲染 producer 数据，不在浏览器重算 PnL、收益、benchmark 或 drawdown。导航、URL 与交互边界见 [Workspace authority](ui_web/workspace.md)。
 
 ### 典型研究案例
 
@@ -228,12 +239,15 @@ SQLite 解决的是“本地研究缓存与认证存储”，不是整个系统�
 
 - 一键启动需要默认端口 `8011`（backend）与 `5173`（Web）空闲；启动器不会终止占用端口的其他程序。
 - 原生 Windows 缺少 Publication 与在线 run store 所需的 POSIX descriptor-relative 文件能力：Publication 读写与 Futures Basis 在线 run 返回 503，Research Explorer 显示 Publication 存储不可用。
-- Backtesting 的 online store 同样要求 POSIX；当前原生 Windows 上不可用，且尚未暴露 HTTP。
+- Backtesting 的在线 run store 同样要求 POSIX：原生 Windows 上 `/backtesting` 可以打开、Preflight 可用，但 Submit / Status / Result 返回 503；完整在线回测请在 Linux / WSL 中运行。
 - 完整的 Publication、在线回测与相关浏览器验收请在 Linux / WSL 中运行；Linux 启动器还检查 `flock`、`ss`、`ps`、`setsid`、`curl`、`awk`、`tr`。
 - 本地已有的旧 Dataset cache 若不兼容，会明确失败并要求重建 owning Dataset；不会自动迁移或静默回退。
 - Windows 上的其他页面可以正常启动；能否返回数据仍取决于 Tushare 权限、网络与本地 cache 是否兼容。
+- Web 通过同源 `/api` 访问 HTTP 产品（开发时 Vite 代理 `/api/backtesting/*` 与 `/api/research/*`）；自定义部署需转发 `/api` 并为页面路由提供 SPA fallback。
 
 ### 项目状态与 Roadmap
+
+**W2 Futures Roll Long**：WP2–WP8 全部 PASS，真实 IM 完整窗口、HTTP worker 与 Windows Chrome → WSL 验收已经完成。验收记录见 [WP8 acceptance](market_backtesting/cases/futures_roll_long/WP8_ACCEPTANCE.md)，authority 与实现的对账见 [Reconciliation](market_backtesting/cases/futures_roll_long/RECONCILIATION.md)。W2 范围内不包含费用、滑点、保证金与优化。
 
 **已可使用**
 
@@ -244,14 +258,8 @@ SQLite 解决的是“本地研究缓存与认证存储”，不是整个系统�
 - Futures Basis 的 Web / HTTP / Python / 离线报告；
 - Publication 的 Python 发布与 Web / HTTP 只读浏览；
 - Quantile / IntervalCount / Mean 统计 API；
-- Futures Roll Long 的 Core、Python 执行、Result、Evidence 与 online application；
+- Futures Roll Long 的 Core、Python 执行、Result、Evidence、online application、HTTP product 与 `/backtesting` Web workflow；
 - 认证、`lab` CLI、OpenAPI 与契约校验。
-
-**开发中**
-
-- W2 WP6 Backtesting HTTP product；
-- WP7 `/backtesting` Web 页面；
-- WP8 真实市场端到端验收与 reconciliation。
 
 **规划中**
 
@@ -278,10 +286,10 @@ SQLite 解决的是“本地研究缓存与认证存储”，不是整个系统�
 | DataLake 的 Dataset、public service 与缓存生命周期 | [data_lake/ARCHITECTURE.md](data_lake/ARCHITECTURE.md)、[DATASETS.md](data_lake/DATASETS.md) |
 | Snapshot 产品与 analysis-ready 语义 | [data_snapshot/ARCHITECTURE.md](data_snapshot/ARCHITECTURE.md)、[CAPABILITIES.md](data_snapshot/CAPABILITIES.md) |
 | Research 的 observation、execution 与 Publication | [market_research/ARCHITECTURE.md](market_research/ARCHITECTURE.md)、[USAGE.md](market_research/USAGE.md) |
-| Backtesting 的 Core、case 与当前进度 | [market_backtesting/ARCHITECTURE.md](market_backtesting/ARCHITECTURE.md)、[W2 roadmap](market_backtesting/cases/futures_roll_long/ROADMAP.md) |
+| Backtesting 的 Core、case、HTTP 契约与验收 | [market_backtesting/ARCHITECTURE.md](market_backtesting/ARCHITECTURE.md)、[W2 roadmap](market_backtesting/cases/futures_roll_long/ROADMAP.md)、[HTTP contract](ui_http/products/backtesting/http-contract.md)、[WP8 acceptance](market_backtesting/cases/futures_roll_long/WP8_ACCEPTANCE.md) |
 | 数值统计契约 | [market_statistics/ARCHITECTURE.md](market_statistics/ARCHITECTURE.md) |
 | HTTP 产品与 OpenAPI 契约 | [ui_http/ARCHITECTURE.md](ui_http/ARCHITECTURE.md)、[HTTP product catalog](ui_http/HTTP_PRODUCTS.md) |
-| Web 页面与前端 feature | [ui_web/ARCHITECTURE.md](ui_web/ARCHITECTURE.md)、[FEATURES.md](ui_web/FEATURES.md) |
+| Web 页面与前端 feature | [ui_web/ARCHITECTURE.md](ui_web/ARCHITECTURE.md)、[FEATURES.md](ui_web/FEATURES.md)、[Backtesting feature](ui_web/src/features/backtesting/ARCHITECTURE.md) |
 
 README 只做用户说明与导航。字段、公式、null / zero、HTTP 与可视化语义，以对应 semantic authority 为准；README 不是新的 architecture authority。
 
