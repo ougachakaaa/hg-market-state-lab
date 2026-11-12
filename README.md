@@ -296,3 +296,11 @@ README 只做用户说明与导航。字段、公式、null / zero、HTTP 与可
 ---
 
 仓库：[github.com/ougachakaaa/hg-market-state-lab](https://github.com/ougachakaaa/hg-market-state-lab)
+
+## License
+
+Copyright (C) 2026 ougachakaaa.
+
+Unless otherwise indicated, original source code and documentation authored for this repository are licensed under the **GNU Affero General Public License v3.0 only (AGPL-3.0-only)**. See [LICENSE](LICENSE).
+
+Third-party dependencies, assets, and market data (including any data sourced from Tushare) remain subject to their respective licenses and terms. The repository's AGPL license does not grant redistribution rights for third-party materials.
