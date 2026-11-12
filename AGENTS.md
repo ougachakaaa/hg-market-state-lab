@@ -51,6 +51,15 @@ implementation details
 
 已经明显需要的拆分必须在本次 authority 落位中完成，不将“未来再整理文档”作为默认 deferred work；真正需要新 semantic decision 的 gap 应明确记录，不以文档重组发明业务语义。
 
+## Pre-production Publication / Run retention
+
+**用户已明确决定：本项目尚未正式投产；只有用户后续明确宣布投产，才进入 Production 数据保留阶段。** 公开 GitHub 仓库、GitHub Pages Demo、`production` 配置模式、CI 通过或阶段验收，均不构成投产宣告。Agent 不得自行推定已经投产。
+
+- 正式投产前，仓库自身开发环境中的 **所有 Publication 与 Run 历史数据均可破坏性清理或重建**。适用范围包括 Research Publication Store（含已发布 Manifest、bundle、Layer/View 与其保留的 source evidence 副本）、Research / Backtesting Run Store，以及其他仓库自有的开发期运行记录和派生执行产物。允许按任务需要直接删除、重置或替换；旧记录**不要求迁移、保留、向后兼容或自动恢复**。不得仅为了保护这些开发期旧数据而引入 legacy storage、兼容层或迁移框架。
+- 这是一项**开发期数据保留策略及针对性清理授权**，不是允许随意删除所有文件。执行破坏性操作前必须辨认具体 store root、所属环境与清理范围；不得波及源码、Authority、已提交的正式证据、原始/外部市场数据、DataLake 数据集缓存、凭证、其他用户/环境的数据或不明确归属的目录。不得在没有明确业务需求时增加启动即自动清库的行为；实施清理后在任务报告中说明实际删除范围。
+- 此规则只放宽**历史开发数据的保留义务**，不放宽运行中的业务契约、发布身份/引用一致性、权限隔离、完整性验证、安全约束或 Public Demo 真实数据与授权门槛。
+- 用户明确宣布投产后，本项破坏性清理授权立即失效；任何生产数据删除、清库或不兼容存储切换，均须重新制定数据保留/迁移方案并获得明确批准。
+
 ## Repository-wide Rules
 
 - 不得提交真实 API Token、密码或其他敏感信息。
