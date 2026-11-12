@@ -7,7 +7,8 @@ import type { Plugin } from 'vite'
 const web = fileURLToPath(new URL('../', import.meta.url))
 const local = (id: string) => relative(web, id.split('?')[0]).replaceAll('\\', '/')
 const project = (id: string) => isAbsolute(id) && !id.includes('/node_modules/')
-export function staticPresentationIsolation(feature: string, forbidden: RegExp): Plugin {
+export function staticPresentationIsolation(feature: string, forbidden: RegExp, compositionModules: readonly string[] = []): Plugin {
+  const composition = new Set(compositionModules)
   return {
     name: `static-${feature}-isolation`, enforce: 'pre',
     transform(code, id) {
@@ -26,6 +27,7 @@ export function staticPresentationIsolation(feature: string, forbidden: RegExp):
       const modules = [...this.getModuleIds()].filter(project)
       const allowed = (path: string) =>
         path === 'src/app/AppUiProvider.tsx' || path === 'src/index.css' ||
+        composition.has(path) ||
         /^src\/shared\/(ui|charts|format|clipboard|csv|download)\//.test(path) ||
         (path.startsWith(`src/features/${feature}/`) &&
           !forbidden.test(path))

@@ -102,7 +102,8 @@ try {
   assert.ok(rows.some(row => row.includes('A-null,7300,null')))
   assert.ok(rows.some(row => row.includes('A-zero,7100,0')))
   const exported = await download('Export Context JSON')
-  assert.equal(exported.bytes.toString('utf8'), contextText)
+  // Windows clipboard text uses CRLF while the downloaded UTF-8 file preserves LF.
+  assert.equal(exported.bytes.toString('utf8').replaceAll('\r\n', '\n'), contextText.replaceAll('\r\n', '\n'))
   pass('Fixed query; expiry, last-selection guard, colors, viewport; full Raw/Context JSON and CSV retain hidden/outside/null/zero data')
   await page.locator('.js-plotly-plot').waitFor()
   // Production deliberately fixes both axes and hides the modebar. Preserve that
