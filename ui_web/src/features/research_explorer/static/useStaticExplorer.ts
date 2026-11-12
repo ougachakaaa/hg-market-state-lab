@@ -86,5 +86,6 @@ export function useStaticExplorer(payload: EmbeddedPublicationSetPayload): Resea
   return {
     list, manifest, result, chart, publication, analysis, view, page,
     canPrevious, canNext, selectPublication, selectAnalysis, setView: setViewId, previous, next,
+    morePagesNotEmbedded: publicationSet.status === 'success' && publicationSet.data.unembeddedCursor !== null,
   }
 }

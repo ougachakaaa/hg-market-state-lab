@@ -27,6 +27,11 @@ export interface ResearchExplorerController {
   setView: (id: string) => void
   previous: () => void
   next: () => void
+  /**
+   * Static composition: the embedded page set is a prefix and its final page declares a
+   * further online page that is not embedded. It never means the online list ended.
+   */
+  morePagesNotEmbedded?: boolean
   retryList?: () => void
   retryManifest?: () => void
   retryResult?: () => void

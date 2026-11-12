@@ -19,6 +19,15 @@ function payload(): EmbeddedPublicationSetPayload {
     views: structuredClone(publicationViews),
   }
 }
+function pagedPayload(): EmbeddedPublicationSetPayload {
+  return {
+    ...payload(),
+    pages: [
+      { ...structuredClone(publicationList), next_cursor: 'opaque-page-two+' },
+      { data: [], next_cursor: null },
+    ],
+  }
+}
 function analysis(value: EmbeddedPublicationSetPayload, index = 0): Analysis {
   return value.analyses[index] as Analysis
 }
@@ -50,8 +59,36 @@ describe('Embedded Publication set validation', () => {
     invalid.pages = [{ data: [{ publication_id: 'x', status: 'bogus' }], next_cursor: null }]
     expect(() => validateEmbeddedPublicationSet(invalid)).toThrow()
     const duplicate = payload()
-    duplicate.pages = [publicationList, publicationList]
+    duplicate.pages = [{ ...structuredClone(publicationList), next_cursor: 'page-two' }, publicationList]
     expect(() => validateEmbeddedPublicationSet(duplicate)).toThrow(/Duplicate embedded publication_id/)
+  })
+
+  it('requires a contiguous cursor prefix and preserves every declared opaque cursor', () => {
+    const result = validateEmbeddedPublicationSet(pagedPayload())
+    expect(result.pages).toHaveLength(2)
+    expect(result.pages[0].next_cursor).toBe('opaque-page-two+')
+    expect(result.pages[1].next_cursor).toBeNull()
+    expect(result.unembeddedCursor).toBeNull()
+
+    const open = pagedPayload()
+    open.pages = [{ ...structuredClone(publicationList), next_cursor: 'opaque+/=' }]
+    const openResult = validateEmbeddedPublicationSet(open)
+    expect(openResult.unembeddedCursor).toBe('opaque+/=')
+    expect(openResult.pages[0].next_cursor).toBe('opaque+/=')
+  })
+
+  it('rejects a terminal page followed by an embedded page and a page with no continuation', () => {
+    const afterTerminal = pagedPayload()
+    afterTerminal.pages = [{ ...structuredClone(publicationList), next_cursor: null }, { data: [], next_cursor: null }]
+    expect(() => validateEmbeddedPublicationSet(afterTerminal)).toThrow(/declares no next page/)
+
+    const later = pagedPayload()
+    later.pages = [
+      { ...structuredClone(publicationList), next_cursor: 'page-two' },
+      { data: [], next_cursor: null },
+      { data: [], next_cursor: null },
+    ]
+    expect(() => validateEmbeddedPublicationSet(later)).toThrow(/embedded page 3 follows/)
   })
 
   it('rejects a Manifest outside the list, duplicate Manifests and status disagreement', () => {
@@ -144,6 +181,34 @@ describe('Embedded Publication set validation', () => {
     const unlisted = payload()
     unlisted.views = [{ ...publicationViews[0], publication_id: 'other-publication' }]
     expect(() => validateEmbeddedPublicationSet(unlisted)).toThrow(/no embedded Manifest/)
+  })
+
+  it('rejects an embedded ChartView without a formal View reference in its own Manifest', () => {
+    const orphan = payload()
+    orphan.views = [{ ...structuredClone(publicationViews[0]), view_id: 'unpublished-view' }]
+    expect(() => validateEmbeddedPublicationSet(orphan)).toThrow(/no published View reference/)
+
+    // A published View reference of one Publication cannot legalize a record of another.
+    const foreign = payload()
+    const secondList = structuredClone(publicationList)
+    secondList.data = [{ publication_id: 'pub-static-two', status: 'success' }]
+    foreign.pages = [{ ...structuredClone(publicationList), next_cursor: 'page-two' }, secondList]
+    const secondManifest = structuredClone(publicationManifest)
+    secondManifest.publication_id = 'pub-static-two'
+    secondManifest.jobs = []
+    secondManifest.analyses = []
+    secondManifest.scope.analysis_requests = []
+    foreign.manifests = [structuredClone(publicationManifest), secondManifest]
+    foreign.views = [{ ...structuredClone(publicationViews[0]), publication_id: 'pub-static-two' }]
+    expect(() => validateEmbeddedPublicationSet(foreign)).toThrow(/no published View reference/)
+  })
+
+  it('allows a published View reference with no embedded ChartView as an explicit missing detail', () => {
+    const missing = payload()
+    missing.views = [structuredClone(publicationViews[0])]
+    const result = validateEmbeddedPublicationSet(missing)
+    expect(result.views.get('pub-static-one')?.size).toBe(1)
+    expect(result.manifests.get('pub-static-one')?.analyses[1].views).toHaveLength(2)
   })
 
   it('does not mutate the embedded records', () => {

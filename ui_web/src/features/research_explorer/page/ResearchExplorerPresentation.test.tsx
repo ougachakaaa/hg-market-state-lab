@@ -67,19 +67,40 @@ it('paginates embedded pages locally and preserves the selection contract', asyn
   const payload: EmbeddedPublicationSetPayload = {
     ...embeddedPublicationSet,
     pages: [
-      publicationList,
+      { ...publicationList, next_cursor: 'opaque-page-two' },
       { data: [{ publication_id: 'pub-two', status: 'success' }], next_cursor: null },
     ],
   }
   render(<Static payload={payload} />)
   expect(screen.getByText('当前第 1 页')).toBeTruthy()
   expect((screen.getByRole('button', { name: '上一页' }) as HTMLButtonElement).disabled).toBe(true)
+  expect(screen.queryByText('后续页面未嵌入')).toBeNull()
   fireEvent.click(screen.getByRole('button', { name: '下一页' }))
   expect(await screen.findByText('pub-two')).toBeTruthy()
   expect(screen.getByText('当前第 2 页')).toBeTruthy()
   expect((screen.getByRole('button', { name: '下一页' }) as HTMLButtonElement).disabled).toBe(true)
+  expect(screen.queryByText('后续页面未嵌入')).toBeNull()
   fireEvent.click(screen.getByRole('button', { name: '上一页' }))
   expect(await screen.findByText('pub-static-one')).toBeTruthy()
+})
+
+it('never presents a truncated embedded page set as the online list end', () => {
+  const payload: EmbeddedPublicationSetPayload = {
+    ...embeddedPublicationSet,
+    pages: [{ ...publicationList, next_cursor: 'opaque-unembedded-page' }],
+  }
+  render(<Static payload={payload} />)
+  expect(screen.getByText('后续页面未嵌入')).toBeTruthy()
+  expect(screen.getByText(/不能视为在线列表的最后一页/)).toBeTruthy()
+  expect((screen.getByRole('button', { name: '下一页' }) as HTMLButtonElement).disabled).toBe(true)
+})
+
+it('rejects an embedded View without a published reference instead of showing it', () => {
+  const payload: EmbeddedPublicationSetPayload = structuredClone(embeddedPublicationSet)
+  payload.views = [{ ...payload.views[0], view_id: 'unpublished-view' }]
+  render(<Static payload={payload} />)
+  expect(screen.getByText('静态 Publication 示例无效')).toBeTruthy()
+  expect(screen.queryByText('pub-static-one')).toBeNull()
 })
 
 it('selecting a Publication resets Analysis and View; selecting an Analysis resets View', async () => {

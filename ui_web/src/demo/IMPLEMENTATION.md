@@ -279,6 +279,15 @@ prove market-source authenticity. The test harness reuses existing Research Expl
 regression data and the committed ChartView fixture; it is test-only, not a D3 Example.
 Results: [Explorer D2-D acceptance](../features/research_explorer/testing/ACCEPTANCE.md).
 
+D2-D R1 reconciliation closes two validation gaps without changing the Production cursor
+mechanism. Embedded pages must be a contiguous prefix of the online cursor chain: a
+non-final page must declare continuation, no page may follow a terminal page, and declared
+opaque cursors are preserved byte-for-byte. A non-null cursor on the final embedded page is
+an explicit "subsequent pages are not embedded" state, not evidence that the online store
+ended. Every embedded ChartView must match a formal View reference in its own publication
+Manifest; a published reference without an embedded View remains a legal explicit missing
+detail. Positive and negative validator/controller tests cover both contracts.
+
 ## D2-E handoff
 
 D2-E should apply the same split to Futures Basis Research: `useFuturesBasis` and
