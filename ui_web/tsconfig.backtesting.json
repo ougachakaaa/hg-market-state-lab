@@ -1,0 +1,4 @@
+{
+  "extends": "./tsconfig.demo.json",
+  "include": ["src/features/backtesting/testing/static/main.tsx", "vite.backtesting.config.ts"]
+}
