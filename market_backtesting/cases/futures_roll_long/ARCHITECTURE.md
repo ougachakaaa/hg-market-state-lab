@@ -71,7 +71,7 @@ changed roll rule requires a new profile version and a new request identity.
 W2 input preparation → price-free Decision Context + Close Snapshot
 W2 Mechanical Roll Policy → Target Portfolio
 Core Replay → Transition/Daily PnL → Accounting → immutable Daily Records
-W2 Performance Analyzer → BacktestResult/evidence/projections (remaining work)
+W2 Performance Analyzer → BacktestResult/evidence/projections
 ```
 
 Input preparation owns public-fact completeness, metadata consistency and input identity.
@@ -91,7 +91,7 @@ BacktestResult remain case concerns. Only input preparation may perform market I
 | Exact DataLake public bindings, completeness, W1 Slot reuse, underlying derivation, fingerprint, readiness | [Inputs](INPUTS.md) |
 | BacktestResult, evidence, limitations, result-version and V2 projection | [Result](RESULT.md) |
 | Online request, run lifecycle, ownership, store, concurrency, HTTP/Web ownership | [Online application](ONLINE_APPLICATION.md) |
-| Current delivery, remaining WP2–WP8, acceptance and deferred scope | [Roadmap](ROADMAP.md) |
+| Delivery, WP2–WP8 acceptance and deferred scope | [Roadmap](ROADMAP.md) |
 | Concern/consumer inventory, current semantic review and implementation drift | [Reconciliation](RECONCILIATION.md) |
 
 W1's descriptive futures-basis work remains owned by

@@ -32,7 +32,7 @@ single-instrument accounting kernel; W2 is its first case.
 - Bounded real IM acceptance passed for both profiles over 2025-02-17 through
   2025-03-24: 26 real CFFEX sessions, 104 Futures rows, real 2025-03-21 expiry rolls,
   final Flat, reproducible replay and identical input fingerprint across profiles.
-  Default caches were not touched. Full-window research/Web acceptance remains WP8.
+  Default caches were not touched. Full-window research/Web evidence is recorded in WP8 below.
 - Current verification and real/synthetic evidence are in
   [Reconciliation](RECONCILIATION.md#validation-evidence).
 - **WP4 — PASS (2026-11-11).** Immutable validated BacktestResult, formal trades/rolls,
@@ -51,7 +51,7 @@ single-instrument accounting kernel; W2 is its first case.
   The [HTTP contract](../../../ui_http/products/backtesting/http-contract.md) owns
   transport details; actual acceptance evidence is in
   [WP6 reconciliation](RECONCILIATION.md#wp6-http-product-acceptance--2026-11-11).
-  WP7 Web delivery is recorded below; full-window WP8 acceptance remains pending.
+  WP7 Web delivery and full-window WP8 acceptance are recorded below.
 - **WP7 — PASS (2026-11-12).** The independent authenticated
   [Web consumer](../../../ui_web/src/features/backtesting/ARCHITECTURE.md) provides
   explicit four-field input, advisory preflight, non-replayed submission, polling,
@@ -59,11 +59,16 @@ single-instrument accounting kernel; W2 is its first case.
   Generated contract belongs to the Web feature. Actual synthetic Chromium and
   regression evidence is recorded in [WP7 acceptance](../../../ui_web/src/features/backtesting/ACCEPTANCE.md).
   No producer financial calculation or HTTP wire contract changed.
+- **WP8 — PASS (2026-11-12).** Both real IM profiles completed the full requested
+  window with reproducible evidence, actual authenticated HTTP/worker execution and
+  visible Windows Chrome → WSL acceptance. The independent
+  [WP8 record](WP8_ACCEPTANCE.md) owns Run IDs, coverage, financial/roll evidence,
+  observed performance and regression results. W2 is complete within its declared scope.
 
-## Remaining work packages
+## Accepted work packages
 
-Each WP is independently reviewable, committable and accepted. WP2 through WP7 are accepted;
-WP8 remains an independent gate. No later deliverable is implied by a prior gate.
+Each WP is independently reviewable, committable and accepted. WP2 through WP8 are
+accepted; W2 is complete. No W3 or production deployment deliverable is implied.
 
 | WP | Scope and required deliverables | Dependency | Definition of Done / acceptance | Forbidden scope |
 | --- | --- | --- | --- | --- |
@@ -73,15 +78,16 @@ WP8 remains an independent gate. No later deliverable is implied by a prior gate
 | WP5 — Online Backtest Application & Run Store (**PASS**) | Online composition of the WP3 preflight plus submit/status/result application; owner scope; single worker/busy; disposable file store; atomic result publication; startup recovery; bounded result reads | WP4 | Fake-service state matrix; busy/no queue; owner isolation; restart interruption; orphan result handling; size/corruption/unsupported platform; no HTTP/UI | HTTP/UI, Publication, Workbench, multi-process/queue, W1 store reuse |
 | WP6 — HTTP Product & OpenAPI (**PASS**) | HTTP contract; strict parsing/limits; run/result DTO projection; Auth/owner/error mapping; OpenAPI; no financial recomputation | WP5 | Strict request/auth/error/limit tests; OpenAPI/freshness prerequisites; result/run/request association; preflight and no-store behavior; Web untouched | Web UI, business logic, W1 product changes, financial recomputation |
 | WP7 — Web UI Backtesting Integration (**PASS**) | `/backtesting` page: Ant Design controls, preflight/readiness, submit/poll, V2 return/drawdown charts, trades/rolls, evidence/limitations, busy/error/failed/interrupted states; generated contracts | WP6 | `npm run contract:check`, Vitest, build, lint; deterministic browser tests; no fake result/control; no React financial computation; planned page honestly replaced | Financial calculation, backend bypass, generic chart DSL, CSV/export/copy not authorized by W2 v1 |
-| WP8 — Real-Market E2E Acceptance & Reconciliation | WSL2 FastAPI + Vite + Windows Chrome real IM workflow; login → preflight → submit → poll → result → charts → trades → evidence; restart/busy/ownership/failure; final reconciliation | WP7 | Both profiles for IM, 2024-01-01 through 2026-10-30, with real rolls and final exit; real data not substituted by synthetic; all workflow states; Windows Chrome browser → WSL HTTP/Web local end-to-end acceptance; W1 regression; no W3 features; external evidence; WP8 PASS permits W2 completion | W3 fees/slippage/ETF/margin/funding/optimization; production deployment promise; unverified platform claims |
+| WP8 — Real-Market E2E Acceptance & Reconciliation (**PASS**) | WSL2 FastAPI + Vite + Windows Chrome real IM workflow; login → preflight → submit → poll → result → charts → trades → evidence; restart/busy/ownership/failure; final reconciliation | WP7 | Both profiles for IM, 2024-01-01 through 2026-10-30, with real rolls and final exit; real data not substituted by synthetic; all workflow states; Windows Chrome browser → WSL HTTP/Web local end-to-end acceptance; W1 regression; no W3 features; external evidence; [actual acceptance](WP8_ACCEPTANCE.md) closes W2 | W3 fees/slippage/ETF/margin/funding/optimization; production deployment promise; unverified platform claims |
 
-## Next delivery gate — WP8
+## WP8 acceptance outcome
 
 WP7's [feature authority](../../../ui_web/src/features/backtesting/ARCHITECTURE.md)
 and [acceptance evidence](../../../ui_web/src/features/backtesting/ACCEPTANCE.md)
-record its first Web consumer and independent generated contract. WP8 must verify
-the real IM window and Windows Chrome → WSL topology below; synthetic browser
-acceptance does not close that gate. WP7 delivery stops before executing WP8.
+record its first Web consumer and independent generated contract. The separate
+[WP8 acceptance](WP8_ACCEPTANCE.md) verifies the real IM window and Windows Chrome
+→ WSL topology. Synthetic browser acceptance alone did not close that gate.
+No blocking W2 acceptance or implementation drift remains; merging is a separate action.
 
 ## Acceptance boundaries
 
@@ -117,6 +123,6 @@ acceptance does not close that gate. WP7 delivery stops before executing WP8.
   result CSV/copy/export and production SLA remain outside this release.
 - Full canonical evidence/replay is implemented in WP4; the online result exposes its summary.
 - Native Windows store/backend support and Nginx/Docker production deployment are
-  Deferred / NOT RUN. Windows Chrome to WSL acceptance remains required by WP8.
+  Deferred / NOT RUN. Windows Chrome to WSL acceptance passed in [WP8](WP8_ACCEPTANCE.md).
 - Provider freshness/correction/TTL semantics remain DataLake-owned. HTTP wire details
   and Web generated artifacts belong to WP6/WP7, not this authority reconciliation.

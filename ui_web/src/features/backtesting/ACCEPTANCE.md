@@ -68,6 +68,8 @@ and unchanged producer/HTTP implementation.
 
 ## Remaining boundary
 
-WP8 remains unexecuted: real IM 2024-01-01 through 2026-10-30, both profiles and
-Windows Chrome → WSL workflow. No JSON/CSV export, Copy for GPT, offline evidence
+WP7 did not execute the real IM 2024-01-01 through 2026-10-30 or Windows Chrome → WSL
+gate. Subsequent actual results belong to the independent
+[WP8 acceptance record](../../../../market_backtesting/cases/futures_roll_long/WP8_ACCEPTANCE.md).
+No JSON/CSV export, Copy for GPT, offline evidence
 download, new financial metrics, costs, margin or strategy changes were introduced.

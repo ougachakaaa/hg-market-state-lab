@@ -25,9 +25,11 @@ including lost responses that might already have created a Run. Busy creates no 
 Successful Submit pushes `/backtesting?run_id=<opaque>`. Reload and Back/Forward
 restore Status; identity changes abort previous polling/result work and immediately
 hide old results. URL stores only Run identity; no result/market data enters browser storage.
-Presentation states: IDLE, SUBMITTING, PENDING, RUNNING, COMPLETED, RESULT_LOADING,
-RESULT_READY, FAILED, INTERRUPTED, STATUS_ERROR, RESULT_ERROR, RUN_BUSY, UNAVAILABLE.
-These do not extend backend states. Only PENDING/RUNNING poll; COMPLETED separately
+Run presentation phases: IDLE, STATUS_LOADING, PENDING, RUNNING, COMPLETED,
+RESULT_LOADING, RESULT_READY, FAILED, INTERRUPTED, STATUS_ERROR, RESULT_ERROR,
+UNKNOWN_RUN, UNAVAILABLE. SUBMITTING is an independent submission flag; RUN_BUSY is
+submission feedback, not a Run phase. These do not extend backend states.
+Only PENDING/RUNNING poll; COMPLETED separately
 loads Result. Read errors stop polling and allow manual GET retry. FAILED/INTERRUPTED
 have no result. Result requires a completed identity-matching Run, envelope/data
 request agreement and published result profile/definition version.
@@ -47,10 +49,12 @@ Shared ChartView renders returns/drawdown, date/decimal_ratio, producer event de
 and Zoom/Pan/Reset. Requested and observed windows remain distinct. Evidence is an
 expandable online summary, not the full offline package. Explain ideal Close gross
 execution, no fees/slippage/margin, index price benchmark, historical metadata
-assumptions, and cache completeness versus freshness. No export/copy/download or WP8.
+assumptions, and cache completeness versus freshness. No export/copy/download capability.
 
 ## Verification
 
 API, hook and page tests are feature-local. Real Chromium acceptance uses Vite,
 FastAPI, actual Auth/worker/temporary Store and synthetic public services. Actual
 results and remaining gates are recorded in [acceptance](ACCEPTANCE.md).
+Full-window real-market and Windows Chrome evidence is owned by the independent
+[WP8 acceptance record](../../../../market_backtesting/cases/futures_roll_long/WP8_ACCEPTANCE.md).

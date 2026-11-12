@@ -77,15 +77,15 @@ capabilities are Deferred delivery; a mandatory mismatch in existing code is Dri
 | 7 | W1 Slot transitions versus W2 rolls | Compatible | Policy resolves Slots on entry/expiry decisions only. A role change alone is no trade; authorized facade symbols and architecture tests preserve isolation. |
 | 8 | Look-ahead risk | Compatible | Price-free current context, configuration-only Policy and current/future Close perturbation tests enforce price isolation. Metadata/active-set point-in-time availability is an explicit assumption, not a historical freshness proof. |
 | 9 | Result / Online execution model | Requires Authority Change | Result consumes Core evidence plus Analyzer; Online composes the same path. Failure stage/category vocabulary follows Policy/Core/case ownership. No separate holding executor or ledger. WP4 Result, WP5 Online and WP6 HTTP are implemented. |
-| 10 | Completed work versus future Roadmap | Requires Authority Change | Package, Core and W2 synthetic adapter are present. WP2–WP7 are accepted and WP8 remains pending; no package/simulator recreation or dual roadmap. |
+| 10 | Completed work versus future Roadmap | Requires Authority Change | Package, Core and W2 adapter are present. WP2–WP8 are accepted; the Roadmap records W2 completion and the separate WP8 record owns actual execution evidence. No package/simulator recreation or dual roadmap. |
 | 11 | Duplicate / contradictory authority | Requires Authority Change | Entries navigate; specialized contracts own formulas and workflows. Current audit is separate from Roadmap. No previous-version authority or compatibility chain is maintained. |
 | 12 | Residual implementation mismatch | Requires Authority Change | D1 is closed with independent daily-return tests and both Performance oracles. Missing later-WP deliverables are not mislabeled as regressions. |
 
 No Blocking semantic decision is identified. DataLake integration and bounded real
 IM input acceptance are complete in WP3. Formal Result/Evidence/Views and retained-real
 reproduction are complete in WP4. Online is implemented in WP5 and HTTP in WP6.
-Web is implemented in WP7; full-window real E2E acceptance remains **Deferred** to
-WP8, so W2 is not complete. Existing DataLake/W1 contracts suffice; WP6 changes no producer
+Web is implemented in WP7; full-window real E2E acceptance is **PASS** in
+[WP8](WP8_ACCEPTANCE.md), completing W2. Existing DataLake/W1 contracts suffice; WP6 changes no producer
 contract, financial implementation or sibling HTTP business semantics.
 
 ## Implementation drift register
@@ -107,7 +107,10 @@ contract, financial implementation or sibling HTTP business semantics.
 `futures_roll_long_definition_v1`. Case, definition, result and input identities are
 explicitly tested as four distinct values; no compatibility adapter exists.
 
-No open mandatory mismatch is identified in the implemented Core/W2/WP7 subset.
+No open mandatory mismatch is identified in Core/W2/HTTP/Web after WP8 acceptance.
+The Web authority now accurately distinguishes Run phases (including STATUS_LOADING
+and UNKNOWN_RUN), the independent SUBMITTING flag and RUN_BUSY submission feedback.
+This documentation correction introduces no backend execution state.
 The Index SSE Calendar prerequisite discovered in fresh-cache real acceptance is
 explicitly reconciled in [Inputs](INPUTS.md#reconciled-index-calendar-prerequisite)
 and implemented through the Calendar public service, without producer changes.
@@ -116,8 +119,8 @@ real-instrument attribution or fail-without-partial-success requirements.
 
 ## Deferred and blocking decisions
 
-- **Blocking: none.** D1/D2 are closed; WP2–WP7 are accepted; WP7 consumer verification is recorded below.
-- **Deferred delivery:** real IM and Windows Chrome → WSL acceptance (WP8).
+- **Blocking: none.** D1/D2 are closed; WP2–WP8 are accepted. Full-window real IM,
+  Windows Chrome → WSL and final regression evidence belongs to [WP8](WP8_ACCEPTANCE.md).
 - Historical metadata availability stays an explicit research limitation. Proving
   point-in-time availability or provider-current freshness is not implied by replay.
 - Excluded features and platform/deployment limitations remain in
@@ -466,6 +469,27 @@ Evidence is a read-only summary; no full offline package/download is implied.
 
 Actual commands, counts, synthetic Chromium evidence and known limits are recorded
 once in [WP7 acceptance](../../../ui_web/src/features/backtesting/ACCEPTANCE.md).
-WP8 full-window real IM and Windows Chrome → WSL acceptance remain NOT RUN; no W2
-completion or provider freshness claim is made. No new semantic decision is needed
-for this consumer.
+At the WP7 gate, full-window real IM and Windows Chrome → WSL acceptance were NOT RUN;
+their subsequent result is recorded in [WP8](WP8_ACCEPTANCE.md). WP7 alone made no W2
+completion or provider freshness claim. No new semantic decision was needed for this consumer.
+
+## WP8 final reconciliation — 2026-11-12
+
+**WP8 PASS; W2 complete within its declared scope.** The independent
+[WP8 acceptance record](WP8_ACCEPTANCE.md) owns actual environment, exact requests,
+real coverage, Run IDs, financial/roll summaries, input identity, offline reproduction,
+Windows screenshots, performance observations and regression results.
+
+The full-window Python, actual authenticated HTTP worker and visible Windows Chrome
+runs use the same public exports and fingerprint. Pure offline reproduction rebuilds
+both complete Results and StateEvent chains. Core remains the sole Transition/PnL/
+Accounting owner; Analyzer owns benchmark/excess/drawdown; HTTP and React project
+producer outputs. No financial implementation, W1/DataLake public contract, HTTP DTO,
+OpenAPI or generated Web contract changed. No synthetic fixture supplies WP8 market facts.
+
+Controlled busy/reader/failure/crash/401/network tests and synthetic browser regressions
+remain explicitly distinct from actual real-market executions. All required regressions,
+module checks and authority navigation checks pass. No blocking semantic decision or
+implementation drift remains. Windows-native backend/store, production deployment,
+other-product real acceptance and W3 remain outside this delivery. The branch is ready
+for merge review; this task does not merge it.
