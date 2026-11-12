@@ -66,4 +66,11 @@ user-visible empty, loading and error presentation
 
 ## Runtime scope
 
-Query inputs, protected HTTP reads, preflight, retries and Run lifecycle in this feature authority describe the Production controller. The same feature-owned Presentation also serves [Static Demo Runtime](../../demo/ARCHITECTURE.md) using [validated committed Examples](../../demo/EXAMPLES.md), fixed visible request parameters and local presentation state. Static composition never mounts the production controller or fabricates its lifecycle; it preserves this feature’s result/visualization semantics and applicable local Copy/Export. In Demo, the Inspector displays the complete validated embedded Example payload with an explicit static/synthetic origin label; it must not claim an HTTP response was received. Shared presentation remains here, not in parallel Demo pages. This is a D0 target boundary; existing online Page/controller separation is subsequent implementation work.
+Query inputs, protected HTTP reads, preflight, retries and Run lifecycle in this feature authority describe the Production controller. The same feature-owned Presentation also serves [Static Demo Runtime](../../demo/ARCHITECTURE.md) using [validated committed Examples](../../demo/EXAMPLES.md), fixed visible request parameters and local presentation state. Static composition never mounts the production controller or fabricates its lifecycle; it preserves this feature’s result/visualization semantics and applicable local Copy/Export. In Demo, the Inspector displays the complete validated embedded Example payload with an explicit static/synthetic origin label; it must not claim an HTTP response was received. Shared presentation remains here, not in parallel Demo pages. D2-B implements this boundary through `presentation.ts`: shared page composition,
+`usePremiumPresentation(validatedPlane)` and pure generated-contract validation. Production
+retains query, cancellation, stale-response and Auth lifecycle in `usePremiumPlane`.
+Every new query resets presentation; every replacement static result starts with the
+formal defaults and all expiries selected. Raw JSON/Context/Inspector retain the exact
+validated payload object, while CSV uses its validated plane. The pure validator preserves
+the nonempty-Points success invariant. `testing/static/` is a verification harness using
+regression data, not an official Example or public Demo entry.
