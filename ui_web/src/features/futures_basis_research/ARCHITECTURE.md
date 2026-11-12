@@ -196,6 +196,11 @@ The offline entry continues to bundle a self-contained report with no fetch, CDN
 application/auth import or backend. It may import only the pure reader subpath.
 The online page uses the same reader under the application theme. No second
 six-section implementation and no second financial projection is authorized.
+
+The public [static demo](../../demo/futures_basis/ARCHITECTURE.md) also composes
+this pure reader with `demo` disclosure mode and horizontally scrollable chart
+frames on narrow screens. All six sections, presentation controls and producer
+facts stay shared. Online and offline modes retain their delivery instructions.
 WP8 must preserve the existing offline Vitest, build and real-Chromium offline
 report acceptance.
 

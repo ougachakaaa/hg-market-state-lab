@@ -48,7 +48,7 @@ it('composes a standalone offline title and subordinate online report title with
   expect(data).toEqual(before)
 })
 
-it.each(['online', 'offline'] as const)('defaults all history charts to Trading Days and switches together (%s)', mode => {
+it.each(['online', 'offline', 'demo'] as const)('defaults all history charts to Trading Days and switches together (%s)', mode => {
   const data = readerFixture(); const before = structuredClone(data)
   render(<Report data={data} mode={mode} />)
   expect(screen.getAllByTestId('chart-mode').map(e => e.textContent)).toEqual(['trading', 'trading', 'trading'])
@@ -78,5 +78,17 @@ it('formats Overview, quantiles, intervals and paired means by explicit result u
   expect(screen.getAllByText('0.5').length).toBeGreaterThan(0) // Quantile probability remains raw.
   fireEvent.click(container.querySelector('#section-3 .ant-table-row-expand-icon')!)
   expect(screen.getAllByText('Mean：15.3%')).toHaveLength(3)
+  expect(data).toEqual(before)
+})
+
+it('uses static demo evidence copy without claiming online transport or adjacent evidence files', () => {
+  const data = readerFixture(); const before = structuredClone(data)
+  const { container } = render(<Report data={data} mode="demo" />)
+  expect(container.querySelectorAll('[id^="section-"]')).toHaveLength(6)
+  expect(screen.getByText(/本报告展示 Synthetic Fixture/)).toBeTruthy()
+  expect(screen.queryByText(/此 HTTP 接口/)).toBeNull()
+  expect(screen.queryByText(/相邻 inputs.canonical.json/)).toBeNull()
+  fireEvent.click(screen.getByText('Producer Report Request'))
+  expect(screen.getByText(JSON.stringify(data.request))).toBeTruthy()
   expect(data).toEqual(before)
 })
