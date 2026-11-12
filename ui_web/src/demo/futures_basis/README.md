@@ -1,5 +1,11 @@
 # Backend-free Historical Basis Demo
 
+This guide documents the shipped V1 single-page commands and historical WP3/WP4
+evidence. [Static Demo V2 authority](../ARCHITECTURE.md) now defines the shared UI,
+seven-page read-only target; [D0 handoff](../IMPLEMENTATION.md) records the remaining
+implementation. The commands below still build V1. V2 D7 owns the future `main` release
+trigger; D0 does not modify the current feature-branch deployment workflow.
+
 WP3 provides one static page for **股指期货历史基差研究**. It consumes the
 committed WP2 `futuresBasisDemoFixture`, validated through `validateReportData`,
 and reuses the six-section Futures Basis `Report`, ChartView / Plotly and shared
@@ -117,12 +123,15 @@ Metric/Slot and chart interactions, refresh/anchors, and network traffic for
 API/Auth/external requests. Local preview results must remain separate.
 Current evidence and any manual setup blockers: [WP4 acceptance](DEPLOYMENT_ACCEPTANCE.md).
 
-### WP5 release transition
+### WP5 release transition (superseded by V2 D7)
 
-Continue on `feat/github-pages-demo` with independent commits. Do not create a
-per-WP branch, rebase, force push or merge into `main`/`develop` in WP4. During
-WP5's authorized final reconciliation/release, change `on.push.branches` to
-`main`, authorize `main` in the existing Environment policy without weakening
-protections, and release the reconciled workflow to `main`. Recheck the production
-run and public browser acceptance before labeling a link **Live Demo**. If a manual
-trigger is later added, its definition must first be present on the default branch.
+The V1 plan assigned a future main-trigger transition to WP5. That assignment is
+superseded by [V2 release authority](../ARCHITECTURE.md#generation-versus-release):
+D7 owns the reviewed change to `on.push.branches: main`, Pages Environment branch
+policy and release validation. D0 leaves the current feature-branch trigger intact.
+Continue D0 on `feat/github-pages-demo` with an independent commit; do not merge,
+rebase or force push. The long-term flow is feature development → develop → release
+review → main → Actions → Pages. Environment protections remain in force. Recheck
+deployment and public browser acceptance before claiming Live Demo updated; a local
+build or failed deployment is insufficient. If a manual trigger is later added,
+its definition must first be present on the default branch.

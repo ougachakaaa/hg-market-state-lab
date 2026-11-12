@@ -58,3 +58,7 @@ FastAPI, actual Auth/worker/temporary Store and synthetic public services. Actua
 results and remaining gates are recorded in [acceptance](ACCEPTANCE.md).
 Full-window real-market and Windows Chrome evidence is owned by the independent
 [WP8 acceptance record](../../../../market_backtesting/cases/futures_roll_long/WP8_ACCEPTANCE.md).
+
+## Runtime scope
+
+Query inputs, protected HTTP reads, preflight, retries and Run lifecycle in this feature authority describe the Production controller. The same feature-owned Presentation also serves [Static Demo Runtime](../../demo/ARCHITECTURE.md) using [validated committed Examples](../../demo/EXAMPLES.md), fixed visible request parameters and local presentation state. Static composition never mounts the production controller or fabricates its lifecycle; it preserves this feature’s result/visualization semantics and applicable local Copy/Export. Shared presentation remains here, not in parallel Demo pages. This is a D0 target boundary; existing online Page/controller separation is subsequent implementation work.

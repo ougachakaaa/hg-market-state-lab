@@ -36,3 +36,7 @@ boundary handles 401 and unmounts all Research content; no data survives a sessi
 change. The slice follows the [presentation architecture](../../../presentation-architecture.md)
 and [UI system](../../../ui-system.md) without a shared Research runtime or financial
 calculation in React.
+
+## Runtime scope
+
+Query inputs, protected HTTP reads, preflight, retries and Run lifecycle in this feature authority describe the Production controller. The same feature-owned Presentation also serves [Static Demo Runtime](../../demo/ARCHITECTURE.md) using [validated committed Examples](../../demo/EXAMPLES.md), fixed visible request parameters and local presentation state. Static composition never mounts the production controller or fabricates its lifecycle; it preserves this feature’s result/visualization semantics and applicable local Copy/Export. Shared presentation remains here, not in parallel Demo pages. This is a D0 target boundary; existing online Page/controller separation is subsequent implementation work.

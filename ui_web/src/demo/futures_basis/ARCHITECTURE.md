@@ -1,5 +1,11 @@
 # Futures Basis static demo data
 
+V1 fixture authority and historical WP3/WP4 implementation record. The target multi-page
+architecture is now owned by [Static Demo V2](../ARCHITECTURE.md), with its
+[Example contract](../EXAMPLES.md). One-page/no-router/independent-shell statements below
+describe V1 only; V2 shares the formal shell and all seven business surfaces. The V1
+fixture profile/window remains unchanged. Historical acceptance is not V2 evidence.
+
 Specializes [ui_web](../../../ARCHITECTURE.md), the
 [R01-A delivery](../../../../market_research/descriptive/cases/futures_basis/DELIVERY.md)
 and the shared [Futures Basis reader](../../features/futures_basis_research/ARCHITECTURE.md).
@@ -76,8 +82,9 @@ metadata, private dataset or redistributable market data. Tests scan the fixture
 credentials and local paths and pin the section coverage; review any regeneration diff
 before commit.
 
-Scope is intentionally one case. MO Option Chain, MO Premium Plane and Backtesting
-demos need their own fixture authority and are not implied by this contract.
+This V1 fixture owns one case only. V2 MO Option Chain, MO Premium Plane and Backtesting
+Examples follow the parent Example contract and their existing feature/producer authorities;
+this fixture does not define their business semantics.
 
 ## Static presentation entry (WP3)
 
@@ -113,4 +120,6 @@ No Python, fixture regeneration, secret or application runtime is part of delive
 The repository Pages Source must be GitHub Actions; existing Environment protection
 must be respected. Public availability requires a successful deployment and separate
 public HTTP/browser acceptance, never inferred from a local preview.
-WP5 owns final reconciliation/release and the eventual trigger change to `main`.
+The former WP5 eventual-trigger plan is superseded: V2 D7 owns the reviewed trigger
+change to `main` under the parent release authority. Until D7, the current branch trigger
+is an implementation fact, not the long-term release policy.

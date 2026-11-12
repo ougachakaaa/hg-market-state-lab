@@ -260,3 +260,7 @@ execution will attempt acquisition; reset it on query/result changes. Only an
 explicit Generate posts a Run; check completion never submits. End-date changes
 remain user-controlled; today blocks offer editing and recheck, no hidden ensure
 or automatic shift to yesterday. Failed-Run retry first loads/checks its request.
+
+## Runtime scope
+
+Query inputs, protected HTTP reads, preflight, retries and Run lifecycle in this feature authority describe the Production controller. The same feature-owned Presentation also serves [Static Demo Runtime](../../demo/ARCHITECTURE.md) using [validated committed Examples](../../demo/EXAMPLES.md), fixed visible request parameters and local presentation state. Static composition never mounts the production controller or fabricates its lifecycle; it preserves this feature’s result/visualization semantics and applicable local Copy/Export. Shared presentation remains here, not in parallel Demo pages. This is a D0 target boundary; existing online Page/controller separation is subsequent implementation work.

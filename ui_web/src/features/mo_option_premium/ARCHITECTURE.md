@@ -53,7 +53,7 @@ user-visible empty, loading and error presentation
 5. 新 query 的旧 response 不得作为当前 observation 展示，较早请求不得覆盖较新 query 的结果。
 6. Table rows 是 selected side 与 selected expiries 下全部真实 Point strikes 的 numeric union；frontend 不按 reference price 或显示范围删除真实 Point。
 7. Strike relative-to-reference coloring 只属于 presentation，不创建 analytical metric、Point 或市场判断，也不由 selected metric reference basis 控制。
-8. Raw HTTP Response Inspector 只展示当前成功 Premium request 实际收到且通过 runtime validation 的完整 JSON payload；它不是 Source Raw、Premium Raw Artifact、canonical Point 或 table projection，也不受 local presentation state 影响。
+8. Production 的 Raw HTTP Response Inspector 只展示当前成功 Premium request 实际收到且通过 runtime validation 的完整 JSON payload；它不是 Source Raw、Premium Raw Artifact、canonical Point 或 table projection，也不受 local presentation state 影响。
 9. query identity 改变后，旧 raw payload 与旧 validated response 同时退出 current-result 状态；idle、loading 与 failure 均不得把上一笔成功 payload 标记为当前原始响应。
 
 ## 4. Navigation
@@ -63,3 +63,7 @@ user-visible empty, loading and error presentation
 - HTTP resource、wire projection、ordering 与 error mapping：[ui_http HTTP contract](../../../../ui_http/products/mo_option_premium/http-contract.md)
 
 只沿当前任务需要的分支继续读取。Frontend implementation 不需要读取 backend Source、Raw、formula、Preparation 或 orchestration authority。
+
+## Runtime scope
+
+Query inputs, protected HTTP reads, preflight, retries and Run lifecycle in this feature authority describe the Production controller. The same feature-owned Presentation also serves [Static Demo Runtime](../../demo/ARCHITECTURE.md) using [validated committed Examples](../../demo/EXAMPLES.md), fixed visible request parameters and local presentation state. Static composition never mounts the production controller or fabricates its lifecycle; it preserves this feature’s result/visualization semantics and applicable local Copy/Export. In Demo, the Inspector displays the complete validated embedded Example payload with an explicit static/synthetic origin label; it must not claim an HTTP response was received. Shared presentation remains here, not in parallel Demo pages. This is a D0 target boundary; existing online Page/controller separation is subsequent implementation work.
