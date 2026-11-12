@@ -63,6 +63,10 @@ export function ResearchExplorerPresentation({ controller, mode, sourceDisclosur
           <Button disabled={!controller.canPrevious} onClick={controller.previous}>上一页</Button>
           <Button disabled={!controller.canNext} onClick={controller.next}>下一页</Button>
         </Flex>
+        {staticMode && !controller.canNext && (controller.morePagesNotEmbedded
+          ? <Alert type="info" title="后续页面未嵌入"
+            description="此嵌入示例止于本页；该页仍声明可继续分页，因此在线 Publication Store 还有未嵌入的后续页面，不能视为在线列表的最后一页。" showIcon />
+          : <Typography.Text type="secondary">该嵌入页未声明后续分页；这只描述嵌入集合的末端，不代表在线 Store 当前状态。</Typography.Text>)}
       </>}
     </Card>
 

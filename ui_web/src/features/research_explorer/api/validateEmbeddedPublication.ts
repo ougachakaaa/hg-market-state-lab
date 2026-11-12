@@ -28,6 +28,12 @@ export interface ValidatedPublicationSet {
   manifests: ReadonlyMap<string, Manifest>
   analyses: ReadonlyMap<string, ReadonlyMap<string, Analysis>>
   views: ReadonlyMap<string, ReadonlyMap<string, ChartViewContract>>
+  /**
+   * Declared continuation of the final embedded page, or null when that page ends the
+   * online cursor chain. A non-null value means the embedded set stops before pages the
+   * online store still declares; it is never a claim that the online list ended.
+   */
+  unembeddedCursor: string | null
 }
 
 function nonempty(value: unknown, field: string): asserts value is string {
@@ -61,8 +67,9 @@ function nested<T>(map: Map<string, Map<string, T>>, publicationId: string): Map
 
 // Validate identities that the Manifest itself owns before checking optional embedded
 // detail records. Every Analysis summary belongs to exactly one published Job, repeated
-// Job identities are ambiguous, and a View reference has one Analysis owner.
-function validateManifestRelations(manifest: Manifest) {
+// Job identities are ambiguous, and a View reference has one Analysis owner. The returned
+// map is the publication's formal View Reference set.
+function validateManifestRelations(manifest: Manifest): ReadonlyMap<string, string> {
   const requests = new Map<string, Manifest['scope']['analysis_requests'][number]>()
   for (const request of manifest.scope.analysis_requests) {
     nonempty(request.request_id, 'request_id')
@@ -113,6 +120,21 @@ function validateManifestRelations(manifest: Manifest) {
   for (const analysisId of summaries.keys()) {
     if (!referenced.has(analysisId)) throw new Error(`Analysis ${analysisId} is not referenced by a published Job`)
   }
+  return viewOwners
+}
+
+// Embedded pages are a contiguous prefix of the online cursor chain: only the final
+// embedded page may declare the chain's end, and it may also stop before pages the online
+// store still declares. Page bytes, including opaque cursor values, are never created,
+// decoded or rewritten here; the declared cursor is returned unchanged.
+function validatePageContinuation(pages: readonly PublicationList[]): string | null {
+  for (const [index, page] of pages.entries()) {
+    if (page.next_cursor !== null && index === pages.length - 1) return page.next_cursor
+    if (page.next_cursor === null && index < pages.length - 1) {
+      throw new Error(`Embedded page ${index + 1} declares no next page but embedded page ${index + 2} follows it`)
+    }
+  }
+  return null
 }
 
 function validateAnalysisRelations(analysis: Analysis, manifest: Manifest) {
@@ -149,8 +171,10 @@ export function validateEmbeddedPublicationSet(payload: EmbeddedPublicationSetPa
       navigation.set(item.publication_id, item)
     }
   }
+  const unembeddedCursor = validatePageContinuation(pages)
 
   const manifests = new Map<string, Manifest>()
+  const viewReferences = new Map<string, ReadonlyMap<string, string>>()
   for (const raw of payload.manifests) {
     const manifest = validateManifest(raw)
     nonempty(manifest.publication_id, 'publication_id')
@@ -159,7 +183,7 @@ export function validateEmbeddedPublicationSet(payload: EmbeddedPublicationSetPa
     if (navigation.get(manifest.publication_id)!.status !== manifest.status) {
       throw new Error(`Publication ${manifest.publication_id} status does not match its Manifest`)
     }
-    validateManifestRelations(manifest)
+    viewReferences.set(manifest.publication_id, validateManifestRelations(manifest))
     manifests.set(manifest.publication_id, manifest)
   }
 
@@ -181,11 +205,17 @@ export function validateEmbeddedPublicationSet(payload: EmbeddedPublicationSetPa
     nonempty(record.publication_id, 'publication_id')
     nonempty(record.view_id, 'view_id')
     if (!manifests.has(record.publication_id)) throw new Error(`View publication has no embedded Manifest: ${record.publication_id}`)
+    // An embedded ChartView is only legal when its own publication's Manifest declares a
+    // formal View Reference with that ID. A published reference without an embedded View
+    // stays a legal missing detail; the reverse is an illegal embedded set.
+    if (!viewReferences.get(record.publication_id)?.has(record.view_id)) {
+      throw new Error(`Embedded ChartView ${record.view_id} has no published View reference`)
+    }
     const view = validateChartViewData(record.view)
     const records = nested(views, record.publication_id)
     if (records.has(record.view_id)) throw new Error(`Duplicate embedded ChartView: ${record.view_id}`)
     records.set(record.view_id, view)
   }
 
-  return { pages, publicationIds, manifests, analyses, views }
+  return { pages, publicationIds, manifests, analyses, views, unembeddedCursor }
 }
