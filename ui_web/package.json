@@ -18,7 +18,11 @@
     "report:futures-basis": "node scripts/package_futures_basis_report.mjs",
     "test:futures-basis-report-browser": "node scripts/futures_basis_report_browser.mjs",
     "test:daily-data-copy-export-browser": "node scripts/daily_data_copy_export_browser.mjs",
-    "test:backtesting-browser": "node scripts/backtesting_browser_acceptance.mjs"
+    "test:backtesting-browser": "node scripts/backtesting_browser_acceptance.mjs",
+    "demo:dev": "vite --config vite.demo.config.ts",
+    "demo:build": "tsc -p tsconfig.demo.json && vite build --config vite.demo.config.ts",
+    "demo:preview": "vite preview --config vite.demo.config.ts",
+    "test:demo-browser": "node scripts/futures_basis_demo_browser.mjs"
   },
   "dependencies": {
     "@ant-design/icons": "^6.3.4",

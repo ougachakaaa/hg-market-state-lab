@@ -78,3 +78,27 @@ before commit.
 
 Scope is intentionally one case. MO Option Chain, MO Premium Plane and Backtesting
 demos need their own fixture authority and are not implied by this contract.
+
+## Static presentation entry (WP3)
+
+The independent `index.html` / `main.tsx` entry composes the shared application
+Ant Design theme, a public introduction, fixture disclosure, shared six-section
+Reader and repository/documentation links. It imports neither the authenticated
+application shell nor HTTP clients and reads no authentication state. All assets
+are bundled locally; no CDN, remote font, mock server or business request is allowed.
+
+The fixture is loaded through a dynamic import of `fixture.ts`: import-time
+validation failures show a visible error instead of mounting report results.
+Loading shows only a pending message; reader rendering failures have their own
+error boundary. The reader's `demo` evidence copy describes static delivery:
+it makes no claim to an online HTTP response or adjacent sealed evidence files.
+Disclosure label, notice and data_source are consumed verbatim above the report;
+a compact synthetic label stays visible while scrolling, with the full notice
+available through its anchor. In demo mode, narrow screens scroll the shared
+chart frames horizontally to preserve readable labels; chart semantics do not change.
+
+`vite.demo.config.ts` owns the standalone build, fixed `/hg-market-state-lab/`
+base and ignored `dist-demo/` output. There is one page, no router and no change
+to production app routes, auth, proxies or build. Building needs only npm dependencies
+and the committed fixture, never Python, a token or fixture generation.
+Usage and WP4 static deployment handoff: [Demo guide](README.md).
