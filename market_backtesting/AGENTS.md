@@ -8,19 +8,23 @@
 | Task | Next authority |
 | --- | --- |
 | Module ownership、依赖方向、case 边界 | [ARCHITECTURE.md](ARCHITECTURE.md) |
+| Replay、Portfolio、Transition、Daily PnL、累计核算 | [Core](core/ARCHITECTURE.md) |
 | Case identity、request、strategy profile、scope/status | [Futures Roll Long case](cases/futures_roll_long/ARCHITECTURE.md) |
 | Real-contract position、entry/hold/roll/exit、contract vs slot、failure matrix | [Strategy](cases/futures_roll_long/STRATEGY.md) |
-| Initial notional、daily PnL、benchmark、returns、equity、drawdown | [Accounting](cases/futures_roll_long/ACCOUNTING.md) |
+| Initial notional、benchmark、drawdown、case performance | [Performance](cases/futures_roll_long/PERFORMANCE.md) |
 | DataLake public bindings、completeness、W1 slot 复用、fingerprint/readiness | [Inputs](cases/futures_roll_long/INPUTS.md) |
 | BacktestResult、evidence、limitations、V2 projection | [Result](cases/futures_roll_long/RESULT.md) |
+| Portable evidence package、encoding、pure offline reproduction | [Evidence](cases/futures_roll_long/EVIDENCE.md) |
 | Online request、run lifecycle、store、concurrency、HTTP/Web ownership | [Online application](cases/futures_roll_long/ONLINE_APPLICATION.md) |
-| WP0–WP8、acceptance、reconciliation、deferred | [Roadmap](cases/futures_roll_long/ROADMAP.md) |
+| 当前状态、剩余 WP、acceptance、deferred | [Roadmap](cases/futures_roll_long/ROADMAP.md) |
+| 当前职责映射、语义审查、Implementation Drift | [Reconciliation](cases/futures_roll_long/RECONCILIATION.md) |
+| Actual real-market、HTTP、Windows Chrome 执行证据 | [WP8 acceptance](cases/futures_roll_long/WP8_ACCEPTANCE.md) |
 
 ## 执行规则
 
 - `market_backtesting` 只实现当前已确认的 `futures_roll_long_v1`；不得预先建立
-  generic strategy engine、plugin/registry、multi-strategy portfolio、optimizer 或未来
-  strategy abstraction。
+  order-driven trading framework、broker/matching、plugin/registry、multi-strategy portfolio、optimizer 或未来
+  strategy scaffold；允许 [Core V1](core/ARCHITECTURE.md) 明确授权的策略无关日频回放。
 - Strategy/accounting/input/result/online 语义分别只属于上述 narrowest authority。
   修改行为前先更新对应 authority；下层只能 specialize 或 constrain 上层 invariant。
 - 不修改 W1 Research 的代码、公式或 public contract。只允许通过 case Inputs 明确列出的
@@ -39,10 +43,12 @@
 
 ## 验证
 
-WP0 是 authority-only：只运行 Markdown links/anchors/reachability、topology 检查与
-`git diff --check`，不要求 Python/HTTP/Web 测试矩阵。
+Authority-only 修改必须检查 Markdown links/anchors/reachability、唯一 Owner、
+导航 topology、公共 API 静态一致性和 Markdown-only diff。当前 W2 reconciliation
+同时运行现有 Backtesting 测试及下列 topology/architecture 检查；不得通过修改测试
+关闭文档与实现差异，未实现的强制契约登记到当前 Implementation Drift。
 
-WP1 起在 repository root 按影响范围运行：
+在 repository root 按影响范围运行：
 
 ```bash
 poetry run pytest market_backtesting/tests

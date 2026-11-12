@@ -1,10 +1,12 @@
-# Futures Roll Long strategy and holding simulation
+# Futures Roll Long Mechanical Roll Position Policy
 
-This contract owns the position state machine, session decision order, real-contract
-versus Slot identity, roll trigger and failure rules for the
-[case](ARCHITECTURE.md). It does not own PnL formulas
-([Accounting](ACCOUNTING.md)), upstream completeness ([Inputs](INPUTS.md)) or
-result projection ([Result](RESULT.md)).
+This contract owns W2 Mechanical Roll Position Policy for the [case](ARCHITECTURE.md).
+Policy consumes current session, previous actual Portfolio, price-free current-session
+Decision Context and immutable strategy configuration; returns an immutable Target
+Portfolio. It never mutates actual state, executes a trade or computes PnL.
+[Core Transition](../../core/PORTFOLIO_TRANSITION.md) owns all state evolution and PnL;
+[Performance](PERFORMANCE.md) owns case analysis. References to trades below describe
+the required consequences when Core consumes a W2 target, not a second case executor.
 
 ## Identity model
 
@@ -43,35 +45,22 @@ No weekday rule, holiday heuristic, `pretrade_date` inference or adjacent-day jo
 may supplement a missing Calendar. Calendar completeness and exact scope are
 validated by [Inputs](INPUTS.md).
 
-## Decision and accounting order
+## Decision order
 
-For each CFFEX session in strictly increasing order:
+The Policy sees no current Close. Validate held real identity and lifecycle first;
+expiry before the session fails even on the final session. Then apply these priorities:
 
-1. Validate the session's required Futures facts: the currently held contract's row,
-   lifecycle and legal Close, and on a decision session the target's row and legal
-   Close. Export completeness/public-fact validity and benchmark Index data are not
-   strategy inputs; this stage performs no market I/O.
-2. Attribute the session's PnL to the contract held from the previous session's
-   close. Entry day PnL is zero. On a roll or final session, the PnL belongs to the
-   old, still-held contract.
-3. If this is the final session: close any position at the session Close, record the
-   exit, terminate. Do not enter or roll.
-4. If flat: resolve the session's Slots; select `M1`; validate that the target is
-   active, has a legal Close and `delist_date > session`; enter at the Close. The
-   session's PnL remains zero.
-5. If holding and `session < delist_date`: continue holding. No decision-day Slot
-   resolution is required.
-6. If holding and `session == delist_date`: resolve the session's Slots; select the
-   profile target (`M1` or `Q1`); validate the target; close the old contract at the
-   Close and open the target at the same Close; record one roll. The new contract's
-   PnL begins at the next session's close-to-close move.
-7. If holding and `session > delist_date`: fail
-   `held_contract_expired_without_roll`. Never continue an expired contract.
+1. Final session: return flat; never resolve Slots or roll. An unexpected flat previous
+   state fails `no_position_on_final_session`.
+2. First session with flat previous state: resolve M1 and return one-lot-long target.
+   Flat on another non-final date fails `unexpected_flat_state`.
+3. Held instrument before expiry: return the same one-lot target; no Slot resolution.
+4. Held instrument on expiry: resolve its current M0 membership and profile M1/Q1
+   target from the same validated active set; return the replacement one-lot target.
 
-The final-session rule deliberately precedes entry/roll. A valid study window has at
-least two sessions, so the first session cannot also be the final session. If a
-future version admits a shorter window, it must define a new result contract; v1
-does not invent a flat/no-holding-period result.
+Target metadata must prove active lifecycle and remaining holding period, distinct
+identity on roll and consistent multiplier. Core validates execution prices after
+Policy decides. Replay alone advances dates and state, then accounts/records each day.
 
 ## State machine
 
@@ -173,14 +162,14 @@ repair or continue when any of the following is true:
   export;
 - Session count, price, equity or result arithmetic becomes non-finite or invalid.
 
-A failure is classified by the online application
-([Online application](ONLINE_APPLICATION.md)); it never degrades into a partial
-BacktestResult. Missing data is never treated as a closed session, zero price, zero
-volume or an implicit empty active set.
+Pure Policy/replay failures retain the public Core/case category and reason. The
+[Online application](ONLINE_APPLICATION.md) projects them with execution-stage context;
+a failure never degrades into a partial BacktestResult. Missing data is never treated
+as a closed session, zero price, zero volume or an implicit empty active set.
 
 ## Required tests
 
-WP1 must test at least:
+Required Policy/Core/integration coverage:
 
 - first-session entry at M1; both profiles;
 - normal holding and final-session exit;
@@ -194,5 +183,17 @@ WP1 must test at least:
 - Calendar/Futures/Index scope, completeness and underlying inconsistencies;
 - deterministic ordering and immutable inputs.
 
-No market data acquisition is required for WP1. Synthetic fixtures are sufficient and
-preferred; WP3 adds the public-service integration and bounded real IM acceptance.
+Pure policy/replay acceptance uses synthetic fixtures without market acquisition.
+WP3 adds public-service integration and bounded real IM acceptance; current completion
+is recorded in the [roadmap](ROADMAP.md).
+
+## Decision evidence and Python boundary
+
+`MechanicalRollPolicy` stores product/profile configuration only. `DecisionContext`
+contains first/final flags, current metadata/instrument references and optional current
+active-set evidence; no price, Snapshot, full calendar or future facts. The target
+retains decision reason, selection Slot, validated old Slot on a roll and source ref.
+`replay_futures_roll(FuturesRollInput)` prepares synthetic contexts/snapshots, derives
+capital using [Performance](PERFORMANCE.md), calls Core Replay once and projects
+executions/rolls from recorded Core events. It returns `FuturesRollReplay`, not the
+future full BacktestResult. There is no legacy holding-only execution API.

@@ -190,6 +190,10 @@ def test_runtime_openapi_publishes_composed_products_without_422() -> None:
     document = authenticated_client(runtime_app).get("/openapi.json").json()
 
     assert set(document["paths"]) == {
+        "/backtesting/futures-roll/preflight",
+        "/backtesting/futures-roll/runs",
+        "/backtesting/futures-roll/runs/{run_id}",
+        "/backtesting/futures-roll/runs/{run_id}/result",
         "/mo-option-chain",
         ROUTE,
         "/research/capabilities",

@@ -6,6 +6,7 @@ import OptionChainPage from '../features/mo_option_chain'
 import PremiumPlanePage from '../features/mo_option_premium'
 import ResearchExplorerPage from '../features/research_explorer/page/ResearchExplorerPage'
 import ResearchWorkspacePage from '../features/research_catalog/page/ResearchWorkspacePage'
+import BacktestingPage from '../features/backtesting/page/BacktestingPage'
 import AppUiProvider from './AppUiProvider'
 import AuthForm from './auth/AuthForm'
 import { useAuthentication } from './auth/useAuthentication'
@@ -22,16 +23,15 @@ const titles: Record<WorkspacePath, string> = {
   '/backtesting': '回测',
 }
 
-function Landing({ area, navigate }: { area: 'data' | 'backtesting'; navigate: (path: WorkspacePath) => void }) {
+function Landing({ navigate }: { navigate: (path: WorkspacePath) => void }) {
   return <Flex vertical gap="large">
     <header>
-      <Typography.Title level={1} style={{ margin: 0, fontSize: 24 }}>{area === 'data' ? '数据总览' : '回测'}</Typography.Title>
+      <Typography.Title level={1} style={{ margin: 0, fontSize: 24 }}>数据总览</Typography.Title>
       <Typography.Paragraph type="secondary" style={{ marginBottom: 0 }}>
-        {area === 'data' ? '查看 MO 数据产品，读取结果后可复制 JSON 或导出数据。'
-          : '规划中：策略模拟与历史验证尚未实现，目前没有回测结果。'}
+        查看 MO 数据产品，读取结果后可复制 JSON 或导出数据。
       </Typography.Paragraph>
     </header>
-    {area === 'data' && <Flex gap="middle" wrap>
+    <Flex gap="middle" wrap>
       <Card title="MO Option Chain" style={{ flex: '1 1 280px', minWidth: 0 }}>
         <Typography.Paragraph type="secondary">查看期权链价格分布与同到期 Futures 参考。</Typography.Paragraph>
         <Button icon={<DotChartOutlined aria-hidden="true" />} onClick={() => navigate('/data/mo-option-chain')}>打开 MO Option Chain</Button>
@@ -40,7 +40,7 @@ function Landing({ area, navigate }: { area: 'data' | 'backtesting'; navigate: (
         <Typography.Paragraph type="secondary">查看多维权利金稀疏数值平面。</Typography.Paragraph>
         <Button icon={<TableOutlined aria-hidden="true" />} onClick={() => navigate('/data/mo-premium-plane')}>打开 MO Premium Plane</Button>
       </Card>
-    </Flex>}
+    </Flex>
   </Flex>
 }
 
@@ -91,7 +91,7 @@ function ApplicationShell({ user, signOut, path, navigate }: {
             { key: '/data/mo-option-chain', icon: <DotChartOutlined aria-hidden="true" />, label: 'MO Option Chain' },
             { key: '/data/mo-premium-plane', icon: <TableOutlined aria-hidden="true" />, label: 'MO Premium Plane' },
           ] },
-          { key: '/backtesting', label: '回测 · 规划中', icon: <HistoryOutlined aria-hidden="true" /> },
+          { key: '/backtesting', label: '回测', icon: <HistoryOutlined aria-hidden="true" /> },
         ]} />
     </Layout.Sider>
     <Layout style={{ minWidth: 0 }}>
@@ -118,10 +118,10 @@ function ApplicationShell({ user, signOut, path, navigate }: {
         {path === '/research' ? <ResearchWorkspacePage openExplorer={() => navigate('/research/publications')} openFuturesBasis={() => navigate('/research/futures-basis')} />
           : path === '/research/futures-basis' ? <FuturesBasisPage />
           : path === '/research/publications' ? <ResearchExplorerPage />
-            : path === '/data' ? <Landing area="data" navigate={navigate} />
+            : path === '/data' ? <Landing navigate={navigate} />
               : path === '/data/mo-option-chain' ? <OptionChainPage />
                 : path === '/data/mo-premium-plane' ? <PremiumPlanePage />
-                  : <Landing area="backtesting" navigate={navigate} />}
+                  : <BacktestingPage />}
       </Layout.Content>
     </Layout>
   </Layout>

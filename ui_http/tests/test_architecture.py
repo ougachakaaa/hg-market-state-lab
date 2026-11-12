@@ -140,3 +140,25 @@ def test_research_and_statistics_have_no_reverse_http_dependency() -> None:
         if any(name == prefix or name.startswith(prefix + ".") for prefix in forbidden)
     ]
     assert not violations, violations
+
+
+def test_backtesting_delivery_uses_only_public_case_facade() -> None:
+    allowed = "market_backtesting.cases.futures_roll_long"
+    violations = [
+        f"{source.relative_to(REPOSITORY_ROOT)} -> {name}"
+        for source in BACKEND_SOURCE.rglob("*.py")
+        for name in imported_modules(source)
+        if name.startswith("market_backtesting") and name != allowed
+    ]
+    assert not violations, violations
+
+
+def test_backtesting_has_no_reverse_http_dependency() -> None:
+    forbidden = ("ui_http", "fastapi", "starlette", "uvicorn")
+    violations = [
+        f"{source.relative_to(REPOSITORY_ROOT)} -> {name}"
+        for source in (REPOSITORY_ROOT / "market_backtesting/src").rglob("*.py")
+        for name in imported_modules(source)
+        if any(name == prefix or name.startswith(prefix + ".") for prefix in forbidden)
+    ]
+    assert not violations, violations

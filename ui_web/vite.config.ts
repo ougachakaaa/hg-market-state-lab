@@ -7,6 +7,10 @@ export default defineConfig({
   server: {
     host: '127.0.0.1',
     proxy: {
+      '/api/backtesting': {
+        target: 'http://127.0.0.1:8011',
+        rewrite: (path) => path.replace(/^\/api/, ''),
+      },
       '/api/research': {
         target: 'http://127.0.0.1:8011',
         rewrite: (path) => path.replace(/^\/api/, ''),

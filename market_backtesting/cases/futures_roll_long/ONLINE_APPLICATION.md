@@ -4,7 +4,7 @@ This contract owns the case-specific online request, read-only readiness assessm
 run lifecycle, runtime result store, owner boundary and read semantics for the
 [case](ARCHITECTURE.md). HTTP transport belongs to `ui_http` (WP6); browser interaction
 belongs to `ui_web` (WP7). This document does not define the HTTP DTO/OpenAPI or the Web
-layout, and does not own Strategy, Accounting, Inputs or Result semantics.
+layout, and does not own Policy, Core, Performance, Inputs or Result semantics.
 
 The design deliberately reuses operational principles validated by
 [W1 R01-A online application](../../../market_research/descriptive/cases/futures_basis/ONLINE_APPLICATION.md),
@@ -38,17 +38,13 @@ client cannot select a different case, benchmark, multiplier, roll rule, fee mod
 strategy parameter. The case is bound by the application; only the four client
 parameters above are accepted under the WP6 wire contract.
 
-Pure request validation, before run creation or upstream I/O:
-
-- product is exactly one canonical member of `IM / IC / IF / IH`;
-- dates are date-only, inclusive, with `start_date <= end_date`;
-- `end_date` is not after the current date in `Asia/Shanghai`;
-- inclusive span `(end_date - start_date).days + 1` is at most 1,096 days;
-- profile is exactly one of the two named profiles.
+Pure request validation delegates to the [case request contract](ARCHITECTURE.md#request-and-identity)
+before run creation or upstream I/O. It applies the canonical product/profile,
+date-only, inclusive-window, Asia/Shanghai future-date and maximum-span rules.
 
 The request does not carry a session count; whether the window contains at least two
 CFFEX sessions is established during input preparation and fails as
-`input_preparation/insufficient_sessions` if not. The HTTP layer strictly parses the
+`prepare/invalid_case_input/insufficient_sessions` if not. The HTTP layer strictly parses the
 request and maps the owning application's classified failure; it does not duplicate a
 second semantic validator.
 
@@ -106,7 +102,7 @@ state in v1.
   created; there is no queue and no waiting list.
 - Submission returns immediately (the HTTP request is accepted; no request remains open
   during acquisition or computation). A single in-process worker performs input
-  preparation, holding simulation and accounting; the browser polls status.
+  preparation, Policy-driven Core Replay and case performance analysis; the browser polls status.
 - Status reads are cheap and may proceed concurrently. They inspect stored metadata
   only; they do not execute the backtest, parse the result or acquire a result-read
   permit.
@@ -127,9 +123,9 @@ The worker executes the accepted public path:
 validated semantic request
   → public input preparation (Calendar / Futures / Index)
   → complete input validation + canonical fingerprint
-  → decision-day Slot resolution (authorized W1 pure boundary)
-  → real-contract entry / hold / roll / exit simulation
-  → PnL + benchmark + drawdown accounting
+  → price-free W2 Policy targets (authorized W1 Slots on entry/roll only)
+  → Core Replay: Transition → Accounting → Recorder on every session
+  → W2 Performance Analyzer: Core consumption + benchmark / excess / drawdown
   → immutable BacktestResult + evidence summary + V2 views
   → validate profile, request association, coverage, invariants and finite JSON
   → atomically publish result bytes
@@ -154,27 +150,47 @@ Run failures expose a safe `{stage, category, dependency, reason}` record. HTTP 
 map the category to a transport status/body, but must not reclassify the financial or
 application meaning.
 
-| Stage | Categories | Dependency | Meaning |
-| --- | --- | --- | --- |
-| `input_preparation` | `upstream_operation`, `incomplete_required_input`, `invalid_public_input`, `insufficient_sessions`, `invalid_contract_lifecycle` | `calendar_cffex`, `futures`, `index`, or null | Public acquisition/completeness/metadata failure, fewer than two sessions, invalid lifecycle evidence discovered before simulation |
-| `holding_simulation` | `invalid_holding_input`, `slot_resolution`, `missing_market_fact`, `invalid_price`, `roll_target_invalid`, `invalid_contract_lifecycle`, `invalid_position_state` | null | Invalid simulation input, authorized Slot resolution, real-contract target/lifecycle failure or illegal position state |
-| `accounting` | `non_positive_equity`, `non_finite_result`, `multiplier_mismatch` | null | Invalid normalized equity, non-finite arithmetic or cross-contract multiplier inconsistency |
-| `result_publication` | `result_too_large`, `serialization_failure` | null | Bounded result publication failure |
-| `execution` | `interrupted`, `internal_failure` | null | Process interruption or unexpected worker failure |
+| Stage | Meaning |
+| --- | --- |
+| `request` | WP3 pure request validation |
+| `export`, `ensure`, `prepare` | Actual WP3 public input operation |
+| `replay` | Actual WP3 replay operation, including Policy, Transition and Accounting |
+| `analysis` | Actual WP3 Analyzer operation |
+| `result_validation` | WP4 result construction and validation |
+| `result_publication` | Bounded serialization and atomic publication |
+| `execution` | Thread startup, recovery or unknown failure |
 
-The stage, category and reason are stable classification fields. Representative reason
-mapping:
+Preserve recognized `FuturesRollApplicationError.stage`, category, reason and dependency.
+Dependencies are `calendar_cffex`, `calendar_sse`, `futures`, `index` or null.
+The already public category is `incomplete_input`, not `incomplete_required_input`;
+fewer than two sessions remains `invalid_case_input/insufficient_sessions`.
+Core/Case `invalid_numeric`, `invalid_accounting`, `accounting_failure`, `invalid_result`
+and `invalid_evidence` retain their category/reason. Stage follows the actual operation:
+accounting failure during replay is `replay`, not synthetic `accounting`.
+The existing `missing_instrument_quote` to `missing_contract_row` translation remains.
+
+An explicit safe category/reason allowlist excludes arbitrary exception text.
+Unknown exceptions/classifications become fixed `{stage: execution, category:
+internal_failure, dependency: null, reason: internal_failure}`.
+Publication uses fixed category/reason `result_too_large`, `serialization_failure` or
+`storage_failure`; recovery uses `execution/interrupted/interrupted`.
+Diagnostics, detail, provider messages, credentials and paths are never projected.
+
+Representative preserved Core/Case reasons:
 
 | Category | Representative stable reasons |
 | --- | --- |
-| `invalid_holding_input` | `invalid_product_code`, `invalid_strategy_profile`, `insufficient_sessions`, `session_order_not_increasing`, `duplicate_session`, `invalid_session_facts`, `duplicate_session_facts`, `unknown_contract_fact` |
-| `slot_resolution` | `missing_decision_evidence`, `invalid_decision_evidence`, `w1_slot_resolution_error`, `resolved_target_missing` |
+| `invalid_case_input` | `invalid_product_code`, `invalid_strategy_profile`, `insufficient_sessions`, `session_order_not_increasing`, `duplicate_session`, `invalid_session_facts`, `duplicate_session_facts`, `unknown_contract_fact` |
+| `slot_resolution` | `missing_decision_evidence`, `invalid_decision_evidence`, `w1_slot_resolution_error` |
 | `missing_market_fact` | `missing_session_facts`, `missing_contract_row`, `missing_active_contract_metadata` |
-| `invalid_price` | `missing_close`, `non_finite_close`, `non_positive_close` |
+| `invalid_price` | `non_finite_close`, `non_positive_close` |
 | `roll_target_invalid` | `target_not_resolved`, `target_expired`, `target_without_holding_period`, `target_equal_held_contract`, `target_inactive` |
 | `invalid_contract_lifecycle` | `invalid_contract_metadata`, `duplicate_contract_code`, `duplicate_delivery_month`, `conflicting_product`, `conflicting_underlying`, `held_contract_inactive`, `held_contract_missing_from_active_set`, `expiring_held_contract_not_m0` |
 | `invalid_position_state` | `held_contract_expired_without_roll`, `no_position_on_final_session`, `unexpected_flat_state`, `final_state_not_flat` |
-| `accounting` | `multiplier_mismatch` (WP2), `non_positive_equity`, `non_finite_result` |
+| `accounting_failure` | `multiplier_mismatch`, `non_positive_equity` |
+| `invalid_input` / `invalid_target` | Core validation reasons such as `sessions_not_increasing`, `snapshot_date_mismatch`, `instrument_reference_conflict`, `quantity_change_unsupported` |
+| `invalid_accounting` | `inconsistent_previous_accounting`, `session_already_accounted` |
+| `invalid_numeric` | Name of the rejected numeric value, such as `initial_capital`, `daily_pnl`, `equity` or `cumulative_return` |
 
 `no_position_on_final_session` is unreachable under valid v1 input and remains a
 defensive failure guard, consistent with [Strategy](STRATEGY.md). A
@@ -199,7 +215,7 @@ and Workbench storage. The semantic records are:
     validated result: only when COMPLETED
 ```
 
-Incidental filenames and state schema versions are implementation choices for WP5;
+Private records use `request.json`, `state.json`, `result.json` and schema version 1;
 the semantic records and atomicity above are canonical.
 
 Configuration and platform:
@@ -260,9 +276,10 @@ operation in v1.
 Ant Design controls, request/preflight presentation, submit/poll, producer-owned V2
 charts, trades/rolls table, evidence/limitations and busy/failed/interrupted/error
 states, plus the feature's generated OpenAPI/TypeScript contract freshness loop. The
-page must not fabricate results, controls or readiness. Until WP7, the existing
-`/backtesting` area remains a planned page with no strategy engine, trades or result
-data, as stated by the [Web workspace authority](../../../ui_web/workspace.md).
+page must not fabricate results, controls or readiness. WP7 replaced the previously
+planned page with the real workflow; actual Web acceptance is recorded in
+[WP7 acceptance](../../../ui_web/src/features/backtesting/ACCEPTANCE.md) and the
+full real-market/Windows evidence in [WP8](WP8_ACCEPTANCE.md).
 
 Auth and access:
 
@@ -290,3 +307,40 @@ Explicitly deferred or out of scope for W2 v1:
 
 These are not implied by a successful WP5/WP6/WP7 run. WP8 records the actual integrated
 acceptance and any NOT RUN platform/deployment boundaries.
+
+## WP5 public Python facade
+
+The case package exports `create_futures_roll_online_application`,
+`FuturesRollOnlineApplication`, `OnlineRunStatus`, `OnlineFailure` and
+`FuturesRollOnlineError`. Operations are `preflight(request, owner_scope)`,
+`submit(request, owner_scope)`, `get_status(run_id, owner_scope)` and
+`get_result(run_id, owner_scope)`. Status/failure carriers are frozen; result is the
+existing BacktestResult. Preflight delegates to WP3 independently of store availability.
+Every operation requires a nonempty string owner. Public operation errors classify as
+`invalid_request`, `run_busy`, `read_busy`, `run_not_found`, `result_not_ready`,
+`unavailable` or `corrupt`; messages contain only that fixed classification.
+
+Private records bind run ID, immutable request/owner, UTC ISO timestamps and version 1.
+Store-owned directories/files use 0700/0600 and current-uid ownership; existing objects
+must forbid group/other writes. Ancestors are opened without following symlinks;
+shared writable ancestors require sticky-directory protection. Runtime roots must be
+absolute without parent traversal. All reads validate opened descriptors and bounds.
+Atomic publication fsyncs the file, replaces it relative to the directory descriptor,
+then fsyncs the directory; result precedes COMPLETED. Terminal states cannot change.
+Process-wide admission also serializes initialization/recovery; recovery skips the
+actual current-process active run. Terminal-persistence failure makes the application
+unavailable until restart, preventing stale RUNNING responses. Corruption fails closed.
+
+Minimal single-process usage:
+
+```python
+app = create_futures_roll_online_application()
+readiness = app.preflight(request, owner_scope)
+accepted = app.submit(request, owner_scope)
+status = app.get_status(accepted.run_id, owner_scope)
+# Poll status; only COMPLETED permits:
+result = app.get_result(accepted.run_id, owner_scope)
+```
+
+Optional `LAB_BACKTESTING_RUN_ROOT` uses lab_config and root `.env`/process environment.
+Native Windows or missing POSIX capabilities is unavailable before runtime creation.

@@ -6,12 +6,14 @@ from dataclasses import replace
 from datetime import date
 from typing import Any
 
-from market_backtesting.models import (
+from market_backtesting.cases.futures_roll_long.models import (
     ContractClose,
     DecisionSlotEvidence,
-    HoldingSimulationInput,
+    FuturesRollInput,
+    IndexClose,
     SessionFacts,
 )
+from market_backtesting.core import InstrumentReference
 from market_research.descriptive.cases.futures_basis import (
     ContractMetadata,
     DailySlotResolution,
@@ -244,55 +246,43 @@ def resolution_for(
     )
 
 
-def long_input(profile: str = "expiry_to_M1_v1") -> HoldingSimulationInput:
-    return HoldingSimulationInput(
+def long_input(profile: str = "expiry_to_M1_v1") -> FuturesRollInput:
+    return make_input(
         product_code="IM",
         sessions=SESSIONS,
         contracts=contracts_for(),
-        session_facts=tuple(
-            session_facts(day, ACTIVE_MONTHS[day]) for day in SESSIONS
-        ),
-        decision_slots=tuple(
-            decision_for(day, ACTIVE_MONTHS[day]) for day in SESSIONS
-        ),
+        session_facts=tuple(session_facts(day, ACTIVE_MONTHS[day]) for day in SESSIONS),
+        decision_slots=tuple(decision_for(day, ACTIVE_MONTHS[day]) for day in SESSIONS),
         strategy_profile=profile,  # type: ignore[arg-type]
     )
 
 
-def expiry_on_final_input() -> HoldingSimulationInput:
+def expiry_on_final_input() -> FuturesRollInput:
     sessions = (JAN5, FEB20)
-    return HoldingSimulationInput(
+    return make_input(
         product_code="IM",
         sessions=sessions,
         contracts=contracts_for(),
-        session_facts=tuple(
-            session_facts(day, ACTIVE_MONTHS[day]) for day in sessions
-        ),
-        decision_slots=tuple(
-            decision_for(day, ACTIVE_MONTHS[day]) for day in sessions
-        ),
+        session_facts=tuple(session_facts(day, ACTIVE_MONTHS[day]) for day in sessions),
+        decision_slots=tuple(decision_for(day, ACTIVE_MONTHS[day]) for day in sessions),
         strategy_profile="expiry_to_M1_v1",
     )
 
 
-def expiry_after_final_input() -> HoldingSimulationInput:
+def expiry_after_final_input() -> FuturesRollInput:
     sessions = (JAN5, JAN20)
-    return HoldingSimulationInput(
+    return make_input(
         product_code="IM",
         sessions=sessions,
         contracts=contracts_for(),
-        session_facts=tuple(
-            session_facts(day, ACTIVE_MONTHS[day]) for day in sessions
-        ),
-        decision_slots=tuple(
-            decision_for(day, ACTIVE_MONTHS[day]) for day in sessions
-        ),
+        session_facts=tuple(session_facts(day, ACTIVE_MONTHS[day]) for day in sessions),
+        decision_slots=tuple(decision_for(day, ACTIVE_MONTHS[day]) for day in sessions),
         strategy_profile="expiry_to_M1_v1",
     )
 
 
-def expiry_skipped_input() -> HoldingSimulationInput:
-    return HoldingSimulationInput(
+def expiry_skipped_input() -> FuturesRollInput:
+    return make_input(
         product_code="IM",
         sessions=(JAN5, FEB25),
         contracts=contracts_for(),
@@ -308,25 +298,21 @@ def expiry_skipped_input() -> HoldingSimulationInput:
     )
 
 
-def simple_input(product: str = "IM") -> HoldingSimulationInput:
+def simple_input(product: str = "IM") -> FuturesRollInput:
     months = ("202601", "202602", "202603", "202606")
     sessions = (JAN5, JAN20)
     contracts = contracts_for(months, product=product)
-    return HoldingSimulationInput(
+    return make_input(
         product_code=product,  # type: ignore[arg-type]
         sessions=sessions,
         contracts=contracts,
-        session_facts=tuple(
-            session_facts(day, months, product=product) for day in sessions
-        ),
-        decision_slots=tuple(
-            decision_for(day, months, product=product) for day in sessions
-        ),
+        session_facts=tuple(session_facts(day, months, product=product) for day in sessions),
+        decision_slots=tuple(decision_for(day, months, product=product) for day in sessions),
         strategy_profile="expiry_to_M1_v1",
     )
 
 
-def non_m0_expiry_input() -> HoldingSimulationInput:
+def non_m0_expiry_input() -> FuturesRollInput:
     sessions = (JAN5, FEB20, JUN19, JUN22)
     contracts = contracts_for()
     contracts = replace_contract(contracts, "IM2605.CFX", delist_date=JUN19)
@@ -336,7 +322,7 @@ def non_m0_expiry_input() -> HoldingSimulationInput:
         JUN19: ("202605", "202606", "202609", "202612"),
         JUN22: ACTIVE_MONTHS[JUN22],
     }
-    return HoldingSimulationInput(
+    return make_input(
         product_code="IM",
         sessions=sessions,
         contracts=contracts,
@@ -346,7 +332,7 @@ def non_m0_expiry_input() -> HoldingSimulationInput:
     )
 
 
-def replace_input(inputs: HoldingSimulationInput, **changes: Any) -> HoldingSimulationInput:
+def replace_input(inputs: FuturesRollInput, **changes: Any) -> FuturesRollInput:
     return replace(inputs, **changes)
 
 
@@ -362,46 +348,40 @@ def replace_contract(
 
 
 def replace_session_facts(
-    inputs: HoldingSimulationInput,
+    inputs: FuturesRollInput,
     day: date,
     closes: tuple[ContractClose, ...],
-) -> HoldingSimulationInput:
+) -> FuturesRollInput:
     return replace_input(
         inputs,
         session_facts=tuple(
-            SessionFacts(trade_date=day, closes=closes)
-            if item.trade_date == day
-            else item
+            SessionFacts(trade_date=day, closes=closes) if item.trade_date == day else item
             for item in inputs.session_facts
         ),
     )
 
 
 def drop_contract_close(
-    inputs: HoldingSimulationInput,
+    inputs: FuturesRollInput,
     day: date,
     contract_code: str,
-) -> HoldingSimulationInput:
+) -> FuturesRollInput:
     for item in inputs.session_facts:
         if item.trade_date == day:
             return replace_session_facts(
                 inputs,
                 day,
-                tuple(
-                    close
-                    for close in item.closes
-                    if close.contract_code != contract_code
-                ),
+                tuple(close for close in item.closes if close.contract_code != contract_code),
             )
     return inputs
 
 
 def set_contract_close(
-    inputs: HoldingSimulationInput,
+    inputs: FuturesRollInput,
     day: date,
     contract_code: str,
     close: Any,
-) -> HoldingSimulationInput:
+) -> FuturesRollInput:
     for item in inputs.session_facts:
         if item.trade_date == day:
             return replace_session_facts(
@@ -419,22 +399,20 @@ def set_contract_close(
 
 
 def drop_decision_slot(
-    inputs: HoldingSimulationInput,
+    inputs: FuturesRollInput,
     day: date,
-) -> HoldingSimulationInput:
+) -> FuturesRollInput:
     return replace_input(
         inputs,
-        decision_slots=tuple(
-            item for item in inputs.decision_slots if item.trade_date != day
-        ),
+        decision_slots=tuple(item for item in inputs.decision_slots if item.trade_date != day),
     )
 
 
 def replace_decision_slot(
-    inputs: HoldingSimulationInput,
+    inputs: FuturesRollInput,
     day: date,
     evidence: DailyUniverseEvidence,
-) -> HoldingSimulationInput:
+) -> FuturesRollInput:
     return replace_input(
         inputs,
         decision_slots=tuple(
@@ -447,12 +425,62 @@ def replace_decision_slot(
 
 
 def drop_session_facts(
-    inputs: HoldingSimulationInput,
+    inputs: FuturesRollInput,
     day: date,
-) -> HoldingSimulationInput:
+) -> FuturesRollInput:
     return replace_input(
         inputs,
+        session_facts=tuple(item for item in inputs.session_facts if item.trade_date != day),
+    )
+
+
+def make_input(**kwargs: Any) -> FuturesRollInput:
+    contracts = kwargs["contracts"]
+    return FuturesRollInput(
+        **kwargs,
+        instrument_refs=tuple(
+            InstrumentReference(c.contract_code, 200.0, "synthetic-metadata") for c in contracts
+        ),
+        index_closes=tuple(IndexClose(day, 6000.0) for day in kwargs["sessions"]),
+    )
+
+
+def performance_oracle_input(profile: str = "expiry_to_M1_v1") -> FuturesRollInput:
+    """Five artificial sessions with legal W1 entry/expiry universes; no real-calendar claim."""
+    days = (JAN5, FEB5, FEB20, FEB25, date(2026, 2, 26))
+    entry_months = ("202601", "202602", "202603", "202606")
+    roll_months = ("202602", "202603", "202606", "202609")
+    after_months = ("202603", "202604", "202606", "202609")
+    months_by_day = (entry_months, roll_months, roll_months, after_months, after_months)
+    prices = (
+        {"202602": 5900},
+        {"202602": 5950},
+        {"202602": 6000, "202603": 6010, "202606": 6025},
+        {"202603": 6030, "202606": 6030},
+        {"202603": 6020, "202606": 6020},
+    )
+    inputs = make_input(
+        product_code="IM",
+        sessions=days,
+        contracts=contracts_for(),
         session_facts=tuple(
-            item for item in inputs.session_facts if item.trade_date != day
+            SessionFacts(
+                day,
+                tuple(
+                    ContractClose(f"IM{month[2:]}.CFX", closes.get(month, 6000)) for month in months
+                ),
+            )
+            for day, months, closes in zip(days, months_by_day, prices, strict=True)
+        ),
+        decision_slots=tuple(
+            decision_for(day, months) for day, months in zip(days, months_by_day, strict=True)
+        ),
+        strategy_profile=profile,
+    )
+    return replace(
+        inputs,
+        index_closes=tuple(
+            IndexClose(day, close)
+            for day, close in zip(days, (6000, 6060, 6030, 6090, 6075), strict=True)
         ),
     )

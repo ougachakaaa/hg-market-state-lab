@@ -30,6 +30,7 @@ LAB_AUTH_MODE_ENV = "LAB_AUTH_MODE"
 LAB_AUTH_ORIGIN_ENV = "LAB_AUTH_ORIGIN"
 LAB_AUTH_DB_PATH_ENV = "LAB_AUTH_DB_PATH"
 LAB_RESEARCH_PUBLICATION_ROOT_ENV = "LAB_RESEARCH_PUBLICATION_ROOT"
+LAB_BACKTESTING_RUN_ROOT_ENV = "LAB_BACKTESTING_RUN_ROOT"
 LAB_FUTURES_BASIS_RUN_ROOT_ENV = "LAB_FUTURES_BASIS_RUN_ROOT"
 
 
@@ -71,6 +72,10 @@ class AuthSettings(_RepositorySettings):
 
 class PublicationSettings(_RepositorySettings):
     lab_research_publication_root: str | None = None
+
+
+class BacktestingRunSettings(_RepositorySettings):
+    lab_backtesting_run_root: str | None = None
 
 
 class FuturesBasisRunSettings(_RepositorySettings):
@@ -135,6 +140,11 @@ def futures_basis_run_root() -> str | None:
     return _load(FuturesBasisRunSettings).lab_futures_basis_run_root
 
 
+def backtesting_run_root() -> str | None:
+    """Return optional case-owned backtesting runtime root."""
+    return _load(BacktestingRunSettings).lab_backtesting_run_root
+
+
 __all__ = [
     "AuthSettings",
     "ConfigError",
@@ -144,6 +154,7 @@ __all__ = [
     "LAB_AUTH_DB_PATH_ENV",
     "LAB_AUTH_JWT_SECRET_ENV",
     "LAB_AUTH_MODE_ENV",
+    "LAB_BACKTESTING_RUN_ROOT_ENV",
     "LAB_AUTH_ORIGIN_ENV",
     "LAB_RESEARCH_PUBLICATION_ROOT_ENV",
     "LAB_FUTURES_BASIS_RUN_ROOT_ENV",
@@ -154,6 +165,7 @@ __all__ = [
     "TushareRateSettings",
     "TushareTokenSettings",
     "auth_settings",
+    "backtesting_run_root",
     "publication_root",
     "futures_basis_run_root",
     "tushare_calls_per_minute",

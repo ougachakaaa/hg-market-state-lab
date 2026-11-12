@@ -1,4 +1,4 @@
-"""WP1 failure matrix over artificial facts; no market I/O or PnL."""
+"""Migrated WP1 failure matrix against the W2/Core replay boundary."""
 
 from __future__ import annotations
 
@@ -9,8 +9,8 @@ from typing import Any
 
 import pytest
 
-import market_backtesting.holding as holding_module
-from holding_fixtures import (
+import market_backtesting.cases.futures_roll_long.policy as policy_module
+from futures_roll_fixtures import (
     ACTIVE_MONTHS,
     EXPECTED_RESOLVER_CALLS,
     FEB5,
@@ -32,12 +32,12 @@ from holding_fixtures import (
     replace_session_facts,
     set_contract_close,
 )
-from market_backtesting import (
+from market_backtesting.cases.futures_roll_long import (
     ContractClose,
-    HoldingSimulationError,
-    HoldingSimulationInput,
+    FuturesRollError,
+    FuturesRollInput,
     SessionFacts,
-    simulate_holding,
+    replay_futures_roll,
 )
 from market_research.descriptive.cases.futures_basis import (
     ContractMetadata,
@@ -48,12 +48,12 @@ from market_research.descriptive.cases.futures_basis import (
 
 
 def assert_failure(
-    inputs: HoldingSimulationInput,
+    inputs: FuturesRollInput,
     category: str,
     reason: str,
-) -> HoldingSimulationError:
-    with pytest.raises(HoldingSimulationError) as exc:
-        simulate_holding(inputs)
+) -> FuturesRollError:
+    with pytest.raises(FuturesRollError) as exc:
+        replay_futures_roll(inputs)
     assert exc.value.category == category
     assert exc.value.reason == reason
     return exc.value
@@ -62,7 +62,7 @@ def assert_failure(
 def test_bad_input_carrier_fails_explicitly() -> None:
     assert_failure(
         object(),  # type: ignore[arg-type]
-        "invalid_holding_input",
+        "invalid_case_input",
         "invalid_input_shape",
     )
 
@@ -70,7 +70,7 @@ def test_bad_input_carrier_fails_explicitly() -> None:
 def test_invalid_product_code() -> None:
     assert_failure(
         replace_input(long_input(), product_code="XX"),
-        "invalid_holding_input",
+        "invalid_case_input",
         "invalid_product_code",
     )
 
@@ -78,7 +78,7 @@ def test_invalid_product_code() -> None:
 def test_invalid_strategy_profile() -> None:
     assert_failure(
         replace_input(long_input(), strategy_profile="expiry_to_X"),
-        "invalid_holding_input",
+        "invalid_case_input",
         "invalid_strategy_profile",
     )
 
@@ -86,7 +86,7 @@ def test_invalid_strategy_profile() -> None:
 def test_insufficient_sessions() -> None:
     assert_failure(
         replace_input(long_input(), sessions=(JAN5,)),
-        "invalid_holding_input",
+        "invalid_case_input",
         "insufficient_sessions",
     )
 
@@ -94,7 +94,7 @@ def test_insufficient_sessions() -> None:
 def test_session_order_is_not_inferred_or_repaired() -> None:
     assert_failure(
         replace_input(long_input(), sessions=tuple(reversed(SESSIONS))),
-        "invalid_holding_input",
+        "invalid_case_input",
         "session_order_not_increasing",
     )
 
@@ -102,7 +102,7 @@ def test_session_order_is_not_inferred_or_repaired() -> None:
 def test_duplicate_session() -> None:
     assert_failure(
         replace_input(long_input(), sessions=(JAN5, JAN5, JAN20)),
-        "invalid_holding_input",
+        "invalid_case_input",
         "duplicate_session",
     )
 
@@ -120,7 +120,7 @@ def test_duplicate_session_facts() -> None:
     January = next(item for item in inputs.session_facts if item.trade_date == JAN5)
     assert_failure(
         replace_input(inputs, session_facts=inputs.session_facts + (January,)),
-        "invalid_holding_input",
+        "invalid_case_input",
         "duplicate_session_facts",
     )
 
@@ -132,7 +132,7 @@ def test_session_fact_outside_sessions() -> None:
             inputs,
             session_facts=inputs.session_facts + (SessionFacts(date(2026, 1, 6), ()),),
         ),
-        "invalid_holding_input",
+        "invalid_case_input",
         "invalid_session_facts",
     )
 
@@ -147,19 +147,17 @@ def test_unknown_contract_fact() -> None:
             next(item for item in inputs.session_facts if item.trade_date == JAN5).closes
             + (extra,),
         ),
-        "invalid_holding_input",
+        "invalid_case_input",
         "unknown_contract_fact",
     )
 
 
 def test_duplicate_contract_close() -> None:
     inputs = long_input()
-    closes = next(
-        item for item in inputs.session_facts if item.trade_date == JAN5
-    ).closes
+    closes = next(item for item in inputs.session_facts if item.trade_date == JAN5).closes
     assert_failure(
         replace_session_facts(inputs, JAN5, closes + (closes[0],)),
-        "invalid_holding_input",
+        "invalid_case_input",
         "duplicate_contract_close",
     )
 
@@ -219,9 +217,7 @@ def test_initial_m1_cannot_be_selected_from_a_proven_empty_universe() -> None:
 
 def test_incomplete_decision_evidence() -> None:
     inputs = long_input()
-    original = next(
-        item for item in inputs.decision_slots if item.trade_date == JAN5
-    )
+    original = next(item for item in inputs.decision_slots if item.trade_date == JAN5)
     evidence = replace(original.evidence, complete=False)
     assert_failure(
         replace_decision_slot(inputs, JAN5, evidence),
@@ -232,9 +228,7 @@ def test_incomplete_decision_evidence() -> None:
 
 def test_decision_evidence_with_unknown_contract() -> None:
     inputs = long_input()
-    original = next(
-        item for item in inputs.decision_slots if item.trade_date == JAN5
-    )
+    original = next(item for item in inputs.decision_slots if item.trade_date == JAN5)
     evidence = replace(
         original.evidence,
         active_contract_codes=(
@@ -418,24 +412,20 @@ def test_extra_decision_evidence_is_not_treated_as_a_trade() -> None:
         ),
     )
     extra = decision_for(FEB5, ACTIVE_MONTHS[FEB5])
-    timeline = simulate_holding(
+    timeline = replay_futures_roll(
         replace_input(
             trimmed,
             decision_slots=trimmed.decision_slots + (extra,),
         )
     )
-    assert all(
-        execution.trade_date != FEB5 for execution in timeline.executions
-    )
+    assert all(execution.trade_date != FEB5 for execution in timeline.executions)
 
 
 def controlled_roll_resolution(
-    inputs: HoldingSimulationInput,
+    inputs: FuturesRollInput,
     target: ContractMetadata,
 ) -> DailySlotResolution:
-    evidence = next(
-        item for item in inputs.decision_slots if item.trade_date == FEB20
-    ).evidence
+    evidence = next(item for item in inputs.decision_slots if item.trade_date == FEB20).evidence
     by_code = {contract.contract_code: contract for contract in inputs.contracts}
     old = by_code["IM2602.CFX"]
     q1 = by_code["IM2606.CFX"]
@@ -457,12 +447,10 @@ def test_expired_roll_target_guard(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     inputs = long_input()
-    target = dict(
-        (contract.contract_code, contract) for contract in inputs.contracts
-    )["IM2603.CFX"]
+    target = dict((contract.contract_code, contract) for contract in inputs.contracts)["IM2603.CFX"]
     target = replace(target, delist_date=JAN5)
     controlled = controlled_roll_resolution(inputs, target)
-    real_resolver = holding_module.resolve_daily_slots
+    real_resolver = policy_module.resolve_daily_slots
 
     def wrapper(
         product_code: str,
@@ -475,7 +463,7 @@ def test_expired_roll_target_guard(
             return controlled
         return real_resolver(product_code, trade_date, contracts, evidence=evidence)
 
-    monkeypatch.setattr(holding_module, "resolve_daily_slots", wrapper)
+    monkeypatch.setattr(policy_module, "resolve_daily_slots", wrapper)
     assert_failure(
         inputs,
         "roll_target_invalid",
@@ -487,11 +475,9 @@ def test_roll_target_equal_to_held_contract_guard(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     inputs = long_input()
-    held = dict(
-        (contract.contract_code, contract) for contract in inputs.contracts
-    )["IM2602.CFX"]
+    held = dict((contract.contract_code, contract) for contract in inputs.contracts)["IM2602.CFX"]
     controlled = controlled_roll_resolution(inputs, held)
-    real_resolver = holding_module.resolve_daily_slots
+    real_resolver = policy_module.resolve_daily_slots
 
     def wrapper(
         product_code: str,
@@ -504,7 +490,7 @@ def test_roll_target_equal_to_held_contract_guard(
             return controlled
         return real_resolver(product_code, trade_date, contracts, evidence=evidence)
 
-    monkeypatch.setattr(holding_module, "resolve_daily_slots", wrapper)
+    monkeypatch.setattr(policy_module, "resolve_daily_slots", wrapper)
     assert_failure(
         inputs,
         "roll_target_invalid",

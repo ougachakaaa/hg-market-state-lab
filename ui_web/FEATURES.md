@@ -4,6 +4,7 @@
 
 | Frontend slice | 状态与用途 | Canonical authority entry |
 | --- | --- | --- |
+| Backtesting | WP7 已实现；Futures Roll Long 参数、只读检查、显式执行、Run 恢复与结果阅读 | [backtesting/ARCHITECTURE.md](src/features/backtesting/ARCHITECTURE.md) |
 | MO Option Chain | 已实现；展示指定交易日的完整 MO 期权链价格分布 | [mo_option_chain/ARCHITECTURE.md](src/features/mo_option_chain/ARCHITECTURE.md) |
 | MO Premium Plane | 已实现；检视指定 observation 与取价口径下的 MO 稀疏年化权利金数值平面 | [mo_option_premium/ARCHITECTURE.md](src/features/mo_option_premium/ARCHITECTURE.md) |
 | Research Explorer | 已实现；浏览已发布的 Research scope、结果与可视化，不执行研究 | [research_explorer/ARCHITECTURE.md](src/features/research_explorer/ARCHITECTURE.md) |

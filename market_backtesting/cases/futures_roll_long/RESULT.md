@@ -2,8 +2,8 @@
 
 This contract owns the immutable `BacktestResult` semantic payload and its
 producer-owned evidence/visualization projection for the [case](ARCHITECTURE.md).
-Position decisions are owned by [Strategy](STRATEGY.md); accounting values and their
-canonical formulas are owned by [Accounting](ACCOUNTING.md). This document defines the
+Position decisions are owned by [Strategy](STRATEGY.md); Daily PnL and daily/cumulative accounting are owned by [Core](../../core/ARCHITECTURE.md);
+case performance formulas are owned by [Performance](PERFORMANCE.md). This document defines the
 result fields and required cross-field consistency; it does not create a second
 accounting formula. Web transport and rendering are separate contracts.
 
@@ -31,8 +31,8 @@ definition_version  = futures_roll_long_definition_v1
 status              = complete
 ```
 
-W2 v1 has no partial scientific result. Input preparation, holding simulation or
-accounting failure produces a run failure and no `BacktestResult`; it never publishes a
+W2 v1 has no partial scientific result. Input preparation, Policy-driven Core Replay or
+case analysis failure produces a run failure and no `BacktestResult`; it never publishes a
 successful result with missing dates, filled prices or partial exposure.
 
 A result is published only after all of the following are true:
@@ -90,8 +90,9 @@ initial_notional = {
   not a second identity.
 - `first_close` is the Index Close on the first CFFEX session; `last_close` is the
   Index Close on the final CFFEX session.
-- `value = index_first_close × multiplier`; `multiplier` is the entry contract's real
-  multiplier, fixed for the backtest.
+- `value` is the W2 initial capital derived by [Performance](PERFORMANCE.md#fixed-initial-index-equivalent-notional)
+  and supplied unchanged to Core; `multiplier` is the entry contract's real multiplier,
+  fixed for the backtest.
 
 ## Daily series
 
@@ -132,17 +133,23 @@ Semantics:
   contract's first close is the roll Close and its first PnL appears on the next row.
 - On the final row: `pnl_contract_code` is the held contract; `position_contract_code`
   is null after the close.
-- `daily_pnl`, `cumulative_pnl`, `equity`, returns and drawdowns follow
-  [Accounting](ACCOUNTING.md) exactly; no value is recomputed by a consumer.
-- `benchmark_equity = initial_notional.value × (1 + benchmark_cumulative_return)`.
-- `excess_cumulative_return = cumulative_return - benchmark_cumulative_return`.
-- `drawdown`/`benchmark_drawdown` use each series' running peak; they are `<= 0`.
+- `daily_pnl` projects [Core Transition](../../core/PORTFOLIO_TRANSITION.md);
+  `cumulative_pnl`, `equity`, `daily_return` and `cumulative_return` project
+  [Core Accounting](../../core/ACCOUNTING.md) unchanged.
+- Benchmark fields, `excess_cumulative_return`, `drawdown` and `benchmark_drawdown`
+  project the Case Analyzer under [Performance](PERFORMANCE.md). The cumulative
+  excess field applies its holding-period excess definition at each session; drawdowns
+  use each series' running peak and are `<= 0`. Consumers never recompute these values.
 
 Every numeric value is finite. A missing price or a non-finite/negative-equity value is
 a failure, not a null daily cell. W2 v1 does not use null to represent an unavailable
 price; it fails the backtest.
 
 ## Executions and roll events
+
+`trades` projects only `TransitionResult.position_changes` (close/open); `rolls`
+groups the close/open pair associated with an expiry decision. Daily `mark` events are
+valuation evidence, never executions and never part of trade/roll counts.
 
 `trades` is the ordered list of individual execution legs:
 
@@ -187,7 +194,7 @@ Rules:
   from the delivery month, contract code or a recalled role.
 - A valid roll requires the expiring held contract to be present in the complete active
   set and to map to `M0`; this follows from the expiring contract being the front
-  contract. If it is absent or maps elsewhere, the simulation fails
+  contract. If it is absent or maps elsewhere, the Policy-driven replay fails
   `invalid_contract_lifecycle` and publishes no result. Thus `old_slot = M0` is a
   validated invariant, not an unconditional assumption.
 
@@ -237,10 +244,18 @@ limitations
 - `limitations` is an ordered, fixed list owned by the producer. It must state the
   gross idealized close execution, absence of fees/slippage/margin/funding/dividends,
   one-lot/no-compounding normalization, index-price benchmark nature, and the fact
-  that cache completeness is not provider freshness.
-- The full canonical input package/replay is a case-owned WP4 evidence artifact. The
-  online result carries this evidence summary; an online evidence/replay endpoint is
+  that cache completeness is not provider freshness. It also states the historical
+  decision-time availability assumption for metadata/active sets; a retained complete
+  export does not prove point-in-time Source availability.
+- The full canonical input package/replay is a case-owned WP4 evidence artifact. It
+  retains Previous/Target/Next Portfolio, price evidence, Core accounting and the full
+  ordered StateEvent sequence, including `mark` reference/date updates. Replay
+  verification checks exact state reconstruction under
+  [Core Transition](../../core/PORTFOLIO_TRANSITION.md#evidence-and-events), independently
+  of the trade projection. The online result carries this evidence summary; an online evidence/replay endpoint is
   not part of W2 v1 unless a later authority adds it.
+
+The portable format and offline API are owned by [Evidence](EVIDENCE.md).
 
 ## Visualization projection
 
@@ -279,19 +294,25 @@ A result is invalid unless all of the following hold:
 
 1. `daily` dates equal the observed CFFEX sessions exactly, strictly increasing.
 2. `summary.total_pnl == Σ daily.daily_pnl == last daily.cumulative_pnl`.
-3. `daily.equity == initial_notional.value + daily.cumulative_pnl`.
-4. `summary.gross_return == summary.total_pnl / initial_notional.value`.
+   Here Σ follows Core's chronological binary64 accumulation, starting at `0.0`
+   and adding each recorded Daily PnL in session order. A compensated/reassociated
+   library sum is not an alternative accounting value; no rounding or tolerance
+   repairs a mismatch in recorded projections.
+3. Each daily equity equals its recorded Core Accounting equity.
+4. `summary.gross_return == last daily.cumulative_return`.
 5. `summary.benchmark_return == last daily.benchmark_cumulative_return`.
-6. `summary.excess_return == summary.gross_return - summary.benchmark_return`.
+6. Summary excess equals the final Analyzer holding-period excess return.
 7. `summary.strategy_max_drawdown == min(daily.drawdown)`;
    `summary.benchmark_max_drawdown == min(daily.benchmark_drawdown)`.
-8. `daily.cumulative_return == daily.cumulative_pnl / initial_notional.value`.
-9. `daily.benchmark_cumulative_return == daily.benchmark_close / first_close - 1`.
+8. Daily PnL, cumulative PnL and both strategy returns equal their recorded Core
+   outputs under the canonical Transition/Accounting contracts.
+9. Daily benchmark, excess and drawdown fields equal the Analyzer outputs under the
+   canonical Performance contract.
 10. On entry, both contract fields are the entry contract and PnL is zero; on a roll,
     `pnl_contract_code` is the old contract and `position_contract_code` is the new
     contract; on the final row, position is null.
 11. `trades`/`rolls` match the daily position changes: one entry, two legs per roll,
-    one final exit; no execution after the final exit; no trade on a non-roll day.
+    one final exit; no execution after the final exit; no trade on a hold-only day.
 12. `views` numeric values match the corresponding daily series; no view contains a
     value absent from the daily/result evidence.
 

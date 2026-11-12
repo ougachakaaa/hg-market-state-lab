@@ -1,7 +1,7 @@
 """Repository FastAPI composition root for owning-module product adapters.
 
-This module composes the independent MO Option Chain, MO Premium Plane, Research
-and Futures Basis Research adapters. It owns runtime wiring only; each product-local
+This module composes the independent Snapshot, Research and Backtesting adapters.
+It owns runtime wiring only; each product-local
 bounded context keeps ownership of its router, query contract, DTOs and error envelope.
 """
 
@@ -18,6 +18,9 @@ from fastapi.responses import JSONResponse
 
 from ui_http.auth._http import install_auth
 
+from .products.backtesting.endpoint import install_contract as install_backtesting_contract
+from .products.backtesting.endpoint import router as backtesting_router
+from .products.backtesting.runtime import initialize as initialize_backtesting
 from .products.futures_basis_research.endpoint import (
     install_contract as install_futures_basis_contract,
 )
@@ -170,6 +173,7 @@ def contract_openapi(application: FastAPI) -> Callable[[], dict[str, Any]]:
 @asynccontextmanager
 async def lifespan(application: FastAPI) -> AsyncIterator[None]:
     initialize_futures_basis(application)
+    initialize_backtesting(application)
     yield
 
 
@@ -226,7 +230,9 @@ def create_app() -> FastAPI:
     application.include_router(research_router)
     application.include_router(publication_router)
     application.include_router(futures_basis_router)
+    application.include_router(backtesting_router)
     install_futures_basis_contract(application)
+    install_backtesting_contract(application)
     return application
 
 

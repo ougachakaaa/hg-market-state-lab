@@ -9,7 +9,7 @@ Web application 以 Research 为登录后默认入口，包含三个一级业务
 ```text
 Daily Data → MO Option Chain / MO Premium Plane（已实现）
 Research → Research Catalog & Workspace / Research Explorer（已实现）；Futures Basis Online Research（已实现 Web Consumer）
-Backtesting → Planned（没有策略引擎或结果）
+Backtesting → Futures Roll Long（WP7 Web Consumer 已实现）
 ```
 
 登录后默认进入 `/research`，不提供独立宣传首页。三个既有在线 feature 保持可发现、可访问且相互独立；WP3 Research Catalog 是只读发现入口。Futures Basis Online Research 已完成 WP8-B Web Consumer，并复用在线和离线共享 Reader。导航和 URL 由 [Workspace authority](workspace.md) 细化。
@@ -42,7 +42,7 @@ Application navigation 只选择当前 feature surface，不成为 backend produ
 
 ## 3. Feature Independence
 
-MO Option Chain、MO Premium Plane、Research Catalog、Research Explorer 与 Futures Basis Research 保持独立 frontend bounded contexts。它们不共享产品 identity、backend DTO、query state、presentation state 或 visualization semantics，也不从 sibling feature 的 response 或 local state 派生自己的事实。
+MO Option Chain、MO Premium Plane、Research Catalog、Research Explorer、Futures Basis Research 与 Backtesting 保持独立 frontend bounded contexts。它们不共享产品 identity、backend DTO、query state、presentation state 或 visualization semantics，也不从 sibling feature 的 response 或 local state 派生自己的事实。
 
 Application composition 不改变各 feature 的 backend dependencies，也不表示 backend products 存在业务耦合。切换 surface 时 feature state 的 React lifecycle 或持久化机制属于实现细节；无论采用何种机制，一个 feature 都不得读取、覆盖或重新解释另一个 feature 的 local state。
 

@@ -1,8 +1,7 @@
 # Futures Roll Long public inputs, completeness and reproduction
 
 This contract specializes the [case](ARCHITECTURE.md) and the repository's public
-upstream boundaries. Only input preparation acquires market facts. Holding simulation,
-accounting and result projection consume retained validated inputs and perform no
+upstream boundaries. Only input preparation acquires market facts. Policy, Core Replay and result projection consume retained validated inputs and perform no
 market I/O.
 
 ## DataLake-first selection
@@ -41,13 +40,24 @@ backtest may start. There is no partial-input BacktestResult in v1.
 4. Derive the benchmark `underlying_index_code` from the validated Futures rows. All
    retained rows for the product must agree. If no row exists or more than one distinct
    underlying is present, fail input preparation.
-5. Acquire the mapped Index export in the same pattern. Validate the final envelope and
-   completeness for the whole window.
-6. Build the ordered CFFEX session sequence, the per-session active contract sets and
-   the decision-day Slot resolutions. All required facts are now retained as one
-   semantic input identity.
-7. Compute the canonical input fingerprint and begin the pure strategy simulation.
-   No further market I/O occurs after this point.
+5. Prepare the exact-window SSE Calendar prerequisite through the Calendar public
+   service in the same pattern; retain its final export separately as described below.
+6. Acquire the mapped Index export in the same pattern. Validate its target against
+   the SSE sessions and its completeness for the whole window.
+7. Build read-only, date-queryable market facts: ordered CFFEX sessions, per-session
+   active contract evidence, metadata/instrument references, Futures Close snapshots
+   and Index Close facts. All required facts are retained as one semantic input identity.
+8. Compute the canonical input fingerprint. The adapter builds price-free decision
+   contexts and `ReplaySession.snapshot` inputs from these retained facts. Policy calls
+   the authorized Slot resolver only for entry/roll decisions. Begin pure Core Replay;
+   no further market I/O occurs after preparation.
+
+Input Adapter owns validation and preparation of the market-fact set. Replay owns
+clock advancement, Policy invocation and the handoff of each retained snapshot.
+[Transition](../../core/PORTFOLIO_TRANSITION.md) determines necessary valuation and
+execution quotes by Previous/Target real instrument IDs inside that snapshot. Neither
+Accounting nor Analyzer queries a market service or reselects a PnL instrument by Slot.
+No additional market-data framework or selection owner is required.
 
 `ensure` is not a repair mechanism for a malformed export. A malformed envelope,
 counter set, scope/window, row identity or public fact fails immediately; it is never
@@ -138,8 +148,9 @@ turn it into a roll.
 
 This is a symbol-level consumer grant in the repository and module authority, not a
 general permission to consume Research. If the W1 public facade cannot provide the
-required isolation, WP1 must escalate an authority change; it must not copy the Slot
-algorithm into W2.
+required isolation, stop and report the boundary conflict; do not copy the Slot
+algorithm into W2. Current isolation is checked by the Backtesting architecture tests;
+WP3 must preserve that boundary.
 
 ## The synthetic `DailyUniverseEvidence` contract
 
@@ -231,3 +242,137 @@ A failure may retain safe diagnostics and public evidence obtained so far. It mu
 publish a successful input fingerprint, a partial BacktestResult, a filled price, a
 guessed contract or a silently shortened window. No Snapshot fallback, second Source,
 retry framework, date shift or alternate calendar is authorized.
+
+## Decision context versus Close snapshot
+
+W2 synthetic `FuturesRollInput` retains sessions, W1 metadata, session Close facts,
+active-set evidence, explicit contract multiplier references and the underlying
+index Close series. W1 ContractMetadata has no multiplier; W2 associates it separately and
+never changes the W1 carrier. Multipliers are supplied, not guessed from product codes.
+The adapter requires exact metadata-to-instrument identity associations; used contracts
+must match the entry multiplier.
+
+`FuturesRollInput.index_closes` is an immutable tuple of frozen
+`IndexClose(trade_date, close)` rows. Its date sequence must equal the supplied CFFEX
+sessions exactly, in order, with no missing, extra, duplicate or reordered row.
+Dates are date-only; every Close is numeric (not bool), finite and strictly positive.
+There is no separate initial-index-price input: the first row is the sole index
+price used for N0, and the same series supplies the benchmark.
+`FuturesRollReplay` retains this validated series and `benchmark_index_code`, derived
+from the single underlying in validated contract metadata. Neither enters Policy or
+DecisionContext. WP3's public Index adapter must map its validated CFFEX-session
+rows into this same boundary; extra SSE-only dates are filtered during preparation,
+not silently accepted by the synthetic boundary or Analyzer.
+
+For each session the adapter exposes only current metadata/instrument references and
+that date's evidence to Policy. Historical metadata are supplied as assumed known at
+decision time; current export completeness does not prove a historically versioned
+pre-close active set or metadata freshness. This limitation must remain explicit.
+Current-session Close and future prices are exclusively Replay/Transition inputs;
+Policy configuration retains no market input collection. Perturbing current/future
+Close values must not change mechanical targets when price inputs remain legal.
+
+The synthetic adapter computes the first price-free target once to obtain the entry
+multiplier for capital derivation. Its callable returns that same immutable target to
+Replay on the first session; subsequent decisions invoke MechanicalRollPolicy using
+Replay's actual previous Portfolio. This does not perform an execution or introduce
+a second clock; W1 Slot resolution still occurs once per entry/roll decision date.
+
+## WP3 public Python application boundary
+
+The canonical facade is `market_backtesting.cases.futures_roll_long`.
+`FuturesRollRequest(product_code, start_date, end_date, strategy_profile)` is frozen,
+has fixed `case="futures_roll_long_v1"`, and no business defaults.
+`validate_futures_roll_request(request)` validates without I/O before any service
+operation; application operations repeat validation (including the Shanghai today limit).
+
+`create_futures_roll_service()` composes the three published Dataset factories.
+Tests may inject the three public service dependencies by keyword (`calendar`,
+`futures`, `index`); these are case-specific structural dependencies, not a generic
+service framework. Neither factories nor read-only operations require credentials.
+
+- `service.prepare(request) -> PreparedFuturesRollInputs` retains the exact public
+  requests, three frozen final exports, ensure diagnostics, canonical fingerprint and
+  existing `FuturesRollInput`. It does not resolve Slots or run the strategy.
+- `service.run(request) -> FuturesRollExecution` prepares once, then calls the existing
+  Replay and Analyzer once each. The frozen execution contains request, observed
+  session bounds, replay, performance and prepared inputs. This is **not** the WP4
+  `BacktestResult` or full Evidence Package; no run ID, persistence or transport is added.
+- `service.preflight(request) -> FuturesRollReadiness` uses exports only. Each dependency
+  has a state, safe reason and optional public coverage. Unknown dependencies are not
+  queried. This operation does not invoke full row/Slot/strategy validation.
+
+`FuturesRollApplicationError` specializes `FuturesRollError` with `stage`, optional
+`dependency`, and retained safe ensure diagnostics. Input/acquisition failures use
+case-owned categories/reasons; replay/analysis failures preserve the original
+category/reason/date/contract. No error carries a successful partial execution or a
+successful input fingerprint. Upstream exception text is not copied into diagnostics,
+because public operation failures can contain runtime paths or provider details.
+
+Legal incomplete exports must pass the same envelope, counters, public-field,
+identity/order and payload accounting checks before ensure is permitted. Missing
+Calendar records are legal only when accounted for by incomplete coverage; a complete
+Calendar must contain every natural day. A complete Index export must have one row
+per successful unit and a Close for every CFFEX session. Its own SSE target count is
+producer-owned; W2 does not substitute the CFFEX count for it. Futures successful
+zero-row units remain legal producer proofs, but cannot satisfy missing strategy facts.
+
+Ensure results are retained as diagnostics, not fingerprint inputs. A returned
+incomplete ensure is always followed by the final export; only that export determines
+whether preparation can continue. All retained export sequences must be immutable
+public tuples. The case-specific canonical encoder explicitly enumerates published
+fields, rejecting illegal values rather than serializing internal object state.
+
+### Reconciled Index Calendar prerequisite
+
+Bounded real acceptance identified a necessary operational prerequisite in the
+published [Index trading-days contract](../../../data_lake/datasets/tushare_index_daily/TRADING_DAYS.md):
+Index export requires a complete exact-window **SSE** Calendar, independently of
+CFFEX. With a fresh cache, an Index export cannot report its own incomplete coverage
+until that prerequisite exists. An arbitrary Index OperationError does not authorize
+ensure or retry.
+
+After deriving the underlying and before the first Index export, preparation therefore
+uses the same Calendar public service for `TradeCalendarRange(exchange="SSE", ...same
+window...)`. It applies the same legal-export / at-most-once ensure / final-export
+validation as for CFFEX, and retains this final prerequisite export and its request
+separately as `index_calendar_export` / `index_calendar_request`. Its ensure diagnostics
+use dependency `calendar_sse`. Index coverage targets and records must match this
+public SSE session set; CFFEX alone continues to define replay sessions.
+
+This is an operational prerequisite reconciliation, not a fourth strategy input or
+another calendar algorithm. The fingerprint profile remains exactly the three declared
+final exports: CFFEX Calendar, Futures, Index. The final Index export already retains
+its complete target coverage and all SSE-session rows. Auxiliary prerequisite evidence
+is retained separately and is not added to that canonical payload. Preflight remains
+strictly read-only: it calls Index export and reports unavailable if the owning
+Dataset cannot resolve its SSE prerequisite; it does not initialize that prerequisite.
+
+
+### Public Python usage
+
+```python
+from datetime import date
+from market_backtesting.cases.futures_roll_long import (
+    FuturesRollRequest,
+    create_futures_roll_service,
+)
+
+request = FuturesRollRequest(
+    product_code="IM",
+    start_date=date(2025, 2, 17),
+    end_date=date(2025, 3, 24),
+    strategy_profile="expiry_to_M1_v1",
+)
+service = create_futures_roll_service()
+readiness = service.preflight(request)  # read-only advisory, not an execution gate
+execution = service.run(request)        # may ensure legally incomplete inputs
+summary = execution.performance.summary
+fingerprint = execution.input_fingerprint
+retained_exports = execution.inputs.exports
+```
+
+`execution.inputs.replay_input` can be passed to `replay_futures_roll`, followed by
+`analyze_futures_roll`, without market I/O. `prepare` exposes the same retained inputs
+without running either computation. A semantic/operation failure raises the typed
+error; callers never receive a successful partial execution.

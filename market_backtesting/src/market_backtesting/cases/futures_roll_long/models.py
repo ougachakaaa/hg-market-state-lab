@@ -1,4 +1,4 @@
-"""Immutable synthetic inputs and real-contract holding timeline carriers."""
+"""Immutable W2 inputs, decision context and replay/performance projections."""
 
 from __future__ import annotations
 
@@ -10,6 +10,8 @@ from market_research.descriptive.cases.futures_basis import (
     ContractMetadata,
     DailyUniverseEvidence,
 )
+
+from ...core import InstrumentReference, ReplayResult
 
 ProductCode = Literal["IF", "IH", "IC", "IM"]
 PRODUCT_CODES: tuple[ProductCode, ...] = ("IF", "IH", "IC", "IM")
@@ -52,8 +54,16 @@ class DecisionSlotEvidence:
 
 
 @dataclass(frozen=True, slots=True)
-class HoldingSimulationInput:
-    """Everything the pure holding simulation may consume."""
+class IndexClose:
+    """One underlying index Close for exactly one CFFEX session."""
+
+    trade_date: date
+    close: float
+
+
+@dataclass(frozen=True, slots=True)
+class FuturesRollInput:
+    """Explicit synthetic inputs for W2 Policy-driven Core Replay."""
 
     product_code: ProductCode
     sessions: tuple[date, ...]
@@ -61,10 +71,12 @@ class HoldingSimulationInput:
     session_facts: tuple[SessionFacts, ...]
     decision_slots: tuple[DecisionSlotEvidence, ...]
     strategy_profile: StrategyProfile
+    instrument_refs: tuple[InstrumentReference, ...]
+    index_closes: tuple[IndexClose, ...]
 
 
 @dataclass(frozen=True, slots=True)
-class DailyHolding:
+class DailyProjection:
     """Session-level identities, not PnL values."""
 
     trade_date: date
@@ -99,15 +111,18 @@ class RollEvent:
 
 
 @dataclass(frozen=True, slots=True)
-class StrategyTimeline:
-    """The complete immutable result of one holding simulation."""
+class FuturesRollReplay:
+    """W2 projections of Core records, not a full BacktestResult."""
 
     product_code: ProductCode
     strategy_profile: StrategyProfile
     sessions: tuple[date, ...]
-    daily: tuple[DailyHolding, ...]
+    daily: tuple[DailyProjection, ...]
     executions: tuple[Execution, ...]
     rolls: tuple[RollEvent, ...]
+    replay: ReplayResult
+    benchmark_index_code: str
+    index_closes: tuple[IndexClose, ...]
 
     @property
     def entry_execution(self) -> Execution:
@@ -116,3 +131,58 @@ class StrategyTimeline:
     @property
     def exit_execution(self) -> Execution:
         return self.executions[-1]
+
+
+@dataclass(frozen=True, slots=True)
+class DecisionContext:
+    """Current metadata and evidence only; deliberately has no market prices."""
+
+    is_first: bool
+    is_final: bool
+    contracts: tuple[ContractMetadata, ...]
+    instrument_refs: tuple[InstrumentReference, ...]
+    evidence: DailyUniverseEvidence | None
+
+
+@dataclass(frozen=True, slots=True)
+class DailyPerformance:
+    """Core accounting projections plus case-owned benchmark and risk measures."""
+
+    trade_date: date
+    daily_pnl: float
+    cumulative_pnl: float
+    equity: float
+    daily_return: float
+    cumulative_return: float
+    benchmark_close: float
+    benchmark_daily_return: float
+    benchmark_cumulative_return: float
+    benchmark_equity: float
+    excess_cumulative_return: float
+    drawdown: float
+    benchmark_drawdown: float
+
+
+@dataclass(frozen=True, slots=True)
+class PerformanceSummary:
+    """Final holding-period measures and minimum daily drawdowns."""
+
+    initial_notional: float
+    total_pnl: float
+    gross_return: float
+    benchmark_return: float
+    excess_return: float
+    strategy_max_drawdown: float
+    benchmark_max_drawdown: float
+
+
+@dataclass(frozen=True, slots=True)
+class FuturesRollPerformance:
+    """Immutable WP2 calculation result, not a full BacktestResult."""
+
+    product_code: ProductCode
+    strategy_profile: StrategyProfile
+    benchmark_index_code: str
+    entry_multiplier: float
+    daily: tuple[DailyPerformance, ...]
+    summary: PerformanceSummary
