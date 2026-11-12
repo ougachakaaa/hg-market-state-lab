@@ -97,8 +97,9 @@ framework from it.
 | Case identity, request, strategy profiles, scope and status | [Futures Roll Long case](cases/futures_roll_long/ARCHITECTURE.md) |
 | Real-contract position state machine, session decisions and contract/slot identity | [Strategy](cases/futures_roll_long/STRATEGY.md) |
 | Initial notional, benchmark, drawdown and case performance | [Performance](cases/futures_roll_long/PERFORMANCE.md) |
-| Public upstream bindings, completeness, slot reuse, fingerprint and readiness | [Inputs](cases/futures_roll_long/INPUTS.md) |
+| Input preparation, public bindings, completeness, slot reuse, fingerprint and readiness | [Inputs](cases/futures_roll_long/INPUTS.md) |
 | BacktestResult, evidence, limitations and Visualization projection | [Result](cases/futures_roll_long/RESULT.md) |
+| Portable evidence package, encoding and pure offline reproduction | [Evidence](cases/futures_roll_long/EVIDENCE.md) |
 | Online request, run lifecycle, storage, concurrency and delivery ownership | [Online application](cases/futures_roll_long/ONLINE_APPLICATION.md) |
 | Delivery status, remaining work packages and acceptance | [Roadmap](cases/futures_roll_long/ROADMAP.md) |
 | Concern/consumer inventory, current semantic review and implementation drift | [Reconciliation](cases/futures_roll_long/RECONCILIATION.md) |

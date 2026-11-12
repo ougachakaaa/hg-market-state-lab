@@ -64,6 +64,10 @@ single-instrument accounting kernel; W2 is its first case.
   visible Windows Chrome → WSL acceptance. The independent
   [WP8 record](WP8_ACCEPTANCE.md) owns Run IDs, coverage, financial/roll evidence,
   observed performance and regression results. W2 is complete within its declared scope.
+  A later final acceptance-gate hardening makes PASS the only exit-0 outcome, adds
+  token-free exit-code tests and records the retained-evidence cross-check; it changes
+  no financial or product semantics. See
+  [WP8 acceptance-gate hardening](WP8_ACCEPTANCE.md#final-acceptance-gate-hardening--2026-11-12).
 
 ## Accepted work packages
 

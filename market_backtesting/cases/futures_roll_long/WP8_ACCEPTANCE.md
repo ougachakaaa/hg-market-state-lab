@@ -3,6 +3,9 @@
 **WP8 PASS. W2 complete within its declared scope; ready for merge review.**
 Real-market, HTTP/Auth, Windows Chrome, controlled recovery/privacy and regression
 gates passed. No blocking implementation drift remains. This task does not merge branches.
+A final acceptance-gate hardening addendum at the end of this record adds PASS-only
+exit semantics and a later retained-evidence cross-check; it does not alter the
+historical execution results above.
 
 This is execution evidence, not a financial or workflow authority. Semantics remain in
 [Inputs](INPUTS.md), [Strategy](STRATEGY.md), [Performance](PERFORMANCE.md),
@@ -242,6 +245,12 @@ poetry run python market_backtesting/tests/wp8_real_acceptance.py --root /tmp/w2
 node scripts/wp8_real_acceptance.mjs /tmp/w2-wp8-real-im
 ```
 
+Exit status is part of the gate: PASS exits 0; FAIL, PARTIAL, NOT RUN and missing
+required evidence exit nonzero. `--mode reproduce` writes
+`offline-reproduction.json`, requires a PASS Python acceptance with the same input
+identity, and never treats missing evidence as success. The final section records the
+current status/exit contract and its automated tests in detail.
+
 The browser harness starts the real backend through the Python storage-isolation
 wrapper, creates test users through the public Auth service with CLI approval, runs
 HTTP acceptance, and invokes Windows Node/Chrome through WSL interop. Existing synthetic
@@ -253,7 +262,78 @@ Vite with matching loopback Auth origin, register/approve/login, execute both ex
 profiles, inspect charts/tables/evidence, reload/deep-link/logout, and record screenshots
 and actual statuses before changing any gate to PASS.
 
-External artifacts include `python-acquisition.json`, `python-acceptance.json`,
+Artifacts produced by the current commands are `python-acceptance.json`,
 `offline-reproduction.json`, `http-acceptance.json`, `windows-acceptance.json`,
-per-profile Results/Evidence and regression logs. No credentials, runtime databases,
-large market payloads or personal local paths are committed.
+per-profile Results/Evidence/SSE-calendar files and the Windows screenshots. The
+retained historical run directory also contains earlier/derived names such as
+`python-acquisition.json` and `reproduction.json`; those are not outputs of the current
+commands. No credentials, runtime databases, large market payloads or personal local
+paths are committed.
+
+## Final acceptance gate hardening — 2026-11-12
+
+This addendum records a later, independent review of the acceptance harness and the
+retained evidence. It does not rerun the real research and does not change the
+historical execution evidence above.
+
+### Exit semantics
+
+Both WP8 harnesses share one contract: **PASS is the only outcome that exits 0.**
+FAIL, PARTIAL, NOT RUN, missing required evidence and an unexecuted Windows Chrome gate
+all exit nonzero (FAIL 1, PARTIAL 2, NOT RUN 3). A failed stage cannot be masked by a
+later successful check, and the aggregate browser gate revalidates every earlier stage.
+
+- A new Python acceptance round writes a fresh `RUNNING` marker before any market
+  operation, clears the previous round's per-profile evidence/result files and writes
+  `python-acceptance.json` with `run_id`, `generated_at`, detailed per-profile
+  PASS/FAIL/NOT RUN and an overall PASS/FAIL/PARTIAL/NOT RUN status. Unexpected errors
+  fail closed instead of leaving an earlier PASS readable.
+- `--mode reproduce` requires a PASS Python acceptance with `same_input`, revalidates
+  both evidence packages and retained Results, checks the accepted fingerprint, writes
+  `offline-reproduction.json` carrying the same acceptance `run_id`, and exits nonzero
+  on missing evidence or mismatch.
+- The browser orchestrator validates Python and reproduction prerequisites before
+  starting HTTP, then requires authenticated HTTP PASS and an actual Windows Chrome
+  process (exit 0, version present, no page errors, both profiles PASS and both
+  full-page screenshots regenerated). HTTP/Windows artifacts are removed before their
+  stage, so a previous round's PASS cannot be reused.
+- Unavailable provider/credential conditions remain honestly classified `NOT RUN`, not
+  FAIL; both are nonzero because neither closes the gate.
+
+Automated verification needs no Tushare token and no network:
+
+| Check | Actual result |
+| --- | --- |
+| `poetry run pytest market_backtesting/tests/test_wp8_acceptance_exit.py -q` | PASS — 13 tests: PASS 0, FAIL/PARTIAL/NOT RUN nonzero, stale PASS invalidation, missing/corrupt evidence, credential-free evidence reproduction |
+| `npx vitest run scripts/wp8_acceptance_status.test.mjs` in `ui_web` | PASS — 15 tests: exit mapping, stage combination, stale/missing Python acceptance, reproduction identity, HTTP and Windows evidence completeness, Windows-not-executed cannot PASS |
+
+### Retained-evidence cross-check
+
+The retained WSL artifact directory `/tmp/w2-wp8-real-im` still exists and was inspected
+read-only. Its facts agree with the record above:
+
+| Fact | Retained artifact | Verdict |
+| --- | --- | --- |
+| Observed window / sessions | `2024-01-02` → `2026-10-30`, 683 CFFEX sessions in Python, HTTP and browser summaries | PASS |
+| Futures / Index scale | 2,732 real contract-day rows; 683 index rows; index closes 5,854.7494 / 6,161.2275 | PASS |
+| Rolls and final exits | M1 33 rolls, final exit `IM2611.CFX` at 6130.0; Q1 11 rolls, final exit `IM2612.CFX` at 6081.0 | PASS |
+| Financial summaries | M1 total PnL 499,439.99999999907 / gross 0.42652551448230996; Q1 489,039.9999999981 / 0.4176438363015146; benchmark 0.0523469202627187; drawdowns −0.2790896566811212 / −0.3120134267330231 | PASS |
+| Canonical identity | Both profiles: `b83a38c9bdc83f082eda87e93c1babdb9950dacad1e316b4186a2e07e0ef557c` | PASS |
+| HTTP identity | Run IDs `7ba4eb4d5f52c29a586384275bc794da` / `3f106620cf565e38327e7781d2c3bffe`; both terminal COMPLETED | PASS |
+| Windows browser | Chrome 157.0.8103.39; Run IDs `a68ea2072ee6525cfc370f710355a72b` / `32e85922c651070cc72a1dd3160f1c37`; both full-page screenshots present | PASS |
+| Offline reproduction | Both evidence packages report `verified`, 750 / 706 StateEvents, same fingerprint | PASS |
+
+Independent reproduction in this review copied only `python-acceptance.json`, both
+evidence packages and both retained Results to a separate temporary directory; the
+source directory was not modified. The current `--mode reproduce` command returned
+PASS (exit 0), 750 / 706 events and the same fingerprint.
+
+### Scope of this independent review
+
+Real acquisition, authenticated HTTP worker execution and Windows Chrome execution were
+**NOT RUN** again in this review; they remain the historical WP8 evidence above. The
+aggregate harness was therefore not rerun end-to-end, and its current execution stages
+are NOT RUN (nonzero by design). The cross-check and offline reproduction verify
+consistency relative to retained facts, not Source freshness or a new real-market run.
+The historical WP8 PASS and W2 completion conclusion are unchanged: the defect was in
+acceptance exit/artifact semantics, not in production financial or HTTP/Web behavior.

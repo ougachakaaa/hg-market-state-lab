@@ -1,13 +1,27 @@
 // Opt-in real-market HTTP + visible Windows Chrome acceptance. No fake services.
 // Run from ui_web: node scripts/wp8_real_acceptance.mjs /absolute/external/root
+// The aggregate gate is PASS only when Python, offline reproduction, HTTP and Windows
+// Chrome all pass in this artifact round; every other outcome exits nonzero.
 import assert from 'node:assert/strict'
 import { spawn, spawnSync } from 'node:child_process'
 import { randomBytes } from 'node:crypto'
-import { mkdir, readFile, writeFile, readdir, rm } from 'node:fs/promises'
+import { mkdir, readFile, writeFile, readdir, rm, stat } from 'node:fs/promises'
 import { resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import Ajv2020 from 'ajv/dist/2020.js'
 import { chromium } from 'playwright'
+import {
+  FAIL,
+  NOT_RUN,
+  PASS,
+  classifyHttpAcceptance,
+  classifyOverall,
+  classifyPythonAcceptance,
+  classifyReproduction,
+  classifyWindowsAcceptance,
+  combineStatuses,
+  exitCode,
+} from './wp8_acceptance_status.mjs'
 
 const windows = process.argv[2] === '--windows'
 const artifactRoot = resolve(process.argv[windows ? 3 : 2] || '/tmp/w2-wp8-real-im')
@@ -18,20 +32,45 @@ const body = profile => ({ product_code: 'IM', start_date: '2024-01-01', end_dat
 const save = (name, value) => writeFile(resolve(artifactRoot, name), JSON.stringify(value, null, 2) + '\n')
 const pause = ms => new Promise(done => setTimeout(done, ms))
 
+async function readArtifact(name) {
+  try {
+    return JSON.parse(await readFile(resolve(artifactRoot, name), 'utf8'))
+  } catch {
+    return null
+  }
+}
+
+async function removeArtifacts(names) {
+  await Promise.all(names.map(name => rm(resolve(artifactRoot, name), { force: true })))
+}
+
+async function hasArtifact(name) {
+  try {
+    return (await stat(resolve(artifactRoot, name))).size > 0
+  } catch {
+    return false
+  }
+}
+
 async function windowsBrowser() {
   let input = ''
   for await (const chunk of process.stdin) input += chunk
   const credentials = JSON.parse(input)
-  const browser = await chromium.launch({ headless: false,
-    executablePath: 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe' })
-  const report = { kind: 'actual_windows_chrome_real_market', version: browser.version(), profiles: {}, errors: [] }
-  const context = await browser.newContext({ viewport: { width: 1440, height: 1000 } })
-  const page = await context.newPage()
-  page.setDefaultTimeout(60000)
-  page.on('pageerror', error => report.errors.push(error.name))
-  let posts = 0
-  page.on('request', request => { if (request.method() === 'POST' && request.url() === `${base}/runs`) posts++ })
+  const report = { kind: 'actual_windows_chrome_real_market', status: 'RUNNING', profiles: {}, errors: [] }
+  // Invalidate an earlier PASS before attempting any browser execution.
+  await save('windows-acceptance.json', report)
+  let browser
+  let page
   try {
+    browser = await chromium.launch({ headless: false,
+      executablePath: 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe' })
+    report.version = browser.version()
+    const context = await browser.newContext({ viewport: { width: 1440, height: 1000 } })
+    page = await context.newPage()
+    page.setDefaultTimeout(60000)
+    page.on('pageerror', error => report.errors.push(error.name))
+    let posts = 0
+    page.on('request', request => { if (request.method() === 'POST' && request.url() === `${base}/runs`) posts++ })
     const start = performance.now()
     await page.goto(origin)
     await page.getByLabel('用户名', { exact: true }).fill(credentials.username)
@@ -131,17 +170,20 @@ async function windowsBrowser() {
     assert.equal(await page.getByTestId('backtest-result').count(), 0)
     assert.equal((await context.request.get(`${base}/runs/${ids[0]}/result`)).status(), 401)
     assert.equal(report.errors.length, 0)
-    report.status = 'PASS'
+    report.status = PASS
   } catch (error) {
-    report.status = 'FAIL'
     // Do not persist raw browser exception text: it can contain local paths.
+    report.status = browser ? FAIL : NOT_RUN
+    report.reason = browser ? 'browser_acceptance_failed' : 'windows_chrome_unavailable'
     report.failure = { name: error.name, phase: Object.keys(report.profiles).length }
-    await page.screenshot({ path: resolve(artifactRoot, 'windows-failure.png'), fullPage: true }).catch(() => {})
-    process.exitCode = 1
+    if (browser && page) {
+      await page.screenshot({ path: resolve(artifactRoot, 'windows-failure.png'), fullPage: true }).catch(() => {})
+    }
   } finally {
     await save('windows-acceptance.json', report)
-    await browser.close()
+    if (browser) await browser.close()
   }
+  process.exitCode = exitCode(report.status)
 }
 
 async function orchestrate() {
@@ -156,7 +198,18 @@ async function orchestrate() {
     LAB_BACKTESTING_RUN_ROOT: resolve(temporary, 'runs'),
     LAB_FUTURES_BASIS_RUN_ROOT: resolve(temporary, 'research-runs') }
   const children = []
-  const report = { kind: 'actual_http_auth_real_market', profiles: {}, privacy: {} }
+  const runId = randomBytes(16).toString('hex')
+  const stages = { python: null, reproduction: null, http: null, windows: null }
+  const report = {
+    kind: 'actual_acceptance_gate',
+    status: NOT_RUN,
+    run_id: runId,
+    generated_at: new Date().toISOString(),
+    stages,
+    profiles: {},
+    privacy: {},
+  }
+  let currentStage = 'python'
   function start(command, args, cwd = root) {
     const child = spawn(command, args, { cwd, env, stdio: ['ignore', 'pipe', 'pipe'] })
     children.push(child)
@@ -194,7 +247,62 @@ async function orchestrate() {
     assert.equal(response.status, 200)
     return response.headers.get('set-cookie').split(';')[0]
   }
+  async function runWindowsStage(credentials) {
+    await removeArtifacts(['windows-acceptance.json', 'windows-failure.png',
+      ...profiles.map(profile => `windows-${profile}.png`)])
+    function winPath(path) {
+      const result = spawnSync('wslpath', ['-w', path], { encoding: 'utf8' })
+      return result.status === 0 ? result.stdout.trim() : ''
+    }
+    const scriptPath = winPath(fileURLToPath(import.meta.url))
+    const rootPath = winPath(artifactRoot)
+    if (!scriptPath || !rootPath) {
+      await save('windows-acceptance.json', { status: NOT_RUN, reason: 'wsl_interop_unavailable' })
+      return NOT_RUN
+    }
+    // Windows Node consumes the shared pure-JS Playwright package; Chrome is Windows.
+    const command = `& node.exe '${scriptPath.replaceAll("'", "''")}' --windows '${rootPath.replaceAll("'", "''")}'`
+    const child = spawn('powershell.exe', ['-NoProfile', '-NonInteractive', '-Command', command], { stdio: ['pipe', 'pipe', 'pipe'] })
+    children.push(child)
+    child.stdin.on('error', () => { /* missing Windows command; classified below */ })
+    child.stdin.end(JSON.stringify(credentials))
+    child.stdout.resume(); child.stderr.resume()
+    const code = await new Promise(done => {
+      child.once('error', () => done(null)); child.once('exit', done)
+    })
+    report.windows_process_exit = code
+    let windowsReport = await readArtifact('windows-acceptance.json')
+    if (!windowsReport) {
+      await save('windows-acceptance.json', { status: NOT_RUN, reason: 'windows_automation_unavailable' })
+      windowsReport = { status: NOT_RUN }
+    }
+    const screenshots = await Promise.all(profiles.map(profile => hasArtifact(`windows-${profile}.png`)))
+    return classifyWindowsAcceptance(windowsReport, { processExit: code, screenshots, profiles })
+  }
+
   try {
+    // Stale HTTP/Windows artifacts are removed before any stage can claim a result.
+    await removeArtifacts(['http-acceptance.json', 'windows-acceptance.json', 'windows-failure.png',
+      ...profiles.flatMap(profile => [`http-${profile}-preflight.json`, `http-${profile}-result.json`, `windows-${profile}.png`])])
+    await save('http-acceptance.json', { ...report, status: NOT_RUN, reason: 'acceptance_not_finished' })
+
+    const pythonReport = await readArtifact('python-acceptance.json')
+    stages.python = classifyPythonAcceptance(pythonReport, profiles)
+    const reproductionReport = await readArtifact('offline-reproduction.json')
+    stages.reproduction = classifyReproduction(reproductionReport, pythonReport, profiles)
+    report.python_acceptance_status = stages.python
+    report.reproduction_status = stages.reproduction
+    if (stages.python !== PASS || stages.reproduction !== PASS) {
+      stages.http = NOT_RUN
+      stages.windows = NOT_RUN
+      report.reason = 'real_market_prerequisites_not_passed'
+      await save('windows-acceptance.json', { status: NOT_RUN, reason: 'real_market_prerequisite_failed' })
+      return
+    }
+    report.python_run_id = pythonReport.run_id
+    report.python_fingerprint = pythonReport.profiles[profiles[0]].fingerprint
+
+    currentStage = 'http'
     const { createServer } = await import('node:net')
     for (const port of [8011, 5173]) {
       const server = createServer()
@@ -249,7 +357,6 @@ async function orchestrate() {
       if (status.status !== 'COMPLETED') {
         item.failure = status.failure
         item.status = ['upstream_operation', 'incomplete_input'].includes(status.failure?.category) ? 'NOT RUN' : 'FAIL'
-        report.status = item.status === 'FAIL' ? 'FAIL' : 'PARTIAL'
         break
       }
       const response = await fetch(`${base}/runs/${admission.run_id}/result`, { headers })
@@ -265,7 +372,7 @@ async function orchestrate() {
       const expected = JSON.parse(await readFile(resolve(artifactRoot, `${profile}-result.json`), 'utf8'))
       assert.deepEqual(payload.data, expected)
       await save(`http-${profile}-result.json`, payload)
-      item.status = 'PASS'; item.result_bytes = Buffer.byteLength(raw)
+      item.status = PASS; item.result_bytes = Buffer.byteLength(raw)
       item.summary = payload.data.summary; item.window = payload.data.window
       item.fingerprint = payload.data.evidence.input_fingerprint
       const repeated = await (await fetch(`${base}/runs/${admission.run_id}/result`, { headers })).json()
@@ -280,44 +387,40 @@ async function orchestrate() {
       report.privacy.completed_reread = true
       await save('http-acceptance.json', report)
     }
-    if (profiles.every(profile => report.profiles[profile]?.status === 'PASS')) {
-      report.status = 'PASS'
-      await save('http-acceptance.json', report)
-      const script = fileURLToPath(import.meta.url)
-      const winPath = path => spawnSync('wslpath', ['-w', path], { encoding: 'utf8' }).stdout.trim()
-      // Windows Node consumes the shared pure-JS Playwright package; Chrome is Windows.
-      const command = `& node.exe '${winPath(script).replaceAll("'", "''")}' --windows '${winPath(artifactRoot).replaceAll("'", "''")}'`
-      await rm(resolve(artifactRoot, 'windows-acceptance.json'), { force: true })
-      const child = spawn('powershell.exe', ['-NoProfile', '-NonInteractive', '-Command', command], { stdio: ['pipe', 'pipe', 'pipe'] })
-      children.push(child)
-      child.stdin.on('error', () => { /* missing Windows command; classified below */ })
-      child.stdin.end(JSON.stringify(credentials))
-      child.stdout.resume(); child.stderr.resume()
-      const code = await new Promise(done => {
-        child.once('error', () => done(null)); child.once('exit', done)
-      })
-      report.windows_process_exit = code
-      try {
-        const result = JSON.parse(await readFile(resolve(artifactRoot, 'windows-acceptance.json'), 'utf8'))
-        if (code !== 0 || result.status !== 'PASS') process.exitCode = 1
-      } catch {
-        await save('windows-acceptance.json', { status: 'NOT RUN', reason: 'windows_automation_unavailable' })
-        process.exitCode = 1
-      }
+    const httpProfiles = combineStatuses(profiles.map(profile => report.profiles[profile]?.status))
+    // The aggregate report carries the overall gate status, so classify HTTP with
+    // an explicit HTTP-scoped view of the same profiles and run association.
+    stages.http = classifyHttpAcceptance(
+      { ...report, kind: 'actual_http_auth_real_market', status: httpProfiles },
+      pythonReport,
+      profiles,
+    )
+    await save('http-acceptance.json', report)
+    if (stages.http === PASS) {
+      currentStage = 'windows'
+      stages.windows = await runWindowsStage(credentials)
     } else {
-      await save('windows-acceptance.json', { status: 'NOT RUN', reason: 'real_market_prerequisite_failed' })
+      stages.windows = NOT_RUN
+      await save('windows-acceptance.json', { status: NOT_RUN, reason: 'real_market_prerequisite_failed' })
     }
-    report.retained_run_count = (await readdir(env.LAB_BACKTESTING_RUN_ROOT)).length
+    try {
+      report.retained_run_count = (await readdir(env.LAB_BACKTESTING_RUN_ROOT)).length
+    } catch {
+      report.retained_run_count = 0
+    }
   } catch (error) {
-    report.status = 'FAIL'
-    report.failure = { name: error.name }
-    process.exitCode = 1
+    stages[currentStage] = FAIL
+    report.failure = { name: error.name, stage: currentStage }
   } finally {
+    report.stages = stages
+    report.status = classifyOverall(stages)
+    report.exit_code = exitCode(report.status)
     await save('http-acceptance.json', report)
     for (const child of children.reverse()) if (child.exitCode === null) child.kill('SIGTERM')
     await pause(1000)
     // Credentials are disposable. Results/evidence survive; private runtime is removed.
     await rm(temporary, { recursive: true, force: true })
+    process.exitCode = report.exit_code
   }
 }
 

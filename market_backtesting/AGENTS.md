@@ -14,9 +14,11 @@
 | Initial notional、benchmark、drawdown、case performance | [Performance](cases/futures_roll_long/PERFORMANCE.md) |
 | DataLake public bindings、completeness、W1 slot 复用、fingerprint/readiness | [Inputs](cases/futures_roll_long/INPUTS.md) |
 | BacktestResult、evidence、limitations、V2 projection | [Result](cases/futures_roll_long/RESULT.md) |
+| Portable evidence package、encoding、pure offline reproduction | [Evidence](cases/futures_roll_long/EVIDENCE.md) |
 | Online request、run lifecycle、store、concurrency、HTTP/Web ownership | [Online application](cases/futures_roll_long/ONLINE_APPLICATION.md) |
 | 当前状态、剩余 WP、acceptance、deferred | [Roadmap](cases/futures_roll_long/ROADMAP.md) |
 | 当前职责映射、语义审查、Implementation Drift | [Reconciliation](cases/futures_roll_long/RECONCILIATION.md) |
+| Actual real-market、HTTP、Windows Chrome 执行证据 | [WP8 acceptance](cases/futures_roll_long/WP8_ACCEPTANCE.md) |
 
 ## 执行规则
 

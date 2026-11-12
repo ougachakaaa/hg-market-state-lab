@@ -109,12 +109,15 @@ see [public examples](market_statistics/README.md). It has no CLI or HTTP servic
 
 ## Backtesting status
 
-W2 Futures Roll Long has completed WP1 Strategy & Holding Simulation: a pure Python
-boundary resolves real-contract entry, holding, expiry rolls and final exit from
-validated synthetic facts, with both `expiry_to_M1_v1` and `expiry_to_Q1_v1`. There is
-still no PnL/accounting (WP2), DataLake integration (WP3), result/evidence (WP4),
-online run (WP5), HTTP product (WP6) or Web workflow (WP7); `/backtesting` remains a
-planned page with no results. Start from the [W2 case authority](market_backtesting/cases/futures_roll_long/ARCHITECTURE.md)
+W2 Futures Roll Long is complete within its declared scope: strategy-independent Core
+replay/accounting, both roll profiles, DataLake integration with canonical input
+identity, Result/Evidence with offline reproduction, the online Run store, the
+authenticated HTTP product and the implemented `/backtesting` Web workflow. Full-window
+real IM acceptance and Windows Chrome → WSL execution are recorded in
+[WP8 acceptance](market_backtesting/cases/futures_roll_long/WP8_ACCEPTANCE.md); current
+authority and implementation reconciliation is in
+[Reconciliation](market_backtesting/cases/futures_roll_long/RECONCILIATION.md). Start
+from the [W2 case authority](market_backtesting/cases/futures_roll_long/ARCHITECTURE.md)
 and its [roadmap](market_backtesting/cases/futures_roll_long/ROADMAP.md). Backtesting is
 not a Research capability, Publication or Workbench Run.
 
@@ -139,7 +142,7 @@ poetry run python ui_http/scripts/api.py --host 127.0.0.1 --port 8012
 npm run dev
 ```
 
-默认开发地址为 `http://127.0.0.1:5173/`；登录后进入 `/research` 工作台。Vite 将 `/api/research/*`（去除 `/api` 前缀）、`/auth`、`/mo-option-chain` 与 `/mo-option-premium-plane` 转发到默认 backend 地址；部署网关也需同样转发 `/api` 并为页面路由提供 SPA fallback。导航见 [Workspace authority](ui_web/workspace.md)。
+默认开发地址为 `http://127.0.0.1:5173/`；登录后进入 `/research` 工作台，回测工作流位于 `/backtesting`。Vite 将 `/api/research/*`、`/api/backtesting/*`（去除 `/api` 前缀）、`/auth`、`/mo-option-chain` 与 `/mo-option-premium-plane` 转发到默认 backend 地址；部署网关也需同样转发 `/api` 并为页面路由提供 SPA fallback。导航见 [Workspace authority](ui_web/workspace.md)。
 
 ## 验证命令
 

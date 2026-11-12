@@ -493,3 +493,110 @@ module checks and authority navigation checks pass. No blocking semantic decisio
 implementation drift remains. Windows-native backend/store, production deployment,
 other-product real acceptance and W3 remain outside this delivery. The branch is ready
 for merge review; this task does not merge it.
+
+## W2 final acceptance gate hardening — 2026-11-12
+
+**Exit-code defect fixed; no production financial, HTTP or Web behavior changed.**
+The final review found a harness defect, not a product defect: PASS was not the only
+exit-0 outcome. The Python harness exited 0 for `PARTIAL`/`NOT RUN`, and `--mode
+reproduce` exited 0 without retained evidence. The Node orchestrator could exit 0 after
+a FAILED/NOT RUN HTTP stage, wrote `http-acceptance.json` PASS before a later Windows
+failure, and did not require Python/offline-reproduction prerequisites. A failed Python
+attempt could also read a prior `python-acceptance.json` PASS.
+
+### Implemented acceptance contract
+
+- Both harnesses map PASS → 0, FAIL → 1, PARTIAL → 2, NOT RUN → 3; unknown status or
+  missing required evidence is nonzero.
+- Python writes a fresh `RUNNING` report with `run_id`/`generated_at` before any market
+  operation, clears the previous round's per-profile evidence/result files, and fails
+  closed on unexpected errors. A previous PASS is never silently preserved.
+- `--mode reproduce` requires a PASS Python acceptance with `same_input`, revalidates
+  both evidence packages and retained Results, checks the accepted fingerprint, writes
+  `offline-reproduction.json` with the same acceptance `run_id`, and exits nonzero on
+  missing evidence or mismatch.
+- The Node gate validates Python and reproduction prerequisites before starting HTTP,
+  removes stale HTTP/Windows artifacts before those stages, requires authenticated HTTP
+  PASS and an actual Windows Chrome process (exit 0, version present, no page errors,
+  both profiles PASS and both full-page screenshots regenerated), and combines the four
+  stages so no later success can mask an earlier failure.
+- Provider/credential unavailability remains `NOT RUN` rather than a product failure;
+  it is still nonzero because the gate is not closed.
+
+### Automated verification
+
+| Check | Actual result |
+| --- | --- |
+| `poetry run pytest market_backtesting/tests/test_wp8_acceptance_exit.py -q` | PASS — 13 tests; PASS 0, FAIL/PARTIAL/NOT RUN nonzero, stale-PASS invalidation, missing/corrupt evidence, credential-free reproduction |
+| `npx vitest run scripts/wp8_acceptance_status.test.mjs` (in `ui_web`) | PASS — 15 tests; exit mapping, stage combination, stale/missing Python acceptance, reproduction identity, HTTP and Windows evidence completeness, Windows-not-executed cannot PASS |
+
+### Retained evidence cross-check
+
+The retained WSL artifact directory `/tmp/w2-wp8-real-im` still exists and was inspected
+read-only. The full fact table and NOT RUN scope are recorded in
+[WP8 acceptance](WP8_ACCEPTANCE.md#final-acceptance-gate-hardening--2026-11-12). This
+review independently confirmed:
+
+- window `2024-01-02` → `2026-10-30`, 683 CFFEX sessions, 2,732 Futures rows, 683 Index
+  rows and both index closes;
+- M1 33 rolls / Q1 11 rolls, final exits 6130.0 / 6081.0, and both financial summaries;
+- the single input fingerprint `b83a38c9bdc83f082eda87e93c1babdb9950dacad1e316b4186a2e07e0ef557c`;
+- HTTP Result payload `data` equality with the retained producer Result and the recorded
+  HTTP/Windows Run IDs; valid Windows full-page PNG evidence for both profiles;
+- offline reproduction from a copy of the retained evidence: PASS (exit 0), 750 / 706
+  StateEvents, same fingerprint.
+
+Real acquisition, authenticated HTTP worker execution and Windows Chrome were **NOT RUN**
+again in this review. They remain the historical WP8 evidence; this is not a new
+real-market run or a Source-freshness claim.
+
+### Final architecture reconciliation
+
+| Requirement | Evidence | Result |
+| --- | --- | --- |
+| Core Position-Driven Replay/Transition/Accounting ownership stable | Core architecture tests, pure-Core import isolation, 540 backtesting tests | PASS |
+| Policy does not calculate PnL/returns/drawdown | `policy.py` contains no such computations; Core owns Transition/PnL and Accounting | PASS |
+| Input Preparation uses only DataLake public Application Services | `test_source_uses_only_authorized_datalake_public_boundaries` enumerates the three services and input-module whitelist | PASS |
+| W1 Slot Resolver is a pure function dependency only | `test_only_authorized_w1_symbols_are_imported` symbol whitelist; no Observation/Report/Statistics/Publication/Online consumption | PASS |
+| Analyzer consumes only formal Performance/accounting | `analyze_futures_roll` projects Core records and owns only benchmark/excess/drawdown | PASS |
+| Result/Evidence do not repeat financial calculation | projection equality, evidence reproduction and `result_validation` checks; WP8 cross-check matched payload `data` exactly | PASS |
+| Online Store isolated from Research/Publication/Workbench | independent case-owned store and application tests; no W1 identity/store reuse | PASS |
+| HTTP is transport only; Web is interaction/display only | 588 HTTP tests; HTTP DTO fields inspected; React formatting only (`presentation.ts`, `Result.tsx`) | PASS |
+| Auth/Owner isolation not regressed | authenticated HTTP/owner tests plus retained WP8 privacy evidence | PASS |
+| Generated OpenAPI/TypeScript freshness | `npm run contract:check`: all seven pairs current | PASS |
+| Progressive Disclosure navigation | root → module → case navigation now routes EVIDENCE and WP8 evidence; topology 13 tests | PASS |
+| No Holding V0 / stale design / duplicate authority | architecture test asserts `holding.py`/legacy pipeline absent; stale README and ONLINE_APPLICATION "planned page" statements corrected | PASS |
+
+The only documentation drift found was outside the specialized contracts: README still
+described W2 as WP1-only with no PnL/HTTP/Web, and `ONLINE_APPLICATION.md` still called
+`/backtesting` a planned page. Both were corrected; no historical execution evidence was
+rewritten.
+
+### Regression and merge readiness
+
+| Check | Actual result |
+| --- | --- |
+| `poetry run pytest market_backtesting/tests -q` | PASS — 540 tests (WSL Linux) |
+| `poetry run pytest ui_http/tests -q` | PASS — 588 tests |
+| `poetry run pytest market_research/tests -q` (W1) | PASS — 1,270 tests, 1 skipped (WSL Linux) |
+| `poetry run pytest config/tests -q` | PASS — 26 tests |
+| Snapshot authority topology / DataLake boundary / Research boundary | PASS — 13 / 15 tests |
+| `poetry run ruff check market_backtesting ui_http config` | PASS |
+| `poetry run mypy market_backtesting` / `poetry run mypy ui_http` | PASS — 50 / 62 files |
+| `npm run contract:check` | PASS — seven OpenAPI/TypeScript pairs current |
+| `npm run test` | PASS — 48 files, 442 tests (WSL Linux) |
+| `npm run build` / `npm run lint` | PASS |
+| `npm run test:backtesting-browser` | PASS — Linux Chromium, synthetic public-service fixtures |
+| `git diff --check` | PASS |
+| Secret/large-file/personal-path diff scan | PASS |
+
+`origin/develop` remains `42cfd38ba4bfbedf3cd37ee975557dfc3be7793d`; the merge base is
+that commit, and the branch was 13 commits ahead / 0 behind before this commit (14 / 0
+after it). The merge is a fast-forward with no textual or semantic conflict. W1 and the
+other products' regressions pass; no secrets, Auth database, runtime store or real
+market payload enters Git.
+
+**Merge readiness: PASS.** The exit-code/exit-artifact defect is closed, retained WP8
+evidence is consistent, regression and architecture checks pass, and no blocking
+authority or implementation drift remains. The current review's real-market/HTTP/Windows
+re-execution is explicitly NOT RUN and does not invalidate the recorded WP8 PASS.

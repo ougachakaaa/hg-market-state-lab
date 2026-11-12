@@ -276,9 +276,10 @@ operation in v1.
 Ant Design controls, request/preflight presentation, submit/poll, producer-owned V2
 charts, trades/rolls table, evidence/limitations and busy/failed/interrupted/error
 states, plus the feature's generated OpenAPI/TypeScript contract freshness loop. The
-page must not fabricate results, controls or readiness. Until WP7, the existing
-`/backtesting` area remains a planned page with no strategy engine, trades or result
-data, as stated by the [Web workspace authority](../../../ui_web/workspace.md).
+page must not fabricate results, controls or readiness. WP7 replaced the previously
+planned page with the real workflow; actual Web acceptance is recorded in
+[WP7 acceptance](../../../ui_web/src/features/backtesting/ACCEPTANCE.md) and the
+full real-market/Windows evidence in [WP8](WP8_ACCEPTANCE.md).
 
 Auth and access:
 

@@ -251,6 +251,7 @@ ARCHITECTURE.md（本文件）
     │      ├─ PERFORMANCE.md
     │      ├─ INPUTS.md
     │      ├─ RESULT.md
+    │      ├─ EVIDENCE.md
     │      ├─ ONLINE_APPLICATION.md
     │      └─ ROADMAP.md
     ├─ market_statistics/ARCHITECTURE.md
