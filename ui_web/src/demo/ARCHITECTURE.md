@@ -3,7 +3,8 @@
 Specializes [module ownership](../../ARCHITECTURE.md), [application](../../application.md),
 [workspace navigation](../../workspace.md) and [presentation boundaries](../../presentation-architecture.md).
 This is the canonical Demo Runtime entry, not a business module, second Web product,
-Mock Backend or new financial capability. D0 encodes the target; V2 is not yet implemented.
+Mock Backend or new financial capability. D0 established the shared architecture; D1/D2 implemented shell/presentation boundaries.
+D3-R0 supersedes only the synthetic V2 source decision; full V2 remains unaccepted.
 
 ## Identity and ownership
 
@@ -20,8 +21,8 @@ The application selects runtime composition, never financial semantics:
 
 | Concern | Production Runtime | Static Demo Runtime |
 | --- | --- | --- |
-| Entry | Existing Authentication Gate | Anonymous entry, explicit Demo/Synthetic disclosure |
-| Data/control | Real HTTP queries, preflight, Run lifecycle | Validated committed Examples and local selection only |
+| Entry | Existing Authentication Gate | Anonymous entry, explicit static historical real-market disclosure |
+| Data/control | Real HTTP queries, preflight, Run lifecycle | Validated embedded Examples and local selection only |
 | Execution | Owning Python Research/Backtesting and normal business reads/writes | No backend, database, Token or Python runtime |
 | Presentation | Canonical feature presentation | The same feature presentation with fixed request and read-only capability |
 | Routing | Existing pathname/history, server `run_id` query semantics | Hash routing below `/hg-market-state-lab/` |
@@ -89,9 +90,10 @@ merely for Demo. Disclosure and Example origin remain clear during reading and d
 
 ## Examples and maintenance
 
-[Example contract](EXAMPLES.md) owns fixture targets, provenance and validation;
-[implementation handoff](IMPLEMENTATION.md) owns D0 reconciliation, bounded D1–D6 work
-and acceptance guidance. Feature and producer contracts continue to own results.
+[Example contract](EXAMPLES.md) owns real-market targets and result packaging;
+[Authenticity and rights](AUTHENTICITY.md) owns provenance, independent gates and public admission;
+[implementation handoff](IMPLEMENTATION.md) owns current D3-R0 cutover, D3-R1-R6, bounded D1–D6 work
+and D7 release handoff. Feature and producer contracts continue to own results.
 
 **Production UI Changes Propagate by Shared Code; Data Contract Changes Are Reconciled by CI.**
 
@@ -103,9 +105,12 @@ drift must fail CI; stale fixtures must not silently be accepted or regenerated 
 
 ## Generation versus release
 
-Fixture generation/update is an explicit offline operation. It may use Python producers
-in the repository-root environment, then review and commit deterministic results. Valid,
-compatible Examples need not be regenerated for each release.
+Real-data acquisition and result generation/update are explicit development operations using
+formal producers in the repository-root environment. Development First permits lawful
+acquisition, research, private results and local shared-UI integration while public rights
+remain unresolved. Private assets stay outside Git tracking and public build paths. Only
+rights-cleared results may enter committed public Examples. Valid, compatible Examples
+need not be regenerated for each release. The static runtime itself never acquires data.
 
 Static release consumes only committed Examples and locked npm dependencies. No Python
 Research/Backtesting execution, external market-data access, backend, database, token or
@@ -122,10 +127,10 @@ publication. CI gates Production/Demo compatibility before release. A failed bui
 deployment never establishes that Live Demo updated; successful deployment and public
 HTTP/browser acceptance are separate evidence.
 
-D0 does not change workflow triggers: [current workflow](../../../.github/workflows/deploy-demo-pages.yml)
+D3-R0 does not change workflow triggers: [current workflow](../../../.github/workflows/deploy-demo-pages.yml)
 still deploys the V1 feature branch. D7 owns switching to main and enforcing this release
 model. The old V1 WP5 eventual-trigger plan is superseded by D7. Do not push merely to
-validate D0: the existing branch trigger can publish V1.
+validate documentation: the existing branch trigger can publish V1.
 
 ## Transition and evidence
 
@@ -134,3 +139,8 @@ contract, generator and WP3/WP4 historical evidence. Its one-page/no-router and 
 shell describe V1 implementation only; they do not constrain the V2 target. V2 must share
 the full formal UI and cannot claim seven-page coverage until implemented and verified.
 No historical acceptance is evidence of V2 isolation, new Examples or main-driven release.
+
+D7 requires an independent Publication Review of the exact public artifact, all six
+[authenticity and rights gates](AUTHENTICITY.md) PASS, and exclusion of historical V1
+synthetic Examples. Attribution alone is not redistribution permission. Local technical
+acceptance and public release approval are separate outcomes.

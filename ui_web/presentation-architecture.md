@@ -78,6 +78,14 @@ Production 页面是业务展示的唯一实现来源：Shell、页面结构、�
 
 Shared Shell 展示不拥有认证 lifecycle：由 production composition 将 gate、身份/退出动作与在线页面组合在其外部；静态 composition 提供匿名披露、静态 content 与路由。不得以禁用按钮替代依赖隔离，也不引入 generic Mock Server、plugin 或 DI framework。详细 capability 与 isolation gates 见 [Demo Runtime](src/demo/ARCHITECTURE.md) 和 [实施 handoff](src/demo/IMPLEMENTATION.md)。
 
+Static delivery mode does not establish source authenticity. V2 uses real historical
+market results under the [Example contract](src/demo/EXAMPLES.md) and
+[development/publication gates](src/demo/AUTHENTICITY.md). Feature-owned shared Presentation
+must distinguish historical V1 Synthetic, test-only facts and V2 real-market provenance;
+layout mode such as `demo` must not select a false source label. Private local integration
+reuses the same Presentation while publication rights remain unresolved. Detailed pending
+origin corrections are tracked in the [implementation handoff](src/demo/IMPLEMENTATION.md).
+
 ## 2. Application Shell 与 Feature Page
 
 Application shell 只拥有：

@@ -39,6 +39,15 @@ calculation in React.
 
 ## Runtime scope
 
-Query inputs, protected HTTP reads, preflight, retries and Run lifecycle in this feature authority describe the Production controller. The same feature-owned Presentation also serves [Static Demo Runtime](../../demo/ARCHITECTURE.md) using [validated committed Examples](../../demo/EXAMPLES.md), fixed visible request parameters and local presentation state. Static composition never mounts the production controller or fabricates its lifecycle; it preserves this feature’s result/visualization semantics and applicable local Copy/Export. Shared presentation remains here, not in parallel Demo pages.
+Query inputs, protected HTTP reads, preflight, retries and Run lifecycle in this feature authority describe the Production controller. The same feature-owned Presentation also serves [Static Demo Runtime](../../demo/ARCHITECTURE.md) using [validated embedded Examples](../../demo/EXAMPLES.md), fixed visible request parameters and local presentation state. Static composition never mounts the production controller or fabricates its lifecycle; it preserves this feature’s result/visualization semantics and applicable local Copy/Export. Shared presentation remains here, not in parallel Demo pages.
 
 D2-C implements this boundary. `presentation.ts` exposes the feature-owned `ResearchOverviewPresentation`, pure generated-contract validators (`validateCapabilityList`, `validateCapabilityDetail`, `validateEmbeddedCatalog`) and a feature-local `useStaticCatalog` controller. Production `useCatalog` retains mount list GET, selection-triggered detail GET, independent list/detail retry, cancellation plus request-token stale isolation, protected Auth and HTTP error mapping; `ResearchWorkspacePage` is a thin composition root. Static composition validates the embedded list/detail set, rejects duplicate or unassociated capability identities, selects locally without a GET, and never fabricates a missing detail result. Both runtimes use the same page JSX and feature components. Static origin labels distinguish embedded descriptions from authenticated discovery while preserving published `status` and `live_readiness`. Explorer and Futures Basis navigation remain injected runtime-specific callbacks. `testing/static/` is a verification harness using regression data, not an official D3 Example or public Demo entry.
+
+## V2 origin policy reconciliation
+
+[Demo Example authority](../../demo/EXAMPLES.md) owns formal V2 real-market dates and
+packaging; [authenticity and rights](../../demo/AUTHENTICITY.md) owns evidence and admission.
+This feature owns only their presentation. Static delivery is not a Synthetic source label
+or proof of authenticity. Preserve historical V1/test disclosures, use actual real-market
+origin for V2, and never promote regression inputs to formal Examples. Pending origin-code
+changes are tracked in the [D3 handoff](../../demo/IMPLEMENTATION.md); R0 changes no code.
