@@ -17,7 +17,7 @@ const evidence = { status: 'RUNNING', checks: [], requests: [], errors: [] }
 let preview; let browser; let page
 function pass(message) { evidence.checks.push(message); console.log(`PASS: ${message}`) }
 try {
-  const build = spawnSync('npm', ['run', 'demo:build'], { cwd: web, encoding: 'utf8' })
+  const build = spawnSync('npm', ['run', 'demo:build'], { cwd: web, encoding: 'utf8', shell: process.platform === 'win32' })
   assert.equal(build.status, 0, build.stderr || build.error?.message)
   const html = await readFile(resolve(web, 'dist-demo/index.html'), 'utf8')
   assert.match(html, /\/hg-market-state-lab\/assets\//)

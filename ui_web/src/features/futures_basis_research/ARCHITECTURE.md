@@ -263,4 +263,30 @@ or automatic shift to yesterday. Failed-Run retry first loads/checks its request
 
 ## Runtime scope
 
-Query inputs, protected HTTP reads, preflight, retries and Run lifecycle in this feature authority describe the Production controller. The same feature-owned Presentation also serves [Static Demo Runtime](../../demo/ARCHITECTURE.md) using [validated committed Examples](../../demo/EXAMPLES.md), fixed visible request parameters and local presentation state. Static composition never mounts the production controller or fabricates its lifecycle; it preserves this feature’s result/visualization semantics and applicable local Copy/Export. Shared presentation remains here, not in parallel Demo pages. This is a D0 target boundary; existing online Page/controller separation is subsequent implementation work.
+Query inputs, protected HTTP reads, preflight, retries and Run lifecycle in this feature authority describe the Production controller. The same feature-owned Presentation also serves [Static Demo Runtime](../../demo/ARCHITECTURE.md) using [validated committed Examples](../../demo/EXAMPLES.md), fixed visible request parameters and local presentation state. Static composition never mounts the production controller or fabricates its lifecycle; it preserves this feature's result/visualization semantics and applicable local Copy/Export. Shared presentation remains here, not in parallel Demo pages.
+
+## Shared page presentation and static composition (D2-E)
+
+`page/FuturesBasisPresentation.tsx` is the single formal page presentation. It owns the
+feature header, the Research parameter region shell, immutable request facts, the Result
+region and the Report composition. Production supplies only its execution regions (query
+form, preflight, explicit Submit, accepted Run identity, status/errors and manual retries)
+through the `production` composition input. Static composition supplies a validated fixed
+request and Embedded Report through the `static` input; Preflight, Submit, polling and Run
+status are never simulated or hidden behind disabled controls.
+
+`presentation.ts` is the transport-free public entry. `api/validateResult.ts` owns the pure
+generated-contract boundary: `matchesResponse`, `validateImmutableRequest`,
+`validateReaderReport` (shared with Production report reading) and `validateEmbeddedReport`.
+Production transport retains URL construction, protected Auth and HTTP error mapping.
+`static/useStaticFuturesBasis.ts` validates the fixed request plus the complete producer
+reader payload once and exposes only validated facts; it owns no Run, polling, fetch or
+`run_id` restore. Page-level requested-window facts remain separate from the producer's
+actual observed coverage, and static success means the Embedded Report passed formal
+validation, not that a server Run executed.
+
+The shared `report/Report.tsx` keeps its six sections, M0/M1/Q1/Q2, chart controls and
+producer facts for online (`mode="online"`), offline (`mode="offline"`) and static
+(`mode="demo"`) delivery. `sectionNavigation="local"` scrolls between report sections
+without a fragment or history change, so a static hash route is never replaced; online and
+offline delivery retain their fragment section links.

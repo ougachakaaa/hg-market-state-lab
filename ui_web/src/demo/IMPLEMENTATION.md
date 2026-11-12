@@ -288,15 +288,28 @@ ended. Every embedded ChartView must match a formal View reference in its own pu
 Manifest; a published reference without an embedded View remains a legal explicit missing
 detail. Positive and negative validator/controller tests cover both contracts.
 
-## D2-E handoff
+## D2-E Futures Basis implementation handoff
 
-D2-E should apply the same split to Futures Basis Research: `useFuturesBasis` and
-`usePreflight` retain admission, preflight, explicit Submit, URL Run restore, polling,
-status/error lifecycle, cancellation and Auth; extract the shared page shell, fixed
-request disclosure, run-status/result surface and existing `Report.tsx` consumer. Static
-composition should consume a validated embedded Run/Report or fixed Example and must not
-offer Submit, preflight/refresh, polling or server Run restore, nor fake PENDING/RUNNING/
-COMPLETED. Preserve all six report sections, published provenance/coverage, local reader
-controls and existing disclosure; do not add Research execution or a second report
-implementation. Official D3 Examples, full D4 composition and release switching remain
-later work.
+D2-E applies that split to Futures Basis Research. `presentation.ts` is the transport-free
+feature entry. `page/FuturesBasisPresentation.tsx` is the single formal page presentation
+(header, parameter region, immutable request facts, Result region and shared six-section
+Report); `FuturesBasisPage` is the Production composition root that passes only its query
+form/preflight/Submit/Run-lifecycle nodes. Production `useFuturesBasis` and `usePreflight`
+retain admission, preflight, explicit Submit, URL Run restore, 1.5s polling, terminal stop,
+Report reading, cancellation/stale isolation, retries and Auth. `api/validateResult.ts` owns
+the generated-contract pure validators shared by Production report reading and static
+composition: `validateImmutableRequest`, `validateReaderReport`, `validateEmbeddedReport`
+and `matchesResponse`; Production keeps URL construction, protected Auth and HTTP error
+mapping. `static/useStaticFuturesBasis.ts` validates the fixed request plus complete producer
+reader payload once, with no Run, polling, fetch or `run_id` restore. Static presentation
+shows the fixed request, distinguishes the requested window from the producer's actual
+observed coverage, and states that success means the Embedded Report passed validation, not
+that a server Run executed. The shared reader keeps `mode="demo"` evidence semantics and
+uses route-local section navigation so the D1 hash route is never replaced. The test harness
+reuses the committed V1 Synthetic report verbatim (2024 window/profile) and is test-only,
+not a D3 Example or public Demo entry.
+
+D2-F remains Backtesting: extract shared request/readout with a capability-aware execution
+area, preserve W2 strategy/Core results and both Views, and never fake a completed Run.
+Official D3 Examples, D4 full composition, D5 compatibility gates and D7 release switching
+remain outstanding.

@@ -15,7 +15,7 @@ const evidence = { status: 'RUNNING', checks: [], requests: [], errors: [] }
 let server; let browser; let page
 const pass = message => { evidence.checks.push(message); console.log(`PASS: ${message}`) }
 try {
-  const built = spawnSync('npm', ['run', 'test:static-shell'], { cwd: web, encoding: 'utf8' })
+  const built = spawnSync('npm', ['run', 'test:static-shell'], { cwd: web, encoding: 'utf8', shell: process.platform === 'win32' })
   assert.equal(built.status, 0, built.stdout + built.stderr)
   const artifact = resolve(web, 'dist-demo-shell')
   const inventory = JSON.parse(await readFile(resolve(artifact, 'shell-routes.json'), 'utf8'))
