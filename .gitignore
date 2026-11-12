@@ -25,6 +25,7 @@ ui_web/dist-demo-shell/
 ui_web/dist-option-chain-test/
 ui_web/dist-premium-test/
 ui_web/dist-catalog-test/
+ui_web/dist-explorer-test/
 ui_web/dist-ssr/
 /ui_web/deploy/deploy.config.psd1
 

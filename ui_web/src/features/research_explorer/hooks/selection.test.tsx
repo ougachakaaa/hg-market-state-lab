@@ -2,7 +2,7 @@ import { act, renderHook, waitFor } from '@testing-library/react'
 import { expect, it, vi } from 'vitest'
 vi.mock('react-plotly.js', () => ({ default: () => null }))
 vi.mock('../api/research', () => ({
-  listPublications: vi.fn().mockResolvedValue({ data: [], next_cursor: 'opaque' }),
+  listPublications: vi.fn().mockResolvedValue({ data: [], next_cursor: 'opaque+/=' }),
   getPublication: vi.fn().mockResolvedValue({}),
   getAnalysis: vi.fn().mockResolvedValue({}),
   getChartView: vi.fn(),
@@ -15,7 +15,7 @@ it('requests details only on selection and ignores obsolete view completions', a
   const { result } = renderHook(() => useExplorer())
   await waitFor(() => expect(result.current.list.status).toBe('success'))
   expect(getPublication).not.toHaveBeenCalled()
-  act(() => result.current.next('opaque+/='))
+  act(() => result.current.next())
   await waitFor(() => expect(listPublications).toHaveBeenCalledWith('opaque+/=', expect.any(AbortSignal)))
   act(() => result.current.selectPublication('p'))
   await waitFor(() => expect(result.current.manifest.status).toBe('success'))

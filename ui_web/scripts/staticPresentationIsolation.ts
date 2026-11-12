@@ -28,7 +28,7 @@ export function staticPresentationIsolation(feature: string, forbidden: RegExp, 
       const allowed = (path: string) =>
         path === 'src/app/AppUiProvider.tsx' || path === 'src/index.css' ||
         composition.has(path) ||
-        /^src\/shared\/(ui|charts|format|clipboard|csv|download)\//.test(path) ||
+        /^src\/shared\/(ui|charts|format|clipboard|csv|download|visualization)\//.test(path) ||
         (path.startsWith(`src/features/${feature}/`) &&
           !forbidden.test(path))
       for (const id of modules) {

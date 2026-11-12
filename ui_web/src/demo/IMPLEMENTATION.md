@@ -258,12 +258,36 @@ Python access text as formal product instructions rather than Demo operations.
 regression fixture and is not a D3 Example. Results:
 [Catalog D2-C acceptance](../features/research_catalog/testing/ACCEPTANCE.md).
 
-D2-D should apply the same split to Research Explorer: Production mount/list GET,
-cursor/manifest/analysis/View lazy GET, retry, cancellation and Auth remain in its
-controller; extract the feature-owned Reader/Facts/AnalysisDetails/View composition plus
-pure generated-contract validators. Static composition should consume a validated embedded
-Publication set or the formal explicit empty state, with local cursor/selection and no
-mount GET, Refresh, request retry or server Run restore. Preserve published ordering,
-null/zero/status/provenance and Plotly View semantics; do not add Research execution or
-reuse Catalog DTOs/state. Official D3 Examples, full D4 composition and release switching
-remain later work.
+## D2-D Research Explorer implementation handoff
+
+D2-D implements that split for Research Explorer. `presentation.ts` exposes the shared
+`ResearchExplorerPresentation`, `AnalysisDetails`, pure generated-contract validators and
+the feature-local `useStaticExplorer` controller. Production `useExplorer` retains the
+initial list GET, opaque cursor pagination, lazy Manifest/Analysis/View GETs, retry,
+cancellation plus request-token stale isolation, Auth and error mapping;
+`ResearchExplorerPage` only composes controller and presentation. The View validator
+preserves `invalid_view` separately from other malformed responses and requires both the
+generated envelope and the shared ChartView contract.
+
+Static composition validates embedded pages, Manifests, Analyses and ChartViews together
+with list/Manifest/Job/Analysis/View identity associations, then performs only local
+pagination and selection. Duplicate, conflicting or unlisted identities reject the set;
+missing embedded Manifest/Analysis/ChartView records remain explicit missing states and
+never fabricate success or fall back to HTTP. Static disclosure says the online
+Publication Store was not queried, research was not executed, and source metadata does not
+prove market-source authenticity. The test harness reuses existing Research Explorer
+regression data and the committed ChartView fixture; it is test-only, not a D3 Example.
+Results: [Explorer D2-D acceptance](../features/research_explorer/testing/ACCEPTANCE.md).
+
+## D2-E handoff
+
+D2-E should apply the same split to Futures Basis Research: `useFuturesBasis` and
+`usePreflight` retain admission, preflight, explicit Submit, URL Run restore, polling,
+status/error lifecycle, cancellation and Auth; extract the shared page shell, fixed
+request disclosure, run-status/result surface and existing `Report.tsx` consumer. Static
+composition should consume a validated embedded Run/Report or fixed Example and must not
+offer Submit, preflight/refresh, polling or server Run restore, nor fake PENDING/RUNNING/
+COMPLETED. Preserve all six report sections, published provenance/coverage, local reader
+controls and existing disclosure; do not add Research execution or a second report
+implementation. Official D3 Examples, full D4 composition and release switching remain
+later work.
