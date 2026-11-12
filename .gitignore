@@ -21,6 +21,7 @@ G6_ACCEPTANCE_HANDOFF.md
 ui_web/node_modules/
 ui_web/dist/
 ui_web/dist-demo/
+ui_web/dist-demo-shell/
 ui_web/dist-ssr/
 /ui_web/deploy/deploy.config.psd1
 

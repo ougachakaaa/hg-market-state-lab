@@ -22,7 +22,9 @@
     "demo:dev": "vite --config vite.demo.config.ts",
     "demo:build": "tsc -p tsconfig.demo.json && vite build --config vite.demo.config.ts",
     "demo:preview": "vite preview --config vite.demo.config.ts",
-    "test:demo-browser": "node scripts/futures_basis_demo_browser.mjs"
+    "test:demo-browser": "node scripts/futures_basis_demo_browser.mjs",
+    "test:static-shell": "tsc -p tsconfig.shell.json && vite build --config vite.shell.config.ts",
+    "test:static-shell-browser": "node scripts/static_shell_browser.mjs"
   },
   "dependencies": {
     "@ant-design/icons": "^6.3.4",
