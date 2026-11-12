@@ -3,8 +3,8 @@ import { Alert, Button, Collapse, Empty, Flex, Space, Table, Typography, theme }
 import type { TableColumnsType } from 'antd'
 import { serializeJson } from '../../../shared/clipboard/text'
 import { useClipboardWrite } from '../../../shared/clipboard/useClipboardWrite'
-import type { PremiumPlane } from '../api/moOptionPremium'
-import { PremiumRequestError } from '../api/moOptionPremium'
+import type { PremiumPlane } from '../api/validatePremiumPlane'
+import type { PremiumRequestError } from '../api/moOptionPremium'
 import { classifyStrikeRelativeToReference, formatMetric, formatPlaneNumber } from '../model/premiumPlane'
 import type { PremiumPlaneProjection, PremiumPlaneRow, SelectedRepresentation } from '../model/premiumPlane'
 
@@ -91,7 +91,7 @@ export function PremiumPlaneTable({ plane, projection, representation }: {
     scroll={{ x: 'max-content', y: 'clamp(320px, 52vh, 600px)' }} />
 }
 
-export function RawResponseInspector({ payload }: { payload: unknown }) {
+export function RawResponseInspector({ payload, sourceDisclosure }: { payload: unknown; sourceDisclosure?: string }) {
   const { copy, pending, feedback: copyFeedback } = useClipboardWrite()
   const prettyJson = serializeJson(payload)
   const { token } = theme.useToken()
@@ -99,13 +99,14 @@ export function RawResponseInspector({ payload }: { payload: unknown }) {
   return (
     <Collapse size="small" items={[{
       key: 'raw-response',
-      label: 'View raw response',
+      label: sourceDisclosure === undefined ? 'View raw response' : 'View embedded payload',
       children: <Space orientation="vertical" style={{ display: 'flex' }}>
         <Flex align="center" gap="small" wrap>
-          <Typography.Text strong>Raw backend response</Typography.Text>
+          <Typography.Text strong>{sourceDisclosure === undefined ? 'Raw backend response' : 'Validated embedded Example payload'}</Typography.Text>
           <Button icon={<CopyOutlined aria-hidden="true" />} disabled={pending} onClick={() => void copy(() => serializeJson(payload))}>Copy JSON</Button>
           {copyFeedback && <Typography.Text role="status" type={copyFeedback === 'Copied' ? 'success' : 'danger'}>{copyFeedback}</Typography.Text>}
         </Flex>
+        {sourceDisclosure !== undefined && <Typography.Text role="note">{sourceDisclosure}</Typography.Text>}
         <pre className="raw-response-code" style={{ background: token.colorBgLayout, color: token.colorText }}>{prettyJson}</pre>
       </Space>,
     }]} />

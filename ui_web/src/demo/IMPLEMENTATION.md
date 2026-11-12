@@ -217,3 +217,31 @@ presentation state, and expose a transport-free presentation entry. Reuse its ex
 serializers/Inspector and keep source disclosure adjacent to them. Do not import Option
 Chain state/DTOs or introduce a generic feature runtime. D2-B, official Examples and full
 static composition remain separate work.
+
+## D2-B Premium Plane implementation handoff
+
+Premium now exposes its own transport-free `presentation.ts`, shared layout,
+`usePremiumPresentation(plane)` and `validatePremiumPlane(payload)`. The validator returns
+the original validated payload with its plane and preserves the nonempty-Points invariant.
+Production keeps date/price query, Auth, cancellation/stale-response and error lifecycle;
+local controls reset on query start (including consecutive queries without a result) and
+static result replacement. Result replacement also retires Inspector/Clipboard feedback.
+Static query capability has no callbacks and disables both date and price inputs. Source
+labels distinguish a backend response from a validated embedded payload, outside all
+serialized data. The test harness uses existing regression data, not D3 Example assets.
+
+D2-A's build-time dependency-isolation plugin is now a shared test utility with an
+explicit owner/forbidden-path configuration per feature. This is verification tooling,
+not a shared feature runtime or cross-feature DTO/state dependency. D2-A runtime code,
+V1 entry, D1 harness and deployment workflow are unchanged. Results and command evidence:
+[Premium D2-B acceptance](../features/mo_option_premium/testing/ACCEPTANCE.md).
+
+D2-C should separate `ResearchWorkspacePage` layout, CapabilityDetails, local-case details
+and local online/local selection from `useCatalog`'s mount list GET, selected detail GET,
+retry/cancellation and Auth boundary. Extract generated descriptor validators within
+Catalog; a static controller should validate the embedded list/details and their ID
+association, then select locally without GET/retry. Reuse localCases descriptions and
+injected navigation callbacks, make HTTP-origin/access wording appropriate for static
+reading, and preserve descriptor readiness/limitations without inferring provider
+availability. Do not add Research execution or modify Explorer. This is a handoff only;
+D2-C remains unimplemented.

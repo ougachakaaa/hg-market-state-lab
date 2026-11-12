@@ -149,7 +149,9 @@ try {
       await page.getByRole('button', { name: collapsed ? '展开导航' : '折叠导航', exact: true }).waitFor()
       if (collapsed && group) await page.getByRole('menuitem', { name: group, exact: true }).click()
       if (path === '/research') {
-        const navigation = collapsed ? page.locator('.ant-menu-submenu-popup:visible') : page.getByRole('menu', { name: '业务导航' })
+        // During the popup animation its container can briefly have zero bounds.
+        // Wait on the actual leaf below instead of re-filtering the container.
+        const navigation = collapsed ? page.locator('.ant-menu-submenu-popup') : page.getByRole('menu', { name: '业务导航' })
         await navigation.getByRole('menuitem', { name: 'Research Explorer', exact: true }).waitFor({ state: 'visible' })
         assert.equal(await navigation.getByRole('menuitem', { name: 'Research Explorer', exact: true }).count(), 1)
         assert.equal(await navigation.getByRole('menuitem', { name: 'DESCRIPTIVE RESEARCH', exact: true }).count(), 0)

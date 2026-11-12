@@ -1,4 +1,4 @@
-import type { PremiumPlane } from '../api/moOptionPremium'
+import type { PremiumPlane } from '../api/validatePremiumPlane'
 import { serializeCsv, type CsvCell } from '../../../shared/csv/csv'
 
 const references = ['underlying_spot', 'expiry_futures'] as const
