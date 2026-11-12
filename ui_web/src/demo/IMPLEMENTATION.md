@@ -309,7 +309,26 @@ uses route-local section navigation so the D1 hash route is never replaced. The 
 reuses the committed V1 Synthetic report verbatim (2024 window/profile) and is test-only,
 not a D3 Example or public Demo entry.
 
-D2-F remains Backtesting: extract shared request/readout with a capability-aware execution
-area, preserve W2 strategy/Core results and both Views, and never fake a completed Run.
-Official D3 Examples, D4 full composition, D5 compatibility gates and D7 release switching
-remain outstanding.
+## D2-F Backtesting implementation handoff
+
+D2-F applies that split to Backtesting. `presentation.ts` is the transport-free feature
+entry. `page/BacktestingPresentation.tsx` is the single formal page presentation (header,
+execution/readiness region, fixed request facts, requested-vs-observed window and shared
+Result Reader); `BacktestingPage` is the Production composition root that passes only its
+query form/preflight/Submit/Run-lifecycle nodes. Production `useBacktesting` and
+`usePreflight` retain advisory Preflight, protected Submit, URL `run_id` restore, 1.5s polling,
+terminal stop, Result reading, cancellation/stale isolation, manual retries and Auth.
+`api/validateResult.ts` owns the generated-contract pure validators shared by Production
+Result reading and static composition: `validateImmutableRequest`, `validateRunState`,
+`validateResult`, `validateResultResponse`, `matchesResponse` and `sameRequest`. Production
+keeps URL construction, protected Auth and HTTP error mapping. `static/useStaticBacktesting.ts`
+validates the fixed request plus complete producer Result once, with no Run, polling, fetch,
+Auth or `run_id` restore. Static presentation shows the fixed request, distinguishes the
+requested window from the producer's actual observed sessions, and states that success
+means the Embedded Backtest Result passed formal validation, not that a server Run executed.
+`Result.tsx` remains the only Result Reader and now uses origin-aware Evidence wording.
+The test harness reuses the committed producer regression Result (2025-02-17..2025-03-25)
+verbatim and is test-only, not a D3 Example or public Demo entry.
+
+D2-F is complete. D3 Static Examples, D4 full composition, D5 compatibility gates and D7
+release switching remain outstanding.

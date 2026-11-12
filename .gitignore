@@ -27,6 +27,7 @@ ui_web/dist-premium-test/
 ui_web/dist-catalog-test/
 ui_web/dist-explorer-test/
 ui_web/dist-futures-basis-test/
+ui_web/dist-backtesting-test/
 ui_web/dist-ssr/
 /ui_web/deploy/deploy.config.psd1
 
