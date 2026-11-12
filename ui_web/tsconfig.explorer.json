@@ -1,0 +1,4 @@
+{
+  "extends": "./tsconfig.demo.json",
+  "include": ["src/features/research_explorer/testing/static/main.tsx", "vite.explorer.config.ts"]
+}

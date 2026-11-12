@@ -30,7 +30,9 @@
     "test:premium-static": "tsc -p tsconfig.premium.json && vite build --config vite.premium.config.ts",
     "test:premium-static-browser": "node scripts/premium_static_browser.mjs",
     "test:catalog-static": "tsc -p tsconfig.catalog.json && vite build --config vite.catalog.config.ts",
-    "test:catalog-static-browser": "node scripts/catalog_static_browser.mjs"
+    "test:catalog-static-browser": "node scripts/catalog_static_browser.mjs",
+    "test:explorer-static": "tsc -p tsconfig.explorer.json && vite build --config vite.explorer.config.ts",
+    "test:explorer-static-browser": "node scripts/explorer_static_browser.mjs"
   },
   "dependencies": {
     "@ant-design/icons": "^6.3.4",
