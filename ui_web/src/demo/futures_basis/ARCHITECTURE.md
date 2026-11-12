@@ -101,4 +101,16 @@ chart frames horizontally to preserve readable labels; chart semantics do not ch
 base and ignored `dist-demo/` output. There is one page, no router and no change
 to production app routes, auth, proxies or build. Building needs only npm dependencies
 and the committed fixture, never Python, a token or fixture generation.
-Usage and WP4 static deployment handoff: [Demo guide](README.md).
+Usage and deployment: [Demo guide](README.md#deployment-guide-wp4).
+
+## Static deployment boundary (WP4)
+
+[Pages workflow](../../../../.github/workflows/deploy-demo-pages.yml) builds only
+this entry with Node 22 and the committed fixture. Pushes to the existing
+`feat/github-pages-demo` branch deploy only the contents of `ui_web/dist-demo/`
+to the `github-pages` Environment using the standard GitHub token and OIDC.
+No Python, fixture regeneration, secret or application runtime is part of delivery.
+The repository Pages Source must be GitHub Actions; existing Environment protection
+must be respected. Public availability requires a successful deployment and separate
+public HTTP/browser acceptance, never inferred from a local preview.
+WP5 owns final reconciliation/release and the eventual trigger change to `main`.

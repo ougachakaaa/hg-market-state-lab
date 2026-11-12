@@ -43,7 +43,7 @@ The browser gate prints a system temporary directory containing `acceptance.json
 and desktop/mobile, chart, hover and invalid-fixture screenshots. These artifacts
 and `dist-demo/` are not committed. Reproduce using the [Demo guide](README.md).
 
-The [WP4 handoff](README.md#wp4-deployment-handoff) deploys only the contents of
+The [WP4 handoff](README.md#deployment-guide-wp4) deploys only the contents of
 `ui_web/dist-demo/`. Actions, Pages account configuration and public endpoint
 verification are intentionally NOT RUN in WP3 and remain WP4 work. No local
 browser acceptance checks were skipped.
