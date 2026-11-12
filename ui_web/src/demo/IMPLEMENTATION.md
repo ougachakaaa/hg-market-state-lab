@@ -236,12 +236,34 @@ not a shared feature runtime or cross-feature DTO/state dependency. D2-A runtime
 V1 entry, D1 harness and deployment workflow are unchanged. Results and command evidence:
 [Premium D2-B acceptance](../features/mo_option_premium/testing/ACCEPTANCE.md).
 
-D2-C should separate `ResearchWorkspacePage` layout, CapabilityDetails, local-case details
-and local online/local selection from `useCatalog`'s mount list GET, selected detail GET,
-retry/cancellation and Auth boundary. Extract generated descriptor validators within
-Catalog; a static controller should validate the embedded list/details and their ID
-association, then select locally without GET/retry. Reuse localCases descriptions and
-injected navigation callbacks, make HTTP-origin/access wording appropriate for static
-reading, and preserve descriptor readiness/limitations without inferring provider
-availability. Do not add Research execution or modify Explorer. This is a handoff only;
-D2-C remains unimplemented.
+## D2-C Research Overview implementation handoff
+
+Catalog now exposes its transport-free `presentation.ts` with the shared
+`ResearchOverviewPresentation`, pure `validateCapabilityList` /
+`validateCapabilityDetail` / `validateEmbeddedCatalog` validators and a feature-local
+`useStaticCatalog` controller. Production `useCatalog` retains mount list GET,
+selection-triggered detail GET, independent list/detail retry, AbortController plus
+request-token stale-response isolation, protected Auth and HTTP error mapping;
+`ResearchWorkspacePage` only composes that controller with the shared presentation. Local
+selection retires the online detail request and never issues a detail GET.
+
+Static composition validates the embedded list before render, rejects malformed payloads,
+duplicate IDs and details outside the list, and allows a listed capability without a
+detail (shown as an explicit missing-detail state). It selects by ID locally, never calls
+the API, and uses the D1 hash adapter's navigate callbacks for the two existing navigation
+actions. Origin-aware labels distinguish embedded descriptions from authenticated
+discovery, preserve published `status`/`live_readiness`, and mark authenticated HTTP or
+Python access text as formal product instructions rather than Demo operations.
+`localCases` remains the sole local-case registry. The test harness reuses the existing
+regression fixture and is not a D3 Example. Results:
+[Catalog D2-C acceptance](../features/research_catalog/testing/ACCEPTANCE.md).
+
+D2-D should apply the same split to Research Explorer: Production mount/list GET,
+cursor/manifest/analysis/View lazy GET, retry, cancellation and Auth remain in its
+controller; extract the feature-owned Reader/Facts/AnalysisDetails/View composition plus
+pure generated-contract validators. Static composition should consume a validated embedded
+Publication set or the formal explicit empty state, with local cursor/selection and no
+mount GET, Refresh, request retry or server Run restore. Preserve published ordering,
+null/zero/status/provenance and Plotly View semantics; do not add Research execution or
+reuse Catalog DTOs/state. Official D3 Examples, full D4 composition and release switching
+remain later work.

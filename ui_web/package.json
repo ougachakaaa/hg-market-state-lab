@@ -28,7 +28,9 @@
     "test:option-chain-static": "tsc -p tsconfig.option-chain.json && vite build --config vite.option-chain.config.ts",
     "test:option-chain-static-browser": "node scripts/option_chain_static_browser.mjs",
     "test:premium-static": "tsc -p tsconfig.premium.json && vite build --config vite.premium.config.ts",
-    "test:premium-static-browser": "node scripts/premium_static_browser.mjs"
+    "test:premium-static-browser": "node scripts/premium_static_browser.mjs",
+    "test:catalog-static": "tsc -p tsconfig.catalog.json && vite build --config vite.catalog.config.ts",
+    "test:catalog-static-browser": "node scripts/catalog_static_browser.mjs"
   },
   "dependencies": {
     "@ant-design/icons": "^6.3.4",

@@ -91,7 +91,7 @@ try {
   await page.getByText('Validated embedded Example payload', { exact: true }).waitFor()
   assert.equal(await page.getByText('Raw backend response', { exact: true }).count(), 0)
   assert.equal(await page.getByRole('note').count(), 2)
-  assert.equal(await page.locator('.raw-response-code').textContent(), raw)
+  assert.equal(await page.locator('.raw-response-code').textContent(), raw.replaceAll('\r\n', '\n'))
   await page.getByRole('button', { name: 'Copy JSON', exact: true }).click()
   await page.waitForFunction(raw => navigator.clipboard.readText().then(text => text === raw), raw)
   await page.getByRole('button', { name: 'Copy Raw JSON', exact: true }).click()
@@ -126,7 +126,8 @@ try {
     assert.deepEqual(rows[index + 1], expected)
   }
   const exported = await download('Export Context JSON')
-  assert.equal(exported.bytes.toString('utf8'), contextText)
+  // Windows clipboard text uses CRLF while the downloaded UTF-8 file preserves LF.
+  assert.equal(exported.bytes.toString('utf8').replaceAll('\r\n', '\n'), contextText.replaceAll('\r\n', '\n'))
   pass('Fixed query and Form submit; default/four-axis/side/expiry controls; sparse absent/null/zero and reference coloring; complete Inspector/Clipboard/31-column CSV/Context downloads')
   for (const width of [1440, 390]) {
     await page.setViewportSize({ width, height: 900 })
