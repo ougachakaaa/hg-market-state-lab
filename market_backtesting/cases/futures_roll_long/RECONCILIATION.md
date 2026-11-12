@@ -600,3 +600,17 @@ market payload enters Git.
 evidence is consistent, regression and architecture checks pass, and no blocking
 authority or implementation drift remains. The current review's real-market/HTTP/Windows
 re-execution is explicitly NOT RUN and does not invalidate the recorded WP8 PASS.
+
+## Portable SQLite storage WP0
+
+2026-11-12: the case-owned [Online storage](ONLINE_STORAGE.md) approves an independent
+SQLite target. The current `online_store.py` still requires POSIX descriptors/UID/modes
+and `online.py` still publishes separate result/state files. This is **intended migration
+drift**, not a newly failing implementation of the legacy contract. Legacy permission,
+symlink and file-replacement tests remain truthful for that adapter; WP1/WP2 must replace
+physical-layout expectations while retaining lifecycle/owner/result/security assertions.
+
+The authoritative [storage drift register and WP plan](../../../market_research/STORAGE_RECONCILIATION.md)
+records severity, dependencies and acceptance. The earlier no-open-drift/merge-readiness
+statements above retain their original review scope and do not close this new target.
+No Core, Policy, Analyzer, Result, HTTP or Web semantic change is authorized.

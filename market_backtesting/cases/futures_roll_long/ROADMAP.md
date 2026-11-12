@@ -1,5 +1,13 @@
 # W2 Futures Roll Long delivery and readiness
 
+## Portable storage follow-up
+
+The original case milestones below retain their original evidence and numbering.
+The new, unimplemented storage WP0-WP6 series is tracked in
+[Storage reconciliation](../../../market_research/STORAGE_RECONCILIATION.md); its case-owned target is
+[Online storage](ONLINE_STORAGE.md). Prior PASS does not establish SQLite readiness
+or native Windows storage support.
+
 This document specializes the [case](ARCHITECTURE.md). It owns current delivery
 status, remaining work-package acceptance and deferred scope. Current authority
 inventory, semantic review and implementation drift belong to

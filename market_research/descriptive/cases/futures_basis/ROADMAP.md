@@ -1,5 +1,13 @@
 # R01-A work packages, reconciliation and readiness
 
+## Portable storage follow-up
+
+The original case milestones below retain their original evidence and numbering.
+The new, unimplemented storage WP0-WP6 series is tracked in
+[Storage reconciliation](../../../STORAGE_RECONCILIATION.md); its case-owned target is
+[Online storage](ONLINE_STORAGE.md). Prior PASS does not establish SQLite readiness
+or native Windows storage support.
+
 This document specializes the [case entry](ARCHITECTURE.md). It owns delivery
 boundaries and reconciliation, not duplicate formulas, schemas or runtime results.
 Baseline: `develop` at `3c7db37714443d7717218ee602218e7abfd911ab`.
