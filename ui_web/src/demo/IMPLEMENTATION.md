@@ -10,6 +10,16 @@ they do not undo the completed extractions or authorize synthetic formal V2 Exam
 
 ## Current baseline and next package
 
+WP-A is completing the remaining real W2 and admitted Trailing Return examples from
+baseline `69cd25f15dd35d086582726439236ebe472f36d3`. Its bounded checkpoints and final
+delivery are recorded in [WP-A acceptance](WP_A_ACCEPTANCE.md). Real W2 M1/Q1 production,
+guarded portable replay and Embedded Result validation have passed. Private Research
+publication and unified handoff are independently recorded there as they complete.
+Public rights remain BLOCKED; D4–D6 composition and deployment are outside WP-A.
+
+The R1 next-package guidance below is historical; completed R2/R3 evidence is in
+[R2 acceptance](R2_ACCEPTANCE.md) and [R3 acceptance](R3_ACCEPTANCE.md).
+
 D3-R1 completed against clean `feat/github-pages-demo` HEAD
 `751b0a8b8276f58af95570a70596f805f0951e04` on 2026-11-13.
 See [R1 feasibility and rights](R1_FEASIBILITY.md) for the seven-target matrix,

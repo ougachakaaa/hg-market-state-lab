@@ -46,6 +46,12 @@ only for a trusted, operationally sized store; capacity must be controlled by th
 
 ## Safe projection
 
+The adapter's pure `project_analysis(raw, publication_id)` projects an already verified
+public Reader Analysis into the existing `AnalysisResponse` DTO. HTTP uses the same
+function after its bounded read. Explicit private offline exports may call it after
+the Python Reader verifies retained evidence; they are not HTTP reads or capacity
+acceptance and do not change HTTP source/response limits. No business result is computed.
+
 The Manifest exposes schema version, identity, status, declared scope, Jobs, Analysis
 identities, exact request/spec, View IDs and measures, and source digest and size. Free-form
 publication context, source ID, raw failures, skip reasons, source location, Layer IDs,
