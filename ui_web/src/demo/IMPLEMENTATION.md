@@ -1,14 +1,39 @@
-# Static Demo implementation handoff: D3-R0 cutover
+# Static Demo implementation handoff: D3-R1 feasibility
 
 Execution guidance under [Demo Runtime authority](ARCHITECTURE.md) and
 [Example contract](EXAMPLES.md); feature semantics remain with their canonical owners.
-D3-R0 is authority-only: Real Market Only replaces D0 synthetic V2 requirements, while
-Development First separates local technical delivery from public admission. D1/D2 shared
-architecture is retained. No new real-market result or publication right is verified here.
+D3-R0 established Real Market Only and Development First; D3-R1 has now verified
+bounded real-source access and input availability. D1/D2 shared architecture is retained.
+No formal R2–R5 Example or market-data public redistribution right is established.
 The D0 baseline/extraction descriptions and D1/D2 handoffs below are historical records;
 they do not undo the completed extractions or authorize synthetic formal V2 Examples.
 
 ## Current baseline and next package
+
+D3-R1 completed against clean `feat/github-pages-demo` HEAD
+`751b0a8b8276f58af95570a70596f805f0951e04` on 2026-11-13.
+See [R1 feasibility and rights](R1_FEASIBILITY.md) for the seven-target matrix,
+producer paths, exact coverage, private evidence index and blocker exit conditions.
+
+- Actual private Source checks passed: 315/315 natural days in both Calendars,
+  206 CFFEX/SSE sessions; MO 312 active contracts and 312 matching daily rows;
+  exact-day underlying and four legitimate IM references. Premium's independent
+  canonical probe and 312-option input Basis validate; Points/Plane remain R2 work.
+- Existing default Futures/Index caches cover 205/206 sessions. The missing
+  November 11 inputs were actually acquired through public services in private
+  storage (four Futures rows, one Index row); no merged full-window proof is claimed.
+  Default Calendar/caches remain unchanged. R3/R4 need coherent final exports.
+- Capability discovery returns the sole real descriptor, with `live_readiness=not_probed`.
+  Publication root is unconfigured; R5 still needs its explicit admitted Trailing
+  Return plan, warm-up evidence, completed Batch and retained Publication.
+- Technical feasibility PASS; full-window execution readiness BLOCKED; public market
+  rights BLOCKED. Local R2–R5 preparation may proceed under the reviewed personal
+  research scope. Unknown public rights do not authorize repository/Pages/downloads.
+
+Recommended next package is **D3-R2**, private exact-day MO producer execution and
+validation. R1 stops here; no automatic R2 execution, deployment, push or merge.
+
+### Historical D3-R0 baseline
 
 D3-R0 inspected branch `feat/github-pages-demo`, clean HEAD
 `694fa6c517218c50fbf85e52377c124d248c302f`. It changes Markdown only, not producers,
