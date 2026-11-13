@@ -1,4 +1,4 @@
-import type { OptionChain } from '../api/moOptionChain'
+import type { OptionChain } from '../api/validateOptionChain'
 import { serializeCsv, type CsvCell } from '../../../shared/csv/csv'
 
 export const optionChainCsvHeader = [

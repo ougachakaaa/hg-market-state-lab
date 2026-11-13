@@ -1,0 +1,23 @@
+{
+  "market_research/tests/fixtures/futures_basis_inputs_v1.json": "f9990fff3ba3de740e04ae2a0c468dde881ffe70486fa68b8d2351d05e48d224",
+  "market_research/tests/fixtures/publication_visualization_v1.json": "f125077a3fcbab82eb04ca8983987458503edd1058774e922f5ac9ce61c25b2b",
+  "ui_http/tests/fixtures/research_execute.json": "69ec8d8e0e25121ddfccc2b5e67a329e19ed64a19959ddeeffc639eba7b4639d",
+  "ui_http/tests/fixtures/research_plan.json": "5828208a7ee66e85f0130025cf4e330772b060f4924d2952723a6c9a71251913",
+  "ui_http/tests/fixtures/research_preview.json": "e6c2f82aa461d8071e9bac8f9d09ca89b9b79e3d10c1b7bb4cf9da2e043640c3",
+  "ui_http/tests/fixtures/research_success.json": "750293e6b6791a5cd92aa4f6e2311bee0c60d923a562fbffa5922c0ad725073b",
+  "ui_web/src/demo/futures_basis/report.v1.json": "cf9709e5abd3f9ff42a25a432e0abcdbab04a54223bc84c526db094a63ddd45a",
+  "ui_web/src/features/backtesting/api/result.fixture.json": "810566069129ae1de86c546b0a24e98d90be5f6adc1ac073b49aa4c8655ece9c",
+  "ui_web/src/features/research_catalog/api/catalog.fixture.json": "ba8c965cf444499f17dafb8d727eac292a97f9818f2bd7272bfb721d1b931b6b",
+  "ui_web/src/shared/visualization/fixtureV2.json": "750e1de808fe7e17e54dbbc24010a724844a521e4e6bdfb19a9e01e9ef048c63",
+  "workbench/tasks/equity_index_futures_basis_monitor/runtime/request.example.json": "1f1fcf66cd6cd53db30c4ffeaa4af992f64e8895cd1f253185bf9f58e189e6be",
+  "workbench/tasks/equity_index_futures_basis_monitor/runtime/request.four_families.example.json": "fca43dacca4e7fc1cad7478a39d1a5607f50b959597117e59080ab3405c43147",
+  "workbench/tasks/equity_index_futures_basis_monitor/task.json": "91baf9dacb8ae8547234b35e957fd8d93ae6a8bea5127db2b327da8edba5a553",
+  "workbench/tasks/historical_return_observation/results/2026_four_index_returns/scope.json": "25bc8a532577792b0ed3fd7f0557b950c9ddc6ffedc9d462a492b2010457c77b",
+  "workbench/tasks/historical_return_observation/task.json": "dff8c1a16e52b25f08d086b06e4cbc5daadd1d127cd4ec8d18aaf39aa8af85a9",
+  "workbench/tests/fixtures/capability.json": "ba8c965cf444499f17dafb8d727eac292a97f9818f2bd7272bfb721d1b931b6b",
+  "workbench/tests/fixtures/natural_language_candidate.json": "afc4db9c17e47193567f8931fca87116cd9ad2f67a0c3e442fdcff1549eff90f",
+  "workbench/tests/fixtures/planning_candidate.json": "454b8eb429c9371cbe51b52b6d7118a7b20cb02e64332c495cdf318e22f82a9a",
+  "ui_web/src/demo/public/examples/package.json": "16d6b2fe09e5c001999173a9e7b15e1391e61959fd78a7d287a702df03efea84",
+  "ui_web/src/demo/futures_basis/rollback-v1.tar.gz": "c3840dca3a94a3050530ac64ad27e239242bb0942e75edbde70a0acd2a3b5081",
+  "ui_web/src/demo/futures_basis/rollback-inventory.json": "011bdde61e66122b1cd306813a5222be4442471dfa912da601ce31b7813c12fe"
+}

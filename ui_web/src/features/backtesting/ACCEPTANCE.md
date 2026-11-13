@@ -73,3 +73,49 @@ gate. Subsequent actual results belong to the independent
 [WP8 acceptance record](../../../../market_backtesting/cases/futures_roll_long/WP8_ACCEPTANCE.md).
 No JSON/CSV export, Copy for GPT, offline evidence
 download, new financial metrics, costs, margin or strategy changes were introduced.
+
+## UI-WP01 date-axis presentation acceptance — 2026-11-13
+
+The cumulative return and drawdown charts now share one default `Trading Days` /
+`Calendar Days` control as required by the
+[date-axis presentation authority](../../../DATE_AXIS_PRESENTATION.md). The domain is
+`BacktestResult.daily[].trade_date` in result order, memoized once per Result; both charts
+receive the same `RenderOptions.ordinalDates`. This is local presentation state: no Run
+identity/request change, no GET/POST/preflight, no URL/browser storage, and no change to
+producer values or evidence. A different Run remounts `Result` and restores the default.
+
+Executed in `ui_web/`, on Windows with Chrome 157.0.8103.39 through the existing
+`PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH` override because Playwright's bundled Chromium was
+not installed (the browser install was not added to the repository).
+
+| Check | Actual result |
+| --- | --- |
+| `npm run contract:check` | PASS; all seven committed OpenAPI/TypeScript pairs current |
+| `npm run lint` | PASS; 0 warnings, 0 errors |
+| `npm run build` | PASS; TypeScript + Vite; existing large-bundle warning remains |
+| `npm test -- --maxWorkers=1 --testTimeout=15000` | PASS; 52 files, 457 tests |
+| `npm run test:backtesting-browser` | PASS; full pre-existing lifecycle matrix plus the new date-axis checks |
+| `npm run test:futures-basis-online-browser` | PASS; W1 historical date axis unchanged |
+| `npm run test:futures-basis-report-browser` | PASS; offline W1 reader unchanged |
+| `npm run test:visualization-browser` | PASS; generic renderer defaults and interactions unchanged |
+
+A plain parallel `npm test` twice hit the pre-existing MO Premium Plane 5-second timeout
+under concurrent suite load; that file passes in isolation and the documented serial run
+above passes all 457 tests. No test or timeout configuration was changed.
+
+The running development services occupied default ports 8011/5173, so browser gates used
+temporary copies with backend 18011 / frontend 15173 and a corresponding Vite config,
+following the [WP2A precedent](../../../WP2A_ACCEPTANCE.md). Assertions, fixtures,
+authentication and lifecycle checks were not modified; the port-adjusted copies were
+deleted after execution and the developer services were preserved. The committed
+`backtesting_browser_acceptance.mjs` keeps the canonical 8011/5173 ports.
+
+Date-axis browser evidence: both charts use ordinal `linear` x positions in Trading Days
+and raw dates with a `date` axis in Calendar Days; entry/roll/exit shapes and annotations
+align; the 31-day non-session interval spans one equal step in Trading Days but more than
+5× a one-day interval in Calendar Days; mode switches reset the horizontal viewport to
+the full new-coordinate-system range, preserve legend selection, keep tooltip dates and
+support Zoom/Pan/Reset; repeated switching produced no extra request, no state change and
+identical y values. Evidence: `acceptance.json` with `status: PASS` and `errors: []`,
+plus `date-axis-trading.png` and `date-axis-calendar.png` in the disposable output
+directory (`/tmp/wp7-backtesting-browser` by default).

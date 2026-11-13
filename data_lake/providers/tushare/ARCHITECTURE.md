@@ -92,6 +92,8 @@ Provider 使用受控 HTTP client 校验 HTTP status、JSON envelope 与 provide
 
 Executor 不把 provider request failure 映射到 FetchUnits；Dataset adapter 与现有 Dataset/Core machinery 根据该请求实际尝试的目标编码 failure。不能合法确定目标集合时，仍按公共及 Dataset authority 的 operation failure boundary 处理。Provider exception object、SDK type、stack 或 provider transport response 不进入 public Application contract；可读 reason 不包含 credential。
 
+Confirmed absent/blank TUSHARE_TOKEN raises the public `CredentialMissingError`, a subtype of `OperationError`, before client creation. Configuration parsing, client initialization and request failures do not use this signal. No credential value is carried by this error; lazy initialization and acquisition behavior remain unchanged.
+
 ## 6. Cancellation boundary
 
 内部 execution 可用 cancellation guard 包裹 Executor：取消后拒绝后续 call，已进入的 call 按既有 timeout/限流/错误契约收束。Guard 不重试、不取消已发出的 HTTP、不改变 quota 计数，也不解释 FetchUnits；Dataset Source 的分页停止遵守 Adapter lifecycle，取消触发与等待属于 [bounded execution](../../EXECUTION.md)。

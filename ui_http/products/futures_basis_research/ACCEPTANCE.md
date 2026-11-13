@@ -1,5 +1,11 @@
 # WP8-A HTTP acceptance — 2026-11-09
 
+**Storage update (2026-11-13):** the POSIX storage gate recorded in this dated evidence
+was retired by storage WP3; W1 exclusively uses its independent portable SQLite store and
+native Windows/WSL2/Linux Docker runtime evidence is recorded in
+[Storage reconciliation](../../../market_research/STORAGE_RECONCILIATION.md#storage-wp6-execution-evidence).
+The statements below remain historical execution evidence for their original backend.
+
 This is execution evidence for the [HTTP contract](http-contract.md), not a second
 semantic contract. The [Research roadmap](../../../market_research/descriptive/cases/futures_basis/ROADMAP.md)
 records WP7-R and the WP8-A / WP8-B split.
@@ -44,11 +50,11 @@ construction performs no run-storage I/O. No queue, scheduler or multiple-worker
 support is added. The report delivery permit includes envelope serialization and
 is released on failure; status reads need neither report permit.
 
-The storage boundary checks POSIX capabilities before filesystem mutation. Native
-Windows lacks the required descriptor-relative/no-follow/ownership support and
-therefore serves this product as unavailable while other products can start.
-Linux runtime and simulated capability failures were tested; a native Windows or
-WSL execution was not performed. WSL requires equivalent filesystem capabilities.
+Historical storage boundary (retired): the adapter checked POSIX capabilities before
+filesystem mutation, so native Windows served this product as unavailable. The active
+implementation is the portable SQLite store described by
+[Online storage](../../../market_research/descriptive/cases/futures_basis/ONLINE_STORAGE.md);
+the statements in this dated section describe the retired adapter only.
 
 ## Error and OpenAPI reconciliation
 

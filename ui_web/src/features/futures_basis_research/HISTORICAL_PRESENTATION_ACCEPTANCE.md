@@ -1,5 +1,10 @@
 # Historical Basis presentation acceptance
 
+> Authority note: the Trading Days / Calendar Days behavior recorded here is now the
+> repository-wide standard owned by the
+> [date-axis presentation authority](../../../DATE_AXIS_PRESENTATION.md). This file is
+> implementation and verification evidence for W1, not a second normative standard.
+
 Implementation stays on `feat/web-ui-ux-polish` above `056c72a`, preserving the
 existing UI polish, as requested. Develop was verified at `52b31a5`.
 

@@ -2,7 +2,7 @@ import dayjs from 'dayjs'
 import 'dayjs/locale/zh-cn'
 import zhCN from 'antd/es/date-picker/locale/zh_CN'
 import { Checkbox, Flex, Form, DatePicker, Radio, Select, Space, Typography } from 'antd'
-import type { PremiumExpiry, PremiumPriceType } from '../api/moOptionPremium'
+import type { PremiumExpiry, PremiumPriceType } from '../api/validatePremiumPlane'
 import type {
   SelectedOptionType,
   SelectedReferenceBasis,
@@ -11,12 +11,13 @@ import type {
   SelectedValueBasis,
 } from '../model/premiumPlane'
 
-export function PremiumQueryControls({ selectedDate, priceType, selectDate, selectPriceType }: {
-  selectedDate: string
-  priceType: PremiumPriceType
-  selectDate: (date: string) => void
-  selectPriceType: (priceType: PremiumPriceType) => void
-}) {
+export type PremiumQuery =
+  | { mode: 'production'; selectedDate: string; priceType: PremiumPriceType;
+      selectDate: (date: string) => void; selectPriceType: (priceType: PremiumPriceType) => void }
+  | { mode: 'static'; selectedDate: string; priceType: PremiumPriceType; sourceDisclosure: string }
+
+export function PremiumQueryControls({ query }: { query: PremiumQuery }) {
+  const { selectedDate, priceType } = query
   return (
     <Form layout="vertical" onSubmitCapture={(event) => event.preventDefault()} aria-label="权利金平面查询">
       <Space orientation="vertical" size="small">
@@ -24,13 +25,15 @@ export function PremiumQueryControls({ selectedDate, priceType, selectDate, sele
           <Form.Item label="观察日期" htmlFor="premium-as-of" style={{ marginBottom: 0 }}>
             <DatePicker id="premium-as-of" value={selectedDate ? dayjs(selectedDate) : null}
               locale={zhCN} format="YYYY-MM-DD" placeholder="YYYY-MM-DD" preserveInvalidOnBlur
-              allowClear
-              onChange={(date) => selectDate(date?.isValid() ? date.format('YYYY-MM-DD') : '')}
+              disabled={query.mode === 'static'}
+              allowClear={query.mode === 'production'}
+              onChange={(date) => { if (query.mode === 'production') query.selectDate(date?.isValid() ? date.format('YYYY-MM-DD') : '') }}
               style={{ width: 200 }} aria-describedby="premium-query-help" />
           </Form.Item>
           <Form.Item label="价格口径" htmlFor="premium-price-type" style={{ marginBottom: 0 }}>
             <Select id="premium-price-type" aria-label="价格口径" value={priceType} style={{ width: 160 }}
-              onChange={(value: PremiumPriceType) => selectPriceType(value)} options={[
+              disabled={query.mode === 'static'}
+              onChange={(value: PremiumPriceType) => { if (query.mode === 'production') query.selectPriceType(value) }} options={[
                 { value: 'open', label: '开盘（Open）' },
                 { value: 'high', label: '最高（High）' },
                 { value: 'low', label: '最低（Low）' },
@@ -38,7 +41,7 @@ export function PremiumQueryControls({ selectedDate, priceType, selectDate, sele
               ]} />
           </Form.Item>
         </Flex>
-        <Typography.Text type="secondary" id="premium-query-help">选择有效日期后自动加载；更改价格口径会重新查询，清空日期可重置查询。</Typography.Text>
+        <Typography.Text type="secondary" id="premium-query-help">{query.mode === 'static' ? `固定观察日期 · MO · ${priceType}；静态展示不支持查询。` : '选择有效日期后自动加载；更改价格口径会重新查询，清空日期可重置查询。'}</Typography.Text>
       </Space>
     </Form>
   )

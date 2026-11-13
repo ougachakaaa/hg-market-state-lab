@@ -173,3 +173,8 @@ window with bounded density. Changing mapping resets the horizontal viewport
 and retains legend selection; Reset restores the full domain. Numeric units and
 feature detail adapters follow the Visualization entry's presentation rules.
 These frontend options do not change the serialized contract.
+
+This renderer default is not a research-surface default. A chart with an authoritative
+trading-session domain exposes the repository-wide `Trading Days` / `Calendar Days`
+policy owned by the [date-axis presentation authority](DATE_AXIS_PRESENTATION.md); that
+policy adds no field to this contract.

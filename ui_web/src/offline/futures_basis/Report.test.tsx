@@ -5,7 +5,11 @@ import type { ReportData } from './types'
 
 afterEach(cleanup)
 
-vi.mock('../../shared/visualization', () => ({ ChartView: () => <div>Producer ChartView</div> }))
+vi.mock('../../shared/visualization', () => ({
+  ChartView: () => <div>Producer ChartView</div>,
+  DateAxisControl: () => <div>Producer date-axis control</div>,
+  DEFAULT_DATE_AXIS_MODE: 'trading',
+}))
 
 function fixture(): ReportData {
   const empty = { version: 2 as const, axes: [], layers: [], events: [], layout: { title: '' }, presentation: { show_legend: true, zoom: true, pan: true, reset: true } }

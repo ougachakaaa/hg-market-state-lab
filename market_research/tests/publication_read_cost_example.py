@@ -35,11 +35,20 @@ def inspect(store: PublicationStore, pid: str) -> dict[str, Any]:
     view = analysis["views"][0]
     reads: list[tuple[str, int]] = []
     parsed_source = 0
-    real_read, real_json = storage._read, storage._json
+    real_read, real_json = store._storage.blob, storage._json
+    real_envelope = store._envelope
 
-    def track_read(parent: int, name: str) -> bytes:
-        result = real_read(parent, name)
-        reads.append((name, len(result)))
+    def track_read(
+        connection: Any, publication_id: str, group: str, identity: str, *args: Any
+    ) -> bytes:
+        result = real_read(connection, publication_id, group, identity, *args)
+        reads.append((group, len(result)))
+        return result
+
+    def track_envelope(publication_id: str, connection: Any = None) -> Any:
+        result = real_envelope(publication_id, connection)
+        if connection is not None:
+            reads.append(("manifest", len(storage.canonical_json(result["manifest"]))))
         return result
 
     source_size = manifest["source"]["size"]
@@ -68,7 +77,8 @@ def inspect(store: PublicationStore, pid: str) -> dict[str, Any]:
         tracemalloc.start()
         started = time.perf_counter()
         with (
-            patch.object(storage, "_read", side_effect=track_read),
+            patch.object(store._storage, "blob", side_effect=track_read),
+            patch.object(store, "_envelope", side_effect=track_envelope),
             patch.object(storage, "_json", side_effect=track_json),
         ):
             operation()
@@ -76,14 +86,17 @@ def inspect(store: PublicationStore, pid: str) -> dict[str, Any]:
         _, peak = tracemalloc.get_traced_memory()
         tracemalloc.stop()
         groups = {
-            "manifest": sum(file == f"{pid}.json" for file, _ in reads),
-            "source": sum(file == "source.json" for file, _ in reads),
-            "analysis": sum(file == f"{analysis['analysis_id']}.json" for file, _ in reads),
-            "view": sum(file == f"{view['view_id']}.json" for file, _ in reads),
-            "layer": sum(file == f"{view['layer_id']}.json" for file, _ in reads),
+            name: sum(group == kind for group, _ in reads)
+            for name, kind in (
+                ("manifest", "manifest"),
+                ("source", "source"),
+                ("analysis", "analyses"),
+                ("view", "views"),
+                ("layer", "layers"),
+            )
         }
         output["operations"][name] = {
-            "file_reads": len(reads),
+            "record_reads": len(reads),
             "bytes_read": sum(size for _, size in reads),
             "read_groups": groups,
             "source_json_parses": parsed_source,

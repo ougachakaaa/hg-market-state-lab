@@ -26,7 +26,7 @@ visualization
 上述 online 产品消费路径之外，已明确契约化的 offline report 可以渲染 producer 提供的完整通用 Visualization Views；
 例如 [R01-A offline delivery](../market_research/descriptive/cases/futures_basis/DELIVERY.md)。ui_web 只拥有渲染及静态资源封装，
 其 R01-A standalone reader 入口为 [offline reader](src/offline/futures_basis/ARCHITECTURE.md)。不直接 import Research/business internals、执行研究、获取市场数据或绕过 HTTP authentication；该离线路径不发布新的 HTTP product。
-公开静态 Demo 的数据与消费契约由 [Futures Basis static demo](src/demo/futures_basis/ARCHITECTURE.md) 拥有；它复用同一 producer reader 与共享 reader，不引入后端、认证或第二套研究 schema。
+公开静态 Demo V2 是同一正式业务 Presentation 的 anonymous read-only runtime，不是第二套 Web 产品。双 Runtime composition、全页面覆盖、静态隔离与发布不变量从 [Demo Runtime authority](src/demo/ARCHITECTURE.md) 进入，再按需进入 Example 契约、实施边界与历史 V1 fixture；不引入后端或第二套业务 schema。Private D1–D6 的实现与工程证据见 [WP-C acceptance](src/demo/WP_C_ACCEPTANCE.md)；D7 public admission 仍独立待审，不能将历史单页验收视为 V2 readiness。
 
 ## 3. 数据依赖方向
 
@@ -51,6 +51,8 @@ Application entry、认证交互与 gate、feature discovery/navigation 与 comp
 
 跨语言 domain-neutral Layer / View / Template contract 由 [Visualization authority](VISUALIZATION.md) 拥有；它不建立新的顶层模块或要求 producer 依赖 UI。
 该稳定入口按版本导航到 [V2 date-series contract](VISUALIZATION_V2.md)；V1 与现有 online consumer 的契约不因新版本设计而改变。
+
+日期型研究图表（存在权威交易日 domain、以日期为 X 轴）的 `Trading Days` / `Calendar Days` 展示规范、domain ownership、多图联动与交互不变量由 [Date-axis presentation authority](DATE_AXIS_PRESENTATION.md) 拥有；它是 presentation policy，不覆盖 Visualization 的 generic 契约。
 
 Frontend 内部 application、Page、API、React hooks、pure model、component、chart 与 shared infrastructure 的 ownership、依赖方向和状态边界由 [presentation architecture](presentation-architecture.md) 拥有。具体 feature 的产品展示与 visualization 语义仍由 co-located feature authority 拥有。
 

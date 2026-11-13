@@ -10,7 +10,13 @@ from typing import Any
 
 import pytest
 
-from data_lake import EnsureResult, InvalidRequestError, OperationError, UnitFailure
+from data_lake import (
+    CredentialMissingError,
+    EnsureResult,
+    InvalidRequestError,
+    OperationError,
+    UnitFailure,
+)
 from data_lake.datasets.tushare_equity_index_futures import FuturesDailyScope
 from data_lake.datasets.tushare_index_daily import IndexDailyScope
 from market_backtesting.cases.futures_roll_long import (
@@ -551,3 +557,32 @@ def test_malformed_ensure_result_is_typed_without_success_or_retry() -> None:
     with pytest.raises(FuturesRollApplicationError, match="invalid_ensure_result"):
         service.run(request())
     assert [name for name, _ in futures.calls] == ["export", "ensure"]
+
+
+@pytest.mark.parametrize("error,reason", [
+    (CredentialMissingError("required credential absent"), "credential_missing"),
+    (OperationError("network fake-secret /private/path"), "operation_unavailable"),
+    (OperationError("credential unavailable"), "operation_unavailable"),
+])
+def test_safe_ensure_classification(error: OperationError, reason: str) -> None:
+    from dataclasses import asdict
+
+    from market_backtesting.cases.futures_roll_long.online_models import project_failure
+
+    service, calendar, futures, index = fake_services()
+    futures.exports = [incomplete(public_exports().futures, "futures")]
+    attempts = []
+
+    def fail(value: object) -> Any:
+        attempts.append(value)
+        raise error
+
+    futures.ensure = fail  # type: ignore[method-assign, assignment]
+    with pytest.raises(FuturesRollApplicationError) as caught:
+        service.run(request())
+    assert asdict(project_failure(caught.value)) == dict(
+        stage="ensure", category="upstream_operation", dependency="futures", reason=reason
+    )
+    assert len(attempts) == 1
+    assert [name for name, _ in futures.calls] == ["export"]
+    assert not index.calls

@@ -1,0 +1,4 @@
+{
+  "extends": "./tsconfig.demo.json",
+  "include": ["src/features/futures_basis_research/testing/static/main.tsx", "vite.futures-basis.config.ts"]
+}

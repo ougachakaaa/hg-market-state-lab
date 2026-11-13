@@ -1,6 +1,11 @@
 # WP8-B Web acceptance — 2026-11-09
 
 **PASS within deterministic synthetic Linux acceptance. WP9 is NOT RUN.**
+**Storage update (2026-11-13):** the historical POSIX run-store requirement recorded
+below was retired by storage WP3. W1 now uses an independent portable SQLite store and
+native Windows/WSL2/Linux Docker runtime evidence is recorded in
+[Storage reconciliation](../../../../market_research/STORAGE_RECONCILIATION.md#storage-wp6-execution-evidence);
+the statements below remain historical execution evidence.
 This records execution evidence for the [frontend authority](ARCHITECTURE.md),
 not a second financial, HTTP or lifecycle contract.
 
@@ -127,8 +132,10 @@ All three paths use synthetic facts, not live markets.
 
 - WP9 real market acquisition, actual Provider/Cache readiness, WSL/Windows Chrome,
   restart-in-browser and production deployment acceptance: **NOT RUN**.
-- Online storage still requires the existing POSIX capabilities and one backend
-  process. Native Windows unavailability is surfaced through the published contract.
+- Historical storage requirement: the retired adapter required POSIX capabilities and
+  one backend process. The active W1 store is portable SQLite and supports native
+  Windows, Linux and WSL2 on local filesystems, still with one backend process; current
+  platform evidence is in the storage reconciliation link above.
 - Offline font embedding is verified without system CJK fonts. Online presentation
   inherits application/host fonts; this minimal headless host lacks a system CJK
   font, so online screenshots show missing Chinese glyphs. No remote font is added.

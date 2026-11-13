@@ -1,5 +1,15 @@
 # W2 Futures Roll Long delivery and readiness
 
+## Portable storage follow-up
+
+The original case milestones below retain their original evidence and numbering.
+The storage WP0-WP6 series is tracked in
+[Storage reconciliation](../../../market_research/STORAGE_RECONCILIATION.md); its case-owned target is
+[Online storage](ONLINE_STORAGE.md). W2 exclusively uses SQLite after storage WP2; the POSIX adapter is retired.
+Current checks and platform limits are recorded in
+[WP2 evidence](RECONCILIATION.md#storage-wp2-execution-evidence).
+Historical original milestones do not establish unexecuted platform acceptance.
+
 This document specializes the [case](ARCHITECTURE.md). It owns current delivery
 status, remaining work-package acceptance and deferred scope. Current authority
 inventory, semantic review and implementation drift belong to
@@ -126,7 +136,29 @@ No blocking W2 acceptance or implementation drift remains; merging is a separate
   execution, automatic cleanup/TTL, standalone online evidence/replay endpoints,
   result CSV/copy/export and production SLA remain outside this release.
 - Full canonical evidence/replay is implemented in WP4; the online result exposes its summary.
-- Native Windows store/backend support and Nginx/Docker production deployment are
-  Deferred / NOT RUN. Windows Chrome to WSL acceptance passed in [WP8](WP8_ACCEPTANCE.md).
+- The portable SQLite online store supports native Windows, Linux, WSL2 and Linux Docker
+  on local filesystems; the four-platform runtime verification matrix is recorded in
+  [Storage reconciliation](../../../market_research/STORAGE_RECONCILIATION.md#storage-wp6-execution-evidence).
+  Nginx/Docker production deployment remains **NOT RUN** (no production ingress or
+  packaging is claimed). Windows Chrome to WSL acceptance passed in [WP8](WP8_ACCEPTANCE.md).
 - Provider freshness/correction/TTL semantics remain DataLake-owned. HTTP wire details
   and Web generated artifacts belong to WP6/WP7, not this authority reconciliation.
+
+## Storage WP6 final status (2026-11-13)
+
+W2 exclusively uses its independent SQLite store after storage WP2; the POSIX adapter is
+retired. Storage WP6 executed W1/W2/Publication storage acceptance on native Windows,
+WSL2 Ubuntu and Linux Docker; native Linux outside WSL remains **NOT RUN**. Current
+evidence, remaining risks and the four-platform verdict are recorded in
+[Storage reconciliation](../../../market_research/STORAGE_RECONCILIATION.md#storage-wp6-execution-evidence).
+The historical WP1 partial-readiness statement below is superseded by the WP2 cutover and
+this WP6 evidence; it does not supersede the original W2 delivery WP numbering or
+historical acceptance.
+
+## Storage WP1 readiness (2026-11-13, historical)
+
+The independent private SQLite adapter is implemented; production online wiring remains
+legacy POSIX. Storage WP1 acceptance is PARTIAL pending a green supported-platform
+legacy regression and remaining portability evidence. The native Windows adapter tests
+pass with two privilege-dependent skips. See [execution evidence](RECONCILIATION.md#storage-wp1-execution-evidence).
+This does not supersede the original W2 delivery WP numbering or historical acceptance.

@@ -1,24 +1,12 @@
 import { protectedRequest } from '../../../shared/http/protectedRequest'
-import Ajv2020 from 'ajv/dist/2020.js'
-import openApi from './moOptionPremium.openapi.json'
-import type { components, paths } from './moOptionPremium.generated'
+import { matchesPremiumResult, matchesResponse } from './validatePremiumPlane'
+import type { PremiumPlaneResult, PremiumPriceType, PremiumError, PremiumErrorResponse } from './validatePremiumPlane'
+import type { paths } from './moOptionPremium.generated'
+export type { PremiumPlane, PremiumExpiry, PremiumPoint, PremiumPriceType, PremiumError, PremiumErrorKind, PremiumPlaneResult } from './validatePremiumPlane'
 
 const path = '/mo-option-premium-plane' satisfies keyof paths
 type Operation = paths[typeof path]['get']
 type Query = Operation['parameters']['query']
-
-export type PremiumPlane = Operation['responses'][200]['content']['application/json']
-export type PremiumExpiry = PremiumPlane['expiries'][number]
-export type PremiumPoint = PremiumPlane['points'][number]
-export type PremiumPriceType = NonNullable<Query['price_type']>
-export type PremiumError = components['schemas']['PremiumErrorBody']
-export type PremiumErrorKind = PremiumError['kind']
-export interface PremiumPlaneResult {
-  plane: PremiumPlane
-  rawPayload: unknown
-}
-type ErrorStatus = Exclude<keyof Operation['responses'], 200>
-type PremiumErrorResponse = Operation['responses'][ErrorStatus]['content']['application/json']
 
 export class PremiumRequestError extends Error {
   readonly kind: PremiumErrorResponse['error']['kind'] | 'network' | 'invalid_response'
@@ -34,21 +22,6 @@ export class PremiumRequestError extends Error {
     this.kind = kind
     this.param = param
   }
-}
-
-const ajv = new Ajv2020({ strictSchema: false })
-const responseValidators = new Map(
-  Object.entries(openApi.paths[path].get.responses).map(([status, response]) => [
-    Number(status),
-    ajv.compile({
-      ...response.content['application/json'].schema,
-      components: openApi.components,
-    }),
-  ]),
-)
-
-function matchesResponse(status: number, body: unknown): boolean {
-  return responseValidators.get(status)?.(body) === true
 }
 
 export async function loadMoOptionPremiumPlane(
@@ -79,11 +52,8 @@ export async function loadMoOptionPremiumPlane(
     throw new PremiumRequestError('invalid_response', '数据服务返回了无法读取的响应')
   }
 
-  if (response.ok && response.status === 200 && matchesResponse(200, body)) {
-    const plane = body as PremiumPlane
-    // HTTP contract §5.4: a successful plane contains a real analytical Point.
-    // The generated structural schema alone does not encode this invariant.
-    if (plane.points.length > 0) return { plane, rawPayload: body }
+  if (response.ok && response.status === 200 && matchesPremiumResult(body)) {
+    return { plane: body, rawPayload: body }
   }
   if (!response.ok && matchesResponse(response.status, body)) {
     const { error } = body as PremiumErrorResponse

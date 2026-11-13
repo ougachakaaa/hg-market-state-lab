@@ -177,6 +177,7 @@ def test_provider_is_separate_from_kernel_and_dataset_semantics() -> None:
                     "data_lake.domain.ExecutionFailure",
                     "data_lake.results",
                     "data_lake.results.OperationError",
+                    "data_lake.results.CredentialMissingError",
                 }
                 for name in names
             ), path

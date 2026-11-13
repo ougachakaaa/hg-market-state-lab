@@ -1,5 +1,13 @@
 # Online Futures Basis Research HTTP contract V1
 
+## Storage transition status
+
+W1 online Runs exclusively use the case-owned [portable SQLite storage](../../../market_research/descriptive/cases/futures_basis/ONLINE_STORAGE.md).
+Native Windows no longer has a POSIX capability gate. Endpoints, DTOs, Auth, owner
+isolation and safe unavailable/corrupt mappings remain unchanged. Actual platform
+verification is recorded in the shared storage reconciliation; portability is not
+acceptance evidence for unexecuted platforms.
+
 This contract specializes [HTTP ownership](../../ARCHITECTURE.md) and is cataloged
 in [HTTP_PRODUCTS](../../HTTP_PRODUCTS.md). Research owns the
 [online application, profile and run lifecycle](../../../market_research/descriptive/cases/futures_basis/ONLINE_APPLICATION.md),

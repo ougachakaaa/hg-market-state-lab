@@ -1,0 +1,34 @@
+{
+  "status": "PASS",
+  "kind": "independently_reviewed_v1_recovery_rebuild",
+  "sourceSha": "6e69f362110d2ee8415ca0efd5bde984df69d81e",
+  "priorDeploymentSha": "d6e813a93e5b0a1fc71c985f7798f6d546c5d62f",
+  "priorWorkflowRun": 43393646248,
+  "reviewer": "Codex",
+  "reviewDate": "2026-11-13",
+  "browser": "PASS: rebuilt recovery artifact; all eight V1 Chromium groups; no API/Auth/external requests or console errors",
+  "scope": "Synthetic V1 only; recovery rebuild independently reviewed, not a claim of byte identity with original deployment",
+  "archiveDigest": "c3840dca3a94a3050530ac64ad27e239242bb0942e75edbde70a0acd2a3b5081",
+  "files": [
+    {
+      "file": "assets/fixture-Cpqpqgb1.js",
+      "size": 589033,
+      "sha256": "96f8673c51e1c4b2f15bede5b198b94a0e02f54fb6132f94625d6f1026eefd79"
+    },
+    {
+      "file": "assets/index-Cet5f1MU.js",
+      "size": 5655299,
+      "sha256": "c947d4f6b9f2f05f24e257a167e008c6d5ac4c4f14bca023f876deafd3adaa04"
+    },
+    {
+      "file": "assets/index-O9sVkxwP.css",
+      "size": 320,
+      "sha256": "0c85b1fbd02b1587bab9df61b83c3807d17b4745a4200e080af11b4351b22b12"
+    },
+    {
+      "file": "index.html",
+      "size": 656,
+      "sha256": "9e469eaa56dfbd0d5e41f578916712fd236e40213049864a8133d11c90ca6234"
+    }
+  ]
+}

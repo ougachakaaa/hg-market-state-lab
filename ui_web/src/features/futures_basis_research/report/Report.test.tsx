@@ -1,9 +1,18 @@
-import { cleanup, fireEvent, render, screen } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen, within } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { Report } from './Report'
 import { validateReportData } from './validate'
 import { readerFixture } from './reader.fixture'
-vi.mock('../../../shared/visualization', () => ({ ChartView: ({ options }: any) => <div data-testid="chart-mode">{options?.ordinalDates ? 'trading' : 'calendar'}</div> }))
+// Keep the reader's real mode state; stub only the shared renderer/control boundary.
+vi.mock('../../../shared/visualization', () => ({
+  ChartView: ({ options }: any) => <div data-testid="chart-mode">{options?.ordinalDates ? 'trading' : 'calendar'}</div>,
+  DateAxisControl: ({ value, onChange, label }: any) => <div aria-label={label}>
+    {[['trading', 'Trading Days'], ['calendar', 'Calendar Days']].map(([mode, text]) =>
+      <button key={mode} onClick={() => onChange(mode)}>{text}</button>)}
+    <span data-testid="chart-mode-state">{value}</span>
+  </div>,
+  DEFAULT_DATE_AXIS_MODE: 'trading',
+}))
 afterEach(cleanup)
 describe('shared reader', () => {
   it('renders six online sections, explicit empty coverage and online-only disclosure', () => {
@@ -48,7 +57,7 @@ it('composes a standalone offline title and subordinate online report title with
   expect(data).toEqual(before)
 })
 
-it.each(['online', 'offline'] as const)('defaults all history charts to Trading Days and switches together (%s)', mode => {
+it.each(['online', 'offline', 'demo'] as const)('defaults all history charts to Trading Days and switches together (%s)', mode => {
   const data = readerFixture(); const before = structuredClone(data)
   render(<Report data={data} mode={mode} />)
   expect(screen.getAllByTestId('chart-mode').map(e => e.textContent)).toEqual(['trading', 'trading', 'trading'])
@@ -79,4 +88,60 @@ it('formats Overview, quantiles, intervals and paired means by explicit result u
   fireEvent.click(container.querySelector('#section-3 .ant-table-row-expand-icon')!)
   expect(screen.getAllByText('Mean：15.3%')).toHaveLength(3)
   expect(data).toEqual(before)
+})
+
+it('uses static demo evidence copy without claiming online transport or adjacent evidence files', () => {
+  const data = readerFixture(); const before = structuredClone(data)
+  const { container } = render(<Report data={data} mode="demo" />)
+  expect(container.querySelectorAll('[id^="section-"]')).toHaveLength(6)
+  expect(screen.getByText(/本报告展示 Synthetic Fixture/)).toBeTruthy()
+  expect(screen.queryByText(/此 HTTP 接口/)).toBeNull()
+  expect(screen.queryByText(/相邻 inputs.canonical.json/)).toBeNull()
+  fireEvent.click(screen.getByText('Producer Report Request'))
+  expect(screen.getByText(JSON.stringify(data.request))).toBeTruthy()
+  expect(data).toEqual(before)
+})
+
+it('keeps hash-routed section navigation local without replacing the active route', () => {
+  window.history.replaceState(null, '', '/#/research/futures-basis')
+  const original = Element.prototype.scrollIntoView
+  const scroll = vi.fn()
+  Element.prototype.scrollIntoView = scroll
+  try {
+    const { container } = render(<Report data={readerFixture()} mode="demo" sectionNavigation="local" />)
+    const nav = screen.getByRole('navigation', { name: '报告章节' })
+    expect(nav.querySelectorAll('a[href^="#section-"]')).toHaveLength(0)
+    const buttons = within(nav).getAllByRole('button')
+    expect(buttons).toHaveLength(6)
+    expect(container.querySelectorAll('[id^="section-"]')).toHaveLength(6)
+    buttons[3].focus()
+    expect(document.activeElement).toBe(buttons[3])
+    fireEvent.click(buttons[3])
+    expect(scroll).toHaveBeenCalledTimes(1)
+    expect(document.getElementById('section-3')).toBeTruthy()
+    expect(window.location.hash).toBe('#/research/futures-basis')
+  } finally {
+    Element.prototype.scrollIntoView = original
+  }
+})
+
+it('retains fragment section links for standalone and online delivery', () => {
+  for (const mode of ['online', 'offline'] as const) {
+    const { unmount } = render(<Report data={readerFixture()} mode={mode} />)
+    const nav = screen.getByRole('navigation', { name: '报告章节' })
+    expect(within(nav).getAllByRole('link')).toHaveLength(6)
+    expect(within(nav).queryAllByRole('button')).toHaveLength(0)
+    expect(nav.querySelector('a[href="#section-0"]')).toBeTruthy()
+    unmount()
+  }
+})
+
+it('keeps source origin separate from demo delivery in the evidence section', () => {
+  const disclosure = 'Historical Real Market Data · Source: Tushare · Private'
+  const first = render(<Report data={readerFixture()} mode="demo" sourceDisclosure={disclosure} />)
+  expect(screen.getByText(disclosure)).toBeTruthy()
+  expect(screen.queryByText(/Synthetic Fixture/)).toBeNull()
+  first.unmount()
+  render(<Report data={readerFixture()} mode="demo" />)
+  expect(screen.getByText(/Synthetic Fixture/)).toBeTruthy()
 })

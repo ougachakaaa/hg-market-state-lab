@@ -1,5 +1,9 @@
 # R01-A online research application and run lifecycle
 
+## Storage authority and delivery status
+
+Business lifecycle and public interfaces remain owned here. SQLite persistence is owned by [Online storage](ONLINE_STORAGE.md). Completion commits validated report bytes and lifecycle state in one transaction. Recovery and admission share process coordination; terminal visibility follows required execution cleanup. An unpersistable terminal state makes the store unavailable in this process until restart.
+
 This contract specializes the [Futures Basis case](ARCHITECTURE.md), its
 [offline delivery](DELIVERY.md), [evidence](EVIDENCE.md) and
 [roadmap](ROADMAP.md). It owns the case-specific online request, standard analysis
@@ -113,17 +117,17 @@ fail execution. `no_eligible_sample` is an empty finding, not a statistical
 execution failure.
 
 Only one execution may be active across the process. A submission while one is
-active is rejected as busy before any run directory is created; there is no queue.
+active is rejected as busy before any Run is created; there is no queue.
 The HTTP request is accepted and returned immediately. A single in-process worker
 performs the existing `observe_futures_basis` and `compose_report` calls; the
 browser polls status. No HTTP request remains open during acquisition or
 computation. No wall-clock deadline or cancellation is provided; provider
 availability and long-running work are not promised.
 
-Startup recovery marks every persisted `PENDING` or `RUNNING` run
+Startup recovery excludes the current process active Run and marks other persisted `PENDING` or `RUNNING` run
 `INTERRUPTED`, with `finished_at` set to the recovery time. A run that is not the
 current process's active run is never reported as running. If the process stops
-after a result file is written but before the completed state is committed, the
+before the result and completed state transaction commits, the
 result is not served; recovery remains conservative and the run is interrupted.
 No partial or orphaned result may appear completed.
 
@@ -158,9 +162,7 @@ finite canonical JSON; and the serialized payload is at most `32 MiB`. Exceeding
 the size bound fails execution with the classified
 `result_publication/result_too_large` failure; it never truncates.
 
-Publication order is result bytes first, completed state last, both by atomic
-replacement in the run directory. A reader sees only complete files. A storage
-failure is classified and never silently repaired.
+Publication inserts report bytes and COMPLETED in one SQLite transaction. Computation and serialization run outside database write transactions. Storage failure is classified and never silently repaired.
 
 ## Failure classification
 
@@ -183,57 +185,7 @@ stay `partial`; they are retained in the report as failures.
 
 ## Runtime storage and retention
 
-The case owns a file-based external runtime root, independent of DataLake,
-Publication and Workbench storage:
-
-```text
-<run_root>/<run_id>/
-    request.json   immutable request, owner scope and creation time
-    state.json     atomic current status, timestamps, failure and result digest
-    report.json    validated reader projection, only when COMPLETED
-```
-
-The optional server configuration `LAB_FUTURES_BASIS_RUN_ROOT` is an absolute
-server-owned path without parent traversal. When unset, the default is the module
-runtime directory `market_research/.runtime/futures_basis_online/` (WP7 must ensure
-the runtime tree is outside Git); it is resolved without depending on the process
-working directory. Invalid, unavailable
-or unwritable storage makes the online product unavailable; it does not prevent
-server startup or other products. The store requires POSIX descriptor-relative
-file operations, no-follow directory/file opens and user ownership checks. Missing
-platform capabilities (including native Windows) classify as `unavailable` before
-creating the runtime tree; WSL/Linux must provide those capabilities. No Windows
-filesystem emulation is provided. Server paths, owner scopes and storage
-configuration are never exposed.
-
-The store is deliberately disposable runtime state under the
-[repository runtime invariant](../../../../ARCHITECTURE.md#naming-and-transition-authority).
-There is no automatic cleanup, TTL, quota, migration, compatibility promise or
-deletion API; operators own retention and disk capacity. Completed runs survive
-browser refresh and server restart. The store does not make ObservationSets or
-research results generally durable and does not change the existing
-[execution](../../../descriptive/EXECUTION.md) contracts.
-
-MVP support is a single backend process. Multiple processes or workers sharing a
-root are unsupported because the in-process active-run guard and restart recovery
-would conflict. No distributed lock, external queue or durable worker is
-introduced.
-
-Run status reads check run ID format, containment, no symlink, request/state schema,
-owner scope and state consistency. For COMPLETED they open the result safely and
-check only presence, regular-file type and size (at most 32 MiB); an invalid result
-file is `corrupt`. They never read report bytes, verify a digest, parse the report
-or acquire a report-reader permit. Full report reads alone perform digest and
-payload association validation. Stored reports above 32 MiB classify as
-`response_too_large`; publication above that bound remains the execution failure
-`result_publication/result_too_large`. Neither path truncates.
-
-Full report read-path checks cover run ID format, containment in the root, no symlink,
-request/state schema, owner scope, state consistency, result presence, size and
-SHA-256, reader profile, status and request association. Corrupt or unknown state
-is never silently repaired and never recomputed. A report read is bounded to one
-reader permit per process; excess capacity is a manual-retry `read_busy` condition,
-not a queue.
+The case owns an independent portable SQLite database `<run_root>/runs.sqlite3`. Configuration, initialization, bounded reads, recovery, trust and retention are defined exclusively by [Online storage](ONLINE_STORAGE.md). Old per-run directories are ignored and never read, migrated or deleted.
 
 ## Report-read boundary and evidence scope
 

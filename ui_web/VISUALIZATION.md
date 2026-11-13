@@ -123,3 +123,10 @@ View fields and introduce no financial semantics. Explicit numeric decimal_ratio
 coordinates display as one-decimal percentages without negative zero; original
 coordinate values remain unchanged. Other units retain their scale. Category
 labels never replace identities or reorder marks. Details stay literal by default.
+
+Supplying an ordinal date domain stays caller-owned; the renderer never invents or
+defaults to a trading calendar and keeps natural date spacing when no domain is
+supplied. Research surfaces that expose the repository-wide `Trading Days` /
+`Calendar Days` policy follow the
+[date-axis presentation authority](DATE_AXIS_PRESENTATION.md). That policy is product
+presentation and does not extend or override this contract.

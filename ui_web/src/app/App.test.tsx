@@ -105,7 +105,7 @@ describe('integrated feature routes', () => {
     fireEvent.click(screen.getByRole('button', { name: '打开 MO Option Chain' }))
     await screen.findByRole('heading', { name: 'MO 期权链' })
     expect(window.location.pathname).toBe('/data/mo-option-chain')
-    fireEvent.click(screen.getByText('MO Premium Plane', { selector: '.ant-menu-title-content' }))
+    fireEvent.click(screen.getByRole('menuitem', { name: 'MO Premium Plane' }))
     await screen.findByRole('heading', { name: 'MO 年化权利金平面' })
     expect(window.location.pathname).toBe('/data/mo-premium-plane')
     await act(async () => { window.history.replaceState(null, '', '/research/publications'); window.dispatchEvent(new PopStateEvent('popstate')) })
@@ -257,14 +257,19 @@ it('preserves the Futures Basis deep link through login and clears its result on
 
 it('returns a restored Futures Basis run to the authentication gate on a protected 401', async () => {
   window.history.replaceState(null, '', `/research/futures-basis?run_id=${'a'.repeat(32)}`)
-  vi.stubGlobal('fetch', vi.fn((url: string) => Promise.resolve(url === '/auth/me' ? response(identity) : unauthorized())))
+  const protectedReply = deferred<Response>()
+  const fetch = vi.fn((url: string) => url === '/auth/me' ? Promise.resolve(response(identity)) : protectedReply.promise)
+  vi.stubGlobal('fetch', fetch)
   render(<App />)
+  await screen.findByRole('heading', { name: 'Futures Basis Research' })
+  expect(fetch.mock.calls.some(([url]) => url.includes('/runs/'))).toBe(true)
+  await act(async () => { protectedReply.resolve(unauthorized()) })
   await screen.findByRole('button', { name: '登录' })
   expect(screen.queryByRole('heading', { name: 'Futures Basis Research' })).toBeNull()
 })
 
 describe('WP1 navigation composition', () => {
-  it('groups implemented topics and keeps Explorer outside the selected leaves', async () => {
+  it('groups implemented topics and selects the Explorer leaf', async () => {
     window.history.replaceState(null, '', '/research')
     vi.stubGlobal('fetch', vi.fn((url: string) => Promise.resolve(url === '/auth/me' ? response(identity)
       : url === '/api/research/capabilities' ? response([]) : response({ data: [], next_cursor: null }))))
@@ -272,15 +277,16 @@ describe('WP1 navigation composition', () => {
     const navigation = await screen.findByRole('menu', { name: '业务导航' })
     expect(within(navigation).getByRole('menuitem', { name: '研究总览' })).toBeTruthy()
     expect(within(navigation).getByRole('menuitem', { name: '历史基差研究' })).toBeTruthy()
-    expect(within(navigation).queryByRole('menuitem', { name: 'Research Explorer' })).toBeNull()
+    expect(within(navigation).getByRole('menuitem', { name: 'Research Explorer' })).toBeTruthy()
     expect(within(navigation).queryByRole('menuitem', { name: 'DESCRIPTIVE RESEARCH' })).toBeNull()
     fireEvent.click(within(navigation).getByText('DESCRIPTIVE RESEARCH'))
     expect(window.location.pathname).toBe('/research')
     fireEvent.click(screen.getByRole('button', { name: '浏览已发布研究结果' }))
     await screen.findByRole('heading', { name: '研究结果浏览' })
-    expect(container.querySelectorAll('.ant-menu-item-selected')).toHaveLength(0)
+    expect(container.querySelectorAll('.ant-menu-item-selected')).toHaveLength(1)
+    expect(container.querySelector('.ant-menu-item-selected')?.textContent).toBe('Research Explorer')
     expect(container.querySelector('.ant-menu-submenu-selected')).toBeTruthy()
-    expect(screen.getByText('Research Explorer')).toBeTruthy()
+    expect(screen.getAllByText('Research Explorer')).toHaveLength(2)
   })
 
   it('keeps group toggles out of history and selects only the destination leaf', async () => {

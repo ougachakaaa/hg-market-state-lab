@@ -11,6 +11,10 @@ class OperationError(Exception):
     """The operation could not be executed, rather than returning incomplete coverage."""
 
 
+class CredentialMissingError(OperationError):
+    """A required Source credential is confirmed absent or blank."""
+
+
 @dataclass(frozen=True)
 class CoverageResult:
     requested_units: int
