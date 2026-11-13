@@ -1,4 +1,4 @@
-# Static Demo implementation handoff: WP-A private real examples
+# Static Demo implementation handoff: WP-B private seven-page workspace
 
 Execution guidance under [Demo Runtime authority](ARCHITECTURE.md) and
 [Example contract](EXAMPLES.md); feature semantics remain with their canonical owners.
@@ -9,7 +9,21 @@ BLOCKED and full V2 page integration remains subsequent work.
 The D0 baseline/extraction descriptions and D1/D2 handoffs below are historical records;
 they do not undo the completed extractions or authorize synthetic formal V2 Examples.
 
-## Current baseline and next package
+## Current WP-B delivery
+
+WP-B integrates the existing R2/R3/WP-A real results through all seven formal
+shared surfaces. The independent private build takes explicit external package
+roots, runs formal offline admission, injects only safe complete Result projections
+and emits an external static site. Default V1 build and Pages inputs are unchanged.
+No market acquisition, business calculation change or online controller is added.
+
+Start with [private build authority](PRIVATE_BUILD.md) for admission/isolation and
+[WP-B acceptance](WP_B_ACCEPTANCE.md) for route sources, commands, origin disclosure,
+real browser evidence, technical gates and remaining WP-C regression issues.
+Publication Rights remain BLOCKED. Local integration does not start WP-C or D7.
+The local WP-B handoff locates private build/screenshots without committing paths.
+
+## Historical WP-A baseline and next package
 
 WP-A completed the remaining real W2 and admitted Trailing Return examples from
 baseline `69cd25f15dd35d086582726439236ebe472f36d3`. Its bounded checkpoints and final

@@ -144,3 +144,9 @@ D7 requires an independent Publication Review of the exact public artifact, all 
 [authenticity and rights gates](AUTHENTICITY.md) PASS, and exclusion of historical V1
 synthetic Examples. Attribution alone is not redistribution permission. Local technical
 acceptance and public release approval are separate outcomes.
+
+## Explicit private composition (WP-B)
+
+The independent [private build contract](PRIVATE_BUILD.md) owns verified external
+input admission, safe static projection injection, origin disclosure and external
+output isolation. It does not change the V1 public build or Pages deployment.

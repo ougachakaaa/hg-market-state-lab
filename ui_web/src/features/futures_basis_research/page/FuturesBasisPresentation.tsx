@@ -33,6 +33,8 @@ export type FuturesBasisPresentationProps =
     state: StaticFuturesBasisState
     /** Explicit static source statement; defaults to the feature disclosure. */
     disclosure?: string
+    /** Validated source statement for the shared reader. */
+    sourceDisclosure?: string
   }
 
 function RequestFacts({ request }: { request: ImmutableRequest }) {
@@ -53,7 +55,7 @@ function Header({ mode }: { mode: 'production' | 'static' }) {
   </Flex>
 }
 
-function StaticView({ state, disclosure }: { state: StaticFuturesBasisState; disclosure?: string }) {
+function StaticView({ state, disclosure, sourceDisclosure }: { sourceDisclosure?: string; state: StaticFuturesBasisState; disclosure?: string }) {
   return <>
     <Alert showIcon type="warning" title="嵌入研究示例 · 静态只读"
       description={<Flex vertical gap="small" role="note">
@@ -63,11 +65,11 @@ function StaticView({ state, disclosure }: { state: StaticFuturesBasisState; dis
     {state.status === 'invalid'
       ? <Alert showIcon type="error" title="静态研究报告未通过校验"
         description="嵌入的 Producer Reader Payload 或固定请求关联未通过正式契约校验，已拒绝展示；未执行任何 HTTP 请求，也不会回退到在线服务。" />
-      : <StaticReport state={state} />}
+      : <StaticReport state={state} sourceDisclosure={sourceDisclosure} />}
   </>
 }
 
-function StaticReport({ state }: { state: Extract<StaticFuturesBasisState, { status: 'validated' }> }) {
+function StaticReport({ state, sourceDisclosure }: { sourceDisclosure?: string; state: Extract<StaticFuturesBasisState, { status: 'validated' }> }) {
   const coverage = observedCoverage(state.data.report)
   return <>
     <Card title="固定研究参数" size="small">
@@ -91,7 +93,7 @@ function StaticReport({ state }: { state: Extract<StaticFuturesBasisState, { sta
           description="展示成功表示嵌入报告通过正式契约与固定请求关联校验，不代表浏览器完成了一次服务器研究执行，也不代表在线服务就绪。" />
       </Flex>
     </Card>
-    <Report data={state.data.report} mode="demo" sectionNavigation="local" />
+    <Report data={state.data.report} sourceDisclosure={sourceDisclosure} mode="demo" sectionNavigation="local" />
   </>
 }
 
@@ -99,7 +101,7 @@ export function FuturesBasisPresentation(props: FuturesBasisPresentationProps) {
   if (props.mode === 'static') {
     return <Flex vertical gap="large" style={{ minWidth: 0 }}>
       <Header mode="static" />
-      <StaticView state={props.state} disclosure={props.disclosure} />
+      <StaticView state={props.state} disclosure={props.disclosure} sourceDisclosure={props.sourceDisclosure} />
     </Flex>
   }
   return <Flex vertical gap="large" style={{ minWidth: 0 }}>

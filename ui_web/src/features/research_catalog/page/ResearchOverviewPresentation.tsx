@@ -56,7 +56,7 @@ export function ResearchOverviewPresentation({ controller, mode, navigation, sou
               <Button key="details" aria-pressed={selected} type={selected ? 'primary' : 'default'} onClick={() => controller.selectLocal(item.id)}>查看详情</Button>,
               ...(item.id === 'futures_basis_v1' ? [<Button key="open" type="primary" icon={<LineChartOutlined aria-hidden="true" />} onClick={navigation.openFuturesBasis}>进入历史基差研究</Button>] : []),
             ]}>
-              <List.Item.Meta title={<Flex align="center" gap="small" wrap><Typography.Text strong>{item.name}</Typography.Text><Tag>{item.readiness}</Tag>{item.planned && <Tag>{item.planned}</Tag>}</Flex>}
+              <List.Item.Meta title={<Flex align="center" gap="small" wrap><Typography.Text strong>{item.name}</Typography.Text><Tag style={{ maxWidth: '100%', whiteSpace: 'normal' }}>{item.readiness}</Tag>{item.planned && <Tag>{item.planned}</Tag>}</Flex>}
                 description={<><Typography.Text code>{item.id}</Typography.Text><br />{item.purpose}<br />访问路径：{item.id === 'price_segmentation_v1' ? '本地 Python' : '独立在线页面 / 本地离线报告'}</>} />
             </List.Item>
           }} />

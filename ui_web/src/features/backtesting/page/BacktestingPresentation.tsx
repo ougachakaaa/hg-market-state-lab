@@ -31,6 +31,8 @@ export type BacktestingPresentationProps =
     state: StaticBacktestingState
     /** Explicit static source statement; defaults to the feature disclosure. */
     disclosure?: string
+    /** Validated source statement for the shared reader. */
+    sourceDisclosure?: string
   }
 
 function RequestFacts({ request }: { request: ImmutableRequest }) {
@@ -65,7 +67,7 @@ function Header({ mode }: { mode: 'production' | 'static' }) {
   </header>
 }
 
-function StaticView({ state, disclosure }: { state: StaticBacktestingState; disclosure?: string }) {
+function StaticView({ state, disclosure, sourceDisclosure }: { sourceDisclosure?: string; state: StaticBacktestingState; disclosure?: string }) {
   return <>
     <Alert showIcon type="warning" title="嵌入回测结果 · 静态只读"
       description={<Flex vertical gap="small" role="note">
@@ -75,11 +77,11 @@ function StaticView({ state, disclosure }: { state: StaticBacktestingState; disc
     {state.status === 'invalid'
       ? <Alert showIcon type="error" title="静态回测结果未通过校验"
         description="嵌入的 Producer Backtest Result、固定请求关联或 V2 View 未通过正式契约校验，已拒绝展示；未执行任何 HTTP 请求，也不会回退到在线服务。" />
-      : <StaticResult state={state} />}
+      : <StaticResult state={state} sourceDisclosure={sourceDisclosure} />}
   </>
 }
 
-function StaticResult({ state }: { state: Extract<StaticBacktestingState, { status: 'validated' }> }) {
+function StaticResult({ state, sourceDisclosure }: { sourceDisclosure?: string; state: Extract<StaticBacktestingState, { status: 'validated' }> }) {
   return <>
     <Card title="固定回测参数" size="small">
       <Flex vertical gap="small">
@@ -90,7 +92,7 @@ function StaticResult({ state }: { state: Extract<StaticBacktestingState, { stat
     <WindowFacts request={state.data.request} result={state.data.result} />
     <Alert showIcon type="success" title="Embedded Backtest Result 已通过正式契约校验"
       description="展示成功表示嵌入的 Producer Result 通过正式 Result Profile、Definition Version、Case、固定请求身份与 Returns/Drawdown V2 View 校验；不代表浏览器运行过 W2 Backtest Core，也不代表在线服务、缓存或 Provider 就绪。" />
-    <Result data={state.data.result} mode="static" />
+    <Result data={state.data.result} mode="static" sourceDisclosure={sourceDisclosure} />
   </>
 }
 
@@ -98,7 +100,7 @@ export function BacktestingPresentation(props: BacktestingPresentationProps) {
   if (props.mode === 'static') {
     return <Flex vertical gap="large" style={{ minWidth: 0 }}>
       <Header mode="static" />
-      <StaticView state={props.state} disclosure={props.disclosure} />
+      <StaticView state={props.state} disclosure={props.disclosure} sourceDisclosure={props.sourceDisclosure} />
     </Flex>
   }
   const request = props.result ? props.request ?? props.result.request : undefined

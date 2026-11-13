@@ -88,3 +88,12 @@ it.each([
   expect(screen.queryByTestId('backtest-result')).toBeNull()
   expect(screen.queryByText(/Run ID/)).toBeNull()
 })
+
+it('propagates an explicit admitted source into Evidence while preserving synthetic defaults', () => {
+  const disclosure = 'Historical Real Market Data · Source: Tushare · Private'
+  render(<BacktestingPresentation mode="static" state={{ status: 'validated', data: { request, result } }} sourceDisclosure={disclosure} />)
+  fireEvent.click(screen.getByText('研究证据与限制 · Evidence / Limitations'))
+  expect(screen.getByText(new RegExp(disclosure))).toBeTruthy()
+  expect(screen.queryByText(/Embedded Synthetic Example/)).toBeNull()
+  expect(screen.getByText(/不包含手续费、滑点和保证金机制/)).toBeTruthy()
+})

@@ -36,7 +36,8 @@ function RunTable({ runs }: { runs: Run[] }) {
   ]} />
 }
 
-export function Report({ data, mode, sectionNavigation = 'fragment' }: {
+export function Report({ data, mode, sourceDisclosure, sectionNavigation = 'fragment' }: {
+  sourceDisclosure?: string
   data: ReportData
   mode: 'online' | 'offline' | 'demo'
   /**
@@ -141,7 +142,7 @@ export function Report({ data, mode, sectionNavigation = 'fragment' }: {
         {mode === 'offline' ? <>
         <Typography.Paragraph>相邻 inputs.canonical.json 保留原始输入；evidence.json 保留完整观测、统计请求/结果与绑定；associations.json 和 views.json 保留图表关联。manifest.json / SHA256SUMS 可验证文件完整性。运行 REPRODUCE.md 中的 verify / replay，不依赖可变行情缓存。</Typography.Paragraph>
         <Collapse items={[{ key: 'details', label: '研究参数与逐日结果定位', children: <Typography.Paragraph>请求与统计方法参数见 evidence.json → science.request；Slot-day 和 Contract-day 见 science.observations；无效值原因见对应 metric outcome.reason。原始数值及单位保持不变，页面展示不重新计算任何研究指标。</Typography.Paragraph> }]} />
-        </> : mode === 'demo' ? <Typography.Paragraph>本报告展示 Synthetic Fixture 中的研究参数、统计结果、Coverage、输入指纹与限制。此静态演示不附带完整离线证据包；完整应用与证据生成需本地部署。</Typography.Paragraph> : <Typography.Paragraph>在线报告提供当前请求、统计方法结果、Coverage、输入指纹与限制。完整离线证据包及 Verify / Replay 需独立本地生成；此 HTTP 接口不提供相邻证据文件。</Typography.Paragraph>}
+        </> : mode === 'demo' ? <Typography.Paragraph>{sourceDisclosure ?? '本报告展示 Synthetic Fixture 中的研究参数、统计结果、Coverage、输入指纹与限制。此静态演示不附带完整离线证据包；完整应用与证据生成需本地部署。'}</Typography.Paragraph> : <Typography.Paragraph>在线报告提供当前请求、统计方法结果、Coverage、输入指纹与限制。完整离线证据包及 Verify / Replay 需独立本地生成；此 HTTP 接口不提供相邻证据文件。</Typography.Paragraph>}
         {mode !== 'offline' && <Collapse items={[{ key: 'request', label: 'Producer Report Request', children: <Typography.Paragraph><Typography.Text code>{JSON.stringify(data.request)}</Typography.Text></Typography.Paragraph> }]} />}
       </Card>
     </Flex>

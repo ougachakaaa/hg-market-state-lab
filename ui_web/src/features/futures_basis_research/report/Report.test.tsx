@@ -126,3 +126,13 @@ it('retains fragment section links for standalone and online delivery', () => {
     unmount()
   }
 })
+
+it('keeps source origin separate from demo delivery in the evidence section', () => {
+  const disclosure = 'Historical Real Market Data · Source: Tushare · Private'
+  const first = render(<Report data={readerFixture()} mode="demo" sourceDisclosure={disclosure} />)
+  expect(screen.getByText(disclosure)).toBeTruthy()
+  expect(screen.queryByText(/Synthetic Fixture/)).toBeNull()
+  first.unmount()
+  render(<Report data={readerFixture()} mode="demo" />)
+  expect(screen.getByText(/Synthetic Fixture/)).toBeTruthy()
+})
