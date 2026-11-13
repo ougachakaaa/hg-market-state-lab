@@ -95,11 +95,12 @@ def test_research_preview_has_exact_scope():
     assert preview.plan.on_job_failure == "continue"
 
 
-def test_sqlite_publication_export_is_offline_readonly_and_matches_formal_reader(tmp_path, monkeypatch):
+def test_sqlite_publication_export_is_offline_readonly_and_matches_formal_reader(
+    tmp_path, monkeypatch
+):
     """Synthetic engineering regression, never real WP-A acceptance."""
     monkeypatch.syspath_prepend(str(tool.REPO / "market_research/tests"))
     from batch_execution_example import run
-
     from market_research.publication import PublicationStore, publish, retain_source
 
     batch = run("continue", inject_failure=False)
