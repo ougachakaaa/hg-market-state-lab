@@ -345,6 +345,8 @@ def handoff(root, r2, r3):
         "profile": "wp-a-private-example-index-v1", "revision": 1,
         "classification": "real_market", "publication_rights": "BLOCKED",
         "created_at": now(), "runtime": "runtime.json",
+        "delivery_source_revision": git("rev-parse", "HEAD"),
+        "node": subprocess.check_output(["node", "--version"], text=True).strip(),
         "examples": {
             **{p: {"request": f"w2/{p}-request.json", "result": f"w2/{p}-result.json",
                    "evidence": f"w2/{p}-evidence.json"} for p in PROFILES},
@@ -431,6 +433,8 @@ def main():
                 "producer_worktree_clean": not git("diff", "HEAD", "--", "market_backtesting",
                                                    "market_research", "data_lake", "config"),
             })
+        require(root.is_dir() and (root / "runtime.json").is_file(), "missing package runtime")
+        require(root.stat().st_mode & 0o077 == 0, "private output must be owner-only")
         require(not (root / args.operation).exists(), "stage already exists; no overwrite")
         receipt = root / f"{args.operation}-stage.json"
         write(receipt, {"status": "RUNNING", "started_at": now()})
