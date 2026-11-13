@@ -21,5 +21,6 @@ try {
     }, privateDemoIsolation()],
     build: { outDir: resolve(output, 'private'), sourcemap: false },
   })
-  console.log('PASS: actual private entry dependency graph (no market payload; no browser acceptance claim)')
+  await build({ configFile: false, root: resolve('src/demo/public'), publicDir: false, envDir: false, plugins: [react(), { name: 'invalid-public-probe', resolveId(id) { if (id === 'virtual:public-examples') return '\0public-probe' }, load(id) { if (id === '\0public-probe') return 'export default {}' } }, privateDemoIsolation('public')], build: { outDir: resolve(output, 'public-graph'), sourcemap: false } })
+  console.log('PASS: actual private/public entry dependency graph (no market payload; no browser acceptance claim)')
 } finally { rmSync(output, { recursive: true, force: true }) }

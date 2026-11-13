@@ -20,6 +20,6 @@ it('keeps public V1 entry, output and Pages upload independent of private admiss
   expect(config).toContain('./dist-demo')
   expect(config).not.toMatch(/private|process\.env/)
   const workflow = readFileSync(resolve('../.github/workflows/deploy-demo-pages.yml'), 'utf8')
-  expect(workflow).toContain('ui_web/dist-demo')
+  expect(workflow).toContain('ui_web/dist-demo-public/site')
   expect(workflow).not.toContain('demo:build:private')
 })

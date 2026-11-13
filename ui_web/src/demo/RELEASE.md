@@ -1,10 +1,12 @@
 # Public V2 release contract
 
+Current D7 publication policy: [user-directed decision](AUTHENTICITY.md#d7-user-directed-distribution-decision--2026-11-13); implementation and evidence: [D7 acceptance](D7_RELEASE_ACCEPTANCE.md). Historical BLOCKED records retain their original scope.
+
 Specializes [Demo Runtime](ARCHITECTURE.md), [Examples](EXAMPLES.md) and
-[authenticity/public admission](AUTHENTICITY.md). This document owns the future D7
-release transaction, revision binding and rollback boundary. It does not grant
-publication rights or implement a deploy workflow. Current execution and blockers
-are recorded in [D7 readiness](D7_READINESS.md).
+[authenticity/public admission](AUTHENTICITY.md). This document owns the D7 release transaction, revision binding and rollback boundary.
+It grants no publication rights. Implementation entry is [Public build](PUBLIC_BUILD.md);
+current execution is [D7 acceptance](D7_RELEASE_ACCEPTANCE.md). Historical readiness
+retains its original scope in [D7 readiness](D7_READINESS.md).
 
 ## Admission and approval
 
@@ -31,7 +33,7 @@ and disclosed; continuing or restoring V1 is not acceptance of V2.
 
 ## Same-revision release transaction
 
-Future D7 implementation must use these dependencies in a main-triggered release
+D7 implementation must use these dependencies in a main-triggered release
 workflow, with compatibility exposed as a reusable validation workflow:
 
 ```text
@@ -51,7 +53,7 @@ hash verification must reject any changed file. Only the deployment job receives
 `pages: write` and `id-token: write`, subject to Environment protection. A new candidate,
 data update or permission-scope change requires a new bound review.
 
-Future public output is a distinct reviewed V2 artifact. The current V1 `demo:build`,
+Public output is a distinct reviewed V2 artifact. The current V1 `demo:build`,
 fixed V1 entry and V1-specific safety guard remain in force until the independently
 approved cutover. D7 must implement an explicit V2 guard rather than weakening V1's
 fixture/disclosure requirements to let private input pass. D7-P makes no trigger,
@@ -91,3 +93,27 @@ approved artifact using the protected deployment process, then verify its public
 assets and behavior and record the failed candidate plus recovery deployment. Do not
 repair financial payloads in place or silently present restored V1 as V2. With no
 verified recovery artifact, rollback readiness and cutover remain BLOCKED.
+
+## D7 user-directed distribution decision — 2026-11-13
+
+The repository owner explicitly instructed: “不要管许可的事情，不要管数据来源，直接分发就行了”.
+This newer instruction supersedes the requirement to obtain third-party publication
+permission before this release. Stop further licensing/source investigation. Retain
+existing truthful provenance and unchanged producer results. Publication Rights is
+recorded **USER_DIRECTED / third-party permission unverified**, never fabricated PASS.
+The other five technical/integrity/safety gates remain required. A separate public
+package binds this decision, exact result digests and fresh formal verification;
+changing private envelope labels alone is still insufficient. Public scope covers
+the seven display routes, embedded data and supported Copy/JSON/CSV, repository and
+Pages. Secrets, account information, original Source Evidence and private paths remain
+excluded. This decision is publication authorization by the repository owner, not
+a representation of permission from a provider. No project production declaration.
+
+## Retained V1 recovery
+
+The committed `futures_basis/rollback-v1.tar.gz` is an independently reviewed recovery
+rebuild, with `rollback-inventory.json` binding its bytes and all site files. It is
+synthetic V1, never V2. Its Chromium acceptance is independent of the old deployment;
+no byte-identity claim is made. This avoids dependence on an expiring prior Actions
+artifact. CI verifies it, retains it for 90 days, and deploys these exact bytes on
+post-deploy V2 acceptance failure through the same protected Environment.

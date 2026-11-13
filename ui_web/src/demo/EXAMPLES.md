@@ -1,5 +1,7 @@
 # Static Example result contract
 
+Current D7 publication policy: [user-directed decision](AUTHENTICITY.md#d7-user-directed-distribution-decision--2026-11-13); implementation and evidence: [D7 acceptance](D7_RELEASE_ACCEPTANCE.md). Historical BLOCKED records retain their original scope.
+
 Specializes [Demo Runtime](ARCHITECTURE.md). This contract owns private development and reviewed public Example packaging,
 not market semantics, transport schemas, numerical methods or a second business model.
 D3-R0 replaces D0's synthetic V2 policy. V1 remains a historical compatibility artifact.

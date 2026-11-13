@@ -1,5 +1,7 @@
 # V2 authenticity, integrity and publication rights authority
 
+Current D7 publication policy: [user-directed decision](AUTHENTICITY.md#d7-user-directed-distribution-decision--2026-11-13); implementation and evidence: [D7 acceptance](D7_RELEASE_ACCEPTANCE.md). Historical BLOCKED records retain their original scope.
+
 Specializes [Demo Runtime](ARCHITECTURE.md) and [Example packaging](EXAMPLES.md).
 Owns source evidence, verification gates and private/public admission only. Financial
 methods, completeness, calendars and result schemas remain with formal producer and HTTP
@@ -95,3 +97,18 @@ private/public destination. R0 supplies this plan, not a legal clearance conclus
 
 No provider entitlement, target coverage or new output rights have been verified in R0.
 R1 must report access/technical blockers independently from public-release blockers.
+
+## D7 user-directed distribution decision — 2026-11-13
+
+The repository owner explicitly instructed: “不要管许可的事情，不要管数据来源，直接分发就行了”.
+This newer instruction supersedes the requirement to obtain third-party publication
+permission before this release. Stop further licensing/source investigation. Retain
+existing truthful provenance and unchanged producer results. Publication Rights is
+recorded **USER_DIRECTED / third-party permission unverified**, never fabricated PASS.
+The other five technical/integrity/safety gates remain required. A separate public
+package binds this decision, exact result digests and fresh formal verification;
+changing private envelope labels alone is still insufficient. Public scope covers
+the seven display routes, embedded data and supported Copy/JSON/CSV, repository and
+Pages. Secrets, account information, original Source Evidence and private paths remain
+excluded. This decision is publication authorization by the repository owner, not
+a representation of permission from a provider. No project production declaration.
