@@ -60,7 +60,8 @@ and private paths are excluded. No backtest export feature was invented.
 Command: `cd ui_web && npm ci && npm run demo:build:public`.
 Output: `ui_web/dist-demo-public/site`; asset base `/hg-market-state-lab/`;
 default hash `#/research`. Private build/admission remains independent.
-No Python/Producer execution, acquisition, backend, login or token is needed by release.
+The static build/runtime needs no Python, Producer execution, acquisition, backend,
+login or token. Separate compatibility jobs use the root Python environment.
 
 Main validation toolchain: CPython **3.13.18**, Poetry **2.2.1**, Node **22.23.4**,
 npm **10.9.9**. Local verification used Python 3.13.15 / Poetry 2.4.3 /
