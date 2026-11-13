@@ -2,9 +2,13 @@
 
 本文档从属于 [ui_web architecture](ARCHITECTURE.md)，并遵循 [presentation architecture](presentation-architecture.md) 定义的内部 ownership boundary；它只拥有 Web application 的 entry、feature discovery/navigation、layout/shell 与 composition boundary。Ordinary UI、application-level theme 与 CSS policy 遵循 [UI system authority](ui-system.md)。正式 frontend surfaces 由 [feature catalog](FEATURES.md) 导航；各 surface 的产品与 visualization 语义仍由其 co-located feature authority 拥有。
 
+## Dual Runtime composition
+
+Production 与 Static Demo 共用正式 Shell、导航和 feature Presentation；application composition 分别选择 Production Auth/HTTP controllers 与 anonymous static Example controllers。Shared Shell 的展示边界不依赖 Auth、在线 Page 或业务请求 Hook；身份/退出动作、路由和 feature content 由 composition 提供。Production 的认证 gate 与下述 lifecycle 维持不变，仅 Production 可 mount 在线 controller。Demo 细节进入 [Runtime authority](src/demo/ARCHITECTURE.md)，其 feature Presentation 仍由正式 feature 拥有；不得复制 Demo 业务页面。本文中的登录、请求、preflight、Run lifecycle 均描述 Production；静态 runtime 不模拟这些状态。
+
 ## 1. Application Surfaces
 
-Web application 以 Research 为登录后默认入口，包含三个一级业务区：
+Production Web application 以 Research 为登录后默认入口，包含三个一级业务区：
 
 ```text
 Daily Data → MO Option Chain / MO Premium Plane（已实现）
@@ -23,8 +27,8 @@ application entry
 feature discovery and navigation
 application layout / shell
 feature composition boundary
-authentication state and access gate
-login / registration / logout interaction
+production authentication composition state and access gate (outside shared shell presentation)
+production login / registration / logout interaction
 ```
 
 它不拥有或解释：

@@ -15,6 +15,7 @@ Run from the repository root::
 from __future__ import annotations
 
 import argparse
+import copy
 import json
 import math
 from dataclasses import fields
@@ -169,8 +170,7 @@ class DemoServices:
                 ),
                 proof(len(days)),
                 tuple(
-                    TradeCalendarRecord(exchange, day, int(day.weekday() < 5), None)
-                    for day in days
+                    TradeCalendarRecord(exchange, day, int(day.weekday() < 5), None) for day in days
                 ),
             )
             for exchange in ("CFFEX", "SSE")
@@ -264,9 +264,38 @@ def build_fixture() -> dict[str, Any]:
 
 
 def fixture_bytes() -> bytes:
-    return (
-        json.dumps(build_fixture(), ensure_ascii=False, separators=(",", ":")) + "\n"
-    ).encode("utf-8")
+    return (json.dumps(build_fixture(), ensure_ascii=False, separators=(",", ":")) + "\n").encode(
+        "utf-8"
+    )
+
+
+def assert_fixture_matches(current: dict[str, Any], expected: dict[str, Any]) -> None:
+    """V1-only libm tolerance; all fields outside annualized history remain exact."""
+    normalized = copy.deepcopy(current)
+    actual_layers = normalized["report"]["views"]["history"]["annualized_basis_ratio"]["layers"]
+    expected_layers = expected["report"]["views"]["history"]["annualized_basis_ratio"]["layers"]
+    assert len(actual_layers) == len(expected_layers), "History layer count drift"
+    for actual, target in zip(actual_layers, expected_layers, strict=True):
+        marks, targets = actual["layer"]["data"], target["layer"]["data"]
+        assert len(marks) == len(targets), "History point count drift"
+        for mark, point in zip(marks, targets, strict=True):
+            a, b = mark["y"], point["y"]
+            if type(a) is float and type(b) is float and math.isfinite(a) and math.isfinite(b):
+                assert (
+                    a == 0.0
+                    and a.hex() == b.hex()
+                    or a != 0.0
+                    and b != 0.0
+                    and abs(a - b) <= 2 * min(math.ulp(a), math.ulp(b))
+                ), "Annualized history drift"
+                for item in mark["details"]:
+                    if item["label"] == "结果":
+                        assert item["value"] == repr(a), "History detail disagrees with point"
+                        item["value"] = repr(b)
+                mark["y"] = b
+    assert json.dumps(normalized, ensure_ascii=False, separators=(",", ":")) == json.dumps(
+        expected, ensure_ascii=False, separators=(",", ":")
+    ), "Fixture structure or scientific content drift"
 
 
 def main() -> None:
@@ -280,8 +309,15 @@ def main() -> None:
         if not output.exists():
             raise SystemExit(f"Missing demo fixture: {output}")
         current = output.read_text(encoding="utf-8").replace("\r\n", "\n").encode("utf-8")
-        if current != expected:
-            raise SystemExit(f"Demo fixture is stale: {output}")
+        try:
+            parsed = json.loads(current)
+            canonical = (
+                json.dumps(parsed, ensure_ascii=False, separators=(",", ":")) + "\n"
+            ).encode("utf-8")
+            assert current == canonical, "Noncanonical fixture serialization"
+            assert_fixture_matches(parsed, json.loads(expected))
+        except (AssertionError, KeyError, TypeError, ValueError) as exc:
+            raise SystemExit(f"Demo fixture is stale: {output}: {exc}") from exc
         print(f"Demo fixture is current: {output}")
         return
     output.parent.mkdir(parents=True, exist_ok=True)

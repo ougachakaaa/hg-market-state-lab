@@ -1,5 +1,5 @@
 import type { Config, Layout, ScatterData } from 'plotly.js'
-import type { ExpiryGroup, OptionChain, OptionPoint } from '../api/moOptionChain'
+import type { ExpiryGroup, OptionChain, OptionPoint } from '../api/validateOptionChain'
 import type { projectCombinedChain } from '../model/combinedChartData'
 import type { ExpiryColors } from './expiryPalette'
 import { formatPrice } from '../model/priceDisplay'

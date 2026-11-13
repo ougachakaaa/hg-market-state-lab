@@ -2,7 +2,7 @@ import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, expect, it, vi } from 'vitest'
 vi.mock('react-plotly.js', () => ({ default: () => null }))
 import type { Analysis } from '../api/research'
-import { AnalysisDetails } from './ResearchExplorerPage'
+import { AnalysisDetails } from '../components/AnalysisDetails'
 afterEach(cleanup)
 const summary: Analysis['summary'] = { analysis_id: 'a', request_id: 'same', status: 'success', job_identity: { subject: 'S', horizon: 2, horizon_unit: 'days', start_date: '2020-01-01', end_date: '2020-02-01', bounds: 'inclusive', anchor_meaning: 'end', metric: 'm', metric_parameters: {} }, spec: { method: 'quantile', points: [0.5] }, views: [] }
 const base: Analysis = { schema_version: 1, publication_id: 'p', summary, outcome: 'success', reason: null, result: null, coverage: null }

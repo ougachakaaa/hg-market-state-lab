@@ -1,15 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 
-const knownPaths = [
-  '/research', '/research/futures-basis', '/research/publications', '/data', '/data/mo-option-chain',
-  '/data/mo-premium-plane', '/backtesting',
-] as const
-export type WorkspacePath = typeof knownPaths[number]
-const known = new Set<string>(knownPaths)
-
-export function isWorkspacePath(path: string): path is WorkspacePath {
-  return known.has(path)
-}
+import { isWorkspacePath, type WorkspacePath } from './routeInventory'
 
 export function currentWorkspacePath(): WorkspacePath {
   return isWorkspacePath(window.location.pathname)
