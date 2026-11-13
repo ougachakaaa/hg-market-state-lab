@@ -96,3 +96,137 @@ negative probes reject foreign Publication, unpublished View and invalid Job/Ana
 association. `list_capabilities()` / `get_capability(id)` supply the real Catalog,
 including `supported` and `live_readiness="not_probed"`; `validateEmbeddedCatalog`
 passes and rejects an unlisted detail identity. No fake readiness probe occurred.
+
+## Private handoff and reproducibility
+
+The accepted owner-only external package is located through the local
+`WP-A-HANDOFF.md`, beside the existing R2/R3 handoffs, outside Git and every build
+input. Its index uses `wp-a-private-example-index-v1`, revision 1, `real_market`.
+It inventories 45 files with SHA-256/byte lengths, references the two original W2
+Results/Evidence, complete Research source/Publication Store, safe Reader export,
+Catalog, runtime, acquisition/placement audits and validation receipts. No generic
+financial artifact store, serialization or business schema is introduced.
+
+```text
+runtime.json  acquisition.json  placement-audit.json
+w2-stage.json  research-stage.json
+w2/{strategy}-request.json / -result.json / -evidence.json
+w2/acceptance.json  frontend-validation.json  offline-reproduction.json
+research/preview.json  batch-summary.json  source.json  source-reference.json
+research/publications/             # unchanged formal PublicationStore layout
+research/embedded-publications.json  catalog.json
+research/acceptance.json  frontend-validation.json
+tooling/                           # accepted helper source snapshots
+r2-verification.json  r3-verification.json
+example-index.json  example-index.sha256
+```
+
+The index's detached checksum is
+`d368f2a05c7eb552ba20c3b95b74a98d97a16c18bea2753fb56fa93d3775bbeb`.
+R2's existing full private verifier and R3's formal Evidence verifier passed again;
+their original identities/manifests are referenced without copying or replacing
+business evidence. W2's strict proof remains independent of R3's Basis proof.
+
+Final acquisition ran **2026-11-13 11:55:03–11:56:32 Asia/Shanghai**. The 48 public
+service operation records retain exact requests, start/end timestamps, statuses,
+final coverage and row counts. These are service-operation timestamps, not claims
+of exchange-side timestamps or simultaneous Source snapshots. All audited SQLite
+connections stayed under the new private Dataset root. Default caches were never
+opened by this tool; no historical Publication/Run or DataLake cache was deleted.
+
+Producer baseline, clean business-source state, helper digest, dependency-lock
+digests, Python 3.13.15, NumPy 2.5.3, Pydantic 2.13.5 and Tushare 1.4.29 are retained.
+The handoff records Node 22.23.2 and the delivery source revision. The helpers were
+developed during this work; source snapshots and digests distinguish them from the
+unchanged baseline business producers. Earlier private attempts remain diagnostics.
+
+From repository root, set `PRIVATE_WPA` to the accepted external location:
+
+```bash
+TUSHARE_TOKEN='' poetry run python ui_web/scripts/private_wpa_examples.py verify --output "$PRIVATE_WPA"
+TUSHARE_TOKEN='' poetry run python ui_web/scripts/private_wpa_examples.py replay-w2 --output "$PRIVATE_WPA"
+node ui_web/scripts/validate_private_wpa.mjs "$PRIVATE_WPA" w2
+node ui_web/scripts/validate_private_wpa.mjs "$PRIVATE_WPA" research
+```
+
+`verify` is read-only: it validates the full accepted inventory, prior-package
+references, both complete W2 reproductions, formal Publication Reader export and
+actual Capability facade equivalence, then invokes the existing frontend validators.
+Python credential lookup, socket connections and SQLite connections are forbidden.
+An independent temporary copy containing the sealed package but no Dataset cache
+also passed complete verification, both formal W2 reproductions and all three
+frontend validators. Its read-only verification receipt is retained beside the handoff.
+Digests and reproduction establish integrity relative to retained facts, not external
+market authentication or redistribution rights. Research source verification uses
+its official Reader; no new Research replay engine is claimed.
+
+Explicit fresh production uses `w2 --output "$NEW_PRIVATE_WPA"`, then
+`research --output "$NEW_PRIVATE_WPA"`; both may acquire facts. Output/stages cannot
+overwrite existing results. `handoff` requires explicit accepted `--r2` and `--r3`
+paths and seals the index only after both stages pass. `export-research` is an
+explicit recovery for a genuinely committed Publication whose offline export failed;
+it uses the formal Reader, never reconstructs a Batch or reacquires data, and rejects
+already accepted/sealed output. Failure markers cannot inherit an earlier PASS.
+
+## Verification and remaining work
+
+| Check | Actual result |
+| --- | --- |
+| W2 full Python suite | PASS: 540 tests |
+| Research Plan/Batch/Job/Publication focused suite | PASS: 244 passed, 1 platform-specific skip |
+| Research full suite | FAIL: 1273 passed, 1 skipped, 2 known V1 Synthetic fixture drift failures |
+| DataLake full suite | PASS: 686 tests |
+| HTTP full suite after projection extraction | PASS: 589 tests |
+| Architecture/topology | PASS: 23 tests |
+| New private-tool boundary tests | PASS: 10 tests |
+| Backtesting/Catalog/Explorer frontend tests | PASS: 154 tests |
+| Actual W2/Publication/Catalog validators | PASS; 12 negative rejection probes |
+| Complete cacheless copy verification / R2–R3 references | PASS / PASS |
+| Rehashed wrong Strategy / missing Evidence / corrupted stored Source | PASS: all three rejected |
+| Backtesting/Research/HTTP Ruff | PASS |
+| Backtesting / HTTP / Research-tests mypy | PASS: 50 / 62 / 49 files; separate invocations |
+| `npm run contract:check` | PASS; all seven generated boundaries current |
+| `npm run build` / `npm run lint` | PASS / PASS |
+| Full Vitest default suite | FAIL: 567 passed, 13 failed in 74 files |
+
+The Python failures are the same unchanged V1 Synthetic binary64/report fixture
+drift recorded in [R3](R3_ACCEPTANCE.md). Frontend full-suite failures comprise 12
+5000ms timeouts and one protected-401 login-button assertion. That assertion failed
+on its first isolated rerun, passed on a second isolated rerun, and passed in a
+temporary extraction of the exact required baseline using the same installed
+dependencies. All frontend business source remains byte-identical to the baseline.
+Keep these timing/fixture diagnostics for WP-C; the repository-wide regression gate
+is **FAIL**, not waived. No formula, assertion, fixture or global timeout was changed.
+Private logs retain all runs. An initial combined mypy command hit duplicate test
+module names; the required module checks passed separately.
+
+The first local attempt's URI placement audit rejected a legitimate read-only
+SQLite URI; a test now covers that case. An earlier genuine Research publication
+hit the unchanged HTTP verification budget during export; the shared pure projection
+resolved offline delivery. A separate cacheless-check launcher initially dereferenced
+the venv Python symlink and used an interpreter without dependencies; it was corrected
+to the root runtime's `sys.executable`. These were tooling diagnostics, not altered
+market facts or financial Producer failures.
+
+| Technical gate | W2 M1/Q1 | Research Publication | Catalog |
+| --- | --- | --- | --- |
+| Real Source / formal origin | PASS | PASS | PASS: formal metadata facade |
+| Formal Producer | PASS | PASS | PASS |
+| Contract / identity / integrity | PASS | PASS | PASS |
+| Coverage | PASS | PASS, Warm-up separately retained | PASS: metadata scope |
+| Publication Rights | BLOCKED | BLOCKED | BLOCKED: separate metadata review |
+| Admission to public data assets | BLOCKED | BLOCKED | BLOCKED |
+
+Git/worktree/symlink checks and build asset scans found no private package references,
+real Result bodies or Publication payloads in public inputs or built assets. Vite Demo
+still has `publicDir: false`; Pages still uploads only `ui_web/dist-demo`. No deployment
+workflow, static page composition, generated contract, financial calculation or
+business admission range changed. Safe source/documentation changes pass the public
+data-safety inspection; this does not approve real-data inclusion or a new release.
+
+D4 has both full W2 Results, real Explorer records, genuine Catalog and verified R2/R3
+references for private consumption through existing shared presentations. It must
+preserve request/coverage/limitations, distinguish real-market origin from historical
+Synthetic wording and avoid HTTP Run fabrication. Actual public consumption remains
+blocked pending independent rights clearance. WP-B can use this private input set;
+its acceptance is not claimed here. No D4–D6, Pages release, push or merge was executed.

@@ -1,20 +1,28 @@
-# Static Demo implementation handoff: D3-R1 feasibility
+# Static Demo implementation handoff: WP-A private real examples
 
 Execution guidance under [Demo Runtime authority](ARCHITECTURE.md) and
 [Example contract](EXAMPLES.md); feature semantics remain with their canonical owners.
-D3-R0 established Real Market Only and Development First; D3-R1 has now verified
-bounded real-source access and input availability. D1/D2 shared architecture is retained.
-No formal R2–R5 Example or market-data public redistribution right is established.
+D3-R0 established Real Market Only and Development First; D3-R1 verified bounded
+real-source access. R2/R3 and WP-A now establish the complete private real Example
+input set. D1/D2 shared architecture is retained; public redistribution rights remain
+BLOCKED and full V2 page integration remains subsequent work.
 The D0 baseline/extraction descriptions and D1/D2 handoffs below are historical records;
 they do not undo the completed extractions or authorize synthetic formal V2 Examples.
 
 ## Current baseline and next package
 
-WP-A is completing the remaining real W2 and admitted Trailing Return examples from
+WP-A completed the remaining real W2 and admitted Trailing Return examples from
 baseline `69cd25f15dd35d086582726439236ebe472f36d3`. Its bounded checkpoints and final
 delivery are recorded in [WP-A acceptance](WP_A_ACCEPTANCE.md). Real W2 M1/Q1 production,
-guarded portable replay and Embedded Result validation have passed. Private Research
-publication and unified handoff are independently recorded there as they complete.
+guarded portable replay, real H20/H60 Trailing Return Batch, formal Publication with
+four Analyses/six Views, genuine Catalog, Embedded Validators and the unified private
+handoff have passed. The index references the previously accepted R2/R3 evidence.
+Python Reader export shares the HTTP adapter's safe projection while preserving the
+unchanged 4 MiB HTTP source-verification budget; this larger Publication is for static
+private consumption, not a passing live HTTP detailed-read example.
+Whole-repository regression remains FAIL on the documented V1 fixture drift and
+frontend timing failures; diagnostics belong to WP-C. The local `WP-A-HANDOFF.md`
+locates private artifacts without adding paths or market values to repository docs.
 Public rights remain BLOCKED; D4–D6 composition and deployment are outside WP-A.
 
 The R1 next-package guidance below is historical; completed R2/R3 evidence is in
