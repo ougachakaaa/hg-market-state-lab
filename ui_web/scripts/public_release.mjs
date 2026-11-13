@@ -47,7 +47,7 @@ export function loadPublicPackage() {
   const files = inventory(packageRoot)
   assert.deepEqual(files.map(f=>f.file).sort(), [...expected].sort(), 'Unreviewed package file')
   for (const file of files) {
-    assert.ok(tracked.has(relative(repository, resolve(packageRoot, file.file))), 'Public input must be tracked')
+    assert.ok(tracked.has(relative(repository, resolve(packageRoot, file.file)).replaceAll('\\', '/')), 'Public input must be tracked')
     assertPublicV2Asset(readFileSync(resolve(packageRoot, file.file)), file.file)
   }
   return { envelope, files }

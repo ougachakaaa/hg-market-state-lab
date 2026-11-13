@@ -88,3 +88,10 @@ suites use `.build/tests/<suite>/`, compatibility probes use unique subdirectori
 Vite and configurable TypeScript caches use `.build/cache/`. Third-party dependency caches
 remain npm-owned. Explicit external delivery roots and OS temporary browser/backend runtime
 roots retain their semantics. WP1B owns source/config/test relocation; WP1A moves none of them.
+
+## Reviewed input checkout bytes
+
+Root `.gitattributes` constrains the exact files in `scripts/public_payload_inventory.json`
+and Public review evidence: reviewed text uses LF on every platform; binary archives use
+`-text`. Keep these rules aligned when admitting a new reviewed input. Runtime verification
+continues to hash exact file bytes without normalizing them or rewriting reviewed digests.
