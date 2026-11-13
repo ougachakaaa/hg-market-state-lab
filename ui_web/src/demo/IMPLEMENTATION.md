@@ -1,4 +1,4 @@
-# Static Demo implementation handoff: WP-C engineering acceptance
+# Static Demo implementation handoff: D7-P release readiness
 
 Execution guidance under [Demo Runtime authority](ARCHITECTURE.md) and
 [Example contract](EXAMPLES.md); feature semantics remain with their canonical owners.
@@ -9,7 +9,19 @@ BLOCKED and the private seven-page composition is implemented. D7 public admissi
 The D0 baseline/extraction descriptions and D1/D2 handoffs below are historical records;
 they do not undo the completed extractions or authorize synthetic formal V2 Examples.
 
-## Current WP-C engineering handoff
+## Current D7-P handoff
+
+[D7 readiness](D7_READINESS.md) records the actual remote CI failures, conditional
+Backtesting Node dependency, upstream delayed-update cleanup, dependency advisory
+review, new local/private verification and exact public-rights blockers.
+[Public release contract](RELEASE.md) owns the future same-revision checks, artifact
+admission, protected main deployment and rollback. It specifies a future D7 transaction;
+D7-P does not implement or execute the public V2 loader/build/cutover.
+The existing remote Run remains FAIL; updated remote verification is NOT RUN without
+authorized push. Current V1 deployment remains unchanged. No private asset, rights
+approval, merge, production declaration or storage cleanup follows from this handoff.
+
+## Historical WP-C engineering handoff
 
 [WP-C acceptance](WP_C_ACCEPTANCE.md) records regression root causes, bounded fixes,
 compatibility/public-safety CI, original-input offline reproduction, real seven-route

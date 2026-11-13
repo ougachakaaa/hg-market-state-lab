@@ -49,7 +49,8 @@ metadata is never added to formal business DTOs or exported business payloads.
 Local strategy selection switches only the two validated W2 Results. All other
 local feature interactions keep their existing semantics.
 
-Acceptance evidence and commands belong to [WP-B acceptance](WP_B_ACCEPTANCE.md).
+Initial acceptance and commands are recorded in [WP-B acceptance](WP_B_ACCEPTANCE.md);
+current dependency/CI and private reproduction evidence is [D7 readiness](D7_READINESS.md).
 Publication Rights remain BLOCKED; this contract grants no public release.
 
 ## Continuous compatibility (WP-C)

@@ -95,7 +95,10 @@ merely for Demo. Disclosure and Example origin remain clear during reading and d
 [Example contract](EXAMPLES.md) owns real-market targets and result packaging;
 [Authenticity and rights](AUTHENTICITY.md) owns provenance, independent gates and public admission;
 [implementation handoff](IMPLEMENTATION.md) owns current D3-R0 cutover, D3-R1-R6, bounded D1–D6 work
-and D7 release handoff. Feature and producer contracts continue to own results.
+and D7 release handoff. [Public release contract](RELEASE.md) owns the future revision-bound
+admission/deployment/rollback transaction; [D7 readiness](D7_READINESS.md) records current
+engineering, remote CI and rights status separately. Feature and producer contracts
+continue to own results.
 
 **Production UI Changes Propagate by Shared Code; Data Contract Changes Are Reconciled by CI.**
 

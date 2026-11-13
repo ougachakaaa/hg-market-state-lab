@@ -13,8 +13,9 @@ This report owns D5/D6 execution evidence. [Runtime](ARCHITECTURE.md),
 [authenticity](AUTHENTICITY.md) remain canonical. Feature Presentations, generated
 HTTP contracts, producer formulas and admission identities retain their owners.
 Original external R2/R3/WP-A handoffs locate retained inputs; none enters Git or CI.
-Final HEAD accompanies this report in the delivery response and external handoff;
-`git log -1 --format=%H -- ui_web/src/demo/WP_C_ACCEPTANCE.md` identifies its commit.
+Original WP-C Final HEAD: `e3dce5ebfb48771941e8ac309c18af875d4b60e4`, also recorded
+in its delivery response and external handoff. The later D7-P count erratum below
+does not change that historical delivery revision.
 
 ## Root causes and fixes
 
@@ -79,8 +80,8 @@ Run Python commands at repository root, npm commands in `ui_web`.
 | --- | --- |
 | `poetry run pytest market_research/tests -q` | PASS: 1280 passed, one existing skip |
 | `poetry run pytest data_lake -q` | PASS: 686 |
-| `poetry run pytest data_snapshot/tests -q` | PASS: 540 |
-| `poetry run pytest market_backtesting/tests -q` | PASS: 287 |
+| `poetry run pytest data_snapshot/tests -q` | PASS: 287 |
+| `poetry run pytest market_backtesting/tests -q` | PASS: 540 |
 | `poetry run pytest ui_http/tests -q` | PASS: 589 |
 | `poetry run pytest ui_web/scripts/test_export_contracts.py ui_web/scripts/test_private_wpa_examples.py -q` | PASS: 15 |
 | `poetry run pytest data_snapshot/tests/test_authority_topology.py ui_http/tests/test_architecture.py -q` | PASS: 23 |
@@ -94,6 +95,11 @@ Run Python commands at repository root, npm commands in `ui_web`.
 | `npm run test:static-compatibility` | PASS: exhaustive private route type check and actual public/private entry module graphs |
 | `npm run test:public-safety` | PASS: tracked payload/credential guards and actual default public files |
 | `actionlint` on compatibility and Pages workflows | PASS; existing local actionlint 1.7.12 |
+
+D7-P count erratum: the original table transposed the Snapshot and Backtesting
+counts. Retained WP-C raw logs confirm Snapshot **287** and Backtesting **540**;
+D7-P independently reproduces both totals. This corrects labels, not historical
+execution outcomes or technical acceptance.
 
 ## CI and fail-closed feedback
 
@@ -231,8 +237,8 @@ was committed or deployed; no trigger change, auto-approval or production declar
 
 `853f8d0` — `ci(demo): enforce static compatibility and public asset safety`
 
-Final acceptance commit: `test(demo): close private v2 engineering acceptance (WP-C)`;
-its exact SHA is supplied in the final delivery response and external handoff.
+Original final acceptance commit: `e3dce5ebfb48771941e8ac309c18af875d4b60e4` —
+`test(demo): close private v2 engineering acceptance (WP-C)`.
 All required WP-C local gates are complete. The final response supplies the last HEAD
 and this complete report; the final commit contains documentation only. External
 `WP-C-HANDOFF.md` locates private builds, browser receipts, logs, hashes and exact SHA.
