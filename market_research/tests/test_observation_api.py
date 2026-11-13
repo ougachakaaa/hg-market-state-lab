@@ -210,7 +210,10 @@ def test_only_published_datalake_imports_and_no_forbidden_dependency_edges() -> 
                 assert (
                     name == "sqlite3"
                     and path.relative_to(SOURCE).as_posix()
-                    == "descriptive/cases/futures_basis/online_sqlite_store.py"
+                    in {
+                        "descriptive/cases/futures_basis/online_sqlite_store.py",
+                        "publication/_sqlite.py",
+                    }
                 ) or not any(
                     name == prefix or name.startswith(prefix + ".") for prefix in forbidden
                 ), (path, name)

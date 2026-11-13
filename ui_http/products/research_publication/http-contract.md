@@ -2,11 +2,9 @@
 
 ## Storage transition status
 
-The approved [portable storage target](../../../market_research/PUBLICATION_STORAGE.md#portable-sqlite-target) is not implemented by storage WP0.
-Any POSIX/platform-unavailable statements below describe the current adapter only;
-SQLite cutover removes that capability gate while preserving endpoints, DTOs, Auth,
-owner isolation where applicable, safe error mapping and existing unavailable/corrupt
-behavior for real storage failures. No wire contract or generated artifact changes.
+The active [portable SQLite storage](../../../market_research/PUBLICATION_STORAGE.md#portable-sqlite-target)
+replaces the retired POSIX adapter. Endpoints, DTOs, Auth, safe projection and error
+mapping remain unchanged. Actual platform evidence is recorded in Research storage reconciliation.
 
 This contract specializes [HTTP ownership](../../ARCHITECTURE.md) and the
 [product catalog](../../HTTP_PRODUCTS.md). Research owns publication identities and
@@ -30,8 +28,8 @@ uses nullable `next_cursor`. A cursor is an opaque transport encoding of the exc
 Research reader cursor; clients must not interpret it. There is no promise that a
 non-null cursor has a subsequent result.
 
-`LAB_RESEARCH_PUBLICATION_ROOT` is an absolute server-owned path without parent traversal; it may come from the process environment or, for local development, the repository-root `.env` (process environment wins). Missing or invalid configuration and a runtime platform without the required
-descriptor-relative filesystem capability are isolated to these operations and return 503;
+`LAB_RESEARCH_PUBLICATION_ROOT` is an absolute server-owned path without parent traversal; it may come from the process environment or, for local development, the repository-root `.env` (process environment wins). Missing or invalid configuration and unavailable storage
+are isolated to these operations and return 503;
 they do not prevent startup or other products. Reads do not create paths. A publication must
 be accessible in this runtime's configured store; no synchronization is implied. Tests may
 inject a store in the app composition. Blocking reads run in worker threads.
@@ -44,11 +42,10 @@ the old response limit while limiting JSON expansion: WP2 observed about 6.48 MB
 peak for an 854 KB source, with no process RSS or throughput guarantee. The reader bounds
 the actual source read before parsing, then retains all integrity and association checks.
 Other processes have independent capacity; deployment must size worker count accordingly.
-Reader pagination limits the number of returned Manifests,
-not their size or index scan. WP2 reads each Manifest in full and scans/sorts the entire
-index; a detailed reader verifies its Manifest and then fully verifies the retained source.
+Reader pagination selects ascending identities through SQLite and limits the number of returned
+Manifests, not their individual size; a detailed reader verifies its Manifest and then fully verifies the retained source.
 These bounds do not cap the memory
-or time of the initial Manifest/index read, filesystem I/O, or JSON object expansion. No
+or time of the initial Manifest/index read, database I/O, or JSON object expansion. No
 cache, timeout, background job or silent partial delivery is implied. This is appropriate
 only for a trusted, operationally sized store; capacity must be controlled by the operator.
 
@@ -91,7 +88,7 @@ is fixed safe text. Authentication failures retain their independent Auth envelo
 | 409 | unsupported_version | unsupported stored schema |
 | 413 | response_too_large | serialized response exceeds delivery bound, or an identifier is not deliverable under V1 |
 | 503 | verification_budget_exceeded | source verification bytes or concurrent capacity exceeds the per-process budget |
-| 503 | unavailable | missing/invalid configuration, missing platform capability, or unavailable storage/source |
+| 503 | unavailable | missing/invalid configuration, unavailable storage/source |
 | 500 | internal_error | unexpected transport/runtime failure |
 
 No exception text, storage location or source bytes enter errors. Reader calls never execute

@@ -20,13 +20,13 @@ The active facade, HTTP and Explorer capabilities and all new-publication integr
 immutability guarantees remain. WP0 changes no code or runtime data; no automatic deletion
 is introduced. This revised decision, not the superseded preservation proposal, is binding.
 
-## Current W2 storage status
+## Current storage status
 
-Storage WP2 integrates W2 exclusively with SQLite and removes its POSIX backend.
-[W2 execution evidence](../market_backtesting/cases/futures_roll_long/RECONCILIATION.md#storage-wp2-execution-evidence)
-records the actual verification matrix and remaining limits. WP0/WP1 descriptions below
-are historical baselines; W1 and Publication migration status is unchanged. No WP3 work
-has started. The repository remains pre-production.
+W1, W2 and Publication exclusively use independent SQLite databases. Their POSIX
+backends are retired. The WP2/WP3 and WP4/WP5 execution summaries below distinguish
+implementation closure from actual platform acceptance. WP0 inspection descriptions
+and original work-package requirements are historical baselines. The repository remains
+pre-production; WP6 has not started.
 
 ## Inspected boundaries and reconciliation
 
@@ -50,9 +50,9 @@ An intended migration difference does not retroactively invalidate legacy accept
 | M1 / resolved for W2 in WP2 | W2 online_store.py gates on POSIX/UID, reads request/state/result files; online.py imports descriptor helpers and publishes result then state | WP1 adapter is integrated by WP2; descriptor coupling and legacy code removed, atomic result+COMPLETED and unchanged W2 application behavior verified on native Windows |
 | M2 / required, intended migration | W1 online.py mixes POSIX persistence and application, separate report/state publication; no SQLite schema/version | WP3 replaces persistence while retaining exact request/report/profile and scientific complete/partial behavior |
 | M3 / required, current implementation gap | W1 _execute suppresses final state persistence errors; _recover does not exclude an actual current-process active run or serialize with admission | WP3 must fail closed after unpersistable terminal state and serialize initialization/recovery with active-run exclusion; add failure-injection and simultaneous-initialization regression evidence |
-| M4 / required, intended migration | Publication store.py uses bundles/commit envelopes and hard-link visibility; source.py and _platform.py require descriptors | WP4/WP5 replace physical persistence/gates, preserve source capture facade, exact bytes/digests and pure association checks |
-| M5 / required, intended migration | Existing store tests mutate files, modes, UID/flags and assert unsupported Windows; atomic tests target replace/fsync gaps | WP1-WP5 replace backend-specific expectations with SQLite rollback, schema, corruption, alias/sidecar and platform evidence; preserve semantic assertions, do not weaken security tests merely to pass |
-| M6 / required, intended migration | Existing HTTP platform tests intentionally expect unavailable without POSIX primitives; current feature/runtime documents describe that restriction | WP2/WP3/WP5 retain endpoint/DTO/error contracts but update platform capability expectations; WP6 demonstrates actual four-platform behavior |
+| M4 / implementation closed in WP4/WP5 | Publication now uses independent SQLite records and one immutable snapshot transaction; POSIX backend removed | Native Windows canonical bytes, association, rollback, concurrent collision and real process interruption tests pass; other platform runtime remains WP6 |
+| M5 / native implementation tests closed | W1/W2/Publication SQLite tests replace retired file-backend assertions | Native Windows regression, bounded BLOB reads, corruption/schema/alias/sidecar and process interruption evidence below; privileged symlink test skipped; four-platform acceptance remains open |
+| M6 / integration closed on native Windows | HTTP no longer gates Publication on POSIX primitives; current documentation reflects SQLite | Stable DTO/OpenAPI, safe errors, native HTTP and real Chrome Explorer pass; Linux/WSL2/Docker runtime evidence remains WP6 |
 | M7 / informational, no runtime config drift | lab_config already owns all three root settings; roots have directory meaning and configuration priority is centralized | Keep keys, defaults and lab_config calls. WP0 template/guide comments distinguish target filenames from current behavior |
 | M8 / informational, preserved consumer boundary | HTTP consumes owning application/facade; Web consumes HTTP/OpenAPI, not private persistence | No production/generated files changed in WP0. WP2/WP3/WP5 provide HTTP and feature regression; no contract generation unless a separately approved wire change occurs |
 | I1 / informational, implementation-only | SQL table names/indexes, connection encapsulation and journal selection are not business decisions | Each owner chooses minimal implementation in its WP; enforce separate metadata/BLOB reads, transactions, finite capacity and controlled sidecars. No shared framework |
@@ -314,3 +314,140 @@ migration state is unchanged. WP4 remains ready for its separately scoped implem
 this commit does not start WP4 or establish WP6 four-platform acceptance.
 
 Final combined W1 application/storage + HTTP rerun after bounded streaming serialization: PASS, 62 passed / 1 skipped. Browser script initially failed on its obsolete directory-count assertion; final SQL-count run passes. Browser server logs include a ClientDisconnect during deliberate lost-response coverage; the test completes successfully.
+
+## Storage WP4-WP5 execution evidence
+
+Baseline `7f0a0693b2c41a5363ecee5b048981f6c1b90113`, branch
+`feat/sqlite-portable-runtime`, 2026-11-13. Initial branch/HEAD matched and the working
+tree was clean. Execution used native Windows 11 build 22000, Python 3.13.7,
+SQLite 3.50.4 and the repository root Poetry `.venv`. No Linux environment was used.
+
+### Persistence and cutover
+
+Publication exclusively uses `<root>/publications.sqlite3`, user_version 1.
+`publications` retains the exact Manifest BLOB, its size/SHA-256 and the integrity
+index; `records` retains Source, Analysis, View and Layer BLOBs keyed by Publication,
+kind and local identity. The integrity index retains original per-record size and
+SHA-256. No W1/W2 schema, Run identity, dependency or business lifecycle is reused.
+Private `_sqlite.py` owns SQLite operations; `_paths.py` owns portable path checks;
+`_records.py` retains the pure evidence/association helpers and `store.py` owns the facade.
+No generic framework or second backend is introduced.
+
+A valid empty schema commits before the first snapshot transaction. All snapshot
+records then insert in one transaction; primary keys enforce collision even for
+identical retries. Failed snapshot commits roll back. Independent-reader observations
+and real subprocess `os._exit(73)` immediately before/after commit prove no partial
+visibility and persistence of the complete committed snapshot after reopening.
+Connections use synchronous FULL, DELETE journaling, parameterized statements and
+foreign keys. In-process initialization/operations are serialized; this grants no
+multi-process worker or shared-network-filesystem support.
+
+Source capture uses exclusive creation, regular-file/ancestor/identity checks and
+flush/fsync. Publication checks exact external source bytes against re-encoded Batch
+evidence before retaining its SQLite copy. Reads remain valid after external source
+deletion. Caller-selected source access stays explicit. Root, junction/reparse-point,
+hard-link and sidecar checks retain the operator-controlled-filesystem trust boundary.
+Windows reserved/alternate-stream path names are rejected. No hostile-writer or
+perfect power-loss-durability guarantee is added.
+
+Manifest reads select only Manifest/integrity metadata. Detailed reads share a read
+transaction and load only required records. SQL type/actual length and source budget
+checks precede BLOB selection; digest checks precede strict parsing. Existing source,
+Job/request/spec, original failures/outcomes, coverage and projection checks remain.
+Signed-zero roundtrip is tested; rewritten Layer bytes/digest with positive zero are
+rejected against retained negative-zero evidence. No execution or numerical computation
+is invoked by publisher/readers.
+
+The POSIX capability module, descriptor-relative helpers, hard-link commit protocol,
+bundle paths and old platform tests are retired. No legacy data was read, migrated or
+deleted. The unchanged four HTTP routes retain Auth, allowlisted projection/redaction,
+closed errors, response bounds and source verification capacity. Generated contracts
+and React product implementation are unchanged. The browser harness now terminates
+only its own Windows child process trees during cleanup.
+
+### Actual verification
+
+All runtime results below are native Windows. Synthetic public research fixtures are
+used; no real market credentials or default market caches are needed.
+
+| Check | Result |
+| --- | --- |
+| `poetry run pytest market_research/tests -q --tb=short` (final full run) | PASS: 1279 passed, 3 skipped; includes W1 and Publication |
+| `poetry run pytest ui_http/tests -q --tb=short` (final full run) | PASS: 586 passed, 2 skipped; includes W1/W2/Publication HTTP |
+| `poetry run pytest market_backtesting/tests -q --tb=short` | PASS: 590 passed, 2 skipped |
+| Publication/source/schema/path/atomicity closeout tests | PASS within full Research; junction/hard-link/sidecar, lock failure, canonical-byte and success/partial/failed outcome checks execute; privileged symlink creation unavailable to account and skipped |
+| `poetry run python market_research/tests/publication_example.py` | PASS: source capture, publish, Manifest, Analysis and materialized View |
+| `poetry run python market_research/tests/publication_read_cost_example.py` | PASS: list/Manifest read one logical Manifest and no source; Analysis reads Manifest/Source/selected Analysis; View reads Manifest/Source/selected View/Layer |
+| `poetry run pytest data_snapshot/tests/test_authority_topology.py ui_http/tests/test_architecture.py -q --tb=short` | PASS: 23 passed |
+| `poetry run ruff check market_research ui_http` | PASS |
+| `poetry run mypy market_research ui_http` and `--platform linux` | PASS: 175 files each; Linux-target typing is not Linux runtime evidence |
+| `npm run contract:check` | PASS: all seven OpenAPI/TypeScript pairs current, no regeneration |
+| `npm run test -- src/features/research_explorer src/shared/visualization` | PASS: 10 files, 141 tests |
+| `npm run build`; `npm run lint` | PASS; existing large-bundle warning remains |
+| `npm run test` | FAIL: 445 passed, 3 timeouts in unchanged MO Option Chain/Premium Plane tests at 5000 ms |
+| `npm run test:research-browser` using installed Chrome | PASS: real Chrome -> Vite -> FastAPI -> temporary Auth/Publication SQLite; publication browsing, selected details/Views, refresh/history, errors and logout at desktop/tablet sizes |
+| `npm run test:visualization-browser` using installed Chrome | PASS: real Plotly interactions and V1 line/bar rendering |
+| HTTP TLS | NOT RUN: fixture skips on native Windows without OpenSSL; previous TLS readiness finding remains unverified |
+| Linux / WSL2 / Linux Docker runtime | NOT RUN; reserved for separately authorized WP6 |
+
+Final pure-helper extraction was followed by another full Research PASS (1279 passed,
+3 skipped), focused Publication HTTP PASS (16 tests), both Mypy targets and topology
+checks. Relative Markdown file targets were checked (125 targets, none missing).
+
+Initial Research run found two architecture allowlist failures for the new owner-local
+SQLite dependency. The allowlists were narrowly updated; negative execution-boundary
+checks still reject SQLite outside its authorized owners. Initial HTTP focused run
+found a new test expecting incorrect safe error wording; the test now asserts the
+unchanged existing wording. Linux-target Mypy initially rejected `os.path.isreserved`;
+the portable stdlib `ntpath` import resolves typing on both targets. Final checks above
+pass. Full frontend timeouts are recorded, with no unrelated product/timeout repairs.
+The prior Demo fixture tests pass within native Research; no historical WSL finding is
+erased or claimed resolved on another platform.
+
+### Acceptance and remaining work
+
+WP4 persistence: **PASS within the recorded native Windows scope**. Immutable atomic
+SQLite snapshots, granular bounded verification and original evidence semantics are
+implemented and exercised. This is not four-platform acceptance.
+
+WP5 integration: **PARTIAL**. Native Windows Publication/HTTP, stable generated contracts
+and real Explorer browser acceptance pass. The full frontend regression has three
+unrelated timeouts; privileged symlink and TLS checks are unexecuted. Combined WP4-WP5
+verdict: **PARTIAL**, without a claim of a completely green repository.
+
+M4 is closed by the active SQLite cutover. M5/M6 native implementation/integration gaps
+are closed only to the extent recorded above; their unexecuted platform portions remain
+open. WP6 is ready for a separate final-platform acceptance task, retaining frontend,
+TLS, privileged filesystem and Linux/WSL2/Docker gates. WP6 was not started. No merge
+into `develop` or production declaration was made.
+
+### Changed-file inventory
+
+Status is relative to the required baseline; A = added, M = modified, D = deleted.
+
+```text
+M	.env.example
+M	ARCHITECTURE.md
+M	DEVELOPMENT.md
+M	market_research/ARCHITECTURE.md
+M	market_research/PUBLICATION.md
+M	market_research/PUBLICATION_STORAGE.md
+M	market_research/STORAGE_RECONCILIATION.md
+M	market_research/descriptive/ACCEPTANCE.md
+D	market_research/src/market_research/publication/_platform.py
+M	market_research/src/market_research/publication/source.py
+M	market_research/src/market_research/publication/store.py
+M	market_research/tests/publication_read_cost_example.py
+M	market_research/tests/test_conversion_boundaries.py
+M	market_research/tests/test_observation_api.py
+M	market_research/tests/test_publication.py
+M	market_research/tests/test_publication_closeout.py
+D	market_research/tests/test_publication_descriptor_platform.py
+M	ui_http/products/research_publication/http-contract.md
+M	ui_http/tests/test_publication_http.py
+M	ui_http/tests/test_publication_http_platform.py
+M	ui_web/scripts/research_browser_smoke.mjs
+A	market_research/src/market_research/publication/_records.py
+A	market_research/src/market_research/publication/_paths.py
+A	market_research/src/market_research/publication/_sqlite.py
+```

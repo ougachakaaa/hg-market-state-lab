@@ -2,17 +2,13 @@
 
 ## Contract status
 
-The approved replacement is [Portable SQLite target](#portable-sqlite-target).
-Sections from Source eligibility through HTTP delivery describe the currently active
-V1 facade and file adapter. Their payload, association, granular-read and public API
-contracts continue; their physical layout, hard-link/descriptor publication protocol,
-POSIX platform gate and file-layout initialization rules apply **only to that legacy
-adapter**, not the SQLite target. WP0 changes authority only, not the active adapter.
+The active persistence contract is [Portable SQLite target](#portable-sqlite-target).
+The POSIX file adapter is retired. Business payload and association contracts remain unchanged.
 
 This contract specializes [Publication](PUBLICATION.md). The latter remains the owner of
 publication semantics, and [Visualization](../ui_web/VISUALIZATION.md) remains the sole
-owner of Layer and ChartView semantics. This document specifies the initial Python and
-local-file boundary; it does not create an execution lifecycle or a generic artifact store.
+owner of Layer and ChartView semantics. This document specifies the Python and
+local SQLite boundary; it does not create an execution lifecycle or a generic artifact store.
 
 ## Source eligibility and retention
 
@@ -79,51 +75,17 @@ and `frequency` respectively. No statistic, missing mark or density is computed.
 
 ## Local store and integrity
 
-Canonical JSON is UTF-8, sorted object keys, compact separators, ASCII escaping and no
-NaN/Infinity. SHA-256 covers exact bytes. Every payload and Manifest has an explicit V1
-schema tag; unknown versions are rejected. Storage is rooted at a caller-selected local
-directory and independent of Workbench and DataLake:
+Canonical JSON is UTF-8, sorted keys, compact separators, ASCII escaping and no
+NaN/Infinity. SHA-256 covers exact bytes; payload V1 tags remain independent of the
+storage schema. Strict parsing rejects duplicate keys and non-finite numbers.
 
-```text
-root/
-  bundles/<random-uuid>/source.json
-  bundles/<random-uuid>/analyses/<analysis-id>.json
-  bundles/<random-uuid>/layers/<layer-id>.json
-  bundles/<random-uuid>/views/<view-id>.json
-  publications/<publication-id>.json       # atomic commit record / Manifest envelope
-```
-
-The publisher writes a unique, private staging bundle, flushes and fsyncs each file, then
-publishes a complete Manifest envelope using an exclusive hard link in `publications`.
-The envelope contains the exact Manifest, its SHA-256, the generated bundle identity and
-SHA-256 and size of each referenced payload. A reader only discovers commit records, so
-uncommitted bundles and temporary files are invisible. Competing commits for the same ID
-produce one winner and explicit collision failures; interrupted attempts can leave orphan
-bundles or temporary files, which are never repaired or automatically deleted. The local
-filesystem must support same-filesystem atomic hard links; errors propagate as classified
-storage unavailability. This promises atomic visibility on supported local filesystems,
-not distributed coordination, power-loss durability, authenticity or hostile-writer protection.
-No automatic garbage collection is implied.
-
-IDs used as path components are strictly validated, not caller paths. Every directory/file
-is opened relative to a verified directory descriptor with no-follow behavior; regular-file
-type is checked. Publication-local references must be declared in the same verified Manifest
-and matched to generated paths, never interpreted as paths or accepted from another snapshot.
-A payload's size and digest are verified before parsing; a Manifest envelope is checked
-before any result is returned. SHA-256 detects accidental corruption, not coordinated
-malicious rewriting of both content and metadata. JSON parsing rejects duplicate object keys,
-non-finite values, invalid shapes and unknown versions. Reads do not repair or rewrite.
-
-### Platform capability
-
-The descriptor-relative requirement is part of the storage contract, not an implementation
-detail. V1 requires `O_DIRECTORY`, `O_NOFOLLOW` and `dir_fd` support for `os.open`,
-`os.mkdir`, `os.stat`, `os.unlink` and `os.link`. On a platform without these primitives, the
-public facade must remain importable and the composed HTTP app must still start, but every
-store read and every `retain_source`/`publish` call fails with `PublicationUnavailable`
-before any file or directory is created. A path-based approximation, zero-valued flags or
-removal of the no-follow checks is not an admissible fallback. Native Windows storage is
-not implemented or validated.
+The active backend is independent stdlib SQLite at `<root>/publications.sqlite3`,
+with `PRAGMA user_version=1`. Manifest, Source, Analysis, View and Layer are separate
+logical records retaining exact canonical JSON bytes, SHA-256 and sizes. All records
+commit in one immutable transaction; duplicate publication identity always collides.
+Legacy files are ignored without migration or automatic deletion. Construction and
+uninitialized reads create nothing. Existing invalid databases are never recreated.
+The portable filesystem and trust boundary below replaces descriptor-relative access.
 
 ## Public facade and reads
 
@@ -140,11 +102,11 @@ its Manifest association, View and required Layer digest and contract and materi
 complete inline-data ChartView; unrelated Layers are not loaded. A missing Analysis is
 separate from a recorded unsuccessful outcome. Stored source bytes are integrity checked
 when required for detailed association; absence or corruption never triggers reconstruction.
-V1 reads the retained source file as a whole for these checks, so detailed reads do not load
+V1 reads the retained SQLite source BLOB as a whole for these checks, so detailed reads do not load
 unrelated stored Analysis or Layer payloads but their cost grows with the source Batch size.
 
 Detailed reads may take a caller-supplied finite source byte budget. The reader enforces it
-on the actual opened source file and bounded read, before JSON parsing, and reports a distinct
+on the actual SQL BLOB length before loading or JSON parsing, and reports a distinct
 verification-capacity failure; this does not replace digest or association checks. Analysis
 reads include a detached Job-scoped coverage summary derived from the verified retained
 ObservationSet, or null when that evidence is absent. Counts and ratios use Observation's
@@ -195,26 +157,10 @@ For a self-contained example using explicitly synthetic market facts, run
 
 ### Empty store and initialization
 
-Listing and exact-identity lookup are read-only, including before the first publish. A
-configured root whose existing path components are accessible, real directories and whose
-remaining suffix does not yet exist is an uninitialized store: listing returns `[]` and an
-exact lookup returns `PublicationNotFound`. An existing empty root, or a root containing
-only a real `bundles` directory, is also uninitialized. The latter is a possible transient
-or interrupted prefix of the publisher's existing `bundles`-then-`publications` setup;
-its orphan bundles are never visible. Listing may observe the state immediately before a
-concurrent commit and need not include it.
-
-Once `publications` exists, both it and `bundles` must be real accessible directories.
-A root with unrelated entries but no `publications`, a `publications` directory without
-`bundles`, a non-directory or a symlink in the configured path or store structure is corrupt;
-it is not treated as empty. Permission and other I/O failures are unavailable, not empty.
-Empty path, NUL and parent traversal are invalid input. Reads create nothing. An absent
-commit in a valid initialized store remains `PublicationNotFound`; malformed existing
-commit records remain failures. In the publication index, only UUID4 commit filenames and
-regular `.tmp-<UUID4 hex>` staging files are admitted; malformed entries and symlinks
-are corrupt, while a staging file removed concurrently may be ignored. These checks do not
-claim protection from hostile concurrent filesystem mutation or change the atomic commit
-protocol.
+A safe root without `publications.sqlite3` is uninitialized, regardless of legacy
+contents. Reads return empty or NotFound without writing. Only writing may create
+storage. Existing zero-byte/version-0, corrupt or incompatible databases fail closed;
+unknown nonzero versions are unsupported. No repair or upgrade is automatic.
 
 ### Workbench source handoff
 
@@ -250,8 +196,8 @@ fields into Research and does not itself define routes or HTTP DTOs.
 
 ## Portable SQLite target
 
-Approved in storage WP0 (2026-11-12), unimplemented until storage WP4/WP5. This section
-owns Publication's target persistence only; [Publication](PUBLICATION.md) remains the
+Approved in storage WP0 (2026-11-12); implemented by storage WP4/WP5. This section
+owns Publication's active persistence only; [Publication](PUBLICATION.md) remains the
 business authority. [Storage reconciliation](STORAGE_RECONCILIATION.md) owns drift and
 work-package readiness, independently of historical Publication/Workbench WP numbering.
 
@@ -265,7 +211,7 @@ explicit configuration where it does today. A caller-selected root remains suppo
 W1/W2 Run Stores, DataLake, Auth and Workbench.
 
 The user explicitly authorizes a development-time breaking cutover: all legacy Publication
-data may be abandoned; remove the retired file adapter and POSIX gate in WP4/WP5, without
+data is abandoned; WP4/WP5 removes the file adapter and POSIX gate, without
 migration, compatibility, dual reads/writes or an importer. No old publication is visible
 in the new store. A missing database is uninitialized even when legacy bundles/publications
 remain in that controlled root; legacy contents are never followed or consulted. The new
@@ -276,7 +222,10 @@ not disposable online Run state. No extra abstraction survives merely for legacy
 
 Listing and exact lookup remain read-only, create no directory/database, and return `[]`
 or `PublicationNotFound` for an uninitialized safe root. Writes initialize only an absent
-database: schema creation and `PRAGMA user_version=1` commit together. An existing file,
+database: schema creation and `PRAGMA user_version=1` commit together before the first snapshot
+transaction. Failed publication leaves a valid empty database. Interruption during schema
+initialization may leave an invalid existing database, which fails closed without repair.
+An existing file,
 including a zero-byte/version-0 database, must not be overwritten or silently initialized.
 Unknown versions are `UnsupportedPublicationVersion`; incompatible/corrupt structures are
 `PublicationCorrupt`; I/O/permissions/lock/capacity failures are `PublicationUnavailable`.

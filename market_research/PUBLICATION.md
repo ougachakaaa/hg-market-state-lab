@@ -3,7 +3,7 @@
 ## Storage transition status
 
 [Publication storage](PUBLICATION_STORAGE.md#portable-sqlite-target) owns the approved
-SQLite replacement. The current POSIX file store remains active until storage WP4/WP5.
+active SQLite storage. Storage WP4/WP5 retires the POSIX file store.
 The development-time breaking cutover abandons old data without migration, dual reads or
 compatibility; it preserves all publication business operations, immutable snapshots,
 integrity and association checks, HTTP interfaces and Research Explorer.

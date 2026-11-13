@@ -218,7 +218,11 @@ try {
 } finally {
   await browser?.close()
   for (const child of processes.reverse()) {
-    child.kill('SIGTERM')
+    if (process.platform === 'win32' && child.exitCode === null) {
+      spawnSync('taskkill', ['/PID', String(child.pid), '/T', '/F'], { stdio: 'ignore' })
+    } else {
+      child.kill('SIGTERM')
+    }
     if (child.exitCode === null) await new Promise((done) => child.once('exit', done))
   }
   await rm(temporary, { recursive: true, force: true })

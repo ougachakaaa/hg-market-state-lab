@@ -1,7 +1,7 @@
 """Synthetic public Research evidence; no network, Workbench, or default caches."""
 
 import json
-import os
+import sqlite3
 import uuid
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import replace
@@ -23,13 +23,7 @@ from market_research.publication import (
     publish,
     retain_source,
 )
-from market_research.publication._platform import supports_descriptor_relative_io
 from market_research.publication.source import canonical_json, digest
-
-pytestmark = pytest.mark.skipif(
-    not supports_descriptor_relative_io(),
-    reason="Publication storage requires POSIX descriptor-relative operations",
-)
 
 
 @pytest.fixture(scope="module")
@@ -46,15 +40,41 @@ def published(tmp_path, batch):
 
 
 def envelope(store, pid):
-    return json.loads((store.root / "publications" / f"{pid}.json").read_text())
+    return store._envelope(pid)
 
 
-def bundle(store, pid):
-    return store.root / "bundles" / envelope(store, pid)["bundle"]
+def record(store, pid, kind, identity=""):
+    with sqlite3.connect(store.root / "publications.sqlite3") as c:
+        return c.execute(
+            "SELECT payload FROM records WHERE publication_id=? AND kind=? AND identity=?",
+            (pid, kind, identity),
+        ).fetchone()[0]
+
+
+def change_record(store, pid, kind, identity="", raw=None):
+    with sqlite3.connect(store.root / "publications.sqlite3") as c:
+        if raw is None:
+            c.execute(
+                "DELETE FROM records WHERE publication_id=? AND kind=? AND identity=?",
+                (pid, kind, identity),
+            )
+        else:
+            c.execute(
+                "UPDATE records SET payload=? WHERE publication_id=? AND kind=? AND identity=?",
+                (raw, pid, kind, identity),
+            )
 
 
 def rewrite_envelope(store, pid, data):
-    (store.root / "publications" / f"{pid}.json").write_bytes(canonical_json(data))
+    raw = canonical_json(data["manifest"])
+    with sqlite3.connect(store.root / "publications.sqlite3") as c:
+        c.execute(
+            (
+                "UPDATE publications SET manifest=?, sha256=?, size=?, "
+                "integrity=? WHERE publication_id=?"
+            ),
+            (raw, digest(raw), len(raw), canonical_json(data["payloads"]), pid),
+        )
 
 
 def test_publish_read_reopen_and_scope(published):
@@ -124,14 +144,12 @@ def test_missing_corrupt_payload_and_read_isolation(published):
     _, _, store, pid = published
     manifest = store.get_publication_manifest(pid)
     first, second = manifest["analyses"][:2]
-    path = bundle(store, pid) / "analyses" / f"{second['analysis_id']}.json"
-    path.unlink()
+    change_record(store, pid, "analyses", second["analysis_id"])
     assert store.get_publication_manifest(pid) == manifest
     assert store.get_analysis(pid, first["analysis_id"])["summary"] == first
     with pytest.raises(PublicationCorrupt):
         store.get_analysis(pid, second["analysis_id"])
-    layer = bundle(store, pid) / "layers" / f"{second['views'][1]['layer_id']}.json"
-    layer.write_text("{}")
+    change_record(store, pid, "layers", second["views"][1]["layer_id"], b"{}")
     assert store.get_chart_view(pid, first["views"][0]["view_id"])
     with pytest.raises(PublicationCorrupt):
         store.get_chart_view(pid, second["views"][1]["view_id"])
@@ -140,18 +158,17 @@ def test_missing_corrupt_payload_and_read_isolation(published):
 def test_source_and_manifest_corruption_are_detected(published):
     _, _, store, pid = published
     manifest = store.get_publication_manifest(pid)
-    source = bundle(store, pid) / "source.json"
-    source.write_bytes(b"{}")
+    change_record(store, pid, "source", raw=b"{}")
     assert store.get_publication_manifest(pid) == manifest
     with pytest.raises(PublicationCorrupt):
         store.get_analysis(pid, manifest["analyses"][0]["analysis_id"])
-    commit = store.root / "publications" / f"{pid}.json"
-    commit.write_bytes(b"not json")
+    with sqlite3.connect(store.root / "publications.sqlite3") as c:
+        c.execute("UPDATE publications SET manifest=?", (b"not json",))
     with pytest.raises(PublicationCorrupt):
         store.get_publication_manifest(pid)
 
 
-def test_versions_paths_symlinks_and_cross_publication(published):
+def test_versions_paths_and_cross_publication(published):
     batch, source, store, pid = published
     m = store.get_publication_manifest(pid)
     other = publish(batch, source, "second", store)
@@ -162,19 +179,16 @@ def test_versions_paths_symlinks_and_cross_publication(published):
     with pytest.raises(InvalidPublicationInput):
         store.get_chart_view(pid, "../source.json")
     view = m["analyses"][0]["views"][0]
-    target = bundle(store, pid) / "layers" / f"{view['layer_id']}.json"
-    target.unlink()
-    target.symlink_to(Path(source.location))
+    change_record(store, pid, "layers", view["layer_id"])
     with pytest.raises(PublicationCorrupt):
         store.get_chart_view(pid, view["view_id"])
-    env = envelope(store, pid)
-    env["schema"] = "publication-envelope-v99"
-    rewrite_envelope(store, pid, env)
+    with sqlite3.connect(store.root / "publications.sqlite3") as c:
+        c.execute("PRAGMA user_version=99")
     with pytest.raises(UnsupportedPublicationVersion):
         store.get_publication_manifest(pid)
 
 
-def test_concurrent_publish_one_winner_and_orphans_invisible(tmp_path, batch):
+def test_concurrent_initialization_and_publish_one_winner(tmp_path, batch):
     source = retain_source(batch, "fixture", tmp_path / "source.json")
     store = PublicationStore(tmp_path / "store")
     pid = uuid.uuid4().hex
@@ -189,13 +203,13 @@ def test_concurrent_publish_one_winner_and_orphans_invisible(tmp_path, batch):
         results = list(pool.map(lambda _: attempt(), range(2)))
     assert sorted(results) == sorted([pid, "collision"])
     assert len(store.list_publications()) == 1
-    assert len(os.listdir(store.root / "bundles")) == 2
+    assert not (store.root / "bundles").exists()
 
 
 def test_failed_commit_is_invisible(tmp_path, batch):
     source = retain_source(batch, "fixture", tmp_path / "source.json")
     store = PublicationStore(tmp_path / "store")
-    with patch("market_research.publication.store.os.link", side_effect=OSError("interrupted")):
+    with patch.object(store._storage, "_commit", side_effect=OSError("interrupted")):
         with pytest.raises(PublicationUnavailable):
             publish(batch, source, "fixture", store)
     assert store.list_publications() == []
@@ -263,25 +277,18 @@ def test_inputs_remain_unchanged_and_no_execution_on_read(published):
     assert source_bytes(batch, source.source_id) == before
 
 
-def test_unsupported_versioned_payload_and_bundle_symlink(published):
+def test_unsupported_versioned_payload(published):
     _, _, store, pid = published
     manifest = store.get_publication_manifest(pid)
     aid = manifest["analyses"][0]["analysis_id"]
     env = envelope(store, pid)
-    file = bundle(store, pid) / "analyses" / f"{aid}.json"
-    data = json.loads(file.read_text())
+    data = json.loads(record(store, pid, "analyses", aid))
     data["schema"] = "publication-analysis-v99"
     content = canonical_json(data)
-    file.write_bytes(content)
+    change_record(store, pid, "analyses", aid, content)
     env["payloads"]["analyses"][aid] = {"sha256": digest(content), "size": len(content)}
     rewrite_envelope(store, pid, env)
     with pytest.raises(UnsupportedPublicationVersion):
-        store.get_analysis(pid, aid)
-    actual = bundle(store, pid)
-    renamed = actual.with_name("moved")
-    actual.rename(renamed)
-    actual.symlink_to(renamed, target_is_directory=True)
-    with pytest.raises(PublicationCorrupt):
         store.get_analysis(pid, aid)
 
 
@@ -290,11 +297,10 @@ def test_layer_must_match_retained_result_even_if_digest_is_rewritten(published)
     summary = store.get_publication_manifest(pid)["analyses"][0]
     ref = summary["views"][0]
     env = envelope(store, pid)
-    path = bundle(store, pid) / "layers" / f"{ref['layer_id']}.json"
-    value = json.loads(path.read_text())
+    value = json.loads(record(store, pid, "layers", ref["layer_id"]))
     value["layer"]["data"][0]["y"] += 1
     raw = canonical_json(value)
-    path.write_bytes(raw)
+    change_record(store, pid, "layers", ref["layer_id"], raw)
     env["payloads"]["layers"][ref["layer_id"]] = {"sha256": digest(raw), "size": len(raw)}
     rewrite_envelope(store, pid, env)
     with pytest.raises(InconsistentPublication, match="retained source result"):
