@@ -318,6 +318,7 @@ def finish_research(root, expected_pid=None):
     batch = read(output / "batch-summary.json")
     write(output / "acceptance.json", {
         "status": "PASS", "batch_status": batch["status"], "publication_id": pid,
+        "source_revision": git("rev-parse", "HEAD"),
         "source_sha256": source["sha256"], "source_bytes": source["size"],
         "jobs": [{"status": j["status"], "horizon": j["fixed_job_spec"]["horizon"]}
                  for j in batch["job_results"]],

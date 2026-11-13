@@ -82,3 +82,8 @@ selected package Publication database. Dataset/Online Run SQLite, credentials an
 network remain blocked; W2 replay continues to prohibit every SQLite connection.
 Generation limits Dataset placement auditing to formal Batch execution, independently
 of the Publication publisher. Verification cannot create or modify the database.
+
+A newly rebuilt Research stage records its integration code `source_revision` in
+`research/acceptance.json`. Static Catalog/Publication origin uses that stage revision;
+unchanged W2 results retain the original package runtime revision and sealed Evidence.
+This permits evidence reuse without attributing old W2 generation to the new code.

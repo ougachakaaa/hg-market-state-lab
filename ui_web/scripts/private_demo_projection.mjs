@@ -23,7 +23,8 @@ export function projectPrivateExamples(paths, producers) {
   add('basis', { request: r3.request, report: read(paths.r3, 'delivery/report-data.json') }, r3.source_revision, fileDigest(paths.r3, 'delivery/manifest.json'), r3.input_fingerprint)
   const revision = read(paths.wpa, 'runtime.json').source_revision
   for (const key of ['expiry_to_M1_v1', 'expiry_to_Q1_v1']) add(key, { request: read(paths.wpa, `w2/${key}-request.json`), result: read(paths.wpa, `w2/${key}-result.json`) }, revision, fileDigest(paths.wpa, `w2/${key}-evidence.json`), read(paths.wpa, `w2/${key}-evidence.json`).input_fingerprint)
-  add('catalog', read(paths.wpa, 'research/catalog.json'), revision, fileDigest(paths.wpa, 'example-index.json'))
-  add('publications', read(paths.wpa, 'research/embedded-publications.json'), revision, fileDigest(paths.wpa, 'research/source.json'), read(paths.wpa, 'research/source-reference.json').sha256)
+  const researchRevision = read(paths.wpa, 'research/acceptance.json').source_revision ?? revision
+  add('catalog', read(paths.wpa, 'research/catalog.json'), researchRevision, fileDigest(paths.wpa, 'example-index.json'))
+  add('publications', read(paths.wpa, 'research/embedded-publications.json'), researchRevision, fileDigest(paths.wpa, 'research/source.json'), read(paths.wpa, 'research/source-reference.json').sha256)
   return { profile: 'wp-b-private-static-v1', examples }
 }
