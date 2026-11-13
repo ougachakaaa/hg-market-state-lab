@@ -21,7 +21,7 @@ from .online_codec import (
     strict_json,
 )
 from .online_models import FuturesRollOnlineError, OnlineFailure, OnlineRunStatus, RunState
-from .online_store import now, valid_id, validate_state
+from .online_record import now, valid_id, validate_state
 
 _SCHEMA = (
     "CREATE TABLE runs (run_id TEXT PRIMARY KEY, owner TEXT NOT NULL, "
@@ -217,6 +217,16 @@ class FuturesRollSQLiteRunStore:
         row = connection.execute("SELECT owner FROM runs WHERE run_id=?", (run_id,)).fetchone()
         if row is None or (owner is not None and row[0] != owner):
             raise FuturesRollOnlineError("run_not_found")
+        bounds = connection.execute(
+            "SELECT typeof(metadata),length(metadata),typeof(state),length(state) "
+            "FROM runs WHERE run_id=?",
+            (run_id,),
+        ).fetchone()
+        if bounds is None or any(
+            kind != "blob" or type(size) is not int or not 0 < size <= METADATA_LIMIT
+            for kind, size in (bounds[:2], bounds[2:])
+        ):
+            raise ValueError("metadata_size")
         row = connection.execute(
             "SELECT metadata,state,status,result_length,profile,scientific_status "
             "FROM runs WHERE run_id=?",

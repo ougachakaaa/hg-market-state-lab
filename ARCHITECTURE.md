@@ -9,8 +9,9 @@ persistence framework. PostgreSQL, Redis, SQLAlchemy and new database dependenci
 not introduced by this migration. DataLake SQLite, Auth SQLite and Workbench storage are outside
 this migration. Follow module entries to case storage contracts and
 [Publication storage](market_research/PUBLICATION_STORAGE.md). The
-[storage reconciliation](market_research/STORAGE_RECONCILIATION.md) distinguishes approved
-targets from current POSIX implementations; WP0 changes no runtime behavior.
+[storage reconciliation](market_research/STORAGE_RECONCILIATION.md) tracks implemented W2 SQLite
+cutover and remaining W1/Publication POSIX implementations;
+storage WP0 itself changed no runtime behavior.
 
 Publication's development-time breaking cutover may abandon the old store, without
 migration or compatibility. This does not make newly committed Publication snapshots

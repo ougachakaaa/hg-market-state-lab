@@ -2,11 +2,10 @@
 
 ## Storage transition status
 
-The approved [portable storage target](../../../market_backtesting/cases/futures_roll_long/ONLINE_STORAGE.md) is not implemented by storage WP0.
-Any POSIX/platform-unavailable statements below describe the current adapter only;
-SQLite cutover removes that capability gate while preserving endpoints, DTOs, Auth,
-owner isolation where applicable, safe error mapping and existing unavailable/corrupt
-behavior for real storage failures. No wire contract or generated artifact changes.
+W2 exclusively uses its case-owned [SQLite storage](../../../market_backtesting/cases/futures_roll_long/ONLINE_STORAGE.md).
+Native Windows no longer requires POSIX storage capabilities. Storage errors remain
+product-local; endpoints, DTOs, Auth, owner isolation and safe mapping are unchanged.
+No wire contract or generated artifact changes accompany this cutover.
 
 This product specializes [HTTP ownership](../../ARCHITECTURE.md) and the existing
 [Auth gate](../../AUTHENTICATION.md). Business semantics belong exclusively to the
@@ -142,4 +141,4 @@ Tushare credentials, runtime directory or active worker. Existing products remai
 unchanged. [WP7 contract ownership](../../../ui_web/contracts.md) now assigns Backtesting's
 generated OpenAPI/TypeScript to the independent Web consumer, included in the
 complete generation/freshness loop. WP6's original acceptance checked the six
-pre-existing consumers; WP7 adds the seventh. Single-process/POSIX storage limitations remain producer-owned.
+pre-existing consumers; WP7 adds the seventh. Single-process/local-filesystem storage limitations remain producer-owned.

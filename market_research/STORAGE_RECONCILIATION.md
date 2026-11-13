@@ -20,6 +20,14 @@ The active facade, HTTP and Explorer capabilities and all new-publication integr
 immutability guarantees remain. WP0 changes no code or runtime data; no automatic deletion
 is introduced. This revised decision, not the superseded preservation proposal, is binding.
 
+## Current W2 storage status
+
+Storage WP2 integrates W2 exclusively with SQLite and removes its POSIX backend.
+[W2 execution evidence](../market_backtesting/cases/futures_roll_long/RECONCILIATION.md#storage-wp2-execution-evidence)
+records the actual verification matrix and remaining limits. WP0/WP1 descriptions below
+are historical baselines; W1 and Publication migration status is unchanged. No WP3 work
+has started. The repository remains pre-production.
+
 ## Inspected boundaries and reconciliation
 
 Inspection covered repository/module/case authorities; W2 `online.py`, `online_store.py`,
@@ -39,7 +47,7 @@ An intended migration difference does not retroactively invalidate legacy accept
 | A1 / required, resolved in WP0 | Genuine authority conflict: both ONLINE_APPLICATION contracts require file layouts/POSIX gates and separate atomic result/state files, conflicting with portable SQLite | Their explicit legacy-adapter status delegates replacement storage to independent ONLINE_STORAGE contracts; WP1-WP3 deliver the target |
 | A2 / required, resolved in WP0 | Genuine authority conflict: PUBLICATION.md called the store JSON-based and PUBLICATION_STORAGE required descriptor-relative access/hard-link commits | Upper authority now distinguishes JSON encoding from storage; lower contract explicitly scopes physical requirements to current adapter and owns the SQLite replacement |
 | A3 / required, resolved in WP0 | Superseded proposal required preserving legacy Publication evidence, while latest user explicitly permits abandoning it | Breaking cutover recorded above; new immutable evidence contract preserved; WP4/WP5 remove obsolete backend without compatibility |
-| M1 / required, intended migration | W2 online_store.py gates on POSIX/UID, reads request/state/result files; online.py imports descriptor helpers and publishes result then state | WP1 builds independent SQLite store; WP2 removes descriptor coupling, verifies atomic result+COMPLETED and unchanged application behavior |
+| M1 / resolved for W2 in WP2 | W2 online_store.py gates on POSIX/UID, reads request/state/result files; online.py imports descriptor helpers and publishes result then state | WP1 adapter is integrated by WP2; descriptor coupling and legacy code removed, atomic result+COMPLETED and unchanged W2 application behavior verified on native Windows |
 | M2 / required, intended migration | W1 online.py mixes POSIX persistence and application, separate report/state publication; no SQLite schema/version | WP3 replaces persistence while retaining exact request/report/profile and scientific complete/partial behavior |
 | M3 / required, current implementation gap | W1 _execute suppresses final state persistence errors; _recover does not exclude an actual current-process active run or serialize with admission | WP3 must fail closed after unpersistable terminal state and serialize initialization/recovery with active-run exclusion; add failure-injection and simultaneous-initialization regression evidence |
 | M4 / required, intended migration | Publication store.py uses bundles/commit envelopes and hard-link visibility; source.py and _platform.py require descriptors | WP4/WP5 replace physical persistence/gates, preserve source capture facade, exact bytes/digests and pure association checks |
@@ -227,3 +235,19 @@ closed by this documentation commit. Stop after WP0; no WP1 code is started.
 | `market_backtesting/cases/futures_roll_long/ROADMAP.md`, `market_research/descriptive/cases/futures_basis/ROADMAP.md` | Discoverable storage follow-up, independent of original WP numbering |
 | `ui_http/products/backtesting/http-contract.md`, `ui_http/products/futures_basis_research/http-contract.md`, `ui_http/products/research_publication/http-contract.md` | Current-versus-target platform clarification; wire contract unchanged |
 | `DEVELOPMENT.md`, `.env.example` | Current runtime guidance versus future directory-root SQLite filenames; comments only for configuration template |
+
+
+## Storage WP2 execution summary
+
+Baseline `eae9e8fc50b515753c52bd045f11feff2a8efa61`, branch
+`feat/sqlite-portable-runtime`, 2026-11-13. W2 uses its independent SQLite database,
+with pure record validation moved out of the deleted POSIX adapter. Owner-first reads,
+process-wide admission/reader guards and active-aware recovery are retained. SQL type
+and byte-length checks precede metadata/state BLOB selection. No data was migrated or
+deleted; W1, Publication, Auth, DataLake, Workbench, formulas and public DTOs are unchanged.
+
+**WP2 verdict: PARTIAL**: W2 focused/native-Windows checks pass; full HTTP regression
+is blocked by the unchanged W1 POSIX store, and Linux runtime remains NOT RUN.
+Detailed commands, platform results, verdict and remaining blockers are owned by the
+[W2 WP2 evidence](../market_backtesting/cases/futures_roll_long/RECONCILIATION.md#storage-wp2-execution-evidence).
+W1 native-Windows POSIX failures remain WP3 work; this summary does not close them.

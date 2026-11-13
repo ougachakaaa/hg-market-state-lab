@@ -9,6 +9,7 @@ import argparse
 import importlib
 import json
 import os
+import shutil
 import subprocess
 import tempfile
 from dataclasses import asdict
@@ -125,7 +126,8 @@ def main() -> None:
         root = Path(__file__).resolve().parents[2]
         check = subprocess.run(
             [
-                "node_modules/.bin/vitest",
+                shutil.which("node") or "node",
+                "node_modules/vitest/vitest.mjs",
                 "run",
                 "--config",
                 "../market_backtesting/tests/v2_contract.vitest.mjs",

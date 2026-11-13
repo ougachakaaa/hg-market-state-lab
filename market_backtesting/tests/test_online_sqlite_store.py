@@ -459,3 +459,24 @@ def test_snapshot_length_check_precedes_blob_load(
     monkeypatch.setattr(sqlite3, "connect", connect)
     error("corrupt", lambda: store.read_result(run_id, "alice"))
     assert not any("SELECT payload" in statement for statement in reads)
+
+
+@pytest.mark.parametrize("column", ["metadata", "state"])
+@pytest.mark.parametrize("value", [b"", "text", b"x" * (16 * 1024 + 1)])
+def test_metadata_bounds_before_selection(store, monkeypatch, column, value):
+    run_id = store.create(request(), "alice").run_id
+    sql(store, f"UPDATE runs SET {column}=?", (value,))
+    original = sqlite3.connect
+    statements = []
+
+    def connect(*args, **kwargs):
+        connection = original(*args, **kwargs)
+        connection.set_trace_callback(statements.append)
+        return connection
+
+    monkeypatch.setattr(sqlite3, "connect", connect)
+    error("run_not_found", lambda: store.status(run_id, "bob"))
+    error("corrupt", lambda: store.status(run_id, "alice"))
+    error("corrupt", store.recover)
+    assert any("length(metadata)" in statement for statement in statements)
+    assert not any("SELECT metadata,state" in statement for statement in statements)

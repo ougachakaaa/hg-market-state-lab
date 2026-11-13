@@ -2,13 +2,13 @@
 
 ## Portable storage transition status
 
-Storage WP0 defines approved SQLite targets, not an implemented Windows fix. Current
-POSIX limitations below remain factual until the owning implementation WP ships. Follow
-[Storage reconciliation](market_research/STORAGE_RECONCILIATION.md) for target status and
-platform acceptance. The three existing root settings keep directory semantics; future
-W1/W2 databases are `runs.sqlite3` and Publication is `publications.sqlite3` inside their
-respective roots. Publication's later breaking cutover ignores old data without migration
-or compatibility; WP0 deletes nothing and changes no runtime configuration behavior.
+W2 Online exclusively uses SQLite. `LAB_BACKTESTING_RUN_ROOT` remains an absolute
+directory containing `runs.sqlite3`; the default remains the ignored Backtesting
+runtime directory. Old Run directories are ignored without migration or deletion.
+Native Windows and local Linux/WSL use the same single-process implementation;
+actual platform verification is recorded in [Storage reconciliation](market_research/STORAGE_RECONCILIATION.md).
+W1 and Publication remain on their POSIX adapters pending their own work packages.
+W2 storage cutover is not a production deployment declaration.
 
 本文档只描述当前本地开发环境与操作方式，不是架构、CLI、产品或 HTTP 语义 authority。Repository-level Python runtime invariant 与仓库级路由见 [ARCHITECTURE.md](ARCHITECTURE.md)，canonical CLI interface 与 delegation 见 [lab authority](ui_cli/ARCHITECTURE.md)，产品语义从 [data_snapshot/CAPABILITIES.md](data_snapshot/CAPABILITIES.md) 进入，HTTP transport contract 从 [ui_http HTTP catalog](ui_http/HTTP_PRODUCTS.md) 进入。
 

@@ -1,6 +1,7 @@
 """Real frontend validator conformance, isolated from Web application code."""
 
 import os
+import shutil
 import subprocess
 from dataclasses import asdict, replace
 from pathlib import Path
@@ -26,7 +27,8 @@ def test_generated_views_pass_canonical_frontend_validator(tmp_path: Path) -> No
     destination.write_bytes(_json(fixtures))
     completed = subprocess.run(
         [
-            "node_modules/.bin/vitest",
+            shutil.which("node") or "node",
+            "node_modules/vitest/vitest.mjs",
             "run",
             "--config",
             "../market_backtesting/tests/v2_contract.vitest.mjs",

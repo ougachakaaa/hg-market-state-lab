@@ -1,6 +1,5 @@
 """Single-process online composition of the accepted WP3/WP4 execution path."""
 
-import hashlib
 import threading
 from pathlib import Path
 from typing import Protocol
@@ -15,14 +14,15 @@ from .application_models import (
     validate_futures_roll_request,
 )
 from .failures import FuturesRollError
-from .online_codec import RESULT_LIMIT, decode_result, encode_result
+from .online_codec import decode_result, encode_result
 from .online_models import (
     FuturesRollOnlineError,
     OnlineFailure,
     OnlineRunStatus,
     project_failure,
 )
-from .online_store import FuturesRollRunStore, read_bytes, supports_storage, valid_id
+from .online_record import valid_id
+from .online_sqlite_store import FuturesRollSQLiteRunStore
 from .result import build_backtest_result
 from .result_models import BacktestResult
 from .result_validation import validate_backtest_result
@@ -49,12 +49,10 @@ class FuturesRollOnlineApplication:
 
     def __init__(self, *, root: Path | None = None, service: OnlineService | None = None) -> None:
         self._service = service if service is not None else create_futures_roll_service()
-        self._store: FuturesRollRunStore | None = None
+        self._store: FuturesRollSQLiteRunStore | None = None
         self._unavailable: str | None = None
         with _PROCESS_LOCK:
             try:
-                if not supports_storage():
-                    raise FuturesRollOnlineError("unavailable")
                 configured = backtesting_run_root() if root is None else None
                 selected = (
                     Path(configured)
@@ -65,14 +63,14 @@ class FuturesRollOnlineApplication:
                     / ".runtime"
                     / "futures_roll_long_online"
                 )
-                self._store = FuturesRollRunStore(selected)
+                self._store = FuturesRollSQLiteRunStore(selected)
                 self._store.recover(_ACTIVE)
             except FuturesRollOnlineError as exc:
                 self._unavailable = exc.category
             except (OSError, ConfigError, ValueError, TypeError, RecursionError, FuturesRollError):
                 self._unavailable = "unavailable"
 
-    def _available(self) -> FuturesRollRunStore:
+    def _available(self) -> FuturesRollSQLiteRunStore:
         if self._unavailable is not None or self._store is None:
             raise FuturesRollOnlineError(self._unavailable or "unavailable")
         return self._store
@@ -191,14 +189,8 @@ class FuturesRollOnlineApplication:
             if not _READ_PERMIT.acquire(blocking=False):
                 raise FuturesRollOnlineError("read_busy")
             try:
-                with store.directory(run_id) as fd:
-                    _, state, request = store.record(fd, run_id, owner_scope)
-                    if state["status"] != "COMPLETED":
-                        raise FuturesRollOnlineError("corrupt")
-                    payload = read_bytes(fd, "result.json", RESULT_LIMIT)
-                if hashlib.sha256(payload).hexdigest() != state["result_digest"]:
-                    raise FuturesRollOnlineError("corrupt")
-                return decode_result(payload, request)
+                payload = store.read_result(run_id, owner_scope)
+                return decode_result(payload, status.request)
             finally:
                 _READ_PERMIT.release()
         except (OSError, ValueError, TypeError, OverflowError, RecursionError, FuturesRollError):

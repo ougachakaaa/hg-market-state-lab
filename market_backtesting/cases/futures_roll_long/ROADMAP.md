@@ -3,10 +3,12 @@
 ## Portable storage follow-up
 
 The original case milestones below retain their original evidence and numbering.
-The new, unimplemented storage WP0-WP6 series is tracked in
+The storage WP0-WP6 series is tracked in
 [Storage reconciliation](../../../market_research/STORAGE_RECONCILIATION.md); its case-owned target is
-[Online storage](ONLINE_STORAGE.md). Prior PASS does not establish SQLite readiness
-or native Windows storage support.
+[Online storage](ONLINE_STORAGE.md). W2 exclusively uses SQLite after storage WP2; the POSIX adapter is retired.
+Current checks and platform limits are recorded in
+[WP2 evidence](RECONCILIATION.md#storage-wp2-execution-evidence).
+Historical original milestones do not establish unexecuted platform acceptance.
 
 This document specializes the [case](ARCHITECTURE.md). It owns current delivery
 status, remaining work-package acceptance and deferred scope. Current authority

@@ -3,9 +3,10 @@
 ## Portable storage navigation
 
 The case-owned [online storage contract](cases/futures_roll_long/ONLINE_STORAGE.md)
-defines the approved SQLite target; [reconciliation](cases/futures_roll_long/RECONCILIATION.md#storage-wp1-execution-evidence)
-tracks storage delivery and links the storage work packages. The independent WP1
-SQLite adapter exists; the online application still uses the POSIX store pending WP2.
+defines SQLite persistence; [reconciliation](cases/futures_roll_long/RECONCILIATION.md#storage-wp2-execution-evidence)
+tracks storage delivery and links the storage work packages. The online application
+exclusively uses the case-owned SQLite adapter after storage WP2;
+the POSIX store is retired.
 This grants no Research store reuse and changes no public application or HTTP contract.
 
 `market_backtesting` is the repository business module for deterministic strategy
