@@ -1,15 +1,26 @@
-# Static Demo implementation handoff: WP-B private seven-page workspace
+# Static Demo implementation handoff: WP-C engineering acceptance
 
 Execution guidance under [Demo Runtime authority](ARCHITECTURE.md) and
 [Example contract](EXAMPLES.md); feature semantics remain with their canonical owners.
 D3-R0 established Real Market Only and Development First; D3-R1 verified bounded
 real-source access. R2/R3 and WP-A now establish the complete private real Example
 input set. D1/D2 shared architecture is retained; public redistribution rights remain
-BLOCKED and full V2 page integration remains subsequent work.
+BLOCKED and the private seven-page composition is implemented. D7 public admission remains separate.
 The D0 baseline/extraction descriptions and D1/D2 handoffs below are historical records;
 they do not undo the completed extractions or authorize synthetic formal V2 Examples.
 
-## Current WP-B delivery
+## Current WP-C engineering handoff
+
+[WP-C acceptance](WP_C_ACCEPTANCE.md) records regression root causes, bounded fixes,
+compatibility/public-safety CI, original-input offline reproduction, real seven-route
+Chromium acceptance, Publication capacity and remaining public-release blockers.
+Two complete frontend repeats pass 593 tests each; relevant Python, offline admission
+and real Chromium checks pass. Use the report and committed-source rebuild receipts
+instead of the historical regression failures below. The independent
+CI runs without private evidence or market credentials; Pages continues to build V1.
+No D7, push, merge, private deployment or public rights approval is authorized here.
+
+## Historical WP-B delivery
 
 WP-B integrates the existing R2/R3/WP-A real results through all seven formal
 shared surfaces. The independent private build takes explicit external package
@@ -20,7 +31,8 @@ No market acquisition, business calculation change or online controller is added
 Start with [private build authority](PRIVATE_BUILD.md) for admission/isolation and
 [WP-B acceptance](WP_B_ACCEPTANCE.md) for route sources, commands, origin disclosure,
 real browser evidence, technical gates and remaining WP-C regression issues.
-Publication Rights remain BLOCKED. Local integration does not start WP-C or D7.
+Publication Rights remain BLOCKED. WP-C owns the completed engineering package;
+local integration does not start D7.
 The local WP-B handoff locates private build/screenshots without committing paths.
 
 ## Historical WP-A baseline and next package
@@ -111,12 +123,11 @@ not pause lawful acquisition or local computation. Deliver per-product PASS / FA
 with evidence and R2-R5 entry conditions; do not claim access, coverage or public approval
 from this R0 document. Any true producer-contract gap returns to its canonical owner first.
 
-### Remaining D2 Presentation origin corrections
+### Historical D2 Presentation origin correction plan
 
-R0 changes authority only; existing code and historical test evidence remain unchanged.
-R2-R5 supply validated origin/disclosure records; D4 integrates them through feature public
-Presentation entries, including private local builds. D5 adds compatibility/negative checks;
-D6 records actual browser acceptance.
+This R0 plan is historical. WP-B now integrates validated origin/disclosure records
+through all shared Presentations; WP-C supplies D5 compatibility and D6 browser evidence.
+The table preserves the original work scope rather than claiming these fixes remain pending.
 
 | Surface | Subsequent implementation correction |
 | --- | --- |

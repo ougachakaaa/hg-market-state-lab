@@ -4,7 +4,9 @@ Specializes [module ownership](../../ARCHITECTURE.md), [application](../../appli
 [workspace navigation](../../workspace.md) and [presentation boundaries](../../presentation-architecture.md).
 This is the canonical Demo Runtime entry, not a business module, second Web product,
 Mock Backend or new financial capability. D0 established the shared architecture; D1/D2 implemented shell/presentation boundaries.
-D3-R0 supersedes only the synthetic V2 source decision; full V2 remains unaccepted.
+D3-R0 supersedes the synthetic V2 source decision. WP-B implements private seven-page
+composition; [WP-C](WP_C_ACCEPTANCE.md) owns engineering evidence. Public V2 admission
+remains a separate, uncompleted D7 review.
 
 ## Identity and ownership
 
@@ -150,3 +152,19 @@ acceptance and public release approval are separate outcomes.
 The independent [private build contract](PRIVATE_BUILD.md) owns verified external
 input admission, safe static projection injection, origin disclosure and external
 output isolation. It does not change the V1 public build or Pages deployment.
+
+## Engineering gates (WP-C)
+
+[Engineering acceptance](WP_C_ACCEPTANCE.md) records current D5/D6 outcomes and
+remaining D7 blockers. The independent `demo-compatibility.yml` validates generated
+contracts, full frontend regression, production/default V1 builds, lint, exhaustive
+private route typing, the actual static dependency graph and tracked/public asset
+safety. Per-module Python jobs validate producer contracts, Publication projections,
+V1 regeneration and architecture without credentials or acquisition. No market
+packages or private artifacts enter CI or deploy inputs. The pinned payload inventory
+contains historical synthetic regression files and nonfinancial request/task metadata;
+changing a hash is a review event, never public rights approval. New market payloads
+remain prohibited until independent D7 admission. Safety scans are regression guards,
+not a substitute for exact-artifact rights review. Test workers are bounded to avoid
+JSDOM/Ant Design CPU contention; file isolation, default deadlines, all assertions
+and unhandled-error reporting remain enabled.
