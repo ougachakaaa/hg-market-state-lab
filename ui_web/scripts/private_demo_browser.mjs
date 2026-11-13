@@ -4,6 +4,7 @@ import { readFile, writeFile, mkdir } from 'node:fs/promises'
 import { resolve, extname, relative, sep } from 'node:path'
 import { createHash } from 'node:crypto'
 import { chromium } from 'playwright'
+import { createServer as createViteServer } from 'vite'
 import { workspaceRoutes } from '../src/app/routeInventory.ts'
 import { externalPath } from './private_demo_boundary.mjs'
 
@@ -13,6 +14,12 @@ const build = externalPath(args['--build']), artifact = resolve(build, 'site')
 const output = externalPath(args['--evidence'], { fresh: true })
 const r2 = externalPath(args['--r2']), wpa = externalPath(args['--wpa'])
 const read = async (root, path) => JSON.parse(await readFile(resolve(root, path), 'utf8'))
+// Use the formal feature exporters as the byte oracle; no second CSV projection.
+const validator = await createViteServer({ configFile: false, logLevel: 'silent', server: { middlewareMode: true }, appType: 'custom' })
+let csvModels
+try {
+  csvModels = [await validator.ssrLoadModule('/src/features/mo_option_chain/model/csvExport.ts'), await validator.ssrLoadModule('/src/features/mo_option_premium/model/csvExport.ts')]
+} finally { await validator.close() }
 const admission = await read(build, 'admission.json')
 assert.equal(admission.status, 'PASS')
 for (const file of admission.files) assert.equal(createHash('sha256').update(await readFile(resolve(build, file.file))).digest('hex'), file.sha256)
@@ -52,7 +59,17 @@ try {
     await main.getByRole('heading', { name: headings[path], exact: true }).waitFor()
     await page.waitForFunction(() => !document.body.textContent.includes('Static Error'))
   }
+  // Hold the actual WebCrypto admission, asserting loading without a timed sleep.
+  await page.addInitScript(() => {
+    const digest = crypto.subtle.digest.bind(crypto.subtle)
+    let release
+    const gate = new Promise(done => { release = done })
+    window.releaseStaticAdmission = release
+    crypto.subtle.digest = async (...args) => { await gate; return digest(...args) }
+  })
   await page.goto(base)
+  await page.getByText('静态 Example 正在校验', { exact: true }).waitFor()
+  await page.evaluate(() => window.releaseStaticAdmission())
   await main.getByRole('heading', { name: '研究总览', exact: true }).waitFor()
   assert.equal(new URL(page.url()).hash, '#/research')
   for (const route of workspaceRoutes) {
@@ -75,6 +92,7 @@ try {
   await main.getByRole('region', { name: '所选研究详情' }).waitFor()
   assert.match(await main.textContent(), /trailing_cumulative_return_v1/)
   assert.match(await main.textContent(), /not_probed/)
+  pass('Static admission loading state completes without a backend')
   pass('Genuine Capability identity, status and local Detail')
 
   const download = async name => {
@@ -106,6 +124,9 @@ try {
     const copied = JSON.parse(await page.evaluate(() => navigator.clipboard.readText()))
     assert.deepEqual(copied.data, expected)
     const csv = await download('Export CSV')
+    const formalCsv = path.includes('chain') ? csvModels[0].optionChainCsv(expected) : csvModels[1].premiumPlaneCsv(expected)
+    assert.equal(csv.bytes.toString('utf8'), formalCsv.csv)
+    assert.equal(csv.name, formalCsv.filename)
     assert.equal(csv.bytes.toString('utf8').replace(/^\uFEFF/, '').trimEnd().split('\r\n').length, expectedRows + 1)
     const json = await download('Export Context JSON')
     assert.deepEqual(JSON.parse(json.bytes.toString('utf8')), copied)
@@ -132,6 +153,8 @@ try {
   pass('Basis all six sections, 206 sessions, local section jump, Slot and time axis')
 
   await go('/research/publications')
+  assert.equal(await main.getByRole('button', { name: '上一页', exact: true }).isDisabled(), true)
+  assert.equal(await main.getByRole('button', { name: '下一页', exact: true }).isDisabled(), true)
   await main.getByRole('button', { name: /^选\s*择$/ }).click()
   assert.equal(await main.getByRole('button', { name: '选择 Analysis', exact: true }).count(), 4)
   let viewCount = 0
@@ -178,7 +201,7 @@ try {
   pass('Shared sidebar and breadcrumb links navigate locally')
   await go('/data'); await go('/research/publications'); await page.goBack(); assert.equal(new URL(page.url()).hash, '#/data')
   await page.goForward(); assert.equal(new URL(page.url()).hash, '#/research/publications')
-  await page.reload(); await main.getByRole('heading', { name: '研究结果浏览', exact: true }).waitFor()
+  await page.reload(); await page.getByText('静态 Example 正在校验', { exact: true }).waitFor(); await page.evaluate(() => window.releaseStaticAdmission()); await main.getByRole('heading', { name: '研究结果浏览', exact: true }).waitFor()
   pass('Hash navigation, browser Back/Forward and deep-link reload')
   const invalid = await context.newPage()
   invalid.on('pageerror', error => evidence.errors.push(String(error)))

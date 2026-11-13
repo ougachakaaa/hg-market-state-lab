@@ -39,7 +39,9 @@
     "test:backtesting-static-browser": "node scripts/backtesting_static_browser.mjs",
     "demo:build:private": "tsc -p tsconfig.private.json && node scripts/build_private_demo.mjs",
     "test:private-demo-browser": "node scripts/private_demo_browser.mjs",
-    "test:private-demo-data": "node scripts/private_demo_negative.mjs"
+    "test:private-demo-data": "node scripts/private_demo_negative.mjs",
+    "test:static-compatibility": "tsc -p tsconfig.private.json && node scripts/static_compatibility.mjs",
+    "test:public-safety": "node scripts/public_asset_safety.mjs"
   },
   "dependencies": {
     "@ant-design/icons": "^6.3.4",

@@ -83,8 +83,8 @@ market results under the [Example contract](src/demo/EXAMPLES.md) and
 [development/publication gates](src/demo/AUTHENTICITY.md). Feature-owned shared Presentation
 must distinguish historical V1 Synthetic, test-only facts and V2 real-market provenance;
 layout mode such as `demo` must not select a false source label. Private local integration
-reuses the same Presentation while publication rights remain unresolved. Detailed pending
-origin corrections are tracked in the [implementation handoff](src/demo/IMPLEMENTATION.md).
+reuses the same Presentation while publication rights remain unresolved. WP-B implements validated origin disclosure through these shared Presentations; current
+verification and release boundaries are tracked in the [implementation handoff](src/demo/IMPLEMENTATION.md).
 
 ## 2. Application Shell 与 Feature Page
 

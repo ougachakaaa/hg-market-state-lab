@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useState, type ReactNode } from 'react'
+import type { WorkspacePath } from '../../app/routeInventory'
 import { Alert, Flex, Select, Typography } from 'antd'
 import ApplicationShell from '../../app/ApplicationShell'
 import AppUiProvider from '../../app/AppUiProvider'
@@ -37,18 +38,24 @@ function Backtesting({ data }: { data: PrivateData }) {
     <BacktestingPresentation key={strategy} mode="static" state={{ status: 'validated', data: strategy === 'expiry_to_M1_v1' ? data.m1 : data.q1 }} disclosure={disclosure} sourceDisclosure={disclosure} />
   </Flex>
 }
+type StaticContext = { data: PrivateData; navigate: ReturnType<typeof useHashRoute>['navigate'] }
+// Compile-time exhaustive coverage comes from the formal application inventory.
+const privateRoutePresentations = {
+  '/research': ({ data, navigate }) => <Catalog data={data} navigate={navigate} />,
+  '/research/futures-basis': ({ data }) => <FuturesBasisPresentation mode="static" state={{ status: 'validated', data: data.basis }} disclosure={sourceDisclosure(data.identities.basis)} sourceDisclosure={sourceDisclosure(data.identities.basis)} />,
+  '/research/publications': ({ data }) => <Explorer data={data} />,
+  '/data': ({ navigate }) => <DailyDataLanding navigate={navigate} />,
+  '/data/mo-option-chain': ({ data }) => <Chain data={data} />,
+  '/data/mo-premium-plane': ({ data }) => <Premium data={data} />,
+  '/backtesting': ({ data }) => <Backtesting data={data} />,
+} satisfies Record<WorkspacePath, (context: StaticContext) => ReactNode>
+
 export function PrivateWorkspace({ data }: { data: PrivateData }) {
   const { path, navigate } = useHashRoute()
   return <AppUiProvider><ApplicationShell path={path} navigate={navigate} href={staticHref} header={<Typography.Text type="secondary">Private · Static · Historical Real Market · No Backend</Typography.Text>}>
     <Flex vertical gap="large" style={{ minWidth: 0, maxWidth: '100%', overflowX: 'auto' }}>
       <Alert type="warning" showIcon title="私有真实市场静态 Demo V2" description="Historical Embedded Results · 匿名只读 · 无实时行情或服务器执行 · Publication Rights = BLOCKED；仅限本地验收。" />
-      {path === '/research' && <Catalog data={data} navigate={navigate} />}
-      {path === '/research/futures-basis' && <FuturesBasisPresentation mode="static" state={{ status: 'validated', data: data.basis }} disclosure={sourceDisclosure(data.identities.basis)} sourceDisclosure={sourceDisclosure(data.identities.basis)} />}
-      {path === '/research/publications' && <Explorer data={data} />}
-      {path === '/data' && <DailyDataLanding navigate={navigate} />}
-      {path === '/data/mo-option-chain' && <Chain data={data} />}
-      {path === '/data/mo-premium-plane' && <Premium data={data} />}
-      {path === '/backtesting' && <Backtesting data={data} />}
+      {privateRoutePresentations[path]({ data, navigate })}
     </Flex>
   </ApplicationShell></AppUiProvider>
 }

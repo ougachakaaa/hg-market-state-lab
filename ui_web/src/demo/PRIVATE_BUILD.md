@@ -51,3 +51,18 @@ local feature interactions keep their existing semantics.
 
 Acceptance evidence and commands belong to [WP-B acceptance](WP_B_ACCEPTANCE.md).
 Publication Rights remain BLOCKED; this contract grants no public release.
+
+## Continuous compatibility (WP-C)
+
+Private composition owns a typed route-to-Presentation mapping whose keys must
+exactly cover `workspaceRoutes`. CI type-checks it and builds the actual private
+entry with an empty, explicitly test-only virtual envelope solely to inspect the
+module graph. This artifact cannot pass admission and is discarded; it is never
+a V2 Example or browser acceptance substitute. Real private verification and browser
+acceptance remain explicit external-input operations. Public safety additionally
+scans tracked payloads/credential literals and the actual default V1 output; Pages
+continues to upload only `ui_web/dist-demo` without private command references.
+
+Startup visibly reports static admission loading while WebCrypto and validators run;
+only successful admission mounts business pages. Browser acceptance holds that actual
+admission promise to verify loading, then releases it without arbitrary sleeps.

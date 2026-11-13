@@ -35,5 +35,7 @@ without a published reference rejects the embedded set.
 packaging; [authenticity and rights](../../demo/AUTHENTICITY.md) owns evidence and admission.
 This feature owns only their presentation. Static delivery is not a Synthetic source label
 or proof of authenticity. Preserve historical V1/test disclosures, use actual real-market
-origin for V2, and never promote regression inputs to formal Examples. Pending origin-code
-changes are tracked in the [D3 handoff](../../demo/IMPLEMENTATION.md); R0 changes no code.
+origin for V2, and never promote regression inputs to formal Examples. WP-B implements explicit validated source disclosure through the same Presentation;
+[private acceptance](../../demo/WP_B_ACCEPTANCE.md) records integration evidence.
+Current engineering verification and release boundaries enter through the
+[implementation handoff](../../demo/IMPLEMENTATION.md).

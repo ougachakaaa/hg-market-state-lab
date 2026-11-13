@@ -1,0 +1,59 @@
+name: Demo engineering compatibility
+on:
+  push:
+    branches: [feat/github-pages-demo, develop, main]
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  frontend:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.13'
+      - uses: actions/setup-node@v7.1.0
+        with:
+          node-version: '22'
+          package-manager-cache: false
+      - run: pip install poetry==2.2.1
+      - run: poetry install --no-interaction
+      - run: npm ci
+        working-directory: ui_web
+      - run: npm run contract:check
+        working-directory: ui_web
+      - run: npm test
+        working-directory: ui_web
+      - run: npm run build
+        working-directory: ui_web
+      - run: npm run lint
+        working-directory: ui_web
+      - run: npm run demo:build
+        working-directory: ui_web
+      - run: npm run test:static-compatibility
+        working-directory: ui_web
+      - run: npm run test:public-safety
+        working-directory: ui_web
+  python:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        suite: [market_research/tests, market_backtesting/tests, data_lake, data_snapshot/tests, ui_http/tests, ui_web/scripts]
+    steps:
+      - uses: actions/checkout@v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.13'
+      - run: pip install poetry==2.2.1
+      - run: poetry install --no-interaction
+      - run: poetry run pytest ${{ matrix.suite }} -q
+      - run: poetry run python market_research/scripts/futures_basis_demo_fixture.py --check
+        if: matrix.suite == 'market_research/tests'
