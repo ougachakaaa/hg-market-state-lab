@@ -475,3 +475,19 @@ or create an offline financial implementation. Full frontend regression still ha
 default-timeout failures. Commands, exact coverage, integrity/replay limits, test
 outcomes and D4 consumption requirements: [D3-R2 acceptance](R2_ACCEPTANCE.md).
 D3-R3/R4 and D4 remain unstarted by this task.
+
+## D3-R3 private real IM Basis handoff
+
+D3-R3 technical acceptance passes for the exact inclusive 2026-01-01..2026-11-11
+IM / `r01a_standard_v1` request. Fresh private public-service Exports cover both
+315-day calendars, 206 CFFEX/SSE sessions, 824 Futures Contract-days and 206 Index
+rows. The unchanged official Producer emits a complete six-section Reader, three
+V2 history Views and 24 histogram Views. Formal Verify/Replay pass without Token,
+network or cache; the existing Embedded Report validator and actual offline browser
+Reader pass. The official Evidence Package and a lightweight Example index remain
+outside Git/build inputs. Public market rights remain BLOCKED; no real market asset
+or deployment workflow is changed. Full regression is not green: two existing V1
+synthetic-fixture consistency checks and eight frontend timeout tests fail.
+Details, digests, limitations and reproduction: [D3-R3 acceptance](R3_ACCEPTANCE.md).
+R4/R5/R6 and D4 remain separate work; D4 must resolve the shared Reader's historical
+`mode="demo"` Synthetic wording before consuming real-market Examples.
