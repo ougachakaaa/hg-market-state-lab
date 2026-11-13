@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { Card, Empty, Typography, theme } from 'antd'
 import Plot from 'react-plotly.js'
-import type { OptionChain } from '../api/moOptionChain'
+import type { OptionChain } from '../api/validateOptionChain'
 import { projectCombinedChain } from '../model/combinedChartData'
 import { formatPrice } from '../model/priceDisplay'
 import { buildCombinedPlot } from './combinedPlot'

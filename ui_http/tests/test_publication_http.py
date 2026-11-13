@@ -59,6 +59,24 @@ def test_end_to_end(published):
     assert "no-store" in listing.headers["cache-control"]
 
 
+def test_pure_analysis_projection_matches_http_and_redacts_private_context(published):
+    from ui_http.products.research_publication.endpoint import project_analysis
+
+    client, store, pid = published
+    statuses = set()
+    for item in store.get_publication_manifest(pid)["analyses"]:
+        raw = store.get_analysis(pid, item["analysis_id"])
+        raw["private_context"] = "/private/path/never-export"
+        projected = project_analysis(raw, pid)
+        response = client.get(f"/research/publications/{pid}/analyses/{item['analysis_id']}")
+        assert response.status_code == 200
+        assert projected.model_dump(mode="json") == response.json()
+        assert "/private/path" not in projected.model_dump_json()
+        assert str(store.root) not in projected.model_dump_json()
+        statuses.add(item["status"])
+    assert statuses == {"success", "failed", "not_attempted"}
+
+
 def test_access_and_openapi(published):
     client, store, pid = published
     anonymous = TestClient(client.app, base_url="https://testserver")

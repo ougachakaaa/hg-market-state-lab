@@ -1,6 +1,8 @@
 """The committed public demo fixture is deterministic synthetic producer output."""
 
+import copy
 import json
+import math
 import runpy
 from pathlib import Path
 from typing import Any
@@ -25,7 +27,10 @@ def payload() -> dict[str, Any]:
 def test_committed_fixture_is_a_deterministic_regeneration(module: dict[str, Any]) -> None:
     assert FIXTURE.exists()
     committed = FIXTURE.read_text(encoding="utf-8").replace("\r\n", "\n").encode("utf-8")
-    assert module["fixture_bytes"]() == committed
+    module["assert_fixture_matches"](json.loads(committed), json.loads(module["fixture_bytes"]()))
+    assert (
+        json.dumps(json.loads(committed), ensure_ascii=False, separators=(",", ":")) + "\n"
+    ).encode() == committed
     assert len(committed) < 1_000_000
 
 
@@ -50,7 +55,7 @@ def test_report_is_producer_output_except_the_synthetic_source_label(
     producer = module["producer_reader"]()
     assert report["sources"] == module["SYNTHETIC_SOURCES"]
     producer["sources"] = report["sources"]
-    assert report == producer
+    module["assert_fixture_matches"]({"report": report}, {"report": producer})
 
 
 def test_fixture_covers_all_reader_sections(payload: dict[str, Any]) -> None:
@@ -121,3 +126,25 @@ def test_fixture_contains_no_credentials_or_local_paths() -> None:
         "127.0.0.1",
     ):
         assert pattern not in raw, pattern
+
+
+@pytest.mark.parametrize("change", ["large_ulp", "detail", "date", "fingerprint", "statistic"])
+def test_fixture_comparison_rejects_real_drift(module: dict[str, Any], change: str) -> None:
+    expected = module["build_fixture"]()
+    altered = copy.deepcopy(expected)
+    point = altered["report"]["views"]["history"]["annualized_basis_ratio"]["layers"][1]["layer"][
+        "data"
+    ][36]
+    if change == "large_ulp":
+        point["y"] += 8 * math.ulp(point["y"])
+        point["details"][5]["value"] = repr(point["y"])
+    elif change == "detail":
+        point["details"][5]["value"] = "0"
+    elif change == "date":
+        point["x"] = "2024-10-23"
+    elif change == "fingerprint":
+        altered["report"]["fingerprint"] = "0" * 64
+    else:
+        altered["report"]["distributions"][0]["changed"] = True
+    with pytest.raises(AssertionError):
+        module["assert_fixture_matches"](altered, expected)

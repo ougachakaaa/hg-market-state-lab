@@ -1,4 +1,4 @@
-import type { ExpiryGroup, OptionChain } from '../api/moOptionChain'
+import type { ExpiryGroup, OptionChain } from '../api/validateOptionChain'
 
 export function missingPriceCount(group: ExpiryGroup): number {
   return [...group.calls, ...group.puts].filter((point) => point.price === null).length

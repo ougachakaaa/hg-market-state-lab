@@ -1,0 +1,4 @@
+{
+  "extends": "./tsconfig.demo.json",
+  "include": ["src/demo/shell/main.tsx", "vite.shell.config.ts"]
+}

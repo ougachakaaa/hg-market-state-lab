@@ -1,11 +1,11 @@
 import { useMemo, useState } from 'react'
 import { Card, Collapse, Descriptions, Flex, Statistic, Table, Typography } from 'antd'
 import { ChartView, DateAxisControl, DEFAULT_DATE_AXIS_MODE, type DateAxisMode } from '../../../shared/visualization'
-import type { BacktestResult } from '../api/backtesting'
+import type { BacktestResult } from '../api/validateResult'
 import { resultChartOptions, tradingDates } from '../model/dateAxis'
 import { money, percent } from '../model/presentation'
 
-export function Result({ data }: { data: BacktestResult }) {
+export function Result({ data, mode = 'production', sourceDisclosure }: { sourceDisclosure?: string; data: BacktestResult; mode?: 'production' | 'static' }) {
   const s = data.summary
   const [timeScale, setTimeScale] = useState<DateAxisMode>(DEFAULT_DATE_AXIS_MODE)
   // Stable references: ChartView treats a new ordinal domain as a coordinate-system change.
@@ -53,7 +53,9 @@ export function Result({ data }: { data: BacktestResult }) {
       { title: 'New Close', dataIndex: 'new_close' }, { title: 'Target Slot', dataIndex: 'new_slot' },
     ]} /></Card>
     <Collapse items={[{ key: 'evidence', label: '研究证据与限制 · Evidence / Limitations', children: <>
-      <Typography.Paragraph>采用理想收盘价成交；不包含手续费、滑点和保证金机制。Benchmark 为指数价格基准。Historical Metadata 使用已记录的历史可得性假设；缓存完整不保证数据源实时性。这里是在线证据摘要。</Typography.Paragraph>
+      <Typography.Paragraph>{mode === 'production'
+        ? '采用理想收盘价成交；不包含手续费、滑点和保证金机制。Benchmark 为指数价格基准。Historical Metadata 使用已记录的历史可得性假设；缓存完整不保证数据源实时性。这里是在线证据摘要。'
+        : sourceDisclosure ? `${sourceDisclosure} 未执行服务器回测，不构成完整离线证据包；未检查当前市场、缓存或 Provider 就绪。采用理想收盘价成交；不包含手续费、滑点和保证金机制。Benchmark 为指数价格基准。Historical Metadata 使用已记录的历史可得性假设；缓存完整不保证数据源实时性。以下保留 Producer Result 中的原始 Evidence 与限制。` : '本页来自 Embedded Synthetic Example，未执行服务器回测，也不构成完整离线证据包；未检查当前市场、缓存或 Provider 就绪。采用理想收盘价成交；不包含手续费、滑点和保证金机制。Benchmark 为指数价格基准。Historical Metadata 使用已记录的历史可得性假设；缓存完整不保证数据源实时性。以下保留 Producer Result 中的原始 Evidence 数据。'}</Typography.Paragraph>
       <Descriptions column={1} items={[
         { key: 'profile', label: 'Result Profile', children: data.profile },
         { key: 'definition', label: 'Definition Version', children: data.definition_version },

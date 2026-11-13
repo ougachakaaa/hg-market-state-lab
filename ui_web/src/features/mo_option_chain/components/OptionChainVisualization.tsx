@@ -1,5 +1,5 @@
 import { Collapse, Flex, Space, Typography } from 'antd'
-import type { OptionChain } from '../api/moOptionChain'
+import type { OptionChain } from '../api/validateOptionChain'
 import CombinedExpiryChart from '../charts/CombinedExpiryChart'
 import { buildExpiryPalette } from '../charts/expiryPalette'
 import type { SeriesColors } from '../model/presentationState'

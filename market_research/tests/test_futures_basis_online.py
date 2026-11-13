@@ -20,6 +20,27 @@ from market_research.descriptive.cases.futures_basis.online import (
 from market_research.descriptive.cases.futures_basis.report import compose_report
 from market_statistics import CalculationFailure
 
+# Terminal state is published before the worker's finally releases the process permit.
+# Tests must join their own workers before another submit, storage mutation or teardown.
+_workers: dict[tuple[int, str], threading.Thread] = {}
+
+
+@pytest.fixture(autouse=True)
+def join_execution_workers(monkeypatch):
+    execute = FuturesBasisOnlineApplication._execute
+    _workers.clear()
+
+    def tracked_execute(self, run_id, request):
+        _workers[id(self), run_id] = threading.current_thread()
+        return execute(self, run_id, request)
+
+    monkeypatch.setattr(FuturesBasisOnlineApplication, "_execute", tracked_execute)
+    yield
+    for worker in _workers.values():
+        worker.join(timeout=2)
+        assert not worker.is_alive(), "Synthetic execution leaked beyond its test"
+    _workers.clear()
+
 
 def application(root: Path, *, observe=None) -> FuturesBasisOnlineApplication:
     services = Services()
@@ -33,6 +54,9 @@ def settled(app: FuturesBasisOnlineApplication, run_id: str) -> dict:
     for _ in range(100):
         state = app.get_run(run_id, "owner-a")
         if state["status"] in ("COMPLETED", "FAILED"):
+            worker = _workers[id(app), run_id]
+            worker.join(timeout=2)
+            assert not worker.is_alive(), "Terminal publication preceded unfinished cleanup"
             return state
         time.sleep(0.02)
     pytest.fail("Synthetic run did not settle")

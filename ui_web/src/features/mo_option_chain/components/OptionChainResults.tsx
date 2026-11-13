@@ -1,5 +1,5 @@
-import type { ExpiryGroup, OptionChain, OptionPoint } from '../api/moOptionChain'
-import { ChainRequestError } from '../api/moOptionChain'
+import type { ExpiryGroup, OptionChain, OptionPoint } from '../api/validateOptionChain'
+import type { ChainRequestError } from '../api/moOptionChain'
 import type { ExpiryColors } from '../charts/expiryPalette'
 import { missingPriceCount } from '../model/combinedChartData'
 import { formatPrice } from '../model/priceDisplay'

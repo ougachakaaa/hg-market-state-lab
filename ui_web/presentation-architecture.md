@@ -70,6 +70,22 @@ ui_web/src/
 
 目录名和 incidental component tree 可以随实现调整，但上述 ownership 与 dependency direction 必须保持。
 
+## Dual Runtime controller / Presentation boundary
+
+上述 HTTP / hooks 数据流属于 Production。Static Demo 从 [已提交 Example](src/demo/EXAMPLES.md) 取得并校验同一正式 Result，经 feature-local static controller 组合相同 Presentation；不经过 HTTP request 或生产 Query/Run Hook。Application composition、Feature Presentation、Production Data/Execution Controller 与 Static Example Controller 必须分离。Runtime 选择不改变产品含义、Result Contract 或 feature ownership。
+
+Production 页面是业务展示的唯一实现来源：Shell、页面结构、结果组件、图表/表格及适用的纯本地 state 共同消费 validated facts。Page 可以保留为生产 composition root，但可复用的展示不得依赖它的在线 controller；static composition 只能消费 feature public Presentation entry。Local state 与 pure projection 仍留在 owning feature，不能复制到 Demo 或提升为跨 feature 业务 state。现有 API 中与 transport 共址的校验允许抽取为 feature-local pure validator，复用 generated contract，而不 import HTTP client。
+
+Shared Shell 展示不拥有认证 lifecycle：由 production composition 将 gate、身份/退出动作与在线页面组合在其外部；静态 composition 提供匿名披露、静态 content 与路由。不得以禁用按钮替代依赖隔离，也不引入 generic Mock Server、plugin 或 DI framework。详细 capability 与 isolation gates 见 [Demo Runtime](src/demo/ARCHITECTURE.md) 和 [实施 handoff](src/demo/IMPLEMENTATION.md)。
+
+Static delivery mode does not establish source authenticity. V2 uses real historical
+market results under the [Example contract](src/demo/EXAMPLES.md) and
+[development/publication gates](src/demo/AUTHENTICITY.md). Feature-owned shared Presentation
+must distinguish historical V1 Synthetic, test-only facts and V2 real-market provenance;
+layout mode such as `demo` must not select a false source label. Private local integration
+reuses the same Presentation while publication rights remain unresolved. WP-B implements validated origin disclosure through these shared Presentations; current
+verification and release boundaries are tracked in the [implementation handoff](src/demo/IMPLEMENTATION.md).
+
 ## 2. Application Shell 与 Feature Page
 
 Application shell 只拥有：
@@ -79,7 +95,7 @@ application entry
 navigation
 layout / shell
 feature composition
-application authentication state / access gate
+production composition authentication state / access gate (outside shared shell presentation)
 ```
 
 它不拥有 backend product semantics、feature query logic、feature presentation state、financial projection、chart series construction 或 feature-specific formatting。MO Option Chain 与 MO Premium Plane 保持独立 bounded contexts；不得为当前两个 surface 引入 generic plugin framework 或 generalized feature runtime。

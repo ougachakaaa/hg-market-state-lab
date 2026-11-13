@@ -151,6 +151,31 @@ def manifest(raw: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+def project_analysis(data: dict[str, Any], publication_id: str) -> AnalysisResponse:
+    """Safe projection shared by bounded HTTP reads and explicit offline export."""
+    status = data["summary"]["status"]
+    result = decode(data["result"]) if status == "success" else None
+    if result and result.get("method") == "quantile":
+        result["points_and_values"] = [tuple(p) for p in result["points_and_values"]]
+    return AnalysisResponse.model_validate(
+        {
+            "data": {
+                "schema_version": 1,
+                "publication_id": publication_id,
+                "summary": summary(data["summary"]),
+                "outcome": status,
+                "reason": {
+                    "success": None,
+                    "failed": "Analysis failed.",
+                    "not_attempted": "Analysis was not attempted.",
+                }[status],
+                "result": result,
+                "coverage": data["coverage"],
+            }
+        }
+    )
+
+
 def query(request: Request, allowed: set[str]) -> None:
     keys = list(request.query_params.multi_items())
     if any(key not in allowed for key, _ in keys) or len({k for k, _ in keys}) != len(keys):
@@ -301,29 +326,7 @@ def get_analysis(request: Request, publication_id: str, analysis_id: str) -> JSO
         query(request, set())
         reader = store(request)
         data = verify_read(reader.get_analysis, publication_id, analysis_id)
-        status = data["summary"]["status"]
-        result = decode(data["result"]) if status == "success" else None
-        if result and result.get("method") == "quantile":
-            result["points_and_values"] = [tuple(p) for p in result["points_and_values"]]
-        return bounded(
-            AnalysisResponse.model_validate(
-                {
-                    "data": {
-                        "schema_version": 1,
-                        "publication_id": publication_id,
-                        "summary": summary(data["summary"]),
-                        "outcome": status,
-                        "reason": {
-                            "success": None,
-                            "failed": "Analysis failed.",
-                            "not_attempted": "Analysis was not attempted.",
-                        }[status],
-                        "result": result,
-                        "coverage": data["coverage"],
-                    }
-                }
-            )
-        )
+        return bounded(project_analysis(data, publication_id))
     except Exception as exc:
         return error(exc)
 

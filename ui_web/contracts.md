@@ -70,3 +70,12 @@ Contract export 使用离线 `.openapi()`，不通过受保护的 HTTP schema en
 ## 5. Tooling Boundary
 
 本 authority 不规定 exporter 的 Python 文件结构、npm script 的具体拼装、是否复用 helper，或 generic contract tooling abstraction。实现只需保持 per-product ownership、上述生成条件、确定性 dependency direction 与 repository-level complete coverage。
+
+## 6. Static Example compatibility
+
+Static Demo consumes the same published Result contracts, never a competing Mock HTTP schema. Existing all-product `contract:check` remains mandatory for backend/OpenAPI/generated-type freshness. In addition, Demo compatibility must validate every committed Example against the current generated schemas and feature semantic/association validators, report/profile definitions and Visualization contracts. Extract pure validation from transport where necessary; static consumers must not import production HTTP controllers. Contract drift or unsupported Example versions fail CI; do not repair or regenerate fixtures silently during release. [Example authority](src/demo/EXAMPLES.md) owns packaging and reproducibility, and [Demo Runtime authority](src/demo/ARCHITECTURE.md) owns route-coverage/static isolation gates. [WP-C](src/demo/WP_C_ACCEPTANCE.md) implements V1 fixture/feature validation,
+exhaustive route typing, actual static dependency checks and public asset safety.
+[D7-P](src/demo/D7_READINESS.md) repairs the cross-language Backtesting CI prerequisite
+and records current verification. Retained real-market private Examples remain outside
+CI and use explicit formal admission/replay; no public V2 Example is admitted by these
+checks. The [release contract](src/demo/RELEASE.md) defines their future public boundary.

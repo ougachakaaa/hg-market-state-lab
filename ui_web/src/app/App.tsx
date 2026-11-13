@@ -1,6 +1,6 @@
-import { AppstoreOutlined, DatabaseOutlined, DotChartOutlined, ExperimentOutlined, HistoryOutlined, LineChartOutlined, LogoutOutlined, MenuFoldOutlined, MenuUnfoldOutlined, ReloadOutlined, TableOutlined } from '@ant-design/icons'
-import { Alert, Breadcrumb, Button, Card, Flex, Layout, Menu, Spin, Typography, theme } from 'antd'
-import { useEffect, useState } from 'react'
+import { LogoutOutlined, ReloadOutlined } from '@ant-design/icons'
+import { Alert, Button, Flex, Spin, Typography, theme } from 'antd'
+import { useEffect } from 'react'
 import FuturesBasisPage from '../features/futures_basis_research/page/FuturesBasisPage'
 import OptionChainPage from '../features/mo_option_chain'
 import PremiumPlanePage from '../features/mo_option_premium'
@@ -8,123 +8,32 @@ import ResearchExplorerPage from '../features/research_explorer/page/ResearchExp
 import ResearchWorkspacePage from '../features/research_catalog/page/ResearchWorkspacePage'
 import BacktestingPage from '../features/backtesting/page/BacktestingPage'
 import AppUiProvider from './AppUiProvider'
+import ApplicationShell from './ApplicationShell'
+import DailyDataLanding from './DailyDataLanding'
 import AuthForm from './auth/AuthForm'
 import { useAuthentication } from './auth/useAuthentication'
 import type { CurrentUser, LoginRequest } from './auth/api/auth'
-import { isWorkspacePath, useWorkspaceRoute, type WorkspacePath } from './routes'
+import { useWorkspaceRoute } from './routes'
+import { isWorkspacePath, type WorkspacePath } from './routeInventory'
 
-const titles: Record<WorkspacePath, string> = {
-  '/research': '研究总览',
-  '/research/futures-basis': '历史基差研究',
-  '/research/publications': 'Research Explorer',
-  '/data': '数据总览',
-  '/data/mo-option-chain': 'MO Option Chain',
-  '/data/mo-premium-plane': 'MO Premium Plane',
-  '/backtesting': '回测',
-}
-
-function Landing({ navigate }: { navigate: (path: WorkspacePath) => void }) {
-  return <Flex vertical gap="large">
-    <header>
-      <Typography.Title level={1} style={{ margin: 0, fontSize: 24 }}>数据总览</Typography.Title>
-      <Typography.Paragraph type="secondary" style={{ marginBottom: 0 }}>
-        查看 MO 数据产品，读取结果后可复制 JSON 或导出数据。
-      </Typography.Paragraph>
-    </header>
-    <Flex gap="middle" wrap>
-      <Card title="MO Option Chain" style={{ flex: '1 1 280px', minWidth: 0 }}>
-        <Typography.Paragraph type="secondary">查看期权链价格分布与同到期 Futures 参考。</Typography.Paragraph>
-        <Button icon={<DotChartOutlined aria-hidden="true" />} onClick={() => navigate('/data/mo-option-chain')}>打开 MO Option Chain</Button>
-      </Card>
-      <Card title="MO Premium Plane" style={{ flex: '1 1 280px', minWidth: 0 }}>
-        <Typography.Paragraph type="secondary">查看多维权利金稀疏数值平面。</Typography.Paragraph>
-        <Button icon={<TableOutlined aria-hidden="true" />} onClick={() => navigate('/data/mo-premium-plane')}>打开 MO Premium Plane</Button>
-      </Card>
-    </Flex>
-  </Flex>
-}
-
-function ApplicationShell({ user, signOut, path, navigate }: {
+function ProductionWorkspace({ user, signOut, path, navigate }: {
   user: CurrentUser; signOut: () => Promise<void>; path: WorkspacePath;
-  navigate: (path: WorkspacePath, replace?: boolean) => void
+  navigate: (path: WorkspacePath, replace?: boolean) => void;
 }) {
-  const [collapsed, setCollapsed] = useState(() => window.matchMedia('(max-width: 1199.98px)').matches)
-  const { token } = theme.useToken()
-  const area = path.startsWith('/data') ? '/data' : path.startsWith('/research') ? '/research' : '/backtesting'
-  const group = area === '/backtesting' ? null : `area:${area}`
-  const [openKeys, setOpenKeys] = useState<string[]>(group ? [group] : [])
-  const [popupKeys, setPopupKeys] = useState<string[]>([])
-  const [menuPath, setMenuPath] = useState(path)
-  // Reconcile navigation before rendering children, including browser history changes.
-  if (menuPath !== path) {
-    setMenuPath(path)
-    if (group) setOpenKeys(keys => keys.includes(group) ? keys : [...keys, group])
-    setPopupKeys([])
-  }
-  const toggleSidebar = () => {
-    setCollapsed(value => !value)
-    setPopupKeys([])
-    if (group) setOpenKeys(keys => keys.includes(group) ? keys : [...keys, group])
-  }
-  const areaTitle = area === '/research' ? '研究' : area === '/data' ? '日常数据' : '回测'
-  return <Layout style={{ minHeight: '100vh', background: token.colorBgLayout }}>
-    <Layout.Sider collapsed={collapsed} collapsedWidth={64} width={232} breakpoint="xl"
-      onBreakpoint={broken => { setCollapsed(broken); setPopupKeys([]) }} trigger={null}
-      theme="dark" style={{ borderRight: `1px solid ${token.colorBorderSecondary}` }}>
-      <Flex align="center" justify="center" style={{ minHeight: 64, paddingInline: token.paddingSM }}>
-        <Typography.Text strong aria-label="Market State Lab">{collapsed ? 'MSL' : 'Market State Lab'}</Typography.Text>
-      </Flex>
-      <Menu aria-label="业务导航" mode="inline" theme="dark" triggerSubMenuAction="click" selectedKeys={[path]}
-        openKeys={collapsed ? popupKeys : openKeys}
-        onOpenChange={collapsed ? setPopupKeys : setOpenKeys} inlineCollapsed={collapsed}
-        style={{ background: 'transparent', borderInlineEnd: 0 }}
-        onClick={({ key }) => { if (isWorkspacePath(key)) navigate(key) }}
-        items={[
-          { key: 'area:/research', label: '研究', className: path === '/research/publications' ? 'ant-menu-submenu-selected' : undefined, icon: <ExperimentOutlined aria-hidden="true" />, children: [
-            { key: '/research', icon: <AppstoreOutlined aria-hidden="true" />, label: '研究总览' },
-            { type: 'group', key: 'descriptive-research', label: 'DESCRIPTIVE RESEARCH', children: [
-              { key: '/research/futures-basis', icon: <LineChartOutlined aria-hidden="true" />, label: '历史基差研究' },
-            ] },
-          ] },
-          { key: 'area:/data', label: '日常数据', icon: <DatabaseOutlined aria-hidden="true" />, children: [
-            { key: '/data', icon: <DatabaseOutlined aria-hidden="true" />, label: '数据总览' },
-            { key: '/data/mo-option-chain', icon: <DotChartOutlined aria-hidden="true" />, label: 'MO Option Chain' },
-            { key: '/data/mo-premium-plane', icon: <TableOutlined aria-hidden="true" />, label: 'MO Premium Plane' },
-          ] },
-          { key: '/backtesting', label: '回测', icon: <HistoryOutlined aria-hidden="true" /> },
-        ]} />
-    </Layout.Sider>
-    <Layout style={{ minWidth: 0 }}>
-      <Layout.Header style={{ paddingInline: token.paddingLG, paddingBlock: token.paddingSM,
-        lineHeight: 'normal',
-        borderBottom: `1px solid ${token.colorBorderSecondary}`, height: 'auto', minHeight: 64 }}>
-        <Flex justify="space-between" align="center" wrap gap="small">
-          <Flex align="center" gap="middle" style={{ minWidth: 0 }}>
-            <Button icon={collapsed ? <MenuUnfoldOutlined aria-hidden="true" /> : <MenuFoldOutlined aria-hidden="true" />} aria-label={collapsed ? '展开导航' : '折叠导航'} aria-expanded={!collapsed}
-              onClick={toggleSidebar}>{collapsed ? '展开' : '折叠'}</Button>
-            <Breadcrumb items={path === '/backtesting' ? [{ title: '回测' }] : [
-              { title: path === area ? areaTitle : <a href={area} onClick={(event) => { event.preventDefault(); navigate(area) }}>{areaTitle}</a> },
-              { title: titles[path] },
-            ]} />
-          </Flex>
-          <Flex align="center" gap="middle" wrap>
-            <Typography.Text type="secondary" style={{ overflowWrap: 'anywhere' }}>{user.username}</Typography.Text>
-            <Button icon={<LogoutOutlined aria-hidden="true" />} onClick={() => void signOut()}>退出登录</Button>
-          </Flex>
-        </Flex>
-      </Layout.Header>
-      <Layout.Content style={{ minWidth: 0, width: '100%', maxWidth: 1500, margin: '0 auto',
-        padding: token.paddingLG, boxSizing: 'border-box' }}>
-        {path === '/research' ? <ResearchWorkspacePage openExplorer={() => navigate('/research/publications')} openFuturesBasis={() => navigate('/research/futures-basis')} />
-          : path === '/research/futures-basis' ? <FuturesBasisPage />
-          : path === '/research/publications' ? <ResearchExplorerPage />
-            : path === '/data' ? <Landing navigate={navigate} />
-              : path === '/data/mo-option-chain' ? <OptionChainPage />
-                : path === '/data/mo-premium-plane' ? <PremiumPlanePage />
-                  : <BacktestingPage />}
-      </Layout.Content>
-    </Layout>
-  </Layout>
+  return <ApplicationShell path={path} navigate={navigate} href={path => path} header={
+    <Flex align="center" gap="middle" wrap>
+      <Typography.Text type="secondary" style={{ overflowWrap: 'anywhere' }}>{user.username}</Typography.Text>
+      <Button icon={<LogoutOutlined aria-hidden="true" />} onClick={() => void signOut()}>退出登录</Button>
+    </Flex>
+  }>
+    {path === '/research' ? <ResearchWorkspacePage openExplorer={() => navigate('/research/publications')} openFuturesBasis={() => navigate('/research/futures-basis')} />
+      : path === '/research/futures-basis' ? <FuturesBasisPage />
+        : path === '/research/publications' ? <ResearchExplorerPage />
+          : path === '/data' ? <DailyDataLanding navigate={navigate} />
+            : path === '/data/mo-option-chain' ? <OptionChainPage />
+              : path === '/data/mo-premium-plane' ? <PremiumPlanePage />
+                : <BacktestingPage />}
+  </ApplicationShell>
 }
 
 function AuthenticationGate() {
@@ -140,7 +49,7 @@ function AuthenticationGate() {
     await signIn(credentials)
     if (!isWorkspacePath(window.location.pathname)) navigate('/research', true)
   }
-  if (state.status === 'authenticated') return <ApplicationShell user={state.user} signOut={signOut} path={path} navigate={navigate} />
+  if (state.status === 'authenticated') return <ProductionWorkspace user={state.user} signOut={signOut} path={path} navigate={navigate} />
   if (state.status === 'anonymous') return <AuthForm signIn={login} />
   return <Flex vertical align="center" justify="center" gap="middle" style={{ minHeight: '100vh', padding: 24,
     boxSizing: 'border-box', background: token.colorBgLayout }}>

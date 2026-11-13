@@ -196,6 +196,11 @@ The offline entry continues to bundle a self-contained report with no fetch, CDN
 application/auth import or backend. It may import only the pure reader subpath.
 The online page uses the same reader under the application theme. No second
 six-section implementation and no second financial projection is authorized.
+
+The public [static demo](../../demo/futures_basis/ARCHITECTURE.md) also composes
+this pure reader with `demo` disclosure mode and horizontally scrollable chart
+frames on narrow screens. All six sections, presentation controls and producer
+facts stay shared. Online and offline modes retain their delivery instructions.
 WP8 must preserve the existing offline Vitest, build and real-Chromium offline
 report acceptance.
 
@@ -259,3 +264,45 @@ execution will attempt acquisition; reset it on query/result changes. Only an
 explicit Generate posts a Run; check completion never submits. End-date changes
 remain user-controlled; today blocks offer editing and recheck, no hidden ensure
 or automatic shift to yesterday. Failed-Run retry first loads/checks its request.
+
+## Runtime scope
+
+Query inputs, protected HTTP reads, preflight, retries and Run lifecycle in this feature authority describe the Production controller. The same feature-owned Presentation also serves [Static Demo Runtime](../../demo/ARCHITECTURE.md) using [validated embedded Examples](../../demo/EXAMPLES.md), fixed visible request parameters and local presentation state. Static composition never mounts the production controller or fabricates its lifecycle; it preserves this feature's result/visualization semantics and applicable local Copy/Export. Shared presentation remains here, not in parallel Demo pages.
+
+## Shared page presentation and static composition (D2-E)
+
+`page/FuturesBasisPresentation.tsx` is the single formal page presentation. It owns the
+feature header, the Research parameter region shell, immutable request facts, the Result
+region and the Report composition. Production supplies only its execution regions (query
+form, preflight, explicit Submit, accepted Run identity, status/errors and manual retries)
+through the `production` composition input. Static composition supplies a validated fixed
+request and Embedded Report through the `static` input; Preflight, Submit, polling and Run
+status are never simulated or hidden behind disabled controls.
+
+`presentation.ts` is the transport-free public entry. `api/validateResult.ts` owns the pure
+generated-contract boundary: `matchesResponse`, `validateImmutableRequest`,
+`validateReaderReport` (shared with Production report reading) and `validateEmbeddedReport`.
+Production transport retains URL construction, protected Auth and HTTP error mapping.
+`static/useStaticFuturesBasis.ts` validates the fixed request plus the complete producer
+reader payload once and exposes only validated facts; it owns no Run, polling, fetch or
+`run_id` restore. Page-level requested-window facts remain separate from the producer's
+actual observed coverage, and static success means the Embedded Report passed formal
+validation, not that a server Run executed.
+
+The shared `report/Report.tsx` keeps its six sections, M0/M1/Q1/Q2, chart controls and
+producer facts for online (`mode="online"`), offline (`mode="offline"`) and static
+(`mode="demo"`) delivery. `sectionNavigation="local"` scrolls between report sections
+without a fragment or history change, so a static hash route is never replaced; online and
+offline delivery retain their fragment section links.
+
+## V2 origin policy reconciliation
+
+[Demo Example authority](../../demo/EXAMPLES.md) owns formal V2 real-market dates and
+packaging; [authenticity and rights](../../demo/AUTHENTICITY.md) owns evidence and admission.
+This feature owns only their presentation. Static delivery is not a Synthetic source label
+or proof of authenticity. Preserve historical V1/test disclosures, use actual real-market
+origin for V2, and never promote regression inputs to formal Examples. WP-B propagates an explicit validated Example source statement from static composition
+into the shared reader Evidence through UI-only `sourceDisclosure`; delivery mode never
+infers real-market origin. Historical Synthetic defaults and Production/Offline evidence
+remain unchanged. Admission and provenance ownership stay in the
+[private build contract](../../demo/PRIVATE_BUILD.md).

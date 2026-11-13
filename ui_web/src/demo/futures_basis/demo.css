@@ -1,0 +1,4 @@
+/* Standalone browser reset; ordinary presentation uses Ant Design and theme tokens. */
+body { margin: 0; }
+/* Keep anchored sections clear of the standalone synthetic disclosure strip. */
+html { scroll-padding-top: 72px; }
