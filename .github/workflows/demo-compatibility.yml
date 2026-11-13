@@ -3,6 +3,7 @@ on:
   push:
     branches: [feat/github-pages-demo, develop, main]
   pull_request:
+  workflow_call:
 permissions:
   contents: read
 jobs:
@@ -35,6 +36,14 @@ jobs:
       - run: npm run demo:build
         working-directory: ui_web
       - run: npm run test:static-compatibility
+        working-directory: ui_web
+      - run: npm run demo:build:public
+        working-directory: ui_web
+      - run: npx playwright install --with-deps chromium
+        working-directory: ui_web
+      - run: node scripts/public_demo_browser.mjs
+        working-directory: ui_web
+      - run: node scripts/verify_public_artifact.mjs ${{ github.sha }}
         working-directory: ui_web
       - run: npm run test:public-safety
         working-directory: ui_web

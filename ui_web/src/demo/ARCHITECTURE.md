@@ -1,5 +1,7 @@
 # Static Demo V2 runtime authority
 
+Current D7 publication policy: [user-directed decision](AUTHENTICITY.md#d7-user-directed-distribution-decision--2026-11-13); implementation and evidence: [D7 acceptance](D7_RELEASE_ACCEPTANCE.md). Historical BLOCKED records retain their original scope.
+
 Specializes [module ownership](../../ARCHITECTURE.md), [application](../../application.md),
 [workspace navigation](../../workspace.md) and [presentation boundaries](../../presentation-architecture.md).
 This is the canonical Demo Runtime entry, not a business module, second Web product,
@@ -134,7 +136,7 @@ publication. CI gates Production/Demo compatibility before release. A failed bui
 deployment never establishes that Live Demo updated; successful deployment and public
 HTTP/browser acceptance are separate evidence.
 
-D3-R0 does not change workflow triggers: [current workflow](../../../.github/workflows/deploy-demo-pages.yml)
+Historical D3-R0 did not change workflow triggers: [current workflow](../../../.github/workflows/deploy-demo-pages.yml)
 still deploys the V1 feature branch. D7 owns switching to main and enforcing this release
 model. The old V1 WP5 eventual-trigger plan is superseded by D7. Do not push merely to
 validate documentation: the existing branch trigger can publish V1.
@@ -173,3 +175,10 @@ remain prohibited until independent D7 admission. Safety scans are regression gu
 not a substitute for exact-artifact rights review. Test workers are bounded to avoid
 JSDOM/Ant Design CPU contention; file isolation, default deadlines, all assertions
 and unhandled-error reporting remain enabled.
+
+## D7 public implementation
+
+[Public build](PUBLIC_BUILD.md) owns the separate reviewed public package and fail-closed
+build. [D7 acceptance](D7_RELEASE_ACCEPTANCE.md) records actual release status.
+Main-driven release supersedes the historical feature-branch deploy trigger. Missing
+public admission preserves the existing V1 deployment and does not admit partial V2.

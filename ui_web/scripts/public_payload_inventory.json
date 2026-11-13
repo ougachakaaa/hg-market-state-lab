@@ -16,5 +16,8 @@
   "workbench/tasks/historical_return_observation/task.json": "dff8c1a16e52b25f08d086b06e4cbc5daadd1d127cd4ec8d18aaf39aa8af85a9",
   "workbench/tests/fixtures/capability.json": "ba8c965cf444499f17dafb8d727eac292a97f9818f2bd7272bfb721d1b931b6b",
   "workbench/tests/fixtures/natural_language_candidate.json": "afc4db9c17e47193567f8931fca87116cd9ad2f67a0c3e442fdcff1549eff90f",
-  "workbench/tests/fixtures/planning_candidate.json": "454b8eb429c9371cbe51b52b6d7118a7b20cb02e64332c495cdf318e22f82a9a"
+  "workbench/tests/fixtures/planning_candidate.json": "454b8eb429c9371cbe51b52b6d7118a7b20cb02e64332c495cdf318e22f82a9a",
+  "ui_web/src/demo/public/examples/package.json": "16d6b2fe09e5c001999173a9e7b15e1391e61959fd78a7d287a702df03efea84",
+  "ui_web/src/demo/futures_basis/rollback-v1.tar.gz": "c3840dca3a94a3050530ac64ad27e239242bb0942e75edbde70a0acd2a3b5081",
+  "ui_web/src/demo/futures_basis/rollback-inventory.json": "011bdde61e66122b1cd306813a5222be4442471dfa912da601ce31b7813c12fe"
 }

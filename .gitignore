@@ -70,3 +70,5 @@ data_lake/experiments/**/output/
 /workbench/tasks/historical_return_observation/results/2026_four_index_returns/evidence/
 
 /market_backtesting/.runtime/
+
+/ui_web/dist-demo-public/

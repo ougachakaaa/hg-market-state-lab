@@ -40,8 +40,10 @@
     "demo:build:private": "tsc -p tsconfig.private.json && node scripts/build_private_demo.mjs",
     "test:private-demo-browser": "node scripts/private_demo_browser.mjs",
     "test:private-demo-data": "node scripts/private_demo_negative.mjs",
-    "test:static-compatibility": "tsc -p tsconfig.private.json && node scripts/static_compatibility.mjs",
-    "test:public-safety": "node scripts/public_asset_safety.mjs"
+    "test:static-compatibility": "tsc -p tsconfig.private.json && tsc -p tsconfig.public.json && node scripts/static_compatibility.mjs",
+    "test:public-safety": "node scripts/public_asset_safety.mjs",
+    "demo:build:public": "tsc -p tsconfig.public.json && node scripts/build_public_demo.mjs",
+    "test:public-admission": "vitest run src/demo/public/admission.test.ts scripts/public_release.test.ts"
   },
   "dependencies": {
     "@ant-design/icons": "^6.3.4",
