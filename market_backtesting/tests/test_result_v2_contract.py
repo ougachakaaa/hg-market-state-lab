@@ -37,6 +37,8 @@ def test_generated_views_pass_canonical_frontend_validator(tmp_path: Path) -> No
         env={**os.environ, "W2_V2_FIXTURE": str(destination)},
         capture_output=True,
         text=True,
+        encoding="utf-8",
+        errors="replace",
     )
     assert completed.returncode == 0, completed.stdout + completed.stderr
 

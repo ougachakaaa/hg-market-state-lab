@@ -13,7 +13,6 @@ import pytest
 from ui_http.auth import create_service
 
 
-@pytest.mark.skipif(os.name != "posix", reason="Online store requires POSIX capabilities")
 def test_process_restart_preserves_completed_and_interrupts_running(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:

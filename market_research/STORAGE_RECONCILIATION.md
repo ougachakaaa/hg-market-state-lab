@@ -583,6 +583,21 @@ Execution evidence:
 | `ruff check .` reports 8 findings in `ui_web/deploy/publish.py` | Pre-existing, outside the repository's configured Ruff scopes and untouched by this branch; canonical scoped Ruff passes | Recorded; no unrelated cleanup |
 | Docker Hub unreachable | Environment/network prerequisite; public ECR mirror used instead | Recorded |
 
+### Post-WP6 test hygiene
+
+2026-11-13, follow-up to WP6. No runtime, schema, DTO or generated-contract
+change.
+
+- `ui_http/tests/test_futures_basis_process.py` no longer skips on non-POSIX:
+  the test uses the SQLite runtime and now executes on Windows. It passed three
+  consecutive Windows runs. With the TLS fixture enabled through the existing
+  Git OpenSSL, Windows full HTTP is 588 passed; without it, 587 passed and one
+  TLS skip.
+- `market_backtesting/tests/test_result_v2_contract.py` and
+  `real_result_acceptance.py` decode Node/Vitest subprocess output as UTF-8.
+  This removes the Windows GBK reader-thread warning; the accepted Windows
+  Backtesting result remains 590 passed, 2 skipped.
+
 ### Remaining known risks and unverified claims
 
 - The complete four-platform gate is **PARTIAL**: native Linux outside WSL was not

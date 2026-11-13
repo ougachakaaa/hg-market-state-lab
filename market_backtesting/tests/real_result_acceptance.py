@@ -136,6 +136,8 @@ def main() -> None:
             env={**os.environ, "W2_V2_FIXTURE": str(fixture)},
             capture_output=True,
             text=True,
+            encoding="utf-8",
+            errors="replace",
         )
         (output / "v2-conformance.txt").write_text(check.stdout + check.stderr)
         assert check.returncode == 0, "frontend_v2_conformance_failed"
