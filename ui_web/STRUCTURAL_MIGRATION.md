@@ -66,7 +66,7 @@ and every npm command. KEEP does not preclude correcting imports after another o
 | Browser, isolation and acceptance helpers in scripts | MOVE `tests/browser/`, `tests/isolation/`, `tests/fixtures/` | 1 | Move imported helpers together, update Python subprocess paths and CI pytest collection |
 | `export_contracts.py`, `contract_types.mjs`, `test_export_contracts.py`, report packager | KEEP general tools; MOVE tool test to `tests/` | 1 | Contract semantics unchanged; package report's generated output under `.build/reports/` |
 | `src/demo/static`, shared hash routing; public/private entry/admission | MERGE `demo/runtime/` | 3 | One entry and runtime, shared formal Presentation, preserved static error/disclosure and validation |
-| Public `examples/package.json` and evidence | MERGE `demo/bundles/manifest.json`, per-result Bundle files and evidence | 2 | Split existing envelope without editing results; rebind hashes/reviews to exact output; no automatic rights promotion |
+| Public `examples/package.json` and evidence | MERGE `demo/bundles/manifest.json`, per-result Bundle files and evidence | 2 | Split existing envelope without editing results; bind exact Bundle hashes; evidence review is separate from Build admission |
 | Private Python generators, validators, `private_demo_projection.mjs` | MERGE generation/admission tooling in `demo/build/` | 2 | Explicit formal local HTTP, root Python environment, no business/projection internals; legacy profiles retire only after equivalent checks |
 | `build_public_demo.mjs`, `build_private_demo.mjs` | MERGE `demo/build/` | 2–3 | One offline Vite build, no Python/HTTP; preserve failure checks; remove private command after cutover |
 | `vite.demo.config.ts`, Demo/private/public TSConfigs | MERGE `demo/build/` config | 2–3 | Separate from V1 includes first; default demo commands select sole runtime after WP3 |
@@ -107,12 +107,13 @@ auth/run/publication acquisition. Record endpoint/response association for Basis
 Backtesting, catalog descriptors and Explorer manifest/analysis/Views. Use formal workflow including
 polling only in explicit generation, never browser/build. Missing capabilities block that item and
 must be reported; do not design new APIs here. Implement Python explicit capture and one Manifest
-with one complete Result per Bundle, exact SHA-256 and truthful existing metadata/review associations.
+with one complete Result per Bundle, exact SHA-256; seven Examples are seven Bundles even when a Result requires multiple HTTP requests.
 Private evidence remains external; never copy raw sources or automatically commit generated results.
 
 Acceptance: generate only on explicit invocation against local formal authenticated HTTP; failure
-does not publish incomplete Manifest. Offline Node/Vite validates all hashes, identities, references,
-formal shapes and review bindings. Tests reject missing/tampered/traversal/unsupported/mismatched
+does not publish incomplete Manifest. Offline Node/Vite Bundle admission validates only the Manifest and Bundle SHA-256.
+Business DTO/Result validation, static isolation and deployment Artifact Verification are separate;
+legacy Publication Rights Gates, Evidence Review and independent review records are not Build prerequisites. Tests reject missing/tampered/traversal/unsupported/mismatched
 bundles and dangling Explorer references. Run build with Python unavailable and business network
 blocked; it must succeed from admitted existing inputs. No financial/result recomputation.
 
@@ -167,9 +168,9 @@ to claim new success. Documentation moves repair relative links and inbound navi
 | RELEASE | WP4 move to `deploy/pages/ARCHITECTURE.md`; replace V1 recovery and previous-generation retention with hard cutover; retain admission and permission constraints |
 | IMPLEMENTATION | WP3 retire live D/R/WP-A–C handoff sections superseded by this migration; preserve original as historical evidence with explicit scope note |
 | D7_READINESS | WP3 retire current-status role in favor of actual WP acceptance; preserve historical findings |
-| R1_FEASIBILITY, R2/R3, WP_A/B/C, INTEGRATION, D7_RELEASE acceptance; shell ACCEPTANCE | KEEP historical evidence; move under `demo/history/` in WP3 with links repaired; no fabricated rerun results |
-| futures_basis ARCHITECTURE/README/ACCEPTANCE/DEPLOYMENT_ACCEPTANCE | WP3 retire active V1 contracts; preserve history under `demo/history/v1/`; WP4 remove executable archive references from current owners |
-| public/examples README and evidence/review | WP2 reconcile Manifest paths and exact review binding, keep Authenticity sole publication-decision owner |
+| R1_FEASIBILITY, R2/R3, WP_A/B/C, INTEGRATION, D7_RELEASE acceptance; shell ACCEPTANCE | RETIRE superseded Demo documents after extracting valid Authority; preserve history in Git, not demo/history; preserve independent business evidence |
+| futures_basis ARCHITECTURE/README/ACCEPTANCE/DEPLOYMENT_ACCEPTANCE | WP3 retire active V1 contracts; preserve history in Git after extracting valid Authority; WP4 remove executable archive references from current owners |
+| public/examples README and evidence/review | WP2 reconcile Manifest paths separately from evidence review, keep Authenticity sole publication-decision owner |
 | Six feature testing ACCEPTANCE; feature architecture/static references; offline reader authority | WP1 update active paths only; WP3 annotate superseding Demo coverage; preserve old command results |
 | deploy README/config documentation | WP1 `.build/online`; WP4 artifact-only Pages boundary, no permission/WSL infrastructure changes |
 | Root DEVELOPMENT and navigation; Research fixture-related Authority | Change only discovered affected references in assigned WP; enter Research local policy before producer retirement |

@@ -36,12 +36,10 @@ retiring their implementation; restricted material does not become a public Bund
 
 ## Data and build boundary
 
-**One Result → One Bundle → One Hash.** A single Manifest indexes all formal Demo Bundles.
-Each Bundle contains one complete formal Result plus its required identity/provenance association;
-it does not create another business DTO. SHA-256 binds exact Bundle file bytes. Manifest metadata
-associates route selections, result identities, hashes and existing review bindings. Multiple HTTP
-results needed by Explorer/catalog are separate bundles referenced by the same Manifest; navigation
-descriptions do not require invented financial Results. Formal producer contracts still own results.
+**One Complete Business Result ? One Bundle ? One Hash.** One Manifest indexes all
+seven current Examples as seven Bundles. Multiple HTTP requests may assemble one complete
+business Result Bundle; request count does not determine Bundle count. SHA-256 binds exact bytes.
+Formal producer contracts continue to own Result meaning and DTOs.
 
 Python generation is an explicit operator action against the local formal HTTP application, using
 repository-root Python tooling and normal authentication. It captures official results without
@@ -49,8 +47,11 @@ direct service/projection invocation as an alternate generation path. No mock AP
 second backend or second frontend project is introduced. Any missing formal HTTP capability is a
 reported blocker, not permission to expand HTTP semantics in this structural work.
 
-Vite verifies hashes, completeness, formal result compatibility and required review associations
-before consuming existing Bundles. Build never invokes Python, generates results or contacts an
+Future Bundle admission verifies only the Manifest and Bundle SHA-256. Business DTO/Result
+validation, static dependency isolation and deployment Artifact Verification are separate concerns.
+Legacy Publication Rights Gates, Evidence Review and independent review records are not Demo Build
+prerequisites. This target decision does not change current validation code in WP1A.
+Build never invokes Python, generates results or contacts an
 online business HTTP service. Browsers consume static data and shared Presentation only: no financial
 computation, Auth/API requests, polling, preflight or server Run lifecycle. Preserve all seven formal
 routes and existing local interactions. Runtime, Example meaning and distribution decision remain
@@ -75,5 +76,6 @@ distribution bindings and deployment permissions remain required. No production 
 Directory ownership changes here; migration state and gates change in the audit. Runtime capability,
 Examples, authenticity and release semantics stay with their narrow existing owners. Move those
 authorities and repair inbound/outbound navigation with their implementation, without parallel owners.
-Historical acceptance retains its original revision, commands and conclusions, with a migration note
-where necessary. It is not evidence that the new structure has passed.
+Only one formal Demo generation is retained. Superseded Demo documents retire after extracting
+valid Authority; Git History preserves their original conclusions. No demo/history tree is planned.
+Independent business results, research evidence and data are preserved. WP1A retires no runtime or V1 archive.

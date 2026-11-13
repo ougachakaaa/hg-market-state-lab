@@ -94,24 +94,24 @@ Classification is a planned disposition, not work performed. Family gates in the
 | `scripts/wp8_real_acceptance.mjs` | MOVE tests/browser/wp8_real_acceptance.mjs | 1 |
 | `src/demo/ARCHITECTURE.md` | MOVE demo/ARCHITECTURE.md | 3 |
 | `src/demo/AUTHENTICITY.md` | MOVE demo/AUTHENTICITY.md | 2 |
-| `src/demo/D7_READINESS.md` | MOVE demo/history/D7_READINESS.md; historical scope | 3 |
-| `src/demo/D7_RELEASE_ACCEPTANCE.md` | MOVE demo/history/D7_RELEASE_ACCEPTANCE.md; historical scope | 3 |
+| `src/demo/D7_READINESS.md` | RETIRE after extracting valid Authority; history remains in Git | 3 |
+| `src/demo/D7_RELEASE_ACCEPTANCE.md` | RETIRE after extracting valid Authority; history remains in Git | 3 |
 | `src/demo/EXAMPLES.md` | MOVE demo/EXAMPLES.md | 2 |
-| `src/demo/IMPLEMENTATION.md` | MOVE demo/history/IMPLEMENTATION.md; historical scope | 3 |
-| `src/demo/INTEGRATION_ACCEPTANCE.md` | MOVE demo/history/INTEGRATION_ACCEPTANCE.md; historical scope | 3 |
+| `src/demo/IMPLEMENTATION.md` | RETIRE after extracting valid Authority; history remains in Git | 3 |
+| `src/demo/INTEGRATION_ACCEPTANCE.md` | RETIRE after extracting valid Authority; history remains in Git | 3 |
 | `src/demo/PRIVATE_BUILD.md` | MERGE demo/build/ARCHITECTURE.md | 3 |
 | `src/demo/PUBLIC_BUILD.md` | MERGE demo/build/ARCHITECTURE.md | 3 |
-| `src/demo/R1_FEASIBILITY.md` | MOVE demo/history/R1_FEASIBILITY.md; historical scope | 3 |
-| `src/demo/R2_ACCEPTANCE.md` | MOVE demo/history/R2_ACCEPTANCE.md; historical scope | 3 |
-| `src/demo/R3_ACCEPTANCE.md` | MOVE demo/history/R3_ACCEPTANCE.md; historical scope | 3 |
+| `src/demo/R1_FEASIBILITY.md` | RETIRE after extracting valid Authority; history remains in Git | 3 |
+| `src/demo/R2_ACCEPTANCE.md` | RETIRE after extracting valid Authority; history remains in Git | 3 |
+| `src/demo/R3_ACCEPTANCE.md` | RETIRE after extracting valid Authority; history remains in Git | 3 |
 | `src/demo/RELEASE.md` | MOVE deploy/pages/ARCHITECTURE.md | 4 |
-| `src/demo/WP_A_ACCEPTANCE.md` | MOVE demo/history/WP_A_ACCEPTANCE.md; historical scope | 3 |
-| `src/demo/WP_B_ACCEPTANCE.md` | MOVE demo/history/WP_B_ACCEPTANCE.md; historical scope | 3 |
-| `src/demo/WP_C_ACCEPTANCE.md` | MOVE demo/history/WP_C_ACCEPTANCE.md; historical scope | 3 |
-| `src/demo/futures_basis/ACCEPTANCE.md` | MOVE demo/history/v1/ACCEPTANCE.md; historical scope | 3 |
-| `src/demo/futures_basis/ARCHITECTURE.md` | MOVE demo/history/v1/ARCHITECTURE.md; historical scope | 3 |
-| `src/demo/futures_basis/DEPLOYMENT_ACCEPTANCE.md` | MOVE demo/history/v1/DEPLOYMENT_ACCEPTANCE.md; historical scope | 3 |
-| `src/demo/futures_basis/README.md` | MOVE demo/history/v1/README.md; historical scope | 3 |
+| `src/demo/WP_A_ACCEPTANCE.md` | RETIRE after extracting valid Authority; history remains in Git | 3 |
+| `src/demo/WP_B_ACCEPTANCE.md` | RETIRE after extracting valid Authority; history remains in Git | 3 |
+| `src/demo/WP_C_ACCEPTANCE.md` | RETIRE after extracting valid Authority; history remains in Git | 3 |
+| `src/demo/futures_basis/ACCEPTANCE.md` | RETIRE after extracting valid Authority; history remains in Git | 3 |
+| `src/demo/futures_basis/ARCHITECTURE.md` | RETIRE after extracting valid Authority; history remains in Git | 3 |
+| `src/demo/futures_basis/DEPLOYMENT_ACCEPTANCE.md` | RETIRE after extracting valid Authority; history remains in Git | 3 |
+| `src/demo/futures_basis/README.md` | RETIRE after extracting valid Authority; history remains in Git | 3 |
 | `src/demo/futures_basis/demo.css` | RETIRE | 3 |
 | `src/demo/futures_basis/fixture.test.ts` | RETIRE | 3 |
 | `src/demo/futures_basis/fixture.ts` | RETIRE | 3 |
@@ -129,12 +129,12 @@ Classification is a planned disposition, not work performed. Family gates in the
 | `src/demo/public/admission.test.ts` | MERGE tests/demo/admission.test.ts | 3 |
 | `src/demo/public/admission.ts` | MERGE demo/runtime/ | 3 |
 | `src/demo/public/examples/README.md` | MOVE demo/bundles/README.md; current packaging guidance | 2 |
-| `src/demo/public/examples/evidence/review.md` | MOVE demo/bundles/evidence/review.md; preserve exact review bindings | 2 |
+| `src/demo/public/examples/evidence/review.md` | MOVE demo/bundles/evidence/review.md; separate evidence from Manifest/hash admission | 2 |
 | `src/demo/public/examples/package.json` | MERGE demo/bundles/ | 2 |
 | `src/demo/public/index.html` | MERGE demo/runtime/ | 3 |
 | `src/demo/public/main.tsx` | MERGE demo/runtime/ | 3 |
 | `src/demo/public/virtual.d.ts` | MERGE demo/runtime/ | 3 |
-| `src/demo/shell/ACCEPTANCE.md` | MOVE demo/history/shell/ACCEPTANCE.md; historical scope | 3 |
+| `src/demo/shell/ACCEPTANCE.md` | RETIRE after extracting valid Authority; history remains in Git | 3 |
 | `src/demo/shell/StaticShellHarness.tsx` | MOVE tests/static/shell/ | 1 |
 | `src/demo/shell/hashRoutes.ts` | MERGE demo/runtime/ | 3 |
 | `src/demo/shell/index.html` | MOVE tests/static/shell/ | 1 |
