@@ -1,5 +1,9 @@
 # Static Demo V2 runtime authority
 
+## Structural WP0 reconciliation notice
+
+[Directory ownership](../../STRUCTURE.md) and [migration audit](../../STRUCTURAL_MIGRATION.md) now own the target placement and staged retirement. At baseline `4872508`, the actual Pages workflow is main-driven, public D7 implementation exists, and the owner distribution decision below supersedes historical six-PASS wording. Statements below about pending D7 or a still-active feature-branch trigger describe earlier stages; they are not current workflow facts. Existing runtime/build/recovery behavior remains until the assigned WP. The selected WP4 hard cutover supersedes long-term V1 recovery as a target, without removing recovery in WP0. Historical acceptance retains its original revision scope.
+
 Current D7 publication policy: [user-directed decision](AUTHENTICITY.md#d7-user-directed-distribution-decision--2026-11-13); implementation and evidence: [D7 acceptance](D7_RELEASE_ACCEPTANCE.md). Historical BLOCKED records retain their original scope.
 
 Specializes [module ownership](../../ARCHITECTURE.md), [application](../../application.md),

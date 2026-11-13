@@ -1,5 +1,9 @@
 # ui_web Agent Rules
 
+## Structural consolidation routing
+
+Directory ownership is defined by [Structure](STRUCTURE.md); current paths, KEEP/MOVE/MERGE/RETIRE decisions and WP1-WP4 gates are in the [WP0 migration audit](STRUCTURAL_MIGRATION.md) and [baseline inventory](STRUCTURAL_INVENTORY.md). These are target/transition authorities, not evidence that migration has executed. For structural tasks read them before existing Demo or specialized tooling contracts.
+
 ## 适用范围
 
 本文件适用于 `ui_web/` 整棵目录，并在根 [../AGENTS.md](../AGENTS.md) 之上提供模块级执行规则。
