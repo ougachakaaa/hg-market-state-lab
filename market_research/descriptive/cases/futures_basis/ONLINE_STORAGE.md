@@ -6,11 +6,7 @@ It does not authorize reuse of another case's store, database or execution ident
 
 ## Delivery status and cutover
 
-**Approved target, not implemented in storage WP0 (2026-11-12).** The current file-based
-POSIX adapter remains active until storage WP3.
-Its descriptor/UID/mode requirements describe that adapter, not the portable target.
-Implementation differences and acceptance gates are in [Storage reconciliation](../../../STORAGE_RECONCILIATION.md).
-Storage WP numbering is independent of the original case delivery WP numbering.
+SQLite cutover is implemented by storage WP3; actual acceptance and remaining checks are tracked in Storage reconciliation.
 
 Use standard-library `sqlite3`, with no database dependency, ORM, generic store framework,
 queue, cross-module persistence abstraction or scheduling change. Existing public Python

@@ -2,6 +2,7 @@
 
 import hashlib
 import json
+import sqlite3
 import sys
 import threading
 import time
@@ -98,7 +99,7 @@ def test_completed_payload_dto_and_repeated_lightweight_status(product, monkeypa
     payload = response.json()
     FuturesBasisReportResponse.model_validate_json(response.content)
     assert payload["data"]["profile"] == "futures_basis_report_evidence_v1"
-    metadata = json.loads((research.root / run_id / "request.json").read_bytes())
+    metadata = json.loads(db(research, "SELECT metadata FROM runs WHERE run_id=?", (run_id,))[0][0])
     identity = client.get("/auth/me").json()
     assert metadata["owner_scope"] == identity["id"]
     assert payload["data"] == research.get_report(run_id, identity["id"])
@@ -116,13 +117,15 @@ def test_completed_payload_dto_and_repeated_lightweight_status(product, monkeypa
     before = list(services.calls)
     research.observe = research.compose = Mock(side_effect=AssertionError("Read executed Research"))
     research._report = Mock(side_effect=AssertionError("Status parsed full report"))
-    decode = online._decode
+    from market_research.descriptive.cases.futures_basis import online_sqlite_store
+
+    decode = online_sqlite_store._decode
 
     def metadata_only(raw):
         assert len(raw) <= 8192
         return decode(raw)
 
-    monkeypatch.setattr(online, "_decode", metadata_only)
+    monkeypatch.setattr(online_sqlite_store, "_decode", metadata_only)
     assert online._READ_PERMIT.acquire(blocking=False)
     try:
         for _ in range(4):
@@ -154,7 +157,7 @@ def test_invalid_request_creates_no_run(product, body):
     app, research, services = product
     client = authenticated_client(app)
     assert_error(client.post(PATH, json=body), 400, "invalid_request")
-    assert list(research.root.iterdir()) == [] and not services.calls
+    assert db(research, "SELECT count(*) FROM runs") == [(0,)] and not services.calls
 
 
 @pytest.mark.parametrize(
@@ -174,7 +177,7 @@ def test_strict_raw_body(product, content, content_type, kind):
     assert_error(
         client.post(PATH, content=content, headers={"Content-Type": content_type}), 400, kind
     )
-    assert not list(research.root.iterdir()) and not services.calls
+    assert db(research, "SELECT count(*) FROM runs") == [(0,)] and not services.calls
 
 
 def test_request_stream_bound_and_exact_limit(product):
@@ -273,10 +276,15 @@ def test_partial_science_and_interrupted_state(product, partial):
     response = client.get(f"{PATH}/{run_id}/report")
     assert response.status_code == 200
     assert response.json()["data"]["status"] == state["result_status"]
-    path = research.root / run_id / "state.json"
-    state = json.loads(path.read_bytes())
+    state = json.loads(db(research, "SELECT state FROM runs WHERE run_id=?", (run_id,))[0][0])
     state.update(status="RUNNING", finished_at=None, result_status=None, result_digest=None)
-    path.write_text(json.dumps(state))
+    db(research, "DELETE FROM results WHERE run_id=?", (run_id,))
+    db(
+        research,
+        "UPDATE runs SET state=?,status='RUNNING',result_length=NULL,profile=NULL,"
+        "scientific_status=NULL WHERE run_id=?",
+        (json.dumps(state).encode(), run_id),
+    )
     app.state.futures_basis_application = FuturesBasisOnlineApplication(root=research.root)
     assert terminal(client, run_id)["status"] == "INTERRUPTED"
     assert_error(client.get(f"{PATH}/{run_id}/report"), 409, "result_unavailable")
@@ -287,32 +295,39 @@ def test_corrupt_oversized_unknown_and_envelope_limit(product, monkeypatch):
     client = authenticated_client(app)
     run_id = client.post(PATH, json=BODY).json()["run_id"]
     terminal(client, run_id)
-    report_path = research.root / run_id / "report.json"
-    state_path = research.root / run_id / "state.json"
-    payload = report_path.read_bytes()
+    from market_research.descriptive.cases.futures_basis import online_sqlite_store
+
+    payload = db(research, "SELECT payload FROM results WHERE run_id=?", (run_id,))[0][0]
     with monkeypatch.context() as context:
         context.setattr(endpoint, "MAX_REPORT_BYTES", len(payload))
         assert_error(client.get(f"{PATH}/{run_id}/report"), 413, "response_too_large")
     with monkeypatch.context() as context:
-        context.setattr(online, "MAX_REPORT_BYTES", len(payload) - 1)
+        context.setattr(online_sqlite_store, "MAX_REPORT_BYTES", len(payload) - 1)
         assert_error(client.get(f"{PATH}/{run_id}/report"), 413, "response_too_large")
-    report_path.write_bytes(payload + b" ")
+    db(research, "UPDATE results SET payload=? WHERE run_id=?", (payload + b" ", run_id))
     assert_error(client.get(f"{PATH}/{run_id}/report"), 409, "corrupt")
     reader = json.loads(payload)
     reader["profile"] = "unknown_v2"
     changed = json.dumps(reader).encode()
-    report_path.write_bytes(changed)
-    state = json.loads(state_path.read_bytes())
+    state = json.loads(db(research, "SELECT state FROM runs WHERE run_id=?", (run_id,))[0][0])
     state["result_digest"] = hashlib.sha256(changed).hexdigest()
-    state_path.write_text(json.dumps(state))
+    db(research, "UPDATE results SET payload=? WHERE run_id=?", (changed, run_id))
+    db(
+        research,
+        "UPDATE runs SET state=?,result_length=? WHERE run_id=?",
+        (json.dumps(state).encode(), len(changed), run_id),
+    )
     assert_error(client.get(f"{PATH}/{run_id}/report"), 409, "unsupported_version")
-    with report_path.open("wb") as stream:
-        stream.truncate(32 * 1024 * 1024 + 1)
+    db(
+        research,
+        "UPDATE results SET payload=zeroblob(?) WHERE run_id=?",
+        (32 * 1024 * 1024 + 1, run_id),
+    )
     assert_error(client.get(f"{PATH}/{run_id}/report"), 413, "response_too_large")
-    report_path.unlink()
+    db(research, "DELETE FROM results WHERE run_id=?", (run_id,))
     assert_error(client.get(f"{PATH}/{run_id}"), 409, "corrupt")
     state["version"] = 2
-    state_path.write_text(json.dumps(state))
+    db(research, "UPDATE runs SET state=? WHERE run_id=?", (json.dumps(state).encode(), run_id))
     for suffix in ("", "/report"):
         assert_error(client.get(f"{PATH}/{run_id}{suffix}"), 409, "unsupported_version")
 
@@ -347,15 +362,10 @@ def test_singleton_startup_offline_export_and_platform_isolation(tmp_path, monke
     assert clients[1].get("/research/capabilities").status_code == 200
     monkeypatch.setattr(runtime, "FuturesBasisOnlineApplication", FuturesBasisOnlineApplication)
     monkeypatch.setattr(runtime, "_runtime", runtime.OnlineRuntime())
-    monkeypatch.setattr(online, "_supports_storage", lambda: False)
-    with pytest.raises(OnlineError, match="unavailable"):
-        FuturesBasisOnlineApplication(root=tmp_path / "unsupported")
-    assert not (tmp_path / "unsupported").exists()
-    client = authenticated_client(create_app())
-    with client:
-        assert_error(client.post(PATH, json=BODY), 503, "unavailable")
-        assert client.get("/research/capabilities").status_code == 200
-        assert client.get("/openapi.json").status_code == 200
+    root = tmp_path / "portable"
+    portable = FuturesBasisOnlineApplication(root=root)
+    assert portable.root == root
+    assert (root / "runs.sqlite3").is_file()
 
 
 def test_openapi_exact_operations_and_access(product):
@@ -421,7 +431,7 @@ def test_query_rejection_and_status_response_bound(product, monkeypatch):
     app, research, services = product
     client = authenticated_client(app)
     assert_error(client.post(PATH + "?owner=x", json=BODY), 400, "invalid_request")
-    assert not list(research.root.iterdir()) and not services.calls
+    assert db(research, "SELECT count(*) FROM runs") == [(0,)] and not services.calls
     for suffix in ("", "/report"):
         assert_error(client.get(f"{PATH}/bad{suffix}?owner=x"), 400, "invalid_request")
     run_id = client.post(PATH, json=BODY).json()["run_id"]
@@ -436,14 +446,14 @@ def test_http_report_contention_preserves_status_reads(product, monkeypatch):
     run_id = client.post(PATH, json=BODY).json()["run_id"]
     terminal(client, run_id)
     entered, release = threading.Event(), threading.Event()
-    original = research._report
+    original = research._store.read_report
 
     def blocked(*args):
         entered.set()
         assert release.wait(5)
         return original(*args)
 
-    monkeypatch.setattr(research, "_report", blocked)
+    monkeypatch.setattr(research._store, "read_report", blocked)
     with ThreadPoolExecutor(max_workers=1) as pool:
         future = pool.submit(client.get, f"{PATH}/{run_id}/report")
         try:
@@ -571,3 +581,8 @@ def test_preflight_openapi_is_bounded_authenticated_and_has_no_422():
     assert {"200", "400", "401", "403", "500"} == set(operation["responses"])
     for response in operation["responses"].values():
         assert response["headers"]["Cache-Control"]["schema"]["const"] == "no-store"
+
+
+def db(research, statement, args=()):
+    with sqlite3.connect(research.root / "runs.sqlite3") as connection:
+        return connection.execute(statement, args).fetchall()

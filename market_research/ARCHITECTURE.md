@@ -5,7 +5,7 @@
 The independent [W1 storage target](descriptive/cases/futures_basis/ONLINE_STORAGE.md)
 and [Publication storage](PUBLICATION_STORAGE.md) own their respective database contracts.
 [Storage reconciliation](STORAGE_RECONCILIATION.md) owns this migration's drift and WP
-readiness. Current POSIX implementations remain active during documentation-only WP0;
+readiness. W1 online Runs use their independent SQLite database; Publication remains POSIX;
 no generic mandatory Research persistence or shared execution identity is introduced.
 
 ## Mission and authority

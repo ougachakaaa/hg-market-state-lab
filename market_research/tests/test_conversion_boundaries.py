@@ -267,6 +267,7 @@ def test_conversion_imports_only_public_contracts_and_has_no_effectful_dependenc
                 "descriptive/cases/futures_basis/report.py",
                 "descriptive/cases/futures_basis/evidence.py",
                 "descriptive/cases/futures_basis/online.py",
+                "descriptive/cases/futures_basis/online_record.py",
             },
         )
 

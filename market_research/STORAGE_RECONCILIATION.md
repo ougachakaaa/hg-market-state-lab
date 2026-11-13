@@ -251,3 +251,66 @@ is blocked by the unchanged W1 POSIX store, and Linux runtime remains NOT RUN.
 Detailed commands, platform results, verdict and remaining blockers are owned by the
 [W2 WP2 evidence](../market_backtesting/cases/futures_roll_long/RECONCILIATION.md#storage-wp2-execution-evidence).
 W1 native-Windows POSIX failures remain WP3 work; this summary does not close them.
+
+
+## Storage WP3 execution summary
+
+Baseline `5c20aaf03349def4c528a9086280f28d51dbc00e`, branch
+`feat/sqlite-portable-runtime`, 2026-11-13, native Windows, root Poetry `.venv` (Python 3.13.7, SQLite 3.50.4, Windows 11 build 22000).
+W1 now exclusively uses its independent `runs.sqlite3` (schema user_version 1).
+`online.py` orchestrates execution; case-local `online_record.py` owns pure validation
+and `online_sqlite_store.py` owns persistence. There is no W1/W2 shared store or schema.
+The removed POSIX capability gate, descriptor-relative directory/file helpers and
+per-run request/state/report execution paths have no fallback or feature flag.
+Old Run files were neither read nor deleted; no market data or other stores were changed.
+
+The metadata table retains immutable owner/request, timestamps, safe failure, execution
+and scientific status, profile, length and digest; a separate table retains exact report
+BLOB bytes. Short operation-owned connections use parameterized SQL, synchronous FULL,
+rollback journaling and conditional transitions. Report validation and bounded canonical
+serialization precede the single result-plus-COMPLETED transaction. Owner authorization
+precedes the reader permit. SQL type/length inspection precedes payload selection;
+status reads neither select report BLOBs nor check their digest.
+
+M2 implementation gap: CLOSED by SQLite integration, atomic publication and scientific
+complete/partial/empty parity tests. M3 and R2 implementation gaps: CLOSED by shared
+process coordination for recovery/admission/terminal visibility, actual active identity
+exclusion, deterministic concurrent-construction/submission tests, terminal admission
+checks and explicit failed-terminal-commit injection. A poisoned store is unavailable
+across same-root instances until process restart; the admission guard is safely released.
+No sleeps/retries were introduced as a concurrency fix. The supported model remains
+one backend process and one active W1 execution, independent of W2.
+
+### Executed verification
+
+| Platform / check | Result |
+| --- | --- |
+| Native Windows W1 storage/application focused tests | PASS: 25 passed, 1 skipped; symlink creation unavailable to OS account. Hard-link and unsafe-sidecar tests execute separately |
+| Native Windows full Research regression | PASS: 1240 passed, 38 skipped before the final additional hard-link test; final focused suite covers that addition |
+| Native Windows full HTTP regression | PASS: 571 passed, 17 skipped; focused W1 HTTP 37 passed. Previously reported 32 W1 errors and one failure do not recur |
+| Native Windows full Backtesting regression | PASS: 590 passed, 2 skipped |
+| Architecture/topology checks | PASS: 23 passed; case-specific boundary allowlists updated for the extracted validator and independent SQLite owner |
+| Native Windows Mypy / Linux-target Mypy | PASS: Research and HTTP, 174 source files each; target checking is not Linux runtime acceptance |
+| Ruff | PASS: Research and HTTP |
+| Generated OpenAPI / TypeScript freshness | PASS: all seven pairs unchanged |
+| Native Windows Chrome browser E2E | PASS: actual Chrome -> Vite -> FastAPI -> temporary Auth/W1 SQLite; submit/busy/poll/report/refresh/history/partial/error/logout; final exit 0. Browser fixture now counts SQL rows, and Windows cleanup terminates only its own child process trees |
+| W1 frontend feature tests | PASS: 6 files, 40 tests |
+| Frontend build / lint | PASS; existing large-bundle warning remains |
+| Full frontend tests | FAIL: 446 passed, 2 timeouts in unchanged MO Option Chain/Premium Plane tests at 5000 ms. No unrelated product or timeout changes made |
+| Demo fixture consistency focused rerun | PASS: five tests; historical WSL byte/View findings are not erased or claimed resolved on WSL |
+| HTTP TLS | NOT RUN: native fixture skips because OpenSSL is missing; historical TLS readiness finding remains unverified |
+| Linux / WSL2 / Linux Docker runtime | NOT RUN: no compatible root Linux environment exercised; installed WSL distribution is not acceptance evidence |
+
+Real subprocess interruption tests terminate during completion commit: before commit
+recovery yields INTERRUPTED with zero result rows; after commit recovery preserves exact
+COMPLETED report bytes. Injected commit failure rolls back report/state atomically.
+Scientific parity compares the complete accepted reader projection from unchanged
+observation/report APIs, including formal specs, fingerprint, numerical results and Views.
+Partial method failures and empty findings retain their existing scientific meanings.
+
+WP3 verdict: **PARTIAL**, because the full frontend suite has two unresolved unrelated
+timeouts and runtime platform gates outside native Windows remain unexecuted. Publication
+migration state is unchanged. WP4 remains ready for its separately scoped implementation;
+this commit does not start WP4 or establish WP6 four-platform acceptance.
+
+Final combined W1 application/storage + HTTP rerun after bounded streaming serialization: PASS, 62 passed / 1 skipped. Browser script initially failed on its obsolete directory-count assertion; final SQL-count run passes. Browser server logs include a ClientDisconnect during deliberate lost-response coverage; the test completes successfully.

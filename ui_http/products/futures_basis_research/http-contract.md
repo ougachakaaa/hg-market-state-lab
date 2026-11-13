@@ -2,11 +2,11 @@
 
 ## Storage transition status
 
-The approved [portable storage target](../../../market_research/descriptive/cases/futures_basis/ONLINE_STORAGE.md) is not implemented by storage WP0.
-Any POSIX/platform-unavailable statements below describe the current adapter only;
-SQLite cutover removes that capability gate while preserving endpoints, DTOs, Auth,
-owner isolation where applicable, safe error mapping and existing unavailable/corrupt
-behavior for real storage failures. No wire contract or generated artifact changes.
+W1 online Runs exclusively use the case-owned [portable SQLite storage](../../../market_research/descriptive/cases/futures_basis/ONLINE_STORAGE.md).
+Native Windows no longer has a POSIX capability gate. Endpoints, DTOs, Auth, owner
+isolation and safe unavailable/corrupt mappings remain unchanged. Actual platform
+verification is recorded in the shared storage reconciliation; portability is not
+acceptance evidence for unexecuted platforms.
 
 This contract specializes [HTTP ownership](../../ARCHITECTURE.md) and is cataloged
 in [HTTP_PRODUCTS](../../HTTP_PRODUCTS.md). Research owns the

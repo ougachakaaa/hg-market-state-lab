@@ -10,7 +10,7 @@ not introduced by this migration. DataLake SQLite, Auth SQLite and Workbench sto
 this migration. Follow module entries to case storage contracts and
 [Publication storage](market_research/PUBLICATION_STORAGE.md). The
 [storage reconciliation](market_research/STORAGE_RECONCILIATION.md) tracks implemented W2 SQLite
-cutover and remaining W1/Publication POSIX implementations;
+cutovers and remaining Publication POSIX implementation;
 storage WP0 itself changed no runtime behavior.
 
 Publication's development-time breaking cutover may abandon the old store, without

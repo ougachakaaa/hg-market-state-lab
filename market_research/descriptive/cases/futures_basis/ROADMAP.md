@@ -3,7 +3,7 @@
 ## Portable storage follow-up
 
 The original case milestones below retain their original evidence and numbering.
-The new, unimplemented storage WP0-WP6 series is tracked in
+The storage WP0-WP6 series is tracked in
 [Storage reconciliation](../../../STORAGE_RECONCILIATION.md); its case-owned target is
 [Online storage](ONLINE_STORAGE.md). Prior PASS does not establish SQLite readiness
 or native Windows storage support.
@@ -407,3 +407,5 @@ integrated synthetic acceptance. No live-source check occurs implicitly.
 WP-P0–WP-P4 are implemented under synthetic Linux acceptance; see
 [verification evidence](PREFLIGHT_ACCEPTANCE.md). This adds no live Source or
 platform/deployment acceptance claim beyond existing WP9 evidence.
+
+Storage WP3 implements W1 SQLite cutover. Current execution evidence and remaining platform gates are recorded in [Storage reconciliation](../../../STORAGE_RECONCILIATION.md#storage-wp3-execution-summary). Historical case acceptance does not establish new platform acceptance.
