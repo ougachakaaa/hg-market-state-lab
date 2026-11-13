@@ -43,7 +43,8 @@ def test_process_restart_preserves_completed_and_interrupts_running(
             try:
                 if client.get("/auth/me").status_code in (200, 401):
                     return
-            except httpx.ConnectError:
+            except httpx.TransportError:
+                # A restarted server can reset the first probe while binding.
                 pass
             time.sleep(0.05)
         pytest.fail("Synthetic backend did not start")
