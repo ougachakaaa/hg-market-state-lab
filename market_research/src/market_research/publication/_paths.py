@@ -13,7 +13,7 @@ def path_value(value: str | Path) -> Path:
     if not raw or "\x00" in raw or ".." in Path(raw).parts:
         raise InvalidPublicationInput("invalid publication path")
     path = Path(raw).absolute()
-    if os.name == "nt" and any(isreserved(part) for part in path.parts[1:]):
+    if os.name == "nt" and any(isreserved(part) or ":" in part for part in path.parts[1:]):
         raise InvalidPublicationInput("reserved publication path")
     return path
 

@@ -791,3 +791,18 @@ was deleted. WP3 is not started.
   `ROADMAP.md`, this `RECONCILIATION.md`;
   `market_research/STORAGE_RECONCILIATION.md`;
   `ui_http/products/backtesting/http-contract.md`.
+
+## Storage WP6 final status (2026-11-13)
+
+The Storage WP2 verdict above is historical execution evidence. WP3 subsequently replaced
+the W1 POSIX store, so the full-HTTP-red and W1 follow-up statements it records no longer
+describe current behavior. Storage WP6 executed W1, W2 and Publication storage acceptance
+on native Windows, WSL2 Ubuntu and Linux Docker; native Linux outside WSL remains
+**NOT RUN**. W2 financial oracles, owner/isolation, atomic result+COMPLETED, recovery,
+bounded reads and HTTP projection were re-exercised without semantic change.
+
+Current evidence, cross-platform matrix, remaining risks and the merge recommendation are
+owned by
+[Storage reconciliation](../../../market_research/STORAGE_RECONCILIATION.md#storage-wp6-execution-evidence).
+This section does not rewrite the historical WP1/WP2 evidence or the original W2 delivery
+numbering.

@@ -5,8 +5,12 @@
 The original case milestones below retain their original evidence and numbering.
 The storage WP0-WP6 series is tracked in
 [Storage reconciliation](../../../STORAGE_RECONCILIATION.md); its case-owned target is
-[Online storage](ONLINE_STORAGE.md). Prior PASS does not establish SQLite readiness
-or native Windows storage support.
+[Online storage](ONLINE_STORAGE.md). Storage WP3 implemented the W1 SQLite cutover and
+storage WP6 executed W1/W2/Publication acceptance on native Windows, WSL2 Ubuntu and
+Linux Docker; native Linux outside WSL remains NOT RUN. Current evidence and remaining
+platform gates are recorded in
+[Storage reconciliation](../../../STORAGE_RECONCILIATION.md#storage-wp6-execution-evidence).
+Historical case acceptance does not establish additional platform acceptance.
 
 This document specializes the [case entry](ARCHITECTURE.md). It owns delivery
 boundaries and reconciliation, not duplicate formulas, schemas or runtime results.
@@ -408,4 +412,8 @@ WP-P0–WP-P4 are implemented under synthetic Linux acceptance; see
 [verification evidence](PREFLIGHT_ACCEPTANCE.md). This adds no live Source or
 platform/deployment acceptance claim beyond existing WP9 evidence.
 
-Storage WP3 implements W1 SQLite cutover. Current execution evidence and remaining platform gates are recorded in [Storage reconciliation](../../../STORAGE_RECONCILIATION.md#storage-wp3-execution-summary). Historical case acceptance does not establish new platform acceptance.
+Storage WP3 implemented the W1 SQLite cutover; storage WP6 completed the final functional
+and platform reconciliation. Current execution evidence, the four-platform matrix and
+remaining unverified platforms are recorded in
+[Storage reconciliation](../../../STORAGE_RECONCILIATION.md#storage-wp6-execution-evidence).
+Historical case acceptance does not establish additional platform acceptance.

@@ -269,6 +269,14 @@ class FuturesBasisSQLiteRunStore:
             result_available=s["status"] == "COMPLETED",
         )
 
+    def authorize(self, run_id: str, owner: str) -> None:
+        """Owner-first existence check that never selects metadata or report bytes."""
+        self.valid_id(run_id)
+        with self._connection() as c:
+            row = c.execute("SELECT owner FROM runs WHERE run_id=?", (run_id,)).fetchone()
+            if row is None or row[0] != owner:
+                raise OnlineError("run_not_found")
+
     def _transition(
         self, c: sqlite3.Connection, run_id: str, status: str, failure: dict[str, Any] | None = None
     ) -> None:
@@ -339,11 +347,15 @@ class FuturesBasisSQLiteRunStore:
             )
             _validate_state(s)
             c.execute("INSERT INTO results VALUES (?,?)", (run_id, payload))
-            c.execute(
-                "UPDATE runs SET state=?,status='COMPLETED',result_length=?,profile=?,"
-                "scientific_status=? WHERE run_id=? AND status='RUNNING'",
-                (json_bytes(s), len(payload), PROFILE_REPORT, scientific_status, run_id),
-            )
+            if (
+                c.execute(
+                    "UPDATE runs SET state=?,status='COMPLETED',result_length=?,profile=?,"
+                    "scientific_status=? WHERE run_id=? AND status='RUNNING'",
+                    (json_bytes(s), len(payload), PROFILE_REPORT, scientific_status, run_id),
+                ).rowcount
+                != 1
+            ):
+                raise OnlineError("corrupt")
 
     def read_report(self, run_id: str, owner: str) -> dict[str, Any]:
         self.valid_id(run_id)
@@ -365,7 +377,10 @@ class FuturesBasisSQLiteRunStore:
     def recover(self, active: tuple[str, str] | None = None) -> None:
         with self._connection(write=True, initialize=True) as c:
             for (run_id,) in c.execute("SELECT run_id FROM runs").fetchall():
-                self.valid_id(run_id)
+                try:
+                    self.valid_id(run_id)
+                except OnlineError:
+                    raise OnlineError("corrupt") from None
                 _, s = self._record(c, run_id)
                 if active != (str(self.root), run_id) and s["status"] in {"PENDING", "RUNNING"}:
                     self._transition(

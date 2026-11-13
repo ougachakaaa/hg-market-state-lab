@@ -74,6 +74,17 @@ def test_invalid_paths(value):
         PublicationStore(value)
 
 
+@pytest.mark.parametrize("name", ["CON", "trail.", "source:stream"])
+def test_windows_reserved_and_stream_names_rejected(tmp_path, batch, name):
+    if os.name != "nt":
+        pytest.skip("Windows path-name test")
+    path = Path(str(tmp_path) + "\\" + name)
+    with pytest.raises(InvalidPublicationInput):
+        PublicationStore(path)
+    with pytest.raises(InvalidPublicationInput):
+        retain_source(batch, "source", path)
+
+
 def test_source_exclusive_and_aliases(tmp_path, batch):
     path = tmp_path / "source.json"
     source = retain_source(batch, "source", path)

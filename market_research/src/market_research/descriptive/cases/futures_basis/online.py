@@ -169,11 +169,8 @@ class FuturesBasisOnlineApplication:
         self._store.valid_id(run_id)
         with _PROCESS_LOCK:
             self._available()
-        # Owner authorization precedes the full-reader permit, even under contention.
-        with self._store._connection() as connection:
-            row = connection.execute("SELECT owner FROM runs WHERE run_id=?", (run_id,)).fetchone()
-            if row is None or row[0] != owner_scope:
-                raise OnlineError("run_not_found")
+            # Owner authorization precedes the full-reader permit, even under contention.
+            self._store.authorize(run_id, owner_scope)
         if not _READ_PERMIT.acquire(blocking=False):
             raise OnlineError("read_busy")
         try:

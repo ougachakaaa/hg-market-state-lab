@@ -136,12 +136,26 @@ No blocking W2 acceptance or implementation drift remains; merging is a separate
   execution, automatic cleanup/TTL, standalone online evidence/replay endpoints,
   result CSV/copy/export and production SLA remain outside this release.
 - Full canonical evidence/replay is implemented in WP4; the online result exposes its summary.
-- Native Windows store/backend support and Nginx/Docker production deployment are
-  Deferred / NOT RUN. Windows Chrome to WSL acceptance passed in [WP8](WP8_ACCEPTANCE.md).
+- The portable SQLite online store supports native Windows, Linux, WSL2 and Linux Docker
+  on local filesystems; the four-platform runtime verification matrix is recorded in
+  [Storage reconciliation](../../../market_research/STORAGE_RECONCILIATION.md#storage-wp6-execution-evidence).
+  Nginx/Docker production deployment remains **NOT RUN** (no production ingress or
+  packaging is claimed). Windows Chrome to WSL acceptance passed in [WP8](WP8_ACCEPTANCE.md).
 - Provider freshness/correction/TTL semantics remain DataLake-owned. HTTP wire details
   and Web generated artifacts belong to WP6/WP7, not this authority reconciliation.
 
-## Storage WP1 readiness (2026-11-13)
+## Storage WP6 final status (2026-11-13)
+
+W2 exclusively uses its independent SQLite store after storage WP2; the POSIX adapter is
+retired. Storage WP6 executed W1/W2/Publication storage acceptance on native Windows,
+WSL2 Ubuntu and Linux Docker; native Linux outside WSL remains **NOT RUN**. Current
+evidence, remaining risks and the four-platform verdict are recorded in
+[Storage reconciliation](../../../market_research/STORAGE_RECONCILIATION.md#storage-wp6-execution-evidence).
+The historical WP1 partial-readiness statement below is superseded by the WP2 cutover and
+this WP6 evidence; it does not supersede the original W2 delivery WP numbering or
+historical acceptance.
+
+## Storage WP1 readiness (2026-11-13, historical)
 
 The independent private SQLite adapter is implemented; production online wiring remains
 legacy POSIX. Storage WP1 acceptance is PARTIAL pending a green supported-platform

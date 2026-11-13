@@ -6,6 +6,12 @@ are NOT RUN.** This is execution evidence for [the online application](ONLINE_AP
 and [Web consumer](../../../../ui_web/src/features/futures_basis_research/ARCHITECTURE.md),
 not a new semantic contract. See [Roadmap](ROADMAP.md) for work-package ownership.
 
+**Storage note (2026-11-13):** the writable POSIX run volume referred to in this dated
+evidence was replaced by the independent W1 portable SQLite store in storage WP3; current
+storage and platform evidence is owned by
+[Storage reconciliation](../../../STORAGE_RECONCILIATION.md#storage-wp6-execution-evidence).
+POSIX run-volume statements below are historical.
+
 ## Baseline and environment
 
 - Repository: `ougachakaaa/hg-market-state-lab`.

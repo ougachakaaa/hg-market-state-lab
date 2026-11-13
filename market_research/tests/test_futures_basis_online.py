@@ -230,6 +230,97 @@ def test_corruption_owner_and_bounded_reads(tmp_path, monkeypatch):
     error("run_not_found", lambda: app.get_run(run_id, "foreign"))
 
 
+def test_foreign_identity_under_reader_contention(tmp_path, monkeypatch):
+    app = application(tmp_path)
+    run_id = app.submit(REQUEST, "owner-a")["run_id"]
+    settled(app, run_id)
+    entered, release = threading.Event(), threading.Event()
+    original = app._store.read_report
+    outcomes = []
+
+    def blocked(*args):
+        entered.set()
+        assert release.wait(5)
+        return original(*args)
+
+    monkeypatch.setattr(app._store, "read_report", blocked)
+    reader = threading.Thread(target=lambda: outcomes.append(app.get_report(run_id, "owner-a")))
+    reader.start()
+    try:
+        assert entered.wait(2)
+        # Foreign identity is rejected before the permit is considered.
+        error("run_not_found", lambda: app.get_report(run_id, "foreign"))
+        error("run_not_found", lambda: app.get_report("0" * 32, "owner-a"))
+        error("read_busy", lambda: app.get_report(run_id, "owner-a"))
+        assert app.get_run(run_id, "owner-a")["status"] == "COMPLETED"
+    finally:
+        release.set()
+        reader.join(5)
+    assert len(outcomes) == 1
+
+
+def test_application_has_no_private_store_sql():
+    import inspect
+
+    from market_research.descriptive.cases.futures_basis import online
+
+    source = inspect.getsource(online)
+    assert "_connection" not in source
+    assert "SELECT " not in source
+
+
+def test_completion_update_requires_single_row(tmp_path, monkeypatch):
+    from market_research.descriptive.cases.futures_basis.evidence import (
+        json_bytes,
+        scientific_payload,
+    )
+    from market_research.descriptive.cases.futures_basis.online_sqlite_store import (
+        FuturesBasisSQLiteRunStore,
+    )
+    from market_research.descriptive.cases.futures_basis.service import observe_futures_basis
+
+    services = Services()
+    source = observe_futures_basis(
+        REQUEST, calendar_service=services, futures_service=services, index_service=services
+    )
+    payload = json_bytes(
+        scientific_payload(compose_report(source, standard_report_request(REQUEST)))[3]
+    )
+    store = FuturesBasisSQLiteRunStore(tmp_path)
+    store.initialize()
+    run_id = store.create(REQUEST, "owner-a")["run_id"]
+    store.transition(run_id, "RUNNING")
+    original = store._schema
+
+    def ignore_completion(connection):
+        original(connection)
+        connection.execute(
+            "CREATE TEMP TRIGGER IF NOT EXISTS skip_completion BEFORE UPDATE ON runs "
+            "WHEN NEW.status='COMPLETED' BEGIN SELECT RAISE(IGNORE); END"
+        )
+
+    monkeypatch.setattr(store, "_schema", ignore_completion)
+    error("corrupt", lambda: store.publish(run_id, payload, "complete"))
+    assert store.status(run_id, "owner-a")["status"] == "RUNNING"
+    with sqlite3.connect(store.path) as c:
+        assert c.execute("SELECT count(*) FROM results").fetchone() == (0,)
+
+
+def test_recovery_treats_malformed_stored_identity_as_corrupt(tmp_path):
+    from market_research.descriptive.cases.futures_basis.online_sqlite_store import (
+        FuturesBasisSQLiteRunStore,
+    )
+
+    store = FuturesBasisSQLiteRunStore(tmp_path)
+    store.initialize()
+    with sqlite3.connect(store.path) as c:
+        c.execute(
+            "INSERT INTO runs VALUES (?,?,?,?,?,NULL,NULL,NULL)",
+            ("BAD", "owner-a", b"{}", b"{}", "PENDING"),
+        )
+    error("corrupt", store.recover)
+
+
 @pytest.mark.parametrize("version", [0, 2])
 def test_existing_invalid_schema_is_not_initialized(tmp_path, version):
     with sqlite3.connect(tmp_path / "runs.sqlite3") as c:

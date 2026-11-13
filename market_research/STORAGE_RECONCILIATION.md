@@ -26,7 +26,8 @@ W1, W2 and Publication exclusively use independent SQLite databases. Their POSIX
 backends are retired. The WP2/WP3 and WP4/WP5 execution summaries below distinguish
 implementation closure from actual platform acceptance. WP0 inspection descriptions
 and original work-package requirements are historical baselines. The repository remains
-pre-production; WP6 has not started.
+pre-production; WP6 final acceptance is recorded in
+[Storage WP6 execution evidence](#storage-wp6-execution-evidence).
 
 ## Inspected boundaries and reconciliation
 
@@ -450,4 +451,193 @@ M	ui_web/scripts/research_browser_smoke.mjs
 A	market_research/src/market_research/publication/_records.py
 A	market_research/src/market_research/publication/_paths.py
 A	market_research/src/market_research/publication/_sqlite.py
+```
+
+## Storage WP6 execution evidence
+
+Baseline `2d769cc042ce270ac6bb0d104022250fc1686a2c`, branch
+`feat/sqlite-portable-runtime`, native Windows checkout, 2026-11-13. Branch, HEAD and
+clean working tree were verified before execution. `origin/develop` (`4c9fea7`) is an
+ancestor of the branch, so a later `develop` merge is a fast-forward without conflicts.
+No merge, no production-data operation and no real-market/Tushare/Publication-user
+evidence was performed. The final WP6 commit is the commit containing this section
+(parent `2d769cc`); its SHA is reported with the WP6 delivery.
+
+### Narrow reconciliation
+
+These are the only runtime changes authorized by WP6. W1/W2/Publication business,
+financial, scientific, HTTP and generated-contract semantics are unchanged.
+
+| Finding | Evidence | Fix |
+| --- | --- | --- |
+| W1 application read path depended on private SQL | `futures_basis/online.py::get_report` opened `_store._connection()` and executed `SELECT owner FROM runs` | Store-owned `authorize(run_id, owner)` performs only the owner existence check without loading metadata or report bytes; `get_report` authorizes before acquiring `_READ_PERMIT`; no SQL remains in `online.py` |
+| W1 completion transition did not verify exactly one row | `online_sqlite_store.py::publish` ignored the conditional `UPDATE` rowcount; a zero-row update could commit an orphan result | `RUNNING → COMPLETED` now requires `.rowcount == 1`; otherwise `corrupt` and rollback (no result row, no completed state) |
+| W1 recovery misclassified a malformed stored run identity | `recover()` surfaced `run_not_found`; W2 maps the same corruption to `corrupt` and ONLINE_STORAGE requires corrupt structures to fail as corrupt | Stored-ID validation in recovery now raises `corrupt` |
+| Windows alternate-stream path bypassed the documented path gate | Probe: `...\source:stream` passed `path_value` and wrote an invisible NTFS stream (`a:b` created file `a`) | Windows-only rejection of `:` in non-drive path components in `publication/_paths.py`; Windows test added |
+| Regression coverage | New W1 tests: foreign identity under reader contention, no private SQL in the application module, completion zero-row rollback, malformed stored identity; new Publication reserved/stream-name test | Focused and full suites pass |
+
+No W2 or Publication behavior changed beyond the Windows path-name rejection. No
+schema, version, lifecycle, financial, statistical or HTTP contract changed.
+
+### Platform verification matrix
+
+| Platform | OS / version | Python | SQLite | Dependency environment | Filesystem | Backend process model | Result |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| Native Windows | Windows 11 (10.0.22000) | 3.13.7 | 3.50.4 | repository root Poetry `.venv`, Poetry 2.3.2 | NTFS (`E:`) | one backend process, in-process worker, process-wide admission/reader guards; real subprocess interruption tests | **PASS** |
+| WSL2 Ubuntu | Ubuntu 22.04.5 LTS, kernel 6.18.58.1-microsoft-standard-WSL2 | 3.13.15 | 3.53.1 | isolated `/tmp/wp6-linux` working-tree copy, in-project `.venv`, Poetry 2.4.3 | ext4 (`/tmp`) | same single-process code; real subprocess interruption tests | **PASS** (storage/Python; browser NOT RUN) |
+| Linux Docker | Debian GNU/Linux 13 (trixie) container, Docker Desktop Linux engine | 3.13.18 | 3.46.1 | `public.ecr.aws/docker/library/python:3.13-slim`, Poetry 2.3.2 in image | overlayfs | same single-process code; real subprocess interruption tests | **PASS** |
+| Linux outside WSL | not available on this host | — | — | — | — | — | **NOT RUN** |
+
+Execution evidence:
+
+- **Native Windows** — `poetry run pytest market_research/tests -q --tb=short`
+  (1286 passed, 3 skipped), `market_backtesting/tests` (590 passed, 2 skipped),
+  `ui_http/tests` (586 passed, 2 skipped), and
+  `config/tests data_snapshot/tests/test_authority_topology.py ui_http/tests/test_architecture.py`
+  (49 passed). TLS fixture executed separately with the existing Git-for-Windows
+  OpenSSL CLI: `$env:PATH="C:\Program Files\Git\usr\bin;"+$env:PATH`,
+  `$env:OPENSSL_CONF="C:\Program Files\Git\usr\ssl\openssl.cnf"` and an isolated
+  `LAB_AUTH_DB_PATH`, `poetry run pytest ui_http/tests/test_auth_tls.py` → 1 passed,
+  three consecutive runs. The host `OPENSSL_CONF` points at a missing PostgreSQL
+  config; this is an environment prerequisite, not a repository change.
+- **WSL2 Ubuntu** — tracked working-tree content copied to `/tmp/wp6-linux` on ext4
+  (the WSL copy also carries `.git` metadata for the segmentation fixture test);
+  `POETRY_VIRTUALENVS_IN_PROJECT=true poetry install --sync` used the unchanged lock.
+  Focused W1/W2/Publication storage suites: 204 passed, 4 skipped (the four Windows-only
+  path/junction tests). Full Research: 1283 passed, 2 failed, 4 skipped; the two failures
+  are the historical Demo fixture regeneration/View differences. Full Backtesting:
+  591 passed plus one Node-prerequisite failure; rerun with that single test
+  explicitly deselected: 591 passed, 1 deselected. Full HTTP: 588 passed, including the
+  real TLS fixture with the distribution OpenSSL.
+- **Linux Docker** — Docker Desktop Linux engine was started from the existing
+  installation. Docker Hub is unreachable from this host; the image was pulled from the
+  public ECR mirror `public.ecr.aws/docker/library/python:3.13-slim`. The image was
+  built from a temporary staging copy outside the repository and ran
+  the same focused storage suites (204 passed, 4 skipped) plus both Publication
+  example scripts inside the container.
+- **Linux outside WSL** — no non-WSL Linux host or authorized remote is available.
+  Minimal completion steps: provision a native Linux host with Python 3.13, Poetry and
+  network access; clone the branch; run `poetry install --sync`; execute the same
+  focused suites and platform probe; record OS, Python, SQLite, filesystem and process
+  model. This is **not** inferred from WSL2 or Docker evidence.
+
+### Functional acceptance
+
+- **W1 Futures Basis online runs — PASS.** Preflight without storage initialization,
+  submit plus single-active-run admission, PENDING → RUNNING → COMPLETED, scientific
+  `complete`/`partial` and legal empty findings, classified failure, full report
+  retrieval with exact canonical bytes, owner isolation, reader permit/`read_busy`,
+  restart recovery, actual active-run exclusion, failed terminal persistence,
+  corrupt/incompatible/missing database, unsafe root/sidecar and hard-link handling,
+  and the new foreign-identity-under-contention regression were exercised. No POSIX-only
+  storage capability is required: the POSIX capability module and descriptor helpers are
+  absent and the same code executed on Windows, WSL2 and Docker. The historical
+  intermittent `run_busy` issue remained closed: 10 consecutive runs of
+  `test_futures_basis_online.py` were green (29 passed, 1 skipped each).
+- **W2 Futures Roll Long online runs — PASS.** Preflight independence, submit and
+  one-active-run guard, successful execution and exact result retrieval, classified
+  failures, atomic result plus COMPLETED, abandoned PENDING/RUNNING recovery, preserved
+  committed results, owner isolation, full-result reader permit, bounded payload and
+  digest checks, corruption/version failures and repeated application construction
+  were exercised. Accepted financial fixtures are compared exactly: M1 total PnL
+  22,000 CNY and Q1 19,000 CNY with their roll transitions, benchmark/excess,
+  performance summary, evidence and V2 Views; no strategy, accounting or numerical
+  value changed.
+- **Research Publication — PASS.** A complete synthetic workflow (accepted completed
+  BatchResult → explicit retained Source Evidence → immutable publish → reopen →
+  list → Manifest → selected Analysis → selected Chart View → external source deletion
+  → readable publication) ran on all three executed platforms. Tests cover repeated ID
+  collision, atomic rollback and real process interruption, corrupt schema/payload,
+  unsupported version, missing/mismatched source, digest/association mismatch,
+  verification capacity, same-publication references, signed-zero/exact canonical JSON,
+  read-only empty store, legacy artifacts ignored without deletion, unsafe
+  paths/aliases/sidecars, and the Windows stream-name rejection. Manifest/list reads
+  loaded no Source/Analysis/Layer BLOBs and selected detailed reads loaded no unrelated
+  records; the read-cost example confirms it. Publication retains immutable evidence
+  semantics and has no legacy compatibility backend.
+
+### Regression outcome
+
+| Check | Result |
+| --- | --- |
+| Native Windows Ruff (configured scopes) | PASS |
+| Native Windows Mypy (research+HTTP 175, Backtesting 52, config 3; also `--platform linux`) | PASS; bare `poetry run mypy` still hits the pre-existing duplicate `test_architecture` module-name limitation, so scoped invocations are used as before |
+| Generated OpenAPI/TypeScript contract freshness (`npm run contract:check`) | PASS: all seven pairs current, no regeneration |
+| Frontend full suite (`npm run test`) | Run 1: 445 passed, 3 timeouts in unchanged MO Option Chain/Premium Plane tests; Run 2: 448 passed. Isolated MO files: 60 passed |
+| Frontend build / lint | PASS; existing large-bundle warning remains; build output is ignored |
+| Browser acceptance (real Chrome → Vite → FastAPI → temporary SQLite) | PASS: W1 Futures Basis online, W2 Backtesting, Research Explorer, Visualization |
+| Publication examples / read-cost / Demo fixture | PASS (`publication_example.py`, `publication_read_cost_example.py`, five Demo fixture tests) |
+| WSL2 focused/full suites | PASS with two pre-existing Demo fixture failures and one Node prerequisite; see matrix |
+| Docker focused suites and examples | PASS |
+| Markdown authority links/anchors/reachability (`data_snapshot/tests/test_authority_topology.py`) | PASS after documentation reconciliation |
+
+### Previously recorded exceptions
+
+| Finding | Classification | Disposition |
+| --- | --- | --- |
+| MO Option Chain / Premium Plane tests timing out at 5000 ms in one full frontend run | Pre-existing unrelated intermittent test timing under full-suite load (MO/Premium files untouched by this branch; second full run and isolated files pass) | Recorded; no timeout/test change |
+| WSL Demo fixture byte/View mismatch | Pre-existing unrelated cross-platform numerical determinism (R1): Linux produced `0.03393217204082061` for annualized basis where the committed Windows-generated fixture has `0.0339321720408206` (same offset 505845 recorded in WP0); Demo producer and fixture are untouched by this branch | Recorded, not repaired or hidden |
+| TLS fixture previously skipped/failing | Environment prerequisite: host `OPENSSL_CONF` points at a missing PostgreSQL config. With the existing Git OpenSSL CLI and valid config it passes on Windows; it also passes on WSL2 using the distribution OpenSSL | Executed, not skipped |
+| Privileged symlink tests | Windows account cannot create symlinks; W2 falls back to a junction, Publication has a separate junction test, and W1's directory-symlink test skips. WSL2 ext4 executed the symlink tests. Hard-link and sidecar tests executed on Windows | Recorded; no privilege elevation attempted |
+| WSL `/tmp` Backtesting Node test | Environment prerequisite: WSL has no Node runtime. Full run shows one failure; explicit single-test deselection run is 591 passed | Recorded; no test weakening |
+| `ruff check .` reports 8 findings in `ui_web/deploy/publish.py` | Pre-existing, outside the repository's configured Ruff scopes and untouched by this branch; canonical scoped Ruff passes | Recorded; no unrelated cleanup |
+| Docker Hub unreachable | Environment/network prerequisite; public ECR mirror used instead | Recorded |
+
+### Remaining known risks and unverified claims
+
+- The complete four-platform gate is **PARTIAL**: native Linux outside WSL was not
+  executed. WSL2 and Docker evidence do not substitute for it.
+- WSL2 and Docker browser end-to-end acceptance is **NOT RUN** (WSL has no Node/Chromium;
+  Docker acceptance is scoped to the Python storage runtime). Native Windows browser
+  acceptance passed.
+- Windows symlink creation was unavailable to this account; W2's junction fallback,
+  Publication's separate junction test and the hard-link/sidecar checks ran, but a
+  separately provisioned Windows developer-mode/admin account is required to execute the
+  W1 directory-symlink branch and file-symlink variants.
+- Unsupported deployment modes remain unsupported and unchanged: multiple backend
+  processes sharing a root, distributed workers/locks, queues, shared network
+  filesystems and production multi-worker serving. No production deployment or SLA is
+  claimed.
+- Portable path checks remain weaker than POSIX descriptor-race resistance; a hostile
+  concurrent writer or coordinated metadata-plus-payload rewrite is outside the stated
+  contract. No perfect power-loss durability or authenticity claim is made.
+- Synthetic fixtures are acceptance evidence only; they do not establish real-market
+  readiness, upstream-data correctness or per-user Publication data.
+
+### WP6 verdict
+
+- **A. Functional storage acceptance: PASS.** W1, W2 and Publication meet their own
+  persistence, lifecycle, integrity, isolation and bounded-read contracts on the
+  executed platforms.
+- **B. Cross-platform acceptance: PARTIAL.** Native Windows PASS, WSL2 Ubuntu PASS,
+  Linux Docker PASS, native Linux outside WSL NOT RUN.
+- **WP6: PARTIAL.** Implementation reconciliation, functional acceptance and three of
+  four runtime platforms are complete; the four-platform gate cannot be declared PASS.
+- **C. Merge readiness: RECOMMENDED for pre-production `develop`.** `origin/develop` is
+  an ancestor, the merge is conflict-free, no branch-introduced semantic or regression
+  drift was found, and the remaining failures are pre-existing/environmental. Unverified
+  claims when merging: native non-WSL Linux runtime, WSL2/Docker browser end-to-end, and
+  Windows privileged symlink execution. This is not a production-readiness declaration.
+  No merge was performed.
+
+### Changed-file inventory (WP6)
+
+Status is relative to baseline `2d769cc...`; A = added, M = modified, D = deleted.
+Only the first five files change runtime behavior or tests; the rest is reconciliation
+documentation.
+
+```text
+M	market_research/src/market_research/descriptive/cases/futures_basis/online.py
+M	market_research/src/market_research/descriptive/cases/futures_basis/online_sqlite_store.py
+M	market_research/src/market_research/publication/_paths.py
+M	market_research/tests/test_futures_basis_online.py
+M	market_research/tests/test_publication_closeout.py
+M	market_research/STORAGE_RECONCILIATION.md
+M	README.md
+M	market_backtesting/cases/futures_roll_long/ROADMAP.md
+M	market_backtesting/cases/futures_roll_long/RECONCILIATION.md
+M	market_research/descriptive/cases/futures_basis/ROADMAP.md
+M	market_research/descriptive/cases/futures_basis/WP9_ACCEPTANCE.md
+M	ui_http/products/futures_basis_research/ACCEPTANCE.md
+M	ui_web/src/features/futures_basis_research/ACCEPTANCE.md
 ```
