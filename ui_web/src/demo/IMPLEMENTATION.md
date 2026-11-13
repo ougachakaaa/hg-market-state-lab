@@ -1,4 +1,4 @@
-# Static Demo implementation handoff: D7-P release readiness
+# Static Demo implementation handoff: INT-1 integration
 
 Execution guidance under [Demo Runtime authority](ARCHITECTURE.md) and
 [Example contract](EXAMPLES.md); feature semantics remain with their canonical owners.
@@ -9,7 +9,20 @@ BLOCKED and the private seven-page composition is implemented. D7 public admissi
 The D0 baseline/extraction descriptions and D1/D2 handoffs below are historical records;
 they do not undo the completed extractions or authorize synthetic formal V2 Examples.
 
-## Current D7-P handoff
+## Current INT-1 integration handoff
+
+[INT-1 acceptance](INTEGRATION_ACCEPTANCE.md) records integration of fixed develop
+`389abc7` and Demo `d6e813a`, the two-parent Merge Commit, SQLite-compatible private
+Publication tooling, shared latest date-axis/readiness/failure UX, rebuilt genuine
+Publication and complete private seven-page Chromium acceptance. It also records
+current engineering checks, the independent Draft PR and retained HTTP/public-release
+boundaries. Exact private paths/digests and final delivery HEAD are in the external
+INT-1 handoff. No real private payload or deployment permission enters Git.
+
+The D7-P and WP-C sections below apply to their explicitly recorded older commits and
+environments. Their historical CI outcomes do not describe the INT-1 PR checks.
+
+## Historical D7-P handoff
 
 [D7 readiness](D7_READINESS.md) records the actual remote CI failures, conditional
 Backtesting Node dependency, upstream delayed-update cleanup, dependency advisory

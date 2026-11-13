@@ -6,7 +6,9 @@ This is the canonical Demo Runtime entry, not a business module, second Web prod
 Mock Backend or new financial capability. D0 established the shared architecture; D1/D2 implemented shell/presentation boundaries.
 D3-R0 supersedes the synthetic V2 source decision. WP-B implements private seven-page
 composition; [WP-C](WP_C_ACCEPTANCE.md) owns engineering evidence. Public V2 admission
-remains a separate, uncompleted D7 review.
+remains a separate, uncompleted D7 review. Current integration execution evidence is
+[INT-1 acceptance](INTEGRATION_ACCEPTANCE.md); historical WP-C/D7-P records retain their
+original commit and environment scope.
 
 ## Identity and ownership
 
