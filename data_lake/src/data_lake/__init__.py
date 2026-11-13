@@ -3,6 +3,7 @@
 from pkgutil import extend_path
 
 from .results import CoverageResult as CoverageResult
+from .results import CredentialMissingError as CredentialMissingError
 from .results import EnsureResult as EnsureResult
 from .results import ExportEnvelope as ExportEnvelope
 from .results import InvalidRequestError as InvalidRequestError

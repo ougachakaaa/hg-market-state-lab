@@ -3,8 +3,9 @@ import type { Dayjs } from 'dayjs'
 import { products, strategies, type RunRequest } from '../api/backtesting'
 import { useBacktesting } from '../hooks/useBacktesting'
 import { usePreflight } from '../hooks/usePreflight'
-import { errorMessage } from '../model/presentation'
+import { dependencyLabels, errorMessage, readinessPresentation } from '../model/presentation'
 import { Result } from '../components/Result'
+import { Failure } from '../components/Failure'
 
 type Fields = { product?: RunRequest['product_code']; start?: Dayjs; end?: Dayjs; strategy?: RunRequest['strategy_profile'] }
 export default function BacktestingPage() {
@@ -28,22 +29,24 @@ export default function BacktestingPage() {
         </Flex>
         {start && end && start > end && <Alert type="warning" title="开始日期不能晚于结束日期。" />}
         <Flex gap="middle" wrap><Button type="primary" htmlType="button" disabled={!valid || run.submitting} loading={run.submitting} onClick={() => { if (query) void run.submit(query) }}>开始回测</Button>
-          <Button htmlType="button" disabled={!query} onClick={readiness.refresh}>重新检查数据</Button></Flex>
+          <Button htmlType="button" disabled={!query} onClick={readiness.refresh}>重新检查缓存</Button></Flex>
       </Form>
+      <Typography.Paragraph type="secondary">重新检查缓存仅检查本地缓存，不获取或下载数据。</Typography.Paragraph>
       {run.submitting && <Typography.Paragraph role="status">SUBMITTING · 正在提交，请勿重复操作。</Typography.Paragraph>}
       {run.feedback && <Alert type="warning" title={errorMessage(run.feedback.kind, true)} />}
     </Card>
     <Card title="数据准备状态">
-      <Typography.Paragraph type="secondary">Preflight 不获取数据。当前缓存不完整仍可提交，执行时可能获取行情；ready=true 也不保证回测成功。</Typography.Paragraph>
+      <Typography.Paragraph type="secondary">这里显示本地行情缓存的准备情况。缓存缺失时，点击「开始回测」将尝试自动获取行情；数据获取需要后端已正确配置 Tushare。</Typography.Paragraph>
       {!query && <Typography.Text>请完整选择产品、日期和策略。</Typography.Text>}
-      {readiness.checking && <Flex align="center" gap="small"><Spin size="small" /><Typography.Text>正在 Preflight…</Typography.Text></Flex>}
+      {readiness.checking && <Flex align="center" gap="small"><Spin size="small" /><Typography.Text>正在检查本地缓存…</Typography.Text></Flex>}
       {readiness.error && <Alert type="warning" title={`数据检查失败：${errorMessage(readiness.error.kind)}`} />}
-      {readiness.result && <><Tag color={readiness.result.ready ? 'green' : 'orange'}>ready={String(readiness.result.ready)}</Tag>
+      {readiness.result && <><Tag color={readiness.result.ready ? 'green' : 'orange'}>{readiness.result.ready ? '本地缓存已就绪' : '本地缓存尚未就绪'}</Tag>
         <Descriptions column={1} items={(['calendar_cffex', 'futures', 'index'] as const).map(key => {
           const item = readiness.result![key]
-          return { key, label: key === 'calendar_cffex' ? 'CFFEX Calendar' : key === 'futures' ? 'Futures' : 'Index', children: <>
-            <Tag>{item.state}</Tag>Reason: {item.reason}
-            {item.coverage && <span> · Coverage: {JSON.stringify(item.coverage)}</span>}
+          const display = readinessPresentation(item)
+          return { key, label: dependencyLabels[key], children: <>
+            <Tag>{display.label}</Tag>{display.description}
+            {display.coverage && <Typography.Paragraph>{display.coverage}</Typography.Paragraph>}
           </> }
         })} /></>}
     </Card>
@@ -56,9 +59,9 @@ export default function BacktestingPage() {
         { key: 'created', label: 'Created', children: run.run.created_at },
         ...('started_at' in run.run ? [{ key: 'started', label: 'Started', children: run.run.started_at ?? '—' }, { key: 'finished', label: 'Finished', children: run.run.finished_at ?? '—' }] : []),
       ]} />}
-      {run.run && 'failure' in run.run && run.run.failure && <Alert type="error" title="回测未产生结果" description={`${run.run.failure.stage} / ${run.run.failure.category} / ${run.run.failure.dependency ?? '—'} / ${run.run.failure.reason}`} />}
+      {['FAILED', 'INTERRUPTED'].includes(run.phase) && <Failure status={run.phase} failure={run.run && 'failure' in run.run ? run.run.failure : undefined} runId={run.id} />}
       {run.error && <Alert type="error" title={errorMessage(run.error.kind)} action={<Button onClick={() => run.retry(run.errorRead === 'result')}>重新读取{run.errorRead === 'result' ? '结果' : '状态'}</Button>} />}
     </Card>
-    {run.result && <Result key={run.result.run_id} data={run.result.data} />}
+    {run.result && !['FAILED', 'INTERRUPTED'].includes(run.phase) && <Result key={run.result.run_id} data={run.result.data} />}
   </Flex>
 }

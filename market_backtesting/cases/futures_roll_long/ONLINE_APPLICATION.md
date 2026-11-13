@@ -180,6 +180,8 @@ Publication uses fixed category/reason `result_too_large`, `serialization_failur
 `storage_failure`; recovery uses `execution/interrupted/interrupted`.
 Diagnostics, detail, provider messages, credentials and paths are never projected.
 
+The public DataLake `CredentialMissingError` is translated to `upstream_operation / credential_missing`, preserving actual stage/dependency, and is included in the safe reason vocabulary. Generic OperationError remains `operation_unavailable`. Preflight stays read-only; submit-time Ensure, HTTP DTO shape and persistence behavior are unchanged.
+
 Representative preserved Core/Case reasons:
 
 | Category | Representative stable reasons |

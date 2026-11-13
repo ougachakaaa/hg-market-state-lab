@@ -51,6 +51,8 @@ expandable online summary, not the full offline package. Explain ideal Close gro
 execution, no fees/slippage/margin, index price benchmark, historical metadata
 assumptions, and cache completeness versus freshness. No export/copy/download capability.
 
+Readiness uses friendly dependency/status labels and Dataset-owned target-unit coverage counts. Unknown targets are not missing datasets; no separate SSE readiness is fabricated. Refresh only checks cache. Failure presentation is a case-owned pure mapping of status and safe OnlineFailure: title, explanation and action, with stage/category/dependency/reason and Run ID in collapsed details. Only ensure/upstream_operation/credential_missing identifies absent Tushare configuration; other and historical failures use conservative guidance. No automatic submission/acquisition or change to Result/date-axis state is introduced.
+
 ## Date-axis presentation
 
 Returns and drawdown share one date-axis control in the Result region, following the

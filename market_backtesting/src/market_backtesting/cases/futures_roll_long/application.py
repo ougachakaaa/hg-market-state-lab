@@ -5,7 +5,13 @@ from __future__ import annotations
 from collections.abc import Callable
 from typing import TypeVar
 
-from data_lake import EnsureResult, InvalidRequestError, OperationError, UnitFailure
+from data_lake import (
+    CredentialMissingError,
+    EnsureResult,
+    InvalidRequestError,
+    OperationError,
+    UnitFailure,
+)
 from data_lake.datasets.tushare_equity_index_futures import FuturesDailyRange
 from data_lake.datasets.tushare_equity_index_futures import create_service as create_futures_service
 from data_lake.datasets.tushare_index_daily import IndexDailyRange
@@ -104,7 +110,9 @@ def _acquire(
     except (OperationError, InvalidRequestError) as exc:
         raise FuturesRollApplicationError(
             "upstream_operation",
-            "operation_unavailable"
+            "credential_missing"
+            if isinstance(exc, CredentialMissingError)
+            else "operation_unavailable"
             if isinstance(exc, OperationError)
             else "upstream_request_rejected",
             stage=stage,

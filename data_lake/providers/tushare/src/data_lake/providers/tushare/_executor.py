@@ -10,7 +10,7 @@ from typing import Any, Protocol
 
 import lab_config
 from data_lake.domain import ExecutionFailure
-from data_lake.results import OperationError
+from data_lake.results import CredentialMissingError, OperationError
 
 from ._client import Client as create_client
 from ._client import RequestFailure
@@ -68,7 +68,7 @@ def resolve_credential() -> str:
     except lab_config.ConfigError as exc:
         raise OperationError(str(exc)) from None
     if not token:
-        raise OperationError("TUSHARE_TOKEN credential is required for Source I/O")
+        raise CredentialMissingError("TUSHARE_TOKEN credential is required for Source I/O")
     return token
 
 

@@ -377,6 +377,7 @@ def test_datalake_imports_name_only_published_symbols() -> None:
             "ExportEnvelope",
             "InvalidRequestError",
             "OperationError",
+            "CredentialMissingError",
         },
         "data_lake.datasets.tushare_trade_calendar": {
             "TradeCalendarExport",

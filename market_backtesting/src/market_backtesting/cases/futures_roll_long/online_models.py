@@ -98,6 +98,7 @@ def project_failure(exc: BaseException, stage: str = "execution") -> OnlineFailu
 SAFE_REASONS = frozenset(
     {
         "operation_unavailable",
+        "credential_missing",
         "upstream_request_rejected",
         "missing_contract_row",
         "entry_multiplier",

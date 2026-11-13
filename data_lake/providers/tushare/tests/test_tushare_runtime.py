@@ -10,7 +10,7 @@ from typing import Any
 import pytest
 
 import lab_config
-from data_lake import OperationError
+from data_lake import CredentialMissingError, OperationError
 from data_lake.domain import ExecutionFailure
 from data_lake.providers.tushare import TushareExecutor, _executor
 
@@ -84,7 +84,7 @@ def test_missing_credentials_never_create_client(
         monkeypatch.setenv("TUSHARE_TOKEN", token)
     monkeypatch.setattr(_executor, "create_client", lambda token: pytest.fail("no client expected"))
     executor = TushareExecutor()
-    with pytest.raises(OperationError, match="credential"):
+    with pytest.raises(CredentialMissingError, match="credential"):
         executor.call("query")
 
 
@@ -95,7 +95,7 @@ def test_blank_environment_does_not_use_fallback(
     env_file.write_text("TUSHARE_TOKEN=fallback\n", encoding="utf-8")
     monkeypatch.setattr(lab_config, "ENV_FILE", env_file)
     monkeypatch.setenv("TUSHARE_TOKEN", " ")
-    with pytest.raises(OperationError):
+    with pytest.raises(CredentialMissingError):
         TushareExecutor().prepare()
 
 

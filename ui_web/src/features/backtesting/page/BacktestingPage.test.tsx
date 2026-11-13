@@ -30,7 +30,7 @@ it('renders four empty controls without defaults or implicit submit', () => {
 it.each(['FAILED', 'INTERRUPTED'])('shows real %s failure without a result', phase => {
   state({ phase, run: { run_id: 'a'.repeat(32), request: fixture.request, created_at: '2026-11-12T00:00:00Z', failure: { stage: 'execution', category: 'internal_failure', dependency: null, reason: 'internal_failure' } } })
   render(<BacktestingPage />)
-  expect(screen.getByText(phase)).toBeTruthy(); expect(screen.getByText('回测未产生结果')).toBeTruthy()
+  expect(screen.getByText(phase)).toBeTruthy(); expect(screen.getByText(phase === 'INTERRUPTED' ? '回测执行已中断' : '回测执行失败')).toBeTruthy()
   expect(screen.queryByTestId('backtest-result')).toBeNull()
 })
 it.each([['STATUS_ERROR', 'status', false], ['RESULT_ERROR', 'result', true]])('retries %s only as GET', (phase, errorRead, result) => {
@@ -70,4 +70,16 @@ it('switches the Result date axis without submitting, reading or resetting the w
   rerender(<BacktestingPage />)
   expect(selected('Trading Days')).toContain('ant-segmented-item-selected')
   vi.unstubAllGlobals()
+})
+
+it('shows exact credential guidance with collapsed diagnostics and no implicit submit', () => {
+ const s = state({ phase: 'FAILED', id: 'a'.repeat(32), run: { request: fixture.request, created_at: '2026-11-12T00:00:00Z', status: 'FAILED', failure: { stage: 'ensure', category: 'upstream_operation', dependency: 'calendar_cffex', reason: 'credential_missing' } } })
+ render(<BacktestingPage />)
+ expect(screen.getByText('无法获取 CFFEX 交易日历，因为后端未配置 Tushare Token。')).toBeTruthy()
+ expect(screen.getByText(/如果进程环境变量中存在同名空值/)).toBeTruthy()
+ expect(screen.queryByText('credential_missing')).toBeNull()
+ fireEvent.click(screen.getByText('技术详情'))
+ expect(screen.getByText('credential_missing')).toBeTruthy()
+ expect(s.submit).not.toHaveBeenCalled(); expect(s.retry).not.toHaveBeenCalled()
+ expect(screen.queryByTestId('backtest-result')).toBeNull()
 })

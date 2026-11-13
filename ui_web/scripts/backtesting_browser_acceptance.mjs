@@ -118,7 +118,7 @@ try {
     }
     await page.getByRole('combobox', { name: '策略', exact: true }).click()
     await page.locator(`.ant-select-item-option[title="${profile}"]`).click()
-    await page.getByText('ready=true', { exact: true }).waitFor()
+    await page.getByText('本地缓存已就绪', { exact: true }).waitFor()
   }
   // Real Chromium date-axis acceptance for the cumulative return and drawdown charts.
   async function dateAxisAcceptance(result) {
@@ -300,11 +300,11 @@ try {
     json.ready = false; json.futures.state = 'incomplete'
     await route.fulfill({ response, json })
   })
-  await page.getByRole('button', { name: '重新检查数据' }).click()
-  await page.getByText('ready=false', { exact: true }).waitFor(); assert.equal(await submit.isEnabled(), true)
+  await page.getByRole('button', { name: '重新检查缓存' }).click()
+  await page.getByText('本地缓存尚未就绪', { exact: true }).waitFor(); assert.equal(await submit.isEnabled(), true)
   await page.unroute('**/api/backtesting/futures-roll/preflight')
   await page.route('**/api/backtesting/futures-roll/preflight', route => route.fulfill({ status: 503, json: { error: { kind: 'unavailable', detail: 'safe', param: null } } }))
-  await page.getByRole('button', { name: '重新检查数据' }).click()
+  await page.getByRole('button', { name: '重新检查缓存' }).click()
   await page.getByText('数据检查失败：回测服务暂不可用，请稍后重试。', { exact: true }).waitFor()
   assert.equal(await submit.isEnabled(), true)
   await page.unroute('**/api/backtesting/futures-roll/preflight')

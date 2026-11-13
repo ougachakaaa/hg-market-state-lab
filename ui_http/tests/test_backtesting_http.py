@@ -385,12 +385,13 @@ class ControlledService:
         return self.delegate.preflight(req)
 
 
-def test_running_busy_and_failed_safe_classification(product):
+@pytest.mark.parametrize("reason", ["operation_unavailable", "credential_missing"])
+def test_running_busy_and_failed_safe_classification(product, reason):
     app, application, client, root, services = product
     service = ControlledService(
         FuturesRollApplicationError(
             "upstream_operation",
-            "operation_unavailable",
+            reason,
             stage="ensure",
             dependency="futures",
         )
@@ -414,7 +415,7 @@ def test_running_busy_and_failed_safe_classification(product):
         "stage": "ensure",
         "category": "upstream_operation",
         "dependency": "futures",
-        "reason": "operation_unavailable",
+        "reason": reason,
     }
     assert_error(client.get(f"{RUNS}/{run_id}/result"), 409, "result_not_ready")
 
