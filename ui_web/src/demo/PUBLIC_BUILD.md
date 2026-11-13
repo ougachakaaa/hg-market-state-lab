@@ -43,7 +43,7 @@ Compatibility is reusable and unprivileged. Main pushes run same-SHA compatibili
 then admission availability. A missing package records BLOCKED and skips V2 build and
 deployment, preserving V1. A present invalid package fails. With an admitted package,
 public build, actual-asset scan, inventory verification and static Chromium checks must
-pass before protected deployment. Environment rules must permit only main ; inability to inspect them blocks deployment. V1 recovery artifact must be
+pass before protected deployment. Environment rules must protect deployment and permit main; inability to inspect them blocks deployment. V1 recovery artifact must be
 retained and verified before cutover. No workflow in this change automatically deploys
 V1 or substitutes V1 for V2. Post-deployment acceptance and recovery remain mandatory.
 
