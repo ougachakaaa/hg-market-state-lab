@@ -10,5 +10,5 @@ export default mergeConfig(demoConfig, {
     'backtesting',
     /(api\/backtesting\.ts|hooks\/useBacktesting\.ts|hooks\/usePreflight\.ts|page\/BacktestingPage\.tsx)$/,
   )],
-  build: { outDir: fileURLToPath(new URL('./dist-backtesting-test', import.meta.url)) },
+  build: { outDir: fileURLToPath(new URL('./.build/tests/backtesting', import.meta.url)) },
 })

@@ -17,7 +17,7 @@ const pass = message => { evidence.checks.push(message); console.log(`PASS: ${me
 try {
   const built = spawnSync('npm', ['run', 'test:premium-static'], { cwd: web, encoding: 'utf8', shell: process.platform === 'win32' })
   assert.equal(built.status, 0, built.stdout + built.stderr)
-  const artifact = resolve(web, 'dist-premium-test')
+  const artifact = resolve(web, '.build/tests/premium')
   const graph = JSON.parse(await readFile(resolve(artifact, 'presentation-dependencies.json'), 'utf8'))
   assert.ok(graph.includes('src/features/mo_option_premium/page/PremiumPlanePresentation.tsx'))
   assert.ok(graph.includes('src/features/mo_option_premium/api/validatePremiumPlane.ts'))

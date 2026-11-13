@@ -11,5 +11,5 @@ export default mergeConfig(demoConfig, {
     /(api\/catalog\.ts|hooks\/useCatalog\.ts|page\/ResearchWorkspacePage\.tsx)$/,
     ['src/app/routeInventory.ts', 'src/demo/shell/hashRoutes.ts'],
   )],
-  build: { outDir: fileURLToPath(new URL('./dist-catalog-test', import.meta.url)) },
+  build: { outDir: fileURLToPath(new URL('./.build/tests/catalog', import.meta.url)) },
 })

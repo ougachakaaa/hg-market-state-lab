@@ -36,7 +36,7 @@ retiring their implementation; restricted material does not become a public Bund
 
 ## Data and build boundary
 
-**One Complete Business Result ? One Bundle ? One Hash.** One Manifest indexes all
+**One Complete Business Result -> One Bundle -> One Hash.** One Manifest indexes all
 seven current Examples as seven Bundles. Multiple HTTP requests may assemble one complete
 business Result Bundle; request count does not determine Bundle count. SHA-256 binds exact bytes.
 Formal producer contracts continue to own Result meaning and DTOs.
@@ -79,3 +79,12 @@ authorities and repair inbound/outbound navigation with their implementation, wi
 Only one formal Demo generation is retained. Superseded Demo documents retire after extracting
 valid Authority; Git History preserves their original conclusions. No demo/history tree is planned.
 Independent business results, research evidence and data are preserved. WP1A retires no runtime or V1 archive.
+
+## WP1A build outputs
+
+Current Online build/preview uses `.build/online/`; Public Demo packaging uses `.build/demo/`
+(site, receipt and verification evidence). Temporary V1 uses `.build/tests/v1/`; seven static
+suites use `.build/tests/<suite>/`, compatibility probes use unique subdirectories there.
+Vite and configurable TypeScript caches use `.build/cache/`. Third-party dependency caches
+remain npm-owned. Explicit external delivery roots and OS temporary browser/backend runtime
+roots retain their semantics. WP1B owns source/config/test relocation; WP1A moves none of them.

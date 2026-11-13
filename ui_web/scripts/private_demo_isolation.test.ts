@@ -17,9 +17,9 @@ it('rejects production execution dependencies before emitting a private artifact
 it('keeps public V1 entry, output and Pages upload independent of private admission', () => {
   const config = readFileSync(resolve('vite.demo.config.ts'), 'utf8')
   expect(config).toContain('./src/demo/futures_basis')
-  expect(config).toContain('./dist-demo')
+  expect(config).toContain('./.build/tests/v1')
   expect(config).not.toMatch(/private|process\.env/)
   const workflow = readFileSync(resolve('../.github/workflows/deploy-demo-pages.yml'), 'utf8')
-  expect(workflow).toContain('ui_web/dist-demo-public/site')
+  expect(workflow).toContain('ui_web/.build/demo/site')
   expect(workflow).not.toContain('demo:build:private')
 })

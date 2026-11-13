@@ -17,7 +17,7 @@ const pass = message => { evidence.checks.push(message); console.log(`PASS: ${me
 try {
   const built = spawnSync('npm', ['run', 'test:static-shell'], { cwd: web, encoding: 'utf8', shell: process.platform === 'win32' })
   assert.equal(built.status, 0, built.stdout + built.stderr)
-  const artifact = resolve(web, 'dist-demo-shell')
+  const artifact = resolve(web, '.build/tests/shell')
   const inventory = JSON.parse(await readFile(resolve(artifact, 'shell-routes.json'), 'utf8'))
   const graph = JSON.parse(await readFile(resolve(artifact, 'shell-dependencies.json'), 'utf8'))
   assert.equal(inventory.routes.length, 7)

@@ -34,9 +34,9 @@ export function checkPublicSafety() {
   assert.ok(config.includes('./src/demo/futures_basis') && config.includes('publicDir: false'))
   assert.ok(!/private|process\.env/.test(config), 'Public build input boundary')
   const workflow = readFileSync(resolve(repository, '.github/workflows/deploy-demo-pages.yml'), 'utf8')
-  assert.ok(workflow.includes('path: ui_web/dist-demo-public/site'))
+  assert.ok(workflow.includes('path: ui_web/.build/demo/site'))
   assert.ok(!/demo:build:private|private_demo|--r2|--wpa|TUSHARE_TOKEN/.test(workflow), 'Private deployment path')
-  const root = resolve(repository, 'ui_web/dist-demo')
+  const root = resolve(repository, 'ui_web/.build/tests/v1')
   const files = []
   function scan(dir) {
     for (const item of readdirSync(dir, { withFileTypes: true })) {

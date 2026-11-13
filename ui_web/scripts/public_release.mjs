@@ -8,7 +8,7 @@ import { assertNoCredentials } from './public_asset_safety.mjs'
 export const web = fileURLToPath(new URL('../', import.meta.url))
 export const repository = resolve(web, '..')
 export const packageRoot = resolve(web, 'src/demo/public/examples')
-export const output = resolve(web, 'dist-demo-public')
+export const output = resolve(web, '.build/demo')
 export const sha = bytes => createHash('sha256').update(bytes).digest('hex')
 export function inventory(root) {
   const files = []

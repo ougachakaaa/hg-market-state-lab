@@ -20,7 +20,7 @@ const hash = async () => page.evaluate(() => window.location.hash)
 try {
   const built = spawnSync('npm', ['run', 'test:futures-basis-static'], { cwd: web, encoding: 'utf8', shell: process.platform === 'win32' })
   assert.equal(built.status, 0, built.stdout + built.stderr)
-  const artifact = resolve(web, 'dist-futures-basis-test')
+  const artifact = resolve(web, '.build/tests/futures-basis')
   const graph = JSON.parse(await readFile(resolve(artifact, 'presentation-dependencies.json'), 'utf8'))
   for (const module of [
     'src/features/futures_basis_research/page/FuturesBasisPresentation.tsx',

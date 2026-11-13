@@ -67,7 +67,8 @@ jobs:
         if: steps.admission.outputs.admitted == 'true'
         with:
           name: portfolio-public-${{ github.sha }}
-          path: ui_web/dist-demo-public
+          path: ui_web/.build/demo
+          include-hidden-files: true
           retention-days: 90
     outputs:
       admitted: ${{ steps.admission.outputs.admitted }}
@@ -96,13 +97,13 @@ jobs:
       - uses: actions/download-artifact@v5
         with:
           name: portfolio-public-${{ github.sha }}
-          path: ui_web/dist-demo-public
+          path: ui_web/.build/demo
       - run: node scripts/verify_public_artifact.mjs ${{ github.sha }}
         working-directory: ui_web
       - uses: actions/configure-pages@v6.0.0
       - uses: actions/upload-pages-artifact@v5.0.0
         with:
-          path: ui_web/dist-demo-public/site
+          path: ui_web/.build/demo/site
       - uses: actions/deploy-pages@v5.0.1
         id: deployment
       - run: npx playwright install --with-deps chromium
@@ -116,7 +117,8 @@ jobs:
         if: always()
         with:
           name: portfolio-online-${{ github.sha }}
-          path: ui_web/dist-demo-public/browser-online
+          path: ui_web/.build/demo/browser-online
+          include-hidden-files: true
           retention-days: 90
       - uses: actions/download-artifact@v5
         if: steps.online.outcome == 'failure'

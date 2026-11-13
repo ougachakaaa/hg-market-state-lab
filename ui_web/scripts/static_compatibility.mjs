@@ -1,12 +1,13 @@
 // No private input and no business execution: inspect the real entry's build graph.
 import { build } from 'vite'
 import react from '@vitejs/plugin-react'
-import { mkdtempSync, rmSync } from 'node:fs'
-import { tmpdir } from 'node:os'
+import { mkdirSync, mkdtempSync, rmSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { staticPresentationIsolation } from './staticPresentationIsolation.ts'
 import { privateDemoIsolation } from './private_demo_isolation.mjs'
-const output = mkdtempSync(resolve(tmpdir(), 'static-contract-'))
+const testRoot = resolve('.build/tests')
+mkdirSync(testRoot, { recursive: true })
+const output = mkdtempSync(resolve(testRoot, 'static-contract-'))
 try {
   await build({ configFile: resolve('vite.demo.config.ts'), plugins: [staticPresentationIsolation(
     'futures_basis_research',

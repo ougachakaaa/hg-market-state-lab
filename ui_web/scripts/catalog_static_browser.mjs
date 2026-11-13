@@ -19,7 +19,7 @@ try {
   const descriptor = JSON.parse(await readFile(resolve(web, 'src/features/research_catalog/api/catalog.fixture.json'), 'utf8'))
   const built = spawnSync('npm', ['run', 'test:catalog-static'], { cwd: web, encoding: 'utf8', shell: process.platform === 'win32' })
   assert.equal(built.status, 0, built.stdout + built.stderr)
-  const artifact = resolve(web, 'dist-catalog-test')
+  const artifact = resolve(web, '.build/tests/catalog')
   const graph = JSON.parse(await readFile(resolve(artifact, 'presentation-dependencies.json'), 'utf8'))
   assert.ok(graph.includes('src/features/research_catalog/page/ResearchOverviewPresentation.tsx'))
   assert.ok(graph.includes('src/features/research_catalog/api/validateCatalog.ts'))

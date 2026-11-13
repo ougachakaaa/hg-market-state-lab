@@ -19,7 +19,7 @@ const pass = message => { evidence.checks.push(message); console.log(`PASS: ${me
 try {
   const built = spawnSync('npm', ['run', 'test:backtesting-static'], { cwd: web, encoding: 'utf8', shell: process.platform === 'win32' })
   assert.equal(built.status, 0, built.stdout + built.stderr)
-  const artifact = resolve(web, 'dist-backtesting-test')
+  const artifact = resolve(web, '.build/tests/backtesting')
   const graph = JSON.parse(await readFile(resolve(artifact, 'presentation-dependencies.json'), 'utf8'))
   for (const module of [
     'src/features/backtesting/page/BacktestingPresentation.tsx',

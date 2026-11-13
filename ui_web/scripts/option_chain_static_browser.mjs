@@ -17,7 +17,7 @@ const pass = message => { evidence.checks.push(message); console.log(`PASS: ${me
 try {
   const built = spawnSync('npm', ['run', 'test:option-chain-static'], { cwd: web, encoding: 'utf8', shell: process.platform === 'win32' })
   assert.equal(built.status, 0, built.stdout + built.stderr)
-  const artifact = resolve(web, 'dist-option-chain-test')
+  const artifact = resolve(web, '.build/tests/option-chain')
   const graph = JSON.parse(await readFile(resolve(artifact, 'presentation-dependencies.json'), 'utf8'))
   assert.ok(graph.includes('src/features/mo_option_chain/page/OptionChainPresentation.tsx'))
   assert.ok(graph.includes('src/features/mo_option_chain/api/validateOptionChain.ts'))

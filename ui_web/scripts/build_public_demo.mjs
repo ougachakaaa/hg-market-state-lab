@@ -15,7 +15,7 @@ try {
 } finally { await server.close() }
 process.env.NODE_ENV = 'production'
 rmSync(output, { recursive: true, force: true })
-mkdirSync(output)
+mkdirSync(output, { recursive: true })
 await build({ configFile: false, root: resolve(web, 'src/demo/public'), base: '/hg-market-state-lab/', envDir: false, publicDir: false,
   plugins: [react(), { name: 'reviewed-public-examples', resolveId(id) { if (id === 'virtual:public-examples') return '\0public-examples' }, load(id) { if (id === '\0public-examples') return `export default ${JSON.stringify(envelope)}` } }, privateDemoIsolation('public')],
   build: { outDir: resolve(output, 'site'), sourcemap: false },

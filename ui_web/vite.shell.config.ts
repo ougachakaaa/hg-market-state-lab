@@ -58,9 +58,9 @@ function shellIsolation(): Plugin {
   }
 }
 
-// Verification only; V1 release entry and dist-demo are untouched.
+// Verification only; V1 release entry and .build/tests/v1 are untouched.
 export default mergeConfig(demoConfig, {
   root: fileURLToPath(new URL('./src/demo/shell', import.meta.url)),
   plugins: [shellIsolation()],
-  build: { outDir: fileURLToPath(new URL('./dist-demo-shell', import.meta.url)) },
+  build: { outDir: fileURLToPath(new URL('./.build/tests/shell', import.meta.url)) },
 })

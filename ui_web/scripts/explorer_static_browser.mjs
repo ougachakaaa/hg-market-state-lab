@@ -18,7 +18,7 @@ const pass = message => { evidence.checks.push(message); console.log(`PASS: ${me
 try {
   const built = spawnSync('npm', ['run', 'test:explorer-static'], { cwd: web, encoding: 'utf8', shell: process.platform === 'win32' })
   assert.equal(built.status, 0, built.stdout + built.stderr)
-  const artifact = resolve(web, 'dist-explorer-test')
+  const artifact = resolve(web, '.build/tests/explorer')
   const graph = JSON.parse(await readFile(resolve(artifact, 'presentation-dependencies.json'), 'utf8'))
   for (const module of [
     'src/features/research_explorer/page/ResearchExplorerPresentation.tsx',

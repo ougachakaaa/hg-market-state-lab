@@ -11,5 +11,5 @@ export default mergeConfig(demoConfig, {
     /(api\/research\.ts|hooks\/useExplorer\.ts|page\/ResearchExplorerPage\.tsx)$/,
     ['../market_research/tests/fixtures/publication_visualization_v1.json'],
   )],
-  build: { outDir: fileURLToPath(new URL('./dist-explorer-test', import.meta.url)) },
+  build: { outDir: fileURLToPath(new URL('./.build/tests/explorer', import.meta.url)) },
 })

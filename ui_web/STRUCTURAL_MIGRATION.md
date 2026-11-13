@@ -87,6 +87,14 @@ and every npm command. KEEP does not preclude correcting imports after another o
 Each WP updates narrow Authority first, implements its bounded change, reviews the full diff and
 records acceptance before the next starts. WP0 ends with its documentation commit.
 
+### WP1A / WP1B execution split
+
+WP1A changes output paths only, retaining all Public/V1/Private entries and configs.
+WP1B owns the WP1 source/config/test relocation rows below. Current output paths supersede
+baseline observations: Online `.build/online`, Public `.build/demo`, V1 `.build/tests/v1`,
+seven suites `.build/tests/<suite>`, configurable caches `.build/cache`. Explicit external
+private/report delivery and temporary browser/backend runtime roots remain unchanged.
+
 ### WP1 — placement and generated-output boundary
 
 Move specialized harnesses/configs, test scripts and fixture helpers as mapped above. Keep Online and

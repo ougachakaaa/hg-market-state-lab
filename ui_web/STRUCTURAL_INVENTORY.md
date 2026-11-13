@@ -240,3 +240,11 @@ feature testing Authority and formal offline reader. Root Authority remains in p
 | External private R2/R3/WPA and output roots | No discovery or deletion; preserve isolation, never auto-copy into public bundles |
 | .github/workflows/{demo-compatibility,deploy-demo-pages,release-preflight}.yml | KEEP repository location; invocation chains and WP gates in migration audit |
 | market_research/scripts/futures_basis_demo_fixture.py and tests/test_futures_basis_demo_fixture.py | WP4 producer-policy reconciliation before retirement; Python workflow check is active |
+
+## WP1A current output override
+
+Tables above preserve WP0 baseline observations. Current producers/consumers use `.build/online`,
+`.build/demo`, `.build/tests/v1`, `.build/tests/{shell,option-chain,premium,catalog,explorer,futures-basis,backtesting}`
+and `.build/cache`. Source/config/test relocation remains WP1B. npm commands retain names:
+their configs/scripts own output defaults. Old ignored dist directories are retained.
+Explicit external private/report delivery roots and browser temporary runtimes remain unchanged.

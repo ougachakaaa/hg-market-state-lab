@@ -29,7 +29,7 @@
 | `ProjectRoot` | 空字符串 | 自动使用 `deploy` 的父目录；也可指定 Windows 项目路径。 |
 | `PackageManager` | `npm` | 当前项目固定使用 npm 和 `package-lock.json`。 |
 | `BuildArguments` | `@('run', 'build')` | 传给 npm 的参数数组，不经 shell 求值。 |
-| `BuildOutput` | `dist` | 项目根目录下的构建目录，必须包含 `index.html`。 |
+| `BuildOutput` | `.build/online` | 项目根目录下的构建目录，必须包含 `index.html`。 |
 | `Distribution` | `Ubuntu-24.04` | `wsl --list --verbose` 显示的发行版名称。 |
 | `DeployRoot` | `~/deployments/nginx-gateway` | 已存在的 Linux 部署根目录；`~` 指该发行版的默认用户。 |
 | `SitePath` | `sites/example` | 根目录下的相对站点目录；应只包含该站点的静态文件。 |

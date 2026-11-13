@@ -7,5 +7,5 @@ import demoConfig from './vite.demo.config.ts'
 export default mergeConfig(demoConfig, {
   root: fileURLToPath(new URL('./src/features/mo_option_chain/testing/static', import.meta.url)),
   plugins: [staticPresentationIsolation('mo_option_chain', /(api\/moOptionChain\.ts|hooks\/useOptionChain\.ts|page\/OptionChainPage\.tsx|\/index\.ts)$/)],
-  build: { outDir: fileURLToPath(new URL('./dist-option-chain-test', import.meta.url)) },
+  build: { outDir: fileURLToPath(new URL('./.build/tests/option-chain', import.meta.url)) },
 })

@@ -47,7 +47,7 @@ try {
   }
   assert.throws(() => validateIdentity({ ...original.examples.chain.identity, delivery: 'production' }, 'chain')); pass('Delivery separated from origin')
   assert.throws(() => externalPath(resolve(paths.output, 'missing-package'))); pass('Missing Private Package')
-  assert.throws(() => externalPath(resolve(web, 'dist-demo'))); pass('Private Data Routed to Public Build')
+  assert.throws(() => externalPath(resolve(web, '.build/tests/v1'))); pass('Private Data Routed to Public Build')
   assert.throws(() => externalPath('relative/path')); pass('Relative Input Rejected')
   mkdirSync(paths.output, { mode: 0o700 })
   writeFileSync(resolve(paths.output, 'negative.json'), JSON.stringify({ status: 'PASS', checks }, null, 2))
