@@ -2,8 +2,8 @@ import { formatUnit } from '../../../shared/format/unit'
 import { intervalLabels } from '../../../shared/format/interval'
 import { historyOptions, histogramOptions } from './presentation'
 import { useState } from 'react'
-import { Alert, Card, Collapse, Descriptions, Flex, Select, Segmented, Table, Tag, Typography, theme } from 'antd'
-import { ChartView } from '../../../shared/visualization'
+import { Alert, Card, Collapse, Descriptions, Flex, Select, Table, Tag, Typography, theme } from 'antd'
+import { ChartView, DateAxisControl, DEFAULT_DATE_AXIS_MODE, type DateAxisMode } from '../../../shared/visualization'
 import type { Method, ReportData, Run } from './types'
 
 const metrics = ['basis_value', 'basis_ratio', 'annualized_basis_ratio']
@@ -40,7 +40,7 @@ export function Report({ data, mode }: { data: ReportData; mode: 'online' | 'off
   const { token } = theme.useToken()
   const [metric, setMetric] = useState(metrics[0])
   const [slot, setSlot] = useState('M0')
-  const [timeScale, setTimeScale] = useState('Trading Days')
+  const [timeScale, setTimeScale] = useState<DateAxisMode>(DEFAULT_DATE_AXIS_MODE)
   if (data.profile !== 'futures_basis_report_evidence_v1') throw new Error('Unsupported report version')
   const distribution = data.distributions.find(d => d.request.metric === metric && d.request.slot === slot)
   const obs = data.request.observation
@@ -81,8 +81,8 @@ export function Report({ data, mode }: { data: ReportData; mode: 'online' | 'off
       </Card>
       <Card id="section-1" title={<Typography.Title level={mode === 'offline' ? 2 : 4} style={{ margin: 0, fontSize: token.fontSizeHeading4, lineHeight: token.lineHeightHeading4 }}>B. 历史基差</Typography.Title>} styles={{ body: { display: 'flex', flexDirection: 'column', gap: token.padding, minWidth: 0 } }} style={{ scrollMarginTop: token.paddingLG }}>
         <Typography.Paragraph>四个 Slot 是相对期限角色。合约转换由竖线和事件详情标注；缺失与转换断线。拖拽放大，工具栏切换 Pan、Reset；图例控制系列显示。decimal_ratio 以一位小数百分比展示；原始数据及证据单位保持不变。</Typography.Paragraph>
-        <Segmented style={{ alignSelf: 'flex-start' }} aria-label="历史基差时间轴" value={timeScale} onChange={setTimeScale} options={['Trading Days', 'Calendar Days']} />
-        {metrics.map(m => <div key={m} style={{ minWidth: 0, overflow: 'hidden' }}><ChartView view={data.views.history[m]} minPlotHeight={480} options={historyOptions(data.views.history[m], data.candidate_dates, timeScale === 'Trading Days', m === 'basis_value')} /></div>)}
+        <DateAxisControl label="历史基差时间轴" value={timeScale} onChange={setTimeScale} />
+        {metrics.map(m => <div key={m} style={{ minWidth: 0, overflow: 'hidden' }}><ChartView view={data.views.history[m]} minPlotHeight={480} options={historyOptions(data.views.history[m], data.candidate_dates, timeScale === 'trading', m === 'basis_value')} /></div>)}
       </Card>
       <Card id="section-2" title={<Typography.Title level={mode === 'offline' ? 2 : 4} style={{ margin: 0, fontSize: token.fontSizeHeading4, lineHeight: token.lineHeightHeading4 }}>C. 基差分布</Typography.Title>} styles={{ body: { display: 'flex', flexDirection: 'column', gap: token.padding, minWidth: 0 } }} style={{ scrollMarginTop: token.paddingLG }}>
         <Typography.Text type="secondary">以下为本地展示设置，仅切换已有结果，不会提交请求或重新计算统计。</Typography.Text>

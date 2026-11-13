@@ -51,6 +51,23 @@ expandable online summary, not the full offline package. Explain ideal Close gro
 execution, no fees/slippage/margin, index price benchmark, historical metadata
 assumptions, and cache completeness versus freshness. No export/copy/download capability.
 
+## Date-axis presentation
+
+Returns and drawdown share one date-axis control in the Result region, following the
+repository [date-axis presentation authority](../../../DATE_AXIS_PRESENTATION.md):
+`Trading Days` (default) maps both charts onto the ordered
+`BacktestResult.daily[].trade_date` domain with one position per observed CFFEX
+session; `Calendar Days` keeps real date spacing. The daily order is the authoritative
+domain; the feature never infers sessions from contract codes, provider calendars,
+weekday heuristics or date arithmetic, and its Charts/Model never recalculate values.
+
+The mode is local Result presentation state: it changes neither the Run identity nor
+the Run Request, performs no GET/POST/preflight, writes no URL or browser storage, and
+leaves dates, values, trades, rolls, evidence and fingerprint unchanged. Both charts
+receive the same memoized options object and date domain, so a switch resets the
+horizontal viewport to the new coordinate system, preserves legend selection and keeps
+event annotations aligned. A different Run remounts Result and restores the default.
+
 ## Verification
 
 API, hook and page tests are feature-local. Real Chromium acceptance uses Vite,

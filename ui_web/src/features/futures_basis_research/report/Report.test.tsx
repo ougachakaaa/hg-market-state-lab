@@ -3,7 +3,16 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { Report } from './Report'
 import { validateReportData } from './validate'
 import { readerFixture } from './reader.fixture'
-vi.mock('../../../shared/visualization', () => ({ ChartView: ({ options }: any) => <div data-testid="chart-mode">{options?.ordinalDates ? 'trading' : 'calendar'}</div> }))
+// Keep the reader's real mode state; stub only the shared renderer/control boundary.
+vi.mock('../../../shared/visualization', () => ({
+  ChartView: ({ options }: any) => <div data-testid="chart-mode">{options?.ordinalDates ? 'trading' : 'calendar'}</div>,
+  DateAxisControl: ({ value, onChange, label }: any) => <div aria-label={label}>
+    {[['trading', 'Trading Days'], ['calendar', 'Calendar Days']].map(([mode, text]) =>
+      <button key={mode} onClick={() => onChange(mode)}>{text}</button>)}
+    <span data-testid="chart-mode-state">{value}</span>
+  </div>,
+  DEFAULT_DATE_AXIS_MODE: 'trading',
+}))
 afterEach(cleanup)
 describe('shared reader', () => {
   it('renders six online sections, explicit empty coverage and online-only disclosure', () => {

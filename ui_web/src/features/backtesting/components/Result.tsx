@@ -1,10 +1,16 @@
+import { useMemo, useState } from 'react'
 import { Card, Collapse, Descriptions, Flex, Statistic, Table, Typography } from 'antd'
-import { ChartView } from '../../../shared/visualization'
+import { ChartView, DateAxisControl, DEFAULT_DATE_AXIS_MODE, type DateAxisMode } from '../../../shared/visualization'
 import type { BacktestResult } from '../api/backtesting'
+import { resultChartOptions, tradingDates } from '../model/dateAxis'
 import { money, percent } from '../model/presentation'
 
 export function Result({ data }: { data: BacktestResult }) {
   const s = data.summary
+  const [timeScale, setTimeScale] = useState<DateAxisMode>(DEFAULT_DATE_AXIS_MODE)
+  // Stable references: ChartView treats a new ordinal domain as a coordinate-system change.
+  const dates = useMemo(() => tradingDates(data.daily), [data.daily])
+  const options = useMemo(() => resultChartOptions(dates, timeScale), [dates, timeScale])
   return <Flex vertical gap="large" data-testid="backtest-result">
     <Card title="回测结果 · Result Summary">
       <Descriptions column={{ xs: 1, md: 2 }} items={[
@@ -26,8 +32,15 @@ export function Result({ data }: { data: BacktestResult }) {
         <Statistic title="Roll Count" value={s.roll_count} />
       </Flex>
     </Card>
-    <Card title="累计收益 · Cumulative Return"><div style={{ overflowX: 'auto' }}><div style={{ minWidth: 620 }}><ChartView view={data.views.returns} /></div></div></Card>
-    <Card title="回撤 · Drawdown"><div style={{ overflowX: 'auto' }}><div style={{ minWidth: 620 }}><ChartView view={data.views.drawdown} /></div></div></Card>
+    <Flex vertical gap="small">
+      <Flex align="center" gap="middle" wrap>
+        <Typography.Text type="secondary">时间轴</Typography.Text>
+        <DateAxisControl label="收益与回撤时间轴" value={timeScale} onChange={setTimeScale} />
+        <Typography.Text type="secondary">Trading Days 使用结果中的 CFFEX 观察交易日等间距展示。仅改变横坐标，不重新计算收益或回撤。</Typography.Text>
+      </Flex>
+      <Card title="累计收益 · Cumulative Return"><div style={{ overflowX: 'auto' }}><div style={{ minWidth: 620 }}><ChartView view={data.views.returns} options={options} /></div></div></Card>
+      <Card title="回撤 · Drawdown"><div style={{ overflowX: 'auto' }}><div style={{ minWidth: 620 }}><ChartView view={data.views.drawdown} options={options} /></div></div></Card>
+    </Flex>
     <Card title="交易记录 · Trades"><Table size="small" dataSource={data.trades} rowKey={row => `${row.trade_date}:${row.side}:${row.contract_code}:${row.reason}`}  scroll={{ x: 850 }} columns={[
       { title: 'Trade Date', dataIndex: 'trade_date' }, { title: 'BUY / SELL', dataIndex: 'side' },
       { title: 'Contract Code', dataIndex: 'contract_code' }, { title: 'Execution Close', dataIndex: 'price' },

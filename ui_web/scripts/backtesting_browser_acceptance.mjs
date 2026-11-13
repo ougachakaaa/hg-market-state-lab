@@ -120,6 +120,126 @@ try {
     await page.locator(`.ant-select-item-option[title="${profile}"]`).click()
     await page.getByText('ready=true', { exact: true }).waitFor()
   }
+  // Real Chromium date-axis acceptance for the cumulative return and drawdown charts.
+  async function dateAxisAcceptance(result) {
+    const plots = page.locator('.js-plotly-plot')
+    const dates = result.daily.map(row => row.trade_date)
+    const views = [result.views.returns, result.views.drawdown]
+    const evidenceBefore = evidence.length
+    const statesBefore = states.length
+    assert.ok(dates.length > 3)
+    async function chartState(index) {
+      return plots.nth(index).evaluate(el => ({
+        type: el._fullLayout.xaxis.type,
+        x: el.data.map(trace => trace.x),
+        y: el.data.map(trace => trace.y),
+        shapes: el.layout.shapes.map(shape => shape.x0),
+        annotations: el.layout.annotations.map(annotation => [annotation.text, annotation.x]),
+        range: Array.from(el._fullLayout.xaxis.range),
+        ticktext: el._fullLayout.xaxis.ticktext,
+      }))
+    }
+    async function pointXs(index) {
+      return plots.nth(index).evaluate(el => Array.from(el.querySelectorAll('.scatterlayer .trace')[0]
+        .querySelectorAll('.point')).slice(0, 4).map(point => point.getBoundingClientRect().x))
+    }
+    async function assertMode(mode) {
+      for (const [index, view] of views.entries()) {
+        const actual = await chartState(index)
+        assert.equal(actual.type, mode === 'trading' ? 'linear' : 'date')
+        assert.deepEqual(actual.x, view.layers.map(binding => binding.layer.data.map((mark, position) => mode === 'trading' ? position : mark.x)))
+        assert.deepEqual(actual.y, view.layers.map(binding => binding.layer.data.map(mark => mark.y)))
+        assert.deepEqual(actual.shapes, view.events.map(event => mode === 'trading' ? dates.indexOf(event.x) : event.x))
+        assert.deepEqual(actual.annotations.map(([, x]) => x), view.events.map(event => mode === 'trading' ? dates.indexOf(event.x) : event.x))
+        assert.deepEqual(actual.annotations.map(([text]) => text), view.events.map(event => event.label))
+        if (mode === 'trading') {
+          assert.ok(actual.ticktext.length > 0 && actual.ticktext.length <= 8)
+          assert.ok(actual.ticktext.every(text => /^\d{4}-\d{2}-\d{2}$/.test(text)))
+          assert.ok(actual.range[0] < 0 && actual.range[1] > dates.length - 1 && actual.range[1] < dates.length + 5)
+        }
+      }
+    }
+    async function waitType(type) {
+      await page.waitForFunction(expected => [...document.querySelectorAll('.js-plotly-plot')]
+        .every(el => el._fullLayout?.xaxis?.type === expected), type)
+    }
+    async function drag(index, from, to) {
+      const plot = plots.nth(index)
+      await plot.evaluate(el => el.scrollIntoView({ block: 'center', behavior: 'instant' }))
+      const box = await plot.locator('.nsewdrag').boundingBox()
+      await page.mouse.move(box.x + box.width * from, box.y + box.height * .5)
+      await page.mouse.down()
+      await page.mouse.move(box.x + box.width * to, box.y + box.height * .5, { steps: 12 })
+      await page.mouse.up()
+    }
+    async function waitRangeChanged(index, before) {
+      await page.waitForFunction(({ i, old }) => JSON.stringify(Array.from(document.querySelectorAll('.js-plotly-plot')[i]._fullLayout.xaxis.range)) !== JSON.stringify(old), { i: index, old: before })
+    }
+    await waitType('linear')
+    await assertMode('trading')
+    const tradingRange = (await chartState(0)).range
+    // A long non-session gap occupies one ordinal step in Trading Days.
+    const tradingGaps = await pointXs(0)
+    assert.ok(tradingGaps.length >= 4)
+    assert.ok(Math.abs((tradingGaps[1] - tradingGaps[0]) - (tradingGaps[2] - tradingGaps[1])) < 1.5)
+    // Hover keeps the real supplied date in Trading Days.
+    const returns = plots.first()
+    await returns.locator('.scatterlayer .trace').first().locator('.point').first().hover({ force: true })
+    await page.waitForFunction(() => document.querySelector('.js-plotly-plot .hoverlayer')?.textContent.includes('2025-02-17'))
+    assert.match(await returns.locator('.hoverlayer').textContent(), /Strategy\s*2025-02-17/)
+    await page.screenshot({ path: resolve(output, 'date-axis-trading.png'), fullPage: true })
+    // Zoom in Trading Days, then switch: the calendar viewport must be the full new domain.
+    await returns.locator('[data-title="Zoom"]').click()
+    await drag(0, .15, .75)
+    await waitRangeChanged(0, tradingRange)
+    await page.getByText('Calendar Days', { exact: true }).click()
+    await waitType('date')
+    await assertMode('calendar')
+    const calendarRange = (await chartState(0)).range
+    assert.notDeepEqual(calendarRange, tradingRange)
+    // The 31-day gap is visibly wider than a 1-day gap in Calendar Days.
+    const calendarGaps = await pointXs(0)
+    assert.ok(calendarGaps[1] - calendarGaps[0] > 5 * (calendarGaps[2] - calendarGaps[1]))
+    await returns.locator('.scatterlayer .trace').first().locator('.point').first().hover({ force: true })
+    await page.waitForFunction(() => document.querySelector('.js-plotly-plot .hoverlayer')?.textContent.includes('2025-02-17'))
+    // Zoom, Pan and Reset keep working in Calendar Days and restore the full calendar domain.
+    await drag(0, .45, .7)
+    await waitRangeChanged(0, calendarRange)
+    await plots.first().locator('[data-title="Reset axes"]').click()
+    await page.waitForFunction(old => JSON.stringify(Array.from(document.querySelector('.js-plotly-plot')._fullLayout.xaxis.range)) === JSON.stringify(old), calendarRange)
+    const pan = plots.first().locator('[data-title="Pan"]')
+    await pan.click()
+    await drag(0, .55, .7)
+    await waitRangeChanged(0, calendarRange)
+    await plots.first().locator('[data-title="Reset axes"]').click()
+    await page.waitForFunction(old => JSON.stringify(Array.from(document.querySelector('.js-plotly-plot')._fullLayout.xaxis.range)) === JSON.stringify(old), calendarRange)
+    await page.screenshot({ path: resolve(output, 'date-axis-calendar.png'), fullPage: true })
+    // Legend selection survives mode changes.
+    await returns.locator('.legend .traces').first().click()
+    await page.waitForFunction(() => document.querySelector('.js-plotly-plot')._fullData.some(trace => trace.visible === 'legendonly'))
+    await page.getByText('Trading Days', { exact: true }).click()
+    await waitType('linear')
+    await assertMode('trading')
+    assert.deepEqual((await chartState(0)).range, tradingRange)
+    assert.ok(await returns.evaluate(el => el._fullData.some(trace => trace.visible === 'legendonly')))
+    await page.getByText('Calendar Days', { exact: true }).click()
+    await waitType('date')
+    assert.ok(await returns.evaluate(el => el._fullData.some(trace => trace.visible === 'legendonly')))
+    await page.getByText('Trading Days', { exact: true }).click()
+    await waitType('linear')
+    await returns.locator('.legend .traces').first().click()
+    await page.waitForFunction(() => document.querySelector('.js-plotly-plot')._fullData.every(trace => trace.visible !== 'legendonly'))
+    // Repeated switching stays stable and never changes data or issues a request.
+    for (let round = 0; round < 3; round++) {
+      await page.getByText('Calendar Days', { exact: true }).click(); await waitType('date')
+      await page.getByText('Trading Days', { exact: true }).click(); await waitType('linear')
+    }
+    await assertMode('trading')
+    assert.deepEqual((await chartState(0)).range, tradingRange)
+    assert.equal(evidence.length, evidenceBefore)
+    assert.equal(states.length, statesBefore)
+    console.log('PASS: W2 date-axis default/mapping/sync/spacing/hover/zoom-pan-reset/legend with no requests or value change')
+  }
   const persistedRunIds = () => {
     const result = spawnSync('poetry', ['run', 'python', '-c',
       'import json,sqlite3,sys; from pathlib import Path; c=sqlite3.connect(Path(sys.argv[1]).as_uri()+"?mode=ro",uri=True); print(json.dumps([r[0] for r in c.execute("SELECT run_id FROM runs")])); c.close()',
@@ -162,8 +282,12 @@ try {
     assert.equal(actual.events, payload.data.views.returns.events.length)
     assert.ok(actual.ys.some(ys => JSON.stringify(ys) === JSON.stringify(payload.data.views.returns.layers[0].layer.data.map(m => m.y))))
     assert.equal(actual.tickformat, '.1%')
+    if (runIds.length === 1) await dateAxisAcceptance(payload.data)
     await page.screenshot({ path: resolve(output, `${profile}.png`), fullPage: true })
     await page.reload(); await page.getByTestId('backtest-result').waitFor()
+    // Reloading restores the Run with the default Trading Days viewport.
+    await page.waitForFunction(() => document.querySelector('.js-plotly-plot')._fullLayout.xaxis.type === 'linear')
+    assert.deepEqual(await page.locator('.js-plotly-plot').first().evaluate(el => el.data[0].x.slice(0, 2)), [0, 1])
     assert.ok(page.url().includes(admission.run_id))
   }
   assert.ok(states.includes('RUNNING')); assert.ok(states.includes('COMPLETED'))

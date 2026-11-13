@@ -152,6 +152,8 @@ Feature hooks 可以选择或协调影响 chart projection 的 presentation stat
 
 [Visualization authority](VISUALIZATION.md) 定义明确有限的跨语言 Layer / View contract；Research Explorer 可以消费 producer 已发布的 Layer，feature 仍拥有具体展示语义，shared 只实现 domain-neutral rendering。这个 contract 不授权 arbitrary chart DSL、计算语言或 plugin runtime，也不要求迁移现有 feature charts。
 
+日期型研究图表的 Trading Days / Calendar Days 展示规范、date domain ownership、多图联动与交互不变量由 [date-axis presentation authority](DATE_AXIS_PRESENTATION.md) 拥有。它是 research surface 的 presentation policy：不改变 ChartView 的 generic 默认坐标，也不成为第二个 Visualization schema owner。
+
 Plotly 是当前 chart stack。Plotly-specific implementation 不得扩散到 application shell、Feature Page orchestration、feature API 或 ordinary feature component；同时不得仅为隐藏 Plotly 而创建 generic chart DSL。目标是 containment，不是 abstraction for its own sake。Exact Plotly package、version 与 library API usage 属于实现细节。
 
 ## 5. Shared Infrastructure

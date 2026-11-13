@@ -1,5 +1,10 @@
 import type { DateMark, Detail, VisualizationView } from './contractV2'
 
+/** Frontend date-axis presentation modes; see ui_web/DATE_AXIS_PRESENTATION.md. */
+export type DateAxisMode = 'trading' | 'calendar'
+/** Research-surface default. The generic renderer still defaults to natural date spacing. */
+export const DEFAULT_DATE_AXIS_MODE: DateAxisMode = 'trading'
+
 /** Frontend options, never serialized into a producer View. */
 export interface RenderOptions {
   ordinalDates?: readonly string[]

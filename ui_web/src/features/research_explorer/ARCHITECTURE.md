@@ -13,3 +13,9 @@ one-decimal percentages with the shared formatter. Probability, frequency, count
 and coverage retain their own semantics; observation_unit does not assign units
 to coverage fields. Histogram labels preserve category identity, order and
 inclusion. Raw request and evidence payloads remain unchanged.
+
+This reader renders arbitrary published Views and therefore has no authoritative
+trading-session domain for a date View. Following the
+[date-axis presentation authority](../../../DATE_AXIS_PRESENTATION.md), it does not
+invent a market calendar and exposes no Trading Days default; published date Views keep
+the generic natural date spacing.

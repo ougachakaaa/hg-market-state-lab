@@ -52,6 +52,8 @@ Application entry、认证交互与 gate、feature discovery/navigation 与 comp
 跨语言 domain-neutral Layer / View / Template contract 由 [Visualization authority](VISUALIZATION.md) 拥有；它不建立新的顶层模块或要求 producer 依赖 UI。
 该稳定入口按版本导航到 [V2 date-series contract](VISUALIZATION_V2.md)；V1 与现有 online consumer 的契约不因新版本设计而改变。
 
+日期型研究图表（存在权威交易日 domain、以日期为 X 轴）的 `Trading Days` / `Calendar Days` 展示规范、domain ownership、多图联动与交互不变量由 [Date-axis presentation authority](DATE_AXIS_PRESENTATION.md) 拥有；它是 presentation policy，不覆盖 Visualization 的 generic 契约。
+
 Frontend 内部 application、Page、API、React hooks、pure model、component、chart 与 shared infrastructure 的 ownership、依赖方向和状态边界由 [presentation architecture](presentation-architecture.md) 拥有。具体 feature 的产品展示与 visualization 语义仍由 co-located feature authority 拥有。
 
 Ordinary application UI、Ant Design、application-level theme、generic UI composition 与 custom CSS exception boundary 由 [UI system authority](ui-system.md) 拥有。Analytical visualization 仍由 feature semantics 与 Plotly chart boundary 拥有。

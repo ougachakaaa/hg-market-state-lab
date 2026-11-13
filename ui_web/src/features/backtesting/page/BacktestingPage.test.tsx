@@ -49,3 +49,25 @@ it('formats producer summary and mounts both existing V2 charts, trades and evid
   expect(screen.getByText(fixture.evidence.input_fingerprint)).toBeTruthy()
   expect(screen.getByText(/不包含手续费、滑点和保证金机制/)).toBeTruthy()
 })
+
+it('switches the Result date axis without submitting, reading or resetting the wrong Run', () => {
+  const fetch = vi.fn(); vi.stubGlobal('fetch', fetch)
+  const first = { run_id: 'a'.repeat(32), request: fixture.request, data: fixture as BacktestResult }
+  const s = state({ phase: 'RESULT_READY', id: first.run_id, result: first })
+  const selected = (label: string) => screen.getByText(label).closest('.ant-segmented-item')?.className ?? ''
+  const { rerender } = render(<BacktestingPage />)
+  const preflightRefresh = vi.mocked(usePreflight).mock.results.at(-1)?.value.refresh
+  expect(preflightRefresh).toBeTruthy()
+  expect(selected('Trading Days')).toContain('ant-segmented-item-selected')
+  fireEvent.click(screen.getByText('Calendar Days'))
+  expect(selected('Calendar Days')).toContain('ant-segmented-item-selected')
+  expect(s.submit).not.toHaveBeenCalled()
+  expect(s.retry).not.toHaveBeenCalled()
+  expect(preflightRefresh).not.toHaveBeenCalled()
+  expect(fetch).not.toHaveBeenCalled()
+  // A different Run identity is a new Result lifecycle: the date axis returns to default.
+  state({ phase: 'RESULT_READY', id: 'b'.repeat(32), result: { ...first, run_id: 'b'.repeat(32), data: structuredClone(fixture) as BacktestResult } })
+  rerender(<BacktestingPage />)
+  expect(selected('Trading Days')).toContain('ant-segmented-item-selected')
+  vi.unstubAllGlobals()
+})
