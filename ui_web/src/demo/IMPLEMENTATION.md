@@ -461,3 +461,17 @@ verbatim and is test-only, not a D3 Example or public Demo entry.
 
 D2-F is complete. D3 Static Examples, D4 full composition, D5 compatibility gates and D7
 release switching remain outstanding.
+
+## D3-R2 private real MO Example handoff
+
+D3-R2 technically passes: the two independent real Tushare Product Services produced
+2026-11-11 / MO / close Results, each covering 312 contracts and six expiries;
+Premium has 312 genuine Points. Official HTTP projections, existing frontend
+validators and credential-free private package verification pass. R1 identities
+and all corresponding Raw byte digests agree. Public market redistribution remains
+BLOCKED; no restricted JSON is committed or added to Pages inputs. The private
+versioned package and explicit acquire/verify tooling do not alter Product semantics
+or create an offline financial implementation. Full frontend regression still has
+default-timeout failures. Commands, exact coverage, integrity/replay limits, test
+outcomes and D4 consumption requirements: [D3-R2 acceptance](R2_ACCEPTANCE.md).
+D3-R3/R4 and D4 remain unstarted by this task.

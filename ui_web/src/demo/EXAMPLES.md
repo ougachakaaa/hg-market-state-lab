@@ -23,6 +23,19 @@ public rights clearance; only reviewed public-safe Examples may be committed or 
 
 ## Temporal semantics
 
+Private D3-R2 packaging uses explicit external `--output` and `--r1` paths.
+`ui_web/scripts/private_mo_examples.py acquire` calls the two independent public
+Product Services with a real configured Source; `verify` is credential-free and
+never reacquires. Results are exact official HTTP projections, separate from the
+versioned Demo manifest. SHA-256 inventories bind each Product's own retained Raw,
+Source call timestamps, result and R1 comparison evidence; these are Demo provenance
+digests, not Product-owned input fingerprints. A detached manifest digest detects
+accidental manifest edits. Verification uses official Python DTOs and existing
+TypeScript feature validators, and checks retained identity/price/reference coverage
+without implementing financial formulas. Full financial replay requires the public
+Service against a Source: no pure offline service replay is currently published.
+Neither operation admits data to public builds or clears redistribution rights.
+
 The common inclusive research window is `2026-01-01..2026-11-11`. Requested Window and
 Actual Observed Coverage are separate: retain actual sessions, missing observations and
 producer completeness semantics. Do not replace coverage with request endpoints. No
