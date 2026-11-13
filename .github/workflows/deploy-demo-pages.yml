@@ -135,6 +135,16 @@ jobs:
         if: steps.online.outcome == 'failure'
         with:
           artifact_name: github-pages-recovery
+      - name: Verify restored V1 URL and exact bytes
+        if: steps.online.outcome == 'failure'
+        run: node scripts/verify_v1_online.mjs '${{ steps.deployment.outputs.page_url }}'
+        working-directory: ui_web
+      - uses: actions/upload-artifact@v6
+        if: steps.online.outcome == 'failure'
+        with:
+          name: portfolio-recovery-${{ github.sha }}
+          path: ui_web/v1-recovery-online.json
+          retention-days: 90
       - name: Record failed V2 acceptance
         if: steps.online.outcome == 'failure'
         run: exit 1

@@ -69,13 +69,20 @@ try {
     crypto.subtle.digest = async (...args) => { await gate; return digest(...args) }
   })
   if (publicUrl) {
-    for (const file of admission.files) {
-      const response = await context.request.get(new URL(file.file, base).href)
-      assert.equal(response.status(), 200)
-      const bytes = await response.body()
-      const { createHash } = await import('node:crypto')
-      assert.equal(createHash('sha256').update(bytes).digest('hex'), file.sha256, `Deployed asset ${file.file}`)
+    const { createHash } = await import('node:crypto')
+    let failure
+    for (let attempt = 0; attempt < 12; attempt++) {
+      try {
+        for (const file of admission.files) {
+          const response = await context.request.get(new URL(file.file, base).href)
+          assert.equal(response.status(), 200)
+          const bytes = await response.body()
+          assert.equal(createHash('sha256').update(bytes).digest('hex'), file.sha256, `Deployed asset ${file.file}`)
+        }
+        failure = null; break
+      } catch (error) { failure = error; if (attempt < 11) await new Promise(done => setTimeout(done, 5000)) }
     }
+    if (failure) throw failure
     pass('All deployed file bytes match exact candidate inventory')
   }
   await page.goto(base)
