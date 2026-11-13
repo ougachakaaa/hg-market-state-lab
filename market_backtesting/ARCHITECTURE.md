@@ -1,5 +1,14 @@
 # Market Backtesting module authority
 
+## Portable storage navigation
+
+The case-owned [online storage contract](cases/futures_roll_long/ONLINE_STORAGE.md)
+defines SQLite persistence; [reconciliation](cases/futures_roll_long/RECONCILIATION.md#storage-wp2-execution-evidence)
+tracks storage delivery and links the storage work packages. The online application
+exclusively uses the case-owned SQLite adapter after storage WP2;
+the POSIX store is retired.
+This grants no Research store reuse and changes no public application or HTTP contract.
+
 `market_backtesting` is the repository business module for deterministic strategy
 backtesting over authorized market facts. It is a sibling analytical module, not a
 Research paradigm, a Modeling implementation or an inbound delivery adapter. This

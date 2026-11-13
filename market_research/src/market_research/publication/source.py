@@ -21,7 +21,7 @@ from market_research.descriptive import execution as ex
 from market_research.descriptive import observation as obs
 from market_research.descriptive.cases import trailing_return as case
 
-from ._platform import os_flag, require_descriptor_relative_io
+from ._paths import directories, path_value, regular, same
 from .errors import InvalidPublicationInput, PublicationCollision, PublicationUnavailable
 
 # Explicit fields for the admitted public vocabulary; adding a type requires a V1
@@ -267,20 +267,19 @@ class SourceReference:
 def retain_source(batch: ex.BatchResult, source_id: str, path: str | Path) -> SourceReference:
     """Exclusively retain a completed Batch; caller controls the source location."""
     data = source_bytes(batch, source_id)
-    location = os.path.abspath(os.fspath(path))
-    require_descriptor_relative_io()
+    location = path_value(path)
     try:
-        fd = os.open(
-            location,
-            os.O_WRONLY | os.O_CREAT | os.O_EXCL | os_flag("O_NOFOLLOW"),
-            0o600,
-        )
+        directories(location.parent)
+        fd = os.open(location, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
         with os.fdopen(fd, "wb") as stream:
-            stream.write(data)
+            same(regular(location), os.fstat(stream.fileno()))
+            if stream.write(data) != len(data):
+                raise PublicationUnavailable("incomplete source evidence write")
             stream.flush()
             os.fsync(stream.fileno())
+            same(os.fstat(stream.fileno()), regular(location))
     except FileExistsError as exc:
         raise PublicationCollision("source location already exists") from exc
     except OSError as exc:
         raise PublicationUnavailable("cannot retain source evidence") from exc
-    return SourceReference(source_id, location, digest(data), len(data))
+    return SourceReference(source_id, str(location), digest(data), len(data))

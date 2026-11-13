@@ -196,6 +196,7 @@ def test_only_published_datalake_imports_and_no_forbidden_dependency_edges() -> 
                         "descriptive/cases/futures_basis/report.py",
                         "descriptive/cases/futures_basis/evidence.py",
                         "descriptive/cases/futures_basis/online.py",
+                        "descriptive/cases/futures_basis/online_record.py",
                     } or {
                         "conversion",
                         "association",
@@ -206,7 +207,14 @@ def test_only_published_datalake_imports_and_no_forbidden_dependency_edges() -> 
                         name,
                     )
                     assert name == "market_statistics", (path, name)
-                assert not any(
+                assert (
+                    name == "sqlite3"
+                    and path.relative_to(SOURCE).as_posix()
+                    in {
+                        "descriptive/cases/futures_basis/online_sqlite_store.py",
+                        "publication/_sqlite.py",
+                    }
+                ) or not any(
                     name == prefix or name.startswith(prefix + ".") for prefix in forbidden
                 ), (path, name)
                 if name.startswith("data_lake"):

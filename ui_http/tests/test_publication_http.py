@@ -8,14 +8,8 @@ from fastapi.testclient import TestClient
 
 from http_support.auth import authenticated_client
 from market_research.publication import PublicationStore, publish, retain_source
-from market_research.publication._platform import supports_descriptor_relative_io
 from market_research.publication.visualization import validate_view
 from ui_http.app import create_app
-
-pytestmark = pytest.mark.skipif(
-    not supports_descriptor_relative_io(),
-    reason="Publication storage requires POSIX descriptor-relative operations",
-)
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "market_research" / "tests"))
 from batch_execution_example import run  # noqa: E402
@@ -163,18 +157,20 @@ def test_failures_and_bounds(published, tmp_path, monkeypatch):
 
 
 def test_corrupt_manifest_and_layer(published):
-    import json
+    import sqlite3
 
     client, store, pid = published
-    commit = store.root / "publications" / f"{pid}.json"
-    envelope = json.loads(commit.read_text())
     source_manifest = store.get_publication_manifest(pid)
     view = next(v for analysis in source_manifest["analyses"] for v in analysis["views"])
-    layer = store.root / "bundles" / envelope["bundle"] / "layers" / f"{view['layer_id']}.json"
-    layer.write_text("{}")
+    with sqlite3.connect(store.root / "publications.sqlite3") as c:
+        c.execute(
+            "UPDATE records SET payload=? WHERE kind='layers' AND identity=?",
+            (b"{}", view["layer_id"]),
+        )
     response = client.get(f"/research/publications/{pid}/views/{view['view_id']}")
     assert response.status_code == 409 and response.json()["error"]["kind"] == "corrupt"
-    commit.write_text("{}")
+    with sqlite3.connect(store.root / "publications.sqlite3") as c:
+        c.execute("UPDATE publications SET manifest=?", (b"{}",))
     response = client.get(f"/research/publications/{pid}")
     assert response.status_code == 409 and response.json()["error"]["kind"] == "corrupt"
 
@@ -290,10 +286,10 @@ def test_verification_slot_and_corrupt_source(published):
         assert response.json()["error"]["kind"] == "verification_budget_exceeded"
     finally:
         endpoint._verification_slot.release()
-    import json
+    import sqlite3
 
-    envelope = json.loads((store.root / "publications" / f"{pid}.json").read_text())
-    (store.root / "bundles" / envelope["bundle"] / "source.json").write_text("{}")
+    with sqlite3.connect(store.root / "publications.sqlite3") as c:
+        c.execute("UPDATE records SET payload=? WHERE kind='source'", (b"{}",))
     response = client.get(path)
     assert response.status_code == 409
     assert response.json()["error"]["kind"] == "corrupt"

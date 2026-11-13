@@ -114,17 +114,8 @@ provider freshness or coverage outside it.
 
 ### Native Windows Publication limitation
 
-Publication V1 storage depends on POSIX directory descriptors, `dir_fd`, `O_DIRECTORY` and
-`O_NOFOLLOW` to enforce the [storage contract](../PUBLICATION_STORAGE.md). Native Windows
-lacks these primitives: the public facade remains importable and the combined HTTP app
-starts, but every Publication read and every `retain_source`/`publish` call fails as
-unavailable (HTTP 503 `unavailable`) before touching the filesystem. It does not create a
-native Windows store, and a native Windows Publication runtime is not validated.
-
-The Windows one-click launcher starts the backend and Web with that limitation; the
-Research Explorer reports the unavailable Publication storage. Full Publication use
-requires a validated Linux runtime (or WSL with the same required filesystem capabilities)
-and an explicitly configured `LAB_RESEARCH_PUBLICATION_ROOT`. Native Windows Publication
-remains unavailable pending a separately verified secure implementation. Do not remove
-no-follow checks or substitute zero-valued flags to claim compatibility. This integration
-performs no live market acceptance or default-cache recovery.
+Historical POSIX adapter limitation: retired by storage WP4/WP5. Publication now uses
+portable SQLite and explicit portable source capture. Current implementation and actual
+platform verification are owned by [Publication storage](../PUBLICATION_STORAGE.md) and
+[Storage reconciliation](../STORAGE_RECONCILIATION.md). Earlier acceptance evidence does
+not establish acceptance for the replacement backend or unexecuted platforms.

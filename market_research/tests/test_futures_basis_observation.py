@@ -362,7 +362,7 @@ def test_case_dependencies_and_pure_construction() -> None:
         ]
         assert not any(name.startswith(("data_snapshot", "ui_", "tushare")) for name in imports)
         if "market_statistics" in imports:
-            assert path.name in {"report.py", "evidence.py", "online.py"}
+            assert path.name in {"report.py", "evidence.py", "online.py", "online_record.py"}
             for node in ast.walk(tree):
                 if isinstance(node, ast.ImportFrom) and node.module == "market_statistics":
                     assert {a.name for a in node.names} <= {
@@ -386,7 +386,10 @@ def test_case_dependencies_and_pure_construction() -> None:
                     assert (
                         node.func.attr not in {"export", "ensure", "coverage", "now"}
                         or path.name == "validation.py"
-                        or (path.name == "online.py" and node.func.attr == "now")
+                        or (
+                            path.name in {"online.py", "online_record.py"}
+                            and node.func.attr == "now"
+                        )
                         or (
                             path.name == "preflight.py"
                             and node.func.attr in {"export", "coverage", "now"}

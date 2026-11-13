@@ -1,5 +1,13 @@
 # Market Research architecture authority
 
+## Portable storage navigation
+
+The independent [W1 storage target](descriptive/cases/futures_basis/ONLINE_STORAGE.md)
+and [Publication storage](PUBLICATION_STORAGE.md) own their respective database contracts.
+[Storage reconciliation](STORAGE_RECONCILIATION.md) owns this migration's drift and WP
+readiness. W1 online Runs and Publication use independent SQLite databases;
+no generic mandatory Research persistence or shared execution identity is introduced.
+
 ## Mission and authority
 
 `market_research` transforms historical market facts into reproducible empirical

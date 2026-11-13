@@ -1,5 +1,6 @@
 """Actual thread, WP3/WP4 pipeline, owner and concurrency acceptance."""
 
+import sqlite3
 import threading
 import time
 from dataclasses import asdict, replace
@@ -94,6 +95,14 @@ def test_real_thread_pipeline_and_oracle(
         terminal = wait_terminal(app, accepted.run_id)
         assert terminal.status == "COMPLETED" and terminal.finished_at is not None
         result = app.get_result(accepted.run_id, "alice")
+        from market_backtesting.cases.futures_roll_long import build_backtest_result
+        from market_backtesting.cases.futures_roll_long.online_codec import encode_result
+
+        oracle = build_backtest_result(service.delegate.run(accepted.request))
+        assert result == oracle
+        assert app._available().read_result(accepted.run_id, "alice") == encode_result(
+            oracle, accepted.request
+        )
         assert result.summary.total_pnl == pnl
         assert result.initial_notional.value == 1200000
         assert result.rolls[0].new_contract_code == target
@@ -122,7 +131,9 @@ def test_busy_cross_instance_no_directory_status_not_blocked(tmp_path: Path) -> 
         same = create_futures_roll_online_application(root=tmp_path / "a", service=service)
         for other in (app, second, same):
             assert_error("run_busy", lambda other=other: other.submit(request(), "bob"))
-        assert list((tmp_path / "b").iterdir()) == []
+        assert second._available().path.is_file()
+        with sqlite3.connect(second._available().path) as connection:
+            assert connection.execute("SELECT count(*) FROM runs").fetchone() == (0,)
         assert len(list((tmp_path / "a").iterdir())) == 1
         assert same.get_status(accepted.run_id, "alice").status == "RUNNING"
         assert app.preflight(request(), "alice").ready
@@ -242,7 +253,8 @@ def test_invalid_request_owner_before_admission(tmp_path: Path) -> None:
         app.submit(replace(request(), product_code="OTHER"), "alice")  # type: ignore[arg-type]
     for operation in (app.submit, app.preflight):
         assert_error("invalid_request", lambda operation=operation: operation(request(), ""))
-    assert not list((tmp_path / "runs").iterdir())
+    with sqlite3.connect(app._available().path) as connection:
+        assert connection.execute("SELECT count(*) FROM runs").fetchone() == (0,)
 
 
 def test_thread_start_failure(tmp_path: Path, monkeypatch: Any) -> None:
@@ -364,10 +376,102 @@ def test_busy_admission_does_not_wait_for_metadata_creation(
     try:
         assert entered.wait(2)
         assert_error("run_busy", lambda: app.submit(request(), "bob"))
-        assert list((tmp_path / "runs").iterdir()) == []
+        assert app._store is not None
+        with sqlite3.connect(app._store.path) as connection:
+            assert connection.execute("SELECT count(*) FROM runs").fetchone() == (0,)
     finally:
         release.set()
         thread.join(5)
         service.release.set()
     assert len(accepted) == 1
     assert wait_terminal(app, accepted[0].run_id).status == "COMPLETED"
+
+
+@pytest.mark.parametrize("terminal_failure", [False, True])
+def test_failed_publication_commit_and_terminal_recovery(tmp_path, monkeypatch, terminal_failure):
+    service = ControlledService()
+    root = tmp_path / "runs"
+    app = create_futures_roll_online_application(root=root, service=service)
+    accepted = app.submit(request(), "alice")
+    assert service.entered.wait(2)
+    second = create_futures_roll_online_application(root=root, service=service)
+    store = app._available()
+    original = store._commit
+
+    def fail(connection):
+        status = connection.execute("SELECT status FROM runs").fetchone()[0]
+        if status == "COMPLETED" or terminal_failure:
+            raise sqlite3.OperationalError("private commit detail")
+        original(connection)
+
+    with monkeypatch.context() as patch:
+        patch.setattr(store, "_commit", fail)
+        service.release.set()
+        deadline = time.monotonic() + 5
+        while time.monotonic() < deadline:
+            with online._PROCESS_LOCK:
+                if online._ACTIVE is None:
+                    break
+            time.sleep(0.005)
+        assert online._ACTIVE is None
+        if terminal_failure:
+            for instance in (app, second):
+                assert_error(
+                    "unavailable",
+                    lambda instance=instance: instance.get_status(accepted.run_id, "alice"),
+                )
+        else:
+            state = second.get_status(accepted.run_id, "alice")
+            assert state.status == "FAILED"
+            assert state.failure.category == "storage_failure"
+            assert state.failure.stage == "result_publication"
+        with sqlite3.connect(store.path) as connection:
+            assert connection.execute("SELECT count(*) FROM results").fetchone() == (0,)
+    restarted = create_futures_roll_online_application(root=root, service=service)
+    assert restarted.get_status(accepted.run_id, "alice").status == (
+        "INTERRUPTED" if terminal_failure else "FAILED"
+    )
+
+
+def test_unavailable_initialization_preflight_independent(tmp_path, monkeypatch):
+    def fail(*args):
+        raise OSError("private storage")
+
+    monkeypatch.setattr(online.FuturesRollSQLiteRunStore, "recover", fail)
+    root = tmp_path / "absent"
+    app = create_futures_roll_online_application(root=root, service=fake_services()[0])
+    assert app.preflight(request(), "alice").ready
+    assert not root.exists()
+    assert_error("unavailable", lambda: app.submit(request(), "alice"))
+
+
+def test_application_lock_contention_no_run(tmp_path):
+    app = create_futures_roll_online_application(root=tmp_path / "runs", service=fake_services()[0])
+    with sqlite3.connect(app._available().path) as connection:
+        connection.execute("BEGIN IMMEDIATE")
+        assert_error("unavailable", lambda: app.submit(request(), "alice"))
+    assert online._ACTIVE is None
+    with sqlite3.connect(app._available().path) as connection:
+        assert connection.execute("SELECT count(*) FROM runs").fetchone() == (0,)
+
+
+def test_publication_validation_does_not_hold_process_lock(tmp_path, monkeypatch):
+    entered, release = threading.Event(), threading.Event()
+    original = online.FuturesRollSQLiteRunStore._validate_payload
+
+    def blocked(payload, req):
+        entered.set()
+        assert release.wait(5)
+        original(payload, req)
+
+    monkeypatch.setattr(
+        online.FuturesRollSQLiteRunStore, "_validate_payload", staticmethod(blocked)
+    )
+    app = create_futures_roll_online_application(root=tmp_path / "runs", service=fake_services()[0])
+    accepted = app.submit(request(), "alice")
+    try:
+        assert entered.wait(2)
+        assert app.get_status(accepted.run_id, "alice").status == "RUNNING"
+    finally:
+        release.set()
+        assert wait_terminal(app, accepted.run_id).status == "COMPLETED"

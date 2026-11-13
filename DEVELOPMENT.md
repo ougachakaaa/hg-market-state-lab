@@ -1,5 +1,17 @@
 # Repository Development
 
+## Portable storage transition status
+
+W2 Online exclusively uses SQLite. `LAB_BACKTESTING_RUN_ROOT` remains an absolute
+directory containing `runs.sqlite3`; the default remains the ignored Backtesting
+runtime directory. Old Run directories are ignored without migration or deletion.
+Native Windows and local Linux/WSL use the same single-process implementation;
+actual platform verification is recorded in [Storage reconciliation](market_research/STORAGE_RECONCILIATION.md).
+W1 Online exclusively uses its independent `<LAB_FUTURES_BASIS_RUN_ROOT>/runs.sqlite3`.
+Publication exclusively uses `<LAB_RESEARCH_PUBLICATION_ROOT>/publications.sqlite3`;
+configure the directory root explicitly. Legacy files are ignored and never deleted.
+W2 storage cutover is not a production deployment declaration.
+
 本文档只描述当前本地开发环境与操作方式，不是架构、CLI、产品或 HTTP 语义 authority。Repository-level Python runtime invariant 与仓库级路由见 [ARCHITECTURE.md](ARCHITECTURE.md)，canonical CLI interface 与 delegation 见 [lab authority](ui_cli/ARCHITECTURE.md)，产品语义从 [data_snapshot/CAPABILITIES.md](data_snapshot/CAPABILITIES.md) 进入，HTTP transport contract 从 [ui_http HTTP catalog](ui_http/HTTP_PRODUCTS.md) 进入。
 
 正式 console command 是 `lab`，由根 canonical Python project 安装。以下命令在 repository root 的 Poetry environment 中运行；help discovery 与完整 workflow 见 [lab usage guide](ui_cli/README.md)（usage-only，不是 authority）。
@@ -90,7 +102,7 @@ bash scripts/market-lab.sh stop    # 从另一终端停止两个服务
 
 `start` 会保持前台运行并等待按键；`stop` 和 `status` 可在另一个终端执行。
 
-原生 Windows 缺少 Publication V1 存储所需的 POSIX `dir_fd`、`O_DIRECTORY` 与 `O_NOFOLLOW` 能力。backend 与其他产品可正常启动，但 Publication 读操作及 `retain_source`/`publish` 返回 503 `unavailable`，Research Explorer 显示 Publication 存储不可用。Futures Basis Online Run Store 同样依赖 POSIX descriptor-relative I/O 与 ownership 检查；原生 Windows 上三个 `/research/futures-basis/runs` 操作返回 503 `unavailable`，不影响其他产品启动。该产品仅支持单进程，配置和平台能力失败在初始化时隔离；修复后需重启 backend。完整 Publication 仍需 Linux 或满足相同文件系统能力的 WSL，并显式配置 `LAB_RESEARCH_PUBLICATION_ROOT`；详见 [Publication 平台限制](market_research/descriptive/ACCEPTANCE.md#native-windows-publication-limitation)。当前集成验证以 Linux 为准，WSL 仍需满足相同文件系统能力要求。
+Publication uses independent portable SQLite on native Windows. Configure the absolute directory `LAB_RESEARCH_PUBLICATION_ROOT` explicitly. Legacy Publication files are ignored without migration or deletion. Only operator-controlled local filesystems and the existing single-process deployment are supported. Actual platform verification is recorded in [Storage reconciliation](market_research/STORAGE_RECONCILIATION.md).
 
 首次使用时在网页注册，然后在仓库根目录的另一个终端运行 `poetry run lab auth pending`，取得用户 ID 后运行 `poetry run lab auth approve <user-id>`，再返回网页登录。若在 process environment 或根 `.env` 设置了 `LAB_AUTH_DB_PATH`，审批终端也必须使用相同的值。
 

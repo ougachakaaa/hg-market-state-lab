@@ -1,5 +1,11 @@
 # Futures Roll Long online application, run lifecycle and delivery ownership
 
+## Storage authority and delivery status
+
+Business lifecycle and public interfaces remain owned here. SQLite is the sole online
+storage implementation; [Online storage](ONLINE_STORAGE.md) owns its physical layout,
+transaction, integrity, portable path and initialization requirements.
+
 This contract owns the case-specific online request, read-only readiness assessment,
 run lifecycle, runtime result store, owner boundary and read semantics for the
 [case](ARCHITECTURE.md). HTTP transport belongs to `ui_http` (WP6); browser interaction
@@ -98,7 +104,7 @@ state in v1.
 ## Execution and concurrency
 
 - Only one execution may be active across the backend process.
-- A submission while one is active is rejected as busy before any run directory is
+- A submission while one is active is rejected as busy before any Run is
   created; there is no queue and no waiting list.
 - Submission returns immediately (the HTTP request is accepted; no request remains open
   during acquisition or computation). A single in-process worker performs input
@@ -128,8 +134,7 @@ validated semantic request
   → W2 Performance Analyzer: Core consumption + benchmark / excess / drawdown
   → immutable BacktestResult + evidence summary + V2 views
   → validate profile, request association, coverage, invariants and finite JSON
-  → atomically publish result bytes
-  → atomically publish COMPLETED state
+  → atomically commit result bytes and COMPLETED in one SQLite transaction
 ```
 
 Before publication, validate at least: result profile is exact; status is `complete`;
@@ -139,9 +144,8 @@ hold; the views validate against V2; the serialized payload is finite canonical 
 and the serialized result is at most 32 MiB.
 
 Exceeding the size bound fails the run with
-`result_publication/result_too_large`; it never truncates. Result bytes are written
-first; the `COMPLETED` state is committed last. A reader must never see a completed
-run without a validated result. A storage failure is classified, never silently
+`result_publication/result_too_large`; it never truncates. Result bytes and COMPLETED
+are committed together. A reader must never see a completed run without a validated result. A storage failure is classified, never silently
 repaired.
 
 ## Failure classification
@@ -205,44 +209,11 @@ legal partial result.
 
 ## Runtime storage and retention
 
-The case owns a file-based runtime root independent of DataLake, Research Publication
-and Workbench storage. The semantic records are:
-
-```text
-<run_root>/<run_id>/
-    immutable request + owner scope + creation time
-    atomic state: status, timestamps, failure, result digest
-    validated result: only when COMPLETED
-```
-
-Private records use `request.json`, `state.json`, `result.json` and schema version 1;
-the semantic records and atomicity above are canonical.
-
-Configuration and platform:
-
-- optional server configuration `LAB_BACKTESTING_RUN_ROOT` is an absolute
-  server-owned path without parent traversal;
-- when unset, the default root is the module runtime directory
-  `market_backtesting/.runtime/futures_roll_long_online/`, which WP5 must keep outside
-  Git; resolution must not depend on the process working directory;
-- the store requires POSIX descriptor-relative file operations, no-follow
-  directory/file opens and user ownership checks; missing platform capabilities,
-  including native Windows, classify as `unavailable` before creating the runtime
-  tree; WSL/Linux must provide those capabilities;
-- invalid/unavailable/unwritable storage makes only the online product unavailable; it
-  does not prevent other products from starting;
-- server paths, owner scopes and storage configuration are never exposed;
-- the store is disposable runtime state with no automatic cleanup, TTL, quota,
-  migration, compatibility promise or deletion API; operators own retention and disk
-  capacity.
-
-Status reads check run ID format, containment, no symlink, request/state schema, owner
-scope and state consistency. For `COMPLETED`, they check result presence, regular-file
-type and size only; they do not parse the result, verify its digest or acquire a
-result-read permit. Full result reads check containment, no symlink, request/state
-schema, owner, state consistency, result presence, size, SHA-256, result profile,
-status and request association. Corrupt or unknown state is never silently repaired or
-recomputed.
+The case owns an independent SQLite runtime store. [Online storage](ONLINE_STORAGE.md)
+is the canonical owner of root configuration, database layout, bounded reads,
+transactions and portable filesystem checks. Unavailable storage isolates this product;
+preflight and unrelated HTTP products remain usable. Old Run directories are ignored,
+without migration or automatic deletion. Operators own retention and capacity.
 
 ## Startup recovery
 
@@ -303,7 +274,7 @@ Explicitly deferred or out of scope for W2 v1:
   the full package/replay belongs to WP4);
 - Publication admission, Research Explorer admission and Workbench Run integration;
 - production deployment, public ingress, trusted-proxy client IP handling, Nginx/Docker
-  packaging, Windows-native online store support and SLA claims.
+  packaging, SLA claims.
 
 These are not implied by a successful WP5/WP6/WP7 run. WP8 records the actual integrated
 acceptance and any NOT RUN platform/deployment boundaries.
@@ -321,12 +292,6 @@ Every operation requires a nonempty string owner. Public operation errors classi
 `unavailable` or `corrupt`; messages contain only that fixed classification.
 
 Private records bind run ID, immutable request/owner, UTC ISO timestamps and version 1.
-Store-owned directories/files use 0700/0600 and current-uid ownership; existing objects
-must forbid group/other writes. Ancestors are opened without following symlinks;
-shared writable ancestors require sticky-directory protection. Runtime roots must be
-absolute without parent traversal. All reads validate opened descriptors and bounds.
-Atomic publication fsyncs the file, replaces it relative to the directory descriptor,
-then fsyncs the directory; result precedes COMPLETED. Terminal states cannot change.
 Process-wide admission also serializes initialization/recovery; recovery skips the
 actual current-process active run. Terminal-persistence failure makes the application
 unavailable until restart, preventing stale RUNNING responses. Corruption fails closed.
@@ -343,4 +308,4 @@ result = app.get_result(accepted.run_id, owner_scope)
 ```
 
 Optional `LAB_BACKTESTING_RUN_ROOT` uses lab_config and root `.env`/process environment.
-Native Windows or missing POSIX capabilities is unavailable before runtime creation.
+Native Windows uses the same SQLite implementation as Linux/WSL on local filesystems.

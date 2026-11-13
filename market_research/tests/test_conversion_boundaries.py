@@ -125,6 +125,11 @@ def check_imports(
                 allowed = {
                     "base64",
                     "collections.abc",
+                    "sqlite3",
+                    "threading",
+                    "contextvars",
+                    "functools",
+                    "ntpath",
                     "errno",
                     "hashlib",
                     "json",
@@ -146,7 +151,9 @@ def check_imports(
                     "market_research.descriptive",
                     "market_research.descriptive.execution",
                     "market_research.descriptive.cases",
-                    "market_research.publication._platform",
+                    "market_research.publication._paths",
+                    "market_research.publication._records",
+                    "market_research.publication._sqlite",
                     "market_research.publication.errors",
                     "market_research.publication.source",
                     "market_research.publication.store",
@@ -267,6 +274,7 @@ def test_conversion_imports_only_public_contracts_and_has_no_effectful_dependenc
                 "descriptive/cases/futures_basis/report.py",
                 "descriptive/cases/futures_basis/evidence.py",
                 "descriptive/cases/futures_basis/online.py",
+                "descriptive/cases/futures_basis/online_record.py",
             },
         )
 

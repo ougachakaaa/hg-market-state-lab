@@ -119,10 +119,10 @@ flowchart TB
 | Snapshot 数据产品 | Python；MO 产品另有 HTTP / Web | 已可用 |
 | Trailing Return | Python；HTTP `/research/capabilities`、`/research/preview`、`/research/execute` | 已可用；Web 仅做能力发现 |
 | Price Segmentation | Python | 仅 Python |
-| Futures Basis Research | Web `/research/futures-basis`；HTTP；Python；离线报告 | 已可用；原生 Windows 在线 503 |
+| Futures Basis Research | Web `/research/futures-basis`；HTTP；Python；离线报告 | 已可用；独立 SQLite 在线 run store |
 | Research Publication / Explorer | Python `retain_source` / `publish`；Web / HTTP 只读 | 已可用 |
 | 通用数值统计 | `market_statistics` Python API | 仅 Python |
-| Position-Driven Core + Futures Roll Long 回测 | Web `/backtesting`；HTTP `/backtesting/futures-roll/*`；Python API | 已可用；原生 Windows 在线运行 503 |
+| Position-Driven Core + Futures Roll Long 回测 | Web `/backtesting`；HTTP `/backtesting/futures-roll/*`；Python API | 已可用；独立 SQLite 在线 run store |
 | Daily Data Copy / Export | MO 页面的 Copy Raw JSON / Context JSON、CSV / Context JSON Export | 已可用 |
 | CLI / OpenAPI | `lab`；FastAPI / OpenAPI | 已可用 |
 
@@ -147,7 +147,7 @@ Backtesting 不提供默认参数：四项输入必须显式选择；Preflight �
 - **问题**：同一交易日，股指期货相对标的指数的基差处于什么水平？不同期限的期限结构如何变化？分布的折价 / 升水持续性如何？
 - **输入**：一个明确品种（IM / IC / IF / IH）与包含首尾的日期区间；CFFEX / SSE 日历、期货日线、指数日线。
 - **结果**：六段式报告——Overview、Historical Basis、Distributions、Term Structure、Discount Persistence、Evidence and Limitations；基差是描述性指标，不是预测或交易信号。
-- **入口**：Web `/research/futures-basis`；HTTP preflight / submit / status / report；离线 HTML 报告；Python case API。原生 Windows 在线 run store 返回 503，完整路径使用 Linux / WSL。
+- **入口**：Web `/research/futures-basis`；HTTP preflight / submit / status / report；离线 HTML 报告；Python case API。原生 Windows、Linux 与 WSL 使用同一份独立 SQLite 在线 run store。
 
 契约见 [Futures Basis case](market_research/descriptive/cases/futures_basis/ARCHITECTURE.md) 与 [offline delivery](market_research/descriptive/cases/futures_basis/DELIVERY.md)。
 
@@ -156,7 +156,7 @@ Backtesting 不提供默认参数：四项输入必须显式选择；Preflight �
 - **问题**：只做多一手真实股指期货合约，在最后交易日按固定规则展期、窗口末平仓，其历史毛收益与风险特征与同期指数买入持有相比如何？
 - **输入**：品种、日期区间、策略 profile（`expiry_to_M1_v1` / `expiry_to_Q1_v1`）；CFFEX 日历、期货日线（含真实到期日与乘数）、指数日线。
 - **结果**：逐日 PnL / equity / benchmark / drawdown、trades、rolls、summary、evidence 与 V2 Views；evidence package 可离线复现。
-- **入口**：Web `/backtesting`（参数 → Preflight → 显式提交 → Run 状态 → 结果阅读）；HTTP preflight / submit / status / result；Python API。原生 Windows 缺少所需 POSIX 运行能力，完整在线工作流在 Linux / WSL 中执行。
+- **入口**：Web `/backtesting`（参数 → Preflight → 显式提交 → Run 状态 → 结果阅读）；HTTP preflight / submit / status / result；Python API。同一份 SQLite 在线 run store 在原生 Windows、Linux 与 WSL 上运行。
 
 ```python
 from datetime import date
@@ -207,18 +207,19 @@ print(result.summary.total_pnl, result.evidence.input_fingerprint)
 
 #### 为什么是 SQLite
 
-SQLite 解决的是“本地研究缓存与认证存储”，不是整个系统的中心数据库。
+SQLite 解决的是“本地研究缓存、认证与运行状态存储”，不是整个系统的中心数据库。
 
 | 存储 | 机制 | 用途 |
 | --- | --- | --- |
 | `data_lake/datasets/<dataset-id>/data/<dataset-id>.sqlite3` | 每个 Dataset 一个 SQLite | 4 个 Dataset 的 source-fact 缓存、frozen basis、逐 unit 事务与读快照 |
 | `ui_http/data/auth.sqlite3`（或 `LAB_AUTH_DB_PATH`） | 独立 SQLite | 用户、审批状态与身份查询 |
 | `data_snapshot/data/raw/` | JSON 文件 | Snapshot Raw Artifact |
-| `LAB_RESEARCH_PUBLICATION_ROOT` 指定目录 | JSON + 原子 hard link | Research Publication 的 source、analysis、View 与 Manifest |
-| `market_research/.runtime/futures_basis_online/`、`market_backtesting/.runtime/futures_roll_long_online/` | JSON 文件 | 在线运行状态与 reader / result 投影 |
+| `LAB_RESEARCH_PUBLICATION_ROOT` 指定目录 | 独立 SQLite | Research Publication 的 `publications.sqlite3`：Manifest、Source、Analysis、View 与 Layer |
+| `<LAB_FUTURES_BASIS_RUN_ROOT>`（默认 `market_research/.runtime/futures_basis_online/`） | 独立 SQLite | W1 在线 run 状态与 reader report：`runs.sqlite3` |
+| `<LAB_BACKTESTING_RUN_ROOT>`（默认 `market_backtesting/.runtime/futures_roll_long_online/`） | 独立 SQLite | W2 在线 run 状态与 result：`runs.sqlite3` |
 | Research Observation / 统计结果 | 内存对象 | 未显式发布时不自动持久化 |
 
-因此，**SQLite 只承担 DataLake 缓存与 Auth 存储**；研究发布、在线运行与回测结果使用文件存储，研究中间对象默认只在内存中。
+因此，**SQLite 同时承担 DataLake 缓存、Auth 存储以及 W1、W2、Publication 三个相互独立的运行存储**；研究中间对象默认只在内存中，Publication 仍是不可变 evidence，不是可弃运行状态。
 
 选择 SQLite 的理由：
 
@@ -232,17 +233,17 @@ SQLite 解决的是“本地研究缓存与认证存储”，不是整个系统�
 
 - 没有多进程 / 分布式协调；并发写入依赖 SQLite 自身锁，不适合高并发或多用户。
 - 不做 in-place migration；不兼容 cache 需要显式重建。
-- 需要原子发布与跨进程可见性的 Publication / online run store 使用 POSIX 文件存储，而不是 SQLite。
+- Publication 与 W1/W2 online run store 使用各自独立的 SQLite；Publication 提交是不可变 evidence snapshot，online run 是可弃运行状态。
 - 生产级多 worker、反向代理、入口限流与高可用部署仍未完成。
 
 ### 运行限制
 
 - 一键启动需要默认端口 `8011`（backend）与 `5173`（Web）空闲；启动器不会终止占用端口的其他程序。
-- 原生 Windows 缺少 Publication 与在线 run store 所需的 POSIX descriptor-relative 文件能力：Publication 读写与 Futures Basis 在线 run 返回 503，Research Explorer 显示 Publication 存储不可用。
-- Backtesting 的在线 run store 同样要求 POSIX：原生 Windows 上 `/backtesting` 可以打开、Preflight 可用，但 Submit / Status / Result 返回 503；完整在线回测请在 Linux / WSL 中运行。
-- 完整的 Publication、在线回测与相关浏览器验收请在 Linux / WSL 中运行；Linux 启动器还检查 `flock`、`ss`、`ps`、`setsid`、`curl`、`awk`、`tr`。
+- W1、W2 与 Publication 各自拥有独立 SQLite store，不依赖 POSIX descriptor-relative 能力；原生 Windows、Linux 与 WSL2 使用同一份单进程实现。
+- 仅支持单 backend process 与本地文件系统；多进程/多 worker 共享同一 root、分布式锁、队列与共享网络文件系统不受支持。
+- Publication 必须显式配置绝对目录 `LAB_RESEARCH_PUBLICATION_ROOT`；旧文件布局会被忽略，不会自动迁移或删除。
+- 完整浏览器验收在原生 Windows Chrome 上执行；WSL2/Docker 的实际运行范围与剩余未运行平台见 [Storage reconciliation](market_research/STORAGE_RECONCILIATION.md)。
 - 本地已有的旧 Dataset cache 若不兼容，会明确失败并要求重建 owning Dataset；不会自动迁移或静默回退。
-- Windows 上的其他页面可以正常启动；能否返回数据仍取决于 Tushare 权限、网络与本地 cache 是否兼容。
 - Web 通过同源 `/api` 访问 HTTP 产品（开发时 Vite 代理 `/api/backtesting/*` 与 `/api/research/*`）；自定义部署需转发 `/api` 并为页面路由提供 SPA fallback。
 
 ### 项目状态与 Roadmap

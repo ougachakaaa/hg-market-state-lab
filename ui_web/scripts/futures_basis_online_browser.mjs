@@ -4,7 +4,7 @@ import { historicalBasisAcceptance } from './historical_basis_acceptance.mjs'
 import assert from 'node:assert/strict'
 import { spawn, spawnSync } from 'node:child_process'
 import { randomBytes } from 'node:crypto'
-import { mkdtemp, rm, mkdir, readdir, writeFile } from 'node:fs/promises'
+import { mkdtemp, rm, mkdir, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -193,8 +193,14 @@ try {
   assert.ok(page.url().includes(secondId))
   // Deliver the POST to the real backend, then lose its response in this browser.
   // The prior report must survive and the client must not create another Run.
-  const runDirectories = () => readdir(env.LAB_FUTURES_BASIS_RUN_ROOT)
-  assert.equal((await runDirectories()).length, 2)
+  const runCount = () => {
+    const result = spawnSync('poetry', ['run', 'python', '-c',
+      'import sqlite3,sys; from pathlib import Path; c=sqlite3.connect(Path(sys.argv[1]).as_uri()+"?mode=ro",uri=True); print(c.execute("SELECT count(*) FROM runs").fetchone()[0]); c.close()',
+      resolve(env.LAB_FUTURES_BASIS_RUN_ROOT, 'runs.sqlite3')], { cwd: root, env, encoding: 'utf8' })
+    assert.equal(result.status, 0, result.stderr)
+    return Number(result.stdout.trim())
+  }
+  assert.equal(runCount(), 2)
   let lostAccepted
   await page.route('**/api/research/futures-basis/runs', async route => {
     assert.equal(route.request().method(), 'POST')
@@ -214,7 +220,7 @@ try {
   await page.getByText(/网络响应丢失。提交结果可能已被服务器接受/).waitFor()
   await page.waitForTimeout(2000)
   assert.ok(lostAccepted?.run_id)
-  assert.equal((await runDirectories()).length, 3)
+  assert.equal(runCount(), 3)
   assert.ok(page.url().includes(secondId))
   assert.equal(await page.locator('#section-5').count(), 1)
   await page.unroute('**/api/research/futures-basis/runs')
@@ -242,7 +248,11 @@ try {
 } finally {
   await browser?.close()
   for (const child of processes.reverse()) {
-    child.kill('SIGTERM')
+    if (process.platform === 'win32' && child.exitCode === null) {
+      spawnSync('taskkill', ['/PID', String(child.pid), '/T', '/F'], { stdio: 'ignore' })
+    } else {
+      child.kill('SIGTERM')
+    }
     if (child.exitCode === null) await new Promise((done) => child.once('exit', done))
   }
   await rm(temporary, { recursive: true, force: true })

@@ -600,3 +600,209 @@ market payload enters Git.
 evidence is consistent, regression and architecture checks pass, and no blocking
 authority or implementation drift remains. The current review's real-market/HTTP/Windows
 re-execution is explicitly NOT RUN and does not invalidate the recorded WP8 PASS.
+
+## Portable SQLite storage WP0
+
+2026-11-12: the case-owned [Online storage](ONLINE_STORAGE.md) approves an independent
+SQLite target. The current `online_store.py` still requires POSIX descriptors/UID/modes
+and `online.py` still publishes separate result/state files. This is **intended migration
+drift**, not a newly failing implementation of the legacy contract. Legacy permission,
+symlink and file-replacement tests remain truthful for that adapter; WP1/WP2 must replace
+physical-layout expectations while retaining lifecycle/owner/result/security assertions.
+
+The authoritative [storage drift register and WP plan](../../../market_research/STORAGE_RECONCILIATION.md)
+records severity, dependencies and acceptance. The earlier no-open-drift/merge-readiness
+statements above retain their original review scope and do not close this new target.
+No Core, Policy, Analyzer, Result, HTTP or Web semantic change is authorized.
+
+## Storage WP1 execution evidence
+
+2026-11-13, `feat/sqlite-portable-runtime`, baseline
+`78b61280703ae5580d7db6733aa1bb11caa004a5`. Native Windows, Python 3.13.7,
+SQLite 3.50.4, repository-root `.venv`, temporary local test directories.
+
+### Implemented component and remaining integration
+
+`online_sqlite_store.py` independently implements `FuturesRollSQLiteRunStore(root)`.
+Construction/read does not initialize. `initialize`, `create`, `status`, `transition`,
+`publish`, `read_result` and `recover(active)` encapsulate connections and SQL. The two
+version-1 tables separate bounded request/state metadata from exact result BLOBs;
+metadata retains owner, timestamps, safe failure, SHA-256, byte length, result profile
+and scientific status. SQLite schema spelling is private, not business authority.
+The private helper import from `online_store` reuses only pure timestamp/ID/state
+validation; no POSIX storage operation is invoked by the SQLite adapter.
+
+Each operation closes its own connection, with foreign keys, FULL synchronous and a
+finite one-second busy timeout. New databases use SQLite's default DELETE journal.
+Explicit write transactions conditionally update lifecycle state. Generic transition
+cannot set COMPLETED; publication validates existing codec/canonical bytes before the
+write transaction, rechecks request/state, inserts bytes and commits COMPLETED together.
+Exceptions roll back; rollback failure returns safe unavailable and closes the connection.
+Recovery validates metadata, atomically interrupts abandoned nonterminal rows, excludes
+the caller-supplied current-process active identity and preserves completed results.
+Failed initialization leaves an invalid version-0 file rather than silently recreating it.
+
+Owner lookup precedes private record checks. Status queries only BLOB type/length;
+full reads bound actual bytes before SELECT payload within one read snapshot, then
+validate digest, strict/canonical JSON, profile and request association. Root/ancestor,
+regular-file, reparse, hard-link, sidecar and open-time identity checks use portable APIs.
+Controlled ancestor ACLs remain an operator obligation; no hostile concurrent path
+replacement or perfect power-loss protection is claimed. Legacy directories are ignored.
+No runtime data was deleted, migrated or repaired.
+
+WP2 must replace the private composition and descriptor-dependent get_result path;
+retain lab_config root/default resolution, process admission/reader permits, owner-first
+permit ordering, serialized recovery with actual active exclusion and terminal-persistence
+fail-closed handling; use publish for the sole COMPLETED path, and read_result followed
+by the existing codec for the public result carrier. If pure helpers are relocated when
+retiring legacy code, preserve their behavior. No business-semantic decision is deferred.
+`online.py`, legacy store/tests, public exports, HTTP and financial behavior are unchanged.
+
+### Verification
+
+| Check | Result |
+| --- | --- |
+| `poetry run pytest market_backtesting/tests/test_online_sqlite_store.py -q -rs --tb=short` | PASS: 64 passed, 2 skipped (file symlink privilege unavailable); directory junction fallback and hard links executed |
+| SQLite + Backtesting architecture focused run | PASS: 76 passed, 2 skipped; final run adding Data Snapshot authority topology: 89 passed, 2 skipped |
+| Real child termination before/after commit | PASS within dedicated tests: interrupted before commit; exact completed bytes preserved after commit |
+| Commit/statement/rollback/initialization failure and lock contention | PASS within dedicated tests; no visible partial completion/creation |
+| `poetry run pytest market_backtesting/tests -q --tb=line` | FAIL: 533 passed, 71 failed, 2 skipped; 70 failures in unchanged legacy online/POSIX tests on native Windows; one frontend validator subprocess WinError 2 |
+| `poetry run pytest data_snapshot/tests/test_authority_topology.py ui_http/tests/test_architecture.py -q --tb=short` | PASS: 23 tests |
+| `poetry run ruff check market_backtesting` | PASS |
+| `poetry run mypy market_backtesting` (native Windows) | FAIL: 16 missing POSIX os-attribute errors in unchanged online_store.py/test_online_store.py |
+| `poetry run mypy --platform linux market_backtesting` | PASS: 52 files; static Linux-target check, not Linux runtime acceptance |
+| Changed Markdown local links/anchors; `git diff --check`; full diff review | PASS: 103 links/anchors; independent ownership, no public API/financial/online wiring changes |
+| Linux / WSL2 / Linux Docker runtime tests | NOT RUN: this worktree has a Windows root .venv; WSL has no corresponding root environment; no second environment installed |
+
+WP1 verdict: **PARTIAL**. Adapter transactional/integrity tests pass, but full legacy
+regression is not green in the available native Windows environment and file symlink
+coverage needs privileges. No four-platform or production online cutover PASS is claimed.
+The prior WP0 Demo fixture, W1 timing and HTTP TLS findings remain open as recorded in
+[shared storage reconciliation](../../../market_research/STORAGE_RECONCILIATION.md).
+WP2 is not started; cross-platform integrated acceptance remains later work.
+
+
+## Storage WP2 execution evidence
+
+2026-11-13, `feat/sqlite-portable-runtime`, baseline
+`eae9e8fc50b515753c52bd045f11feff2a8efa61`. Native Windows, root `.venv`,
+Python 3.13.7 / SQLite 3.50.4; deterministic existing public-service fixtures and
+isolated temporary databases. Earlier WP0/WP1 statements above retain their historical
+scope; the active online application now exclusively uses SQLite.
+
+### Integration and retired code
+
+`online.py` composes `FuturesRollSQLiteRunStore`. The worker calls `publish()` as the
+sole COMPLETED path; result bytes and state commit together. Preparation, financial
+computation and validation precede the write transaction. Failed publication rolls
+back and maps to safe result_publication failures; failed terminal persistence makes
+the application unavailable. Another existing application cannot return stale RUNNING
+after the active worker releases its identity. Restart recovery interrupts abandoned
+rows and preserves terminal rows; recovery and admission share the process lock.
+
+Full reads authorize owner before the process reader permit, call `read_result()` and
+decode the existing BacktestResult carrier. The store owns BLOB bounds/digest/canonical
+validation; the application no longer performs descriptor access or duplicate digest
+checks. Status uses metadata and result type/length only. Preflight is independent of
+storage failure and never initializes storage itself.
+
+`online_store.py`, POSIX capability gating and descriptor helpers are deleted.
+`online_record.py` owns the unchanged pure ID/timestamp/state validators. Legacy tests
+are replaced by SQLite assertions for immutable states, corruption, owner privacy,
+rollback/commit/crash recovery, portable aliases and sidecars. No legacy backend,
+feature flag, migration, automatic deletion, schema change or execution model is added.
+SQL typeof/length checks reject invalid or oversized metadata/state before SELECT of
+the BLOB contents, within the same snapshot and after owner lookup. Regression tracing
+checks both columns and prevents BLOB selection on oversize/type/empty failures.
+
+### Financial and transport parity
+
+Both original deterministic profiles compare the full online result against the
+accepted existing public pipeline, and stored canonical bytes against `encode_result`.
+This includes daily records, trades, rolls, PnL, benchmark/excess, summary, evidence and
+V2 Views. Existing numerical oracles remain M1 22,000 CNY / Q1 19,000 CNY and initial
+notional 1,200,000 CNY. Core, strategy, Analyzer, Result, codec and frontend contracts
+are unchanged. HTTP tests compare complete producer projections and cover all four
+endpoints, Cookie/owner isolation, unavailable-product isolation and safe errors.
+
+The frontend-validator WinError 2 was a portable invocation defect: the Python test
+executed a POSIX npm shim. Both W2 validator entry points now invoke Node explicitly;
+Vitest's absolute include path is normalized to forward slashes on Windows. No React
+or generated artifacts changed. Browser storage assertions query Run rows rather than
+counting files, preserving the no-Run-on-preflight invariant.
+
+### Verification matrix
+
+| Check (repository root unless stated) | Native Windows result |
+| --- | --- |
+| `poetry run pytest market_backtesting/tests -q --tb=short` | PASS: 590 passed, 2 skipped (file symlink privilege unavailable; directory junction/hard-link checks executed) |
+| W2 HTTP/contract, Auth HTTP/service/imports/TLS, HTTP architecture and Data Snapshot topology focused run | PASS: 333 passed, 1 skipped (OpenSSL unavailable for TLS fixture) |
+| `poetry run ruff check market_backtesting ui_http` | PASS |
+| `poetry run mypy market_backtesting` / `poetry run mypy ui_http` | PASS: 52 / 62 files; run separately to avoid duplicate test module names |
+| `poetry run mypy --platform linux market_backtesting` / `ui_http` | PASS: 52 / 62 files; static target checks only |
+| `npm run contract:check` (ui_web) | PASS: all seven OpenAPI/TypeScript pairs current; no artifacts rewritten |
+| `npm run test -- src/features/backtesting` (ui_web) | PASS: 42 tests, 4 files |
+| `npm run build` / `npm run lint` (ui_web) | PASS; existing bundle-size warning |
+| Linux/WSL runtime, Docker | NOT RUN: WSL Ubuntu has Python 3.10.12, no corresponding root Poetry environment; Windows root .venv is not a Linux environment |
+| New real-market acceptance | NOT RUN; deterministic parity does not replace historical real-market acceptance |
+| Full `poetry run pytest ui_http/tests -q --tb=line` | FAIL: 538 passed, 17 skipped, 32 errors, 1 failure; errors in W1 Futures Basis HTTP setup and failure in `test_successful_runtime_is_shared_across_concurrent_compositions`, all from unchanged W1 POSIX store returning unavailable |
+| HTTP regression excluding `test_futures_basis_http.py` | PASS: 534 passed, 17 skipped |
+| `npm run test:backtesting-browser` with `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH` set to installed Windows Chrome | PASS: actual native Windows backend, real Cookie/CLI, synthetic market fixtures, both profiles and existing browser scenarios; script exited 0 |
+| Final authority topology / HTTP architecture / Backtesting architecture | PASS: 23 + 12 tests, invoked separately because architecture test filenames collide |
+| Pure validators AST comparison / changed Markdown links and anchors / full diff / `git diff --check` | PASS: pure helper functions unchanged; 166 links/anchors checked before final evidence update; final validation repeated |
+
+Browser evidence: `E:/tmp/wp7-backtesting-browser/acceptance.json` and screenshots.
+The initial browser attempt lacked Playwright's bundled Chromium; the installed Chrome
+was supplied through the existing executable-path setting. After replacing legacy file
+counts, the browser scenarios passed. Windows Poetry/Python launcher descendants needed
+explicit test-owned process-tree termination; the W2 test script now does that in its
+finally block, and the final run completed without manual process cleanup. These are
+acceptance-harness changes, not React or backend runtime changes.
+
+### Verdict and next work
+
+**Storage WP2 verdict: PARTIAL.** W2 integration, native Windows lifecycle, atomicity,
+owner/concurrency/recovery, bounded reads, numerical/HTTP parity, contracts and focused
+checks pass. Full HTTP regression remains red on the unchanged W1 POSIX implementation;
+Linux/WSL/Docker runtime and new real-market checks remain NOT RUN. TLS coverage is
+skipped without OpenSSL, and file symlink coverage needs privileges. No four-platform,
+full-repository or production deployment PASS is claimed.
+
+WP3 implementation inputs remain ready under its already approved authority; W1's
+native-Windows failures are relevant follow-up evidence. This PARTIAL verdict is not
+full regression sign-off and does not authorize automatically starting WP3.
+No W1, Publication, Demo or Auth functional repair is included. No user runtime data
+was deleted. WP3 is not started.
+
+
+### Changed-file inventory
+
+- Added: `market_backtesting/src/market_backtesting/cases/futures_roll_long/online_record.py`.
+- Deleted: `market_backtesting/src/market_backtesting/cases/futures_roll_long/online_store.py`.
+- Modified runtime: case `online.py`, `online_sqlite_store.py`.
+- Modified Backtesting checks: `tests/test_architecture.py`, `tests/test_online_application.py`,
+  `tests/test_online_sqlite_store.py`, `tests/test_online_store.py`,
+  `tests/test_result_v2_contract.py`, `tests/real_result_acceptance.py`,
+  `tests/v2_contract.vitest.mjs` under `market_backtesting/`.
+- Modified consumers' checks: `ui_http/tests/test_backtesting_http.py`,
+  `ui_web/scripts/backtesting_browser_acceptance.mjs`.
+- Modified authority/guidance: root `ARCHITECTURE.md`, `DEVELOPMENT.md`, `.env.example`;
+  `market_backtesting/ARCHITECTURE.md`; case `ONLINE_APPLICATION.md`, `ONLINE_STORAGE.md`,
+  `ROADMAP.md`, this `RECONCILIATION.md`;
+  `market_research/STORAGE_RECONCILIATION.md`;
+  `ui_http/products/backtesting/http-contract.md`.
+
+## Storage WP6 final status (2026-11-13)
+
+The Storage WP2 verdict above is historical execution evidence. WP3 subsequently replaced
+the W1 POSIX store, so the full-HTTP-red and W1 follow-up statements it records no longer
+describe current behavior. Storage WP6 executed W1, W2 and Publication storage acceptance
+on native Windows, WSL2 Ubuntu and Linux Docker; native Linux outside WSL remains
+**NOT RUN**. W2 financial oracles, owner/isolation, atomic result+COMPLETED, recovery,
+bounded reads and HTTP projection were re-exercised without semantic change.
+
+Current evidence, cross-platform matrix, remaining risks and the merge recommendation are
+owned by
+[Storage reconciliation](../../../market_research/STORAGE_RECONCILIATION.md#storage-wp6-execution-evidence).
+This section does not rewrite the historical WP1/WP2 evidence or the original W2 delivery
+numbering.

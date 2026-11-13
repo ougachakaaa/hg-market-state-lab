@@ -2,6 +2,7 @@
 
 import asyncio
 import json
+import sqlite3
 import sys
 import threading
 import time
@@ -20,7 +21,7 @@ from market_backtesting.cases.futures_roll_long import (
     FuturesRollOnlineError,
     create_futures_roll_online_application,
     online,
-    online_store,
+    online_sqlite_store,
 )
 from ui_http.app import create_app
 from ui_http.auth import _session, create_service
@@ -55,6 +56,11 @@ def product(tmp_path):
     app.state.backtesting_application = online_app
     client = authenticated_client(app)
     return app, online_app, client, root, (calendar, futures, index)
+
+
+def run_count(root):
+    with sqlite3.connect(root / "runs.sqlite3") as connection:
+        return connection.execute("SELECT count(*) FROM runs").fetchone()[0]
 
 
 def assert_error(response, status, kind):
@@ -117,7 +123,11 @@ def test_complete_result_is_exact_producer_projection(product, profile, pnl, tar
     }
     assert state["result_available"] and state["failure"] is None
     identity = client.get("/auth/me").json()["id"]
-    assert json.loads((root / run_id / "request.json").read_bytes())["owner_scope"] == identity
+    with sqlite3.connect(root / "runs.sqlite3") as connection:
+        metadata = connection.execute(
+            "SELECT metadata FROM runs WHERE run_id=?", (run_id,)
+        ).fetchone()[0]
+    assert json.loads(metadata)["owner_scope"] == identity
     response = client.get(f"{RUNS}/{run_id}/result")
     assert response.status_code == 200, response.text
     data = response.json()["data"]
@@ -183,7 +193,7 @@ def test_invalid_input_before_runtime_or_io(product, monkeypatch, path, changes)
     obtain = Mock(side_effect=AssertionError("Invalid input obtained application"))
     monkeypatch.setattr(endpoint, "application", obtain)
     assert_error(client.post(path, json={**BODY, **changes}), 400, "invalid_request")
-    assert not obtain.called and not list(root.iterdir())
+    assert not obtain.called and run_count(root) == 0
     assert not any(service.calls for service in services)
 
 
@@ -210,7 +220,7 @@ def test_malformed_body(product, path, content, headers, kind):
         400,
         kind,
     )
-    assert not list(product[3].iterdir())
+    assert run_count(product[3]) == 0
 
 
 @pytest.mark.parametrize("field", list(BODY))
@@ -234,7 +244,7 @@ def test_canonical_enums_preflight(product, product_code, profile):
     assert response.status_code == 200, response.text
     assert response.json()["request"]["product_code"] == product_code
     assert response.json()["request"]["strategy_profile"] == profile
-    assert not list(product[3].iterdir())
+    assert run_count(product[3]) == 0
 
 
 @pytest.mark.parametrize("method,path", PATHS)
@@ -274,7 +284,7 @@ def test_invalid_session_all_routes(product, cookie, monkeypatch):
     client.cookies.set(COOKIE, token)
     for method, path in PATHS:
         assert_error(client.request(method, path, content=b"bad"), 401, "authentication_required")
-    assert not list(root.iterdir())
+    assert run_count(root) == 0
 
 
 def test_stream_limit_does_not_trust_content_length(product):
@@ -301,7 +311,7 @@ def test_stream_limit_does_not_trust_content_length(product):
                 assert_error(result, 400, "request_too_large")
 
     asyncio.run(exercise())
-    assert not list(root.iterdir()) and not any(service.calls for service in services)
+    assert run_count(root) == 0 and not any(service.calls for service in services)
 
 
 def test_exact_body_limit_charset_and_identity_encoding(product):
@@ -325,7 +335,7 @@ def test_preflight_readonly_and_store_unavailable(product, monkeypatch):
     assert response.status_code == 200, response.text
     assert response.json()["ready"]
     assert set(response.json()) == {"request", "ready", "calendar_cffex", "futures", "index"}
-    assert not list(root.iterdir())
+    assert run_count(root) == 0
     assert client.get("/research/capabilities").status_code == 200
     assert_error(client.get(RUNS + "/" + "a" * 32), 503, "unavailable")
 
@@ -432,7 +442,7 @@ def test_thread_start_failure_preserves_admission_snapshot(product, monkeypatch)
 def test_recovered_interrupted_and_pending_transport(product):
     app, application, client, root, services = product
     owner = client.get("/auth/me").json()["id"]
-    store = online_store.FuturesRollRunStore(root)
+    store = online_sqlite_store.FuturesRollSQLiteRunStore(root)
     accepted = store.create(request(), owner)
     # Inject the public immutable carrier to observe PENDING without worker timing races.
     original = application.get_status
@@ -532,12 +542,16 @@ def test_delivery_permit_covers_serialization_and_releases_after_failure(product
 def test_corrupt_result_and_metadata(product):
     app, application, client, root, services = product
     run_id = complete(client)
-    result_path = root / run_id / "result.json"
-    result_path.write_bytes(b"corrupt")
+    with sqlite3.connect(root / "runs.sqlite3") as connection:
+        size = connection.execute(
+            "SELECT result_length FROM runs WHERE run_id=?", (run_id,)
+        ).fetchone()[0]
+        connection.execute("UPDATE results SET payload=? WHERE run_id=?", (b"x" * size, run_id))
     # Presence/size is sufficient for status; full digest validation belongs to result read.
     assert client.get(f"{RUNS}/{run_id}").json()["result_available"]
     assert_error(client.get(f"{RUNS}/{run_id}/result"), 409, "corrupt")
-    (root / run_id / "state.json").write_bytes(b"corrupt")
+    with sqlite3.connect(root / "runs.sqlite3") as connection:
+        connection.execute("UPDATE runs SET state=? WHERE run_id=?", (b"corrupt", run_id))
     assert_error(client.get(f"{RUNS}/{run_id}"), 409, "corrupt")
     assert_error(client.get(f"{RUNS}/{run_id}/result"), 409, "corrupt")
 
@@ -568,9 +582,9 @@ def test_delivery_bounds_and_association(product, monkeypatch):
 def test_real_result_delivery_size_bound(product):
     app, application, client, root, services = product
     run_id = complete(client)
-    # A real oversized stored file is rejected without truncation, including status's stat check.
-    with (root / run_id / "result.json").open("wb") as output:
-        output.truncate(32 * 1024 * 1024 + 1)
+    # Actual BLOB size is checked before payload allocation.
+    with sqlite3.connect(root / "runs.sqlite3") as connection:
+        connection.execute("UPDATE results SET payload=zeroblob(?)", (32 * 1024 * 1024 + 1,))
     assert_error(client.get(f"{RUNS}/{run_id}/result"), 409, "corrupt")
 
 
@@ -675,4 +689,4 @@ def test_duplicate_keys_in_otherwise_valid_body_and_ambiguous_headers(product, p
         ],
     ]:
         assert_error(client.post(path, content=raw, headers=headers), 400, "invalid_request")
-    assert not list(product[3].iterdir())
+    assert run_count(product[3]) == 0

@@ -3,7 +3,7 @@
 import assert from 'node:assert/strict'
 import { spawn, spawnSync } from 'node:child_process'
 import { randomBytes } from 'node:crypto'
-import { mkdtemp, rm, mkdir, readdir, writeFile } from 'node:fs/promises'
+import { mkdtemp, rm, mkdir, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -120,18 +120,24 @@ try {
     await page.locator(`.ant-select-item-option[title="${profile}"]`).click()
     await page.getByText('ready=true', { exact: true }).waitFor()
   }
-  const runDirectories = () => readdir(env.LAB_BACKTESTING_RUN_ROOT)
+  const persistedRunIds = () => {
+    const result = spawnSync('poetry', ['run', 'python', '-c',
+      'import json,sqlite3,sys; from pathlib import Path; c=sqlite3.connect(Path(sys.argv[1]).as_uri()+"?mode=ro",uri=True); print(json.dumps([r[0] for r in c.execute("SELECT run_id FROM runs")])); c.close()',
+      resolve(env.LAB_BACKTESTING_RUN_ROOT, 'runs.sqlite3')], { cwd: root, env, encoding: 'utf8' })
+    assert.equal(result.status, 0, result.stderr)
+    return JSON.parse(result.stdout)
+  }
   const runIds = []
   for (const [profile, pnl, contract] of [['expiry_to_M1_v1', 22000, 'IM2504.CFX'], ['expiry_to_Q1_v1', 19000, 'IM2506.CFX']]) {
     await fill(profile)
-    assert.equal((await runDirectories()).length, runIds.length, 'preflight and Enter cannot create Run')
+    assert.equal((await persistedRunIds()).length, runIds.length, 'preflight and Enter cannot create Run')
     const acceptedResponse = page.waitForResponse(r => r.request().method() === 'POST' && r.url().endsWith('/api/backtesting/futures-roll/runs'))
     await submit.click()
     const accepted = await acceptedResponse
     assert.equal(accepted.status(), 202)
     const admission = await accepted.json(); assert.equal(admission.status, 'PENDING')
     runIds.push(admission.run_id)
-    // Real busy response from the same worker, no second Run directory.
+    // Real busy response from the same worker, no second Run.
     if (runIds.length === 1) {
       await page.getByText('RUNNING', { exact: true }).waitFor()
       await page.waitForTimeout(1000)
@@ -186,7 +192,7 @@ try {
   })
   await submit.click(); await page.getByText(/网络响应丢失。提交结果可能已被服务器接受/).waitFor()
   await page.waitForTimeout(5500)
-  assert.equal((await runDirectories()).length, 3); assert.ok(lostAccepted.run_id)
+  assert.equal((await persistedRunIds()).length, 3); assert.ok(lostAccepted.run_id)
   assert.ok(page.url().includes(runIds[1]))
   await page.unroute('**/api/backtesting/futures-roll/runs')
   // Safe GET recovery uses the same completed immutable identity.
@@ -270,7 +276,12 @@ try {
 } finally {
   await browser?.close()
   for (const child of processes.reverse()) {
-    child.kill('SIGTERM')
+    // Windows Poetry/Python launchers leave descendants holding server ports/pipes.
+    if (process.platform === 'win32' && child.exitCode === null) {
+      spawnSync('taskkill', ['/pid', String(child.pid), '/t', '/f'], { stdio: 'ignore' })
+    } else {
+      child.kill('SIGTERM')
+    }
     if (child.exitCode === null) await new Promise((done) => child.once('exit', done))
   }
   await rm(temporary, { recursive: true, force: true })
