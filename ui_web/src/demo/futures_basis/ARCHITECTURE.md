@@ -123,3 +123,15 @@ public HTTP/browser acceptance, never inferred from a local preview.
 The former WP5 eventual-trigger plan is superseded: V2 D7 owns the reviewed trigger
 change to `main` under the parent release authority. Until D7, the current branch trigger
 is an implementation fact, not the long-term release policy.
+
+## V1 cross-platform regression comparison (WP-C)
+
+The retained JSON remains byte-for-byte historical evidence. Generation still emits
+unchanged producer values. `--check` verifies canonical JSON serialization and exact
+structural/scientific equality except finite `y` values in the annualized history
+View: platform libm `log` can differ at binary64 rounding boundaries. These values
+may differ by at most two ULPs, with no absolute floor. Each corresponding `结果`
+detail must equal `repr` of its own point value before comparison. All other detail
+text, dates, identities, input fingerprint, statistics, nulls and Views remain exact.
+This tolerance belongs only to V1 fixture regression; it changes neither financial
+computation nor sealed Evidence/Result digests or real-market admission.

@@ -288,9 +288,9 @@ function clipboard(writeText = vi.fn().mockResolvedValue(undefined)) {
   return writeText
 }
 function copyActions() { return within(screen.getByRole('group', { name: 'MO Option Chain copy actions' })) }
-async function copied(button: string) {
-  fireEvent.click(copyActions().getByRole('button', { name: button }))
-  await waitFor(() => expect(copyActions().getAllByRole('status').some((node) => node.textContent === 'Copied')).toBe(true))
+async function copied(button: string, actions = copyActions()) {
+  fireEvent.click(actions.getByRole('button', { name: button }))
+  await waitFor(() => expect(actions.getAllByRole('status').some((node) => node.textContent === 'Copied')).toBe(true))
 }
 
 describe('complete current-result copy', () => {
@@ -371,8 +371,9 @@ describe('complete current-result copy', () => {
 it('copies full chain and response context independently of all display controls', async () => {
   const write = clipboard()
   await load()
+  const actions = copyActions()
   const raw = JSON.stringify(chain, null, 2)
-  await copied('Copy Raw JSON')
+  await copied('Copy Raw JSON', actions)
   expect(write).toHaveBeenLastCalledWith(raw)
   const controls = [
     () => fireEvent.click(screen.getByRole('checkbox', { name: '2026-10-23' })),
@@ -383,10 +384,10 @@ it('copies full chain and response context independently of all display controls
   ]
   for (const change of controls) {
     change()
-    await copied('Copy Raw JSON')
+    await copied('Copy Raw JSON', actions)
     expect(write).toHaveBeenLastCalledWith(raw)
   }
-  await copied('Copy Context JSON')
+  await copied('Copy Context JSON', actions)
   const context = JSON.parse(write.mock.calls.at(-1)![0] as string)
   expect(context.format_version).toBe('daily-data-context-v1')
   expect(context.metadata.product).toBe('MO Option Chain')
@@ -403,7 +404,10 @@ it('downloads complete CSV across viewport, hidden expiry and every color contro
   const write = clipboard()
   const download = captureCsvDownloads()
   await load()
-  expect(copyActions().getAllByRole('button').map((b) => b.textContent)).toEqual(['Copy Raw JSON', 'Copy Context JSON', 'Export CSV', 'Export Context JSON'])
+  // Keep role assertions scoped to the mounted export group instead of repeatedly
+  // recomputing accessibility for every chart, table and ColorPicker popup.
+  const actions = copyActions()
+  expect(actions.getAllByRole('button').map((b) => b.textContent)).toEqual(['Copy Raw JSON', 'Copy Context JSON', 'Export CSV', 'Export Context JSON'])
   const controls = [
     () => {},
     () => fireEvent.click(screen.getByRole('checkbox', { name: '2026-10-23' })),
@@ -414,7 +418,7 @@ it('downloads complete CSV across viewport, hidden expiry and every color contro
   ]
   for (const change of controls) {
     change()
-    fireEvent.click(copyActions().getByRole('button', { name: 'Export CSV' }))
+    fireEvent.click(actions.getByRole('button', { name: 'Export CSV' }))
     const csv = await download.text()
     expect(csv).toBe(optionChainCsv(chain).csv)
     expect(csv.split('\r\n').length - 2).toBe(8)
@@ -422,11 +426,11 @@ it('downloads complete CSV across viewport, hidden expiry and every color contro
     expect(csv).toContain(',put,A-null,7300,null\r\n')
     expect(csv).toContain(',put,A-zero,7100,0\r\n')
     expect(csv).toContain('2026-11-27,false,null,null,call,C-call')
-    expect(copyActions().getAllByRole('status').some((node) => node.textContent === 'Download started')).toBe(true)
-    await copied('Copy Context JSON')
+    expect(actions.getAllByRole('status').some((node) => node.textContent === 'Download started')).toBe(true)
+    await copied('Copy Context JSON', actions)
     const contextText = write.mock.calls.at(-1)![0] as string
     expect(JSON.parse(contextText).data).toEqual(chain)
-    fireEvent.click(copyActions().getByRole('button', { name: 'Export Context JSON' }))
+    fireEvent.click(actions.getByRole('button', { name: 'Export Context JSON' }))
     expect(await download.text()).toBe(contextText)
     expect(download.blobs.at(-1)!.type).toBe('application/json;charset=utf-8')
     expect(download.filenames.at(-1)).toBe(`mo-option-chain_${chain.target_trade_date}_${chain.price_type}_context.json`)

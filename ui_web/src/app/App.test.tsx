@@ -257,8 +257,13 @@ it('preserves the Futures Basis deep link through login and clears its result on
 
 it('returns a restored Futures Basis run to the authentication gate on a protected 401', async () => {
   window.history.replaceState(null, '', `/research/futures-basis?run_id=${'a'.repeat(32)}`)
-  vi.stubGlobal('fetch', vi.fn((url: string) => Promise.resolve(url === '/auth/me' ? response(identity) : unauthorized())))
+  const protectedReply = deferred<Response>()
+  const fetch = vi.fn((url: string) => url === '/auth/me' ? Promise.resolve(response(identity)) : protectedReply.promise)
+  vi.stubGlobal('fetch', fetch)
   render(<App />)
+  await screen.findByRole('heading', { name: 'Futures Basis Research' })
+  expect(fetch.mock.calls.some(([url]) => url.includes('/runs/'))).toBe(true)
+  await act(async () => { protectedReply.resolve(unauthorized()) })
   await screen.findByRole('button', { name: '登录' })
   expect(screen.queryByRole('heading', { name: 'Futures Basis Research' })).toBeNull()
 })

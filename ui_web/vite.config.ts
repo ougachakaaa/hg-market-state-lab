@@ -21,6 +21,9 @@ export default defineConfig({
     },
   },
   test: {
+    // JSDOM + Ant Design integration tests are CPU-heavy. Bound scheduling,
+    // retain per-file isolation and the default 5s regression deadline.
+    maxWorkers: 1,
     environment: 'jsdom',
     setupFiles: './src/test/setup.ts',
   },
