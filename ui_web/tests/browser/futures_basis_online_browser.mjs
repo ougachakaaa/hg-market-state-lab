@@ -11,7 +11,7 @@ import { fileURLToPath } from 'node:url'
 import { chromium } from 'playwright'
 import { polishAcceptance } from './futures_basis_polish_acceptance.mjs'
 
-const root = fileURLToPath(new URL('../../', import.meta.url))
+const root = fileURLToPath(new URL('../../../', import.meta.url))
 const temporary = await mkdtemp(resolve(tmpdir(), 'wp8b-online-'))
 const env = { ...process.env, LAB_AUTH_MODE: 'loopback-http',
   LAB_AUTH_ORIGIN: 'http://127.0.0.1:5173',
@@ -56,9 +56,9 @@ try {
     await new Promise((done, reject) => server.once('error', reject).listen(port, '127.0.0.1', done))
     await new Promise((done) => server.close(done))
   }
-  const backend = start('poetry', ['run', 'python', '-m', 'uvicorn', '--app-dir', 'ui_web/scripts',
+  const backend = start('poetry', ['run', 'python', '-m', 'uvicorn', '--app-dir', 'ui_web/tests/fixtures',
     'futures_basis_browser_app:create_app', '--factory', '--host', '127.0.0.1', '--port', '8011', '--no-proxy-headers'])
-  const frontend = start(process.execPath, ['node_modules/vite/bin/vite.js', '--strictPort'], resolve(root, 'ui_web'))
+  const frontend = start(process.execPath, ['node_modules/vite/bin/vite.js', '--config', 'tests/config/vite.browser.config.ts', '--strictPort'], resolve(root, 'ui_web'))
   await ready('http://127.0.0.1:8011/auth/me', backend, 401)
   await ready('http://127.0.0.1:5173/', frontend, 200)
   browser = await chromium.launch({ headless: true,

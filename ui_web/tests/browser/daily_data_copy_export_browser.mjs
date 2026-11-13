@@ -9,7 +9,7 @@ import { resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { chromium } from 'playwright'
 
-const root = fileURLToPath(new URL('../../', import.meta.url))
+const root = fileURLToPath(new URL('../../../', import.meta.url))
 const output = await mkdtemp(resolve(tmpdir(), 'daily-data-evidence-'))
 const frontendPort = Number(process.env.DAILY_DATA_FRONTEND_PORT ?? 5173)
 const backendPort = Number(process.env.DAILY_DATA_BACKEND_PORT ?? 8011)
@@ -62,7 +62,7 @@ try {
   const backend = start('poetry', ['run', 'python', '-m', 'uvicorn', '--app-dir', 'ui_http/tests',
     'http_support.daily_data_browser_app:create_app', '--factory', '--host', '127.0.0.1', '--port', String(backendPort), '--no-proxy-headers'])
   const configPath = resolve(temporary, 'vite.config.mjs')
-  await writeFile(configPath, `import react from '${resolve(root, 'ui_web/node_modules/@vitejs/plugin-react/dist/index.js')}'; export default { plugins: [react()], server: { host: '127.0.0.1', proxy: Object.fromEntries(['/auth', '/mo-option-chain', '/mo-option-premium-plane'].map(path => [path, '${backendOrigin}'])) } }`)
+  await writeFile(configPath, `import react from '${resolve(root, 'ui_web/node_modules/@vitejs/plugin-react/dist/index.js')}'; export default { plugins: [react()], optimizeDeps: { entries: [${JSON.stringify(resolve(root, 'ui_web/index.html'))}] }, server: { host: '127.0.0.1', proxy: Object.fromEntries(['/auth', '/mo-option-chain', '/mo-option-premium-plane'].map(path => [path, '${backendOrigin}'])) } }`)
   const frontend = start(process.execPath, ['node_modules/vite/bin/vite.js', '--strictPort', '--port', String(frontendPort), '--config', configPath], resolve(root, 'ui_web'))
   await ready(`${backendOrigin}/auth/me`, backend, 401)
   await ready(`${origin}/`, frontend, 200)

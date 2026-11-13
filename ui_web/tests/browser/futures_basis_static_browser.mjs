@@ -8,7 +8,7 @@ import { resolve, extname } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { chromium } from 'playwright'
 
-const web = fileURLToPath(new URL('../', import.meta.url))
+const web = fileURLToPath(new URL('../../', import.meta.url))
 const output = await mkdtemp(resolve(tmpdir(), 'd2e-futures-basis-'))
 const prefix = '/hg-market-state-lab/'
 const disclosure = '静态测试数据 · 非正式 D3 Research Example · 固定 2024 Synthetic Fixture 请求 · 未创建服务器 Run · 未执行 Preflight 或研究 · 不代表当前市场数据或在线服务状态。'

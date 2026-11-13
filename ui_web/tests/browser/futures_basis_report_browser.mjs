@@ -10,12 +10,12 @@ import { chromium } from 'playwright'
 
 // The no-argument npm command is a self-contained synthetic regression gate.
 if (!process.argv[2]) {
-  const repository = fileURLToPath(new URL('../../', import.meta.url))
+  const repository = fileURLToPath(new URL('../../../', import.meta.url))
   const web = resolve(repository, 'ui_web')
   const temporary = await mkdtemp(resolve(tmpdir(), 'r01a-offline-browser-'))
   const report = resolve(temporary, 'report')
   const commands = [
-    ['poetry', ['run', 'python', 'ui_web/scripts/futures_basis_offline_fixture.py', report], repository],
+    ['poetry', ['run', 'python', 'ui_web/tests/fixtures/futures_basis_offline_fixture.py', report], repository],
     [process.execPath, ['scripts/package_futures_basis_report.mjs', report], web],
     [process.execPath, [fileURLToPath(import.meta.url), report], web],
   ]

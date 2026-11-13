@@ -3,8 +3,8 @@ import { createHash } from 'node:crypto'
 import { createServer } from 'vite'
 import { writeFileSync, mkdirSync } from 'node:fs'
 import { resolve } from 'node:path'
-import { projectPrivateExamples } from './private_demo_projection.mjs'
-import { parsePrivateArgs, web, externalPath } from './private_demo_boundary.mjs'
+import { projectPrivateExamples } from '../../scripts/private_demo_projection.mjs'
+import { parsePrivateArgs, web, externalPath } from '../../scripts/private_demo_boundary.mjs'
 
 const paths = parsePrivateArgs(process.argv.slice(2))
 const server = await createServer({ root: web, logLevel: 'silent', configFile: false, server: { middlewareMode: true }, appType: 'custom' })

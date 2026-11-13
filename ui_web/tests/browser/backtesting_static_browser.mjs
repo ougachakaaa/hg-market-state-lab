@@ -8,7 +8,7 @@ import { resolve, extname } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { chromium } from 'playwright'
 
-const web = fileURLToPath(new URL('../', import.meta.url))
+const web = fileURLToPath(new URL('../../', import.meta.url))
 const output = await mkdtemp(resolve(tmpdir(), 'd2f-backtesting-'))
 const prefix = '/hg-market-state-lab/'
 const disclosure = 'Test-only 静态测试数据 · 非正式 D3 Backtesting Example · 复用既有生产者 Test Fixture（2025-02-17 至 2025-03-25，5 个 CFFEX 交易日）· 非真实市场业绩 · 非 2026 目标窗口 · 未创建服务器 Run · 未执行 Preflight 或 W2 回测。'

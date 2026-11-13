@@ -7,7 +7,7 @@ import { resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { createServer } from 'node:net'
 import { chromium } from 'playwright'
-import { historicalBasisAcceptance } from './historical_basis_acceptance.mjs'
+import { historicalBasisAcceptance } from '../tests/browser/historical_basis_acceptance.mjs'
 
 const web = fileURLToPath(new URL('../', import.meta.url))
 const output = await mkdtemp(resolve(tmpdir(), 'wp3-demo-browser-'))

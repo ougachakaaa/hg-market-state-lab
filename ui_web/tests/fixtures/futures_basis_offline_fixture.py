@@ -3,7 +3,7 @@ import runpy
 import sys
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[2]
+ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(ROOT / "market_research/tests"))
 
 from market_research.descriptive.cases.futures_basis.evidence import write_evidence  # noqa: E402

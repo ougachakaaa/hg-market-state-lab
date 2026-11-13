@@ -8,7 +8,7 @@ import { resolve, extname } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { chromium } from 'playwright'
 
-const web = fileURLToPath(new URL('../', import.meta.url))
+const web = fileURLToPath(new URL('../../', import.meta.url))
 const output = await mkdtemp(resolve(tmpdir(), 'd2d-explorer-'))
 const prefix = '/hg-market-state-lab/'
 const disclosure = '静态测试数据 · 非正式 D3 Publication Example · 未查询在线 Publication Store · 未执行研究 · 不代表实时服务或 Provider 状态；示例 Provenance / Source Metadata 不证明真实市场来源。'

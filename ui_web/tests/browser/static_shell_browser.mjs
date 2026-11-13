@@ -8,7 +8,7 @@ import { resolve, extname } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { chromium } from 'playwright'
 
-const web = fileURLToPath(new URL('../', import.meta.url))
+const web = fileURLToPath(new URL('../../', import.meta.url))
 const output = await mkdtemp(resolve(tmpdir(), 'd1-shell-browser-'))
 const prefix = '/hg-market-state-lab/'
 const evidence = { status: 'RUNNING', checks: [], requests: [], errors: [] }

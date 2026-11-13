@@ -7,7 +7,7 @@ from lab_config import backtesting_run_root
 from market_backtesting.cases.futures_roll_long import create_futures_roll_online_application
 from ui_http.app import create_app as create_runtime
 
-ROOT = Path(__file__).resolve().parents[2]
+ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(ROOT / "market_backtesting/tests"))
 from public_input_fixtures import fake_services  # noqa: E402
 

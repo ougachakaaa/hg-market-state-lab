@@ -6,8 +6,8 @@ import { fileURLToPath } from 'node:url'
 import { chromium } from 'playwright'
 import { createServer } from 'vite'
 
-const root = fileURLToPath(new URL('../', import.meta.url))
-const output = resolve(process.env.WP1_BROWSER_EVIDENCE_DIR || resolve(root, 'node_modules/.cache/visualization-browser'))
+const root = fileURLToPath(new URL('../../', import.meta.url))
+const output = resolve(process.env.WP1_BROWSER_EVIDENCE_DIR || resolve(root, '.build/tests/visualization-browser'))
 await mkdir(output, { recursive: true })
 const evidence = { status: 'RUNNING', checks: [], errors: [] }
 const server = await createServer({ root, server: { host: '127.0.0.1', port: 0, open: false, proxy: {} } })

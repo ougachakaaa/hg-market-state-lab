@@ -3,8 +3,8 @@ import { build } from 'vite'
 import react from '@vitejs/plugin-react'
 import { mkdirSync, mkdtempSync, rmSync } from 'node:fs'
 import { resolve } from 'node:path'
-import { staticPresentationIsolation } from './staticPresentationIsolation.ts'
-import { privateDemoIsolation } from './private_demo_isolation.mjs'
+import { staticPresentationIsolation } from '../../scripts/staticPresentationIsolation.ts'
+import { privateDemoIsolation } from '../../scripts/private_demo_isolation.mjs'
 const testRoot = resolve('.build/tests')
 mkdirSync(testRoot, { recursive: true })
 const output = mkdtempSync(resolve(testRoot, 'static-contract-'))

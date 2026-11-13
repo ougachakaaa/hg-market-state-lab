@@ -11,7 +11,7 @@ import {
   classifyWindowsAcceptance,
   combineStatuses,
   exitCode,
-} from './wp8_acceptance_status.mjs'
+} from '../browser/wp8_acceptance_status.mjs'
 
 const profiles = ['expiry_to_M1_v1', 'expiry_to_Q1_v1']
 const fingerprint = 'b83a38c9bdc83f082eda87e93c1babdb9950dacad1e316b4186a2e07e0ef557c'

@@ -3,7 +3,7 @@
 import runpy
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[2]
+ROOT = Path(__file__).resolve().parents[3]
 
 
 def test_auth_export_is_offline_and_complete(monkeypatch, tmp_path):

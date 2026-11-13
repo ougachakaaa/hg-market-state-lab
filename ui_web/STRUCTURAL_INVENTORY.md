@@ -249,6 +249,11 @@ and `.build/cache`. Source/config/test relocation remains WP1B. npm commands ret
 their configs/scripts own output defaults. Old ignored dist directories are retained.
 Explicit external private/report delivery roots and browser temporary runtimes remain unchanged.
 
-## WP1B stage 1
+## WP1B current path override
 
-Seven specialized Vite/TypeScript pairs now belong to `tests/config/`; six feature static entries and the Shell harness belong to `tests/static/`. Visualization harness entries belong to `tests/visualization/`. Existing production ownership, Demo configuration inheritance and WP1A output roots are preserved. Browser/isolation consumers use the relocated entries; their own relocation follows in stage 2. Baseline tables above remain historical inventory.
+The WP0 rows above remain the historical baseline. WP1B has applied all 72 WP1 test/config/harness
+moves; the complete old-to-new ledger is in [WP1B acceptance](WP1B_ACCEPTANCE.md). Root Online,
+V1/private/public configuration and production-consumed tooling remain at their assigned owners.
+Execution status and subsequent gates belong to the [migration audit](STRUCTURAL_MIGRATION.md).
+
+One small Browser startup configuration was added under `tests/config/`; it declares the Online dependency-scan entry and is type-checked by the root node project. It is not an additional npm project or a configuration-generation framework.

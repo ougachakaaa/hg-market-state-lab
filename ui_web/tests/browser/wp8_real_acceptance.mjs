@@ -1,5 +1,5 @@
 // Opt-in real-market HTTP + visible Windows Chrome acceptance. No fake services.
-// Run from ui_web: node scripts/wp8_real_acceptance.mjs /absolute/external/root
+// Run from ui_web: node tests/browser/wp8_real_acceptance.mjs /absolute/external/root
 // The aggregate gate is PASS only when Python, offline reproduction, HTTP and Windows
 // Chrome all pass in this artifact round; every other outcome exits nonzero.
 import assert from 'node:assert/strict'
@@ -187,7 +187,7 @@ async function windowsBrowser() {
 }
 
 async function orchestrate() {
-  const root = fileURLToPath(new URL('../../', import.meta.url))
+  const root = fileURLToPath(new URL('../../../', import.meta.url))
   assert.ok(artifactRoot !== resolve(root) && !artifactRoot.startsWith(`${resolve(root)}/`), 'artifacts_must_be_outside_repository')
   await mkdir(artifactRoot, { recursive: true })
   const temporary = resolve(artifactRoot, 'private-runtime')
@@ -310,7 +310,7 @@ async function orchestrate() {
       await new Promise(done => server.close(done))
     }
     const backend = start('poetry', ['run', 'python', 'market_backtesting/tests/wp8_real_acceptance.py', '--root', artifactRoot, '--mode', 'serve'])
-    const frontend = start(process.execPath, ['node_modules/vite/bin/vite.js', '--strictPort'], resolve(root, 'ui_web'))
+    const frontend = start(process.execPath, ['node_modules/vite/bin/vite.js', '--config', 'tests/config/vite.browser.config.ts', '--strictPort'], resolve(root, 'ui_web'))
     await ready('http://127.0.0.1:8011/auth/me', backend, 401)
     await ready(origin, frontend, 200)
     const credentials = await provision('wp8_real_user')

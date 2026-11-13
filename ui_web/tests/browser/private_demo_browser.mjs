@@ -5,8 +5,8 @@ import { resolve, extname, relative, sep } from 'node:path'
 import { createHash } from 'node:crypto'
 import { chromium } from 'playwright'
 import { createServer as createViteServer } from 'vite'
-import { workspaceRoutes } from '../src/app/routeInventory.ts'
-import { externalPath } from './private_demo_boundary.mjs'
+import { workspaceRoutes } from '../../src/app/routeInventory.ts'
+import { externalPath } from '../../scripts/private_demo_boundary.mjs'
 
 const args = Object.fromEntries(Array.from({ length: (process.argv.length - 2) / 2 }, (_, i) => [process.argv[2 + i * 2], process.argv[3 + i * 2]]))
 assert.deepEqual(Object.keys(args).sort(), ['--build', '--evidence', '--r2', '--wpa'])

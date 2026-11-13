@@ -3,7 +3,7 @@ import sys
 import time
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[2]
+ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(ROOT / "market_research/tests"))
 
 from futures_basis_observation_fixtures import Services  # noqa: E402

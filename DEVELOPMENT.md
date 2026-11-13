@@ -165,7 +165,7 @@ poetry run python -c 'import secrets; print(secrets.token_urlsafe(32))'
 
 ### Authentication 验证与部署准备
 
-在 `ui_web/` 执行 `npm run contract:generate`、`npm run contract:check`、`npm run test`、`npm run build`、`npm run lint`；从仓库根执行 `poetry run pytest ui_http/tests ui_web/scripts/test_export_contracts.py`、`poetry run ruff check ui_http ui_web/scripts` 与 `poetry run mypy ui_http`。离线 contract export 不需要配置 Auth 或创建用户数据库。
+在 `ui_web/` 执行 `npm run contract:generate`、`npm run contract:check`、`npm run test`、`npm run build`、`npm run lint`；从仓库根执行 `poetry run pytest ui_http/tests ui_web/tests/tooling/test_export_contracts.py`、`poetry run ruff check ui_http ui_web/scripts ui_web/tests` 与 `poetry run mypy ui_http`。离线 contract export 不需要配置 Auth 或创建用户数据库。
 
 真实浏览器 smoke（不是 Mock UI 测试）：在 `ui_web/` 执行 `npx playwright install chromium`，然后 `npm run test:auth-browser`。Linux 还需 Chromium 系统运行库；可用 `npx playwright install-deps chromium` 安装。已有兼容 Chromium 可通过 `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH` 指定。端口 5173/8011 必须空闲；脚本拒绝连接已有开发服务。
 

@@ -2,7 +2,7 @@
 import sys
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[2]
+ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(ROOT / 'market_research/tests'))
 from batch_execution_example import run  # noqa: E402
 from market_research.publication import PublicationStore, publish, retain_source  # noqa: E402

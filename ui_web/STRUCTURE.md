@@ -96,6 +96,10 @@ and Public review evidence: reviewed text uses LF on every platform; binary arch
 `-text`. Keep these rules aligned when admitting a new reviewed input. Runtime verification
 continues to hash exact file bytes without normalizing them or rewriting reviewed digests.
 
-## WP1B stage 1
+## WP1B current test ownership
 
-Seven specialized Vite/TypeScript pairs now belong to `tests/config/`; six feature static entries and the Shell harness belong to `tests/static/`. Visualization harness entries belong to `tests/visualization/`. Existing production ownership, Demo configuration inheritance and WP1A output roots are preserved. Browser/isolation consumers use the relocated entries; their own relocation follows in stage 2. Baseline tables above remain historical inventory.
+Specialized configs, static/Visualization harnesses and browser/isolation/fixture/tooling/deploy
+tests now occupy `tests/` as defined above. Feature unit tests, setup and Production Presentation
+retain their owners. Root Online and transitional V1/private/public engineering entries remain.
+Current paths and completion gates belong to the [migration audit](STRUCTURAL_MIGRATION.md);
+file-level movement and verification are recorded in [WP1B acceptance](WP1B_ACCEPTANCE.md).

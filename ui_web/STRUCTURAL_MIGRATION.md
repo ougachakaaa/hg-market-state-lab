@@ -217,3 +217,27 @@ before WP1 implementation acceptance. Contract, build and lint success does not 
 ## WP1B stage 1
 
 Seven specialized Vite/TypeScript pairs now belong to `tests/config/`; six feature static entries and the Shell harness belong to `tests/static/`. Visualization harness entries belong to `tests/visualization/`. Existing production ownership, Demo configuration inheritance and WP1A output roots are preserved. Browser/isolation consumers use the relocated entries; their own relocation follows in stage 2. Baseline tables above remain historical inventory.
+
+## WP1B stage 2
+
+WP1 MOVE browser/acceptance helpers, Python fixtures, isolation and tooling tests now live in
+`tests/{browser,fixtures,isolation,tooling,deploy}/`. Production-consumed build/isolation tooling
+stays in `scripts/` until its assigned WP2-WP4. V1/Public browser runners remain at their existing
+owners; the V1 runner imports the relocated shared assertions. Feature tests and setup stay co-located.
+CI explicitly collects `ui_web/tests/tooling` and `ui_web/tests/deploy`; it no longer relies on
+`ui_web/scripts` for pytest discovery. Current relocation ledger and closure evidence:
+[WP1B acceptance](WP1B_ACCEPTANCE.md). No Demo generation/release cutover occurs here.
+
+WP1B Browser startup additionally uses `tests/config/vite.browser.config.ts` to scan only
+the Online index, avoiding implicit Demo virtual-entry discovery during browser regressions.
+The existing Copy/Export generated proxy configuration declares the same Online entry.
+Root Online configuration and all assertions retain their semantics. By the user's execution-time
+scope update, complete Demo builds are not a WP1B closure prerequisite; this changes no CI
+check or WP2-WP4 runtime/release contract. Evidence remains in WP1B_ACCEPTANCE.md.
+
+WP1B implementation is complete; acceptance remains OPEN. Vitest 84/610, Python 20,
+seven specialized + V1 Browser Suites and Public seven-page Browser passed. Two affected
+extended Online suites (Futures Basis and Backtesting) remain failing after bounded reruns;
+see the canonical WP1B acceptance record for baseline comparisons and exact limitations.
+The user-waived Demo build prerequisite is not the blocker. WP2 directory prerequisites exist,
+but WP1B does not yet provide an unconditional acceptance handoff. No WP2 work has started.
