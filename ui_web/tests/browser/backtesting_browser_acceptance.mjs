@@ -1,7 +1,8 @@
+import { onlineHarness, unusedPort, observe } from './online_harness.mjs'
 // Real browser -> Vite proxy -> FastAPI -> temporary SQLite. Only market public
 // providers are deterministic fixtures; Auth, Cookie and CLI are real.
 import assert from 'node:assert/strict'
-import { spawn, spawnSync } from 'node:child_process'
+import { spawnSync } from 'node:child_process'
 import { randomBytes } from 'node:crypto'
 import { mkdtemp, rm, mkdir, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
@@ -11,72 +12,46 @@ import { chromium } from 'playwright'
 
 const root = fileURLToPath(new URL('../../../', import.meta.url))
 const temporary = await mkdtemp(resolve(tmpdir(), 'wp7-backtesting-'))
+const backendPort = await unusedPort()
+let frontendPort = await unusedPort()
+while (frontendPort === backendPort) frontendPort = await unusedPort()
+const origin = `http://127.0.0.1:${frontendPort}`
+const output = resolve(process.argv[2] || resolve(temporary, 'evidence'))
 const env = { ...process.env, LAB_AUTH_MODE: 'loopback-http',
-  LAB_AUTH_ORIGIN: 'http://127.0.0.1:5173',
+  LAB_AUTH_ORIGIN: origin, LAB_BROWSER_API_ORIGIN: `http://127.0.0.1:${backendPort}`,
   LAB_AUTH_JWT_SECRET: randomBytes(32).toString('base64url'),
   LAB_AUTH_DB_PATH: resolve(temporary, 'auth.sqlite3'), LAB_BACKTESTING_RUN_ROOT: resolve(temporary, 'runs') }
-const processes = []
+const { start, ready, save, stop } = onlineHarness(env, root, output)
+let drain = async () => {}
 let browser
 let page
 const evidence = []
 const states = []
 const errors = []
-function start(command, args, cwd = root) {
-  const child = spawn(command, args, { cwd, env, stdio: ['ignore', 'pipe', 'pipe'] })
-  processes.push(child)
-  let output = ''
-  child.stdout.on('data', (chunk) => { output += chunk })
-  child.stderr.on('data', (chunk) => { output += chunk })
-  child.on('exit', (code) => { if (code) process.stderr.write(output) })
-  return child
-}
-async function ready(url, child, expected) {
-  for (let attempt = 0; attempt < 120; attempt++) {
-    if (child.exitCode !== null) throw new Error(`Server exited: ${child.exitCode}`)
-    try {
-      const res = await fetch(url)
-      if (res.status === expected) return
-    } catch { /* starting */ }
-    await new Promise((done) => setTimeout(done, 250))
-  }
-  throw new Error(`Timed out waiting for ${url}`)
-}
 function cli(...args) {
   const result = spawnSync('poetry', ['run', 'lab', 'auth', ...args], { cwd: root, env, encoding: 'utf8' })
   assert.equal(result.status, 0, result.stderr)
   return result.stdout
 }
 try {
-  // Fail instead of attaching to an unrelated developer's running servers.
-  const { createServer } = await import('node:net')
-  for (const port of [8011, 5173]) {
-    const server = createServer()
-    await new Promise((done, reject) => server.once('error', reject).listen(port, '127.0.0.1', done))
-    await new Promise((done) => server.close(done))
-  }
   const backend = start('poetry', ['run', 'python', '-m', 'uvicorn', '--app-dir', 'ui_web/tests/fixtures',
-    'backtesting_browser_app:create_app', '--factory', '--host', '127.0.0.1', '--port', '8011', '--no-proxy-headers'])
-  const frontend = start(process.execPath, ['node_modules/vite/bin/vite.js', '--config', 'tests/config/vite.browser.config.ts', '--strictPort'], resolve(root, 'ui_web'))
-  await ready('http://127.0.0.1:8011/auth/me', backend, 401)
-  await ready('http://127.0.0.1:5173/', frontend, 200)
+    'backtesting_browser_app:create_app', '--factory', '--host', '127.0.0.1', '--port', String(backendPort), '--no-proxy-headers'])
+  const frontend = start(process.execPath, ['node_modules/vite/bin/vite.js', '--config', 'tests/config/vite.browser.config.ts', '--strictPort', '--port', String(frontendPort)], resolve(root, 'ui_web'))
+  await ready(`${env.LAB_BROWSER_API_ORIGIN}/auth/me`, backend, 401)
+  await ready(`${origin}/`, frontend, 200)
   browser = await chromium.launch({ headless: true,
     ...(process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH
       ? { executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH } : {}) })
   const context = await browser.newContext()
   page = await context.newPage()
   page.setDefaultTimeout(15000)
-  page.on('pageerror', error => errors.push(String(error)))
-  page.on('response', async (res) => {
-    const path = new URL(res.url()).pathname
-    if (path.startsWith('/auth/') || path.startsWith('/api/backtesting/futures-roll')) evidence.push(`${path} ${res.status()}`)
-    if (/\/runs\/[a-f0-9]+$/.test(path) && res.status() === 200) states.push((await res.json()).status)
-  })
-  const anonymous = await context.request.get('http://127.0.0.1:5173/mo-option-chain')
+  drain = observe(page, evidence, states, errors)
+  const anonymous = await context.request.get(`${origin}/mo-option-chain`)
   assert.equal(anonymous.status(), 401)
-  await page.goto('http://127.0.0.1:5173/')
+  await page.goto(`${origin}/`)
   await page.getByRole('button', { name: '登录', exact: true }).waitFor()
   assert.equal(await page.getByRole('button', { name: 'MO Option Chain', exact: true }).count(), 0)
-  assert.equal(evidence.some((entry) => entry.startsWith('/mo-option')), false)
+  assert.equal(evidence.some((entry) => entry.includes('/mo-option')), false)
   await page.getByRole('button', { name: '注册', exact: true }).click()
   await page.getByLabel('用户名', { exact: true }).fill('g3_browser_user')
   const password = randomBytes(24).toString('base64url')
@@ -103,7 +78,6 @@ try {
   assert.equal(cookie.sameSite, 'Strict')
   assert.equal(cookie.secure, false)
   assert.equal(await page.evaluate(() => document.cookie.includes('lab_access_token')), false)
-  const output = resolve(process.argv[2] || '/tmp/wp7-backtesting-browser')
   await mkdir(output, { recursive: true })
   await page.getByRole('menuitem', { name: '回测', exact: true }).click()
   await page.getByRole('heading', { name: '期货展期做多回测', exact: true }).waitFor()
@@ -260,7 +234,6 @@ try {
     // Real busy response from the same worker, no second Run.
     if (runIds.length === 1) {
       await page.getByText('RUNNING', { exact: true }).waitFor()
-      await page.waitForTimeout(1000)
       const busy = page.waitForResponse(r => r.request().method() === 'POST' && r.url().endsWith('/api/backtesting/futures-roll/runs'))
       await submit.click(); assert.equal((await busy).status(), 409)
       await page.getByText(/RUN_BUSY：/).waitFor()
@@ -268,7 +241,7 @@ try {
     await page.getByTestId('backtest-result').waitFor()
     await page.locator('.js-plotly-plot .nsewdrag').first().waitFor()
     assert.equal(await page.locator('.js-plotly-plot').count(), 2)
-    const payload = await (await context.request.get(`http://127.0.0.1:5173/api/backtesting/futures-roll/runs/${admission.run_id}/result`)).json()
+    const payload = await (await context.request.get(`${origin}/api/backtesting/futures-roll/runs/${admission.run_id}/result`)).json()
     assert.equal(payload.data.summary.total_pnl, pnl)
     assert.equal(payload.data.rolls[0].new_contract_code, contract)
     await page.getByRole('cell', { name: contract, exact: true }).first().waitFor()
@@ -296,7 +269,7 @@ try {
   // Incomplete/unavailable readiness remains advisory. Real submit path is retained.
   await fill('expiry_to_Q1_v1')
   await page.route('**/api/backtesting/futures-roll/preflight', async route => {
-    const response = await route.fetch(); const json = await response.json()
+    const response = await route.fetch(); assert.equal(response.status(), 200, `Fixture source fetch: ${response.status()}`); const json = await response.json()
     json.ready = false; json.futures.state = 'incomplete'
     await route.fulfill({ response, json })
   })
@@ -315,6 +288,7 @@ try {
     lostAccepted = await response.json(); await route.abort('failed')
   })
   await submit.click(); await page.getByText(/网络响应丢失。提交结果可能已被服务器接受/).waitFor()
+  // Bounded observation window: detect forbidden automatic POST replay.
   await page.waitForTimeout(5500)
   assert.equal((await persistedRunIds()).length, 3); assert.ok(lostAccepted.run_id)
   assert.ok(page.url().includes(runIds[1]))
@@ -336,26 +310,26 @@ try {
   assert.equal(provision.status, 0, provision.stderr)
   const foreignId = cli('pending').match(/[0-9a-f]{8}-[0-9a-f-]{27,}/i)?.[0]
   assert.ok(foreignId); cli('approve', foreignId)
-  assert.equal((await foreign.request.post('http://127.0.0.1:5173/auth/login', { headers: { Origin: env.LAB_AUTH_ORIGIN }, data: foreignCredentials })).status(), 200)
+  assert.equal((await foreign.request.post(`${origin}/auth/login`, { headers: { Origin: env.LAB_AUTH_ORIGIN }, data: foreignCredentials })).status(), 200)
   const foreignPage = await foreign.newPage()
-  await foreignPage.goto(`http://127.0.0.1:5173/backtesting?run_id=${runIds[0]}`)
+  await foreignPage.goto(`${origin}/backtesting?run_id=${runIds[0]}`)
   await foreignPage.getByText('回测不存在或无权访问。', { exact: true }).waitFor()
   assert.equal(await foreignPage.getByTestId('backtest-result').count(), 0)
-  const denied = await foreign.request.get(`http://127.0.0.1:5173/api/backtesting/futures-roll/runs/${runIds[0]}`)
-  const missing = await foreign.request.get('http://127.0.0.1:5173/api/backtesting/futures-roll/runs/' + 'f'.repeat(32))
+  const denied = await foreign.request.get(`${origin}/api/backtesting/futures-roll/runs/${runIds[0]}`)
+  const missing = await foreign.request.get(`${origin}/api/backtesting/futures-roll/runs/` + 'f'.repeat(32))
   assert.equal(denied.status(), 404); assert.deepEqual(await denied.json(), await missing.json())
   await foreign.close()
-  await page.goto('http://127.0.0.1:5173/backtesting?run_id=' + 'f'.repeat(32))
+  await page.goto(`${origin}/backtesting?run_id=` + 'f'.repeat(32))
   await page.getByText('回测不存在或无权访问。', { exact: true }).waitFor()
   assert.equal(await page.getByTestId('backtest-result').count(), 0)
-  await page.goto(`http://127.0.0.1:5173/backtesting?run_id=${runIds[1]}`)
+  await page.goto(`${origin}/backtesting?run_id=${runIds[1]}`)
   await page.getByTestId('backtest-result').waitFor()
   // Fault injection changes only delivered HTTP responses; successful results above
   // always come from the actual worker. These checks cover terminal/error rendering.
   const selectedStatus = `**/api/backtesting/futures-roll/runs/${runIds[1]}`
   for (const status of ['FAILED', 'INTERRUPTED']) {
     await page.route(selectedStatus, async route => {
-      const response = await route.fetch(); const json = await response.json()
+      const response = await route.fetch(); assert.equal(response.status(), 200, `Fixture source fetch: ${response.status()}`); const json = await response.json()
       json.status = status; json.result_available = false
       json.failure = { stage: 'execution', category: 'internal_failure', dependency: null, reason: 'internal_failure' }
       await route.fulfill({ response, json })
@@ -380,7 +354,7 @@ try {
   await page.unroute('**/api/backtesting/futures-roll/runs/*/result')
   await page.getByRole('button', { name: '重新读取结果' }).click(); await page.getByTestId('backtest-result').waitFor()
   await page.setViewportSize({ width: 390, height: 844 })
-  await page.waitForTimeout(500)
+  await page.waitForFunction(() => document.querySelector('.js-plotly-plot')?._fullLayout?._size.w >= 300 && document.documentElement.scrollWidth <= innerWidth + 1)
   assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1))
   assert.ok(await page.locator('.js-plotly-plot').first().evaluate(el => el._fullLayout._size.w >= 300))
   await page.screenshot({ path: resolve(output, 'mobile.png'), fullPage: true })
@@ -390,23 +364,25 @@ try {
   await page.reload(); await page.getByRole('button', { name: '登录', exact: true }).waitFor()
   assert.equal(await page.getByTestId('backtest-result').count(), 0)
   assert.deepEqual(await page.evaluate(() => [localStorage.length, sessionStorage.length]), [0, 0])
+  await drain()
   assert.deepEqual(errors, [])
   await writeFile(resolve(output, 'acceptance.json'), JSON.stringify({ status: 'PASS', admissionStatus: 'PENDING', evidence, states, runIds, lostResponseRun: lostAccepted.run_id, errors }, null, 2))
   console.log(`PASS: WP7 Chromium -> Vite -> FastAPI -> worker -> public-service fixtures; evidence: ${output}`)
 } catch (error) {
-  console.error(evidence.join('\n'))
-  if (page) { await page.screenshot({ path: '/tmp/wp7-backtesting-error.png', fullPage: true }).catch(() => {}); console.error(await page.locator('body').innerText().catch(() => 'Page unavailable')) }
+  await mkdir(output, { recursive: true })
+  if (page) await page.screenshot({ path: resolve(output, 'failure.png'), fullPage: true }).catch(() => {})
   throw error
 } finally {
-  await browser?.close()
-  for (const child of processes.reverse()) {
-    // Windows Poetry/Python launchers leave descendants holding server ports/pipes.
-    if (process.platform === 'win32' && child.exitCode === null) {
-      spawnSync('taskkill', ['/pid', String(child.pid), '/t', '/f'], { stdio: 'ignore' })
-    } else {
-      child.kill('SIGTERM')
+  try {
+    await drain()
+    await save(evidence, errors)
+    console.log(`Diagnostics: ${output}`)
+  } finally {
+    try { await browser?.close() } finally {
+      await stop()
+      // Keep evidence, remove only this run's authentication and Run Store.
+      await rm(env.LAB_AUTH_DB_PATH, { force: true })
+      await rm(env.LAB_BACKTESTING_RUN_ROOT, { recursive: true, force: true })
     }
-    if (child.exitCode === null) await new Promise((done) => child.once('exit', done))
   }
-  await rm(temporary, { recursive: true, force: true })
 }

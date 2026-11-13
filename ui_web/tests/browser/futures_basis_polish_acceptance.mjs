@@ -4,8 +4,7 @@ import assert from 'node:assert/strict'
 import { mkdir, writeFile } from 'node:fs/promises'
 import { resolve } from 'node:path'
 
-export async function polishAcceptance(page, context, output, sourceId) {
-  const base = 'http://127.0.0.1:5173'
+export async function polishAcceptance(page, context, output, sourceId, base = 'http://127.0.0.1:5173') {
   const api = '/api/research/futures-basis/runs'
   const sourceRun = await (await context.request.get(`${base}${api}/${sourceId}`)).json()
   const sourceReport = await (await context.request.get(`${base}${api}/${sourceId}/report`)).json()

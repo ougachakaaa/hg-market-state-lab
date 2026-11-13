@@ -1,5 +1,16 @@
 # Structural consolidation — WP0 audit and migration
 
+## WP1B bounded hardening reconciliation — 2026-11-14
+
+The [WP1B evidence](WP1B_ACCEPTANCE.md#bounded-harness-hardening--2026-11-14) records
+isolated-port/process/diagnostic hardening of the two affected Online runners. All 72 moves,
+Core Verification and the Online production graph audit pass; Futures Basis Online passes.
+WP1B remains OPEN solely on Backtesting Online's unexpected authenticated 401 and ensuing
+presentation timeout. The migration baseline reproduces the 401 symptom, but its root cause
+remains undetermined; the required gate is not waived. Historical results below are preserved.
+Verification scope follows [Agent rules](AGENTS.md#验证); formal release/security/integrity gates
+are unchanged. No additional static-build change or full static Browser Matrix rerun was needed.
+
 ## Baseline and status
 
 Audited 2026-11-13 at `4872508fb7b7f47b2d8f8977942246a3068c0e2c` on branch

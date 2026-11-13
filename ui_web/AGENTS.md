@@ -30,6 +30,12 @@ Directory ownership is defined by [Structure](STRUCTURE.md); current paths, KEEP
 
 ## 验证
 
+- **Core Verification**：当前变更涉及的 TypeScript、Lint、Unit Tests、Build、Contract 和 Python Tests 必须通过。
+- **Scoped Integration**：实际受当前变更影响的 Browser / HTTP / Integration Tests 是任务强制门槛。
+- **Extended E2E**：其他完整 Online Browser Suites 是扩展回归诊断，不自动阻塞每个开发任务；正式发布、认证安全、权限隔离、数据完整性及任务明确要求的 E2E 仍须满足对应强制验收。此规则不减免正式 Demo 发布、安全扫描或 Artifact Verification 门槛。
+- 失败必须按证据区分 `PRODUCT_REGRESSION`、`HARNESS_FAILURE`、`BASELINE_FLAKY`、`ENVIRONMENT_BLOCKED`、`UNDETERMINED`。失败后最多一次干净环境重试；必要时再做一次同环境、同命令的未修改基线对照，保留命令、版本与失败证据，禁止无限重试求 PASS。`BASELINE_FLAKY` 不能仅凭一次通过判定，必须保留失败证据和基线对照；`UNDETERMINED` 不得自动视为无害。
+- 非当前任务的可选扩展测试失败可独立记录而不阻塞当前任务；当前任务的必需测试不能通过简单重新分类获得豁免。
+
 在 `ui_web/` 中按影响范围运行，提交前完整验证默认为：
 
 ```bash

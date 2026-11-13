@@ -263,3 +263,59 @@ Logs (including first failures, successful retries, baseline and final failures)
 ignored `ui_web/.build/tests/verification/wp1b/` in the Windows workspace. WSL source logs remain
 under the three task-owned checkout roots documented above. No old dist outputs or user data
 were deleted. Windows native Symlink/pytest/worker qualification remains Deferred as in WP1A-R.
+
+## Bounded Harness hardening — 2026-11-14
+
+Starting HEAD: `b6e952ad24c6b4c9804246249c3b0f8d309408e8`, clean worktree on the same branch.
+Verification used the existing isolated WSL Ubuntu 24.04 checkout `/tmp/wp1br-head`, root
+Poetry environment, Node 22.22.1 and installed Chromium with the previously documented library path.
+No business, Auth, calculation, Demo release, safety or Artifact Verification code changed.
+
+Two runners now select isolated ephemeral ports and propagate one browser Origin and backend
+proxy target. A small shared helper checks owned-child listening logs before readiness probes,
+handles spawn failures, terminates owned process groups/Windows process trees with bounded waits,
+and saves redacted process/HTTP/browser diagnostics even on assertion failure. Async response-body
+observations are drained and navigation-aborted bodies are recorded rather than escaping as
+unhandled promises. The explicit Online dependency-scan entry is retained. Busy and responsive-layout
+sleeps were removed/replaced with existing RUNNING and explicit layout conditions. The bounded
+lost-response observation windows remain: they assert absence of automatic POST replay.
+Each run retains evidence but removes only its own temporary Auth DB and Run Store after stopping servers.
+
+| Check | Result |
+| --- | --- |
+| Core: contract:check, TypeScript + Online build, lint | PASS |
+| Default Vitest | PASS: 84 files / 610 tests; discovery/count unchanged |
+| Python tooling/deploy and Python lint | PASS: 20 tests; ruff scripts/tests PASS |
+| Migration audit | PASS: all 72 mapped destinations exist; all 72 old entries absent |
+| Online build module graph | PASS: no tests or src/demo modules |
+| Shared lifecycle probe / runner syntax | PASS: own-server readiness, HTTP probe, process-group stop and released port |
+| Futures Basis Online Browser | PASS: unmodified HEAD clean run and hardened runner complete flow |
+| Backtesting Online Browser | FAIL: hardened run and its one clean retry; unexpected protected HTTP 401 precedes presentation timeout |
+| Unmodified migration baseline `5da36db` | FAIL: same npm Backtesting command, same WSL/Node/Chromium environment; preflight 401 precedes readiness timeout |
+
+Initial attempts encountered the user's running development server on 8011 (`ENVIRONMENT_BLOCKED`).
+After the user stopped it, unmodified HEAD Futures Basis passed; unmodified HEAD Backtesting failed
+after `/auth/me 401`. These attempts remain separate from the hardened runner results.
+No further browser retries were performed after the one hardened Backtesting retry.
+
+The retry's 401 diagnostics show Cookie present, issued=1794589227, expires=1794592827,
+observed clock=1794589226.521. A future-issued token is consistent with wall-clock rollback;
+Auth correctly requires issued <= current time. This is a diagnostic lead, not a proven root cause:
+a subsequent five-second clock sample saw no rollback, and eight Node/Python clock comparisons
+were consistent. No Auth tolerance, cookie copying, re-login or request replay was added.
+
+Classification: startup/process/body-observation weaknesses addressed here are `HARNESS_FAILURE`;
+the intermittent 401 symptom is reproduced on the migration baseline, but its root cause and
+equivalence of every historical failure remain `UNDETERMINED`. It is not reclassified into a PASS.
+Deferred: investigate the pre-existing intermittent authenticated 401 in a controlled clock/runtime
+environment. Native Windows qualification remains Deferred; no full static Browser Matrix rerun
+was needed because no static configuration, production graph or static assertions changed.
+
+**WP1B remains OPEN. The single remaining acceptance blocker is a successful, attributable
+Backtesting Online Browser run without unexpected authenticated 401.** The new scoped-verification
+policy does not waive this task's explicit required test. Existing static-build and Browser evidence
+above remains valid; no production-to-test dependency or missing migration entry was found.
+
+Evidence: `ui_web/.build/tests/verification/hardening-2026-11-14/` in the Windows workspace;
+WSL source logs are `.build/tests/hardening-before/`, `hardening-after/`, `hardening-core/`
+under `/tmp/wp1br-head/ui_web`, and `hardening-baseline/` under `/tmp/wp1br-base/ui_web`.
