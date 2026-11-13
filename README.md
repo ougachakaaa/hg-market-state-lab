@@ -6,7 +6,7 @@
 
 **[Live Demo](https://ougachakaaa.github.io/hg-market-state-lab/)** · **[Source Code](https://github.com/ougachakaaa/hg-market-state-lab)**
 
-当前在线版本为单页 Synthetic V1。七页面真实历史结果 V2 已有公共构建与浏览器验证，正式上线状态见 [Release acceptance](ui_web/src/demo/D7_RELEASE_ACCEPTANCE.md)。静态演示无需登录、Python 后端或 Token；只阅读预先计算的结果，不在线执行研究。
+公开演示的实际版本、Release SHA 与线上验收见 [Release acceptance](ui_web/src/demo/D7_RELEASE_ACCEPTANCE.md)。七页面真实历史结果 V2 已完成公共构建与本地浏览器验证；上线以该记录为准。静态演示无需登录、Python 后端或 Token；只阅读预先计算的结果，不在线执行研究。
 
 ```mermaid
 flowchart LR

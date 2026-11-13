@@ -56,3 +56,9 @@ V1 recovery: independently reviewed rebuild, eight Chromium groups PASS, committ
 archive digest `c3840dca3a94a3050530ac64ad27e239242bb0942e75edbde70a0acd2a3b5081`.
 The recovery inventory explicitly distinguishes this rebuild from the original
 deployment bytes. No dependency on the prior one-day artifact retention remains.
+
+Scoped verification additionally passed: Ruff across the eight Python owners and
+config; independent mypy for config, DataLake, Snapshot, Research, Backtesting,
+Statistics, HTTP and CLI. Local Python total: 3,766 passed / four platform skips.
+Production W2 and Basis Chromium passed their real FastAPI/Vite/synthetic-service
+paths; public retained-market results remain independently verified.

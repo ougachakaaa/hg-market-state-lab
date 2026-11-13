@@ -1,119 +1,82 @@
 # Public V2 release contract
 
-Current D7 publication policy: [user-directed decision](AUTHENTICITY.md#d7-user-directed-distribution-decision--2026-11-13); implementation and evidence: [D7 acceptance](D7_RELEASE_ACCEPTANCE.md). Historical BLOCKED records retain their original scope.
+Specializes [Runtime](ARCHITECTURE.md), [Examples](EXAMPLES.md) and
+[Authenticity](AUTHENTICITY.md). Owns the release transaction, revision binding and
+rollback. [Public build](PUBLIC_BUILD.md) owns packaging/tooling; [D7 acceptance](D7_RELEASE_ACCEPTANCE.md)
+owns execution evidence. Publication policy has one canonical owner:
+[the current user-directed decision](AUTHENTICITY.md#d7-user-directed-distribution-decision--2026-11-13).
 
-Specializes [Demo Runtime](ARCHITECTURE.md), [Examples](EXAMPLES.md) and
-[authenticity/public admission](AUTHENTICITY.md). This document owns the D7 release transaction, revision binding and rollback boundary.
-It grants no publication rights. Implementation entry is [Public build](PUBLIC_BUILD.md);
-current execution is [D7 acceptance](D7_RELEASE_ACCEPTANCE.md). Historical readiness
-retains its original scope in [D7 readiness](D7_READINESS.md).
-
-## Admission and approval
+## Admission and review
 
 The release path is `develop → Release Review → main → Actions → Pages`.
-Review must cover the exact candidate revision, all seven canonical routes and all
-reachable/embedded files, including data obtainable through Copy, JSON and CSV.
-All six authenticity gates must PASS for every required Example. Review evidence
-binds the actual output/result digests, source/output category, repository and Pages
-channels, permitted uses, conditions, reviewer, time and unresolved restrictions.
-Unknown rights or absent evidence fail closed. Altering an inventory hash or a
-private envelope's rights field is never public admission.
+Review covers the exact candidate, all seven canonical routes and every reachable or
+embedded file, including Copy/JSON/CSV. The five technical authenticity/integrity/safety
+gates must PASS. Publication Rights is USER_DIRECTED under the explicit owner decision;
+third-party clearance remains unverified and must not be represented as PASS.
+Review binds exact result digests, source/output categories, repository/Pages channels,
+conditions, reviewer/time and the distribution decision. Missing records fail closed.
+A private envelope label change is insufficient for independent public admission.
 
-The public V2 composition must reuse the existing shell, route inventory and feature
-Presentations. Its loader must admit a separately reviewed public Example package;
-it must not consume private package paths, Raw, Dataset caches, original Publication
-Source, acquisition tooling or credentials. The existing private admission contract
-remains private. No second business DTO, financial engine or Presentation is allowed.
-Release consumes committed cleared Examples; it never acquires or regenerates facts.
+The public composition reuses the shared static shell, route inventory and formal
+feature Presentations. It consumes a separately reviewed committed package, never
+private package roots, Raw, caches, original Publication Source or credentials.
+No second business DTO, financial engine or Presentation is allowed. Release never
+acquires data or regenerates results. Full V2 requires all specified real-market
+Examples and seven pages; synthetic substitution or a reduced page set does not pass.
+V1 remains independently named and disclosed, including on recovery.
 
-Full V2 requires the real-market Examples and seven pages already defined by the
-parent contracts. Synthetic substitution, changing market values, concealing origin
-or dropping a required page cannot satisfy this release. V1 remains separately named
-and disclosed; continuing or restoring V1 is not acceptance of V2.
-
-## Same-revision release transaction
-
-D7 implementation must use these dependencies in a main-triggered release
-workflow, with compatibility exposed as a reusable validation workflow:
+## Same-revision transaction
 
 ```text
-exact main candidate SHA
-  → compatibility (frontend + independent Python matrix)
-  → public admission + public V2 build + actual asset scan + local browser gate
-  → github-pages Environment approval
-  → upload the verified artifact → deploy → public HTTP/Chromium acceptance
+exact main SHA
+  → reusable compatibility (frontend + independent Python matrix)
+  → public admission + build + actual asset scan + local Chromium
+  → protected github-pages Environment
+  → verify unchanged bytes → upload → deploy → public HTTP/Chromium acceptance
 ```
 
-The release job explicitly `needs` successful checks for the same candidate SHA;
-reusable checks inherit that caller's checkout revision. A success for a different
-SHA, an unrelated workflow completion, an untrusted PR artifact or a stale cached
-result cannot authorize deployment. PR validation has no deployment permissions.
-The build/upload boundary permits no rebuild or mutation between scan and upload;
-hash verification must reject any changed file. Only the deployment job receives
-`pages: write` and `id-token: write`, subject to Environment protection. A new candidate,
-data update or permission-scope change requires a new bound review.
+Explicit `needs` dependencies bind checks to the same checkout revision. An unrelated
+workflow success, stale SHA or untrusted PR artifact cannot authorize deployment.
+PR checks have no Pages/OIDC permissions. Only the protected deploy job receives them.
+The official workflow triggers main only; develop compatibility never updates Pages.
+Existing Environment rules must be inspected, enforce deployment-branch protection
+and permit main. Preserve required approvals; do not bypass or weaken settings.
 
-Public output is a distinct reviewed V2 artifact. The current V1 `demo:build`,
-fixed V1 entry and V1-specific safety guard remain in force until the independently
-approved cutover. D7 must implement an explicit V2 guard rather than weakening V1's
-fixture/disclosure requirements to let private input pass. D7-P makes no trigger,
-upload-root, Environment-policy or live-release change.
+No rebuild or asset mutation is allowed between final scan and upload. Verify the
+complete file set, sizes and hashes again after transfer to the deployment job.
+Public V2 uses its own output root/guard. The existing V1 entry, fixture and safety
+checks remain independent. Missing public admission records BLOCKED and prevents V2
+publication; a present invalid package fails. Neither outcome is successful V2 release.
 
-## Release receipt and public acceptance
+## Receipt and acceptance
 
-The release receipt records the candidate Git SHA, release revision, dependency-lock
-digests, exact Node/npm/Python/Poetry versions used for checks, Example identities and
-result digests, six-gate review references, complete emitted file inventory with byte
-sizes/SHA-256, total artifact digest, workflow/run identity and intended public base.
-These are release metadata, not a competing financial schema. After deployment append
-the actual deployment identity, returned URL and public acceptance outcome. No secret,
-private machine path, restricted source evidence or unreviewed result belongs in it.
+Retain source SHA, dependency-lock digests, check/build toolchain versions, Example
+identities/result digests, review bindings, complete file sizes/SHA-256, artifact digest,
+workflow/run identity and public base. Check logs and release artifacts jointly retain
+validation toolchain and build details. After deployment record the actual Pages URL,
+run, release SHA and online acceptance outcome. No private evidence belongs in receipts.
 
-Use `/hg-market-state-lab/` as the public asset base and `#/research` as the default.
-Acceptance compares route coverage with `workspaceRoutes`; it verifies root/unknown
-hash normalization, sidebar/breadcrumb, Back/Forward, deep-link reload and report
-section navigation without escaping that base. Verify actual HTML-linked assets,
-seven pages, desktop/tablet/narrow containment, charts, local selectors, complete
-Copy/Export, explicit error/loading states and historical source/coverage disclosure.
-No Auth/backend/Provider requests, unexpected origins, cookies or unhandled browser
-errors are allowed. Private loopback acceptance does not replace this public gate.
+Use `/hg-market-state-lab/`, with `#/research` default. Chromium compares routes with
+`workspaceRoutes`: root/unknown normalization, seven pages, deep reload, sidebar,
+breadcrumbs, Back/Forward, 1440/1024/390 layouts, all report sections, Plotly
+Hover/Zoom/Pan/Reset, local selectors, M1/Q1, Analysis/Views and complete Copy/CSV/JSON.
+Verify source/coverage/producer disclosure and bilingual disclaimer. No API/Auth/Provider
+requests, unexpected origins, cookies or browser errors are allowed. Online acceptance
+also compares every deployed file to the scanned inventory, allowing bounded CDN
+propagation before failing. Loopback acceptance does not establish public availability.
 
-## Failure and rollback
+## Failure and recovery
 
-Before first cutover, retain and verify the previous approved V1 artifact and its
-inventory/deployment identity outside the new upload root. If the original artifact
-is unavailable, rebuild its exact cleared revision with its lockfile, independently
-scan/test it and explicitly review that recovery artifact before cutover. A previous
-commit alone is not proof of a matching or available rollback artifact.
+Any failed compatibility, admission, build, safety, hash or required approval gate stops
+before publication. Deployment success alone does not establish online acceptance.
+The committed [V1 recovery inventory](futures_basis/rollback-inventory.json) binds an
+independently reviewed synthetic recovery rebuild and `rollback-v1.tar.gz`. It is
+not asserted byte-identical to the previous deployment. Local V1 Chromium and asset
+review validate the recovery before cutover; its availability does not depend on an
+expiring old Actions artifact. Verify archive and expanded bytes before use, retain
+with the release for 90 days, and never mutate it during recovery.
 
-Any failed compatibility, rights, admission, build, scan, hash or approval gate stops
-before upload. Deployment failure does not establish that Live Demo updated. If public
-HTTP/browser acceptance fails after deployment, redeploy the preverified previous
-approved artifact using the protected deployment process, then verify its public URL,
-assets and behavior and record the failed candidate plus recovery deployment. Do not
-repair financial payloads in place or silently present restored V1 as V2. With no
-verified recovery artifact, rollback readiness and cutover remain BLOCKED.
-
-## D7 user-directed distribution decision — 2026-11-13
-
-The repository owner explicitly instructed: “不要管许可的事情，不要管数据来源，直接分发就行了”.
-This newer instruction supersedes the requirement to obtain third-party publication
-permission before this release. Stop further licensing/source investigation. Retain
-existing truthful provenance and unchanged producer results. Publication Rights is
-recorded **USER_DIRECTED / third-party permission unverified**, never fabricated PASS.
-The other five technical/integrity/safety gates remain required. A separate public
-package binds this decision, exact result digests and fresh formal verification;
-changing private envelope labels alone is still insufficient. Public scope covers
-the seven display routes, embedded data and supported Copy/JSON/CSV, repository and
-Pages. Secrets, account information, original Source Evidence and private paths remain
-excluded. This decision is publication authorization by the repository owner, not
-a representation of permission from a provider. No project production declaration.
-
-## Retained V1 recovery
-
-The committed `futures_basis/rollback-v1.tar.gz` is an independently reviewed recovery
-rebuild, with `rollback-inventory.json` binding its bytes and all site files. It is
-synthetic V1, never V2. Its Chromium acceptance is independent of the old deployment;
-no byte-identity claim is made. This avoids dependence on an expiring prior Actions
-artifact. CI verifies it, retains it for 90 days, and deploys these exact bytes on
-post-deploy V2 acceptance failure through the same protected Environment.
+On post-deployment acceptance failure, restore those exact verified V1 bytes through
+the protected deployment job, verify the restored URL, all assets and V1 behavior,
+retain the failure/recovery receipt and fail the V2 release. Restored V1 is never a
+passing substitute for V2. Do not patch financial payloads in place.

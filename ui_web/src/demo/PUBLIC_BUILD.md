@@ -47,17 +47,8 @@ pass before protected deployment. Environment rules must protect deployment and 
 retained and verified before cutover. No workflow in this change automatically deploys
 V1 or substitutes V1 for V2. Post-deployment acceptance and recovery remain mandatory.
 
-## D7 user-directed distribution decision — 2026-11-13
+## Publication decision ownership
 
-The repository owner explicitly instructed: “不要管许可的事情，不要管数据来源，直接分发就行了”.
-This newer instruction supersedes the requirement to obtain third-party publication
-permission before this release. Stop further licensing/source investigation. Retain
-existing truthful provenance and unchanged producer results. Publication Rights is
-recorded **USER_DIRECTED / third-party permission unverified**, never fabricated PASS.
-The other five technical/integrity/safety gates remain required. A separate public
-package binds this decision, exact result digests and fresh formal verification;
-changing private envelope labels alone is still insufficient. Public scope covers
-the seven display routes, embedded data and supported Copy/JSON/CSV, repository and
-Pages. Secrets, account information, original Source Evidence and private paths remain
-excluded. This decision is publication authorization by the repository owner, not
-a representation of permission from a provider. No project production declaration.
+The [current distribution decision](AUTHENTICITY.md#d7-user-directed-distribution-decision--2026-11-13)
+is canonical in Authenticity. This tooling binds that instruction to exact results;
+it does not establish third-party permission. Private admission remains independent.
