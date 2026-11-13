@@ -60,7 +60,7 @@ npm run lint
 npm run test:visualization-browser
 ```
 
-`npm run dev` serves `/visualization-harness.html`, a standalone development/test
+`npm run dev` serves `/tests/visualization/visualization-harness.html`, a standalone development/test
 entry with the unchanged fixed acceptance fixture, derived generic edge cases and
 V1 regressions. It is outside application navigation and needs no backend.
 The browser script starts its own Vite server on an available loopback port and

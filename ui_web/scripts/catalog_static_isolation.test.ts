@@ -6,7 +6,7 @@ function rejectedBuild(target: string, appended: string, reason: RegExp) {
   // Injection stays in memory; production files and build artifacts are untouched.
   const script = `
     import { build, loadConfigFromFile } from 'vite'
-    const loaded = await loadConfigFromFile({ command: 'build', mode: 'production' }, 'vite.catalog.config.ts')
+    const loaded = await loadConfigFromFile({ command: 'build', mode: 'production' }, 'tests/config/vite.catalog.config.ts')
     const injection = {
       name: 'test-forbidden-catalog-import', enforce: 'pre',
       transform(code, id) { if (id.endsWith(${JSON.stringify(target)})) return code + '\\n' + ${JSON.stringify(appended)} },
@@ -27,21 +27,21 @@ function rejectedBuild(target: string, appended: string, reason: RegExp) {
 
 describe('static Research Overview build isolation rejects reachable runtime imports', () => {
   it('rejects a direct Auth import even when none of its exports are used', () => {
-    rejectedBuild('/src/features/research_catalog/testing/static/main.tsx', "import '../../../../app/auth/useAuthentication'", /Forbidden static presentation dependency/)
+    rejectedBuild('/tests/static/research_catalog/main.tsx', "import '../../../src/app/auth/useAuthentication'", /Forbidden static presentation dependency/)
   }, 25000)
   it('rejects the production catalog controller even when tree shaking could discard it', () => {
-    rejectedBuild('/src/features/research_catalog/testing/static/main.tsx', "import '../../hooks/useCatalog'", /Forbidden static presentation dependency/)
+    rejectedBuild('/tests/static/research_catalog/main.tsx', "import '../../../src/features/research_catalog/hooks/useCatalog'", /Forbidden static presentation dependency/)
   }, 25000)
   it('rejects the production catalog HTTP client', () => {
-    rejectedBuild('/src/features/research_catalog/testing/static/main.tsx', "import '../../api/catalog'", /Forbidden static presentation dependency/)
+    rejectedBuild('/tests/static/research_catalog/main.tsx', "import '../../../src/features/research_catalog/api/catalog'", /Forbidden static presentation dependency/)
   }, 25000)
   it('rejects a sibling Research Explorer runtime import', () => {
-    rejectedBuild('/src/features/research_catalog/testing/static/main.tsx', "import '../../../../features/research_explorer/page/ResearchExplorerPage'", /Forbidden static presentation dependency/)
+    rejectedBuild('/tests/static/research_catalog/main.tsx', "import '../../../src/features/research_explorer/page/ResearchExplorerPage'", /Forbidden static presentation dependency/)
   }, 25000)
   it('rejects an indirect dynamic HTTP import through the shared provider', () => {
     rejectedBuild('/src/app/AppUiProvider.tsx', "void import('../shared/http/protectedRequest')", /Forbidden static presentation dependency/)
   }, 25000)
   it('rejects unresolvable dynamic runtime imports rather than trusting tree shaking', () => {
-    rejectedBuild('/src/features/research_catalog/testing/static/main.tsx', 'const runtimeModule = window.location.search; void import(runtimeModule)', /Unresolved static presentation import/)
+    rejectedBuild('/tests/static/research_catalog/main.tsx', 'const runtimeModule = window.location.search; void import(runtimeModule)', /Unresolved static presentation import/)
   }, 25000)
 })

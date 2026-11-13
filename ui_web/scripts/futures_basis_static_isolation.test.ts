@@ -6,7 +6,7 @@ function rejectedBuild(target: string, appended: string, reason: RegExp) {
   // Injection stays in memory; production files and build artifacts are untouched.
   const script = `
     import { build, loadConfigFromFile } from 'vite'
-    const loaded = await loadConfigFromFile({ command: 'build', mode: 'production' }, 'vite.futures-basis.config.ts')
+    const loaded = await loadConfigFromFile({ command: 'build', mode: 'production' }, 'tests/config/vite.futures-basis.config.ts')
     const injection = {
       name: 'test-forbidden-futures-basis-import', enforce: 'pre',
       transform(code, id) { if (id.endsWith(${JSON.stringify(target)})) return code + '\\n' + ${JSON.stringify(appended)} },
@@ -27,24 +27,24 @@ function rejectedBuild(target: string, appended: string, reason: RegExp) {
 
 describe('static Futures Basis build isolation rejects reachable runtime imports', () => {
   it('rejects a direct Auth import even when none of its exports are used', () => {
-    rejectedBuild('/src/features/futures_basis_research/testing/static/main.tsx', "import '../../../../app/auth/useAuthentication'", /Forbidden static presentation dependency/)
+    rejectedBuild('/tests/static/futures_basis_research/main.tsx', "import '../../../src/app/auth/useAuthentication'", /Forbidden static presentation dependency/)
   }, 35000)
   it('rejects the Production Run lifecycle controller', () => {
-    rejectedBuild('/src/features/futures_basis_research/testing/static/main.tsx', "import '../../hooks/useFuturesBasis'", /Forbidden static presentation dependency/)
+    rejectedBuild('/tests/static/futures_basis_research/main.tsx', "import '../../../src/features/futures_basis_research/hooks/useFuturesBasis'", /Forbidden static presentation dependency/)
   }, 35000)
   it('rejects the Production preflight controller', () => {
-    rejectedBuild('/src/features/futures_basis_research/testing/static/main.tsx', "import '../../hooks/usePreflight'", /Forbidden static presentation dependency/)
+    rejectedBuild('/tests/static/futures_basis_research/main.tsx', "import '../../../src/features/futures_basis_research/hooks/usePreflight'", /Forbidden static presentation dependency/)
   }, 35000)
   it('rejects the Production HTTP client', () => {
-    rejectedBuild('/src/features/futures_basis_research/testing/static/main.tsx', "import '../../api/futuresBasis'", /Forbidden static presentation dependency/)
+    rejectedBuild('/tests/static/futures_basis_research/main.tsx', "import '../../../src/features/futures_basis_research/api/futuresBasis'", /Forbidden static presentation dependency/)
   }, 35000)
   it('rejects the Production Page composition root', () => {
-    rejectedBuild('/src/features/futures_basis_research/testing/static/main.tsx', "import '../../page/FuturesBasisPage'", /Forbidden static presentation dependency/)
+    rejectedBuild('/tests/static/futures_basis_research/main.tsx', "import '../../../src/features/futures_basis_research/page/FuturesBasisPage'", /Forbidden static presentation dependency/)
   }, 35000)
   it('rejects an indirect dynamic HTTP import through the shared provider', () => {
     rejectedBuild('/src/app/AppUiProvider.tsx', "void import('../shared/http/protectedRequest')", /Forbidden static presentation dependency/)
   }, 35000)
   it('rejects unresolvable dynamic runtime imports rather than trusting tree shaking', () => {
-    rejectedBuild('/src/features/futures_basis_research/testing/static/main.tsx', 'const runtimeModule = window.location.search; void import(runtimeModule)', /Unresolved static presentation import/)
+    rejectedBuild('/tests/static/futures_basis_research/main.tsx', 'const runtimeModule = window.location.search; void import(runtimeModule)', /Unresolved static presentation import/)
   }, 35000)
 })

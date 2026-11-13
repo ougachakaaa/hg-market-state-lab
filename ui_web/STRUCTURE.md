@@ -95,3 +95,7 @@ Root `.gitattributes` constrains the exact files in `scripts/public_payload_inve
 and Public review evidence: reviewed text uses LF on every platform; binary archives use
 `-text`. Keep these rules aligned when admitting a new reviewed input. Runtime verification
 continues to hash exact file bytes without normalizing them or rewriting reviewed digests.
+
+## WP1B stage 1
+
+Seven specialized Vite/TypeScript pairs now belong to `tests/config/`; six feature static entries and the Shell harness belong to `tests/static/`. Visualization harness entries belong to `tests/visualization/`. Existing production ownership, Demo configuration inheritance and WP1A output roots are preserved. Browser/isolation consumers use the relocated entries; their own relocation follows in stage 2. Baseline tables above remain historical inventory.

@@ -1,0 +1,7 @@
+{
+  "extends": "../../tsconfig.demo.json",
+  "include": [
+    "../static/shell/main.tsx",
+    "./vite.shell.config.ts"
+  ]
+}

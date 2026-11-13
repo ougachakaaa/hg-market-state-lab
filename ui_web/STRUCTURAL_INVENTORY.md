@@ -248,3 +248,7 @@ Tables above preserve WP0 baseline observations. Current producers/consumers use
 and `.build/cache`. Source/config/test relocation remains WP1B. npm commands retain names:
 their configs/scripts own output defaults. Old ignored dist directories are retained.
 Explicit external private/report delivery roots and browser temporary runtimes remain unchanged.
+
+## WP1B stage 1
+
+Seven specialized Vite/TypeScript pairs now belong to `tests/config/`; six feature static entries and the Shell harness belong to `tests/static/`. Visualization harness entries belong to `tests/visualization/`. Existing production ownership, Demo configuration inheritance and WP1A output roots are preserved. Browser/isolation consumers use the relocated entries; their own relocation follows in stage 2. Baseline tables above remain historical inventory.

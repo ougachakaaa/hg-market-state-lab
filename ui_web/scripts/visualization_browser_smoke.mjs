@@ -25,7 +25,7 @@ try {
     const url = new URL(request.url())
     if (/^\/(research|auth|mo-option)/.test(url.pathname) || (request.resourceType() === 'fetch' || request.resourceType() === 'xhr')) evidence.errors.push(`Unexpected data request: ${request.url()}`)
   })
-  await page.goto(`http://127.0.0.1:${address.port}/visualization-harness.html`)
+  await page.goto(`http://127.0.0.1:${address.port}/tests/visualization/visualization-harness.html`)
   const plot = page.locator('.js-plotly-plot')
   const traces = () => plot.locator('.scatterlayer .trace.scatter')
   async function settled() { await page.waitForFunction(() => !!document.querySelector('.js-plotly-plot')?._fullLayout?._plots?.xy); await plot.locator('.nsewdrag').waitFor() }

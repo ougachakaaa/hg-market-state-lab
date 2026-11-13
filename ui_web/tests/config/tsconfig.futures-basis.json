@@ -1,0 +1,7 @@
+{
+  "extends": "../../tsconfig.demo.json",
+  "include": [
+    "../static/futures_basis_research/main.tsx",
+    "./vite.futures-basis.config.ts"
+  ]
+}

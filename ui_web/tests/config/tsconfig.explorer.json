@@ -1,0 +1,7 @@
+{
+  "extends": "../../tsconfig.demo.json",
+  "include": [
+    "../static/research_explorer/main.tsx",
+    "./vite.explorer.config.ts"
+  ]
+}

@@ -213,3 +213,7 @@ No remote freshness, live deployment or external/private data validation is clai
 
 The incomplete full-suite run is a verification limitation for WP0 and must be resolved/rechecked
 before WP1 implementation acceptance. Contract, build and lint success does not substitute for tests.
+
+## WP1B stage 1
+
+Seven specialized Vite/TypeScript pairs now belong to `tests/config/`; six feature static entries and the Shell harness belong to `tests/static/`. Visualization harness entries belong to `tests/visualization/`. Existing production ownership, Demo configuration inheritance and WP1A output roots are preserved. Browser/isolation consumers use the relocated entries; their own relocation follows in stage 2. Baseline tables above remain historical inventory.

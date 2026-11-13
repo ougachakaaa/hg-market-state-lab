@@ -72,7 +72,7 @@ retains query, cancellation, stale-response and Auth lifecycle in `usePremiumPla
 Every new query resets presentation; every replacement static result starts with the
 formal defaults and all expiries selected. Raw JSON/Context/Inspector retain the exact
 validated payload object, while CSV uses its validated plane. The pure validator preserves
-the nonempty-Points success invariant. `testing/static/` is a verification harness using
+the nonempty-Points success invariant. [`tests/static/mo_option_premium/`](../../../tests/static/mo_option_premium/) is a verification harness using
 regression data, not an official Example or public Demo entry.
 
 ## V2 origin policy reconciliation

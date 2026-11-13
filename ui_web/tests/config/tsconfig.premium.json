@@ -1,0 +1,7 @@
+{
+  "extends": "../../tsconfig.demo.json",
+  "include": [
+    "../static/mo_option_premium/main.tsx",
+    "./vite.premium.config.ts"
+  ]
+}

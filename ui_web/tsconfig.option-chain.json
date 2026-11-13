@@ -1,4 +1,0 @@
-{
-  "extends": "./tsconfig.demo.json",
-  "include": ["src/features/mo_option_chain/testing/static/main.tsx", "vite.option-chain.config.ts"]
-}

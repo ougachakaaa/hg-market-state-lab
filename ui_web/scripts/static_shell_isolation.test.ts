@@ -6,7 +6,7 @@ function rejectedBuild(target: string, appended: string, reason: RegExp) {
   // Injection stays in memory; production files and build artifacts are untouched.
   const script = `
     import { build, loadConfigFromFile } from 'vite'
-    const loaded = await loadConfigFromFile({ command: 'build', mode: 'production' }, 'vite.shell.config.ts')
+    const loaded = await loadConfigFromFile({ command: 'build', mode: 'production' }, 'tests/config/vite.shell.config.ts')
     const injection = {
       name: 'test-forbidden-shell-import', enforce: 'pre',
       transform(code, id) { if (id.endsWith(${JSON.stringify(target)})) return code + '\\n' + ${JSON.stringify(appended)} },
@@ -27,12 +27,12 @@ function rejectedBuild(target: string, appended: string, reason: RegExp) {
 
 describe('static shell build isolation rejects reachable runtime imports', () => {
   it('rejects a direct Auth import even when none of its exports are used', () => {
-    rejectedBuild('/src/demo/shell/main.tsx', "import '../../app/auth/useAuthentication'", /Forbidden static shell runtime dependency/)
+    rejectedBuild('/tests/static/shell/main.tsx', "import '../../../src/app/auth/useAuthentication'", /Forbidden static shell runtime dependency/)
   }, 25000)
   it('rejects an indirect dynamic HTTP import through the shared provider', () => {
     rejectedBuild('/src/app/AppUiProvider.tsx', "void import('../shared/http/protectedRequest')", /Forbidden static shell runtime dependency/)
   }, 25000)
   it('rejects unresolvable dynamic runtime imports rather than trusting tree shaking', () => {
-    rejectedBuild('/src/demo/shell/main.tsx', 'const runtimeModule = window.location.search; void import(runtimeModule)', /Unresolved dynamic import in static shell/)
+    rejectedBuild('/tests/static/shell/main.tsx', 'const runtimeModule = window.location.search; void import(runtimeModule)', /Unresolved dynamic import in static shell/)
   }, 25000)
 })
