@@ -6,8 +6,11 @@ It does not authorize reuse of another case's store, database or execution ident
 
 ## Delivery status and cutover
 
-**Approved target, not implemented in storage WP0 (2026-11-12).** The current file-based
-POSIX adapter remains active until storage WP1/WP2.
+**Storage WP1 adapter implemented (2026-11-13); application cutover remains WP2.**
+`online_sqlite_store.py` is independently usable and tested on native Windows;
+`online.py` still uses the file-based POSIX adapter. WP1 acceptance is PARTIAL because
+the legacy POSIX regression and other platform checks are not green/verified here.
+See [W2 execution evidence](RECONCILIATION.md#storage-wp1-execution-evidence).
 Its descriptor/UID/mode requirements describe that adapter, not the portable target.
 Implementation differences and acceptance gates are in [Storage reconciliation](../../../market_research/STORAGE_RECONCILIATION.md).
 Storage WP numbering is independent of the original case delivery WP numbering.

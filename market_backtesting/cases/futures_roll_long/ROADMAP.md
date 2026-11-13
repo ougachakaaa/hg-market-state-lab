@@ -138,3 +138,11 @@ No blocking W2 acceptance or implementation drift remains; merging is a separate
   Deferred / NOT RUN. Windows Chrome to WSL acceptance passed in [WP8](WP8_ACCEPTANCE.md).
 - Provider freshness/correction/TTL semantics remain DataLake-owned. HTTP wire details
   and Web generated artifacts belong to WP6/WP7, not this authority reconciliation.
+
+## Storage WP1 readiness (2026-11-13)
+
+The independent private SQLite adapter is implemented; production online wiring remains
+legacy POSIX. Storage WP1 acceptance is PARTIAL pending a green supported-platform
+legacy regression and remaining portability evidence. The native Windows adapter tests
+pass with two privilege-dependent skips. See [execution evidence](RECONCILIATION.md#storage-wp1-execution-evidence).
+This does not supersede the original W2 delivery WP numbering or historical acceptance.

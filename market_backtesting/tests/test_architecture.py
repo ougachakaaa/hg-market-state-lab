@@ -44,6 +44,7 @@ ONLINE_IMPORTS = {
     "online.py": {"pathlib", "threading", "lab_config"},
     "online_store.py": {"os", "pathlib", "stat", "secrets", "contextlib"},
     "online_codec.py": {"types"},
+    "online_sqlite_store.py": {"sqlite3", "pathlib", "stat", "secrets", "contextlib"},
 }
 
 ALLOWED_TOP_LEVEL = {
