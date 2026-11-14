@@ -233,7 +233,7 @@ option_type, instrument_id, strike, price
 
 文件名为 `mo-option-chain_{target_trade_date}_{price_type}.csv`，身份来自响应；编码、安全与下载遵循共同 authority。
 
-Static source disclosure follows the [Example contract](../../demo/EXAMPLES.md): formal
+Static source disclosure follows the Example contract (retired; Git history): formal
 V2 is historical real_market, while regression data remains test-only. Keep this distinction
 visible beside local Copy/Export without changing serialized business payloads. Public
-inclusion also requires the [independent rights review](../../demo/AUTHENTICITY.md).
+inclusion also requires the independent rights review (retired; Git history).

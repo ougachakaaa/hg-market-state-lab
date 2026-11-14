@@ -33,19 +33,10 @@ jobs:
         working-directory: ui_web
       - run: npm run lint
         working-directory: ui_web
-      - run: npm run demo:build
-        working-directory: ui_web
-      - run: npm run test:static-compatibility
-        working-directory: ui_web
-      - run: npm run demo:build:public
-        working-directory: ui_web
-      - run: npx playwright install --with-deps chromium
-        working-directory: ui_web
-      - run: node scripts/public_demo_browser.mjs
-        working-directory: ui_web
-      - run: node scripts/verify_public_artifact.mjs ${{ github.sha }}
-        working-directory: ui_web
       - run: npm run test:public-safety
+        working-directory: ui_web
+      - name: BLOCKED until new Demo Bundle Pipeline exists
+        run: npm run demo:build
         working-directory: ui_web
   python:
     runs-on: ubuntu-latest
@@ -74,5 +65,3 @@ jobs:
       - run: pip install poetry==2.2.1
       - run: poetry install --no-interaction
       - run: poetry run pytest ${{ matrix.suite }} -q
-      - run: poetry run python market_research/scripts/futures_basis_demo_fixture.py --check
-        if: matrix.suite == 'market_research/tests'

@@ -66,7 +66,7 @@ user-visible empty, loading and error presentation
 
 ## Runtime scope
 
-Query inputs, protected HTTP reads, preflight, retries and Run lifecycle in this feature authority describe the Production controller. The same feature-owned Presentation also serves [Static Demo Runtime](../../demo/ARCHITECTURE.md) using [validated embedded Examples](../../demo/EXAMPLES.md), fixed visible request parameters and local presentation state. Static composition never mounts the production controller or fabricates its lifecycle; it preserves this feature’s result/visualization semantics and applicable local Copy/Export. In Demo, the Inspector displays the complete validated embedded Example payload with an explicit static origin label distinguishing V2 real-market data from Synthetic test data; it must not claim an HTTP response was received. Shared presentation remains here, not in parallel Demo pages. D2-B implements this boundary through `presentation.ts`: shared page composition,
+Query inputs, protected HTTP reads, preflight, retries and Run lifecycle in this feature authority describe the Production controller. The same feature-owned Presentation also serves [Static Demo Runtime](../../demo/ARCHITECTURE.md) using validated embedded Examples (retired; Git history), fixed visible request parameters and local presentation state. Static composition never mounts the production controller or fabricates its lifecycle; it preserves this feature’s result/visualization semantics and applicable local Copy/Export. In Demo, the Inspector displays the complete validated embedded Example payload with an explicit static origin label distinguishing V2 real-market data from Synthetic test data; it must not claim an HTTP response was received. Shared presentation remains here, not in parallel Demo pages. D2-B implements this boundary through `presentation.ts`: shared page composition,
 `usePremiumPresentation(validatedPlane)` and pure generated-contract validation. Production
 retains query, cancellation, stale-response and Auth lifecycle in `usePremiumPlane`.
 Every new query resets presentation; every replacement static result starts with the
@@ -77,11 +77,11 @@ regression data, not an official Example or public Demo entry.
 
 ## V2 origin policy reconciliation
 
-[Demo Example authority](../../demo/EXAMPLES.md) owns formal V2 real-market dates and
-packaging; [authenticity and rights](../../demo/AUTHENTICITY.md) owns evidence and admission.
+Demo Example authority (retired; Git history) owns formal V2 real-market dates and
+packaging; authenticity and rights (retired; Git history) owns evidence and admission.
 This feature owns only their presentation. Static delivery is not a Synthetic source label
 or proof of authenticity. Preserve historical V1/test disclosures, use actual real-market
 origin for V2, and never promote regression inputs to formal Examples. WP-B implements explicit validated source disclosure through the same Presentation;
-[private acceptance](../../demo/WP_B_ACCEPTANCE.md) records integration evidence.
+private acceptance (retired; Git history) records integration evidence.
 Current engineering verification and release boundaries enter through the
-[implementation handoff](../../demo/IMPLEMENTATION.md).
+implementation handoff (retired; Git history).

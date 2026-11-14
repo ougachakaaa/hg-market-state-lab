@@ -3,7 +3,7 @@ import { isAbsolute, relative } from 'node:path'
 import ts from 'typescript'
 import { mergeConfig, type Plugin } from 'vite'
 import { workspaceRoutes, workspaceAreas } from '../../src/app/routeInventory.ts'
-import demoConfig from '../../vite.demo.config.ts'
+import demoConfig from './vite.static-base.ts'
 
 const web = fileURLToPath(new URL('../..', import.meta.url))
 const allowed = new Set([
@@ -58,7 +58,7 @@ function shellIsolation(): Plugin {
   }
 }
 
-// Verification only; V1 release entry and .build/tests/v1 are untouched.
+// Independent static Presentation verification.
 export default mergeConfig(demoConfig, {
   root: fileURLToPath(new URL('../static/shell', import.meta.url)),
   plugins: [shellIsolation()],

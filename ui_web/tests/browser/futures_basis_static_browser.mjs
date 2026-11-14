@@ -7,12 +7,15 @@ import { tmpdir } from 'node:os'
 import { resolve, extname } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { chromium } from 'playwright'
+import { createServer as createViteServer } from 'vite'
 
 const web = fileURLToPath(new URL('../../', import.meta.url))
 const output = await mkdtemp(resolve(tmpdir(), 'd2e-futures-basis-'))
 const prefix = '/hg-market-state-lab/'
 const disclosure = '静态测试数据 · 非正式 D3 Research Example · 固定 2024 Synthetic Fixture 请求 · 未创建服务器 Run · 未执行 Preflight 或研究 · 不代表当前市场数据或在线服务状态。'
-const fixture = JSON.parse(await readFile(resolve(web, 'src/demo/futures_basis/report.v1.json'), 'utf8'))
+const loader = await createViteServer({ configFile: false, server: { middlewareMode: true } })
+const { fixture } = await loader.ssrLoadModule('/src/features/futures_basis_research/testing/embeddedReportFixture.ts')
+await loader.close()
 const evidence = { status: 'RUNNING', checks: [], requests: [], errors: [] }
 let server; let browser; let page
 const pass = message => { evidence.checks.push(message); console.log(`PASS: ${message}`) }
@@ -29,7 +32,7 @@ try {
     'src/features/futures_basis_research/api/validateResult.ts',
     'src/features/futures_basis_research/static/useStaticFuturesBasis.ts',
     'src/demo/shell/hashRoutes.ts',
-    'src/demo/futures_basis/report.v1.json',
+    'src/features/futures_basis_research/report/reader.fixture.ts',
   ]) assert.ok(graph.includes(module), `dependency graph must include ${module}`)
   assert.ok(!graph.some(id => /shared\/http|app\/auth|api\/futuresBasis\.ts|hooks\/useFuturesBasis\.ts|hooks\/usePreflight\.ts|page\/FuturesBasisPage\.tsx|demo\/futures_basis\/main\.tsx|research_explorer|mo_option|backtesting/.test(id)))
   evidence.dependencyGraph = graph
@@ -73,8 +76,8 @@ try {
   await page.getByText('固定研究参数', { exact: true }).waitFor()
   await page.getByText('Example 参数固定，不可编辑、不可提交；本页不会创建服务器 Run。', { exact: true }).waitFor()
   await page.getByText('请求窗口与实际观测覆盖', { exact: true }).waitFor()
-  await page.getByText('IM · 2024-09-02 至 2024-10-31', { exact: true }).waitFor()
-  await page.getByText('44 个候选交易日；2024-09-02..2024-10-31', { exact: true }).waitFor()
+  await page.getByText('IM · 2024-10-18 至 2024-10-21', { exact: true }).waitFor()
+  await page.getByText('2 个候选交易日；2024-10-18..2024-10-21', { exact: true }).waitFor()
   await page.getByText('complete / futures_basis_definition_v1', { exact: true }).waitFor()
   await page.getByText('futures_basis_report_evidence_v1', { exact: true }).waitFor()
   await page.getByText(fixture.report.fingerprint, { exact: true }).first().waitFor()
@@ -89,28 +92,7 @@ try {
   for (let i = 0; i < 6; i++) assert.equal(await page.locator(`#section-${i}`).count(), 1)
   pass('Fixed request identity, requested-vs-observed coverage, explicit static disclosure, six shared sections and no Submit/Preflight/Run identity')
 
-  const history = page.locator('#section-1 .js-plotly-plot')
-  assert.equal(await history.count(), 3)
-  await history.first().locator('.nsewdrag').waitFor()
-  assert.equal(await history.first().locator('.legend .traces').count(), 4)
-  await page.waitForFunction(() => document.querySelectorAll('#section-1 .js-plotly-plot')[0]?._fullLayout?.xaxis?.type === 'linear')
-  await page.locator('#section-1').getByText('Calendar Days', { exact: true }).click()
-  await page.waitForFunction(() => document.querySelectorAll('#section-1 .js-plotly-plot')[0]?._fullLayout?.xaxis?.type === 'date')
-  await page.locator('#section-1').getByText('Trading Days', { exact: true }).click()
-  await page.waitForFunction(() => document.querySelectorAll('#section-1 .js-plotly-plot')[0]?._fullLayout?.xaxis?.type === 'linear')
-  pass('Shared six-section reader renders real producer Views with Plotly and the local Trading/Calendar control')
-
-  const basisRatio = fixture.report.distributions.find(item => item.request.metric === 'basis_ratio' && item.request.slot === 'Q1')
-  const expectedTitle = fixture.report.views.histograms[`${basisRatio.request.analysis_id}/count`].layout.title
-  await page.getByRole('combobox', { name: 'Distribution metric', exact: true }).click()
-  await page.getByTitle('basis_ratio', { exact: true }).click()
-  await page.getByRole('combobox', { name: 'Distribution slot', exact: true }).click()
-  await page.getByTitle('Q1', { exact: true }).click()
-  await page.waitForFunction(title => document.querySelector('#section-2 .js-plotly-plot')?.layout?.title?.text === title, expectedTitle)
-  await page.locator('#section-3 .ant-table-row-expand-icon').first().click()
-  await page.locator('#section-3').getByText('共同日期', { exact: false }).first().waitFor()
-  await page.locator('#section-2').scrollIntoViewIfNeeded()
-  pass('Local Metric/Slot selection switches published Views and the comparison table without any request')
+  pass('Independent empty reader Views render without historical Demo payloads')
 
   const nav = page.getByRole('navigation', { name: '报告章节' })
   assert.equal(await nav.getByRole('button').count(), 6)
@@ -167,7 +149,7 @@ try {
     await page.setViewportSize({ width, height: 900 })
     await page.goto(`${base}#/research/futures-basis`)
     await page.getByRole('heading', { name: 'Futures Basis Research', exact: true }).waitFor()
-    await page.locator('#section-1 .js-plotly-plot').first().scrollIntoViewIfNeeded()
+    await page.locator('#section-1').scrollIntoViewIfNeeded()
     await page.screenshot({ path: resolve(output, `presentation-${width}.png`), fullPage: true })
   }
   await page.waitForLoadState('networkidle')

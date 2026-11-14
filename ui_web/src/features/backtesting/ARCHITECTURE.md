@@ -52,7 +52,7 @@ and Zoom/Pan/Reset. Requested and observed windows remain distinct. Evidence is 
 expandable online summary, not the full offline package. Explain ideal Close gross
 execution, no fees/slippage/margin, index price benchmark, historical metadata
 assumptions, and cache completeness versus freshness. Evidence wording is origin-aware:
-Static labels the actual embedded origin under the [Example contract](../../demo/EXAMPLES.md),
+Static labels the actual embedded origin under the Example contract (retired; Git history),
 with real-market provenance for formal V2 and Synthetic disclosure for test-only results, and does not claim server execution, a full
 offline evidence package, or current market/cache/Provider readiness. No export/copy/download
 capability.
@@ -101,15 +101,15 @@ Shared presentation remains here, not in parallel Demo pages.
 
 ## V2 origin policy reconciliation
 
-[Demo Example authority](../../demo/EXAMPLES.md) owns formal V2 real-market dates and
-packaging; [authenticity and rights](../../demo/AUTHENTICITY.md) owns evidence and admission.
+Demo Example authority (retired; Git history) owns formal V2 real-market dates and
+packaging; authenticity and rights (retired; Git history) owns evidence and admission.
 This feature owns only their presentation. Static delivery is not a Synthetic source label
 or proof of authenticity. Preserve historical V1/test disclosures, use actual real-market
 origin for V2, and never promote regression inputs to formal Examples. WP-B propagates an explicit validated Example source statement from static composition
 into shared Result Evidence through UI-only `sourceDisclosure`; delivery mode never
 infers real-market origin. Historical Synthetic defaults and Production evidence remain
 unchanged. Admission and provenance ownership stay in the
-[private build contract](../../demo/PRIVATE_BUILD.md).
+private build contract (retired; Git history).
 
 ## INT-1 shared runtime reconciliation
 

@@ -1,7 +1,7 @@
 import { fileURLToPath } from 'node:url'
 import { mergeConfig } from 'vite'
 import { staticPresentationIsolation } from '../../scripts/staticPresentationIsolation.ts'
-import demoConfig from '../../vite.demo.config.ts'
+import demoConfig from './vite.static-base.ts'
 
 // Test-only artifact; public V1 entry/output and workflow are unchanged.
 export default mergeConfig(demoConfig, {

@@ -6,7 +6,9 @@
 
 **[Live Demo](https://ougachakaaa.github.io/hg-market-state-lab/)** · **[Source Code](https://github.com/ougachakaaa/hg-market-state-lab)**
 
-公开演示的实际版本、Release SHA 与线上验收见 [Release acceptance](ui_web/src/demo/D7_RELEASE_ACCEPTANCE.md)。七页面真实历史结果 V2 已完成公共构建与本地浏览器验证；上线以该记录为准。静态演示无需登录、Python 后端或 Token；只阅读预先计算的结果，不在线执行研究。
+DDB-00 retired the legacy Demo on this feature branch. New HTTP Bundle Pipeline:
+**BLOCKED / not implemented**. Existing main and published Pages are unchanged.
+See [Demo authority](ui_web/src/demo/ARCHITECTURE.md).
 
 ```mermaid
 flowchart LR
@@ -63,12 +65,8 @@ poetry run lab auth approve <user-id>
 ```bash
 cd ui_web
 npm ci
-npm run demo:build:public
-# 输出 dist-demo-public/site，部署 base 为 /hg-market-state-lab/
-node scripts/public_demo_browser.mjs
+npm run demo:build # expected failure until the new HTTP Bundle Pipeline exists
 ```
-
-Private build 保持独立，其外部输入及使用方式见 [PRIVATE_BUILD.md](ui_web/src/demo/PRIVATE_BUILD.md)。
 
 ## 测试与发布
 
@@ -82,11 +80,10 @@ npm run contract:check
 npm test
 npm run build
 npm run lint
-npm run test:static-compatibility
 npm run test:public-safety
 ```
 
-正式发布沿 `develop → Release Review → main → GitHub Actions → Pages`。同 SHA 的完整兼容性、准入、实际资产扫描、文件 SHA-256 与浏览器检查必须通过，再经 `github-pages` Environment 部署。详见 [Public build](ui_web/src/demo/PUBLIC_BUILD.md) 与 [Release contract](ui_web/src/demo/RELEASE.md)。
+正式发布沿 `develop → Release Review → main → GitHub Actions → Pages`。同 SHA 的完整兼容性、准入、实际资产扫描、文件 SHA-256 与浏览器检查必须通过，再经 `github-pages` Environment 部署。详见 [Public build](ui_web/src/demo/ARCHITECTURE.md) 与 [Release contract](ui_web/src/demo/ARCHITECTURE.md)。
 
 ## 限制与许可
 

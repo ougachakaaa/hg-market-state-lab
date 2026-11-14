@@ -1,9 +1,21 @@
+# DDB-00 hard retirement — 2026-11-14
+
+Legacy Synthetic V1 and Public/Private V2 Packages are retired by direct cutover.
+No migration, fallback, rollback, archive or compatibility reader remains.
+The new sole Demo Bundle Pipeline is NOT implemented. Demo build and publication
+are BLOCKED and must fail. New business Results must be acquired through formal
+FastAPI HTTP with normal authentication; direct producer/projection calls are forbidden.
+Only one active dataset will be permitted. Existing shared Presentation, hash routing,
+static composition and formal Result validators remain implementation foundations,
+not a runnable historical Demo. Online Web and business contracts are unchanged.
+Git history retains previous decisions; retired acceptance is not current readiness.
+
 # ui_web directory ownership
 
 Specializes [module architecture](ARCHITECTURE.md) and preserves [Presentation boundaries](presentation-architecture.md).
 This is the canonical directory contract approved in structural WP0. It describes the target;
 the [migration audit](STRUCTURAL_MIGRATION.md) records current paths, dependencies and cutover gates.
-WP0 changes documents only. Existing commands and paths remain operational until their assigned WP.
+DDB-00 supersedes the former staged legacy cutover.
 
 ## Ownership
 
@@ -50,13 +62,12 @@ reported blocker, not permission to expand HTTP semantics in this structural wor
 Future Bundle admission verifies only the Manifest and Bundle SHA-256. Business DTO/Result
 validation, static dependency isolation and deployment Artifact Verification are separate concerns.
 Legacy Publication Rights Gates, Evidence Review and independent review records are not Demo Build
-prerequisites. This target decision does not change current validation code in WP1A.
+prerequisites. Legacy Envelope validation has been removed.
 Build never invokes Python, generates results or contacts an
 online business HTTP service. Browsers consume static data and shared Presentation only: no financial
 computation, Auth/API requests, polling, preflight or server Run lifecycle. Preserve all seven formal
 routes and existing local interactions. Runtime, Example meaning and distribution decision remain
-owned by the existing [Demo Runtime](src/demo/ARCHITECTURE.md), [Examples](src/demo/EXAMPLES.md) and
-[Authenticity](src/demo/AUTHENTICITY.md) contracts pending their explicitly staged reconciliation.
+owned by the existing [Demo Runtime](src/demo/ARCHITECTURE.md) contract.
 
 ## Deployment and lifecycle
 
@@ -66,7 +77,7 @@ inspection, upload/online verification and release support belong to `deploy/`; 
 remain under repository `.github/workflows/`. Local Online deployment remains supported independently.
 
 The user selected a hard cutover: remove V1 recovery and do not add previous-generation recovery or
-long-term build-history retention. Clean identifiable historical build outputs at WP4, not WP0.
+long-term build-history retention. DDB-00 retires identifiable old Demo build outputs; local deletion status is in acceptance.
 This does not authorize deleting formal committed evidence, source, raw/external data, Dataset caches,
 credentials or another environment's data. Existing exact-artifact verification, truthful provenance,
 distribution bindings and deployment permissions remain required. No production declaration is inferred.
@@ -78,28 +89,17 @@ Examples, authenticity and release semantics stay with their narrow existing own
 authorities and repair inbound/outbound navigation with their implementation, without parallel owners.
 Only one formal Demo generation is retained. Superseded Demo documents retire after extracting
 valid Authority; Git History preserves their original conclusions. No demo/history tree is planned.
-Independent business results, research evidence and data are preserved. WP1A retires no runtime or V1 archive.
+Independent business results, research evidence and data are preserved. DDB-00 retires all legacy runtime entries.
 
-## WP1A build outputs
+## Build outputs
 
-Current Online build/preview uses `.build/online/`; Public Demo packaging uses `.build/demo/`
-(site, receipt and verification evidence). Temporary V1 uses `.build/tests/v1/`; seven static
-suites use `.build/tests/<suite>/`, compatibility probes use unique subdirectories there.
-Vite and configurable TypeScript caches use `.build/cache/`. Third-party dependency caches
-remain npm-owned. Explicit external delivery roots and OS temporary browser/backend runtime
-roots retain their semantics. WP1B owns source/config/test relocation; WP1A moves none of them.
+Online uses `.build/online`; independent static suites use `.build/tests/<suite>`.
+Future Demo output belongs under `.build/demo`. Old ignored outputs are not build inputs;
+local cleanup was blocked by tool policy (see acceptance).
 
-## Reviewed input checkout bytes
+## Current implementation status
 
-Root `.gitattributes` constrains the exact files in `scripts/public_payload_inventory.json`
-and Public review evidence: reviewed text uses LF on every platform; binary archives use
-`-text`. Keep these rules aligned when admitting a new reviewed input. Runtime verification
-continues to hash exact file bytes without normalizing them or rewriting reviewed digests.
-
-## WP1B current test ownership
-
-Specialized configs, static/Visualization harnesses and browser/isolation/fixture/tooling/deploy
-tests now occupy `tests/` as defined above. Feature unit tests, setup and Production Presentation
-retain their owners. Root Online and transitional V1/private/public engineering entries remain.
-Current paths and completion gates belong to the [migration audit](STRUCTURAL_MIGRATION.md);
-file-level movement and verification are recorded in [WP1B acceptance](WP1B_ACCEPTANCE.md).
+Old Public/Private/V1 configs and data are removed. The target demo/ tree is not
+implemented. Tests/config inherit tsconfig.app directly. Payload byte rules cover
+remaining independent fixtures only. Source safety and generic artifact integrity
+remain active; publication fails before any upload or deployment.

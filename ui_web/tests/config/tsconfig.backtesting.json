@@ -1,5 +1,5 @@
 {
-  "extends": "../../tsconfig.demo.json",
+  "extends": "../../tsconfig.app.json",
   "include": [
     "../static/backtesting/main.tsx",
     "./vite.backtesting.config.ts"

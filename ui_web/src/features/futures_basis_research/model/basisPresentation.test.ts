@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import fixture from '../../../demo/futures_basis/report.v1.json'
+import { fixture } from '../testing/embeddedReportFixture'
 import { observedCoverage } from './basisPresentation'
 import { validateReportData } from '../report/validate'
 import type { ReportData } from '../report/types'
@@ -19,9 +19,9 @@ describe('shared Futures Basis coverage projection', () => {
       definitionVersion: 'futures_basis_definition_v1',
       status: 'complete',
       fingerprint: source.fingerprint,
-      candidateCount: 44,
-      firstCandidate: '2024-09-02',
-      lastCandidate: '2024-10-31',
+      candidateCount: 2,
+      firstCandidate: '2024-10-18',
+      lastCandidate: '2024-10-21',
       complete: true,
     })
     expect(source).toEqual(before)
@@ -29,7 +29,7 @@ describe('shared Futures Basis coverage projection', () => {
 
   it('retains an incomplete dependency and an empty candidate set as producer facts', () => {
     const incomplete = report()
-    incomplete.coverage.futures = { ...incomplete.coverage.futures, missing_units: 2, successful_units: 42, complete: false }
+    incomplete.coverage.futures = { ...incomplete.coverage.futures, missing_units: 2, successful_units: 0, complete: false }
     expect(observedCoverage(incomplete).complete).toBe(false)
 
     const empty = report()

@@ -30,7 +30,7 @@ visualization
 上述 online 产品消费路径之外，已明确契约化的 offline report 可以渲染 producer 提供的完整通用 Visualization Views；
 例如 [R01-A offline delivery](../market_research/descriptive/cases/futures_basis/DELIVERY.md)。ui_web 只拥有渲染及静态资源封装，
 其 R01-A standalone reader 入口为 [offline reader](src/offline/futures_basis/ARCHITECTURE.md)。不直接 import Research/business internals、执行研究、获取市场数据或绕过 HTTP authentication；该离线路径不发布新的 HTTP product。
-公开静态 Demo V2 是同一正式业务 Presentation 的 anonymous read-only runtime，不是第二套 Web 产品。双 Runtime composition、全页面覆盖、静态隔离与发布不变量从 [Demo Runtime authority](src/demo/ARCHITECTURE.md) 进入，再按需进入 Example 契约、实施边界与历史 V1 fixture；不引入后端或第二套业务 schema。Private D1–D6 的实现与工程证据见 [WP-C acceptance](src/demo/WP_C_ACCEPTANCE.md)；D7 public admission 仍独立待审，不能将历史单页验收视为 V2 readiness。
+The sole future Demo reuses formal Presentation in an anonymous read-only static runtime. DDB-00 retired all V1/Public/Private data and entries; new HTTP Bundle generation and runtime are not implemented. Build and publication remain BLOCKED. See [Demo authority](src/demo/ARCHITECTURE.md).
 
 ## 3. 数据依赖方向
 

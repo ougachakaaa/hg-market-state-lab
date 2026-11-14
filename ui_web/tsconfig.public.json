@@ -1,4 +1,0 @@
-{
-  "extends": "./tsconfig.demo.json",
-  "include": ["src/demo/public/main.tsx", "src/demo/public/virtual.d.ts"]
-}
