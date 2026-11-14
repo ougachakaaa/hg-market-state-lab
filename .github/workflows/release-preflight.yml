@@ -1,7 +1,6 @@
 name: Pages environment inspection
 on:
-  pull_request:
-    branches: [develop, main]
+  workflow_dispatch:
 permissions:
   contents: read
   actions: read

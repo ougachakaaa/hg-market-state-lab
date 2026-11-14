@@ -34,7 +34,9 @@
     "test:futures-basis-static-browser": "node tests/browser/futures_basis_static_browser.mjs",
     "test:backtesting-static": "tsc -p tests/config/tsconfig.backtesting.json && vite build --config tests/config/vite.backtesting.config.ts",
     "test:backtesting-static-browser": "node tests/browser/backtesting_static_browser.mjs",
-    "test:public-safety": "node scripts/public_asset_safety.mjs"
+    "test:public-safety": "node scripts/public_asset_safety.mjs",
+    "test:diagnostics": "vitest run --config vitest.diagnostics.config.ts",
+    "test:credentials": "node scripts/public_asset_safety.mjs --credentials-only"
   },
   "dependencies": {
     "@ant-design/icons": "^6.3.4",

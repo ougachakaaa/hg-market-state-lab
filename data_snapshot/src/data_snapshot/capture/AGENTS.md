@@ -5,3 +5,9 @@
 - 先读 [ARCHITECTURE.md](ARCHITECTURE.md)，再只读当前 Capture 对应的 specialized authority。
 - Source endpoint、query 与 minimal normalization 在此拥有；产品 scope、窗口和 completeness 必须进入产品 context。
 - 修改后运行对应 Capture tests；影响共享 MO/IM Capture 时同时运行受影响的活跃 Product tests。
+
+## Verification scope override
+
+The [root verification policy](../../../../AGENTS.md#verification-policy-user-decision-2026-11-14) governs execution.
+Only directly changed behavior gets targeted tests; full/system/browser/platform checks
+are manual only. Earlier verification examples are not mandatory task gates.

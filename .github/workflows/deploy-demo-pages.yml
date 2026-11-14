@@ -8,10 +8,7 @@ concurrency:
   group: pages
   cancel-in-progress: false
 jobs:
-  compatibility:
-    uses: ./.github/workflows/demo-compatibility.yml
   publication-blocked:
-    needs: compatibility
     runs-on: ubuntu-latest
     steps:
       - name: Reject publication until new Bundle Pipeline is implemented

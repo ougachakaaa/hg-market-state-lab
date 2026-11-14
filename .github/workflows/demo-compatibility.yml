@@ -1,13 +1,43 @@
-name: Demo engineering compatibility
+name: Scoped development checks
 on:
   push:
-    branches: [feat/github-pages-demo, develop, main]
+    branches: [develop, main]
   pull_request:
-  workflow_call:
+  workflow_dispatch:
+    inputs:
+      suite:
+        description: Explicit manual suite (never a normal development gate)
+        type: choice
+        required: true
+        default: regression
+        options: [regression, diagnostics]
 permissions:
   contents: read
 jobs:
   frontend:
+    if: github.event_name != 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7.0.1
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.13'
+      - uses: actions/setup-node@v7.1.0
+        with:
+          node-version: '22'
+          package-manager-cache: false
+      - run: pip install ruff==0.9.10
+      - name: Check only changed sources and credentials
+        env:
+          DIFF_BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
+          DIFF_HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: python .github/scripts/check_changed_sources.py
+  manual:
+    if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -25,43 +55,15 @@ jobs:
       - run: poetry install --no-interaction
       - run: npm ci
         working-directory: ui_web
-      - run: npm run contract:check
-        working-directory: ui_web
-      - run: npm test
-        working-directory: ui_web
-      - run: npm run build
-        working-directory: ui_web
-      - run: npm run lint
-        working-directory: ui_web
-      - run: npm run test:public-safety
-        working-directory: ui_web
-      - name: BLOCKED until new Demo Bundle Pipeline exists
-        run: npm run demo:build
-        working-directory: ui_web
-  python:
-    runs-on: ubuntu-latest
-    timeout-minutes: 20
-    strategy:
-      fail-fast: false
-      matrix:
-        suite: [market_research/tests, market_backtesting/tests, data_lake, data_snapshot/tests, ui_http/tests, ui_web/tests/tooling, ui_web/tests/deploy]
-    steps:
-      - uses: actions/checkout@v7.0.1
-        with:
-          persist-credentials: false
-      - uses: actions/setup-python@v6
-        with:
-          python-version: '3.13'
-      # This suite executes the canonical TypeScript V2 Visualization validator.
-      # The other Python suites do not invoke Node in their collected tests.
-      - uses: actions/setup-node@v7.1.0
-        if: matrix.suite == 'market_backtesting/tests'
-        with:
-          node-version: '22'
-          package-manager-cache: false
-      - run: npm ci
-        if: matrix.suite == 'market_backtesting/tests'
-        working-directory: ui_web
-      - run: pip install poetry==2.2.1
-      - run: poetry install --no-interaction
-      - run: poetry run pytest ${{ matrix.suite }} -q
+      - name: Manual business regression
+        if: inputs.suite == 'regression'
+        run: |
+          poetry run pytest -q
+          poetry run pytest ui_web/tests/tooling -q
+          npm --prefix ui_web test
+      - name: Manual diagnostics
+        if: inputs.suite == 'diagnostics'
+        run: |
+          poetry run pytest --diagnostics -m diagnostic data_lake data_snapshot/tests market_research/tests market_backtesting/tests market_statistics/tests ui_http/tests ui_web/tests/deploy -q
+          npm --prefix ui_web run test:diagnostics
+          npm --prefix ui_web run test:public-safety

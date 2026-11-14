@@ -12,13 +12,10 @@
 - 不记录、不打印、不在异常中包含 token、JWT secret 或其他配置值；错误消息只允许包含固定 key 名和文件路径。
 - 不在 import 时读取 `.env`；测试通过 `lab_config.ENV_FILE` 隔离真实文件。
 
-## 验证
+## Scoped verification
 
-从 repository root 运行：
-
-```bash
-poetry run pytest config/tests
-poetry run ruff check config conftest.py
-poetry run mypy config/src config/tests
-git diff --check
-```
+Follow the [root verification policy](../AGENTS.md#verification-policy-user-decision-2026-11-14).
+Select only directly affected business test files/cases. No default full-module or
+cross-module regression, topology, browser, live-data or deployment acceptance.
+Retain business invariants and fixtures; record unavailable checks as NOT VERIFIED.
+Do not modify real market data or caches to satisfy tests.

@@ -71,4 +71,33 @@ implementation details
 - Repository runtime configuration（`TUSHARE_*`、`LAB_AUTH_*`、`LAB_RESEARCH_PUBLICATION_ROOT` 等）只从 process environment 或 repository root `.env` 经 `lab_config` 读取；process environment 优先。不得在模块内建立 `.env`、独立 dotenv 读取或直接 `os.environ` 配置读取；tracked template 是根 `.env.example`。细节与验证见 [config Agent Rules](config/AGENTS.md)。
 - 根 `.venv` 是 repository 唯一 Python environment；不得保留 module-local `.venv`。共享 dependency graph 或根 `.venv` 不构成 cross-module import permission；跨模块依赖仍必须遵守 public boundary、稳定依赖方向与 architecture tests。
 - 优先采用满足当前 authority 与任务要求的最小实现，不为假设需求引入框架、抽象或业务概念。
-- 修改后按受影响模块的 local `AGENTS.md` 验证；跨模块 contract 变更同时执行 producer 与 consumer 的相关检查，并在提交前审阅完整 diff。
+- Verification follows the scoped policy below; review the complete diff before committing.
+
+## Verification policy (user decision, 2026-11-14)
+
+Verify only the behavior directly changed by this task. This policy supersedes older
+full-suite, cross-module, Browser Matrix, topology and release-readiness instructions
+for ordinary development, including historical acceptance documents.
+
+- Documentation-only changes require diff/semantic review, not business tests.
+- Select individual test files or cases for changed behavior; never expand automatically
+  to a whole module, consumers/producers, the repository or an entire website.
+- Run Build, Contract Check or type checking only when the changed entry, wire contract
+  or types require it. Do not run all checks as a fixed pre-commit checklist.
+- Architecture/source-layout scans, document links/reachability, retired-path checks,
+  repeated static isolation builds, Browser/E2E matrices, real-data, deployment and
+  platform-specific checks are MANUAL ONLY. Do not run them unless the user explicitly
+  requests them. Do not reinstall browsers, add system dependencies or start external
+  services just to satisfy ordinary task verification.
+- Full regression is manual only. Do not automatically restore any disabled check,
+  broaden mandatory coverage or introduce a new system-level gate without user direction.
+- An unsupported environment stops that check: report NOT VERIFIED and continue ordinary
+  development. Unrelated failures and ignored build-output cleanup do not block commits
+  or the next task. Real regressions in directly changed business behavior must be fixed.
+- Never label an unrun check PASS. Do not label the whole task BLOCKED because an unrelated
+  diagnostic or unavailable environment did not pass. Actual publication still requires
+  its own working build/artifact; this policy does not authorize a broken deployment.
+- After a directly related fix, rerun the failed case only. Do not rerun a complete suite
+  to chase green. Keep verification reporting short and review the diff before committing.
+
+Commands and manual-only inventory: [verification guide](DEVELOPMENT.md#verification-policy).

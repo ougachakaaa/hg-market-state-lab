@@ -25,6 +25,7 @@ from market_statistics import IntervalCountSpec, QuantileResult, QuantileSpec
 from observation_fixtures import CalendarFake, IndexFake
 
 
+@pytest.mark.diagnostic
 def test_isolation_checks_every_factory_and_rejects_escape(tmp_path: Path) -> None:
     with isolated_storage(tmp_path) as audit:
         assert audit["established_before_source"]
@@ -38,6 +39,7 @@ def test_isolation_checks_every_factory_and_rejects_escape(tmp_path: Path) -> No
     assert audit["sqlite_connections"] == {}
 
 
+@pytest.mark.diagnostic
 def test_isolation_refuses_source_tree_and_existing_state(tmp_path: Path) -> None:
     for unsafe in (ROOT, tmp_path):
         if unsafe == tmp_path:

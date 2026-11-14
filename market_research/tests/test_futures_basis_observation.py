@@ -522,8 +522,8 @@ def test_operation_error_retains_prior_exports() -> None:
     assert all(a.final_export is not None for a in error.value.evidence[:3])
 
 
-def test_live_oracle_rejects_corrupt_metrics_and_harness_isolation(tmp_path) -> None:
-    from futures_basis_live_acceptance import isolated_storage, verify
+def test_live_oracle_rejects_corrupt_metrics() -> None:
+    from futures_basis_live_acceptance import verify
 
     result = observe(Services())
     assert len(verify(result)) == 3
@@ -531,6 +531,12 @@ def test_live_oracle_rejects_corrupt_metrics_and_harness_isolation(tmp_path) -> 
     corrupt = replace(first, basis_value=replace(first.basis_value, value=999.0))
     with pytest.raises(AssertionError):
         verify(replace(result, contract_days=(corrupt, *result.contract_days[1:])))
+
+
+@pytest.mark.diagnostic
+def test_live_harness_storage_isolation(tmp_path) -> None:
+    from futures_basis_live_acceptance import isolated_storage
+
     with isolated_storage(tmp_path / "cache") as audit:
         import sqlite3
 

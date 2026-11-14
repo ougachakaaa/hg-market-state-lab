@@ -206,6 +206,7 @@ def test_manifest_rejects_traversal_symlink_and_extra_files(tmp_path):
         verify_delivery(tmp_path)
 
 
+@pytest.mark.diagnostic
 def test_operator_retained_input_failure_sealed_without_success(tmp_path):
     import runpy
     import sys

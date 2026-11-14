@@ -1,3 +1,7 @@
+> Verification policy update, 2026-11-14: this record preserves its original results.
+> Its cleanup/platform limitations do not block ordinary development or DDB-01.
+> Follow the [current scoped policy](../AGENTS.md#verification-policy-user-decision-2026-11-14).
+
 # DDB-00 hard retirement — 2026-11-14
 
 Legacy Synthetic V1 and Public/Private V2 Packages are retired by direct cutover.

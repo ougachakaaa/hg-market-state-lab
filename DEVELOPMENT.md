@@ -225,3 +225,69 @@ Generate Research。Run ID 写入 URL；刷新和浏览器前进/后退会重新
 ## Rebuild an incompatible local Dataset cache
 
 When DataLake reports `CacheIncompatibleError` (Backtesting reason `cache_incompatible`), stop the backend and any data tasks using that Dataset. Verify the owning Dataset and resolved absolute cache path under `data_lake/datasets/<dataset-id>/data/`. Remove only its `<dataset-id>.sqlite3` and any SQLite sidecars (`-journal`, `-wal`, `-shm`) after connections close. Current development caches need no backup or migration. Do not remove sibling Dataset caches, exports, source code, credentials, Auth or Run stores. Restart the backend and explicitly resubmit the request; normal ensure rebuilds missing facts using the configured Source. Read-only preflight does not rebuild. A new failure must be diagnosed independently rather than triggering repository-wide cleanup.
+
+
+## Verification policy
+
+User decision, 2026-11-14: ordinary development verifies only directly changed
+behavior. Full/module/system acceptance is not a task prerequisite. The canonical
+execution policy is [Agent rules](AGENTS.md#verification-policy-user-decision-2026-11-14).
+This overrides the automatic-verification wording of older instructions and historical
+acceptance records. Those records retain their original results, not current gates.
+
+Choose a specific Python test (`poetry run pytest path/to/test.py::test_name`) or
+frontend test (`npm test -- path/to/file.test.ts`) for the actual change. Documentation
+needs diff review only. Build/contract/type checks are selected only when relevant.
+Do not install browsers, system packages or external services for routine verification.
+An unsupported diagnostic is NOT VERIFIED; it does not stop ordinary development.
+
+### Manual only: do not run without explicit user request
+
+- Python architecture/topology/source-layout checks: files enumerated by
+  `DIAGNOSTIC_FILES` in root conftest.py. Includes real-TLS OpenSSL integration.
+- Linux deployment checks: ui_web/tests/deploy (excluded before import).
+- Mixed-file `diagnostic` cases: external-storage harness isolation and operator
+  report CLI integration. Their business/oracle assertions remain in normal tests.
+- Frontend repeated build/import injection: tests/isolation; release artifact
+  filesystem/symlink test: tests/tooling/public_release.test.ts.
+- Full payload hash inventory: `npm run test:public-safety`.
+- All Browser, static build, live-data and deployment commands: manual only. Existing
+  scripts are retained for explicit requests and investigating actual runtime problems.
+
+Explicit diagnostic collection/execution, from repository root:
+
+```powershell
+poetry run pytest --diagnostics -m diagnostic data_lake data_snapshot/tests market_research/tests market_backtesting/tests market_statistics/tests ui_http/tests ui_web/tests/deploy
+```
+
+From ui_web: `npm run test:diagnostics`. To list without running, use
+`node node_modules/vitest/vitest.mjs list --config vitest.diagnostics.config.ts --filesOnly`.
+For Python listing, add `--collect-only -q`. `--diagnostics` enables manual cases;
+without `-m diagnostic`, business tests in the selected paths also run. Normal pytest
+and npm test exclude manual diagnostics, but still run all selected business tests:
+they are NOT suggested as commands to run in full for every task.
+
+### CI and publication
+
+Ordinary PR/push CI lints changed Python/frontend source files and scans changed files
+for credential literals. It does not build, run full regression, inspect deployment
+environments, validate document topology, check payload hashes or invoke demo:build.
+There is no fallback to a full scan when a new-branch comparison base is unavailable;
+the missing check is reported as NOT VERIFIED.
+
+The compatibility workflow offers explicit workflow_dispatch choices `regression`
+and `diagnostics`. Pages environment inspection is also workflow_dispatch only.
+Remote branch protection is unchanged. Existing required-check settings, if any,
+are not an instruction to run removed local gates or permission to change remote settings.
+Demo publication remains BLOCKED until its new Bundle Pipeline and verified artifact
+exist. demo:build still fails; a normal development check passing is not a release PASS.
+
+This policy/tooling change is verified by collection listings, one small retained
+business test and diff/config review. No full suite, build matrix or browser acceptance.
+
+Implementation check (2026-11-14): frontend listings show 73 normal files and 9
+manual-only files. Targeted Python mixed-file collection retains 80 cases and
+excludes 4 diagnostics; manual collection finds the selected diagnostic cases.
+One retained business oracle test passes. Broad Python collection also exposes an
+existing duplicate `test_core` module-name collision; no full regression was run
+and that unrelated collection issue is not a development handoff gate.
