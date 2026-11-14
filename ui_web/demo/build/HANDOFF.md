@@ -27,6 +27,19 @@ cases to pass offline and feature-owned validators to perform business validatio
 
 ## DDB-03 — Explicit HTTP Collector
 
+Implementation now provides `collect.py`, the internal `collectorBridge.ts` and the
+`scripts/demo_collect_bridge.mjs` launcher. CLI details and transaction protocol are in
+the build authority. Focused controlled verification runs with
+`npx vitest run --config demo/build/vitest.config.ts demo/build/collector.test.ts` from
+`ui_web`; it launches the root Python environment and a temporary HTTP fixture server,
+and invokes the actual independent DDB-02 Preflight on candidate and active test data.
+These test payloads remain temporary and are never active Demo captures.
+
+Real capture remains NOT VERIFIED. The local backend responds with protected HTTP 401,
+but the inspected configuration lacks LAB_AUTH_ORIGIN and approved account credentials
+must be supplied interactively. No real active Bundle dataset is delivered by these tests.
+The tracked real dataset and distribution authorization remain DDB-04 entry conditions.
+
 Goal is local authenticated capture with single-Bundle/all selection. Requires DDB-02
 Registry export and admission tooling, an operator-provided serving URL, approved user,
 explicit Presets and available source/Run/Publication dependencies for real collection.

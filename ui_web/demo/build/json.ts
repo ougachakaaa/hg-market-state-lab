@@ -28,7 +28,7 @@ export function parseStrict(text: string): Json {
     }
     return fail()
   }
-  function value(): Json {
+  function value(path: (string | number)[] = []): Json {
     whitespace()
     if (text[offset] === '"') return string()
     if (text[offset] === '{') {
@@ -43,7 +43,7 @@ export function parseStrict(text: string): Json {
         if (Object.hasOwn(object, key)) throw new Error('duplicate_key')
         whitespace()
         if (text[offset++] !== ':') return fail()
-        object[key] = value()
+        object[key] = value([...path, key])
         whitespace()
         const separator = text[offset++]
         if (separator === '}') return object
@@ -57,7 +57,7 @@ export function parseStrict(text: string): Json {
       whitespace()
       if (text[offset] === ']') { offset++; return array }
       while (offset < text.length) {
-        array.push(value())
+        array.push(value([...path, array.length]))
         whitespace()
         const separator = text[offset++]
         if (separator === ']') return array
@@ -75,7 +75,9 @@ export function parseStrict(text: string): Json {
     const number = Number(token)
     if (!Number.isFinite(number) || Object.is(number, -0) ||
       (Number.isInteger(number) && !Number.isSafeInteger(number)) ||
-      decimalIdentity(token) !== decimalIdentity(JSON.stringify(number))) throw new Error('unsafe_number')
+      decimalIdentity(token) !== decimalIdentity(JSON.stringify(number))) {
+      throw Object.assign(new Error('unsafe_number'), { fieldPath: path })
+    }
     return number
   }
   const result = value()

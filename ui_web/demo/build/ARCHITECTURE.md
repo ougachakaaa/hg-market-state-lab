@@ -6,7 +6,27 @@ Implementation is assigned in [handoff](HANDOFF.md). HTTP evidence is in
 
 ## Explicit HTTP collection
 
-The future Python Collector runs from repository root in the sole Poetry environment.
+DDB-03 exposes `poetry run python ui_web/demo/build/collect.py --all --base-url
+http://127.0.0.1:8011` and mutually exclusive `--only <bundle_id>`. Username can be
+provided with `--username`; password is entered with getpass. Poll interval, Run deadline
+and HTTP request timeout default to 2, 1800 and 60 seconds and accept finite positive
+CLI overrides. Origin comes exclusively from lab_config Auth settings. Requests are
+sequential, with no automatic redirects or retries.
+
+The internal Node bridge retains strictly parsed HTTP payloads and assembles canonical
+Bundle bytes using DDB-02 JSON tooling. Python receives navigation metadata and response
+references, never serializes financial payloads. Complete generated HTTP envelopes are
+validated before extraction. Candidate admission always invokes the independent demo:check.
+
+Collection holds `.build/demo-collection/dataset.lock` using a nonblocking OS byte lock
+on Windows or flock on POSIX. The file persists; process exit releases ownership.
+`pending.json` names one same-root candidate and its exact replacement hashes. Candidate
+bytes and journal are flushed before pending publication. Recovery verifies the complete
+candidate with Preflight, then repeats selected replacements and replaces Manifest last.
+Only explicit Collector invocations recover transactions. DDB-04 must acquire this same
+lock and reject pending.json before loading inputs. Corrupt pending resources fail closed.
+
+The Python Collector runs from repository root in the sole Poetry environment.
 It accepts an explicit Bundle ID or all, an HTTP base URL, and the selected committed
 Presets. Runtime environment configuration follows root `lab_config` policy. Credentials
 are supplied interactively and held in memory. Login uses existing `/auth/login`, a Cookie
@@ -72,8 +92,9 @@ No startup-time data deletion is introduced.
 DDB-02 implements the standalone offline `demo:check` command and `demo:registry`
 export described in the [Bundle interface](../BUNDLES.md#offline-admission-interface).
 It validates a quiescent local dataset without Collector or serving dependencies.
-The lock, pending-transaction handling, byte staging and Vite integration below remain
-assigned to DDB-03/DDB-04. The current `demo:build` entry remains BLOCKED.
+DDB-03 implements Collector locking, pending-transaction recovery and candidate staging.
+Build-side lock admission, input staging and Vite integration remain assigned to DDB-04.
+The current `demo:build` entry remains BLOCKED.
 
 The future single `npm run demo:build` entry executes offline Preflight before Vite. It
 acquires the dataset lock, rejects pending transactions, verifies Registry/Manifest/file
