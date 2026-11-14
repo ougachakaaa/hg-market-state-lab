@@ -1,8 +1,12 @@
 # ui_web 模块架构 authority
 
-## Structural consolidation routing
+## Directory and Demo routing
 
-Directory ownership is defined by [Structure](STRUCTURE.md); current paths, KEEP/MOVE/MERGE/RETIRE decisions and WP1-WP4 gates are in the [WP0 migration audit](STRUCTURAL_MIGRATION.md) and [baseline inventory](STRUCTURAL_INVENTORY.md). These are target/transition authorities, not evidence that migration has executed. For structural tasks read them before existing Demo or specialized tooling contracts.
+[Structure](STRUCTURE.md) owns canonical placement. Current Demo tasks enter
+[Demo authority](demo/ARCHITECTURE.md), then its Bundle/build contracts as needed.
+[Structural migration](STRUCTURAL_MIGRATION.md) records the superseded transition and
+DDB-00 retirement context. Historical inventories are consulted only for a task that
+needs their migration evidence.
 
 本文件定义 `ui_web` 的稳定职责、数据依赖方向与 authority 路由。仓库级定位见 [../ARCHITECTURE.md](../ARCHITECTURE.md)；具体 vertical slice 的 authority 与实现共址于 `src/features/`。
 
@@ -30,7 +34,7 @@ visualization
 上述 online 产品消费路径之外，已明确契约化的 offline report 可以渲染 producer 提供的完整通用 Visualization Views；
 例如 [R01-A offline delivery](../market_research/descriptive/cases/futures_basis/DELIVERY.md)。ui_web 只拥有渲染及静态资源封装，
 其 R01-A standalone reader 入口为 [offline reader](src/offline/futures_basis/ARCHITECTURE.md)。不直接 import Research/business internals、执行研究、获取市场数据或绕过 HTTP authentication；该离线路径不发布新的 HTTP product。
-The sole future Demo reuses formal Presentation in an anonymous read-only static runtime. DDB-00 retired all V1/Public/Private data and entries; new HTTP Bundle generation and runtime are not implemented. Build and publication remain BLOCKED. See [Demo authority](src/demo/ARCHITECTURE.md).
+The sole future Demo reuses formal Presentation in an anonymous read-only static runtime. DDB-00 retired all V1/Public/Private data and entries; new HTTP Bundle generation and runtime are not implemented. Build and publication remain BLOCKED. DDB-01 encodes the current design in [Demo authority](demo/ARCHITECTURE.md).
 
 ## 3. 数据依赖方向
 

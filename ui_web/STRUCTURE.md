@@ -13,9 +13,10 @@ Git history retains previous decisions; retired acceptance is not current readin
 # ui_web directory ownership
 
 Specializes [module architecture](ARCHITECTURE.md) and preserves [Presentation boundaries](presentation-architecture.md).
-This is the canonical directory contract approved in structural WP0. It describes the target;
-the [migration audit](STRUCTURAL_MIGRATION.md) records current paths, dependencies and cutover gates.
-DDB-00 supersedes the former staged legacy cutover.
+This is the canonical directory contract. [Demo authority](demo/ARCHITECTURE.md) owns
+the DDB-01 design; the [migration record](STRUCTURAL_MIGRATION.md) retains transition context.
+DDB-00 supersedes the former staged legacy cutover. Runtime/tooling placement below remains
+the target until the assigned DDB implementation work packages deliver it.
 
 ## Ownership
 
@@ -42,9 +43,8 @@ owner; `tests/` is not a demand to move every unit test. Shared feature validato
 local presentation state and charts remain in `src/`, never copied into Demo. Demo consumes feature
 public Presentation entries; Online must not depend on Demo or test harnesses.
 
-`demo/` is the only formal Demo. Historical V1, Private V2 and separate Public/Private runtimes
-are migration inputs, not enduring products. Private admission restrictions are preserved when
-retiring their implementation; restricted material does not become a public Bundle by moving it.
+`demo/` is the only formal Demo. DDB-00 retired historical V1 and Public/Private V2 code and data.
+Public distribution still requires authorization for the actual captured material.
 
 ## Data and build boundary
 
@@ -59,15 +59,18 @@ direct service/projection invocation as an alternate generation path. No mock AP
 second backend or second frontend project is introduced. Any missing formal HTTP capability is a
 reported blocker, not permission to expand HTTP semantics in this structural work.
 
-Future Bundle admission verifies only the Manifest and Bundle SHA-256. Business DTO/Result
-validation, static dependency isolation and deployment Artifact Verification are separate concerns.
+Build Preflight independently checks Manifest/Bundle completeness, identity, envelope,
+formal business Result contracts, associations and exact-byte SHA-256. Bundle validators own
+packaging/integrity; feature validators own formal Results; Preflight schedules both.
+Required failures stop the whole Demo build. Static dependency isolation and deployment
+Artifact Verification retain their own responsibilities.
 Legacy Publication Rights Gates, Evidence Review and independent review records are not Demo Build
 prerequisites. Legacy Envelope validation has been removed.
 Build never invokes Python, generates results or contacts an
 online business HTTP service. Browsers consume static data and shared Presentation only: no financial
 computation, Auth/API requests, polling, preflight or server Run lifecycle. Preserve all seven formal
 routes and existing local interactions. Runtime, Example meaning and distribution decision remain
-owned by the existing [Demo Runtime](src/demo/ARCHITECTURE.md) contract.
+owned by the existing [Demo authority](demo/ARCHITECTURE.md) contract.
 
 ## Deployment and lifecycle
 
@@ -84,7 +87,8 @@ distribution bindings and deployment permissions remain required. No production 
 
 ## Maintenance
 
-Directory ownership changes here; migration state and gates change in the audit. Runtime capability,
+Directory ownership changes here; current Demo design changes in its specialized authorities.
+The migration record retains historical transition context. Runtime capability,
 Examples, authenticity and release semantics stay with their narrow existing owners. Move those
 authorities and repair inbound/outbound navigation with their implementation, without parallel owners.
 Only one formal Demo generation is retained. Superseded Demo documents retire after extracting

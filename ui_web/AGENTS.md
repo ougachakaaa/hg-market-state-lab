@@ -1,8 +1,12 @@
 # ui_web Agent Rules
 
-## Structural consolidation routing
+## Directory and Demo routing
 
-Directory ownership is defined by [Structure](STRUCTURE.md); current paths, KEEP/MOVE/MERGE/RETIRE decisions and WP1-WP4 gates are in the [WP0 migration audit](STRUCTURAL_MIGRATION.md) and [baseline inventory](STRUCTURAL_INVENTORY.md). These are target/transition authorities, not evidence that migration has executed. For structural tasks read them before existing Demo or specialized tooling contracts.
+[Structure](STRUCTURE.md) owns canonical placement. Current Demo tasks enter
+[Demo authority](demo/ARCHITECTURE.md), then its Bundle/build contracts as needed.
+[Structural migration](STRUCTURAL_MIGRATION.md) records the superseded transition and
+DDB-00 retirement context. Historical inventories are consulted only for a task that
+needs their migration evidence.
 
 ## 适用范围
 

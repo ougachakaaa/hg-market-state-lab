@@ -15,3 +15,12 @@ Package is migrated into Bundles. DDB-01 may start from the cleared workspace;
 new runtime, HTTP generation and publication acceptance remain unimplemented.
 WP1B's previously observed Backtesting Online 401 remains an independent open
 integration issue, not a DDB-00 PASS. See [acceptance](DDB_00_ACCEPTANCE.md).
+
+## DDB-01 routing reconciliation
+
+The former WP0-WP4 migration is superseded by DDB-00 hard retirement. Current Demo
+implementation enters [Demo authority](demo/ARCHITECTURE.md), [Bundle contract](demo/BUNDLES.md)
+and [DDB handoff](demo/build/HANDOFF.md). DDB-01 encodes design only. DDB-02 through DDB-05
+own admission, collection, runtime/build and release respectively. Historical acceptance
+is retained without rewriting its test conclusions. Current scoped verification makes
+ignored old build cleanup and unrelated platform diagnostics nonblocking for DDB-02.
