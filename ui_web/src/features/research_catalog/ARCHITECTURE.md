@@ -7,6 +7,31 @@ online descriptor. This slice consumes only the two Capability GET operations th
 its generated OpenAPI contract. It does not preview, execute, probe market availability,
 or create Research results.
 
+## Research Study presentation
+
+The primary overview presents three feature-local static Research Studies, independent
+of Capability request success. The minimal presentation model is `title`, `description`,
+`status: completed | incomplete` and optional `route`. It is not an HTTP DTO, Bundle
+contract or backend registry. `completed` means an independent Web presentation exists;
+it makes no claim about provider/cache readiness, computation success, Bundle admission
+or method development. `incomplete` means there is no independent Web entry, not that
+the Python research is unimplemented.
+
+In order, 历史基差研究 is completed and navigates to `/research/futures-basis` through
+the injected callback; 价格分段研究 and 指数滚动收益研究 are incomplete with no action.
+Cards show purpose and completion, not raw identities, commands or readiness fields.
+They share the same feature Presentation across runtimes, use responsive Ant Design
+layout and provide an explicit keyboard-accessible study action. The secondary
+“浏览研究成果” action uses the injected Explorer callback.
+
+Capability discovery and local technical instructions remain in a secondary, initially
+collapsed panel. Controller requests, selection, retry, cancellation, stale isolation
+and validators remain unchanged. Errors and invalid-contract feedback remain visible
+even when the panel is collapsed. Necessary origin/research disclosures appear in a
+secondary footer; injected static disclosure retains its exact source meaning.
+
+## Capability and local workflow facts
+
 The catalog distinguishes independently evidenced states:
 
 - `trailing_cumulative_return_v1`: admitted descriptor available through authenticated

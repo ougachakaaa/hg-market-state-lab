@@ -16,7 +16,7 @@ Research → Research Catalog & Workspace / Research Explorer（已实现）；F
 Backtesting → Futures Roll Long（WP7 Web Consumer 已实现）
 ```
 
-登录后默认进入 `/research`，不提供独立宣传首页。三个既有在线 feature 保持可发现、可访问且相互独立；WP3 Research Catalog 是只读发现入口。Futures Basis Online Research 已完成 WP8-B Web Consumer，并复用在线和离线共享 Reader。导航和 URL 由 [Workspace authority](workspace.md) 细化。
+登录后默认进入 `/research`，不提供独立宣传首页。既有在线 feature 保持可访问且相互独立。Research Overview 是面向用户的 Research Study 导览，展示研究目的与独立 Web 页面的完成状态；不以 Capability readiness 推断完成状态。Research Explorer 是辅助成果浏览工具，保留正式路由与总览次要入口，不作为 Study 或侧栏项目。Capability 发现继续由原 controller 与 validator 拥有。Futures Basis Online Research 已完成 WP8-B Web Consumer，并复用在线和离线共享 Reader。导航和 URL 由 [Workspace authority](workspace.md) 细化。
 
 ## 2. Application Ownership
 
