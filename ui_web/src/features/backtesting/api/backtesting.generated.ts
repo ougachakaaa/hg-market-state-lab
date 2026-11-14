@@ -474,7 +474,7 @@ export interface components {
              * Reason
              * @enum {string}
              */
-            reason: "public_export_unavailable" | "cache_complete" | "cache_incomplete" | "calendar_target_unknown" | "underlying_unknown";
+            reason: "cache_incompatible" | "public_export_unavailable" | "cache_complete" | "cache_incomplete" | "calendar_target_unknown" | "underlying_unknown";
             /**
              * State
              * @enum {string}

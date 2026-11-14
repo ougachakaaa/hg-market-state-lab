@@ -24,3 +24,19 @@ it('identifies incomplete dependencies and safely maps internal and historical r
  expect(failurePresentation('FAILED', { ...failure, category: 'internal_failure', reason: 'internal_failure' }).description).toBe('回测执行失败。请查看技术详情或联系维护人员。')
  expect(failurePresentation('FAILED', { ...failure, category: 'invalid_public_input', reason: 'historical' }).description).not.toContain('historical')
 })
+
+it('explains typed cache incompatibility without recommending network retries', () => {
+ for (const stage of ['export', 'ensure'] as const) {
+  const failure = failurePresentation('FAILED', { stage, category: 'upstream_operation', dependency: 'futures', reason: 'cache_incompatible' })
+  expect(failure.title).toBe('本地行情缓存不兼容')
+  expect(failure.description).toContain('股指期货日线')
+  expect(failure.action).toContain('维护者重建')
+  expect(failure.description).not.toContain('网络')
+ }
+ const readiness = readinessPresentation({ dependency: 'futures', state: 'unavailable', reason: 'cache_incompatible', coverage: null })
+ expect(readiness.label).toBe('本地缓存不兼容')
+ expect(readiness.description).toContain('股指期货日线')
+ expect(readiness.description).toContain('需要重建')
+ expect(readiness.coverage).toBeUndefined()
+ expect(failurePresentation('FAILED', { stage: 'export', category: 'upstream_operation', dependency: 'futures', reason: 'future_reason' }).description).toContain('网络')
+})

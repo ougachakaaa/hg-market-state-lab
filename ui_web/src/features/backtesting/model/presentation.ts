@@ -21,13 +21,14 @@ type Failure = NonNullable<Run['failure']>
 export function failurePresentation(status: string, failure?: Failure | null) {
  if (status === 'INTERRUPTED') return { title: '回测执行已中断', description: '上一次执行被中断，未生成成功结果。', action: '确认后端服务可用后，重新提交回测。' }
  if (failure?.stage === 'ensure' && failure.category === 'upstream_operation' && failure.reason === 'credential_missing') return { title: '行情数据获取失败', description: `无法获取 ${dependencyLabels[failure.dependency ?? ''] ?? '所需行情数据'}，因为后端未配置 Tushare Token。`, action: credentialAction }
+ if (failure?.category === 'upstream_operation' && failure.reason === 'cache_incompatible') return { title: '本地行情缓存不兼容', description: `${dependencyLabels[failure.dependency ?? ''] ?? '所需行情数据'}的本地缓存与当前版本不兼容，需要重建。`, action: '请联系维护者重建受影响的 Dataset 缓存，完成后重新提交回测。' }
  if (failure?.category === 'upstream_operation') return { title: '行情数据获取失败', description: '行情数据获取失败。请检查后端数据源配置和网络连接，或稍后重试。', action: '确认后端数据源可用后，重新提交回测。' }
  if (failure?.category === 'incomplete_input') return { title: '必要行情尚不完整', description: `所选时间范围内的必要行情仍不完整，暂时无法生成回测结果。${failure.dependency ? `涉及：${dependencyLabels[failure.dependency] ?? '所需行情数据'}。` : ''}`, action: '检查本地缓存和后端数据源配置后，重新提交回测。' }
  return { title: '回测执行失败', description: '回测执行失败。请查看技术详情或联系维护人员。', action: '确认问题解决后，重新提交回测。' }
 }
 export function readinessPresentation(item: Preflight['calendar_cffex']) {
  const labels = { complete: '数据已就绪', incomplete: '本地缓存不完整', unknown: '暂无法判断', unavailable: '缓存检查不可用' }
- const reasons = { cache_complete: '本地目标缓存完整，不代表行情最新或回测一定成功。', cache_incomplete: '提交回测时将尝试自动获取缺失行情。', calendar_target_unknown: 'CFFEX 交易日历尚不完整或无法读取，暂无法确定下游所需日期。', underlying_unknown: '尚无法确定标的指数，暂无法检查指数缓存。', public_export_unavailable: '暂无法检查本地缓存，请稍后重新检查。' }
+ const reasons = { cache_incompatible: `${dependencyLabels[item.dependency]}的本地缓存不兼容，需要重建。请联系维护者重建受影响的 Dataset 缓存，完成后重新检查。`, cache_complete: '本地目标缓存完整，不代表行情最新或回测一定成功。', cache_incomplete: '提交回测时将尝试自动获取缺失行情。', calendar_target_unknown: 'CFFEX 交易日历尚不完整或无法读取，暂无法确定下游所需日期。', underlying_unknown: '尚无法确定标的指数，暂无法检查指数缓存。', public_export_unavailable: '暂无法检查本地缓存，请稍后重新检查。' }
  const unit = item.dependency.startsWith('calendar_') ? '个自然日目标' : item.dependency === 'futures' ? '个产品×日期目标' : '个指数×日期目标'
- return { label: labels[item.state], description: reasons[item.reason] ?? '暂无法判断缓存准备情况。', coverage: item.coverage ? `已缓存 ${item.coverage.successful_units} / ${item.coverage.requested_units} ${unit}` : undefined }
+ return { label: item.reason === 'cache_incompatible' ? '本地缓存不兼容' : labels[item.state], description: reasons[item.reason] ?? '暂无法判断缓存准备情况。', coverage: item.coverage ? `已缓存 ${item.coverage.successful_units} / ${item.coverage.requested_units} ${unit}` : undefined }
 }

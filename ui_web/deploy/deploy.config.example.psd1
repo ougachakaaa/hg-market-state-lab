@@ -3,7 +3,7 @@
     ProjectRoot = ''
     PackageManager = 'npm'
     BuildArguments = @('run', 'build')
-    BuildOutput = 'dist'
+    BuildOutput = '.build/online'
     Distribution = 'Ubuntu-24.04'
     DeployRoot = '~/deployments/nginx-gateway'
     SitePath = 'sites/example'

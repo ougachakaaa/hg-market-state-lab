@@ -8,7 +8,7 @@ import { assertNoCredentials } from './public_asset_safety.mjs'
 export const web = fileURLToPath(new URL('../', import.meta.url))
 export const repository = resolve(web, '..')
 export const packageRoot = resolve(web, 'src/demo/public/examples')
-export const output = resolve(web, 'dist-demo-public')
+export const output = resolve(web, '.build/demo')
 export const sha = bytes => createHash('sha256').update(bytes).digest('hex')
 export function inventory(root) {
   const files = []
@@ -47,7 +47,7 @@ export function loadPublicPackage() {
   const files = inventory(packageRoot)
   assert.deepEqual(files.map(f=>f.file).sort(), [...expected].sort(), 'Unreviewed package file')
   for (const file of files) {
-    assert.ok(tracked.has(relative(repository, resolve(packageRoot, file.file))), 'Public input must be tracked')
+    assert.ok(tracked.has(relative(repository, resolve(packageRoot, file.file)).replaceAll('\\', '/')), 'Public input must be tracked')
     assertPublicV2Asset(readFileSync(resolve(packageRoot, file.file)), file.file)
   }
   return { envelope, files }

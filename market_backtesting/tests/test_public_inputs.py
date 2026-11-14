@@ -11,6 +11,7 @@ from typing import Any
 import pytest
 
 from data_lake import (
+    CacheIncompatibleError,
     CredentialMissingError,
     EnsureResult,
     InvalidRequestError,
@@ -560,6 +561,7 @@ def test_malformed_ensure_result_is_typed_without_success_or_retry() -> None:
 
 
 @pytest.mark.parametrize("error,reason", [
+    (CacheIncompatibleError("private/path fake-secret"), "cache_incompatible"),
     (CredentialMissingError("required credential absent"), "credential_missing"),
     (OperationError("network fake-secret /private/path"), "operation_unavailable"),
     (OperationError("credential unavailable"), "operation_unavailable"),

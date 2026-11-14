@@ -378,6 +378,7 @@ def test_datalake_imports_name_only_published_symbols() -> None:
             "InvalidRequestError",
             "OperationError",
             "CredentialMissingError",
+            "CacheIncompatibleError",
         },
         "data_lake.datasets.tushare_trade_calendar": {
             "TradeCalendarExport",

@@ -388,7 +388,7 @@ not business Presentation or V2 page readiness. Hash route queries, including se
 `run_id`, normalize away; report section scrolling remains D2/D4 work and must not
 replace a route hash.
 
-The harness uses `vite.shell.config.ts`, inheriting the V1 Vite settings with a separate
+The harness uses `tests/config/vite.shell.config.ts`, inheriting the V1 Vite settings with a separate
 entry/output. Its build rejects nonliteral dynamic imports in project code and checks
 all loaded project modules and their static/dynamic edges before tree shaking against
 an explicit shell-only allowlist. The emitted dependency evidence and real static-file

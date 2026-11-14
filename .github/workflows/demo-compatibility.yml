@@ -53,7 +53,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        suite: [market_research/tests, market_backtesting/tests, data_lake, data_snapshot/tests, ui_http/tests, ui_web/scripts]
+        suite: [market_research/tests, market_backtesting/tests, data_lake, data_snapshot/tests, ui_http/tests, ui_web/tests/tooling, ui_web/tests/deploy]
     steps:
       - uses: actions/checkout@v7.0.1
         with:

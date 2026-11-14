@@ -1,0 +1,7 @@
+{
+  "extends": "../../tsconfig.demo.json",
+  "include": [
+    "../static/mo_option_chain/main.tsx",
+    "./vite.option-chain.config.ts"
+  ]
+}

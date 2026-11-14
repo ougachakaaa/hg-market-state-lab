@@ -33,3 +33,7 @@ Frozen basis 去重释放的 SQLite pages 可供后续写入复用，不承诺�
 读操作使用一个 committed snapshot，在此 snapshot 内复用相同 basis 的 JSON 解析；所有目标 success records 仍逐条校验 content hash 和 Dataset completeness。不得通过跳过旧数据验证、读写共用事务、WAL 或 consumer 直读 SQL 来加速。
 
 Snapshot 可以在同一 read transaction 内有界批量取得目标 units、records 和关联 instruments，并复用 join 得到的 instrument facts；在内存还原原目标及记录顺序、关联去重，不另开 snapshot。SQL 批次限制参数和临时行缓冲；最终 public view 的 materialization 契约不变。批量读取仍对每个成功 unit 执行原有 hash/count、错误 metadata、basis 与 Dataset completeness 验证，不把 status='success' 当作完整性证明。
+
+## Typed incompatibility signal
+
+The existing structure, identity, generation and representation incompatibility checks raise public `CacheIncompatibleError(OperationError)`. This specializes the [Application failure contract](APPLICATION.md), without changing compatibility predicates, integrity checks or explicit rebuild policy.

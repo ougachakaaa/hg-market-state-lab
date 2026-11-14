@@ -2,6 +2,7 @@
 
 from pkgutil import extend_path
 
+from .results import CacheIncompatibleError as CacheIncompatibleError
 from .results import CoverageResult as CoverageResult
 from .results import CredentialMissingError as CredentialMissingError
 from .results import EnsureResult as EnsureResult

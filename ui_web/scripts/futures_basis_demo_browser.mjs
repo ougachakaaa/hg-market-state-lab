@@ -7,7 +7,7 @@ import { resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { createServer } from 'node:net'
 import { chromium } from 'playwright'
-import { historicalBasisAcceptance } from './historical_basis_acceptance.mjs'
+import { historicalBasisAcceptance } from '../tests/browser/historical_basis_acceptance.mjs'
 
 const web = fileURLToPath(new URL('../', import.meta.url))
 const output = await mkdtemp(resolve(tmpdir(), 'wp3-demo-browser-'))
@@ -19,9 +19,9 @@ function pass(message) { evidence.checks.push(message); console.log(`PASS: ${mes
 try {
   const build = spawnSync('npm', ['run', 'demo:build'], { cwd: web, encoding: 'utf8', shell: process.platform === 'win32' })
   assert.equal(build.status, 0, build.stderr || build.error?.message)
-  const html = await readFile(resolve(web, 'dist-demo/index.html'), 'utf8')
+  const html = await readFile(resolve(web, '.build/tests/v1/index.html'), 'utf8')
   assert.match(html, /\/hg-market-state-lab\/assets\//)
-  pass('Independent npm-only build emits dist-demo/index.html and subpath asset URLs')
+  pass('Independent npm-only build emits .build/tests/v1/index.html and subpath asset URLs')
   const port = createServer()
   await new Promise((done, reject) => port.once('error', reject).listen(4179, '127.0.0.1', done))
   await new Promise(done => port.close(done))

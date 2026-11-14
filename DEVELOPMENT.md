@@ -165,7 +165,7 @@ poetry run python -c 'import secrets; print(secrets.token_urlsafe(32))'
 
 ### Authentication 验证与部署准备
 
-在 `ui_web/` 执行 `npm run contract:generate`、`npm run contract:check`、`npm run test`、`npm run build`、`npm run lint`；从仓库根执行 `poetry run pytest ui_http/tests ui_web/scripts/test_export_contracts.py`、`poetry run ruff check ui_http ui_web/scripts` 与 `poetry run mypy ui_http`。离线 contract export 不需要配置 Auth 或创建用户数据库。
+在 `ui_web/` 执行 `npm run contract:generate`、`npm run contract:check`、`npm run test`、`npm run build`、`npm run lint`；从仓库根执行 `poetry run pytest ui_http/tests ui_web/tests/tooling/test_export_contracts.py`、`poetry run ruff check ui_http ui_web/scripts ui_web/tests` 与 `poetry run mypy ui_http`。离线 contract export 不需要配置 Auth 或创建用户数据库。
 
 真实浏览器 smoke（不是 Mock UI 测试）：在 `ui_web/` 执行 `npx playwright install chromium`，然后 `npm run test:auth-browser`。Linux 还需 Chromium 系统运行库；可用 `npx playwright install-deps chromium` 安装。已有兼容 Chromium 可通过 `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH` 指定。端口 5173/8011 必须空闲；脚本拒绝连接已有开发服务。
 
@@ -221,3 +221,7 @@ Generate Research。Run ID 写入 URL；刷新和浏览器前进/后退会重新
 登录后选择 Research Explorer，浏览 Publication 列表并按需翻页；选择 Publication 查看声明 scope 和 Jobs，再选择 Analysis 检查原始结果、Coverage 与 provenance。点击 quantile、count 或 frequency 才读取对应 View。浏览不会执行 Research；服务端验证容量不足时可手动重试。
 
 真实浏览器合成数据验收：在 `ui_web/` 执行 `npm run test:research-browser`，需要 Playwright Chromium 及系统运行库、空闲的 5173 和 8011 端口。脚本建立临时 Auth 数据库和合成 Publication Store，不访问真实行情。
+
+## Rebuild an incompatible local Dataset cache
+
+When DataLake reports `CacheIncompatibleError` (Backtesting reason `cache_incompatible`), stop the backend and any data tasks using that Dataset. Verify the owning Dataset and resolved absolute cache path under `data_lake/datasets/<dataset-id>/data/`. Remove only its `<dataset-id>.sqlite3` and any SQLite sidecars (`-journal`, `-wal`, `-shm`) after connections close. Current development caches need no backup or migration. Do not remove sibling Dataset caches, exports, source code, credentials, Auth or Run stores. Restart the backend and explicitly resubmit the request; normal ensure rebuilds missing facts using the configured Source. Read-only preflight does not rebuild. A new failure must be diagnosed independently rather than triggering repository-wide cleanup.

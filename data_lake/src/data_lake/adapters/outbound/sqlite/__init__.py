@@ -21,7 +21,7 @@ from data_lake.domain import (
     UnitRecords,
 )
 from data_lake.ports import Snapshot
-from data_lake.results import CoverageResult, OperationError
+from data_lake.results import CacheIncompatibleError, CoverageResult, OperationError
 
 SCHEMA_VERSION = 3
 BASIS_DDL = (
@@ -129,8 +129,8 @@ class Repository:
         if connection.execute("PRAGMA foreign_key_check").fetchone() is not None:
             raise OperationError("Dataset storage references are invalid")
 
-    def _incompatible(self, reason: str) -> OperationError:
-        return OperationError(
+    def _incompatible(self, reason: str) -> CacheIncompatibleError:
+        return CacheIncompatibleError(
             f"Dataset '{self.dataset}' cache is incompatible ({reason}); "
             "rebuild required for this owning Dataset"
         )

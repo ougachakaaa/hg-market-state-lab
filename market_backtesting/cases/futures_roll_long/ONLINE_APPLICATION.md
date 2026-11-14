@@ -180,7 +180,7 @@ Publication uses fixed category/reason `result_too_large`, `serialization_failur
 `storage_failure`; recovery uses `execution/interrupted/interrupted`.
 Diagnostics, detail, provider messages, credentials and paths are never projected.
 
-The public DataLake `CredentialMissingError` is translated to `upstream_operation / credential_missing`, preserving actual stage/dependency, and is included in the safe reason vocabulary. Generic OperationError remains `operation_unavailable`. Preflight stays read-only; submit-time Ensure, HTTP DTO shape and persistence behavior are unchanged.
+The public DataLake `CredentialMissingError` is translated to `upstream_operation / credential_missing`, preserving actual stage/dependency, and is included in the safe reason vocabulary. Generic OperationError remains `operation_unavailable`; the typed cache incompatibility specialization is defined below. Preflight stays read-only; submit-time Ensure, HTTP DTO shape and persistence behavior are unchanged.
 
 Representative preserved Core/Case reasons:
 
@@ -311,3 +311,7 @@ result = app.get_result(accepted.run_id, owner_scope)
 
 Optional `LAB_BACKTESTING_RUN_ROOT` uses lab_config and root `.env`/process environment.
 Native Windows uses the same SQLite implementation as Linux/WSL on local filesystems.
+
+## Safe cache incompatibility failure
+
+`cache_incompatible` is a fixed safe OnlineFailure reason for `upstream_operation`, preserving the acquisition stage and dependency from the application. Status persistence retains this reason; arbitrary exception messages, SQLite details and paths never enter the public failure. See [Inputs](INPUTS.md#cache-incompatibility-classification) for producer classification.

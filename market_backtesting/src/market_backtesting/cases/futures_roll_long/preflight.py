@@ -6,7 +6,13 @@ import re
 from collections.abc import Callable
 from typing import TypeVar
 
-from data_lake import CoverageResult, ExportEnvelope, InvalidRequestError, OperationError
+from data_lake import (
+    CacheIncompatibleError,
+    CoverageResult,
+    ExportEnvelope,
+    InvalidRequestError,
+    OperationError,
+)
 from data_lake.datasets.tushare_equity_index_futures import FuturesDailyRange, FuturesDailyRow
 from data_lake.datasets.tushare_index_daily import IndexDailyRange
 from data_lake.datasets.tushare_trade_calendar import TradeCalendarExport, TradeCalendarRange
@@ -35,6 +41,8 @@ def _assess(
     try:
         view = read()
         coverage = validate(view)
+    except CacheIncompatibleError:
+        return DependencyReadiness(dependency, "unavailable", "cache_incompatible"), None
     except (OperationError, InvalidRequestError, FuturesRollApplicationError):
         return DependencyReadiness(dependency, "unavailable", "public_export_unavailable"), None
     return DependencyReadiness(

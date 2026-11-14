@@ -72,3 +72,5 @@ data_lake/experiments/**/output/
 /market_backtesting/.runtime/
 
 /ui_web/dist-demo-public/
+
+/ui_web/.build/

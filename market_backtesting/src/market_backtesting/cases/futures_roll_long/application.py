@@ -6,6 +6,7 @@ from collections.abc import Callable
 from typing import TypeVar
 
 from data_lake import (
+    CacheIncompatibleError,
     CredentialMissingError,
     EnsureResult,
     InvalidRequestError,
@@ -110,7 +111,9 @@ def _acquire(
     except (OperationError, InvalidRequestError) as exc:
         raise FuturesRollApplicationError(
             "upstream_operation",
-            "credential_missing"
+            "cache_incompatible"
+            if isinstance(exc, CacheIncompatibleError)
+            else "credential_missing"
             if isinstance(exc, CredentialMissingError)
             else "operation_unavailable"
             if isinstance(exc, OperationError)

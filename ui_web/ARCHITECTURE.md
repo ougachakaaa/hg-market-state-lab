@@ -1,5 +1,9 @@
 # ui_web 模块架构 authority
 
+## Structural consolidation routing
+
+Directory ownership is defined by [Structure](STRUCTURE.md); current paths, KEEP/MOVE/MERGE/RETIRE decisions and WP1-WP4 gates are in the [WP0 migration audit](STRUCTURAL_MIGRATION.md) and [baseline inventory](STRUCTURAL_INVENTORY.md). These are target/transition authorities, not evidence that migration has executed. For structural tasks read them before existing Demo or specialized tooling contracts.
+
 本文件定义 `ui_web` 的稳定职责、数据依赖方向与 authority 路由。仓库级定位见 [../ARCHITECTURE.md](../ARCHITECTURE.md)；具体 vertical slice 的 authority 与实现共址于 `src/features/`。
 
 ## Module identity

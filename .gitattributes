@@ -1,0 +1,24 @@
+# Exact-byte reviewed inputs: checkout bytes must match reviewed Git blobs.
+# Scope: public_payload_inventory.json and Public review gates.
+/market_research/tests/fixtures/futures_basis_inputs_v1.json text eol=lf
+/market_research/tests/fixtures/publication_visualization_v1.json text eol=lf
+/ui_http/tests/fixtures/research_execute.json text eol=lf
+/ui_http/tests/fixtures/research_plan.json text eol=lf
+/ui_http/tests/fixtures/research_preview.json text eol=lf
+/ui_http/tests/fixtures/research_success.json text eol=lf
+/ui_web/src/demo/futures_basis/report.v1.json text eol=lf
+/ui_web/src/demo/futures_basis/rollback-inventory.json text eol=lf
+/ui_web/src/demo/futures_basis/rollback-v1.tar.gz -text
+/ui_web/src/demo/public/examples/evidence/review.md text eol=lf
+/ui_web/src/demo/public/examples/package.json text eol=lf
+/ui_web/src/features/backtesting/api/result.fixture.json text eol=lf
+/ui_web/src/features/research_catalog/api/catalog.fixture.json text eol=lf
+/ui_web/src/shared/visualization/fixtureV2.json text eol=lf
+/workbench/tasks/equity_index_futures_basis_monitor/runtime/request.example.json text eol=lf
+/workbench/tasks/equity_index_futures_basis_monitor/runtime/request.four_families.example.json text eol=lf
+/workbench/tasks/equity_index_futures_basis_monitor/task.json text eol=lf
+/workbench/tasks/historical_return_observation/results/2026_four_index_returns/scope.json text eol=lf
+/workbench/tasks/historical_return_observation/task.json text eol=lf
+/workbench/tests/fixtures/capability.json text eol=lf
+/workbench/tests/fixtures/natural_language_candidate.json text eol=lf
+/workbench/tests/fixtures/planning_candidate.json text eol=lf

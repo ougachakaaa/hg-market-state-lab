@@ -20,7 +20,7 @@ query controller with `page/OptionChainPresentation.tsx`. Static consumers enter
 disclosure, plus `useOptionChainPresentation(result)` local state. The hook resets expiry
 selection on result replacement while retaining colors and viewport. `api/validateOptionChain.ts`
 owns pure generated-contract validation; it imports no request/auth implementation.
-The static verification harness under `testing/static/` is test data/composition only,
+The static verification harness under [`tests/static/mo_option_chain/`](../../../tests/static/mo_option_chain/) is test data/composition only,
 not a published Example or Demo V2 entry.
 
 ## V2 origin policy reconciliation

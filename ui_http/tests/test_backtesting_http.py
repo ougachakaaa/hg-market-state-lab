@@ -385,7 +385,9 @@ class ControlledService:
         return self.delegate.preflight(req)
 
 
-@pytest.mark.parametrize("reason", ["operation_unavailable", "credential_missing"])
+@pytest.mark.parametrize(
+    "reason", ["operation_unavailable", "credential_missing", "cache_incompatible"]
+)
 def test_running_busy_and_failed_safe_classification(product, reason):
     app, application, client, root, services = product
     service = ControlledService(
@@ -625,17 +627,22 @@ def test_nonactive_signed_identity_cannot_reach_product(product, state):
     assert not any(service.calls for service in services)
 
 
-def test_unavailable_readiness_does_not_expose_provider_details(product):
-    from data_lake import OperationError
+@pytest.mark.parametrize("incompatible", [False, True])
+def test_unavailable_readiness_does_not_expose_provider_details(product, incompatible):
+    from data_lake import CacheIncompatibleError, OperationError
 
     app, application, client, root, services = product
-    services[0].error = OperationError("secret-token /private/provider")
+    services[0].error = (CacheIncompatibleError if incompatible else OperationError)(
+        "secret-token /private/provider"
+    )
     response = client.post(BASE + "/preflight", json=BODY)
     assert response.status_code == 200, response.text
     data = response.json()
     assert not data["ready"]
     assert data["calendar_cffex"]["state"] == "unavailable"
-    assert data["calendar_cffex"]["reason"] == "public_export_unavailable"
+    assert data["calendar_cffex"]["reason"] == (
+        "cache_incompatible" if incompatible else "public_export_unavailable"
+    )
     assert data["calendar_cffex"]["coverage"] is None
     assert data["futures"]["state"] == data["index"]["state"] == "unknown"
     assert "secret-token" not in response.text and "/private" not in response.text

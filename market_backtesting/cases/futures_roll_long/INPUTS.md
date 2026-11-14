@@ -376,3 +376,7 @@ retained_exports = execution.inputs.exports
 `analyze_futures_roll`, without market I/O. `prepare` exposes the same retained inputs
 without running either computation. A semantic/operation failure raises the typed
 error; callers never receive a successful partial execution.
+
+## Cache incompatibility classification
+
+A public DataLake `CacheIncompatibleError` during preflight maps to the affected dependency with state `unavailable`, reason `cache_incompatible` and null coverage; unresolved downstream dependencies remain `unknown`. During execution it maps to category `upstream_operation`, reason `cache_incompatible`, preserving acquisition stage and dependency. No message matching, automatic rebuild, partial success or Source access during preflight is introduced. Other operation errors retain their existing classification.
