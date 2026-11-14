@@ -18,6 +18,8 @@ describe('canonical routes and runtime adapters', () => {
       expect(hashWorkspacePath(staticHref(route.path))).toBe(route.path)
     }
     expect(isWorkspacePath('/unknown')).toBe(false)
+    expect(workspaceRoutes.filter(route => route.area === '/research' && route.sidebarVisible).map(route => route.path))
+      .toEqual(['/research', '/research/futures-basis'])
   })
 
   it.each(['/research/futures-basis', '/backtesting'] as const)('preserves %s run identity on mount, same-page navigation and history', path => {

@@ -1,8 +1,14 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
+import { act, cleanup, fireEvent, render as baseRender, screen, waitFor, within } from '@testing-library/react'
 import { createRequestBoundary, installRequestBoundary } from '../../../shared/http/protectedRequest'
 import descriptor from '../api/catalog.fixture.json'
 import ResearchWorkspacePage from './ResearchWorkspacePage'
+
+function render(ui: Parameters<typeof baseRender>[0]) {
+  const result = baseRender(ui)
+  fireEvent.click(screen.getByRole('button', { name: '能力与访问方式（技术详情）' }))
+  return result
+}
 
 const reply = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status })
 const error = (kind: string, status: number) => reply({ error: { kind, detail: 'safe', param: null } }, status)
@@ -63,7 +69,7 @@ describe('Research Workspace catalog', () => {
     render(<ResearchWorkspacePage openFuturesBasis={vi.fn()} openExplorer={openExplorer} />)
     await screen.findByText('暂无已发布的在线能力。')
     expect(screen.getByText('Price Segmentation')).toBeTruthy()
-    fireEvent.click(screen.getByRole('button', { name: '浏览已发布研究结果' }))
+    fireEvent.click(screen.getByRole('button', { name: '浏览研究成果' }))
     expect(openExplorer).toHaveBeenCalledOnce()
   })
 

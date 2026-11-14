@@ -95,7 +95,7 @@ describe('integrated feature routes', () => {
       : url === '/api/research/capabilities' ? response([]) : response({ data: [], next_cursor: null })))
     vi.stubGlobal('fetch', fetch)
     render(<App />)
-    fireEvent.click(await screen.findByRole('button', { name: '浏览已发布研究结果' }))
+    fireEvent.click(await screen.findByRole('button', { name: '浏览研究成果' }))
     await screen.findByText('Publication Store 为空。')
     expect(window.location.pathname).toBe('/research/publications')
     expect(fetch.mock.calls.some(([url]) => url === '/api/research/publications')).toBe(true)
@@ -149,7 +149,7 @@ describe('integrated feature routes', () => {
     await screen.findByRole('heading', { name: '研究总览' })
     old.resolve(unauthorized())
     await screen.findByRole('button', { name: '登录' })
-    expect(screen.queryByText('Price Segmentation')).toBeNull()
+    expect(screen.queryByRole('heading', { name: '价格分段研究' })).toBeNull()
     expect(screen.queryByText('alice')).toBeNull()
   })
 
@@ -158,11 +158,11 @@ describe('integrated feature routes', () => {
     vi.stubGlobal('fetch', vi.fn((url: string) => Promise.resolve(url === '/auth/me' ? response(identity)
       : url === '/api/research/capabilities' ? response([]) : response({ data: [], next_cursor: null }))))
     render(<App />)
-    await screen.findByText('暂无已发布的在线能力。')
-    fireEvent.click(screen.getByRole('button', { name: '浏览已发布研究结果' }))
+    await screen.findByRole('heading', { name: '研究总览' })
+    fireEvent.click(screen.getByRole('button', { name: '浏览研究成果' }))
     await screen.findByText('Publication Store 为空。')
     await act(async () => { window.history.replaceState(null, '', '/research'); window.dispatchEvent(new PopStateEvent('popstate')) })
-    await screen.findByText('暂无已发布的在线能力。')
+    await screen.findByRole('heading', { name: '研究总览' })
     expect(window.location.pathname).toBe('/research')
   })
 })
@@ -269,7 +269,7 @@ it('returns a restored Futures Basis run to the authentication gate on a protect
 })
 
 describe('WP1 navigation composition', () => {
-  it('groups implemented topics and selects the Explorer leaf', async () => {
+  it('shows studies directly and retains the hidden Explorer route', async () => {
     window.history.replaceState(null, '', '/research')
     vi.stubGlobal('fetch', vi.fn((url: string) => Promise.resolve(url === '/auth/me' ? response(identity)
       : url === '/api/research/capabilities' ? response([]) : response({ data: [], next_cursor: null }))))
@@ -277,16 +277,13 @@ describe('WP1 navigation composition', () => {
     const navigation = await screen.findByRole('menu', { name: '业务导航' })
     expect(within(navigation).getByRole('menuitem', { name: '研究总览' })).toBeTruthy()
     expect(within(navigation).getByRole('menuitem', { name: '历史基差研究' })).toBeTruthy()
-    expect(within(navigation).getByRole('menuitem', { name: 'Research Explorer' })).toBeTruthy()
+    expect(within(navigation).queryByRole('menuitem', { name: 'Research Explorer' })).toBeNull()
     expect(within(navigation).queryByRole('menuitem', { name: 'DESCRIPTIVE RESEARCH' })).toBeNull()
-    fireEvent.click(within(navigation).getByText('DESCRIPTIVE RESEARCH'))
     expect(window.location.pathname).toBe('/research')
-    fireEvent.click(screen.getByRole('button', { name: '浏览已发布研究结果' }))
+    fireEvent.click(screen.getByRole('button', { name: '浏览研究成果' }))
     await screen.findByRole('heading', { name: '研究结果浏览' })
-    expect(container.querySelectorAll('.ant-menu-item-selected')).toHaveLength(1)
-    expect(container.querySelector('.ant-menu-item-selected')?.textContent).toBe('Research Explorer')
-    expect(container.querySelector('.ant-menu-submenu-selected')).toBeTruthy()
-    expect(screen.getAllByText('Research Explorer')).toHaveLength(2)
+    expect(container.querySelectorAll('.ant-menu-item-selected')).toHaveLength(0)
+    expect(screen.getAllByText('Research Explorer')).toHaveLength(1)
   })
 
   it('keeps group toggles out of history and selects only the destination leaf', async () => {

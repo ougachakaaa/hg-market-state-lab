@@ -1,7 +1,7 @@
 import { AppstoreOutlined, DatabaseOutlined, DotChartOutlined, ExperimentOutlined, HistoryOutlined, LineChartOutlined, MenuFoldOutlined, MenuUnfoldOutlined, ReadOutlined, TableOutlined } from '@ant-design/icons'
 import { Breadcrumb, Button, Flex, Layout, Menu, Typography, theme } from 'antd'
 import { useState, type ReactNode } from 'react'
-import { isWorkspacePath, workspaceRoutes, workspaceAreas, workspaceCategories, type WorkspacePath, type NavigationIcon } from './routeInventory'
+import { isWorkspacePath, workspaceRoutes, workspaceAreas, type WorkspacePath, type NavigationIcon } from './routeInventory'
 
 const icons: Record<NavigationIcon, ReactNode> = {
   overview: <AppstoreOutlined aria-hidden="true" />, data: <DatabaseOutlined aria-hidden="true" />,
@@ -43,13 +43,7 @@ export default function ApplicationShell({ path, navigate, href, header, childre
   })
   const groupedArea = (area: '/research' | '/data') => ({
     key: `area:${area}`, label: workspaceAreas[area].title, icon: icons[workspaceAreas[area].icon],
-    children: [
-      ...workspaceRoutes.filter(route => route.area === area && !route.category).map(leaf),
-      ...Object.entries(workspaceCategories).filter(([, category]) => category.area === area).map(([key, category]) => ({
-        type: 'group' as const, key, label: category.title,
-        children: workspaceRoutes.filter(route => route.category === key).map(leaf),
-      })),
-    ],
+    children: workspaceRoutes.filter(route => route.area === area && route.sidebarVisible).map(leaf),
   })
   return <Layout style={{ minHeight: '100vh', background: token.colorBgLayout }}>
     <Layout.Sider collapsed={collapsed} collapsedWidth={64} width={232} breakpoint="xl"
@@ -58,13 +52,13 @@ export default function ApplicationShell({ path, navigate, href, header, childre
       <Flex align="center" justify="center" style={{ minHeight: 64, paddingInline: token.paddingSM }}>
         <Typography.Text strong aria-label="Market State Lab">{collapsed ? 'MSL' : 'Market State Lab'}</Typography.Text>
       </Flex>
-      <Menu aria-label="业务导航" mode="inline" theme="dark" triggerSubMenuAction="click" selectedKeys={[path]}
+      <Menu aria-label="业务导航" mode="inline" theme="dark" triggerSubMenuAction="click" selectedKeys={route.sidebarVisible ? [path] : []}
         openKeys={collapsed ? popupKeys : openKeys}
         onOpenChange={collapsed ? setPopupKeys : setOpenKeys} inlineCollapsed={collapsed}
         style={{ background: 'transparent', borderInlineEnd: 0 }}
         onClick={({ key }) => { if (isWorkspacePath(key)) navigate(key) }}
         items={[
-          groupedArea('/research'), groupedArea('/data'),
+          groupedArea('/data'), groupedArea('/research'),
           ...workspaceRoutes.filter(route => route.area === '/backtesting').map(leaf),
         ]} />
     </Layout.Sider>
