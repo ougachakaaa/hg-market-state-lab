@@ -97,6 +97,7 @@ def project_failure(exc: BaseException, stage: str = "execution") -> OnlineFailu
 # Fixed public vocabulary audited against WP3/WP4; never derived at runtime.
 SAFE_REASONS = frozenset(
     {
+        "cache_incompatible",
         "operation_unavailable",
         "credential_missing",
         "upstream_request_rejected",

@@ -276,6 +276,17 @@ try {
   await page.getByRole('button', { name: '重新检查缓存' }).click()
   await page.getByText('本地缓存尚未就绪', { exact: true }).waitFor(); assert.equal(await submit.isEnabled(), true)
   await page.unroute('**/api/backtesting/futures-roll/preflight')
+  await page.route('**/api/backtesting/futures-roll/preflight', async route => {
+    const response = await route.fetch(); const json = await response.json()
+    json.ready = false
+    json.futures = { dependency: 'futures', state: 'unavailable', reason: 'cache_incompatible', coverage: null }
+    json.index = { dependency: 'index', state: 'unknown', reason: 'underlying_unknown', coverage: null }
+    await route.fulfill({ response, json })
+  })
+  await page.getByRole('button', { name: '重新检查缓存' }).click()
+  await page.getByText('本地缓存不兼容', { exact: true }).waitFor()
+  assert.equal(await submit.isEnabled(), true)
+  await page.unroute('**/api/backtesting/futures-roll/preflight')
   await page.route('**/api/backtesting/futures-roll/preflight', route => route.fulfill({ status: 503, json: { error: { kind: 'unavailable', detail: 'safe', param: null } } }))
   await page.getByRole('button', { name: '重新检查缓存' }).click()
   await page.getByText('数据检查失败：回测服务暂不可用，请稍后重试。', { exact: true }).waitFor()
@@ -338,6 +349,21 @@ try {
     assert.equal(await page.getByTestId('backtest-result').count(), 0)
     await page.unroute(selectedStatus)
   }
+  // Cache failure presentation consumes only the published safe classification.
+  const runCountBeforeCacheFailure = (await persistedRunIds()).length
+  await page.route(selectedStatus, async route => {
+    const response = await route.fetch(); const json = await response.json()
+    json.status = 'FAILED'; json.result_available = false
+    json.failure = { stage: 'export', category: 'upstream_operation', dependency: 'futures', reason: 'cache_incompatible' }
+    await route.fulfill({ response, json })
+  })
+  await page.reload()
+  await page.getByText('本地行情缓存不兼容', { exact: true }).waitFor()
+  await page.getByText('请联系维护者重建受影响的 Dataset 缓存，完成后重新提交回测。', { exact: true }).waitFor()
+  assert.equal(await page.getByTestId('backtest-result').count(), 0)
+  assert.equal((await persistedRunIds()).length, runCountBeforeCacheFailure)
+  await page.screenshot({ path: resolve(output, 'cache-incompatible.png'), fullPage: true })
+  await page.unroute(selectedStatus)
   await page.route(selectedStatus, route => route.abort('failed'))
   await page.reload(); await page.getByText('STATUS_ERROR', { exact: true }).waitFor()
   await page.unroute(selectedStatus)

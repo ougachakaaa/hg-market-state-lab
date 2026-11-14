@@ -101,6 +101,7 @@ class FuturesRollReadinessDependency(DTO):
     dependency: Dependency
     state: Literal["complete", "incomplete", "unavailable", "unknown"]
     reason: Literal[
+        "cache_incompatible",
         "public_export_unavailable",
         "cache_complete",
         "cache_incomplete",

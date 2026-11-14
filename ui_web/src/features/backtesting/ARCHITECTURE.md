@@ -117,3 +117,7 @@ Both runtimes use the same Result date-axis control and Producer daily domain.
 Production injects friendly readiness and safe Failure guidance into the shared
 Presentation; these execution regions are absent from Static composition. Static
 M1/Q1 selection remounts Result so each selected Example starts in Trading Days.
+
+## Incompatible local cache presentation
+
+For producer reason `cache_incompatible`, readiness identifies the affected dependency and explains that its local cache requires rebuilding. A failed Run displays local market-cache incompatibility and asks the maintainer to rebuild the affected Dataset before explicit resubmission. Neither view recommends network retries for this signal, deletes caches, or automatically resubmits. Unknown reasons retain the generic fallback.

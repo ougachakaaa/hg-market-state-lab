@@ -9,7 +9,7 @@ from typing import Any
 
 import pytest
 
-from data_lake import OperationError
+from data_lake import CacheIncompatibleError, OperationError
 from market_backtesting.cases.futures_roll_long import create_futures_roll_service
 from public_input_fixtures import FakeService, fake_services, public_exports, request
 from test_public_inputs import incomplete, malformed
@@ -166,3 +166,33 @@ def test_real_public_read_paths_do_not_create_cache_or_require_credentials(
         == "incomplete"
     )
     assert not (tmp_path / "absent").exists()
+
+
+@pytest.mark.parametrize(
+    "dependency,position", [("calendar_cffex", 0), ("futures", 1), ("index", 2)]
+)
+def test_cache_incompatible_is_safe_and_does_not_query_downstream(
+    dependency: str, position: int
+) -> None:
+    from dataclasses import asdict
+
+    from market_backtesting.cases.futures_roll_long import FuturesRollApplicationError
+    from market_backtesting.cases.futures_roll_long.online_models import project_failure
+
+    service, *sources = fake_services()
+    sources[position].error = CacheIncompatibleError("private/path fake-secret")
+    result = service.preflight(request())
+    item = getattr(result, dependency)
+    assert not result.ready
+    assert (item.state, item.reason, item.coverage) == ("unavailable", "cache_incompatible", None)
+    for downstream in ("calendar_cffex", "futures", "index")[position + 1:]:
+        assert getattr(result, downstream).state == "unknown"
+    assert all(not source.calls for source in sources[position + 1:])
+    assert all(name == "export" for source in sources for name, _ in source.calls)
+    with pytest.raises(FuturesRollApplicationError) as caught:
+        service.run(request())
+    assert asdict(project_failure(caught.value)) == dict(
+        stage="export", category="upstream_operation",
+        dependency=dependency, reason="cache_incompatible",
+    )
+    assert all(not source.calls for source in sources[position + 1:])

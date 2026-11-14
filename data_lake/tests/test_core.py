@@ -13,6 +13,7 @@ import pytest
 import data_lake
 import data_lake.adapters.outbound.sqlite as repository_module
 from data_lake import (
+    CacheIncompatibleError,
     CoverageResult,
     EnsureResult,
     ExportEnvelope,
@@ -861,7 +862,11 @@ def test_incompatible_cache_requires_owning_dataset_rebuild_without_mutation(
     entries = sorted(p.name for p in path.parent.iterdir())
     preparations, calls = dataset.preparations, list(dataset.calls)
     dataset.credentials = False  # Storage incompatibility must fail before Source setup.
-    with pytest.raises(OperationError, match="Dataset 'fake'.*incompatible.*rebuild required"):
+    with pytest.raises(
+        CacheIncompatibleError, match="Dataset 'fake'.*incompatible.*rebuild required"
+    ):
+        assert data_lake.CacheIncompatibleError is CacheIncompatibleError
+        assert issubclass(CacheIncompatibleError, OperationError)
         if operation == "write_session":
             with dataset.repository.write_session():
                 pytest.fail("Incompatible cache must never enter a writer session")

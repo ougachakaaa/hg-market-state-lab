@@ -221,3 +221,7 @@ Generate Research。Run ID 写入 URL；刷新和浏览器前进/后退会重新
 登录后选择 Research Explorer，浏览 Publication 列表并按需翻页；选择 Publication 查看声明 scope 和 Jobs，再选择 Analysis 检查原始结果、Coverage 与 provenance。点击 quantile、count 或 frequency 才读取对应 View。浏览不会执行 Research；服务端验证容量不足时可手动重试。
 
 真实浏览器合成数据验收：在 `ui_web/` 执行 `npm run test:research-browser`，需要 Playwright Chromium 及系统运行库、空闲的 5173 和 8011 端口。脚本建立临时 Auth 数据库和合成 Publication Store，不访问真实行情。
+
+## Rebuild an incompatible local Dataset cache
+
+When DataLake reports `CacheIncompatibleError` (Backtesting reason `cache_incompatible`), stop the backend and any data tasks using that Dataset. Verify the owning Dataset and resolved absolute cache path under `data_lake/datasets/<dataset-id>/data/`. Remove only its `<dataset-id>.sqlite3` and any SQLite sidecars (`-journal`, `-wal`, `-shm`) after connections close. Current development caches need no backup or migration. Do not remove sibling Dataset caches, exports, source code, credentials, Auth or Run stores. Restart the backend and explicitly resubmit the request; normal ensure rebuilds missing facts using the configured Source. Read-only preflight does not rebuild. A new failure must be diagnosed independently rather than triggering repository-wide cleanup.

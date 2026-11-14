@@ -982,6 +982,7 @@
           },
           "reason": {
             "enum": [
+              "cache_incompatible",
               "public_export_unavailable",
               "cache_complete",
               "cache_incomplete",

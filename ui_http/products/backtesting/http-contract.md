@@ -142,3 +142,7 @@ unchanged. [WP7 contract ownership](../../../ui_web/contracts.md) now assigns Ba
 generated OpenAPI/TypeScript to the independent Web consumer, included in the
 complete generation/freshness loop. WP6's original acceptance checked the six
 pre-existing consumers; WP7 adds the seventh. Single-process/local-filesystem storage limitations remain producer-owned.
+
+## Cache incompatibility projection
+
+Preflight reason vocabulary includes `cache_incompatible`, projected unchanged with `state=unavailable` and `coverage=null`. Run failure reason preserves the same producer safe code under `upstream_operation`, with its stage and dependency. This adds no endpoint, HTTP status, storage deletion operation or internal exception text.

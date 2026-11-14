@@ -102,6 +102,8 @@ Dataset owns export semantics；CLI / HTTP adapter owns serialization 与 delive
 
 公共 `data_lake` facade 发布这两类错误；core 与 Dataset service 保留 InvalidRequestError，并将 storage / execution failures 转换为 OperationError。Caller 无需访问 internals 即可识别这两类 failure。DataLake 不定义 CLI exit code 或 HTTP status code；adapter 分别映射 request failure 与 execution failure。
 
+Public facade also exports `CacheIncompatibleError(OperationError)` for persisted cache structure, identity, generation or representation incompatibility under [Persistence](PERSISTENCE.md). Consumers distinguish this typed signal without matching exception messages; it never authorizes automatic rebuild. Existing callers catching `OperationError` remain compatible.
+
 Public facade also exports `CredentialMissingError(OperationError)`: a backward-compatible typed signal only for confirmed absent/blank required credentials. Consumers may distinguish it without inspecting messages or provider internals; other operation failures retain their existing classification.
 
 ## 2. Runtime configuration 与调用边界

@@ -11,6 +11,10 @@ class OperationError(Exception):
     """The operation could not be executed, rather than returning incomplete coverage."""
 
 
+class CacheIncompatibleError(OperationError):
+    """Persisted Dataset cache requires an explicit owning-Dataset rebuild."""
+
+
 class CredentialMissingError(OperationError):
     """A required Source credential is confirmed absent or blank."""
 
