@@ -62,6 +62,7 @@ implementation details
 
 ## Repository-wide Rules
 
+- 清理操作被执行工具以 `blocked by policy` 等策略拒绝时，不得仅报告受阻并留下产物不作交接。对于已经核实归属、用途和可删除性的临时或无用产物，必须向用户提供可直接执行的删除命令，注明执行目录、准确目标与影响范围，并明确尚未删除；由用户执行清理。Windows 命令使用 PowerShell `Remove-Item -LiteralPath`，递归删除前核实绝对路径和清理边界；不使用宽泛通配符，不波及用户改动、凭证或正式证据。不确定可删除性的内容先澄清，不得把“无用”作为未经核实的删除依据，也不得更换工具或语言绕过策略拒绝。
 - 不得提交真实 API Token、密码或其他敏感信息。
 - 涉及数据含义、输出结构、职责边界或 workflow 语义的变更，先更新 narrowest canonical authority，再修改实现。
 - 实现必须遵循当前 authority；发现代码、同级文档或上下层 authority 不一致时，显式 reconciliation，不得静默选择或创建另一套语义。
