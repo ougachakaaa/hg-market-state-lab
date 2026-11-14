@@ -36,7 +36,9 @@
     "test:backtesting-static-browser": "node tests/browser/backtesting_static_browser.mjs",
     "test:public-safety": "node scripts/public_asset_safety.mjs",
     "test:diagnostics": "vitest run --config vitest.diagnostics.config.ts",
-    "test:credentials": "node scripts/public_asset_safety.mjs --credentials-only"
+    "test:credentials": "node scripts/public_asset_safety.mjs --credentials-only",
+    "demo:check": "node scripts/demo_check.mjs",
+    "demo:registry": "node scripts/demo_check.mjs --registry"
   },
   "dependencies": {
     "@ant-design/icons": "^6.3.4",

@@ -1,0 +1,47 @@
+{
+  "basis": {
+    "request": {
+      "product_code": "IM",
+      "start_date": "2026-01-01",
+      "end_date": "2026-11-11"
+    }
+  },
+  "catalog": {
+    "request": {}
+  },
+  "chain": {
+    "request": {
+      "target_trade_date": "2026-11-11",
+      "option_product": "MO",
+      "price_type": "close"
+    }
+  },
+  "expiry_to_M1_v1": {
+    "request": {
+      "product_code": "IM",
+      "start_date": "2026-01-01",
+      "end_date": "2026-11-11",
+      "strategy_profile": "expiry_to_M1_v1"
+    }
+  },
+  "expiry_to_Q1_v1": {
+    "request": {
+      "product_code": "IM",
+      "start_date": "2026-01-01",
+      "end_date": "2026-11-11",
+      "strategy_profile": "expiry_to_Q1_v1"
+    }
+  },
+  "premium": {
+    "request": {
+      "as_of": "2026-11-11",
+      "option_product": "MO",
+      "price_type": "close"
+    }
+  },
+  "publications": {
+    "request": {
+      "limit": 50
+    }
+  }
+}

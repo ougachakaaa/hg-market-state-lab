@@ -31,7 +31,7 @@ Goal is local authenticated capture with single-Bundle/all selection. Requires D
 Registry export and admission tooling, an operator-provided serving URL, approved user,
 explicit Presets and available source/Run/Publication dependencies for real collection.
 
-Create `demo/build/collect.py` and `presets.json`, using repository-root Poetry and
+Create `demo/build/collect.py` and consume DDB-02's `presets.json`, using repository-root Poetry and
 existing HTTP dependencies or standard library. Put focused Python tests alongside this
 tool. Invoke the DDB-02 Node validator on staged candidate files. Runtime configuration
 uses root lab_config. Extend config authority first only if new environment keys are needed.

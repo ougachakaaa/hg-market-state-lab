@@ -69,6 +69,12 @@ No startup-time data deletion is introduced.
 
 ## Build admission
 
+DDB-02 implements the standalone offline `demo:check` command and `demo:registry`
+export described in the [Bundle interface](../BUNDLES.md#offline-admission-interface).
+It validates a quiescent local dataset without Collector or serving dependencies.
+The lock, pending-transaction handling, byte staging and Vite integration below remain
+assigned to DDB-03/DDB-04. The current `demo:build` entry remains BLOCKED.
+
 The future single `npm run demo:build` entry executes offline Preflight before Vite. It
 acquires the dataset lock, rejects pending transactions, verifies Registry/Manifest/file
 completeness, paths, identity, envelope, deterministic bytes and SHA-256, then invokes

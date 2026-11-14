@@ -24,14 +24,16 @@ Source descriptions cannot assert unverified provider authenticity or publicatio
 
 ## Registry, Presets and active data
 
-The future `demo/build/registry.ts` is a small static table owning required IDs, exact paths,
+`demo/build/registry.ts` is a small static table owning required IDs, exact paths,
 Preset association, contract reference and validator dispatch. All seven rows below are
 required. The Python Collector consumes this table through the offline Node tooling's JSON
 registry export, keeping one machine-readable registry owner. No plugin discovery is needed.
 
-The future `demo/build/presets.json` maps each `preset_id` to `{request}`. It records explicit
-formal query/body inputs. Initial market dates and product selections are chosen during
-DDB-03 local collection against available data and committed with that delivery. There are
+`demo/build/presets.json` maps each `preset_id` to `{request}`. It records explicit
+formal query/body inputs. Initial Basis and Backtesting requests use IM, 2026-01-01 through
+2026-11-11. M1/Q1 have independent strategy profiles. Chain and Premium use MO,
+2026-11-11 and explicit close prices. Catalog uses `{}` and Publications uses
+`{limit: 50}`. These selections are committed with DDB-02. There are
 no implicit latest-date choices. M1/Q1 requests have their respective strategy fixed.
 
 `demo/bundles/manifest.json` is the only active Manifest. It is a closed object with
@@ -85,6 +87,15 @@ Hash covers all final Bundle bytes, including the final LF. Build hashes origina
 before decoding and checks canonical formatting using equivalent lossless JSON rules.
 The Manifest is serialized by the same rules and has no self-hash.
 
+DDB-02 uses Number-compatible numeric admission. Every JSON numeric token, including
+unknown nested fields, must retain its exact decimal value after Number conversion and
+JSON serialization. Unsafe integers, overflow, underflow and rounded decimals fail
+admission. Ordinary decimal values such as 0.1 remain valid when their decimal round trip
+is unchanged. Signed zero is rejected because serialization loses its sign. Numeric strings
+remain strings. Object keys use UTF-16 lexical order and numeric tokens use JSON.stringify
+formatting after this check. Canonical serialization explicitly orders even integer-like
+object keys. Build checks UTF-8 decoding strictly and rejects BOM.
+
 Single-Bundle generation replaces only the selected Bundle and its Manifest entry. Other
 Bundle files and their hashes remain byte-for-byte unchanged. Registry entries are ordered
 by Bundle ID, matching Manifest entry order independently of collection order. Full generation publishes only
@@ -95,3 +106,19 @@ Adding a Bundle updates this catalog, Registry, Preset, formal validator dispatc
 runtime route/composition as needed, then captures its data and extends the single Manifest.
 Existing unrelated Bundles need no regeneration. A business-contract change first follows
 the feature's [contract feedback loop](../contracts.md).
+
+## Offline admission interface
+
+Run `npm run demo:check -- --dir <directory>` from `ui_web`. The default is
+`demo/bundles/` resolved relative to the tool. Success prints PASS and exits zero.
+Failure prints a registered Bundle ID (or `dataset`), stage and fixed safe reason, and
+exits nonzero without echoing payloads or filesystem exception messages.
+`npm run --silent demo:registry` emits the static Registry as JSON for Collector consumption.
+Tool compilation uses the existing npm Vite toolchain and ignored `.build/demo-tools/`.
+Windows additionally uses its built-in PowerShell filesystem attributes to reject all
+reparse tags, including tags Node does not expose as symbolic links. Attribute-check
+failure rejects admission. Other platforms use lstat and resolved-path checks.
+Admission reads local bytes only. Dataset locking, transaction recovery and build staging
+remain assigned to DDB-03/DDB-04. Callers must supply a quiescent input directory for DDB-02.
+Focused tests run with `npx vitest run --config demo/build/vitest.config.ts`.
+The tool's type check is `npx tsc -p demo/build/tsconfig.json`.
