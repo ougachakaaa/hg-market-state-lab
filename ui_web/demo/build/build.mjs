@@ -1,8 +1,10 @@
 import { mkdir, mkdtemp, readdir, lstat, cp, rm, rename, writeFile, access, rmdir } from 'node:fs/promises'
 import { resolve, dirname, relative, isAbsolute } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { spawn } from 'node:child_process'
+import { execFileSync, spawn } from 'node:child_process'
 import { build } from 'vite'
+import { readFile } from 'node:fs/promises'
+import { sha } from '../../scripts/artifact_integrity.mjs'
 
 export const web = fileURLToPath(new URL('../../', import.meta.url))
 export async function lock(path) {
@@ -57,7 +59,7 @@ export async function buildDemo({ dataset = resolve(web, 'demo/bundles'), work =
     await compile(snapshot, artifact)
     await access(resolve(artifact, 'index.html'))
     await access(resolve(artifact, 'assets'))
-    await writeFile(resolve(artifact, 'build-complete.json'), JSON.stringify({ format: 'ddb04_static_build_v1' }) + '\n')
+    await writeFile(resolve(artifact, 'build-complete.json'), JSON.stringify({ format: 'ddb04_static_build_v1', sourceCommit: execFileSync('git', ['rev-parse', 'HEAD'], { cwd: web, encoding: 'utf8' }).trim(), manifestSha256: sha(await readFile(resolve(snapshot, 'manifest.json'))) }) + '\n')
     await rename(artifact, output)
   } catch (error) {
     await removeOwned(output)
