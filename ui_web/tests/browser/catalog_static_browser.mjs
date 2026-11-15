@@ -24,7 +24,7 @@ try {
   assert.ok(graph.includes('src/features/research_catalog/page/ResearchOverviewPresentation.tsx'))
   assert.ok(graph.includes('src/features/research_catalog/api/validateCatalog.ts'))
   assert.ok(graph.includes('src/features/research_catalog/static/useStaticCatalog.ts'))
-  assert.ok(graph.includes('src/demo/shell/hashRoutes.ts'))
+  assert.ok(graph.includes('demo/runtime/hashRoutes.ts'))
   assert.ok(!graph.some(id => /shared\/http|app\/auth|api\/catalog\.ts|hooks\/useCatalog\.ts|page\/ResearchWorkspacePage\.tsx|research_explorer|futures_basis_research|backtesting/.test(id)))
   evidence.dependencyGraph = graph
   pass('Shared presentation/validator/static controller load without Auth, HTTP or production controller; D1 hash router is the intentional composition module')

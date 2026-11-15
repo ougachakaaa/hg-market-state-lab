@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import { isWorkspacePath, type WorkspacePath } from '../../app/routeInventory'
+import { isWorkspacePath, type WorkspacePath } from '../../src/app/routeInventory'
 
 export const staticHref = (path: WorkspacePath) => `#${path}`
 export function hashWorkspacePath(hash: string): WorkspacePath {

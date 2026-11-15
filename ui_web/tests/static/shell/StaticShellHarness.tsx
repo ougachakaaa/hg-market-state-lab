@@ -4,7 +4,7 @@ import AppUiProvider from '../../../src/app/AppUiProvider'
 import BacktestingOverview from '../../../src/app/BacktestingOverview'
 import DailyDataLanding from '../../../src/app/DailyDataLanding'
 import { workspaceRoutes } from '../../../src/app/routeInventory'
-import { staticHref, useHashRoute } from '../../../src/demo/shell/hashRoutes'
+import { staticHref, useHashRoute } from '../../../demo/runtime/hashRoutes'
 
 export default function StaticShellHarness() {
   const { path, navigate } = useHashRoute()

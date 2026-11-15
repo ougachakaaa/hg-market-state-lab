@@ -1,7 +1,7 @@
 import { Button, Flex, Typography } from 'antd'
 import { createRoot } from 'react-dom/client'
 import AppUiProvider from '../../../src/app/AppUiProvider'
-import { useHashRoute } from '../../../src/demo/shell/hashRoutes'
+import { useHashRoute } from '../../../demo/runtime/hashRoutes'
 import { FuturesBasisPresentation, useStaticFuturesBasis } from '../../../src/features/futures_basis_research/presentation'
 import { embeddedReportPayload, mismatchedReportPayload, testOnlyDisclosure } from '../../../src/features/futures_basis_research/testing/embeddedReportFixture'
 import '../../../src/index.css'

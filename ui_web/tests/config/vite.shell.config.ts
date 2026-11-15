@@ -8,7 +8,7 @@ import demoConfig from './vite.static-base.ts'
 const web = fileURLToPath(new URL('../..', import.meta.url))
 const allowed = new Set([
   'tests/static/shell/index.html', 'tests/static/shell/main.tsx',
-  'tests/static/shell/StaticShellHarness.tsx', 'src/demo/shell/hashRoutes.ts',
+  'tests/static/shell/StaticShellHarness.tsx', 'demo/runtime/hashRoutes.ts',
   'src/app/ApplicationShell.tsx', 'src/app/AppUiProvider.tsx',
   'src/app/BacktestingOverview.tsx', 'src/app/DailyDataLanding.tsx', 'src/app/routeInventory.ts',
   'src/shared/ui/theme.ts', 'src/index.css',

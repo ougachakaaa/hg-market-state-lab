@@ -31,7 +31,7 @@ try {
     'src/features/futures_basis_research/report/validate.ts',
     'src/features/futures_basis_research/api/validateResult.ts',
     'src/features/futures_basis_research/static/useStaticFuturesBasis.ts',
-    'src/demo/shell/hashRoutes.ts',
+    'demo/runtime/hashRoutes.ts',
     'src/features/futures_basis_research/report/reader.fixture.ts',
   ]) assert.ok(graph.includes(module), `dependency graph must include ${module}`)
   assert.ok(!graph.some(id => /shared\/http|app\/auth|api\/futuresBasis\.ts|hooks\/useFuturesBasis\.ts|hooks\/usePreflight\.ts|page\/FuturesBasisPage\.tsx|demo\/futures_basis\/main\.tsx|research_explorer|mo_option|backtesting/.test(id)))

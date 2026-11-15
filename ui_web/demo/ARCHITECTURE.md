@@ -55,3 +55,10 @@ Build Preflight is an offline admission step in the build process.
 Public distribution continues to require truthful source descriptions, authorization and
 artifact integrity under existing repository policies. HTTP success and a matching hash
 alone do not establish permission to distribute market data.
+
+## DDB-04 runtime
+
+The sole runtime lives in demo/runtime and consumes the validated private snapshot.
+Its adapter reuses feature public validators and Presentation. Identity contains Bundle
+ID, Preset, contract and actual source description. Eight shared pages use hash routes.
+Explorer remains hidden from sidebar navigation. Invalid input stops successful rendering.

@@ -9,7 +9,7 @@ export default mergeConfig(demoConfig, {
   plugins: [staticPresentationIsolation(
     'futures_basis_research',
     /(api\/futuresBasis\.ts|hooks\/useFuturesBasis\.ts|hooks\/usePreflight\.ts|page\/FuturesBasisPage\.tsx)$/,
-    ['src/app/routeInventory.ts', 'src/demo/shell/hashRoutes.ts'],
+    ['src/app/routeInventory.ts', 'demo/runtime/hashRoutes.ts'],
   )],
   build: { outDir: fileURLToPath(new URL('../../.build/tests/futures-basis', import.meta.url)) },
 })
