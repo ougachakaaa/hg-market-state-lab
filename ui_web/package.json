@@ -19,7 +19,7 @@
     "test:futures-basis-report-browser": "node tests/browser/futures_basis_report_browser.mjs",
     "test:daily-data-copy-export-browser": "node tests/browser/daily_data_copy_export_browser.mjs",
     "test:backtesting-browser": "node tests/browser/backtesting_browser_acceptance.mjs",
-    "demo:build": "node scripts/demo_build_blocked.mjs",
+    "demo:build": "node demo/build/build.mjs",
     "test:static-shell": "tsc -p tests/config/tsconfig.shell.json && vite build --config tests/config/vite.shell.config.ts",
     "test:static-shell-browser": "node tests/browser/static_shell_browser.mjs",
     "test:option-chain-static": "tsc -p tests/config/tsconfig.option-chain.json && vite build --config tests/config/vite.option-chain.config.ts",

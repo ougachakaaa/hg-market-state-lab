@@ -97,46 +97,25 @@ DDB-03 implements Collector locking, pending-transaction recovery and candidate 
 Build-side lock admission, input staging and Vite integration remain assigned to DDB-04.
 The current `demo:build` entry remains BLOCKED.
 
-### Node Build coordination constraint
+### Shared directory coordination
 
-DDB-04 Build and validation run entirely in Node/Vite and must never invoke Python.
-The current Collector OS lock is implemented only in Python. Node core filesystem APIs
-provide no direct equivalent of Windows `msvcrt.locking` or POSIX `flock`. Opening the
-persistent lock file, checking its existence, or creating a separate exclusive-create
-lock does not coordinate with the current Collector.
+Collector and Node Build exclusively create `.build/demo-collection/dataset.lock/`
+with atomic mkdir. Contention fails immediately. Both release in finally on normal
+completion or caught failure. Forced termination leaves the directory and fails closed.
+There is no timeout-based or PID-based lock stealing. Stop all Collector/Build processes
+and confirm no holder remains before explicitly removing this exact lock directory.
+Keep pending.json and candidate staging intact; the next Collector completes recovery.
+Before the protocol cutover stop old Collector processes and remove the old dataset.lock
+file only after confirming no process holds it. A file at the new lock path fails closed.
 
-A feasible DDB-04 implementation is a Node native binding using the compatible OS lock
-on the same file, exclusively locking byte zero on Windows and using flock on POSIX.
-Its compatibility with the Collector must be verified on each supported platform before
-claiming Build coordination. Binding selection and Build-side implementation remain open.
-If native bindings are unsuitable, DDB-04 must explicitly reconcile a replacement shared
-protocol for both participants with equivalent crash recovery and exclusion guarantees.
-DDB-03 retains its current Collector protocol and introduces no general lock framework.
-
-Build must hold coordinated exclusion while rejecting pending.json, copying the complete
-input into private ignored staging and independently admitting that staged snapshot.
-It must release exclusion only after the exact validated bytes are fixed for Vite.
-Vite consumes only that snapshot, so later Collection cannot mix dataset generations.
-A pending transaction or unavailable coordination fails Build closed. Standalone demo:check
-assumes quiescent input and alone supplies no concurrent Build guarantee.
-
-The future single `npm run demo:build` entry executes offline Preflight before Vite. It
-acquires the dataset lock, rejects pending transactions, verifies Registry/Manifest/file
-completeness, paths, identity, envelope, deterministic bytes and SHA-256, then invokes
-feature-owned generated-contract and semantic validators. Producer success is never an
-admission input. Preflight copies its validated input bytes into ignored build staging
-while locked so Vite consumes exactly those bytes even if later collection starts.
-
-Bundle validation owns packaging/integrity. Feature validators own business shapes,
-profiles, Visualization and request/result associations. Preflight schedules both and
-checks complete Catalog details and Publication reference closure. Existing embedded
-validators deliberately allow missing local detail states; complete Bundle admission
-must additionally reject those omissions and nonterminal Publication pagination.
-
-Any required failure terminates the whole build before Vite output is accepted. Diagnostics
-name Bundle ID and validation stage. Build never silently repairs or regenerates input.
-Build loads generated contracts already committed with their owning feature and has no
-backend, Collector, Auth or market-data dependency. No TuShare token is required.
+Build holds a separate `.build/demo-output.lock/` for its entire invocation to serialize
+output replacement. The same explicit stale-lock procedure applies. After acquiring it,
+Build removes prior formal output. Under the dataset lock it rejects pending.json, copies
+all dataset files to private staging and independently runs DDB-02 Preflight there.
+Only after admission fixes the snapshot does it release the dataset lock. Vite consumes
+that snapshot exclusively. Build never runs Python, Collector or business HTTP.
+Vite writes private output, checked before promotion to `.build/demo/`; errors remove
+formal output and never publish a completion marker. Platform claims require actual tests.
 
 ## Static loading and release
 
