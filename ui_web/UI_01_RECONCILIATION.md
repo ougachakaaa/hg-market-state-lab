@@ -1,5 +1,27 @@
 # UI-01-R2 reconciliation
 
+## DDB integration acceptance - 2026-11-15
+
+Implementation is PASS. Browser Acceptance is PASS using the existing evidence below.
+DDB Integration is PASS on no-ff merge `4dbff6e89bbeb78712d4ae62693a992cc4e8f453`,
+which preserves source `5342f83058ba9e691a59c5221f42cfbba3f15a6b` and all seven UI commits.
+Branch retirement is pending remote synchronization and final reference checks.
+
+Integrated verification passed 76 cases in eight files covering App, routes,
+ApplicationShell, Overview, ResearchOverviewPresentation, ResearchWorkspacePage,
+FuturesBasisPresentation and useBacktesting. Online `npm run build` passed TypeScript
+and Vite. `npm run lint`, `test:static-shell`, `test:catalog-static` and
+`test:backtesting-static` passed. Builds retain the large-chunk advisory.
+The exhaustive static route map covers eight pages and direct hidden Explorer access.
+DDB-02 Validator, DDB-03 Collector and their authority were preserved by the merge.
+Browser acceptance evidence is retained below. Integration ran no new browser matrix
+or real capture. Official Demo Build / Publication remain BLOCKED and DDB-04 is NOT STARTED.
+
+Workspace and Application now reference the canonical Demo authority and formal HTTP
+Bundle admission. Eight page identities coexist with seven business-result Bundles.
+All three overviews reuse formal Presentation. Existing historical acceptance entries
+below describe their original execution and are superseded only by subsequent evidence.
+
 ## Browser acceptance completed — 2026-11-15
 
 Current UI-01-R2 status is **READY**. The NOT_READY entries below describe earlier

@@ -121,7 +121,7 @@ DDB-04 integrates the latest merged UI Composition using
 `src/features/*/presentation.ts` entries and the current app route inventory. Bundle IDs and
 Result Contracts remain independent of routes, Overview Cards and Tab Composition, whose
 ownership stays with Application / Presentation authority. Preserve all
-seven business pages and local controls. Online entry keeps its own data path. Build loads
+eight application pages and local controls. Online entry keeps its own data path. Build loads
 the exact admitted static input, emits `.build/demo/` and requires no backend or credentials.
 
 Direct verification covers seven-Bundle adapter dispatch, shared Presentation and route
@@ -156,3 +156,9 @@ The inspected HTTP surfaces support proceeding to DDB-02. Actual capture, source
 Store contents, login and generated-artifact freshness are NOT VERIFIED. They are explicit
 DDB-03 prerequisites/evidence, not claimed DDB-01 runtime success. DDB-01 stops after its
 independent authority commit.
+
+## UI integration baseline - 2026-11-15
+
+UI-01-R2 source `5342f83058ba9e691a59c5221f42cfbba3f15a6b` was merged with no conflicts using no-ff merge `4dbff6e89bbeb78712d4ae62693a992cc4e8f453`. All seven UI commits and the DDB baseline history are retained. Application owns eight page identities, while the unchanged Registry owns seven Bundles. Overview routes create no Bundle. Explorer stays directly hash-accessible and hidden from the sidebar. M1/Q1 share the Backtesting instance page.
+
+DDB-00, DDB-01 and DDB-02 are complete. DDB-03 Implementation and UI Integration are complete. DDB-04 is NOT STARTED. Real Bundle Capture is NOT VERIFIED. Seven real Bundles and their Manifest remain undelivered. Demo Build / Publication remain BLOCKED. The retained UI, Bundle Contract, Validator and Collector provide the DDB-04 integration baseline. Actual capture and coordinated Build locking remain the delivery prerequisites described above.

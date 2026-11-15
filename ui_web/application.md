@@ -4,7 +4,9 @@
 
 ## Dual Runtime composition
 
-Production 与 Static Demo 共用正式 Shell、导航和 feature Presentation；application composition 分别选择 Production Auth/HTTP controllers 与 anonymous static Example controllers。Shared Shell 的展示边界不依赖 Auth、在线 Page 或业务请求 Hook；身份/退出动作、路由和 feature content 由 composition 提供。Production 的认证 gate 与下述 lifecycle 维持不变，仅 Production 可 mount 在线 controller。Demo 细节进入 [Runtime authority](src/demo/ARCHITECTURE.md)，其 feature Presentation 仍由正式 feature 拥有；不得复制 Demo 业务页面。本文中的登录、请求、preflight、Run lifecycle 均描述 Production；静态 runtime 不模拟这些状态。
+Production 与 Static Demo 共用正式 Shell、导航和 feature Presentation；application composition 分别选择 Production Auth/HTTP controllers 与 anonymous static Bundle controllers (DDB-04)。Shared Shell 的展示边界不依赖 Auth、在线 Page 或业务请求 Hook；身份/退出动作、路由和 feature content 由 composition 提供。Production 的认证 gate 与下述 lifecycle 维持不变，仅 Production 可 mount 在线 controller。Demo 细节进入 [Demo authority](demo/ARCHITECTURE.md)，其 feature Presentation 仍由正式 feature 拥有；不得复制 Demo 业务页面。本文中的登录、请求、preflight、Run lifecycle 均描述 Production；静态 runtime 不模拟这些状态。
+
+The retained static composition is preparation for DDB-04. Formal FastAPI HTTP business results require Bundle admission before static display. Controlled synthetic fixtures belong only to tests. Demo Build and publication remain BLOCKED.
 
 ## 1. Application Surfaces
 
