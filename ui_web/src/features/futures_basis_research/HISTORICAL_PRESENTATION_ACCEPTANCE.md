@@ -135,3 +135,25 @@ reconciliation of Research case INPUTS/OBSERVATION, REPORT/DELIVERY and ONLINE_A
 including partial Index exports, unavailable observations, method-failure Partial,
 no-eligible-sample findings and Run result delivery. Producer classification and its tests
 must then implement the approved rule. UI-02 changes presentation only.
+
+## UI-04 Date Events (2026-11-16)
+
+Optional renderer-only disclosure is enabled for Compact history and both Backtesting
+curves; Offline Full and generic consumers keep their previous behavior.
+Scoped verification: 41 unit cases passed across ChartView, figureV2, Report and
+Backtesting dateAxis. TypeScript/Online Build and Demo Build passed. Lint completed
+with two existing unrelated warnings. Research and Backtesting static browser harnesses
+passed. `node tests/browser/date_events_demo.mjs` passed against the actual Demo
+Plotly charts, including M1/Q1 selection, preserved figure data/markers and local
+axis switches without fetch/XHR.
+
+Online browser acceptance: NOT VERIFIED. Research harness startup failed with
+OnlineError unavailable in SQLite store recovery. Backtesting harness timed out
+waiting for authentication response before result acceptance. No backend fix was
+attempted as part of this presentation change.
+
+UI-01 overview wrapping, UI-02 Compact Research, UI-03 Compact Backtesting/Chinese
+strategy names are retained from baseline; UI-04 adds only local disclosure.
+Diff review found no Backend, Result, Bundle, generated schema or ViewV2 data-contract
+changes. Final local Demo acceptance remains with the user; Online browser coverage
+above is outstanding.

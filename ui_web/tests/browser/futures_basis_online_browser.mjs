@@ -1,3 +1,4 @@
+import { verifyDateEvents } from './date_events_disclosure.mjs'
 import { onlineHarness, unusedPort, observe } from './online_harness.mjs'
 import { historicalBasisAcceptance } from './historical_basis_acceptance.mjs'
 // Real browser -> Vite proxy -> FastAPI -> temporary SQLite. Only market public
@@ -109,6 +110,7 @@ try {
   assert.equal(await page.getByText(/相邻 inputs.canonical.json/).count(), 0)
   const plots = page.locator('[data-testid="history-charts"] .js-plotly-plot')
   assert.equal(await plots.count(), 3)
+  await verifyDateEvents(page, 3)
   assert.equal(await plots.first().locator('.legend .traces').count(), 4)
   assert.ok(states.includes('RUNNING'))
   assert.ok(states.includes('COMPLETED'))

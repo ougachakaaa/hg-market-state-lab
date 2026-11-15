@@ -1,3 +1,4 @@
+import { verifyDateEvents } from './date_events_disclosure.mjs'
 // D2-E verification only: built artifact served as files; no backend, proxy or Auth.
 import assert from 'node:assert/strict'
 import { spawnSync } from 'node:child_process'
@@ -118,6 +119,7 @@ try {
   await page.getByRole('heading', { name: 'Futures Basis Research', exact: true }).waitFor()
   assert.equal(await hash(), '#/research/futures-basis')
   assert.equal(await page.locator('[data-testid="history-charts"] .js-plotly-plot').count(), 3)
+  await verifyDateEvents(page, 0)
   pass('Browser Back/Forward and reload keep the static Research route and the embedded report')
 
   const runId = 'a'.repeat(32)

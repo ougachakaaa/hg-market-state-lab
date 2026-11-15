@@ -1,3 +1,4 @@
+import { verifyDateEvents } from './date_events_disclosure.mjs'
 // D2-F verification only: built artifact served as files; no backend, proxy or Auth.
 import assert from 'node:assert/strict'
 import { spawnSync } from 'node:child_process'
@@ -88,6 +89,7 @@ try {
 
   const plots = page.locator('.js-plotly-plot')
   assert.equal(await plots.count(), 2)
+  await verifyDateEvents(page, 2)
   await plots.first().locator('.nsewdrag').waitFor()
   const chart = await plots.first().evaluate(el => ({
     ys: el.data.filter(t => t.type === 'scatter' && t.showlegend !== false).map(t => t.y),

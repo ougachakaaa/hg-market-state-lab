@@ -1,3 +1,4 @@
+import { verifyDateEvents } from './date_events_disclosure.mjs'
 import { onlineHarness, unusedPort, observe } from './online_harness.mjs'
 // Real browser -> Vite proxy -> FastAPI -> temporary SQLite. Only market public
 // providers are deterministic fixtures; Auth, Cookie and CLI are real.
@@ -101,6 +102,7 @@ try {
   async function dateAxisAcceptance(result) {
     const plots = page.locator('.js-plotly-plot')
     const dates = result.daily.map(row => row.trade_date)
+    await verifyDateEvents(page, 2)
     const views = [result.views.returns, result.views.drawdown]
     const evidenceBefore = evidence.length
     const statesBefore = states.length

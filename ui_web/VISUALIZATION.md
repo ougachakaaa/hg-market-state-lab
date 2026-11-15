@@ -130,3 +130,5 @@ supplied. Research surfaces that expose the repository-wide `Trading Days` /
 `Calendar Days` policy follow the
 [date-axis presentation authority](DATE_AXIS_PRESENTATION.md). That policy is product
 presentation and does not extend or override this contract.
+
+Renderer-only `dateEventsDisclosure` optionally wraps the complete ordered V2 event detail list in a locally controlled, initially closed disclosure titled 日期事件（Date Events）, with caller-supplied description before the list. Without this option the existing list remains unchanged. Empty event lists show no panel; missing-value disclosures and Plotly event lines, annotations and hover remain independent and unchanged. This option is never serialized into ViewV2.

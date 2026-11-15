@@ -58,7 +58,8 @@ export function Report({ data, mode, sectionNavigation = 'fragment' }: {
   const jump = (index: number) => document.getElementById(`section-${index}`)?.scrollIntoView({ block: 'start' })
   const historyCharts = <>
         <DateAxisControl label="历史基差时间轴" value={timeScale} onChange={setTimeScale} />
-        {metrics.map(m => <div key={m} tabIndex={mode === 'demo' ? 0 : undefined} aria-label={mode === 'demo' ? `${m} 图表，窄屏可横向滚动` : undefined} style={{ minWidth: 0, overflow: mode === 'demo' ? 'auto' : 'hidden' }}><div style={{ minWidth: mode === 'demo' ? 640 : undefined }}><ChartView view={data.views.history[m]} minPlotHeight={480} options={historyOptions(data.views.history[m], data.candidate_dates, timeScale === 'trading', m === 'basis_value')} /></div></div>)}
+        {metrics.map(m => <div key={m} tabIndex={mode === 'demo' ? 0 : undefined} aria-label={mode === 'demo' ? `${m} 图表，窄屏可横向滚动` : undefined} style={{ minWidth: 0, overflow: mode === 'demo' ? 'auto' : 'hidden' }}><div style={{ minWidth: mode === 'demo' ? 640 : undefined }}><ChartView view={data.views.history[m]} minPlotHeight={480} options={{ ...historyOptions(data.views.history[m], data.candidate_dates, timeScale === 'trading', m === 'basis_value'),
+          dateEventsDisclosure: mode === 'offline' ? undefined : { description: '标记不同期限 Slot 所对应的期货合约发生切换的日期，仅用于描述合约映射变化，不代表实际交易。' } }} /></div></div>)}
   </>
   const distributionCharts = <>
         <Flex gap="middle" wrap align="center"><Typography.Text>指标</Typography.Text><Select aria-label="Distribution metric" value={metric} onChange={setMetric} options={metrics.map(value => ({ value, label: value }))} style={{ minWidth: 260 }} /><Typography.Text>Slot</Typography.Text><Select aria-label="Distribution slot" value={slot} onChange={setSlot} options={['M0', 'M1', 'Q1', 'Q2'].map(value => ({ value, label: value }))} /></Flex>

@@ -131,3 +131,5 @@ with purpose and navigation to `/backtesting/futures-roll-long`. It is a shared 
 application Presentation, independent of Preflight and Run controllers. Completion
 uses the UI system success text and denotes Web entry availability. Legacy Production
 Run URLs normalize according to Workspace authority before mounting this feature.
+
+Demo and Online returns/drawdown share the initially closed 日期事件（Date Events） disclosure via their common chart options. Its description is: 标记策略开仓、到期换仓及最终平仓的日期，帮助理解持仓变化与收益曲线的关系。 Producer Entry/Roll/Exit identities, order, details and Plotly markers remain intact. Expansion changes only local UI state, with no HTTP or recalculation.

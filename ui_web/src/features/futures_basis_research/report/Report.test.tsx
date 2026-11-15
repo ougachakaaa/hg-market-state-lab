@@ -5,7 +5,7 @@ import { validateReportData } from './validate'
 import { readerFixture } from './reader.fixture'
 // Keep the reader's real mode state; stub only the shared renderer/control boundary.
 vi.mock('../../../shared/visualization', () => ({
-  ChartView: ({ options }: any) => <div data-testid="chart-mode">{options?.ordinalDates ? 'trading' : 'calendar'}</div>,
+  ChartView: ({ options }: any) => <div data-testid="chart-mode" data-disclosure={options?.dateEventsDisclosure?.description}>{options?.ordinalDates ? 'trading' : 'calendar'}</div>,
   DateAxisControl: ({ value, onChange, label }: any) => <div aria-label={label}>
     {[['trading', 'Trading Days'], ['calendar', 'Calendar Days']].map(([mode, text]) =>
       <button key={mode} onClick={() => onChange(mode)}>{text}</button>)}
@@ -134,4 +134,10 @@ it.each(['demo', 'online'] as const)('renders producer distribution Count and Fr
   fireEvent.click(screen.getByRole('button', { name: '指标定义与公式' }))
   expect(screen.getByText('producer formula')).toBeTruthy()
   expect(data).toEqual(before)
+})
+
+it.each(['online', 'demo', 'offline'] as const)('configures only compact history disclosures (%s)', mode => {
+  render(<Report data={readerFixture()} mode={mode} />)
+  const configured = screen.getAllByTestId('chart-mode').filter(el => el.hasAttribute('data-disclosure'))
+  expect(configured).toHaveLength(mode === 'offline' ? 0 : 3)
 })

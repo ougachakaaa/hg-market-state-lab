@@ -292,3 +292,5 @@ in both runtimes, collapsed by default, with exactly two fields.
 
 Expansion is local UI state preserving HTTP requests, Run, report, chart state, URL and
 section navigation. It contains no internal identities, endpoints or configuration.
+
+Compact Demo/Online history charts all enable the shared initially closed 日期事件（Date Events） disclosure. Its description is: 标记不同期限 Slot 所对应的期货合约发生切换的日期，仅用于描述合约映射变化，不代表实际交易。 These are producer Contract Transition events; all Slot mappings and chart markers remain unchanged. Offline Full keeps the existing event list; distribution charts are unaffected.
