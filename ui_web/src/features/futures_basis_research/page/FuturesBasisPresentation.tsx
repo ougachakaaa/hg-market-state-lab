@@ -1,4 +1,4 @@
-import { Alert, Card, Descriptions, Flex, Typography } from 'antd'
+import { Alert, Card, Collapse, Descriptions, Flex, Typography } from 'antd'
 import type { ReactNode } from 'react'
 import type { ImmutableRequest } from '../api/validateResult'
 import {
@@ -52,6 +52,12 @@ function Header({ mode }: { mode: 'production' | 'static' }) {
     <Typography.Text type="secondary">{mode === 'production'
       ? '期货基差研究 · 选择参数、提交 Run，再阅读报告与证据。'
       : '期货基差研究 · 固定 Example 请求与已验证嵌入报告；只读，不执行服务器研究。'}</Typography.Text>
+    <Collapse items={[{ key: 'introduction', label: '关于本研究', children:
+      <Descriptions size="small" column={1} items={[
+        { key: 'purpose', label: '研究目的', children: '观察股指期货相对现货指数的价格偏离，理解不同合约期限下的贴水特征及其历史变化。' },
+        { key: 'method', label: '研究方式', children: '基于历史交易日数据，统计并可视化不同期限合约的基差、分布和贴水持续区间。' },
+      ]} />,
+    }]} />
   </Flex>
 }
 

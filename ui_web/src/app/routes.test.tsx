@@ -7,20 +7,22 @@ import { hashWorkspacePath, staticHref, useHashRoute } from '../demo/shell/hashR
 afterEach(() => { cleanup(); window.history.replaceState(null, '', '/') })
 
 describe('canonical routes and runtime adapters', () => {
-  it('declares each of the seven formal pages once', () => {
+  it('declares each of the eight formal pages once', () => {
     expect(workspaceRoutes.map(route => route.path)).toEqual([
       '/research', '/research/futures-basis', '/research/publications', '/data',
-      '/data/mo-option-chain', '/data/mo-premium-plane', '/backtesting',
+      '/data/mo-option-chain', '/data/mo-premium-plane', '/backtesting', '/backtesting/futures-roll-long',
     ])
-    expect(new Set(workspaceRoutes.map(route => route.path)).size).toBe(7)
+    expect(new Set(workspaceRoutes.map(route => route.path)).size).toBe(8)
     for (const route of workspaceRoutes) {
       expect(isWorkspacePath(route.path)).toBe(true)
       expect(hashWorkspacePath(staticHref(route.path))).toBe(route.path)
     }
     expect(isWorkspacePath('/unknown')).toBe(false)
+    expect(workspaceRoutes.filter(route => route.area === '/research' && route.sidebarVisible).map(route => route.path))
+      .toEqual(['/research', '/research/futures-basis'])
   })
 
-  it.each(['/research/futures-basis', '/backtesting'] as const)('preserves %s run identity on mount, same-page navigation and history', path => {
+  it.each(['/research/futures-basis', '/backtesting/futures-roll-long'] as const)('preserves %s run identity on mount, same-page navigation and history', path => {
     window.history.replaceState(null, '', `${path}?run_id=first`)
     const { result } = renderHook(useWorkspaceRoute)
     expect(result.current.path).toBe(path)
@@ -57,4 +59,35 @@ describe('canonical routes and runtime adapters', () => {
     })
     expect(result.current.path).toBe('/data')
   })
+})
+
+it('shares the overview icon identity across both areas', () => {
+  expect(workspaceRoutes.find(route => route.path === '/data')?.icon).toBe('overview')
+  expect(workspaceRoutes.find(route => route.path === '/research')?.icon).toBe('overview')
+})
+
+it('normalizes legacy Run deep links on mount and history without losing identity', () => {
+  window.history.replaceState(null, '', '/backtesting?run_id=first&source=bookmark#details')
+  const length = window.history.length
+  const { result } = renderHook(useWorkspaceRoute)
+  expect(result.current.path).toBe('/backtesting/futures-roll-long')
+  expect(window.location.search).toBe('?run_id=first&source=bookmark')
+  expect(window.location.hash).toBe('#details')
+  expect(window.history.length).toBe(length)
+  act(() => {
+    window.history.replaceState(null, '', '/backtesting?run_id=second')
+    window.dispatchEvent(new PopStateEvent('popstate'))
+  })
+  expect(result.current.path).toBe('/backtesting/futures-roll-long')
+  expect(window.location.search).toBe('?run_id=second')
+  act(() => result.current.navigate('/backtesting'))
+  expect(result.current.path).toBe('/backtesting')
+  expect(window.location.search).toBe('')
+})
+
+it('uses one overview icon and one instance icon across every visible route', () => {
+  const overviews = ['/data', '/research', '/backtesting']
+  for (const route of workspaceRoutes.filter(route => route.sidebarVisible)) {
+    expect(route.icon).toBe(overviews.includes(route.path) ? 'overview' : 'instance')
+  }
 })

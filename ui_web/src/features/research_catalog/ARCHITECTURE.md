@@ -7,41 +7,35 @@ online descriptor. This slice consumes only the two Capability GET operations th
 its generated OpenAPI contract. It does not preview, execute, probe market availability,
 or create Research results.
 
-The catalog distinguishes independently evidenced states:
+## Research Study presentation
 
-- `trailing_cumulative_return_v1`: admitted descriptor available through authenticated
-  HTTP discovery. `supported` means implementation support; `live_readiness` is shown
-  unchanged and is not an execution or provider-readiness claim. Selecting it requests
-  the published detail by ID.
-- `price_segmentation_v1`: implemented independent Python observation API, with no
-  Capability Publication, HTTP consumer, or online execution UI. Its identity and scope
-  come from [case authority](../../../../market_research/descriptive/cases/price_segmentation/ARCHITECTURE.md).
-- `futures_basis_v1`: implemented local Python case and offline report generation and
-  standalone reading workflow, owned by [R01-A](../../../../market_research/descriptive/cases/futures_basis/ARCHITECTURE.md)
-  and its [delivery](../../../../market_research/descriptive/cases/futures_basis/DELIVERY.md).
-  Its independent online Web Consumer is available at `/research/futures-basis`.
-  Selecting the case offers navigation to that sibling page, not execution inside
-  this catalog. Offline generation remains independent; provider/cache readiness
-  is not established by the existence of an online consumer.
+The primary overview presents three feature-local static Research Studies, independent
+of Capability request success. The minimal presentation model is `title`, `description`,
+`status: completed | incomplete` and optional `route`. It is not an HTTP DTO, Bundle
+contract or backend registry. `completed` means an independent Web presentation exists;
+it makes no claim about provider/cache readiness, computation success, Bundle admission
+or method development. `incomplete` means there is no independent Web entry, not that
+the Python research is unimplemented.
 
-Local descriptions are bounded presentation summaries of those published contracts,
-with explicit Python or operator entry instructions. They are not a second backend DTO,
-case registry, or assertion of live data availability. No report link is shown without
-an actual served report URL. The Research Results action navigates to the existing
-`/research/publications` Explorer, which remains the only online Publication reader.
-
-List and selected detail have independent loading, empty, error, and manual retry states.
-Changing selection or unmounting invalidates obsolete responses. The application auth
-boundary handles 401 and unmounts all Research content; no data survives a session
-change. The slice follows the [presentation architecture](../../../presentation-architecture.md)
-and [UI system](../../../ui-system.md) without a shared Research runtime or financial
-calculation in React.
+In order, 历史基差研究 is completed and navigates to `/research/futures-basis` through
+the injected callback; 价格分段研究 and 指数滚动收益研究 are incomplete with no action.
+Cards show purpose and completion (已完成 in success-colored text, 未完成 in secondary gray text), not raw identities, commands or readiness fields.
+They share the same feature Presentation across runtimes, use responsive Ant Design
+layout and provide an explicit keyboard-accessible study action. The overview contains
+only its heading, Study cards, completion statuses, available study navigation and
+minimal footer disclosure. It exposes no Explorer action, Capability list, technical
+selection, raw descriptors or local workflow instructions. Catalog-only failures are
+not presented because their results are not displayed. Authentication remains owned
+by the application boundary. Controller requests, selection, retries, cancellation,
+stale isolation and formal validation remain independently testable and unchanged.
+Explorer remains registered at `/research/publications` for direct URL and history.
+Injected static disclosure retains its exact source meaning.
 
 ## Runtime scope
 
 Query inputs, protected HTTP reads, preflight, retries and Run lifecycle in this feature authority describe the Production controller. The same feature-owned Presentation also serves [Static Demo Runtime](../../demo/ARCHITECTURE.md) using validated embedded Examples (retired; Git history), fixed visible request parameters and local presentation state. Static composition never mounts the production controller or fabricates its lifecycle; it preserves this feature’s result/visualization semantics and applicable local Copy/Export. Shared presentation remains here, not in parallel Demo pages.
 
-D2-C implements this boundary. `presentation.ts` exposes the feature-owned `ResearchOverviewPresentation`, pure generated-contract validators (`validateCapabilityList`, `validateCapabilityDetail`, `validateEmbeddedCatalog`) and a feature-local `useStaticCatalog` controller. Production `useCatalog` retains mount list GET, selection-triggered detail GET, independent list/detail retry, cancellation plus request-token stale isolation, protected Auth and HTTP error mapping; `ResearchWorkspacePage` is a thin composition root. Static composition validates the embedded list/detail set, rejects duplicate or unassociated capability identities, selects locally without a GET, and never fabricates a missing detail result. Both runtimes use the same page JSX and feature components. Static origin labels distinguish embedded descriptions from authenticated discovery while preserving published `status` and `live_readiness`. Explorer and Futures Basis navigation remain injected runtime-specific callbacks. [`tests/static/research_catalog/`](../../../tests/static/research_catalog/) is a verification harness using regression data, not an official D3 Example or public Demo entry.
+D2-C implements this boundary. `presentation.ts` exposes the feature-owned `ResearchOverviewPresentation`, pure generated-contract validators (`validateCapabilityList`, `validateCapabilityDetail`, `validateEmbeddedCatalog`) and a feature-local `useStaticCatalog` controller. Production `useCatalog` retains mount list GET, selection-triggered detail GET, independent list/detail retry, cancellation plus request-token stale isolation, protected Auth and HTTP error mapping; `ResearchWorkspacePage` is a thin composition root. Static composition validates the embedded list/detail set, rejects duplicate or unassociated capability identities, selects locally without a GET, and never fabricates a missing detail result. Both runtimes use the same page JSX and feature components. Catalog facts remain validated independently of the Study-only presentation. Explorer and Futures Basis navigation remain injected runtime-specific callbacks. [`tests/static/research_catalog/`](../../../tests/static/research_catalog/) is a verification harness using regression data, not an official D3 Example or public Demo entry.
 
 ## V2 origin policy reconciliation
 
