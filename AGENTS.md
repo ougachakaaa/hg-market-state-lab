@@ -101,3 +101,11 @@ for ordinary development, including historical acceptance documents.
   to chase green. Keep verification reporting short and review the diff before committing.
 
 Commands and manual-only inventory: [verification guide](DEVELOPMENT.md#verification-policy).
+
+## Personal study and research (user decision, 2026-11-15)
+
+This project is for personal study and research. Unless the user explicitly requests it,
+agents must not investigate data distribution authorization or make it an execution
+or publication gate. Preserve truthful source disclosure, investment disclaimers,
+credential/private-data safety and artifact integrity. This supersedes conflicting
+Demo publication-policy requirements; it does not assert third-party permission.

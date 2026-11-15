@@ -51,9 +51,9 @@ Build Preflight is an offline admission step in the build process.
 - [HTTP feasibility](build/HTTP_FEASIBILITY.md) records DDB-01 source evidence and limitations.
 - [Implementation handoff](build/HANDOFF.md) defines DDB-02 through DDB-05 boundaries.
 
-Public distribution continues to require truthful source descriptions, authorization and
-artifact integrity under existing repository policies. HTTP success and a matching hash
-alone do not establish permission to distribute market data.
+Publication follows the root personal-study policy. Preserve source disclosure,
+disclaimers and safety checks. Release contracts live in
+[deployment authority](../deploy/ARCHITECTURE.md).
 
 ## DDB-04 runtime
 

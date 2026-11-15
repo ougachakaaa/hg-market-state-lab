@@ -154,3 +154,6 @@ build/preview acceptance before commit, then independent Actions admission and a
 verification. Deploy consumes verified artifact bytes and never regenerates business data.
 Artifact integrity, publication permission and source disclosure remain applicable release
 requirements. DDB-05 owns their integration with existing deploy tooling.
+
+Release specializes this build contract through [deployment authority](../../deploy/ARCHITECTURE.md).
+The root personal-study policy supersedes former authorization gates.
