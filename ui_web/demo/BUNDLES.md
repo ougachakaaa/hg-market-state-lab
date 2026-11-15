@@ -71,6 +71,17 @@ Analysis has its detail, and every referenced View has its payload. Pagination e
 real null cursor. Empty formal lists remain valid empty captures, with one terminal page
 for Publications. HTTP reading never creates Publications.
 
+## UI integration boundary
+
+Bundle IDs and Result Contract references identify business captures independently of
+navigation structure. Routes, Overview Cards and Tab Composition belong to
+[Application](../application.md) and [Presentation](../presentation-architecture.md)
+authority. Collector depends on Registry, Presets and formal HTTP contracts. UI routes,
+card definitions and navigation order are outside its inputs and Registry ownership.
+Formal Online Web has no dependency on Demo Bundles. DDB-04 integrates the latest merged
+UI Composition into Demo Runtime through feature public Presentation entries. UI branch
+integration and navigation changes are outside DDB-03 reconciliation.
+
 ## Admission and exact bytes
 
 Reject duplicate JSON keys, duplicate IDs/paths, missing required IDs, unknown IDs, extra

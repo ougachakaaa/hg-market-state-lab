@@ -2,8 +2,9 @@
 
 Specializes [module authority](../ARCHITECTURE.md) and [directory ownership](../STRUCTURE.md).
 This is the canonical Demo entry. DDB-01 encodes the design. DDB-02 supplies the static
-Registry, explicit initial Presets and executable offline Bundle admission. Collector,
-the new runtime and publication remain assigned to DDB-03 through DDB-05.
+Registry, explicit initial Presets and executable offline Bundle admission. DDB-03 supplies
+the HTTP Collector and transaction recovery. Real capture remains NOT VERIFIED. The new
+runtime and publication remain assigned to DDB-04 and DDB-05.
 
 ## Purpose and ownership
 

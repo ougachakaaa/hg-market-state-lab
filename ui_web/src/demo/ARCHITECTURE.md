@@ -6,5 +6,6 @@ Follow it to Bundle, collection/build, feasibility and implementation handoff co
 
 DDB-00 retired the historical runtime entries and data. Retained `shell/` and `static/`
 code supplies shared composition foundations until DDB-04 reconciles canonical placement.
-The new pipeline is unimplemented and Demo build/publication remain fail-closed. Historical
+DDB-02 admission and DDB-03 collection/recovery are implemented. Real capture remains
+NOT VERIFIED and Demo build/publication remain fail-closed. Historical
 execution conclusions remain in [DDB-00 acceptance](../../DDB_00_ACCEPTANCE.md).

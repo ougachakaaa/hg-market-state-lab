@@ -23,8 +23,9 @@ on Windows or flock on POSIX. The file persists; process exit releases ownership
 `pending.json` names one same-root candidate and its exact replacement hashes. Candidate
 bytes and journal are flushed before pending publication. Recovery verifies the complete
 candidate with Preflight, then repeats selected replacements and replaces Manifest last.
-Only explicit Collector invocations recover transactions. DDB-04 must acquire this same
-lock and reject pending.json before loading inputs. Corrupt pending resources fail closed.
+Only explicit Collector invocations recover transactions. DDB-04 must coordinate with this
+lock and reject pending.json before loading inputs, as specified below. Corrupt pending
+resources fail closed.
 
 The Python Collector runs from repository root in the sole Poetry environment.
 It accepts an explicit Bundle ID or all, an HTTP base URL, and the selected committed
@@ -63,8 +64,8 @@ inconsistency. Empty results are recorded truthfully.
 
 ## Dataset update transaction
 
-Acquire an exclusive process-held lock before inspecting or updating active data. Build
-uses the same lock protocol for admission and input loading. A concurrent operation fails
+Acquire an exclusive process-held lock before inspecting or updating active data. Future Build
+must coordinate with the Collector lock for admission and input loading. A concurrent operation fails
 with a clear busy result. The lock is outside the active Bundle directory and releases on
 process exit. A durable pending-transaction marker independently blocks Build after a crash.
 
@@ -95,6 +96,29 @@ It validates a quiescent local dataset without Collector or serving dependencies
 DDB-03 implements Collector locking, pending-transaction recovery and candidate staging.
 Build-side lock admission, input staging and Vite integration remain assigned to DDB-04.
 The current `demo:build` entry remains BLOCKED.
+
+### Node Build coordination constraint
+
+DDB-04 Build and validation run entirely in Node/Vite and must never invoke Python.
+The current Collector OS lock is implemented only in Python. Node core filesystem APIs
+provide no direct equivalent of Windows `msvcrt.locking` or POSIX `flock`. Opening the
+persistent lock file, checking its existence, or creating a separate exclusive-create
+lock does not coordinate with the current Collector.
+
+A feasible DDB-04 implementation is a Node native binding using the compatible OS lock
+on the same file, exclusively locking byte zero on Windows and using flock on POSIX.
+Its compatibility with the Collector must be verified on each supported platform before
+claiming Build coordination. Binding selection and Build-side implementation remain open.
+If native bindings are unsuitable, DDB-04 must explicitly reconcile a replacement shared
+protocol for both participants with equivalent crash recovery and exclusion guarantees.
+DDB-03 retains its current Collector protocol and introduces no general lock framework.
+
+Build must hold coordinated exclusion while rejecting pending.json, copying the complete
+input into private ignored staging and independently admitting that staged snapshot.
+It must release exclusion only after the exact validated bytes are fixed for Vite.
+Vite consumes only that snapshot, so later Collection cannot mix dataset generations.
+A pending transaction or unavailable coordination fails Build closed. Standalone demo:check
+assumes quiescent input and alone supplies no concurrent Build guarantee.
 
 The future single `npm run demo:build` entry executes offline Preflight before Vite. It
 acquires the dataset lock, rejects pending transactions, verifies Registry/Manifest/file

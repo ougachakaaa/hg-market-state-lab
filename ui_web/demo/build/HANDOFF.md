@@ -35,10 +35,60 @@ the build authority. Focused controlled verification runs with
 and invokes the actual independent DDB-02 Preflight on candidate and active test data.
 These test payloads remain temporary and are never active Demo captures.
 
-Real capture remains NOT VERIFIED. The local backend responds with protected HTTP 401,
-but the inspected configuration lacks LAB_AUTH_ORIGIN and approved account credentials
-must be supplied interactively. No real active Bundle dataset is delivered by these tests.
-The tracked real dataset and distribution authorization remain DDB-04 entry conditions.
+### Implementation closure
+
+DDB-03 implementation is PASS and may close independently of operational delivery.
+Reconciliation reviewed collect.py, collectorBridge.ts and json.ts against build and Bundle
+authority. No implementation defect requiring a code change was identified.
+
+| Implementation concern | Status and evidence |
+| --- | --- |
+| Python Collector | PASS, Registry-driven seven captures and single-Bundle byte preservation |
+| Node Bridge | PASS, generated/feature-owned validation and numeric admission, financial payloads retained in Node |
+| HTTP Auth/Run orchestration | PASS, controlled Cookie/Origin, submit/poll/result and failure cases |
+| Candidate Preflight | PASS, actual independent DDB-02 CLI before transaction admission |
+| Transaction / Recovery | PASS, lock contention, interrupted replacement, corrupt candidate rejection and idempotent forward completion |
+
+All business Results enter through formal HTTP. Seven Bundle identities use the DDB-02
+Registry. No competing business DTO or historical V1/Public/Private fallback is introduced.
+Numeric values outside DDB-02 exact Number round-trip admission are rejected. Unselected
+Bundle bytes are copied unchanged. Failed acquisition leaves active bytes intact. Interrupted
+replacement retains pending.json until verified forward completion, blocking future Build
+admission. Build coordination remains an unimplemented DDB-04 obligation documented in
+[build authority](ARCHITECTURE.md#node-build-coordination-constraint).
+
+### Focused verification evidence (2026-11-15)
+
+Executed on baseline 9262eddfc1250a498b9b6b372dc5aadd620f85f0 with the documentation
+reconciliation in the working tree, from ui_web using
+`npx vitest run --config demo/build/vitest.config.ts demo/build/collector.test.ts demo/build/validate.test.ts`.
+Both files passed, with 84 tests passed and one skipped in 63.70 seconds. The Collector
+wrapper also ran five Python controlled HTTP cases in the root environment. Coverage includes
+numeric fidelity, actual candidate Preflight, failed/interrupted transactions, recovery and
+Registry/Bundle admission. The file-symlink rejection case was skipped on Windows for EPERM
+and remains NOT VERIFIED in this environment. Existing junction cases passed.
+
+Semantic and complete diff review cover the documentation changes. Verification is limited
+to these directly related cases. Real capture, Demo Build, browser checks, deployment and
+CI publication were unrun. UI authority review found no known contract conflict in the
+current branch. The separate UI branch remains unmerged and its actual diff is unverified.
+
+### Operational delivery
+
+| Delivery concern | Status |
+| --- | --- |
+| Real authenticated HTTP capture | NOT VERIFIED |
+| Seven real Bundles | NOT VERIFIED, no real dataset delivered |
+| Git-tracked real Manifest | NOT VERIFIED, remains undelivered |
+| Public distribution requirements | NOT VERIFIED, source disclosure, data authorization and artifact integrity remain required |
+
+The prior DDB-03 inspection recorded protected HTTP 401 and missing LAB_AUTH_ORIGIN.
+This reconciliation performs no live capture or endpoint probe. Configure LAB_AUTH_ORIGIN
+through root lab_config, supply an approved active login identity interactively, and make
+real source data, Run services and Publication dependencies available before operational
+acceptance. These prerequisites and distribution authorization remain unresolved.
+Controlled HTTP Fixture success supplies implementation evidence only. Real capture and a
+tracked independently admitted dataset remain DDB-04 delivery prerequisites.
 
 Goal is local authenticated capture with single-Bundle/all selection. Requires DDB-02
 Registry export and admission tooling, an operator-provided serving URL, approved user,
@@ -53,9 +103,9 @@ Direct verification covers query/body mapping, Cookie renewal and same-origin he
 M1/Q1 separation, terminal Run failures/timeouts, lost Submit response, complete opaque
 pagination, missing details, lossless numeric serialization, single-file byte preservation,
 full-generation acquisition failure, lock contention, commit interruption and idempotent
-forward completion. Controlled HTTP fixtures verify transport only. Completion requires
-the current tracked dataset to be acquired through formal HTTP and independently admitted;
-real captures and distribution authorization are reported separately from fixture tests.
+forward completion. Controlled HTTP fixtures verify implementation behavior. Implementation closure requires
+the scoped cases above to pass. Operational delivery requires a tracked real dataset acquired
+through formal authenticated HTTP and independently admitted, plus distribution authorization.
 
 ## DDB-04 — Single Demo runtime and build
 
@@ -67,7 +117,10 @@ and `results.ts` into canonical Demo ownership, updating local consumers. Existi
 fields must be reconciled to actual captured provenance; remove obsolete required assertions
 rather than fabricate sourceRevision/fingerprint/evidence provenance absent from HTTP.
 
-Use `src/features/*/presentation.ts` entries and current app route inventory. Preserve all
+DDB-04 integrates the latest merged UI Composition using
+`src/features/*/presentation.ts` entries and the current app route inventory. Bundle IDs and
+Result Contracts remain independent of routes, Overview Cards and Tab Composition, whose
+ownership stays with Application / Presentation authority. Preserve all
 seven business pages and local controls. Online entry keeps its own data path. Build loads
 the exact admitted static input, emits `.build/demo/` and requires no backend or credentials.
 
