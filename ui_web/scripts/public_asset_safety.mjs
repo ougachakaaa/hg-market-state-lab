@@ -25,7 +25,7 @@ export function checkPublicSafety() {
     assertNoCredentials(bytes.toString('utf8'))
     if (/\.(?:jsonl?|csv|sqlite3?|db|parquet|zip|gz)$/.test(path)) {
       const specializedConfig = /^ui_web\/tests\/config\/tsconfig\.(?:shell|option-chain|premium|catalog|explorer|futures-basis|backtesting)\.json$/.test(path)
-      const config = ['ui_web/demo/build/tsconfig.json', 'ui_web/demo/runtime/tsconfig.json'].includes(path) || specializedConfig || path === 'ui_web/scripts/public_payload_inventory.json' || /^ui_web\/(?:package(?:-lock)?|tsconfig[^/]*|\.oxlintrc)\.json$/.test(path) || /\.openapi\.json$/.test(path)
+      const config = ['ui_web/demo/build/presets.json', 'ui_web/demo/build/tsconfig.json', 'ui_web/demo/runtime/tsconfig.json'].includes(path) || specializedConfig || path === 'ui_web/scripts/public_payload_inventory.json' || /^ui_web\/(?:package(?:-lock)?|tsconfig[^/]*|\.oxlintrc)\.json$/.test(path) || /\.openapi\.json$/.test(path)
       if (!config) assert.equal(sha(bytes), reviewed[path], `Unreviewed or changed payload: ${path}`)
     }
   }
