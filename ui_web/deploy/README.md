@@ -54,3 +54,42 @@
 ## Workspace 路由前提
 
 `/research/publications` 是浏览器页面路径，也是后端 Publication API 路径。站点网关需把 `/research`、`/research/publications`、`/data/*`、`/backtesting` 的 HTML navigation 回退到 `index.html`，并把同源 `/api/research/*` 去除 `/api` 后转发至原后端路径，保留 Cookie、query、状态码与响应体。此仓库不包含实际 Nginx 站点配置；发布前应在目标网关验证这两类请求，不能仅以普通 SPA fallback 检查代替。
+
+## Manual Demo Pages release (DDB-05)
+
+Pages is separate from WSL Online deployment. Root AGENTS.md personal-study policy
+applies; preserve source disclosure, investment disclaimers and safety checks.
+
+Feature-branch Linux acceptance without deployment:
+
+```powershell
+gh workflow run demo-compatibility.yml --repo ougachakaaa/hg-market-state-lab --ref feat/demo-bundle-workflow -f suite=demo-build
+```
+
+After reviewed merge to main, inspect github-pages Environment branch protections,
+Pages configuration (Actions source) and Actions permissions via the existing inspection
+workflow or authenticated gh api. Missing API permissions are NOT VERIFIED; do not
+change protections to bypass them. Environment must permit main.
+
+Only the user explicitly starts actual release on main with its confirmed full SHA:
+
+```powershell
+gh workflow run deploy-demo-pages.yml --repo ougachakaaa/hg-market-state-lab --ref main -f source_sha=CONFIRMED_MAIN_SHA
+```
+
+Push main never deploys. Feature refs and mismatching confirmations fail before build.
+The protected deploy job downloads and rechecks all files against the confirmed checkout,
+then packages those same bytes under a unique run/attempt name. No rebuilding, data
+collection or historical fallback occurs. Environment rejection stops deployment.
+
+Local artifact verification, from ui_web after demo:build:
+
+```powershell
+node scripts/demo_artifact.mjs scan .build/demo .build/demo-receipt.json
+node scripts/demo_artifact.mjs verify .build/demo .build/demo-receipt.json
+```
+
+The receipt binds Git HEAD, exact tracked Manifest SHA-256, per-file SHA-256/size and
+inventory digest. It resides outside the site and is retained with the CI artifact
+for 14 days. It is integrity evidence, not a signature or independent financial audit.
+Report CI success separately from actual deployment.

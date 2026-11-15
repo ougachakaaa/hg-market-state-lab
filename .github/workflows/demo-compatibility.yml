@@ -10,7 +10,7 @@ on:
         type: choice
         required: true
         default: regression
-        options: [regression, diagnostics]
+        options: [regression, diagnostics, demo-build]
 permissions:
   contents: read
 jobs:
@@ -37,7 +37,7 @@ jobs:
           DIFF_HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
         run: python .github/scripts/check_changed_sources.py
   manual:
-    if: github.event_name == 'workflow_dispatch'
+    if: github.event_name == 'workflow_dispatch' && inputs.suite != 'demo-build'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -67,3 +67,61 @@ jobs:
           poetry run pytest --diagnostics -m diagnostic data_lake data_snapshot/tests market_research/tests market_backtesting/tests market_statistics/tests ui_http/tests ui_web/tests/deploy -q
           npm --prefix ui_web run test:diagnostics
           npm --prefix ui_web run test:public-safety
+
+  demo-build:
+    if: github.event_name == 'workflow_dispatch' && inputs.suite == 'demo-build'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: ui_web
+    steps:
+      - uses: actions/checkout@v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v7.1.0
+        with:
+          node-version: '22'
+          package-manager-cache: false
+      - run: npm ci
+      - run: npm run test:public-safety
+      - run: npm run demo:check
+      - run: node --test scripts/demo_artifact.test.mjs
+      - run: npx vitest run --config demo/build/vitest.config.ts demo/build/validate.test.ts
+      - run: npm run demo:build
+      - run: node scripts/demo_artifact.mjs scan .build/demo .build/demo-receipt.json
+      - run: node scripts/demo_artifact.mjs verify .build/demo .build/demo-receipt.json
+      - uses: actions/upload-artifact@v6
+        with:
+          name: verified-demo
+          path: ui_web/.build/demo/
+          if-no-files-found: error
+          retention-days: 14
+      - uses: actions/upload-artifact@v6
+        with:
+          name: demo-receipt
+          path: ui_web/.build/demo-receipt.json
+          if-no-files-found: error
+          retention-days: 14
+
+  demo-reverify:
+    needs: demo-build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7.0.1
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@v7.1.0
+        with:
+          node-version: '22'
+          package-manager-cache: false
+      - uses: actions/download-artifact@v7
+        with:
+          name: verified-demo
+          path: ui_web/.build/demo
+      - uses: actions/download-artifact@v7
+        with:
+          name: demo-receipt
+          path: ui_web/.build
+      - run: node ui_web/scripts/demo_artifact.mjs verify ui_web/.build/demo ui_web/.build/demo-receipt.json

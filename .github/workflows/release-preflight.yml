@@ -4,6 +4,7 @@ on:
 permissions:
   contents: read
   actions: read
+  pages: read
 jobs:
   inspect:
     runs-on: ubuntu-latest
@@ -14,12 +15,17 @@ jobs:
         run: |
           gh api repos/${{ github.repository }}/environments/github-pages > environment.json
           gh api repos/${{ github.repository }}/environments/github-pages/deployment-branch-policies > branch-policies.json
+          gh api repos/${{ github.repository }}/pages > pages.json
+          gh api repos/${{ github.repository }}/actions/permissions > actions-permissions.json
           jq '{name, protection_rules, deployment_branch_policy}' environment.json
           jq '.branch_policies' branch-policies.json
       - uses: actions/upload-artifact@v6
+        if: always()
         with:
           name: pages-environment-inspection
           path: |
             environment.json
             branch-policies.json
+            pages.json
+            actions-permissions.json
           retention-days: 14

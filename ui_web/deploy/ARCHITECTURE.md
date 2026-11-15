@@ -25,7 +25,7 @@ push checks stay lightweight. Pages is workflow_dispatch only on main; the requi
 full confirmed source SHA must equal the dispatch SHA. Checkout is pinned to that SHA.
 Build and verify once, transfer the site and separate receipt, then independently
 verify downloaded bytes before upload-pages-artifact. Deploy the exact uploaded
-artifact ID without rebuilding or fetching business data. Failed checks or Environment
+artifact selected by its unique run/attempt name without rebuilding or fetching business data. Failed checks or Environment
 rejection stop publication without fallback. Use github-pages Environment and pages
 concurrency, with Pages/OIDC permissions confined to the deployment job.
 

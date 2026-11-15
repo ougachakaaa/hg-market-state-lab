@@ -1,17 +1,97 @@
-name: Portfolio Pages release (BLOCKED)
+name: Manual Demo Pages release
 on:
-  push:
-    branches: [main]
+  workflow_dispatch:
+    inputs:
+      source_sha:
+        description: Confirm the full main commit SHA to publish
+        type: string
+        required: true
 permissions:
   contents: read
 concurrency:
   group: pages
   cancel-in-progress: false
 jobs:
-  publication-blocked:
+  build:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: ui_web
     steps:
-      - name: Reject publication until new Bundle Pipeline is implemented
+      - name: Require confirmed main dispatch
+        working-directory: .
+        env:
+          RELEASE_REF: ${{ github.ref }}
+          RELEASE_SHA: ${{ github.sha }}
+          CONFIRMED_SHA: ${{ inputs.source_sha }}
         run: |
-          echo 'BLOCKED: no current Demo Bundle Pipeline or verified artifact'
-          exit 1
+          test "$RELEASE_REF" = refs/heads/main
+          test "$CONFIRMED_SHA" = "$RELEASE_SHA"
+          [[ "$CONFIRMED_SHA" =~ ^[a-f0-9]{40}$ ]]
+      - uses: actions/checkout@v7.0.1
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@v7.1.0
+        with:
+          node-version: '22'
+          package-manager-cache: false
+      - run: npm ci
+      - run: npm run test:public-safety
+      - run: npm run demo:check
+      - run: npm run demo:build
+      - run: node scripts/demo_artifact.mjs scan .build/demo .build/demo-receipt.json
+      - run: node scripts/demo_artifact.mjs verify .build/demo .build/demo-receipt.json
+      - uses: actions/upload-artifact@v6
+        with:
+          name: verified-demo
+          path: ui_web/.build/demo/
+          if-no-files-found: error
+          retention-days: 14
+      - uses: actions/upload-artifact@v6
+        with:
+          name: demo-receipt
+          path: ui_web/.build/demo-receipt.json
+          if-no-files-found: error
+          retention-days: 14
+  deploy:
+    needs: build
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v7.0.1
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@v7.1.0
+        with:
+          node-version: '22'
+          package-manager-cache: false
+      - uses: actions/download-artifact@v7
+        with:
+          name: verified-demo
+          path: ui_web/.build/demo
+      - uses: actions/download-artifact@v7
+        with:
+          name: demo-receipt
+          path: ui_web/.build
+      - name: Reverify downloaded bytes against confirmed checkout
+        run: node ui_web/scripts/demo_artifact.mjs verify ui_web/.build/demo ui_web/.build/demo-receipt.json
+      - uses: actions/upload-pages-artifact@v4
+        id: pages
+        with:
+          path: ui_web/.build/demo
+          name: pages-${{ github.run_id }}-${{ github.run_attempt }}
+      - uses: actions/deploy-pages@v4
+        id: deployment
+        with:
+          artifact_name: pages-${{ github.run_id }}-${{ github.run_attempt }}
