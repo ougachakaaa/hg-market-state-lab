@@ -2,8 +2,9 @@
 
 DDB-00 retired V1 and Public/Private entries and data. DDB-02 supplies admission,
 DDB-03 supplies explicit authenticated HTTP collection, and DDB-04 supplies the single
-static runtime and coordinated offline build. Real capture remains undelivered; the
-default build fails closed until admitted data exists. DDB-05 owns publication integration.
+static runtime and coordinated offline build. DDB-04-R1 delivered the real Dataset. DDB-05 supplies manual CI and verified-artifact
+Pages release; actual deployment remains NOT VERIFIED. Current evidence is in the
+[handoff](demo/build/HANDOFF.md#ddb-05-closure---2026-11-15).
 
 # ui_web directory ownership
 

@@ -289,3 +289,74 @@ Explorer content remains an explicit portfolio limitation.
 Git blob hashes were checked against every Manifest entry after data commit.
 The active Bundle/Manifest JSON paths pin checkout to LF in .gitattributes, preventing
 Windows autocrlf from invalidating canonical bytes on a subsequent checkout.
+
+## DDB-05 closure - 2026-11-15
+
+Current status supersedes earlier undelivered-data/publication-gate statements above.
+DDB-04-R1 delivered the real Dataset. Root AGENTS.md now records the user's personal
+study/research policy; data authorization investigation is not an execution/publication
+gate unless explicitly requested. Original sources and disclaimers remain unchanged.
+
+DDB-05 Implementation: PASS. Deployment: NOT VERIFIED (intentionally not requested).
+No PR, merge, Pages dispatch, Environment change or real market-data collection occurred.
+The existing feature branch was pushed with explicit user authorization for Linux CI.
+
+### Implementation and evidence
+
+- 2695e36: policy reconciliation and narrow deployment authority.
+- 774cbe7: receipt, Git/Manifest identity, exact file inventory, safety and isolation.
+- b25f16c: manual offline CI, cross-job byte verification and confirmed-main Pages flow.
+- 5938932: classify Presets as configuration; eight active data files stay hash-reviewed.
+
+[Ubuntu Actions run 43722528491](https://github.com/ougachakaaa/hg-market-state-lab/actions/runs/43722528491)
+PASS on 5938932f27199030e1efeb7407e52152cbfa2539. demo-build and demo-reverify succeeded;
+ordinary frontend/manual regression jobs were skipped. Node 22/npm installed from lock,
+Public Safety passed (25 reviewed payloads), seven-Bundle admission passed, all 82
+admission tests passed on Linux, the offline Vite build passed, and receipt scan,
+verification, upload/download and independent second-job verification passed. No Python,
+backend, Collector, TuShare credentials or account secrets were supplied to these jobs.
+The existing large-chunk build warning remains informational.
+
+Receipt: five files; Manifest SHA-256
+179f1fe0681e7902eb3030f1bd2b93e5a31b0a42ff1256d62f4e9e8ce98f7dff;
+artifact digest ee564a4ffe09f5a0b9502c14e209f105cf54bff8f219682262aacf48ac8a02e1.
+The receipt and exact site are retained as separate Actions artifacts for 14 days.
+This is contract/safety/integrity evidence, not independent financial accuracy proof.
+
+The initial run 43722402638 failed closed on an extra Presets inventory entry: local
+CRLF bytes differed from Git/Linux LF bytes. No Dataset change occurred. The fix removes
+that configuration entry and uses an exact-path config exemption, like the two Demo
+TypeScript configs. The eight Bundle/Manifest entries match actual Git blob SHA-256.
+Presets are still checked by formal admission and unchanged from the baseline.
+
+Local scoped verification passed receipt identity/tamper/reference/isolation failure
+cases, existing artifact symlink/credential/private-path tests, and Public Safety tests.
+Combined admission/runtime tests: 88 passed, one Windows symlink case skipped for EPERM;
+that admission case passed in Linux CI. Actual workflow guard executed with Bash:
+feature ref rejected, matching main accepted, mismatching SHA rejected. Local real-Dataset
+build and existing browserAcceptance passed eight routes, local interactions, history
+and static-only network activity. No broad Browser Matrix or business regression ran.
+A standalone YAML-parser check was unavailable (no installed yaml package); GitHub
+accepted the dispatched CI workflow. Pages execution remains unverified.
+
+### Release handoff
+
+Read-only GitHub API inspection confirmed Pages build_type=workflow, Actions enabled
+with allowed_actions=all, and github-pages custom branch policy allowing main plus the
+historical feat/github-pages-demo branch. No protections were modified. The new release
+workflow itself rejects every non-main dispatch before checkout/build and requires the
+confirmed full SHA to equal the dispatch SHA. Pages/OIDC write permissions are confined
+to the protected deploy job; verification failure prevents deployment through needs.
+Actual Environment rejection and the Pages upload/deploy path are NOT VERIFIED.
+The deployment job's automatic token permissions are validated only by actual release.
+
+Manual entry and commands are in [deployment guide](../../deploy/README.md#manual-demo-pages-release-ddb-05).
+After Final Reconciliation and user-reviewed merge to main, the user explicitly starts
+Manual Demo Pages release on main with its full confirmed SHA. Push main does not
+publish. No further data-rights approval is required by current project policy.
+The current branch is ready for Final Reconciliation and merge preparation; neither
+merge nor publication is performed by DDB-05. The empty Publication Bundle is preserved.
+
+Git diff against baseline 2ca1d52782b3ffcaf42ebac0299fad0e6c7c267b confirms no change to
+seven Bundles, Manifest, Presets or .gitattributes. No historical Demo fallback exists.
+Generated local build/receipt files remain ignored; no business store or cache was deleted.
