@@ -20,6 +20,21 @@ verification independently checks the emitted dependency inventory.
 
 ## CI and publication
 
+DDB-06 publisher contract: `npm run demo:publish` selects fetched remote-main,
+never implicit HEAD. The configured default remote is github; --remote selects another
+GitHub remote explicitly. Feature/develop/main own development/integration/approval;
+release/demo-pages is only an FF deployment pointer, without release-only commits.
+The publisher rejects dirty relevant sources, local-main drift, non-main candidates,
+divergent release history and active/uncertain deployments. It uses a clean detached
+worktree for dependency installation and the complete release gate, then checks remote
+refs again and performs only a normal explicit-SHA push. Git's FF check is the final
+server-side safeguard; local preflight cannot prohibit manual pushes or atomically lock
+remote main. CI independently rejects non-main history. No force push is permitted.
+Existing release HEAD uses existing run/deployment evidence without implicit reruns.
+Polling has finite deadlines; failures after push never imply successful publication.
+Online verification compares every emitted file against the CI receipt before browser
+acceptance. Gate evidence and receipt are retained outside the public site.
+
 Manual offline CI accepts feature branches without deployment permissions. Ordinary
 push checks stay lightweight. Pages is workflow_dispatch only on main; the required
 full confirmed source SHA must equal the dispatch SHA. Checkout is pinned to that SHA.
