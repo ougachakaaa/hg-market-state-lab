@@ -13,8 +13,7 @@ slice; WP8 implements it and the offline reader regression.
 
 ## Application composition
 
-The surface is discovered from Research Overview and the Descriptive Research navigation
-category. Research Explorer remains available as a secondary result reader. Research remains the default entry.
+The surface is discovered from Research Overview and directly under Research navigation. Research Explorer remains available as a secondary result reader. Research remains the default entry.
 This is a sibling bounded
 context: it does not read or reinterpret another feature's DTO, state, chart or
 result.
@@ -306,3 +305,14 @@ into the shared reader Evidence through UI-only `sourceDisclosure`; delivery mod
 infers real-market origin. Historical Synthetic defaults and Production/Offline evidence
 remain unchanged. Admission and provenance ownership stay in the
 private build contract (retired; Git history).
+
+## Research introduction
+
+Shared FuturesBasisPresentation shows 关于本研究 below the heading and above parameters
+in both runtimes, collapsed by default, with exactly two fields.
+
+- 研究目的 — 观察股指期货相对现货指数的价格偏离，理解不同合约期限下的贴水特征及其历史变化。
+- 研究方式 — 基于历史交易日数据，统计并可视化不同期限合约的基差、分布和贴水持续区间。
+
+Expansion is local UI state preserving HTTP requests, Run, report, chart state, URL and
+section navigation. It contains no internal identities, endpoints or configuration.
