@@ -4,7 +4,8 @@ Specializes [module authority](../ARCHITECTURE.md) and [directory ownership](../
 This is the canonical Demo entry. DDB-01 encodes the design. DDB-02 supplies the static
 Registry, explicit initial Presets and executable offline Bundle admission. DDB-03 supplies
 the HTTP Collector and transaction recovery. DDB-04-R1 delivered real captures. DDB-04 implements the sole runtime and offline build.
-DDB-05 supplies verified-artifact manual release; actual deployment remains NOT VERIFIED.
+DDB-06 extends DDB-05 verified artifacts with release requirements and dedicated-branch
+publication. Actual release evidence enters the implementation handoff below.
 
 ## Purpose and ownership
 

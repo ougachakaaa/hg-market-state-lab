@@ -369,3 +369,18 @@ Supersedes DDB-05 manual main dispatch. Release Requirements enter
 Only release/demo-pages push deploys; candidate must already be on remote main.
 DDB-00–05 collection, Bundle ownership and artifact transfer remain intact.
 Actual first-release evidence is recorded after execution, never inferred from local PASS.
+
+### First public execution and online acceptance
+
+On 2026-11-15, source cdf697d0f37f5eee08a8f4406440d78b4ece563c passed the Linux
+release gate and independent deployment-job artifact verification in
+[Actions run 43726003773](https://github.com/ougachakaaa/hg-market-state-lab/actions/runs/43726003773).
+Pages deployed to https://ougachakaaa.github.io/hg-market-state-lab/.
+Online eight-route browser acceptance passed, including MO results, Basis charts,
+M1/Q1 interaction, direct hidden Explorer and truthful empty Publication capture.
+Every public file matched the downloaded CI Receipt by size and SHA-256 when read
+through the browser network stack. Node fetch timed out in this environment; the
+publisher correction uses the verified browser path without weakening byte checks.
+The subsequent user-authorized history repair replaces the original integration
+commits. This run remains historical evidence for its original source SHA; any
+replacement release requires its own gate, deployment and online acceptance.

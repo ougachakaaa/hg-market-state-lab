@@ -4,7 +4,6 @@ import { readFileSync } from 'node:fs'
 import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises'
 import { resolve, dirname } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
-import { sha } from '../../scripts/artifact_integrity.mjs'
 import { verifyDemo } from '../../scripts/demo_artifact.mjs'
 const web = fileURLToPath(new URL('../../', import.meta.url))
 const root = dirname(web.replace(/[\\/]$/, ''))
@@ -37,16 +36,31 @@ function run(program, args, cwd) {
 const npm = (args, cwd) => process.platform === 'win32'
   ? run('cmd.exe', ['/d', '/s', '/c', 'npm ' + args.join(' ')], cwd)
   : run('npm', args, cwd)
+export async function verifyPublicFiles(receipt, read) {
+  for (const item of receipt.files) {
+    console.log(`Checking public bytes: ${item.file}`)
+    const actual = await read(item.file)
+    assert.equal(actual.size, item.size, `Public size mismatch: ${item.file}`)
+    assert.equal(actual.sha256, item.sha256, `Public hash mismatch: ${item.file}`)
+  }
+}
 export async function verifyOnline(base, receipt) {
   const url = new URL(base)
   assert.equal(url.protocol, 'https:')
-  for (const item of receipt.files) {
-    const response = await fetch(new URL(item.file, url), { cache: 'no-store', signal: AbortSignal.timeout(30000) })
-    assert.ok(response.ok, `Public file unavailable: ${item.file}`)
-    const bytes = Buffer.from(await response.arrayBuffer())
-    assert.equal(bytes.length, item.size, `Public size mismatch: ${item.file}`)
-    assert.equal(sha(bytes), item.sha256, `Public hash mismatch: ${item.file}`)
-  }
+  const { chromium } = await import('playwright')
+  const browser = await chromium.launch({ headless: true })
+  try {
+    const page = await browser.newPage()
+    const response = await page.goto(url.href)
+    assert.ok(response?.ok(), 'Public homepage unavailable')
+    await verifyPublicFiles(receipt, file => page.evaluate(async href => {
+      const response = await fetch(href, { cache: 'no-store', signal: AbortSignal.timeout(30000) })
+      if (!response.ok) throw new Error('Public file unavailable')
+      const bytes = await response.arrayBuffer()
+      const digest = await crypto.subtle.digest('SHA-256', bytes)
+      return { size: bytes.byteLength, sha256: Array.from(new Uint8Array(digest), n => n.toString(16).padStart(2, '0')).join('') }
+    }, new URL(file, url).href))
+  } finally { await browser.close() }
 }
 export async function publish(args = process.argv.slice(2)) {
   assert.ok(!args.length || (args.length === 2 && args[0] === '--remote'), 'Usage: demo:publish [--remote github]')

@@ -1,6 +1,6 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { prePushPolicy, checkedPush, verifyOnline } from './publish.mjs'
+import { prePushPolicy, checkedPush, verifyPublicFiles } from './publish.mjs'
 const candidate = 'a'.repeat(40)
 const valid = { candidate, main: candidate, release: 'b'.repeat(40), ancestor: true, dirty: '', localMain: candidate, active: false }
 test('accept exact main and FF release', () => prePushPolicy(valid))
@@ -20,8 +20,10 @@ test('push follows successful gate and remote recheck', async () => {
   assert.deepEqual(order, ['gate', 'refs', 'push'])
 })
 test('online acceptance rejects tampered bytes', async () => {
-  const original = globalThis.fetch
-  globalThis.fetch = async () => new Response('tampered')
-  try { await assert.rejects(verifyOnline('https://example.com/', { files: [{ file: 'index.html', size: 8, sha256: '0'.repeat(64) }] }), /hash mismatch/) }
-  finally { globalThis.fetch = original }
+  await assert.rejects(verifyPublicFiles({ files: [{ file: 'index.html', size: 8, sha256: '0'.repeat(64) }] }, async () => ({ size: 8, sha256: '1'.repeat(64) })), /hash mismatch/)
+})
+test('online acceptance rejects missing files and changed sizes', async () => {
+  const receipt = { files: [{ file: 'index.html', size: 8, sha256: '0'.repeat(64) }] }
+  await assert.rejects(verifyPublicFiles(receipt, async () => { throw Error('unavailable') }), /unavailable/)
+  await assert.rejects(verifyPublicFiles(receipt, async () => ({ size: 7, sha256: '0'.repeat(64) })), /size mismatch/)
 })
