@@ -96,6 +96,7 @@ try {
     const selected = page.locator('.ant-menu-item-selected')
     assert.equal(await selected.count(), route.sidebarVisible ? 1 : 0)
     if (route.sidebarVisible) assert.equal(await selected.textContent(), route.title)
+    if (route.icon === 'overview') assert.equal(await selected.locator('[data-icon="appstore"]').count(), 1)
     for (const href of await page.locator('a[href]').evaluateAll(links => links.map(link => link.href))) {
       assert.equal(new URL(href).pathname, prefix)
       assert.equal(new URL(href).origin, new URL(base).origin)

@@ -4,7 +4,7 @@ import assert from 'node:assert/strict'
 import { researchAcceptance } from './research_browser_acceptance.mjs'
 import { spawn, spawnSync } from 'node:child_process'
 import { randomBytes } from 'node:crypto'
-import { mkdir, mkdtemp, rm } from 'node:fs/promises'
+import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -24,6 +24,7 @@ const processes = []
 let browser
 let page
 const evidence = []
+const browserErrors = []
 function start(command, args, cwd = root) {
   const child = spawn(command, args, { cwd, env, stdio: ['ignore', 'pipe', 'pipe'] })
   processes.push(child)
@@ -71,6 +72,11 @@ try {
   const context = await browser.newContext({ viewport: { width: 1440, height: 900 } })
   page = await context.newPage()
   page.setDefaultTimeout(15000)
+  page.on('pageerror', error => browserErrors.push(String(error)))
+  page.on('console', message => {
+    if (message.type() === 'error') evidence.push(`Console error: ${message.text()}`)
+  })
+  console.log(`Chromium: ${browser.version()}`)
   page.on('response', (res) => {
     const path = new URL(res.url()).pathname
     if (path.startsWith('/auth/') || path.startsWith('/mo-option') || path.startsWith('/api/research')) evidence.push(`${path} ${res.status()}`)
@@ -200,11 +206,15 @@ try {
     headers: { Origin: env.LAB_AUTH_ORIGIN },
   })
   assert.equal(again.status(), 204)
+  assert.deepEqual(browserErrors, [], 'no browser exceptions')
+  await writeFile(resolve(screenshots, 'acceptance.json'), JSON.stringify({ status: 'PASS', browser: browser.version(), evidence, browserErrors }, null, 2))
   console.log('PASS: real Chromium login -> 研究总览 -> Daily Data -> both MO pages -> 研究结果浏览 -> logout; direct URL, reload and history')
   console.log(`Screenshots: ${screenshots}`)
   console.log('PASS: HttpOnly / SameSite Cookie; no JS token/storage; anonymous business gate; repeated logout')
   console.log(evidence.join('\n'))
 } catch (error) {
+  await page?.screenshot({ path: resolve(screenshots, 'failure.png'), fullPage: true }).catch(() => {})
+  await writeFile(resolve(screenshots, 'failure.json'), JSON.stringify({ status: 'FAIL', error: error.stack, evidence, browserErrors }, null, 2))
   console.error(evidence.join('\n'))
   if (page) console.error(await page.locator('body').innerText().catch(() => 'Page unavailable'))
   throw error

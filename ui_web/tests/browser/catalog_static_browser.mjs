@@ -67,6 +67,8 @@ try {
   }
   assert.equal(await page.getByRole('button', { name: '能力与访问方式（技术详情）' }).count(), 0)
   assert.equal(await page.getByRole('button', { name: '浏览研究成果' }).count(), 0)
+  assert.equal(await page.getByText('已完成', { exact: true }).count(), 1)
+  assert.equal(await page.getByText('未完成', { exact: true }).count(), 2)
   assert.equal(await page.getByText(descriptor.name, { exact: true }).count(), 0)
   await page.getByRole('button', { name: '查看历史基差研究' }).click()
   assert.equal(new URL(page.url()).hash, '#/research/futures-basis')

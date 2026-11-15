@@ -34,6 +34,9 @@ export async function researchAcceptance(page, output) {
     }
     assert.equal(await page.getByRole('button', { name: '能力与访问方式（技术详情）' }).count(), 0)
     assert.equal(await page.getByRole('button', { name: '浏览研究成果' }).count(), 0)
+    assert.equal(await page.getByText('已完成', { exact: true }).count(), 1)
+    assert.equal(await page.getByText('未完成', { exact: true }).count(), 2)
+    if (viewport.width === 1440) assert.equal(await page.getByRole('menuitem', { name: '研究总览', exact: true }).locator('[data-icon="appstore"]').count(), 1)
     await capture('workspace-initial')
     await page.getByRole('button', { name: '查看历史基差研究' }).click()
     const introduction = page.getByRole('button', { name: '关于本研究' })

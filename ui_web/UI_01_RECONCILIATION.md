@@ -1,5 +1,67 @@
 # UI-01-R2 reconciliation
 
+## Browser acceptance completed — 2026-11-15
+
+Current UI-01-R2 status is **READY**. The NOT_READY entries below describe earlier
+attempts and are superseded by this browser evidence. Acceptance used branch
+`feat/ui-01-research-overview` at `727353b` (including the overview follow-up after
+the supplied `d5b7beb` baseline).
+
+Native Windows x64, Node 22.23.2, npm 11.0.0 and installed Playwright 1.64.1 were used.
+`npx --no-install playwright install chromium` stalled while downloading. The exact
+official Chrome for Testing 156.0.8078.4 headless-shell archive for revision 1248 was
+downloaded with curl, reconstructed from HTTP ranges and verified against the official
+response MD5 `rT33sBjoEAhkmSHMEEwqdA==` before extraction into
+`%LOCALAPPDATA%/ms-playwright/chromium_headless_shell-1248`.
+All tests launched that browser through their existing Playwright default path.
+No package version or lockfile changed. Linux dependencies were inapplicable.
+
+From `ui_web`, all three original entry commands passed real Chromium acceptance.
+
+| Command | Result and local evidence under `%TEMP%` |
+| --- | --- |
+| `node tests/browser/catalog_static_browser.mjs` | PASS; `d2c-catalog-dJbxuu/acceptance.json`, desktop/mobile screenshots |
+| `node tests/browser/static_shell_browser.mjs` | PASS; `d1-shell-browser-S9dZsn/acceptance.json`, expanded/collapsed screenshots |
+| `node tests/browser/research_browser_smoke.mjs` | PASS, including the fourth script `research_browser_acceptance.mjs`; `hg-market-state-lab-web-workspace/acceptance.json`, `wp3a/1440x900` and `wp3a/1024x768` screenshots |
+
+The Production composition used real authentication, Cookie, HTTP, temporary SQLite
+and explicitly synthetic provider/publication fixtures. Both viewport acceptances
+verified three cards, one completed/two incomplete states, removed technical/Explorer
+buttons, direct Explorer access, and the collapsed introduction's two fields.
+Static Shell verified all eight current routes, reload/history, hidden Explorer leaf
+and shared Appstore overview icons. Static Catalog verified the shared Study-only
+presentation and static-only network activity.
+
+Additional existing scripts completed the requested report coverage.
+
+- `node tests/browser/futures_basis_static_browser.mjs` — PASS; shared collapsed
+  introduction, both fields, embedded report, section navigation and static isolation.
+  Evidence is `%TEMP%/d2e-futures-basis-zgXoq5/acceptance.json` and screenshots.
+- `node tests/browser/futures_basis_report_browser.mjs` — PASS; real offline charts,
+  Trading Days/Calendar Days mapping, legend persistence, percentage hover, mouse
+  box zoom, drag pan and reset. Evidence is
+  `%TEMP%/r01a-offline-browser-8bpxvU/report-browser/acceptance.json` and screenshots.
+
+No browser exceptions occurred in the successful runs. Static/offline checks reported
+zero console errors. Production console review found the expected anonymous 401 and
+injected 503 responses plus the existing Ant Design List deprecation warning.
+The initial cold Vite run also logged an Outdated Optimize Dep 504, absent on rerun.
+The first browser attempt failed a newly added icon assertion against an unmounted
+narrow-screen submenu. The assertion now checks the expanded desktop layout, while
+the existing narrow navigation checks remain. Failure evidence is retained locally
+in `hg-market-state-lab-web-workspace/failure.json` and `failure.png`; the earlier
+missing-executable failure is in `d2c-catalog-0ChOO3/acceptance.json`.
+Final smoke output is retained in `%TEMP%/ui01-research-final.log`.
+
+Only acceptance scripts and this reconciliation changed. Production UI and business
+contracts required no fixes. Large browser artifacts remain outside Git. Test-owned
+temporary Auth/Run/Publication stores were removed by the existing smoke teardown.
+
+Non-mutating three-way inspection against DDB `9262eddf` using common ancestor
+`a350fd8` and current UI HEAD reported no conflict markers. UI-01-R2 is ready for
+integration into that DDB baseline. Official Bundle composition/build and integrated
+Demo acceptance remain DDB-04 work. No merge, push or deployment was performed.
+
 ## Scope
 
 Research Overview exposes Study navigation and minimal disclosure. Historical Basis
