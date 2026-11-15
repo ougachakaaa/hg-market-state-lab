@@ -39,7 +39,8 @@
     "test:credentials": "node scripts/public_asset_safety.mjs --credentials-only",
     "demo:check": "node scripts/demo_check.mjs",
     "demo:registry": "node scripts/demo_check.mjs --registry",
-    "demo:preview": "node demo/build/preview.mjs"
+    "demo:preview": "node demo/build/preview.mjs",
+    "demo:release-check": "node scripts/demo_release_check.mjs"
   },
   "dependencies": {
     "@ant-design/icons": "^6.3.4",

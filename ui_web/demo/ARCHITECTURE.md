@@ -62,3 +62,5 @@ The sole runtime lives in demo/runtime and consumes the validated private snapsh
 Its adapter reuses feature public validators and Presentation. Identity contains Bundle
 ID, Preset, contract and actual source description. Eight shared pages use hash routes.
 Explorer remains hidden from sidebar navigation. Invalid input stops successful rendering.
+
+Release content requirements enter [Release Requirements](release/ARCHITECTURE.md).

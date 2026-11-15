@@ -20,3 +20,6 @@
 
 # Sole Demo dataset: Manifest hashes require canonical LF checkout bytes.
 /ui_web/demo/bundles/*.json text eol=lf
+
+# Release requirement identity uses exact committed bytes on every platform.
+/ui_web/demo/release/*.json text eol=lf
