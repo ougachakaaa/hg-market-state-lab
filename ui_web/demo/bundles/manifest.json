@@ -1,0 +1,40 @@
+{
+  "bundles": [
+    {
+      "bundle_id": "basis",
+      "path": "basis.json",
+      "sha256": "33ab2da5a36b8b0b862856322ca7b9f1f1a98bee1913fedc55b3a1dc7db77397"
+    },
+    {
+      "bundle_id": "catalog",
+      "path": "catalog.json",
+      "sha256": "af90ab7ec17bce2bb24678b6a9a786fa6688d9a4bdff5ed8cb887b3ea2e7982d"
+    },
+    {
+      "bundle_id": "chain",
+      "path": "chain.json",
+      "sha256": "d0c49192d9094cc4ed839008e3123e57624d2026708fcbb960e176ac28e47294"
+    },
+    {
+      "bundle_id": "expiry_to_M1_v1",
+      "path": "expiry_to_M1_v1.json",
+      "sha256": "11edb220ed34cf8ea0239bacf55294970a7cfbae86cf6849441657d4dbbb2720"
+    },
+    {
+      "bundle_id": "expiry_to_Q1_v1",
+      "path": "expiry_to_Q1_v1.json",
+      "sha256": "2492ac91e1566e241dd4543df05e42fe3f435794d6d1d91659a538562182475f"
+    },
+    {
+      "bundle_id": "premium",
+      "path": "premium.json",
+      "sha256": "15dd54f4a51df1ad82232b11fde4d0b3cfadd7cd18d70f45c18b20324735dd41"
+    },
+    {
+      "bundle_id": "publications",
+      "path": "publications.json",
+      "sha256": "8957b3c07a8b7fa1cd1afd04ec2ffcb5aa444d38c047a8389a2cefe201c22024"
+    }
+  ],
+  "manifest_format": "demo_manifest_v1"
+}
