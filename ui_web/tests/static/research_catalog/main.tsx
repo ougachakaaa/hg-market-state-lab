@@ -1,7 +1,7 @@
 import { Button, Flex, Typography } from 'antd'
 import { createRoot } from 'react-dom/client'
 import AppUiProvider from '../../../src/app/AppUiProvider'
-import { useHashRoute } from '../../../src/demo/shell/hashRoutes'
+import { useHashRoute } from '../../../demo/runtime/hashRoutes'
 import { ResearchOverviewPresentation, useStaticCatalog } from '../../../src/features/research_catalog/presentation'
 import { embeddedCatalog } from '../../../src/features/research_catalog/testing/catalogFixture'
 import '../../../src/index.css'

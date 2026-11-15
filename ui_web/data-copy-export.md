@@ -80,7 +80,7 @@ Shared CSV utility 仅拥有 ordered header、scalar encoding、quoting、BOM/CR
 [Static Demo](src/demo/ARCHITECTURE.md) 保留正式 UI 已具备的本地 Copy/Export：source 是完整、通过同一正式契约校验的当前 embedded Example 业务 payload，不是浏览器实际收到的 HTTP response。上述 successful-response/current-result 条款在 Demo 对应 validated Example ready 状态；静态 loading/invalid/error 不暴露旧 source，不创建假的 Query/Run lifecycle。Premium Inspector 和结果旁必须明确 static origin (V2 real_market; Synthetic only for historical V1/test data) 来源，复制/下载入口的说明同样可见；不能把 Example 声称为实时市场或在线请求结果。Raw、Context V1、CSV 内容/字段、precision、完整性与下载反馈规则不变，不把 Demo metadata 加入 Raw 或扩展 Context schema；来源披露由相邻 UI 承担。Presentation filters 不改变完整 Example source，复制导出仍不发请求。两个 feature 的 visualization authority 中 actual-response 要求均按此区分 Production 与 Static 来源。
 
 V2 provenance and local development/public admission follow the
-[Example contract](src/demo/EXAMPLES.md) and [Authenticity / Rights](src/demo/AUTHENTICITY.md).
+Example contract (retired; Git history) and Authenticity / Rights (retired; Git history).
 Private local Copy/Export does not grant public redistribution permission; review the actual
 download content before public inclusion. Pending source wording changes belong to the
-[implementation handoff](src/demo/IMPLEMENTATION.md); R0 changes authority only.
+implementation handoff (retired; Git history); R0 changes authority only.

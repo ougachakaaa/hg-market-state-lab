@@ -13,10 +13,10 @@ it('validates the embedded report once and exposes the fixed request identity', 
   expect(result.current.status).toBe('validated')
   if (result.current.status !== 'validated') throw new Error('expected a validated example')
   expect(result.current.data.request).toEqual({
-    case: 'futures_basis_v1', product_code: 'IM', start_date: '2024-09-02', end_date: '2024-10-31', analysis_profile: 'r01a_standard_v1',
+    case: 'futures_basis_v1', product_code: 'IM', start_date: '2024-10-18', end_date: '2024-10-21', analysis_profile: 'r01a_standard_v1',
   })
   expect(result.current.data.report.profile).toBe('futures_basis_report_evidence_v1')
-  expect(result.current.data.report.request.observation).toMatchObject({ start_date: '2024-09-02', end_date: '2024-10-31' })
+  expect(result.current.data.report.request.observation).toMatchObject({ start_date: '2024-10-18', end_date: '2024-10-21' })
   expect(embeddedReportPayload).toEqual(before)
   rerender()
   expect(result.current.status).toBe('validated')

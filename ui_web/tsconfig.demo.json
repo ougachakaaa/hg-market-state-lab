@@ -1,5 +1,0 @@
-{
-  "extends": "./tsconfig.app.json",
-  "include": ["src/demo/futures_basis/main.tsx", "vite.demo.config.ts"],
-  "compilerOptions": { "types": ["vite/client", "node"] }
-}

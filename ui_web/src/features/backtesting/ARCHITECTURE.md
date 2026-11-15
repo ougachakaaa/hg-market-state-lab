@@ -22,7 +22,7 @@ Editable form state and accepted immutable Run request are separate. Only clicki
 开始回测 submits; Enter, edits, effects and read retries never POST a Run.
 A synchronous guard prevents duplicate pending POSTs. No automatic POST replay exists,
 including lost responses that might already have created a Run. Busy creates no local Run.
-Successful Submit pushes `/backtesting?run_id=<opaque>`. Reload and Back/Forward
+Successful Submit pushes `/backtesting/futures-roll-long?run_id=<opaque>`. Reload and Back/Forward
 restore Status; identity changes abort previous polling/result work and immediately
 hide old results. URL stores only Run identity; no result/market data enters browser storage.
 Run presentation phases: IDLE, STATUS_LOADING, PENDING, RUNNING, COMPLETED,
@@ -52,7 +52,7 @@ and Zoom/Pan/Reset. Requested and observed windows remain distinct. Evidence is 
 expandable online summary, not the full offline package. Explain ideal Close gross
 execution, no fees/slippage/margin, index price benchmark, historical metadata
 assumptions, and cache completeness versus freshness. Evidence wording is origin-aware:
-Static labels the actual embedded origin under the [Example contract](../../demo/EXAMPLES.md),
+Static labels the actual embedded origin under the Example contract (retired; Git history),
 with real-market provenance for formal V2 and Synthetic disclosure for test-only results, and does not claim server execution, a full
 offline evidence package, or current market/cache/Provider readiness. No export/copy/download
 capability.
@@ -101,15 +101,15 @@ Shared presentation remains here, not in parallel Demo pages.
 
 ## V2 origin policy reconciliation
 
-[Demo Example authority](../../demo/EXAMPLES.md) owns formal V2 real-market dates and
-packaging; [authenticity and rights](../../demo/AUTHENTICITY.md) owns evidence and admission.
+Demo Example authority (retired; Git history) owns formal V2 real-market dates and
+packaging; authenticity and rights (retired; Git history) owns evidence and admission.
 This feature owns only their presentation. Static delivery is not a Synthetic source label
 or proof of authenticity. Preserve historical V1/test disclosures, use actual real-market
 origin for V2, and never promote regression inputs to formal Examples. WP-B propagates an explicit validated Example source statement from static composition
 into shared Result Evidence through UI-only `sourceDisclosure`; delivery mode never
 infers real-market origin. Historical Synthetic defaults and Production evidence remain
 unchanged. Admission and provenance ownership stay in the
-[private build contract](../../demo/PRIVATE_BUILD.md).
+private build contract (retired; Git history).
 
 ## INT-1 shared runtime reconciliation
 
@@ -121,3 +121,11 @@ M1/Q1 selection remounts Result so each selected Example starts in Trading Days.
 ## Incompatible local cache presentation
 
 For producer reason `cache_incompatible`, readiness identifies the affected dependency and explains that its local cache requires rebuilding. A failed Run displays local market-cache incompatibility and asks the maintainer to rebuild the affected Dataset before explicit resubmission. Neither view recommends network retries for this signal, deletes caches, or automatically resubmits. Unknown reasons retain the generic fallback.
+
+## Discovery
+
+Backtesting Overview at `/backtesting` presents one completed 期货展期做多回测 card
+with purpose and navigation to `/backtesting/futures-roll-long`. It is a shared pure
+application Presentation, independent of Preflight and Run controllers. Completion
+uses the UI system success text and denotes Web entry availability. Legacy Production
+Run URLs normalize according to Workspace authority before mounting this feature.

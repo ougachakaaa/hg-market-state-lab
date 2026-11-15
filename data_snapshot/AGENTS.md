@@ -26,14 +26,10 @@
 - 不在 Source Capture 中实现 analyzer-specific filtering、join、formula 或市场判断；不在 delivery adapter 中重算 domain semantics。
 - Repository 本地配置统一位于 repository root `.env`（tracked template 为根 `.env.example`），经 `lab_config` 读取；`.env` 与 `data/raw/**` 是本地 runtime artifacts，不得提交。不在 `data_snapshot/` 建立独立 `.env`。
 
-## 验证
+## Scoped verification
 
-在 repository root 按影响范围运行，提交前本模块完整验证默认为：
-
-```bash
-poetry run pytest data_snapshot/tests
-poetry run ruff check data_snapshot
-poetry run mypy data_snapshot
-```
-
-若 `ui_http` HTTP DTO 或 OpenAPI 发生变化，还必须按 [../ui_http/AGENTS.md](../ui_http/AGENTS.md) 与 [../ui_web/AGENTS.md](../ui_web/AGENTS.md) 执行 transport/frontend contract 检查。
+Follow the [root verification policy](../AGENTS.md#verification-policy-user-decision-2026-11-14).
+Select only directly affected business test files/cases. No default full-module or
+cross-module regression, topology, browser, live-data or deployment acceptance.
+Retain business invariants and fixtures; record unavailable checks as NOT VERIFIED.
+Do not modify real market data or caches to satisfy tests.

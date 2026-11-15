@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import fixture from '../../../demo/futures_basis/report.v1.json'
+import { fixture } from '../testing/embeddedReportFixture'
 import {
   matchesResponse,
   products,
@@ -23,7 +23,7 @@ describe('Futures Basis pure result validation', () => {
     expect(result.report.definition_version).toBe('futures_basis_definition_v1')
     expect(result.report.status).toBe('complete')
     expect(result.report.request.observation).toMatchObject({
-      product_code: 'IM', start_date: '2024-09-02', end_date: '2024-10-31', case: 'futures_basis_v1',
+      product_code: 'IM', start_date: '2024-10-18', end_date: '2024-10-21', case: 'futures_basis_v1',
     })
     expect(result.request).toEqual(testOnlyRequest)
     expect(input).toEqual(before)
@@ -72,7 +72,7 @@ describe('Futures Basis pure result validation', () => {
     expect(() => validateEmbeddedReport(definition)).toThrow(/definition version/)
 
     const view = payload()
-    view.report.views.history.basis_value.version = 99
+    Object.assign(view.report.views.history.basis_value, { version: 99 })
     expect(() => validateEmbeddedReport(view)).toThrow()
 
     expect(() => validateEmbeddedReport({ request: testOnlyRequest, report: null })).toThrow()

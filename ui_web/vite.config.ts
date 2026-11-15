@@ -1,5 +1,5 @@
 import react from '@vitejs/plugin-react'
-import { defineConfig } from 'vitest/config'
+import { configDefaults, defineConfig } from 'vitest/config'
 
 // https://vite.dev/config/
 export default defineConfig({
@@ -23,6 +23,8 @@ export default defineConfig({
     },
   },
   test: {
+    // Manual diagnostics never run through npm test.
+    exclude: [...configDefaults.exclude, 'tests/isolation/**', 'tests/tooling/public_release.test.ts'],
     // JSDOM + Ant Design integration tests are CPU-heavy. Bound scheduling,
     // retain per-file isolation and the default 5s regression deadline.
     maxWorkers: 1,

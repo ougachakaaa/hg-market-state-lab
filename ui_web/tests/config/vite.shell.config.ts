@@ -3,14 +3,14 @@ import { isAbsolute, relative } from 'node:path'
 import ts from 'typescript'
 import { mergeConfig, type Plugin } from 'vite'
 import { workspaceRoutes, workspaceAreas } from '../../src/app/routeInventory.ts'
-import demoConfig from '../../vite.demo.config.ts'
+import demoConfig from './vite.static-base.ts'
 
 const web = fileURLToPath(new URL('../..', import.meta.url))
 const allowed = new Set([
   'tests/static/shell/index.html', 'tests/static/shell/main.tsx',
-  'tests/static/shell/StaticShellHarness.tsx', 'src/demo/shell/hashRoutes.ts',
+  'tests/static/shell/StaticShellHarness.tsx', 'demo/runtime/hashRoutes.ts',
   'src/app/ApplicationShell.tsx', 'src/app/AppUiProvider.tsx',
-  'src/app/DailyDataLanding.tsx', 'src/app/routeInventory.ts',
+  'src/app/BacktestingOverview.tsx', 'src/app/DailyDataLanding.tsx', 'src/app/routeInventory.ts',
   'src/shared/ui/theme.ts', 'src/index.css',
 ])
 const projectPath = (id: string) => relative(web, id.split('?')[0]).replaceAll('\\', '/')
@@ -58,7 +58,7 @@ function shellIsolation(): Plugin {
   }
 }
 
-// Verification only; V1 release entry and .build/tests/v1 are untouched.
+// Independent static Presentation verification.
 export default mergeConfig(demoConfig, {
   root: fileURLToPath(new URL('../static/shell', import.meta.url)),
   plugins: [shellIsolation()],

@@ -41,23 +41,10 @@
 - 所有 Python tooling 从 repository root 使用唯一根环境；module directory 不建立
   module-local `.env` / `.venv` / Poetry project。
 
-## 验证
+## Scoped verification
 
-Authority-only 修改必须检查 Markdown links/anchors/reachability、唯一 Owner、
-导航 topology、公共 API 静态一致性和 Markdown-only diff。当前 W2 reconciliation
-同时运行现有 Backtesting 测试及下列 topology/architecture 检查；不得通过修改测试
-关闭文档与实现差异，未实现的强制契约登记到当前 Implementation Drift。
-
-在 repository root 按影响范围运行：
-
-```bash
-poetry run pytest market_backtesting/tests
-poetry run pytest data_snapshot/tests/test_authority_topology.py ui_http/tests/test_architecture.py
-poetry run ruff check market_backtesting
-poetry run mypy market_backtesting
-git diff --check
-```
-
-跨模块 contract 变更同时执行 producer 与 consumer 的相关检查；WP6/WP7 还必须执行
-`ui_http` / `ui_web` 的 contract 与浏览器验证。不得用 synthetic fixture 代替 WP8 的
-real-market acceptance，也不得声称未运行的矩阵已 PASS。
+Follow the [root verification policy](../AGENTS.md#verification-policy-user-decision-2026-11-14).
+Select only directly affected business test files/cases. No default full-module or
+cross-module regression, topology, browser, live-data or deployment acceptance.
+Retain business invariants and fixtures; record unavailable checks as NOT VERIFIED.
+Do not modify real market data or caches to satisfy tests.

@@ -1,0 +1,24 @@
+{
+  "bundle_format": "demo_bundle_v1",
+  "bundle_id": "publications",
+  "preset_id": "publications",
+  "request": {
+    "limit": 50
+  },
+  "result": {
+    "analyses": [],
+    "manifests": [],
+    "pages": [
+      {
+        "data": [],
+        "next_cursor": null
+      }
+    ],
+    "views": []
+  },
+  "result_contract": "research_publication:PublicationList+Manifest+Analysis+ChartView",
+  "source": {
+    "description": "Explicit authenticated HTTP capture. Publication pages are sequential reads without Store snapshot isolation; distribution authorization is separate.",
+    "kind": "formal_http"
+  }
+}

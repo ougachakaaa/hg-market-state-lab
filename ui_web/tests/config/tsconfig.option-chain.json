@@ -1,5 +1,5 @@
 {
-  "extends": "../../tsconfig.demo.json",
+  "extends": "../../tsconfig.app.json",
   "include": [
     "../static/mo_option_chain/main.tsx",
     "./vite.option-chain.config.ts"

@@ -13,8 +13,7 @@ slice; WP8 implements it and the offline reader regression.
 
 ## Application composition
 
-The surface is discovered from Research Overview and the Descriptive Research navigation
-category. Research Explorer remains available as a secondary result reader. Research remains the default entry.
+The surface is discovered from Research Overview and directly under Research navigation. Research Explorer remains available as a secondary result reader. Research remains the default entry.
 This is a sibling bounded
 context: it does not read or reinterpret another feature's DTO, state, chart or
 result.
@@ -197,7 +196,7 @@ application/auth import or backend. It may import only the pure reader subpath.
 The online page uses the same reader under the application theme. No second
 six-section implementation and no second financial projection is authorized.
 
-The public [static demo](../../demo/futures_basis/ARCHITECTURE.md) also composes
+The public static demo (retired; Git history) also composes
 this pure reader with `demo` disclosure mode and horizontally scrollable chart
 frames on narrow screens. All six sections, presentation controls and producer
 facts stay shared. Online and offline modes retain their delivery instructions.
@@ -267,7 +266,7 @@ or automatic shift to yesterday. Failed-Run retry first loads/checks its request
 
 ## Runtime scope
 
-Query inputs, protected HTTP reads, preflight, retries and Run lifecycle in this feature authority describe the Production controller. The same feature-owned Presentation also serves [Static Demo Runtime](../../demo/ARCHITECTURE.md) using [validated embedded Examples](../../demo/EXAMPLES.md), fixed visible request parameters and local presentation state. Static composition never mounts the production controller or fabricates its lifecycle; it preserves this feature's result/visualization semantics and applicable local Copy/Export. Shared presentation remains here, not in parallel Demo pages.
+Query inputs, protected HTTP reads, preflight, retries and Run lifecycle in this feature authority describe the Production controller. The same feature-owned Presentation also serves [Static Demo Runtime](../../demo/ARCHITECTURE.md) using validated embedded Examples (retired; Git history), fixed visible request parameters and local presentation state. Static composition never mounts the production controller or fabricates its lifecycle; it preserves this feature's result/visualization semantics and applicable local Copy/Export. Shared presentation remains here, not in parallel Demo pages.
 
 ## Shared page presentation and static composition (D2-E)
 
@@ -297,12 +296,23 @@ offline delivery retain their fragment section links.
 
 ## V2 origin policy reconciliation
 
-[Demo Example authority](../../demo/EXAMPLES.md) owns formal V2 real-market dates and
-packaging; [authenticity and rights](../../demo/AUTHENTICITY.md) owns evidence and admission.
+Demo Example authority (retired; Git history) owns formal V2 real-market dates and
+packaging; authenticity and rights (retired; Git history) owns evidence and admission.
 This feature owns only their presentation. Static delivery is not a Synthetic source label
 or proof of authenticity. Preserve historical V1/test disclosures, use actual real-market
 origin for V2, and never promote regression inputs to formal Examples. WP-B propagates an explicit validated Example source statement from static composition
 into the shared reader Evidence through UI-only `sourceDisclosure`; delivery mode never
 infers real-market origin. Historical Synthetic defaults and Production/Offline evidence
 remain unchanged. Admission and provenance ownership stay in the
-[private build contract](../../demo/PRIVATE_BUILD.md).
+private build contract (retired; Git history).
+
+## Research introduction
+
+Shared FuturesBasisPresentation shows 关于本研究 below the heading and above parameters
+in both runtimes, collapsed by default, with exactly two fields.
+
+- 研究目的 — 观察股指期货相对现货指数的价格偏离，理解不同合约期限下的贴水特征及其历史变化。
+- 研究方式 — 基于历史交易日数据，统计并可视化不同期限合约的基差、分布和贴水持续区间。
+
+Expansion is local UI state preserving HTTP requests, Run, report, chart state, URL and
+section navigation. It contains no internal identities, endpoints or configuration.

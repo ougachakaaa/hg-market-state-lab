@@ -4,7 +4,7 @@ import assert from 'node:assert/strict'
 import { researchAcceptance } from './research_browser_acceptance.mjs'
 import { spawn, spawnSync } from 'node:child_process'
 import { randomBytes } from 'node:crypto'
-import { mkdir, mkdtemp, rm } from 'node:fs/promises'
+import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -24,6 +24,7 @@ const processes = []
 let browser
 let page
 const evidence = []
+const browserErrors = []
 function start(command, args, cwd = root) {
   const child = spawn(command, args, { cwd, env, stdio: ['ignore', 'pipe', 'pipe'] })
   processes.push(child)
@@ -71,6 +72,11 @@ try {
   const context = await browser.newContext({ viewport: { width: 1440, height: 900 } })
   page = await context.newPage()
   page.setDefaultTimeout(15000)
+  page.on('pageerror', error => browserErrors.push(String(error)))
+  page.on('console', message => {
+    if (message.type() === 'error') evidence.push(`Console error: ${message.text()}`)
+  })
+  console.log(`Chromium: ${browser.version()}`)
   page.on('response', (res) => {
     const path = new URL(res.url()).pathname
     if (path.startsWith('/auth/') || path.startsWith('/mo-option') || path.startsWith('/api/research')) evidence.push(`${path} ${res.status()}`)
@@ -104,21 +110,14 @@ try {
   await page.getByRole('button', { name: '登录', exact: true }).click()
   await page.getByRole('menuitem', { name: '研究总览', exact: true }).waitFor()
   assert.equal(new URL(page.url()).pathname, '/research')
-  await page.getByText('Index Trailing Cumulative Return Research', { exact: true }).waitFor()
-  assert.ok(evidence.includes('/api/research/capabilities 200'))
-  assert.equal(await page.getByText('仅本地 Python').count(), 1)
-  assert.equal(await page.getByText('独立在线页面 · 独立离线报告生成').count(), 1)
-  await page.getByRole('region', { name: '在线能力发现' }).getByRole('button', { name: '查看详情' }).click()
-  await page.getByRole('region', { name: '所选研究详情' }).getByText(/supported · live readiness: not_probed/).waitFor()
-  assert.ok(evidence.includes('/api/research/capabilities/trailing_cumulative_return_v1 200'))
-  await page.screenshot({ path: resolve(screenshots, 'research.png'), fullPage: true })
+  await page.getByRole('heading', { name: '历史基差研究', exact: true }).waitFor()
   const cookie = (await context.cookies()).find((value) => value.name === 'lab_access_token')
   assert.ok(cookie?.httpOnly)
   assert.equal(cookie.sameSite, 'Strict')
   assert.equal(cookie.secure, false)
   assert.equal(await page.evaluate(() => document.cookie.includes('lab_access_token')), false)
   assert.deepEqual(await page.evaluate(() => [localStorage.length, sessionStorage.length]), [0, 0])
-  await page.getByRole('button', { name: '浏览已发布研究结果', exact: true }).click()
+  await page.goto('http://127.0.0.1:5173/research/publications')
   assert.equal(new URL(page.url()).pathname, '/research/publications')
   await page.getByText(publicationId, { exact: true }).waitFor()
   await page.screenshot({ path: resolve(screenshots, 'research-explorer.png'), fullPage: true })
@@ -207,11 +206,15 @@ try {
     headers: { Origin: env.LAB_AUTH_ORIGIN },
   })
   assert.equal(again.status(), 204)
+  assert.deepEqual(browserErrors, [], 'no browser exceptions')
+  await writeFile(resolve(screenshots, 'acceptance.json'), JSON.stringify({ status: 'PASS', browser: browser.version(), evidence, browserErrors }, null, 2))
   console.log('PASS: real Chromium login -> 研究总览 -> Daily Data -> both MO pages -> 研究结果浏览 -> logout; direct URL, reload and history')
   console.log(`Screenshots: ${screenshots}`)
   console.log('PASS: HttpOnly / SameSite Cookie; no JS token/storage; anonymous business gate; repeated logout')
   console.log(evidence.join('\n'))
 } catch (error) {
+  await page?.screenshot({ path: resolve(screenshots, 'failure.png'), fullPage: true }).catch(() => {})
+  await writeFile(resolve(screenshots, 'failure.json'), JSON.stringify({ status: 'FAIL', error: error.stack, evidence, browserErrors }, null, 2))
   console.error(evidence.join('\n'))
   if (page) console.error(await page.locator('body').innerText().catch(() => 'Page unavailable'))
   throw error

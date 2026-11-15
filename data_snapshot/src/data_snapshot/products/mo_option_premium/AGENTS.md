@@ -5,3 +5,9 @@
 - 从 [ARCHITECTURE.md](ARCHITECTURE.md) 进入：data task 读 `data.md`，analytical/domain task 读 `backend.md`，service/orchestration task 读 `service-contract.md`，HTTP task 读 [ui_http HTTP contract](../../../../../ui_http/products/mo_option_premium/http-contract.md)。
 - Premium product/application implementation 必须留在本 bounded context，且不得依赖 sibling product Raw、read DTO 或 final artifact；本 context 不拥有 FastAPI、HTTP DTO 或 OpenAPI，HTTP transport implementation 的 canonical owner 是 `ui_http`。
 - HTTP 只投影完整 product result，不得重算、修复或发明 analytical semantics。
+
+## Verification scope override
+
+The [root verification policy](../../../../../AGENTS.md#verification-policy-user-decision-2026-11-14) governs execution.
+Only directly changed behavior gets targeted tests; full/system/browser/platform checks
+are manual only. Earlier verification examples are not mandatory task gates.

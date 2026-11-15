@@ -1,6 +1,6 @@
 # D1 shared Shell acceptance — 2026-11-12
 
-This is implementation evidence under [Demo implementation handoff](../IMPLEMENTATION.md),
+This is implementation evidence under [Demo implementation handoff](../ARCHITECTURE.md),
 not Demo V2 readiness or a new business authority.
 
 ## Baseline and scope

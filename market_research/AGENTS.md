@@ -35,8 +35,10 @@ Converter 与业务结果关联属于 Research，Statistics 不获取市场数�
 未来实现按真实 case colocate，仅在实际复用需求成立时提取共享能力。
 所有 Python tooling 从 repository root 使用唯一根环境。
 
-修改后执行 `poetry run pytest market_research/tests`、
-`poetry run pytest data_snapshot/tests/test_authority_topology.py ui_http/tests/test_architecture.py`、
-`poetry run ruff check market_research`、`poetry run mypy market_research/tests` 与
-`git diff --check`，检查 links / anchors、根入口可达性与完整 diff。
-实现变更补充受影响行为验证；跨模块改动同时执行对应 owner 的相关检查。
+## Scoped verification
+
+Follow the [root verification policy](../AGENTS.md#verification-policy-user-decision-2026-11-14).
+Select only directly affected business test files/cases. No default full-module or
+cross-module regression, topology, browser, live-data or deployment acceptance.
+Retain business invariants and fixtures; record unavailable checks as NOT VERIFIED.
+Do not modify real market data or caches to satisfy tests.

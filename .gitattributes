@@ -6,11 +6,6 @@
 /ui_http/tests/fixtures/research_plan.json text eol=lf
 /ui_http/tests/fixtures/research_preview.json text eol=lf
 /ui_http/tests/fixtures/research_success.json text eol=lf
-/ui_web/src/demo/futures_basis/report.v1.json text eol=lf
-/ui_web/src/demo/futures_basis/rollback-inventory.json text eol=lf
-/ui_web/src/demo/futures_basis/rollback-v1.tar.gz -text
-/ui_web/src/demo/public/examples/evidence/review.md text eol=lf
-/ui_web/src/demo/public/examples/package.json text eol=lf
 /ui_web/src/features/backtesting/api/result.fixture.json text eol=lf
 /ui_web/src/features/research_catalog/api/catalog.fixture.json text eol=lf
 /ui_web/src/shared/visualization/fixtureV2.json text eol=lf
@@ -22,3 +17,9 @@
 /workbench/tests/fixtures/capability.json text eol=lf
 /workbench/tests/fixtures/natural_language_candidate.json text eol=lf
 /workbench/tests/fixtures/planning_candidate.json text eol=lf
+
+# Sole Demo dataset: Manifest hashes require canonical LF checkout bytes.
+/ui_web/demo/bundles/*.json text eol=lf
+
+# Release requirement identity uses exact committed bytes on every platform.
+/ui_web/demo/release/*.json text eol=lf

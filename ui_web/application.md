@@ -4,7 +4,9 @@
 
 ## Dual Runtime composition
 
-Production 与 Static Demo 共用正式 Shell、导航和 feature Presentation；application composition 分别选择 Production Auth/HTTP controllers 与 anonymous static Example controllers。Shared Shell 的展示边界不依赖 Auth、在线 Page 或业务请求 Hook；身份/退出动作、路由和 feature content 由 composition 提供。Production 的认证 gate 与下述 lifecycle 维持不变，仅 Production 可 mount 在线 controller。Demo 细节进入 [Runtime authority](src/demo/ARCHITECTURE.md)，其 feature Presentation 仍由正式 feature 拥有；不得复制 Demo 业务页面。本文中的登录、请求、preflight、Run lifecycle 均描述 Production；静态 runtime 不模拟这些状态。
+Production 与 Static Demo 共用正式 Shell、导航和 feature Presentation；application composition 分别选择 Production Auth/HTTP controllers 与 anonymous static Bundle controllers (DDB-04)。Shared Shell 的展示边界不依赖 Auth、在线 Page 或业务请求 Hook；身份/退出动作、路由和 feature content 由 composition 提供。Production 的认证 gate 与下述 lifecycle 维持不变，仅 Production 可 mount 在线 controller。Demo 细节进入 [Demo authority](demo/ARCHITECTURE.md)，其 feature Presentation 仍由正式 feature 拥有；不得复制 Demo 业务页面。本文中的登录、请求、preflight、Run lifecycle 均描述 Production；静态 runtime 不模拟这些状态。
+
+The sole static composition lives in demo/runtime. Formal FastAPI HTTP business results require Bundle admission before static display. Controlled synthetic fixtures belong only to tests. Demo Build requires the real admitted dataset; publication integration belongs to DDB-05.
 
 ## 1. Application Surfaces
 
@@ -13,10 +15,10 @@ Production Web application 以 Research 为登录后默认入口，包含三个�
 ```text
 Daily Data → MO Option Chain / MO Premium Plane（已实现）
 Research → Research Catalog & Workspace / Research Explorer（已实现）；Futures Basis Online Research（已实现 Web Consumer）
-Backtesting → Futures Roll Long（WP7 Web Consumer 已实现）
+Backtesting → Backtesting Overview / Futures Roll Long（WP7 Web Consumer 已实现）
 ```
 
-登录后默认进入 `/research`，不提供独立宣传首页。三个既有在线 feature 保持可发现、可访问且相互独立；WP3 Research Catalog 是只读发现入口。Futures Basis Online Research 已完成 WP8-B Web Consumer，并复用在线和离线共享 Reader。导航和 URL 由 [Workspace authority](workspace.md) 细化。
+登录后默认进入 `/research`，不提供独立宣传首页。既有在线 feature 保持可访问且相互独立。Research Overview 是面向用户的 Research Study 导览，展示研究目的与独立 Web 页面的完成状态；不以 Capability readiness 推断完成状态。Research Explorer 是辅助成果浏览工具，保留正式路由，通过已知 URL 与浏览器历史访问，不作为 Study 或侧栏项目。Capability 发现继续由原 controller 与 validator 拥有。Futures Basis Online Research 已完成 WP8-B Web Consumer，并复用在线和离线共享 Reader。导航和 URL 由 [Workspace authority](workspace.md) 细化。
 
 ## 2. Application Ownership
 
@@ -75,3 +77,10 @@ Application 只消费服务端 identity；JWT 只由浏览器 HttpOnly Cookie �
 Auth request adaptation、generated schema/types 及 React lifecycle 属于 application 的 Auth concern（可放在 `src/app/auth/`，incidental filenames 由实现决定），独立于产品 DTO。Domain-neutral `shared/http` 可以传递 401/credentials 信号，但不能依赖 app/feature 或解释产品 state；由 application 显式组合 callback/context。不得为了全局 gate 引入通用 feature runtime。
 
 G3 的本地 dev proxy 增加 `/auth`，保持正常 frontend origin 和 Set-Cookie；浏览器不直接调用不同 port 的 backend。Cookie/CSRF 和 loopback/production 配置遵循 Auth authority。无 local bypass，UI gate 也不能替代后端 access check。无状态 logout 在途 Cookie 竞争的限制由 Auth authority 明示，frontend 不承诺全设备即时撤销。
+
+## Backtesting overview composition
+
+The application composes a transport-free Backtesting overview at `/backtesting` and
+mounts the existing execution Page only at `/backtesting/futures-roll-long`. Shared
+Shell and overview Presentation support static composition. The static Shell harness
+verifies both identities; official Bundle composition remains DDB-04 work.

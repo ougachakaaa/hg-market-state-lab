@@ -1,5 +1,5 @@
 {
-  "extends": "../../tsconfig.demo.json",
+  "extends": "../../tsconfig.app.json",
   "include": [
     "../static/shell/main.tsx",
     "./vite.shell.config.ts"

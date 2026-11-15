@@ -46,6 +46,7 @@ requires = ["poetry-core>=2.0.0"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.pytest.ini_options]
+markers = ["diagnostic: manual-only harness/platform check; requires --diagnostics"]
 testpaths = [
     "ui_cli/tests",
     "config/tests",

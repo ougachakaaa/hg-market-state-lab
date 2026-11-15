@@ -1,0 +1,69 @@
+{
+  "format": "demo_release_requirements_v1",
+  "bundles": {
+    "basis": {
+      "request": {
+        "product_code": "IM",
+        "start_date": "2026-03-01",
+        "end_date": "2026-09-30"
+      },
+      "content": "basis",
+      "coverage": {
+        "first": "2026-03-02",
+        "last": "2026-09-30"
+      }
+    },
+    "catalog": {
+      "request": {},
+      "content": "catalog"
+    },
+    "chain": {
+      "request": {
+        "target_trade_date": "2026-09-30",
+        "option_product": "MO",
+        "price_type": "close"
+      },
+      "content": "chain"
+    },
+    "expiry_to_M1_v1": {
+      "request": {
+        "product_code": "IM",
+        "start_date": "2026-03-01",
+        "end_date": "2026-09-30",
+        "strategy_profile": "expiry_to_M1_v1"
+      },
+      "content": "backtest",
+      "coverage": {
+        "first": "2026-03-02",
+        "last": "2026-09-30"
+      }
+    },
+    "expiry_to_Q1_v1": {
+      "request": {
+        "product_code": "IM",
+        "start_date": "2026-03-01",
+        "end_date": "2026-09-30",
+        "strategy_profile": "expiry_to_Q1_v1"
+      },
+      "content": "backtest",
+      "coverage": {
+        "first": "2026-03-02",
+        "last": "2026-09-30"
+      }
+    },
+    "premium": {
+      "request": {
+        "as_of": "2026-09-30",
+        "option_product": "MO",
+        "price_type": "close"
+      },
+      "content": "premium"
+    },
+    "publications": {
+      "request": {
+        "limit": 50
+      },
+      "content": "publications"
+    }
+  }
+}

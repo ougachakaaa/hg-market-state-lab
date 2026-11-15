@@ -19,14 +19,10 @@
 - FastAPI implementation、HTTP product adapters 与 launcher 位于本模块；不得在 owning business module 中恢复 competing runtime。
 - HTTP DTO 或 OpenAPI 发生变化时，必须按 [ui_web rules](../ui_web/AGENTS.md) 执行 generated-contract feedback-loop；authority relocation 本身不得重写 generated artifacts。
 
-## 验证
+## Scoped verification
 
-Poetry environment 与 dependency graph 由 repository root 统一拥有。在 repository root 按影响范围运行，提交前本模块完整验证默认为：
-
-```bash
-poetry run pytest ui_http/tests
-poetry run ruff check ui_http
-poetry run mypy ui_http
-```
-
-同时检查根 authority 能经本模块 architecture 与 catalog 到达所有 HTTP contracts，并检查所有 Markdown 相对链接、旧 canonical contract 路径与重复 authority。若 wire contract 未改变，不生成 OpenAPI 或 TypeScript；若 HTTP DTO 或 OpenAPI 改变，还必须按 [ui_web rules](../ui_web/AGENTS.md) 运行 generated-contract feedback loop。提交前运行 `git diff --check` 并审阅完整 diff。
+Follow the [root verification policy](../AGENTS.md#verification-policy-user-decision-2026-11-14).
+Select only directly affected business test files/cases. No default full-module or
+cross-module regression, topology, browser, live-data or deployment acceptance.
+Retain business invariants and fixtures; record unavailable checks as NOT VERIFIED.
+Do not modify real market data or caches to satisfy tests.

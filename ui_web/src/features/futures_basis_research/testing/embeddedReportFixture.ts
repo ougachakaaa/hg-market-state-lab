@@ -1,16 +1,16 @@
-import fixture from '../../../demo/futures_basis/report.v1.json'
+import { readerFixture } from '../report/reader.fixture'
+const report = readerFixture()
+report.candidate_dates = ['2024-10-18', '2024-10-21']
+report.coverage.futures = { requested_units: 2, successful_units: 2, missing_units: 0, pending_units: 0, failed_units: 0, complete: true }
+export const fixture = { report }
 import type { EmbeddedReportPayload, ImmutableRequest } from '../api/validateResult'
 
-// Test-only embedded input for D2-E. The report payload is the committed V1 synthetic
-// fixture, reused verbatim with its original 2024 window and profile. It is not an official
-// D3 Example, not the 2026 target window, not current market data and not newly executed
-// research. The fixed request below is the Example's declared identity; validation must
-// prove it matches the report observation.
+// Independent business-test input; never a Demo dataset.
 export const testOnlyRequest: ImmutableRequest = {
   case: 'futures_basis_v1',
   product_code: 'IM',
-  start_date: '2024-09-02',
-  end_date: '2024-10-31',
+  start_date: '2024-10-18',
+  end_date: '2024-10-21',
   analysis_profile: 'r01a_standard_v1',
 }
 

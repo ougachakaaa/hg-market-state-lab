@@ -1,0 +1,12 @@
+{
+  "extends": "../../tsconfig.app.json",
+  "compilerOptions": {
+    "types": [
+      "node"
+    ],
+    "tsBuildInfoFile": "../../.build/cache/demo-tools.tsbuildinfo"
+  },
+  "include": [
+    "./*.ts"
+  ]
+}

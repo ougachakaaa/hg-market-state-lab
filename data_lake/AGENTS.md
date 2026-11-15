@@ -32,36 +32,10 @@
 - Kernel 结构任务先锁定模块架构的 Domain / Application / Ports / Adapters 依赖方向，再读受影响专题；Dataset 接入任务读取 COMPOSITION.md 与 owning Dataset 角色绑定，不按旧 Python 文件名推导 semantic owner。
 - Runtime state 不进入 Git；验证使用临时 SQLite / fake Source，不操作真实缓存。Canonical cache lifecycle / integrity 遵循 PERSISTENCE.md，credential convention 遵循 provider authority。
 
-## Verification rules
+## Scoped verification
 
-### Authority-only
-
-核对受影响语义及下层 specialization、唯一 semantic owner、相对链接与 section anchors、从根入口逐层可达性，并审阅完整 diff。移除历史记录不能移除仍有效的 contract；authority ↔ implementation 的真实 gap 必须明确报告。
-
-从 repository root 运行：
-
-```bash
-poetry run pytest data_snapshot/tests/test_authority_topology.py
-git diff --check
-```
-
-Authority-only 不修改 source、runtime data 或根 Python 配置；只有修复 authority link / topology verification 明确必要时才修改测试登记。新增或删除 authority 时同步 catalog / navigation 与现有 topology entries；补充只读检查验证所有当前 DataLake authority 的可达性及 anchors，不以 topology green 代替 semantic review。
-
-### Implementation
-
-从 repository root 按受影响范围运行；共享 core/module tests 位于 `data_lake/tests/`，Provider tests 位于 `providers/<provider-id>/tests/`，Dataset tests 位于 `datasets/<dataset-id>/tests/`，CLI consumer tests 位于 `ui_cli/tests/`：
-
-```bash
-poetry run python -c "import data_lake"
-poetry run python -c "import data_lake.datasets.tushare_trade_calendar, data_lake.datasets.tushare_index_daily, data_lake.datasets.tushare_equity_index_futures, data_lake.datasets.tushare_equity_index_options"
-poetry run pytest data_lake
-poetry run pytest ui_cli/tests
-poetry run ruff check data_lake ui_cli
-poetry run mypy data_lake ui_cli
-poetry run pytest ui_http/tests/test_architecture.py data_snapshot/tests/test_authority_topology.py
-git diff --check
-```
-
-检查公共 request/result/view、计数、逐 unit completeness / 原子提交、read-only 调用链、failure taxonomy 与 export snapshot；按受影响 execution / persistence / provider 专题验证其 invariants。Public facade tests 直接验证 attributes。Core / Dataset tests 不需要真实 credential，不调用外部 Source。
-
-跨 Dataset contract 同时验证 producer 与 consumer；CLI integration 同时验证 owning Dataset 与 lab delivery/exit codes。根 package registration / tooling 改变时，先从根执行 `poetry install`，再验证 installed imports（包含临时 cwd 的 isolated interpreter）及 `poetry run pytest`，不能只依赖 pytest pythonpath。提交前审阅完整 diff。
+Follow the [root verification policy](../AGENTS.md#verification-policy-user-decision-2026-11-14).
+Select only directly affected business test files/cases. No default full-module or
+cross-module regression, topology, browser, live-data or deployment acceptance.
+Retain business invariants and fixtures; record unavailable checks as NOT VERIFIED.
+Do not modify real market data or caches to satisfy tests.

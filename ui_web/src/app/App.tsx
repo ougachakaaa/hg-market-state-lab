@@ -9,6 +9,7 @@ import ResearchWorkspacePage from '../features/research_catalog/page/ResearchWor
 import BacktestingPage from '../features/backtesting/page/BacktestingPage'
 import AppUiProvider from './AppUiProvider'
 import ApplicationShell from './ApplicationShell'
+import BacktestingOverview from './BacktestingOverview'
 import DailyDataLanding from './DailyDataLanding'
 import AuthForm from './auth/AuthForm'
 import { useAuthentication } from './auth/useAuthentication'
@@ -32,7 +33,8 @@ function ProductionWorkspace({ user, signOut, path, navigate }: {
           : path === '/data' ? <DailyDataLanding navigate={navigate} />
             : path === '/data/mo-option-chain' ? <OptionChainPage />
               : path === '/data/mo-premium-plane' ? <PremiumPlanePage />
-                : <BacktestingPage />}
+                : path === '/backtesting' ? <BacktestingOverview navigate={navigate} />
+                  : <BacktestingPage />}
   </ApplicationShell>
 }
 

@@ -18,21 +18,10 @@ registration under the existing contracts. No CLI or HTTP service is published. 
 create a module-local Python environment, statistical framework or compatibility layer.
 Authority readiness is not runtime readiness.
 
-Run applicable checks from the repository root's unique Poetry environment:
+## Scoped verification
 
-```bash
-poetry run pytest market_statistics/tests market_research/tests
-poetry run pytest data_snapshot/tests/test_authority_topology.py ui_http/tests/test_architecture.py
-poetry run ruff check market_statistics market_research
-poetry run mypy market_statistics/src market_statistics/tests market_research/tests
-poetry run ruff check data_snapshot/tests/test_authority_topology.py
-poetry run mypy data_snapshot/tests/test_authority_topology.py
-git diff --check
-```
-
-Check relative links/anchors, root reachability, unique semantic ownership and the complete
-diff. Runtime changes must run numerical and failure-injection tests; architecture checks
-alone do not establish statistical correctness.
-NumPy is declared in the root project with a tested Python-compatible range. Backend
-upgrades must prove method conformance. STAT-01 added neither that dependency nor a
-runtime; STAT-IMP-01 supplies runtime evidence. Keep obligations distinct from executed checks.
+Follow the [root verification policy](../AGENTS.md#verification-policy-user-decision-2026-11-14).
+Select only directly affected business test files/cases. No default full-module or
+cross-module regression, topology, browser, live-data or deployment acceptance.
+Retain business invariants and fixtures; record unavailable checks as NOT VERIFIED.
+Do not modify real market data or caches to satisfy tests.

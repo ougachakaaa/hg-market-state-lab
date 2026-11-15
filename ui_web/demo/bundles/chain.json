@@ -1,0 +1,1396 @@
+{
+  "bundle_format": "demo_bundle_v1",
+  "bundle_id": "chain",
+  "preset_id": "chain",
+  "request": {
+    "option_product": "MO",
+    "price_type": "close",
+    "target_trade_date": "2026-09-30"
+  },
+  "result": {
+    "expiries": [
+      {
+        "calls": [
+          {
+            "instrument_id": "MO2610-C-6200.CFX",
+            "price": 1100,
+            "strike": 6200
+          },
+          {
+            "instrument_id": "MO2610-C-6300.CFX",
+            "price": 1007.4,
+            "strike": 6300
+          },
+          {
+            "instrument_id": "MO2610-C-6400.CFX",
+            "price": 952.6,
+            "strike": 6400
+          },
+          {
+            "instrument_id": "MO2610-C-6500.CFX",
+            "price": 810.2,
+            "strike": 6500
+          },
+          {
+            "instrument_id": "MO2610-C-6600.CFX",
+            "price": 710.4,
+            "strike": 6600
+          },
+          {
+            "instrument_id": "MO2610-C-6700.CFX",
+            "price": 622.2,
+            "strike": 6700
+          },
+          {
+            "instrument_id": "MO2610-C-6800.CFX",
+            "price": 515.2,
+            "strike": 6800
+          },
+          {
+            "instrument_id": "MO2610-C-6900.CFX",
+            "price": 424.8,
+            "strike": 6900
+          },
+          {
+            "instrument_id": "MO2610-C-7000.CFX",
+            "price": 338.8,
+            "strike": 7000
+          },
+          {
+            "instrument_id": "MO2610-C-7100.CFX",
+            "price": 257.8,
+            "strike": 7100
+          },
+          {
+            "instrument_id": "MO2610-C-7200.CFX",
+            "price": 182.8,
+            "strike": 7200
+          },
+          {
+            "instrument_id": "MO2610-C-7300.CFX",
+            "price": 123,
+            "strike": 7300
+          },
+          {
+            "instrument_id": "MO2610-C-7400.CFX",
+            "price": 81,
+            "strike": 7400
+          },
+          {
+            "instrument_id": "MO2610-C-7500.CFX",
+            "price": 49,
+            "strike": 7500
+          },
+          {
+            "instrument_id": "MO2610-C-7600.CFX",
+            "price": 29.8,
+            "strike": 7600
+          },
+          {
+            "instrument_id": "MO2610-C-7700.CFX",
+            "price": 17.8,
+            "strike": 7700
+          },
+          {
+            "instrument_id": "MO2610-C-7800.CFX",
+            "price": 11.6,
+            "strike": 7800
+          },
+          {
+            "instrument_id": "MO2610-C-7900.CFX",
+            "price": 7,
+            "strike": 7900
+          },
+          {
+            "instrument_id": "MO2610-C-8000.CFX",
+            "price": 5.4,
+            "strike": 8000
+          },
+          {
+            "instrument_id": "MO2610-C-8100.CFX",
+            "price": 3.6,
+            "strike": 8100
+          },
+          {
+            "instrument_id": "MO2610-C-8200.CFX",
+            "price": 2.6,
+            "strike": 8200
+          },
+          {
+            "instrument_id": "MO2610-C-8300.CFX",
+            "price": 2.2,
+            "strike": 8300
+          },
+          {
+            "instrument_id": "MO2610-C-8400.CFX",
+            "price": 1.6,
+            "strike": 8400
+          },
+          {
+            "instrument_id": "MO2610-C-8500.CFX",
+            "price": 1.6,
+            "strike": 8500
+          },
+          {
+            "instrument_id": "MO2610-C-8600.CFX",
+            "price": 1.4,
+            "strike": 8600
+          },
+          {
+            "instrument_id": "MO2610-C-8700.CFX",
+            "price": 1.2,
+            "strike": 8700
+          },
+          {
+            "instrument_id": "MO2610-C-8800.CFX",
+            "price": 1.2,
+            "strike": 8800
+          }
+        ],
+        "expiry_date": "2026-10-16",
+        "futures": {
+          "instrument_id": "IM2610.CFX",
+          "price": 7291
+        },
+        "puts": [
+          {
+            "instrument_id": "MO2610-P-6200.CFX",
+            "price": 4.4,
+            "strike": 6200
+          },
+          {
+            "instrument_id": "MO2610-P-6300.CFX",
+            "price": 5.4,
+            "strike": 6300
+          },
+          {
+            "instrument_id": "MO2610-P-6400.CFX",
+            "price": 6.6,
+            "strike": 6400
+          },
+          {
+            "instrument_id": "MO2610-P-6500.CFX",
+            "price": 8.2,
+            "strike": 6500
+          },
+          {
+            "instrument_id": "MO2610-P-6600.CFX",
+            "price": 11,
+            "strike": 6600
+          },
+          {
+            "instrument_id": "MO2610-P-6700.CFX",
+            "price": 15,
+            "strike": 6700
+          },
+          {
+            "instrument_id": "MO2610-P-6800.CFX",
+            "price": 22,
+            "strike": 6800
+          },
+          {
+            "instrument_id": "MO2610-P-6900.CFX",
+            "price": 30.6,
+            "strike": 6900
+          },
+          {
+            "instrument_id": "MO2610-P-7000.CFX",
+            "price": 43.8,
+            "strike": 7000
+          },
+          {
+            "instrument_id": "MO2610-P-7100.CFX",
+            "price": 65.2,
+            "strike": 7100
+          },
+          {
+            "instrument_id": "MO2610-P-7200.CFX",
+            "price": 91,
+            "strike": 7200
+          },
+          {
+            "instrument_id": "MO2610-P-7300.CFX",
+            "price": 131.8,
+            "strike": 7300
+          },
+          {
+            "instrument_id": "MO2610-P-7400.CFX",
+            "price": 185.8,
+            "strike": 7400
+          },
+          {
+            "instrument_id": "MO2610-P-7500.CFX",
+            "price": 254.4,
+            "strike": 7500
+          },
+          {
+            "instrument_id": "MO2610-P-7600.CFX",
+            "price": 335.4,
+            "strike": 7600
+          },
+          {
+            "instrument_id": "MO2610-P-7700.CFX",
+            "price": 424.6,
+            "strike": 7700
+          },
+          {
+            "instrument_id": "MO2610-P-7800.CFX",
+            "price": 515,
+            "strike": 7800
+          },
+          {
+            "instrument_id": "MO2610-P-7900.CFX",
+            "price": 613,
+            "strike": 7900
+          },
+          {
+            "instrument_id": "MO2610-P-8000.CFX",
+            "price": 709.2,
+            "strike": 8000
+          },
+          {
+            "instrument_id": "MO2610-P-8100.CFX",
+            "price": 791.8,
+            "strike": 8100
+          },
+          {
+            "instrument_id": "MO2610-P-8200.CFX",
+            "price": 899.8,
+            "strike": 8200
+          },
+          {
+            "instrument_id": "MO2610-P-8300.CFX",
+            "price": 999,
+            "strike": 8300
+          },
+          {
+            "instrument_id": "MO2610-P-8400.CFX",
+            "price": 1106,
+            "strike": 8400
+          },
+          {
+            "instrument_id": "MO2610-P-8500.CFX",
+            "price": 1195.6,
+            "strike": 8500
+          },
+          {
+            "instrument_id": "MO2610-P-8600.CFX",
+            "price": 1298,
+            "strike": 8600
+          },
+          {
+            "instrument_id": "MO2610-P-8700.CFX",
+            "price": 1371,
+            "strike": 8700
+          },
+          {
+            "instrument_id": "MO2610-P-8800.CFX",
+            "price": 1496.2,
+            "strike": 8800
+          }
+        ]
+      },
+      {
+        "calls": [
+          {
+            "instrument_id": "MO2611-C-6500.CFX",
+            "price": 829.4,
+            "strike": 6500
+          },
+          {
+            "instrument_id": "MO2611-C-6600.CFX",
+            "price": 702.4,
+            "strike": 6600
+          },
+          {
+            "instrument_id": "MO2611-C-6700.CFX",
+            "price": 628.2,
+            "strike": 6700
+          },
+          {
+            "instrument_id": "MO2611-C-6800.CFX",
+            "price": 548,
+            "strike": 6800
+          },
+          {
+            "instrument_id": "MO2611-C-6900.CFX",
+            "price": 472.6,
+            "strike": 6900
+          },
+          {
+            "instrument_id": "MO2611-C-7000.CFX",
+            "price": 399.4,
+            "strike": 7000
+          },
+          {
+            "instrument_id": "MO2611-C-7100.CFX",
+            "price": 334,
+            "strike": 7100
+          },
+          {
+            "instrument_id": "MO2611-C-7200.CFX",
+            "price": 274.6,
+            "strike": 7200
+          },
+          {
+            "instrument_id": "MO2611-C-7300.CFX",
+            "price": 227.4,
+            "strike": 7300
+          },
+          {
+            "instrument_id": "MO2611-C-7400.CFX",
+            "price": 181.6,
+            "strike": 7400
+          },
+          {
+            "instrument_id": "MO2611-C-7500.CFX",
+            "price": 145,
+            "strike": 7500
+          },
+          {
+            "instrument_id": "MO2611-C-7600.CFX",
+            "price": 114.4,
+            "strike": 7600
+          },
+          {
+            "instrument_id": "MO2611-C-7700.CFX",
+            "price": 89.2,
+            "strike": 7700
+          },
+          {
+            "instrument_id": "MO2611-C-7800.CFX",
+            "price": 70.2,
+            "strike": 7800
+          },
+          {
+            "instrument_id": "MO2611-C-7900.CFX",
+            "price": 54,
+            "strike": 7900
+          },
+          {
+            "instrument_id": "MO2611-C-8000.CFX",
+            "price": 45,
+            "strike": 8000
+          },
+          {
+            "instrument_id": "MO2611-C-8100.CFX",
+            "price": 34.4,
+            "strike": 8100
+          },
+          {
+            "instrument_id": "MO2611-C-8200.CFX",
+            "price": 26.4,
+            "strike": 8200
+          },
+          {
+            "instrument_id": "MO2611-C-8300.CFX",
+            "price": 21,
+            "strike": 8300
+          },
+          {
+            "instrument_id": "MO2611-C-8400.CFX",
+            "price": 17.2,
+            "strike": 8400
+          },
+          {
+            "instrument_id": "MO2611-C-8500.CFX",
+            "price": 13,
+            "strike": 8500
+          },
+          {
+            "instrument_id": "MO2611-C-8600.CFX",
+            "price": 11.6,
+            "strike": 8600
+          }
+        ],
+        "expiry_date": "2026-11-20",
+        "futures": {
+          "instrument_id": "IM2611.CFX",
+          "price": 7229.8
+        },
+        "puts": [
+          {
+            "instrument_id": "MO2611-P-6500.CFX",
+            "price": 56,
+            "strike": 6500
+          },
+          {
+            "instrument_id": "MO2611-P-6600.CFX",
+            "price": 73,
+            "strike": 6600
+          },
+          {
+            "instrument_id": "MO2611-P-6700.CFX",
+            "price": 90,
+            "strike": 6700
+          },
+          {
+            "instrument_id": "MO2611-P-6800.CFX",
+            "price": 107.8,
+            "strike": 6800
+          },
+          {
+            "instrument_id": "MO2611-P-6900.CFX",
+            "price": 140,
+            "strike": 6900
+          },
+          {
+            "instrument_id": "MO2611-P-7000.CFX",
+            "price": 165,
+            "strike": 7000
+          },
+          {
+            "instrument_id": "MO2611-P-7100.CFX",
+            "price": 200,
+            "strike": 7100
+          },
+          {
+            "instrument_id": "MO2611-P-7200.CFX",
+            "price": 240.4,
+            "strike": 7200
+          },
+          {
+            "instrument_id": "MO2611-P-7300.CFX",
+            "price": 289.4,
+            "strike": 7300
+          },
+          {
+            "instrument_id": "MO2611-P-7400.CFX",
+            "price": 346.2,
+            "strike": 7400
+          },
+          {
+            "instrument_id": "MO2611-P-7500.CFX",
+            "price": 408.8,
+            "strike": 7500
+          },
+          {
+            "instrument_id": "MO2611-P-7600.CFX",
+            "price": 477.6,
+            "strike": 7600
+          },
+          {
+            "instrument_id": "MO2611-P-7700.CFX",
+            "price": 552.4,
+            "strike": 7700
+          },
+          {
+            "instrument_id": "MO2611-P-7800.CFX",
+            "price": 637.4,
+            "strike": 7800
+          },
+          {
+            "instrument_id": "MO2611-P-7900.CFX",
+            "price": 709,
+            "strike": 7900
+          },
+          {
+            "instrument_id": "MO2611-P-8000.CFX",
+            "price": 810,
+            "strike": 8000
+          },
+          {
+            "instrument_id": "MO2611-P-8100.CFX",
+            "price": 894,
+            "strike": 8100
+          },
+          {
+            "instrument_id": "MO2611-P-8200.CFX",
+            "price": 976.2,
+            "strike": 8200
+          },
+          {
+            "instrument_id": "MO2611-P-8300.CFX",
+            "price": 1028.6,
+            "strike": 8300
+          },
+          {
+            "instrument_id": "MO2611-P-8400.CFX",
+            "price": 1147.4,
+            "strike": 8400
+          },
+          {
+            "instrument_id": "MO2611-P-8500.CFX",
+            "price": 1252,
+            "strike": 8500
+          },
+          {
+            "instrument_id": "MO2611-P-8600.CFX",
+            "price": 1332.4,
+            "strike": 8600
+          }
+        ]
+      },
+      {
+        "calls": [
+          {
+            "instrument_id": "MO2612-C-6200.CFX",
+            "price": 1049,
+            "strike": 6200
+          },
+          {
+            "instrument_id": "MO2612-C-6400.CFX",
+            "price": 880,
+            "strike": 6400
+          },
+          {
+            "instrument_id": "MO2612-C-6500.CFX",
+            "price": 778.4,
+            "strike": 6500
+          },
+          {
+            "instrument_id": "MO2612-C-6600.CFX",
+            "price": 713.2,
+            "strike": 6600
+          },
+          {
+            "instrument_id": "MO2612-C-6700.CFX",
+            "price": 661.6,
+            "strike": 6700
+          },
+          {
+            "instrument_id": "MO2612-C-6800.CFX",
+            "price": 555,
+            "strike": 6800
+          },
+          {
+            "instrument_id": "MO2612-C-6900.CFX",
+            "price": 487.8,
+            "strike": 6900
+          },
+          {
+            "instrument_id": "MO2612-C-7000.CFX",
+            "price": 425.2,
+            "strike": 7000
+          },
+          {
+            "instrument_id": "MO2612-C-7100.CFX",
+            "price": 363.4,
+            "strike": 7100
+          },
+          {
+            "instrument_id": "MO2612-C-7200.CFX",
+            "price": 311,
+            "strike": 7200
+          },
+          {
+            "instrument_id": "MO2612-C-7300.CFX",
+            "price": 266.6,
+            "strike": 7300
+          },
+          {
+            "instrument_id": "MO2612-C-7400.CFX",
+            "price": 226.2,
+            "strike": 7400
+          },
+          {
+            "instrument_id": "MO2612-C-7500.CFX",
+            "price": 189.4,
+            "strike": 7500
+          },
+          {
+            "instrument_id": "MO2612-C-7600.CFX",
+            "price": 156.2,
+            "strike": 7600
+          },
+          {
+            "instrument_id": "MO2612-C-7700.CFX",
+            "price": 134.2,
+            "strike": 7700
+          },
+          {
+            "instrument_id": "MO2612-C-7800.CFX",
+            "price": 109.2,
+            "strike": 7800
+          },
+          {
+            "instrument_id": "MO2612-C-7900.CFX",
+            "price": 91.2,
+            "strike": 7900
+          },
+          {
+            "instrument_id": "MO2612-C-8000.CFX",
+            "price": 77.4,
+            "strike": 8000
+          },
+          {
+            "instrument_id": "MO2612-C-8100.CFX",
+            "price": 64.8,
+            "strike": 8100
+          },
+          {
+            "instrument_id": "MO2612-C-8200.CFX",
+            "price": 53.6,
+            "strike": 8200
+          },
+          {
+            "instrument_id": "MO2612-C-8300.CFX",
+            "price": 44.2,
+            "strike": 8300
+          },
+          {
+            "instrument_id": "MO2612-C-8400.CFX",
+            "price": 37,
+            "strike": 8400
+          },
+          {
+            "instrument_id": "MO2612-C-8500.CFX",
+            "price": 31.4,
+            "strike": 8500
+          },
+          {
+            "instrument_id": "MO2612-C-8600.CFX",
+            "price": 28.8,
+            "strike": 8600
+          },
+          {
+            "instrument_id": "MO2612-C-8800.CFX",
+            "price": 21.4,
+            "strike": 8800
+          },
+          {
+            "instrument_id": "MO2612-C-9000.CFX",
+            "price": 16.4,
+            "strike": 9000
+          },
+          {
+            "instrument_id": "MO2612-C-9200.CFX",
+            "price": 13.6,
+            "strike": 9200
+          },
+          {
+            "instrument_id": "MO2612-C-9400.CFX",
+            "price": 10.4,
+            "strike": 9400
+          },
+          {
+            "instrument_id": "MO2612-C-9600.CFX",
+            "price": 9.6,
+            "strike": 9600
+          },
+          {
+            "instrument_id": "MO2612-C-9800.CFX",
+            "price": 7.6,
+            "strike": 9800
+          },
+          {
+            "instrument_id": "MO2612-C-10000.CFX",
+            "price": 7.4,
+            "strike": 10000
+          }
+        ],
+        "expiry_date": "2026-12-18",
+        "futures": {
+          "instrument_id": "IM2612.CFX",
+          "price": 7168.8
+        },
+        "puts": [
+          {
+            "instrument_id": "MO2612-P-6200.CFX",
+            "price": 69.6,
+            "strike": 6200
+          },
+          {
+            "instrument_id": "MO2612-P-6400.CFX",
+            "price": 94,
+            "strike": 6400
+          },
+          {
+            "instrument_id": "MO2612-P-6500.CFX",
+            "price": 108.2,
+            "strike": 6500
+          },
+          {
+            "instrument_id": "MO2612-P-6600.CFX",
+            "price": 128,
+            "strike": 6600
+          },
+          {
+            "instrument_id": "MO2612-P-6700.CFX",
+            "price": 150.8,
+            "strike": 6700
+          },
+          {
+            "instrument_id": "MO2612-P-6800.CFX",
+            "price": 176.2,
+            "strike": 6800
+          },
+          {
+            "instrument_id": "MO2612-P-6900.CFX",
+            "price": 206.8,
+            "strike": 6900
+          },
+          {
+            "instrument_id": "MO2612-P-7000.CFX",
+            "price": 243.4,
+            "strike": 7000
+          },
+          {
+            "instrument_id": "MO2612-P-7100.CFX",
+            "price": 282,
+            "strike": 7100
+          },
+          {
+            "instrument_id": "MO2612-P-7200.CFX",
+            "price": 339.4,
+            "strike": 7200
+          },
+          {
+            "instrument_id": "MO2612-P-7300.CFX",
+            "price": 385.2,
+            "strike": 7300
+          },
+          {
+            "instrument_id": "MO2612-P-7400.CFX",
+            "price": 442.2,
+            "strike": 7400
+          },
+          {
+            "instrument_id": "MO2612-P-7500.CFX",
+            "price": 503,
+            "strike": 7500
+          },
+          {
+            "instrument_id": "MO2612-P-7600.CFX",
+            "price": 573,
+            "strike": 7600
+          },
+          {
+            "instrument_id": "MO2612-P-7700.CFX",
+            "price": 646,
+            "strike": 7700
+          },
+          {
+            "instrument_id": "MO2612-P-7800.CFX",
+            "price": 721,
+            "strike": 7800
+          },
+          {
+            "instrument_id": "MO2612-P-7900.CFX",
+            "price": 811.6,
+            "strike": 7900
+          },
+          {
+            "instrument_id": "MO2612-P-8000.CFX",
+            "price": 890,
+            "strike": 8000
+          },
+          {
+            "instrument_id": "MO2612-P-8100.CFX",
+            "price": 974.4,
+            "strike": 8100
+          },
+          {
+            "instrument_id": "MO2612-P-8200.CFX",
+            "price": 1068,
+            "strike": 8200
+          },
+          {
+            "instrument_id": "MO2612-P-8300.CFX",
+            "price": 1161.4,
+            "strike": 8300
+          },
+          {
+            "instrument_id": "MO2612-P-8400.CFX",
+            "price": 1229.8,
+            "strike": 8400
+          },
+          {
+            "instrument_id": "MO2612-P-8500.CFX",
+            "price": 1335.8,
+            "strike": 8500
+          },
+          {
+            "instrument_id": "MO2612-P-8600.CFX",
+            "price": 1434,
+            "strike": 8600
+          },
+          {
+            "instrument_id": "MO2612-P-8800.CFX",
+            "price": 1622.4,
+            "strike": 8800
+          },
+          {
+            "instrument_id": "MO2612-P-9000.CFX",
+            "price": 1819.2,
+            "strike": 9000
+          },
+          {
+            "instrument_id": "MO2612-P-9200.CFX",
+            "price": 2023,
+            "strike": 9200
+          },
+          {
+            "instrument_id": "MO2612-P-9400.CFX",
+            "price": 2166.4,
+            "strike": 9400
+          },
+          {
+            "instrument_id": "MO2612-P-9600.CFX",
+            "price": 2419.2,
+            "strike": 9600
+          },
+          {
+            "instrument_id": "MO2612-P-9800.CFX",
+            "price": 2604.6,
+            "strike": 9800
+          },
+          {
+            "instrument_id": "MO2612-P-10000.CFX",
+            "price": 2813.2,
+            "strike": 10000
+          }
+        ]
+      },
+      {
+        "calls": [
+          {
+            "instrument_id": "MO2703-C-6200.CFX",
+            "price": 1008.6,
+            "strike": 6200
+          },
+          {
+            "instrument_id": "MO2703-C-6400.CFX",
+            "price": 855.4,
+            "strike": 6400
+          },
+          {
+            "instrument_id": "MO2703-C-6600.CFX",
+            "price": 697.4,
+            "strike": 6600
+          },
+          {
+            "instrument_id": "MO2703-C-6800.CFX",
+            "price": 578,
+            "strike": 6800
+          },
+          {
+            "instrument_id": "MO2703-C-7000.CFX",
+            "price": 468,
+            "strike": 7000
+          },
+          {
+            "instrument_id": "MO2703-C-7200.CFX",
+            "price": 372.4,
+            "strike": 7200
+          },
+          {
+            "instrument_id": "MO2703-C-7400.CFX",
+            "price": 300.4,
+            "strike": 7400
+          },
+          {
+            "instrument_id": "MO2703-C-7600.CFX",
+            "price": 235.6,
+            "strike": 7600
+          },
+          {
+            "instrument_id": "MO2703-C-7800.CFX",
+            "price": 185.4,
+            "strike": 7800
+          },
+          {
+            "instrument_id": "MO2703-C-8000.CFX",
+            "price": 142.6,
+            "strike": 8000
+          },
+          {
+            "instrument_id": "MO2703-C-8200.CFX",
+            "price": 112.4,
+            "strike": 8200
+          },
+          {
+            "instrument_id": "MO2703-C-8400.CFX",
+            "price": 87.6,
+            "strike": 8400
+          },
+          {
+            "instrument_id": "MO2703-C-8600.CFX",
+            "price": 69.2,
+            "strike": 8600
+          },
+          {
+            "instrument_id": "MO2703-C-8800.CFX",
+            "price": 56.6,
+            "strike": 8800
+          },
+          {
+            "instrument_id": "MO2703-C-9000.CFX",
+            "price": 43.4,
+            "strike": 9000
+          },
+          {
+            "instrument_id": "MO2703-C-9200.CFX",
+            "price": 37.2,
+            "strike": 9200
+          },
+          {
+            "instrument_id": "MO2703-C-9400.CFX",
+            "price": 30,
+            "strike": 9400
+          },
+          {
+            "instrument_id": "MO2703-C-9600.CFX",
+            "price": 25.2,
+            "strike": 9600
+          },
+          {
+            "instrument_id": "MO2703-C-9800.CFX",
+            "price": 21,
+            "strike": 9800
+          },
+          {
+            "instrument_id": "MO2703-C-10000.CFX",
+            "price": 17.8,
+            "strike": 10000
+          }
+        ],
+        "expiry_date": "2027-03-19",
+        "futures": {
+          "instrument_id": "IM2703.CFX",
+          "price": 6989
+        },
+        "puts": [
+          {
+            "instrument_id": "MO2703-P-6200.CFX",
+            "price": 174.6,
+            "strike": 6200
+          },
+          {
+            "instrument_id": "MO2703-P-6400.CFX",
+            "price": 219.8,
+            "strike": 6400
+          },
+          {
+            "instrument_id": "MO2703-P-6600.CFX",
+            "price": 290,
+            "strike": 6600
+          },
+          {
+            "instrument_id": "MO2703-P-6800.CFX",
+            "price": 366.6,
+            "strike": 6800
+          },
+          {
+            "instrument_id": "MO2703-P-7000.CFX",
+            "price": 457.8,
+            "strike": 7000
+          },
+          {
+            "instrument_id": "MO2703-P-7200.CFX",
+            "price": 558,
+            "strike": 7200
+          },
+          {
+            "instrument_id": "MO2703-P-7400.CFX",
+            "price": 681.6,
+            "strike": 7400
+          },
+          {
+            "instrument_id": "MO2703-P-7600.CFX",
+            "price": 814.6,
+            "strike": 7600
+          },
+          {
+            "instrument_id": "MO2703-P-7800.CFX",
+            "price": 961.6,
+            "strike": 7800
+          },
+          {
+            "instrument_id": "MO2703-P-8000.CFX",
+            "price": 1181.4,
+            "strike": 8000
+          },
+          {
+            "instrument_id": "MO2703-P-8200.CFX",
+            "price": 1276,
+            "strike": 8200
+          },
+          {
+            "instrument_id": "MO2703-P-8400.CFX",
+            "price": 1463.4,
+            "strike": 8400
+          },
+          {
+            "instrument_id": "MO2703-P-8600.CFX",
+            "price": 1631.4,
+            "strike": 8600
+          },
+          {
+            "instrument_id": "MO2703-P-8800.CFX",
+            "price": 1792.2,
+            "strike": 8800
+          },
+          {
+            "instrument_id": "MO2703-P-9000.CFX",
+            "price": 1822.2,
+            "strike": 9000
+          },
+          {
+            "instrument_id": "MO2703-P-9200.CFX",
+            "price": 2289,
+            "strike": 9200
+          },
+          {
+            "instrument_id": "MO2703-P-9400.CFX",
+            "price": 2382,
+            "strike": 9400
+          },
+          {
+            "instrument_id": "MO2703-P-9600.CFX",
+            "price": 2574,
+            "strike": 9600
+          },
+          {
+            "instrument_id": "MO2703-P-9800.CFX",
+            "price": 2735.8,
+            "strike": 9800
+          },
+          {
+            "instrument_id": "MO2703-P-10000.CFX",
+            "price": 2975,
+            "strike": 10000
+          }
+        ]
+      },
+      {
+        "calls": [
+          {
+            "instrument_id": "MO2706-C-6200.CFX",
+            "price": 926,
+            "strike": 6200
+          },
+          {
+            "instrument_id": "MO2706-C-6400.CFX",
+            "price": 808,
+            "strike": 6400
+          },
+          {
+            "instrument_id": "MO2706-C-6600.CFX",
+            "price": 676.6,
+            "strike": 6600
+          },
+          {
+            "instrument_id": "MO2706-C-6800.CFX",
+            "price": 582,
+            "strike": 6800
+          },
+          {
+            "instrument_id": "MO2706-C-7000.CFX",
+            "price": 483.8,
+            "strike": 7000
+          },
+          {
+            "instrument_id": "MO2706-C-7200.CFX",
+            "price": 410,
+            "strike": 7200
+          },
+          {
+            "instrument_id": "MO2706-C-7400.CFX",
+            "price": 330,
+            "strike": 7400
+          },
+          {
+            "instrument_id": "MO2706-C-7600.CFX",
+            "price": 276.8,
+            "strike": 7600
+          },
+          {
+            "instrument_id": "MO2706-C-7800.CFX",
+            "price": 230,
+            "strike": 7800
+          },
+          {
+            "instrument_id": "MO2706-C-8000.CFX",
+            "price": 188.8,
+            "strike": 8000
+          },
+          {
+            "instrument_id": "MO2706-C-8200.CFX",
+            "price": 156,
+            "strike": 8200
+          },
+          {
+            "instrument_id": "MO2706-C-8400.CFX",
+            "price": 130.4,
+            "strike": 8400
+          },
+          {
+            "instrument_id": "MO2706-C-8600.CFX",
+            "price": 104.8,
+            "strike": 8600
+          },
+          {
+            "instrument_id": "MO2706-C-8800.CFX",
+            "price": 88.4,
+            "strike": 8800
+          },
+          {
+            "instrument_id": "MO2706-C-9000.CFX",
+            "price": 74.4,
+            "strike": 9000
+          },
+          {
+            "instrument_id": "MO2706-C-9200.CFX",
+            "price": 62.2,
+            "strike": 9200
+          },
+          {
+            "instrument_id": "MO2706-C-9400.CFX",
+            "price": 52.4,
+            "strike": 9400
+          },
+          {
+            "instrument_id": "MO2706-C-9600.CFX",
+            "price": 45.2,
+            "strike": 9600
+          },
+          {
+            "instrument_id": "MO2706-C-9800.CFX",
+            "price": 37.2,
+            "strike": 9800
+          }
+        ],
+        "expiry_date": "2027-06-18",
+        "futures": null,
+        "puts": [
+          {
+            "instrument_id": "MO2706-P-6200.CFX",
+            "price": 292.4,
+            "strike": 6200
+          },
+          {
+            "instrument_id": "MO2706-P-6400.CFX",
+            "price": 368,
+            "strike": 6400
+          },
+          {
+            "instrument_id": "MO2706-P-6600.CFX",
+            "price": 433.2,
+            "strike": 6600
+          },
+          {
+            "instrument_id": "MO2706-P-6800.CFX",
+            "price": 529,
+            "strike": 6800
+          },
+          {
+            "instrument_id": "MO2706-P-7000.CFX",
+            "price": 638.4,
+            "strike": 7000
+          },
+          {
+            "instrument_id": "MO2706-P-7200.CFX",
+            "price": 755.8,
+            "strike": 7200
+          },
+          {
+            "instrument_id": "MO2706-P-7400.CFX",
+            "price": 890,
+            "strike": 7400
+          },
+          {
+            "instrument_id": "MO2706-P-7600.CFX",
+            "price": 1049,
+            "strike": 7600
+          },
+          {
+            "instrument_id": "MO2706-P-7800.CFX",
+            "price": 1163.2,
+            "strike": 7800
+          },
+          {
+            "instrument_id": "MO2706-P-8000.CFX",
+            "price": 1328.8,
+            "strike": 8000
+          },
+          {
+            "instrument_id": "MO2706-P-8200.CFX",
+            "price": 1500,
+            "strike": 8200
+          },
+          {
+            "instrument_id": "MO2706-P-8400.CFX",
+            "price": 1753.6,
+            "strike": 8400
+          },
+          {
+            "instrument_id": "MO2706-P-8600.CFX",
+            "price": 1544,
+            "strike": 8600
+          },
+          {
+            "instrument_id": "MO2706-P-8800.CFX",
+            "price": 2050,
+            "strike": 8800
+          },
+          {
+            "instrument_id": "MO2706-P-9000.CFX",
+            "price": 1920,
+            "strike": 9000
+          },
+          {
+            "instrument_id": "MO2706-P-9200.CFX",
+            "price": 2408.4,
+            "strike": 9200
+          },
+          {
+            "instrument_id": "MO2706-P-9400.CFX",
+            "price": 2582.2,
+            "strike": 9400
+          },
+          {
+            "instrument_id": "MO2706-P-9600.CFX",
+            "price": 2750,
+            "strike": 9600
+          },
+          {
+            "instrument_id": "MO2706-P-9800.CFX",
+            "price": 2941,
+            "strike": 9800
+          }
+        ]
+      },
+      {
+        "calls": [
+          {
+            "instrument_id": "MO2709-C-6400.CFX",
+            "price": 774,
+            "strike": 6400
+          },
+          {
+            "instrument_id": "MO2709-C-6600.CFX",
+            "price": 673.4,
+            "strike": 6600
+          },
+          {
+            "instrument_id": "MO2709-C-6800.CFX",
+            "price": 570.4,
+            "strike": 6800
+          },
+          {
+            "instrument_id": "MO2709-C-7000.CFX",
+            "price": 488.8,
+            "strike": 7000
+          },
+          {
+            "instrument_id": "MO2709-C-7200.CFX",
+            "price": 421.4,
+            "strike": 7200
+          },
+          {
+            "instrument_id": "MO2709-C-7400.CFX",
+            "price": 362,
+            "strike": 7400
+          },
+          {
+            "instrument_id": "MO2709-C-7600.CFX",
+            "price": 307.8,
+            "strike": 7600
+          },
+          {
+            "instrument_id": "MO2709-C-7800.CFX",
+            "price": 271.8,
+            "strike": 7800
+          },
+          {
+            "instrument_id": "MO2709-C-8000.CFX",
+            "price": 224,
+            "strike": 8000
+          },
+          {
+            "instrument_id": "MO2709-C-8200.CFX",
+            "price": 191.2,
+            "strike": 8200
+          },
+          {
+            "instrument_id": "MO2709-C-8400.CFX",
+            "price": 165,
+            "strike": 8400
+          },
+          {
+            "instrument_id": "MO2709-C-8600.CFX",
+            "price": 142.2,
+            "strike": 8600
+          }
+        ],
+        "expiry_date": "2027-09-17",
+        "futures": null,
+        "puts": [
+          {
+            "instrument_id": "MO2709-P-6400.CFX",
+            "price": 488.2,
+            "strike": 6400
+          },
+          {
+            "instrument_id": "MO2709-P-6600.CFX",
+            "price": 578.4,
+            "strike": 6600
+          },
+          {
+            "instrument_id": "MO2709-P-6800.CFX",
+            "price": 678.6,
+            "strike": 6800
+          },
+          {
+            "instrument_id": "MO2709-P-7000.CFX",
+            "price": 788,
+            "strike": 7000
+          },
+          {
+            "instrument_id": "MO2709-P-7200.CFX",
+            "price": 925.6,
+            "strike": 7200
+          },
+          {
+            "instrument_id": "MO2709-P-7400.CFX",
+            "price": 1061.2,
+            "strike": 7400
+          },
+          {
+            "instrument_id": "MO2709-P-7600.CFX",
+            "price": 1199,
+            "strike": 7600
+          },
+          {
+            "instrument_id": "MO2709-P-7800.CFX",
+            "price": 1343,
+            "strike": 7800
+          },
+          {
+            "instrument_id": "MO2709-P-8000.CFX",
+            "price": 1509.8,
+            "strike": 8000
+          },
+          {
+            "instrument_id": "MO2709-P-8200.CFX",
+            "price": 1655,
+            "strike": 8200
+          },
+          {
+            "instrument_id": "MO2709-P-8400.CFX",
+            "price": 1908,
+            "strike": 8400
+          },
+          {
+            "instrument_id": "MO2709-P-8600.CFX",
+            "price": 1980,
+            "strike": 8600
+          }
+        ]
+      }
+    ],
+    "option_product": "MO",
+    "price_type": "close",
+    "target_trade_date": "2026-09-30",
+    "underlying": {
+      "instrument_id": "000852.SH",
+      "price": 7298.8208
+    }
+  },
+  "result_contract": "mo_option_chain:OptionChainDTO",
+  "source": {
+    "description": "Explicit authenticated HTTP capture. Publication pages are sequential reads without Store snapshot isolation; distribution authorization is separate.",
+    "kind": "formal_http"
+  }
+}

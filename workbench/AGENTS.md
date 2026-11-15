@@ -20,16 +20,10 @@ business modules into the generic recorder. Executing a future Task still requir
 reading each capability owner's authority and local policy.
 
 For changes, encode semantics in the narrowest contract before implementation.
-From repository root run:
+## Scoped verification
 
-```text
-poetry run pytest workbench/tests
-poetry run ruff check workbench
-poetry run mypy workbench/run_store.py
-poetry run python workbench/tests/acceptance_example.py
-```
-
-Tests use temporary storage; the acceptance example writes only synthetic evidence
-under ignored `workbench/.runs/`. Review the complete diff and reconcile root
-navigation, contracts, script behavior and acceptance evidence. Do not modify market
-runtime data to validate this facility.
+Follow the [root verification policy](../AGENTS.md#verification-policy-user-decision-2026-11-14).
+Select only directly affected business test files/cases. No default full-module or
+cross-module regression, topology, browser, live-data or deployment acceptance.
+Retain business invariants and fixtures; record unavailable checks as NOT VERIFIED.
+Do not modify real market data or caches to satisfy tests.
