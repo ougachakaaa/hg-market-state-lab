@@ -285,3 +285,7 @@ No financial code, Result Validator, Collector, Demo Runtime, CI or Pages workfl
 changed. No PR, merge, push or site publication was performed. DDB-05 formal release
 acceptance can now begin as a separate task; this task does not execute it. The empty
 Explorer content remains an explicit portfolio limitation.
+
+Git blob hashes were checked against every Manifest entry after data commit.
+The active Bundle/Manifest JSON paths pin checkout to LF in .gitattributes, preventing
+Windows autocrlf from invalidating canonical bytes on a subsequent checkout.

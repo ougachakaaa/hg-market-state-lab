@@ -17,3 +17,6 @@
 /workbench/tests/fixtures/capability.json text eol=lf
 /workbench/tests/fixtures/natural_language_candidate.json text eol=lf
 /workbench/tests/fixtures/planning_candidate.json text eol=lf
+
+# Sole Demo dataset: Manifest hashes require canonical LF checkout bytes.
+/ui_web/demo/bundles/*.json text eol=lf

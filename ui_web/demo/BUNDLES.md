@@ -94,6 +94,7 @@ Generation serializes strict JSON as UTF-8 without BOM, recursively sorted objec
 two-space indentation, LF line endings and one final LF. Array order and decoded business
 values are preserved. Nonfinite numbers are rejected. DDB-03 must preserve numeric values
 without lossy coercion when parsing/serializing HTTP JSON, including unknown nested fields.
+Git attributes pin active Bundle/Manifest JSON checkout to LF on every platform.
 Hash covers all final Bundle bytes, including the final LF. Build hashes original bytes
 before decoding and checks canonical formatting using equivalent lossless JSON rules.
 The Manifest is serialized by the same rules and has no self-hash.
