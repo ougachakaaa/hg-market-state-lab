@@ -10,6 +10,7 @@ const TEST_ONLY_DISCLOSURE =
   '静态测试数据 · 非正式 D3 Capability Example · 非在线发现 · 浏览器未执行认证 GET，也未探测 Provider、Token 或缓存。'
 
 export function StaticCatalogHarness() {
+  const params = new URLSearchParams(window.location.search)
   const { path, navigate } = useHashRoute()
   const controller = useStaticCatalog(embeddedCatalog)
   if (path !== '/research') return <Flex vertical gap="middle" style={{ padding: 24 }}>
@@ -19,12 +20,12 @@ export function StaticCatalogHarness() {
   </Flex>
   return <Flex vertical gap="middle" style={{ padding: 24 }}>
     <Typography.Title level={1} style={{ margin: 0, fontSize: 20 }}>D2-C 静态验证入口</Typography.Title>
-    <ResearchOverviewPresentation controller={controller} mode="static"
+    <ResearchOverviewPresentation controller={controller} mode={params.get('mode') === 'production' ? 'production' : 'static'}
       navigation={{
         openExplorer: () => navigate('/research/publications'),
         openFuturesBasis: () => navigate('/research/futures-basis'),
       }}
-      sourceDisclosure={TEST_ONLY_DISCLOSURE} />
+      sourceDisclosure={params.get('disclosure') ?? TEST_ONLY_DISCLOSURE} />
   </Flex>
 }
 

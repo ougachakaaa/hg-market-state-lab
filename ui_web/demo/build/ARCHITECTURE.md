@@ -130,6 +130,31 @@ From ui_web run `npm run demo:build`, then `npm run demo:preview` at
 http://127.0.0.1:4173/hg-market-state-lab/. Preview requires the completion marker and
 no output lock. Online npm run build retains its independent configuration.
 
+### Local UI review (no publication)
+
+For Demo UI changes, reuse committed Bundles and run from `ui_web/`:
+
+```powershell
+npm run demo:build
+npm run demo:preview
+```
+
+Open http://127.0.0.1:4173/hg-market-state-lab/#/research for visual review;
+stop preview with Ctrl+C. Rebuild and reload after editing; preview serves the built
+artifact, without hot reload. No backend, collection, remote push, Actions build
+or Pages publication is needed.
+
+Run `npm run demo:test:browser` after the build for local Playwright review. It starts
+temporary loopback previews and closes them afterward, checks all eight Demo routes
+and existing interactions, and checks Research Overview at 1280, 1024 and 768px.
+Focused checks cover full disclosure, horizontal containment, card alignment,
+Production-mode shared Presentation and Chinese/unbroken-English stress inputs in
+a test-only harness. Screenshots are saved to ignored `.build/demo-review/`.
+Production coverage here verifies Presentation, not authenticated backend flows.
+Use installed Playwright Chromium or set `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH`
+to a compatible existing browser. An unavailable browser is NOT VERIFIED.
+These checks are explicit commands, not a default gate for unrelated development.
+
 After stopping all relevant processes and verifying no lock holder remains, run from
 repository root only for the identified stale lock. For a directory lock use
 `Remove-Item -LiteralPath '.\ui_web\.build\demo-collection\dataset.lock'`.

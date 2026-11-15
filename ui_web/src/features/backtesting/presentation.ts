@@ -25,5 +25,7 @@ export type {
   RunRequest,
   ValidatedEmbeddedBacktestResult,
 } from './api/validateResult'
-export { STATIC_BACKTESTING_DISCLOSURE, STATIC_BACKTESTING_SOURCE_NOTE } from './model/staticPresentation'
+export { STATIC_BACKTESTING_DISCLOSURE } from './model/staticPresentation'
 export { Result } from './components/Result'
+
+export { strategyLabels } from './model/strategyPresentation'

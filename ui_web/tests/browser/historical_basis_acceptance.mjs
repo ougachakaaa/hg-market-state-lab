@@ -3,13 +3,13 @@ import assert from 'node:assert/strict'
 import { resolve } from 'node:path'
 
 export async function historicalBasisAcceptance(page, expected, output) {
-  const plots = page.locator('#section-1 .js-plotly-plot')
-  const control = page.locator('#section-1')
+  const plots = page.locator(':is(#section-1, [data-testid="history-charts"]) .js-plotly-plot')
+  const control = page.locator(':is(#section-1, [data-testid="history-charts"])')
   const metrics = ['basis_value', 'basis_ratio', 'annualized_basis_ratio']
   async function projection(trading) {
     for (let i = 0; i < 3; i++) {
       const plot = plots.nth(i)
-      await page.waitForFunction(({ index, type }) => document.querySelectorAll('#section-1 .js-plotly-plot')[index]?._fullLayout.xaxis.type === type, { index: i, type: trading ? 'linear' : 'date' })
+      await page.waitForFunction(({ index, type }) => document.querySelectorAll(':is(#section-1, [data-testid="history-charts"]) .js-plotly-plot')[index]?._fullLayout.xaxis.type === type, { index: i, type: trading ? 'linear' : 'date' })
       const view = expected.views.history[metrics[i]]
       const actual = await plot.evaluate(el => ({
         data: el.data.map(t => ({ x: t.x, y: t.y, text: t.text, connectgaps: t.connectgaps })),
@@ -65,17 +65,17 @@ export async function historicalBasisAcceptance(page, expected, output) {
       await page.mouse.down(); await page.mouse.move(box.x + box.width * to, box.y + box.height * .5, { steps: 12 }); await page.mouse.up()
     }
     async function changed(before) {
-      await page.waitForFunction(old => JSON.stringify(document.querySelector('#section-1 .js-plotly-plot')._fullLayout.xaxis.range) !== JSON.stringify(old), before)
+      await page.waitForFunction(old => JSON.stringify(document.querySelector(':is(#section-1, [data-testid="history-charts"]) .js-plotly-plot')._fullLayout.xaxis.range) !== JSON.stringify(old), before)
     }
     await plot.locator('[data-title="Zoom"]').click()
-    await page.waitForFunction(() => document.querySelector('#section-1 .js-plotly-plot')._fullLayout.dragmode === 'zoom')
+    await page.waitForFunction(() => document.querySelector(':is(#section-1, [data-testid="history-charts"]) .js-plotly-plot')._fullLayout.dragmode === 'zoom')
     await drag(.15, .75); await changed(initial)
     await plot.locator('[data-title="Pan"]').click()
-    await page.waitForFunction(() => document.querySelector('#section-1 .js-plotly-plot')._fullLayout.dragmode === 'pan')
+    await page.waitForFunction(() => document.querySelector(':is(#section-1, [data-testid="history-charts"]) .js-plotly-plot')._fullLayout.dragmode === 'pan')
     const zoomed = await range()
     await drag(.5, .7); await changed(zoomed)
     await plot.locator('[data-title="Reset axes"]').click()
-    await page.waitForFunction(old => JSON.stringify(document.querySelector('#section-1 .js-plotly-plot')._fullLayout.xaxis.range) === JSON.stringify(old), initial)
+    await page.waitForFunction(old => JSON.stringify(document.querySelector(':is(#section-1, [data-testid="history-charts"]) .js-plotly-plot')._fullLayout.xaxis.range) === JSON.stringify(old), initial)
     await plot.locator('[data-title="Zoom"]').click()
   }
   await projection(true)
@@ -91,7 +91,7 @@ export async function historicalBasisAcceptance(page, expected, output) {
   const first = plots.first()
   await first.scrollIntoViewIfNeeded()
   await first.locator('.legend .traces').first().click()
-  await page.waitForFunction(() => document.querySelector('#section-1 .js-plotly-plot')._fullData.some(t => t.visible === 'legendonly'))
+  await page.waitForFunction(() => document.querySelector(':is(#section-1, [data-testid="history-charts"]) .js-plotly-plot')._fullData.some(t => t.visible === 'legendonly'))
   await control.getByText('Calendar Days', { exact: true }).click()
   await projection(false)
   await interact()
@@ -101,7 +101,7 @@ export async function historicalBasisAcceptance(page, expected, output) {
   await projection(true)
   assert.ok(await first.evaluate(el => el._fullData.some(t => t.visible === 'legendonly')))
   await first.locator('.legend .traces').first().click()
-  await page.waitForFunction(() => document.querySelector('#section-1 .js-plotly-plot')._fullData.every(t => t.visible !== 'legendonly'))
+  await page.waitForFunction(() => document.querySelector(':is(#section-1, [data-testid="history-charts"]) .js-plotly-plot')._fullData.every(t => t.visible !== 'legendonly'))
   await first.scrollIntoViewIfNeeded()
   await page.screenshot({ path: resolve(output, 'historical-trading.png') })
   // Real hover for percentage plots: coordinate date and the supplied result detail.
@@ -110,7 +110,7 @@ export async function historicalBasisAcceptance(page, expected, output) {
   if (expected.views.history.basis_ratio.layers.some(b => b.layer.data.some(m => m.y !== null))) {
   const point = ratio.locator('.scatterlayer .point').first()
   await point.hover({ force: true })
-  await page.waitForFunction(() => /\d\.\d%/.test(document.querySelectorAll('#section-1 .hoverlayer')[1]?.textContent ?? ''))
+  await page.waitForFunction(() => /\d\.\d%/.test(document.querySelectorAll(':is(#section-1, [data-testid="history-charts"]) .hoverlayer')[1]?.textContent ?? ''))
   const hover = await ratio.locator('.hoverlayer').textContent()
   assert.match(hover, /\d{4}-\d{2}-\d{2}/)
   assert.match(hover, /结果:.*%/)

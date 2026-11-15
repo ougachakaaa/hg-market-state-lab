@@ -1,3 +1,4 @@
+import { verifyDateEvents } from './date_events_disclosure.mjs'
 // D2-E verification only: built artifact served as files; no backend, proxy or Auth.
 import assert from 'node:assert/strict'
 import { spawnSync } from 'node:child_process'
@@ -79,45 +80,27 @@ try {
   await introduction.click()
   assert.equal(await introduction.getAttribute('aria-expanded'), 'false')
   pass('Shared static introduction defaults collapsed and expands both approved fields')
-  await page.getByText(disclosure, { exact: true }).waitFor()
-  assert.equal(await page.getByText(disclosure, { exact: true }).count(), 1)
+  await page.getByText('本页面为静态研究成果展示。数据不保证准确，不构成任何投资建议，仅供项目功能演示。', { exact: true }).waitFor()
+  assert.equal(await page.getByText(disclosure, { exact: true }).count(), 0)
   await page.getByText('固定研究参数', { exact: true }).waitFor()
-  await page.getByText('Example 参数固定，不可编辑、不可提交；本页不会创建服务器 Run。', { exact: true }).waitFor()
-  await page.getByText('请求窗口与实际观测覆盖', { exact: true }).waitFor()
-  await page.getByText('IM · 2024-10-18 至 2024-10-21', { exact: true }).waitFor()
-  await page.getByText('2 个候选交易日；2024-10-18..2024-10-21', { exact: true }).waitFor()
-  await page.getByText('complete / futures_basis_definition_v1', { exact: true }).waitFor()
-  await page.getByText('futures_basis_report_evidence_v1', { exact: true }).waitFor()
-  await page.getByText(fixture.report.fingerprint, { exact: true }).first().waitFor()
-  assert.equal(await page.getByText(fixture.report.fingerprint, { exact: true }).count(), 2)
-  await page.getByText(/请求窗口 ≠ 实际观测覆盖/).waitFor()
-  await page.getByText('Embedded Report 已通过静态校验', { exact: true }).waitFor()
   assert.equal(await page.getByRole('button', { name: /生成研究/ }).count(), 0)
   assert.equal(await page.getByRole('button', { name: '重新检查输入', exact: true }).count(), 0)
   assert.equal(await page.getByText(/Run ID/).count(), 0)
-  const sections = await page.locator('[id^="section-"]').count()
-  assert.equal(sections, 6)
-  for (let i = 0; i < 6; i++) assert.equal(await page.locator(`#section-${i}`).count(), 1)
-  pass('Fixed request identity, requested-vs-observed coverage, explicit static disclosure, six shared sections and no Submit/Preflight/Run identity')
 
-  pass('Independent empty reader Views render without historical Demo payloads')
-
-  const nav = page.getByRole('navigation', { name: '报告章节' })
-  assert.equal(await nav.getByRole('button').count(), 6)
-  assert.equal(await nav.locator('a').count(), 0)
+  assert.equal(await page.locator('[data-testid="compact-report"] .ant-card').count(), 0)
+  assert.equal(await page.getByRole('navigation', { name: '报告章节' }).count(), 0)
+  assert.equal(await page.getByText('请求窗口与实际观测覆盖', { exact: true }).count(), 0)
+  assert.equal(await page.getByText(fixture.report.fingerprint, { exact: true }).count(), 0)
   const historyLength = await page.evaluate(() => history.length)
-  for (let i = 0; i < 6; i++) {
-    await nav.getByRole('button').nth(i).click()
-    await page.locator(`#section-${i}`).getByRole('heading').first().waitFor({ state: 'visible' })
-    assert.equal(await hash(), '#/research/futures-basis')
-  }
-  assert.equal(await page.evaluate(() => history.length), historyLength)
-  await nav.getByRole('button').nth(5).focus()
-  assert.equal(await page.evaluate(() => document.activeElement?.textContent?.includes('证据与限制')), true)
-  await page.keyboard.press('Enter')
+  const formulas = page.getByRole('button', { name: '指标定义与公式', exact: true })
+  assert.equal(await formulas.getAttribute('aria-expanded'), 'false')
+  await formulas.click()
+  assert.equal(await formulas.getAttribute('aria-expanded'), 'true')
+  await page.getByText('Calendar Days', { exact: true }).click()
+  await page.getByText('Trading Days', { exact: true }).click()
   assert.equal(await hash(), '#/research/futures-basis')
-  assert.ok(await page.evaluate(() => window.scrollY) > 0)
-  pass('Hash Router coexists with section navigation: six local section controls, keyboard activation, no fragment replacement and no history entries')
+  assert.equal(await page.evaluate(() => history.length), historyLength)
+  pass('Compact report, fixed disclaimer and local controls preserve static route and history')
 
   await page.getByRole('button', { name: '导航到研究总览（路由验证）', exact: true }).click()
   await page.getByTestId('static-route').waitFor()
@@ -125,7 +108,7 @@ try {
   assert.equal(await hash(), '#/research')
   await page.goBack()
   await page.getByRole('heading', { name: 'Futures Basis Research', exact: true }).waitFor()
-  assert.equal(await page.locator('[id^="section-"]').count(), 6)
+  assert.equal(await page.getByTestId('compact-report').count(), 1)
   assert.equal(await hash(), '#/research/futures-basis')
   await page.goForward()
   await page.getByTestId('static-route').waitFor()
@@ -135,7 +118,8 @@ try {
   await page.reload()
   await page.getByRole('heading', { name: 'Futures Basis Research', exact: true }).waitFor()
   assert.equal(await hash(), '#/research/futures-basis')
-  assert.equal(await page.locator('#section-1 .js-plotly-plot').count(), 3)
+  assert.equal(await page.locator('[data-testid="history-charts"] .js-plotly-plot').count(), 3)
+  await verifyDateEvents(page, 0)
   pass('Browser Back/Forward and reload keep the static Research route and the embedded report')
 
   const runId = 'a'.repeat(32)
@@ -153,11 +137,12 @@ try {
   assert.equal(await page.getByText('固定研究参数', { exact: true }).count(), 0)
   pass('A mismatched fixed request rejects the embedded set with an explicit static error and no report')
 
-  for (const width of [1440, 1024]) {
+  for (const width of [1440, 1024, 390]) {
     await page.setViewportSize({ width, height: 900 })
     await page.goto(`${base}#/research/futures-basis`)
     await page.getByRole('heading', { name: 'Futures Basis Research', exact: true }).waitFor()
-    await page.locator('#section-1').scrollIntoViewIfNeeded()
+    await page.locator('[data-testid="history-charts"]').scrollIntoViewIfNeeded()
+    assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false)
     await page.screenshot({ path: resolve(output, `presentation-${width}.png`), fullPage: true })
   }
   await page.waitForLoadState('networkidle')

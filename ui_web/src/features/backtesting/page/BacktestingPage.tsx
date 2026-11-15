@@ -4,6 +4,7 @@ import { products, strategies, type RunRequest } from '../api/backtesting'
 import { useBacktesting } from '../hooks/useBacktesting'
 import { usePreflight } from '../hooks/usePreflight'
 import { dependencyLabels, errorMessage, readinessPresentation } from '../model/presentation'
+import { strategyLabels } from '../model/strategyPresentation'
 import { Failure } from '../components/Failure'
 import { BacktestingPresentation } from './BacktestingPresentation'
 
@@ -27,7 +28,7 @@ export default function BacktestingPage() {
         <Form.Item name="product" label="产品" style={{ flex: '1 1 180px' }}><Select placeholder="选择产品" options={products.map(value => ({ value, label: value }))} /></Form.Item>
         <Form.Item name="start" label="开始日期" style={{ flex: '1 1 180px' }}><DatePicker placeholder="YYYY-MM-DD" format="YYYY-MM-DD" style={{ width: '100%' }} /></Form.Item>
         <Form.Item name="end" label="结束日期" style={{ flex: '1 1 180px' }}><DatePicker placeholder="YYYY-MM-DD" format="YYYY-MM-DD" style={{ width: '100%' }} /></Form.Item>
-        <Form.Item name="strategy" label="策略" style={{ flex: '1 1 240px' }}><Select placeholder="选择策略" options={strategies.map(value => ({ value, label: value }))} /></Form.Item>
+        <Form.Item name="strategy" label="策略" style={{ flex: '1 1 240px' }}><Select placeholder="选择策略" options={strategies.map(value => ({ value, label: strategyLabels[value] }))} /></Form.Item>
       </Flex>
       {start && end && start > end && <Alert type="warning" title="开始日期不能晚于结束日期。" />}
       <Flex gap="middle" wrap><Button type="primary" htmlType="button" disabled={!valid || run.submitting} loading={run.submitting} onClick={() => { if (query) void run.submit(query) }}>开始回测</Button>
@@ -68,6 +69,7 @@ export default function BacktestingPage() {
 
   return <BacktestingPresentation
     mode="production"
+    selectedStrategy={values?.strategy}
     parameters={parameters}
     readiness={readinessView}
     run={runView}

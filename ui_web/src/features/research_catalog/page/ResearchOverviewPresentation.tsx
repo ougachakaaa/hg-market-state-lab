@@ -1,5 +1,5 @@
 import { FileTextOutlined } from '@ant-design/icons'
-import { Button, Card, Col, Flex, Row, Typography } from 'antd'
+import { Button, Card, Col, Flex, Grid, Row, Typography } from 'antd'
 import { researchStudies } from '../model/researchStudies'
 import {
   STATIC_CATALOG_DISCLOSURE,
@@ -15,11 +15,15 @@ export function ResearchOverviewPresentation({ mode, navigation, sourceDisclosur
   sourceDisclosure?: string
 }) {
   const staticMode = mode === 'static'
+  const { md } = Grid.useBreakpoint()
+  const disclosureStyle = { fontSize: 12, minWidth: 0, maxWidth: '100%', whiteSpace: 'normal', overflowWrap: 'anywhere' } as const
 
   return <Flex vertical gap="large" style={{ minWidth: 0, overflowWrap: 'anywhere' }}>
     <Typography.Title level={2} style={{ margin: 0 }}>研究总览</Typography.Title>
-    <Row gutter={[24, 24]}>
-      {researchStudies.map(study => <Col key={study.title} xs={24} md={12}>
+    {/* Keep the 24px inner gutter without Row's negative outer margins. */}
+    <Row gutter={[0, 24]}>
+      {researchStudies.map((study, index) => <Col key={study.title} xs={24} md={12}
+        style={{ paddingInlineStart: md && index % 2 === 1 ? 12 : 0, paddingInlineEnd: md && index % 2 === 0 ? 12 : 0 }}>
         <Card style={{ height: '100%' }}>
           <Flex vertical gap="middle" align="start">
             <Flex gap="small" align="center" wrap>
@@ -33,9 +37,9 @@ export function ResearchOverviewPresentation({ mode, navigation, sourceDisclosur
         </Card>
       </Col>)}
     </Row>
-    <Flex vertical gap="small" role="note">
-      <Typography.Text type="secondary" style={{ fontSize: 12 }}>完成状态仅表示独立 Web 页面已开放；不代表数据源就绪、计算成功或研究方法开发完毕。研究内容仅供研究参考。</Typography.Text>
-      {staticMode && <Typography.Text type="secondary" style={{ fontSize: 12 }}>{sourceDisclosure ?? STATIC_CATALOG_DISCLOSURE}</Typography.Text>}
+    <Flex vertical gap="small" role="note" style={{ minWidth: 0, maxWidth: '100%' }}>
+      <Typography.Text type="secondary" style={disclosureStyle}>完成状态仅表示独立 Web 页面已开放；不代表数据源就绪、计算成功或研究方法开发完毕。研究内容仅供研究参考。</Typography.Text>
+      {staticMode && <Typography.Text type="secondary" style={disclosureStyle}>{sourceDisclosure ?? STATIC_CATALOG_DISCLOSURE}</Typography.Text>}
     </Flex>
   </Flex>
 }

@@ -84,3 +84,5 @@ The application composes a transport-free Backtesting overview at `/backtesting`
 mounts the existing execution Page only at `/backtesting/futures-roll-long`. Shared
 Shell and overview Presentation support static composition. The static Shell harness
 verifies both identities; official Bundle composition remains DDB-04 work.
+
+The shared workspace header remains sticky while scrolling. Its right edge always exposes a GitHub source link to https://github.com/ougachakaaa/hg-market-state-lab in both runtimes, opening a separate tab with noopener/noreferrer. Runtime identity actions remain supplied by composition.

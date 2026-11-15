@@ -46,16 +46,20 @@ Page composes hooks/components; pure validators own generated schema, immutable 
 Run-state coherence, Result association and V2 View checks; the Production API owns
 protected transport and safe error mapping; hooks own explicit submission, abort/history,
 and polling; model owns display formatting. React never recomputes financial metrics,
-curves, trades or slots. Summary/Trades/Rolls/Evidence project Result unchanged.
-Shared ChartView renders returns/drawdown, date/decimal_ratio, producer event details
-and Zoom/Pan/Reset. Requested and observed windows remain distinct. Evidence is an
-expandable online summary, not the full offline package. Explain ideal Close gross
-execution, no fees/slippage/margin, index price benchmark, historical metadata
-assumptions, and cache completeness versus freshness. Evidence wording is origin-aware:
-Static labels the actual embedded origin under the Example contract (retired; Git history),
-with real-market provenance for formal V2 and Synthetic disclosure for test-only results, and does not claim server execution, a full
-offline evidence package, or current market/cache/Provider readiness. No export/copy/download
-capability.
+curves, trades or slots. Demo and Online share one Compact Backtest Result card.
+Its reading order is research question, collapsed strategy/return conventions,
+returns and drawdown Views, then seven core summary metrics and initial notional.
+Profile machine identities retain generated-contract types; a feature-local pure
+presentation mapping owns their Chinese labels and accurate strategy explanations.
+The page's collapsed About section follows the selected input profile, while Result
+explains its own immutable request. Unselected inputs show shared rules.
+Request summaries show product, inclusive requested range and strategy label.
+Independent observed-window, validation-success, Trades, Rolls and Evidence panels
+are omitted. Producer data, validation, event associations, lifecycle and date-axis
+contracts remain authoritative. Financial semantics belong exclusively to W2.
+Static warning body uses the compact investment disclaimer. Truthful source disclosure
+may accompany the report separately, including explicit test-only provenance.
+No export/copy/download capability.
 
 Readiness uses friendly dependency/status labels and Dataset-owned target-unit coverage counts. Unknown targets are not missing datasets; no separate SSE readiness is fabricated. Refresh only checks cache. Failure presentation is a case-owned pure mapping of status and safe OnlineFailure: title, explanation and action, with stage/category/dependency/reason and Run ID in collapsed details. Only ensure/upstream_operation/credential_missing identifies absent Tushare configuration; other and historical failures use conservative guidance. No automatic submission/acquisition or change to Result/date-axis state is introduced.
 
@@ -105,11 +109,9 @@ Demo Example authority (retired; Git history) owns formal V2 real-market dates a
 packaging; authenticity and rights (retired; Git history) owns evidence and admission.
 This feature owns only their presentation. Static delivery is not a Synthetic source label
 or proof of authenticity. Preserve historical V1/test disclosures, use actual real-market
-origin for V2, and never promote regression inputs to formal Examples. WP-B propagates an explicit validated Example source statement from static composition
-into shared Result Evidence through UI-only `sourceDisclosure`; delivery mode never
-infers real-market origin. Historical Synthetic defaults and Production evidence remain
-unchanged. Admission and provenance ownership stay in the
-private build contract (retired; Git history).
+origin for V2, and never promote regression inputs to formal Examples. Explicit test-only or admitted source disclosure may accompany the compact report
+through UI-only `sourceDisclosure`; delivery mode never infers source authenticity.
+The formal Demo uses the compact static warning and existing runtime source disclosure.
 
 ## INT-1 shared runtime reconciliation
 
@@ -129,3 +131,5 @@ with purpose and navigation to `/backtesting/futures-roll-long`. It is a shared 
 application Presentation, independent of Preflight and Run controllers. Completion
 uses the UI system success text and denotes Web entry availability. Legacy Production
 Run URLs normalize according to Workspace authority before mounting this feature.
+
+Demo and Online returns/drawdown share the initially closed 日期事件（Date Events） disclosure via their common chart options. Its description is: 标记策略开仓、到期换仓及最终平仓的日期，帮助理解持仓变化与收益曲线的关系。 Producer Entry/Roll/Exit identities, order, details and Plotly markers remain intact. Expansion changes only local UI state, with no HTTP or recalculation.

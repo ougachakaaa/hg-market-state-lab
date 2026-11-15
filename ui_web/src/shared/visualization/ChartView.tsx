@@ -65,7 +65,12 @@ function V2Chart({ view, minPlotHeight, options }: { view: ViewV2; minPlotHeight
         style={{ width: '100%', height: '100%' }} useResizeHandler />
     </div>
     {missing.length > 0 && <section aria-label="Missing values"><Typography.Title level={5}>Missing values</Typography.Title><Collapse items={missing} /></section>}
-    {events.length > 0 && <section aria-label="Date events"><Typography.Title level={5}>Date events</Typography.Title><Collapse items={events} /></section>}
+    {events.length > 0 && <section aria-label="Date events">{options.dateEventsDisclosure
+      ? <Collapse items={[{ key: 'date-events', label: '日期事件（Date Events）', children: <>
+          <Typography.Paragraph>{options.dateEventsDisclosure.description}</Typography.Paragraph>
+          <Collapse items={events} />
+        </> }]} />
+      : <><Typography.Title level={5}>Date events</Typography.Title><Collapse items={events} /></>}</section>}
   </Flex>
 }
 

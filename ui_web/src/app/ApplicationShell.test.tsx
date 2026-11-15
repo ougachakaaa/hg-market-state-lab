@@ -66,3 +66,12 @@ it('groups Backtesting overview and instance with matching icon roles and breadc
   fireEvent.click(screen.getByRole('button', { name: '展开导航' }))
   expect(screen.getByRole('link', { name: '回测总览' })).toBeTruthy()
 })
+
+it('keeps a source link in the sticky shared header', () => {
+  const { container } = render(<ApplicationShell path="/research" href={path => path} navigate={vi.fn()} header={null}>Study</ApplicationShell>)
+  const link = screen.getByRole('link', { name: '查看源码（GitHub）' })
+  expect(link.getAttribute('href')).toBe('https://github.com/ougachakaaa/hg-market-state-lab')
+  expect(link.getAttribute('target')).toBe('_blank')
+  expect(link.getAttribute('rel')).toBe('noopener noreferrer')
+  expect((container.querySelector('.ant-layout-header') as HTMLElement).style.position).toBe('sticky')
+})

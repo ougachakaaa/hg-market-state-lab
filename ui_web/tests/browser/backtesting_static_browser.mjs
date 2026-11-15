@@ -1,3 +1,4 @@
+import { verifyDateEvents } from './date_events_disclosure.mjs'
 // D2-F verification only: built artifact served as files; no backend, proxy or Auth.
 import assert from 'node:assert/strict'
 import { spawnSync } from 'node:child_process'
@@ -68,37 +69,27 @@ try {
   await page.getByText(disclosure, { exact: true }).waitFor()
   assert.equal(await page.getByText(disclosure, { exact: true }).count(), 1)
   await page.getByText('固定回测参数', { exact: true }).waitFor()
-  await page.getByText('Example 参数固定，不可编辑、不可提交；本页不会创建服务器 Run，也不会执行 Preflight。', { exact: true }).waitFor()
   await page.getByText('IM', { exact: true }).first().waitFor()
-  await page.getByText('expiry_to_M1_v1', { exact: true }).first().waitFor()
-  await page.getByText('futures_roll_long_v1', { exact: true }).first().waitFor()
+  await page.getByText('到期换入次月合约（M0 → M1）', { exact: true }).first().waitFor()
   assert.equal(await page.locator('form').count(), 0)
   assert.equal(await page.locator('input:not([type="radio"]), textarea, select, [role="combobox"]').count(), 0)
-  assert.equal(await page.getByRole('button', { name: '开始回测' }).count(), 0)
   assert.equal(await page.getByRole('button', { name: '重新检查缓存' }).count(), 0)
-  pass('Shared static page renders a fixed, non-editable and non-submittable request with no Query/Preflight controls')
-
-  await page.getByText('请求窗口与实际观测', { exact: true }).waitFor()
-  await page.getByText('2025-02-17 至 2025-03-25', { exact: true }).first().waitFor()
-  await page.getByText('2025-02-17 至 2025-03-25（5 个 CFFEX 交易日）', { exact: true }).waitFor()
-  await page.getByText('futures_roll_long_result_v1', { exact: true }).waitFor()
-  await page.getByText('futures_roll_long_definition_v1', { exact: true }).waitFor()
-  await page.getByText('Embedded Backtest Result 已通过正式契约校验', { exact: true }).waitFor()
-  await page.getByText(/不代表浏览器运行过 W2 Backtest Core/).first().waitFor()
-  pass('Fixed request, Result Profile, Definition Version, requested-vs-observed window and static validation meaning are explicit')
-
-  await page.getByText('回测结果 · Result Summary', { exact: true }).waitFor()
+  assert.equal(await page.getByRole('button', { name: '开始回测' }).count(), 0)
+  assert.equal(await page.getByText('请求窗口与实际观测', { exact: true }).count(), 0)
+  assert.equal(await page.getByText('Embedded Backtest Result 已通过正式契约校验', { exact: true }).count(), 0)
+  await page.getByText('2025-02-17 至 2025-03-25', { exact: true }).waitFor()
+  await page.getByText('回测报告', { exact: true }).waitFor()
   await page.getByText('¥22,000.00', { exact: true }).waitFor()
   await page.getByText('1.8%', { exact: true }).first().waitFor()
-  await page.getByText('Benchmark Return', { exact: true }).waitFor()
-  await page.getByText('Excess Return', { exact: true }).waitFor()
-  await page.getByText('Execution Count', { exact: true }).waitFor()
-  await page.getByText('Roll Count', { exact: true }).waitFor()
+  for (const label of ['基准收益率', '超额收益率', '策略最大回撤', '基准最大回撤', '展期次数']) {
+    await page.getByText(label, { exact: true }).waitFor()
+  }
   assert.equal(await page.getByTestId('backtest-result').count(), 1)
-  pass('Result Summary keeps producer Gross/Benchmark/Excess Return, PnL, drawdowns, execution/roll counts and initial notional')
+  pass('Compact report shows Chinese strategy, requested range and producer summary')
 
   const plots = page.locator('.js-plotly-plot')
   assert.equal(await plots.count(), 2)
+  await verifyDateEvents(page, 2)
   await plots.first().locator('.nsewdrag').waitFor()
   const chart = await plots.first().evaluate(el => ({
     ys: el.data.filter(t => t.type === 'scatter' && t.showlegend !== false).map(t => t.y),
@@ -146,20 +137,15 @@ try {
   await page.waitForFunction(() => document.querySelector('.js-plotly-plot')?._fullLayout?.dragmode === 'pan')
   pass('Real Chromium Plotly Zoom, Pan mode and Reset interactions operate on the embedded Views only')
 
-  await page.getByRole('cell', { name: fixture.trades[0].contract_code, exact: true }).first().waitFor()
-  assert.ok(await page.getByRole('cell', { name: fixture.trades[0].contract_code, exact: true }).count() > 0)
-  await page.getByRole('cell', { name: fixture.rolls[0].new_contract_code, exact: true }).first().waitFor()
-  assert.ok(await page.getByRole('cell', { name: fixture.rolls[0].new_contract_code, exact: true }).count() > 0)
-  assert.ok(await page.getByRole('cell', { name: fixture.rolls[0].old_contract_code, exact: true }).count() > 0)
-  pass('Trades and Rolls tables preserve complete producer rows and published contract identities')
-
-  await page.getByText('研究证据与限制 · Evidence / Limitations', { exact: true }).click()
-  await page.getByText(fixture.evidence.input_fingerprint, { exact: true }).waitFor()
-  await page.getByText(/Embedded Synthetic Example/).waitFor()
-  await page.getByText(/未执行服务器回测/).waitFor()
-  await page.getByText(/不包含手续费、滑点和保证金机制/).waitFor()
-  await page.getByText(/Historical decision-time metadata and active-set availability are explicit assumptions/).first().waitFor()
-  pass('Evidence/Limitations retain the producer payload and disclose the static Synthetic origin, ideal Close gross execution and no fee/slippage/margin')
+  assert.equal(await page.getByTestId('backtest-result').getByRole('table').count(), 0)
+  await page.getByText('策略规则与收益口径', { exact: true }).click()
+  await page.getByText(/未考虑手续费、滑点、保证金与融资成本/).waitFor()
+  await page.getByText(/首个 CFFEX 交易日买入 M1/).waitFor()
+  for (const width of [1440, 1024, 768]) {
+    await page.setViewportSize({ width, height: 1000 })
+    await page.waitForFunction(() => document.documentElement.scrollWidth <= innerWidth)
+  }
+  pass('Compact rules expand and responsive report has no page overflow')
 
   assert.equal(await page.getByText('当前 Run 状态', { exact: true }).count(), 0)
   assert.equal(await page.getByText(/Run ID/).count(), 0)

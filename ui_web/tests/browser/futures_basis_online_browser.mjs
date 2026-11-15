@@ -1,3 +1,4 @@
+import { verifyDateEvents } from './date_events_disclosure.mjs'
 import { onlineHarness, unusedPort, observe } from './online_harness.mjs'
 import { historicalBasisAcceptance } from './historical_basis_acceptance.mjs'
 // Real browser -> Vite proxy -> FastAPI -> temporary SQLite. Only market public
@@ -101,13 +102,15 @@ try {
   await page.getByRole('button', { name: '生成研究' }).click()
   assert.equal((await busyResponse).status(), 409)
   await page.getByText(/BUSY：/).waitFor()
-  await page.locator('#section-5').waitFor()
-  await page.locator('#section-1 .js-plotly-plot .nsewdrag').first().waitFor()
+  await page.locator('[data-testid="compact-report"]').waitFor()
+  await page.locator('[data-testid="history-charts"] .js-plotly-plot .nsewdrag').first().waitFor()
   assert.ok(page.url().includes(`run_id=${firstId}`))
-  for (let i = 0; i < 6; i++) assert.equal(await page.locator(`#section-${i}`).count(), 1)
+  assert.equal(await page.getByTestId('compact-report').count(), 1)
+  assert.equal(await page.getByRole('navigation', { name: '报告章节' }).count(), 0)
   assert.equal(await page.getByText(/相邻 inputs.canonical.json/).count(), 0)
-  const plots = page.locator('#section-1 .js-plotly-plot')
+  const plots = page.locator('[data-testid="history-charts"] .js-plotly-plot')
   assert.equal(await plots.count(), 3)
+  await verifyDateEvents(page, 3)
   assert.equal(await plots.first().locator('.legend .traces').count(), 4)
   assert.ok(states.includes('RUNNING'))
   assert.ok(states.includes('COMPLETED'))
@@ -142,10 +145,10 @@ try {
   await page.getByText('输入检查失败，请重新检查').waitFor()
   assert.equal(await page.getByRole('button', { name: '生成研究' }).isEnabled(), false)
   assert.equal(evidence.filter(entry => entry.startsWith('POST /api/research/futures-basis/runs ')).length, 2)
-  assert.equal(await page.locator('#section-5').count(), 1)
+  assert.equal(await page.locator('[data-testid="compact-report"]').count(), 1)
   assert.ok(page.url().includes(firstId))
   await page.reload()
-  await page.locator('#section-5').waitFor()
+  await page.locator('[data-testid="compact-report"]').waitFor()
   assert.ok(page.url().includes(firstId))
   const againAccepted = page.waitForResponse(r => r.request().method() === 'POST' && r.url().endsWith('/api/research/futures-basis/runs'))
   // Refresh restores the immutable run; only the end date defaults to Shanghai today.
@@ -159,12 +162,12 @@ try {
   const secondId = (await (await againAccepted).json()).run_id
   assert.notEqual(secondId, firstId)
   await page.waitForFunction(id => new URLSearchParams(location.search).get('run_id') === id, secondId)
-  await page.locator('#section-5').waitFor()
+  await page.locator('[data-testid="compact-report"]').waitFor()
   await page.goBack()
-  await page.locator('#section-5').waitFor()
+  await page.locator('[data-testid="compact-report"]').waitFor()
   assert.ok(page.url().includes(firstId))
   await page.goForward()
-  await page.locator('#section-5').waitFor()
+  await page.locator('[data-testid="compact-report"]').waitFor()
   assert.ok(page.url().includes(secondId))
   // Deliver the POST to the real backend, then lose its response in this browser.
   // The prior report must survive and the client must not create another Run.
@@ -198,7 +201,7 @@ try {
   assert.ok(lostAccepted?.run_id)
   assert.equal(runCount(), 3)
   assert.ok(page.url().includes(secondId))
-  assert.equal(await page.locator('#section-5').count(), 1)
+  assert.equal(await page.locator('[data-testid="compact-report"]').count(), 1)
   await page.unroute('**/api/research/futures-basis/runs')
   assert.deepEqual(await page.evaluate(() => [localStorage.length, sessionStorage.length]), [0, 0])
   await polishAcceptance(page, context, output, secondId, origin)
@@ -207,7 +210,7 @@ try {
   assert.equal((await context.cookies()).length, 0)
   assert.equal((await context.request.get(`${origin}/auth/me`)).status(), 401)
   assert.equal((await context.request.get(`${origin}/api/research/futures-basis/runs/${secondId}/report`)).status(), 401)
-  assert.equal(await page.locator('#section-0').count(), 0)
+  assert.equal(await page.locator('[data-testid="compact-report"]').count(), 0)
   const again = await context.request.post(`${origin}/auth/logout`, {
     headers: { Origin: env.LAB_AUTH_ORIGIN },
   })

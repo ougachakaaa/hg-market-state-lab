@@ -5,7 +5,7 @@ import { validateReportData } from './validate'
 import { readerFixture } from './reader.fixture'
 // Keep the reader's real mode state; stub only the shared renderer/control boundary.
 vi.mock('../../../shared/visualization', () => ({
-  ChartView: ({ options }: any) => <div data-testid="chart-mode">{options?.ordinalDates ? 'trading' : 'calendar'}</div>,
+  ChartView: ({ options }: any) => <div data-testid="chart-mode" data-disclosure={options?.dateEventsDisclosure?.description}>{options?.ordinalDates ? 'trading' : 'calendar'}</div>,
   DateAxisControl: ({ value, onChange, label }: any) => <div aria-label={label}>
     {[['trading', 'Trading Days'], ['calendar', 'Calendar Days']].map(([mode, text]) =>
       <button key={mode} onClick={() => onChange(mode)}>{text}</button>)}
@@ -15,12 +15,19 @@ vi.mock('../../../shared/visualization', () => ({
 }))
 afterEach(cleanup)
 describe('shared reader', () => {
-  it('renders six online sections, explicit empty coverage and online-only disclosure', () => {
-    const { container } = render(<Report data={readerFixture()} mode="online" />)
-    expect(container.querySelectorAll('[id^="section-"]')).toHaveLength(6)
-    expect(screen.getByText('0；无..无')).toBeTruthy()
-    expect(screen.getByText(/完整离线证据包及 Verify/)).toBeTruthy()
-    expect(screen.queryByText(/相邻 inputs.canonical.json/)).toBeNull()
+  it.each(['online', 'demo'] as const)('renders one compact report with charts before means (%s)', mode => {
+    const { container } = render(<Report data={readerFixture()} mode={mode} />)
+    expect(container.querySelectorAll('.ant-card')).toHaveLength(1)
+    expect(screen.queryByRole('navigation', { name: '报告章节' })).toBeNull()
+    const toggle = screen.getByRole('button', { name: '指标定义与公式' })
+    expect(toggle.getAttribute('aria-expanded')).toBe('false')
+    fireEvent.click(toggle)
+    expect(toggle.getAttribute('aria-expanded')).toBe('true')
+    const history = screen.getByTestId('history-charts')
+    const mean = screen.getByRole('heading', { name: '各 Slot 统计均值' })
+    expect(history.compareDocumentPosition(mean) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+    expect(screen.queryByText('Producer Report Request')).toBeNull()
+    expect(screen.queryByText('数据完整性（各自单位，不相加）')).toBeNull()
   })
   it('retains offline evidence disclosure with the identical reader', () => {
     render(<Report data={readerFixture()} mode="offline" />)
@@ -79,7 +86,7 @@ it('formats Overview, quantiles, intervals and paired means by explicit result u
   data.distributions = [{ request: { analysis_id: 'ratio', metric: 'basis_value', slot: 'M0' }, candidates: [], binding: [], methods }]
   data.comparisons = [{ request: { analysis_id: 'pair', metric: 'basis_value', slots: ['M0', 'M1'] }, common_dates: [], dropped: [], dropped_details: [], left_methods: methods, right_methods: methods }]
   const before = structuredClone(data)
-  const { container } = render(<Report data={data} mode="online" />)
+  const { container } = render(<Report data={data} mode="offline" />)
   expect(screen.getByText('15.3%')).toBeTruthy()
   expect(screen.getByText('Mean：15.3%')).toBeTruthy()
   expect(screen.getByText('-8.7%')).toBeTruthy()
@@ -90,58 +97,47 @@ it('formats Overview, quantiles, intervals and paired means by explicit result u
   expect(data).toEqual(before)
 })
 
-it('uses static demo evidence copy without claiming online transport or adjacent evidence files', () => {
-  const data = readerFixture(); const before = structuredClone(data)
-  const { container } = render(<Report data={data} mode="demo" />)
+it('keeps compact local interactions on the static route and suppresses repeated source disclosure', () => {
+  window.history.replaceState(null, '', '/#/research/futures-basis')
+  render(<Report data={readerFixture()} mode="demo" sourceDisclosure="private source" />)
+  fireEvent.click(screen.getByText('Calendar Days'))
+  fireEvent.click(screen.getByRole('button', { name: '指标定义与公式' }))
+  expect(window.location.hash).toBe('#/research/futures-basis')
+  expect(screen.queryByText('private source')).toBeNull()
+})
+
+it('retains all six offline sections and fragment links', () => {
+  const { container } = render(<Report data={readerFixture()} mode="offline" />)
   expect(container.querySelectorAll('[id^="section-"]')).toHaveLength(6)
-  expect(screen.getByText(/本报告展示 Synthetic Fixture/)).toBeTruthy()
-  expect(screen.queryByText(/此 HTTP 接口/)).toBeNull()
-  expect(screen.queryByText(/相邻 inputs.canonical.json/)).toBeNull()
-  fireEvent.click(screen.getByText('Producer Report Request'))
-  expect(screen.getByText(JSON.stringify(data.request))).toBeTruthy()
+  expect(within(screen.getByRole('navigation', { name: '报告章节' })).getAllByRole('link')).toHaveLength(6)
+})
+
+it('warns for partial results and presents empty results honestly', () => {
+  const data = readerFixture()
+  data.status = 'partial'
+  data.distributions = []
+  render(<Report data={data} mode="online" />)
+  expect(screen.getByText(/Partial：研究执行已完成，部分统计方法失败/)).toBeTruthy()
+  expect(screen.getByText('无可用分布结果')).toBeTruthy()
+})
+
+it.each(['demo', 'online'] as const)('renders producer distribution Count and Frequency with history (%s)', mode => {
+  const data = readerFixture()
+  data.formulas = ['producer formula']
+  data.distributions = [{ request: { analysis_id: 'a', metric: 'basis_value', slot: 'M0' }, candidates: [], binding: [], methods: [{ spec: { method: 'mean' }, failure_category: null, reason: null, result: { method: 'mean', unit: 'index_points', sample_count: 1, value: 12 } }] }]
+  data.views.histograms = { 'a/count': data.views.history.basis_value, 'a/frequency': data.views.history.basis_value }
+  const before = structuredClone(data)
+  render(<Report data={data} mode={mode} />)
+  expect(screen.getAllByTestId('chart-mode')).toHaveLength(5)
+  expect(screen.getByRole('combobox', { name: 'Distribution metric' })).toBeTruthy()
+  expect(screen.getByRole('combobox', { name: 'Distribution slot' })).toBeTruthy()
+  fireEvent.click(screen.getByRole('button', { name: '指标定义与公式' }))
+  expect(screen.getByText('producer formula')).toBeTruthy()
   expect(data).toEqual(before)
 })
 
-it('keeps hash-routed section navigation local without replacing the active route', () => {
-  window.history.replaceState(null, '', '/#/research/futures-basis')
-  const original = Element.prototype.scrollIntoView
-  const scroll = vi.fn()
-  Element.prototype.scrollIntoView = scroll
-  try {
-    const { container } = render(<Report data={readerFixture()} mode="demo" sectionNavigation="local" />)
-    const nav = screen.getByRole('navigation', { name: '报告章节' })
-    expect(nav.querySelectorAll('a[href^="#section-"]')).toHaveLength(0)
-    const buttons = within(nav).getAllByRole('button')
-    expect(buttons).toHaveLength(6)
-    expect(container.querySelectorAll('[id^="section-"]')).toHaveLength(6)
-    buttons[3].focus()
-    expect(document.activeElement).toBe(buttons[3])
-    fireEvent.click(buttons[3])
-    expect(scroll).toHaveBeenCalledTimes(1)
-    expect(document.getElementById('section-3')).toBeTruthy()
-    expect(window.location.hash).toBe('#/research/futures-basis')
-  } finally {
-    Element.prototype.scrollIntoView = original
-  }
-})
-
-it('retains fragment section links for standalone and online delivery', () => {
-  for (const mode of ['online', 'offline'] as const) {
-    const { unmount } = render(<Report data={readerFixture()} mode={mode} />)
-    const nav = screen.getByRole('navigation', { name: '报告章节' })
-    expect(within(nav).getAllByRole('link')).toHaveLength(6)
-    expect(within(nav).queryAllByRole('button')).toHaveLength(0)
-    expect(nav.querySelector('a[href="#section-0"]')).toBeTruthy()
-    unmount()
-  }
-})
-
-it('keeps source origin separate from demo delivery in the evidence section', () => {
-  const disclosure = 'Historical Real Market Data · Source: Tushare · Private'
-  const first = render(<Report data={readerFixture()} mode="demo" sourceDisclosure={disclosure} />)
-  expect(screen.getByText(disclosure)).toBeTruthy()
-  expect(screen.queryByText(/Synthetic Fixture/)).toBeNull()
-  first.unmount()
-  render(<Report data={readerFixture()} mode="demo" />)
-  expect(screen.getByText(/Synthetic Fixture/)).toBeTruthy()
+it.each(['online', 'demo', 'offline'] as const)('configures only compact history disclosures (%s)', mode => {
+  render(<Report data={readerFixture()} mode={mode} />)
+  const configured = screen.getAllByTestId('chart-mode').filter(el => el.hasAttribute('data-disclosure'))
+  expect(configured).toHaveLength(mode === 'offline' ? 0 : 3)
 })

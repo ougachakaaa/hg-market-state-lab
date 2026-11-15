@@ -1,39 +1,21 @@
-import { describe, expect, it } from 'vitest'
-import { fixture } from '../testing/embeddedReportFixture'
-import { observedCoverage } from './basisPresentation'
-import { validateReportData } from '../report/validate'
-import type { ReportData } from '../report/types'
+import { expect, it } from 'vitest'
+import { distributionMean } from './basisPresentation'
+import type { Distribution, Method } from '../report/types'
 
-function report(): ReportData {
-  const value: unknown = structuredClone(fixture.report)
-  validateReportData(value)
-  return value
+const mean: Method = { spec: { method: 'mean' }, failure_category: null, reason: null,
+  result: { method: 'mean', unit: 'decimal_ratio', sample_count: 2, value: .15342 } }
+function distribution(methods: Method[]): Distribution {
+  return { request: { analysis_id: 'test', metric: 'basis_ratio', slot: 'M0' }, candidates: [], binding: [], methods }
 }
-
-describe('shared Futures Basis coverage projection', () => {
-  it('exposes producer coverage facts without recomputation', () => {
-    const source = report()
-    const before = structuredClone(source)
-    expect(observedCoverage(source)).toEqual({
-      reportProfile: 'futures_basis_report_evidence_v1',
-      definitionVersion: 'futures_basis_definition_v1',
-      status: 'complete',
-      fingerprint: source.fingerprint,
-      candidateCount: 2,
-      firstCandidate: '2024-10-18',
-      lastCandidate: '2024-10-21',
-      complete: true,
-    })
-    expect(source).toEqual(before)
-  })
-
-  it('retains an incomplete dependency and an empty candidate set as producer facts', () => {
-    const incomplete = report()
-    incomplete.coverage.futures = { ...incomplete.coverage.futures, missing_units: 2, successful_units: 0, complete: false }
-    expect(observedCoverage(incomplete).complete).toBe(false)
-
-    const empty = report()
-    empty.candidate_dates = []
-    expect(observedCoverage(empty)).toMatchObject({ candidateCount: 0, firstCandidate: null, lastCandidate: null })
-  })
+it('selects mean by identity and preserves producer values and units', () => {
+  const source = distribution([{ ...mean, spec: { method: 'quantile' } }, mean])
+  const before = structuredClone(source)
+  expect(distributionMean(source)).toBe('15.3%')
+  expect(source).toEqual(before)
+})
+it('preserves zero and explicit unavailable states', () => {
+  expect(distributionMean(distribution([{ ...mean, result: { ...mean.result!, value: 0 } }]))).toBe('0.0%')
+  expect(distributionMean(distribution([]))).toBe('不可用')
+  expect(distributionMean(distribution([{ ...mean, result: null }]))).toBe('不可用')
+  expect(distributionMean(distribution([{ ...mean, failure_category: 'no_eligible_sample', result: null }]))).toContain('no_eligible_sample')
 })

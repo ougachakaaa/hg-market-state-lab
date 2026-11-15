@@ -1,4 +1,4 @@
-import { AppstoreOutlined, DatabaseOutlined, ExperimentOutlined, HistoryOutlined, FileTextOutlined, MenuFoldOutlined, MenuUnfoldOutlined, ReadOutlined } from '@ant-design/icons'
+import { GithubOutlined, AppstoreOutlined, DatabaseOutlined, ExperimentOutlined, HistoryOutlined, FileTextOutlined, MenuFoldOutlined, MenuUnfoldOutlined, ReadOutlined } from '@ant-design/icons'
 import { Breadcrumb, Button, Flex, Layout, Menu, Typography, theme } from 'antd'
 import { useState, type ReactNode } from 'react'
 import { isWorkspacePath, workspaceRoutes, workspaceAreas, type WorkspacePath, type NavigationIcon } from './routeInventory'
@@ -64,7 +64,7 @@ export default function ApplicationShell({ path, navigate, href, header, childre
     </Layout.Sider>
     <Layout style={{ minWidth: 0 }}>
       <Layout.Header style={{ paddingInline: token.paddingLG, paddingBlock: token.paddingSM,
-        lineHeight: 'normal',
+        lineHeight: 'normal', position: 'sticky', top: 0, zIndex: 100,
         borderBottom: `1px solid ${token.colorBorderSecondary}`, height: 'auto', minHeight: 64 }}>
         <Flex justify="space-between" align="center" wrap gap="small">
           <Flex align="center" gap="middle" style={{ minWidth: 0 }}>
@@ -75,7 +75,12 @@ export default function ApplicationShell({ path, navigate, href, header, childre
               { title: route.title },
             ]} />
           </Flex>
-          {header}
+          <Flex align="center" gap="middle" style={{ marginInlineStart: 'auto' }}>
+            {header}
+            <Button type="link" href="https://github.com/ougachakaaa/hg-market-state-lab"
+              target="_blank" rel="noopener noreferrer" icon={<GithubOutlined aria-hidden="true" />}
+              aria-label="查看源码（GitHub）" style={{ flexShrink: 0 }}>GitHub</Button>
+          </Flex>
         </Flex>
       </Layout.Header>
       <Layout.Content style={{ minWidth: 0, width: '100%', maxWidth: 1500, margin: '0 auto',
