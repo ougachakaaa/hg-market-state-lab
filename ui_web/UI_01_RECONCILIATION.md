@@ -5,7 +5,12 @@
 Implementation is PASS. Browser Acceptance is PASS using the existing evidence below.
 DDB Integration is PASS on no-ff merge `4dbff6e89bbeb78712d4ae62693a992cc4e8f453`,
 which preserves source `5342f83058ba9e691a59c5221f42cfbba3f15a6b` and all seven UI commits.
-Branch retirement is pending remote synchronization and final reference checks.
+Branch Status is CLOSED. The integrated DDB branch was pushed to the configured
+GitHub remote `github` and its tracking HEAD passed source ancestry verification.
+The remote UI ref still matched the expected source SHA before deletion. Remote and
+local UI branches are deleted, and the obsolete GitHub tracking ref is absent.
+The clean secondary worktree was detached at the original UI commit and retained.
+`feat/demo-bundle-workflow` is the sole continuation branch for DDB-04/DDB-05.
 
 Integrated verification passed 76 cases in eight files covering App, routes,
 ApplicationShell, Overview, ResearchOverviewPresentation, ResearchWorkspacePage,
