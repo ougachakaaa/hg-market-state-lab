@@ -36,8 +36,9 @@ Online verification compares every emitted file against the CI receipt before br
 acceptance. Gate evidence and receipt are retained outside the public site.
 
 Manual offline CI accepts feature branches without deployment permissions. Ordinary
-push checks stay lightweight. Pages is workflow_dispatch only on main; the required
-full confirmed source SHA must equal the dispatch SHA. Checkout is pinned to that SHA.
+push checks stay lightweight. Pages runs only on release/demo-pages pushes. The exact
+triggering SHA must be reachable from freshly checked-out remote-main history.
+Checkout is pinned to that SHA; Linux independently runs the complete release gate.
 Build and verify once, transfer the site and separate receipt, then independently
 verify downloaded bytes before upload-pages-artifact. Deploy the exact uploaded
 artifact selected by its unique run/attempt name without rebuilding or fetching business data. Failed checks or Environment

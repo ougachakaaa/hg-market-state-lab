@@ -55,41 +55,37 @@
 
 `/research/publications` 是浏览器页面路径，也是后端 Publication API 路径。站点网关需把 `/research`、`/research/publications`、`/data/*`、`/backtesting` 的 HTML navigation 回退到 `index.html`，并把同源 `/api/research/*` 去除 `/api` 后转发至原后端路径，保留 Cookie、query、状态码与响应体。此仓库不包含实际 Nginx 站点配置；发布前应在目标网关验证这两类请求，不能仅以普通 SPA fallback 检查代替。
 
-## Manual Demo Pages release (DDB-05)
+## Verified Demo Pages release (DDB-06)
 
-Pages is separate from WSL Online deployment. Root AGENTS.md personal-study policy
-applies; preserve source disclosure, investment disclaimers and safety checks.
-
-Feature-branch Linux acceptance without deployment:
+Pages remains independent of WSL Online deployment. From ui_web run:
 
 ```powershell
-gh workflow run demo-compatibility.yml --repo ougachakaaa/hg-market-state-lab --ref feat/demo-bundle-workflow -f suite=demo-build
+npm run demo:publish
 ```
 
-After reviewed merge to main, inspect github-pages Environment branch protections,
-Pages configuration (Actions source) and Actions permissions via the existing inspection
-workflow or authenticated gh api. Missing API permissions are NOT VERIFIED; do not
-change protections to bypass them. Environment must permit main.
+Default remote: github. Override: `npm run demo:publish -- --remote NAME`.
+The publisher selects remote-main without switching your branch, rejects relevant
+uncommitted files and local-main drift, and gates a clean detached candidate worktree.
+Only its verified SHA is pushed, normally and without force, to release/demo-pages.
+Main/develop pushes do not deploy. Existing release HEAD uses its existing run without
+implicit reruns. Failed/missing runs require an explicitly authorized rerun.
 
-Only the user explicitly starts actual release on main with its confirmed full SHA:
+Read [Requirements authority](../demo/release/ARCHITECTURE.md). Changes to Requirements
+must be reviewed and committed to main. `npm run demo:release-check` runs the gate alone.
+Prerequisites: Git, authenticated GitHub CLI with repository/deployment read and push
+permissions, Node/npm and installed Playwright Chromium. Pages Source must be Actions;
+the github-pages Environment must explicitly allow release/demo-pages. Missing permission
+is a blocker; never disable protections. No business data is collected or fabricated.
+Root personal-study policy applies; preserve source disclosure and disclaimers.
 
-```powershell
-gh workflow run deploy-demo-pages.yml --repo ougachakaaa/hg-market-state-lab --ref main -f source_sha=CONFIRMED_MAIN_SHA
-```
+The publisher waits for Actions, verifies actual public files against the CI Receipt,
+and runs browser acceptance on the successful deployment URL. Local and CI receipts
+record their respective builds; CI verified bytes are deployed without rebuilding.
+Evidence stays outside the site in ignored .build/demo-release.json and demo-publish.json.
+CI retains evidence/receipts for 14 days. A receipt is not a signature.
 
-Push main never deploys. Feature refs and mismatching confirmations fail before build.
-The protected deploy job downloads and rechecks all files against the confirmed checkout,
-then packages those same bytes under a unique run/attempt name. No rebuilding, data
-collection or historical fallback occurs. Environment rejection stops deployment.
-
-Local artifact verification, from ui_web after demo:build:
-
-```powershell
-node scripts/demo_artifact.mjs scan .build/demo .build/demo-receipt.json
-node scripts/demo_artifact.mjs verify .build/demo .build/demo-receipt.json
-```
-
-The receipt binds Git HEAD, exact tracked Manifest SHA-256, per-file SHA-256/size and
-inventory digest. It resides outside the site and is retained with the CI artifact
-for 14 days. It is integrity evidence, not a signature or independent financial audit.
-Report CI success separately from actual deployment.
+A gate failure prevents push. Deployment failures and incomplete online verification
+are reported separately. No localhost result substitutes for online acceptance.
+A crash may leave demo-publish.lock in the absolute Git common directory returned by
+`git rev-parse --path-format=absolute --git-common-dir`. Confirm no publisher is running
+before removing that exact empty directory. Never delete unrelated user worktrees.

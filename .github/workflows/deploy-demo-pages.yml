@@ -1,11 +1,8 @@
-name: Manual Demo Pages release
+name: Verified Demo Pages release
 on:
-  workflow_dispatch:
-    inputs:
-      source_sha:
-        description: Confirm the full main commit SHA to publish
-        type: string
-        required: true
+  push:
+    branches:
+      - release/demo-pages
 permissions:
   contents: read
 concurrency:
@@ -19,34 +16,37 @@ jobs:
       run:
         working-directory: ui_web
     steps:
-      - name: Require confirmed main dispatch
+      - uses: actions/checkout@v7.0.1
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Require release branch and approved main history
         working-directory: .
         env:
           RELEASE_REF: ${{ github.ref }}
           RELEASE_SHA: ${{ github.sha }}
-          CONFIRMED_SHA: ${{ inputs.source_sha }}
         run: |
-          test "$RELEASE_REF" = refs/heads/main
-          test "$CONFIRMED_SHA" = "$RELEASE_SHA"
-          [[ "$CONFIRMED_SHA" =~ ^[a-f0-9]{40}$ ]]
-      - uses: actions/checkout@v7.0.1
-        with:
-          ref: ${{ github.sha }}
-          persist-credentials: false
+          test "$RELEASE_REF" = refs/heads/release/demo-pages
+          [[ "$RELEASE_SHA" =~ ^[a-f0-9]{40}$ ]]
+          test "$(git rev-parse HEAD)" = "$RELEASE_SHA"
+          git merge-base --is-ancestor "$RELEASE_SHA" refs/remotes/origin/main
       - uses: actions/setup-node@v7.1.0
         with:
           node-version: '22'
           package-manager-cache: false
       - run: npm ci
-      - run: npm run test:public-safety
-      - run: npm run demo:check
-      - run: npm run demo:build
-      - run: node scripts/demo_artifact.mjs scan .build/demo .build/demo-receipt.json
-      - run: node scripts/demo_artifact.mjs verify .build/demo .build/demo-receipt.json
+      - run: npm run demo:release-check
       - uses: actions/upload-artifact@v6
         with:
           name: verified-demo
           path: ui_web/.build/demo/
+          if-no-files-found: error
+          retention-days: 14
+      - uses: actions/upload-artifact@v6
+        with:
+          name: release-evidence
+          path: ui_web/.build/demo-release.json
           if-no-files-found: error
           retention-days: 14
       - uses: actions/upload-artifact@v6
@@ -57,7 +57,7 @@ jobs:
           retention-days: 14
   deploy:
     needs: build
-    if: github.ref == 'refs/heads/main'
+    if: github.ref == 'refs/heads/release/demo-pages'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:

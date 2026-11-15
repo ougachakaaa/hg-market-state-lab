@@ -360,3 +360,12 @@ merge nor publication is performed by DDB-05. The empty Publication Bundle is pr
 Git diff against baseline 2ca1d52782b3ffcaf42ebac0299fad0e6c7c267b confirms no change to
 seven Bundles, Manifest, Presets or .gitattributes. No historical Demo fallback exists.
 Generated local build/receipt files remain ignored; no business store or cache was deleted.
+
+## DDB-06 — Dedicated release publication
+
+Supersedes DDB-05 manual main dispatch. Release Requirements enter
+[release authority](../release/ARCHITECTURE.md); publication enters
+[deployment guide](../../deploy/README.md#verified-demo-pages-release-ddb-06).
+Only release/demo-pages push deploys; candidate must already be on remote main.
+DDB-00–05 collection, Bundle ownership and artifact transfer remain intact.
+Actual first-release evidence is recorded after execution, never inferred from local PASS.

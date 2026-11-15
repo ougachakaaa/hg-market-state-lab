@@ -25,7 +25,7 @@ export async function checkedPush({ check, recheck, push }) {
   return evidence
 }
 function command(program, args, cwd = root) {
-  return execFileSync(program, args, { cwd, encoding: 'utf8', windowsHide: true, stdio: ['ignore', 'pipe', 'pipe'] }).trim()
+  return execFileSync(program, args, { cwd, encoding: 'utf8', windowsHide: true, timeout: 120000, stdio: ['ignore', 'pipe', 'pipe'] }).trim()
 }
 function run(program, args, cwd) {
   return new Promise((accept, reject) => {
@@ -58,7 +58,7 @@ export async function publish(args = process.argv.slice(2)) {
   assert.ok(match, 'Remote must identify a GitHub repository')
   const repo = match[1]
   const gh = args => command('gh', [...args, '--repo', repo])
-  const api = path => JSON.parse(command('gh', ['api', `repos/${repo}/${path}`]))
+  const api = path => JSON.parse(command('gh', ['api', `repos/${repo}${path ? '/' + path : ''}`]))
   const common = git(['rev-parse', '--path-format=absolute', '--git-common-dir'])
   const lockPath = resolve(common, 'demo-publish.lock')
   await mkdir(lockPath) // Existing ownership requires explicit operator recovery.
@@ -115,6 +115,7 @@ export async function publish(args = process.argv.slice(2)) {
         }
       },
     })
+    await mkdir(resolve(web, '.build'), { recursive: true })
     await writeFile(resolve(web, '.build/demo-publish.json'), JSON.stringify({ ...evidence, repo }, null, 2) + '\n')
     const deadline = Date.now() + 25 * 60 * 1000
     let selected

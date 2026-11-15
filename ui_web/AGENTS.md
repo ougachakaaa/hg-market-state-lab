@@ -39,3 +39,11 @@ Select only directly affected business test files/cases. No default full-module 
 cross-module regression, topology, browser, live-data or deployment acceptance.
 Retain business invariants and fixtures; record unavailable checks as NOT VERIFIED.
 Do not modify real market data or caches to satisfy tests.
+
+## Static Demo publication
+
+“发布最新的静态 Demo” means run `npm run demo:publish` from ui_web against approved
+remote main. Read [deployment authority](deploy/ARCHITECTURE.md) and
+[release guide](deploy/README.md#verified-demo-pages-release-ddb-06) first.
+Do not dispatch a second workflow, publish current feature HEAD, recollect Bundles or
+claim completion before actual Pages deployment and public acceptance pass.
