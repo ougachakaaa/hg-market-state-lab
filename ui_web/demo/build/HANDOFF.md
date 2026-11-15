@@ -161,7 +161,7 @@ independent authority commit.
 
 UI-01-R2 source `5342f83058ba9e691a59c5221f42cfbba3f15a6b` was merged with no conflicts using no-ff merge `4dbff6e89bbeb78712d4ae62693a992cc4e8f453`. All seven UI commits and the DDB baseline history are retained. Application owns eight page identities, while the unchanged Registry owns seven Bundles. Overview routes create no Bundle. Explorer stays directly hash-accessible and hidden from the sidebar. M1/Q1 share the Backtesting instance page.
 
-DDB-00, DDB-01 and DDB-02 are complete. DDB-03 Implementation and UI Integration are complete. DDB-04 implementation is delivered; current scoped evidence is recorded below. Real Bundle Capture is NOT VERIFIED. Seven real Bundles and their Manifest remain undelivered. Demo Build / Publication remain BLOCKED. The retained UI, Bundle Contract, Validator and Collector provide the DDB-04 integration baseline. Actual capture remains the delivery prerequisite; coordinated Build locking is implemented.
+DDB-00, DDB-01 and DDB-02 are complete. DDB-03 Implementation and UI Integration are complete. DDB-04 implementation is delivered; current scoped evidence is recorded below. Real Bundle Capture is NOT VERIFIED. Seven real Bundles and their Manifest remain undelivered. DDB-04 Implementation is PASS; Operational Delivery and publication readiness remain BLOCKED by missing real data. The implemented build fails closed until that dataset exists. The retained UI, Bundle Contract, Validator and Collector provide the DDB-04 integration baseline. Actual capture remains the delivery prerequisite; coordinated Build locking is implemented.
 
 UI-01 Branch Status is CLOSED after successful DDB push and ancestry verification, followed by remote/local UI branch retirement. Continue DDB-04 and DDB-05 directly on `feat/demo-bundle-workflow`. The DDB-04 integration baseline is READY; runtime implementation is delivered and real-data delivery prerequisites remain open.
 
@@ -217,3 +217,71 @@ DDB-05 implementation planning may consume this runtime/build entry. Operational
 publication readiness remains BLOCKED until a tracked real admitted dataset, successful
 formal build/preview and distribution prerequisites are supplied. No CI/release change,
 merge, push or Pages publication was performed.
+
+## DDB-04-R1 operational closure - 2026-11-15
+
+DDB-04 Implementation: PASS. Operational Delivery: PASS for the local real-HTTP
+Dataset, independent admission, offline build and static browser acceptance below.
+Historical fixture evidence above is not the evidence for this real delivery.
+
+The user changed current Presets to IM 2026-03-01 through 2026-09-30 for Basis and
+both Backtesting profiles, and MO 2026-09-30 close for Chain/Premium. These replace
+the initial dates; Producer coverage is retained without padding.
+
+Formal Auth serving validation passes in loopback-http mode. The formal backend was
+started with poetry run lab serve backend at 127.0.0.1:8011. Anonymous requests to
+/auth/me, /research/capabilities and /research/publications returned 401. The first
+login failed because a trailing input punctuation character was interpreted as part
+of the password; after user clarification, formal /auth/login and /auth/me returned
+200. The approved identity was used throughout. No bypass or account mutation occurred.
+At the user's explicit request, operator credentials were saved only in ignored root
+.env; they are absent from Bundles, tracked files and committed evidence.
+
+The existing Collector was invoked with --all and the formal base URL. Interactive
+credential input was supplied in memory by a one-off operator wrapper; Collector code
+and authentication behavior were unchanged. All seven captures, complete Result
+validation and candidate admission passed. The sole active Dataset is demo/bundles/:
+seven registered JSON Bundles and one Manifest, with no extra dataset or archive.
+
+| Bundle | Formal HTTP acquisition | Actual result and coverage |
+| --- | --- | --- |
+| basis | Submit 202; owned polling/report 200 | complete; 147 candidate dates, 2026-03-02 through 2026-09-30; calendar/futures/index coverage complete; two Views |
+| catalog | List and every returned detail 200 | Full currently published catalog: one capability and one matching detail |
+| chain | GET /mo-option-chain 200 | MO 2026-09-30 close; six expiries, 131 calls and 131 puts |
+| expiry_to_M1_v1 | Submit 202; owned polling/result 200 | complete; 147 sessions, 2026-03-02 through 2026-09-30; 14 trades, six rolls, two Views |
+| expiry_to_Q1_v1 | Independent Submit 202; owned polling/result 200 | complete; same 147-session window; eight trades, three rolls, two Views |
+| premium | GET /mo-option-premium-plane 200 | MO 2026-09-30 close; six expiries, 262 points |
+| publications | GET /research/publications?limit=50 200 | One terminal empty page; zero Manifests, Analyses or Views |
+
+Both default case-owned SQLite Run Stores worked for actual execution. TuShare-backed
+formal producers supplied the requested market results; their original source and
+coverage statements are preserved. HTTP acquisition records third-party results and
+does not independently guarantee their truth. The user selected an empty development
+Publication Store, configured via root .env under ignored market_research/.runtime/.
+It is operationally valid but provides no existing research findings for the portfolio.
+No Publication was fabricated, and no market cache or prior Run was deleted.
+
+Scoped acceptance:
+
+- Collector: PASS full authenticated HTTP capture and seven-Bundle admission.
+- npm run demo:check: PASS independently against the active Dataset.
+- npm run demo:build: PASS source and private-snapshot admission, followed by Vite.
+  The unchanged build entry spawns Node admission only and never starts Python,
+  Collector or FastAPI. The backend was separately started for collection.
+- npm run demo:preview: PASS at the standard /hg-market-state-lab/ base.
+- Existing browserAcceptance.mjs invoked directly against the real artifact: PASS
+  eight routes, local interactions, direct hidden Explorer, reload/history and
+  static-only network requests (business API/Auth requests rejected by the harness).
+- Additional real-result browser checks: PASS Chain 12 traces/262 points; Premium
+  table 34 displayed rows; nonempty Basis charts; M1/Q1 results and nonempty charts.
+  An initial supplemental probe incorrectly expected a Plotly chart on Premium and
+  timed out; corrected table-specific verification passed without product changes.
+- Online npm run build: PASS. Both builds emit the existing large-chunk warning.
+- All eight dataset files: PASS inspection for configured secrets, supplied account
+  values, Cookie/auth fields and machine-private paths. Manifest and exact bytes
+  pass independent admission. Documentation/configuration diff reviewed.
+
+No financial code, Result Validator, Collector, Demo Runtime, CI or Pages workflow
+changed. No PR, merge, push or site publication was performed. DDB-05 formal release
+acceptance can now begin as a separate task; this task does not execute it. The empty
+Explorer content remains an explicit portfolio limitation.

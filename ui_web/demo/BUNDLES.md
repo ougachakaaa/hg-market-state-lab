@@ -30,11 +30,11 @@ required. The Python Collector consumes this table through the offline Node tool
 registry export, keeping one machine-readable registry owner. No plugin discovery is needed.
 
 `demo/build/presets.json` maps each `preset_id` to `{request}`. It records explicit
-formal query/body inputs. Initial Basis and Backtesting requests use IM, 2026-01-01 through
-2026-11-11. M1/Q1 have independent strategy profiles. Chain and Premium use MO,
-2026-11-11 and explicit close prices. Catalog uses `{}` and Publications uses
-`{limit: 50}`. These selections are committed with DDB-02. There are
-no implicit latest-date choices. M1/Q1 requests have their respective strategy fixed.
+formal query/body inputs. Current Basis and Backtesting requests use IM, 2026-03-01 through
+2026-09-30. M1/Q1 have independent strategy profiles. Chain and Premium use MO,
+2026-09-30 and explicit close prices. Catalog uses `{}` and Publications uses
+`{limit: 50}`. The user confirmed these selections for DDB-04-R1, replacing
+the initial DDB-02 dates. There are no implicit latest-date choices. M1/Q1 requests have their respective strategy fixed.
 
 `demo/bundles/manifest.json` is the only active Manifest. It is a closed object with
 `manifest_format` equal to `demo_manifest_v1` and `bundles`, an array of closed entries

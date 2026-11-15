@@ -132,10 +132,12 @@ no output lock. Online npm run build retains its independent configuration.
 
 After stopping all relevant processes and verifying no lock holder remains, run from
 repository root only for the identified stale lock. For a directory lock use
-`Remove-Item -LiteralPath 'C:\Users\Benjamin\source\repos\hg-market-state-lab\ui_web\.build\demo-collection\dataset.lock'`.
+`Remove-Item -LiteralPath '.\ui_web\.build\demo-collection\dataset.lock'`.
 For the output lock use
-`Remove-Item -LiteralPath 'C:\Users\Benjamin\source\repos\hg-market-state-lab\ui_web\.build\demo-output.lock'`.
+`Remove-Item -LiteralPath '.\ui_web\.build\demo-output.lock'`.
+Run either command only after confirming that every process holding that lock has stopped.
 These empty-directory operations preserve pending transactions and their candidates.
+Never delete pending.json, candidate data or valid Bundles to clear a stale lock.
 The same first command removes an identified old protocol lock file after all old
 Collector processes have exited. Never remove a lock while its holder is running.
 
