@@ -119,3 +119,21 @@ support Zoom/Pan/Reset; repeated switching produced no extra request, no state c
 identical y values. Evidence: `acceptance.json` with `status: PASS` and `errors: []`,
 plus `date-axis-trading.png` and `date-axis-calendar.png` in the disposable output
 directory (`/tmp/wp7-backtesting-browser` by default).
+
+## UI-03 compact presentation verification — 2026-11-16
+
+Demo and Online share a single report ordered as question, collapsed rules,
+returns/drawdown charts and seven core statistics. Chinese profile labels are
+presentation-only. Requested summaries contain product, range and strategy.
+Trades/Rolls/Evidence and separate window/validation-success panels are retired.
+
+- PASS — 39 directly related unit/component cases across seven selected files.
+- PASS — TypeScript, scoped Lint and Online Build. Vite reports a large chunk warning.
+- PASS — Static Chromium acceptance, both chart coordinates/events, date-axis switch,
+  Zoom/Pan/Reset, invalid-result rejection, zero API/Auth requests and page overflow
+  checks at 1440, 1024 and 768px.
+- NOT VERIFIED — Online Chromium acceptance timed out twice waiting for registration
+  response before entering Backtesting. Run lifecycle remains covered by selected
+  hook/page tests. Historical WP7 evidence above describes its original run.
+- NOT VERIFIED — Formal Bundle Demo M1/Q1 selector browser interaction in this run.
+  Both labels and strategy rules have component/model coverage.

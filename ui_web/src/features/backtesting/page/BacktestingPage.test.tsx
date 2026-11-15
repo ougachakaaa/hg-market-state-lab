@@ -39,16 +39,14 @@ it.each([['STATUS_ERROR', 'status', false], ['RESULT_ERROR', 'result', true]])('
   fireEvent.click(screen.getByRole('button', { name: result ? '重新读取结果' : '重新读取状态' }))
   expect(s.retry).toHaveBeenCalledWith(result); expect(s.submit).not.toHaveBeenCalled()
 })
-it('formats producer summary and mounts both existing V2 charts, trades and evidence', () => {
+it('formats producer summary and mounts the compact report with both existing V2 charts', () => {
   render(<Result data={fixture as BacktestResult} />)
   expect(screen.getAllByTestId('plotly')).toHaveLength(2)
   expect(screen.getByText('¥22,000.00')).toBeTruthy()
   expect(screen.getByText('1.8%')).toBeTruthy()
-  expect(screen.getAllByText('IM2504.CFX').length).toBeGreaterThan(0)
-  fireEvent.click(screen.getByText('研究证据与限制 · Evidence / Limitations'))
-  expect(screen.getByText(fixture.evidence.input_fingerprint)).toBeTruthy()
-  expect(screen.getByText(/不包含手续费、滑点和保证金机制/)).toBeTruthy()
-  expect(screen.getByText(/这里是在线证据摘要/)).toBeTruthy()
+  expect(screen.queryByRole('table')).toBeNull()
+  fireEvent.click(screen.getByText('策略规则与收益口径'))
+  expect(screen.getByText(/未考虑手续费、滑点、保证金与融资成本/)).toBeTruthy()
 })
 
 it('switches the Result date axis without submitting, reading or resetting the wrong Run', () => {

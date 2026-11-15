@@ -94,7 +94,7 @@ try {
       await page.getByRole('textbox', { name: label, exact: true }).press('Enter')
     }
     await page.getByRole('combobox', { name: '策略', exact: true }).click()
-    await page.locator(`.ant-select-item-option[title="${profile}"]`).click()
+    await page.locator(`.ant-select-item-option[title="${profile === 'expiry_to_M1_v1' ? '到期换入次月合约（M0 → M1）' : '到期换入首个后续季月合约（M0 → Q1）'}"]`).click()
     await page.getByText('本地缓存已就绪', { exact: true }).waitFor()
   }
   // Real Chromium date-axis acceptance for the cumulative return and drawdown charts.
@@ -247,9 +247,13 @@ try {
     const payload = await (await context.request.get(`${origin}/api/backtesting/futures-roll/runs/${admission.run_id}/result`)).json()
     assert.equal(payload.data.summary.total_pnl, pnl)
     assert.equal(payload.data.rolls[0].new_contract_code, contract)
-    await page.getByRole('cell', { name: contract, exact: true }).first().waitFor()
-    await page.getByText('研究证据与限制 · Evidence / Limitations', { exact: true }).click()
-    await page.getByText(payload.data.evidence.input_fingerprint, { exact: true }).waitFor()
+    assert.equal(await page.getByTestId('backtest-result').getByRole('table').count(), 0)
+    await page.getByText('策略规则与收益口径', { exact: true }).click()
+    await page.getByText(/未考虑手续费、滑点、保证金与融资成本/).waitFor()
+    for (const width of [1440, 1024, 768]) {
+      await page.setViewportSize({ width, height: 1000 })
+      await page.waitForFunction(() => document.documentElement.scrollWidth <= innerWidth)
+    }
     // Plotly receives the exact producer data, units and event annotations.
     const actual = await page.locator('.js-plotly-plot').first().evaluate(el => ({
       ys: el.data.filter(t => t.type === 'scatter' && t.showlegend !== false).map(t => t.y),

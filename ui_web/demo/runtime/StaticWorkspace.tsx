@@ -11,7 +11,7 @@ import { PremiumPlanePresentation, usePremiumPresentation } from '../../src/feat
 import { ResearchOverviewPresentation, useStaticCatalog } from '../../src/features/research_catalog/presentation'
 import { ResearchExplorerPresentation, useStaticExplorer } from '../../src/features/research_explorer/presentation'
 import { FuturesBasisPresentation } from '../../src/features/futures_basis_research/presentation'
-import { BacktestingPresentation } from '../../src/features/backtesting/presentation'
+import { BacktestingPresentation, strategyLabels } from '../../src/features/backtesting/presentation'
 import type { ResultIdentity, StaticData } from './results'
 
 function Chain({ data, disclose }: StaticProps) {
@@ -30,13 +30,11 @@ function Explorer({ data, disclose }: StaticProps) {
   const controller = useStaticExplorer(data.publicationPayload)
   return <ResearchExplorerPresentation controller={controller} mode="static" sourceDisclosure={`${disclose(data.identities.publications)} 正式结果的静态阅读；Analysis 与 View 选择仅使用已装载数据。`} />
 }
-function Backtesting({ data, disclose }: StaticProps) {
+function Backtesting({ data }: StaticProps) {
   const [strategy, setStrategy] = useState<'expiry_to_M1_v1' | 'expiry_to_Q1_v1'>('expiry_to_M1_v1')
-  const disclosure = disclose(data.identities[strategy])
   return <Flex vertical gap="middle">
-    <Typography.Text>本地选择已计算的正式 Result；不会提交回测任务。</Typography.Text>
-    <Select aria-label="已计算策略结果" value={strategy} onChange={setStrategy} options={(['expiry_to_M1_v1', 'expiry_to_Q1_v1'] as const).map(value => ({ value, label: value }))} style={{ width: 260 }} />
-    <BacktestingPresentation key={strategy} mode="static" state={{ status: 'validated', data: strategy === 'expiry_to_M1_v1' ? data.m1 : data.q1 }} disclosure={disclosure} sourceDisclosure={disclosure} />
+    <Select aria-label="已计算策略结果" value={strategy} onChange={setStrategy} options={(['expiry_to_M1_v1', 'expiry_to_Q1_v1'] as const).map(value => ({ value, label: strategyLabels[value] }))} style={{ width: '100%', maxWidth: 460 }} />
+    <BacktestingPresentation key={strategy} mode="static" state={{ status: 'validated', data: strategy === 'expiry_to_M1_v1' ? data.m1 : data.q1 }} sourceDisclosure={data.identities[strategy].source.description} />
   </Flex>
 }
 type StaticProps = { data: StaticData; disclose: (identity: ResultIdentity) => string }

@@ -40,3 +40,17 @@ it('restores the default Trading Days when a different Run remounts the result',
   expect(modes()).toEqual(['trading', 'trading'])
   expect(second.summary.total_pnl).toBe(1)
 })
+
+it.each(['expiry_to_M1_v1', 'expiry_to_Q1_v1'] as const)('presents compact report for %s', profile => {
+  const data = structuredClone(result)
+  data.request.strategy_profile = profile
+  const { container } = render(<Result data={data} />)
+  expect(screen.getAllByTestId('backtest-result')).toHaveLength(1)
+  expect(container.querySelectorAll('.ant-card')).toHaveLength(1)
+  expect(screen.queryByRole('table')).toBeNull()
+  expect(screen.queryByText(/首个 CFFEX 交易日买入/)).toBeNull()
+  fireEvent.click(screen.getByText('策略规则与收益口径'))
+  expect(screen.getByText(/首个 CFFEX 交易日买入 M1/)).toBeTruthy()
+  expect(screen.getByText(profile === 'expiry_to_M1_v1' ? /换入当天 M1/ : /换入当天 Q1/)).toBeTruthy()
+  expect(screen.getByText('核心统计结果').compareDocumentPosition(screen.getAllByTestId('chart-mode')[1]) & Node.DOCUMENT_POSITION_PRECEDING).toBeTruthy()
+})
