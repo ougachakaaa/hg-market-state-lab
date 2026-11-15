@@ -1,12 +1,13 @@
 import assert from 'node:assert/strict'
 import { chromium } from 'playwright'
 import { previewDemo } from './preview.mjs'
+import { verifyOverviewLayout } from '../../tests/browser/research_overview_layout.mjs'
 
-export async function verifyBrowser(publicUrl) {
+export async function verifyBrowser(publicUrl, { reviewOverview = false } = {}) {
   const server = publicUrl ? undefined : await previewDemo(0)
   let browser
   try {
-    browser = await chromium.launch({ headless: true })
+    browser = await chromium.launch({ headless: true, ...(process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH ? { executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH } : {}) })
     const page = await browser.newPage({ viewport: { width: 1440, height: 1000 } })
     const errors = []
     page.on('pageerror', error => errors.push(error.message))
@@ -24,6 +25,7 @@ export async function verifyBrowser(publicUrl) {
     })
     const routes = ['/data', '/data/mo-option-chain', '/data/mo-premium-plane', '/research',
       '/research/futures-basis', '/research/publications', '/backtesting', '/backtesting/futures-roll-long']
+    if (reviewOverview) await verifyOverviewLayout(browser, base + '#/research')
     for (const route of routes) {
       await page.goto(base + '#' + route)
       await page.getByText('Static Demo', { exact: true }).waitFor()

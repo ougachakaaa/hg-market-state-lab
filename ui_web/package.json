@@ -40,6 +40,7 @@
     "demo:check": "node scripts/demo_check.mjs",
     "demo:registry": "node scripts/demo_check.mjs --registry",
     "demo:preview": "node demo/build/preview.mjs",
+    "demo:test:browser": "node demo/build/localReview.mjs",
     "demo:release-check": "node scripts/demo_release_check.mjs",
     "demo:publish": "node demo/release/publish.mjs"
   },
