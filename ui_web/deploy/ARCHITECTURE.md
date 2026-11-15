@@ -32,7 +32,8 @@ server-side safeguard; local preflight cannot prohibit manual pushes or atomical
 remote main. CI independently rejects non-main history. No force push is permitted.
 Existing release HEAD uses existing run/deployment evidence without implicit reruns.
 Polling has finite deadlines; failures after push never imply successful publication.
-Online verification compares every emitted file against the CI receipt before browser
+Online verification uses the anonymous Playwright browser network stack to read and
+hash every emitted file against the CI receipt before route-level browser
 acceptance. Gate evidence and receipt are retained outside the public site.
 
 Manual offline CI accepts feature branches without deployment permissions. Ordinary
