@@ -1,6 +1,10 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { prePushPolicy, checkedPush, verifyPublicFiles } from './publish.mjs'
+import { prePushPolicy, checkedPush, verifyPublicFiles, cleanupCheckout } from './publish.mjs'
+import { mkdtemp, rm, access } from 'node:fs/promises'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
+import { execFileSync } from 'node:child_process'
 const candidate = 'a'.repeat(40)
 const valid = { candidate, main: candidate, release: 'b'.repeat(40), ancestor: true, dirty: '', localMain: candidate, active: false }
 test('accept exact main and FF release', () => prePushPolicy(valid))
@@ -26,4 +30,17 @@ test('online acceptance rejects missing files and changed sizes', async () => {
   const receipt = { files: [{ file: 'index.html', size: 8, sha256: '0'.repeat(64) }] }
   await assert.rejects(verifyPublicFiles(receipt, async () => { throw Error('unavailable') }), /unavailable/)
   await assert.rejects(verifyPublicFiles(receipt, async () => ({ size: 7, sha256: '0'.repeat(64) })), /size mismatch/)
+})
+test('removes owned checkout before unregistering its real Git worktree', async () => {
+  const directory = await mkdtemp(join(tmpdir(), 'demo-cleanup-test-'))
+  const git = args => execFileSync('git', args, { cwd: directory, stdio: 'pipe' })
+  try {
+    git(['init'])
+    git(['-c', 'user.name=test', '-c', 'user.email=test@example.invalid', 'commit', '--allow-empty', '-m', 'test'])
+    const checkout = join(directory, 'checkout')
+    git(['worktree', 'add', '--detach', checkout])
+    await cleanupCheckout(checkout, () => git(['worktree', 'remove', '--force', checkout]))
+    await assert.rejects(access(checkout))
+    assert.ok(!git(['worktree', 'list', '--porcelain']).toString().includes('/checkout'))
+  } finally { await rm(directory, { recursive: true, force: true }) }
 })

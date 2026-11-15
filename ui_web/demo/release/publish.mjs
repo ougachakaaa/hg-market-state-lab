@@ -36,6 +36,11 @@ function run(program, args, cwd) {
 const npm = (args, cwd) => process.platform === 'win32'
   ? run('cmd.exe', ['/d', '/s', '/c', 'npm ' + args.join(' ')], cwd)
   : run('npm', args, cwd)
+export async function cleanupCheckout(worktree, unregister) {
+  // Node handles Windows file attributes/retries; Git then removes only registration.
+  await rm(worktree, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 })
+  unregister()
+}
 export async function verifyPublicFiles(receipt, read) {
   for (const item of receipt.files) {
     console.log(`Checking public bytes: ${item.file}`)
@@ -169,9 +174,14 @@ export async function publish(args = process.argv.slice(2)) {
     console.error(deployed ? 'DEPLOYED_BUT_ONLINE_ACCEPTANCE_NOT_VERIFIED' : pushed ? 'PUSHED_DEPLOYMENT_FAILED' : 'PREFLIGHT_FAILED_NOT_PUSHED')
     throw error
   } finally {
-    if (worktree) git(['worktree', 'remove', '--force', worktree])
-    if (temporary) await rm(temporary, { recursive: true, force: true })
-    await rm(lockPath, { recursive: true })
+    try {
+      if (worktree) {
+        assert.equal(dirname(worktree), temporary, 'Unsafe checkout cleanup')
+        assert.equal(dirname(temporary), common, 'Unsafe temporary cleanup')
+        await cleanupCheckout(worktree, () => git(['worktree', 'remove', '--force', worktree]))
+      }
+      if (temporary) await rm(temporary, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 })
+    } finally { await rm(lockPath, { recursive: true }) }
   }
 }
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
