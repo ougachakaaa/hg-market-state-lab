@@ -116,45 +116,17 @@ Polling rules:
 
 ## Research result and shared W1 reader
 
-The result region contains exactly the existing six W1 reader sections:
+Online and Demo compose one compact Report Card in the shared reader. Reading order is
+research question (`summary`), initially collapsed producer formulas, history and
+distribution visualizations, then Slot/Metric means. Mean presentation selects the explicit
+`mean` method and preserves units, zero and unavailable states. No statistics are recomputed.
+Compact delivery omits section navigation, coverage/fingerprint/runtime metadata,
+detailed evidence tables, Methods cards and request JSON. Partial retains a short warning;
+empty findings and validation errors remain explicit. Full payload validation still applies.
 
-```text
-Overview
-Historical Basis
-Distributions
-Term Structure
-Discount Persistence
-Evidence and Limitations
-```
-
-These are not reimplemented in this feature. The R01-A reader presentation is
-shared with the offline report: the feature owns a pure `report/` presentation
-module, extracted from the existing offline reader in WP8, and the offline entry
-composes the same module. The online page supplies an online evidence/disclosure
-mode; the financial content, section identities and chart semantics are unchanged.
-
-The reader preserves:
-
-- ChartView Zoom / Pan / Reset, M0/M1/Q1/Q2 bindings, contract transition events
-  and point hover details;
-- the distinction between valid, unavailable, excluded and not-applicable samples,
-  including null points and missing-value details;
-- producer-supplied distribution counts, frequencies, bins, underflow/overflow and
-  exact inclusion labels;
-- common-date comparison populations, dropped-date outcomes and Slot pairs;
-- separate complete and censored discount runs, with observed session counts as
-  lower bounds.
-
-Metric and Slot selection is presentation state only. It never changes the HTTP
-request, triggers statistics, recomputes a distribution or invents a chart point.
-All numbers, text, events, intervals, comparisons and limitations come from the
-producer reader payload. No financial interpretation may be added in React.
-
-The page must clearly separate the requested window (from the run request) from
-the actual observed coverage (from candidate dates and coverage in the report).
-An empty candidate set is displayed as empty, never as the requested range. A
-`complete` report with `no_eligible_sample` is an empty finding; it is not a failed
-execution. A `partial` report keeps its failed-method evidence visible.
+Offline retains the complete six-section report, evidence, navigation and reproduction
+instructions. Shared chart regions retain ChartView options, producer Views, transition
+annotations, null breaks, hover, Metric/Slot controls and the date-axis contract.
 
 ## Error, empty and retry presentation
 
@@ -163,7 +135,7 @@ execution. A `partial` report keeps its failed-method evidence visible.
 - Pending/running: run identity and an honest wait state; no progress percentage.
 - Completed: reader or explicit "no numeric data" presentation from the payload.
 - Partial: completed presentation with a partial-status warning and producer method
-  failures visible.
+  failures retained in the payload; compact delivery shows a concise warning.
 - Failed/interrupted: classified failure, no report, manual Retry.
 - Busy: active-run message; manual retry only.
 - Invalid request: field-level safe message; no run created.
@@ -198,8 +170,7 @@ six-section implementation and no second financial projection is authorized.
 
 The public static demo (retired; Git history) also composes
 this pure reader with `demo` disclosure mode and horizontally scrollable chart
-frames on narrow screens. All six sections, presentation controls and producer
-facts stay shared. Online and offline modes retain their delivery instructions.
+frames on narrow screens. Online/Demo use compact composition; Offline retains all six sections. Chart controls and producer facts stay shared. Online and offline modes retain their delivery instructions.
 WP8 must preserve the existing offline Vitest, build and real-Chromium offline
 report acceptance.
 
@@ -288,11 +259,16 @@ reader payload once and exposes only validated facts; it owns no Run, polling, f
 actual observed coverage, and static success means the Embedded Report passed formal
 validation, not that a server Run executed.
 
-The shared `report/Report.tsx` keeps its six sections, M0/M1/Q1/Q2, chart controls and
-producer facts for online (`mode="online"`), offline (`mode="offline"`) and static
-(`mode="demo"`) delivery. `sectionNavigation="local"` scrolls between report sections
-without a fragment or history change, so a static hash route is never replaced; online and
-offline delivery retain their fragment section links.
+The shared `report/Report.tsx` selects Compact for online/demo and Full for offline
+using its existing mode. Compact has no section navigation and local interactions preserve
+static hash routes. Offline retains its section links. Demo fixed parameters and accepted
+Online request facts show only product and inclusive request range. Demo shows only the
+static alert title and this fixed paragraph:
+
+本页面为静态研究成果展示。数据不保证准确，不构成任何投资建议，仅供项目功能演示。
+
+Source provenance and Bundle metadata remain owned by admission. Compact report rendering
+does not repeat sourceDisclosure. Invalid embedded payloads retain the existing error path.
 
 ## V2 origin policy reconciliation
 
@@ -301,7 +277,7 @@ packaging; authenticity and rights (retired; Git history) owns evidence and admi
 This feature owns only their presentation. Static delivery is not a Synthetic source label
 or proof of authenticity. Preserve historical V1/test disclosures, use actual real-market
 origin for V2, and never promote regression inputs to formal Examples. WP-B propagates an explicit validated Example source statement from static composition
-into the shared reader Evidence through UI-only `sourceDisclosure`; delivery mode never
+through UI-only `sourceDisclosure` (retained as an input for compatibility; compact delivery omits its display); delivery mode never
 infers real-market origin. Historical Synthetic defaults and Production/Offline evidence
 remain unchanged. Admission and provenance ownership stay in the
 private build contract (retired; Git history).

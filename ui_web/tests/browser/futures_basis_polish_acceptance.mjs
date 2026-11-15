@@ -10,7 +10,7 @@ export async function polishAcceptance(page, context, output, sourceId, base = '
   const sourceReport = await (await context.request.get(`${base}${api}/${sourceId}/report`)).json()
   assert.equal(sourceRun.status, 'COMPLETED')
   const checks = []
-  for (const viewport of [{ width: 1440, height: 900 }, { width: 1024, height: 768 }]) {
+  for (const viewport of [{ width: 1440, height: 900 }, { width: 1024, height: 768 }, { width: 390, height: 844 }]) {
     const directory = resolve(output, 'wp3b', `${viewport.width}x${viewport.height}`)
     await mkdir(directory, { recursive: true })
     await page.setViewportSize(viewport)
@@ -73,37 +73,31 @@ export async function polishAcceptance(page, context, output, sourceId, base = '
     await page.getByText('正在执行', { exact: true }).waitFor()
     await shot('running')
     fixtureRun = { ...sourceRun, run_id: accepted.run_id }
-    await page.locator('#section-5').waitFor()
-    await page.locator('#section-1 .nsewdrag').first().waitFor()
+    await page.locator('[data-testid="compact-report"]').waitFor()
+    await page.locator('[data-testid="history-charts"] .nsewdrag').first().waitFor()
     await page.evaluate(() => window.scrollTo(0, 0))
     await shot('completed')
     await shot('full-report', true)
     assert.equal(await page.getByRole('heading', { level: 1 }).count(), 0)
     assert.equal(await page.getByRole('heading', { name: 'Futures Basis Research', exact: true }).count(), 1)
     const readsBeforeNavigation = reads
-    for (let i = 0; i < 6; i++) {
-      await page.getByRole('navigation', { name: '报告章节' }).getByRole('link').nth(i).click()
-      assert.equal(await page.locator(`#section-${i}`).count(), 1)
-    }
-    await page.locator('#section-5').getByText('Producer Report Request', { exact: true }).click()
-    await page.locator('#section-5 code').waitFor()
-    await page.locator('#section-5 code').scrollIntoViewIfNeeded()
-    await shot('expanded-evidence')
-    assert.equal(reads, readsBeforeNavigation, 'Section navigation never reloads the Run')
+    assert.equal(await page.getByRole('navigation', { name: '报告章节' }).count(), 0)
+    const formulas = page.getByRole('button', { name: '指标定义与公式', exact: true })
+    assert.equal(await formulas.getAttribute('aria-expanded'), 'false')
+    await formulas.click()
+    assert.equal(await formulas.getAttribute('aria-expanded'), 'true')
+    assert.equal(reads, readsBeforeNavigation)
     const before = posts
     const readsBeforeControls = reads
     await page.getByRole('combobox', { name: 'Distribution metric', exact: true }).click()
     await page.getByTitle('basis_ratio', { exact: true }).click()
     await page.getByRole('combobox', { name: 'Distribution slot', exact: true }).click()
     await page.getByTitle('Q1', { exact: true }).click()
-    await page.locator('#section-2').scrollIntoViewIfNeeded()
+    await page.locator('section[aria-label="基差分布"]').scrollIntoViewIfNeeded()
     await shot('distribution-table')
     assert.equal(posts, before)
     assert.equal(reads, readsBeforeControls, 'Metric/Slot selection never fetches source data')
-    await page.locator('#section-3 .ant-table-row-expand-icon').first().click()
-    await page.locator('#section-3').scrollIntoViewIfNeeded()
-    await shot('comparison-details')
-    await page.locator('#section-1 .js-plotly-plot').first().scrollIntoViewIfNeeded()
+    await page.locator('[data-testid="history-charts"] .js-plotly-plot').first().scrollIntoViewIfNeeded()
     await shot('history-chart')
     assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false, 'No page-level horizontal overflow')
     const navigate = async () => {
@@ -120,7 +114,7 @@ export async function polishAcceptance(page, context, output, sourceId, base = '
     await navigate()
     await page.getByText(/Partial：研究执行已完成/).waitFor()
     await shot('partial')
-    assert.ok(await page.getByText('Synthetic producer method failure').count() > 0)
+    assert.ok(await page.getByText('不可用（CalculationFailure）', { exact: true }).count() > 0)
     for (const status of ['FAILED', 'INTERRUPTED']) {
       fixtureRun = { ...fixtureRun, status, result_available: false, result_status: null, failure: { stage: 'execution', category: status === 'FAILED' ? 'internal_failure' : 'interrupted', dependency: null, reason: 'Synthetic safe execution failure' } }
       await navigate()
@@ -140,7 +134,7 @@ export async function polishAcceptance(page, context, output, sourceId, base = '
     await shot('report-error')
     reportFault = false
     await page.getByRole('button', { name: '重新读取报告', exact: true }).click()
-    await page.locator('#section-5').waitFor()
+    await page.locator('[data-testid="compact-report"]').waitFor()
     assert.equal(posts, 1, 'Manual GET retries and report controls never POST')
     assert.deepEqual(reportPayload.data, sourceReport.data, 'Original producer numerical content retained')
     await page.unroute(`**${api}`)

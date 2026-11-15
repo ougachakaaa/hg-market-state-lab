@@ -20,8 +20,7 @@ export type {
   RunRequest,
   ValidatedEmbeddedReport,
 } from './api/validateResult'
-export { observedCoverage, STATIC_BASIS_DISCLOSURE, STATIC_BASIS_SOURCE_NOTE } from './model/basisPresentation'
-export type { FuturesBasisCoverage } from './model/basisPresentation'
+export { STATIC_BASIS_DISCLOSURE } from './model/basisPresentation'
 export { Report } from './report/Report'
 export { validateReportData } from './report/validate'
 export type { ReportData } from './report/types'
