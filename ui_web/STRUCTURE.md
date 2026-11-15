@@ -1,14 +1,9 @@
-# DDB-00 hard retirement — 2026-11-14
+# Demo implementation status
 
-Legacy Synthetic V1 and Public/Private V2 Packages are retired by direct cutover.
-No migration, fallback, rollback, archive or compatibility reader remains.
-The new sole Demo Bundle Pipeline is NOT implemented. Demo build and publication
-are BLOCKED and must fail. New business Results must be acquired through formal
-FastAPI HTTP with normal authentication; direct producer/projection calls are forbidden.
-Only one active dataset will be permitted. Existing shared Presentation, hash routing,
-static composition and formal Result validators remain implementation foundations,
-not a runnable historical Demo. Online Web and business contracts are unchanged.
-Git history retains previous decisions; retired acceptance is not current readiness.
+DDB-00 retired V1 and Public/Private entries and data. DDB-02 supplies admission,
+DDB-03 supplies explicit authenticated HTTP collection, and DDB-04 supplies the single
+static runtime and coordinated offline build. Real capture remains undelivered; the
+default build fails closed until admitted data exists. DDB-05 owns publication integration.
 
 # ui_web directory ownership
 
@@ -68,7 +63,7 @@ Legacy Publication Rights Gates, Evidence Review and independent review records 
 prerequisites. Legacy Envelope validation has been removed.
 Build never invokes Python, generates results or contacts an
 online business HTTP service. Browsers consume static data and shared Presentation only: no financial
-computation, Auth/API requests, polling, preflight or server Run lifecycle. Preserve all seven formal
+computation, Auth/API requests, polling, preflight or server Run lifecycle. Preserve all eight formal
 routes and existing local interactions. Runtime, Example meaning and distribution decision remain
 owned by the existing [Demo authority](demo/ARCHITECTURE.md) contract.
 
@@ -98,12 +93,11 @@ Independent business results, research evidence and data are preserved. DDB-00 r
 ## Build outputs
 
 Online uses `.build/online`; independent static suites use `.build/tests/<suite>`.
-Future Demo output belongs under `.build/demo`. Old ignored outputs are not build inputs;
+Demo output belongs under `.build/demo`. Old ignored outputs are not build inputs;
 local cleanup was blocked by tool policy (see acceptance).
 
 ## Current implementation status
 
-Old Public/Private/V1 configs and data are removed. The target demo/ tree is not
-implemented. Tests/config inherit tsconfig.app directly. Payload byte rules cover
+Old Public/Private/V1 configs and data are removed. The canonical demo/runtime and demo/build trees are implemented. Tests/config inherit tsconfig.app directly. Payload byte rules cover
 remaining independent fixtures only. Source safety and generic artifact integrity
 remain active; publication fails before any upload or deployment.

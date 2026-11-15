@@ -4,8 +4,6 @@ The canonical current design is [Demo authority](../../demo/ARCHITECTURE.md), sp
 [module authority](../../ARCHITECTURE.md) and [directory ownership](../../STRUCTURE.md).
 Follow it to Bundle, collection/build, feasibility and implementation handoff contracts.
 
-DDB-00 retired the historical runtime entries and data. Retained `shell/` and `static/`
-code supplies shared composition foundations until DDB-04 reconciles canonical placement.
-DDB-02 admission and DDB-03 collection/recovery are implemented. Real capture remains
-NOT VERIFIED and Demo build/publication remain fail-closed. Historical
-execution conclusions remain in [DDB-00 acceptance](../../DDB_00_ACCEPTANCE.md).
+DDB-04 moved retained hash routing and workspace composition into demo/runtime.
+This directory retains historical acceptance evidence. Real capture remains unverified.
+Current runtime, Bundle and Build behavior is owned by the canonical Demo authority.

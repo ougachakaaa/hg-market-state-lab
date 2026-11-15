@@ -18,8 +18,8 @@ Bundle bytes using DDB-02 JSON tooling. Python receives navigation metadata and 
 references, never serializes financial payloads. Complete generated HTTP envelopes are
 validated before extraction. Candidate admission always invokes the independent demo:check.
 
-Collection holds `.build/demo-collection/dataset.lock` using a nonblocking OS byte lock
-on Windows or flock on POSIX. The file persists; process exit releases ownership.
+Collection holds the shared atomic directory lock described below. Normal completion
+releases ownership; forced termination requires explicit stale-lock recovery.
 `pending.json` names one same-root candidate and its exact replacement hashes. Candidate
 bytes and journal are flushed before pending publication. Recovery verifies the complete
 candidate with Preflight, then repeats selected replacements and replaces Manifest last.
@@ -94,10 +94,12 @@ DDB-02 implements the standalone offline `demo:check` command and `demo:registry
 export described in the [Bundle interface](../BUNDLES.md#offline-admission-interface).
 It validates a quiescent local dataset without Collector or serving dependencies.
 DDB-03 implements Collector locking, pending-transaction recovery and candidate staging.
-Build-side lock admission, input staging and Vite integration remain assigned to DDB-04.
-The current `demo:build` entry remains BLOCKED.
+DDB-04 implements coordinated snapshot admission and Vite integration. The default
+build fails closed until the real seven-Bundle dataset is captured.
 
-### Shared directory coordination
+### Node Build coordination constraint
+
+#### Shared directory coordination
 
 Collector and Node Build exclusively create `.build/demo-collection/dataset.lock/`
 with atomic mkdir. Contention fails immediately. Both release in finally on normal
@@ -116,6 +118,26 @@ Only after admission fixes the snapshot does it release the dataset lock. Vite c
 that snapshot exclusively. Build never runs Python, Collector or business HTTP.
 Vite writes private output, checked before promotion to `.build/demo/`; errors remove
 formal output and never publish a completion marker. Platform claims require actual tests.
+
+Both source and private snapshot run independent DDB-02 Preflight. Source admission
+preserves path/reparse protections across copying. Admission verifies Registry, Manifest,
+complete membership, deterministic exact bytes, SHA-256, envelopes, Presets and feature
+Result contracts. Catalog details and Publication reference closure remain mandatory.
+Bundle admission owns packaging/integrity; feature validators own formal Result semantics.
+Failure reports a safe Bundle/stage diagnostic before Vite. No repair or generation occurs.
+
+From ui_web run `npm run demo:build`, then `npm run demo:preview` at
+http://127.0.0.1:4173/hg-market-state-lab/. Preview requires the completion marker and
+no output lock. Online npm run build retains its independent configuration.
+
+After stopping all relevant processes and verifying no lock holder remains, run from
+repository root only for the identified stale lock. For a directory lock use
+`Remove-Item -LiteralPath 'C:\Users\Benjamin\source\repos\hg-market-state-lab\ui_web\.build\demo-collection\dataset.lock'`.
+For the output lock use
+`Remove-Item -LiteralPath 'C:\Users\Benjamin\source\repos\hg-market-state-lab\ui_web\.build\demo-output.lock'`.
+These empty-directory operations preserve pending transactions and their candidates.
+The same first command removes an identified old protocol lock file after all old
+Collector processes have exited. Never remove a lock while its holder is running.
 
 ## Static loading and release
 

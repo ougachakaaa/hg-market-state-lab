@@ -6,7 +6,6 @@ import { build } from 'vite'
 
 export const web = fileURLToPath(new URL('../../', import.meta.url))
 export async function lock(path) {
-  await mkdir(dirname(path), { recursive: true })
   let current = resolve(path)
   while (true) {
     try { if ((await lstat(current)).isSymbolicLink()) throw new Error('linked_lock_path') }
@@ -15,6 +14,7 @@ export async function lock(path) {
     if (parent === current) break
     current = parent
   }
+  await mkdir(dirname(path), { recursive: true })
   try { await mkdir(path) } catch { throw new Error('busy_requires_explicit_recovery') }
   return () => rmdir(path)
 }
@@ -43,6 +43,8 @@ export async function buildDemo({ dataset = resolve(web, 'demo/bundles'), work =
     try {
       try { await lstat(resolve(work, 'pending.json')); throw new Error('pending_transaction') }
       catch (error) { if (error.code !== 'ENOENT') throw error }
+      // Admit source paths before copying so redirection cannot disappear in staging.
+      await preflight(dataset)
       await mkdir(snapshot)
       for (const name of await readdir(dataset)) {
         const source = resolve(dataset, name)
@@ -61,7 +63,9 @@ export async function buildDemo({ dataset = resolve(web, 'demo/bundles'), work =
     await removeOwned(output)
     throw error
   } finally {
-    try { if (staging) await removeOwned(staging) } finally { await releaseOutput() }
+    try { if (staging) await removeOwned(staging) }
+    catch (error) { await removeOwned(output); throw error }
+    finally { await releaseOutput() }
   }
 }
 async function compileDemo(snapshot, artifact) {
@@ -77,5 +81,10 @@ async function compileDemo(snapshot, artifact) {
 }
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   try { await buildDemo(); console.log('PASS static Demo built') }
-  catch (error) { console.error('FAIL demo build', error.message); process.exitCode = 1 }
+  catch (error) {
+    const reason = ['busy_requires_explicit_recovery', 'pending_transaction'].includes(error.message)
+      ? error.message : 'admission_or_build_failed'
+    console.error('FAIL demo build ' + reason)
+    process.exitCode = 1
+  }
 }

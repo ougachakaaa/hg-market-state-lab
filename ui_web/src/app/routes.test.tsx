@@ -2,7 +2,7 @@ import { act, cleanup, renderHook } from '@testing-library/react'
 import { afterEach, describe, expect, it } from 'vitest'
 import { workspaceRoutes, isWorkspacePath } from './routeInventory'
 import { useWorkspaceRoute } from './routes'
-import { hashWorkspacePath, staticHref, useHashRoute } from '../demo/shell/hashRoutes'
+import { hashWorkspacePath, staticHref, useHashRoute } from '../../demo/runtime/hashRoutes'
 
 afterEach(() => { cleanup(); window.history.replaceState(null, '', '/') })
 

@@ -76,13 +76,13 @@ ui_web/src/
 
 Production 页面是业务展示的唯一实现来源：Shell、页面结构、结果组件、图表/表格及适用的纯本地 state 共同消费 validated facts。Page 可以保留为生产 composition root，但可复用的展示不得依赖它的在线 controller；static composition 只能消费 feature public Presentation entry。Local state 与 pure projection 仍留在 owning feature，不能复制到 Demo 或提升为跨 feature 业务 state。现有 API 中与 transport 共址的校验允许抽取为 feature-local pure validator，复用 generated contract，而不 import HTTP client。
 
-Shared Shell 展示不拥有认证 lifecycle：由 production composition 将 gate、身份/退出动作与在线页面组合在其外部；静态 composition 提供匿名披露、静态 content 与路由。不得以禁用按钮替代依赖隔离，也不引入 generic Mock Server、plugin 或 DI framework。详细 capability 与 isolation gates 见 [Demo Runtime](src/demo/ARCHITECTURE.md) 和 实施 handoff (retired; Git history)。
+Shared Shell 展示不拥有认证 lifecycle：由 production composition 将 gate、身份/退出动作与在线页面组合在其外部；静态 composition 提供匿名披露、静态 content 与路由。不得以禁用按钮替代依赖隔离，也不引入 generic Mock Server、plugin 或 DI framework。详细 capability 与 isolation gates 见 [Demo Runtime](demo/ARCHITECTURE.md) 和 实施 handoff (retired; Git history)。
 
 Static delivery does not establish source authenticity. DDB-00 retired the old
 Synthetic and real-market Packages. Retained shared Presentation accepts validated
 formal Results with truthful disclosure; it does not select historical datasets or
-run legacy admission. The new HTTP Bundle runtime is not implemented; see
-[Demo authority](src/demo/ARCHITECTURE.md).
+run legacy admission. The HTTP Bundle runtime consumes admitted private snapshot data; see
+[Demo authority](demo/ARCHITECTURE.md).
 
 ## 2. Application Shell 与 Feature Page
 

@@ -22,6 +22,13 @@ Canonical paths and disposable runtime state follow [repository authority](ARCHI
 
 ## Repository configuration
 
+The current shared local development login is recorded only in the Git-ignored root
+`.env`, under `DEV_LOGIN_USERNAME` and `DEV_LOGIN_PASSWORD`. These are operator login
+notes for development sessions. Use that account for local development and verify it
+through the existing Auth service; register and approve it if absent. Application
+authentication continues through the normal login flow. Keep actual passwords out of
+tracked documents and templates. The local browser origin is `http://127.0.0.1:5173`.
+
 Repository 本地配置统一位于 **repository root `.env`**，tracked template 为根 `.env.example`；Python consumer 只通过 `config/src/lab_config` 读取。不要在 `data_snapshot/`、`ui_http/` 或其他 module 目录建立独立 `.env`。
 
 来源优先级固定为：

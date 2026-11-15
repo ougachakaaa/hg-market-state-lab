@@ -161,6 +161,59 @@ independent authority commit.
 
 UI-01-R2 source `5342f83058ba9e691a59c5221f42cfbba3f15a6b` was merged with no conflicts using no-ff merge `4dbff6e89bbeb78712d4ae62693a992cc4e8f453`. All seven UI commits and the DDB baseline history are retained. Application owns eight page identities, while the unchanged Registry owns seven Bundles. Overview routes create no Bundle. Explorer stays directly hash-accessible and hidden from the sidebar. M1/Q1 share the Backtesting instance page.
 
-DDB-00, DDB-01 and DDB-02 are complete. DDB-03 Implementation and UI Integration are complete. DDB-04 is NOT STARTED. Real Bundle Capture is NOT VERIFIED. Seven real Bundles and their Manifest remain undelivered. Demo Build / Publication remain BLOCKED. The retained UI, Bundle Contract, Validator and Collector provide the DDB-04 integration baseline. Actual capture and coordinated Build locking remain the delivery prerequisites described above.
+DDB-00, DDB-01 and DDB-02 are complete. DDB-03 Implementation and UI Integration are complete. DDB-04 implementation is delivered; current scoped evidence is recorded below. Real Bundle Capture is NOT VERIFIED. Seven real Bundles and their Manifest remain undelivered. Demo Build / Publication remain BLOCKED. The retained UI, Bundle Contract, Validator and Collector provide the DDB-04 integration baseline. Actual capture remains the delivery prerequisite; coordinated Build locking is implemented.
 
-UI-01 Branch Status is CLOSED after successful DDB push and ancestry verification, followed by remote/local UI branch retirement. Continue DDB-04 and DDB-05 directly on `feat/demo-bundle-workflow`. The DDB-04 integration baseline is READY; runtime implementation is NOT STARTED and real-data delivery prerequisites remain open.
+UI-01 Branch Status is CLOSED after successful DDB push and ancestry verification, followed by remote/local UI branch retirement. Continue DDB-04 and DDB-05 directly on `feat/demo-bundle-workflow`. The DDB-04 integration baseline is READY; runtime implementation is delivered and real-data delivery prerequisites remain open.
+
+## DDB-04 implementation evidence - 2026-11-15
+
+Implementation is PASS for the single runtime, Bundle adapter, coordinated offline
+build and local preview. Operational Delivery is BLOCKED by absent real captures.
+Commits e8bca6e and 804396d introduce orchestration and runtime respectively; the
+following acceptance commit completes preview, safeguards and reconciliation.
+
+The retained composition moved to demo/runtime, using all eight current routes and
+feature public Presentation entries. Seven Bundles map to chain, premium, Basis,
+Catalog, Publications and independent M1/Q1 Results. Identity now reflects the actual
+Bundle source, Preset and contract. No fabricated provenance is required.
+
+From ui_web, scoped verification passed:
+
+- Collector tests: 3 cases, including five controlled Python HTTP cases and recovery.
+- Build tests: 3 cases, Python/Node exclusion in both directions, pending failure with
+  old-output removal, forced process termination retaining exclusion.
+- Admission tests: 81 passed, one Windows symlink case skipped due to EPERM.
+- Runtime tests: seven directly scoped cases passed across selected invocations,
+  covering mappings, missing/hash/Result failures, immutable snapshot after source
+  updates, concurrent Build rejection, Vite failure and real Vite artifact generation.
+- Both Demo tool/runtime TypeScript checks passed. Online npm run build passed with
+  no active Bundles. The moved route tests passed all 12 cases.
+- Real Chromium against the generated fixture artifact passed eight routes under
+  /hg-market-state-lab/, three overview mounts, direct hidden Explorer, reload/history,
+  Basis collapsed introduction and report sections, M1/Q1 selection, Backtesting Plotly
+  mounting and static-only network activity. The existing Ant Design List deprecation
+  warnings were observed. Basis fixture uses empty Views; nonempty Basis chart
+  interactions and real-result browser acceptance remain NOT VERIFIED in this task.
+
+Browser acceptance is explicitly opt-in, not part of routine test execution. On
+PowerShell run `$env:DDB_BROWSER_ACCEPTANCE='1'` followed by
+`npx vitest run --config demo/build/vitest.config.ts demo/build/runtime.test.ts -t "builds an offline"`.
+Temporary synthetic datasets never enter demo/bundles. Build itself never invokes Python.
+The local preview server was exercised by this browser acceptance and closed afterward.
+
+Actual npm run demo:build fails closed with missing_directory on the absent real
+Dataset. npm run demo:preview rejects absent completed output. Successful fixture
+artifacts and private build staging were removed by scoped failure checks.
+Cleanup affects only generated Demo output and invocation-specific temporary resources.
+
+Real capture prerequisite inspection found LAB_AUTH_ORIGIN unset through lab_config.
+A local 8000 listener returned no valid HTTP response to /auth/me (RemoteProtocolError).
+No credentials were printed, no login was attempted and no real dataset was generated.
+An approved identity, configured formal HTTP service, real market inputs and Publication
+Store readiness remain required. Real source availability and distribution authorization
+are NOT VERIFIED. Windows directory exclusion is verified; POSIX is NOT VERIFIED.
+
+DDB-05 implementation planning may consume this runtime/build entry. Operational
+publication readiness remains BLOCKED until a tracked real admitted dataset, successful
+formal build/preview and distribution prerequisites are supplied. No CI/release change,
+merge, push or Pages publication was performed.

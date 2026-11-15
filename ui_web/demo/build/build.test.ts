@@ -43,3 +43,14 @@ it('rejects pending transactions and removes stale successful output', async () 
 })
 
 
+it('keeps exclusion after a process is forcibly terminated', async () => {
+  const work = await mkdtemp(resolve('.build/ddb04-killed-'))
+  const path = join(work, 'dataset.lock')
+  const script = `import { lock } from './demo/build/build.mjs'; await lock(process.argv[1]); console.log('held'); setInterval(() => {}, 1000)`
+  const child = spawn(process.execPath, ['--input-type=module', '-e', script, path], { windowsHide: true })
+  try {
+    await new Promise<void>((done, reject) => { child.once('error', reject); child.stdout.once('data', () => done()); child.once('exit', code => reject(new Error(String(code)))) })
+    const exited = new Promise(done => child.once('exit', done)); child.kill('SIGKILL'); await exited
+    await expect(lock(path)).rejects.toThrow('busy')
+  } finally { child.kill(); await rm(work, { recursive: true, force: true }) }
+}, 20000)

@@ -38,7 +38,8 @@
     "test:diagnostics": "vitest run --config vitest.diagnostics.config.ts",
     "test:credentials": "node scripts/public_asset_safety.mjs --credentials-only",
     "demo:check": "node scripts/demo_check.mjs",
-    "demo:registry": "node scripts/demo_check.mjs --registry"
+    "demo:registry": "node scripts/demo_check.mjs --registry",
+    "demo:preview": "node demo/build/preview.mjs"
   },
   "dependencies": {
     "@ant-design/icons": "^6.3.4",
