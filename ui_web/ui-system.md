@@ -98,3 +98,11 @@ analytical visual semantics remain feature-owned
 Exact Ant Design version、component selection、prop choice、token value、provider filename、component tree、CSS filename 与 individual specialized-layout decision 属于 implementation choice，但不得违反上述 boundary。
 
 UI-system changes 不改变 Page / Hooks / API / Model / Components / Charts ownership，不改变 MO Option Chain 或 MO Premium Plane semantics，也不改变 test ownership。
+
+## Overview navigation signals
+
+Overview cards use explicit completion text. 已完成 uses the theme success text color;
+未完成 uses secondary gray text. Completion denotes the independent Web page being
+available. Overview destinations share the grid icon and visible instance destinations
+share the page icon; business-area headings retain their own icons. Apply these rules
+through existing Ant Design text and icon primitives.

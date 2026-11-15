@@ -19,7 +19,7 @@ the Python research is unimplemented.
 
 In order, 历史基差研究 is completed and navigates to `/research/futures-basis` through
 the injected callback; 价格分段研究 and 指数滚动收益研究 are incomplete with no action.
-Cards show purpose and completion, not raw identities, commands or readiness fields.
+Cards show purpose and completion (已完成 in success-colored text, 未完成 in secondary gray text), not raw identities, commands or readiness fields.
 They share the same feature Presentation across runtimes, use responsive Ant Design
 layout and provide an explicit keyboard-accessible study action. The overview contains
 only its heading, Study cards, completion statuses, available study navigation and

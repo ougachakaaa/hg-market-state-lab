@@ -22,7 +22,7 @@ Editable form state and accepted immutable Run request are separate. Only clicki
 开始回测 submits; Enter, edits, effects and read retries never POST a Run.
 A synchronous guard prevents duplicate pending POSTs. No automatic POST replay exists,
 including lost responses that might already have created a Run. Busy creates no local Run.
-Successful Submit pushes `/backtesting?run_id=<opaque>`. Reload and Back/Forward
+Successful Submit pushes `/backtesting/futures-roll-long?run_id=<opaque>`. Reload and Back/Forward
 restore Status; identity changes abort previous polling/result work and immediately
 hide old results. URL stores only Run identity; no result/market data enters browser storage.
 Run presentation phases: IDLE, STATUS_LOADING, PENDING, RUNNING, COMPLETED,
@@ -121,3 +121,11 @@ M1/Q1 selection remounts Result so each selected Example starts in Trading Days.
 ## Incompatible local cache presentation
 
 For producer reason `cache_incompatible`, readiness identifies the affected dependency and explains that its local cache requires rebuilding. A failed Run displays local market-cache incompatibility and asks the maintainer to rebuild the affected Dataset before explicit resubmission. Neither view recommends network retries for this signal, deletes caches, or automatically resubmits. Unknown reasons retain the generic fallback.
+
+## Discovery
+
+Backtesting Overview at `/backtesting` presents one completed 期货展期做多回测 card
+with purpose and navigation to `/backtesting/futures-roll-long`. It is a shared pure
+application Presentation, independent of Preflight and Run controllers. Completion
+uses the UI system success text and denotes Web entry availability. Legacy Production
+Run URLs normalize according to Workspace authority before mounting this feature.
