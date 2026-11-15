@@ -1,4 +1,4 @@
-import { cleanup, render, screen } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen, within } from '@testing-library/react'
 import { afterEach, expect, it, vi } from 'vitest'
 import { FuturesBasisPresentation } from './FuturesBasisPresentation'
 import { useStaticFuturesBasis } from '../static/useStaticFuturesBasis'
@@ -87,4 +87,30 @@ it('falls back to the feature static disclosure and rejects a mismatched fixed r
   expect(screen.queryByText('固定研究参数')).toBeNull()
   expect(screen.queryByTestId('report')).toBeNull()
   expect(screen.queryByText('Embedded Report 已通过静态校验')).toBeNull()
+})
+
+it.each(['production', 'static'] as const)('keeps the %s introduction local and preserves the report', mode => {
+  const fetch = vi.fn()
+  vi.stubGlobal('fetch', fetch)
+  const { report } = validateEmbeddedReport(embeddedReportPayload)
+  const props = mode === 'production'
+    ? { mode, parameters: <div>parameters</div>, run: <div>run</div>, request: testOnlyRequest, report, reportKey: 'same-run' }
+    : { mode, state: { status: 'validated' as const, data: validateEmbeddedReport(embeddedReportPayload) } }
+  const url = window.location.href
+  render(<FuturesBasisPresentation {...props} />)
+  const reportNode = screen.getByTestId('report')
+  const toggle = screen.getByRole('button', { name: '关于本研究' })
+  expect(toggle.getAttribute('aria-expanded')).toBe('false')
+  fireEvent.click(toggle)
+  const panel = toggle.closest('.ant-collapse-item')! as HTMLElement
+  expect(within(panel).getByText('研究目的')).toBeTruthy()
+  expect(within(panel).getByText('研究方式')).toBeTruthy()
+  expect(panel.querySelectorAll('.ant-descriptions-item-label')).toHaveLength(2)
+  expect(within(panel).getByText('观察股指期货相对现货指数的价格偏离，理解不同合约期限下的贴水特征及其历史变化。')).toBeTruthy()
+  expect(within(panel).getByText('基于历史交易日数据，统计并可视化不同期限合约的基差、分布和贴水持续区间。')).toBeTruthy()
+  fireEvent.click(toggle)
+  expect(screen.getByTestId('report')).toBe(reportNode)
+  expect(window.location.href).toBe(url)
+  expect(fetch).not.toHaveBeenCalled()
+  vi.unstubAllGlobals()
 })

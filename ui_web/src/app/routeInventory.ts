@@ -13,7 +13,7 @@ export const workspaceRoutes = [
   { path: '/research', title: '研究总览', area: '/research', icon: 'overview', sidebarVisible: true },
   { path: '/research/futures-basis', title: '历史基差研究', area: '/research', icon: 'basis', sidebarVisible: true },
   { path: '/research/publications', title: 'Research Explorer', area: '/research', icon: 'explorer', sidebarVisible: false },
-  { path: '/data', title: '数据总览', area: '/data', icon: 'data', sidebarVisible: true },
+  { path: '/data', title: '数据总览', area: '/data', icon: 'overview', sidebarVisible: true },
   { path: '/data/mo-option-chain', title: 'MO Option Chain', area: '/data', icon: 'chain', sidebarVisible: true },
   { path: '/data/mo-premium-plane', title: 'MO Premium Plane', area: '/data', icon: 'premium', sidebarVisible: true },
   { path: '/backtesting', title: '回测', area: '/backtesting', icon: 'backtesting', sidebarVisible: true },

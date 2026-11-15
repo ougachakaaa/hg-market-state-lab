@@ -60,3 +60,8 @@ describe('canonical routes and runtime adapters', () => {
     expect(result.current.path).toBe('/data')
   })
 })
+
+it('shares the overview icon identity across both areas', () => {
+  expect(workspaceRoutes.find(route => route.path === '/data')?.icon).toBe('overview')
+  expect(workspaceRoutes.find(route => route.path === '/research')?.icon).toBe('overview')
+})

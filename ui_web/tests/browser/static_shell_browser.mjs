@@ -67,6 +67,11 @@ try {
   }
   const choose = async path => {
     const route = inventory.routes.find(route => route.path === path)
+    if (!route.sidebarVisible) {
+      await page.goto(`${base}#${path}`)
+      await current(path)
+      return
+    }
     const collapsed = await page.getByRole('button', { name: '展开导航', exact: true }).isVisible()
     const scope = collapsed && route.area !== '/backtesting'
       ? page.locator('.ant-menu-submenu-popup:visible') : page.getByRole('menu', { name: '业务导航' })
@@ -89,8 +94,8 @@ try {
     await page.reload()
     await current(route.path)
     const selected = page.locator('.ant-menu-item-selected')
-    assert.equal(await selected.count(), 1)
-    assert.equal(await selected.textContent(), route.title)
+    assert.equal(await selected.count(), route.sidebarVisible ? 1 : 0)
+    if (route.sidebarVisible) assert.equal(await selected.textContent(), route.title)
     for (const href of await page.locator('a[href]').evaluateAll(links => links.map(link => link.href))) {
       assert.equal(new URL(href).pathname, prefix)
       assert.equal(new URL(href).origin, new URL(base).origin)
