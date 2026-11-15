@@ -1,5 +1,5 @@
-import { LineChartOutlined } from '@ant-design/icons'
-import { Button, Card, Col, Flex, Row, Tag, Typography } from 'antd'
+import { FileTextOutlined } from '@ant-design/icons'
+import { Button, Card, Col, Flex, Row, Typography } from 'antd'
 import { researchStudies } from '../model/researchStudies'
 import {
   STATIC_CATALOG_DISCLOSURE,
@@ -24,10 +24,10 @@ export function ResearchOverviewPresentation({ mode, navigation, sourceDisclosur
           <Flex vertical gap="middle" align="start">
             <Flex gap="small" align="center" wrap>
               <Typography.Title level={3} style={{ margin: 0 }}>{study.title}</Typography.Title>
-              <Tag>{study.status === 'completed' ? '已完成' : '未完成'}</Tag>
+              <Typography.Text type={study.status === 'completed' ? 'success' : 'secondary'}>{study.status === 'completed' ? '已完成' : '未完成'}</Typography.Text>
             </Flex>
             <Typography.Paragraph type="secondary" style={{ margin: 0 }}>{study.description}</Typography.Paragraph>
-            {study.status === 'completed' && <Button icon={<LineChartOutlined aria-hidden="true" />}
+            {study.status === 'completed' && <Button icon={<FileTextOutlined aria-hidden="true" />}
               aria-label="查看历史基差研究" onClick={navigation.openFuturesBasis}>查看研究</Button>}
           </Flex>
         </Card>

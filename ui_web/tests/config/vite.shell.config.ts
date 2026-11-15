@@ -10,7 +10,7 @@ const allowed = new Set([
   'tests/static/shell/index.html', 'tests/static/shell/main.tsx',
   'tests/static/shell/StaticShellHarness.tsx', 'src/demo/shell/hashRoutes.ts',
   'src/app/ApplicationShell.tsx', 'src/app/AppUiProvider.tsx',
-  'src/app/DailyDataLanding.tsx', 'src/app/routeInventory.ts',
+  'src/app/BacktestingOverview.tsx', 'src/app/DailyDataLanding.tsx', 'src/app/routeInventory.ts',
   'src/shared/ui/theme.ts', 'src/index.css',
 ])
 const projectPath = (id: string) => relative(web, id.split('?')[0]).replaceAll('\\', '/')

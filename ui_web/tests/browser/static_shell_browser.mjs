@@ -20,7 +20,7 @@ try {
   const artifact = resolve(web, '.build/tests/shell')
   const inventory = JSON.parse(await readFile(resolve(artifact, 'shell-routes.json'), 'utf8'))
   const graph = JSON.parse(await readFile(resolve(artifact, 'shell-dependencies.json'), 'utf8'))
-  assert.equal(inventory.routes.length, 7)
+  assert.equal(inventory.routes.length, 8)
   assert.ok(graph.projectModules.some(module => module.id === 'src/app/ApplicationShell.tsx'))
   assert.ok(graph.projectModules.some(module => module.id === 'src/app/DailyDataLanding.tsx'))
   assert.ok(graph.projectModules.every(module => !/auth|features|shared\/http|app\/App\.tsx|app\/routes\.ts/.test(module.id)))
@@ -73,10 +73,10 @@ try {
       return
     }
     const collapsed = await page.getByRole('button', { name: '展开导航', exact: true }).isVisible()
-    const scope = collapsed && route.area !== '/backtesting'
+    const scope = collapsed
       ? page.locator('.ant-menu-submenu-popup:visible') : page.getByRole('menu', { name: '业务导航' })
     const leaf = scope.getByRole('menuitem', { name: route.title, exact: true })
-    if (route.area !== '/backtesting' && (collapsed || !await leaf.isVisible())) {
+    if (collapsed || !await leaf.isVisible()) {
       await page.getByRole('menuitem', { name: inventory.areas[route.area].title, exact: true }).click()
     }
     await leaf.waitFor({ state: 'visible' })
@@ -101,7 +101,7 @@ try {
       assert.equal(new URL(href).origin, new URL(base).origin)
     }
   }
-  pass('All seven canonical identities: menu hrefs, direct hash load, reload, selected leaf, breadcrumb and base containment')
+  pass('All eight canonical identities: menu hrefs, direct hash load, reload, selected leaf, breadcrumb and base containment')
   await choose('/data')
   await page.getByRole('button', { name: '打开 MO Option Chain' }).click()
   await current('/data/mo-option-chain')

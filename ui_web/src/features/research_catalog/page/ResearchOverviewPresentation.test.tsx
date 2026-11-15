@@ -36,7 +36,7 @@ it.each(['loading', 'success', 'error', 'invalid'] as const)('keeps study cards 
   for (const [title, status] of [['历史基差研究', '已完成'], ['价格分段研究', '未完成'], ['指数滚动收益研究', '未完成']]) {
     const heading = screen.getByRole('heading', { name: title })
     const card = heading.closest('.ant-card')!
-    expect(within(card as HTMLElement).getByText(status)).toBeTruthy()
+    expect(within(card as HTMLElement).getByText(status).classList.contains(status === '已完成' ? 'ant-typography-success' : 'ant-typography-secondary')).toBe(true)
     if (status === '未完成') expect(card.querySelector('button, a, [tabindex]')).toBeNull()
   }
   const action = screen.getByRole('button', { name: '查看历史基差研究' })

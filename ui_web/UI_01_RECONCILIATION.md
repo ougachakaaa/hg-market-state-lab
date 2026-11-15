@@ -59,3 +59,40 @@ final report. Bundle, HTTP, generated contracts and backend implementation are u
 - Exercise direct Explorer hash navigation, reload and history without a sidebar entry.
 - Verify the shared introduction with a real embedded report, preserving chart state and section navigation.
 - Run the official Demo build and full Demo integration in its owning work package.
+
+## Overview navigation follow-up
+
+User approved three shared overview signals and a Backtesting overview. Completion
+text now uses Ant Design success/secondary colors on Research, Daily Data and
+Backtesting cards. Three overview destinations use AppstoreOutlined and visible instance
+pages use FileTextOutlined. Business areas retain distinct icons.
+
+Backtesting Overview lives at `/backtesting`; its single card opens
+`/backtesting/futures-roll-long`. Production legacy root links with the `run_id` query
+key use replace navigation preserving query and fragment, including anonymous login
+and history restoration. The formal inventory now has eight pages. The overview never
+mounts the execution controller. Existing Run submissions retain the instance pathname.
+
+The retained StaticWorkspace exhaustive route map required both new identities for
+TypeScript compilation, so it now composes the same overview and existing static Result
+page. This minimal composition adjustment was necessary beyond the planned Shell harness.
+DDB-04 still owns official Bundle integration/build and real static reader acceptance.
+
+Verification from ui_web passed all 64 cases across App, routes, ApplicationShell,
+Overview, ResearchOverviewPresentation and useBacktesting test files. `npm run build`
+passed TypeScript and online Vite build with the large-chunk advisory. `npm run lint`
+passed. Updated browser acceptance navigates Backtesting group to overview to instance;
+existing legacy Run-link cases remain to verify redirection. Static Shell assertions
+now use eight routes and all three area groups. Browser execution evidence follows.
+
+Follow-up verification commands from ui_web:
+
+- `npx vitest run src/app/routes.test.tsx src/app/ApplicationShell.test.tsx src/app/App.test.tsx src/app/Overview.test.tsx src/features/research_catalog/page/ResearchOverviewPresentation.test.tsx src/features/backtesting/hooks/useBacktesting.test.ts` — PASS, 6 files / 64 cases.
+- `npm run build` — PASS after synchronizing the retained static route map.
+- `npm run lint` — PASS.
+- `node --check tests/browser/backtesting_browser_acceptance.mjs` and `node --check tests/browser/static_shell_browser.mjs` — PASS.
+- `node tests/browser/static_shell_browser.mjs` — the first attempt exposed the new pure overview missing from the harness allowlist. Added only that Presentation to the allowlist and reran this check. Static build and dependency assertions passed. Chromium launch then failed because the executable under `chromium_headless_shell-1248` is absent. Browser acceptance is NOT VERIFIED. Backtesting browser E2E was not run because it uses the same unavailable browser.
+
+The follow-up implementation is verified by scoped unit tests and online build. The
+previous UI-01 NOT_READY browser-evidence limitation remains until browser acceptance
+can execute. No browser installation, official Demo build or deployment was performed.

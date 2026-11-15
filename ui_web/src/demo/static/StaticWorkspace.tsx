@@ -3,6 +3,7 @@ import type { WorkspacePath } from '../../app/routeInventory'
 import { Flex, Select, Typography } from 'antd'
 import ApplicationShell from '../../app/ApplicationShell'
 import AppUiProvider from '../../app/AppUiProvider'
+import BacktestingOverview from '../../app/BacktestingOverview'
 import DailyDataLanding from '../../app/DailyDataLanding'
 import { staticHref, useHashRoute } from '../shell/hashRoutes'
 import { OptionChainPresentation, useOptionChainPresentation } from '../../features/mo_option_chain/presentation'
@@ -48,7 +49,8 @@ const staticRoutePresentations = {
   '/data': ({ navigate }) => <DailyDataLanding navigate={navigate} />,
   '/data/mo-option-chain': ({ data, disclose }) => <Chain data={data} disclose={disclose} />,
   '/data/mo-premium-plane': ({ data, disclose }) => <Premium data={data} disclose={disclose} />,
-  '/backtesting': ({ data, disclose }) => <Backtesting data={data} disclose={disclose} />,
+  '/backtesting': ({ navigate }) => <BacktestingOverview navigate={navigate} />,
+  '/backtesting/futures-roll-long': ({ data, disclose }) => <Backtesting data={data} disclose={disclose} />,
 } satisfies Record<WorkspacePath, (context: StaticContext) => ReactNode>
 
 export function StaticWorkspace({ data, disclose, header, notice }: StaticProps & { header: string; notice: ReactNode }) {

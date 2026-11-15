@@ -49,3 +49,20 @@ it('composes arbitrary header/content and receives runtime-specific navigation h
   expect(screen.queryByText('Anonymous disclosure')).toBeNull()
   expect(screen.getByText('Production identity')).toBeTruthy()
 })
+
+it('groups Backtesting overview and instance with matching icon roles and breadcrumb navigation', () => {
+  const navigate = vi.fn()
+  const { container } = render(<AppUiProvider>
+    <ApplicationShell path="/backtesting/futures-roll-long" href={path => path} navigate={navigate} header={null}>Result</ApplicationShell>
+  </AppUiProvider>)
+  expect(container.querySelector('.ant-menu-item-selected')?.textContent).toBe('期货展期做多回测')
+  const overview = screen.getByRole('link', { name: '回测总览' }).closest('li')!
+  const instance = screen.getByRole('link', { name: '期货展期做多回测' }).closest('li')!
+  expect(overview.querySelector('[data-icon="appstore"]')).toBeTruthy()
+  expect(instance.querySelector('[data-icon="file-text"]')).toBeTruthy()
+  fireEvent.click(screen.getByRole('link', { name: '回测' }))
+  expect(navigate).toHaveBeenCalledWith('/backtesting')
+  fireEvent.click(screen.getByRole('button', { name: '折叠导航' }))
+  fireEvent.click(screen.getByRole('button', { name: '展开导航' }))
+  expect(screen.getByRole('link', { name: '回测总览' })).toBeTruthy()
+})

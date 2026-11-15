@@ -1,4 +1,4 @@
-import { DotChartOutlined, TableOutlined } from '@ant-design/icons'
+import { FileTextOutlined } from '@ant-design/icons'
 import { Button, Card, Flex, Typography } from 'antd'
 import type { WorkspacePath } from './routeInventory'
 
@@ -12,12 +12,14 @@ export default function DailyDataLanding({ navigate }: { navigate: (path: Worksp
     </header>
     <Flex gap="middle" wrap>
       <Card title="MO Option Chain" style={{ flex: '1 1 280px', minWidth: 0 }}>
+        <Typography.Text type="success">已完成</Typography.Text>
         <Typography.Paragraph type="secondary">查看期权链价格分布与同到期 Futures 参考。</Typography.Paragraph>
-        <Button icon={<DotChartOutlined aria-hidden="true" />} onClick={() => navigate('/data/mo-option-chain')}>打开 MO Option Chain</Button>
+        <Button icon={<FileTextOutlined aria-hidden="true" />} onClick={() => navigate('/data/mo-option-chain')}>打开 MO Option Chain</Button>
       </Card>
       <Card title="MO Premium Plane" style={{ flex: '1 1 280px', minWidth: 0 }}>
+        <Typography.Text type="success">已完成</Typography.Text>
         <Typography.Paragraph type="secondary">查看多维权利金稀疏数值平面。</Typography.Paragraph>
-        <Button icon={<TableOutlined aria-hidden="true" />} onClick={() => navigate('/data/mo-premium-plane')}>打开 MO Premium Plane</Button>
+        <Button icon={<FileTextOutlined aria-hidden="true" />} onClick={() => navigate('/data/mo-premium-plane')}>打开 MO Premium Plane</Button>
       </Card>
     </Flex>
   </Flex>

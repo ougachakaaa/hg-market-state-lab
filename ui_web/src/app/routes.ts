@@ -3,6 +3,11 @@ import { useCallback, useEffect, useState } from 'react'
 import { isWorkspacePath, type WorkspacePath } from './routeInventory'
 
 export function currentWorkspacePath(): WorkspacePath {
+  const url = new URL(window.location.href)
+  if (url.pathname === '/backtesting' && url.searchParams.has('run_id')) {
+    url.pathname = '/backtesting/futures-roll-long'
+    window.history.replaceState(null, '', url.pathname + url.search + url.hash)
+  }
   return isWorkspacePath(window.location.pathname)
     ? window.location.pathname : '/research'
 }

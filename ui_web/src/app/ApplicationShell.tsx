@@ -1,13 +1,13 @@
-import { AppstoreOutlined, DatabaseOutlined, DotChartOutlined, ExperimentOutlined, HistoryOutlined, LineChartOutlined, MenuFoldOutlined, MenuUnfoldOutlined, ReadOutlined, TableOutlined } from '@ant-design/icons'
+import { AppstoreOutlined, DatabaseOutlined, ExperimentOutlined, HistoryOutlined, FileTextOutlined, MenuFoldOutlined, MenuUnfoldOutlined, ReadOutlined } from '@ant-design/icons'
 import { Breadcrumb, Button, Flex, Layout, Menu, Typography, theme } from 'antd'
 import { useState, type ReactNode } from 'react'
 import { isWorkspacePath, workspaceRoutes, workspaceAreas, type WorkspacePath, type NavigationIcon } from './routeInventory'
 
 const icons: Record<NavigationIcon, ReactNode> = {
   overview: <AppstoreOutlined aria-hidden="true" />, data: <DatabaseOutlined aria-hidden="true" />,
-  chain: <DotChartOutlined aria-hidden="true" />, research: <ExperimentOutlined aria-hidden="true" />,
-  backtesting: <HistoryOutlined aria-hidden="true" />, basis: <LineChartOutlined aria-hidden="true" />,
-  premium: <TableOutlined aria-hidden="true" />, explorer: <ReadOutlined aria-hidden="true" />,
+  research: <ExperimentOutlined aria-hidden="true" />,
+  backtesting: <HistoryOutlined aria-hidden="true" />, instance: <FileTextOutlined aria-hidden="true" />,
+  explorer: <ReadOutlined aria-hidden="true" />,
 }
 
 export default function ApplicationShell({ path, navigate, href, header, children }: {
@@ -21,7 +21,7 @@ export default function ApplicationShell({ path, navigate, href, header, childre
   const { token } = theme.useToken()
   const route = workspaceRoutes.find(route => route.path === path)!
   const area = route.area
-  const group = area === '/backtesting' ? null : `area:${area}`
+  const group = `area:${area}`
   const [openKeys, setOpenKeys] = useState<string[]>(group ? [group] : [])
   const [popupKeys, setPopupKeys] = useState<string[]>([])
   const [menuPath, setMenuPath] = useState(path)
@@ -41,7 +41,7 @@ export default function ApplicationShell({ path, navigate, href, header, childre
     key: route.path, icon: icons[route.icon],
     label: <a href={href(route.path)} onClick={event => event.preventDefault()}>{route.title}</a>,
   })
-  const groupedArea = (area: '/research' | '/data') => ({
+  const groupedArea = (area: keyof typeof workspaceAreas) => ({
     key: `area:${area}`, label: workspaceAreas[area].title, icon: icons[workspaceAreas[area].icon],
     children: workspaceRoutes.filter(route => route.area === area && route.sidebarVisible).map(leaf),
   })
@@ -59,7 +59,7 @@ export default function ApplicationShell({ path, navigate, href, header, childre
         onClick={({ key }) => { if (isWorkspacePath(key)) navigate(key) }}
         items={[
           groupedArea('/data'), groupedArea('/research'),
-          ...workspaceRoutes.filter(route => route.area === '/backtesting').map(leaf),
+          groupedArea('/backtesting'),
         ]} />
     </Layout.Sider>
     <Layout style={{ minWidth: 0 }}>
@@ -70,7 +70,7 @@ export default function ApplicationShell({ path, navigate, href, header, childre
           <Flex align="center" gap="middle" style={{ minWidth: 0 }}>
             <Button icon={collapsed ? <MenuUnfoldOutlined aria-hidden="true" /> : <MenuFoldOutlined aria-hidden="true" />} aria-label={collapsed ? '展开导航' : '折叠导航'} aria-expanded={!collapsed}
               onClick={toggleSidebar}>{collapsed ? '展开' : '折叠'}</Button>
-            <Breadcrumb style={{ minWidth: 0, overflowWrap: 'anywhere' }} items={path === '/backtesting' ? [{ title: '回测' }] : [
+            <Breadcrumb style={{ minWidth: 0, overflowWrap: 'anywhere' }} items={[
               { title: path === area ? areaTitle : <a href={href(area)} onClick={(event) => { event.preventDefault(); navigate(area) }}>{areaTitle}</a> },
               { title: route.title },
             ]} />

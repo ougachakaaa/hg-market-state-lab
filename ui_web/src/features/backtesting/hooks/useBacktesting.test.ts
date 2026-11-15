@@ -16,7 +16,7 @@ const completed = { ...pending, status: 'COMPLETED' as const, result_available: 
 const envelope = { run_id: id, request: accepted.request, data: fixture } as Awaited<ReturnType<typeof getResult>>
 function deferred<T>() { let resolve!: (v: T) => void; const promise = new Promise<T>(done => { resolve = done }); return { promise, resolve } }
 async function flush() { await act(async () => { await Promise.resolve() }) }
-beforeEach(() => { vi.useFakeTimers(); vi.clearAllMocks(); window.history.replaceState(null, '', '/backtesting') })
+beforeEach(() => { vi.useFakeTimers(); vi.clearAllMocks(); window.history.replaceState(null, '', '/backtesting/futures-roll-long') })
 afterEach(() => { cleanup(); vi.useRealTimers() })
 
 describe('Backtesting run lifecycle', () => {
