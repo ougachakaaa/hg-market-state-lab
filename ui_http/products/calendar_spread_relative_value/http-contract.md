@@ -1,11 +1,12 @@
-# Research — Calendar Spread Historical Relative Value HTTP plan
+# Research — Calendar Spread Historical Relative Value HTTP contract
 
-Status: WP0 authority only. No endpoint, DTO or OpenAPI operation is implemented.
+Status: WP5 implemented; acceptance is recorded in the
+[case Roadmap](../../../market_research/descriptive/cases/futures_calendar_spread/ROADMAP.md).
 Specializes [HTTP ownership](../../ARCHITECTURE.md). Query/result, sample policy and
 failure classification belong to [Research](../../../market_research/descriptive/cases/futures_calendar_spread/APPLICATION.md),
 with numerical semantics under [Relative value](../../../market_research/descriptive/cases/futures_calendar_spread/RELATIVE_VALUE.md).
 
-## Planned operation and body
+## Operation and body
 
 `POST /research/calendar-spread-relative-value/query`, operationId
 `query_calendar_spread_relative_value`, accepts no query parameters and a closed
@@ -26,7 +27,7 @@ facade's `query_historical_relative_value`, performs no ensure or writes and cre
 no durable execution identity. It is independent of `/research/execute`, capability
 discovery, Plan/Batch, Publication and Futures Basis online Runs.
 
-## Planned result and errors
+## Result and errors
 
 200 projects the complete business Result: case/definition/request, current Daily
 projection, six pairs' per-stage/all-stages distributions, matching-stage and
@@ -55,3 +56,31 @@ numerical results. The [Web consumer](../../../ui_web/src/features/calendar_spre
 owns generated OpenAPI/TypeScript at WP6. Demo later captures this formal 200 Result;
 it never calls the Python facade directly. Runtime resource limits may constrain
 transport delivery but must never truncate samples or silently change populations.
+
+## WP5 transport bounds and projection
+
+The [shared Calendar Spread transport bounds](../futures_calendar_spread/http-contract.md#wp5-transport-bounds-and-projection)
+own the two-worker process capacity, 16 KiB streamed body limit, UTF-8 JSON
+parsing, 32 MiB complete-response limit, threadpool execution, safe errors and
+atomic serialization. This Research product additionally limits the inclusive
+window to 3660 natural dates and histogram_edges to 128 entries; excess returns
+413 `request_too_large` with the relevant field in param before business execution.
+These are transport bounds, without truncation or changes to business populations.
+
+HistoricalRequest, HistoricalResponse and HistoricalErrorResponse are the
+product-owned typed DTOs in `schemas.py`, published by composed `.openapi()`.
+
+Historical response publishes one ordered `samples` sequence per pair from the
+business all-stages distribution: date, stage, selected metric/value/unit and
+near/far real contract code, Close and last trading date, delta/DTE.
+The four distributions retain ordered candidate_dates and sample_dates, accounting,
+sample_count/status/reason/warnings, typed quantile spec/result and optional
+histogram spec/result. sample_dates bind to that pair's samples by exact date;
+the all-stages series is complete, never downsampled. Assessments bind by
+distribution_stage and the pair's current_day observation, retaining kind,
+status/reason/warnings and typed percentile spec/result with L/E/G counts.
+NumericSample arrays and repeated raw observations are not transmitted.
+Historical day date/status/reason summaries preserve closed dates; historical
+accounting and evaluation current_day are explicit. Echoed request includes the
+resolved default metric and null histogram_edges when omitted, as in the Python
+business request. Request optional fields reject explicit null.

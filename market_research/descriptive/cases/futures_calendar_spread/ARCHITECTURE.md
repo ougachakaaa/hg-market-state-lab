@@ -3,7 +3,8 @@
 Status: WP1 pure financial and WP2 read-only preparation / pure Pair-day
 Observation Python APIs are implemented; WP3 delivers the public Statistics
 EmpiricalPercentile method. WP4 delivers the independent Daily and Historical
-Relative Value Python queries. WP5–WP7 HTTP, Web and Demo remain unimplemented.
+Relative Value Python queries. WP5 delivers both formal HTTP products in the
+composed app; WP6–WP7 Web and Demo remain unimplemented.
 This independent Descriptive case specializes [Research](../../../ARCHITECTURE.md)
 and [Descriptive](../../ARCHITECTURE.md). Case identity is
 `futures_calendar_spread_v1`; financial definition version is

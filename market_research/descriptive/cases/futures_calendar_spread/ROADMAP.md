@@ -21,7 +21,10 @@ WP3 implements the Statistics method after baseline
 `b83ef47672d8f58a9490335fb1500d58def287f1` on the existing `develop` branch.
 WP4 implements independent Python Daily / Historical Relative Value queries after
 baseline `f957342039b4137d224b0c9cc2eee9cd44623c5b` on `develop`.
-WP5–WP7 remain **NOT IMPLEMENTED / NOT VERIFIED** for this case.
+WP5 implements formal HTTP delivery after baseline
+`6e20f1e4fcf6976069adaf70f46675b0250f3767`; baseline HEAD was clean on develop,
+so WP5 uses isolated `feat/calendar-spread-wp5-http` without merging develop/main.
+WP6–WP7 remain **NOT IMPLEMENTED / NOT VERIFIED** for this case.
 
 ## Implementation work packages
 
@@ -256,3 +259,74 @@ Real-cache/provider integration, true-market results, workload performance,
 platform/browser/deployment and broad regression remain **NOT VERIFIED**.
 No cache/data changes, dependencies, HTTP/Web/Demo, Publication, W2, merge or
 publication occurred; work stops at WP4.
+
+## WP5 reconciliation and acceptance (2026-11-16)
+
+**IMPLEMENTED** — the composed FastAPI app publishes
+`GET /data/futures-calendar-spread` / `query_futures_calendar_spread` and
+`POST /research/calendar-spread-relative-value/query` /
+`query_calendar_spread_relative_value`. Each delegates exclusively to its public
+case query, with dependency injection for synthetic business Results. The two
+[HTTP](../../../../ui_http/products/futures_calendar_spread/http-contract.md)
+[contracts](../../../../ui_http/products/calendar_spread_relative_value/http-contract.md)
+own wire schemas, safe failures and resource bounds; no financial/statistical or
+source semantics are moved into HTTP.
+
+Explicit request, response and error Pydantic DTOs project selected public fields.
+Daily retains all six ordered Pair outcomes and three metrics, real contract
+codes/Close/last trading dates, lifecycle and accounting. Historical retains one
+complete ordered sample-point sequence per pair, with metric, stage and real
+contract identities; four distributions refer to those samples by date.
+Quantile/Histogram/Percentile spec/results, sample counts, outside counts,
+matching/all-stage classifications, candidate accounting, current observations,
+closed historical dates and source/financial limitations survive projection.
+Neither raw Exports nor duplicated NumericSample/raw Observation trees are sent.
+No Run, persistence, Ensure, Provider access or formula is introduced by HTTP.
+
+The existing access gate authenticates before parsing/dependency resolution,
+enforces POST same-origin, adds no-store and renews Cookie only after complete
+success. New request errors use Calendar Spread's 400 envelope; they cannot fall
+into MO or capability Research handlers. Explicit business 422 survives composed
+OpenAPI; only the default HTTPValidationError response is removed. Existing
+operations retain their prior default-422 behavior. Actual schema publishes typed
+requests/results/errors, exact operationIds, Cookie security and access failures.
+
+Transport bounds were recorded before implementation: two shared process workers,
+16 KiB streamed request body, 3660 inclusive dates, 128 histogram edges, 32 MiB
+complete JSON response. Starlette threadpool executes query, projection and
+encoding; the worker holds capacity until it finishes even after cancellation.
+Saturation is 503 transport_busy; oversize is 413 with request_too_large or
+response_too_large. Encoding uses a bounded buffer before response start;
+nonfinite/malformed projection fails safely with 500. No partial 200, sample
+truncation or window fallback is possible. This bounds transport delivery; it
+does not establish a real-market latency/memory SLA or cross-process capacity.
+
+PASS — 83 new cases in `ui_http/tests/test_calendar_spread_http.py`, executed
+in scoped groups (three corrected fixture expectations rerun individually).
+They cover real authenticated TestClient against the composed app, wire rejection,
+classified errors, closed/empty/excluded/zero/null outcomes, six-pair/four-group
+projection, complete dated samples across contract transitions, N=0/1/35,
+method/spec/result associations and rank counts, media/streaming limits,
+lossless finite numbers including signed zero, safe atomic failures, process-wide
+capacity across apps and capacity held during encoding, threadpool execution,
+OpenAPI and absence of non-Auth persistence. Synthetic fixtures alone supply
+business data; this is not real-market performance acceptance.
+
+PASS — 148 selected Auth/application/adjacent regression cases:
+`ui_http/tests/test_auth_http.py`, `ui_http/tests/test_api_application.py`,
+four product variants of WP2's
+`test_exact_read_only_sequence_and_full_evidence`, and Basis
+`test_failure_preserves_category_request_and_other_methods` plus three metric
+variants of `test_distribution_exact_binding_and_original_result`.
+WP4's two adjacent mypy errors were reproduced first and minimally repaired:
+CoverageResult now receives five explicitly indexed validated counts; Basis
+checks IntervalCountSpec before accessing edges, without adding percentile
+support or changing existing method semantics. Directed mypy over the new HTTP
+packages and composition entry now passes, following imported sources.
+Changed-source Ruff and complete diff/semantic review pass.
+
+WP5 is **READY TO CLOSE**. WP6 is **READY FOR IMPLEMENTATION** from the formal
+composed OpenAPI and complete time series. WP5 creates no Web/TypeScript or Demo
+artifacts and performs no merge or publication. Real-market/cache/provider,
+workload performance, browser, deployment/platform and broad regression remain
+**NOT VERIFIED**. Existing source/financial/statistical authority is unchanged.

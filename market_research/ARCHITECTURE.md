@@ -49,7 +49,8 @@ owns two independent Python product queries sharing one financial/Observation ca
 public Calendar/Futures facts, the published pure Slot resolver and Statistics.
 Its [roadmap](descriptive/cases/futures_calendar_spread/ROADMAP.md) distinguishes WP0
 authority readiness, implemented WP1 financial / WP2 input-Observation APIs,
-implemented WP3 Statistics method / WP4 business queries and planned WP5–WP7.
+implemented WP3 Statistics method / WP4 business queries / WP5 HTTP delivery and
+planned WP6–WP7.
 It is not admitted to scalar capability, Plan/Batch or Publication and creates no Run store.
 
 Input Preparation acquires validated facts and availability evidence through authorized

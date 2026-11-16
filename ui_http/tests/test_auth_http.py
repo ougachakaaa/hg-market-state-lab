@@ -572,7 +572,13 @@ def test_offline_schema_publishes_auth_and_security_without_secrets_or_storage(
             for method, operation in methods.items():
                 public = (method.upper(), path) in _http.PUBLIC
                 assert operation["security"] == ([] if public else [{"CookieSession": []}])
-                assert "422" not in operation["responses"]
+                if path in {
+                    "/data/futures-calendar-spread",
+                    "/research/calendar-spread-relative-value/query",
+                }:
+                    assert "422" in operation["responses"]
+                else:
+                    assert "422" not in operation["responses"]
     assert not (tmp_path / "http-auth.sqlite3").exists()
 
 

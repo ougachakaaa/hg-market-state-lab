@@ -83,7 +83,7 @@ def _coverage(raw: Any, expected: int) -> CoverageResult:
         type(raw.complete) is bool and raw.complete == (counts[1] == expected),
         "Wrong coverage complete formula",
     )
-    return CoverageResult(*counts, raw.complete)
+    return CoverageResult(counts[0], counts[1], counts[2], counts[3], counts[4], raw.complete)
 
 
 def _header(

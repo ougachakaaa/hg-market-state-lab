@@ -21,11 +21,19 @@ from ui_http.auth._http import install_auth
 from .products.backtesting.endpoint import install_contract as install_backtesting_contract
 from .products.backtesting.endpoint import router as backtesting_router
 from .products.backtesting.runtime import initialize as initialize_backtesting
+from .products.calendar_spread_relative_value.endpoint import router as relative_value_router
 from .products.futures_basis_research.endpoint import (
     install_contract as install_futures_basis_contract,
 )
 from .products.futures_basis_research.endpoint import router as futures_basis_router
 from .products.futures_basis_research.runtime import initialize as initialize_futures_basis
+from .products.futures_calendar_spread.endpoint import router as spread_router
+from .products.futures_calendar_spread.transport import (
+    PATHS as CALENDAR_SPREAD_PATHS,
+)
+from .products.futures_calendar_spread.transport import (
+    validation_response as calendar_spread_validation_response,
+)
 from .products.mo_option_chain.endpoint import router as chain_router
 from .products.mo_option_chain.errors import (
     CONTRACT_QUERY_PARAMS as CHAIN_CONTRACT_QUERY_PARAMS,
@@ -150,17 +158,22 @@ def premium_error_response(error: PremiumApiError) -> JSONResponse:
 
 
 def contract_openapi(application: FastAPI) -> Callable[[], dict[str, Any]]:
-    """Remove FastAPI's unused 422 response from every product operation."""
+    """Remove only FastAPI default validation 422, retaining product business 422."""
     build_openapi = application.openapi
 
     def openapi() -> dict[str, Any]:
         document: dict[str, Any] = deepcopy(build_openapi())
         for path in document["paths"].values():
             for operation in path.values():
-                operation["responses"].pop(VALIDATION_STATUS, None)
+                response = operation["responses"].get(VALIDATION_STATUS, {})
+                schema = response.get("content", {}).get("application/json", {}).get("schema", {})
+                if schema == {"$ref": "#/components/schemas/HTTPValidationError"}:
+                    operation["responses"].pop(VALIDATION_STATUS, None)
         schemas = document["components"]["schemas"]
         if "HTTPValidationError" in schemas and not any(
-            VALIDATION_STATUS in entry["responses"]
+            entry["responses"].get(VALIDATION_STATUS, {}).get("content", {}).get(
+                "application/json", {}
+            ).get("schema") == {"$ref": "#/components/schemas/HTTPValidationError"}
             for path in document["paths"].values()
             for entry in path.values()
         ):
@@ -201,6 +214,8 @@ def create_app() -> FastAPI:
     async def handle_request_validation_error(
         request: Request, exc: RequestValidationError
     ) -> JSONResponse:
+        if request.url.path in CALENDAR_SPREAD_PATHS:
+            return calendar_spread_validation_response(exc)
         if is_research_path(request.url.path):
             return research_error_response(ResearchApiError(
                 "invalid_request", "Body must match the strict Research request schema.",
@@ -225,6 +240,8 @@ def create_app() -> FastAPI:
         )
 
     install_auth(application, auth_routes=True)
+    application.include_router(spread_router)
+    application.include_router(relative_value_router)
     application.include_router(chain_router)
     application.include_router(premium_router)
     application.include_router(research_router)
