@@ -5,6 +5,15 @@ acceptance and WP0 reconciliation, not competing financial or numerical formulas
 
 ## Baseline and status
 
+Final reconciliation (2026-11-16): **WP0–WP7 CLOSED**. Financial, read-only
+Observation, public Statistics, strict historical population, two HTTP products,
+two generated-contract Web consumers and the nine-Bundle/ten-route Demo form one
+implemented path. Earlier package-local readiness statements below are historical.
+Exact feature/merge identities, final directed verification, dataset integrity and
+deferred limits are recorded in the existing
+[integration closure evidence](../../../../ui_web/demo/CALENDAR_SPREAD_ACCEPTANCE.md#final-reconciliation-and-develop-integration--2026-11-16).
+This closes L1 development; it does not authorize main promotion or Demo publication.
+
 WP0 starts on `develop` at `f63327fe887d154f68a85dcc479c24844564baec`, exactly the
 requested baseline, with a clean worktree. Only Authority and navigation Markdown
 are changed. WP0 performs no business tests, dependency installation, generated
