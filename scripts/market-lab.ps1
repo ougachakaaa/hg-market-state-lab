@@ -28,6 +28,96 @@ function Test-NativeCommand([string]$Command, [string[]]$Arguments) {
     return ($LASTEXITCODE -eq 0)
 }
 
+function Invoke-CapturedCommand([string]$Command, [string[]]$Arguments, [string]$WorkingDirectory) {
+    $lines = @()
+    $previous = $ErrorActionPreference
+    $ErrorActionPreference = 'Continue'
+    Push-Location -LiteralPath $WorkingDirectory
+    try {
+        $lines = @(& $Command @Arguments 2>&1 | ForEach-Object { [string]$_ })
+        $exitCode = $LASTEXITCODE
+    } finally {
+        Pop-Location
+        $ErrorActionPreference = $previous
+    }
+    return @{ ExitCode = $exitCode; Lines = $lines }
+}
+
+function Get-OutputSummary($Lines, [int]$Count = 4) {
+    $selected = @($Lines | Where-Object { $_.Trim() } | Select-Object -Last $Count)
+    if ($selected.Count -eq 0) { return 'no output' }
+    return ($selected -join ' ')
+}
+
+function ConvertFrom-PackageLock([string]$Path) {
+    # Windows PowerShell 5.1 cannot parse npm's empty root key ("": {...}); give it a name.
+    $text = [System.IO.File]::ReadAllText($Path)
+    $text = ([regex]::new('"":\s*\{')).Replace($text, '"__root__": {', 1)
+    return $text | ConvertFrom-Json
+}
+
+function Get-PythonDependencyIssue {
+    $pythonExe = Join-Path $repoRoot '.venv\Scripts\python.exe'
+    if (-not (Test-Path -LiteralPath $pythonExe -PathType Leaf)) {
+        return 'the repository .venv is missing (.venv\Scripts\python.exe)'
+    }
+    $environment = Invoke-CapturedCommand 'poetry' @('env', 'info', '--path') $repoRoot
+    if ($environment.ExitCode -ne 0) { return 'the Poetry environment is unavailable' }
+    $environmentPath = $environment.Lines | Where-Object { $_.Trim() } | Select-Object -First 1
+    if (-not $environmentPath) { return 'the Poetry environment path is unavailable' }
+    $expected = [System.IO.Path]::GetFullPath((Join-Path $repoRoot '.venv')).TrimEnd('\')
+    $actual = [System.IO.Path]::GetFullPath($environmentPath.Trim()).TrimEnd('\')
+    if ($actual -ne $expected) { return "Poetry uses $actual instead of the repository root .venv" }
+    $probe = Invoke-CapturedCommand 'poetry' @('run', 'python', '-c', 'import sys, fastapi, uvicorn, jwt, argon2; assert sys.version_info[:2] == (3, 13)') $repoRoot
+    if ($probe.ExitCode -ne 0) { return 'Python dependencies are incomplete: ' + (Get-OutputSummary $probe.Lines) }
+    $labHelp = Invoke-CapturedCommand 'poetry' @('run', 'lab', '--help') $repoRoot
+    if ($labHelp.ExitCode -ne 0) { return 'the lab console script is unavailable: ' + (Get-OutputSummary $labHelp.Lines) }
+    return $null
+}
+
+function Get-FrontendDependencyIssue {
+    $frontend = Join-Path $repoRoot 'ui_web'
+    $nodeModules = Join-Path $frontend 'node_modules'
+    if (-not (Test-Path -LiteralPath $nodeModules -PathType Container)) { return 'ui_web/node_modules is missing' }
+    $hiddenLock = Join-Path $nodeModules '.package-lock.json'
+    if (-not (Test-Path -LiteralPath $hiddenLock -PathType Leaf)) { return 'ui_web/node_modules is incomplete (npm did not finish installing)' }
+    if (-not (Test-Path -LiteralPath (Join-Path $nodeModules '.bin\vite.cmd') -PathType Leaf)) { return 'ui_web/node_modules is incomplete (the vite command is missing)' }
+    $lockPath = Join-Path $frontend 'package-lock.json'
+    if (-not (Test-Path -LiteralPath $lockPath -PathType Leaf)) { return 'ui_web/package-lock.json is missing' }
+    try {
+        $lock = ConvertFrom-PackageLock $lockPath
+        $hidden = Get-Content -LiteralPath $hiddenLock -Raw -Encoding UTF8 | ConvertFrom-Json
+        $lockVersions = @{}
+        foreach ($property in $lock.packages.PSObject.Properties) {
+            if ($property.Name -eq '__root__') { continue }
+            $lockVersions[$property.Name] = [string]$property.Value.version
+        }
+        $hiddenVersions = @{}
+        foreach ($property in $hidden.packages.PSObject.Properties) {
+            $hiddenVersions[$property.Name] = [string]$property.Value.version
+        }
+    } catch {
+        return "ui_web/node_modules cannot be verified against package-lock.json: $($_.Exception.Message)"
+    }
+    $mismatches = New-Object System.Collections.Generic.List[string]
+    foreach ($key in $hiddenVersions.Keys) {
+        if (-not $lockVersions.ContainsKey($key)) { [void]$mismatches.Add("$key is not recorded in package-lock.json"); continue }
+        if ($lockVersions[$key] -ne $hiddenVersions[$key]) { [void]$mismatches.Add("$key is $($hiddenVersions[$key]) but package-lock.json requires $($lockVersions[$key])") }
+    }
+    if ($mismatches.Count -gt 0) {
+        $detail = @($mismatches | Select-Object -First 5) -join '; '
+        if ($mismatches.Count -gt 5) { $detail += "; and $($mismatches.Count - 5) more" }
+        return "ui_web/node_modules does not match package-lock.json: $detail"
+    }
+    $tree = Invoke-CapturedCommand 'npm' @('ls', '--depth=0') $frontend
+    if ($tree.ExitCode -ne 0) {
+        $problems = @($tree.Lines | Where-Object { $_ -match 'missing:|invalid:|extraneous|UNMET|ELSPROBLEMS' } | Select-Object -First 8)
+        if ($problems.Count -eq 0) { $problems = @(Get-OutputSummary $tree.Lines 6) }
+        return ('ui_web/node_modules is incomplete: ' + ($problems -join '; '))
+    }
+    return $null
+}
+
 function Get-Listeners([int]$Port) {
     @(Get-NetTCPConnection -State Listen -ErrorAction Stop | Where-Object { $_.LocalPort -eq $Port })
 }
@@ -169,21 +259,26 @@ function Start-MarketLab {
         Assert-FreePorts
 
         $env:POETRY_VIRTUALENVS_IN_PROJECT = 'true'
-        $needsSetup = -not (Test-Path -LiteralPath (Join-Path $repoRoot '.venv\Scripts\python.exe')) -or
-            -not (Test-Path -LiteralPath (Join-Path $repoRoot 'ui_web\node_modules'))
-        if (-not $needsSetup) {
-            if (-not (Test-NativeCommand 'poetry' @('run', 'python', '-c', 'import sys, fastapi, uvicorn, jwt, argon2; assert sys.version_info[:2] == (3, 13)'))) { $needsSetup = $true }
-            if (-not (Test-NativeCommand 'poetry' @('run', 'lab', '--help'))) { $needsSetup = $true }
-            Push-Location (Join-Path $repoRoot 'ui_web')
-            try { if (-not (Test-NativeCommand 'npm' @('ls', '--depth=0'))) { $needsSetup = $true } }
-            finally { Pop-Location }
-        }
-        if ($needsSetup) {
-            Write-Host 'Project dependencies missing or incomplete; running existing Windows bootstrap...'
-            try { & (Join-Path $repoRoot '.codex\scripts\setup.ps1') }
+        Write-Host 'Checking project dependencies...'
+        $pythonIssue = Get-PythonDependencyIssue
+        $frontendIssue = Get-FrontendDependencyIssue
+        if ($pythonIssue -or $frontendIssue) {
+            foreach ($issue in @($pythonIssue, $frontendIssue)) {
+                if ($issue) { Write-Host "Dependency check: $issue" }
+            }
+            $target = if ($pythonIssue -and $frontendIssue) { 'all' } elseif ($pythonIssue) { 'python' } else { 'frontend' }
+            Write-Host "Project dependencies missing or incomplete; running existing Windows bootstrap for $target dependencies..."
+            try { & (Join-Path $repoRoot '.codex\scripts\setup.ps1') -Dependencies $target }
             catch { throw "Project dependency installation failed: $($_.Exception.Message)" }
+            if ($pythonIssue) {
+                $pythonIssue = Get-PythonDependencyIssue
+                if ($pythonIssue) { throw "Python dependencies are still incomplete after installation: $pythonIssue" }
+            }
+            if ($frontendIssue) {
+                $frontendIssue = Get-FrontendDependencyIssue
+                if ($frontendIssue) { throw "Frontend dependencies are still incomplete after installation: $frontendIssue" }
+            }
         }
-        $env:POETRY_VIRTUALENVS_IN_PROJECT = 'true'
         $poetryEnv = & poetry env info --path
         if ($LASTEXITCODE -ne 0 -or -not $poetryEnv -or
             (Resolve-Path -LiteralPath $poetryEnv.Trim()).Path -ne (Resolve-Path -LiteralPath (Join-Path $repoRoot '.venv')).Path) {

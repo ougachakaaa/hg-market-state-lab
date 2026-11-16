@@ -16,14 +16,14 @@ it('preserves interval boundaries, inclusion flags, zero and tail counts', () =>
   render(<AnalysisDetails analysis={{ ...base, result: { method: 'interval_count', sample_count: 2, unit: 'decimal_ratio', edges: [-1, 0], bins: [{ left: -1, right: 0, left_inclusive: true, right_inclusive: false, count: 0, frequency: 0 }], underflow_count: 1, underflow_frequency: 0.5, overflow_count: 1, overflow_frequency: 0.5 } }} />)
   for (const text of ['Underflow', 'Overflow', 'Bin 1', 'true', 'false']) expect(screen.getByText(text)).toBeTruthy()
   expect(screen.getAllByText('-100.0%')).toHaveLength(2)
-  expect(screen.getAllByText('0').length).toBeGreaterThan(1)
-  expect(screen.getAllByText('0.5')).toHaveLength(2)
+  expect(screen.getAllByText('0')).toHaveLength(1)
+  expect(screen.getAllByText('50.0%')).toHaveLength(2)
 })
 it('shows unavailable and excluded counts separately, retains null ratios and fact coverage', () => {
   const fact = { expected_fact_count: 0, available_fact_count: 0, coverage_ratio: null }
   render(<AnalysisDetails analysis={{ ...base, coverage: { candidate_count: 4, eligible_count: 1, unavailable_count: 2, excluded_count: 1, observation_coverage: 0.25, unavailable_ratio: 0.5, excluded_ratio: 0.25, observation_unit: 'decimal_ratio', input_profile: 'trailing_return_inputs_v2', input_fingerprint: 'fingerprint', market_facts: { overall: fact, warm_up: fact, sample: fact } } }} />)
   fireEvent.click(screen.getByRole('button', { name: '展开覆盖与来源证据' }))
-  for (const text of ['unavailable_count', 'excluded_count', '0.5', 'fingerprint']) expect(screen.getByText(text)).toBeTruthy()
+  for (const text of ['unavailable_count', 'excluded_count', '50.0%', 'fingerprint']) expect(screen.getByText(text)).toBeTruthy()
   expect(screen.getAllByText('N/A')).toHaveLength(3)
 })
 it.each(['failed', 'not_attempted'] as const)('shows %s outcome without a fabricated result', outcome => {

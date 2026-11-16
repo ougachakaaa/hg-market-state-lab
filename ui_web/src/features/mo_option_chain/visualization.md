@@ -77,7 +77,8 @@ plot_x_range = [core lower - edge_padding, core upper + edge_padding]
 
 ### Price display precision
 
-Web UI 中所有用户可见的 price-domain 数值统一显示 **1 位小数**：underlying price、各到期日 IM futures price、option selected price、strike、图表轴刻度、tooltip、reference label 与合约明细均适用。例如 `7312.45 → 7312.5`、`7000 → 7000.0`、`0 → 0.0`、`null → —`。
+Web UI 中所有用户可见的 price-domain 数值统一显示 **2 位小数**：underlying price、各到期日 IM futures price、option selected price、strike、图表轴刻度、tooltip、reference label 与合约明细均适用。例如 `7312.45 → 7312.45`、`7312.456 → 7312.46`、`7000 → 7000.00`、`0 → 0.00`、`null → —`。该规则属于
+[presentation formatting authority](../../../PRESENTATION_FORMATTING.md)。
 
 这是 presentation formatting，不是 data rounding。不得修改 backend / read model / HTTP 的 numeric fact，也不得影响计算、排序、chart coordinate 或 contract identity。
 
@@ -111,9 +112,9 @@ Y axis = option selected price（默认 price_type = close）
 * 每个 selected expiry 分别有 Call / Put series，即最多两条 option traces；某一 side 没有可绘制价格时可不生成该 trace。Call / Put 分别按 read contract 的 Strike 顺序以直线连接；`price=null` 的位置断线，不跨过缺价连接，也不在该位置绘制点；`price=0` 是可绘制点；
 * 颜色表达要素类型：Call、Put、IM futures 各使用用户选择的独立色系。同一类型跨 expiry 保持同一基色；Call 与 Put 仍以线型和／或 marker 形状辅助区分，视觉上必须可辨。`callColor`、`putColor`、`futuresColor` 是三个页面级 visualization preference，默认分别为蓝色 `#2563eb`、橙色 `#ea580c`、紫色 `#7c3aed`；第一版不提供逐 expiry 自定义颜色或完整 theme editor；
 * `expiryOpacityScale` 表达到期日相对目标交易日的远近。按完整 response 的 `expiry_date ascending` 顺序固定 rank：若有 `N > 1` 个 expiry，第 `i` 项（从 `0` 开始）的不透明度为 `1 − 0.85 × i / (N − 1)`；只有一个时为 `1`。因此最近为 `1`、最远为 `0.15`，中间按序号线性插值，不按实际日历天数插值。即使隐藏部分 expiry，其余 expiry 的 rank 与不透明度也不重新计算；同一 expiry 的 Call / Put 线与点、IM futures 参考线和图例项使用同一不透明度。透明度不表达质量、信心、风险或重要性；
-* 整张图只绘制一条目标交易日 CSI1000 Spot reference（与 option 相同的 `price_type`），以原始 underlying price 定位于横轴中心、以 1 位小数标注，并使用中性、完全不透明的颜色。Spot 标注位于绘图区下方，与图表上方的 Futures 图例分开；Price 数字刻度放在图最左侧，每 `200` 点标注一次；
+* 整张图只绘制一条目标交易日 CSI1000 Spot reference（与 option 相同的 `price_type`），以原始 underlying price 定位于横轴中心、以 2 位小数标注，并使用中性、完全不透明的颜色。Spot 标注位于绘图区下方，与图表上方的 Futures 图例分开；Price 数字刻度放在图最左侧，每 `200` 点标注一次；
 * 图表上方使用独立的双侧图例区：左侧列出实际可绘制的 Call / Put series，右侧列出 IM futures reference。图例不提供独立显隐交互，窄屏下可换行或上下堆叠，但不得覆盖绘图区；
-* 对每个 selected expiry，仅在其 `futures` 非 `null` 时显示 IM futures reference（合约 identity 与所选价格）：在横轴以 `futuresColor`、该 expiry 不透明度及与 option curves 可区分的虚线绘制垂直参考线，并在右侧 Futures 图例中以同色虚线样例显示 `instrument_id · price`，price 按 1 位小数格式化。参考线顶部不再放置文字标注。为 `null` 时仍让用户知晓“无同到期 IM 合约”，不绘制 IM 参考线或图例项，也不推断替代合约；隐藏 expiry 时其 reference 与图例项一起隐藏；
+* 对每个 selected expiry，仅在其 `futures` 非 `null` 时显示 IM futures reference（合约 identity 与所选价格）：在横轴以 `futuresColor`、该 expiry 不透明度及与 option curves 可区分的虚线绘制垂直参考线，并在右侧 Futures 图例中以同色虚线样例显示 `instrument_id · price`，price 按 2 位小数格式化。参考线顶部不再放置文字标注。为 `null` 时仍让用户知晓“无同到期 IM 合约”，不绘制 IM 参考线或图例项，也不推断替代合约；隐藏 expiry 时其 reference 与图例项一起隐藏；
 * Price 纵轴以 `0` 为刻度起点，每 `100` 点一根灰色虚线网格，其中每 `200` 点显示数字。唯一的 combined Y-domain 只统计 selected expiries 中、实际 `plot_x_range` 内、所选价格非 `null` 的 Call / Put 点：上限为 `ceil(可见最高价 × 1.2 / 100) × 100`，无可见正价时取 `100`；下限包含数值 `0` 并留少量显示余量，若有可见负价也须覆盖。IM 与 Spot 是横轴参考价，不参与 Y-domain 计算。改变 selection 可重新计算 Y-domain，但不改变 X viewport、backend data、expiry identity 或 opacity identity；
 * underlying reference price 是横轴上的市场基准点；
 * 每个 scatter point 代表一个 MO option contract。
@@ -184,7 +185,7 @@ active universe、option type、expiry、selected price fallback、contract comp
 
 页面区分未选择日期、加载中、完整结果、失败四种状态。新日期的请求开始时清除上一日期的结果，较早的请求不得覆盖当前选择。失败根据 HTTP contract 的 `error.kind` 展示说明；网络或异常响应作为读取失败展示，不伪造数据。
 
-完整结果展示 response 中的日期、价格口径、underlying 标识和参考价，以及一张包含 selected expiries 的 combined chart 与按 response 顺序排列的 selected expiry 明细。明细保留 expiry identity、条件性 IM futures reference 或缺失状态、Call / Put 合约数量；到期日可展开分别查看 Call 与 Put 的合约标识、行权价、价格。无同到期 IM 时仍正常展示该到期日和共享 Spot；`price=null` 在价格位置显示 `—`，数值 `0` 显示为 `0.0`。不重新组织或解释合约。
+完整结果展示 response 中的日期、价格口径、underlying 标识和参考价，以及一张包含 selected expiries 的 combined chart 与按 response 顺序排列的 selected expiry 明细。明细保留 expiry identity、条件性 IM futures reference 或缺失状态、Call / Put 合约数量；到期日可展开分别查看 Call 与 Put 的合约标识、行权价、价格。无同到期 IM 时仍正常展示该到期日和共享 Spot；`price=null` 在价格位置显示 `—`，数值 `0` 显示为 `0.00`。不重新组织或解释合约。
 
 前端请求、response 与 error handling 必须遵循 [MO Option Chain HTTP contract](../../../../ui_http/products/mo_option_chain/http-contract.md)。本文档不重复 endpoint、query schema、response shape、error kind 或 status mapping；前端也不得从 wire shape 反向定义 backend 业务语义。
 

@@ -33,9 +33,12 @@ unavailability and loading/error independently; do not hide empty data with zero
 
 Frontend only adapts requests and projects/labels/formats producer-owned values.
 It never resolves Slots, subtracts prices, annualizes values, calculates DTE/stage
-or derives a financial interpretation from quote rows. Formatting includes decimal
-ratio→percent text only, retaining original numerical values. State is feature-local;
-the Research sibling does not consume this feature's DTOs, hooks or projections.
+or derives a financial interpretation from quote rows. Display formatting follows the
+[presentation formatting authority](../../../PRESENTATION_FORMATTING.md): decimal ratios
+display as one-decimal percentages, non-integer point/price values display with two
+decimals, and counts/DTE remain integers. Original numerical values are retained.
+State is feature-local; the Research sibling does not consume this feature's DTOs,
+hooks or projections.
 
 ## Integration and acceptance
 

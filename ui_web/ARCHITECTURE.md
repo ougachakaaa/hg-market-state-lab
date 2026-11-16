@@ -57,6 +57,10 @@ Owning module Markdown authority 定义业务语义，`ui_http` authority 定义
 Application entry、认证交互与 gate、feature discovery/navigation 与 composition boundary 由 [application authority](application.md) 拥有；它通过 [frontend feature catalog](FEATURES.md) 导航到各 vertical slice，但不拥有 feature-local 语义。
 三大业务区的导航、URL 与布局约束见 [Workspace authority](workspace.md)；阶段范围和验收见 [Workspace work packages](workspace-work-packages.md)。
 
+所有 frontend surface 的用户可见时间、比例、百分数、非整数与图表刻度格式由
+[presentation formatting authority](PRESENTATION_FORMATTING.md) 统一拥有；它不改变
+原始 wire 值、Raw/CSV/Context 内容或 feature 的 missing/单位语义。
+
 跨语言 domain-neutral Layer / View / Template contract 由 [Visualization authority](VISUALIZATION.md) 拥有；它不建立新的顶层模块或要求 producer 依赖 UI。
 该稳定入口按版本导航到 [V2 date-series contract](VISUALIZATION_V2.md)；V1 与现有 online consumer 的契约不因新版本设计而改变。
 

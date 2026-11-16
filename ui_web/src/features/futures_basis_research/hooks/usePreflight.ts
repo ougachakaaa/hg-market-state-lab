@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { checkInputs, ResearchError } from '../api/futuresBasis'
 import type { Preflight, RunRequest } from '../api/futuresBasis'
+import { BEIJING_TIME_ZONE } from '../../../shared/format/time'
 
 export function shanghaiDate(value = new Date()) {
-  return new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Shanghai', year: 'numeric', month: '2-digit', day: '2-digit' }).format(value)
+  return new Intl.DateTimeFormat('en-CA', { timeZone: BEIJING_TIME_ZONE, year: 'numeric', month: '2-digit', day: '2-digit' }).format(value)
 }
 export function usePreflight(query: RunRequest | undefined) {
   const key = query ? JSON.stringify(query) : ''

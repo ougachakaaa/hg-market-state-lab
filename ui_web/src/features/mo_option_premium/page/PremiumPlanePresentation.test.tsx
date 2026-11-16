@@ -45,13 +45,13 @@ it('fixes query while preserving defaults, sparse blank/null/zero cells, four-ax
   for (const name of ['Call', 'Underlying spot', 'Total value', 'Annualized', 'Points']) {
     expect((screen.getByRole('radio', { name }) as HTMLInputElement).checked).toBe(true)
   }
-  expect(screen.getByText('0.0')).toBeTruthy()
+  expect(screen.getByText('0.00')).toBeTruthy()
   expect(screen.getByRole('cell', { name: '2026-09-25 no Point' }).textContent).toBe('')
   fireEvent.click(screen.getByRole('radio', { name: 'Same-expiry futures' }))
   fireEvent.click(screen.getByRole('radio', { name: 'Time value' }))
   fireEvent.click(screen.getByRole('radio', { name: 'Unannualized' }))
   fireEvent.click(screen.getByRole('radio', { name: 'Yield' }))
-  expect(screen.getByText('-0.20%')).toBeTruthy()
+  expect(screen.getByText('-0.2%')).toBeTruthy()
   expect(screen.getByRole('cell', { name: '2026-10-23 metric unavailable' }).textContent).toBe('—')
   expect(screen.getByRole('cell', { name: '2026-10-23 metric unavailable' }).classList.contains('neutral')).toBe(true)
   fireEvent.click(screen.getByRole('radio', { name: 'Put' }))

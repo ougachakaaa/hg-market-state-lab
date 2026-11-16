@@ -119,10 +119,12 @@ structure, not another public Layer schema.
 
 Renderer-only options may supply ordinal date positions, axis grid styling,
 category display labels and point-detail presentation. They are not serialized
-View fields and introduce no financial semantics. Explicit numeric decimal_ratio
-coordinates display as one-decimal percentages without negative zero; original
-coordinate values remain unchanged. Other units retain their scale. Category
-labels never replace identities or reorder marks. Details stay literal by default.
+View fields and introduce no financial semantics. Explicit numeric coordinates follow the
+[frontend presentation formatting authority](PRESENTATION_FORMATTING.md): `decimal_ratio`,
+`probability` and `frequency` display as one-decimal percentages without negative zero,
+`count` displays as an integer, and other units display with two decimals. Original
+coordinate values and units remain unchanged. Category labels never replace identities or
+reorder marks. Details stay literal by default.
 
 Supplying an ordinal date domain stays caller-owned; the renderer never invents or
 defaults to a trading calendar and keeps natural date spacing when no domain is

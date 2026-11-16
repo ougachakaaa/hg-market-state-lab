@@ -214,12 +214,14 @@ errors. Null and segment boundaries remain unchanged. This feature is the refere
 application of that authority, not a second owner of the policy.
 
 Only basis_value requests a zero-anchored 100 index_points dashed axis grid.
-Explicit decimal_ratio values display as one-decimal percentages without negative
-zero. Layer/result units determine formatting; probabilities, frequency, count and
-prices retain their own semantics. The feature adapts result details using mark
-values and units. Current producer Histogram labels use supplied IntervalCount boundaries and
-inclusion flags; rounded labels never replace category identity or order.
-Raw Views, reader projection, evidence, exports and fingerprints remain unchanged.
+Display formatting follows the [presentation formatting authority](../../../PRESENTATION_FORMATTING.md):
+explicit decimal_ratio, probability and frequency values display as one-decimal
+percentages without negative zero; non-integer index points and statistical values display
+with two decimals; count values remain integers. Layer/result units determine formatting.
+The feature adapts result details using mark values and units. Current producer Histogram
+labels use supplied IntervalCount boundaries and inclusion flags; rounded labels never
+replace category identity or order. Raw Views, reader projection, evidence, exports and
+fingerprints remain unchanged.
 
 Verification and reproduction: [Historical presentation acceptance](HISTORICAL_PRESENTATION_ACCEPTANCE.md).
 

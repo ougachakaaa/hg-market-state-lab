@@ -11,9 +11,12 @@ export async function verifyBasisSummary(page, report) {
   const summary = page.getByRole('region', { name: '统计摘要' })
   const format = (value, unit) => {
     if (value == null) return '不可用'
-    if (unit !== 'decimal_ratio') return String(value)
-    const rounded = (value * 100).toFixed(1)
-    return `${Number(rounded) === 0 ? '0.0' : rounded}%`
+    if (unit === 'decimal_ratio') {
+      const rounded = (value * 100).toFixed(1)
+      return `${Number(rounded) === 0 ? '0.0' : rounded}%`
+    }
+    const rounded = value.toFixed(2)
+    return Number(rounded) === 0 ? '0.00' : rounded
   }
   function expected(metric) {
     return ['M0', 'M1', 'Q1', 'Q2'].map(slot => {

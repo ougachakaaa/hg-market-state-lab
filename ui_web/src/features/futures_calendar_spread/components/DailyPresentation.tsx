@@ -1,6 +1,6 @@
 import { Alert, Card, Collapse, Descriptions, Flex, Table, Typography } from 'antd'
 import type { Result } from '../api/validateResult'
-import { metricLabels, number } from '../model/format'
+import { metricLabels, number, count } from '../model/format'
 
 export function DailyPresentation({ result }: { result: Result }) {
   const labels = { valid: '有效', not_applicable: '不适用', excluded: '已排除' }
@@ -15,8 +15,8 @@ export function DailyPresentation({ result }: { result: Result }) {
           { title: `${side === 'near' ? 'Near' : 'Far'} Last Trading Date`, render: (_, o: Result['day']['observations'][number]) => o[side]?.delist_date ?? '未提供' },
         ]),
         ...(['signed_spread', 'annualized_point_spread', 'annualized_spread_ratio'] as const).map(metric => ({ title: metricLabels[metric], render: (_, o: Result['day']['observations'][number]) => number(o.metrics?.[metric].value, metric === 'annualized_spread_ratio') })),
-        { title: 'Delta Days', render: (_, o) => number(o.delta_days) },
-        { title: 'Near DTE / Expiry Stage', render: (_, o) => `${number(o.near_dte_days)} / ${o.expiry_stage ?? '未提供'}` },
+        { title: 'Delta Days', render: (_, o) => count(o.delta_days) },
+        { title: 'Near DTE / Expiry Stage', render: (_, o) => `${count(o.near_dte_days)} / ${o.expiry_stage ?? '未提供'}` },
         { title: 'Outcome / Reason', render: (_, o) => `${labels[o.outcome]} / ${o.reason ?? '—'}` },
       ]} />}
       {result.day.observations.some(o => o.reason === 'no_active_contract') && <Alert type="info" title="已证明没有活跃合约（no_active_contract）" />}

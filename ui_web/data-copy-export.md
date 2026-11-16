@@ -10,7 +10,7 @@ Production 复制来源只能是当前成功请求实际收到、通过 runtime 
 
 Raw JSON 不添加 envelope、metadata、reading notes、analysis prompt、request/auth information 或 presentation state。
 
-使用无损的 JSON value serialization，例如 `JSON.stringify(payload, null, 2)`；不要求恢复 HTTP 字节、空白或数字的原始字面写法。必须保留完整响应的字段、数组顺序与数值事实，包括未选中的 expiry、Call/Put 合约、Premium Point 和全部 metric。不得进行金融计算、单位转换、数值四舍五入、补值、删除 null 或静默截断；JSON null、numeric zero 与不存在的 Point 必须保持区别。
+使用无损的 JSON value serialization，例如 `JSON.stringify(payload, null, 2)`；不要求恢复 HTTP 字节、空白或数字的原始字面写法。必须保留完整响应的字段、数组顺序与数值事实，包括未选中的 expiry、Call/Put 合约、Premium Point 和全部 metric。不得进行金融计算、单位转换、数值四舍五入、补值、删除 null 或静默截断；JSON null、numeric zero 与不存在的 Point 必须保持区别。[Presentation formatting authority](PRESENTATION_FORMATTING.md) 的时间、百分比与小数规则不适用于 Raw JSON。
 
 ## 2. Context JSON V1
 
@@ -57,7 +57,7 @@ CSV 是当前完整、已校验成功响应的衍生 tabular representation，�
 
 每行只对应 feature 指定的真实 analytical entity。固定 header、列序和 backend 稳定行序；不生成合约、Point 或占位记录，不做金融计算、fallback、补值或插值。无真实记录时为 header-only。产品 column mapping 归 feature visualization authority。
 
-Nullable value 使用字面量 `null`，numeric zero 使用 `0`，boolean 使用 `true` / `false`。缺席 futures 的 identity/price 均为 `null`，以 `futures_present=false` 表达 object absence。数值使用 JavaScript number 字符串表示，不做 display rounding，不恢复 HTTP 原始数字字面写法；yield 保持 decimal ratio。
+Nullable value 使用字面量 `null`，numeric zero 使用 `0`，boolean 使用 `true` / `false`。缺席 futures 的 identity/price 均为 `null`，以 `futures_present=false` 表达 object absence。数值使用 JavaScript number 字符串表示，不做 display rounding，不恢复 HTTP 原始数字字面写法；yield 保持 decimal ratio。[Presentation formatting authority](PRESENTATION_FORMATTING.md) 的 display rounding 与北京时间规则不适用于 CSV。
 
 CSV 使用 UTF-8 BOM、逗号分隔、CRLF，每条记录（含 header）以 CRLF 结束。包含逗号、双引号或 CR/LF 的 cell 用双引号包裹，内部双引号加倍。文本以 `= + - @`、TAB、CR 或 LF 开头，或去除前导空白/控制字符后以 `= + - @` 开头时，在完整原文本前加单引号，再执行 CSV quoting。此 spreadsheet formula protection 仅作用于风险字符串，不改变 numeric facts，普通文本保持原样。
 

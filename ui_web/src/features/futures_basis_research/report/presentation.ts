@@ -5,8 +5,7 @@ import type { RenderOptions, VisualizationView } from '../../../shared/visualiza
 import type { Method } from './types'
 
 export const historyDetails: RenderOptions['pointDetails'] = (mark, unit) => mark.details.map(detail =>
-  detail.label === '结果' && mark.y !== null && unit === 'decimal_ratio'
-    ? { ...detail, value: formatUnit(mark.y, unit) } : detail)
+  detail.label === '结果' && mark.y !== null ? { ...detail, value: formatUnit(mark.y, unit) } : detail)
 
 export function histogramOptions(view: VisualizationView, result?: Method['result']): RenderOptions {
   if (view.version !== 1 || !result?.bins || result.unit !== 'decimal_ratio') return {}

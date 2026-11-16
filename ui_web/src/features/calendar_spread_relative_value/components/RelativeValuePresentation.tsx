@@ -1,7 +1,7 @@
 import { Alert, Card, Collapse, Descriptions, Flex, Select, Table, Typography } from 'antd'
 import { useMemo, useState } from 'react'
 import { pairs, type Result } from '../api/validateResult'
-import { metricLabels, number } from '../model/format'
+import { metricLabels, number, count } from '../model/format'
 import { historicalView, sessionDates } from '../model/charts'
 import { ChartView, DateAxisControl, type DateAxisMode } from '../../../shared/visualization'
 import { Histogram } from '../charts/Histogram'
@@ -31,7 +31,7 @@ export function RelativeValuePresentation({ result }: { result: Result }) {
       <Descriptions items={[
         { key: 'contracts', label: '当前真实合约', children: `${current?.near?.contract_code ?? '未提供'} / ${current?.far?.contract_code ?? '未提供'}` },
         { key: 'value', label: metricLabels[result.metric], children: number(current?.metrics?.[result.metric].value, result.unit === 'decimal_ratio') },
-        { key: 'stage', label: 'Near DTE / Stage', children: `${number(current?.near_dte_days)} / ${current?.expiry_stage ?? '未提供'}` },
+        { key: 'stage', label: 'Near DTE / Stage', children: `${count(current?.near_dte_days)} / ${current?.expiry_stage ?? '未提供'}` },
         { key: 'outcome', label: 'Outcome / Reason', children: current ? `${current.outcome} / ${current.reason ?? '—'}` : `closed / ${result.current_day.reason}` },
       ]} />
       <Flex gap="middle" wrap>{(['matching_stage', 'all_stages'] as const).map(kind => {

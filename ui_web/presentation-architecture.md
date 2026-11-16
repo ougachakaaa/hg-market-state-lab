@@ -174,6 +174,11 @@ Plotly 是当前 chart stack。Plotly-specific implementation 不得扩散到 ap
 
 `shared/ui`、`shared/charts`、`shared/http` 与 `shared/format` 只有在行为对多个 feature 确实 invariant 且不携带 domain semantics 时才成立。代码相似本身不是共享依据。`shared/ui` 不得仅为隐藏 Ant Design 而包装每个 generic component；repository 自身具有稳定的 domain-neutral behavior 或 policy 时才建立 abstraction。
 
+跨 surface 的用户可见时间、ratio 百分数、非整数小数位与图表刻度格式由
+[presentation formatting authority](PRESENTATION_FORMATTING.md) 拥有；`shared/format`
+实现该 domain-neutral policy，feature 只保留自己的 metric、label、missing 文案与
+visual encoding。
+
 以下 ownership 必须留在 owning feature bounded context：
 
 ```text

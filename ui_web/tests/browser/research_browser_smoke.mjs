@@ -127,7 +127,7 @@ try {
   const intervalResponse = page.waitForResponse(res => /\/analyses\//.test(res.url()))
   await distribution.getByRole('button', { name: '选择 Analysis' }).click()
   const intervalUrl = (await intervalResponse).url()
-  await page.getByText('观察总体与覆盖（原始比例）').waitFor()
+  await page.getByText('观察总体与覆盖').waitFor()
   const countResponse = page.waitForResponse(res => /\/views\//.test(res.url()))
   await page.getByRole('button', { name: 'count', exact: true }).click()
   assert.equal((await countResponse).status(), 200)

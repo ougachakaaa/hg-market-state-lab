@@ -52,7 +52,7 @@ it('uses unit-aware percentage hover and feature result details, with a basis-on
   view.axes[1].coordinate.unit = 'index_points'
   view.layers.forEach(b => { b.layer.y.unit = 'index_points' })
   const grid = chartViewToPlotly(view, historyOptions(view, [], false, true)) as any
-  expect(grid.layout.yaxis).toMatchObject({ tick0: 0, dtick: 100, griddash: 'dash' })
+  expect(grid.layout.yaxis).toMatchObject({ tick0: 0, dtick: 100, griddash: 'dash', tickformat: '.2f' })
   expect(grid.layout.yaxis.range).toEqual(f.layout.yaxis.range)
   expect(grid.layout.shapes).toHaveLength(view.events.length)
 })
@@ -69,6 +69,6 @@ it('keeps colliding formatted bins distinct and preserves counts, order and incl
   expect(figure.layout.xaxis.ticktext).toEqual(['&lt; 0.0%', '[0.0%, 0.0%)', '[0.0%, 0.0%)', '&gt; 0.0%'])
   expect(figure.data[0].x).toEqual(categories)
   expect(figure.data[0].y).toEqual([1, 2, 3, 1])
-  expect(figure.layout.yaxis.tickformat).toBeUndefined()
+  expect(figure.layout.yaxis.tickformat).toBe('d')
   expect({ view, result }).toEqual(before)
 })

@@ -2,7 +2,7 @@ import assert from 'node:assert/strict'
 
 const presets = {
   basis_value: { default: 10, widths: [5, 10, 20, 50], scale: 1 },
-  basis_ratio: { default: .1, widths: [.05, .1, .2, .5], scale: 100 },
+  basis_ratio: { default: .1, widths: [.1, .2, .5], scale: 100 },
   annualized_basis_ratio: { default: 5, widths: [2.5, 5, 10, 20], scale: 100 },
 }
 const slots = ['M0', 'M1', 'Q1', 'Q2']

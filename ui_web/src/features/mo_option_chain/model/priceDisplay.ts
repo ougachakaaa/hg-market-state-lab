@@ -1,9 +1,5 @@
-const priceFormatter = new Intl.NumberFormat('en-US', {
-  minimumFractionDigits: 1,
-  maximumFractionDigits: 1,
-  useGrouping: false,
-})
+import { formatDecimal } from '../../../shared/format/number'
 
 export function formatPrice(value: number | null): string {
-  return value === null ? '—' : priceFormatter.format(value)
+  return formatDecimal(value, '—')
 }

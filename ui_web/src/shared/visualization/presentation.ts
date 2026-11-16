@@ -1,4 +1,5 @@
 import type { DateMark, Detail, VisualizationView } from './contractV2'
+import { unitKind } from '../format/unit'
 
 /** Frontend date-axis presentation modes; see ui_web/DATE_AXIS_PRESENTATION.md. */
 export type DateAxisMode = 'trading' | 'calendar'
@@ -21,6 +22,16 @@ export function ordinalTicks(dates: readonly string[], range: readonly number[] 
   const tickvals: number[] = []
   for (let i = first; i <= last; i += step) tickvals.push(i)
   return { tickmode: 'array' as const, tickvals, ticktext: tickvals.map(i => dates[i]) }
+}
+
+/** Plotly-only projection of the shared unit/display policy; never changes coordinates. */
+export function plotlyAxisFormat(unit: string): { tickformat?: string; hoverformat?: string } {
+  switch (unitKind(unit)) {
+    case 'ratio': return { tickformat: '.1%', hoverformat: '.1%' }
+    case 'count': return { tickformat: 'd', hoverformat: 'd' }
+    case 'decimal': return { tickformat: '.2f', hoverformat: '.2f' }
+    default: return {}
+  }
 }
 
 /** Bind ordered display labels to exact category identities, without parsing them. */

@@ -49,6 +49,17 @@ it('formats producer summary and mounts the compact report with both existing V2
   expect(screen.getByText(/未考虑手续费、滑点、保证金与融资成本/)).toBeTruthy()
 })
 
+it('shows Run timestamps in Beijing time', () => {
+  state({ phase: 'COMPLETED', run: {
+    run_id: 'a'.repeat(32), request: fixture.request,
+    created_at: '2026-11-09T00:00:00Z', started_at: '2026-11-09T01:00:00Z', finished_at: '2026-11-09T02:00:00Z',
+  } })
+  render(<BacktestingPage />)
+  expect(screen.getByText('2026-11-09 08:00:00（北京时间）')).toBeTruthy()
+  expect(screen.getByText('2026-11-09 09:00:00（北京时间）')).toBeTruthy()
+  expect(screen.getByText('2026-11-09 10:00:00（北京时间）')).toBeTruthy()
+})
+
 it('switches the Result date axis without submitting, reading or resetting the wrong Run', () => {
   const fetch = vi.fn(); vi.stubGlobal('fetch', fetch)
   const first = { run_id: 'a'.repeat(32), request: fixture.request, data: fixture as BacktestResult }

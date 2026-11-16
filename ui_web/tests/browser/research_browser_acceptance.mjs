@@ -67,11 +67,11 @@ export async function researchAcceptance(page, output) {
     const analysisResponse = await response
     const analysisUrl = analysisResponse.url()
     const original = await analysisResponse.json()
-    await page.getByText('观察总体与覆盖（原始比例）', { exact: true }).waitFor()
+    await page.getByText('观察总体与覆盖', { exact: true }).waitFor()
     await capture('explorer-analysis', page.getByText('所选 Analysis', { exact: true }))
     await page.getByRole('button', { name: '展开覆盖与来源证据' }).click()
     await page.getByText('input_fingerprint', { exact: true }).waitFor()
-    await capture('explorer-statistics-coverage', page.getByText('观察总体与覆盖（原始比例）', { exact: true }))
+    await capture('explorer-statistics-coverage', page.getByText('观察总体与覆盖', { exact: true }))
     const table = page.locator('.ant-table-content').last()
     const scroll = await table.evaluate(el => { el.scrollLeft = el.scrollWidth; return { width: el.clientWidth, total: el.scrollWidth, left: el.scrollLeft } })
     if (scroll.total > scroll.width) assert.ok(scroll.left > 0, 'overflowing technical table scrolls internally')
