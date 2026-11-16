@@ -120,7 +120,13 @@ def test_calendar_spread_exports_preserve_operations_security_and_local_schema_c
         ),
     ]:
         doc = exporter[builder]().openapi()
-        assert set(doc["paths"]) == {path}
+        expected = {path}
+        if builder == "create_calendar_spread_daily_app":
+            expected.add("/data/futures-calendar-spread/query")
+            assert doc["paths"]["/data/futures-calendar-spread/query"]["post"]["operationId"] == (
+                "execute_futures_calendar_spread"
+            )
+        assert set(doc["paths"]) == expected
         operation = doc["paths"][path][method]
         assert operation["operationId"] == operation_id
         assert operation["security"] == [{"CookieSession": []}]

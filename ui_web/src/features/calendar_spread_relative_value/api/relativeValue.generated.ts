@@ -187,6 +187,8 @@ export interface components {
             kind: "invalid_request" | "incomplete_inputs" | "upstream_unavailable" | "input_contract_error" | "slot_resolution_error" | "calculation_failure" | "statistical_failure" | "internal_error" | "transport_busy" | "request_too_large" | "response_too_large";
             /** Param */
             param?: ("product_code" | "trade_date" | "history_start" | "evaluation_date" | "metric" | "histogram_edges") | null;
+            /** Reason Code */
+            reason_code?: ("cache_incomplete" | "final_export_incomplete" | "credential_missing" | "cache_incompatible" | "operation_unavailable" | "malformed_export" | "malformed_ensure_result" | "upstream_request_rejected") | null;
         };
         /** FinancialMetric */
         FinancialMetric: {

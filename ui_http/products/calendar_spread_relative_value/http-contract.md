@@ -8,10 +8,10 @@ with numerical semantics under [Relative value](../../../market_research/descrip
 
 ## Issue #13 delivery status
 
-The original WP5 read-only POST remains the current implementation until Issue #13
-WP2. This contract now explicitly authorizes the execution-semantic change below;
+Issue #13 WP2 delivers the execution-semantic change below. The original WP5
+read-only POST acceptance remains historical;
 [reconciliation](../../../market_research/descriptive/cases/futures_calendar_spread/AUTO_PREPARATION_RECONCILIATION.md)
-records the undelivered target without rewriting historical acceptance.
+records delivery and operational limits without rewriting historical acceptance.
 
 ## Operation and body
 

@@ -1,4 +1,4 @@
-"""Read-only historical query; no Research execute/Run lifecycle."""
+"""Synchronous historical execution through the public Research facade."""
 
 from collections.abc import Callable
 from typing import Annotated
@@ -8,7 +8,7 @@ from starlette.concurrency import run_in_threadpool
 
 from market_research.descriptive.cases.futures_calendar_spread import (
     HistoricalRelativeValueResult,
-    query_historical_relative_value,
+    execute_historical_relative_value,
 )
 from ui_http.products.futures_calendar_spread.endpoint import responses
 from ui_http.products.futures_calendar_spread.transport import (
@@ -27,7 +27,7 @@ router = APIRouter(tags=["Calendar Spread Relative Value"], route_class=Calendar
 
 
 def get_historical_query() -> Callable[..., HistoricalRelativeValueResult]:
-    return query_historical_relative_value
+    return execute_historical_relative_value
 
 
 @router.post(

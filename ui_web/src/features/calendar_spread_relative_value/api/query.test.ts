@@ -1,6 +1,7 @@
 import { afterEach, expect, it, vi } from 'vitest'
 import { createRequestBoundary, installRequestBoundary } from '../../../shared/http/protectedRequest'
 import { loadQuery } from './query'
+import { errorMessage } from '../model/format'
 import type { Query } from './validateResult'
 import fixture from '../testing/history1.json'
 const query: Query = { product_code: 'IM', history_start: '2024-10-17', evaluation_date: '2024-10-18', metric: 'annualized_spread_ratio', histogram_edges: [-.1, 0, .1] }
@@ -42,4 +43,39 @@ it('distinguishes network failure, malformed data and abort without retry', asyn
 it('preserves domain statistical failure independently of request validation', async () => {
   boundary(); vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(JSON.stringify({ error: { kind: 'statistical_failure', detail: 'safe', param: null } }), { status: 422 })))
   await expect(loadQuery(query, new AbortController().signal)).rejects.toMatchObject({ kind: 'statistical_failure' })
+})
+
+it.each([
+  [409, 'incomplete_inputs', 'cache_incomplete', '所需数据仍不完整'],
+  [409, 'incomplete_inputs', 'final_export_incomplete', '已尝试自动准备'],
+  [503, 'upstream_unavailable', 'credential_missing', '配置数据源凭据'],
+  [503, 'upstream_unavailable', 'cache_incompatible', '维护人员处理缓存'],
+  [503, 'upstream_unavailable', 'operation_unavailable', '稍后重试或联系维护人员'],
+  [502, 'input_contract_error', 'malformed_export', '契约问题'],
+  [502, 'input_contract_error', 'malformed_ensure_result', '契约问题'],
+  [502, 'input_contract_error', 'upstream_request_rejected', '契约问题'],
+] as const)('projects safe reason-specific feedback: %s %s %s', async (status, kind, reason_code, message) => {
+  boundary()
+  const fetch = vi.fn().mockResolvedValue(new Response(JSON.stringify({ error: { kind, reason_code, detail: '/private secret', param: null } }), { status }))
+  vi.stubGlobal('fetch', fetch)
+  const error = await loadQuery(query, new AbortController().signal).catch(e => e)
+  expect(error).toMatchObject({ kind, reason_code })
+  expect(errorMessage(error)).toContain(message)
+  expect(errorMessage(error)).not.toContain('secret')
+  expect(fetch).toHaveBeenCalledOnce()
+})
+it.each([
+  ['upstream_unavailable', 'malformed_export'],
+  ['input_contract_error', 'unknown'],
+  ['invalid_request', 'credential_missing'],
+])('rejects an invalid reason contract %s %s', async (kind, reason_code) => {
+  boundary()
+  const status = kind === 'upstream_unavailable' ? 503 : kind === 'input_contract_error' ? 502 : 400
+  vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(JSON.stringify({ error: { kind, reason_code, detail: 'safe', param: null } }), { status })))
+  await expect(loadQuery(query, new AbortController().signal)).rejects.toMatchObject({ kind: 'invalid_response' })
+})
+it('retains safe legacy feedback without requiring manual data preparation', () => {
+  expect(errorMessage({ kind: 'incomplete_inputs' })).toContain('所需数据仍不完整')
+  expect(errorMessage({ kind: 'incomplete_inputs' })).not.toContain('请先')
+  expect(errorMessage({ kind: 'transport_busy' })).toContain('手动重试')
 })

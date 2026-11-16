@@ -21,13 +21,15 @@ from ui_http.products.calendar_spread_relative_value.endpoint import (
 )
 from ui_http.products.calendar_spread_relative_value.schemas import HistoricalResponse
 from ui_http.products.futures_calendar_spread import transport
-from ui_http.products.futures_calendar_spread.endpoint import get_daily_query
+from ui_http.products.futures_calendar_spread.endpoint import get_daily_execution, get_daily_query
 from ui_http.products.futures_calendar_spread.schemas import DailyResponse
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "market_research" / "tests"))
 from calendar_spread_fixtures import AFTER, DAY, Services, future  # noqa: E402
 
 DAILY = "/data/futures-calendar-spread"
+EXECUTION = DAILY + "/query"
+DAILY_BODY = {"product_code": "IM", "trade_date": DAY.isoformat()}
 HISTORY = "/research/calendar-spread-relative-value/query"
 BODY = {
     "product_code": "IM",
@@ -35,6 +37,12 @@ BODY = {
     "evaluation_date": AFTER.isoformat(),
 }
 QUERY = "?product_code=IM&trade_date=" + DAY.isoformat()
+
+
+def request_path(client, path):
+    if path == DAILY:
+        return client.get(DAILY + QUERY)
+    return client.post(path, json=BODY if path == HISTORY else DAILY_BODY)
 
 
 def historical(services, **kwargs):
@@ -68,6 +76,7 @@ def product():
         )
     )
     app.dependency_overrides[get_daily_query] = lambda: dq
+    app.dependency_overrides[get_daily_execution] = lambda: dq
     app.dependency_overrides[get_historical_query] = lambda: hq
     return app, authenticated_client(app), dq, hq
 
@@ -232,15 +241,17 @@ def test_research_strict_wire(product, change, param):
         (b'{"extra": {"x":1,"x":2}}', None),
     ],
 )
-def test_research_duplicate_and_malformed_json(product, raw, param):
-    _, client, _, hq = product
+@pytest.mark.parametrize("path", [HISTORY, EXECUTION])
+def test_research_duplicate_and_malformed_json(product, raw, param, path):
+    _, client, dq, hq = product
     error(
-        client.post(HISTORY, content=raw, headers={"Content-Type": "application/json"}),
+        client.post(path, content=raw, headers={"Content-Type": "application/json"}),
         400,
         "invalid_request",
         param,
     )
     hq.assert_not_called()
+    dq.assert_not_called()
 
 
 @pytest.mark.parametrize(
@@ -253,17 +264,24 @@ def test_research_duplicate_and_malformed_json(product, raw, param):
         {"Content-Type": "application/json", "Content-Encoding": "gzip"},
     ],
 )
-def test_research_media_type(product, headers):
-    _, client, _, query = product
-    error(client.post(HISTORY, content=json.dumps(BODY), headers=headers), 400, "invalid_request")
+@pytest.mark.parametrize("path", [HISTORY, EXECUTION])
+def test_research_media_type(product, headers, path):
+    _, client, dq, query = product
+    error(client.post(path, content=json.dumps(BODY), headers=headers), 400, "invalid_request")
     query.assert_not_called()
+    dq.assert_not_called()
 
 
 @pytest.mark.parametrize("query", ["?bad=1", "?metric=x&metric=y", "?product_code=IM"])
-def test_research_rejects_all_query_parameters(product, query):
-    _, client, _, hq = product
-    error(client.post(HISTORY + query, json=BODY), 400, "invalid_request")
+@pytest.mark.parametrize("path", [HISTORY, EXECUTION])
+def test_research_rejects_all_query_parameters(product, query, path):
+    _, client, dq, hq = product
+    error(
+        client.post(path + query, json=BODY if path == HISTORY else DAILY_BODY),
+        400, "invalid_request",
+    )
     hq.assert_not_called()
+    dq.assert_not_called()
 
 
 @pytest.mark.parametrize(
@@ -442,7 +460,7 @@ def test_research_availability_and_nulls(product, mode):
         )
 
 
-@pytest.mark.parametrize("path", [DAILY, HISTORY])
+@pytest.mark.parametrize("path", [DAILY, EXECUTION, HISTORY])
 @pytest.mark.parametrize(
     "category,status",
     [
@@ -457,15 +475,16 @@ def test_research_availability_and_nulls(product, mode):
 )
 def test_classified_errors_safe_and_no_renewal(product, path, category, status):
     _, client, dq, hq = product
-    query = dq if path == DAILY else hq
+    query = dq if path != HISTORY else hq
     query.side_effect = case.CalendarSpreadQueryError(
         category,
         "/private/db.sqlite",
         "secret",
         "/private/provider secret traceback",
     )
-    response = client.get(DAILY + QUERY) if path == DAILY else client.post(HISTORY, json=BODY)
+    response = request_path(client, path)
     error(response, status, category)
+    assert "reason_code" not in response.json()["error"]
 
 
 def test_auth_precedes_parsing_dependencies_and_same_origin(product):
@@ -473,6 +492,7 @@ def test_auth_precedes_parsing_dependencies_and_same_origin(product):
     deps = Mock(side_effect=AssertionError("Anonymous dependency"))
     app.dependency_overrides[get_daily_query] = deps
     app.dependency_overrides[get_historical_query] = deps
+    app.dependency_overrides[get_daily_execution] = deps
     anonymous = TestClient(app, base_url=ORIGIN)
     error(anonymous.request("GET", DAILY + "?bad=1", content=b"{"), 401, "authentication_required")
     error(anonymous.post(HISTORY, content=b"{"), 401, "authentication_required")
@@ -480,6 +500,11 @@ def test_auth_precedes_parsing_dependencies_and_same_origin(product):
         client.post(HISTORY, content=b"{", headers={"Origin": "https://evil"}),
         403,
         "origin_forbidden",
+    )
+    error(anonymous.post(EXECUTION, content=b"{"), 401, "authentication_required")
+    error(
+        client.post(EXECUTION, json=DAILY_BODY, headers={"Origin": "https://evil"}),
+        403, "origin_forbidden",
     )
     deps.assert_not_called()
     dq.assert_not_called()
@@ -493,6 +518,7 @@ def test_typed_composed_openapi_business_422_and_other_operations(product):
     doc = response.json()
     for path, method, op, schema in (
         (DAILY, "get", "query_futures_calendar_spread", "DailyResponse"),
+        (EXECUTION, "post", "execute_futures_calendar_spread", "DailyResponse"),
         (HISTORY, "post", "query_calendar_spread_relative_value", "HistoricalResponse"),
     ):
         operation = doc["paths"][path][method]
@@ -515,7 +541,7 @@ def test_typed_composed_openapi_business_422_and_other_operations(product):
     assert {p["name"] for p in params} == {"product_code", "trade_date"}
     assert all(p["required"] for p in params)
     for path, methods in doc["paths"].items():
-        if path not in (DAILY, HISTORY):
+        if path not in (DAILY, EXECUTION, HISTORY):
             assert all("422" not in operation["responses"] for operation in methods.values())
     assert "HTTPValidationError" not in doc["components"]["schemas"]
     assert doc["components"]["securitySchemes"]["CookieSession"]["in"] == "cookie"
@@ -541,21 +567,21 @@ def test_limits_and_no_partial_200(product, monkeypatch):
     assert dq.call_count == 1
 
 
-@pytest.mark.parametrize("path", [DAILY, HISTORY])
+@pytest.mark.parametrize("path", [DAILY, EXECUTION, HISTORY])
 @pytest.mark.parametrize("nonfinite", [float("nan"), float("inf"), float("-inf")])
 def test_unexpected_and_nonfinite_projection_is_atomic(product, path, nonfinite):
     _, client, dq, hq = product
-    query = dq if path == DAILY else hq
+    query = dq if path != HISTORY else hq
     query.side_effect = RuntimeError("/private/db.sqlite secret")
 
     def request():
-        return client.get(DAILY + QUERY) if path == DAILY else client.post(HISTORY, json=BODY)
+        return request_path(client, path)
 
     error(request(), 500, "internal_error")
     query.side_effect = None
-    services = Services() if path == DAILY else Services(DAY, AFTER)
-    original = daily(services) if path == DAILY else historical(services)
-    day = original.day if path == DAILY else original.current_day
+    services = Services() if path != HISTORY else Services(DAY, AFTER)
+    original = daily(services) if path != HISTORY else historical(services)
+    day = original.day if path != HISTORY else original.current_day
     observation = day.observations[0]
     metrics = replace(
         observation.metrics,
@@ -617,13 +643,14 @@ def test_workers_hold_capacity_through_serialization_and_free_after_failure(prod
     assert client.post(HISTORY, json=BODY).status_code == 200
 
 
-@pytest.mark.parametrize("path", [DAILY, HISTORY])
+@pytest.mark.parametrize("path", [DAILY, EXECUTION, HISTORY])
 def test_lossless_finite_projection_and_only_auth_storage(product, path, tmp_path):
     app, client, dq, hq = product
     assert get_daily_query() is case.query_daily_spreads
-    assert get_historical_query() is case.query_historical_relative_value
-    business = daily(Services()) if path == DAILY else historical(Services(DAY, AFTER))
-    original_day = business.day if path == DAILY else business.current_day
+    assert get_historical_query() is case.execute_historical_relative_value
+    assert get_daily_execution() is case.execute_daily_spreads
+    business = daily(Services()) if path != HISTORY else historical(Services(DAY, AFTER))
+    original_day = business.day if path != HISTORY else business.current_day
     original = original_day.observations[0]
     values = (-0.0, 1.2345678901234567, 1.7976931348623157e308)
     metrics = replace(
@@ -643,7 +670,7 @@ def test_lossless_finite_projection_and_only_auth_storage(product, path, tmp_pat
             days=(*business.observation_set.days[:-1], day),
         ),
     )
-    query = dq if path == DAILY else hq
+    query = dq if path != HISTORY else hq
     query.side_effect = None
     query.return_value = business
     # DI returns a completed public Result: no service construction, acquisition,
@@ -659,9 +686,9 @@ def test_lossless_finite_projection_and_only_auth_storage(product, path, tmp_pat
         patch.setattr(queries, "prepare_inputs", forbidden)
         patch.setattr(queries, "construct_observations", forbidden)
         patch.setattr(api, "compute", forbidden)
-        response = client.get(DAILY + QUERY) if path == DAILY else client.post(HISTORY, json=BODY)
+        response = request_path(client, path)
     assert response.status_code == 200, response.text
-    result_day = response.json()["day" if path == DAILY else "current_day"]
+    result_day = response.json()["day" if path != HISTORY else "current_day"]
     projected = result_day["observations"][0]["metrics"]
     actual = tuple(
         projected[name]["value"]
@@ -702,11 +729,11 @@ def test_capacity_includes_projection_encoding(product, monkeypatch):
         assert pending.result(timeout=10).status_code == 200
 
 
-@pytest.mark.parametrize("path", [DAILY, HISTORY])
+@pytest.mark.parametrize("path", [DAILY, EXECUTION, HISTORY])
 def test_incomplete_business_projection_cannot_return_200(product, path):
     _, client, dq, hq = product
-    business = daily(Services()) if path == DAILY else historical(Services(DAY, AFTER))
-    day = business.day if path == DAILY else business.current_day
+    business = daily(Services()) if path != HISTORY else historical(Services(DAY, AFTER))
+    day = business.day if path != HISTORY else business.current_day
     broken = replace(
         business,
         observation_set=replace(
@@ -717,8 +744,161 @@ def test_incomplete_business_projection_cannot_return_200(product, path):
             ),
         ),
     )
-    query = dq if path == DAILY else hq
+    query = dq if path != HISTORY else hq
     query.side_effect = None
     query.return_value = broken
-    response = client.get(DAILY + QUERY) if path == DAILY else client.post(HISTORY, json=BODY)
+    response = request_path(client, path)
     error(response, 500, "internal_error")
+
+
+@pytest.mark.parametrize("path", [DAILY, EXECUTION, HISTORY])
+@pytest.mark.parametrize("reason,kind,status", [
+    ("cache_incomplete", "incomplete_inputs", 409),
+    ("final_export_incomplete", "incomplete_inputs", 409),
+    ("credential_missing", "upstream_unavailable", 503),
+    ("cache_incompatible", "upstream_unavailable", 503),
+    ("operation_unavailable", "upstream_unavailable", 503),
+    ("malformed_export", "input_contract_error", 502),
+    ("malformed_ensure_result", "input_contract_error", 502),
+    ("upstream_request_rejected", "input_contract_error", 502),
+])
+def test_reason_projection(product, path, reason, kind, status):
+    _, client, dq, hq = product
+    query = hq if path == HISTORY else dq
+    query.side_effect = case.CalendarSpreadQueryError(
+        kind, "input_preparation", "secret", "/private/db.sqlite secret", reason_code=reason,
+    )
+    response = request_path(client, path)
+    error(response, status, kind)
+    assert response.json()["error"]["reason_code"] == reason
+    assert response.json()["error"]["detail"] != "/private/db.sqlite secret"
+
+
+@pytest.mark.parametrize("kind,reason", [
+    ("incomplete_inputs", "credential_missing"), ("upstream_unavailable", "unknown"),
+    ("transport_busy", None), ("unknown", None), ("invalid_request", "malformed_export"),
+])
+def test_unknown_failure_contract_is_internal(product, kind, reason):
+    _, client, dq, _ = product
+    dq.side_effect = case.CalendarSpreadQueryError(
+        kind, "secret", "secret", "/private/db.sqlite secret", reason_code=reason,
+    )
+    response = client.post(EXECUTION, json=DAILY_BODY)
+    error(response, 500, "internal_error")
+    assert "reason_code" not in response.json()["error"]
+
+
+@pytest.mark.parametrize("body", [
+    {}, {"product_code": "IM"}, DAILY_BODY | {"extra": 1},
+    DAILY_BODY | {"product_code": True}, DAILY_BODY | {"product_code": "im"},
+    DAILY_BODY | {"trade_date": None}, DAILY_BODY | {"trade_date": 20241018},
+    DAILY_BODY | {"trade_date": "20241018"}, DAILY_BODY | {"trade_date": "2024-02-30"},
+    DAILY_BODY | {"trade_date": "2024-10-18T00:00:00"},
+])
+def test_daily_execution_strict_body(product, body):
+    _, client, dq, _ = product
+    response = client.post(EXECUTION, json=body)
+    assert response.status_code == 400
+    dq.assert_not_called()
+
+
+def test_daily_read_and_execution_dependencies_are_independent(product):
+    app, client, dq, _ = product
+    result = case.execute_daily_spreads(
+        "IM", DAY, calendar_service=Services(), futures_service=Services(),
+    )
+    execution = Mock(return_value=result)
+    app.dependency_overrides[get_daily_execution] = lambda: execution
+    response = client.post(EXECUTION, json=DAILY_BODY)
+    assert response.status_code == 200, response.text
+    assert response.json() == DailyResponse.model_validate(result).model_dump(mode="json")
+    assert response.json()["request"]["operation"] == "query_daily_spreads"
+    execution.assert_called_once_with("IM", DAY)
+    dq.assert_not_called()
+    assert client.get(DAILY + QUERY).status_code == 200
+    dq.assert_called_once_with("IM", DAY)
+
+
+def test_cancelled_requests_hold_shared_capacity(product):
+    import httpx
+
+    app, client, dq, hq = product
+    entered = threading.Barrier(3)
+    release = threading.Event()
+    completed = threading.Event()
+    business = daily(Services())
+    count = 0
+    lock = threading.Lock()
+
+    def slow(*args):
+        nonlocal count
+        entered.wait(timeout=10)
+        assert release.wait(timeout=10)
+        with lock:
+            count += 1
+            if count == 2:
+                completed.set()
+        return business
+
+    dq.side_effect = slow
+
+    async def scenario():
+        async with httpx.AsyncClient(
+            transport=httpx.ASGITransport(app=app), base_url=ORIGIN,
+            headers={"Origin": ORIGIN}, cookies=client.cookies,
+        ) as caller:
+            tasks = [
+                asyncio.create_task(caller.get(DAILY + QUERY)),
+                asyncio.create_task(caller.post(EXECUTION, json=DAILY_BODY)),
+            ]
+            try:
+                await asyncio.to_thread(entered.wait, 10)
+                for task in tasks:
+                    task.cancel()
+                await asyncio.gather(*tasks, return_exceptions=True)
+                error(await caller.post(HISTORY, json=BODY), 503, "transport_busy")
+                error(await caller.post(EXECUTION, json=DAILY_BODY), 503, "transport_busy")
+                hq.assert_not_called()
+            finally:
+                release.set()
+                assert await asyncio.to_thread(completed.wait, 10)
+            # Capacity includes projection/encoding after the fake business call returns.
+            for _ in range(1000):
+                if transport._CAPACITY._value == 2:
+                    break
+                await asyncio.sleep(0.01)
+            assert transport._CAPACITY._value == 2
+            assert (await caller.post(HISTORY, json=BODY)).status_code == 200
+
+    asyncio.run(scenario())
+
+
+def test_historical_execution_preserves_complete_result_and_analysis_identity(product):
+    _, client, _, hq = product
+    services = Services(DAY, AFTER)
+    result = case.execute_historical_relative_value(
+        "IM", DAY, AFTER, calendar_service=services, futures_service=services,
+    )
+    from ui_http.products.calendar_spread_relative_value.projection import historical_response
+
+    hq.side_effect = None
+    hq.return_value = result
+    response = client.post(HISTORY, json=BODY)
+    assert response.status_code == 200, response.text
+    assert response.json() == historical_response(result).model_dump(mode="json")
+    assert response.json()["request"]["operation"] == "query_historical_relative_value"
+    hq.assert_called_once_with(
+        "IM", DAY, AFTER, metric="annualized_spread_ratio", histogram_edges=None,
+    )
+
+
+def test_daily_execution_streamed_body_and_response_bounds(product, monkeypatch):
+    _, client, dq, _ = product
+    error(client.post(
+        EXECUTION, content=iter([b" " * 8192] * 3),
+        headers={"Content-Type": "application/json"},
+    ), 413, "request_too_large")
+    dq.assert_not_called()
+    monkeypatch.setattr(transport, "MAX_RESPONSE_BYTES", 100)
+    error(client.post(EXECUTION, json=DAILY_BODY), 413, "response_too_large")
+    dq.assert_called_once_with("IM", DAY)

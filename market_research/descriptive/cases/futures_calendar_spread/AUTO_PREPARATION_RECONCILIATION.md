@@ -192,3 +192,84 @@ deployment acceptance are **NOT VERIFIED** here; operational acceptance remains 
 No data, cache, credential, dependency, Bundle or Manifest was changed. No PR, merge,
 push or publication was performed. This delivery stops at WP1 and does not close
 Issue #13.
+
+
+## WP2 HTTP and Web delivery and reconciliation (2026-11-16)
+
+Implemented on `fix/issue-13-auto-prepare-research-inputs` from required HEAD
+`e465a050fd57e92cf7f05695db8e76c08198bc88`, with a clean starting worktree.
+Fetch succeeded against the configured `github` remote (there is no `origin`).
+No branch creation, develop/main integration, PR, push or publication occurred.
+WP0/WP1 records above retain their original acceptance facts. Final commit identity
+is recorded in Git history and the task report.
+
+| Boundary | Delivered behavior and reconciliation |
+| --- | --- |
+| Daily GET | `/data/futures-calendar-spread` still selects only `query_daily_spreads`; read-only permission is unchanged. |
+| Daily POST | `/data/futures-calendar-spread/query`, operationId `execute_futures_calendar_spread`, accepts the closed DailyRequest body and selects only `execute_daily_spreads`. |
+| Historical POST | Existing path, operationId, body and success Result remain unchanged; dependency now selects `execute_historical_relative_value`. |
+| Shared HTTP | All three paths use existing Auth, same-origin enforcement, CalendarSpreadRoute, threadpool, two-worker process capacity, streamed 16 KiB request bound, atomic 32 MiB response bound and no-store responses. Cancellation retains capacity through worker completion. No second semaphore or DataLake import/call is added. |
+| Errors | Only the eight frozen category/reason pairs are projected, with fixed safe details. Missing reason_code is omitted for legacy compatibility. Unknown categories/reasons and mismatched combinations become safe internal_error; raw exception text, attempts, UnitFailures, tokens and cache paths are never projected. |
+| Web | Daily submit/retry explicitly uses the new POST; Historical keeps its POST. Both show the exact indeterminate preparation/calculation message and reason-specific fixed guidance, with kind fallback for old errors. No Ensure request/button, automatic retry, mount execution or progress estimate is added. Existing submitted/draft identity, abort and stale isolation remain intact. |
+| Wire | Actual composed FastAPI `.openapi()` remains the sole source. Existing generator regenerated both affected OpenAPI/TypeScript pairs; other generated files are byte-unchanged. Existing operation documents and all success schemas are unchanged; only ErrorBody changes, plus new DailyRequest/POST. Existing request.operation literals remain unchanged. |
+| Demo | Existing Bundle bytes, Manifest, captures, producer and collection scripts are unchanged. Static controllers keep the public pure Result validators/Presentations and never mount Production submission hooks. Retained Bundle rendering and local Pair/date-axis interactions pass without HTTP or execution controls. |
+| Research/DataLake | No Python business implementation, financial formula, sample policy, statistical result, runtime configuration, dependency or market/cache data changed. APPLICATION's stale target-only status is reconciled with delivered WP1/WP2; no new semantic decision is introduced. |
+
+Changed-file inventory (paths are relative to the repository root):
+
+- Authority/status: this record, case `APPLICATION.md`, both affected HTTP product
+  `http-contract.md` files and both Web feature `ARCHITECTURE.md` files.
+- HTTP: `ui_http/src/ui_http/products/futures_calendar_spread/{endpoint,transport,schemas}.py`,
+  `ui_http/src/ui_http/products/calendar_spread_relative_value/endpoint.py`, and
+  `ui_http/tests/test_calendar_spread_http.py`.
+- Web: each affected feature's `api/query.ts`, `api/query.test.ts`, generated
+  OpenAPI/TypeScript pair, `model/format.ts` and Page implementation/test;
+  Daily additionally updates `api/validateResult.ts` to validate the POST responses.
+- Tooling/tests: `ui_web/scripts/export_contracts.py`,
+  `ui_web/tests/tooling/test_export_contracts.py`,
+  `ui_web/tests/fixtures/calendar_spread_browser_app.py` (keeps the new dependency
+  injected for later manual browser acceptance), and
+  `ui_web/demo/runtime/calendarSpread.test.tsx`.
+
+Scoped verification (synthetic injected public services only):
+
+```bash
+# repository root
+poetry run pytest ui_http/tests/test_calendar_spread_http.py -q
+# 136 passed before the extra POST boundary cases were added.
+poetry run pytest ui_http/tests/test_calendar_spread_http.py::test_research_duplicate_and_malformed_json ui_http/tests/test_calendar_spread_http.py::test_research_media_type ui_http/tests/test_calendar_spread_http.py::test_research_rejects_all_query_parameters ui_web/tests/tooling/test_export_contracts.py::test_calendar_spread_exports_preserve_operations_security_and_local_schema_closure -q
+# 27 passed, including 13 newly added route cases and one exporter case.
+poetry run pytest ui_http/tests/test_calendar_spread_http.py::test_historical_execution_preserves_complete_result_and_analysis_identity ui_http/tests/test_calendar_spread_http.py::test_daily_execution_streamed_body_and_response_bounds -q
+# 2 passed. Total: 151 distinct HTTP cases and one exporter case verified.
+poetry run pytest ui_http/tests/test_calendar_spread_http.py::test_reason_projection ui_http/tests/test_calendar_spread_http.py::test_classified_errors_safe_and_no_renewal -q
+# 45 passed after replacing the reason mapping oracle with explicit contract cases
+# and asserting that legacy responses omit reason_code; no additional distinct cases.
+
+# ui_web/; eight explicitly selected feature test files
+npm test -- src/features/futures_calendar_spread/api/query.test.ts src/features/futures_calendar_spread/api/validateResult.test.ts src/features/futures_calendar_spread/hooks/useQuery.test.ts src/features/futures_calendar_spread/page/DailyPage.test.tsx src/features/calendar_spread_relative_value/api/query.test.ts src/features/calendar_spread_relative_value/api/validateResult.test.ts src/features/calendar_spread_relative_value/hooks/useQuery.test.ts src/features/calendar_spread_relative_value/page/RelativeValuePage.test.tsx
+# 98 passed.
+npm test -- demo/runtime/calendarSpread.test.tsx
+# 2 passed using retained Bundles, with network calls forbidden by the test.
+npm run contract:generate
+npm run contract:check
+npm run build
+```
+
+All listed checks passed. Build includes TypeScript checking; its large-chunk
+warning is informational. Scoped Ruff and Oxlint passed for changed Python and
+TypeScript/TSX source/test files. Complete diff/semantic review confirms the frozen
+ownership boundaries, additive error contract and unchanged success DTOs. No full
+regression, Browser Matrix, static isolation build, real-data capture or deployment
+check was run. Browser/native Windows/deployed behavior is **NOT VERIFIED** here.
+The HTTP tests emit the existing Starlette TestClient/httpx deprecation warning.
+
+**WP2 reconciliation: PASS. READY FOR WP3.** This is implementation readiness for
+operational acceptance, not closure of Issue #13 or a production declaration.
+WP3 must still measure real cold/hot request durations and actual browser/Gateway/
+server timeout settings; verify isolated fresh/hot caches, real credential/Source
+failure modes, concurrent cache/Source contention, saturation and post-cancellation
+worker occupancy. Capacity remains per process; no distributed coordination or
+latency guarantee is claimed. A client cancellation does not guarantee automatic
+preparation stops or already committed DataLake units roll back. Synchronous cold
+requests exceeding the actual stack's timeout require an explicit follow-up decision,
+not an implicit async framework. This delivery stops at WP2.

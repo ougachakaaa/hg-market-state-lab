@@ -120,7 +120,9 @@ def create_backtesting_app() -> FastAPI:
 
 
 def create_calendar_spread_daily_app() -> FastAPI:
-    return create_projection({"/data/futures-calendar-spread"})
+    return create_projection({
+        "/data/futures-calendar-spread", "/data/futures-calendar-spread/query",
+    })
 
 
 def create_calendar_spread_relative_value_app() -> FastAPI:

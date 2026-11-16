@@ -21,6 +21,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/data/futures-calendar-spread/query": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Daily Execution */
+        post: operations["execute_futures_calendar_spread"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -90,6 +107,19 @@ export interface components {
         DailyErrorResponse: {
             error: components["schemas"]["ErrorBody"];
         };
+        /** DailyRequest */
+        DailyRequest: {
+            /**
+             * Product Code
+             * @enum {string}
+             */
+            product_code: "IF" | "IH" | "IC" | "IM";
+            /**
+             * Trade Date
+             * Format: date
+             */
+            trade_date: string;
+        };
         /** DailyResponse */
         DailyResponse: {
             accounting: components["schemas"]["Accounting"];
@@ -135,6 +165,8 @@ export interface components {
             kind: "invalid_request" | "incomplete_inputs" | "upstream_unavailable" | "input_contract_error" | "slot_resolution_error" | "calculation_failure" | "statistical_failure" | "internal_error" | "transport_busy" | "request_too_large" | "response_too_large";
             /** Param */
             param?: ("product_code" | "trade_date" | "history_start" | "evaluation_date" | "metric" | "histogram_edges") | null;
+            /** Reason Code */
+            reason_code?: ("cache_incomplete" | "final_export_incomplete" | "credential_missing" | "cache_incompatible" | "operation_unavailable" | "malformed_export" | "malformed_ensure_result" | "upstream_request_rejected") | null;
         };
         /** FinancialMetric */
         FinancialMetric: {
@@ -234,6 +266,111 @@ export interface operations {
             cookie?: never;
         };
         requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DailyResponse"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DailyErrorResponse"];
+                };
+            };
+            /** @description HTTP access error */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AuthErrorResponse"];
+                };
+            };
+            /** @description HTTP access error */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AuthErrorResponse"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DailyErrorResponse"];
+                };
+            };
+            /** @description Content Too Large */
+            413: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DailyErrorResponse"];
+                };
+            };
+            /** @description Unprocessable Content */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DailyErrorResponse"];
+                };
+            };
+            /** @description Internal Server Error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DailyErrorResponse"] | components["schemas"]["AuthErrorResponse"];
+                };
+            };
+            /** @description Bad Gateway */
+            502: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DailyErrorResponse"];
+                };
+            };
+            /** @description Service Unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DailyErrorResponse"];
+                };
+            };
+        };
+    };
+    execute_futures_calendar_spread: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DailyRequest"];
+            };
+        };
         responses: {
             /** @description Successful Response */
             200: {

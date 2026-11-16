@@ -143,8 +143,16 @@ Param = Literal[
 ]
 
 
+ReasonCode = Literal[
+    "cache_incomplete", "final_export_incomplete", "credential_missing",
+    "cache_incompatible", "operation_unavailable", "malformed_export",
+    "malformed_ensure_result", "upstream_request_rejected",
+]
+
+
 class ErrorBody(Wire):
     kind: ErrorKind
+    reason_code: ReasonCode | None = None
     detail: str
     param: Param | None = None
 

@@ -7,9 +7,8 @@ belong to [the Research application](../../../market_research/descriptive/cases/
 
 ## Issue #13 delivery status
 
-The existing GET is delivered and remains read-only. The new POST and additive
-error reason_code below are accepted execution targets, not runtime delivered by
-WP0. [Issue reconciliation](../../../market_research/descriptive/cases/futures_calendar_spread/AUTO_PREPARATION_RECONCILIATION.md)
+The existing GET remains read-only. Issue #13 WP2 delivers the new POST and
+additive error reason_code below under the frozen WP0 contract. [Issue reconciliation](../../../market_research/descriptive/cases/futures_calendar_spread/AUTO_PREPARATION_RECONCILIATION.md)
 tracks implementation separately from the original WP5 acceptance.
 
 ## Operation and request

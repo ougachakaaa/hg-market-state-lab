@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { products, units, type Query } from '../api/validateResult'
 import { RelativeValuePresentation } from '../components/RelativeValuePresentation'
 import { useQuery } from '../hooks/useQuery'
-import { errorMessages, metricLabels } from '../model/format'
+import { errorMessage, metricLabels } from '../model/format'
 
 export default function RelativeValuePage() {
   const { state, submit, retry } = useQuery()
@@ -34,8 +34,8 @@ export default function RelativeValuePage() {
     </Form></Card>
     {inputError && <Alert type="error" title={inputError} />}
     {dirty && <Alert type="info" title="参数已修改，需重新开始研究。下方状态仍对应已提交参数。" />}
-    {state.status === 'loading' && <Spin tip="正在研究…"><div style={{ minHeight: 80 }} /></Spin>}
-    {state.status === 'error' && <Alert type="error" title={errorMessages[state.error.kind]} description={`${state.query.product_code} · ${state.query.history_start} – ${state.query.evaluation_date} · ${state.query.metric}${state.error.param ? ` · ${state.error.param}` : ''}`} action={<Button onClick={retry}>重试原查询</Button>} />}
+    {state.status === 'loading' && <Spin tip="正在准备所需数据并计算结果，请稍候。"><div style={{ minHeight: 80 }} /></Spin>}
+    {state.status === 'error' && <Alert type="error" title={errorMessage(state.error)} description={`${state.query.product_code} · ${state.query.history_start} – ${state.query.evaluation_date} · ${state.query.metric}${state.error.param ? ` · ${state.error.param}` : ''}`} action={<Button onClick={retry}>重试原查询</Button>} />}
     {state.status === 'success' && <RelativeValuePresentation key={state.revision} result={state.result} />}
   </Flex>
 }

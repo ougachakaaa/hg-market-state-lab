@@ -4,8 +4,9 @@ Specializes [the case](ARCHITECTURE.md). The WP1 financial and WP2
 preparation/construction APIs and WP4 independent queries are implemented through
 `market_research.descriptive.cases.futures_calendar_spread`. They are Python
 semantic boundaries; HTTP delivery is owned separately. Issue #13's explicit
-execution APIs are accepted targets, not delivered runtime; current drift and
-readiness enter [reconciliation](AUTO_PREPARATION_RECONCILIATION.md). The immutable
+execution APIs were delivered in Issue #13 WP1; HTTP/Web integration was delivered
+in Issue #13 WP2. Operational readiness and retained limits enter
+[reconciliation](AUTO_PREPARATION_RECONCILIATION.md). The immutable
 business schema and association contract are owned by [Query Results](QUERY_RESULTS.md).
 
 ## Shared capability

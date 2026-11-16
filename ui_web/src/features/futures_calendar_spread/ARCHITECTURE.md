@@ -10,9 +10,9 @@ transport belongs to [Daily HTTP](../../../../ui_http/products/futures_calendar_
 ## Issue #13 execution target
 
 Original WP6 delivery/acceptance remains historical evidence. The Production
-execution changes below are accepted Authority, not delivered by Issue #13 WP0;
+execution changes below are delivered by Issue #13 WP2 under the frozen WP0 Authority;
 [reconciliation](../../../../market_research/descriptive/cases/futures_calendar_spread/AUTO_PREPARATION_RECONCILIATION.md)
-tracks pending implementation separately. Existing static Bundles stay unchanged.
+tracks delivery and retained operational limits separately. Existing static Bundles stay unchanged.
 
 ## Surface
 
