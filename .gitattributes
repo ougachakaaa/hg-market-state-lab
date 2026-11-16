@@ -23,3 +23,7 @@
 
 # Release requirement identity uses exact committed bytes on every platform.
 /ui_web/demo/release/*.json text eol=lf
+
+# Reviewed Calendar Spread test payloads (exact committed bytes).
+/ui_web/src/features/calendar_spread_relative_value/testing/*.json text eol=lf
+/ui_web/src/features/futures_calendar_spread/testing/*.json text eol=lf

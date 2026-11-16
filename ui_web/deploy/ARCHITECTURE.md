@@ -50,3 +50,14 @@ Inspect existing Pages, Environment branch protections and Actions permissions b
 actual release; unavailable inspection is reported truthfully. Root personal-study
 policy applies. Preserve original sources and investment disclaimers. No data-rights
 gate is introduced. CI acceptance and actual deployment are reported separately.
+
+## Portable execution and cleanup
+
+Exact-byte reviewed text inputs use LF attributes. Publisher disables autocrlf only
+for its detached checkout creation; original-workspace dirty checks keep user settings.
+Cleanup compares normalized absolute paths and verifies registered worktree ownership
+before removing only its invocation directory. Cleanup failure is recorded separately
+and never replaces the primary release error or invalidates completed acceptance.
+Verified release plus cleanup failure reports RELEASED_AND_VERIFIED with cleanupPending.
+Known-owned undeleted paths receive exact PowerShell cleanup instructions; unknown
+paths and locks are never deleted automatically. Execution-policy refusals are not bypassed.

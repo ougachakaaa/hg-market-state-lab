@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import { execFileSync, spawn } from 'node:child_process'
 import { readFileSync } from 'node:fs'
-import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises'
+import { mkdir, mkdtemp, rm, writeFile, lstat, rmdir } from 'node:fs/promises'
 import { resolve, dirname } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 import { verifyDemo } from '../../scripts/demo_artifact.mjs'
@@ -36,6 +36,18 @@ function run(program, args, cwd) {
 const npm = (args, cwd) => process.platform === 'win32'
   ? run('cmd.exe', ['/d', '/s', '/c', 'npm ' + args.join(' ')], cwd)
   : run('npm', args, cwd)
+export function assertCleanupPaths({ worktree, temporary, common }, paths = { resolve, dirname }) {
+  const base = paths.resolve(common), parent = paths.resolve(temporary), child = paths.resolve(worktree)
+  assert.equal(paths.dirname(parent), base, 'Unsafe temporary cleanup')
+  assert.equal(paths.dirname(child), parent, 'Unsafe checkout cleanup')
+  assert.ok(paths.dirname(parent) !== parent && /demo-publish-[^\\/]+$/.test(parent), 'Unowned temporary directory')
+}
+export async function finishCleanup(clean, report) {
+  try { await clean() } catch (error) { report(error) }
+}
+export function checkoutArgs(worktree, candidate) {
+  return ['-c', 'core.autocrlf=false', 'worktree', 'add', '--detach', worktree, candidate]
+}
 export async function cleanupCheckout(worktree, unregister) {
   // Node handles Windows file attributes/retries; Git then removes only registration.
   await rm(worktree, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 })
@@ -78,10 +90,11 @@ export async function publish(args = process.argv.slice(2)) {
   const repo = match[1]
   const gh = args => command('gh', [...args, '--repo', repo])
   const api = path => JSON.parse(command('gh', ['api', `repos/${repo}${path ? '/' + path : ''}`]))
-  const common = git(['rev-parse', '--path-format=absolute', '--git-common-dir'])
+  const common = resolve(git(['rev-parse', '--path-format=absolute', '--git-common-dir']))
   const lockPath = resolve(common, 'demo-publish.lock')
   await mkdir(lockPath) // Existing ownership requires explicit operator recovery.
   let worktree, temporary, pushed = false, deployed = false
+  const outcome = { status: 'PREFLIGHT_FAILED_NOT_PUSHED', cleanupPending: false }
   try {
     command('gh', ['auth', 'status'])
     const permission = api('').permissions
@@ -113,7 +126,7 @@ export async function publish(args = process.argv.slice(2)) {
       active: beforeRuns.some(r => r.status !== 'completed') })
     temporary = await mkdtemp(resolve(common, 'demo-publish-'))
     worktree = resolve(temporary, 'checkout')
-    git(['worktree', 'add', '--detach', worktree, candidate])
+    git(checkoutArgs(worktree, candidate))
     const candidateWeb = resolve(worktree, 'ui_web')
     const evidence = await checkedPush({
       check: async () => {
@@ -169,19 +182,39 @@ export async function publish(args = process.argv.slice(2)) {
     await verifyOnline(base, receipt)
     const { verifyBrowser } = await import(pathToFileURL(resolve(candidateWeb, 'demo/build/browserAcceptance.mjs')).href)
     await verifyBrowser(base)
-    console.log(JSON.stringify({ status: 'RELEASED_AND_VERIFIED', sourceCommit: candidate, run: selected.url, url: base }))
+    Object.assign(outcome, { status: 'RELEASED_AND_VERIFIED', sourceCommit: candidate, run: selected.url, url: base })
   } catch (error) {
-    console.error(deployed ? 'DEPLOYED_BUT_ONLINE_ACCEPTANCE_NOT_VERIFIED' : pushed ? 'PUSHED_DEPLOYMENT_FAILED' : 'PREFLIGHT_FAILED_NOT_PUSHED')
+    outcome.status = deployed ? 'DEPLOYED_BUT_ONLINE_ACCEPTANCE_NOT_VERIFIED' : pushed ? 'PUSHED_DEPLOYMENT_FAILED' : 'PREFLIGHT_FAILED_NOT_PUSHED'
+    outcome.error = error.message
+    console.error(outcome.status)
     throw error
   } finally {
-    try {
+    let owned = false
+    await finishCleanup(async () => {
       if (worktree) {
-        assert.equal(dirname(worktree), temporary, 'Unsafe checkout cleanup')
-        assert.equal(dirname(temporary), common, 'Unsafe temporary cleanup')
+        assertCleanupPaths({ worktree, temporary, common })
+        for (const path of [common, temporary, worktree]) assert.ok(!(await lstat(path)).isSymbolicLink(), 'Linked cleanup path')
+        const registered = git(['worktree', 'list', '--porcelain']).split('\n')
+          .filter(line => line.startsWith('worktree ')).map(line => resolve(line.slice(9)))
+        assert.ok(registered.includes(resolve(worktree)), 'Unregistered cleanup checkout')
+        owned = true
         await cleanupCheckout(worktree, () => git(['worktree', 'remove', '--force', worktree]))
       }
       if (temporary) await rm(temporary, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 })
-    } finally { await rm(lockPath, { recursive: true }) }
+    }, error => {
+      outcome.cleanupPending = true; outcome.cleanupError = error.message
+      if (owned) {
+        const quote = value => "'" + value.replaceAll("'", "''") + "'"
+        outcome.cleanupCommands = [
+          `Remove-Item -LiteralPath ${quote(temporary)} -Recurse -Force`,
+          `git -C ${quote(root)} worktree remove --force ${quote(worktree)}`,
+        ]
+      }
+    })
+    await finishCleanup(() => rmdir(lockPath), error => {
+      outcome.cleanupPending = true; outcome.lockCleanupError = error.message
+    })
+    console.log(JSON.stringify(outcome))
   }
 }
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {

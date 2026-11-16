@@ -1,9 +1,9 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { prePushPolicy, checkedPush, verifyPublicFiles, cleanupCheckout } from './publish.mjs'
+import { prePushPolicy, checkedPush, verifyPublicFiles, cleanupCheckout, assertCleanupPaths, finishCleanup, checkoutArgs } from './publish.mjs'
 import { mkdtemp, rm, access } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
-import { join } from 'node:path'
+import { join, win32 } from 'node:path'
 import { execFileSync } from 'node:child_process'
 const candidate = 'a'.repeat(40)
 const valid = { candidate, main: candidate, release: 'b'.repeat(40), ancestor: true, dirty: '', localMain: candidate, active: false }
@@ -43,4 +43,34 @@ test('removes owned checkout before unregistering its real Git worktree', async 
     await assert.rejects(access(checkout))
     assert.ok(!git(['worktree', 'list', '--porcelain']).toString().includes('/checkout'))
   } finally { await rm(directory, { recursive: true, force: true }) }
+})
+
+test('normalizes Windows separators but rejects cleanup outside its invocation', () => {
+  assertCleanupPaths({ common: 'C:/repo/.git', temporary: 'C:\\repo\\.git\\demo-publish-test', worktree: 'C:/repo/.git/demo-publish-test/checkout' }, win32)
+  assert.throws(() => assertCleanupPaths({ common: 'C:/repo/.git', temporary: 'C:/outside/demo-publish-test', worktree: 'C:/outside/demo-publish-test/checkout' }, win32))
+  assert.throws(() => assertCleanupPaths({ common: 'C:/repo/.git', temporary: 'C:/repo/.git/demo-publish-test', worktree: 'C:/repo/user-work' }, win32))
+})
+test('cleanup reports independently without replacing an original failure or successful acceptance', async () => {
+  let warning
+  const primary = new Error('download timed out')
+  await assert.rejects(async () => {
+    try { throw primary } finally { await finishCleanup(async () => { throw Error('cleanup denied') }, error => { warning = error.message }) }
+  }, error => error === primary)
+  assert.equal(warning, 'cleanup denied')
+  await finishCleanup(async () => { throw Error('cleanup denied') }, () => {})
+})
+test('isolated checkout preserves blob bytes under autocrlf=true without changing repository configuration', async () => {
+ const directory = await mkdtemp(join(tmpdir(), 'demo-lf-test-'))
+ const git = args => execFileSync('git', args, { cwd: directory, stdio: 'pipe' })
+ try {
+  git(['init']); git(['config', 'core.autocrlf', 'true'])
+  const { writeFile, readFile } = await import('node:fs/promises')
+  await writeFile(join(directory, 'payload.json'), '{}\n')
+  git(['add', 'payload.json']); git(['-c','user.name=test','-c','user.email=test@example.invalid','commit','-m','test'])
+  const checkout = join(directory, 'with spaces')
+  git(checkoutArgs(checkout, 'HEAD'))
+  assert.deepEqual(await readFile(join(checkout, 'payload.json')), git(['show','HEAD:payload.json']))
+  assert.equal(git(['config','core.autocrlf']).toString().trim(), 'true')
+  await cleanupCheckout(checkout, () => git(['worktree','remove','--force',checkout]))
+ } finally { await rm(directory,{recursive:true,force:true}) }
 })
