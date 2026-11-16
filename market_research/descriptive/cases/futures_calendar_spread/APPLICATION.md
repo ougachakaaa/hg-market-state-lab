@@ -1,9 +1,10 @@
 # Calendar spread shared business boundary
 
 Specializes [the case](ARCHITECTURE.md). The WP1 financial and WP2
-preparation/construction APIs are implemented through
-`market_research.descriptive.cases.futures_calendar_spread`. WP4 query interfaces
-remain planned Python semantic boundaries, not implemented APIs or HTTP DTOs.
+preparation/construction APIs and WP4 independent queries are implemented through
+`market_research.descriptive.cases.futures_calendar_spread`. They are Python
+semantic boundaries; HTTP delivery remains WP5. The immutable business schema and
+association contract are owned by [Query Results](QUERY_RESULTS.md).
 
 ## Shared capability
 
@@ -53,7 +54,7 @@ Preparation returns `PreparedCalendarSpreadInputs`; construction returns
 are exported by the case facade under [Inputs](INPUTS.md#wp2-python-preparation-boundary)
 and [Observation](OBSERVATION.md#wp2-public-construction).
 
-## Planned independent product queries
+## Independent product queries
 
 | Operation | Explicit request | Successful result |
 | --- | --- | --- |
@@ -99,3 +100,27 @@ HTTP authentication gates access; it does not turn query results into stored Run
   own independent Presentation, not formulas or numerical algorithms.
 - [Demo integration](../../../../ui_web/demo/CALENDAR_SPREAD.md) consumes those formal
   HTTP Results only, after runtime delivery and Bundle admission.
+
+## WP4 query execution
+
+`query_daily_spreads(product_code, trade_date, *, calendar_service=None,
+futures_service=None)` validates the request, calls WP2 prepare_inputs once for
+that day, then construct_observations once, returning DailySpreadsResult.
+
+`query_historical_relative_value(product_code, history_start, evaluation_date,
+metric="annualized_spread_ratio", histogram_edges=None, *, calendar_service=None,
+futures_service=None)` validates product, exact date-only ordered bounds,
+Asia/Shanghai future-date exclusion, exact metric identity and optional explicit
+IntervalCountSpec before I/O. It then prepares the inclusive window once and
+constructs one ObservationSet. Dates strictly before evaluation_date supply all
+historical groups; the final day supplies only current values. Statistics is
+consumed only through its root public Python API. No injected clock, window
+fallback, consumer-specific numeric algorithm or additional default is introduced.
+
+Only preparation performs I/O, exporting Calendar then Futures once each. No
+per-date, per-pair or per-method exports occur. Missing/incomplete caches remain
+explicit failures; operators must prepare them separately. Both independent
+snapshots and the lack of historical point-in-time metadata are disclosed in
+returned source_context. Queries execute synchronously with memory/time growing
+with the explicitly requested window; no arbitrary date cap or timeout is added.
+WP5 must assess transport/resource limits and safe DTO/error projection separately.

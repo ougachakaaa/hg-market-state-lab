@@ -2,8 +2,8 @@
 
 Status: WP1 pure financial and WP2 read-only preparation / pure Pair-day
 Observation Python APIs are implemented; WP3 delivers the public Statistics
-EmpiricalPercentile method. WP4–WP7 product queries, HTTP, Web and Demo remain
-unimplemented.
+EmpiricalPercentile method. WP4 delivers the independent Daily and Historical
+Relative Value Python queries. WP5–WP7 HTTP, Web and Demo remain unimplemented.
 This independent Descriptive case specializes [Research](../../../ARCHITECTURE.md)
 and [Descriptive](../../ARCHITECTURE.md). Case identity is
 `futures_calendar_spread_v1`; financial definition version is
@@ -39,16 +39,17 @@ Presentation, and Demo captures only formal HTTP Results.
 | Pair-day population, legality and accounting | [Observation](OBSERVATION.md) |
 | Comparable historical samples and relative assessment | [Relative value](RELATIVE_VALUE.md) |
 | Shared Python business boundary and the two queries | [Application](APPLICATION.md) |
+| Immutable query results, evidence references and statistical association | [Query Results](QUERY_RESULTS.md) |
 | WP1–WP7, acceptance, reconciliation and readiness | [Roadmap](ROADMAP.md) |
 
 ## Independence and reuse
 
-The public Python facade for WP1/WP2 is
+The public Python facade for WP1/WP2/WP4 is
 `market_research.descriptive.cases.futures_calendar_spread`. It consumes only
 the standard library for WP1; WP2 consumes Calendar/Futures public Exports and
 the existing [public pure Slot resolver](../futures_basis/SLOT_RESOLUTION.md)
-through the public Futures Basis facade. Later numerical work may consume the root
-Statistics facade. No sibling case private module is authorized.
+through the public Futures Basis facade. WP4 consumes the root Statistics facade
+for numerical methods. No sibling case private module is authorized.
 The resolver remains owned by its current contract; this case does not copy or
 move it, change `futures_basis_v1`, or consume Basis financial calculations,
 Observations, statistics adapters, online application or storage.

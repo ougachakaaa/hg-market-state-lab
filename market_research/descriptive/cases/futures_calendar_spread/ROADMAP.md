@@ -19,7 +19,9 @@ preparation and pure Pair-day construction after baseline
 `cb9f778ae72cb5a331ea890b61bda99c8d8777d8` on the existing `develop` branch.
 WP3 implements the Statistics method after baseline
 `b83ef47672d8f58a9490335fb1500d58def287f1` on the existing `develop` branch.
-WP4–WP7 remain **NOT IMPLEMENTED / NOT VERIFIED** for this case.
+WP4 implements independent Python Daily / Historical Relative Value queries after
+baseline `f957342039b4137d224b0c9cc2eee9cd44623c5b` on `develop`.
+WP5–WP7 remain **NOT IMPLEMENTED / NOT VERIFIED** for this case.
 
 ## Implementation work packages
 
@@ -188,3 +190,69 @@ query-operation concerns remain WP4/WP5 tracking items; WP3 changes none of them
 No Research runtime, HTTP, Web, Demo, W2, dependencies, persistence, caches or
 market data were changed. Broad regression, architecture scans, real-market,
 browser, platform, build and deployment checks were not run and are **NOT VERIFIED**.
+
+## WP4 reconciliation and acceptance (2026-11-16)
+
+**IMPLEMENTED** — the public case facade publishes `query_daily_spreads` and
+`query_historical_relative_value`, immutable explicit requests/results and nested
+analysis carriers, plus `CalendarSpreadQueryError`. [Application](APPLICATION.md)
+owns operations; [Query Results](QUERY_RESULTS.md) owns the independent result and
+association contract; [Relative Value](RELATIVE_VALUE.md) retains sole population
+policy. No financial formula, Statistics contract or WP2 construction is changed.
+
+Both queries call the existing preparation/construction once. Historical derives
+all six pairs × four groups and the current snapshot from one inclusive-window
+ObservationSet. A strict `< evaluation_date` cutoff excludes the current day from
+every historical sample. Results retain ordered dated values, real contract rows,
+stages and source evidence for future curves and inspection. Stage/all-stage
+projections share immutable sample points. Quantile Type 7, optional explicit-edge
+IntervalCount and Midrank V1 are consumed through root Statistics, with concrete
+Spec/Result/sample associations and no consumer numerical algorithms.
+
+PASS — 98 WP4 synthetic cases in `market_research/tests/test_calendar_spread_queries.py`
+across two scoped runs (97 initially, then the additional historical-exclusion /
+all-closed case). Seven selected existing public API cases also pass: WP1 identity /
+units; WP2 exact read-only preparation (four products) and financial/Slot delegation;
+WP3 standard midrank fixture. Total: **105 passed**, no full-module regression.
+
+Acceptance includes all four products and three metrics/units, six pairs/four
+stages, exact one-preparation/one-construction delegation, fixed quantile parameters,
+actual WP3 calls, duplicates, date cutoff/start inclusion, and true identities
+across contract rolls without artificial continuous returns. An extreme evaluation
+price leaves historical distributions, quantiles, sample counts and percentile
+reference samples unchanged. N=0/1/29/30 gives the required statuses, preserving
+small-sample numbers/warnings. A missing matching-stage sample stays empty even
+with an available all-stage sample. Closed/empty/excluded current observations,
+legitimate zero, histogram not-requested/outside counts, invalid-before-I/O,
+statistical failures/mismatches, seven failure categories, retained evidence,
+immutability, determinism and no extra I/O/Ensure are covered.
+
+Changed source/test Ruff and diff review pass. A targeted mypy invocation reports
+two existing imported-source diagnostics: WP2 `validation.py`'s CoverageResult
+argument shape and Futures Basis `statistics.py`'s handling of the WP3-extended
+Statistics union. No new-file type diagnostic was reported, but the invocation
+is **NOT PASS**. These adjacent typing issues are unchanged and were not repaired
+or suppressed as part of WP4.
+
+Source reconciliation: WP2's `prepared_inputs.futures_export` reference resolves
+through each full query result's `prepared_inputs` projection to the one complete
+retained final Export, including its request/proof; tests confirm actual row links.
+No digest, fabricated provenance, arbitrary reference evaluation or second raw
+collection is introduced. Result identity is operation + case/definition + exact
+echoed request, suitable for later formal projection; it is not a Run identity.
+
+Read-only/no-Ensure reconciliation is complete for the Python queries: missing,
+pending or failed cache units fail explicitly, never auto-acquire or become empty
+samples. Operators prepare caches separately. Independent snapshot freshness and
+historical metadata limits are disclosed in returned SourceContext. WP5 still
+must assess synchronous window-size memory/latency, concurrency, response volume,
+transport limits and safe DTO/error projection. No arbitrary limit, asynchronous
+execution or persistence is added by WP4.
+
+WP4 is **READY TO CLOSE** by this directed synthetic acceptance and complete
+source/diff review. WP5 HTTP Delivery is **READY FOR IMPLEMENTATION**, without
+claiming HTTP delivery or operational/performance readiness. WP5 is not started.
+Real-cache/provider integration, true-market results, workload performance,
+platform/browser/deployment and broad regression remain **NOT VERIFIED**.
+No cache/data changes, dependencies, HTTP/Web/Demo, Publication, W2, merge or
+publication occurred; work stops at WP4.

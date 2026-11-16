@@ -29,7 +29,7 @@ product/date inputs. Daily prepares `[trade_date, trade_date]`; Research prepare
 `[history_start, evaluation_date]` with history_start strictly earlier than the
 evaluation date. There is no implicit latest-session selection.
 
-The planned two product queries are synchronous and read-only: export Calendar
+The two implemented product queries are synchronous and read-only: export Calendar
 first, then Futures for the same window. They never call ensure or repair caches.
 An operator can prepare caches separately with the existing public DataLake ensure
 operations; this introduces no new acquisition command or startup behavior.

@@ -45,7 +45,8 @@ unit; Research retains sample keys and source linkage outside Statistics.
   the histogram is `not_requested`, not an empty observed distribution.
 - Current rank consumes the implemented Statistics [Empirical Percentile method](../../../../market_statistics/EMPIRICAL_PERCENTILE.md)
   with the current valid metric as query. The numerical method is implemented in
-  WP3; Research population adaptation and result association remain WP4 work.
+  WP3; WP4 implements Research population adaptation and result association under
+  [Query Results](QUERY_RESULTS.md).
 
 No direct NumPy import, local quantile interpolation, histogram or percentile
 counting is authorized in Research. Statistics failures remain explicit analysis
