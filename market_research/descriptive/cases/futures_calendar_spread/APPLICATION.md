@@ -1,8 +1,9 @@
 # Calendar spread shared business boundary
 
-Specializes [the case](ARCHITECTURE.md). All interfaces below are planned WP1–WP4
-Python semantic boundaries, not implemented APIs or HTTP DTOs. They are published
-through `market_research.descriptive.cases.futures_calendar_spread` when delivered.
+Specializes [the case](ARCHITECTURE.md). The WP1 financial API is implemented through
+`market_research.descriptive.cases.futures_calendar_spread`. WP2–WP4 preparation,
+construction and query interfaces remain planned Python semantic boundaries, not
+implemented APIs or HTTP DTOs.
 
 ## Shared capability
 
@@ -13,6 +14,33 @@ It returns immutable named metrics with units and the definition version, or an
 explicit validation/calculation failure. Observation owns trade-date lifecycle
 checks and nonpositive-price exclusion before invoking this capability. The public
 function also rejects illegal prices/dates/delta rather than trusting its caller.
+
+The public signature accepts `near_close: int | float`, `far_close: int | float`,
+`near_last_trade_date: date` and `far_last_trade_date: date`, returning
+`CalendarSpreadResult`. Prices accept only exact built-in int/float types (no bool,
+subclasses, Decimal or implicit string conversion), converted to finite positive
+binary64. Conversion overflow is an input failure. Dates require exact
+`datetime.date` values, excluding timestamps and subclasses; delta_days must be
+positive. All inputs are validated before financial arithmetic.
+
+`CalendarSpreadResult` and `CalendarSpreadMetric` are frozen, slotted dataclasses.
+The result contains `signed_spread`, `annualized_point_spread` and
+`annualized_spread_ratio` as named metric carriers, `delta_days: int` and
+`definition_version`, fixed by computation to
+`futures_calendar_spread_definition_v1`. Each metric retains `value: float`,
+`metric_id` equal to its result field name, and the corresponding Definition unit.
+No mutable containers or presentation rounding are introduced.
+
+The facade exports `CalendarSpreadValidationError(ValueError)` for illegal input
+and `CalendarSpreadCalculationError(ArithmeticError)` for valid-input numerical
+failure. Callers distinguish these by exception type, without parsing messages.
+Arithmetic exceptions retain their cause. Each executed intermediate and result
+must be finite; a zero price ratio from underflow fails rather than reaching a
+successful result. Evaluation follows the Definition's written operation order,
+without algebraic repair or partial success. The pure API performs no I/O and
+requires neither trade_date nor near DTE; lifecycle checks belong to Observation.
+
+## Planned preparation and construction
 
 `prepare_inputs(product_code, start_date, end_date)` performs only the read-only
 public input work in [Inputs](INPUTS.md); public-service injection is allowed for

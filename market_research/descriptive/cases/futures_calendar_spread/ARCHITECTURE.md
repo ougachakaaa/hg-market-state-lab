@@ -1,6 +1,7 @@
 # Futures Calendar Spread L1
 
-Status: WP0 authority only; no Python, HTTP, Web or Demo implementation is delivered.
+Status: WP1 pure financial Python API is implemented. WP2–WP7 Input Preparation,
+Observation, Statistics, product queries, HTTP, Web and Demo remain unimplemented.
 This independent Descriptive case specializes [Research](../../../ARCHITECTURE.md)
 and [Descriptive](../../ARCHITECTURE.md). Case identity is
 `futures_calendar_spread_v1`; financial definition version is
@@ -40,8 +41,9 @@ Presentation, and Demo captures only formal HTTP Results.
 
 ## Independence and reuse
 
-The planned public Python facade is
+The public Python facade for WP1 is
 `market_research.descriptive.cases.futures_calendar_spread`. It consumes only
+the standard library for WP1. Later work may consume only
 Calendar/Futures public services, the existing [public pure Slot resolver](../futures_basis/SLOT_RESOLUTION.md)
 and the root Statistics facade. No sibling case private module is authorized.
 The resolver remains owned by its current contract; this case does not copy or

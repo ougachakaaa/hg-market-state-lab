@@ -11,10 +11,11 @@ are changed. WP0 performs no business tests, dependency installation, generated
 contract update, cache mutation, build or publication. Commit identity is reported
 in the task report/Git history rather than self-embedded in the commit's contents.
 
-WP0 semantic and navigation review is complete as recorded below. WP1 is **READY
-for implementation** after WP0 is committed: the pure financial capability has no
-unresolved business decisions or missing upstream facts. This is not runtime PASS.
-WP1–WP7 are **NOT IMPLEMENTED / NOT VERIFIED** for this case.
+WP0 semantic and navigation review is complete as recorded below. WP1 delivers
+the public pure financial API after baseline
+`303c34ce6352073f76370b9f25e919b2bbd4a2e3` on the existing `develop` branch.
+WP1 verification and closure are recorded below. WP2–WP7 remain
+**NOT IMPLEMENTED / NOT VERIFIED** for this case.
 
 ## Implementation work packages
 
@@ -53,7 +54,7 @@ Public exports and Slot resolver/Statistics dispatch source were inspected read-
 | Basis independence | Existing preparation also fetches SSE/Index facts and its financial/statistics/run contracts are case-specific. Do not reuse those workflows, carriers or formula by masquerading as Basis. | PASS — boundary reconciliation |
 | Shared metrics | No existing Calendar Spread public financial capability was found in reviewed public surfaces. WP1 adds it under the new case; both products consume it. | NEW IMPLEMENTATION — not runtime PASS |
 | Quantile and Histogram | Root `market_statistics` exports NumericSample, QuantileSpec, IntervalCountSpec, results, compute and validate_spec. Reuse unchanged Type 7 and explicit-edge interval accounting. | PASS — public API reuse review |
-| Empirical percentile | Current Statistics union/dispatch has Quantile/IntervalCount/Mean only. Existing extension rules require a separate numerical method contract. The new authority resolves midrank semantics; WP3 still must implement/export it. | AUTHORITY RESOLVED; runtime OPEN until WP3 |
+| Empirical percentile | Current Statistics union/dispatch has Quantile/IntervalCount/Mean only. Existing extension rules require a separate numerical method contract. WP0 adopted midrank semantics as its statistical method design, not an explicitly confirmed user ties choice; WP3 still must implement/export it. | AUTHORITY RESOLVED; runtime OPEN until WP3 |
 | Historical relative value | New Pair-day population, expiry stages, cutoff, sample-size interpretation and two assessment bindings belong to Research. No current Basis statistics adapter is reused. | NEW IMPLEMENTATION — WP2/WP4 |
 | HTTP | Existing composition permits Research public case facades. Planned products use that boundary and existing Auth; no adapter-owned business rules or new server identity. | AUTHORITY RESOLVED; runtime OPEN until WP5 |
 | Web | Two planned independent features fit Daily Data and Research. Feature catalogs distinguish planned authority from implemented routes/cards; no sibling semantic state is shared. | AUTHORITY RESOLVED; runtime OPEN until WP6 |
@@ -71,13 +72,43 @@ HTTP catalog → planned products, Web catalog/Workspace → planned features an
 entry → future integration. Links added/changed by WP0 are checked locally; no
 whole-repository link scan or business tests are required.
 
-The user explicitly selected midrank ties, annualized ratio as default metric,
+The confirmed L1 choices include annualized ratio as default metric,
 explicit historical start, retained small-sample numbers with warning, and the
-limited favorable-direction interpretation. Stage boundaries, default quantile
+limited favorable-direction interpretation. Midrank ties are the statistical method
+design adopted by WP0; the prior discussion did not explicitly confirm this ties
+rule as a user choice. Statistics remains unimplemented pending WP3; WP1 does not
+change its mathematical definition. Stage boundaries, default quantile
 points, threshold 30, optional explicit-edge Histogram and read-only synchronous
 query behavior are the recorded L1 defaults. No unresolved business decision needs
 user adjudication before WP1. Runtime gaps in the table are assigned work, not
 authority contradictions or evidence that an unimplemented capability passed.
 
-After the independent WP0 documentation commit, stop. Do not start WP1, merge
-develop/main, capture data or publish Demo as part of this task.
+WP0 ended at its independent documentation commit. WP1 stops after its own
+financial-core commit; do not start WP2, merge, capture data or publish Demo.
+
+## WP1 reconciliation and acceptance
+
+The WP1 API specializes Application without changing Definition formulas, sign,
+units or written binary64 operation order. Exact built-in int/float input acceptance,
+strict date-only validation and separate validation/calculation exception types
+are now explicit. No blocking financial semantic conflict was found. Basis formulas,
+public APIs and private modules are neither reused nor changed.
+
+Directed acceptance uses only `market_research/tests/test_futures_calendar_spread_financial.py`;
+PASS — 71 deterministic cases cover signs/zero, logarithmic annualization, real
+last-trading-date spacing, cross-year/leap-day/one-day dates, finite extreme values,
+strict validation, numerical overflow/ratio underflow, metric identity/units/version,
+immutability, deterministic execution and prohibited network access.
+
+With this directed acceptance, WP1 is **READY TO CLOSE** and WP2 Input Preparation
+& Pair-day Observation is **READY FOR IMPLEMENTATION**. No blocking financial
+authority drift was found. WP2 and all later WPs remain unimplemented/unverified.
+Basis formulas/API and unrelated modules are unchanged by complete diff review.
+No full regression, architecture scan, browser, live-market or deployment checks
+were run; those are NOT VERIFIED and not WP1 acceptance requirements.
+
+Deferred reconciliation items, outside WP1: review synchronous query delivery and
+its operational constraints in WP4/WP5; reconcile Ensure interaction and read-only
+input availability in WP2/WP4; reconcile the formal Release Gate before actual
+WP7 publication. Existing authority remains in force pending those reviews;
+WP1 creates no query, Ensure or release behavior.
