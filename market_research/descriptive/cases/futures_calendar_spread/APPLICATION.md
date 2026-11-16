@@ -1,9 +1,9 @@
 # Calendar spread shared business boundary
 
-Specializes [the case](ARCHITECTURE.md). The WP1 financial API is implemented through
-`market_research.descriptive.cases.futures_calendar_spread`. WP2–WP4 preparation,
-construction and query interfaces remain planned Python semantic boundaries, not
-implemented APIs or HTTP DTOs.
+Specializes [the case](ARCHITECTURE.md). The WP1 financial and WP2
+preparation/construction APIs are implemented through
+`market_research.descriptive.cases.futures_calendar_spread`. WP4 query interfaces
+remain planned Python semantic boundaries, not implemented APIs or HTTP DTOs.
 
 ## Shared capability
 
@@ -40,15 +40,20 @@ successful result. Evaluation follows the Definition's written operation order,
 without algebraic repair or partial success. The pure API performs no I/O and
 requires neither trade_date nor near DTE; lifecycle checks belong to Observation.
 
-## Planned preparation and construction
+## Preparation and construction
 
-`prepare_inputs(product_code, start_date, end_date)` performs only the read-only
-public input work in [Inputs](INPUTS.md); public-service injection is allowed for
+`prepare_inputs(product_code, start_date, end_date, *, calendar_service=None,
+futures_service=None)` performs only the read-only public input work in [Inputs](INPUTS.md); public-service injection is allowed for
 deterministic tests. `construct_observations(prepared_inputs)` is pure. Both queries
 compose these operations. They do not independently calculate financial values or
 share a generic workflow base class.
 
-## Independent product queries
+Preparation returns `PreparedCalendarSpreadInputs`; construction returns
+`CalendarSpreadObservationSet`. Their immutable carriers and classified exceptions
+are exported by the case facade under [Inputs](INPUTS.md#wp2-python-preparation-boundary)
+and [Observation](OBSERVATION.md#wp2-public-construction).
+
+## Planned independent product queries
 
 | Operation | Explicit request | Successful result |
 | --- | --- | --- |

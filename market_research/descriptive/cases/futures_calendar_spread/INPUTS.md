@@ -72,3 +72,31 @@ retained successful basis and is not guaranteed to be metadata known on trade_da
 Filtering sample dates before evaluation_date prevents future observation leakage;
 it does not assert a historical point-in-time metadata dataset. Expose this limit
 truthfully, without fetching a replacement catalog or inventing stronger evidence.
+
+## WP2 Python preparation boundary
+
+`prepare_inputs(product_code, start_date, end_date, *, calendar_service=None,
+futures_service=None)` returns frozen `PreparedCalendarSpreadInputs`. Only exact
+canonical product strings and date-only dates are accepted, with inclusive ordered
+bounds and end_date no later than the operation's Asia/Shanghai current date.
+The injectable service protocols require only the corresponding public `export`.
+Default factories are constructed lazily, after request validation and in export
+order. Each dependency is exported once; no coverage/ensure or retry occurs.
+
+Prepared inputs retain `CalendarSpreadRequest`, both public semantic requests,
+validated immutable copies of both typed Exports and `candidate_dates`. Every
+published field is retained; sequence fields are copied to tuples, including
+scope and records. Evidence binds each final Export to its exact request. Complete
+Calendar proves every natural day; complete Futures coverage proves each open
+product-day, including zero-record success. A nonempty irregular active set is
+not repaired; Slot structure is validated by the public resolver in construction.
+
+`InputPreparationError` retains category, stage, dependency, reason and a tuple
+of `InputEvidence` for already validated exports (including a legal incomplete
+export that causes failure). Malformed exports are not advertised as legal evidence.
+Invalid caller semantics map to `invalid_request`; legal incomplete proof maps to
+`incomplete_inputs`; public OperationError maps to `upstream_unavailable`;
+malformed exports or rejected validated upstream requests map to
+`input_contract_error`. Unexpected service/programming exceptions propagate.
+Construction revalidates retained requests, exports and candidate association,
+without applying a new current-date check or performing I/O.

@@ -61,10 +61,36 @@ after Slot transitions. Natural days include weekends and holidays. Do not use
 remaining trading sessions, pair spacing, delivery date or evaluation-day stage
 to relabel historical candidates. An absent contract has no stage.
 
-## Planned public construction
+## WP2 public construction
 
-The new case facade will expose a pure `construct_observations(prepared_inputs)`
+The case facade exposes a pure `construct_observations(prepared_inputs)`
 operation and immutable observation/result carriers. Construction validates input
 association and evidence, computes metrics through the WP1 public capability and
 retains complete accounting; no upstream acquisition or Statistics call occurs.
 Both product queries consume this same collection, never their own formulas.
+
+`construct_observations(prepared_inputs)` returns frozen
+`CalendarSpreadObservationSet`, retaining the complete prepared inputs, ordered
+`CalendarSpreadDay` results and `OutcomeAccounting`. Its `observations` property
+flattens day outcomes in date then fixed pair order. Each natural date appears in
+`days`: closed dates have status `closed`, reason `non_trading_day`, no resolution
+and zero pairs; open dates have status `open`, a retained `DailySlotResolution`
+and six outcomes. Thus a closed date differs from a proven empty open date.
+
+Each `PairDayObservation` retains product/date, near/far Slots, full near/far public
+Futures rows (or None for a proven empty universe), delta_days, near_dte_days,
+expiry_stage, WP1 `CalendarSpreadResult` (or None), outcome/reason, case and
+definition identity and its `DailyUniverseEvidence`. The source_export_ref is
+`prepared_inputs.futures_export`, a local reference to the complete retained
+Export, not a digest or persistence identity. There is no partial pair absence.
+Excluded nonpositive-price pairs retain rows, spacing and stage but no metrics.
+Spacing/lifecycle is checked before exclusion, so illegal metadata cannot hide
+behind a nonpositive Close. Empty pairs have null spacing/stage/metrics.
+
+`ObservationConstructionError` retains category, stage, dependency, reason,
+prepared inputs and applicable date/Slots. Invalid retained input association is
+`input_contract_error`; public resolver rejection is `slot_resolution_error`;
+illegal pair identities/expiry spacing are `input_contract_error`; WP1 numerical
+failure is `calculation_failure`. The whole call fails with no successful partial
+collection. Unexpected programming exceptions propagate. No transition/PnL series,
+Statistics, storage or acquisition behavior is introduced.

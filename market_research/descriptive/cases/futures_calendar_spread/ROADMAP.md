@@ -14,8 +14,10 @@ in the task report/Git history rather than self-embedded in the commit's content
 WP0 semantic and navigation review is complete as recorded below. WP1 delivers
 the public pure financial API after baseline
 `303c34ce6352073f76370b9f25e919b2bbd4a2e3` on the existing `develop` branch.
-WP1 verification and closure are recorded below. WP2–WP7 remain
-**NOT IMPLEMENTED / NOT VERIFIED** for this case.
+WP1 verification and closure are recorded below. WP2 implements read-only input
+preparation and pure Pair-day construction after baseline
+`cb9f778ae72cb5a331ea890b61bda99c8d8777d8` on the existing `develop` branch.
+WP3–WP7 remain **NOT IMPLEMENTED / NOT VERIFIED** for this case.
 
 ## Implementation work packages
 
@@ -83,8 +85,8 @@ query behavior are the recorded L1 defaults. No unresolved business decision nee
 user adjudication before WP1. Runtime gaps in the table are assigned work, not
 authority contradictions or evidence that an unimplemented capability passed.
 
-WP0 ended at its independent documentation commit. WP1 stops after its own
-financial-core commit; do not start WP2, merge, capture data or publish Demo.
+WP0 ended at its independent documentation commit; WP1 ended at its separate
+financial-core commit. Each task stopped at its own package boundary.
 
 ## WP1 reconciliation and acceptance
 
@@ -102,13 +104,58 @@ immutability, deterministic execution and prohibited network access.
 
 With this directed acceptance, WP1 is **READY TO CLOSE** and WP2 Input Preparation
 & Pair-day Observation is **READY FOR IMPLEMENTATION**. No blocking financial
-authority drift was found. WP2 and all later WPs remain unimplemented/unverified.
+authority drift was found. At WP1 closure, WP2 and all later WPs remained
+unimplemented/unverified; current WP2 status is recorded below.
 Basis formulas/API and unrelated modules are unchanged by complete diff review.
 No full regression, architecture scan, browser, live-market or deployment checks
 were run; those are NOT VERIFIED and not WP1 acceptance requirements.
 
 Deferred reconciliation items, outside WP1: review synchronous query delivery and
 its operational constraints in WP4/WP5; reconcile Ensure interaction and read-only
-input availability in WP2/WP4; reconcile the formal Release Gate before actual
-WP7 publication. Existing authority remains in force pending those reviews;
+input availability in WP2/WP4 (WP2 findings below); reconcile the formal Release Gate
+before actual WP7 publication. Existing authority remains in force pending those reviews;
 WP1 creates no query, Ensure or release behavior.
+
+## WP2 reconciliation and acceptance
+
+WP2 publishes immutable preparation, retained public evidence, ordered day/pair
+outcomes, accounting and classified exceptions under Application / Inputs /
+Observation. These details belong to those existing narrow contracts; no new
+framework, storage or authority layer is needed. Financial Definition and WP1
+API are unchanged. Only public DataLake Calendar/Futures interfaces and the
+existing public Slot resolver are consumed; no Basis preparation, Index/SSE,
+private upstream dependency or second financial formula is introduced.
+
+PASS — 136 synthetic public-service cases in
+`market_research/tests/test_calendar_spread_inputs.py` and
+`market_research/tests/test_calendar_spread_observations.py` verify final-export
+proof/payload validation, exact requests/read-only order, error classification,
+retained immutable evidence, six-pair ordering/accounting, signs/zero, financial
+and Slot delegation, expiry-day / next-open-day transitions, month/quarter/year
+boundaries, stages 0/7/8/21/22, closed/empty/excluded outcomes, malformed retained
+inputs and numerical/Slot failures. Construction is tested with network, file,
+service factory and clock access forbidden. Unexpected service/Slot programming
+exceptions propagate instead of being labeled incomplete inputs.
+
+WP2 is **READY TO CLOSE** by deterministic synthetic acceptance and source/diff
+review. This is not real-market acceptance. Real cache/provider integration,
+real market metadata, platform/browser/deployment and broad regression are
+**NOT VERIFIED**, deliberately not executed. No live caches were accessed or
+changed and no acquisition, merge or publication was performed.
+
+Read-only/no-ensure impact: missing, pending or failed cache units cause explicit
+preparation failure; this API cannot make absent facts available. Operators must
+prepare the selected caches separately through existing DataLake public operations.
+Independent Exports have no shared acquisition-time/freshness guarantee. Complete
+product-day coverage is trusted as producer proof of empty vs full universes;
+Research does not independently recreate the catalog. Retained metadata is not
+asserted to be known on the historical trade date. These are existing boundaries,
+not authority defects requiring new upstream behavior. WP2 resolves the scoped
+Ensure review without enabling Ensure; query-operation review remains for WP4/WP5,
+and the formal Release Gate remains for WP7.
+
+WP3 is independent of WP2 and remains ready for its separately scoped numerical
+implementation; the WP0 Midrank design attribution is unchanged. WP4 now has its
+WP1/WP2 financial/input/Observation dependencies available, but remains **NOT READY
+for complete implementation/closure until WP3 is delivered**. Do not begin WP3 or
+WP4 as part of WP2.
