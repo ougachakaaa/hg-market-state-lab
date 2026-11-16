@@ -34,6 +34,37 @@ The header breadcrumb identifies the area and current page, linking the parent t
 
 `/research/publications` is both a browser page URL and the published backend GET path. Browser API requests therefore use same-origin `/api/research/publications...`; development and deployment gateways strip `/api` before forwarding to the unchanged backend. The published HTTP/OpenAPI path stays `/research/publications...`. The gateway must serve HTML for direct page navigation and forward the `/api` path with Cookie and query intact. This is a deployment prerequisite, not a new HTTP product.
 
+## Production Run navigation identity
+
+Run navigation memory belongs to one browser tab and one authenticated frontend
+Workspace lifecycle. Leaving a Run page through application navigation remembers only
+its opaque, nonempty `run_id`, unchanged, separately for `/research/futures-basis` and
+`/backtesting/futures-roll-long`. Read the live URL when leaving, including identity
+written by an accepted submission since the last application render. An absent or
+empty identity clears that route's previous memory. No other route participates.
+
+Ordinary application navigation back to a Run page restores its remembered identity
+into the destination URL. Clicking the current page preserves its complete URL and
+does not add history. Explicit deep links, reload and browser Back/Forward instead
+use their original URL as authoritative, including a URL without `run_id`; memory
+must never rewrite them or substitute another route's identity. Existing legacy URL
+normalization remains in force. Run IDs are navigation parameters, not cached results
+or frontend interpretations of Run status.
+
+Memory is destroyed when the authenticated Workspace ends, including logout or a
+protected-request 401, and is not inherited on subsequent login. Full reload, tab
+closure and application termination also discard it. No LocalStorage, SessionStorage,
+IndexedDB, DTOs, market data, tokens or credentials are retained by navigation.
+Server Run lifetime is independent; refresh with an explicit ID uses existing GET
+restoration and does not restore unsubmitted form state.
+
+Navigation restoration never creates or resubmits a Run. Features continue to own
+GET/POST, polling, validation, cancellation and result presentation. WP-01 retains
+navigation identity only; page instances, forms and chart interactions are WP-02 work.
+Future Activity retention must keep state only for the matching identity: an explicit
+different URL identity must be recognized by the feature and must hide obsolete
+results before restoring the selected Run.
+
 ## Static routing specialization
 
 The path table above includes ten Production pages; Auth and server Run query behavior apply to Production. Static retains eight admitted page identities: all three overviews and the five existing business pages using hash routes under `/hg-market-state-lab/`, with default/unknown routes resolving to `#/research`. Its local navigation, deep reload, history and breadcrumb hrefs never escape that base. It neither restores server `run_id` nor calls the `/api` gateway. Report section navigation must coexist with routing. The [Demo authority](demo/ARCHITECTURE.md) owns this static specialization; Production keeps pathname/history routing and authenticated deep links.

@@ -46,6 +46,15 @@ feature-local loading, failure or presentation state
 
 Application navigation 只选择当前 feature surface，不成为 backend product contract 或 feature-local state 的 semantic owner。
 
+Production Workspace also owns the most recently visited Run route identities and
+navigation parameters, within the authenticated lifecycle defined by
+[Workspace Run navigation identity](workspace.md#production-run-navigation-identity).
+This is URL navigation memory only. Features retain ownership of Run lifecycle,
+GET/POST, validation, polling, cancellation and result presentation; Application
+neither interprets Run status/results nor caches feature DTOs or presentation state.
+Navigation memory ends with the authenticated Workspace, even though the outer
+authentication gate and history adapter may remain mounted.
+
 ## 3. Feature Independence
 
 MO Option Chain、MO Premium Plane、Research Catalog、Research Explorer、Futures Basis Research 与 Backtesting 保持独立 frontend bounded contexts。它们不共享产品 identity、backend DTO、query state、presentation state 或 visualization semantics，也不从 sibling feature 的 response 或 local state 派生自己的事实。

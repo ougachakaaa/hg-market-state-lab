@@ -40,6 +40,12 @@ feature does not parse, store or refresh tokens; it uses relative same-origin
 requests through the existing protected-request mechanism. 401 returns the
 application to its anonymous gate and must discard any displayed run/report.
 
+Application menu navigation may restore this page's opaque Run ID under
+[Workspace identity rules](../../../workspace.md#production-run-navigation-identity).
+The feature restores that URL through existing reads, never automatic POST. Explicit
+URL identity remains authoritative over retained state; future page-instance retention
+must recognize identity changes and cannot display another Run's retained report.
+
 ## Query controls
 
 ```text

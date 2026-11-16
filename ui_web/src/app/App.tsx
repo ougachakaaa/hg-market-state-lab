@@ -17,12 +17,14 @@ import AuthForm from './auth/AuthForm'
 import { useAuthentication } from './auth/useAuthentication'
 import type { CurrentUser, LoginRequest } from './auth/api/auth'
 import { useWorkspaceRoute } from './routes'
+import { useRunNavigation } from './useRunNavigation'
 import { isWorkspacePath, type WorkspacePath } from './routeInventory'
 
-function ProductionWorkspace({ user, signOut, path, navigate }: {
+function ProductionWorkspace({ user, signOut, path, navigate: navigateRoute }: {
   user: CurrentUser; signOut: () => Promise<void>; path: WorkspacePath;
-  navigate: (path: WorkspacePath, replace?: boolean) => void;
+  navigate: (path: WorkspacePath, replace?: boolean, runId?: string) => void;
 }) {
+  const navigate = useRunNavigation(navigateRoute)
   return <ApplicationShell path={path} navigate={navigate} href={path => path} header={
     <Flex align="center" gap="middle" wrap>
       <Typography.Text type="secondary" style={{ overflowWrap: 'anywhere' }}>{user.username}</Typography.Text>

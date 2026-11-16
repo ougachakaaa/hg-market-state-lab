@@ -3,6 +3,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { StrictMode } from 'react'
 import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import App from './App'
+import backtestFixture from '../features/backtesting/api/result.fixture.json'
 
 vi.mock('react-plotly.js', () => ({ default: () => <div data-testid="plot" /> }))
 
@@ -331,6 +332,72 @@ describe('WP1 navigation composition', () => {
     fireEvent.click(within(screen.getByRole('menu', { name: '业务导航' })).getByRole('menuitem', { name: 'MO Option Chain' }))
     await screen.findByRole('heading', { name: 'MO 期权链' })
     expect(window.location.pathname).toBe('/data/mo-option-chain')
+  })
+})
+
+describe('authenticated Run navigation retention', () => {
+  const id = 'a'.repeat(32)
+  const base = `/api/backtesting/futures-roll/runs/${id}`
+  function installFetch() {
+    const fetch = vi.fn((url: string, _init?: RequestInit) => {
+      if (url === '/auth/me' || url === '/auth/login') return Promise.resolve(response(identity))
+      if (url === '/auth/logout') return Promise.resolve(response(null, 204))
+      if (url === base) return Promise.resolve(response({
+        run_id: id, request: backtestFixture.request, status: 'COMPLETED',
+        created_at: '2026-11-09T00:00:00Z', started_at: '2026-11-09T00:00:01Z',
+        finished_at: '2026-11-09T00:00:02Z', result_available: true, failure: null,
+      }))
+      if (url === `${base}/result`) return Promise.resolve(response({ run_id: id, request: backtestFixture.request, data: backtestFixture }))
+      if (url.startsWith('/api/research/futures-basis/')) return Promise.resolve(unauthorized())
+      return Promise.resolve(response([]))
+    })
+    vi.stubGlobal('fetch', fetch)
+    return fetch
+  }
+  async function openResearch() {
+    fireEvent.click(screen.getByRole('menuitem', { name: '研究' }))
+    fireEvent.click(await screen.findByRole('menuitem', { name: '研究总览' }))
+    await screen.findByRole('heading', { name: '研究总览' })
+  }
+
+  it('remounts the real Backtesting hook and reads the same Result without POST', async () => {
+    window.history.replaceState(null, '', `/backtesting/futures-roll-long?run_id=${id}`)
+    const fetch = installFetch()
+    render(<App />)
+    await screen.findAllByTestId('plot')
+    await openResearch()
+    fireEvent.click(screen.getByRole('menuitem', { name: '期货展期做多回测' }))
+    await screen.findAllByTestId('plot')
+    expect(window.location.search).toBe(`?run_id=${id}`)
+    expect(fetch.mock.calls.filter(([url]) => url === base)).toHaveLength(2)
+    expect(fetch.mock.calls.filter(([url]) => url === `${base}/result`)).toHaveLength(2)
+    expect(fetch.mock.calls.some(([, init]) => init?.method === 'POST')).toBe(false)
+  })
+
+  it.each(['logout', '401'])('discards retained identity across %s and login', async boundary => {
+    window.history.replaceState(null, '', `/backtesting/futures-roll-long?run_id=${id}`)
+    const fetch = installFetch()
+    render(<App />)
+    await screen.findAllByTestId('plot')
+    await openResearch()
+    if (boundary === 'logout') fireEvent.click(screen.getByRole('button', { name: '退出登录' }))
+    else await act(async () => {
+      window.history.pushState(null, '', `/research/futures-basis?run_id=${'c'.repeat(32)}`)
+      window.dispatchEvent(new PopStateEvent('popstate'))
+    })
+    await screen.findByRole('button', { name: '登录' })
+    // A fresh login without an explicit Run URL cannot inherit the old memory.
+    await act(async () => {
+      window.history.replaceState(null, '', '/research')
+      window.dispatchEvent(new PopStateEvent('popstate'))
+    })
+    await submitLogin()
+    await screen.findByRole('heading', { name: '研究总览' })
+    fireEvent.click(screen.getByRole('menuitem', { name: '回测' }))
+    fireEvent.click(await screen.findByRole('menuitem', { name: '期货展期做多回测' }))
+    await screen.findByRole('heading', { name: /期货展期做多回测/ })
+    expect(window.location.search).toBe('')
+    expect(fetch.mock.calls.filter(([url]) => url === base)).toHaveLength(1)
   })
 })
 

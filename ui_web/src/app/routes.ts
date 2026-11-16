@@ -22,8 +22,13 @@ export function useWorkspaceRoute() {
     window.addEventListener('popstate', sync)
     return () => window.removeEventListener('popstate', sync)
   }, [])
-  const navigate = useCallback((next: WorkspacePath, replace = false) => {
-    if (window.location.pathname !== next) window.history[replace ? 'replaceState' : 'pushState'](null, '', next)
+  // Optional identity is supplied only by authenticated menu navigation. History
+  // synchronization and direct URL restoration never consult navigation memory.
+  const navigate = useCallback((next: WorkspacePath, replace = false, runId?: string) => {
+    if (window.location.pathname !== next) {
+      const query = runId ? `?${new URLSearchParams({ run_id: runId })}` : ''
+      window.history[replace ? 'replaceState' : 'pushState'](null, '', next + query)
+    }
     setPath(next)
   }, [])
   return { path, navigate }
