@@ -1,13 +1,15 @@
 """Composed FastAPI/Auth with synthetic public Research inputs; no real market cache."""
+
 import sys
 from pathlib import Path
-from ui_http.app import create_app as composed_app
-from ui_http.products.futures_calendar_spread.endpoint import get_daily_query
-from ui_http.products.calendar_spread_relative_value.endpoint import get_historical_query
+
 from market_research.descriptive.cases import futures_calendar_spread as case
+from ui_http.app import create_app as composed_app
+from ui_http.products.calendar_spread_relative_value.endpoint import get_historical_query
+from ui_http.products.futures_calendar_spread.endpoint import get_daily_query
 
 ROOT = Path(__file__).resolve().parents[3]
-sys.path.insert(0, str(ROOT / 'market_research/tests'))
+sys.path.insert(0, str(ROOT / "market_research/tests"))
 from calendar_spread_fixtures import Services  # noqa: E402
 
 
@@ -18,7 +20,9 @@ def daily(code, day):
 
 def history(code, start, end, **kwargs):
     services = Services(start, end, code)
-    return case.query_historical_relative_value(code, start, end, calendar_service=services, futures_service=services, **kwargs)
+    return case.query_historical_relative_value(
+        code, start, end, calendar_service=services, futures_service=services, **kwargs
+    )
 
 
 def create_app():

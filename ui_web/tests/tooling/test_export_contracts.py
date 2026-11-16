@@ -104,39 +104,55 @@ def test_backtesting_export_is_independent_protected_and_concrete(monkeypatch, t
 
 
 def test_calendar_spread_exports_preserve_operations_security_and_local_schema_closure():
-    exporter = runpy.run_path(str(ROOT / 'ui_web/scripts/export_contracts.py'))
+    exporter = runpy.run_path(str(ROOT / "ui_web/scripts/export_contracts.py"))
     for builder, path, method, operation_id in [
-        ('create_calendar_spread_daily_app', '/data/futures-calendar-spread', 'get', 'query_futures_calendar_spread'),
-        ('create_calendar_spread_relative_value_app', '/research/calendar-spread-relative-value/query', 'post', 'query_calendar_spread_relative_value'),
+        (
+            "create_calendar_spread_daily_app",
+            "/data/futures-calendar-spread",
+            "get",
+            "query_futures_calendar_spread",
+        ),
+        (
+            "create_calendar_spread_relative_value_app",
+            "/research/calendar-spread-relative-value/query",
+            "post",
+            "query_calendar_spread_relative_value",
+        ),
     ]:
         doc = exporter[builder]().openapi()
-        assert set(doc['paths']) == {path}
-        operation = doc['paths'][path][method]
-        assert operation['operationId'] == operation_id
-        assert operation['security'] == [{'CookieSession': []}]
-        assert doc['components']['securitySchemes']['CookieSession']['in'] == 'cookie'
-        assert {'200', '400', '401', '403', '409', '413', '422', '500', '502', '503'} <= set(operation['responses'])
-        assert 'HTTPValidationError' not in doc['components']['schemas']
+        assert set(doc["paths"]) == {path}
+        operation = doc["paths"][path][method]
+        assert operation["operationId"] == operation_id
+        assert operation["security"] == [{"CookieSession": []}]
+        assert doc["components"]["securitySchemes"]["CookieSession"]["in"] == "cookie"
+        assert {"200", "400", "401", "403", "409", "413", "422", "500", "502", "503"} <= set(
+            operation["responses"]
+        )
+        assert "HTTPValidationError" not in doc["components"]["schemas"]
         needed = set()
-        def collect(value):
+
+        def collect(value, needed=needed, doc=doc):
             if isinstance(value, dict):
-                ref = value.get('$ref', '')
-                if ref.startswith('#/components/schemas/'):
-                    name = ref.rsplit('/', 1)[1]
+                ref = value.get("$ref", "")
+                if ref.startswith("#/components/schemas/"):
+                    name = ref.rsplit("/", 1)[1]
                     if name not in needed:
                         needed.add(name)
-                        collect(doc['components']['schemas'][name])
+                        collect(doc["components"]["schemas"][name])
                 for child in value.values():
                     collect(child)
             elif isinstance(value, list):
                 for child in value:
                     collect(child)
-        collect(doc['paths'])
-        assert needed == set(doc['components']['schemas'])
+
+        collect(doc["paths"])
+        assert needed == set(doc["components"]["schemas"])
 
 
 def test_publication_projection_keeps_its_pre_calendar_spread_names():
-    exporter = runpy.run_path(str(ROOT / 'ui_web/scripts/export_contracts.py'))
-    schemas = exporter['create_research_app']().openapi()['components']['schemas']
-    assert 'ErrorBody' in schemas and 'QuantileResult' in schemas
-    assert schemas['ErrorResponse']['properties']['error']['$ref'] == '#/components/schemas/ErrorBody'
+    exporter = runpy.run_path(str(ROOT / "ui_web/scripts/export_contracts.py"))
+    schemas = exporter["create_research_app"]().openapi()["components"]["schemas"]
+    assert "ErrorBody" in schemas and "QuantileResult" in schemas
+    assert (
+        schemas["ErrorResponse"]["properties"]["error"]["$ref"] == "#/components/schemas/ErrorBody"
+    )
