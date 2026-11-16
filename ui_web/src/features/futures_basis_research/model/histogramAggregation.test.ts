@@ -40,7 +40,7 @@ describe('presentation-only histogram', () => {
     expect(r.slots.map(s => s.n)).toEqual([1, 2, 1, 0]); conserved(r)
     expect(r.slots[3].bins).toEqual([])
   })
-  it.each([['basis_ratio', .1, .001], ['basis_ratio', .2, .002], ['annualized_basis_ratio', 5, .05]] as const)('converts %s width %s to raw %s', (metric, width, raw) => {
+  it.each([['basis_ratio', .05, .0005], ['basis_ratio', .1, .001], ['basis_ratio', .2, .002], ['annualized_basis_ratio', 5, .05]] as const)('converts %s width %s to raw %s', (metric, width, raw) => {
     const r = ready(histogramAggregation(histogramFixture([[-raw, 0, raw]], metric), metric, width))
     expect(r.edges).toEqual([-raw, 0, raw]); expect(r.slots[0].bins.map(b => b.count)).toEqual([1, 2]); conserved(r)
   })

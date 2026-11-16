@@ -42,7 +42,7 @@ count conservation; and perform no fill, clipping or financial recalculation.
 | Metric | Default width | Selectable widths |
 | --- | --- | --- |
 | basis_value | 10 index points | 5 / 10 / 20 / 50 index points |
-| basis_ratio | 0.1 percentage points | 0.1 / 0.2 / 0.5 percentage points |
+| basis_ratio | 0.1 percentage points | 0.05 / 0.1 / 0.2 / 0.5 percentage points |
 | annualized_basis_ratio | 5 percentage points | 2.5 / 5 / 10 / 20 percentage points |
 
 Percentage-point widths convert to decimal_ratio for comparison with raw values.
