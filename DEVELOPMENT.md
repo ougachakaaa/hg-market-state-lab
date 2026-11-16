@@ -109,6 +109,8 @@ bash scripts/market-lab.sh stop    # 从另一终端停止两个服务
 
 `start` 会保持前台运行并等待按键；`stop` 和 `status` 可在另一个终端执行。
 
+`start` 分别检查 Python 环境与 frontend 依赖，只修复缺失或与 `package-lock.json` 不一致的部分；两者都完整时不重复执行 Poetry 安装或 `npm ci`。frontend 修复前会检测仍占用 `ui_web/node_modules` 的仓库进程；`npm ci` 因 Windows 文件占用失败时，错误会报告被阻塞的路径与可能的进程，并将完整安装输出保存到 `ui_http/data/one-click/`。手工 bootstrap 仍可运行 `.\.codex\scripts\setup.ps1`；只修复一侧时可用 `-Dependencies python` 或 `-Dependencies frontend`。
+
 Publication uses independent portable SQLite on native Windows. Configure the absolute directory `LAB_RESEARCH_PUBLICATION_ROOT` explicitly. Legacy Publication files are ignored without migration or deletion. Only operator-controlled local filesystems and the existing single-process deployment are supported. Actual platform verification is recorded in [Storage reconciliation](market_research/STORAGE_RECONCILIATION.md).
 
 首次使用时在网页注册，然后在仓库根目录的另一个终端运行 `poetry run lab auth pending`，取得用户 ID 后运行 `poetry run lab auth approve <user-id>`，再返回网页登录。若在 process environment 或根 `.env` 设置了 `LAB_AUTH_DB_PATH`，审批终端也必须使用相同的值。
