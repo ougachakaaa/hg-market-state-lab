@@ -61,3 +61,20 @@ and never replaces the primary release error or invalidates completed acceptance
 Verified release plus cleanup failure reports RELEASED_AND_VERIFIED with cleanupPending.
 Known-owned undeleted paths receive exact PowerShell cleanup instructions; unknown
 paths and locks are never deleted automatically. Execution-policy refusals are not bypassed.
+
+## Existing deployment verification
+
+`demo:verify-release -- --run ID [--remote github]` only inspects an existing successful
+release run and deployment, downloads CI evidence/receipt/site and executes the same
+artifact and online acceptance as Publisher. It never builds, pushes or reruns Actions.
+Run repository, workflow, branch, attempt and SHA must match its successful deployment;
+CI gate evidence must be PASS with matching committed Requirements and Manifest hashes.
+Missing/expired evidence is NOT VERIFIED. A newer public version fails identity checks.
+Already-published candidates bypass local installation/build and use this verifier.
+Artifact downloads have a five-minute attempt deadline, progress messages and at most
+one additional attempt for timeout/network failures in fresh directories. Validation
+failures are never retried. Evidence is saved before each stage and after failure in
+.build/demo-publish.json and .build/demo-releases/<run-id>/verification.json. Evidence
+records identity, run/attempt, deployment, stages, recovery command and cleanup status;
+previous PASS markers never bypass actual verification. Downloads remain ignored and
+outside the site; no unknown lock is removed automatically.
