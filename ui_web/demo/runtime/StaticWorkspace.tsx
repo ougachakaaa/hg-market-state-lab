@@ -1,5 +1,7 @@
+import { DailyPresentation } from '../../src/features/futures_calendar_spread/presentation'
+import { RelativeValuePresentation } from '../../src/features/calendar_spread_relative_value/presentation'
 import { useState, type ReactNode } from 'react'
-import type { WorkspacePath } from '../../src/app/routeInventory'
+import type { StaticWorkspacePath } from '../../src/app/routeInventory'
 import { Flex, Select, Typography } from 'antd'
 import ApplicationShell from '../../src/app/ApplicationShell'
 import AppUiProvider from '../../src/app/AppUiProvider'
@@ -24,7 +26,7 @@ function Premium({ data, disclose }: StaticProps) {
 }
 function Catalog({ data, navigate, disclose }: StaticContext) {
   const controller = useStaticCatalog(data.catalogPayload)
-  return <ResearchOverviewPresentation controller={controller} mode="static" navigation={{ openExplorer: () => navigate('/research/publications'), openFuturesBasis: () => navigate('/research/futures-basis') }} sourceDisclosure={disclose(data.identities.catalog)} />
+  return <ResearchOverviewPresentation controller={controller} mode="static" navigation={{ openExplorer: () => navigate('/research/publications'), openFuturesBasis: () => navigate('/research/futures-basis'), openCalendarSpread: () => navigate('/research/calendar-spread-relative-value') }} sourceDisclosure={disclose(data.identities.catalog)} />
 }
 function Explorer({ data, disclose }: StaticProps) {
   const controller = useStaticExplorer(data.publicationPayload)
@@ -41,19 +43,21 @@ type StaticProps = { data: StaticData; disclose: (identity: ResultIdentity) => s
 type StaticContext = StaticProps & { navigate: ReturnType<typeof useHashRoute>['navigate'] }
 // Compile-time exhaustive coverage comes from the formal application inventory.
 const staticRoutePresentations = {
+  '/data/futures-calendar-spread': ({ data, disclose }) => <Flex vertical gap="middle"><Typography.Title level={2}>Futures Calendar Spread</Typography.Title><Typography.Paragraph>{disclose(data.identities.calendar_spread_daily)} 静态快照不会获取实时行情；历史元数据不保证在当时已知。</Typography.Paragraph><DailyPresentation result={data.calendarDaily} /></Flex>,
+  '/research/calendar-spread-relative-value': ({ data, disclose }) => <Flex vertical gap="middle"><Typography.Title level={2}>Calendar Spread Historical Relative Value</Typography.Title><Typography.Paragraph>{disclose(data.identities.calendar_spread_relative_value)} 静态快照不会获取实时行情；描述性研究不构成收益预测，历史元数据不保证在当时已知。</Typography.Paragraph><RelativeValuePresentation result={data.calendarHistorical} /></Flex>,
   '/research': ({ data, navigate, disclose }) => <Catalog data={data} navigate={navigate} disclose={disclose} />,
   '/research/futures-basis': ({ data, disclose }) => <FuturesBasisPresentation mode="static" state={{ status: 'validated', data: data.basis }} disclosure={disclose(data.identities.basis)} sourceDisclosure={disclose(data.identities.basis)} />,
   '/research/publications': ({ data, disclose }) => <Explorer data={data} disclose={disclose} />,
-  '/data': ({ navigate }) => <DailyDataLanding navigate={navigate} />,
+  '/data': ({ navigate }) => <DailyDataLanding mode="static" navigate={navigate} />,
   '/data/mo-option-chain': ({ data, disclose }) => <Chain data={data} disclose={disclose} />,
   '/data/mo-premium-plane': ({ data, disclose }) => <Premium data={data} disclose={disclose} />,
   '/backtesting': ({ navigate }) => <BacktestingOverview navigate={navigate} />,
   '/backtesting/futures-roll-long': ({ data, disclose }) => <Backtesting data={data} disclose={disclose} />,
-} satisfies Record<WorkspacePath, (context: StaticContext) => ReactNode>
+} satisfies Record<StaticWorkspacePath, (context: StaticContext) => ReactNode>
 
 export function StaticWorkspace({ data, disclose, header, notice }: StaticProps & { header: string; notice: ReactNode }) {
   const { path, navigate } = useHashRoute()
-  return <AppUiProvider><ApplicationShell path={path} navigate={navigate} href={staticHref} header={<Typography.Text type="secondary">{header}</Typography.Text>}>
+  return <AppUiProvider><ApplicationShell mode="static" path={path} navigate={navigate} href={staticHref} header={<Typography.Text type="secondary">{header}</Typography.Text>}>
     <Flex vertical gap="large" style={{ minWidth: 0, maxWidth: '100%', overflowX: 'auto' }}>
       {notice}
       {staticRoutePresentations[path]({ data, navigate, disclose })}

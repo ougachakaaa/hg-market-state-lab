@@ -384,3 +384,13 @@ publisher correction uses the verified browser path without weakening byte check
 The subsequent user-authorized history repair replaces the original integration
 commits. This run remains historical evidence for its original source SHA; any
 replacement release requires its own gate, deployment and online acceptance.
+
+## WP7 — Calendar Spread local delivery (2026-11-16)
+
+The current dataset extends DDB-02–06 to nine required Bundles and ten static
+routes. Two real synchronous authenticated FastAPI captures use shared WP6
+Presentation and feature-owned validation. Existing seven Bundle bytes/hashes are
+unchanged. Local capture/admission/build/Chromium acceptance is complete; no
+publication occurred. Current evidence, exact requests, sample coverage, tests and
+limits enter [Calendar Spread acceptance](../CALENDAR_SPREAD_ACCEPTANCE.md).
+Earlier seven/eight-member counts above are historical DDB evidence.

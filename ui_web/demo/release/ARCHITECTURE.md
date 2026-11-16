@@ -24,3 +24,15 @@ the site with source SHA, Manifest identity and existing Artifact Receipt.
 then public safety, the existing offline build and Receipt scan/verification. Any
 failure returns nonzero and invalidates prior release evidence. The publisher runs it
 in a clean checkout of the exact remote-main candidate; CI runs it independently.
+
+Agent intent, integration and recovery steps enter the [Release Runbook](RUNBOOK.md).
+
+## WP7 Calendar Spread predicates
+
+Daily requires the exact preset date/product, an open session and six valid actual
+contract/metric rows. Research requires the exact request, valid current observations,
+all six pairs' complete historical series, at least 30 all-stage samples per pair,
+Quantile, current Percentile and nonempty matching-stage comparison. All history is
+strictly before evaluation. Small matching-stage populations retain their warnings.
+These additional content predicates never change business availability definitions.
+Histogram remains optional and is rendered only when actually captured.

@@ -75,3 +75,12 @@ it('keeps a source link in the sticky shared header', () => {
   expect(link.getAttribute('rel')).toBe('noopener noreferrer')
   expect((container.querySelector('.ant-layout-header') as HTMLElement).style.position).toBe('sticky')
 })
+
+it('shows Calendar Spread in both admitted runtimes', () => {
+  const props = { path: '/research' as const, href: (path: string) => path, navigate: vi.fn(), header: null, children: 'Content' }
+  const { rerender } = render(<ApplicationShell {...props} />)
+  expect(screen.getByRole('link', { name: '历史跨期相对价值研究' })).toBeTruthy()
+  rerender(<ApplicationShell {...props} mode="static" />)
+  expect(screen.getByRole('link', { name: '历史跨期相对价值研究' })).toBeTruthy()
+  expect(screen.getByRole('link', { name: '历史基差研究' })).toBeTruthy()
+})

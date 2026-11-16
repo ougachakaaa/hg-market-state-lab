@@ -44,6 +44,15 @@ case-specific numerical adaptation. Its [roadmap](descriptive/cases/futures_basi
 separates authority readiness from runtime and offline delivery acceptance; it does
 not extend the existing scalar execution or capability dispatch.
 
+The independent [Futures Calendar Spread L1 case](descriptive/cases/futures_calendar_spread/ARCHITECTURE.md)
+owns two independent Python product queries sharing one financial/Observation capability. It consumes
+public Calendar/Futures facts, the published pure Slot resolver and Statistics.
+Its [roadmap](descriptive/cases/futures_calendar_spread/ROADMAP.md) distinguishes WP0
+authority readiness, implemented WP1 financial / WP2 input-Observation APIs,
+implemented WP3 Statistics method / WP4 business queries / WP5 HTTP delivery and
+implemented WP6 Web consumers and delivered WP7 local Demo integration.
+It is not admitted to scalar capability, Plan/Batch or Publication and creates no Run store.
+
 Input Preparation acquires validated facts and availability evidence through authorized
 upstream public contracts, under the selected case's completeness policy.
 Observation Construction owns market indicator formulas and empirical variables derived

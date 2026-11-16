@@ -4,6 +4,7 @@ This contract specializes the [module authority](ARCHITECTURE.md) and inherits t
 [public contract](CONTRACT.md). It owns numerical library selection, conformance,
 failure adaptation and upgrade policy. Method meaning belongs only to
 [Quantile](QUANTILE.md) and [IntervalCount](INTERVAL_COUNT.md) and [Mean](MEAN.md).
+[Empirical Percentile](EMPIRICAL_PERCENTILE.md) owns its implemented midrank meaning.
 
 ## Selection and runtime boundary
 
@@ -14,6 +15,7 @@ For V1, the preferred backend is NumPy through supported public APIs only:
 | Method | Preferred implementation path | Required adaptation |
 | --- | --- | --- |
 | Quantile | `numpy.quantile(values, points, method="linear")` | Preserve the method's frozen binary64 branches, operation order and failure boundary wherever library behavior differs. |
+| EmpiricalPercentile | `numpy.sort` on a private copy, `numpy.searchsorted` with explicit `side="left"` / `side="right"` | Validate sorted values/multiplicity, insertion boundaries, exact counts and finite midrank fractions in original query order. |
 | IntervalCount | `numpy.histogram(values, bins=explicit_edges, density=False)` | Retain separately counted underflow and overflow; use the full sample denominator for frequencies. |
 
 Use no private NumPy internals. NumPy is an explicit root-project dependency with a
@@ -87,3 +89,14 @@ no process-global warning policy is modified. Failure-injection tests cover malf
 outputs, exceptions and finite-looking results after invalid numerical execution.
 
 Mean uses `numpy.mean(array, dtype=numpy.float64)` with finite scalar/type/range validation under the same scoped warning/error boundary. See [Mean](MEAN.md) for intermediate overflow semantics.
+
+## Empirical percentile backend (WP3)
+
+The implemented [Empirical Percentile](EMPIRICAL_PERCENTILE.md) method uses existing
+NumPy public sort/searchsorted operations on private copies. It validates binary64
+sorted output, full value multiplicity, integer index shape/range and exact left/right
+boundaries for each original query. Derived L/E/G conserve the sample count and
+midrank fractions must be finite and in [0,1]. All execution uses the existing scoped
+warning/error boundary. Malformed outputs fail without repair. No dependency or
+consumer algorithm is added. Directed failure injection and fixtures are in
+`tests/test_empirical_percentile.py`.

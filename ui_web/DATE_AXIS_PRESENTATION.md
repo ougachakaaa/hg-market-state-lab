@@ -17,7 +17,7 @@ Apply this policy when both hold:
   ordered trading-session domain for the displayed marks and events.
 
 Current applications are the W1 historical basis charts and the W2 cumulative return
-and drawdown charts. New applicable charts must be added to §7.
+and drawdown charts, and Calendar Spread Historical Relative Value. New applicable charts must be added to §7.
 
 Do **not** apply this policy, and never infer a market calendar, when:
 
@@ -133,11 +133,11 @@ Evidence lives in the owning feature acceptance record.
 | --- | --- | --- |
 | W1 historical basis charts (`basis_value`, `basis_ratio`, `annualized_basis_ratio`) | report `candidate_dates` | conforming; one shared control in `Report` |
 | W2 cumulative return and drawdown | `BacktestResult.daily[].trade_date` | conforming after UI-WP01; one control in `Result` |
+| Calendar Spread Historical Relative Value | ordered open `historical_days` dates plus open `current_day.trade_date` | WP6 conforming; one shared DateAxisControl; [acceptance](src/features/calendar_spread_relative_value/ACCEPTANCE.md) |
 | Research Explorer published-View reader | none for arbitrary publications | exception: no authoritative session domain; keeps natural date spacing, no mode control |
 | W1 histogram charts, W2 trades/rolls tables | category / numeric / tabular | not applicable: no date x-axis |
 | MO Option Chain, MO Premium Plane | strike / numeric plane | not applicable: no date x-axis |
 
 Repository-wide review of current date-axis charts: the W1 reader (also used by the
 offline report and static demo) and the W2 result are conforming; the Research Explorer
-exception is recorded because inventing a trading calendar there would violate §1. No
-other current analytical chart uses a date x-axis.
+exception is recorded because inventing a trading calendar there would violate §1. Calendar Spread WP6 adds its independently owned historical date chart.

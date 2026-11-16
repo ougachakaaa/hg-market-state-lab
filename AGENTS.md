@@ -23,6 +23,12 @@ module taxonomy; continue into business authority only when an approved Task nee
 
 `_temp_docs/` 不属于 repository authority，不参与上述导航链。除非任务明确指定其中某个文件，否则不得读取、引用或把其内容当作项目事实；需要固化的内容必须先与当前 authority reconciliation，再写入正式 authority。
 
+## Static Demo release routing
+
+用户要求发布静态 Demo、指定来源分支更新 Demo 或更新 Demo 作品集时，进入
+[Demo Release Agent Workflow](ui_web/demo/release/RUNBOOK.md)，并遵循
+[ui_web Agent Rules](ui_web/AGENTS.md)。该流程规定发布准入、分支集成、失败停止与线上验收。
+
 ## Progressive Disclosure：Authority authoring
 
 Progressive disclosure 同时约束已有 authority 的读取和新 authority 的创建、落位与扩展。执行 Semantic Decision Encoding、authority design / reconciliation、新 module / product / capability / study / dataset authority 落位或已有 authority 的较大扩展时，必须判断新语义应进入现有 authority，还是已经形成独立 concern，需要下层专题文档或 catalog；不得默认追加到最近的 `ARCHITECTURE.md`。

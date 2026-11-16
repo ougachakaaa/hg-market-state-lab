@@ -9,7 +9,7 @@ or create Research results.
 
 ## Research Study presentation
 
-The primary overview presents three feature-local static Research Studies, independent
+The primary overview presents feature-local Research Studies, independent
 of Capability request success. The minimal presentation model is `title`, `description`,
 `status: completed | incomplete` and optional `route`. It is not an HTTP DTO, Bundle
 contract or backend registry. `completed` means an independent Web presentation exists;
@@ -18,7 +18,9 @@ or method development. `incomplete` means there is no independent Web entry, not
 the Python research is unimplemented.
 
 In order, 历史基差研究 is completed and navigates to `/research/futures-basis` through
-the injected callback; 价格分段研究 and 指数滚动收益研究 are incomplete with no action.
+the injected callback; Production also exposes completed 历史跨期相对价值研究 at
+`/research/calendar-spread-relative-value` through its own injected callback. Static
+omits that card until WP7 Bundle admission. 价格分段研究 and 指数滚动收益研究 are incomplete with no action.
 Cards show purpose and completion (已完成 in success-colored text, 未完成 in secondary gray text), not raw identities, commands or readiness fields.
 They share the same feature Presentation across runtimes, use responsive Ant Design
 layout and provide an explicit keyboard-accessible study action. The overview contains

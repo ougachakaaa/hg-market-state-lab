@@ -1,25 +1,26 @@
 import { act, cleanup, renderHook } from '@testing-library/react'
 import { afterEach, describe, expect, it } from 'vitest'
-import { workspaceRoutes, isWorkspacePath } from './routeInventory'
+import { workspaceRoutes, isWorkspacePath, isStaticWorkspacePath } from './routeInventory'
 import { useWorkspaceRoute } from './routes'
 import { hashWorkspacePath, staticHref, useHashRoute } from '../../demo/runtime/hashRoutes'
 
 afterEach(() => { cleanup(); window.history.replaceState(null, '', '/') })
 
 describe('canonical routes and runtime adapters', () => {
-  it('declares each of the eight formal pages once', () => {
+  it('declares ten Production and Static pages once', () => {
     expect(workspaceRoutes.map(route => route.path)).toEqual([
-      '/research', '/research/futures-basis', '/research/publications', '/data',
-      '/data/mo-option-chain', '/data/mo-premium-plane', '/backtesting', '/backtesting/futures-roll-long',
+      '/research', '/research/futures-basis', '/research/calendar-spread-relative-value', '/research/publications', '/data',
+      '/data/mo-option-chain', '/data/mo-premium-plane', '/data/futures-calendar-spread', '/backtesting', '/backtesting/futures-roll-long',
     ])
-    expect(new Set(workspaceRoutes.map(route => route.path)).size).toBe(8)
+    expect(new Set(workspaceRoutes.map(route => route.path)).size).toBe(10)
     for (const route of workspaceRoutes) {
       expect(isWorkspacePath(route.path)).toBe(true)
-      expect(hashWorkspacePath(staticHref(route.path))).toBe(route.path)
+      expect(hashWorkspacePath(staticHref(route.path))).toBe(isStaticWorkspacePath(route.path) ? route.path : '/research')
     }
+    expect(workspaceRoutes.filter(route => isStaticWorkspacePath(route.path))).toHaveLength(10)
     expect(isWorkspacePath('/unknown')).toBe(false)
     expect(workspaceRoutes.filter(route => route.area === '/research' && route.sidebarVisible).map(route => route.path))
-      .toEqual(['/research', '/research/futures-basis'])
+      .toEqual(['/research', '/research/futures-basis', '/research/calendar-spread-relative-value'])
   })
 
   it.each(['/research/futures-basis', '/backtesting/futures-roll-long'] as const)('preserves %s run identity on mount, same-page navigation and history', path => {

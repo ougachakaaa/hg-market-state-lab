@@ -89,7 +89,48 @@ class MeanResult:
     estimator: Literal["arithmetic_binary64_v1"] = "arithmetic_binary64_v1"
 
 
-type StatisticalSpec = QuantileSpec | IntervalCountSpec | MeanSpec
+@dataclass(frozen=True, slots=True, init=False)
+class EmpiricalPercentileSpec:
+    queries: tuple[float, ...]
+    unit: str
+    method: Literal["empirical_percentile"] = "empirical_percentile"
+
+    def __init__(self, queries: Sequence[int | float], unit: str) -> None:
+        object.__setattr__(self, "method", "empirical_percentile")
+        object.__setattr__(self, "queries", coordinates(queries, InvalidStatisticalSpec))
+        object.__setattr__(self, "unit", unit)
+        self._validate()
+
+    def _validate(self) -> None:
+        if type(self.method) is not str or self.method != "empirical_percentile":
+            raise InvalidStatisticalSpec("Unknown EmpiricalPercentile method tag")
+        coordinates(self.queries, InvalidStatisticalSpec)
+        if type(self.queries) is not tuple or any(type(q) is not float for q in self.queries):
+            raise InvalidStatisticalSpec(
+                "EmpiricalPercentileSpec must retain its owned binary64 tuple"
+            )
+        unit(self.unit, InvalidStatisticalSpec)
+
+
+@dataclass(frozen=True, slots=True)
+class EmpiricalPercentileQueryResult:
+    query: float
+    less_count: int
+    equal_count: int
+    greater_count: int
+    percentile: float
+
+
+@dataclass(frozen=True, slots=True)
+class EmpiricalPercentileResult:
+    query_results: tuple[EmpiricalPercentileQueryResult, ...]
+    sample_count: int
+    unit: str
+    method: Literal["empirical_percentile"] = "empirical_percentile"
+    estimator: Literal["midrank_v1"] = "midrank_v1"
+
+
+type StatisticalSpec = QuantileSpec | IntervalCountSpec | MeanSpec | EmpiricalPercentileSpec
 
 
 @dataclass(frozen=True, slots=True)
@@ -124,4 +165,6 @@ class IntervalCountResult:
     method: Literal["interval_count"] = "interval_count"
 
 
-type StatisticalResult = QuantileResult | IntervalCountResult | MeanResult
+type StatisticalResult = (
+    QuantileResult | IntervalCountResult | MeanResult | EmpiricalPercentileResult
+)

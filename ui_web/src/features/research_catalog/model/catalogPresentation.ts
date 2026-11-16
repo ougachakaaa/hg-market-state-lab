@@ -36,6 +36,7 @@ export type ResearchOverviewMode = 'production' | 'static'
 export interface ResearchOverviewNavigation {
   openExplorer: () => void
   openFuturesBasis: () => void
+  openCalendarSpread?: () => void
 }
 
 export const STATIC_CATALOG_DISCLOSURE =

@@ -60,12 +60,23 @@ export async function validateRelease(web: string, directory = resolve(web, 'dem
       for (const view of charts) for (const layer of view.layers) {
         if (layer.layer.x.kind === 'date') check(layer.layer.data.every((point: Value) => domain.includes(point.x)), id, 'visualization_date_domain')
       }
+    } else if (rule.content === 'calendar_spread_daily') {
+      check(result.day.status === 'open' && result.day.trade_date === rule.request.trade_date, id, 'actual_daily_date')
+      check(result.day.observations.length === 6 && result.day.observations.every((row: Value) => row.outcome === 'valid' && row.near && row.far && row.metrics), id, 'six_valid_market_pairs')
+    } else if (rule.content === 'calendar_spread_relative_value') {
+      check(result.current_day.status === 'open' && result.current_day.observations.every((row: Value) => row.outcome === 'valid'), id, 'valid_current_observations')
+      for (const pair of result.pairs) {
+        const all = pair.distributions.find((d: Value) => d.stage === 'all_stages')
+        check(pair.samples.length >= 30 && all.sample_count === pair.samples.length && all.quantile !== null, id, 'meaningful_historical_series')
+        check(pair.samples.every((row: Value) => row.trade_date >= result.request.history_start && row.trade_date < result.request.evaluation_date), id, 'historical_cutoff')
+        check(pair.all_stages.percentile !== null && pair.matching_stage.percentile !== null, id, 'current_comparisons')
+      }
     } else if (rule.content === 'chain') {
       check(result.expiries.length && result.expiries.some((expiry: Value) => expiry.calls.length || expiry.puts.length), id, 'nonempty_market_results')
     } else if (rule.content === 'premium') check(result.expiries.length && result.points.length, id, 'nonempty_market_results')
     else if (rule.content === 'catalog') check(result.list.length > 0, id, 'nonempty_capabilities')
   }
-  console.log('PASS Release Requirements seven Bundles')
+  console.log(`PASS Release Requirements ${registry.length} Bundles`)
 }
 export async function main(args: string[], web: string) {
   if (args.length) throw new Error('FAIL dataset release invalid_arguments')

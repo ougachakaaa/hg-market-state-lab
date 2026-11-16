@@ -1,3 +1,5 @@
+import dailyCapture from '../bundles/calendar_spread_daily.json'
+import historicalCapture from '../bundles/calendar_spread_relative_value.json'
 import { it, expect } from 'vitest'
 import { mkdtemp, writeFile, rm } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
@@ -41,6 +43,7 @@ it('collects controlled HTTP fixtures through independent Preflight and exercise
     report.request.observation = { ...report.request.observation, ...presets.basis.request }
     const payload = { chain: { ...chain, ...presets.chain.request },
       premium: { ...plane, observation: { kind: 'trade_date', value: presets.premium.request.as_of } },
+      calendar_spread_daily: dailyCapture.result, calendar_spread_relative_value: historicalCapture.result,
       basis: report, backtest, catalog: embeddedCatalog, publications: embeddedPublicationSet }
     const path = join(directory, 'controlled-fixtures.json')
     await writeFile(path, JSON.stringify(payload))
@@ -57,3 +60,30 @@ it('collects controlled HTTP fixtures through independent Preflight and exercise
     expect(result.code, result.output).toBe(0)
   } finally { await rm(directory, { recursive: true, force: true }) }
 }, 180_000)
+
+// Replay captured wire Results only in a temporary directory; never touch active data.
+it.each([
+  ['get', '/data/futures-calendar-spread', dailyCapture],
+  ['post', '/research/calendar-spread-relative-value/query', historicalCapture],
+] as const)('admits exact synchronous %s %s and rejects wire/identity corruption', async (method, route, capture) => {
+  const bridge = new CollectorBridge()
+  const response = (body: unknown, overrides = {}) => bridge.execute({ op: 'response', method, route, status: 200,
+    expectedRequest: capture.request, bytes: Buffer.from(JSON.stringify(body)).toString('base64'), ...overrides })
+  const result = await response(capture.result) as { ref: number }
+  expect(result.ref).toBe(0)
+  await expect(response(capture.result, { method: method === 'get' ? 'post' : 'get' })).rejects.toThrow('invalid_response')
+  await expect(response(capture.result, { status: 202 })).rejects.toThrow('invalid_response')
+  await expect(response(capture.result, { expectedRequest: { ...capture.request, product_code: 'IF' } })).rejects.toThrow()
+  const malformed = structuredClone(capture.result) as any
+  if ('day' in malformed) malformed.day.observations.reverse()
+  else malformed.pairs[0].distributions[3].quantile.result.sample_count += 1
+  await expect(response(malformed)).rejects.toThrow()
+  await expect(response({}, { bytes: Buffer.from('{"nested":1e400}').toString('base64') })).rejects.toThrow('unsafe_number')
+  const root = await mkdtemp(join(tmpdir(), 'wp7-replay-'))
+  try {
+    await bridge.execute({ op: 'bundle', id: capture.bundle_id, directory: root, request: capture.request, result: { $ref: result.ref } })
+    const { readFile } = await import('node:fs/promises')
+    const body = parseStrict(await readFile(join(root, capture.bundle_id + '.json'), 'utf8')) as any
+    expect(body.result).toEqual(capture.result)
+  } finally { await rm(root, { recursive: true, force: true }) }
+})

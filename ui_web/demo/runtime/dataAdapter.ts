@@ -1,3 +1,5 @@
+import { validateResult as validateDaily, type Query as DailyQuery } from '../../src/features/futures_calendar_spread/presentation'
+import { validateResult as validateHistorical, type Query as HistoricalQuery } from '../../src/features/calendar_spread_relative_value/presentation'
 import type { StaticData, ResultIdentity, ExampleKey } from './results'
 import { validateOptionChain } from '../../src/features/mo_option_chain/presentation'
 import { validatePremiumPlane } from '../../src/features/mo_option_premium/presentation'
@@ -30,6 +32,8 @@ export function adaptBundles(input: unknown): StaticData {
   validateEmbeddedCatalog(catalogPayload)
   validateEmbeddedPublicationSet(publicationPayload)
   return {
+    calendarDaily: validateDaily(get('calendar_spread_daily').result, get('calendar_spread_daily').request as DailyQuery),
+    calendarHistorical: validateHistorical(get('calendar_spread_relative_value').result, get('calendar_spread_relative_value').request as HistoricalQuery),
     chain: validateOptionChain(get('chain').result), premium: validatePremiumPlane(get('premium').result),
     basis: validateEmbeddedReport({ request: basis.request, report: basis.result }),
     m1: validateEmbeddedBacktestResult({ request: m1.request, result: m1.result }),

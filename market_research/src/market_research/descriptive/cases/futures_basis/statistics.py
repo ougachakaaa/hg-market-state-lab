@@ -176,7 +176,11 @@ def _parameters_match(spec: stats.StatisticalSpec, result: stats.StatisticalResu
             and result.estimator == "type7_linear_v1"
             and tuple(p for p, _ in result.points_and_values) == spec.points
         )
-    return isinstance(result, stats.IntervalCountResult) and result.edges == spec.edges
+    return (
+        isinstance(spec, stats.IntervalCountSpec)
+        and isinstance(result, stats.IntervalCountResult)
+        and result.edges == spec.edges
+    )
 
 
 def analyze_distribution(

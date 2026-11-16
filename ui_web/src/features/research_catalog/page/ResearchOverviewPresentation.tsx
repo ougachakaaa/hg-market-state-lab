@@ -32,7 +32,7 @@ export function ResearchOverviewPresentation({ mode, navigation, sourceDisclosur
             </Flex>
             <Typography.Paragraph type="secondary" style={{ margin: 0 }}>{study.description}</Typography.Paragraph>
             {study.status === 'completed' && <Button icon={<FileTextOutlined aria-hidden="true" />}
-              aria-label="查看历史基差研究" onClick={navigation.openFuturesBasis}>查看研究</Button>}
+              aria-label={`查看${study.title}`} onClick={study.route === '/research/calendar-spread-relative-value' ? navigation.openCalendarSpread : navigation.openFuturesBasis}>查看研究</Button>}
           </Flex>
         </Card>
       </Col>)}

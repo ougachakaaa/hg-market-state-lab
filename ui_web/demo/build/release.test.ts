@@ -39,3 +39,26 @@ test.each(['date', 'product', 'strategy', 'coverage', 'schema', 'hash', 'visuali
       await expect(validateRelease(web, directory, requirements)).rejects.toThrow()
     } finally { await rm(root, { recursive: true, force: true }) }
   }, 30000)
+
+test('rejects a formally legal empty Daily capture as unsuitable release content', async () => {
+  const root = await mkdtemp(resolve(tmpdir(), 'wp7-empty-release-'))
+  try {
+    const directory = resolve(root, 'bundles')
+    await cp(resolve(web, 'demo/bundles'), directory, { recursive: true })
+    const path = resolve(directory, 'calendar_spread_daily.json')
+    const bundle = JSON.parse(await readFile(path, 'utf8'))
+    bundle.result.day.observations = bundle.result.day.observations.map((row: any) => ({ ...row, near: null, far: null, delta_days: null, near_dte_days: null, expiry_stage: null, metrics: null, outcome: 'not_applicable', reason: 'no_active_contract' }))
+    bundle.result.accounting = { candidate_count: 6, valid_count: 0, not_applicable_count: 6, excluded_count: 0 }
+    const { canonicalBytes } = await import('./json')
+    const { createHash } = await import('node:crypto')
+    const bytes = canonicalBytes(bundle)
+    await writeFile(path, bytes)
+    const manifestPath = resolve(directory, 'manifest.json')
+    const manifest = JSON.parse(await readFile(manifestPath, 'utf8'))
+    manifest.bundles.find((row: any) => row.bundle_id === bundle.bundle_id).sha256 = createHash('sha256').update(bytes).digest('hex')
+    await writeFile(manifestPath, canonicalBytes(manifest))
+    const { validateDirectory } = await import('./validate')
+    await expect(validateDirectory(directory)).resolves.toBeUndefined()
+    await expect(validateRelease(web, directory)).rejects.toThrow('six_valid_market_pairs')
+  } finally { await rm(root, { recursive: true, force: true }) }
+})

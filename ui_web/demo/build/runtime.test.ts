@@ -7,7 +7,7 @@ import { verifyBrowser } from './browserAcceptance.mjs'
 import { registry } from './registry'
 import { adaptBundles } from '../runtime/dataAdapter'
 import { buildDemo, lock } from './build.mjs'
-it('maps seven Results and rejects missing or malformed data', async () => {
+it('maps nine Results and rejects missing or malformed data', async () => {
   const data = await fixture()
   try {
     const bundles = [...data.data.values()]

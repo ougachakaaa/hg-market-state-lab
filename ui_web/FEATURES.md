@@ -11,4 +11,15 @@
 | Research Catalog & Workspace | WP3 已实现；只读发现在线 Capability、本地 Case 与离线报告流程 | [research_catalog/ARCHITECTURE.md](src/features/research_catalog/ARCHITECTURE.md) |
 | Futures Basis Research | 已实现 Web Consumer、在线执行与共享报告 Reader；Provider / Cache readiness 独立验证 | [futures_basis_research/ARCHITECTURE.md](src/features/futures_basis_research/ARCHITECTURE.md) |
 
+## Calendar Spread WP6 consumers
+
+| Frontend slice | 状态与用途 | Canonical authority entry |
+| --- | --- | --- |
+| Futures Calendar Spread | WP6 已实现；显式查询指定产品、日期的六组跨期价差 | [Daily Presentation](src/features/futures_calendar_spread/ARCHITECTURE.md) |
+| Calendar Spread Historical Relative Value | WP6 已实现；历史分布、当前百分位、真实合约日期图表 | [Historical Presentation](src/features/calendar_spread_relative_value/ARCHITECTURE.md) |
+
+Both pages are Production-only until the independent WP7 Bundle cutover. Web delivery
+does not establish cache, real-data or deployed-Gateway readiness; see the
+[case roadmap](../market_research/descriptive/cases/futures_calendar_spread/ROADMAP.md).
+
 本 catalog 不拥有 input、table/chart、metric、formatting、interaction、empty/error 或其他 visualization semantics。新增、删除或重命名正式 frontend slice 时更新本文件；slice 内部语义变化只更新其 canonical authority。

@@ -13,8 +13,8 @@ The sole static composition lives in demo/runtime. Formal FastAPI HTTP business 
 Production Web application 以 Research 为登录后默认入口，包含三个一级业务区：
 
 ```text
-Daily Data → MO Option Chain / MO Premium Plane（已实现）
-Research → Research Catalog & Workspace / Research Explorer（已实现）；Futures Basis Online Research（已实现 Web Consumer）
+Daily Data → MO Option Chain / MO Premium Plane / Futures Calendar Spread（已实现）
+Research → Research Catalog & Workspace / Research Explorer（已实现）；Futures Basis Online Research / Calendar Spread Historical Relative Value（已实现 Web Consumer）
 Backtesting → Backtesting Overview / Futures Roll Long（WP7 Web Consumer 已实现）
 ```
 
@@ -86,3 +86,10 @@ Shell and overview Presentation support static composition. The static Shell har
 verifies both identities; official Bundle composition remains DDB-04 work.
 
 The shared workspace header remains sticky while scrolling. Its right edge always exposes a GitHub source link to https://github.com/ougachakaaa/hg-market-state-lab in both runtimes, opening a separate tab with noopener/noreferrer. Runtime identity actions remain supplied by composition.
+
+## WP6 Production composition
+
+Calendar Spread adds independent Daily and Historical Relative Value controllers under
+the existing gate. Shared navigation/overviews expose them only in Production until
+WP7. Static route recognition and exhaustive composition stay limited to the existing
+eight admitted pages; no Bundle identity or capture changes in WP6.

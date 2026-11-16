@@ -10,7 +10,8 @@ const icons: Record<NavigationIcon, ReactNode> = {
   explorer: <ReadOutlined aria-hidden="true" />,
 }
 
-export default function ApplicationShell({ path, navigate, href, header, children }: {
+export default function ApplicationShell({ path, navigate, href, header, children, mode = 'production' }: {
+  mode?: 'production' | 'static';
   path: WorkspacePath;
   navigate: (path: WorkspacePath) => void;
   href: (path: WorkspacePath) => string;
@@ -43,7 +44,7 @@ export default function ApplicationShell({ path, navigate, href, header, childre
   })
   const groupedArea = (area: keyof typeof workspaceAreas) => ({
     key: `area:${area}`, label: workspaceAreas[area].title, icon: icons[workspaceAreas[area].icon],
-    children: workspaceRoutes.filter(route => route.area === area && route.sidebarVisible).map(leaf),
+    children: workspaceRoutes.filter(route => route.area === area && route.sidebarVisible && (mode === 'production' || !('productionOnly' in route && route.productionOnly))).map(leaf),
   })
   return <Layout style={{ minHeight: '100vh', background: token.colorBgLayout }}>
     <Layout.Sider collapsed={collapsed} collapsedWidth={64} width={232} breakpoint="xl"
