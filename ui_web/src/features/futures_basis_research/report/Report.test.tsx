@@ -15,7 +15,7 @@ vi.mock('../../../shared/visualization', () => ({
 }))
 afterEach(cleanup)
 describe('shared reader', () => {
-  it.each(['online', 'demo'] as const)('renders one compact report with charts before means (%s)', mode => {
+  it.each(['online', 'demo'] as const)('renders one compact report with charts before the summary (%s)', mode => {
     const { container } = render(<Report data={readerFixture()} mode={mode} />)
     expect(container.querySelectorAll('.ant-card')).toHaveLength(1)
     expect(screen.queryByRole('navigation', { name: '报告章节' })).toBeNull()
@@ -24,7 +24,7 @@ describe('shared reader', () => {
     fireEvent.click(toggle)
     expect(toggle.getAttribute('aria-expanded')).toBe('true')
     const history = screen.getByTestId('history-charts')
-    const mean = screen.getByRole('heading', { name: '各 Slot 统计均值' })
+    const mean = screen.getByRole('heading', { name: '各 Slot 统计摘要' })
     expect(history.compareDocumentPosition(mean) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
     expect(screen.queryByText('Producer Report Request')).toBeNull()
     expect(screen.queryByText('数据完整性（各自单位，不相加）')).toBeNull()
@@ -83,13 +83,13 @@ it('formats Overview, quantiles, intervals and paired means by explicit result u
     { spec: { method: 'interval_count' }, failure_category: null, reason: null, result: { method: 'interval_count', unit: 'decimal_ratio', sample_count: 2, edges: [-.1, 0], bins: [{ left: -.1, right: 0, left_inclusive: true, right_inclusive: false, count: 1, frequency: .5 }], underflow_count: 0, overflow_count: 1, underflow_frequency: 0, overflow_frequency: .5 } },
   ]
   // Result units drive presentation even when no metric-name mapping is available.
-  data.distributions = [{ request: { analysis_id: 'ratio', metric: 'basis_value', slot: 'M0' }, candidates: [], binding: [], methods }]
+  data.distributions = [{ request: { analysis_id: 'ratio', metric: 'basis_value', slot: 'M0' }, candidates: [], binding: [{}, {}], methods }]
   data.comparisons = [{ request: { analysis_id: 'pair', metric: 'basis_value', slots: ['M0', 'M1'] }, common_dates: [], dropped: [], dropped_details: [], left_methods: methods, right_methods: methods }]
   const before = structuredClone(data)
   const { container } = render(<Report data={data} mode="offline" />)
   expect(screen.getByText('15.3%')).toBeTruthy()
   expect(screen.getByText('Mean：15.3%')).toBeTruthy()
-  expect(screen.getByText('-8.7%')).toBeTruthy()
+  expect(screen.getAllByText('-8.7%')).toHaveLength(2)
   expect(screen.getByText('[-10.0%, 0.0%)')).toBeTruthy()
   expect(screen.getAllByText('0.5').length).toBeGreaterThan(0) // Quantile probability remains raw.
   fireEvent.click(container.querySelector('#section-3 .ant-table-row-expand-icon')!)
@@ -140,4 +140,60 @@ it.each(['online', 'demo', 'offline'] as const)('configures only compact history
   render(<Report data={readerFixture()} mode={mode} />)
   const configured = screen.getAllByTestId('chart-mode').filter(el => el.hasAttribute('data-disclosure'))
   expect(configured).toHaveLength(mode === 'offline' ? 0 : 3)
+})
+
+it.each(['online', 'demo', 'offline'] as const)('shows expiry explanation beside only the annualized chart (%s)', mode => {
+  render(<Report data={readerFixture()} mode={mode} />)
+  const note = screen.getByText('合约到期日的剩余期限 D=0，年化基差按研究定义主动留空，并非行情数据错误；原始基差仍然保留。')
+  expect(note.closest('.ant-collapse')).toBeNull()
+  expect(within(note.parentElement!).getAllByTestId('chart-mode')).toHaveLength(1)
+  expect(within(note.parentElement!).getByTestId('chart-mode')).toBe(screen.getAllByTestId('chart-mode')[2])
+})
+
+it.each(['online', 'demo', 'offline'] as const)('switches four-Slot summaries by Metric independently of Histogram Slot (%s)', mode => {
+  const data = readerFixture()
+  data.distributions = ['basis_value', 'basis_ratio'].flatMap(metric => ['M0', 'M1', 'Q1', 'Q2'].map((slot, i) => ({
+    request: { analysis_id: `${metric}/${slot}`, metric, slot }, candidates: [{}, {}], binding: [{}, {}], methods: [
+      { spec: { method: 'quantile' }, failure_category: null, reason: null, result: {
+        method: 'quantile', unit: metric === 'basis_value' ? 'index_points' : 'decimal_ratio', sample_count: 2,
+        points_and_values: [[1, .4 + i], [.25, .1 + i], [0, i], [.75, .3 + i], [.5, .2 + i]] as [number, number][],
+      } },
+      { spec: { method: 'mean' }, failure_category: null, reason: null, result: {
+        method: 'mean', unit: metric === 'basis_value' ? 'index_points' : 'decimal_ratio', sample_count: 2, value: .2 + i,
+      } },
+    ],
+  })))
+  const before = structuredClone(data)
+  render(<Report data={data} mode={mode} />)
+  const summary = screen.getByRole('region', { name: '统计摘要' })
+  const cells = () => within(summary).getAllByRole('row').slice(1).map(row => within(row).getAllByRole('cell').map(c => c.textContent))
+  expect(cells()).toEqual(['M0', 'M1', 'Q1', 'Q2'].map((slot, i) => [slot, '2', String(i), String(.1 + i), String(.2 + i), String(.3 + i), String(.4 + i), String(.2 + i)]))
+  fireEvent.mouseDown(screen.getByRole('combobox', { name: 'Distribution metric' }))
+  fireEvent.click(screen.getByText('basis_ratio', { selector: '.ant-select-item-option-content' }))
+  expect(cells()[0]).toEqual(['M0', '2', '0.0%', '10.0%', '20.0%', '30.0%', '40.0%', '20.0%'])
+  fireEvent.mouseDown(screen.getByRole('combobox', { name: 'Distribution slot' }))
+  fireEvent.click(screen.getByText('Q2', { selector: '.ant-select-item-option-content' }))
+  expect(cells()).toHaveLength(4)
+  expect(cells()[0][0]).toBe('M0')
+  expect(screen.queryByRole('heading', { name: '各 Slot 统计均值' })).toBeNull()
+  expect(data).toEqual(before)
+})
+
+it('renders Partial method failures and empty samples without hiding successful statistics', () => {
+  const data = readerFixture()
+  data.status = 'partial'
+  data.distributions = [
+    { request: { analysis_id: 'failed', metric: 'basis_value', slot: 'M0' }, candidates: [{}, {}], binding: [{}, {}], methods: [
+      { spec: { method: 'mean' }, failure_category: 'CalculationFailure', reason: 'failed', result: { method: 'mean', sample_count: 2, unit: 'index_points', value: 999 } },
+      { spec: { method: 'quantile' }, failure_category: null, reason: null, result: { method: 'quantile', sample_count: 2, unit: 'index_points', points_and_values: [[.5, 0]] } },
+    ] },
+    { request: { analysis_id: 'empty', metric: 'basis_value', slot: 'M1' }, candidates: [], binding: [], methods: [
+      { spec: { method: 'mean' }, failure_category: 'no_eligible_sample', reason: 'empty', result: null },
+    ] },
+  ]
+  render(<Report data={data} mode="online" />)
+  const rows = within(screen.getByRole('region', { name: '统计摘要' })).getAllByRole('row').slice(1)
+  expect(within(rows[0]).getAllByRole('cell').map(c => c.textContent)).toEqual(['M0', '2', '不可用', '不可用', '0', '不可用', '不可用', '不可用（CalculationFailure）'])
+  expect(within(rows[1]).getAllByRole('cell').map(c => c.textContent)).toEqual(['M1', '0', '不可用', '不可用', '不可用', '不可用', '不可用', '不可用（no_eligible_sample）'])
+  expect(screen.getByText(/Partial：/)).toBeTruthy()
 })

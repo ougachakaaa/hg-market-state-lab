@@ -1,3 +1,4 @@
+import { verifyBasisSummary } from './futures_basis_summary_acceptance.mjs'
 import { verifyDateEvents } from './date_events_disclosure.mjs'
 import { onlineHarness, unusedPort, observe } from './online_harness.mjs'
 import { historicalBasisAcceptance } from './historical_basis_acceptance.mjs'
@@ -82,8 +83,8 @@ try {
   assert.equal(cookie.secure, false)
   assert.equal(await page.evaluate(() => document.cookie.includes('lab_access_token')), false)
   await mkdir(output, { recursive: true })
-  await page.getByRole('region', { name: '本地研究与离线工作流' }).getByRole('button', { name: '查看详情' }).nth(1).click()
-  await page.getByRole('button', { name: '进入历史基差研究', exact: true }).click()
+  // Enter this feature directly; its reader checks do not depend on Overview cards.
+  await page.goto(`${origin}/research/futures-basis`)
   await page.getByRole('heading', { name: 'Futures Basis Research', exact: true }).waitFor()
   assert.equal(await page.getByRole('button', { name: '生成研究' }).isEnabled(), false)
   await page.getByRole('combobox', { name: '品种', exact: true }).click()
@@ -116,6 +117,7 @@ try {
   assert.ok(states.includes('COMPLETED'))
   const presentationReport = await (await context.request.get(`${origin}/api/research/futures-basis/runs/${firstId}/report`)).json()
   await historicalBasisAcceptance(page, presentationReport.data, output)
+  await verifyBasisSummary(page, presentationReport.data)
   await page.screenshot({ path: resolve(output, 'online-report.png'), fullPage: true })
   await page.screenshot({ path: resolve(output, 'online-overview.png') })
   // Verify the Web-only today gate using a blocked public assessment without

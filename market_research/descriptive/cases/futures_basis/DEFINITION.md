@@ -33,6 +33,27 @@ arithmetic overflow, non-finite intermediate/result, or undefined logarithm from
 binary64 underflow fails construction explicitly; do not repair, clip or silently
 exclude it. Input and outcome failures are distinguished in the observation contract.
 
+## Expiry-day inapplicability (SD-01)
+
+Annualization requires a strictly positive remaining time span. On the last trading
+day D=0, there is no remaining maturity period to annualize. Futures Close, Index
+Close and the final cash-delivery settlement price are different price conventions;
+the Close basis cannot simply be interpreted as a delivery return. Using 365/(D+1)
+would systematically change every near-expiry observation, rather than losslessly
+repair missing data. Therefore retain Not Applicable (`expiry_day`) deliberately:
+no D+1, zero, interpolation, forward fill or other substitute. Valid raw basis_value
+and basis_ratio remain available. This is neither missing market data nor a
+calculation failure. The [outcome precedence](OBSERVATION.md#outcomes-and-precedence)
+still applies before expiry-day applicability, including excluded prices and missing
+underlying facts; neither is masked by expiry_day. The formula and definition
+version are unchanged.
+
+Reusable principle: for a derived metric requiring a strictly positive time span,
+a zero span that removes its business definition should be expressed as Not
+Applicable. Never change its time denominator or fill a substitute merely to keep
+a chart continuous. Apply the specific metric's existing validity precedence first;
+this is not a global rule for every metric at D=0.
+
 ## Sign and units
 
 | Condition on basis_value | State |
