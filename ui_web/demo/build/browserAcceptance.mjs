@@ -59,7 +59,11 @@ export async function verifyBrowser(publicUrl, { reviewOverview = false } = {}) 
     await page.waitForURL('**/#/research/futures-basis')
     // Compare the actual offline chart and tables with the admitted formal capture.
     const captured = JSON.parse(await readFile(new URL('../bundles/calendar_spread_relative_value.json', import.meta.url), 'utf8')).result
-    const number = (n, percent = false) => `${(percent ? n * 100 : n).toLocaleString('zh-CN', { maximumFractionDigits: 6 })}${percent ? '%' : ''}`
+    const number = (n, percent = false) => {
+      const rounded = (percent ? n * 100 : n).toFixed(percent ? 1 : 2)
+      const normalized = Number(rounded) === 0 ? (percent ? '0.0' : '0.00') : rounded
+      return `${normalized}${percent ? '%' : ''}`
+    }
     const daily = JSON.parse(await readFile(new URL('../bundles/calendar_spread_daily.json', import.meta.url), 'utf8')).result
     await page.goto(base + '#/data/futures-calendar-spread')
     await page.getByText('已查询数据', { exact: true }).waitFor()

@@ -44,3 +44,13 @@ it('reuses the history Binding color even when producer Binding order differs', 
   expect(traces.map(t => t.name)).toEqual(['M0', 'M1', 'Q1', 'Q2'])
   expect(traces.map(t => t.line.color)).toEqual(['#d62728', '#2ca02c', '#ff7f0e', '#1f77b4'])
 })
+
+it('preserves fine raw bins when one-decimal interval labels collide', () => {
+  const projection = histogramAggregation(histogramFixture([[0, .0005, .001, .002]], 'basis_ratio'), 'basis_ratio', .05)
+  if (projection.status !== 'ready') throw new Error(projection.message)
+  const trace = distributionTraces(projection, 'basis_ratio')[0] as any
+  expect(trace.x).toEqual([0, .0005, .0005, .001, .001, .0015, .0015, .002])
+  expect(trace.customdata[2][0]).toBe(trace.customdata[4][0])
+  expect(projection.slots[0].bins.map(bin => bin.count)).toEqual([1, 1, 1, 1])
+  expect(trace.customdata.map((item: any[]) => item[2])).toEqual([.25, .25, .25, .25, .25, .25, .25, .25])
+})
