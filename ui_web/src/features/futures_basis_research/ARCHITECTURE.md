@@ -54,7 +54,7 @@ Futures Basis Research
   maintain a second product-to-underlying mapping.
 - End date initially uses today in Asia/Shanghai; product and start date require
   explicit selection. The default is not a latest-available-date claim. Generate
-  requires complete parameters and a matching successful Preflight result.
+  requires complete, format/order-valid parameters; Preflight is advisory.
 - Date controls produce date-only `YYYY-MM-DD` values. Browser local time must not
   be treated as the business authority; the server applies the Asia/Shanghai
   future-date rule and the inclusive window bound.
@@ -78,7 +78,7 @@ IDLE → SUBMITTING → PENDING → RUNNING → REPORT_LOADING → COMPLETED
 
 - `SUBMITTING`: POST in flight; Generate disabled.
 - `PENDING`: accepted run, no result yet; show run ID, request identity and created
-  time; do not show a report.
+  time in collapsed details; do not show a report.
 - `RUNNING`: same, with an active indicator. No percentage or invented stage list.
 - `COMPLETED`: fetch the report; `partial` is a completed scientific result and is
   presented as such, never as an execution failure.
@@ -230,17 +230,26 @@ Verification and reproduction: [Historical presentation acceptance](HISTORICAL_P
 Consume Research [Preflight](../../../../market_research/descriptive/cases/futures_basis/PREFLIGHT.md)
 through generated HTTP types. Check complete, format/order-valid queries after
 400ms without edits and support manual refresh. Query changes immediately invalidate
-results and confirmation, cancel requests and ignore stale responses. Recheck on
-window focus and Shanghai date rollover. The server market_date is authoritative.
-Inspection state is independent of Run/report state; checking never clears a report.
+results, cancel requests and ignore stale responses. Recheck on window focus and
+Shanghai date rollover. The server market_date is authoritative. Inspection state
+is independent of Run/report state; checking never clears a report.
 
-Show all window dependencies and the today gate; disclose that no data was acquired
-and execution can still fail. Disable Generate while unchecked/checking/blocked or
-on check failure. confirm_required needs an explicit checkbox acknowledging that
-execution will attempt acquisition; reset it on query/result changes. Only an
-explicit Generate posts a Run; check completion never submits. End-date changes
-remain user-controlled; today blocks offer editing and recheck, no hidden ensure
-or automatic shift to yesterday. Failed-Run retry first loads/checks its request.
+UI-05 supersedes the old Web gate: complete format/order-valid inputs permit explicit
+Generate regardless of unchecked/checking/error/unknown or producer submission
+classification. No confirmation checkbox or canSubmit gate remains. Preserve
+`allowed` / `confirm_required` / `blocked` as producer assessment, never rewrite them.
+Run API remains final validation/execution authority. No implicit POST or POST retry.
+Show compact overall and dependency status plus successful/requested coverage,
+natural-day / 品种×日期 / 指数×日期 units, and window/today scope only as returned.
+Normal complete states have no boilerplate; exceptions get short actionable guidance.
+Refresh, cancellation, stale isolation and Shanghai rollover remain unchanged.
+
+Run summary follows UI-04: immutable 品种/window, confirmed backend status Tag
+(PENDING 等待执行 gold; RUNNING 运行中 gold; COMPLETED 已完成 green;
+FAILED 失败 red; INTERRUPTED 已中断 red), Started/Finished Beijing timestamps
+with — for absence, secondary wrapping Run ID. Read phases remain separate and
+never imply execution failure. Default-closed 运行详情 contains Created, raw status,
+phase and failure fields. User-facing failure reasons and manual actions stay visible.
 
 ## Runtime scope
 

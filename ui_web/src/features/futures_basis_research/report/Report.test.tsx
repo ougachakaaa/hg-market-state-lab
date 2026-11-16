@@ -7,7 +7,7 @@ import { validateReportData } from './validate'
 import { readerFixture } from './reader.fixture'
 // Keep the reader's real mode state; stub only the shared renderer/control boundary.
 vi.mock('../../../shared/visualization', () => ({
-  ChartView: ({ options }: any) => <div data-testid="chart-mode" data-disclosure={options?.dateEventsDisclosure?.description}>{options?.ordinalDates ? 'trading' : 'calendar'}</div>,
+  ChartView: ({ options }: any) => <div data-testid="chart-mode" data-disclosure={options?.dateEventsDisclosure?.description} data-missing={options?.missingValuesDisclosure?.title}>{options?.ordinalDates ? 'trading' : 'calendar'}</div>,
   DateAxisControl: ({ value, onChange, label }: any) => <div aria-label={label}>
     {[['trading', 'Trading Days'], ['calendar', 'Calendar Days']].map(([mode, text]) =>
       <button key={mode} onClick={() => onChange(mode)}>{text}</button>)}
@@ -273,4 +273,11 @@ it('rejects a nonempty Eligible Slot that reports no_eligible_sample instead of 
   expect(status.textContent).toContain('no_eligible_sample')
   expect(screen.queryByTestId('distribution-plot')).toBeNull()
   expect(screen.getByRole('region', { name: '统计摘要' })).toBeTruthy()
+})
+
+it.each(['online', 'demo', 'offline'] as const)('configures all three history disclosures in %s', mode => {
+ const data = readerFixture(); const original = structuredClone(data)
+ render(<Report data={data} mode={mode} />)
+ expect(screen.getAllByTestId('chart-mode').filter(node => node.getAttribute('data-missing') === '无有效指标值日期')).toHaveLength(3)
+ expect(data).toEqual(original)
 })

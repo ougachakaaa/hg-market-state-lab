@@ -15,7 +15,7 @@ Show this directly beside the annualized history chart, outside any disclosure:
 Do not repeat it on other metrics. Keep nulls, expiry_day and all producer evidence;
 do not connect gaps, modify transitions or reinterpret other unavailable outcomes.
 The adjacent explanation distinguishes deliberate inapplicability from the generic
-Missing values list without changing that renderer's semantics.
+无有效指标值日期 disclosure without changing null or outcome semantics.
 
 Near the distribution controls show `Slot | N | Min | P25 | Median | P75 | Max | Mean`
 for M0/M1/Q1/Q2 in that order, using the selected Metric, independently of the
@@ -108,3 +108,14 @@ minimum width keeps one-decimal percentage boundaries distinguishable. Offline r
 formal method details for every Slot and all six report sections.
 
 Execution evidence: [Task 2 distribution acceptance](DISTRIBUTION_ACCEPTANCE.md).
+
+## UI-05 no-value dates
+
+All three history charts explicitly configure the shared presentation-only
+`missingValuesDisclosure`: default-closed 无有效指标值日期, description
+“包含合约到期、无有效合约或数据不可用等情况，具体原因见日期详情。”,
+then independent default-closed Slot — date records retaining all original details.
+No expiry identity is inferred from null, dates or contract codes. Other consumers
+without this option keep existing Missing values behavior. Online/Demo/Offline use
+one reader; Offline keeps six sections and evidence. Expansion is local state only;
+producer Views, nulls, segments, transitions, coordinates and reasons are unchanged.

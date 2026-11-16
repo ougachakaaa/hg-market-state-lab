@@ -46,20 +46,23 @@ errors use `prerequisite_unavailable` for the downstream unknown. Missing, pendi
 and failed units are all needs_fetch, never proof of Source unavailability. No
 per-day identities are inferred from aggregate coverage.
 
-## Web submission policy
+## Producer submission classification (UI-05 reconciliation)
 
 `today_gate` is `not_applicable` for history; otherwise `ready` if all four today
 dependencies are complete, `unknown` if any is unknown/error, else `not_ready`.
 Complete calendars proving closure and zero market targets count as ready.
-Today Index coverage must be complete for this Web gate even though formal
+Today Index coverage must be complete for this classification even though formal
 preparation continues to allow a legal partial Index Export.
 
 `submission` is `blocked` if any actual check has operation/contract error or the
 today gate is not_ready/unknown; otherwise `confirm_required` if any window
 dependency is not complete; otherwise `allowed`. Historical calendar cache gaps
-are confirmable unknowns. Today gaps must say “本地当日数据未就绪，请先完成数据准备，再重新检查。”;
-never claim the upstream has not updated. First use of a cold today cache can be
-blocked until a separate existing preparation workflow populates it. No preparation
+retain confirm_required classification. Today gaps retain blocked classification;
+never claim the upstream has not updated. A cold today cache can remain classified
+blocked until populated. These producer classifications and fixed response messages
+are unchanged. UI-05 replaces the former Web button gate with advisory presentation:
+Web permits explicit legal requests without confirmation, preserves the raw classification,
+and uses short readiness labels rather than treating blocked as Run rejection. No preparation
 action is added here. The Run API repeats L1 only; its existing final preparation,
 completeness, lifecycle and failure categories remain authoritative and unchanged.
 

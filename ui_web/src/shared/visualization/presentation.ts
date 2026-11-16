@@ -8,6 +8,7 @@ export const DEFAULT_DATE_AXIS_MODE: DateAxisMode = 'trading'
 
 /** Frontend options, never serialized into a producer View. */
 export interface RenderOptions {
+  missingValuesDisclosure?: { title: string; description: string }
   dateEventsDisclosure?: { description: string }
   ordinalDates?: readonly string[]
   axisGrid?: Record<string, { tick0: number; dtick: number; gridcolor: string; griddash: 'dash' | 'dot' }>

@@ -10,7 +10,7 @@ vi.mock('../report/Report', () => ({ Report: () => <div>Retained report</div> })
 afterEach(cleanup)
 const request = { product_code: 'IC' as const, start_date: '2024-10-18', end_date: '2024-10-21', case: 'futures_basis_v1' as const, analysis_profile: 'r01a_standard_v1' as const }
 function state(overrides: Record<string, unknown> = {}) {
-  vi.mocked(usePreflight).mockReturnValue({ result: undefined, error: undefined, checking: false, confirmed: false, confirm: vi.fn(), canSubmit: false, refresh: vi.fn() })
+  vi.mocked(usePreflight).mockReturnValue({ result: undefined, error: undefined, checking: false, refresh: vi.fn() })
   const value = { phase: 'IDLE', id: '', feedback: undefined, submitting: false, submit: vi.fn(), retry: vi.fn(), ...overrides }
   vi.mocked(useFuturesBasis).mockReturnValue(value as unknown as ReturnType<typeof useFuturesBasis>)
   return value
@@ -66,18 +66,62 @@ it('retries an unavailable status read as status even when the last accepted Run
 it('shows dependency feedback and only submits after an explicit Generate', async () => {
   const s = state({ phase: 'FAILED', run: { run_id: 'a'.repeat(32), request, created_at: '2026-11-09T00:00:00Z', failure: null } })
   const refresh = vi.fn()
-  vi.mocked(usePreflight).mockReturnValue({ result: { request, checked_at: '2026-11-10T14:00:00Z', market_date: '2026-11-10', submission: 'blocked', today_gate: 'not_ready', dependencies: [{ dependency: 'futures', scope: 'today', state: 'needs_fetch', coverage: null, reason_code: 'cache_incomplete', message: '本地数据覆盖不完整' }] }, error: undefined, checking: false, confirmed: false, confirm: vi.fn(), canSubmit: false, refresh })
+  vi.mocked(usePreflight).mockReturnValue({ result: { request, checked_at: '2026-11-10T14:00:00Z', market_date: '2026-11-10', submission: 'blocked', today_gate: 'not_ready', dependencies: [{ dependency: 'futures', scope: 'today', state: 'needs_fetch', coverage: null, reason_code: 'cache_incomplete', message: '本地数据覆盖不完整' }] }, error: undefined, checking: false, refresh })
   const { rerender } = render(<FuturesBasisPage />)
-  expect(screen.getByText('本地当日数据未就绪，请先完成数据准备，再重新检查。')).toBeTruthy()
-  expect(screen.getByText(/检查时间：2026-11-10 22:00:00（北京时间）/)).toBeTruthy()
+  expect(screen.getByText('当日缓存不完整')).toBeTruthy()
+  expect(screen.queryByRole('checkbox')).toBeNull()
+  expect(screen.queryByText('Created')).toBeNull()
+  fireEvent.click(screen.getByText('运行详情'))
   expect(screen.getByText('2026-11-09 08:00:00（北京时间）')).toBeTruthy()
   fireEvent.click(screen.getByRole('button', { name: '使用原请求创建新 Run' }))
   expect(s.submit).not.toHaveBeenCalled()
-  expect(screen.getByRole('button', { name: /生成研究/ }).hasAttribute('disabled')).toBe(true)
+  expect(screen.getByRole('button', { name: /生成研究/ }).hasAttribute('disabled')).toBe(false)
   const current = vi.mocked(usePreflight).mock.results.at(-1)!.value
-  vi.mocked(usePreflight).mockReturnValue({ ...current, result: { ...current.result!, submission: 'allowed', today_gate: 'not_applicable' }, canSubmit: true })
+  vi.mocked(usePreflight).mockReturnValue({ ...current, result: { ...current.result!, submission: 'blocked', today_gate: 'not_ready' } })
   rerender(<FuturesBasisPage />)
   expect(vi.mocked(usePreflight).mock.calls.at(-1)?.[0]).toEqual({ product_code: request.product_code, start_date: request.start_date, end_date: request.end_date })
   fireEvent.click(screen.getByRole('button', { name: /生成研究/ }))
   await waitFor(() => expect(s.submit).toHaveBeenCalledWith({ product_code: request.product_code, start_date: request.start_date, end_date: request.end_date }))
+})
+
+it.each(['confirm_required', 'blocked', 'checking', 'error', 'unknown'] as const)('permits explicit submission with advisory %s', async assessment => {
+ const s = state({ phase: 'FAILED', run: { request } })
+ const refresh = vi.fn()
+ vi.mocked(usePreflight).mockReturnValue({ refresh, checking: assessment === 'checking', error: assessment === 'error' ? new ResearchError('network') : undefined,
+ result: assessment === 'confirm_required' || assessment === 'blocked' ? { request, checked_at: '2026-11-10T14:00:00Z', market_date: '2026-11-10', submission: assessment, today_gate: 'not_applicable', dependencies: [] } : undefined })
+ render(<FuturesBasisPage />)
+ fireEvent.click(screen.getByRole('button', { name: '使用原请求创建新 Run' }))
+ expect(screen.queryByRole('checkbox')).toBeNull()
+ expect(screen.getByRole('button', { name: /生成研究/ }).hasAttribute('disabled')).toBe(false)
+ expect(s.submit).not.toHaveBeenCalled()
+ fireEvent.click(screen.getByRole('button', { name: /生成研究/ }))
+ await waitFor(() => expect(s.submit).toHaveBeenCalledTimes(1))
+})
+it.each([['PENDING', '等待执行', 'gold'], ['RUNNING', '运行中', 'gold'], ['COMPLETED', '已完成', 'green'], ['FAILED', '失败', 'red'], ['INTERRUPTED', '已中断', 'red']])('shows confirmed %s status', (status, label, color) => {
+ state({ phase: status, run: { status, request, started_at: '2026-11-09T01:00:00Z', finished_at: null } })
+ render(<FuturesBasisPage />)
+ expect(screen.getByText(label).className).toContain(`ant-tag-${color}`)
+ expect(screen.getByText('Started: 2026-11-09 09:00:00（北京时间）')).toBeTruthy()
+ expect(screen.getByText('Finished: —')).toBeTruthy()
+ expect(screen.queryByText('Created')).toBeNull()
+})
+it.each(['STATUS_ERROR', 'REPORT_ERROR', 'REPORT_LOADING'])('preserves completed fact during %s', phase => {
+ state({ phase, run: { status: 'COMPLETED', request } })
+ render(<FuturesBasisPage />)
+ expect(screen.getByText('已完成')).toBeTruthy()
+ expect(screen.queryByText('失败')).toBeNull()
+})
+
+it('shows actual scoped coverage with product-day granularity and preserves producer classification', () => {
+ state()
+ vi.mocked(usePreflight).mockReturnValue({ refresh: vi.fn(), checking: false, error: undefined, result: {
+ request, checked_at: '2026-11-10T14:00:00Z', market_date: '2026-11-10', submission: 'confirm_required', today_gate: 'not_applicable',
+ dependencies: [{ dependency: 'futures', scope: 'window', state: 'needs_fetch', reason_code: 'cache_incomplete', message: 'original', coverage: { complete: false, requested_units: 92, successful_units: 48, missing_units: 44, pending_units: 0, failed_units: 0 } }],
+ } })
+ render(<FuturesBasisPage />)
+ expect(screen.getByText('整段 / 期货日线')).toBeTruthy()
+ expect(screen.getByText(/已缓存 48 \/ 92 个品种×日期目标/)).toBeTruthy()
+ expect(screen.queryByText(/当日 \/ /)).toBeNull()
+ fireEvent.click(screen.getByText('预检详情'))
+ expect(screen.getByText(/submission: confirm_required/)).toBeTruthy()
 })

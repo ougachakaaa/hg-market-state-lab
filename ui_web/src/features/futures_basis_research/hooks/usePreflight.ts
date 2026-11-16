@@ -10,9 +10,8 @@ export function usePreflight(query: RunRequest | undefined) {
   const key = query ? JSON.stringify(query) : ''
   const [revision, setRevision] = useState(0)
   const [state, setState] = useState<{ key: string; revision: number; result?: Preflight; error?: ResearchError; signal?: AbortSignal }>({ key: '', revision: -1 })
-  const [confirmation, setConfirmation] = useState<Preflight>()
   const controller = useRef<AbortController | null>(null)
-  const refresh = useCallback(() => { controller.current?.abort(); setRevision(v => v + 1); setConfirmation(undefined) }, [])
+  const refresh = useCallback(() => { controller.current?.abort(); setRevision(v => v + 1) }, [])
   useEffect(() => {
     window.addEventListener('focus', refresh)
     return () => window.removeEventListener('focus', refresh)
@@ -44,12 +43,9 @@ export function usePreflight(query: RunRequest | undefined) {
     const timer = setTimeout(refresh, Math.max(1, next - observed))
     return () => clearTimeout(timer)
   }, [result, refresh])
-  const confirmed = !!result && confirmation === result
-  const canSubmit = !!result && result.submission !== 'blocked' && (result.submission !== 'confirm_required' || confirmed)
   return {
     result, error: matching ? state.error : undefined,
     checking: !!key && !result && !(matching && state.error),
-    confirmed, confirm: (value: boolean) => setConfirmation(value ? result : undefined),
-    canSubmit, refresh,
+    refresh,
   }
 }

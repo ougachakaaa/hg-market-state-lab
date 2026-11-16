@@ -76,7 +76,7 @@ Validation before any run creation or upstream I/O:
 - no minimum start date, source default, window split,
   multi-product expansion or client-controlled method selection exists.
 
-Read-only [Preflight](PREFLIGHT.md) supplies Web admission guidance before explicit
+Read-only [Preflight](PREFLIGHT.md) supplies advisory readiness/classification before explicit
 submission; it does not gate the Run API or change final preparation.
 
 The source-data and completeness rules are unchanged from [Inputs](INPUTS.md) and

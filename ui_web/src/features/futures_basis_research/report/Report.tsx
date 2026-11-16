@@ -63,6 +63,7 @@ export function Report({ data, mode, sectionNavigation = 'fragment' }: {
         {metrics.map(m => <div key={m}>
           {m === 'annualized_basis_ratio' && <Typography.Paragraph>合约到期日的剩余期限 D=0，年化基差按研究定义主动留空，并非行情数据错误；原始基差仍然保留。</Typography.Paragraph>}
           <div tabIndex={mode === 'demo' ? 0 : undefined} aria-label={mode === 'demo' ? `${m} 图表，窄屏可横向滚动` : undefined} style={{ minWidth: 0, overflow: mode === 'demo' ? 'auto' : 'hidden' }}><div style={{ minWidth: mode === 'demo' ? 640 : undefined }}><ChartView view={data.views.history[m]} minPlotHeight={480} options={{ ...historyOptions(data.views.history[m], data.candidate_dates, timeScale === 'trading', m === 'basis_value'),
+          missingValuesDisclosure: { title: '无有效指标值日期', description: '包含合约到期、无有效合约或数据不可用等情况，具体原因见日期详情。' },
           dateEventsDisclosure: mode === 'offline' ? undefined : { description: '标记不同期限 Slot 所对应的期货合约发生切换的日期，仅用于描述合约映射变化，不代表实际交易。' } }} /></div></div></div>)}
   </>
   const distributionCharts = <>

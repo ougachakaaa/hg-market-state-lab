@@ -40,7 +40,7 @@ function V2Chart({ view, minPlotHeight, options }: { view: ViewV2; minPlotHeight
     if (!range && !event['xaxis.autorange']) return
     setViewport({ domain: options.ordinalDates, range: range?.map(Number) })
   }
-  const missing = view.layers.flatMap(b => b.layer.data.filter(m => m.y === null).map(m => ({ key: `${b.id}:${m.x}`, label: `${b.label} — ${m.x} — No value`, children: <DetailList details={m.details} /> })))
+  const missing = view.layers.flatMap(b => b.layer.data.filter(m => m.y === null).map(m => ({ key: `${b.id}:${m.x}`, label: `${b.label} — ${m.x}${options.missingValuesDisclosure ? '' : ' — No value'}`, children: <DetailList details={m.details} /> })))
   const events = view.events.map(e => ({ key: e.id, label: `${e.id} — ${e.x} — ${e.label}`, children: <DetailList details={e.details} /> }))
   // Plotly's Shift/Ctrl shortcuts can switch drag modes even when their buttons
   // are absent. Block only shortcuts that would enable a disabled interaction.
@@ -64,7 +64,12 @@ function V2Chart({ view, minPlotHeight, options }: { view: ViewV2; minPlotHeight
         plot_bgcolor: token.colorBgContainer, font: { color: token.colorText } }}
         style={{ width: '100%', height: '100%' }} useResizeHandler />
     </div>
-    {missing.length > 0 && <section aria-label="Missing values"><Typography.Title level={5}>Missing values</Typography.Title><Collapse items={missing} /></section>}
+    {missing.length > 0 && <section aria-label={options.missingValuesDisclosure?.title ?? 'Missing values'}>{options.missingValuesDisclosure
+      ? <Collapse items={[{ key: 'missing-values', label: options.missingValuesDisclosure.title, children: <>
+          <Typography.Paragraph>{options.missingValuesDisclosure.description}</Typography.Paragraph>
+          <Collapse items={missing} />
+        </> }]} />
+      : <><Typography.Title level={5}>Missing values</Typography.Title><Collapse items={missing} /></>}</section>}
     {events.length > 0 && <section aria-label="Date events">{options.dateEventsDisclosure
       ? <Collapse items={[{ key: 'date-events', label: '日期事件（Date Events）', children: <>
           <Typography.Paragraph>{options.dateEventsDisclosure.description}</Typography.Paragraph>
