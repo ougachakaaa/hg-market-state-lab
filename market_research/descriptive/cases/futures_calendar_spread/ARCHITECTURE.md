@@ -42,7 +42,8 @@ Presentation, and Demo captures only formal HTTP Results.
 | Comparable historical samples and relative assessment | [Relative value](RELATIVE_VALUE.md) |
 | Shared Python business boundary and the two queries | [Application](APPLICATION.md) |
 | Immutable query results, evidence references and statistical association | [Query Results](QUERY_RESULTS.md) |
-| WP1–WP7, acceptance, reconciliation and readiness | [Roadmap](ROADMAP.md) |
+| Original WP0–WP7, acceptance and delivery history | [Roadmap](ROADMAP.md) |
+| Issue #13 automatic preparation: target/current drift, WP0 reconciliation and WP1–WP3 readiness | [Automatic preparation reconciliation](AUTO_PREPARATION_RECONCILIATION.md) |
 
 ## Independence and reuse
 

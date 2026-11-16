@@ -3,8 +3,10 @@
 Specializes [the case](ARCHITECTURE.md). The WP1 financial and WP2
 preparation/construction APIs and WP4 independent queries are implemented through
 `market_research.descriptive.cases.futures_calendar_spread`. They are Python
-semantic boundaries; HTTP delivery remains WP5. The immutable business schema and
-association contract are owned by [Query Results](QUERY_RESULTS.md).
+semantic boundaries; HTTP delivery is owned separately. Issue #13's explicit
+execution APIs are accepted targets, not delivered runtime; current drift and
+readiness enter [reconciliation](AUTO_PREPARATION_RECONCILIATION.md). The immutable
+business schema and association contract are owned by [Query Results](QUERY_RESULTS.md).
 
 ## Shared capability
 
@@ -44,10 +46,14 @@ requires neither trade_date nor near DTE; lifecycle checks belong to Observation
 ## Preparation and construction
 
 `prepare_inputs(product_code, start_date, end_date, *, calendar_service=None,
-futures_service=None)` performs only the read-only public input work in [Inputs](INPUTS.md); public-service injection is allowed for
-deterministic tests. `construct_observations(prepared_inputs)` is pure. Both queries
-compose these operations. They do not independently calculate financial values or
-share a generic workflow base class.
+futures_service=None)` performs only the read-only public input work in
+[Inputs](INPUTS.md); public-service injection is allowed for deterministic tests.
+`prepare_inputs_for_execution` has the same parameters and returns the same
+prepared carrier, with conditional Ensure under Inputs. It is the preparation
+boundary for explicit execution only. `construct_observations(prepared_inputs)` is
+pure. Read-only queries and execution entrypoints compose the selected preparation
+with the same construction and statistical analysis. They do not independently
+calculate financial values or share a generic workflow base class.
 
 Preparation returns `PreparedCalendarSpreadInputs`; construction returns
 `CalendarSpreadObservationSet`. Their immutable carriers and classified exceptions
@@ -81,12 +87,17 @@ Business failure categories are `invalid_request`, `incomplete_inputs`,
 `upstream_unavailable`, `input_contract_error`, `slot_resolution_error`,
 `calculation_failure` and `statistical_failure`. Retain stage, dependency or pair/date
 where applicable, method where applicable, safe reason and obtained evidence.
+Preparation failures also propagate the optional reason_code, operation and
+immutable attempts defined solely by [Inputs](INPUTS.md#execution-preparation-and-diagnostics-boundary);
+application adaptation must not discard them.
 Transport maps these categories without reclassifying normal product availability.
 Closed dates, proven empty universes, nonpositive-price exclusions and empty/small
 historical samples are valid product outcomes, not infrastructure exceptions.
 
-Queries perform no ensure, writes, automatic retries, source substitution, background
-execution or cross-request result persistence. They create no Run ID, durable store,
+The existing `query_*` functions perform no Ensure or writes. Explicit `execute_*`
+functions may prepare caches only through Input Preparation. Both modes are
+synchronous, without automatic retries, source substitution, background execution
+framework or cross-request result persistence. They create no Run ID, durable store,
 ResearchPlan, Batch, Publication or execution ownership identity. Existing repository
 HTTP authentication gates access; it does not turn query results into stored Runs.
 
@@ -123,4 +134,42 @@ explicit failures; operators must prepare them separately. Both independent
 snapshots and the lack of historical point-in-time metadata are disclosed in
 returned source_context. Queries execute synchronously with memory/time growing
 with the explicitly requested window; no arbitrary date cap or timeout is added.
-WP5 must assess transport/resource limits and safe DTO/error projection separately.
+Transport/resource limits and safe DTO/error projection belong to the published
+HTTP contracts. This paragraph describes read-only Python queries only; formal
+user execution uses the entrypoints below.
+
+## Explicit execution entrypoints (Issue #13 target)
+
+The case facade adds:
+
+```text
+execute_daily_spreads(product_code, trade_date, *, calendar_service=None,
+                      futures_service=None) -> DailySpreadsResult
+execute_historical_relative_value(product_code, history_start, evaluation_date,
+    metric="annualized_spread_ratio", histogram_edges=None, *,
+    calendar_service=None, futures_service=None) -> HistoricalRelativeValueResult
+```
+
+Arguments, exact validation, defaults and Result types match the corresponding
+read-only query; injected dependencies implement the execution protocols in Inputs.
+Validate the entire request, including Historical metric/edges, before factories
+or upstream calls. Each execution invokes prepare_inputs_for_execution once and
+construct_observations once, then reuses the existing Daily projection or Historical
+Statistics/association path. Never prepare per date, pair or method, or call the
+read-only query to reacquire inputs. No generic workflow abstraction is required.
+
+The `query_*` entrypoints and export-only injection remain available unchanged.
+No public boolean flag silently upgrades their permissions. Execution and read-only
+results retain existing request.operation literals `query_daily_spreads` and
+`query_historical_relative_value`: these identify the analysis, not acquisition
+permission. Entry selection owns permission; no new result identity or Run is
+created. Given identical final Exports and analysis parameters, financial values,
+populations and statistics are identical under both modes.
+
+[Query Results](QUERY_RESULTS.md) owns accurate source_context and internal
+preparation evidence. Existing Demo results remain valid without a schema or
+Bundle rewrite. Existing Daily GET delegates to query_daily_spreads; new Daily
+POST delegates to execute_daily_spreads. Historical POST keeps its path and HTTP
+operationId but explicitly changes to execute_historical_relative_value. This is
+a documented execution-semantic change, not permission for arbitrary POST reads
+to acquire facts. Preflight/Readiness and static Demo remain read-only.

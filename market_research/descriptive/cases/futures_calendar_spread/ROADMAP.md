@@ -3,6 +3,15 @@
 Specializes [the case](ARCHITECTURE.md). This document owns delivery sequencing,
 acceptance and WP0 reconciliation, not competing financial or numerical formulas.
 
+## Issue #13 follow-up navigation
+
+The WP0–WP7 closure and acceptance records below describe the original L1 delivery
+and remain unchanged. They do not close Issue #13. Its new WP0 Semantic Decision
+Encoding, target/current implementation differences and separately numbered
+Issue #13 WP1–WP3 enter [Automatic preparation reconciliation](AUTO_PREPARATION_RECONCILIATION.md).
+Inputs/Application/HTTP/Web now define that accepted target; no execution runtime
+is delivered by its documentation-only WP0.
+
 ## Baseline and status
 
 Final reconciliation (2026-11-16): **WP0–WP7 CLOSED**. Financial, read-only
