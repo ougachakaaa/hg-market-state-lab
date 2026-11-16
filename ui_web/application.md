@@ -49,7 +49,10 @@ Application navigation 只选择当前 feature surface，不成为 backend produ
 Production Workspace also owns the most recently visited Run route identities and
 navigation parameters, within the authenticated lifecycle defined by
 [Workspace Run navigation identity](workspace.md#production-run-navigation-identity).
-This is URL navigation memory only. Features retain ownership of Run lifecycle,
+Navigation memory stores URL identity only. Production composition also owns the
+first-visited Backtesting Activity instance and visibility, destroyed with Workspace.
+The retained feature continues to own all its data and presentation state.
+Features retain ownership of Run lifecycle,
 GET/POST, validation, polling, cancellation and result presentation; Application
 neither interprets Run status/results nor caches feature DTOs or presentation state.
 Navigation memory ends with the authenticated Workspace, even though the outer

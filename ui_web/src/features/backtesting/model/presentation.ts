@@ -4,6 +4,7 @@ import { formatPercent } from '../../../shared/format/number'
 export const percent = (value: number) => formatPercent(value)
 export const money = (value: number) => new Intl.NumberFormat('zh-CN', { style: 'currency', currency: 'CNY', maximumFractionDigits: 2 }).format(value)
 const messages: Record<string, string> = {
+  submission_unconfirmed: '提交确认已中断，服务器可能已接受，请勿自动重发。',
   network: '网络响应丢失。提交结果可能已被服务器接受，请勿自动重发；读取操作可手动重试。',
   invalid_response: '服务器响应无效，无法安全展示。', invalid_request: '参数未通过服务器验证，请检查日期范围与策略。',
   request_too_large: '请求超过大小限制。', run_not_found: '回测不存在或无权访问。', run_busy: 'RUN_BUSY：已有回测正在执行，请稍后明确提交。',

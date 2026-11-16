@@ -1,7 +1,7 @@
-import { useCallback, useState } from 'react'
-import type { PlotRelayoutEvent } from 'plotly.js'
+import { useCallback, useRef, useState } from 'react'
+import type { Data, Layout, PlotRelayoutEvent } from 'plotly.js'
 import { ordinalTicks, type RenderOptions } from './presentation'
-import Plot from 'react-plotly.js'
+import Plot, { type Figure } from 'react-plotly.js'
 import type { ChartView as ChartViewContract } from './contract'
 import { chartViewToPlotly } from './figure'
 import type { ViewV2, VisualizationView, Detail } from './contractV2'
@@ -14,7 +14,7 @@ function DetailList({ details }: { details: Detail[] }) {
   return <>{details.map((detail, i) => <div key={i}>{detail.label}: {detail.value}</div>)}</>
 }
 
-function V2Chart({ view, minPlotHeight, options }: { view: ViewV2; minPlotHeight: number; options: RenderOptions }) {
+function V2Chart({ view, minPlotHeight, options, retainInteractionState }: { view: ViewV2; minPlotHeight: number; options: RenderOptions; retainInteractionState?: boolean }) {
   const { token } = theme.useToken()
   const [viewport, setViewport] = useState<{ domain: readonly string[] | undefined; range?: number[] }>({ domain: options.ordinalDates })
   // A coordinate-system change invalidates viewport labels, not the Plot instance.
@@ -25,7 +25,33 @@ function V2Chart({ view, minPlotHeight, options }: { view: ViewV2; minPlotHeight
     setViewport(current => ({ domain: current.domain }))
     setResetRevision(value => value + 1)
   }, [])
+  // react-plotly.js purges on Activity effect cleanup. Save only interaction
+  // fields, never producer traces/layout, and replay them into the rebuilt plot.
+  const [interaction, setInteraction] = useState<{
+    view: ViewV2; domain: RenderOptions['ordinalDates']; revision: number;
+    axes: Record<string, { range?: number[]; autorange?: boolean }>;
+    dragmode: Layout['dragmode']; visible: Data['visible'][];
+  }>()
+  const restoring = useRef(false)
   const figure = viewV2ToPlotly(view, options, resetViewport)
+  function retain(snapshot: Figure) {
+    const figure = snapshot as { layout: Partial<Layout>; data: Data[] }
+    if (!retainInteractionState || !figure.layout || !Array.isArray(figure.data)) return
+    restoring.current = true
+    const axes: NonNullable<typeof interaction>['axes'] = {}
+    for (const [key, axis] of Object.entries(figure.layout)) {
+      if (/^[xy]axis\d*$/.test(key)) axes[key] = { range: axis.range?.slice(), autorange: axis.autorange }
+    }
+    setInteraction({ view, domain: options.ordinalDates, revision: resetRevision, axes,
+      dragmode: figure.layout.dragmode, visible: figure.data.map(trace => trace.visible) })
+  }
+  if (retainInteractionState && restoring.current && interaction?.view === view) {
+    figure.data.forEach((trace, index) => { if (interaction.visible[index] !== undefined) trace.visible = interaction.visible[index] })
+    if (interaction.domain === options.ordinalDates && interaction.revision === resetRevision) {
+      for (const [key, axis] of Object.entries(interaction.axes)) Object.assign(figure.layout[key as 'xaxis'], axis)
+      figure.layout.dragmode = interaction.dragmode
+    }
+  }
   // Plotly's built-in reset caches the first coordinate system. Explicit revisions
   // reset to the current full-data ranges after an ordinal/calendar switch.
   for (const [key, axis] of Object.entries(figure.layout)) {
@@ -60,7 +86,7 @@ function V2Chart({ view, minPlotHeight, options }: { view: ViewV2; minPlotHeight
   return <Flex vertical gap="small" style={{ height: '100%', width: '100%' }}>
     {!view.layers.some(b => b.layer.data.some(m => m.y !== null)) && <Alert title="No numeric data" type="info" />}
     <div onMouseDownCapture={guardDrag} onTouchStartCapture={guardDrag} style={{ flex: `1 0 ${minPlotHeight}px`, minHeight: minPlotHeight }}>
-      <Plot {...figure} onRelayout={updateTicks} layout={{ ...figure.layout, paper_bgcolor: token.colorBgContainer,
+      <Plot {...figure} onPurge={retain} onInitialized={() => { restoring.current = false }} onRelayout={updateTicks} layout={{ ...figure.layout, paper_bgcolor: token.colorBgContainer,
         plot_bgcolor: token.colorBgContainer, font: { color: token.colorText } }}
         style={{ width: '100%', height: '100%' }} useResizeHandler />
     </div>
@@ -80,9 +106,9 @@ function V2Chart({ view, minPlotHeight, options }: { view: ViewV2; minPlotHeight
 }
 
 /** Renders a complete inline View; validation errors are thrown to the caller. */
-export function ChartView({ view, minPlotHeight = 320, options = {} }: { view: VisualizationView; minPlotHeight?: number; options?: RenderOptions }) {
+export function ChartView({ view, minPlotHeight = 320, options = {}, retainInteractionState = false }: { view: VisualizationView; minPlotHeight?: number; options?: RenderOptions; retainInteractionState?: boolean }) {
   validateVisualizationView(view)
-  if (view.version === 2) return <V2Chart view={view} minPlotHeight={minPlotHeight} options={options} />
+  if (view.version === 2) return <V2Chart view={view} minPlotHeight={minPlotHeight} options={options} retainInteractionState={retainInteractionState} />
   return <V1Chart view={view} options={options} />
 }
 

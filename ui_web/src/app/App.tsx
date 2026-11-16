@@ -2,7 +2,7 @@ import DailyCalendarSpreadPage from '../features/futures_calendar_spread/page/Da
 import RelativeValuePage from '../features/calendar_spread_relative_value/page/RelativeValuePage'
 import { LogoutOutlined, ReloadOutlined } from '@ant-design/icons'
 import { Alert, Button, Flex, Spin, Typography, theme } from 'antd'
-import { useEffect } from 'react'
+import { Activity, useEffect, useState } from 'react'
 import FuturesBasisPage from '../features/futures_basis_research/page/FuturesBasisPage'
 import OptionChainPage from '../features/mo_option_chain'
 import PremiumPlanePage from '../features/mo_option_premium'
@@ -25,6 +25,9 @@ function ProductionWorkspace({ user, signOut, path, navigate: navigateRoute }: {
   navigate: (path: WorkspacePath, replace?: boolean, runId?: string) => void;
 }) {
   const navigate = useRunNavigation(navigateRoute)
+  const active = path === '/backtesting/futures-roll-long'
+  const [visited, setVisited] = useState(active)
+  if (active && !visited) setVisited(true)
   return <ApplicationShell path={path} navigate={navigate} href={path => path} header={
     <Flex align="center" gap="middle" wrap>
       <Typography.Text type="secondary" style={{ overflowWrap: 'anywhere' }}>{user.username}</Typography.Text>
@@ -40,7 +43,10 @@ function ProductionWorkspace({ user, signOut, path, navigate: navigateRoute }: {
             : path === '/data/mo-option-chain' ? <OptionChainPage />
               : path === '/data/mo-premium-plane' ? <PremiumPlanePage />
                 : path === '/backtesting' ? <BacktestingOverview navigate={navigate} />
-                  : <BacktestingPage />}
+                  : null}
+    {(visited || active) && <Activity mode={active ? 'visible' : 'hidden'}>
+      <BacktestingPage active={active} />
+    </Activity>}
   </ApplicationShell>
 }
 

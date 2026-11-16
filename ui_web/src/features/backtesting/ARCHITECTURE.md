@@ -32,9 +32,16 @@ submission feedback, not a Run phase. These do not extend backend states.
 
 Application menu navigation may restore this page's opaque Run ID under
 [Workspace identity rules](../../../workspace.md#production-run-navigation-identity).
-The feature restores that URL through existing reads, never automatic POST. Explicit
-URL identity remains authoritative over retained state; future page-instance retention
-must recognize identity changes and cannot display another Run's retained Result.
+The feature synchronizes the live URL on visible render, Activity restoration and history,
+never automatic POST. Explicit URL identity, including no ID, overrides retained state
+before old results can display. Identity replacement discards the previous Run/Result
+but preserves editable form inputs. Only one Run/Result is retained.
+A matching validated Result survives Activity hiding without Run/Result GET and keeps
+its Result presentation instance. Hidden pages abort reads and stop polling; returning
+unfinished reads and PENDING/RUNNING Runs re-read the backend. Read errors keep manual
+GET retry. Activity cleanup aborts unconfirmed POSTs, isolates late responses and reports
+an unknown submission outcome without replay. Preflight may recheck current inputs.
+Application destroys all retained state at the end of the authenticated Workspace.
 
 Only PENDING/RUNNING poll; COMPLETED separately
 loads Result. Read errors stop polling and allow manual GET retry. FAILED/INTERRUPTED
@@ -89,6 +96,12 @@ leaves dates, values, trades, rolls, evidence and fingerprint unchanged. Both ch
 receive the same memoized options object and date domain, so a switch resets the
 horizontal viewport to the new coordinate system, preserves legend selection and keeps
 event annotations aligned. A different Run remounts Result and restores the default.
+
+Production retains date-axis controls and disclosures through Activity hiding.
+The Plotly adapter may retain only local axis ranges, legend visibility and drag mode
+across renderer cleanup/recreation; producer traces remain unchanged. Coordinate-system
+changes and explicit reset still invalidate the retained viewport. Renderer recreation
+uses its existing resize lifecycle; no business reads or financial recomputation follow.
 
 ## Verification
 

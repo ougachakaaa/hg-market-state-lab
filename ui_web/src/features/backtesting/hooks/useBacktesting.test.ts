@@ -89,16 +89,17 @@ it('keeps failed immutable request for an explicit new Run and aborts submission
   expect(window.location.search).toBe(`?run_id=${id}`)
 })
 
-it('retains the failed read context independently of a previously completed Run', async () => {
+it('retains a validated completed Result on same-identity history', async () => {
   window.history.replaceState(null, '', `?run_id=${id}`)
   vi.mocked(getRun).mockResolvedValueOnce(completed).mockRejectedValueOnce(new BacktestingError('unavailable'))
   vi.mocked(getResult).mockResolvedValueOnce(envelope)
   const { result } = renderHook(useBacktesting); await flush()
   expect(result.current.phase).toBe('RESULT_READY')
   act(() => window.dispatchEvent(new PopStateEvent('popstate'))); await flush()
-  expect(result.current.phase).toBe('UNAVAILABLE')
-  expect(result.current.run?.status).toBe('COMPLETED')
-  expect(result.current.errorRead).toBe('status')
+  expect(result.current.phase).toBe('RESULT_READY')
+  expect(result.current.result).toBe(envelope)
+  expect(getRun).toHaveBeenCalledTimes(1)
+  expect(getResult).toHaveBeenCalledTimes(1)
   expect(submitRun).not.toHaveBeenCalled()
 })
 

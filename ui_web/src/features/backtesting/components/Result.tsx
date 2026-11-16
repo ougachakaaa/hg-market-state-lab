@@ -40,9 +40,9 @@ export function Result({ data, mode = 'production', sourceDisclosure }: { source
         <Typography.Title level={4}>回测可视化</Typography.Title>
         <DateAxisControl label="收益与回撤时间轴" value={timeScale} onChange={setTimeScale} />
         <Typography.Title level={5}>累计收益曲线</Typography.Title>
-        <div style={{ overflowX: 'auto', maxWidth: '100%' }}><div style={{ minWidth: 620 }}><ChartView view={views.returns} options={options} /></div></div>
+        <div style={{ overflowX: 'auto', maxWidth: '100%' }}><div style={{ minWidth: 620 }}><ChartView view={views.returns} options={options} retainInteractionState={mode === 'production'} /></div></div>
         <Typography.Title level={5}>回撤曲线</Typography.Title>
-        <div style={{ overflowX: 'auto', maxWidth: '100%' }}><div style={{ minWidth: 620 }}><ChartView view={views.drawdown} options={options} /></div></div>
+        <div style={{ overflowX: 'auto', maxWidth: '100%' }}><div style={{ minWidth: 620 }}><ChartView view={views.drawdown} options={options} retainInteractionState={mode === 'production'} /></div></div>
       </section>
       {mode === 'static' && sourceDisclosure && <Typography.Text type="secondary" style={{ overflowWrap: 'anywhere' }}>{sourceDisclosure}</Typography.Text>}
     </Flex>

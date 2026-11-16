@@ -360,17 +360,25 @@ describe('authenticated Run navigation retention', () => {
     await screen.findByRole('heading', { name: '研究总览' })
   }
 
-  it('remounts the real Backtesting hook and reads the same Result without POST', async () => {
+  it('retains the real Backtesting page and Result without extra reads or POST', async () => {
     window.history.replaceState(null, '', `/backtesting/futures-roll-long?run_id=${id}`)
     const fetch = installFetch()
     render(<App />)
     await screen.findAllByTestId('plot')
+    commitDate(screen.getByLabelText('开始日期'), '2024-10-18')
+    fireEvent.click(screen.getByText('Calendar Days'))
+    fireEvent.click(screen.getByRole('button', { name: '运行详情' }))
+    fireEvent.click(screen.getByRole('button', { name: '策略规则与收益口径' }))
     await openResearch()
     fireEvent.click(screen.getByRole('menuitem', { name: '期货展期做多回测' }))
     await screen.findAllByTestId('plot')
+    expect(screen.getByLabelText('开始日期')).toHaveProperty('value', '2024-10-18')
+    expect(screen.getByRole('button', { name: '运行详情' }).getAttribute('aria-expanded')).toBe('true')
+    expect(screen.getByRole('button', { name: '策略规则与收益口径' }).getAttribute('aria-expanded')).toBe('true')
+    expect(screen.getByText('Calendar Days').closest('.ant-segmented-item')?.className).toContain('ant-segmented-item-selected')
     expect(window.location.search).toBe(`?run_id=${id}`)
-    expect(fetch.mock.calls.filter(([url]) => url === base)).toHaveLength(2)
-    expect(fetch.mock.calls.filter(([url]) => url === `${base}/result`)).toHaveLength(2)
+    expect(fetch.mock.calls.filter(([url]) => url === base)).toHaveLength(1)
+    expect(fetch.mock.calls.filter(([url]) => url === `${base}/result`)).toHaveLength(1)
     expect(fetch.mock.calls.some(([, init]) => init?.method === 'POST')).toBe(false)
   })
 
@@ -397,6 +405,7 @@ describe('authenticated Run navigation retention', () => {
     fireEvent.click(await screen.findByRole('menuitem', { name: '期货展期做多回测' }))
     await screen.findByRole('heading', { name: /期货展期做多回测/ })
     expect(window.location.search).toBe('')
+    expect(screen.queryByTestId('backtest-result')).toBeNull()
     expect(fetch.mock.calls.filter(([url]) => url === base)).toHaveLength(1)
   })
 })

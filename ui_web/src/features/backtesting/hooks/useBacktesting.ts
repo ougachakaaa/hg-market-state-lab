@@ -7,9 +7,13 @@ type State = { phase: Phase; run?: Run | Accepted; result?: ResultResponse; erro
 function identity() { return new URLSearchParams(window.location.search).get('run_id') ?? '' }
 function asError(error: unknown) { return error instanceof BacktestingError ? error : new BacktestingError('invalid_response') }
 function cancelled(error: unknown) { return error instanceof DOMException && error.name === 'AbortError' }
-export function useBacktesting() {
+export function useBacktesting(active = true) {
   const [id, setId] = useState(identity)
-  const [state, setState] = useState<State>({ phase: 'IDLE' })
+  const [state, renderState] = useState<State>({ phase: 'IDLE' })
+  const retained = useRef<State>({ phase: 'IDLE' })
+  const setState = useCallback((next: State) => { retained.current = next; renderState(next) }, [])
+  const [, syncHistory] = useState(0)
+  const readAttempt = useRef(-1)
   const [feedback, setFeedback] = useState<BacktestingError>()
   const [submitting, setSubmitting] = useState(false)
   const [attempt, setAttempt] = useState({ sequence: 0, result: false })
@@ -23,14 +27,33 @@ export function useBacktesting() {
     window.history[replace ? 'replaceState' : 'pushState'](null, '', url.pathname + url.search)
     setId(next)
   }, [])
+  // Render-time reconciliation prevents a retained Result flashing under another URL.
+  const selected = active ? identity() : id
+  if (selected !== id) {
+    epoch.current++; submissionEpoch.current++; post.current?.abort()
+    lastRun.current = undefined
+    setId(selected); setState({ phase: 'IDLE' }); setFeedback(undefined); setSubmitting(false)
+    readAttempt.current = -1
+  }
   useEffect(() => {
-    const sync = () => { epoch.current++; submissionEpoch.current++; post.current?.abort(); setSubmitting(false); setFeedback(undefined); setId(identity()); setAttempt(a => ({ sequence: a.sequence + 1, result: false })) }
+    if (!active) return
+    const sync = () => syncHistory(value => value + 1)
     window.addEventListener('popstate', sync)
-    // Cleanup intentionally aborts the latest POST in this mounted lifecycle.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    return () => { window.removeEventListener('popstate', sync); epoch.current++; submissionEpoch.current++; post.current?.abort() }
-  }, [])
+    return () => {
+      window.removeEventListener('popstate', sync)
+      epoch.current++; submissionEpoch.current++
+      if (post.current && !post.current.signal.aborted) {
+        post.current.abort(); post.current = null
+        setSubmitting(false); setFeedback(new BacktestingError('submission_unconfirmed'))
+      }
+    }
+  }, [active])
   useEffect(() => {
+    if (!active || selected !== id) return
+    const saved = retained.current
+    if (readAttempt.current === attempt.sequence &&
+      (saved.phase === 'RESULT_READY' || saved.error || ['FAILED', 'INTERRUPTED'].includes(saved.phase))) return
+    readAttempt.current = attempt.sequence
     const controller = new AbortController()
     let timer: ReturnType<typeof setTimeout> | undefined
     let live = true
@@ -73,9 +96,9 @@ export function useBacktesting() {
     }
     if (attempt.result && restored?.status === 'COMPLETED') void loadResult(restored); else void poll()
     return () => { live = false; controller.abort(); clearTimeout(timer) }
-  }, [id, attempt, writeId])
+  }, [active, selected, id, attempt, writeId, setState])
   const submit = useCallback(async (request: RunRequest) => {
-    if (post.current && !post.current.signal.aborted) return
+    if (!active || (post.current && !post.current.signal.aborted)) return
     const controller = new AbortController(); post.current = controller
     const generation = submissionEpoch.current
     setSubmitting(true); setFeedback(undefined)
@@ -91,7 +114,7 @@ export function useBacktesting() {
     } catch (error) {
       if (!controller.signal.aborted && generation === submissionEpoch.current && !cancelled(error)) setFeedback(asError(error))
     } finally { if (post.current === controller) { post.current = null; setSubmitting(false) } }
-  }, [writeId])
+  }, [active, writeId, setState])
   const retry = useCallback((result: boolean) => setAttempt(a => ({ sequence: a.sequence + 1, result })), [])
   const visible: State = state.run && state.run.run_id !== id ? { phase: id ? 'STATUS_LOADING' : 'IDLE' } : state
   return { ...visible, id, feedback, submitting, submit, retry }

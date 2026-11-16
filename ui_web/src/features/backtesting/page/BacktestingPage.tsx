@@ -14,14 +14,14 @@ type Fields = { product?: RunRequest['product_code']; start?: Dayjs; end?: Dayjs
 // Production composition root: it owns the query form, preflight, explicit Submit, URL Run
 // identity, polling and reads, then composes those execution regions into the shared
 // Backtesting presentation. Static composition never mounts this component.
-export default function BacktestingPage() {
+export default function BacktestingPage({ active = true }: { active?: boolean }) {
   const [form] = Form.useForm<Fields>()
   const values = Form.useWatch([], form) as Fields | undefined
   const start = values?.start?.format('YYYY-MM-DD'); const end = values?.end?.format('YYYY-MM-DD')
   const valid = !!values?.product && !!values?.strategy && !!values?.start?.isValid() && !!values?.end?.isValid() && !!start && !!end && start <= end
   const query: RunRequest | undefined = valid ? { product_code: values!.product!, start_date: start!, end_date: end!, strategy_profile: values!.strategy! } : undefined
   const readiness = usePreflight(query)
-  const run = useBacktesting()
+  const run = useBacktesting(active)
 
   const parameters = <>
     <Form form={form} layout="vertical" onSubmitCapture={event => event.preventDefault()}>

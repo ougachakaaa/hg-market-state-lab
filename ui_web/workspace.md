@@ -60,8 +60,15 @@ restoration and does not restore unsubmitted form state.
 
 Navigation restoration never creates or resubmits a Run. Features continue to own
 GET/POST, polling, validation, cancellation and result presentation. WP-01 retains
-navigation identity only; page instances, forms and chart interactions are WP-02 work.
-Future Activity retention must keep state only for the matching identity: an explicit
+navigation identity; WP-02 retains the first-visited Production Backtesting
+page instance with React Activity, within the authenticated Workspace only. Other pages
+retain conditional mounting and Static Demo does not participate. Application owns
+visibility and instance lifetime; the feature owns its form, Run, Result and chart state.
+A validated completed Result with matching identity is reused without Run/Result GET.
+Hidden pages stop reads and polling; unfinished reads resume against the backend on return.
+Read errors retain manual retry. Unconfirmed POSTs are aborted without replay and show
+unknown-outcome feedback on return. Workspace teardown destroys retained state.
+Retention keeps state only for the matching identity: an explicit
 different URL identity must be recognized by the feature and must hide obsolete
 results before restoring the selected Run.
 
