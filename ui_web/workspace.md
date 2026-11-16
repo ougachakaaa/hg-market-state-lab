@@ -66,3 +66,13 @@ Daily fetches `/api/data/futures-calendar-spread`; gateways must strip `/api`, p
 Cookie/query/status/body, and keep browser `/data/*` HTML navigation on SPA fallback.
 Research uses the existing `/api/research` gateway. No actual Production Nginx site
 configuration is tracked here, so local acceptance does not verify deployed routing.
+
+## WP7 admitted Static Calendar Spread
+
+The two Calendar Spread pages now participate in both runtimes. The sole Demo
+Registry/Manifest contains nine Bundles and its hash navigation contains ten routes.
+Sidebar and both overviews expose the admitted pages. Static composition uses the
+WP6 public Presentations after feature validation, with fixed captured product/date
+or history window and source disclosure. It mounts no Production query controller.
+The eight existing static routes remain present. Local acceptance is tracked in
+[WP7](demo/CALENDAR_SPREAD_ACCEPTANCE.md); this does not publish Pages.

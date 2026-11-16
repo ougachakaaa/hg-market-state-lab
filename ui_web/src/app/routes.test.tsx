@@ -7,7 +7,7 @@ import { hashWorkspacePath, staticHref, useHashRoute } from '../../demo/runtime/
 afterEach(() => { cleanup(); window.history.replaceState(null, '', '/') })
 
 describe('canonical routes and runtime adapters', () => {
-  it('declares ten Production pages and eight Static pages once', () => {
+  it('declares ten Production and Static pages once', () => {
     expect(workspaceRoutes.map(route => route.path)).toEqual([
       '/research', '/research/futures-basis', '/research/calendar-spread-relative-value', '/research/publications', '/data',
       '/data/mo-option-chain', '/data/mo-premium-plane', '/data/futures-calendar-spread', '/backtesting', '/backtesting/futures-roll-long',
@@ -17,6 +17,7 @@ describe('canonical routes and runtime adapters', () => {
       expect(isWorkspacePath(route.path)).toBe(true)
       expect(hashWorkspacePath(staticHref(route.path))).toBe(isStaticWorkspacePath(route.path) ? route.path : '/research')
     }
+    expect(workspaceRoutes.filter(route => isStaticWorkspacePath(route.path))).toHaveLength(10)
     expect(isWorkspacePath('/unknown')).toBe(false)
     expect(workspaceRoutes.filter(route => route.area === '/research' && route.sidebarVisible).map(route => route.path))
       .toEqual(['/research', '/research/futures-basis', '/research/calendar-spread-relative-value'])

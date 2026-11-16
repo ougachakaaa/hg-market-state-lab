@@ -46,7 +46,7 @@ export async function verifyOverviewLayout(browser, url, { mode = 'static', disc
         const { left, right, top } = card.getBoundingClientRect()
         return { left, right, top }
       }))
-      assert.equal(cards.length, 3)
+      assert.equal(cards.length, 4)
       assert.ok(Math.abs(cards[0].top - cards[1].top) <= 1)
       assert.ok(Math.abs(cards[1].left - cards[0].right - 24) <= 1)
       const bounds = await note.boundingBox()

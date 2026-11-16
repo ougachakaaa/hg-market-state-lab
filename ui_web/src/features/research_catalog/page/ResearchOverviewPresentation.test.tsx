@@ -62,7 +62,7 @@ it('preserves static disclosure and makes no request', () => {
   expect(fetch).not.toHaveBeenCalled()
 })
 
-it('routes the new completed Production study through its independent callback and omits it in Static', () => {
+it('routes the admitted study through its independent callback in both runtimes', () => {
   const navigation = { openExplorer: vi.fn(), openFuturesBasis: vi.fn(), openCalendarSpread: vi.fn() }
   const controller = { list: { status: 'success', data: [] }, detail: { status: 'idle' }, selection: null, selectOnline: vi.fn(), selectLocal: vi.fn() } as ResearchOverviewController
   const { rerender } = baseRender(<ResearchOverviewPresentation controller={controller} mode="production" navigation={navigation} />)
@@ -70,6 +70,7 @@ it('routes the new completed Production study through its independent callback a
   expect(navigation.openCalendarSpread).toHaveBeenCalledOnce()
   expect(navigation.openFuturesBasis).not.toHaveBeenCalled()
   rerender(<ResearchOverviewPresentation controller={controller} mode="static" navigation={navigation} />)
-  expect(screen.queryByRole('heading', { name: '历史跨期相对价值研究' })).toBeNull()
+  fireEvent.click(screen.getByRole('button', { name: '查看历史跨期相对价值研究' }))
+  expect(navigation.openCalendarSpread).toHaveBeenCalledTimes(2)
   expect(screen.queryByRole('button', { name: /Explorer/ })).toBeNull()
 })

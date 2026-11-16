@@ -308,6 +308,18 @@ class Collector:
                 else "/backtesting/futures-roll/runs"
             )
             return self.run(root, preset)
+        if validator in ("validateCalendarSpreadDaily", "validateCalendarSpreadRelativeValue"):
+            daily = validator == "validateCalendarSpreadDaily"
+            result = self.request(
+                "get" if daily else "post",
+                "/data/futures-calendar-spread"
+                if daily
+                else "/research/calendar-spread-relative-value/query",
+                parameters=preset if daily else None,
+                body=None if daily else preset,
+                expected_request=preset,
+            )
+            return preset, reference(result)
         if validator in ("validateOptionChain", "validatePremiumPlane"):
             route = (
                 "/mo-option-chain"
@@ -378,25 +390,49 @@ class Collector:
 def generate(bridge, collector, only=None, active=ACTIVE, work=WORK, authenticate=None):
     configuration = bridge.call("config")
     registry, presets = configuration["registry"], configuration["presets"]
-    if only and only not in {item["bundle_id"] for item in registry}:
+    selected_ids = {only} if isinstance(only, str) else set(only or [])
+    if selected_ids - {item["bundle_id"] for item in registry}:
         raise CollectionError("arguments unknown_bundle")
     with dataset_lock(work):
         finish_transaction(active, work, registry)
-        if only:
-            preflight(active)
         reject_links(active)
+        if selected_ids and all((active / entry["path"]).is_file() for entry in registry):
+            preflight(active)
         if active.exists() and any(
             item.name not in {row["path"] for row in registry} | {"manifest.json"}
             for item in active.iterdir()
         ):
             raise CollectionError("dataset unexpected_files")
+        # During membership extension, validate every retained file against its old
+        # Manifest before copying. Full DTO/membership admission runs on the candidate.
+        if selected_ids:
+            reject_links(active / "manifest.json")
+            try:
+                manifest = json.loads((active / "manifest.json").read_bytes())
+                rows = manifest["bundles"]
+                if manifest["manifest_format"] != "demo_manifest_v1" or len(
+                    {r["bundle_id"] for r in rows}
+                ) != len(rows):
+                    raise ValueError
+                for entry in registry:
+                    if entry["bundle_id"] in selected_ids:
+                        continue
+                    reject_links(active / entry["path"])
+                    row = next(r for r in rows if r["bundle_id"] == entry["bundle_id"])
+                    if (
+                        row["path"] != entry["path"]
+                        or digest(active / entry["path"]) != row["sha256"]
+                    ):
+                        raise ValueError
+            except (OSError, KeyError, TypeError, ValueError, StopIteration):
+                raise CollectionError("dataset retained_file_integrity") from None
         if authenticate:
             authenticate()
         candidate = Path(tempfile.mkdtemp(prefix="candidate-", dir=work))
         selected = []
         try:
             for entry in registry:
-                if only and entry["bundle_id"] != only:
+                if selected_ids and entry["bundle_id"] not in selected_ids:
                     shutil.copyfile(active / entry["path"], candidate / entry["path"])
                     continue
                 try:
@@ -432,7 +468,9 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     selection = parser.add_mutually_exclusive_group(required=True)
     selection.add_argument("--all", action="store_true")
-    selection.add_argument("--only")
+    selection.add_argument(
+        "--only", action="append", help="Repeat to capture multiple Bundles atomically"
+    )
     parser.add_argument("--base-url", required=True)
     parser.add_argument("--username")
     parser.add_argument("--poll-interval", type=positive, default=2)
@@ -469,7 +507,7 @@ def main():
                 args.only,
                 authenticate=lambda: collector.login(username, password),
             )
-        print("PASS HTTP capture and seven-Bundle admission")
+        print("PASS HTTP capture and complete Registry admission")
         return 0
     except (CollectionError, OSError, ValueError, EOFError):
         import sys

@@ -1,52 +1,57 @@
-# Calendar Spread L1 Demo integration plan
+# Calendar Spread L1 Demo integration
 
-Status: WP0 planning only; no registered Bundle, Preset, capture, static route or
-release requirement is added. Specializes [Demo](ARCHITECTURE.md),
+Status: WP7 locally delivered and READY TO CLOSE; see the acceptance evidence. No publication is authorized. Specializes [Demo](ARCHITECTURE.md),
 [Bundle](BUNDLES.md), [Build](build/ARCHITECTURE.md) and
 [Release Requirements](release/ARCHITECTURE.md).
 
-## Formal sources and future identities
+## Formal sources and identities
 
-WP7 follows the implemented WP5 HTTP products and WP6 public Presentation:
-
-| Planned Bundle ID | Formal source | Presentation owner |
+| Bundle ID | Formal source | Shared Presentation owner |
 | --- | --- | --- |
-| `calendar_spread_daily` | [Daily formal HTTP 200 Result](../../ui_http/products/futures_calendar_spread/http-contract.md) | `futures_calendar_spread` |
-| `calendar_spread_relative_value` | [Research formal HTTP 200 Result](../../ui_http/products/calendar_spread_relative_value/http-contract.md) | `calendar_spread_relative_value` |
+| `calendar_spread_daily` | [Daily HTTP 200](../../ui_http/products/futures_calendar_spread/http-contract.md) | `futures_calendar_spread` |
+| `calendar_spread_relative_value` | [Research HTTP 200](../../ui_http/products/calendar_spread_relative_value/http-contract.md) | `calendar_spread_relative_value` |
 
-Each captures one complete Result with explicit request identity. No direct Python
-service, DataLake access, copied financial calculation or fabricated Run envelope
-is allowed. The Collector uses normal HTTP authentication, preserves formal values
-and outcomes and never repairs cache gaps itself. Choose explicit available
-product/date/history Presets during WP7 from actual formal results; WP0 invents no
-market data or historical readiness evidence. Actual DTO-based result_contract
-identities are fixed only after OpenAPI delivery, not guessed in this document.
+The active dataset contains nine required Bundles and one Manifest. The two new
+captures were acquired through authenticated FastAPI HTTP on 2026-11-16, using
+existing retained Tushare/CFFEX facts without Ensure or cache modification.
+All seven prior Bundle files retain their baseline SHA-256. There is no second
+Demo dataset, synthetic success result, financial algorithm or production hook.
 
-## Bundle/build integration
+Static routes `#/data/futures-calendar-spread` and
+`#/research/calendar-spread-relative-value` join the prior eight routes.
+Results pass the same feature-owned validators and public Presentations as
+Production. Query controls are absent; local Pair, axis, viewport, sample-detail
+and disclosure interactions remain available.
 
-WP7 adds both entries to the single Registry, Presets, Manifest and canonical Bundle
-catalog together with actual captures, formal validator dispatch and static
-composition. Existing unrelated Bundle bytes need no regeneration. Generation uses
-the existing staging/admission/transaction protocol; failed collection preserves
-active data. No optional pretend entry may make a missing required Result pass.
-Until that coordinated cutover the existing seven-Bundle dataset is unchanged.
+Implementation and operational evidence: [WP7 acceptance](CALENDAR_SPREAD_ACCEPTANCE.md).
+Closure is local integration only and never means Pages publication.
 
-Shared Presentation renders the complete captured Results through read-only static
-controllers, using hash routes corresponding to the two formal Web pages. No Auth,
-business HTTP, query submission, ensure, polling or financial/statistical computation
-runs in the browser.
-Backend-independent local pair selection/formatting remains permitted.
-Keep source disclosure, small/empty-sample explanations, metadata limitations and
-investment disclaimers identical in meaning to the formal Presentation.
+## WP7 delivery contract
 
-## Acceptance and release boundary
+The two contract identities are `futures_calendar_spread:DailyResponse` and
+`calendar_spread_relative_value:HistoricalResponse`, anchored to the delivered
+feature-owned OpenAPI schemas (no invented DTO version). Both Results are complete
+synchronous HTTP 200 bodies. Daily uses GET; Research uses POST with the configured
+same-origin header, without Runs, polling, retries or acquisition.
 
-Verify each new formal Result, request association, envelope, exact bytes/hash,
-Manifest membership, invalid/missing Bundle rejection and failed-collection
-preservation. Build validates the enlarged dataset offline and must produce an
-actual artifact before claiming build readiness. Extend release content requirements
-for the actual new captures at WP7; no automatic release occurs. Existing Auth,
-artifact integrity, credential safety and truthful disclosure remain in force.
-Per the root personal-study decision, do not add distribution-authorization research
-or a permission gate. Any later publication follows the existing release Runbook
-only when explicitly requested. WP0 runs no build, collection or publication.
+Authenticated selections are IM / 2026-09-30 and IM / 2026-03-01 through
+2026-09-30 / annualized_spread_ratio, omitting histogram_edges. Both were verified as complete, usable HTTP 200
+Results before the coordinated cutover.
+
+Repeated Collector `--only` selects both new members in one transaction. During
+membership extension, unchanged active files must match their existing Manifest
+hashes before copying; the entire nine-member candidate independently passes
+Preflight before the existing journal/replacement protocol commits it. A failed
+capture preserves all active bytes. Never recollect the unrelated seven.
+
+The static controller passes validated Results to the two WP6 public Presentations.
+It supplies fixed captured identity and source disclosure without production hooks.
+Pair, date-axis, viewport, sample-table and disclosure interactions remain local.
+Histogram appears only when present in the captured Result; absence is never filled.
+
+Release content admission additionally requires all six Daily pairs to have valid
+actual contracts/metrics; each Research pair must have at least 30 dated all-stage
+samples with Quantile and a current all-stage Percentile, and a nonempty matching
+stage comparison. The 30-observation minimum is a Demo content requirement, not a
+change to the business definitions of empty_sample, small_sample or available.
+Actual historical dates must precede evaluation. No values are recomputed to pass.

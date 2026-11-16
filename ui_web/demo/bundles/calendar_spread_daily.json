@@ -1,0 +1,288 @@
+{
+  "bundle_format": "demo_bundle_v1",
+  "bundle_id": "calendar_spread_daily",
+  "preset_id": "calendar_spread_daily",
+  "request": {
+    "product_code": "IM",
+    "trade_date": "2026-09-30"
+  },
+  "result": {
+    "accounting": {
+      "candidate_count": 6,
+      "excluded_count": 0,
+      "not_applicable_count": 0,
+      "valid_count": 6
+    },
+    "case": "futures_calendar_spread_v1",
+    "day": {
+      "observations": [
+        {
+          "delta_days": 35,
+          "expiry_stage": "8_21",
+          "far": {
+            "close": 7229.8,
+            "contract_code": "IM2611.CFX",
+            "delist_date": "2026-11-20"
+          },
+          "far_slot": "M1",
+          "metrics": {
+            "annualized_point_spread": {
+              "metric_id": "annualized_point_spread",
+              "unit": "index_points_per_365_natural_days",
+              "value": 638.2285714285696
+            },
+            "annualized_spread_ratio": {
+              "metric_id": "annualized_spread_ratio",
+              "unit": "decimal_ratio",
+              "value": 0.08790594877245943
+            },
+            "definition_version": "futures_calendar_spread_definition_v1",
+            "delta_days": 35,
+            "signed_spread": {
+              "metric_id": "signed_spread",
+              "unit": "index_points",
+              "value": 61.19999999999982
+            }
+          },
+          "near": {
+            "close": 7291,
+            "contract_code": "IM2610.CFX",
+            "delist_date": "2026-10-16"
+          },
+          "near_dte_days": 16,
+          "near_slot": "M0",
+          "outcome": "valid",
+          "product_code": "IM",
+          "reason": null,
+          "trade_date": "2026-09-30"
+        },
+        {
+          "delta_days": 63,
+          "expiry_stage": "8_21",
+          "far": {
+            "close": 7168.8,
+            "contract_code": "IM2612.CFX",
+            "delist_date": "2026-12-18"
+          },
+          "far_slot": "Q1",
+          "metrics": {
+            "annualized_point_spread": {
+              "metric_id": "annualized_point_spread",
+              "unit": "index_points_per_365_natural_days",
+              "value": 707.984126984126
+            },
+            "annualized_spread_ratio": {
+              "metric_id": "annualized_spread_ratio",
+              "unit": "decimal_ratio",
+              "value": 0.09792680152846804
+            },
+            "definition_version": "futures_calendar_spread_definition_v1",
+            "delta_days": 63,
+            "signed_spread": {
+              "metric_id": "signed_spread",
+              "unit": "index_points",
+              "value": 122.19999999999982
+            }
+          },
+          "near": {
+            "close": 7291,
+            "contract_code": "IM2610.CFX",
+            "delist_date": "2026-10-16"
+          },
+          "near_dte_days": 16,
+          "near_slot": "M0",
+          "outcome": "valid",
+          "product_code": "IM",
+          "reason": null,
+          "trade_date": "2026-09-30"
+        },
+        {
+          "delta_days": 154,
+          "expiry_stage": "8_21",
+          "far": {
+            "close": 6989,
+            "contract_code": "IM2703.CFX",
+            "delist_date": "2027-03-19"
+          },
+          "far_slot": "Q2",
+          "metrics": {
+            "annualized_point_spread": {
+              "metric_id": "annualized_point_spread",
+              "unit": "index_points_per_365_natural_days",
+              "value": 715.7792207792207
+            },
+            "annualized_spread_ratio": {
+              "metric_id": "annualized_spread_ratio",
+              "unit": "decimal_ratio",
+              "value": 0.10026414032594125
+            },
+            "definition_version": "futures_calendar_spread_definition_v1",
+            "delta_days": 154,
+            "signed_spread": {
+              "metric_id": "signed_spread",
+              "unit": "index_points",
+              "value": 302
+            }
+          },
+          "near": {
+            "close": 7291,
+            "contract_code": "IM2610.CFX",
+            "delist_date": "2026-10-16"
+          },
+          "near_dte_days": 16,
+          "near_slot": "M0",
+          "outcome": "valid",
+          "product_code": "IM",
+          "reason": null,
+          "trade_date": "2026-09-30"
+        },
+        {
+          "delta_days": 28,
+          "expiry_stage": "22_plus",
+          "far": {
+            "close": 7168.8,
+            "contract_code": "IM2612.CFX",
+            "delist_date": "2026-12-18"
+          },
+          "far_slot": "Q1",
+          "metrics": {
+            "annualized_point_spread": {
+              "metric_id": "annualized_point_spread",
+              "unit": "index_points_per_365_natural_days",
+              "value": 795.1785714285714
+            },
+            "annualized_spread_ratio": {
+              "metric_id": "annualized_spread_ratio",
+              "unit": "decimal_ratio",
+              "value": 0.11045286747348061
+            },
+            "definition_version": "futures_calendar_spread_definition_v1",
+            "delta_days": 28,
+            "signed_spread": {
+              "metric_id": "signed_spread",
+              "unit": "index_points",
+              "value": 61
+            }
+          },
+          "near": {
+            "close": 7229.8,
+            "contract_code": "IM2611.CFX",
+            "delist_date": "2026-11-20"
+          },
+          "near_dte_days": 51,
+          "near_slot": "M1",
+          "outcome": "valid",
+          "product_code": "IM",
+          "reason": null,
+          "trade_date": "2026-09-30"
+        },
+        {
+          "delta_days": 119,
+          "expiry_stage": "22_plus",
+          "far": {
+            "close": 6989,
+            "contract_code": "IM2703.CFX",
+            "delist_date": "2027-03-19"
+          },
+          "far_slot": "Q2",
+          "metrics": {
+            "annualized_point_spread": {
+              "metric_id": "annualized_point_spread",
+              "unit": "index_points_per_365_natural_days",
+              "value": 738.5882352941182
+            },
+            "annualized_spread_ratio": {
+              "metric_id": "annualized_spread_ratio",
+              "unit": "decimal_ratio",
+              "value": 0.10389890254755375
+            },
+            "definition_version": "futures_calendar_spread_definition_v1",
+            "delta_days": 119,
+            "signed_spread": {
+              "metric_id": "signed_spread",
+              "unit": "index_points",
+              "value": 240.80000000000018
+            }
+          },
+          "near": {
+            "close": 7229.8,
+            "contract_code": "IM2611.CFX",
+            "delist_date": "2026-11-20"
+          },
+          "near_dte_days": 51,
+          "near_slot": "M1",
+          "outcome": "valid",
+          "product_code": "IM",
+          "reason": null,
+          "trade_date": "2026-09-30"
+        },
+        {
+          "delta_days": 91,
+          "expiry_stage": "22_plus",
+          "far": {
+            "close": 6989,
+            "contract_code": "IM2703.CFX",
+            "delist_date": "2027-03-19"
+          },
+          "far_slot": "Q2",
+          "metrics": {
+            "annualized_point_spread": {
+              "metric_id": "annualized_point_spread",
+              "unit": "index_points_per_365_natural_days",
+              "value": 721.175824175825
+            },
+            "annualized_spread_ratio": {
+              "metric_id": "annualized_spread_ratio",
+              "unit": "decimal_ratio",
+              "value": 0.1018822979549616
+            },
+            "definition_version": "futures_calendar_spread_definition_v1",
+            "delta_days": 91,
+            "signed_spread": {
+              "metric_id": "signed_spread",
+              "unit": "index_points",
+              "value": 179.80000000000018
+            }
+          },
+          "near": {
+            "close": 7168.8,
+            "contract_code": "IM2612.CFX",
+            "delist_date": "2026-12-18"
+          },
+          "near_dte_days": 79,
+          "near_slot": "Q1",
+          "outcome": "valid",
+          "product_code": "IM",
+          "reason": null,
+          "trade_date": "2026-09-30"
+        }
+      ],
+      "reason": null,
+      "status": "open",
+      "trade_date": "2026-09-30"
+    },
+    "definition_version": "futures_calendar_spread_definition_v1",
+    "request": {
+      "operation": "query_daily_spreads",
+      "product_code": "IM",
+      "trade_date": "2026-09-30"
+    },
+    "source_context": {
+      "exchange": "CFFEX",
+      "limitations": [
+        "Calendar and Futures exports are independent snapshots with no common acquisition time or freshness guarantee.",
+        "Retained futures metadata is not guaranteed to have been known on the historical trade date.",
+        "Read-only queries require separately prepared complete caches; they never ensure or repair missing data.",
+        "Close relationships are descriptive, not executable roll quotes, forecasts or investment recommendations.",
+        "Fees, slippage, margin, financing, dividends, future changes and waiting value are excluded."
+      ],
+      "price_field": "close",
+      "provider": "tushare"
+    }
+  },
+  "result_contract": "futures_calendar_spread:DailyResponse",
+  "source": {
+    "description": "Complete authenticated FastAPI HTTP 200 Result; real-contract Close from retained Tushare/CFFEX facts. Historical accuracy and point-in-time metadata are not guaranteed. Descriptive research only; no forecasts or investment advice. Static snapshot; no live market requests.",
+    "kind": "formal_http"
+  }
+}

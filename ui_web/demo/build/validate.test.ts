@@ -40,7 +40,7 @@ describe('strict JSON', () => {
     expect(parseStrict('9007199254740991')).toBe(Number.MAX_SAFE_INTEGER)
   })
 })
-describe('seven Bundle admission', () => {
+describe('nine Bundle admission', () => {
   it('admits complete formal Result fixtures offline', async () => {
     await expect(validateDirectory((await fixture()).root)).resolves.toBeUndefined()
   })
@@ -96,6 +96,11 @@ describe('seven Bundle admission', () => {
     await expect(validateDirectory(root)).rejects.toThrow('FAIL chain envelope')
   })
   it.each([
+    ['calendar_spread_daily', (e: any) => { e.result.day.observations.reverse() }],
+    ['calendar_spread_daily', (e: any) => { e.request.trade_date = '2026-09-29' }],
+    ['calendar_spread_relative_value', (e: any) => { e.result.pairs[0].samples[0].trade_date = '2026-09-30' }],
+    ['calendar_spread_relative_value', (e: any) => { e.result.pairs[0].all_stages.percentile.result.query_results[0].query = 999 }],
+    ['calendar_spread_relative_value', (e: any) => { e.request.metric = 'signed_spread' }],
     ['chain', (e: any) => { e.request.target_trade_date = '2026-11-10' }],
     ['chain', (e: any) => { e.result.target_trade_date = '2026-11-10' }],
     ['chain', (e: any) => { delete e.result.expiries }],

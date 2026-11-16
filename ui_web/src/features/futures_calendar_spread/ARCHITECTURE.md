@@ -12,7 +12,7 @@ transport belongs to [Daily HTTP](../../../../ui_http/products/futures_calendar_
 The independent Daily Data page is `/data/futures-calendar-spread`, titled
 “Futures Calendar Spread”. Explicit product/date controls issue the formal Daily
 query. Do not invent a product, latest date or prior-session fallback. Production
-mounts its authenticated HTTP controller; static Demo later mounts a Bundle controller
+mounts its authenticated HTTP controller; static Demo mounts a Bundle controller
 with the same public Presentation entry.
 
 Show the six ordered pairs with actual near/far contract codes, same-day Close,
@@ -31,7 +31,7 @@ the Research sibling does not consume this feature's DTOs, hooks or projections.
 
 Feature-owned HTTP types are generated from the delivered WP5 OpenAPI.
 Use the existing Page/hooks/API/model/components boundary and domain-neutral shared
-infrastructure. Expose a public pure validator and Presentation for future Demo
+infrastructure. Expose a public pure validator and Presentation for Demo
 consumption; no generic feature framework or separate Demo financial page.
 Verify explicit request identity, six-pair rendering, real-contract labels,
 units/formatting, zero/null distinction and closed/empty/excluded/error outcomes
@@ -56,4 +56,5 @@ future WP7. Daily and Research own independent types, query state and projection
 
 Production routes are separate from gateway paths: requests use `/api/data/…` or
 `/api/research/…`, stripping only `/api` before reaching unchanged FastAPI routes.
-Static navigation does not expose these pages until WP7 Bundle admission.
+WP7 admits the real Bundle and exposes this page in the sole static runtime.
+Static composition consumes this public Presentation without Production query hooks.

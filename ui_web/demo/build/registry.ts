@@ -7,6 +7,20 @@ export const registry = [
     validator: 'validateEmbeddedReport',
   },
   {
+    bundle_id: 'calendar_spread_daily',
+    path: 'calendar_spread_daily.json',
+    preset_id: 'calendar_spread_daily',
+    result_contract: 'futures_calendar_spread:DailyResponse',
+    validator: 'validateCalendarSpreadDaily',
+  },
+  {
+    bundle_id: 'calendar_spread_relative_value',
+    path: 'calendar_spread_relative_value.json',
+    preset_id: 'calendar_spread_relative_value',
+    result_contract: 'calendar_spread_relative_value:HistoricalResponse',
+    validator: 'validateCalendarSpreadRelativeValue',
+  },
+  {
     bundle_id: 'catalog',
     path: 'catalog.json',
     preset_id: 'catalog',

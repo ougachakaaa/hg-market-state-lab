@@ -12,7 +12,7 @@ export async function main(args: string[], defaultDirectory: string): Promise<nu
   }
   try {
     await validateDirectory(args[1] ?? defaultDirectory)
-    console.log('PASS seven Bundles admitted')
+    console.log(`PASS ${registry.length} Bundles admitted`)
     return 0
   } catch (error) {
     console.error(error instanceof AdmissionError ? error.message : 'FAIL dataset admission validation_failed')

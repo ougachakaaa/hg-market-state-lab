@@ -30,6 +30,6 @@ it('presents the implemented backtest card with success text and explicit naviga
 
 it('keeps Static Daily overview limited to admitted pages', () => {
   render(<DailyDataLanding mode="static" navigate={vi.fn()} />)
-  expect(screen.getAllByText('已完成')).toHaveLength(2)
-  expect(screen.queryByText('Futures Calendar Spread')).toBeNull()
+  expect(screen.getAllByText('已完成')).toHaveLength(3)
+  expect(screen.getByRole('button', { name: '打开 Futures Calendar Spread' })).toBeTruthy()
 })

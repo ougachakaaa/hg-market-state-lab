@@ -48,6 +48,17 @@ class ControlledServer(BaseHTTPRequestHandler):
             status = state.get("error_status", 503)
         elif path == "/auth/me":
             payload = {"id": "approved-user", "username": "tester", "status": "active"}
+        elif path == "/data/futures-calendar-spread":
+            assert method == "get" and body is None
+            assert query == {
+                key: [value]
+                for key, value in state["presets"]["calendar_spread_daily"]["request"].items()
+            }
+            payload = state["fixtures"]["calendar_spread_daily"]
+        elif path == "/research/calendar-spread-relative-value/query":
+            assert method == "post" and not query
+            assert body == state["presets"]["calendar_spread_relative_value"]["request"]
+            payload = state["fixtures"]["calendar_spread_relative_value"]
         elif path == "/mo-option-chain":
             assert query == {
                 key: [value] for key, value in state["presets"]["chain"]["request"].items()
@@ -290,7 +301,9 @@ class CollectionTests(unittest.TestCase):
         with self.assertRaises(collect.CollectionError):
             self.generate("chain")
         self.assertEqual(original, {item.name: item.read_bytes() for item in self.active.iterdir()})
-        self.server.state["fixtures"]["chain"]["target_trade_date"] = "2026-11-11"
+        self.server.state["fixtures"]["chain"]["target_trade_date"] = self.config["presets"][
+            "chain"
+        ]["request"]["target_trade_date"]
         actual_replace = collect.os.replace
 
         def interrupt(source, target):
@@ -308,6 +321,45 @@ class CollectionTests(unittest.TestCase):
                 collect.finish_transaction(self.active, self.work, self.config["registry"])
         self.assertTrue((self.work / "pending.json").exists())
         self.assertEqual(original, {item.name: item.read_bytes() for item in self.active.iterdir()})
+
+    def test_calendar_spread_atomic_selection_and_failure(self):
+        self.generate()
+        before = {item.name: item.read_bytes() for item in self.active.iterdir()}
+        selected = ["calendar_spread_daily", "calendar_spread_relative_value"]
+        self.server.state["calls"].clear()
+        self.generate(selected)
+        self.assertEqual(
+            [call[1] for call in self.server.state["calls"]],
+            ["/data/futures-calendar-spread", "/research/calendar-spread-relative-value/query"],
+        )
+        self.assertEqual(before, {item.name: item.read_bytes() for item in self.active.iterdir()})
+        self.server.state.update(
+            error_path="/research/calendar-spread-relative-value/query", error_status=409
+        )
+        with self.assertRaisesRegex(collect.CollectionError, "status_409"):
+            self.generate(selected)
+        self.assertEqual(before, {item.name: item.read_bytes() for item in self.active.iterdir()})
+        self.server.state.pop("error_path")
+        # Reproduce the membership extension with only the seven prior captures.
+        manifest = json.loads((self.active / "manifest.json").read_bytes())
+        manifest["bundles"] = [
+            row for row in manifest["bundles"] if row["bundle_id"] not in selected
+        ]
+        (self.active / "manifest.json").write_text(json.dumps(manifest))
+        for identity in selected:
+            (self.active / (identity + ".json")).unlink()
+        old = {item.name: item.read_bytes() for item in self.active.iterdir()}
+        self.generate(selected)
+        collect.preflight(self.active)
+        for name, data in old.items():
+            if name != "manifest.json":
+                self.assertEqual(data, (self.active / name).read_bytes())
+        # A corrupted retained file cannot be blessed by a regenerated Manifest.
+        (self.active / "catalog.json").write_text("{}")
+        for identity in selected:
+            (self.active / (identity + ".json")).unlink()
+        with self.assertRaisesRegex(collect.CollectionError, "retained_file_integrity"):
+            self.generate(selected)
 
     def test_auth_lock_and_numeric(self):
         self.collector.origin = "http://wrong-origin.invalid"

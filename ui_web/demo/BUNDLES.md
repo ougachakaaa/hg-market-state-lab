@@ -25,7 +25,7 @@ Source descriptions cannot assert unverified provider authenticity or publicatio
 ## Registry, Presets and active data
 
 `demo/build/registry.ts` is a small static table owning required IDs, exact paths,
-Preset association, contract reference and validator dispatch. All seven rows below are
+Preset association, contract reference and validator dispatch. All nine rows below are
 required. The Python Collector consumes this table through the offline Node tooling's JSON
 registry export, keeping one machine-readable registry owner. No plugin discovery is needed.
 
@@ -44,6 +44,8 @@ The Manifest records current bytes. Registry owns expected capability and requir
 
 | ID | Feature owner | `result_contract` | Envelope request and result |
 | --- | --- | --- | --- |
+| `calendar_spread_daily` | `futures_calendar_spread` | `futures_calendar_spread:DailyResponse` | Exact GET query; result is complete HTTP 200 body |
+| `calendar_spread_relative_value` | `calendar_spread_relative_value` | `calendar_spread_relative_value:HistoricalResponse` | Exact POST body; result is complete HTTP 200 body |
 | `chain` | `mo_option_chain` | `mo_option_chain:OptionChainDTO` | Request query; result is full 200 body |
 | `premium` | `mo_option_premium` | `mo_option_premium:PremiumPlaneResponse` | Request query; result is full 200 body |
 | `basis` | `futures_basis_research` | `futures_basis_research:FuturesBasisReportResponse.data` | Immutable response request; result is full response data |
@@ -135,10 +137,12 @@ remain assigned to DDB-03/DDB-04. Callers must supply a quiescent input director
 Focused tests run with `npx vitest run --config demo/build/vitest.config.ts`.
 The tool's type check is `npx tsc -p demo/build/tsconfig.json`.
 
-## Future Calendar Spread captures
+## Calendar Spread captures
 
-The [Calendar Spread integration plan](CALENDAR_SPREAD.md) reserves two future
-capture identities and their formal HTTP sources. They are not registered or
-required Bundles in WP0. WP7 must update this catalog, Registry, Presets, actual
-captures, Manifest and validator dispatch together; the current seven required
-rows remain authoritative until that cutover.
+The [Calendar Spread contract](CALENDAR_SPREAD.md) owns the two synchronous HTTP
+sources and static consumer boundary. Daily is IM / 2026-09-30. Research is IM /
+2026-03-01 through 2026-09-30 / annualized_spread_ratio, without histogram_edges.
+Echoed server operation/defaults remain inside each complete Result; the envelope
+request is exactly the explicit GET query or POST body. The delivered OpenAPI
+DailyResponse/HistoricalResponse schemas supply the contract identities above.
+No DTO version, Run identity or lifecycle is fabricated.

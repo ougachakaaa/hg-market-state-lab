@@ -27,10 +27,12 @@ in a clean checkout of the exact remote-main candidate; CI runs it independently
 
 Agent intent, integration and recovery steps enter the [Release Runbook](RUNBOOK.md).
 
-## Planned Calendar Spread content
+## WP7 Calendar Spread predicates
 
-[Calendar Spread integration](../CALENDAR_SPREAD.md) plans two future complete
-formal HTTP Result captures. Their actual content selections and release requirements
-belong to WP7 after HTTP/Web delivery. WP0 does not modify requirements.json,
-assert release readiness or authorize publication. Root personal-study policy
-continues to govern source disclosure and authorization-related boundaries.
+Daily requires the exact preset date/product, an open session and six valid actual
+contract/metric rows. Research requires the exact request, valid current observations,
+all six pairs' complete historical series, at least 30 all-stage samples per pair,
+Quantile, current Percentile and nonempty matching-stage comparison. All history is
+strictly before evaluation. Small matching-stage populations retain their warnings.
+These additional content predicates never change business availability definitions.
+Histogram remains optional and is rendered only when actually captured.

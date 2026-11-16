@@ -1,3 +1,5 @@
+import dailyCapture from '../bundles/calendar_spread_daily.json'
+import historicalCapture from '../bundles/calendar_spread_relative_value.json'
 import { mkdtemp, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
@@ -18,6 +20,8 @@ export async function fixture() {
     let request: Record<string, unknown> = structuredClone(presets[entry.preset_id].request)
     let result: unknown
     switch (entry.bundle_id) {
+      case 'calendar_spread_daily': result = structuredClone(dailyCapture.result); break
+      case 'calendar_spread_relative_value': result = structuredClone(historicalCapture.result); break
       case 'chain': result = { ...structuredClone(chain), ...request }; break
       case 'premium': result = { ...structuredClone(plane), observation: { kind: 'trade_date', value: request.as_of } }; break
       case 'basis': {

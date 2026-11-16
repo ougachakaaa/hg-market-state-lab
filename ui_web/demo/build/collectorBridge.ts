@@ -1,3 +1,7 @@
+import { matchesResponse as dailyResponse, validateResult as validateDaily } from '../../src/features/futures_calendar_spread/api/validateResult'
+import { matchesResponse as historicalResponse, validateResult as validateHistorical } from '../../src/features/calendar_spread_relative_value/api/validateResult'
+import dailyContract from '../../src/features/futures_calendar_spread/api/calendarSpread.openapi.json'
+import historicalContract from '../../src/features/calendar_spread_relative_value/api/relativeValue.openapi.json'
 import { createInterface } from 'node:readline'
 import { readFile, writeFile } from 'node:fs/promises'
 import { createHash } from 'node:crypto'
@@ -36,6 +40,12 @@ export class CollectorBridge {
           ? basisContract.components.schemas.FuturesBasisRunRequest : backtestContract.components.schemas.FuturesRollRunRequest
         if (!ajv.validate({ ...schema, components: contract.components }, request) || request.start_date > request.end_date) throw new Error('invalid_preset')
       }
+      if (entry.validator === 'validateCalendarSpreadDaily') {
+        if (!ajv.validate({ type: 'object', additionalProperties: false, required: dailyContract.paths['/data/futures-calendar-spread'].get.parameters.filter(p => p.required).map(p => p.name), properties: Object.fromEntries(dailyContract.paths['/data/futures-calendar-spread'].get.parameters.map(p => [p.name, p.schema])) }, request)) throw new Error('invalid_preset')
+      }
+      if (entry.validator === 'validateCalendarSpreadRelativeValue') {
+        if (!ajv.validate({ ...historicalContract.components.schemas.HistoricalRequest, components: historicalContract.components }, request) || request.history_start >= request.evaluation_date) throw new Error('invalid_preset')
+      }
       if (['validateOptionChain', 'validatePremiumPlane'].includes(entry.validator)) {
         const date = request.target_trade_date ?? request.as_of
         if (typeof date !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(date) || !Number.isFinite(Date.parse(date)) || new Date(date).toISOString().slice(0, 10) !== date ||
@@ -53,7 +63,13 @@ export class CollectorBridge {
       const body = parseStrict(new TextDecoder('utf-8', { fatal: true }).decode(bytes)) as RecordValue
       const { route, method, status } = command
       let valid = false
-      if (route.startsWith('/research/futures-basis/')) valid = basisResponse(method, route, status, body)
+      if (route === '/data/futures-calendar-spread') {
+        valid = method === 'get' && status === 200 && dailyResponse(status, body)
+        if (valid) validateDaily(body, command.expectedRequest)
+      } else if (route === '/research/calendar-spread-relative-value/query') {
+        valid = method === 'post' && status === 200 && historicalResponse(status, body)
+        if (valid) validateHistorical(body, command.expectedRequest)
+      } else if (route.startsWith('/research/futures-basis/')) valid = basisResponse(method, route, status, body)
       else if (route.startsWith('/backtesting/')) valid = backtestResponse(method, route, status, body)
       else if (route.startsWith('/research/capabilities')) valid = catalogResponse(route, status, body)
       else if (route.startsWith('/research/publications')) valid = publicationResponse(route, status, body)
@@ -64,7 +80,7 @@ export class CollectorBridge {
       }
       if (!valid) throw new Error('invalid_response')
       if (command.expectedRun && body.run_id !== command.expectedRun) throw new Error('run_mismatch')
-      if (command.expectedRequest && !canonicalBytes(body.request).equals(canonicalBytes(command.expectedRequest))) throw new Error('request_mismatch')
+      if (command.expectedRequest && !['/data/futures-calendar-spread', '/research/calendar-spread-relative-value/query'].includes(route) && !canonicalBytes(body.request).equals(canonicalBytes(command.expectedRequest))) throw new Error('request_mismatch')
       if (command.expectedResultStatus && body.result_status !== command.expectedResultStatus) throw new Error('result_status_mismatch')
       if (route.startsWith('/backtesting/') && route.endsWith('/{run_id}')) validateRunState(body as Run)
       if (route.startsWith('/research/futures-basis/') && route.endsWith('/{run_id}')) {
@@ -103,7 +119,7 @@ export class CollectorBridge {
         return value
       }
       const envelope = { bundle_format: 'demo_bundle_v1', ...entry,
-        source: { kind: 'formal_http', description: 'Explicit authenticated HTTP capture. Publication pages are sequential reads without Store snapshot isolation; distribution authorization is separate.' },
+        source: { kind: 'formal_http', description: entry.bundle_id.startsWith('calendar_spread_') ? 'Complete authenticated FastAPI HTTP 200 Result; real-contract Close from retained Tushare/CFFEX facts. Historical accuracy and point-in-time metadata are not guaranteed. Descriptive research only; no forecasts or investment advice. Static snapshot; no live market requests.' : 'Explicit authenticated HTTP capture. Publication pages are sequential reads without Store snapshot isolation; distribution authorization is separate.' },
         request: resolveReferences(command.request), result: resolveReferences(command.result) }
       const { validator: _validator, path: _path, ...bundle } = envelope
       await writeFile(join(command.directory, entry.path), canonicalBytes(bundle))

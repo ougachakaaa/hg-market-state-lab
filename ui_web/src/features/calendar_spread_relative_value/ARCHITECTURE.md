@@ -44,7 +44,7 @@ Consume feature-owned generated WP5 HTTP types; expose pure validation and
 public Presentation for Demo. Backend owns every financial value, stage, population,
 quantile, histogram and percentile. Targeted tests verify query versus local state,
 cutoff/metric labels, both assessment identities, empty/small-sample explanations,
-histogram outside values, error isolation and null/zero formatting. WP6 registers the actual Production consumer; Demo admission remains WP7.
+histogram outside values, error isolation and null/zero formatting. WP6 registers the actual Production consumer; WP7 records actual Demo admission and offline acceptance.
 
 ## WP6 consumer contract
 
@@ -63,7 +63,8 @@ future WP7. Daily and Research own independent types, query state and projection
 
 Production routes are separate from gateway paths: requests use `/api/data/…` or
 `/api/research/…`, stripping only `/api` before reaching unchanged FastAPI routes.
-Static navigation does not expose these pages until WP7 Bundle admission.
+WP7 admits the real Bundle and exposes this page in the sole static runtime.
+Static composition consumes this public Presentation without Production query hooks.
 
 ## Date chart
 

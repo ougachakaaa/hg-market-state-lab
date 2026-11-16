@@ -70,21 +70,20 @@ and always selects remote main. It has no source-branch argument or integration 
 
 Run commands from the candidate checkout's `ui_web` directory using its locked npm
 dependencies. Record the exact HEAD and inspect Requirements against the user's approved
-content. Run `npm run demo:release-check`. Its existing validators check the seven
-registered Bundles, exact request selections, complete formal Results, actual observation
+content. Run `npm run demo:release-check`. Its existing validators check the registered Bundles, exact request selections, complete formal Results, actual observation
 coverage, meaningful plotted values, Manifest/hash/tracked identity, Public Safety,
 offline build and Artifact Receipt. Keep content details in `requirements.json` and its
 authority. Diagnose a mismatch with Bundle ID, field, actual value and required value.
 
 The release-check command does not execute browser acceptance or Git promotion checks.
-After it passes, invoke the existing eight-page acceptance helper in that same checkout
+After it passes, invoke the existing ten-page acceptance helper in that same checkout
 against its freshly built local artifact.
 
 ```powershell
 node --input-type=module -e "import { verifyBrowser } from './demo/build/browserAcceptance.mjs'; await verifyBrowser()"
 ```
 
-This exercises eight hash routes, expected results/charts, read-only local interactions,
+This exercises ten hash routes, expected results/charts, read-only local interactions,
 history and network/runtime errors. Check main ancestry and release FF eligibility
 separately. Every part must pass before publication. Unavailable prerequisites are
 NOT VERIFIED and prevent publication until resolved. This complete release acceptance
@@ -113,7 +112,7 @@ steps, so coordinate concurrent main updates before starting publication.
 ## E. Remote acceptance and result
 
 Continue through the build job, Requirements gate, artifact verification, deployment job,
-successful deployment URL, public receipt verification and eight-page browser acceptance.
+successful deployment URL, public receipt verification and ten-page browser acceptance.
 Retain Actions URL, deployment URL, exact source/release SHA, Requirements hash, Manifest
 hash and evidence paths. A standalone gate writes ignored `.build/demo-release.json`.
 The Publisher copies its temporary gate evidence into the invoking checkout's ignored

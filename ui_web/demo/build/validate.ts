@@ -1,3 +1,5 @@
+import { validateResult as validateDaily, type Query as DailyQuery } from '../../src/features/futures_calendar_spread/api/validateResult'
+import { validateResult as validateHistorical, type Query as HistoricalQuery } from '../../src/features/calendar_spread_relative_value/api/validateResult'
 import { createHash } from 'node:crypto'
 import { lstat, readdir, readFile, realpath } from 'node:fs/promises'
 import { spawnSync } from 'node:child_process'
@@ -112,6 +114,14 @@ function formalResult(entry: RegistryEntry, envelope: Record<string, unknown>): 
   const actual = object(request)
   requireCondition(Object.entries(expected).every(([key, value]) => Object.hasOwn(actual, key) && equal(actual[key], value)), 'preset_mismatch')
   switch (entry.validator) {
+    case 'validateCalendarSpreadDaily':
+      requireCondition(equal(request, expected), 'preset_mismatch')
+      validateDaily(result, actual as DailyQuery)
+      break
+    case 'validateCalendarSpreadRelativeValue':
+      requireCondition(equal(request, expected), 'preset_mismatch')
+      validateHistorical(result, actual as HistoricalQuery)
+      break
     case 'validateOptionChain': {
       requireCondition(equal(request, expected), 'preset_mismatch')
       const data = validateOptionChain(result)

@@ -61,13 +61,15 @@ disclaimers and safety checks. Release contracts live in
 
 The sole runtime lives in demo/runtime and consumes the validated private snapshot.
 Its adapter reuses feature public validators and Presentation. Identity contains Bundle
-ID, Preset, contract and actual source description. Eight shared pages use hash routes.
+ID, Preset, contract and actual source description. Ten shared pages use hash routes.
 Explorer remains hidden from sidebar navigation. Invalid input stops successful rendering.
 
 Release content requirements enter [Release Requirements](release/ARCHITECTURE.md).
 
-## Planned Calendar Spread L1 integration
+## Calendar Spread L1 integration
 
-[Calendar Spread integration](CALENDAR_SPREAD.md) plans two independent formal HTTP
-Result captures and shared Presentation consumers after business/HTTP/Web delivery.
-It changes no active Bundle membership or runtime/build/release readiness in WP0.
+[Calendar Spread integration](CALENDAR_SPREAD.md) adds two independent formal HTTP
+Result captures and consumes the WP6 public Presentations. The sole active dataset
+has nine Bundles; the runtime has ten routes. Actual local capture/build/browser
+and release-check evidence is recorded in [WP7 acceptance](CALENDAR_SPREAD_ACCEPTANCE.md).
+No publication is implied or authorized by this integration.

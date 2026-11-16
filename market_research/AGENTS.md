@@ -11,7 +11,7 @@
 | PIP algorithm mathematics and versioning | [PIP algorithm](algorithm/pip/ALGORITHM.md) |
 | Price segmentation scope, result and input policy | [Price Segmentation](descriptive/cases/price_segmentation/ARCHITECTURE.md) |
 | R01-A Futures Basis definition, Slots, observations, statistics, offline delivery or online run lifecycle | [Futures Basis](descriptive/cases/futures_basis/ARCHITECTURE.md) → task-specific authority; [online application](descriptive/cases/futures_basis/ONLINE_APPLICATION.md); [work packages/readiness](descriptive/cases/futures_basis/ROADMAP.md) |
-| Futures Calendar Spread L1, shared Daily/Research metrics, historical relative value or WP1–WP7 | [Calendar Spread case](descriptive/cases/futures_calendar_spread/ARCHITECTURE.md) → narrow contract; [readiness/reconciliation](descriptive/cases/futures_calendar_spread/ROADMAP.md) (WP1/WP2/WP4 Python APIs, WP3 Statistics, WP5 HTTP and WP6 Web; Demo planned) |
+| Futures Calendar Spread L1, shared Daily/Research metrics, historical relative value or WP1–WP7 | [Calendar Spread case](descriptive/cases/futures_calendar_spread/ARCHITECTURE.md) → narrow contract; [readiness/reconciliation](descriptive/cases/futures_calendar_spread/ROADMAP.md) (WP1/WP2/WP4 Python APIs, WP3 Statistics, WP5 HTTP, WP6 Web and WP7 local Demo delivery) |
 | Descriptive flow and evidence interpretation | [descriptive/ARCHITECTURE.md](descriptive/ARCHITECTURE.md) |
 | Fixed observation request, population, market derivation or provenance | [descriptive/OBSERVATION.md](descriptive/OBSERVATION.md) |
 | Research-owned sample conversion | [descriptive/SAMPLE_CONVERSION.md](descriptive/SAMPLE_CONVERSION.md) |

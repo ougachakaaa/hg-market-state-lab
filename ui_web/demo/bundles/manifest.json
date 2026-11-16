@@ -6,6 +6,16 @@
       "sha256": "33ab2da5a36b8b0b862856322ca7b9f1f1a98bee1913fedc55b3a1dc7db77397"
     },
     {
+      "bundle_id": "calendar_spread_daily",
+      "path": "calendar_spread_daily.json",
+      "sha256": "6c2c27f29e92ce0b354b9a7de135d27d8884f3fc1aae5fe7396da013bd24c85b"
+    },
+    {
+      "bundle_id": "calendar_spread_relative_value",
+      "path": "calendar_spread_relative_value.json",
+      "sha256": "9db5ae90643e5a8023a077c09db9b5165109725b1d95d5768a4e8a092e7c8c6f"
+    },
+    {
       "bundle_id": "catalog",
       "path": "catalog.json",
       "sha256": "af90ab7ec17bce2bb24678b6a9a786fa6688d9a4bdff5ed8cb887b3ea2e7982d"

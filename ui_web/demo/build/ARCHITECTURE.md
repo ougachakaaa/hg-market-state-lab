@@ -7,7 +7,7 @@ Implementation is assigned in [handoff](HANDOFF.md). HTTP evidence is in
 ## Explicit HTTP collection
 
 DDB-03 exposes `poetry run python ui_web/demo/build/collect.py --all --base-url
-http://127.0.0.1:8011` and mutually exclusive `--only <bundle_id>`. Username can be
+http://127.0.0.1:8011` and mutually exclusive, repeatable `--only <bundle_id>`. Username can be
 provided with `--username`; password is entered with getpass. Poll interval, Run deadline
 and HTTP request timeout default to 2, 1800 and 60 seconds and accept finite positive
 CLI overrides. Origin comes exclusively from lab_config Auth settings. Requests are
@@ -95,7 +95,7 @@ export described in the [Bundle interface](../BUNDLES.md#offline-admission-inter
 It validates a quiescent local dataset without Collector or serving dependencies.
 DDB-03 implements Collector locking, pending-transaction recovery and candidate staging.
 DDB-04 implements coordinated snapshot admission and Vite integration. The default
-build fails closed until the real seven-Bundle dataset is captured.
+build admits the current nine-Bundle dataset and fails closed on missing/corrupt input.
 
 ### Node Build coordination constraint
 
@@ -145,7 +145,7 @@ artifact, without hot reload. No backend, collection, remote push, Actions build
 or Pages publication is needed.
 
 Run `npm run demo:test:browser` after the build for local Playwright review. It starts
-temporary loopback previews and closes them afterward, checks all eight Demo routes
+temporary loopback previews and closes them afterward, checks all ten Demo routes
 and existing interactions, and checks Research Overview at 1280, 1024 and 768px.
 Focused checks cover full disclosure, horizontal containment, card alignment,
 Production-mode shared Presentation and Chinese/unbroken-English stress inputs in
@@ -183,9 +183,12 @@ requirements. DDB-05 owns their integration with existing deploy tooling.
 Release specializes this build contract through [deployment authority](../../deploy/ARCHITECTURE.md).
 The root personal-study policy supersedes former authorization gates.
 
-## Planned Calendar Spread extension
+## WP7 synchronous captures and coordinated extension
 
-[Calendar Spread integration](../CALENDAR_SPREAD.md) assigns future collection and
-static composition to its WP7. Reuse this Collector/admission/build protocol after
-formal HTTP/Web delivery; WP0 adds no Collector branch, Registry entry, data or
-build invocation.
+Calendar Spread uses the two complete HTTP 200 DTOs specified by
+[its integration contract](../CALENDAR_SPREAD.md#wp7-delivery-contract).
+Repeated `--only` arguments select a set in one candidate transaction. Unselected
+files must match the existing Manifest hashes before copying, including during
+seven-to-nine membership extension. Independent complete candidate admission remains
+mandatory; no partial membership is allowed by Build or Preflight. Response schema
+validation precedes feature-owned association validation and payload reference retention.

@@ -50,7 +50,7 @@ public Calendar/Futures facts, the published pure Slot resolver and Statistics.
 Its [roadmap](descriptive/cases/futures_calendar_spread/ROADMAP.md) distinguishes WP0
 authority readiness, implemented WP1 financial / WP2 input-Observation APIs,
 implemented WP3 Statistics method / WP4 business queries / WP5 HTTP delivery and
-implemented WP6 Web consumers and planned WP7 Demo delivery.
+implemented WP6 Web consumers and delivered WP7 local Demo integration.
 It is not admitted to scalar capability, Plan/Batch or Publication and creates no Run store.
 
 Input Preparation acquires validated facts and availability evidence through authorized

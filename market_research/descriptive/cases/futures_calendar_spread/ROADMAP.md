@@ -25,8 +25,9 @@ WP5 implements formal HTTP delivery after baseline
 `6e20f1e4fcf6976069adaf70f46675b0250f3767`; baseline HEAD was clean on develop,
 so WP5 uses isolated `feat/calendar-spread-wp5-http` without merging develop/main.
 WP6 delivers both formal Web consumers and is **READY TO CLOSE**; targeted
-verification and deployment limits are recorded below. WP7 remains
-**NOT IMPLEMENTED / NOT VERIFIED** for this case.
+verification and deployment limits are recorded below. WP7 delivers the two real
+HTTP Bundles and shared static consumers and is **READY TO CLOSE** locally;
+[Demo acceptance](../../../../ui_web/demo/CALENDAR_SPREAD_ACCEPTANCE.md) records evidence.
 
 ## Implementation work packages
 
@@ -382,3 +383,35 @@ WP6 is **READY TO CLOSE**. WP7's shared Presentation/validator prerequisites are
 ready, but its **Demo Bundle delivery remains BLOCKED / NOT IMPLEMENTED** until
 explicit real presets, formal HTTP capture, admission and offline artifact acceptance
 are performed in WP7. Existing seven Bundles and eight static routes remain unchanged.
+
+## WP7 closure — Static Demo integration and offline acceptance
+
+Delivered from exact baseline `29736db8402c29c69ea740c4048ecb5cfa7a4954` on the
+existing `feat/calendar-spread-wp5-http` branch. The sole Demo expands from seven
+to nine required Bundles and from eight to ten hash routes. No business or HTTP
+implementation/DTO changed and no financial calculation was copied to Demo.
+
+Authenticated formal GET Daily and synchronous POST Historical Relative Value both
+returned complete 200 Results for IM, evaluation/trade date 2026-09-30; Research
+starts 2026-03-01 with annualized_spread_ratio and no Histogram request. Daily has
+six valid actual-contract observations. Research has 146 samples per Pair, actual
+coverage 2026-03-02 through 2026-09-29, 876 valid Pair-days and genuine empty
+nonmatching stages retained. Both current assessments remain formally associated.
+
+The existing Collector stages both new captures, validates actual OpenAPI before
+feature associations, independently admits the entire candidate and commits with
+the existing durable journal protocol. Original seven Bundle bytes/SHA-256 remain
+unchanged. Static composition shares WP6 Presentations without online hooks or
+HTTP; Pair/axis/viewport/sample detail/disclosure interaction stays local.
+
+Scoped Collector/admission/feature/runtime/navigation/release-content tests,
+Contract Check, TypeScript, changed-source lint, actual demo:check/demo:build and
+Chromium demo:test:browser PASS. Browser verifies ten pages, actual values,
+Quantile/Percentile associations, both date axes and Zoom/Pan/Reset, truthful empty
+stages and no business/Auth requests. The post-commit local Release Gate has its
+own exact-SHA evidence and final report; it does not publish.
+
+Detailed commands, hashes, data provenance and remaining provider/metadata/platform
+limits enter [WP7 Demo acceptance](../../../../ui_web/demo/CALENDAR_SPREAD_ACCEPTANCE.md).
+**Implementation Complete; Operational Delivery Complete; WP7 READY TO CLOSE** and
+ready for merge review. No merge, Publisher, release-branch push or Pages release.
