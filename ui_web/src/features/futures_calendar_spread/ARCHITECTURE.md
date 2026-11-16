@@ -1,12 +1,13 @@
-# Daily Data — Futures Calendar Spread Presentation plan
+# Daily Data — Futures Calendar Spread Presentation authority
 
-Status: planned WP6; no Web page, route, generated contract or Presentation exists.
+Status: WP6 implemented and READY TO CLOSE; targeted evidence and unverified
+real-data/deployment limits are recorded in [Acceptance](ACCEPTANCE.md).
 Inherits [Web boundaries](../../../ARCHITECTURE.md) and
 [Presentation architecture](../../../presentation-architecture.md).
 Business meaning belongs to [Research](../../../../market_research/descriptive/cases/futures_calendar_spread/ARCHITECTURE.md);
 transport belongs to [Daily HTTP](../../../../ui_http/products/futures_calendar_spread/http-contract.md).
 
-## Planned surface
+## Surface
 
 The independent Daily Data page is `/data/futures-calendar-spread`, titled
 “Futures Calendar Spread”. Explicit product/date controls issue the formal Daily
@@ -28,12 +29,31 @@ the Research sibling does not consume this feature's DTOs, hooks or projections.
 
 ## Integration and acceptance
 
-Generate feature-owned HTTP types only after WP5 publishes the actual OpenAPI.
+Feature-owned HTTP types are generated from the delivered WP5 OpenAPI.
 Use the existing Page/hooks/API/model/components boundary and domain-neutral shared
 infrastructure. Expose a public pure validator and Presentation for future Demo
 consumption; no generic feature framework or separate Demo financial page.
 Verify explicit request identity, six-pair rendering, real-contract labels,
 units/formatting, zero/null distinction and closed/empty/excluded/error outcomes
-with targeted tests. This authority does not register an implemented page or mark
-an overview card completed. Disclosure states actual Close source context and that
+with targeted tests. WP6 registers the implemented Production page and completed Web overview card;
+this does not imply input-cache readiness. Disclosure states actual Close source context and that
 annualized price relationships are not returns or trading instructions.
+
+## WP6 consumer contract
+
+Production uses feature-local explicit-submit controls and `protectedRequest`. Draft
+inputs, submitted identity and local display selection are distinct. Editing a draft
+never changes the identity displayed with an existing result; resubmission clears the
+old result, aborts its request and isolates late completion by request token. Retry
+uses the last failed submitted identity. Unmount and authentication closure cancel
+and isolate requests. No polling, Run, implicit acquisition or automatic retry.
+
+Generated OpenAPI/TypeScript in `api/` remain the only wire schema. The pure validator
+checks structure, finite values, order, null/zero, identity, dates, outcome/count and
+statistical association as applicable; it never computes financial/statistical results.
+The public `presentation.ts` exports the transport-free Presentation and validator for
+future WP7. Daily and Research own independent types, query state and projections.
+
+Production routes are separate from gateway paths: requests use `/api/data/…` or
+`/api/research/…`, stripping only `/api` before reaching unchanged FastAPI routes.
+Static navigation does not expose these pages until WP7 Bundle admission.

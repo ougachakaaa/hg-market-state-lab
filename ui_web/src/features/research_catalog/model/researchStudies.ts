@@ -2,7 +2,7 @@
 type ResearchStudy = {
   title: string
   description: string
-} & ({ status: 'completed'; route: '/research/futures-basis' } | { status: 'incomplete'; route?: never })
+} & ({ status: 'completed'; route: '/research/futures-basis' | '/research/calendar-spread-relative-value' } | { status: 'incomplete'; route?: never })
 
 export const researchStudies = [
   {
@@ -10,6 +10,12 @@ export const researchStudies = [
     description: '研究股指期货基差的历史变化、期限结构、分布及持续性，观察不同合约与时间区间的基差特征。',
     status: 'completed',
     route: '/research/futures-basis',
+  },
+  {
+    title: '历史跨期相对价值研究',
+    description: '比较当前真实合约跨期价差与同到期阶段、全部阶段的历史样本分布和百分位。',
+    status: 'completed',
+    route: '/research/calendar-spread-relative-value',
   },
   {
     title: '价格分段研究',

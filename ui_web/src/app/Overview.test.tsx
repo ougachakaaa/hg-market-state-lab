@@ -8,8 +8,10 @@ afterEach(cleanup)
 it('shows completed data products in success text with their existing navigation', () => {
   const navigate = vi.fn()
   render(<DailyDataLanding navigate={navigate} />)
-  expect(screen.getAllByText('已完成')).toHaveLength(2)
+  expect(screen.getAllByText('已完成')).toHaveLength(3)
   for (const status of screen.getAllByText('已完成')) expect(status.classList.contains('ant-typography-success')).toBe(true)
+  fireEvent.click(screen.getByRole('button', { name: '打开 Futures Calendar Spread' }))
+  expect(navigate).toHaveBeenLastCalledWith('/data/futures-calendar-spread')
   fireEvent.click(screen.getByRole('button', { name: '打开 MO Option Chain' }))
   expect(navigate).toHaveBeenLastCalledWith('/data/mo-option-chain')
   fireEvent.click(screen.getByRole('button', { name: '打开 MO Premium Plane' }))
@@ -24,4 +26,10 @@ it('presents the implemented backtest card with success text and explicit naviga
   expect(navigate).not.toHaveBeenCalled()
   fireEvent.click(screen.getByRole('button', { name: '查看回测' }))
   expect(navigate).toHaveBeenCalledWith('/backtesting/futures-roll-long')
+})
+
+it('keeps Static Daily overview limited to admitted pages', () => {
+  render(<DailyDataLanding mode="static" navigate={vi.fn()} />)
+  expect(screen.getAllByText('已完成')).toHaveLength(2)
+  expect(screen.queryByText('Futures Calendar Spread')).toBeNull()
 })

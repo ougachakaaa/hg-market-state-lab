@@ -22,7 +22,7 @@ export function ResearchOverviewPresentation({ mode, navigation, sourceDisclosur
     <Typography.Title level={2} style={{ margin: 0 }}>研究总览</Typography.Title>
     {/* Keep the 24px inner gutter without Row's negative outer margins. */}
     <Row gutter={[0, 24]}>
-      {researchStudies.map((study, index) => <Col key={study.title} xs={24} md={12}
+      {researchStudies.filter(study => !('route' in study && study.route === '/research/calendar-spread-relative-value') || !staticMode).map((study, index) => <Col key={study.title} xs={24} md={12}
         style={{ paddingInlineStart: md && index % 2 === 1 ? 12 : 0, paddingInlineEnd: md && index % 2 === 0 ? 12 : 0 }}>
         <Card style={{ height: '100%' }}>
           <Flex vertical gap="middle" align="start">
@@ -32,7 +32,7 @@ export function ResearchOverviewPresentation({ mode, navigation, sourceDisclosur
             </Flex>
             <Typography.Paragraph type="secondary" style={{ margin: 0 }}>{study.description}</Typography.Paragraph>
             {study.status === 'completed' && <Button icon={<FileTextOutlined aria-hidden="true" />}
-              aria-label="查看历史基差研究" onClick={navigation.openFuturesBasis}>查看研究</Button>}
+              aria-label={`查看${study.title}`} onClick={study.route === '/research/calendar-spread-relative-value' ? navigation.openCalendarSpread : navigation.openFuturesBasis}>查看研究</Button>}
           </Flex>
         </Card>
       </Col>)}

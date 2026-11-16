@@ -4,7 +4,7 @@ This specialized authority follows [application.md](application.md) and [ui-syst
 
 ## Business areas and readiness
 
-- **Daily Data** exposes the implemented MO Option Chain and MO Premium Plane pages for daily data inspection. It may consume published raw or derived products but never calculates their business values in React. Futures Basis Data Product integration is future work.
+- **Daily Data** exposes the implemented MO Option Chain, MO Premium Plane and Futures Calendar Spread pages for daily data inspection. It may consume published raw or derived products but never calculates their business values in React. Futures Basis Data Product integration is future work.
 - **Research** opens on Research Overview, its authenticated landing and topic-oriented discovery surface. The overview presents Research Studies as user-facing cards; completion means an independent Web page exists, not backend or provider readiness. Implemented study pages appear directly under Research without methodology categories; studies without a Web page appear only in the overview. Research Explorer is a secondary technical reader for existing Publications, evidence and views; it does not execute Research or imply that every topic has a publication. Futures Basis Online Research provides an authenticated execution page at `/research/futures-basis`. R01-A offline report remains independently readable when generated locally.
 - **Backtesting** exposes the implemented W2 Futures Roll Long consumer. The [feature authority](src/features/backtesting/ARCHITECTURE.md) owns the four-field form, advisory preflight, explicit submit, Run polling/restoration and result rendering. Strategy, execution and financial semantics remain with the [W2 case](../market_backtesting/cases/futures_roll_long/ARCHITECTURE.md). React only renders producer-owned results; full-window real-market, HTTP and Windows Chrome execution evidence is recorded in [WP8 acceptance](../market_backtesting/cases/futures_roll_long/WP8_ACCEPTANCE.md).
 
@@ -21,6 +21,8 @@ An online descriptor may be shown as discoverable after its authenticated read c
 | `/data` | Daily Data landing |
 | `/data/mo-option-chain` | MO Option Chain |
 | `/data/mo-premium-plane` | MO Premium Plane |
+| `/data/futures-calendar-spread` | Futures Calendar Spread (Production-only WP6) |
+| `/research/calendar-spread-relative-value` | Calendar Spread Historical Relative Value (Production-only WP6) |
 | `/backtesting` | Backtesting Overview |
 | `/backtesting/futures-roll-long?run_id=<opaque>` | Futures Roll Long; query identity restores the immutable server Run |
 
@@ -34,7 +36,7 @@ The header breadcrumb identifies the area and current page, linking the parent t
 
 ## Static routing specialization
 
-The path table above is the shared eight-page route identity inventory; its Auth and server Run query behavior applies to Production. Demo retains all three overviews and every formal business page using hash routes under `/hg-market-state-lab/`, with default/unknown routes resolving to `#/research`. Its local navigation, deep reload, history and breadcrumb hrefs never escape that base. It neither restores server `run_id` nor calls the `/api` gateway. Report section navigation must coexist with routing. The [Demo authority](demo/ARCHITECTURE.md) owns this static specialization; Production keeps pathname/history routing and authenticated deep links.
+The path table above includes ten Production pages; Auth and server Run query behavior apply to Production. Static retains eight admitted page identities: all three overviews and the five existing business pages using hash routes under `/hg-market-state-lab/`, with default/unknown routes resolving to `#/research`. Its local navigation, deep reload, history and breadcrumb hrefs never escape that base. It neither restores server `run_id` nor calls the `/api` gateway. Report section navigation must coexist with routing. The [Demo authority](demo/ARCHITECTURE.md) owns this static specialization; Production keeps pathname/history routing and authenticated deep links.
 
 ## Overview completion and Backtesting navigation
 
@@ -50,16 +52,17 @@ Bare `/backtesting` opens the overview. Login and history follow the same normal
 
 ## Route and Bundle identities
 
-The eight application pages and seven registered business-result Bundles have independent identities. Overview pages create no additional Bundle. Research Explorer remains directly accessible through its hash route with its Publications Bundle retained. Backtesting M1/Q1 remain two independent Results on the same instance page. Bundle identity is owned by [Bundle authority](demo/BUNDLES.md). The retained StaticWorkspace exhaustively composes all eight paths using shared formal Presentation. DDB-04 owns admitted Bundle adapters and the official runtime/build.
+The ten Production pages, eight Static pages and seven registered business-result Bundles have independent identities. Overview pages create no additional Bundle. Research Explorer remains directly accessible through its hash route with its Publications Bundle retained. Backtesting M1/Q1 remain two independent Results on the same instance page. Bundle identity is owned by [Bundle authority](demo/BUNDLES.md). The retained StaticWorkspace exhaustively composes all eight paths using shared formal Presentation. DDB-04 owns admitted Bundle adapters and the official runtime/build.
 
-## Planned Calendar Spread L1 surfaces
+## WP6 Production-only Calendar Spread integration
 
-[Daily Presentation](src/features/futures_calendar_spread/ARCHITECTURE.md) plans
-`/data/futures-calendar-spread` under Daily Data;
-[Historical Relative Value Presentation](src/features/calendar_spread_relative_value/ARCHITECTURE.md)
-plans `/research/calendar-spread-relative-value` under Research. Both are authority
-only: they are not registered routes, available pages or completed Study cards.
-The current route/Bundle inventory above is unchanged by WP0. Register actual
-consumers and update the inventory at WP6; Demo adds the corresponding hash routes
-only at its coordinated WP7 Bundle cutover. No application-level financial or
-statistical computation is introduced.
+WP6 registers `/data/futures-calendar-spread` and
+`/research/calendar-spread-relative-value` as independent authenticated Production
+surfaces. Production overviews mark only Web delivery complete. Shared route metadata
+explicitly distinguishes Production-only pages; Static keeps its eight admitted pages
+and seven Bundles until WP7, including unknown-hash fallback for these new paths.
+
+Daily fetches `/api/data/futures-calendar-spread`; gateways must strip `/api`, preserve
+Cookie/query/status/body, and keep browser `/data/*` HTML navigation on SPA fallback.
+Research uses the existing `/api/research` gateway. No actual Production Nginx site
+configuration is tracked here, so local acceptance does not verify deployed routing.

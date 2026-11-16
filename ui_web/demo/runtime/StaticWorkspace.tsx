@@ -1,5 +1,5 @@
 import { useState, type ReactNode } from 'react'
-import type { WorkspacePath } from '../../src/app/routeInventory'
+import type { StaticWorkspacePath } from '../../src/app/routeInventory'
 import { Flex, Select, Typography } from 'antd'
 import ApplicationShell from '../../src/app/ApplicationShell'
 import AppUiProvider from '../../src/app/AppUiProvider'
@@ -44,16 +44,16 @@ const staticRoutePresentations = {
   '/research': ({ data, navigate, disclose }) => <Catalog data={data} navigate={navigate} disclose={disclose} />,
   '/research/futures-basis': ({ data, disclose }) => <FuturesBasisPresentation mode="static" state={{ status: 'validated', data: data.basis }} disclosure={disclose(data.identities.basis)} sourceDisclosure={disclose(data.identities.basis)} />,
   '/research/publications': ({ data, disclose }) => <Explorer data={data} disclose={disclose} />,
-  '/data': ({ navigate }) => <DailyDataLanding navigate={navigate} />,
+  '/data': ({ navigate }) => <DailyDataLanding mode="static" navigate={navigate} />,
   '/data/mo-option-chain': ({ data, disclose }) => <Chain data={data} disclose={disclose} />,
   '/data/mo-premium-plane': ({ data, disclose }) => <Premium data={data} disclose={disclose} />,
   '/backtesting': ({ navigate }) => <BacktestingOverview navigate={navigate} />,
   '/backtesting/futures-roll-long': ({ data, disclose }) => <Backtesting data={data} disclose={disclose} />,
-} satisfies Record<WorkspacePath, (context: StaticContext) => ReactNode>
+} satisfies Record<StaticWorkspacePath, (context: StaticContext) => ReactNode>
 
 export function StaticWorkspace({ data, disclose, header, notice }: StaticProps & { header: string; notice: ReactNode }) {
   const { path, navigate } = useHashRoute()
-  return <AppUiProvider><ApplicationShell path={path} navigate={navigate} href={staticHref} header={<Typography.Text type="secondary">{header}</Typography.Text>}>
+  return <AppUiProvider><ApplicationShell mode="static" path={path} navigate={navigate} href={staticHref} header={<Typography.Text type="secondary">{header}</Typography.Text>}>
     <Flex vertical gap="large" style={{ minWidth: 0, maxWidth: '100%', overflowX: 'auto' }}>
       {notice}
       {staticRoutePresentations[path]({ data, navigate, disclose })}

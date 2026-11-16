@@ -24,7 +24,9 @@ baseline `f957342039b4137d224b0c9cc2eee9cd44623c5b` on `develop`.
 WP5 implements formal HTTP delivery after baseline
 `6e20f1e4fcf6976069adaf70f46675b0250f3767`; baseline HEAD was clean on develop,
 so WP5 uses isolated `feat/calendar-spread-wp5-http` without merging develop/main.
-WP6–WP7 remain **NOT IMPLEMENTED / NOT VERIFIED** for this case.
+WP6 delivers both formal Web consumers and is **READY TO CLOSE**; targeted
+verification and deployment limits are recorded below. WP7 remains
+**NOT IMPLEMENTED / NOT VERIFIED** for this case.
 
 ## Implementation work packages
 
@@ -330,3 +332,53 @@ composed OpenAPI and complete time series. WP5 creates no Web/TypeScript or Demo
 artifacts and performs no merge or publication. Real-market/cache/provider,
 workload performance, browser, deployment/platform and broad regression remain
 **NOT VERIFIED**. Existing source/financial/statistical authority is unchanged.
+
+## WP6 closure — Daily and Historical Relative Value Web consumers
+
+Implemented from the exact requested baseline
+`e18c52c3dc4a494c0163665bd3c371561f2b7b1a` on the existing
+`feat/calendar-spread-wp5-http` branch, with an initially clean worktree.
+No backend financial/statistical code, data cache, dependencies, Bundle Registry,
+Manifest, capture or release machinery changed. No merge, publication or WP7 work.
+
+- Production pages `/data/futures-calendar-spread` and
+  `/research/calendar-spread-relative-value` use the existing authentication gate,
+  independent generated HTTP contracts, pure validators, explicit-submit controllers
+  and public transport-free Presentations.
+- Validators check the delivered WP5 DTOs, request/date/Pair/sample/method/count
+  associations without recalculating finance, historical samples or statistics.
+  Existing seven generated contract pairs retain their bytes; the two new pairs
+  bring contract freshness coverage to nine.
+- Draft and submitted identity are separate; replacement, unmount and authentication
+  closure isolate stale work. Retry uses the failed submitted snapshot. Pair and
+  date-axis changes are local. No Run, ensure, polling or automatic POST retry.
+- Vite `/api/data` removes `/api` before Daily delivery; Research reuses
+  `/api/research`. Chromium proves actual local proxy delivery separately from HTML
+  deep reload and history. No Production Nginx site configuration is tracked; the
+  required routing is documented, not claimed as deployed.
+- Research reuses DateAxisControl and the existing Plotly renderer with backend
+  open-day domain, raw dates/values/contracts, missing/contract-transition breaks,
+  current evaluation mark, independent Matching-stage/All-stages ranks, four
+  distributions and producer-supplied Histogram/outside counts.
+
+Verification: targeted Vitest cases across 14 files (executed in scoped
+groups; failed cases alone rerun after fixes), seven exporter pytest cases,
+`npm run contract:check`, `npm run build` and `npm run lint` PASS. Lint retains only
+two pre-existing warnings in unrelated Demo files; Vite reports its existing
+large-bundle warning. Targeted Chromium with actual composed Auth/HTTP and injected
+synthetic public input services PASS, including both axis modes, exact coordinates,
+Hover, Zoom/Pan/Reset, legend retention, local-only interaction, explicit submission,
+deep reload/history and logout. It caught and verified the fix for implicit Enter
+submission from date inputs. See feature acceptance records for commands and limits:
+[Daily](../../../../ui_web/src/features/futures_calendar_spread/ACCEPTANCE.md),
+[Research](../../../../ui_web/src/features/calendar_spread_relative_value/ACCEPTANCE.md).
+
+Real-market queries, target Production Gateway/deployment and other browsers/platforms
+remain **NOT VERIFIED**. Temporary browser auth SQLite and its runner-owned temporary
+directories alone were removed; real market data/caches and user configuration were
+not modified. No whole-repository regression, browser matrix or Demo build ran.
+
+WP6 is **READY TO CLOSE**. WP7's shared Presentation/validator prerequisites are
+ready, but its **Demo Bundle delivery remains BLOCKED / NOT IMPLEMENTED** until
+explicit real presets, formal HTTP capture, admission and offline artifact acceptance
+are performed in WP7. Existing seven Bundles and eight static routes remain unchanged.

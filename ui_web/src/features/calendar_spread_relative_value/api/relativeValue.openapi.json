@@ -1,0 +1,1521 @@
+{
+  "components": {
+    "schemas": {
+      "Accounting": {
+        "additionalProperties": false,
+        "properties": {
+          "candidate_count": {
+            "title": "Candidate Count",
+            "type": "integer"
+          },
+          "excluded_count": {
+            "title": "Excluded Count",
+            "type": "integer"
+          },
+          "not_applicable_count": {
+            "title": "Not Applicable Count",
+            "type": "integer"
+          },
+          "valid_count": {
+            "title": "Valid Count",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "candidate_count",
+          "valid_count",
+          "not_applicable_count",
+          "excluded_count"
+        ],
+        "title": "Accounting",
+        "type": "object"
+      },
+      "Assessment": {
+        "additionalProperties": false,
+        "properties": {
+          "distribution_stage": {
+            "anyOf": [
+              {
+                "enum": [
+                  "0_7",
+                  "8_21",
+                  "22_plus",
+                  "all_stages"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Distribution Stage"
+          },
+          "kind": {
+            "enum": [
+              "matching_stage",
+              "all_stages"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "percentile": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Percentile"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          },
+          "status": {
+            "enum": [
+              "not_applicable",
+              "empty_sample",
+              "small_sample",
+              "available"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Warnings",
+            "type": "array"
+          }
+        },
+        "required": [
+          "kind",
+          "distribution_stage",
+          "status",
+          "reason",
+          "warnings",
+          "percentile"
+        ],
+        "title": "Assessment",
+        "type": "object"
+      },
+      "AuthErrorBody": {
+        "properties": {
+          "detail": {
+            "title": "Detail",
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "invalid_request",
+              "authentication_required",
+              "invalid_credentials",
+              "origin_forbidden",
+              "rate_limited",
+              "internal_error"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "param": {
+            "default": null,
+            "title": "Param",
+            "type": "null"
+          }
+        },
+        "required": [
+          "kind",
+          "detail"
+        ],
+        "title": "AuthErrorBody",
+        "type": "object"
+      },
+      "AuthErrorResponse": {
+        "properties": {
+          "error": {
+            "$ref": "#/components/schemas/AuthErrorBody"
+          }
+        },
+        "required": [
+          "error"
+        ],
+        "title": "AuthErrorResponse",
+        "type": "object"
+      },
+      "Bin": {
+        "additionalProperties": false,
+        "properties": {
+          "count": {
+            "title": "Count",
+            "type": "integer"
+          },
+          "frequency": {
+            "title": "Frequency",
+            "type": "number"
+          },
+          "left": {
+            "title": "Left",
+            "type": "number"
+          },
+          "left_inclusive": {
+            "title": "Left Inclusive",
+            "type": "boolean"
+          },
+          "right": {
+            "title": "Right",
+            "type": "number"
+          },
+          "right_inclusive": {
+            "title": "Right Inclusive",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "left",
+          "right",
+          "left_inclusive",
+          "right_inclusive",
+          "count",
+          "frequency"
+        ],
+        "title": "Bin",
+        "type": "object"
+      },
+      "Contract": {
+        "additionalProperties": false,
+        "properties": {
+          "close": {
+            "title": "Close",
+            "type": "number"
+          },
+          "contract_code": {
+            "title": "Contract Code",
+            "type": "string"
+          },
+          "delist_date": {
+            "description": "Real last trading date, not delivery date.",
+            "format": "date",
+            "title": "Delist Date",
+            "type": "string"
+          }
+        },
+        "required": [
+          "contract_code",
+          "close",
+          "delist_date"
+        ],
+        "title": "Contract",
+        "type": "object"
+      },
+      "Day": {
+        "additionalProperties": false,
+        "properties": {
+          "observations": {
+            "items": {
+              "$ref": "#/components/schemas/PairObservation"
+            },
+            "title": "Observations",
+            "type": "array"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "const": "non_trading_day",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          },
+          "status": {
+            "enum": [
+              "open",
+              "closed"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "trade_date": {
+            "format": "date",
+            "title": "Trade Date",
+            "type": "string"
+          }
+        },
+        "required": [
+          "trade_date",
+          "status",
+          "reason",
+          "observations"
+        ],
+        "title": "Day",
+        "type": "object"
+      },
+      "DaySummary": {
+        "additionalProperties": false,
+        "properties": {
+          "reason": {
+            "anyOf": [
+              {
+                "const": "non_trading_day",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          },
+          "status": {
+            "enum": [
+              "open",
+              "closed"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "trade_date": {
+            "format": "date",
+            "title": "Trade Date",
+            "type": "string"
+          }
+        },
+        "required": [
+          "trade_date",
+          "status",
+          "reason"
+        ],
+        "title": "DaySummary",
+        "type": "object"
+      },
+      "Distribution": {
+        "additionalProperties": false,
+        "properties": {
+          "accounting": {
+            "$ref": "#/components/schemas/Accounting"
+          },
+          "candidate_dates": {
+            "items": {
+              "format": "date",
+              "type": "string"
+            },
+            "title": "Candidate Dates",
+            "type": "array"
+          },
+          "histogram": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Histogram"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "histogram_status": {
+            "enum": [
+              "not_requested",
+              "empty_sample",
+              "available"
+            ],
+            "title": "Histogram Status",
+            "type": "string"
+          },
+          "metric": {
+            "enum": [
+              "signed_spread",
+              "annualized_point_spread",
+              "annualized_spread_ratio"
+            ],
+            "title": "Metric",
+            "type": "string"
+          },
+          "quantile": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Quantile"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          },
+          "sample_count": {
+            "title": "Sample Count",
+            "type": "integer"
+          },
+          "sample_dates": {
+            "items": {
+              "format": "date",
+              "type": "string"
+            },
+            "title": "Sample Dates",
+            "type": "array"
+          },
+          "stage": {
+            "enum": [
+              "0_7",
+              "8_21",
+              "22_plus",
+              "all_stages"
+            ],
+            "title": "Stage",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "empty_sample",
+              "small_sample",
+              "available"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "unit": {
+            "enum": [
+              "index_points",
+              "index_points_per_365_natural_days",
+              "decimal_ratio"
+            ],
+            "title": "Unit",
+            "type": "string"
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Warnings",
+            "type": "array"
+          }
+        },
+        "required": [
+          "stage",
+          "metric",
+          "unit",
+          "candidate_dates",
+          "accounting",
+          "sample_dates",
+          "sample_count",
+          "status",
+          "reason",
+          "warnings",
+          "quantile",
+          "histogram_status",
+          "histogram"
+        ],
+        "title": "Distribution",
+        "type": "object"
+      },
+      "ErrorBody": {
+        "additionalProperties": false,
+        "properties": {
+          "detail": {
+            "title": "Detail",
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "invalid_request",
+              "incomplete_inputs",
+              "upstream_unavailable",
+              "input_contract_error",
+              "slot_resolution_error",
+              "calculation_failure",
+              "statistical_failure",
+              "internal_error",
+              "transport_busy",
+              "request_too_large",
+              "response_too_large"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "param": {
+            "anyOf": [
+              {
+                "enum": [
+                  "product_code",
+                  "trade_date",
+                  "history_start",
+                  "evaluation_date",
+                  "metric",
+                  "histogram_edges"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Param"
+          }
+        },
+        "required": [
+          "kind",
+          "detail"
+        ],
+        "title": "ErrorBody",
+        "type": "object"
+      },
+      "FinancialMetric": {
+        "additionalProperties": false,
+        "properties": {
+          "metric_id": {
+            "enum": [
+              "signed_spread",
+              "annualized_point_spread",
+              "annualized_spread_ratio"
+            ],
+            "title": "Metric Id",
+            "type": "string"
+          },
+          "unit": {
+            "enum": [
+              "index_points",
+              "index_points_per_365_natural_days",
+              "decimal_ratio"
+            ],
+            "title": "Unit",
+            "type": "string"
+          },
+          "value": {
+            "title": "Value",
+            "type": "number"
+          }
+        },
+        "required": [
+          "metric_id",
+          "value",
+          "unit"
+        ],
+        "title": "FinancialMetric",
+        "type": "object"
+      },
+      "FinancialMetrics": {
+        "additionalProperties": false,
+        "properties": {
+          "annualized_point_spread": {
+            "$ref": "#/components/schemas/FinancialMetric"
+          },
+          "annualized_spread_ratio": {
+            "$ref": "#/components/schemas/FinancialMetric"
+          },
+          "definition_version": {
+            "const": "futures_calendar_spread_definition_v1",
+            "title": "Definition Version",
+            "type": "string"
+          },
+          "delta_days": {
+            "title": "Delta Days",
+            "type": "integer"
+          },
+          "signed_spread": {
+            "$ref": "#/components/schemas/FinancialMetric"
+          }
+        },
+        "required": [
+          "signed_spread",
+          "annualized_point_spread",
+          "annualized_spread_ratio",
+          "delta_days",
+          "definition_version"
+        ],
+        "title": "FinancialMetrics",
+        "type": "object"
+      },
+      "Histogram": {
+        "additionalProperties": false,
+        "properties": {
+          "result": {
+            "$ref": "#/components/schemas/HistogramResult"
+          },
+          "spec": {
+            "$ref": "#/components/schemas/HistogramSpec"
+          }
+        },
+        "required": [
+          "spec",
+          "result"
+        ],
+        "title": "Histogram",
+        "type": "object"
+      },
+      "HistogramResult": {
+        "additionalProperties": false,
+        "properties": {
+          "bins": {
+            "items": {
+              "$ref": "#/components/schemas/Bin"
+            },
+            "title": "Bins",
+            "type": "array"
+          },
+          "edges": {
+            "items": {
+              "type": "number"
+            },
+            "title": "Edges",
+            "type": "array"
+          },
+          "method": {
+            "const": "interval_count",
+            "title": "Method",
+            "type": "string"
+          },
+          "overflow_count": {
+            "title": "Overflow Count",
+            "type": "integer"
+          },
+          "overflow_frequency": {
+            "title": "Overflow Frequency",
+            "type": "number"
+          },
+          "sample_count": {
+            "title": "Sample Count",
+            "type": "integer"
+          },
+          "underflow_count": {
+            "title": "Underflow Count",
+            "type": "integer"
+          },
+          "underflow_frequency": {
+            "title": "Underflow Frequency",
+            "type": "number"
+          },
+          "unit": {
+            "enum": [
+              "index_points",
+              "index_points_per_365_natural_days",
+              "decimal_ratio"
+            ],
+            "title": "Unit",
+            "type": "string"
+          }
+        },
+        "required": [
+          "method",
+          "edges",
+          "bins",
+          "underflow_count",
+          "overflow_count",
+          "underflow_frequency",
+          "overflow_frequency",
+          "sample_count",
+          "unit"
+        ],
+        "title": "HistogramResult",
+        "type": "object"
+      },
+      "HistogramSpec": {
+        "additionalProperties": false,
+        "properties": {
+          "edges": {
+            "items": {
+              "type": "number"
+            },
+            "title": "Edges",
+            "type": "array"
+          },
+          "method": {
+            "const": "interval_count",
+            "title": "Method",
+            "type": "string"
+          },
+          "unit": {
+            "enum": [
+              "index_points",
+              "index_points_per_365_natural_days",
+              "decimal_ratio"
+            ],
+            "title": "Unit",
+            "type": "string"
+          }
+        },
+        "required": [
+          "method",
+          "edges",
+          "unit"
+        ],
+        "title": "HistogramSpec",
+        "type": "object"
+      },
+      "HistoricalEcho": {
+        "additionalProperties": false,
+        "properties": {
+          "evaluation_date": {
+            "format": "date",
+            "title": "Evaluation Date",
+            "type": "string"
+          },
+          "histogram_edges": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "number"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Histogram Edges"
+          },
+          "history_start": {
+            "format": "date",
+            "title": "History Start",
+            "type": "string"
+          },
+          "metric": {
+            "enum": [
+              "signed_spread",
+              "annualized_point_spread",
+              "annualized_spread_ratio"
+            ],
+            "title": "Metric",
+            "type": "string"
+          },
+          "operation": {
+            "const": "query_historical_relative_value",
+            "title": "Operation",
+            "type": "string"
+          },
+          "product_code": {
+            "enum": [
+              "IF",
+              "IH",
+              "IC",
+              "IM"
+            ],
+            "title": "Product Code",
+            "type": "string"
+          }
+        },
+        "required": [
+          "product_code",
+          "history_start",
+          "evaluation_date",
+          "metric",
+          "histogram_edges",
+          "operation"
+        ],
+        "title": "HistoricalEcho",
+        "type": "object"
+      },
+      "HistoricalErrorResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "error": {
+            "$ref": "#/components/schemas/ErrorBody"
+          }
+        },
+        "required": [
+          "error"
+        ],
+        "title": "HistoricalErrorResponse",
+        "type": "object"
+      },
+      "HistoricalRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "evaluation_date": {
+            "format": "date",
+            "title": "Evaluation Date",
+            "type": "string"
+          },
+          "histogram_edges": {
+            "items": {
+              "type": "number"
+            },
+            "title": "Histogram Edges",
+            "type": "array"
+          },
+          "history_start": {
+            "format": "date",
+            "title": "History Start",
+            "type": "string"
+          },
+          "metric": {
+            "default": "annualized_spread_ratio",
+            "enum": [
+              "signed_spread",
+              "annualized_point_spread",
+              "annualized_spread_ratio"
+            ],
+            "title": "Metric",
+            "type": "string"
+          },
+          "product_code": {
+            "enum": [
+              "IF",
+              "IH",
+              "IC",
+              "IM"
+            ],
+            "title": "Product Code",
+            "type": "string"
+          }
+        },
+        "required": [
+          "product_code",
+          "history_start",
+          "evaluation_date"
+        ],
+        "title": "HistoricalRequest",
+        "type": "object"
+      },
+      "HistoricalResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "case": {
+            "const": "futures_calendar_spread_v1",
+            "title": "Case",
+            "type": "string"
+          },
+          "current_day": {
+            "$ref": "#/components/schemas/Day"
+          },
+          "definition_version": {
+            "const": "futures_calendar_spread_definition_v1",
+            "title": "Definition Version",
+            "type": "string"
+          },
+          "historical_accounting": {
+            "$ref": "#/components/schemas/Accounting"
+          },
+          "historical_days": {
+            "items": {
+              "$ref": "#/components/schemas/DaySummary"
+            },
+            "title": "Historical Days",
+            "type": "array"
+          },
+          "metric": {
+            "enum": [
+              "signed_spread",
+              "annualized_point_spread",
+              "annualized_spread_ratio"
+            ],
+            "title": "Metric",
+            "type": "string"
+          },
+          "pairs": {
+            "items": {
+              "$ref": "#/components/schemas/PairResult"
+            },
+            "maxItems": 6,
+            "minItems": 6,
+            "title": "Pairs",
+            "type": "array"
+          },
+          "request": {
+            "$ref": "#/components/schemas/HistoricalEcho"
+          },
+          "source_context": {
+            "$ref": "#/components/schemas/SourceContext"
+          },
+          "unit": {
+            "enum": [
+              "index_points",
+              "index_points_per_365_natural_days",
+              "decimal_ratio"
+            ],
+            "title": "Unit",
+            "type": "string"
+          }
+        },
+        "required": [
+          "case",
+          "definition_version",
+          "request",
+          "metric",
+          "unit",
+          "current_day",
+          "historical_days",
+          "historical_accounting",
+          "pairs",
+          "source_context"
+        ],
+        "title": "HistoricalResponse",
+        "type": "object"
+      },
+      "PairObservation": {
+        "additionalProperties": false,
+        "properties": {
+          "delta_days": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Delta Days"
+          },
+          "expiry_stage": {
+            "anyOf": [
+              {
+                "enum": [
+                  "0_7",
+                  "8_21",
+                  "22_plus"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expiry Stage"
+          },
+          "far": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Contract"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "far_slot": {
+            "enum": [
+              "M0",
+              "M1",
+              "Q1",
+              "Q2"
+            ],
+            "title": "Far Slot",
+            "type": "string"
+          },
+          "metrics": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/FinancialMetrics"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "near": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Contract"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "near_dte_days": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Near Dte Days"
+          },
+          "near_slot": {
+            "enum": [
+              "M0",
+              "M1",
+              "Q1",
+              "Q2"
+            ],
+            "title": "Near Slot",
+            "type": "string"
+          },
+          "outcome": {
+            "enum": [
+              "valid",
+              "not_applicable",
+              "excluded"
+            ],
+            "title": "Outcome",
+            "type": "string"
+          },
+          "product_code": {
+            "enum": [
+              "IF",
+              "IH",
+              "IC",
+              "IM"
+            ],
+            "title": "Product Code",
+            "type": "string"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "enum": [
+                  "no_active_contract",
+                  "nonpositive_close"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          },
+          "trade_date": {
+            "format": "date",
+            "title": "Trade Date",
+            "type": "string"
+          }
+        },
+        "required": [
+          "product_code",
+          "trade_date",
+          "near_slot",
+          "far_slot",
+          "near",
+          "far",
+          "delta_days",
+          "near_dte_days",
+          "expiry_stage",
+          "metrics",
+          "outcome",
+          "reason"
+        ],
+        "title": "PairObservation",
+        "type": "object"
+      },
+      "PairResult": {
+        "additionalProperties": false,
+        "properties": {
+          "all_stages": {
+            "$ref": "#/components/schemas/Assessment"
+          },
+          "distributions": {
+            "items": {
+              "$ref": "#/components/schemas/Distribution"
+            },
+            "maxItems": 4,
+            "minItems": 4,
+            "title": "Distributions",
+            "type": "array"
+          },
+          "far_slot": {
+            "enum": [
+              "M0",
+              "M1",
+              "Q1",
+              "Q2"
+            ],
+            "title": "Far Slot",
+            "type": "string"
+          },
+          "matching_stage": {
+            "$ref": "#/components/schemas/Assessment"
+          },
+          "near_slot": {
+            "enum": [
+              "M0",
+              "M1",
+              "Q1",
+              "Q2"
+            ],
+            "title": "Near Slot",
+            "type": "string"
+          },
+          "samples": {
+            "items": {
+              "$ref": "#/components/schemas/SamplePoint"
+            },
+            "title": "Samples",
+            "type": "array"
+          }
+        },
+        "required": [
+          "near_slot",
+          "far_slot",
+          "samples",
+          "distributions",
+          "matching_stage",
+          "all_stages"
+        ],
+        "title": "PairResult",
+        "type": "object"
+      },
+      "Percentile": {
+        "additionalProperties": false,
+        "properties": {
+          "result": {
+            "$ref": "#/components/schemas/PercentileResult"
+          },
+          "spec": {
+            "$ref": "#/components/schemas/PercentileSpec"
+          }
+        },
+        "required": [
+          "spec",
+          "result"
+        ],
+        "title": "Percentile",
+        "type": "object"
+      },
+      "PercentilePoint": {
+        "additionalProperties": false,
+        "properties": {
+          "equal_count": {
+            "title": "Equal Count",
+            "type": "integer"
+          },
+          "greater_count": {
+            "title": "Greater Count",
+            "type": "integer"
+          },
+          "less_count": {
+            "title": "Less Count",
+            "type": "integer"
+          },
+          "percentile": {
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Percentile",
+            "type": "number"
+          },
+          "query": {
+            "title": "Query",
+            "type": "number"
+          }
+        },
+        "required": [
+          "query",
+          "less_count",
+          "equal_count",
+          "greater_count",
+          "percentile"
+        ],
+        "title": "PercentilePoint",
+        "type": "object"
+      },
+      "PercentileResult": {
+        "additionalProperties": false,
+        "properties": {
+          "estimator": {
+            "const": "midrank_v1",
+            "title": "Estimator",
+            "type": "string"
+          },
+          "method": {
+            "const": "empirical_percentile",
+            "title": "Method",
+            "type": "string"
+          },
+          "query_results": {
+            "items": {
+              "$ref": "#/components/schemas/PercentilePoint"
+            },
+            "title": "Query Results",
+            "type": "array"
+          },
+          "sample_count": {
+            "title": "Sample Count",
+            "type": "integer"
+          },
+          "unit": {
+            "enum": [
+              "index_points",
+              "index_points_per_365_natural_days",
+              "decimal_ratio"
+            ],
+            "title": "Unit",
+            "type": "string"
+          }
+        },
+        "required": [
+          "method",
+          "estimator",
+          "query_results",
+          "sample_count",
+          "unit"
+        ],
+        "title": "PercentileResult",
+        "type": "object"
+      },
+      "PercentileSpec": {
+        "additionalProperties": false,
+        "properties": {
+          "method": {
+            "const": "empirical_percentile",
+            "title": "Method",
+            "type": "string"
+          },
+          "queries": {
+            "items": {
+              "type": "number"
+            },
+            "title": "Queries",
+            "type": "array"
+          },
+          "unit": {
+            "enum": [
+              "index_points",
+              "index_points_per_365_natural_days",
+              "decimal_ratio"
+            ],
+            "title": "Unit",
+            "type": "string"
+          }
+        },
+        "required": [
+          "method",
+          "queries",
+          "unit"
+        ],
+        "title": "PercentileSpec",
+        "type": "object"
+      },
+      "Quantile": {
+        "additionalProperties": false,
+        "properties": {
+          "result": {
+            "$ref": "#/components/schemas/QuantileResult"
+          },
+          "spec": {
+            "$ref": "#/components/schemas/QuantileSpec"
+          }
+        },
+        "required": [
+          "spec",
+          "result"
+        ],
+        "title": "Quantile",
+        "type": "object"
+      },
+      "QuantileResult": {
+        "additionalProperties": false,
+        "properties": {
+          "estimator": {
+            "const": "type7_linear_v1",
+            "title": "Estimator",
+            "type": "string"
+          },
+          "method": {
+            "const": "quantile",
+            "title": "Method",
+            "type": "string"
+          },
+          "points_and_values": {
+            "items": {
+              "maxItems": 2,
+              "minItems": 2,
+              "prefixItems": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "number"
+                }
+              ],
+              "type": "array"
+            },
+            "title": "Points And Values",
+            "type": "array"
+          },
+          "sample_count": {
+            "title": "Sample Count",
+            "type": "integer"
+          },
+          "unit": {
+            "enum": [
+              "index_points",
+              "index_points_per_365_natural_days",
+              "decimal_ratio"
+            ],
+            "title": "Unit",
+            "type": "string"
+          }
+        },
+        "required": [
+          "method",
+          "estimator",
+          "points_and_values",
+          "sample_count",
+          "unit"
+        ],
+        "title": "QuantileResult",
+        "type": "object"
+      },
+      "QuantileSpec": {
+        "additionalProperties": false,
+        "properties": {
+          "method": {
+            "const": "quantile",
+            "title": "Method",
+            "type": "string"
+          },
+          "points": {
+            "items": {
+              "type": "number"
+            },
+            "title": "Points",
+            "type": "array"
+          }
+        },
+        "required": [
+          "method",
+          "points"
+        ],
+        "title": "QuantileSpec",
+        "type": "object"
+      },
+      "SamplePoint": {
+        "additionalProperties": false,
+        "properties": {
+          "delta_days": {
+            "title": "Delta Days",
+            "type": "integer"
+          },
+          "expiry_stage": {
+            "enum": [
+              "0_7",
+              "8_21",
+              "22_plus"
+            ],
+            "title": "Expiry Stage",
+            "type": "string"
+          },
+          "far": {
+            "$ref": "#/components/schemas/Contract"
+          },
+          "metric": {
+            "$ref": "#/components/schemas/FinancialMetric"
+          },
+          "near": {
+            "$ref": "#/components/schemas/Contract"
+          },
+          "near_dte_days": {
+            "title": "Near Dte Days",
+            "type": "integer"
+          },
+          "trade_date": {
+            "format": "date",
+            "title": "Trade Date",
+            "type": "string"
+          }
+        },
+        "required": [
+          "trade_date",
+          "expiry_stage",
+          "near",
+          "far",
+          "delta_days",
+          "near_dte_days",
+          "metric"
+        ],
+        "title": "SamplePoint",
+        "type": "object"
+      },
+      "SourceContext": {
+        "additionalProperties": false,
+        "properties": {
+          "exchange": {
+            "title": "Exchange",
+            "type": "string"
+          },
+          "limitations": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Limitations",
+            "type": "array"
+          },
+          "price_field": {
+            "title": "Price Field",
+            "type": "string"
+          },
+          "provider": {
+            "title": "Provider",
+            "type": "string"
+          }
+        },
+        "required": [
+          "provider",
+          "exchange",
+          "price_field",
+          "limitations"
+        ],
+        "title": "SourceContext",
+        "type": "object"
+      }
+    },
+    "securitySchemes": {
+      "CookieSession": {
+        "in": "cookie",
+        "name": "lab_access_token",
+        "type": "apiKey"
+      }
+    }
+  },
+  "info": {
+    "summary": "HTTP delivery runtime for market-snapshot products.",
+    "title": "hg-market-state-lab Market Snapshot API",
+    "version": "0.1.0"
+  },
+  "openapi": "3.1.0",
+  "paths": {
+    "/research/calendar-spread-relative-value/query": {
+      "post": {
+        "operationId": "query_calendar_spread_relative_value",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HistoricalRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HistoricalResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HistoricalErrorResponse"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthErrorResponse"
+                }
+              }
+            },
+            "description": "HTTP access error"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthErrorResponse"
+                }
+              }
+            },
+            "description": "HTTP access error"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HistoricalErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HistoricalErrorResponse"
+                }
+              }
+            },
+            "description": "Content Too Large"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HistoricalErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/HistoricalErrorResponse"
+                    },
+                    {
+                      "$ref": "#/components/schemas/AuthErrorResponse"
+                    }
+                  ]
+                }
+              }
+            },
+            "description": "Internal Server Error"
+          },
+          "502": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HistoricalErrorResponse"
+                }
+              }
+            },
+            "description": "Bad Gateway"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HistoricalErrorResponse"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "security": [
+          {
+            "CookieSession": []
+          }
+        ],
+        "summary": "Historical",
+        "tags": [
+          "Calendar Spread Relative Value"
+        ]
+      }
+    }
+  }
+}

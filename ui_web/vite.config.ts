@@ -9,6 +9,10 @@ export default defineConfig({
   server: {
     host: '127.0.0.1',
     proxy: {
+      '/api/data': {
+        target: 'http://127.0.0.1:8011',
+        rewrite: (path) => path.replace(/^\/api/, ''),
+      },
       '/api/backtesting': {
         target: 'http://127.0.0.1:8011',
         rewrite: (path) => path.replace(/^\/api/, ''),

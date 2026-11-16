@@ -3,6 +3,8 @@ import { resolve } from 'node:path'
 import openapiTS, { astToString, COMMENT_HEADER } from 'openapi-typescript'
 
 const contracts = [
+  { name: 'Futures Calendar Spread', input: 'src/features/futures_calendar_spread/api/calendarSpread.openapi.json', output: 'src/features/futures_calendar_spread/api/calendarSpread.generated.ts' },
+  { name: 'Calendar Spread Relative Value', input: 'src/features/calendar_spread_relative_value/api/relativeValue.openapi.json', output: 'src/features/calendar_spread_relative_value/api/relativeValue.generated.ts' },
   { name: 'Backtesting', input: 'src/features/backtesting/api/backtesting.openapi.json', output: 'src/features/backtesting/api/backtesting.generated.ts' },
   { name: 'Futures Basis Research', input: 'src/features/futures_basis_research/api/futuresBasis.openapi.json', output: 'src/features/futures_basis_research/api/futuresBasis.generated.ts' },
   {

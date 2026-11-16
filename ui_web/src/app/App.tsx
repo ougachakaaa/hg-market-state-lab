@@ -1,3 +1,5 @@
+import DailyCalendarSpreadPage from '../features/futures_calendar_spread/page/DailyPage'
+import RelativeValuePage from '../features/calendar_spread_relative_value/page/RelativeValuePage'
 import { LogoutOutlined, ReloadOutlined } from '@ant-design/icons'
 import { Alert, Button, Flex, Spin, Typography, theme } from 'antd'
 import { useEffect } from 'react'
@@ -27,7 +29,9 @@ function ProductionWorkspace({ user, signOut, path, navigate }: {
       <Button icon={<LogoutOutlined aria-hidden="true" />} onClick={() => void signOut()}>退出登录</Button>
     </Flex>
   }>
-    {path === '/research' ? <ResearchWorkspacePage openExplorer={() => navigate('/research/publications')} openFuturesBasis={() => navigate('/research/futures-basis')} />
+    {path === '/research' ? <ResearchWorkspacePage openExplorer={() => navigate('/research/publications')} openFuturesBasis={() => navigate('/research/futures-basis')} openCalendarSpread={() => navigate('/research/calendar-spread-relative-value')} />
+      : path === '/research/calendar-spread-relative-value' ? <RelativeValuePage />
+      : path === '/data/futures-calendar-spread' ? <DailyCalendarSpreadPage />
       : path === '/research/futures-basis' ? <FuturesBasisPage />
         : path === '/research/publications' ? <ResearchExplorerPage />
           : path === '/data' ? <DailyDataLanding navigate={navigate} />

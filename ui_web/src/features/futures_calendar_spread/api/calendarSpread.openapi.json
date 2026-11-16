@@ -1,0 +1,693 @@
+{
+  "components": {
+    "schemas": {
+      "Accounting": {
+        "additionalProperties": false,
+        "properties": {
+          "candidate_count": {
+            "title": "Candidate Count",
+            "type": "integer"
+          },
+          "excluded_count": {
+            "title": "Excluded Count",
+            "type": "integer"
+          },
+          "not_applicable_count": {
+            "title": "Not Applicable Count",
+            "type": "integer"
+          },
+          "valid_count": {
+            "title": "Valid Count",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "candidate_count",
+          "valid_count",
+          "not_applicable_count",
+          "excluded_count"
+        ],
+        "title": "Accounting",
+        "type": "object"
+      },
+      "AuthErrorBody": {
+        "properties": {
+          "detail": {
+            "title": "Detail",
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "invalid_request",
+              "authentication_required",
+              "invalid_credentials",
+              "origin_forbidden",
+              "rate_limited",
+              "internal_error"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "param": {
+            "default": null,
+            "title": "Param",
+            "type": "null"
+          }
+        },
+        "required": [
+          "kind",
+          "detail"
+        ],
+        "title": "AuthErrorBody",
+        "type": "object"
+      },
+      "AuthErrorResponse": {
+        "properties": {
+          "error": {
+            "$ref": "#/components/schemas/AuthErrorBody"
+          }
+        },
+        "required": [
+          "error"
+        ],
+        "title": "AuthErrorResponse",
+        "type": "object"
+      },
+      "Contract": {
+        "additionalProperties": false,
+        "properties": {
+          "close": {
+            "title": "Close",
+            "type": "number"
+          },
+          "contract_code": {
+            "title": "Contract Code",
+            "type": "string"
+          },
+          "delist_date": {
+            "description": "Real last trading date, not delivery date.",
+            "format": "date",
+            "title": "Delist Date",
+            "type": "string"
+          }
+        },
+        "required": [
+          "contract_code",
+          "close",
+          "delist_date"
+        ],
+        "title": "Contract",
+        "type": "object"
+      },
+      "DailyEcho": {
+        "additionalProperties": false,
+        "properties": {
+          "operation": {
+            "const": "query_daily_spreads",
+            "title": "Operation",
+            "type": "string"
+          },
+          "product_code": {
+            "enum": [
+              "IF",
+              "IH",
+              "IC",
+              "IM"
+            ],
+            "title": "Product Code",
+            "type": "string"
+          },
+          "trade_date": {
+            "format": "date",
+            "title": "Trade Date",
+            "type": "string"
+          }
+        },
+        "required": [
+          "product_code",
+          "trade_date",
+          "operation"
+        ],
+        "title": "DailyEcho",
+        "type": "object"
+      },
+      "DailyErrorResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "error": {
+            "$ref": "#/components/schemas/ErrorBody"
+          }
+        },
+        "required": [
+          "error"
+        ],
+        "title": "DailyErrorResponse",
+        "type": "object"
+      },
+      "DailyResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "accounting": {
+            "$ref": "#/components/schemas/Accounting"
+          },
+          "case": {
+            "const": "futures_calendar_spread_v1",
+            "title": "Case",
+            "type": "string"
+          },
+          "day": {
+            "$ref": "#/components/schemas/Day"
+          },
+          "definition_version": {
+            "const": "futures_calendar_spread_definition_v1",
+            "title": "Definition Version",
+            "type": "string"
+          },
+          "request": {
+            "$ref": "#/components/schemas/DailyEcho"
+          },
+          "source_context": {
+            "$ref": "#/components/schemas/SourceContext"
+          }
+        },
+        "required": [
+          "case",
+          "definition_version",
+          "request",
+          "day",
+          "accounting",
+          "source_context"
+        ],
+        "title": "DailyResponse",
+        "type": "object"
+      },
+      "Day": {
+        "additionalProperties": false,
+        "properties": {
+          "observations": {
+            "items": {
+              "$ref": "#/components/schemas/PairObservation"
+            },
+            "title": "Observations",
+            "type": "array"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "const": "non_trading_day",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          },
+          "status": {
+            "enum": [
+              "open",
+              "closed"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "trade_date": {
+            "format": "date",
+            "title": "Trade Date",
+            "type": "string"
+          }
+        },
+        "required": [
+          "trade_date",
+          "status",
+          "reason",
+          "observations"
+        ],
+        "title": "Day",
+        "type": "object"
+      },
+      "ErrorBody": {
+        "additionalProperties": false,
+        "properties": {
+          "detail": {
+            "title": "Detail",
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "invalid_request",
+              "incomplete_inputs",
+              "upstream_unavailable",
+              "input_contract_error",
+              "slot_resolution_error",
+              "calculation_failure",
+              "statistical_failure",
+              "internal_error",
+              "transport_busy",
+              "request_too_large",
+              "response_too_large"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "param": {
+            "anyOf": [
+              {
+                "enum": [
+                  "product_code",
+                  "trade_date",
+                  "history_start",
+                  "evaluation_date",
+                  "metric",
+                  "histogram_edges"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Param"
+          }
+        },
+        "required": [
+          "kind",
+          "detail"
+        ],
+        "title": "ErrorBody",
+        "type": "object"
+      },
+      "FinancialMetric": {
+        "additionalProperties": false,
+        "properties": {
+          "metric_id": {
+            "enum": [
+              "signed_spread",
+              "annualized_point_spread",
+              "annualized_spread_ratio"
+            ],
+            "title": "Metric Id",
+            "type": "string"
+          },
+          "unit": {
+            "enum": [
+              "index_points",
+              "index_points_per_365_natural_days",
+              "decimal_ratio"
+            ],
+            "title": "Unit",
+            "type": "string"
+          },
+          "value": {
+            "title": "Value",
+            "type": "number"
+          }
+        },
+        "required": [
+          "metric_id",
+          "value",
+          "unit"
+        ],
+        "title": "FinancialMetric",
+        "type": "object"
+      },
+      "FinancialMetrics": {
+        "additionalProperties": false,
+        "properties": {
+          "annualized_point_spread": {
+            "$ref": "#/components/schemas/FinancialMetric"
+          },
+          "annualized_spread_ratio": {
+            "$ref": "#/components/schemas/FinancialMetric"
+          },
+          "definition_version": {
+            "const": "futures_calendar_spread_definition_v1",
+            "title": "Definition Version",
+            "type": "string"
+          },
+          "delta_days": {
+            "title": "Delta Days",
+            "type": "integer"
+          },
+          "signed_spread": {
+            "$ref": "#/components/schemas/FinancialMetric"
+          }
+        },
+        "required": [
+          "signed_spread",
+          "annualized_point_spread",
+          "annualized_spread_ratio",
+          "delta_days",
+          "definition_version"
+        ],
+        "title": "FinancialMetrics",
+        "type": "object"
+      },
+      "PairObservation": {
+        "additionalProperties": false,
+        "properties": {
+          "delta_days": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Delta Days"
+          },
+          "expiry_stage": {
+            "anyOf": [
+              {
+                "enum": [
+                  "0_7",
+                  "8_21",
+                  "22_plus"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expiry Stage"
+          },
+          "far": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Contract"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "far_slot": {
+            "enum": [
+              "M0",
+              "M1",
+              "Q1",
+              "Q2"
+            ],
+            "title": "Far Slot",
+            "type": "string"
+          },
+          "metrics": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/FinancialMetrics"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "near": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Contract"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "near_dte_days": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Near Dte Days"
+          },
+          "near_slot": {
+            "enum": [
+              "M0",
+              "M1",
+              "Q1",
+              "Q2"
+            ],
+            "title": "Near Slot",
+            "type": "string"
+          },
+          "outcome": {
+            "enum": [
+              "valid",
+              "not_applicable",
+              "excluded"
+            ],
+            "title": "Outcome",
+            "type": "string"
+          },
+          "product_code": {
+            "enum": [
+              "IF",
+              "IH",
+              "IC",
+              "IM"
+            ],
+            "title": "Product Code",
+            "type": "string"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "enum": [
+                  "no_active_contract",
+                  "nonpositive_close"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          },
+          "trade_date": {
+            "format": "date",
+            "title": "Trade Date",
+            "type": "string"
+          }
+        },
+        "required": [
+          "product_code",
+          "trade_date",
+          "near_slot",
+          "far_slot",
+          "near",
+          "far",
+          "delta_days",
+          "near_dte_days",
+          "expiry_stage",
+          "metrics",
+          "outcome",
+          "reason"
+        ],
+        "title": "PairObservation",
+        "type": "object"
+      },
+      "SourceContext": {
+        "additionalProperties": false,
+        "properties": {
+          "exchange": {
+            "title": "Exchange",
+            "type": "string"
+          },
+          "limitations": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Limitations",
+            "type": "array"
+          },
+          "price_field": {
+            "title": "Price Field",
+            "type": "string"
+          },
+          "provider": {
+            "title": "Provider",
+            "type": "string"
+          }
+        },
+        "required": [
+          "provider",
+          "exchange",
+          "price_field",
+          "limitations"
+        ],
+        "title": "SourceContext",
+        "type": "object"
+      }
+    },
+    "securitySchemes": {
+      "CookieSession": {
+        "in": "cookie",
+        "name": "lab_access_token",
+        "type": "apiKey"
+      }
+    }
+  },
+  "info": {
+    "summary": "HTTP delivery runtime for market-snapshot products.",
+    "title": "hg-market-state-lab Market Snapshot API",
+    "version": "0.1.0"
+  },
+  "openapi": "3.1.0",
+  "paths": {
+    "/data/futures-calendar-spread": {
+      "get": {
+        "operationId": "query_futures_calendar_spread",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "product_code",
+            "required": true,
+            "schema": {
+              "enum": [
+                "IF",
+                "IH",
+                "IC",
+                "IM"
+              ],
+              "title": "Product Code",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "trade_date",
+            "required": true,
+            "schema": {
+              "format": "date",
+              "title": "Trade Date",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DailyResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DailyErrorResponse"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthErrorResponse"
+                }
+              }
+            },
+            "description": "HTTP access error"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthErrorResponse"
+                }
+              }
+            },
+            "description": "HTTP access error"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DailyErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DailyErrorResponse"
+                }
+              }
+            },
+            "description": "Content Too Large"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DailyErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/DailyErrorResponse"
+                    },
+                    {
+                      "$ref": "#/components/schemas/AuthErrorResponse"
+                    }
+                  ]
+                }
+              }
+            },
+            "description": "Internal Server Error"
+          },
+          "502": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DailyErrorResponse"
+                }
+              }
+            },
+            "description": "Bad Gateway"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DailyErrorResponse"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "security": [
+          {
+            "CookieSession": []
+          }
+        ],
+        "summary": "Daily",
+        "tags": [
+          "Futures Calendar Spread"
+        ]
+      }
+    }
+  }
+}

@@ -52,7 +52,31 @@ def create_projection(paths: set[str]) -> FastAPI:
                 collect(child)
 
     collect(document["paths"])
-    document["components"]["schemas"] = {name: schemas[name] for name in sorted(needed)}
+    # FastAPI qualifies colliding model names across sibling products. Keep local
+    # names stable when the selected operation closure contains only one such title;
+    # this is a ref-preserving projection, never a competing schema definition.
+    titles = [schemas[name].get("title", name) for name in needed]
+    names = {
+        name: schemas[name].get("title", name)
+        if "__" in name and titles.count(schemas[name].get("title", name)) == 1
+        and schemas[name].get("title", name) not in needed else name
+        for name in needed
+    }
+
+    def local_refs(value: object) -> object:
+        if isinstance(value, dict):
+            result = {key: local_refs(child) for key, child in value.items()}
+            ref = value.get("$ref")
+            if isinstance(ref, str) and ref.startswith("#/components/schemas/"):
+                result["$ref"] = "#/components/schemas/" + names[ref.rsplit("/", 1)[1]]
+            return result
+        if isinstance(value, list):
+            return [local_refs(child) for child in value]
+        return value
+
+    document["paths"] = local_refs(document["paths"])
+    projected = {names[name]: local_refs(schemas[name]) for name in needed}
+    document["components"]["schemas"] = dict(sorted(projected.items()))
     app.openapi = lambda: document  # type: ignore[method-assign]
     return app
 
@@ -95,7 +119,19 @@ def create_backtesting_app() -> FastAPI:
     })
 
 
+def create_calendar_spread_daily_app() -> FastAPI:
+    return create_projection({"/data/futures-calendar-spread"})
+
+
+def create_calendar_spread_relative_value_app() -> FastAPI:
+    return create_projection({"/research/calendar-spread-relative-value/query"})
+
+
 CONTRACTS: tuple[tuple[str, Callable[[], FastAPI], Path], ...] = (
+    ("Futures Calendar Spread", create_calendar_spread_daily_app,
+     WEB_UI_ROOT / "src/features/futures_calendar_spread/api/calendarSpread.openapi.json"),
+    ("Calendar Spread Relative Value", create_calendar_spread_relative_value_app,
+     WEB_UI_ROOT / "src/features/calendar_spread_relative_value/api/relativeValue.openapi.json"),
     (
         "Backtesting",
         create_backtesting_app,
