@@ -31,8 +31,9 @@ Closure is local integration only and never means Pages publication.
 The two contract identities are `futures_calendar_spread:DailyResponse` and
 `calendar_spread_relative_value:HistoricalResponse`, anchored to the delivered
 feature-owned OpenAPI schemas (no invented DTO version). Both Results are complete
-synchronous HTTP 200 bodies. Daily uses GET; Research uses POST with the configured
-same-origin header, without Runs, polling, retries or acquisition.
+synchronous HTTP 200 bodies. The original WP7 capture used Daily GET and Research
+POST with the configured same-origin header, without Runs, polling, retries or
+acquisition. This describes that completed capture before Issue #13.
 
 Authenticated selections are IM / 2026-09-30 and IM / 2026-03-01 through
 2026-09-30 / annualized_spread_ratio, omitting histogram_edges. Both were verified as complete, usable HTTP 200
@@ -55,3 +56,21 @@ samples with Quantile and a current all-stage Percentile, and a nonempty matchin
 stage comparison. The 30-observation minimum is a Demo content requirement, not a
 change to the business definitions of empty_sample, small_sample or available.
 Actual historical dates must precede evaluation. No values are recomputed to pass.
+
+## Future collection after Issue #13
+
+The retained WP7 captures and their original read-only disclosures remain historical
+facts. Static display and offline Build Preflight consume those Bundle bytes only;
+neither submits Research POST nor calls Ensure.
+
+A future explicit Collector invocation still uses Daily GET (read-only) and the
+formal Historical POST. Issue #13 changed that POST to execution: Research may
+conditionally Ensure missing Calendar/Futures facts through DataLake before returning
+the complete Result. Collection can therefore acquire data and take longer on cold
+caches, even though the resulting static application remains offline and read-only.
+The Collector's existing default per-request timeout is 60 seconds; timeout does not
+promise worker cancellation or cache rollback and must not cause automatic resubmission.
+
+The Demo/build authority permits explicit formal HTTP generation; it does not impose
+a permanent no-Ensure restriction on the Collector. No new read-only Historical
+endpoint, collection permission, Bundle or Manifest change is introduced here.

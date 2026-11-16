@@ -273,3 +273,194 @@ latency guarantee is claimed. A client cancellation does not guarantee automatic
 preparation stops or already committed DataLake units roll back. Synchronous cold
 requests exceeding the actual stack's timeout require an explicit follow-up decision,
 not an implicit async framework. This delivery stops at WP2.
+
+## WP3 operational acceptance and final reconciliation (2026-11-16)
+
+Continued the existing branch from required HEAD
+`010815fedb689b04c0e673765675afd6699647d5`, with a clean worktree. No new branch,
+integration, PR, issue closure, push or publication. This acceptance supersedes the
+WP2 pending operational status above; original WP0–WP2 and WP7 facts remain historical.
+No runtime defect was found and no implementation or wire contract was changed.
+
+### Environment and evidence levels
+
+- WSL2 Linux x86_64, Python 3.13.15 in the root `.venv`, FastAPI 0.141.1,
+  Starlette 1.7.0, AnyIO 4.15.1, Uvicorn 0.53.0; Node 22.23.2, Vite 8.3.3,
+  installed Playwright Chromium. Source credential available through `lab_config`;
+  no credential value was logged and private `.env` was not edited.
+- New committed `ui_http/tests/test_calendar_spread_preparation_acceptance.py`
+  exercises real Auth/composed FastAPI, unchanged Research execution, real DataLake
+  public services, Source adapters, completeness and SQLite. Only provider rows
+  are controlled. Dataset-private `_create_service` seams are test facilities,
+  not new consumer permissions. Each case has its own pytest temporary cache.
+- Real Source acceptance used the same composition seams with `TushareExecutor`,
+  unmodified Source adapters and real SQLite. Temporary observer wrappers counted
+  public Ensure/Export and provider calls without retaining their parameters or secrets.
+  Research factories selected these services; HTTP query dependencies were not replaced.
+  Chromium same-origin fetch traversed Vite `5173 /api` → Uvicorn `8011` → the
+  actual composed application, using a synthetic approved local Auth account.
+  Each scenario began with its own absent cache directory under
+  `/tmp/issue13-wp3-live-rvinv17x/{daily,short,representative}`.
+  Temporary observers/servers are not application features or a benchmark framework.
+- Failure manufacturing and cancellation occupancy use controlled public-service/
+  business dependency injection, rather than intentionally damaging real caches or
+  credentials. The failure matrix below identifies that evidence level.
+
+### Real fresh/hot results — PASS
+
+All requests used product **IM**, evaluation/trade date **2026-09-30**. Historical
+requests explicitly supplied `histogram_edges=[-0.1,0,0.1]`, omitted metric to select
+the contractual `annualized_spread_ratio`, and used the start dates below. Daily
+used `POST /data/futures-calendar-spread/query`; Historical used
+`POST /research/calendar-spread-relative-value/query`. There was no manual Ensure.
+Times are measured browser fetch/body durations in seconds, one observation each,
+not percentiles, a benchmark average or a latency guarantee. Validator module loading
+is outside the measured duration.
+
+| Request | Cold / hot HTTP | Cold / hot seconds | Calendar Ensure | Futures Ensure | Source calls | Final Calendar / Futures coverage |
+| --- | --- | --- | --- | --- | --- | --- |
+| Daily 2026-09-30 | 200 / 200 | 2.1157 / 0.0125 | 1 / 0 | 1 / 0 | 7 / 0 | 1/1 / 1/1 |
+| Historical 2026-09-28..2026-09-30 | 200 / 200 | 2.3127 / 0.0176 | 1 / 0 | 1 / 0 | 7 / 0 | 3/3 / 3/3 |
+| Historical 2026-08-17..2026-09-30 | 200 / 200 | 6.3950 / 0.1126 | 1 / 0 | 1 / 0 | 19 / 0 | 45/45 / 32/32 |
+
+Source counts are actual endpoint invocations, including terminal pagination calls:
+each cold request made one `trade_cal` and four `fut_basic` calls; `fut_daily`
+counts were 2, 2 and 14 respectively. Calendar/Futures Ensure counts are deltas for
+each request. Calendar Export counts include Futures' existing public prerequisite
+reads (five cold, two hot); they are not additional Research preparation attempts.
+No per-date/Pair Ensure or business retry was observed.
+
+Both cold and hot bodies passed the respective formal Web `validateResult` in
+Chromium. Cold/hot complete JSON bodies were identical, including every financial
+and statistical value. All current days had six valid pairs. Short/representative
+history retained 2/44 natural days, with 2/31 all-stage samples per Pair, respectively.
+Every actual sample preceded evaluation; latest sample was 2026-09-29. Quantile,
+Percentile and explicitly requested Histogram associations passed the validators.
+Calendar proved natural-day coverage; Futures proved only CFFEX open-date coverage.
+
+The synthetic SQLite test additionally verified Daily empty-cache GET = 409
+`incomplete_inputs/cache_incomplete` without Source or cache creation, then hot GET
+= 200 with the same financial results and zero Ensure/Source calls. It checked
+closed-weekend coverage, exact final unit counts, no private path/Token-key/internal
+attempt disclosure, and only the two Dataset SQLite files plus Auth storage.
+Real Uvicorn lifespan separately initialized the already-existing Basis/Backtesting
+empty stores before Calendar Spread execution; both retained zero Runs and zero
+results. Calendar Spread created no Run identity, business result cache or Publication.
+
+### Failure matrix — PASS at controlled-test level
+
+| Injected condition | Expected HTTP / kind / reason_code | Evidence |
+| --- | --- | --- |
+| CredentialMissingError | 503 / upstream_unavailable / credential_missing | WP1 typed errors at Export/Ensure/final Export; HTTP reason projection; both Web reason guidance tests |
+| CacheIncompatibleError | 503 / upstream_unavailable / cache_incompatible | Same layered tests; no rebuild attempted |
+| Source/OperationError | 503 / upstream_unavailable / operation_unavailable | Same layered tests; generic cause is not inferred from text |
+| Valid incomplete EnsureResult, complete final Export | 200 / no error | WP1 incomplete-Ensure diagnostic test, including UnitFailure; final proof wins |
+| Final Export still incomplete | 409 / incomplete_inputs / final_export_incomplete | WP1 final-incomplete test, HTTP reason projection, both Web guidance tests |
+| Malformed Export | 502 / input_contract_error / malformed_export | WP1 preliminary/final malformed tests, HTTP reason projection, Web guidance |
+| Malformed EnsureResult | 502 / input_contract_error / malformed_ensure_result | WP1 field/identity/accounting tests, HTTP reason projection, Web guidance |
+| Invalid request | 400 / invalid_request / absent | WP1 before-I/O validation, HTTP strict parsing, both Web error tests |
+| Saturation | 503 / transport_busy / absent | Controlled shared-worker tests and real browser concurrency below; both Web fallback tests |
+
+HTTP tests inject secret/private-path sentinel text and assert fixed safe details,
+correct status/kind/reason, no fabricated successful projection and no leakage.
+Web tests discard unsafe backend detail and check fixed reason-specific guidance,
+safe legacy fallback and deliberate manual retry. These are layered tests, not claims
+that real Source outages or damaged caches were created in the live environment.
+
+### Synchronous performance, capacity and timeout — PASS for selected local chain
+
+Three simultaneous Chromium submissions of the hot representative request returned
+200 in 0.0492s, 200 in 0.0735s and 503 `transport_busy` in 0.0098s. The following
+request returned 200 in 0.0337s. No automatic resubmission was used.
+Existing controlled tests separately proved all three routes/app instances share
+capacity two, work runs off the event loop, capacity includes DTO encoding, canceled
+clients leave both workers occupied, and completion/failure restores capacity.
+Cancellation evidence is an ASGI task cancellation with blocked synchronous workers;
+it does not assert that a browser abort terminates Source work or rolls back SQLite.
+
+Inspected installed/local configuration:
+
+- Production Web `protectedRequest` uses fetch/AbortController without an application
+  request deadline, polling or automatic retry. Explicit cancel closes client waiting.
+- Vite proxy has no configured `timeout`/`proxyTimeout`; installed proxy code applies
+  those deadlines only when configured. No additional reverse proxy was in this chain.
+- Repository launcher uses Uvicorn without an overall business-request deadline:
+  one process, default `limit_concurrency=None`, keep-alive timeout 5s (idle between
+  requests, not an execution budget). No settings were changed.
+- Installed AnyIO default shared threadpool limiter has 40 tokens; Calendar Spread
+  retains its independent two-worker semaphore. Other products can contend for the
+  threadpool; this is not distributed capacity or an isolated worker pool.
+- Tushare client has a 30s timeout per Source HTTP call, not per Research request.
+  Collector default is 60s per HTTP request. Maximum measured cold execution was
+  6.395s and completed through the actual browser/Gateway/server chain.
+
+No observed blocking timeout or capacity defect requires a new execution model.
+Unobserved Source delays, maximum legal 3660-date requests, cold-cache concurrent
+Source contention, long-duration load and deployed proxy/browser limits remain
+**NOT VERIFIED**. The selected representative window does not prove every legal
+window fits every deployment timeout; these are retained operational risks, not an SLA.
+
+### Demo, Authority and final disposition
+
+**PASS** — corrected only `ui_web/demo/CALENDAR_SPREAD.md`'s unqualified historical
+no-acquisition wording. Original WP7 used retained facts without Ensure. Future
+explicit Historical Collector POST may now conditionally acquire; Daily Collector
+GET remains read-only. Demo/build Authority permits formal HTTP generation and has
+no permanent Collector no-Ensure requirement. No semantic conflict or new endpoint
+decision remains. Static runtime and offline Preflight retain Bundle-only semantics.
+
+**PASS** — existing nine Bundles admitted twice by `npm run demo:build`; static build
+completed. A focused Chromium preview visited both Calendar Spread static routes,
+switched Research Calendar Days and Pair Q1/Q2, found no execution buttons, and
+recorded three static-resource requests with zero fetch/XHR/external requests.
+The targeted static controller test also forbids fetch. Bundles, Manifest and all
+captured values remained unchanged; Collector and publication were not invoked.
+
+Scoped commands and actual results (root `.venv/bin/python`, no installation):
+
+```text
+pytest -q market_research/tests/test_calendar_spread_execution.py
+  market_research/tests/test_calendar_spread_inputs.py
+  market_research/tests/test_calendar_spread_queries.py
+  ui_http/tests/test_calendar_spread_http.py
+  → 436 passed, 15.99s
+pytest -q -s ui_http/tests/test_calendar_spread_preparation_acceptance.py
+  → 3 passed (real services/SQLite, controlled Source)
+pytest -q ui_http/tests/test_calendar_spread_http.py::test_cancelled_requests_hold_shared_capacity
+  ui_http/tests/test_calendar_spread_http.py::test_workers_hold_capacity_through_serialization_and_free_after_failure
+  ui_http/tests/test_calendar_spread_http.py::test_capacity_includes_projection_encoding
+  → 3 passed (already included in the 436 distinct cases)
+npm test -- src/features/futures_calendar_spread/api/query.test.ts
+  src/features/futures_calendar_spread/api/validateResult.test.ts
+  src/features/futures_calendar_spread/hooks/useQuery.test.ts
+  src/features/calendar_spread_relative_value/api/query.test.ts
+  src/features/calendar_spread_relative_value/api/validateResult.test.ts
+  src/features/calendar_spread_relative_value/hooks/useQuery.test.ts
+  demo/runtime/calendarSpread.test.tsx
+  → 7 files, 93 passed, 13.16s
+npm run demo:build → PASS, 9 Bundles; static artifact built
+ruff check ui_http/tests/test_calendar_spread_preparation_acceptance.py → PASS
+```
+
+The HTTP tests emit the existing TestClient/httpx deprecation warning; Demo build
+emits the existing large-chunk warning. Neither is an execution failure. No full
+suite, generated-contract rewrite, dependency update or deployment was performed.
+Temporary browser/live observations are described above rather than introduced as
+a mandatory gate. Temporary Uvicorn/Vite/preview servers were stopped. Cleanup
+removed only `/tmp/issue13_wp3_server.py` and the two temporary browser scripts
+`ui_web/.build/wp3-live.mjs` / `ui_web/.build/wp3-final-browser.mjs`.
+The isolated live cache root and sanitized `/tmp/issue13-wp3-*.json` observations
+remain available for local inspection; no existing DataLake cache/user data was deleted.
+
+| Final layer | Status | Remaining limit |
+| --- | --- | --- |
+| Authority | PASS | One stale Demo statement reconciled; no unresolved critical semantic decision |
+| Implementation | PASS | WP1/WP2 scoped tests, real fresh/hot execution, read-only preservation and safe failure feedback |
+| Operational, selected WSL/local browser chain | PASS | Real Source cold/hot, coverage, latency, network capacity and static Demo verified; cancellation at controlled ASGI level |
+| Other deployments/platforms, maximum windows and prolonged/cold concurrent load | NOT VERIFIED | No extrapolation from this acceptance |
+
+**Issue #13: READY TO CLOSE. Branch: READY TO MERGE INTO DEVELOP for final review.**
+These judgments apply to the selected environment and bounded acceptance, with the
+unverified risks above retained. There is no observed critical defect, timeout failure,
+Authority drift or required semantic decision. Issue remains OPEN; no merge, issue
+closure or publication is performed by WP3.
