@@ -26,8 +26,16 @@ from .observations import (
     OutcomeAccounting,
     PairDayObservation,
 )
-from .preparation import CalendarService, FuturesService, prepare_inputs
+from .preparation import (
+    CalendarService,
+    ExecutionCalendarService,
+    ExecutionFuturesService,
+    FuturesService,
+    prepare_inputs,
+    prepare_inputs_for_execution,
+)
 from .query_models import (
+    EXECUTION_SOURCE_CONTEXT,
     CalendarSpreadQueryError,
     CurrentAssessment,
     DailySpreadsRequest,
@@ -43,6 +51,7 @@ from .query_models import (
     PercentileAnalysis,
     QuantileAnalysis,
     SampleStatus,
+    SourceContext,
 )
 from .query_statistics import compute_associated
 from .validation import PublicInputError, require, validate_request
@@ -74,14 +83,17 @@ def _collect(
     end: date,
     calendar_service: CalendarService | None,
     futures_service: FuturesService | None,
+    *,
+    execution: bool = False,
 ) -> CalendarSpreadObservationSet:
     try:
-        prepared = prepare_inputs(
+        prepare = prepare_inputs_for_execution if execution else prepare_inputs
+        prepared = prepare(
             product_code,
             start,
             end,
-            calendar_service=calendar_service,
-            futures_service=futures_service,
+            calendar_service=cast(ExecutionCalendarService | None, calendar_service),
+            futures_service=cast(ExecutionFuturesService | None, futures_service),
         )
         return construct_observations(prepared)
     except InputPreparationError as exc:
@@ -91,6 +103,9 @@ def _collect(
             exc.dependency,
             "Input preparation failed",
             evidence=exc.evidence,
+            reason_code=exc.reason_code,
+            operation=exc.operation,
+            attempts=exc.attempts,
         ) from exc
     except ObservationConstructionError as exc:
         raise CalendarSpreadQueryError(
@@ -104,6 +119,7 @@ def _collect(
             far_slot=exc.far_slot,
             evidence=prepared.evidence,
             prepared_inputs=prepared,
+            attempts=prepared.attempts,
         ) from exc
 
 
@@ -114,9 +130,48 @@ def query_daily_spreads(
     calendar_service: CalendarService | None = None,
     futures_service: FuturesService | None = None,
 ) -> DailySpreadsResult:
+    return _daily_spreads(
+        product_code,
+        trade_date,
+        calendar_service=calendar_service,
+        futures_service=futures_service,
+        execution=False,
+    )
+
+
+def execute_daily_spreads(
+    product_code: str,
+    trade_date: date,
+    *,
+    calendar_service: ExecutionCalendarService | None = None,
+    futures_service: ExecutionFuturesService | None = None,
+) -> DailySpreadsResult:
+    return _daily_spreads(
+        product_code,
+        trade_date,
+        calendar_service=calendar_service,
+        futures_service=futures_service,
+        execution=True,
+    )
+
+
+def _daily_spreads(
+    product_code: str,
+    trade_date: date,
+    *,
+    calendar_service: CalendarService | None = None,
+    futures_service: FuturesService | None = None,
+    execution: bool,
+) -> DailySpreadsResult:
     _validate(product_code, trade_date, trade_date)
-    collection = _collect(product_code, trade_date, trade_date, calendar_service, futures_service)
-    return DailySpreadsResult(DailySpreadsRequest(product_code, trade_date), collection)
+    collection = _collect(
+        product_code, trade_date, trade_date, calendar_service, futures_service, execution=execution
+    )
+    return DailySpreadsResult(
+        DailySpreadsRequest(product_code, trade_date),
+        collection,
+        EXECUTION_SOURCE_CONTEXT if execution else SourceContext(),
+    )
 
 
 def _account(observations: tuple[PairDayObservation, ...]) -> OutcomeAccounting:
@@ -217,6 +272,51 @@ def query_historical_relative_value(
     calendar_service: CalendarService | None = None,
     futures_service: FuturesService | None = None,
 ) -> HistoricalRelativeValueResult:
+    return _historical_relative_value(
+        product_code,
+        history_start,
+        evaluation_date,
+        metric,
+        histogram_edges,
+        calendar_service=calendar_service,
+        futures_service=futures_service,
+        execution=False,
+    )
+
+
+def execute_historical_relative_value(
+    product_code: str,
+    history_start: date,
+    evaluation_date: date,
+    metric: Metric = "annualized_spread_ratio",
+    histogram_edges: Sequence[int | float] | None = None,
+    *,
+    calendar_service: ExecutionCalendarService | None = None,
+    futures_service: ExecutionFuturesService | None = None,
+) -> HistoricalRelativeValueResult:
+    return _historical_relative_value(
+        product_code,
+        history_start,
+        evaluation_date,
+        metric,
+        histogram_edges,
+        calendar_service=calendar_service,
+        futures_service=futures_service,
+        execution=True,
+    )
+
+
+def _historical_relative_value(
+    product_code: str,
+    history_start: date,
+    evaluation_date: date,
+    metric: Metric = "annualized_spread_ratio",
+    histogram_edges: Sequence[int | float] | None = None,
+    *,
+    calendar_service: CalendarService | None = None,
+    futures_service: FuturesService | None = None,
+    execution: bool,
+) -> HistoricalRelativeValueResult:
     _validate(product_code, history_start, evaluation_date)
     histogram_spec = None
     try:
@@ -238,7 +338,12 @@ def query_historical_relative_value(
         None if histogram_spec is None else histogram_spec.edges,
     )
     collection = _collect(
-        product_code, history_start, evaluation_date, calendar_service, futures_service
+        product_code,
+        history_start,
+        evaluation_date,
+        calendar_service,
+        futures_service,
+        execution=execution,
     )
     historical = tuple(
         o for o in collection.observations if history_start <= o.trade_date < evaluation_date
@@ -282,5 +387,10 @@ def query_historical_relative_value(
             )
         )
     return HistoricalRelativeValueResult(
-        request, unit, collection, tuple(pairs), _account(historical)
+        request,
+        unit,
+        collection,
+        tuple(pairs),
+        _account(historical),
+        EXECUTION_SOURCE_CONTEXT if execution else SourceContext(),
     )

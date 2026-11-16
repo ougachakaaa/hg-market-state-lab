@@ -144,4 +144,4 @@ Ensure legal incomplete inputs, then require complete final Exports. The case do
 not inherit Basis SSE/Index preparation or a missing-tolerant Futures policy. Exact
 requests, evidence and failure behavior remain in that narrow contract. Issue #13
 [reconciliation](descriptive/cases/futures_calendar_spread/AUTO_PREPARATION_RECONCILIATION.md)
-distinguishes this accepted target from the still-read-only implementation.
+tracks Python delivery and the remaining integration and operational acceptance.

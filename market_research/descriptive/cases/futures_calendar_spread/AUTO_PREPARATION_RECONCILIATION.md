@@ -48,7 +48,7 @@ semantic readiness for implementation, not delivery of automatic preparation.
 decision blocks Issue #13 WP1. READY FOR WP1.** The statuses above concern semantic
 review only; they do not label unrun runtime checks as PASS.
 
-## Current implementation differences and reuse review
+## WP0 implementation differences and reuse review
 
 Read-only source inspection at the locked base found:
 
@@ -131,3 +131,64 @@ Retained risks and limits:
 
 No unresolved semantic decision is deferred to WP1. Runtime delivery and operational
 acceptance remain pending the three packages above; this WP0 does not close Issue #13.
+
+## WP1 Python delivery and reconciliation (2026-11-16)
+
+Issue #13 WP1 is implemented on the existing dedicated branch, from required HEAD
+`98b6458ed11ca66f100008fff2b1730ee129d637`. Remote `github` fetch succeeded;
+the required branch/HEAD matched and the worktree was clean before implementation.
+The WP0 inspection above remains historical; its Python differences are resolved
+by this delivery. Commit identity remains in Git history and the final report.
+
+- The Case facade publishes `prepare_inputs_for_execution`, `execute_daily_spreads`,
+  `execute_historical_relative_value`, execution service protocols and frozen
+  `InputPreparationAttempt`. Existing `prepare_inputs` and both `query_*` entrypoints
+  retain export-only injection and never Ensure.
+- Both modes share Request/Export validation and final-input assembly. Execution
+  validates the initial public view before conditional Ensure, permits one Case
+  Ensure per dependency and validates a final Export after a normal legal
+  EnsureResult, including incomplete/UnitFailure outcomes. Calendar must be complete
+  before Futures construction. No coverage round trip, dependency restart, private
+  prerequisite, Source fallback or cache rebuild is introduced.
+- Attempts retain immutable public requests and separately validated preliminary,
+  Ensure and final evidence. Malformed payloads are excluded. Final InputEvidence,
+  Prepared Inputs and existing Observation/Result associations remain intact;
+  diagnostics do not become financial inputs. Calendar/Futures records_written
+  distinctions and public failure identities are validated.
+- Input and application errors retain compatible categories and add optional
+  reason_code/operation/attempts. Typed credential/cache errors precede OperationError;
+  fixed safe messages replace raw upstream text, causes remain attached, and
+  unexpected service/programming exceptions propagate.
+- Daily/Historical validation, Observation construction and analytical projection
+  are shared by the explicit entrypoints. Historical metric and edges are validated
+  before factories/I/O. Same final Exports give the same six pairs, historical cutoff
+  and numerical results. Result/request.operation identities and SourceContext shape
+  remain unchanged; execution discloses preparation permission without claiming an
+  Ensure occurred on a hot cache. Existing read-only disclosure remains unchanged.
+
+Verification uses synthetic public-service fakes only, with no real cache or
+Tushare calls:
+
+```bash
+poetry run pytest -q market_research/tests/test_calendar_spread_inputs.py market_research/tests/test_calendar_spread_queries.py market_research/tests/test_calendar_spread_execution.py
+```
+
+**283 passed**, no failures or skips. Two additional focused scenarios then passed:
+
+```bash
+poetry run pytest -q market_research/tests/test_calendar_spread_execution.py::test_successful_empty_futures_unit_writes_zero_records market_research/tests/test_calendar_spread_execution.py::test_missing_ensure_fields_are_not_validated_evidence
+```
+
+**2 passed**, no failures or skips; **285 distinct cases verified**, including the
+199 original input/query cases. Scoped Ruff validation passed for changed Python
+files; scoped mypy passed for the six changed production Python files. Complete
+diff/semantic review reconciles this delivery with Inputs, Application and Query
+Results without a new business decision or contract change.
+
+**WP1 reconciliation: PASS. READY FOR WP2.** HTTP/Web integration and generated
+contracts remain unchanged and pending WP2. Real Source/cold-hot latency, concurrent
+cache behavior, HTTP timeouts/cancellation capacity, browser, native Windows and
+deployment acceptance are **NOT VERIFIED** here; operational acceptance remains WP3.
+No data, cache, credential, dependency, Bundle or Manifest was changed. No PR, merge,
+push or publication was performed. This delivery stops at WP1 and does not close
+Issue #13.

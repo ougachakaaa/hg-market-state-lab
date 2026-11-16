@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from datetime import date
 from typing import Literal
 
+from data_lake import EnsureResult
 from data_lake.datasets.tushare_equity_index_futures import FuturesDailyExport, FuturesDailyRange
 from data_lake.datasets.tushare_trade_calendar import TradeCalendarExport, TradeCalendarRange
 
@@ -31,6 +32,16 @@ class InputEvidence:
 
 
 @dataclass(frozen=True, slots=True)
+class InputPreparationAttempt:
+    dependency: Literal["calendar", "futures"]
+    request: TradeCalendarRange | FuturesDailyRange
+    preliminary_export: TradeCalendarExport | FuturesDailyExport | None = None
+    ensure_result: EnsureResult | None = None
+    final_export: TradeCalendarExport | FuturesDailyExport | None = None
+    reason_code: str | None = None
+
+
+@dataclass(frozen=True, slots=True)
 class PreparedCalendarSpreadInputs:
     request: CalendarSpreadRequest
     calendar_request: TradeCalendarRange
@@ -39,6 +50,8 @@ class PreparedCalendarSpreadInputs:
     futures_export: FuturesDailyExport
     candidate_dates: tuple[date, ...]
     definition_version: Literal["futures_calendar_spread_definition_v1"] = DEFINITION_VERSION
+
+    attempts: tuple[InputPreparationAttempt, ...] = ()
 
     @property
     def evidence(self) -> tuple[InputEvidence, ...]:
@@ -59,9 +72,16 @@ class InputPreparationError(Exception):
         dependency: str,
         reason: str,
         evidence: tuple[InputEvidence, ...] = (),
+        *,
+        reason_code: str | None = None,
+        operation: str | None = None,
+        attempts: tuple[InputPreparationAttempt, ...] = (),
     ) -> None:
         super().__init__(reason)
         self.category = category
         self.dependency = dependency
         self.reason = reason
         self.evidence = evidence
+        self.reason_code = reason_code
+        self.operation = operation
+        self.attempts = attempts

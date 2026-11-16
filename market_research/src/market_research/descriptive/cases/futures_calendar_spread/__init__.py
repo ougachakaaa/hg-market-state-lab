@@ -8,6 +8,7 @@ from .financial import CalendarSpreadValidationError as CalendarSpreadValidation
 from .financial import compute_calendar_spread as compute_calendar_spread
 from .inputs import CalendarSpreadRequest as CalendarSpreadRequest
 from .inputs import InputEvidence as InputEvidence
+from .inputs import InputPreparationAttempt as InputPreparationAttempt
 from .inputs import InputPreparationError as InputPreparationError
 from .inputs import PreparedCalendarSpreadInputs as PreparedCalendarSpreadInputs
 from .observations import CalendarSpreadDay as CalendarSpreadDay
@@ -16,8 +17,13 @@ from .observations import ObservationConstructionError as ObservationConstructio
 from .observations import OutcomeAccounting as OutcomeAccounting
 from .observations import PairDayObservation as PairDayObservation
 from .preparation import CalendarService as CalendarService
+from .preparation import ExecutionCalendarService as ExecutionCalendarService
+from .preparation import ExecutionFuturesService as ExecutionFuturesService
 from .preparation import FuturesService as FuturesService
 from .preparation import prepare_inputs as prepare_inputs
+from .preparation import prepare_inputs_for_execution as prepare_inputs_for_execution
+from .queries import execute_daily_spreads as execute_daily_spreads
+from .queries import execute_historical_relative_value as execute_historical_relative_value
 from .queries import query_daily_spreads as query_daily_spreads
 from .queries import query_historical_relative_value as query_historical_relative_value
 from .query_models import CalendarSpreadQueryError as CalendarSpreadQueryError
