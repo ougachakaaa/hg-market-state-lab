@@ -95,13 +95,14 @@ G3 的本地 dev proxy 增加 `/auth`，保持正常 frontend origin 和 Set-Coo
 The application composes a transport-free Backtesting overview at `/backtesting` and
 mounts the existing execution Page only at `/backtesting/futures-roll-long`. Shared
 Shell and overview Presentation support static composition. The static Shell harness
-verifies both identities; official Bundle composition remains DDB-04 work.
+verifies both identities; official Bundle composition uses the admitted Demo runtime.
 
 The shared workspace header remains sticky while scrolling. Its right edge always exposes a GitHub source link to https://github.com/ougachakaaa/hg-market-state-lab in both runtimes, opening a separate tab with noopener/noreferrer. Runtime identity actions remain supplied by composition.
 
-## WP6 Production composition
+## Calendar Spread composition
 
-Calendar Spread adds independent Daily and Historical Relative Value controllers under
-the existing gate. Shared navigation/overviews expose them only in Production until
-WP7. Static route recognition and exhaustive composition stay limited to the existing
-eight admitted pages; no Bundle identity or capture changes in WP6.
+Calendar Spread has independent Daily and Historical Relative Value controllers under
+Production's authentication gate. Since WP7, shared navigation/overviews also expose
+the two admitted Static pages through formal Presentation, without online controllers.
+Both runtimes compose ten routes; Demo's nine Bundles remain independently owned by
+[Demo authority](demo/ARCHITECTURE.md).

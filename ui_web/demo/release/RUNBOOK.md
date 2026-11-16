@@ -10,6 +10,23 @@ usage belongs to the [release guide](../../deploy/README.md#verified-demo-pages-
 Retain one Publisher, one Pages workflow, one Requirements file, one active Bundle
 dataset and the single deployment branch `release/demo-pages`.
 
+## Choose the operation
+
+This repository publishes its existing GitHub Pages Demo. Use the repository tools;
+no Sites platform discovery or Publisher-source inspection is required for normal work.
+
+| Intent | Entry from ui_web | Formal refs |
+| --- | --- | --- |
+| Publish requested source | Agent performs A-C, promotes main, then `npm run demo:publish` | Agent advances develop/main as applicable; Publisher alone advances release/demo-pages |
+| Check a candidate | Phase C: `npm run demo:release-check`, then local browser acceptance | Unchanged |
+| Preview local UI | [Local review](../build/ARCHITECTURE.md#local-ui-review-no-publication) | Unchanged |
+| Resume acceptance of a successful deployment | `npm run demo:verify-release -- --run <run-id>` | Unchanged; no build, push or Actions rerun |
+
+Agent owns source review/integration. Publisher remains the sole publication entry and
+always selects remote main. The recovery verifier only reads an existing release.
+The [command quick reference](../../deploy/README.md#verified-demo-pages-release-ddb-06)
+owns prerequisites; authority and this Runbook own safety and execution decisions.
+
 ## Intent and authorization
 
 Recognize “发布最新静态 Demo”, “发布 Demo”, “按照 XXX 分支发布静态 Demo”,
@@ -63,10 +80,19 @@ isolated checkout, then FF-only advance main and push normally. For main source,
 exact fetched SHA directly. The Publisher requires local main, when present, to equal
 remote main. Confirm this alignment after promotion.
 
+Keep the user's current checkout/branch unchanged. Promote local main through a clean
+main worktree with `git merge --ff-only <tested-SHA>`; inspect existing registrations
+before using another worktree. Do not force-move a checked-out or dirty branch.
+
 Source integration is an Agent Git operation. The Publisher accepts only `--remote NAME`
 and always selects remote main. It has no source-branch argument or integration mode.
 
 ## C. Release Preflight on the actual candidate
+
+Create the isolated candidate without global Git configuration changes:
+`git -c core.autocrlf=false worktree add --detach <new-owned-path> <source-SHA>`.
+Exact-byte reviewed text also has LF attributes. Do not renormalize payloads, update
+hashes, or rewrite an existing user checkout to satisfy a failed gate.
 
 Run commands from the candidate checkout's `ui_web` directory using its locked npm
 dependencies. Record the exact HEAD and inspect Requirements against the user's approved
@@ -104,6 +130,10 @@ sources, local-main drift, release ancestry and concurrent runs. It gates a clea
 remote-main checkout, records its SHA, rechecks remote refs and pushes only that SHA normally.
 It then waits for Actions, verifies downloaded artifacts and actual public file bytes
 against the CI Receipt, and executes the existing browser acceptance helper on Pages.
+The Agent's Phase C validates the candidate before formal develop/main advancement.
+Publisher's independent gate validates actual remote main immediately before release
+push; neither substitutes for the other. Already-published candidates skip installation
+and rebuilding and verify the existing run instead.
 Its remote-ref recheck detects changes during its own preflight. Record the selected SHA
 and compare it with the approved candidate. A changed main before invocation requires
 renewed source-scope review. Remote main has no atomic lock across Agent and Publisher
@@ -115,13 +145,19 @@ Continue through the build job, Requirements gate, artifact verification, deploy
 successful deployment URL, public receipt verification and ten-page browser acceptance.
 Retain Actions URL, deployment URL, exact source/release SHA, Requirements hash, Manifest
 hash and evidence paths. A standalone gate writes ignored `.build/demo-release.json`.
-The Publisher copies its temporary gate evidence into the invoking checkout's ignored
-`.build/demo-publish.json` before cleaning up its temporary checkout. CI evidence has
-finite retention. These evidence files remain outside the site.
+Publisher and verifier checkpoint `.build/demo-publish.json` before each stage and
+save per-run `.build/demo-releases/<run-id>/verification.json` with identities, URL,
+CI receipt, failure stage, recovery command and cleanup status. CI evidence has finite
+retention. Downloaded evidence and failed-attempt directories remain ignored under that
+run directory for diagnosis. They are never published and old PASS markers are not
+used to skip checks.
 
 Report `RELEASED_AND_VERIFIED` only after actual Pages and online acceptance pass.
 Report the precise failed stage otherwise, including whether a release push occurred.
 Local build or release push success alone cannot establish completion.
+`cleanupPending` is independent: verified publication stays successful when temporary
+cleanup fails. Report the warning and exact owned paths/commands without hiding the
+original release error or claiming those paths have been deleted.
 
 ## Stop and escalation
 
@@ -138,10 +174,28 @@ within the requested release scope. Never weaken protections to proceed.
 
 ## Idempotency and recovery
 
+For a successful deployment whose acceptance failed or was interrupted, run:
+
+```powershell
+npm run demo:verify-release -- --run <run-id> --remote github
+```
+
+Use the recorded run ID, not latest main/HEAD. This checks repository/workflow/branch,
+run SHA/attempt, matching deployment, CI Requirements/Manifest, downloaded site/receipt,
+actual public bytes and ten routes. Changed attempts, expired/missing CI evidence and
+a public version overwritten by another release stop verification. Do not rebuild as
+replacement evidence. The command performs no branch advancement or Actions rerun.
+It requires installed locked dependencies and Playwright, but does not install them.
+
+Downloads emit START/WAIT/PASS; each attempt has a five-minute timeout. Only transient
+network errors/timeouts retry once in a fresh directory. Validation, permission and
+content failures are not retried. Follow the reported stage and recovery command;
+never manually import internal functions or change validators to finish a release.
+
 - If the candidate is already release HEAD, inspect its existing run and deployment evidence
   and verify current Pages acceptance. Report `ALREADY_PUBLISHED` once verified. The existing
   Publisher rechecks that candidate without pushing or implicitly rerunning the workflow
-  and emits `RELEASED_AND_VERIFIED`. The Agent maps this verified unchanged-release case
+  and emits `RELEASED_AND_VERIFIED` with `alreadyPublished: true`. The Agent maps this verified unchanged-release case
   to `ALREADY_PUBLISHED`. Missing/expired artifacts leave acceptance NOT VERIFIED.
 - If already pushed with a failed or missing deployment, inspect the existing run and failure.
   Propose the precise recovery action. Obtain explicit rerun authorization when needed.
@@ -153,6 +207,12 @@ within the requested release scope. Never weaken protections to proceed.
   Publisher before removing only that exact empty lock directory. Inspect leftover
   Publisher-owned worktree registration and paths before precise cleanup under existing
   deployment rules. Preserve user worktrees, Bundles and market caches.
+- If cleanup is denied, do not switch tool/language to bypass it. For verified owned
+  paths provide the emitted PowerShell `Remove-Item -LiteralPath` and worktree-unregister
+  commands, state their working directory/impact and that deletion remains pending.
+  Unknown paths require inspection before any deletion command. An existing verify.lock
+  likewise requires confirmation that its owner is no longer running before precise
+  removal of that empty lock directory.
 - Publisher polling is bounded. On timeout retain SHA/run evidence and inspect that same
   run before choosing recovery. A timeout does not establish successful deployment.
 

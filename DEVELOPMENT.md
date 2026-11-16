@@ -236,6 +236,13 @@ Generate Research。Run ID 写入 URL；刷新和浏览器前进/后退会重新
 Use the [local Demo build and review workflow](ui_web/demo/build/ARCHITECTURE.md#local-ui-review-no-publication).
 It reuses committed Bundles and supports static preview and browser checks without remote publication.
 
+Formal GitHub Pages releases enter the [Demo Release Runbook](ui_web/demo/release/RUNBOOK.md).
+Agent owns source review and develop/main integration; Publisher owns release push,
+deployment and acceptance. Commands and prerequisites are in the
+[release quick reference](ui_web/deploy/README.md#verified-demo-pages-release-ddb-06).
+Local preview does not authorize publication. Existing-run verification uses
+`npm run demo:verify-release -- --run <run-id>` from `ui_web`, without rebuilding or pushing.
+
 ## Rebuild an incompatible local Dataset cache
 
 When DataLake reports `CacheIncompatibleError` (Backtesting reason `cache_incompatible`), stop the backend and any data tasks using that Dataset. Verify the owning Dataset and resolved absolute cache path under `data_lake/datasets/<dataset-id>/data/`. Remove only its `<dataset-id>.sqlite3` and any SQLite sidecars (`-journal`, `-wal`, `-shm`) after connections close. Current development caches need no backup or migration. Do not remove sibling Dataset caches, exports, source code, credentials, Auth or Run stores. Restart the backend and explicitly resubmit the request; normal ensure rebuilds missing facts using the configured Source. Read-only preflight does not rebuild. A new failure must be diagnosed independently rather than triggering repository-wide cleanup.
@@ -293,8 +300,10 @@ The compatibility workflow offers explicit workflow_dispatch choices `regression
 and `diagnostics`. Pages environment inspection is also workflow_dispatch only.
 Remote branch protection is unchanged. Existing required-check settings, if any,
 are not an instruction to run removed local gates or permission to change remote settings.
-Demo publication remains BLOCKED until its new Bundle Pipeline and verified artifact
-exist. demo:build still fails; a normal development check passing is not a release PASS.
+Demo's Bundle Pipeline and verified artifact build are implemented. Explicit publication
+requires its own Release Gate, CI artifact verification and online browser acceptance;
+a normal development check passing is not a release PASS. Follow the
+[Release Runbook](ui_web/demo/release/RUNBOOK.md), not a full development checklist.
 
 This policy/tooling change is verified by collection listings, one small retained
 business test and diff/config review. No full suite, build matrix or browser acceptance.

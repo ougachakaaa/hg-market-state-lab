@@ -8,7 +8,7 @@ This specialized authority follows [application.md](application.md) and [ui-syst
 - **Research** opens on Research Overview, its authenticated landing and topic-oriented discovery surface. The overview presents Research Studies as user-facing cards; completion means an independent Web page exists, not backend or provider readiness. Implemented study pages appear directly under Research without methodology categories; studies without a Web page appear only in the overview. Research Explorer is a secondary technical reader for existing Publications, evidence and views; it does not execute Research or imply that every topic has a publication. Futures Basis Online Research provides an authenticated execution page at `/research/futures-basis`. R01-A offline report remains independently readable when generated locally.
 - **Backtesting** exposes the implemented W2 Futures Roll Long consumer. The [feature authority](src/features/backtesting/ARCHITECTURE.md) owns the four-field form, advisory preflight, explicit submit, Run polling/restoration and result rendering. Strategy, execution and financial semantics remain with the [W2 case](../market_backtesting/cases/futures_roll_long/ARCHITECTURE.md). React only renders producer-owned results; full-window real-market, HTTP and Windows Chrome execution evidence is recorded in [WP8 acceptance](../market_backtesting/cases/futures_roll_long/WP8_ACCEPTANCE.md).
 
-An online descriptor may be shown as discoverable after its authenticated read consumer is implemented; this does not claim Web execution or live provider readiness. An online execution surface may be shown as available only after its actual consumer and backend are implemented. No false execution controls or mock results are part of Production pages. Static Demo presents formal FastAPI HTTP business results after Bundle admission under the [Demo authority](demo/ARCHITECTURE.md). Controlled synthetic fixtures belong only to tests. Runtime delivery remains DDB-04 work and Build/publication remain BLOCKED.
+An online descriptor may be shown as discoverable after its authenticated read consumer is implemented; this does not claim Web execution or live provider readiness. An online execution surface may be shown as available only after its actual consumer and backend are implemented. No false execution controls or mock results are part of Production pages. Static Demo presents formal FastAPI HTTP business results after Bundle admission under the [Demo authority](demo/ARCHITECTURE.md). Controlled synthetic fixtures belong only to tests. The Bundle runtime and release pipeline are implemented; each publication requires the [Release Runbook](demo/release/RUNBOOK.md) gates and online acceptance.
 
 ## URLs and shell
 
@@ -21,8 +21,8 @@ An online descriptor may be shown as discoverable after its authenticated read c
 | `/data` | Daily Data landing |
 | `/data/mo-option-chain` | MO Option Chain |
 | `/data/mo-premium-plane` | MO Premium Plane |
-| `/data/futures-calendar-spread` | Futures Calendar Spread (Production-only WP6) |
-| `/research/calendar-spread-relative-value` | Calendar Spread Historical Relative Value (Production-only WP6) |
+| `/data/futures-calendar-spread` | Futures Calendar Spread (WP7: both runtimes) |
+| `/research/calendar-spread-relative-value` | Calendar Spread Historical Relative Value (WP7: both runtimes) |
 | `/backtesting` | Backtesting Overview |
 | `/backtesting/futures-roll-long?run_id=<opaque>` | Futures Roll Long; query identity restores the immutable server Run |
 
@@ -74,7 +74,7 @@ results before restoring the selected Run.
 
 ## Static routing specialization
 
-The path table above includes ten Production pages; Auth and server Run query behavior apply to Production. Static retains eight admitted page identities: all three overviews and the five existing business pages using hash routes under `/hg-market-state-lab/`, with default/unknown routes resolving to `#/research`. Its local navigation, deep reload, history and breadcrumb hrefs never escape that base. It neither restores server `run_id` nor calls the `/api` gateway. Report section navigation must coexist with routing. The [Demo authority](demo/ARCHITECTURE.md) owns this static specialization; Production keeps pathname/history routing and authenticated deep links.
+The path table above includes ten Production pages; Auth and server Run query behavior apply to Production. Static retains ten admitted page identities: all three overviews and seven business pages using hash routes under `/hg-market-state-lab/`, with default/unknown routes resolving to `#/research`. Its local navigation, deep reload, history and breadcrumb hrefs never escape that base. It neither restores server `run_id` nor calls the `/api` gateway. Report section navigation must coexist with routing. The [Demo authority](demo/ARCHITECTURE.md) owns this static specialization; Production keeps pathname/history routing and authenticated deep links.
 
 ## Overview completion and Backtesting navigation
 
@@ -90,9 +90,9 @@ Bare `/backtesting` opens the overview. Login and history follow the same normal
 
 ## Route and Bundle identities
 
-The ten Production pages, eight Static pages and seven registered business-result Bundles have independent identities. Overview pages create no additional Bundle. Research Explorer remains directly accessible through its hash route with its Publications Bundle retained. Backtesting M1/Q1 remain two independent Results on the same instance page. Bundle identity is owned by [Bundle authority](demo/BUNDLES.md). The retained StaticWorkspace exhaustively composes all eight paths using shared formal Presentation. DDB-04 owns admitted Bundle adapters and the official runtime/build.
+The ten Production pages, ten Static pages and nine registered business-result Bundles have independent identities. Overview pages create no additional Bundle. Research Explorer remains directly accessible through its hash route with its Publications Bundle retained. Backtesting M1/Q1 remain two independent Results on the same instance page. Bundle identity is owned by [Bundle authority](demo/BUNDLES.md). The retained StaticWorkspace exhaustively composes all ten paths using shared formal Presentation. DDB-04 owns admitted Bundle adapters and the official runtime/build.
 
-## WP6 Production-only Calendar Spread integration
+## WP6 transition (historical; Static extended by WP7 below)
 
 WP6 registers `/data/futures-calendar-spread` and
 `/research/calendar-spread-relative-value` as independent authenticated Production

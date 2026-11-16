@@ -6,9 +6,8 @@
 
 **[Live Demo](https://ougachakaaa.github.io/hg-market-state-lab/)** · **[Source Code](https://github.com/ougachakaaa/hg-market-state-lab)**
 
-DDB-00 retired the legacy Demo on this feature branch. New HTTP Bundle Pipeline:
-**BLOCKED / not implemented**. Existing main and published Pages are unchanged.
-See [Demo authority](ui_web/src/demo/ARCHITECTURE.md).
+Demo 已实现为匿名、只读的 GitHub Pages 站点：复用正式 React Presentation，展示已提交且经过校验的 HTTP 结果 Bundle，不在浏览器中获取实时行情或执行研究。
+发布任务从唯一 [Demo Release Runbook](ui_web/demo/release/RUNBOOK.md) 进入；数据与展示边界见 [Demo authority](ui_web/demo/ARCHITECTURE.md)。
 
 ```mermaid
 flowchart LR
@@ -39,9 +38,9 @@ flowchart LR
 | Data | 四个 Tushare Dataset：日历、指数、股指期货、期权；SQLite 缓存与可验证 Coverage；Snapshot 的 MO Option Chain、Premium Plane 等确定性产品。 |
 | Research | Futures Basis 六节报告、期限结构与折价持续性；Trailing Return Observation / Batch / Publication；Price Segmentation Python case；Quantile / IntervalCount / Mean 独立数值 API。 |
 | Backtesting | Position-Driven Core 与 Futures Roll Long；M1/Q1 策略、持仓 Replay、PnL / Benchmark / Drawdown、Trades / Rolls 与 Evidence。 |
-| Delivery | FastAPI、generated OpenAPI / TypeScript、账户审批与认证；七个 Web 路由；独立 SQLite Run / Publication Store；正式 Presentation 的静态只读组合。 |
+| Delivery | FastAPI、generated OpenAPI / TypeScript、账户审批与认证；十个 Web 路由；独立 SQLite Run / Publication Store；正式 Presentation 的静态只读组合。 |
 
-生产 Web 包含 Research Overview、Historical Basis、Research Explorer、Daily Data、MO Option Chain、MO Premium Plane 与 Futures Roll Long。真实数据公共结果按仓库所有者本次明确指示分发，来源标注保留；第三方许可未核验，不表示提供方授权。
+生产 Web 包含 Research、Daily Data、Backtesting 总览及研究、数据和回测页面；当前路由见 [Workspace authority](ui_web/workspace.md)。Demo 保留真实来源说明和投资免责声明；第三方许可未核验，不表示提供方授权。
 
 ## 本地启动
 
@@ -65,25 +64,20 @@ poetry run lab auth approve <user-id>
 ```bash
 cd ui_web
 npm ci
-npm run demo:build # expected failure until the new HTTP Bundle Pipeline exists
+npm run demo:build
 ```
 
 ## 测试与发布
 
-CI 分别执行 Research、Backtesting、DataLake、Snapshot、HTTP 与脚本 Python suites；前端执行全量 Vitest、契约 freshness、Production / V1 / V2 build、lint、路由穷尽性、静态依赖隔离、公共资产安全与 Chromium 验收。各 Python suite 从仓库根独立运行，避免同名测试模块收集冲突。
+普通开发仅验证直接改动的行为，文档修改做语义与 diff 审查；完整回归、浏览器矩阵及部署检查不作为固定清单。执行政策与手动检查入口见 [DEVELOPMENT](DEVELOPMENT.md#verification-policy)。示例：
 
 ```bash
-poetry run pytest market_research/tests -q
-poetry run pytest market_backtesting/tests -q
+poetry run pytest path/to/test.py::test_name -q
 cd ui_web
-npm run contract:check
-npm test
-npm run build
-npm run lint
-npm run test:public-safety
+npm test -- path/to/file.test.ts
 ```
 
-正式发布沿 `develop → Release Review → main → GitHub Actions → Pages`。同 SHA 的完整兼容性、准入、实际资产扫描、文件 SHA-256 与浏览器检查必须通过，再经 `github-pages` Environment 部署。详见 [Public build](ui_web/src/demo/ARCHITECTURE.md) 与 [Release contract](ui_web/src/demo/ARCHITECTURE.md)。
+正式发布由 Agent 审查指定来源、验收候选并快进 `main`，再由 `npm run demo:publish` 将准确的 remote-main SHA 推进 `release/demo-pages`，经 Actions 构建、Pages 部署和线上验收。已有部署的验收恢复使用 `npm run demo:verify-release -- --run <run-id>`，不重新发布。完整步骤见 [Release Runbook](ui_web/demo/release/RUNBOOK.md)，命令与前置要求见 [发布速查](ui_web/deploy/README.md#verified-demo-pages-release-ddb-06)。
 
 ## 限制与许可
 

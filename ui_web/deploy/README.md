@@ -59,18 +59,22 @@
 
 Agent 发布任务从唯一 [Release Runbook](../demo/release/RUNBOOK.md) 进入。
 
-Pages remains independent of WSL Online deployment. From ui_web run:
+Pages remains independent of WSL Online deployment. All commands below run from
+`ui_web/`; prepare its locked dependencies with `npm ci` when missing. Publishing also
+requires the Agent's source review, candidate acceptance and main promotion in the Runbook.
 
-```powershell
-npm run demo:publish
-```
+| Operation | Command | Effect |
+| --- | --- | --- |
+| Publish approved remote main | `npm run demo:publish` | Gate, FF release pointer, Actions, online acceptance |
+| Candidate gate only | `npm run demo:release-check` | Local artifact/evidence; no branch changes; Phase C also requires browser acceptance |
+| Verify an existing deployment | `npm run demo:verify-release -- --run <run-id>` | Download/recheck CI and online results; no build/push/rerun |
 
-Default remote: github. Override: `npm run demo:publish -- --remote NAME`.
-The publisher selects remote-main without switching your branch, rejects relevant
-uncommitted files and local-main drift, and gates a clean detached candidate worktree.
-Only its verified SHA is pushed, normally and without force, to release/demo-pages.
-Main/develop pushes do not deploy. Existing release HEAD uses its existing run without
-implicit reruns. Failed/missing runs require an explicitly authorized rerun.
+Default remote is `github`; append `--remote NAME` after `--` to either publish or verify.
+Publisher rejects relevant dirty files, local-main drift and divergent/concurrent releases.
+Main/develop pushes do not deploy. Already-released main uses its existing run, skipping
+installation/build. Failed/missing deployments still require an explicit recovery decision;
+verification never triggers an Actions rerun. Local preview enters the
+[local review workflow](../demo/build/ARCHITECTURE.md#local-ui-review-no-publication).
 
 Read [Requirements authority](../demo/release/ARCHITECTURE.md). Changes to Requirements
 must be reviewed and committed to main. `npm run demo:release-check` runs the gate alone.
@@ -83,7 +87,13 @@ Root personal-study policy applies; preserve source disclosure and disclaimers.
 The publisher waits for Actions, verifies actual public files against the CI Receipt,
 and runs browser acceptance on the successful deployment URL. Local and CI receipts
 record their respective builds; CI verified bytes are deployed without rebuilding.
-Evidence stays outside the site in ignored .build/demo-release.json and demo-publish.json.
+Evidence stays outside the site in ignored `.build/demo-release.json`,
+`.build/demo-publish.json` and `.build/demo-releases/<run-id>/verification.json`.
+The latest summary records stage, full SHA, run/attempt, URL, hashes and recovery command.
+Artifact downloads emit progress, time out after five minutes and retry transient network
+failure once into a fresh directory. Content/identity failures are not retried.
+A cleanup failure is a separate `cleanupPending` warning with exact owned-path commands;
+it never hides the primary failure or invalidates successful acceptance.
 CI retains evidence/receipts for 14 days. A receipt is not a signature.
 
 A gate failure prevents push. Deployment failures and incomplete online verification
