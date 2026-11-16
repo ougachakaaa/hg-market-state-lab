@@ -1,3 +1,4 @@
+import { fileURLToPath } from 'node:url'
 // Focused review of the current formal Demo build, with its unchanged Bundle.
 import assert from 'node:assert/strict'
 import { readFile, mkdir } from 'node:fs/promises'
@@ -32,7 +33,7 @@ try {
   await page.locator('.js-plotly-plot').first().waitFor()
   await verifyBasisSummary(page, report)
   assert.equal(new URL(page.url()).hash, '#/research/futures-basis')
-  assert.equal(await page.locator('.js-plotly-plot').count(), 5) // Count/Frequency retained.
+  assert.equal(await page.locator('.js-plotly-plot').count(), 4) // Three histories and one distribution comparison.
   const plots = page.getByTestId('history-charts').locator('.js-plotly-plot')
   const before = await plots.evaluateAll(plots => plots.map(el => el.data.map(t => t.y)))
   assert.deepEqual(before.map(traces => traces.flat().filter(v => v != null).sort((a, b) => a - b)),
@@ -48,9 +49,9 @@ try {
   await page.waitForFunction(() => document.querySelector('[data-testid="history-charts"] .js-plotly-plot').data.some(t => t.visible === 'legendonly'))
   await legend.click()
   await verifyDateEvents(page, Object.values(report.views.history).filter(v => v.events.length > 0).length)
-  await page.screenshot({ path: new URL('demo.png', output).pathname, fullPage: true })
+  await page.screenshot({ path: fileURLToPath(new URL('demo.png', output)), fullPage: true })
   assert.deepEqual(errors, [])
-  console.log(`PASS formal Demo summary, Metric/Slot controls, expiry note, narrow scrolling, history values/null breaks, date axis, Legend, Date Events and route (Chromium ${browser.version()})`)
+  console.log(`PASS formal Demo summary, Metric/Bin Width controls, expiry note, narrow scrolling, history values/null breaks, date axis, Legend, Date Events and route (Chromium ${browser.version()})`)
 } finally {
   await browser?.close()
   await new Promise(done => server.httpServer.close(done))

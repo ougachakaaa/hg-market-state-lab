@@ -33,7 +33,7 @@ filling, clipping or altering financial metrics. It never replaces the formal
 IntervalCount result or recomputes Mean/Quantile. Formal statistics and association
 remain Research / Statistics-owned; presentation controls and bin rules belong to
 the [feature presentation authority](../../../../ui_web/src/features/futures_basis_research/PRESENTATION.md).
-This exception is authority-only in Task 1; existing producer histograms remain.
+The shared reader implements this exception; original producer histogram results and Views remain unchanged.
 
 Sample window means the explicit inclusive research dates, not first/last available
 quote dates.

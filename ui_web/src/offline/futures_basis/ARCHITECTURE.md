@@ -4,10 +4,10 @@ Specializes [ui_web](../../../ARCHITECTURE.md), its presentation/UI-system rules
 and the [Research delivery](../../../../market_research/descriptive/cases/futures_basis/DELIVERY.md).
 This standalone entry consumes only producer-written report-data and complete
 Visualization Views. It never acquires inputs, executes Research, infers financial
-relationships or calculates formal numerical findings. The shared reader's bounded future
+relationships or calculates formal numerical findings. The shared reader's bounded
 presentation-only Histogram Aggregation exception is defined by the
 [feature presentation authority](../../features/futures_basis_research/PRESENTATION.md);
-it does not alter formal results or evidence and is not implemented in Task 1.
+it does not alter formal results or evidence and is implemented by the shared reader.
 The six-section reader presentation is shared with the online [Futures Basis Research](../../features/futures_basis_research/ARCHITECTURE.md)
 feature; the offline entry keeps only its standalone shell, font/asset packaging and
 `file://` entry, and imports the pure reader subpath rather than the app/auth/API.
@@ -16,9 +16,10 @@ by both readers, not a parallel HTTP contract; the online HTTP envelope is gener
 separately under the [HTTP contract](../../../../ui_http/products/futures_basis_research/http-contract.md).
 
 Ordinary controls/tables use Ant Design and the shared application theme;
-generic charts use ChartView. Metric/Slot selection is presentation state only.
-All scientific text, status, counts, intervals, comparisons and runs come from
-Research. Original failed result payloads remain evidence, never successful charts.
+generic charts use ChartView. Metric/Bin Width selection is presentation state only.
+Formal scientific text, status, counts, intervals, comparisons and runs come from
+Research; temporary display bins follow feature presentation authority. Original
+failed result payloads remain evidence, never successful charts.
 The Node packager builds a separate single-chunk Vite entry and embeds its script,
 styles and safely encoded JSON. No fetch, CDN, application/auth import or backend.
 

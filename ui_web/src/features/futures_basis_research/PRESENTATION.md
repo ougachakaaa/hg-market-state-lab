@@ -19,7 +19,7 @@ Missing values list without changing that renderer's semantics.
 
 Near the distribution controls show `Slot | N | Min | P25 | Median | P75 | Max | Mean`
 for M0/M1/Q1/Q2 in that order, using the selected Metric, independently of the
-Histogram Slot selection. Read mean and quantile by explicit method identity and
+Bin Width selection. Read mean and quantile by explicit method identity and
 P0/P25/P50/P75/P100 by point value, never array order or browser computation.
 N is the Eligible binding count; absent distributions show unavailable, empty
 samples show N=0 and unavailable statistics. Missing/failed methods or points show
@@ -32,10 +32,9 @@ Compact removes the redundant 12-row mean table. Offline replaces that overview
 table with the summary near distributions, keeping every Metric accessible through
 the selector and retaining Methods, comparisons, evidence and all six sections.
 
-## Authority only: dynamic presentation bins (SD-02)
+## Implemented: dynamic presentation bins (SD-02)
 
-Task 1 keeps the existing producer Count and Frequency charts unchanged. A future
-implementation may aggregate already published, validated Eligible historical raw
+The shared reader aggregates already published, validated Eligible historical raw
 values into temporary presentation bins. It must use original values, never display
 rounding; preserve duplicate observations, the true per-Slot population and full
 count conservation; and perform no fill, clipping or financial recalculation.
@@ -55,7 +54,7 @@ Frontend owns only this temporary display aggregation. Formal IntervalCount rema
 Research / Statistics-owned and retained unchanged; Mean/Quantile are never recomputed.
 The generic Visualization renderer performs no aggregation.
 
-## Authority only: one four-Slot distribution (SD-03, SD-05)
+## Implemented: one four-Slot distribution (SD-03, SD-05)
 
 Replace the duplicate Count/Frequency charts with one distribution, defaulting to
 Frequency. Tooltip shows Count and Frequency from the same sample and bin; Frequency
@@ -65,4 +64,37 @@ M0/M1/Q1/Q2 are initially visible with shared X-axis bin boundaries, independent
 Eligible samples and per-Slot denominators. Default comparison uses Frequency.
 Legend toggles each Slot independently, using its history-series color. Prefer
 overlay or stepped distributions suitable for comparison, never four mutually
-occluding opaque bar groups. These changes remain Task 2 work.
+occluding opaque bar groups. Online, Demo and Offline share this projection and chart.
+
+## Consumption integrity and numerical display limits
+
+For the selected Metric, match exactly one history binding, Distribution and
+Accounting entry per Slot. Match finite non-null original history coordinates to
+Eligible identities `[product, date, slot]` in Distribution and Accounting, preserving
+numerical duplicates. Candidate and outcome identities must match the published date
+population. Successful method sample counts and units must agree. Missing, duplicate
+or inconsistent associations stop the entire selected Metric comparison with an
+explicit display-data error; formal summaries and evidence remain readable.
+No tooltip parsing, contract-code inference, null filling or sample repair is allowed.
+
+Formal IntervalCount failure takes precedence over any result: show its supplied
+failure category and omit that Slot's successful curve. Valid sibling curves remain
+visible. All validated samples still determine shared edges. Empty Slots have N=0
+and no curve or fabricated frequencies; all-empty inputs show no eligible samples.
+
+Use zero-anchored integer edge indices and preset integer numerator/denominator
+widths. Generate each binary64 edge directly from its index, correct range estimates
+by exact edge comparisons, and assign using ordered-edge binary search without an
+epsilon or rounding sample values. Equal-value samples get at least one full bin.
+At most 2,000 shared bins may be displayed; unsafe indices, non-increasing edges or
+excess capacity explicitly request a larger width, with no clipping or automatic change.
+Every nonempty Slot conserves Count exactly and uses its own Eligible N denominator.
+
+Controls precede one stepped Frequency comparison and the formal summary table.
+Metric changes reset the width to that Metric's default; width changes do not change
+Mean/Quantile, history, HTTP or report data. Tooltip includes Slot, interval closure,
+Count, Frequency (one decimal percent) and Eligible N. Boundary labels retain preset
+width precision, including hundredths of a percent for 0.05 percentage points.
+Offline retains formal method details for every Slot and all six report sections.
+
+Execution evidence: [Task 2 distribution acceptance](DISTRIBUTION_ACCEPTANCE.md).

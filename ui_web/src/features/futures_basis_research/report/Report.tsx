@@ -1,8 +1,10 @@
+import { BIN_PRESETS, histogramAggregation, type BasisMetric } from '../model/histogramAggregation'
+import { DistributionComparison } from '../charts/DistributionComparison'
 import { distributionSummary } from '../model/basisPresentation'
 import { formatUnit } from '../../../shared/format/unit'
 import { intervalLabels } from '../../../shared/format/interval'
-import { historyOptions, histogramOptions } from './presentation'
-import { useState } from 'react'
+import { historyOptions } from './presentation'
+import { useMemo, useState } from 'react'
 import { Alert, Card, Collapse, Descriptions, Flex, Select, Table, Tag, Typography, Button, theme } from 'antd'
 import { ChartView, DateAxisControl, DEFAULT_DATE_AXIS_MODE, type DateAxisMode } from '../../../shared/visualization'
 import type { Method, ReportData, Run } from './types'
@@ -48,11 +50,11 @@ export function Report({ data, mode, sectionNavigation = 'fragment' }: {
   sectionNavigation?: 'fragment' | 'local'
 }) {
   const { token } = theme.useToken()
-  const [metric, setMetric] = useState(metrics[0])
-  const [slot, setSlot] = useState('M0')
+  const [metric, setMetric] = useState<BasisMetric>('basis_value')
+  const [width, setWidth] = useState<number>(BIN_PRESETS.basis_value.default)
+  const projection = useMemo(() => histogramAggregation(data, metric, width), [data, metric, width])
   const [timeScale, setTimeScale] = useState<DateAxisMode>(DEFAULT_DATE_AXIS_MODE)
   if (data.profile !== 'futures_basis_report_evidence_v1') throw new Error('Unsupported report version')
-  const distribution = data.distributions.find(d => d.request.metric === metric && d.request.slot === slot)
   const obs = data.request.observation
   const sectionTitle = (title: string, index: number) => `${String(index + 1).padStart(2, '0')} · ${title}`
   const jump = (index: number) => document.getElementById(`section-${index}`)?.scrollIntoView({ block: 'start' })
@@ -64,7 +66,12 @@ export function Report({ data, mode, sectionNavigation = 'fragment' }: {
           dateEventsDisclosure: mode === 'offline' ? undefined : { description: '标记不同期限 Slot 所对应的期货合约发生切换的日期，仅用于描述合约映射变化，不代表实际交易。' } }} /></div></div></div>)}
   </>
   const distributionCharts = <>
-        <Flex gap="middle" wrap align="center"><Typography.Text>指标</Typography.Text><Select aria-label="Distribution metric" value={metric} onChange={setMetric} options={metrics.map(value => ({ value, label: value }))} style={{ minWidth: 260 }} /><Typography.Text>Slot</Typography.Text><Select aria-label="Distribution slot" value={slot} onChange={setSlot} options={['M0', 'M1', 'Q1', 'Q2'].map(value => ({ value, label: value }))} /></Flex>
+        <Flex gap="middle" wrap align="center"><Typography.Text>指标</Typography.Text><Select aria-label="Distribution metric" value={metric} onChange={(value: BasisMetric) => { setMetric(value); setWidth(BIN_PRESETS[value].default) }} options={metrics.map(value => ({ value, label: value }))} style={{ minWidth: 0, width: 260, maxWidth: '100%' }} /><Typography.Text>分箱宽度</Typography.Text><Select aria-label="Bin width" value={width} onChange={setWidth} options={BIN_PRESETS[metric].widths.map(value => ({ value, label: `${value} ${metric === 'basis_value' ? '点' : '个百分点'}` }))} style={{ minWidth: 145 }} /></Flex>
+        <Typography.Text type="secondary">本地仅进行展示性分箱，正式统计结果保持不变，不会提交请求或重新执行研究。</Typography.Text>
+        {data.distributions.filter(d => d.request.metric === metric).flatMap(d => d.methods
+          .filter(m => m.spec.method === 'interval_count' && m.failure_category && m.failure_category !== 'no_eligible_sample')
+          .map((m, i) => <Alert key={`${d.request.analysis_id}/${i}`} type="warning" title={`${d.request.slot}：${m.failure_category}（Eligible N=${d.binding.length}）`} />))}
+        <DistributionComparison projection={projection} metric={metric} width={width} />
         <section aria-label="统计摘要" style={{ minWidth: 0 }}>
           <Typography.Title level={5}>各 Slot 统计摘要</Typography.Title>
           <Table scroll={{ x: 'max-content' }} pagination={false} size="small" rowKey="slot"
@@ -75,15 +82,8 @@ export function Report({ data, mode, sectionNavigation = 'fragment' }: {
               { title: 'Max', dataIndex: 'max' }, { title: 'Mean', dataIndex: 'mean' },
             ]} />
         </section>
-        {distribution && <>
-          {mode === 'offline' && <Typography.Paragraph>候选交易日：{distribution.candidates.length}；有效样本数：{distribution.binding.length}。分类柱等宽，不表示区间宽度或密度；区间边界及两侧外部区间全部保留。</Typography.Paragraph>}
-          {['count', 'frequency'].map(measure => {
-            const view = data.views.histograms[`${distribution.request.analysis_id}/${measure}`]
-            return view && <div key={measure} tabIndex={mode === 'demo' ? 0 : undefined} aria-label={mode === 'demo' ? `${measure} 图表，窄屏可横向滚动` : undefined} style={{ minWidth: 0, height: 340, overflow: mode === 'demo' ? 'auto' : 'hidden' }}><div style={{ minWidth: mode === 'demo' ? 640 : undefined, height: '100%' }}><ChartView view={view} options={histogramOptions(view, distribution.methods.find(m => m.result?.bins)?.result)} /></div></div>
-          })}
-          {mode === 'offline' && <Methods methods={distribution.methods} />}
-        </>}
-    {!distribution && <Alert type="info" title="无可用分布结果" />}
+        {mode === 'offline' && <Collapse defaultActiveKey={data.distributions.filter(d => d.request.metric === metric).map(d => d.request.analysis_id)} items={data.distributions.filter(d => d.request.metric === metric).map(d => ({ key: d.request.analysis_id, label: `${d.request.slot} 正式统计方法`, children: <Methods methods={d.methods} /> }))} />}
+
   </>
   if (mode !== 'offline') return <Card data-testid="compact-report" title={<Typography.Title level={3} style={{ margin: 0 }}>研究报告</Typography.Title>}
     styles={{ body: { display: 'flex', flexDirection: 'column', gap: token.padding, minWidth: 0 } }} style={{ minWidth: 0 }}>
@@ -135,7 +135,6 @@ export function Report({ data, mode, sectionNavigation = 'fragment' }: {
         {historyCharts}
       </Card>
       <Card id="section-2" title={<Typography.Title level={2} style={{ margin: 0, fontSize: token.fontSizeHeading4, lineHeight: token.lineHeightHeading4 }}>C. 基差分布</Typography.Title>} styles={{ body: { display: 'flex', flexDirection: 'column', gap: token.padding, minWidth: 0 } }} style={{ scrollMarginTop: token.paddingLG }}>
-        <Typography.Text type="secondary">以下为本地展示设置，仅切换已有结果，不会提交请求或重新计算统计。</Typography.Text>
         {distributionCharts}
       </Card>
       <Card id="section-3" title={<Typography.Title level={2} style={{ margin: 0, fontSize: token.fontSizeHeading4, lineHeight: token.lineHeightHeading4 }}>D. 期限结构</Typography.Title>} styles={{ body: { display: 'flex', flexDirection: 'column', gap: token.padding, minWidth: 0 } }} style={{ scrollMarginTop: token.paddingLG }}>

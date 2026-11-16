@@ -3,6 +3,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { Report } from './Report'
 import type { ReportData } from './types'
 
+vi.mock('react-plotly.js', () => ({ default: () => <div /> }))
 afterEach(cleanup)
 
 vi.mock('../../shared/visualization', () => ({

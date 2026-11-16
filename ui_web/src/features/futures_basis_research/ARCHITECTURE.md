@@ -8,9 +8,8 @@ through generated types, and renders the R01-A reader owned semantically by
 [Research](../../../../market_research/descriptive/cases/futures_basis/ONLINE_APPLICATION.md).
 It owns input interaction, presentation state, polling and user-visible empty/error
 presentation only. It never acquires market facts, executes Research or recomputes
-Basis, Slot, DTE, formal statistics, coverage or run length. The only authorized
-future numerical presentation exception is temporary Histogram Aggregation under
-[Presentation authority](PRESENTATION.md); it is not implemented in Task 1.
+Basis, Slot, DTE, formal statistics, coverage or run length. The authorized numerical
+presentation exception is temporary Histogram Aggregation under [Presentation authority](PRESENTATION.md), implemented by the shared reader.
 WP6 defines this authoritative slice; WP8 implements it and the offline reader regression.
 
 ## Application composition
@@ -122,7 +121,7 @@ Online and Demo compose one compact Report Card in the shared reader. Reading or
 research question (`summary`), initially collapsed producer formulas, history and
 distribution visualizations with a four-Slot summary of the selected Metric.
 [Presentation authority](PRESENTATION.md) owns SD-01–SD-05, including the implemented
-expiry explanation and summary, and the authority-only future distribution changes.
+expiry explanation, summary and dynamic four-Slot distribution comparison.
 Summary presentation selects explicit `mean` / `quantile` methods and quantile
 points, preserving units, zero and unavailable states. No formal statistics are recomputed.
 Compact delivery omits section navigation, coverage/fingerprint/runtime metadata,
@@ -130,8 +129,8 @@ detailed evidence tables, Methods cards and request JSON. Partial retains a shor
 empty findings and validation errors remain explicit. Full payload validation still applies.
 
 Offline retains the complete six-section report, evidence, navigation and reproduction
-instructions. Shared chart regions retain ChartView options, producer Views, transition
-annotations, null breaks, hover, Metric/Slot controls and the date-axis contract.
+instructions. History chart regions retain ChartView options, producer Views, transition
+annotations, null breaks, hover, Metric/Bin Width controls and the date-axis contract.
 
 ## Error, empty and retry presentation
 

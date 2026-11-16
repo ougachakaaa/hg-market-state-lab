@@ -1,3 +1,4 @@
+import { verifyBasisDistribution, verifyDistributionInteractions } from './futures_basis_distribution_acceptance.mjs'
 import assert from 'node:assert/strict'
 
 // Compare reader cells directly with retained producer results, never new statistics.
@@ -36,17 +37,19 @@ export async function verifyBasisSummary(page, report) {
     await page.locator('.ant-select-item-option-content').getByText(metric, { exact: true }).click()
     await check(metric)
   }
-  await page.getByRole('combobox', { name: 'Distribution slot' }).click()
-  await page.locator('.ant-select-item-option-content').getByText('Q2', { exact: true }).click()
+  await verifyBasisDistribution(page, report)
+  await verifyDistributionInteractions(page)
   await check('basis_value')
-  await page.getByRole('combobox', { name: 'Distribution slot' }).click()
-  await page.locator('.ant-select-item-option-content').getByText('M0', { exact: true }).click()
   // Let the portal's exit animation finish before resizing; its old absolute
   // position can temporarily exceed the narrower viewport.
   await page.locator('.ant-select-dropdown:visible').waitFor({ state: 'hidden' })
-  for (const width of [1280, 390]) {
+  for (const width of [1440, 1024, 390]) {
     await page.setViewportSize({ width, height: 900 })
     await summary.scrollIntoViewIfNeeded()
+    if (await page.getByTestId('distribution-comparison').count()) await page.waitForFunction(() => {
+      const el = document.querySelector('[data-testid="distribution-comparison"] .js-plotly-plot')
+      return Math.abs(el._fullLayout.width - el.parentElement.clientWidth) < 2
+    })
     assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false)
     const frame = summary.locator('.ant-table-content')
     assert.ok(await frame.evaluate(el => ['auto', 'scroll'].includes(getComputedStyle(el).overflowX)))
