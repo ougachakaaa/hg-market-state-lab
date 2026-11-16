@@ -4,6 +4,26 @@ Specializes [Application](APPLICATION.md). Owns the immutable Python query resul
 schema and statistical association; population policy remains in
 [Relative Value](RELATIVE_VALUE.md). These are business carriers, not HTTP DTOs.
 
+## Issue #13 compatibility and preparation evidence
+
+The execution entrypoints in [Application](APPLICATION.md#explicit-execution-entrypoints-issue-13-target)
+reuse these Result types and existing request.operation literals. Operation identifies
+the analysis, not read-only permissions. Do not add an execution identity, require a
+new Result version or change existing Demo Bundle bodies to support preparation.
+The additive prepared-input attempts and failure diagnostics belong to
+[Inputs](INPUTS.md#execution-preparation-and-diagnostics-boundary); they are retained
+through the same observation_set/prepared_inputs association, not another collection.
+
+`source_context` keeps its existing shape. Read-only query results retain the
+read-only/separately-prepared-cache disclosure. Execution results instead disclose:
+"Explicit execution may prepare incomplete caches through DataLake public services;
+analysis uses validated complete final exports." This describes permission, not a
+claim that Ensure ran on a hot cache. Other provider, independent-snapshot,
+point-in-time metadata and financial limitations remain unchanged. Do not publish
+raw Exports, attempts, UnitFailure reasons or exception text in source_context.
+Existing captured source_context strings remain valid historical disclosures;
+validators must not require a new text value for old Demo results.
+
 ## Requests and shared evidence
 
 The case facade publishes `DailySpreadsRequest`, `HistoricalRelativeValueRequest`,
@@ -80,7 +100,10 @@ A wrong result type, method, unit/count, estimator or parameters is a classified
 
 `CalendarSpreadQueryError` retains category, stage, dependency, safe reason,
 method/date/Slots where applicable, validated InputEvidence, prepared inputs and
-obtained ObservationSet where available. It adapts only the known WP2 classified
+obtained ObservationSet where available. Preparation adaptation also preserves
+optional reason_code, operation and immutable attempts with backward-compatible
+None/empty defaults, under Inputs. A failure never carries a successful partial
+business result. It adapts only the known WP2 classified
 exceptions, public StatisticalFailure and local association violations. Causes
 remain attached. Raw upstream exception text is not copied to its public reason;
 programming exceptions propagate. Invalid query/statistical parameters use

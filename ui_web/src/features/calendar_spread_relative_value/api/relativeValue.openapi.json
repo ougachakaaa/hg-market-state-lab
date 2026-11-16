@@ -469,6 +469,27 @@
               }
             ],
             "title": "Param"
+          },
+          "reason_code": {
+            "anyOf": [
+              {
+                "enum": [
+                  "cache_incomplete",
+                  "final_export_incomplete",
+                  "credential_missing",
+                  "cache_incompatible",
+                  "operation_unavailable",
+                  "malformed_export",
+                  "malformed_ensure_result",
+                  "upstream_request_rejected"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason Code"
           }
         },
         "required": [

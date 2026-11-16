@@ -6,7 +6,7 @@ from pathlib import Path
 from market_research.descriptive.cases import futures_calendar_spread as case
 from ui_http.app import create_app as composed_app
 from ui_http.products.calendar_spread_relative_value.endpoint import get_historical_query
-from ui_http.products.futures_calendar_spread.endpoint import get_daily_query
+from ui_http.products.futures_calendar_spread.endpoint import get_daily_execution, get_daily_query
 
 ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(ROOT / "market_research/tests"))
@@ -18,9 +18,16 @@ def daily(code, day):
     return case.query_daily_spreads(code, day, calendar_service=services, futures_service=services)
 
 
+def execute_daily(code, day):
+    services = Services(day, day, code)
+    return case.execute_daily_spreads(
+        code, day, calendar_service=services, futures_service=services,
+    )
+
+
 def history(code, start, end, **kwargs):
     services = Services(start, end, code)
-    return case.query_historical_relative_value(
+    return case.execute_historical_relative_value(
         code, start, end, calendar_service=services, futures_service=services, **kwargs
     )
 
@@ -28,5 +35,6 @@ def history(code, start, end, **kwargs):
 def create_app():
     app = composed_app()
     app.dependency_overrides[get_daily_query] = lambda: daily
+    app.dependency_overrides[get_daily_execution] = lambda: execute_daily
     app.dependency_overrides[get_historical_query] = lambda: history
     return app

@@ -1,4 +1,4 @@
-"""Daily delivery delegates solely to the public Calendar Spread query."""
+"""Daily delivery delegates solely to the public Calendar Spread facade."""
 
 from collections.abc import Callable
 from typing import Annotated, Any
@@ -8,6 +8,7 @@ from starlette.concurrency import run_in_threadpool
 
 from market_research.descriptive.cases.futures_calendar_spread import (
     DailySpreadsResult,
+    execute_daily_spreads,
     query_daily_spreads,
 )
 
@@ -20,6 +21,10 @@ router = APIRouter(tags=["Futures Calendar Spread"], route_class=CalendarSpreadR
 
 def get_daily_query() -> Callable[..., DailySpreadsResult]:
     return query_daily_spreads
+
+
+def get_daily_execution() -> Callable[..., DailySpreadsResult]:
+    return execute_daily_spreads
 
 
 def responses(model: type[DailyErrorResponse]) -> dict[int | str, dict[str, Any]]:
@@ -39,4 +44,20 @@ async def daily(
     return await run_in_threadpool(
         execute,
         lambda: DailyResponse.model_validate(query(params.product_code, params.trade_date)),
+    )
+
+
+@router.post(
+    ROUTE_PATH + "/query",
+    operation_id="execute_futures_calendar_spread",
+    response_model=DailyResponse,
+    responses=responses(DailyErrorResponse),
+)
+async def daily_execution(
+    body: DailyRequest,
+    operation: Annotated[Callable[..., DailySpreadsResult], Depends(get_daily_execution)],
+) -> Response:
+    return await run_in_threadpool(
+        execute,
+        lambda: DailyResponse.model_validate(operation(body.product_code, body.trade_date)),
     )

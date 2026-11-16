@@ -40,6 +40,7 @@ it('requires explicit submission, switches pair and axis locally, and labels edi
   fireEvent.click(screen.getByRole('button', { name: '开始研究' }))
   await waitFor(() => expect(fetch).toHaveBeenCalledTimes(2))
   expect(screen.queryByText('当前价差相对于可比历史样本处于什么位置？')).toBeNull()
+  expect(screen.getByText('正在准备所需数据并计算结果，请稍候。')).toBeTruthy()
   const changed = structuredClone(fixture); changed.request.histogram_edges = [-1, 0, 1]
   await act(async () => finish(new Response(JSON.stringify(changed))))
   await screen.findByText(/服务返回的数据未通过完整性验证/)

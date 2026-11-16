@@ -144,6 +144,32 @@
         "title": "DailyErrorResponse",
         "type": "object"
       },
+      "DailyRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "product_code": {
+            "enum": [
+              "IF",
+              "IH",
+              "IC",
+              "IM"
+            ],
+            "title": "Product Code",
+            "type": "string"
+          },
+          "trade_date": {
+            "format": "date",
+            "title": "Trade Date",
+            "type": "string"
+          }
+        },
+        "required": [
+          "product_code",
+          "trade_date"
+        ],
+        "title": "DailyRequest",
+        "type": "object"
+      },
       "DailyResponse": {
         "additionalProperties": false,
         "properties": {
@@ -268,6 +294,27 @@
               }
             ],
             "title": "Param"
+          },
+          "reason_code": {
+            "anyOf": [
+              {
+                "enum": [
+                  "cache_incomplete",
+                  "final_export_incomplete",
+                  "credential_missing",
+                  "cache_incompatible",
+                  "operation_unavailable",
+                  "malformed_export",
+                  "malformed_ensure_result",
+                  "upstream_request_rejected"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason Code"
           }
         },
         "required": [
@@ -684,6 +731,139 @@
           }
         ],
         "summary": "Daily",
+        "tags": [
+          "Futures Calendar Spread"
+        ]
+      }
+    },
+    "/data/futures-calendar-spread/query": {
+      "post": {
+        "operationId": "execute_futures_calendar_spread",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DailyRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DailyResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DailyErrorResponse"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthErrorResponse"
+                }
+              }
+            },
+            "description": "HTTP access error"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthErrorResponse"
+                }
+              }
+            },
+            "description": "HTTP access error"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DailyErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DailyErrorResponse"
+                }
+              }
+            },
+            "description": "Content Too Large"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DailyErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/DailyErrorResponse"
+                    },
+                    {
+                      "$ref": "#/components/schemas/AuthErrorResponse"
+                    }
+                  ]
+                }
+              }
+            },
+            "description": "Internal Server Error"
+          },
+          "502": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DailyErrorResponse"
+                }
+              }
+            },
+            "description": "Bad Gateway"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DailyErrorResponse"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "security": [
+          {
+            "CookieSession": []
+          }
+        ],
+        "summary": "Daily Execution",
         "tags": [
           "Futures Calendar Spread"
         ]

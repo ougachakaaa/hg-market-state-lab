@@ -8,7 +8,7 @@ from math import isfinite
 from typing import Any, cast
 from zoneinfo import ZoneInfo
 
-from data_lake import CoverageResult
+from data_lake import CoverageResult, EnsureResult, UnitFailure
 from data_lake.datasets.tushare_equity_index_futures import (
     FuturesDailyExport,
     FuturesDailyRow,
@@ -286,4 +286,52 @@ def validate_prepared(prepared: Any) -> None:
     require(
         prepared.calendar_export == calendar and prepared.futures_export == futures,
         "Noncanonical prepared exports",
+    )
+
+
+def validate_ensure(
+    raw: Any, request: CalendarSpreadRequest, dependency: str, sessions: tuple[date, ...]
+) -> EnsureResult:
+    names = (
+        "requested_units",
+        "already_successful_units",
+        "attempted_units",
+        "succeeded_units",
+        "failed_units",
+        "records_written",
+    )
+    counts = tuple(getattr(raw, name) for name in names)
+    require(all(type(n) is int and n >= 0 for n in counts), "Invalid Ensure counters")
+    requested, already, attempted, succeeded, failed, written = counts
+    calendar = dependency == "calendar"
+    expected = (request.end_date - request.start_date).days + 1 if calendar else len(sessions)
+    require(requested == expected, "Wrong Ensure target count")
+    require(already + attempted == requested, "Wrong Ensure attempt accounting")
+    require(succeeded + failed == attempted, "Wrong Ensure outcome accounting")
+    require(type(raw.complete) is bool, "Invalid Ensure complete")
+    # Complete is the producer's final coverage signal, not a later Export snapshot.
+    if calendar:
+        require(written == succeeded, "Wrong Calendar records_written")
+    failures = []
+    seen = set()
+    for failure in _sequence(raw.failures):
+        identity = _sequence(failure.identity)
+        require(len(identity) == 2, "Wrong failure identity shape")
+        code, day = identity
+        require(
+            type(code) is str and code == ("CFFEX" if calendar else request.product_code),
+            "Wrong failure scope",
+        )
+        require(type(day) is date, "Wrong failure date type")
+        require(
+            request.start_date <= day <= request.end_date if calendar else day in sessions,
+            "Failure outside target domain",
+        )
+        require(identity not in seen, "Duplicate failure identity")
+        require(type(failure.reason) is str, "Invalid failure reason")
+        seen.add(identity)
+        failures.append(UnitFailure(identity, failure.reason))
+    require(len(failures) == failed, "Wrong Ensure failure count")
+    return EnsureResult(
+        requested, already, attempted, succeeded, failed, written, raw.complete, tuple(failures)
     )

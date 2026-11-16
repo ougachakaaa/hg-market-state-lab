@@ -14,7 +14,7 @@ from pydantic import ValidationError
 
 from market_research.descriptive.cases.futures_calendar_spread import CalendarSpreadQueryError
 
-from .schemas import DailyErrorResponse, ErrorBody, ErrorKind, Param, Wire
+from .schemas import DailyErrorResponse, ErrorBody, ErrorKind, Param, ReasonCode, Wire
 
 MAX_BODY_BYTES = 16 * 1024
 MAX_RESPONSE_BYTES = 32 * 1024 * 1024
@@ -24,6 +24,7 @@ _CAPACITY = BoundedSemaphore(2)
 PATHS = frozenset(
     {
         "/data/futures-calendar-spread",
+        "/data/futures-calendar-spread/query",
         "/research/calendar-spread-relative-value/query",
     }
 )
@@ -52,16 +53,62 @@ ERRORS: dict[str, tuple[int, str]] = {
 }
 
 
+BUSINESS_KINDS = frozenset({
+    "invalid_request", "incomplete_inputs", "upstream_unavailable", "input_contract_error",
+    "slot_resolution_error", "calculation_failure", "statistical_failure",
+})
+REASONS: dict[str, tuple[str, str]] = {
+    "cache_incomplete": ("incomplete_inputs", "Required cached market data is incomplete."),
+    "final_export_incomplete": (
+        "incomplete_inputs",
+        "Automatic preparation left required market data incomplete.",
+    ),
+    "credential_missing": (
+        "upstream_unavailable",
+        "Required data source credentials are not configured.",
+    ),
+    "cache_incompatible": (
+        "upstream_unavailable",
+        "Market data cache requires maintainer attention.",
+    ),
+    "operation_unavailable": (
+        "upstream_unavailable",
+        "Market data preparation or reading is unavailable.",
+    ),
+    "malformed_export": (
+        "input_contract_error",
+        "Upstream export did not match the required contract.",
+    ),
+    "malformed_ensure_result": (
+        "input_contract_error",
+        "Upstream preparation result did not match the required contract.",
+    ),
+    "upstream_request_rejected": (
+        "input_contract_error",
+        "Upstream service rejected a validated request.",
+    ),
+}
+
+
 class TransportError(Exception):
     def __init__(self, kind: ErrorKind, param: Param | None = None):
         self.kind, self.param = kind, param
 
 
-def error_response(kind: ErrorKind, param: Param | None = None) -> JSONResponse:
+def error_response(
+    kind: ErrorKind, param: Param | None = None, reason_code: ReasonCode | None = None,
+) -> JSONResponse:
     status, detail = ERRORS[kind]
-    dto = DailyErrorResponse(error=ErrorBody(kind=kind, detail=detail, param=param))
+    if reason_code is not None:
+        detail = REASONS[reason_code][1]
+    dto = DailyErrorResponse(
+        error=ErrorBody(kind=kind, detail=detail, param=param, reason_code=reason_code),
+    )
+    payload = dto.model_dump(mode="json")
+    if reason_code is None:
+        del payload["error"]["reason_code"]
     return JSONResponse(
-        dto.model_dump(mode="json"),
+        payload,
         status_code=status,
         headers={"Cache-Control": "no-store"},
     )
@@ -169,8 +216,17 @@ def execute(query_and_project: Callable[[], Wire]) -> Response:
         except CalendarSpreadQueryError as error:
             from typing import cast
 
-            kind = error.category if error.category in ERRORS else "internal_error"
-            return error_response(cast(ErrorKind, kind))
+            kind, reason = error.category, error.reason_code
+            if (
+                type(kind) is not str or kind not in BUSINESS_KINDS
+                or (reason is not None and (
+                    type(reason) is not str or reason not in REASONS or REASONS[reason][0] != kind
+                ))
+            ):
+                return error_response("internal_error")
+            return error_response(
+                cast(ErrorKind, kind), reason_code=cast(ReasonCode | None, reason),
+            )
         except TransportError as error:
             return error_response(error.kind, error.param)
         except Exception:

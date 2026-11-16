@@ -13,7 +13,7 @@ const ajv = new Ajv2020({ strictSchema: false, strictTypes: false, strictNumbers
   date: (v: string) => /^\d{4}-\d{2}-\d{2}$/.test(v) && v >= '0001-01-01' && Number.isFinite(Date.parse(v)) && new Date(v).toISOString().slice(0, 10) === v,
 } })
 const schema = ajv.compile({ ...openapi.components.schemas.DailyResponse, components: openapi.components })
-const operation = openapi.paths['/data/futures-calendar-spread'].get
+const operation = openapi.paths['/data/futures-calendar-spread/query'].post
 const responses = new Map(Object.entries(operation.responses).map(([status, response]) => [Number(status), ajv.compile({ ...response.content['application/json'].schema, components: openapi.components })]))
 export const matchesResponse = (status: number, value: unknown) => responses.get(status)?.(value) === true
 function check(ok: unknown): asserts ok { if (!ok) throw new Error('Invalid Calendar Spread result association') }

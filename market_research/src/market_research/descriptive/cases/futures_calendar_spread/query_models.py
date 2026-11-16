@@ -16,7 +16,13 @@ from market_statistics import (
 )
 
 from .financial import CalendarSpreadMetric
-from .inputs import CASE, DEFINITION_VERSION, InputEvidence, PreparedCalendarSpreadInputs
+from .inputs import (
+    CASE,
+    DEFINITION_VERSION,
+    InputEvidence,
+    InputPreparationAttempt,
+    PreparedCalendarSpreadInputs,
+)
 from .observations import (
     CalendarSpreadDay,
     CalendarSpreadObservationSet,
@@ -46,6 +52,16 @@ class SourceContext:
         "Fees, slippage, margin, financing, dividends, future changes and "
         "waiting value are excluded.",
     )
+
+
+EXECUTION_SOURCE_CONTEXT = SourceContext(
+    limitations=(
+        *SourceContext().limitations[:2],
+        "Explicit execution may prepare incomplete caches through DataLake public services; "
+        "analysis uses validated complete final exports.",
+        *SourceContext().limitations[3:],
+    )
+)
 
 
 @dataclass(frozen=True, slots=True)
@@ -207,6 +223,9 @@ class CalendarSpreadQueryError(Exception):
         evidence: tuple[InputEvidence, ...] = (),
         prepared_inputs: PreparedCalendarSpreadInputs | None = None,
         observation_set: CalendarSpreadObservationSet | None = None,
+        reason_code: str | None = None,
+        operation: str | None = None,
+        attempts: tuple[InputPreparationAttempt, ...] = (),
     ) -> None:
         super().__init__(reason)
         self.category, self.stage, self.dependency, self.reason = (
@@ -219,3 +238,6 @@ class CalendarSpreadQueryError(Exception):
         self.near_slot, self.far_slot = near_slot, far_slot
         self.evidence, self.prepared_inputs = evidence, prepared_inputs
         self.observation_set = observation_set
+        self.reason_code = reason_code
+        self.operation = operation
+        self.attempts = attempts

@@ -50,6 +50,30 @@ a Python data interface. Shared dependencies and a shared environment grant no a
 permission. Upstream owners retain acquisition infrastructure, credentials, cache lifecycle,
 coverage calculation and canonical deterministic Product preparation.
 
+## Execution-oriented input preparation
+
+For a user-initiated formal Research execution that requires complete market facts,
+the owning case's Input Preparation checks availability and prepares legal missing
+inputs through its selected Dataset public services. Separate manual Ensure is not
+a normal user prerequisite. Backtesting follows the same ownership principle under
+its own case authority; this grants Research no Backtesting imports or orchestration.
+DataLake remains the sole owner of Source acquisition, caches and completeness proof.
+
+This principle grants no acquisition permission to read-only queries, Preflight /
+Readiness, coverage/status, result readers, presentation or static Demo. Existing
+read-only Python APIs retain their contract; a case must publish explicit execution
+entrypoints before enabling preparation. Never make every export implicitly ensure.
+
+For DataLake dependencies, the case declares exact requests and prerequisite order.
+Export and validate a legal partial view before any conditional Ensure; malformed views, incompatible caches and
+OperationError never count as ordinary missing inputs. After a normally returned
+Ensure, validate a final Export of the same request; Ensure success is not proof.
+Retain final input evidence and obtained preparation diagnostics. Bounded Case-level
+Ensure attempts do not replace Dataset-owned prerequisite or Provider execution
+mechanisms. No DataLake Manager, second cache, generic gateway or retry framework is
+introduced. Case-specific missing-tolerant policies below remain explicit exceptions
+to required fact completeness, never permission to accept malformed evidence.
+
 ## Completeness and explicit failure
 
 Input Preparation follows each selected public contract and uses the minimum legal
@@ -114,7 +138,10 @@ registry or upstream facade is introduced by this authority.
 ## Calendar Spread L1 binding navigation
 
 The independent [Calendar Spread input contract](descriptive/cases/futures_calendar_spread/INPUTS.md)
-selects only public CFFEX Calendar and Futures Daily Exports. Its planned product
-queries are read-only and require complete inputs; the case does not inherit the
-Basis SSE/Index preparation workflow or a missing-tolerant Futures policy. Exact
-requests, evidence and failure behavior remain in that narrow contract.
+selects only public CFFEX Calendar and Futures Daily services. Existing Python
+queries and Daily GET remain read-only; explicit execution entrypoints conditionally
+Ensure legal incomplete inputs, then require complete final Exports. The case does
+not inherit Basis SSE/Index preparation or a missing-tolerant Futures policy. Exact
+requests, evidence and failure behavior remain in that narrow contract. Issue #13
+[reconciliation](descriptive/cases/futures_calendar_spread/AUTO_PREPARATION_RECONCILIATION.md)
+tracks Python delivery and the remaining integration and operational acceptance.

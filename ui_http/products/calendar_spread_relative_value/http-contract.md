@@ -6,6 +6,13 @@ Specializes [HTTP ownership](../../ARCHITECTURE.md). Query/result, sample policy
 failure classification belong to [Research](../../../market_research/descriptive/cases/futures_calendar_spread/APPLICATION.md),
 with numerical semantics under [Relative value](../../../market_research/descriptive/cases/futures_calendar_spread/RELATIVE_VALUE.md).
 
+## Issue #13 delivery status
+
+Issue #13 WP2 delivers the execution-semantic change below. The original WP5
+read-only POST acceptance remains historical;
+[reconciliation](../../../market_research/descriptive/cases/futures_calendar_spread/AUTO_PREPARATION_RECONCILIATION.md)
+records delivery and operational limits without rewriting historical acceptance.
+
 ## Operation and body
 
 `POST /research/calendar-spread-relative-value/query`, operationId
@@ -22,9 +29,16 @@ array of finite JSON numbers; Statistics public validation owns boundary legalit
 No horizon, strategy, owner, run_id, arbitrary formulas or statistical estimator
 override is accepted.
 
-This POST is a synchronous read-only analytical query. It invokes only the case
-facade's `query_historical_relative_value`, performs no ensure or writes and creates
-no durable execution identity. It is independent of `/research/execute`, capability
+This POST is a synchronous user-initiated analytical execution. It invokes only
+the case facade's `execute_historical_relative_value`; its Input Preparation may
+conditionally Ensure legal incomplete Calendar/Futures caches and requires complete
+final Exports. Path, HTTP operationId, request body and successful Result shape stay
+unchanged; request.operation remains `query_historical_relative_value`, identifying
+the analysis rather than acquisition permission. Execution source_context follows
+[Query Results](../../../market_research/descriptive/cases/futures_calendar_spread/QUERY_RESULTS.md).
+The read-only Python `query_historical_relative_value` remains available separately;
+this HTTP entry no longer promises read-only cache access. It creates no durable
+execution identity. It is independent of `/research/execute`, capability
 discovery, Plan/Batch, Publication and Futures Basis online Runs.
 
 ## Result and errors
@@ -42,8 +56,8 @@ business outcomes, retaining their distinct reasons. No synthetic neutral rank,
 all-stage fallback or transport-level financial/statistical recomputation.
 
 Use the same error envelope and shared category/status projection as
-[Daily HTTP](../futures_calendar_spread/http-contract.md), adding
-`statistical_failure` → 422 / statistical_failure. Illegal statistical request
+[Daily HTTP](../futures_calendar_spread/http-contract.md), including the optional
+reason_code projection, and adding `statistical_failure` → 422 / statistical_failure. Illegal statistical request
 parameters are Research `invalid_request` → 400, not execution failures.
 Do not expose the default framework 422 validation body.
 
@@ -60,7 +74,7 @@ transport delivery but must never truncate samples or silently change population
 ## WP5 transport bounds and projection
 
 The [shared Calendar Spread transport bounds](../futures_calendar_spread/http-contract.md#wp5-transport-bounds-and-projection)
-own the two-worker process capacity, 16 KiB streamed body limit, UTF-8 JSON
+own the shared two-worker process capacity, 16 KiB streamed body limit, UTF-8 JSON
 parsing, 32 MiB complete-response limit, threadpool execution, safe errors and
 atomic serialization. This Research product additionally limits the inclusive
 window to 3660 natural dates and histogram_edges to 128 entries; excess returns
@@ -84,3 +98,18 @@ Historical day date/status/reason summaries preserve closed dates; historical
 accounting and evaluation current_day are explicit. Echoed request includes the
 resolved default metric and null histogram_edges when omitted, as in the Python
 business request. Request optional fields reject explicit null.
+
+## Execution feedback and compatibility
+
+All existing request/window/edge/response limits remain in force. HTTP consumes only
+the Research facade, never DataLake services. No business auto-retry, Run Store,
+background-job protocol or progress stream is added. Client cancellation isolates
+results but does not guarantee worker termination or cache rollback; capacity stays
+held through completion under the shared Daily transport contract.
+
+Existing formal Demo captures remain valid 200 historical evidence; WP0 neither
+recaptures nor changes Bundles. Static Demo renders those captures offline and never
+submits this POST. Production submission is explicitly execution-oriented; updated
+errors explain credential, compatibility or preparation failures without prescribing
+manual Ensure. Cold/hot latency, timeout and capacity acceptance follow the
+[shared synchronous boundary](../futures_calendar_spread/http-contract.md#issue-13-synchronous-acceptance-boundary).

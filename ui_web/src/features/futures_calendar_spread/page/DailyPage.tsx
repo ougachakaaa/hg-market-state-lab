@@ -3,7 +3,7 @@ import { useState } from 'react'
 import { products, type Query } from '../api/validateResult'
 import { DailyPresentation } from '../components/DailyPresentation'
 import { useQuery } from '../hooks/useQuery'
-import { errorMessages } from '../model/format'
+import { errorMessage } from '../model/format'
 export default function DailyPage() {
   const { state, submit, retry } = useQuery()
   const [product, setProduct] = useState<Query['product_code'] | undefined>()
@@ -17,8 +17,8 @@ export default function DailyPage() {
       <Form.Item><Button aria-label="查询" htmlType="submit" type="primary" disabled={!product || !date}>查询</Button></Form.Item>
     </Form></Card>
     {dirty && <Alert type="info" title="参数已修改，需重新查询。下方状态仍对应已提交参数。" />}
-    {state.status === 'loading' && <Spin tip="正在查询…"><div style={{ minHeight: 80 }} /></Spin>}
-    {state.status === 'error' && <Alert type="error" title={errorMessages[state.error.kind]} description={`${state.query.product_code} · ${state.query.trade_date}${state.error.param ? ` · ${state.error.param}` : ''}`} action={<Button onClick={retry}>重试原查询</Button>} />}
+    {state.status === 'loading' && <Spin tip="正在准备所需数据并计算结果，请稍候。"><div style={{ minHeight: 80 }} /></Spin>}
+    {state.status === 'error' && <Alert type="error" title={errorMessage(state.error)} description={`${state.query.product_code} · ${state.query.trade_date}${state.error.param ? ` · ${state.error.param}` : ''}`} action={<Button onClick={retry}>重试原查询</Button>} />}
     {state.status === 'success' && <DailyPresentation result={state.result} />}
   </Flex>
 }
