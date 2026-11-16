@@ -50,8 +50,8 @@ and polling; model owns display formatting. Display formatting follows the
 `started_at` and `finished_at` display in Beijing time; ratios display as one-decimal
 percentages; currency keeps its two-decimal money format. React never recomputes financial
 metrics, curves, trades or slots. Demo and Online share one Compact Backtest Result card.
-Its reading order is research question, collapsed strategy/return conventions,
-returns and drawdown Views, then seven core summary metrics and initial notional.
+Its reading order is research question, seven core summary metrics and initial notional,
+collapsed strategy/return conventions, then returns and drawdown Views.
 Profile machine identities retain generated-contract types; a feature-local pure
 presentation mapping owns their Chinese labels and accurate strategy explanations.
 The page's collapsed About section follows the selected input profile, while Result
@@ -136,3 +136,28 @@ uses the UI system success text and denotes Web entry availability. Legacy Produ
 Run URLs normalize according to Workspace authority before mounting this feature.
 
 Demo and Online returns/drawdown share the initially closed 日期事件（Date Events） disclosure via their common chart options. Its description is: 标记策略开仓、到期换仓及最终平仓的日期，帮助理解持仓变化与收益曲线的关系。 Producer Entry/Roll/Exit identities, order, details and Plotly markers remain intact. Expansion changes only local UI state, with no HTTP or recalculation.
+
+## UI-04 compact presentation
+
+This page calls a Futures Product 品种, a Futures Instrument 合约标的 and an
+Index Instrument 指数标的; machine fields remain unchanged. Readiness keeps overall
+and dependency status plus actual successful/requested target counts. Normal complete
+coverage has no explanatory boilerplate; exceptional reasons remain actionable.
+Futures coverage is **品种×日期**, not 合约×日期: the Dataset canonical FetchUnit
+is `(product_code, trade_date)` and owns a whole contract cross-section (see
+[Dataset authority](../../../../data_lake/datasets/tushare_equity_index_futures/ARCHITECTURE.md)).
+Calendar coverage counts natural-day targets; index coverage counts index-day targets.
+This reconciles the proposed contract-day label with actual producer granularity.
+Refresh remains read-only and readiness remains advisory.
+
+The compact Online Run summary shows immutable request facts, a Tag for confirmed
+backend status, Started and Finished in Beijing time (missing = —), and secondary
+wrapping Run ID. Backend states map to 已完成/运行中/等待执行/失败/已中断 with
+success/warning/warning/error/error colors. UI read phases have separate labels;
+status/result read failure never implies execution failure. Default-closed 运行详情
+contains raw status, frontend phase and Created. Failure reasons and GET retry actions
+stay visible outside disclosures. Submit busy feedback creates no Run identity.
+Static composition has none of these execution regions. Both runtimes keep the same
+Result, seven producer metrics, chart data and interactions. Rules use two short
+paragraphs, preserving initial M1, expiry replacement, profile differences, final-day
+exit and gross-return conventions. No backend, contract or lifecycle change is made.

@@ -28,8 +28,26 @@ export function failurePresentation(status: string, failure?: Failure | null) {
  return { title: '回测执行失败', description: '回测执行失败。请查看技术详情或联系维护人员。', action: '确认问题解决后，重新提交回测。' }
 }
 export function readinessPresentation(item: Preflight['calendar_cffex']) {
- const labels = { complete: '数据已就绪', incomplete: '本地缓存不完整', unknown: '暂无法判断', unavailable: '缓存检查不可用' }
- const reasons = { cache_incompatible: `${dependencyLabels[item.dependency]}的本地缓存不兼容，需要重建。请联系维护者重建受影响的 Dataset 缓存，完成后重新检查。`, cache_complete: '本地目标缓存完整，不代表行情最新或回测一定成功。', cache_incomplete: '提交回测时将尝试自动获取缺失行情。', calendar_target_unknown: 'CFFEX 交易日历尚不完整或无法读取，暂无法确定下游所需日期。', underlying_unknown: '尚无法确定标的指数，暂无法检查指数缓存。', public_export_unavailable: '暂无法检查本地缓存，请稍后重新检查。' }
- const unit = item.dependency.startsWith('calendar_') ? '个自然日目标' : item.dependency === 'futures' ? '个产品×日期目标' : '个指数×日期目标'
+ const labels = { complete: '已就绪', incomplete: '本地缓存不完整', unknown: '暂无法判断', unavailable: '缓存检查不可用' }
+ const reasons = { cache_incompatible: `${dependencyLabels[item.dependency]}的本地缓存不兼容，需要重建。请联系维护者重建受影响的 Dataset 缓存，完成后重新检查。`, cache_complete: '', cache_incomplete: '提交回测时将尝试自动获取缺失行情。', calendar_target_unknown: 'CFFEX 交易日历尚不完整或无法读取，暂无法确定下游所需日期。', underlying_unknown: '尚无法确定标的指数，暂无法检查指数缓存。', public_export_unavailable: '暂无法检查本地缓存，请稍后重新检查。' }
+ const unit = item.dependency.startsWith('calendar_') ? '个自然日目标' : item.dependency === 'futures' ? '个品种×日期目标' : '个指数×日期目标'
  return { label: item.reason === 'cache_incompatible' ? '本地缓存不兼容' : labels[item.state], description: reasons[item.reason] ?? '暂无法判断缓存准备情况。', coverage: item.coverage ? `已缓存 ${item.coverage.successful_units} / ${item.coverage.requested_units} ${unit}` : undefined }
+}
+
+// Backend execution facts remain separate from UI read phases.
+export function runStatusPresentation(status?: string) {
+ const states: Record<string, { label: string; color: string }> = {
+  COMPLETED: { label: '已完成', color: 'green' }, RUNNING: { label: '运行中', color: 'gold' },
+  PENDING: { label: '等待执行', color: 'gold' }, FAILED: { label: '失败', color: 'red' },
+  INTERRUPTED: { label: '已中断', color: 'red' },
+ }
+ return states[status ?? ''] ?? { label: '未知', color: 'default' }
+}
+export function runPhaseLabel(phase: string) {
+ const labels: Record<string, string> = {
+  IDLE: '尚未提交回测', STATUS_LOADING: '正在读取状态', RESULT_LOADING: '正在读取结果',
+  RESULT_READY: '结果已就绪', STATUS_ERROR: '状态读取失败', RESULT_ERROR: '结果读取失败',
+  UNKNOWN_RUN: '回测不存在或无权访问', UNAVAILABLE: '服务暂不可用',
+ }
+ return labels[phase] ?? runStatusPresentation(phase).label
 }

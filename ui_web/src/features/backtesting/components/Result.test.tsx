@@ -52,5 +52,7 @@ it.each(['expiry_to_M1_v1', 'expiry_to_Q1_v1'] as const)('presents compact repor
   fireEvent.click(screen.getByText('策略规则与收益口径'))
   expect(screen.getByText(/首个 CFFEX 交易日买入 M1/)).toBeTruthy()
   expect(screen.getByText(profile === 'expiry_to_M1_v1' ? /换入当天 M1/ : /换入当天 Q1/)).toBeTruthy()
-  expect(screen.getByText('核心统计结果').compareDocumentPosition(screen.getAllByTestId('chart-mode')[1]) & Node.DOCUMENT_POSITION_PRECEDING).toBeTruthy()
+  const headings = ['回测问题', '核心统计结果', '策略规则与收益口径', '累计收益曲线', '回撤曲线'].map(label => screen.getByText(label))
+  headings.slice(1).forEach((node, i) => expect(headings[i].compareDocumentPosition(node) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy())
+  expect(screen.getByText('核心统计结果').compareDocumentPosition(screen.getAllByTestId('chart-mode')[1]) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
 })

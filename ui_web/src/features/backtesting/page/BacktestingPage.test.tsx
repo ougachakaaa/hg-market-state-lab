@@ -30,7 +30,7 @@ it('renders four empty controls without defaults or implicit submit', () => {
 it.each(['FAILED', 'INTERRUPTED'])('shows real %s failure without a result', phase => {
   state({ phase, run: { run_id: 'a'.repeat(32), request: fixture.request, created_at: '2026-11-12T00:00:00Z', failure: { stage: 'execution', category: 'internal_failure', dependency: null, reason: 'internal_failure' } } })
   render(<BacktestingPage />)
-  expect(screen.getByText(phase)).toBeTruthy(); expect(screen.getByText(phase === 'INTERRUPTED' ? '回测执行已中断' : '回测执行失败')).toBeTruthy()
+  expect(screen.getByText(phase === 'INTERRUPTED' ? '回测执行已中断' : '回测执行失败')).toBeTruthy()
   expect(screen.queryByTestId('backtest-result')).toBeNull()
 })
 it.each([['STATUS_ERROR', 'status', false], ['RESULT_ERROR', 'result', true]])('retries %s only as GET', (phase, errorRead, result) => {
@@ -55,9 +55,11 @@ it('shows Run timestamps in Beijing time', () => {
     created_at: '2026-11-09T00:00:00Z', started_at: '2026-11-09T01:00:00Z', finished_at: '2026-11-09T02:00:00Z',
   } })
   render(<BacktestingPage />)
+  expect(screen.queryByText('2026-11-09 08:00:00（北京时间）')).toBeNull()
+  fireEvent.click(screen.getByText('运行详情'))
   expect(screen.getByText('2026-11-09 08:00:00（北京时间）')).toBeTruthy()
-  expect(screen.getByText('2026-11-09 09:00:00（北京时间）')).toBeTruthy()
-  expect(screen.getByText('2026-11-09 10:00:00（北京时间）')).toBeTruthy()
+  expect(screen.getByText(/Started: 2026-11-09 09:00:00/)).toBeTruthy()
+  expect(screen.getByText(/Finished: 2026-11-09 10:00:00/)).toBeTruthy()
 })
 
 it('switches the Result date axis without submitting, reading or resetting the wrong Run', () => {
@@ -92,4 +94,16 @@ it('shows exact credential guidance with collapsed diagnostics and no implicit s
  expect(screen.getByText('credential_missing')).toBeTruthy()
  expect(s.submit).not.toHaveBeenCalled(); expect(s.retry).not.toHaveBeenCalled()
  expect(screen.queryByTestId('backtest-result')).toBeNull()
+})
+
+it('keeps confirmed completed status on result read failure and hides diagnostics', () => {
+ state({ phase: 'RESULT_ERROR', id: 'a'.repeat(100), run: { status: 'COMPLETED', request: fixture.request, created_at: '2026-11-09T00:00:00Z' }, errorRead: 'result', error: new BacktestingError('read_busy') })
+ render(<BacktestingPage />)
+ expect(screen.getByText('已完成')).toBeTruthy()
+ expect(screen.getByText('结果读取失败')).toBeTruthy()
+ expect(screen.getByText('Started: —')).toBeTruthy()
+ expect(screen.getByText('Finished: —')).toBeTruthy()
+ expect(screen.queryByText('COMPLETED')).toBeNull()
+ expect(screen.queryByText('Created')).toBeNull()
+ expect(screen.getByRole('button', { name: '重新读取结果' })).toBeTruthy()
 })

@@ -38,7 +38,7 @@ export type BacktestingPresentationProps =
   }
 
 function RequestFacts({ request }: { request: ImmutableRequest }) {
-  return <Descriptions size="small" column={{ xs: 1, md: 2 }} items={[
+  return <Descriptions size="small" column={{ xs: 1, md: 3 }} items={[
     { key: 'product', label: '品种', children: request.product_code },
     { key: 'strategy', label: '策略', children: strategyLabels[request.strategy_profile] },
     { key: 'window', label: '请求范围', children: `${request.start_date} 至 ${request.end_date}` },

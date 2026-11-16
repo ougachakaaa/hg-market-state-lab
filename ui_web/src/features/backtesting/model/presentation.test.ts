@@ -1,5 +1,5 @@
 import { expect, it } from 'vitest'
-import { credentialAction, failurePresentation, readinessPresentation } from './presentation'
+import { credentialAction, failurePresentation, readinessPresentation, runStatusPresentation, runPhaseLabel } from './presentation'
 
 it('requires the exact confirmed credential signal and preserves historical fallback', () => {
  const failure = { stage: 'ensure', category: 'upstream_operation', dependency: 'calendar_cffex', reason: 'credential_missing' } as const
@@ -9,7 +9,7 @@ it('requires the exact confirmed credential signal and preserves historical fall
  expect(failurePresentation('FAILED').title).toBe('回测执行失败')
 })
 it('uses dataset target units and explains unknown without claiming missing data', () => {
- for (const [dependency, unit] of [['calendar_cffex', '自然日'], ['futures', '产品×日期'], ['index', '指数×日期']] as const) {
+ for (const [dependency, unit] of [['calendar_cffex', '自然日'], ['futures', '品种×日期'], ['index', '指数×日期']] as const) {
   const result = readinessPresentation({ dependency, state: 'incomplete', reason: 'cache_incomplete', coverage: { requested_units: 43, successful_units: 0, missing_units: 43, pending_units: 0, failed_units: 0, complete: false } })
   expect(result.coverage).toBe(`已缓存 0 / 43 个${unit}目标`)
  }
@@ -39,4 +39,22 @@ it('explains typed cache incompatibility without recommending network retries', 
  expect(readiness.description).toContain('需要重建')
  expect(readiness.coverage).toBeUndefined()
  expect(failurePresentation('FAILED', { stage: 'export', category: 'upstream_operation', dependency: 'futures', reason: 'future_reason' }).description).toContain('网络')
+})
+
+it.each([
+ ['COMPLETED', '已完成', 'green'], ['RUNNING', '运行中', 'gold'],
+ ['PENDING', '等待执行', 'gold'], ['FAILED', '失败', 'red'], ['INTERRUPTED', '已中断', 'red'],
+])('maps confirmed %s status', (status, label, color) => {
+ expect(runStatusPresentation(status)).toEqual({ label, color })
+})
+it('separates read failures from execution facts', () => {
+ expect(runStatusPresentation('RESULT_ERROR').label).toBe('未知')
+ expect(runPhaseLabel('RESULT_ERROR')).toBe('结果读取失败')
+ expect(runPhaseLabel('STATUS_ERROR')).toBe('状态读取失败')
+ expect(runStatusPresentation('COMPLETED').label).toBe('已完成')
+})
+it('keeps complete coverage without boilerplate', () => {
+ const display = readinessPresentation({ dependency: 'futures', state: 'complete', reason: 'cache_complete', coverage: { requested_units: 48, successful_units: 48, missing_units: 0, pending_units: 0, failed_units: 0, complete: true } })
+ expect(display.description).toBe('')
+ expect(display.coverage).toBe('已缓存 48 / 48 个品种×日期目标')
 })
