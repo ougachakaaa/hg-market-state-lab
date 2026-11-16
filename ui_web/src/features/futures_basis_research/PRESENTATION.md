@@ -25,7 +25,7 @@ N is the Eligible binding count; absent distributions show unavailable, empty
 samples show N=0 and unavailable statistics. Missing/failed methods or points show
 unavailable (with failure category when supplied), never a fabricated zero. Failure
 takes precedence over a result; successful sibling methods remain readable in Partial.
-Use result units with the existing index_points / decimal_ratio formatter.
+Use result units with the shared [presentation formatter](../../../PRESENTATION_FORMATTING.md).
 
 All modes share the summary and support narrow-screen horizontal scrolling.
 Compact removes the redundant 12-row mean table. Offline replaces that overview
@@ -42,7 +42,7 @@ count conservation; and perform no fill, clipping or financial recalculation.
 | Metric | Default width | Selectable widths |
 | --- | --- | --- |
 | basis_value | 10 index points | 5 / 10 / 20 / 50 index points |
-| basis_ratio | 0.1 percentage points | 0.05 / 0.1 / 0.2 / 0.5 percentage points |
+| basis_ratio | 0.1 percentage points | 0.1 / 0.2 / 0.5 percentage points |
 | annualized_basis_ratio | 5 percentage points | 2.5 / 5 / 10 / 20 percentage points |
 
 Percentage-point widths convert to decimal_ratio for comparison with raw values.
@@ -101,8 +101,10 @@ Every nonempty Slot conserves Count exactly and uses its own Eligible N denomina
 Controls precede one stepped Frequency comparison and the formal summary table.
 Metric changes reset the width to that Metric's default; width changes do not change
 Mean/Quantile, history, HTTP or report data. Tooltip includes Slot, interval closure,
-Count, Frequency (one decimal percent) and Eligible N. Boundary labels retain preset
-width precision, including hundredths of a percent for 0.05 percentage points.
-Offline retains formal method details for every Slot and all six report sections.
+Count, Frequency (one decimal percent) and Eligible N. Boundary labels follow the
+[presentation formatting authority](../../../PRESENTATION_FORMATTING.md): one decimal for
+percentage boundaries and two decimals for index-point boundaries. The 0.1 percentage-point
+minimum width keeps one-decimal percentage boundaries distinguishable. Offline retains
+formal method details for every Slot and all six report sections.
 
 Execution evidence: [Task 2 distribution acceptance](DISTRIBUTION_ACCEPTANCE.md).

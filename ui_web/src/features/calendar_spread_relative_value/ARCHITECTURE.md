@@ -26,9 +26,13 @@ Daily page is an independent consumer, not a source of shared semantic state.
 Display current actual contracts/value/stage, all four historical group sizes and
 quantile values, and separately labeled matching-stage/all-stages assessments.
 Render Histogram only from supplied IntervalCount boundaries/counts/frequencies,
-including underflow/overflow. Percentile text may multiply a returned fraction by
-100 for formatting; never derive it from quantile interpolation or histogram bins.
-Distinguish historical quantile values from current empirical percentile.
+including underflow/overflow. Display formatting follows the
+[presentation formatting authority](../../../PRESENTATION_FORMATTING.md): decimal ratios,
+percentile and frequency display as one-decimal percentages; non-integer point/price
+values display with two decimals; N, DTE and counts remain integers. Percentile text may
+multiply a returned fraction by 100 for formatting; never derive it from quantile
+interpolation or histogram bins. Distinguish historical quantile values from current
+empirical percentile.
 
 Show the explicit historical cutoff and actual sample date coverage/count. Keep
 empty samples, 1–29 small-sample warnings, excluded current values and closed dates

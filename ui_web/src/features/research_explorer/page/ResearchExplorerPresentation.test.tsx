@@ -43,7 +43,7 @@ it('renders the complete embedded Reader without network activity', async () => 
 
   selectAnalysis('interval-request')
   expect(await screen.findByText('Bin 1')).toBeTruthy()
-  expect(screen.getByText('观察总体与覆盖（原始比例）')).toBeTruthy()
+  expect(screen.getByText('观察总体与覆盖')).toBeTruthy()
   fireEvent.click(screen.getByRole('button', { name: 'count' }))
   expect(await screen.findByTestId('plot')).toBeTruthy()
   expect(screen.getByText('View ID: count-id')).toBeTruthy()

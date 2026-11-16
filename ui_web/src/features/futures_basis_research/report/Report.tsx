@@ -2,6 +2,7 @@ import { BIN_PRESETS, histogramAggregation, type BasisMetric } from '../model/hi
 import { DistributionComparison } from '../charts/DistributionComparison'
 import { distributionSummary } from '../model/basisPresentation'
 import { formatUnit } from '../../../shared/format/unit'
+import { formatPercent } from '../../../shared/format/number'
 import { intervalLabels } from '../../../shared/format/interval'
 import { historyOptions } from './presentation'
 import { useMemo, useState } from 'react'
@@ -11,7 +12,6 @@ import type { Method, ReportData, Run } from './types'
 
 const metrics = ['basis_value', 'basis_ratio', 'annualized_basis_ratio']
 const sections = ['研究概览', '历史基差', '基差分布', '期限结构', '贴水持续区间', '证据与限制']
-const text = (value: unknown) => value === undefined || value === null ? '不适用' : String(value)
 
 function Methods({ methods }: { methods: Method[] }) {
   return <Flex vertical gap="small">{methods.map((m, i) => {
@@ -20,12 +20,12 @@ function Methods({ methods }: { methods: Method[] }) {
     {m.failure_category ? <Alert type={m.failure_category === 'no_eligible_sample' ? 'info' : 'error'} title={m.failure_category} description={m.reason} /> : m.result && <>
       <Typography.Paragraph>单位：{m.result.unit} · 有效样本数：{m.result.sample_count} · {m.result.estimator}</Typography.Paragraph>
       {m.spec.method === 'mean' && <Typography.Text>Mean：{formatUnit(m.result.value, m.result.unit)}</Typography.Text>}
-      {m.result.points_and_values && <Table scroll={{ x: 'max-content' }} pagination={false} size="small" rowKey="point" dataSource={m.result.points_and_values.map(([point, value]) => ({ point, value }))} columns={[{ title: 'Quantile Point', dataIndex: 'point' }, { title: '数值', dataIndex: 'value', render: value => formatUnit(value, m.result?.unit) }]} />}
+      {m.result.points_and_values && <Table scroll={{ x: 'max-content' }} pagination={false} size="small" rowKey="point" dataSource={m.result.points_and_values.map(([point, value]) => ({ point, value }))} columns={[{ title: 'Quantile Point', dataIndex: 'point', render: value => formatPercent(value) }, { title: '数值', dataIndex: 'value', render: value => formatUnit(value, m.result?.unit) }]} />}
       {m.result.bins && <Table scroll={{ x: 'max-content' }} pagination={false} size="small" rowKey="key" dataSource={[
         { key: 'underflow', interval: labels[0], count: m.result.underflow_count, frequency: m.result.underflow_frequency },
         ...m.result.bins.map((b, i) => ({ key: `bin-${i}`, interval: labels[i + 1], count: b.count, frequency: b.frequency })),
         { key: 'overflow', interval: labels.at(-1), count: m.result.overflow_count, frequency: m.result.overflow_frequency },
-      ]} columns={[{ title: '区间（按单位展示）', dataIndex: 'interval' }, { title: 'IntervalCount', dataIndex: 'count' }, { title: 'Frequency（有效样本分母）', dataIndex: 'frequency', render: text }]} />}
+      ]} columns={[{ title: '区间（按单位展示）', dataIndex: 'interval' }, { title: 'IntervalCount', dataIndex: 'count' }, { title: 'Frequency（有效样本分母）', dataIndex: 'frequency', render: value => formatPercent(value) }]} />}
     </>}
   </Card>})}</Flex>
 }
@@ -131,7 +131,7 @@ export function Report({ data, mode, sectionNavigation = 'fragment' }: {
         ]} /> }]} />
       </Card>
       <Card id="section-1" title={<Typography.Title level={2} style={{ margin: 0, fontSize: token.fontSizeHeading4, lineHeight: token.lineHeightHeading4 }}>B. 历史基差</Typography.Title>} styles={{ body: { display: 'flex', flexDirection: 'column', gap: token.padding, minWidth: 0 } }} style={{ scrollMarginTop: token.paddingLG }}>
-        <Typography.Paragraph>四个 Slot 是相对期限角色。合约转换由竖线和事件详情标注；缺失与转换断线。拖拽放大，工具栏切换 Pan、Reset；图例控制系列显示。decimal_ratio 以一位小数百分比展示；原始数据及证据单位保持不变。</Typography.Paragraph>
+        <Typography.Paragraph>四个 Slot 是相对期限角色。合约转换由竖线和事件详情标注；缺失与转换断线。拖拽放大，工具栏切换 Pan、Reset；图例控制系列显示。比例以一位小数百分比展示，非整数点数以两位小数展示；原始数据及证据单位保持不变。</Typography.Paragraph>
         {historyCharts}
       </Card>
       <Card id="section-2" title={<Typography.Title level={2} style={{ margin: 0, fontSize: token.fontSizeHeading4, lineHeight: token.lineHeightHeading4 }}>C. 基差分布</Typography.Title>} styles={{ body: { display: 'flex', flexDirection: 'column', gap: token.padding, minWidth: 0 } }} style={{ scrollMarginTop: token.paddingLG }}>

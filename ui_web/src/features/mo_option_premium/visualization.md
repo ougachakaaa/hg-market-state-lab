@@ -132,18 +132,18 @@ underlying.price
 
 每个 expiry column header 必须保持并显示 `expiry_date`、整数 `dte` 与 `futures` context。`futures` 存在时显示其 `instrument_id` 与 `price`；为 `null` 时明确显示“无合法 futures reference”，不寻找或展示替代 IM contract。
 
-V1 formatting：
+V1 formatting 遵循 [presentation formatting authority](../../../PRESENTATION_FORMATTING.md)：
 
 | Fact | Display |
 | --- | --- |
-| strike | 1 decimal |
-| underlying price | 1 decimal |
-| futures price | 1 decimal |
-| any selected points leaf | 1 decimal |
-| any selected yield leaf | percentage, 2 decimals |
+| strike | 2 decimals |
+| underlying price | 2 decimals |
+| futures price | 2 decimals |
+| any selected points leaf | 2 decimals |
+| any selected yield leaf | percentage, 1 decimal |
 | DTE | integer |
 
-Representation 唯一决定 metric formatting：points 使用 1 decimal，yield 使用 percentage 2 decimals。negative yield 保留负号，zero 按 `0.0` 或 `0.00%` 显示，null 显示 `—`。例如 `7312.45 → 7312.5`、`3825.24 → 3825.2`、`-12.34 → -12.3`、`0.0998 → 9.98%`。Formatting 只影响 display，不改变排序、reference comparison、identity、request 或 backend numeric facts。
+Representation 唯一决定 metric formatting：points 使用 2 decimals，yield 使用 percentage 1 decimal。negative yield 保留负号，zero 按 `0.00` 或 `0.0%` 显示，null 显示 `—`。例如 `7312.45 → 7312.45`、`3825.24 → 3825.24`、`-12.34 → -12.34`、`0.0998 → 10.0%`。Formatting 只影响 display，不改变排序、reference comparison、identity、request 或 backend numeric facts。
 
 第 7、10 节的完整 JSON 查看与复制不应用这些 display formatting；yield 保持响应 numeric ratio，不转换为百分数字符串。
 

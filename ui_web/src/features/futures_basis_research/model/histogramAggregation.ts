@@ -3,7 +3,7 @@ import type { ReportData } from '../report/types'
 export const SLOTS = ['M0', 'M1', 'Q1', 'Q2'] as const
 export const BIN_PRESETS = {
   basis_value: { default: 10, widths: [5, 10, 20, 50], unit: 'index_points', denominator: 1 },
-  basis_ratio: { default: .1, widths: [.05, .1, .2, .5], unit: 'decimal_ratio', denominator: 100 },
+  basis_ratio: { default: .1, widths: [.1, .2, .5], unit: 'decimal_ratio', denominator: 100 },
   annualized_basis_ratio: { default: 5, widths: [2.5, 5, 10, 20], unit: 'decimal_ratio', denominator: 100 },
 } as const
 export type BasisMetric = keyof typeof BIN_PRESETS

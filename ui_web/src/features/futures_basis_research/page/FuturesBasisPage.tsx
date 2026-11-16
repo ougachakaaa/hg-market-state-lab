@@ -7,6 +7,7 @@ import dayjs from 'dayjs'
 import type { Dayjs } from 'dayjs'
 import { shanghaiDate, usePreflight } from '../hooks/usePreflight'
 import { useFuturesBasis } from '../hooks/useFuturesBasis'
+import { formatBeijingTime } from '../../../shared/format/time'
 import { FuturesBasisPresentation } from './FuturesBasisPresentation'
 
 const messages: Record<string, string> = {
@@ -79,7 +80,7 @@ export default function FuturesBasisPage() {
             ? '本地当日数据未就绪，请先完成数据准备，再重新检查。'
             : preflight.result.submission === 'blocked' ? '输入检查发现数据操作或契约异常，请重查或联系维护者。'
             : preflight.result.today_gate === 'ready' ? '本地当日数据已就绪。' : '历史输入检查已完成。'}
-          description={`检查时间：${preflight.result.checked_at}；上海日期：${preflight.result.market_date}。可修改结束日期或重新检查；本检查不保证执行成功。`} />
+          description={`检查时间：${formatBeijingTime(preflight.result.checked_at)}；上海日期：${preflight.result.market_date}。可修改结束日期或重新检查；本检查不保证执行成功。`} />
         <Descriptions size="small" column={1} items={preflight.result.dependencies.map(item => ({
           key: `${item.scope}-${item.dependency}`,
           label: `${item.scope === 'today' ? '当日' : '整段'} / ${{ calendar_cffex: '中金所日历', calendar_sse: '上交所日历', futures: '期货日线', index: '指数日线' }[item.dependency]}`,
@@ -100,7 +101,7 @@ export default function FuturesBasisPage() {
     </Flex>}
     {(research.run || research.id) && <Descriptions size="small" column={{ xs: 1, md: 2 }} items={[
       { key: 'id', label: 'Run ID', span: 2, children: <Typography.Text copyable style={{ overflowWrap: 'anywhere' }}>{research.run?.run_id ?? research.id}</Typography.Text> },
-      ...(research.run ? [{ key: 'created', label: '创建时间', children: research.run.created_at }] : []),
+      ...(research.run ? [{ key: 'created', label: '创建时间', children: formatBeijingTime(research.run.created_at) }] : []),
     ]} />}
     {research.run && <Typography.Text type="secondary">当前 Run 使用已接受的固定参数；上方编辑仅用于下一次研究。</Typography.Text>}
     {research.phase === 'IDLE' && <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="选择品种和起止日期，点击「生成研究」开始。" />}

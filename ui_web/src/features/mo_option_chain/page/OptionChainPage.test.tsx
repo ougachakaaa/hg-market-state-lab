@@ -91,7 +91,7 @@ describe('MO option chain combined page', () => {
     ])
     const futuresLegend = screen.getByRole('region', { name: 'Futures 图例' })
     expect(within(futuresLegend).getAllByRole('listitem').map((item) => item.textContent)).toEqual([
-      'IM2609.CFE · 7487.6', 'IM2610.CFE · 7560.3',
+      'IM2609.CFE · 7487.60', 'IM2610.CFE · 7560.25',
     ])
     expect((within(optionLegend).getAllByRole('listitem')[0].querySelector('.chart-legend-symbol') as HTMLElement).style.color)
       .toBe('rgb(37, 99, 235)')
@@ -118,7 +118,7 @@ describe('MO option chain combined page', () => {
     expect(plot().data.find((trace: { name: string }) => trace.name === '2026-11-27 Call').line.color).toBe(colorC)
     expect(plot().layout.shapes.map((shape: { x0: number }) => shape.x0)).toEqual([7312.45, 7487.6])
     expect(within(screen.getByRole('region', { name: 'Call 与 Put 图例' })).queryByText(/2026-10-23/)).toBeNull()
-    expect(within(screen.getByRole('region', { name: 'Futures 图例' })).queryByText('IM2610.CFE · 7560.3')).toBeNull()
+    expect(within(screen.getByRole('region', { name: 'Futures 图例' })).queryByText('IM2610.CFE · 7560.30')).toBeNull()
     expect(screen.queryByRole('region', { name: '2026-10-23 到期日' })).toBeNull()
     expect(plot().layout.yaxis.range[1]).toBe(300)
     expect(plot().layout.xaxis.range).toEqual(before.layout.xaxis.range)
@@ -144,7 +144,7 @@ describe('MO option chain combined page', () => {
     expect(plot().data[0].line.color).toContain('225, 29, 72')
     changeSeriesColor('Futures 颜色', '#ff00ff')
     expect(plot().layout.shapes[1].line.color).toContain('255, 0, 255')
-    const futuresItem = within(screen.getByRole('region', { name: 'Futures 图例' })).getByText('IM2609.CFE · 7487.6').closest('li')!
+    const futuresItem = within(screen.getByRole('region', { name: 'Futures 图例' })).getByText('IM2609.CFE · 7487.60').closest('li')!
     expect((futuresItem.querySelector('.chart-legend-symbol') as HTMLElement).style.color).toBe('rgb(255, 0, 255)')
     expect(plot().data[2].line.color).toContain('0.575')
     expect(plot().data[0].line.dash).not.toBe(plot().data[1].line.dash)
@@ -165,7 +165,7 @@ describe('MO option chain combined page', () => {
     expect(within(first).getByText('A-out')).toBeTruthy()
     expect(within(first).getByText('A-null')).toBeTruthy()
     expect(within(first).getByText('—')).toBeTruthy()
-    expect(within(first).getByText('0.0')).toBeTruthy()
+    expect(within(first).getByText('0.00')).toBeTruthy()
     const third = screen.getByRole('region', { name: '2026-11-27 到期日' })
     expect(within(third).getByText('无同到期 IM 合约')).toBeTruthy()
   })

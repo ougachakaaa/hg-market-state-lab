@@ -5,6 +5,7 @@ import { useBacktesting } from '../hooks/useBacktesting'
 import { usePreflight } from '../hooks/usePreflight'
 import { dependencyLabels, errorMessage, readinessPresentation } from '../model/presentation'
 import { strategyLabels } from '../model/strategyPresentation'
+import { formatBeijingTime } from '../../../shared/format/time'
 import { Failure } from '../components/Failure'
 import { BacktestingPresentation } from './BacktestingPresentation'
 
@@ -60,8 +61,8 @@ export default function BacktestingPage() {
     {run.id && <Typography.Paragraph style={{ overflowWrap: 'anywhere' }}>Run ID: {run.id}</Typography.Paragraph>}
     {run.run && <Typography.Paragraph>后端状态：{run.run.status}</Typography.Paragraph>}
     {run.run && <Descriptions column={{ xs: 1, md: 2 }} items={[
-      { key: 'created', label: 'Created', children: run.run.created_at },
-      ...('started_at' in run.run ? [{ key: 'started', label: 'Started', children: run.run.started_at ?? '—' }, { key: 'finished', label: 'Finished', children: run.run.finished_at ?? '—' }] : []),
+      { key: 'created', label: 'Created', children: formatBeijingTime(run.run.created_at) },
+      ...('started_at' in run.run ? [{ key: 'started', label: 'Started', children: formatBeijingTime(run.run.started_at) }, { key: 'finished', label: 'Finished', children: formatBeijingTime(run.run.finished_at) }] : []),
     ]} />}
     {['FAILED', 'INTERRUPTED'].includes(run.phase) && <Failure status={run.phase} failure={run.run && 'failure' in run.run ? run.run.failure : undefined} runId={run.id} />}
     {run.error && <Alert type="error" title={errorMessage(run.error.kind)} action={<Button onClick={() => run.retry(run.errorRead === 'result')}>重新读取{run.errorRead === 'result' ? '结果' : '状态'}</Button>} />}

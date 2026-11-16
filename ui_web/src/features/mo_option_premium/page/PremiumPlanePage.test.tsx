@@ -41,7 +41,7 @@ describe('MO Premium Plane page', () => {
     expect(within(results).getByRole<HTMLInputElement>('radio', { name: 'Total value' }).checked).toBe(true)
     expect(within(results).getByRole<HTMLInputElement>('radio', { name: 'Annualized' }).checked).toBe(true)
     expect(within(results).getByRole<HTMLInputElement>('radio', { name: 'Points' }).checked).toBe(true)
-    expect(within(results).getByText('10.0')).toBeTruthy()
+    expect(within(results).getByText('10.00')).toBeTruthy()
   })
 
   it('selects structured coordinates locally and shows unavailable futures facts without fallback', async () => {
@@ -50,10 +50,10 @@ describe('MO Premium Plane page', () => {
     fireEvent.click(within(results).getByRole('radio', { name: 'Same-expiry futures' }))
     fireEvent.click(within(results).getByRole('radio', { name: 'Time value' }))
     fireEvent.click(within(results).getByRole('radio', { name: 'Unannualized' }))
-    expect(within(results).getByText('-2.0')).toBeTruthy()
+    expect(within(results).getByText('-2.00')).toBeTruthy()
     expect(within(results).getByRole('cell', { name: '2026-10-23 metric unavailable' }).textContent).toBe('—')
     fireEvent.click(within(results).getByRole('radio', { name: 'Yield' }))
-    expect(within(results).getByText('-0.20%')).toBeTruthy()
+    expect(within(results).getByText('-0.2%')).toBeTruthy()
     expect(fetch).toHaveBeenCalledTimes(1)
   })
 

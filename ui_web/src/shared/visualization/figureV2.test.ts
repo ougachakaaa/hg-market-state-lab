@@ -15,6 +15,7 @@ describe('V2 deterministic projection', () => {
     expect(new Set(a.map((t: any) => t.line.color)).size).toBe(1)
     expect(f.layout.legend.groupclick).toBe('togglegroup')
     expect(f.layout.hovermode).toBe('x')
+    expect(f.layout.yaxis.tickformat).toBe('d')
     expect(f.data.every((t: any) => t.mode === 'lines+markers' && t.connectgaps === false)).toBe(true)
   })
   it('preserves same-segment null gaps and isolates segment IDs by binding', () => {
@@ -46,7 +47,7 @@ describe('V2 deterministic projection', () => {
     v.axes.push({ id: 'other', orientation: 'y', coordinate: { kind: 'number', unit: 'distance' } })
     v.layers[1].y_axis = 'other'; v.layers[1].layer.y.unit = 'distance'
     const f = figure(v)
-    expect(f.data[3].yaxis).toBe('y2'); expect(f.layout.yaxis2).toMatchObject({ type: 'linear', overlaying: 'y', anchor: 'free', autoshift: true, fixedrange: false, title: { text: 'distance' } })
+    expect(f.data[3].yaxis).toBe('y2'); expect(f.layout.yaxis2).toMatchObject({ type: 'linear', overlaying: 'y', anchor: 'free', autoshift: true, fixedrange: false, title: { text: 'distance' }, tickformat: '.2f' })
     expect(f.layout.yaxis.title.text).toBe('count')
   })
   it.each([true, false])('show_legend=%s applies to the view', show => {

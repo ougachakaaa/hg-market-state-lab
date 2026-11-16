@@ -87,7 +87,7 @@ try {
   const interval = page.locator('.ant-list-item').filter({ hasText: 'interval-request' }).first()
   await interval.getByRole('button', { name: '选择 Analysis', exact: true }).click()
   await page.getByText('Bin 1', { exact: true }).waitFor()
-  await page.getByText('观察总体与覆盖（原始比例）', { exact: true }).waitFor()
+  await page.getByText('观察总体与覆盖', { exact: true }).waitFor()
   await page.getByRole('button', { name: '展开覆盖与来源证据', exact: true }).click()
   await page.getByText('test-only-input-fingerprint', { exact: true }).waitFor()
   await page.getByRole('button', { name: 'count', exact: true }).click()

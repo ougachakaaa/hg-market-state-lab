@@ -1,4 +1,5 @@
 import type { PremiumExpiry, PremiumPlane, PremiumPoint } from '../api/validatePremiumPlane'
+import { formatDecimal, formatPercent } from '../../../shared/format/number'
 
 export type SelectedOptionType = PremiumPoint['option_type']
 export type SelectedReferenceBasis = 'underlying_spot' | 'expiry_futures'
@@ -26,19 +27,8 @@ export interface PremiumPlaneProjection {
   rows: PremiumPlaneRow[]
 }
 
-const oneDecimal = new Intl.NumberFormat('en-US', {
-  minimumFractionDigits: 1,
-  maximumFractionDigits: 1,
-  useGrouping: false,
-})
-const twoDecimals = new Intl.NumberFormat('en-US', {
-  minimumFractionDigits: 2,
-  maximumFractionDigits: 2,
-  useGrouping: false,
-})
-
 export function formatPlaneNumber(value: number): string {
-  return oneDecimal.format(value)
+  return formatDecimal(value, '—')
 }
 
 export function resolveMetric(
@@ -53,8 +43,8 @@ export function resolveMetric(
 
 export function formatMetric(value: number, representation: SelectedRepresentation): string {
   return representation === 'yield'
-    ? `${twoDecimals.format(value * 100)}%`
-    : oneDecimal.format(value)
+    ? formatPercent(value, '—')
+    : formatDecimal(value, '—')
 }
 
 export function classifyStrikeRelativeToReference(

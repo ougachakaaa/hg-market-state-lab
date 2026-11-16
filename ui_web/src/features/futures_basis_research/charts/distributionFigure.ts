@@ -1,13 +1,13 @@
 import type { Data } from 'plotly.js'
 import { BIN_PRESETS, type BasisMetric, type HistogramProjection } from '../model/histogramAggregation'
+import { formatUnit } from '../../../shared/format/unit'
 
 const colors = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728']
 
 /** Feature-owned Plotly encoding; no formal Visualization contract is synthesized. */
-export function distributionTraces(projection: Extract<HistogramProjection, { status: 'ready' }>, metric: BasisMetric, width: number): Data[] {
+export function distributionTraces(projection: Extract<HistogramProjection, { status: 'ready' }>, metric: BasisMetric): Data[] {
   const ratio = BIN_PRESETS[metric].unit === 'decimal_ratio'
-  const precision = ratio ? (width === .05 ? 2 : 1) : 0
-  const boundary = (value: number) => `${(value * (ratio ? 100 : 1)).toFixed(precision)}${ratio ? '%' : ' 点'}`
+  const boundary = (value: number) => ratio ? formatUnit(value, 'decimal_ratio') : `${formatUnit(value)} 点`
   return projection.slots.map(({ slot, n, bins, failure, layerIndex }) => {
     const available = n > 0 && !failure
     // Two vertices per interval preserve horizontal extent and exact edge closures.

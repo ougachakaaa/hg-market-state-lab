@@ -45,8 +45,11 @@ checks Views. Errors use safe local text, never raw diagnostics, paths or creden
 Page composes hooks/components; pure validators own generated schema, immutable request,
 Run-state coherence, Result association and V2 View checks; the Production API owns
 protected transport and safe error mapping; hooks own explicit submission, abort/history,
-and polling; model owns display formatting. React never recomputes financial metrics,
-curves, trades or slots. Demo and Online share one Compact Backtest Result card.
+and polling; model owns display formatting. Display formatting follows the
+[presentation formatting authority](../../../PRESENTATION_FORMATTING.md): Run `created_at`,
+`started_at` and `finished_at` display in Beijing time; ratios display as one-decimal
+percentages; currency keeps its two-decimal money format. React never recomputes financial
+metrics, curves, trades or slots. Demo and Online share one Compact Backtest Result card.
 Its reading order is research question, collapsed strategy/return conventions,
 returns and drawdown Views, then seven core summary metrics and initial notional.
 Profile machine identities retain generated-contract types; a feature-local pure

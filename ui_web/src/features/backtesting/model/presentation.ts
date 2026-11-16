@@ -1,6 +1,7 @@
 import type { Preflight, Run } from '../api/backtesting'
+import { formatPercent } from '../../../shared/format/number'
 
-export const percent = (value: number) => new Intl.NumberFormat('zh-CN', { style: 'percent', minimumFractionDigits: 1, maximumFractionDigits: 1 }).format(Object.is(value, -0) ? 0 : value)
+export const percent = (value: number) => formatPercent(value)
 export const money = (value: number) => new Intl.NumberFormat('zh-CN', { style: 'currency', currency: 'CNY', maximumFractionDigits: 2 }).format(value)
 const messages: Record<string, string> = {
   network: '网络响应丢失。提交结果可能已被服务器接受，请勿自动重发；读取操作可手动重试。',

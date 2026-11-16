@@ -99,6 +99,7 @@ it('renders numerical and date axes without changing their order', () => {
   v.layers[0].layer.x = { kind: 'number', unit: 'distance' }
   v.layers[0].layer.data = [{ x: 2, y: 0 }, { x: 1, y: 2 }]
   expect((chartViewToPlotly(v).data[0] as any).x).toEqual([2, 1])
+  expect(chartViewToPlotly(v).layout.xaxis?.tickformat).toBe('.2f')
 })
 it('validates a noncategorical bar but reports its unsupported renderer', () => {
   const v = view(); v.layers = [v.layers[0]]

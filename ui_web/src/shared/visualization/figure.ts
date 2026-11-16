@@ -1,5 +1,5 @@
 import { formatUnit } from '../format/unit'
-import type { RenderOptions } from './presentation'
+import { plotlyAxisFormat, type RenderOptions } from './presentation'
 import { literalText } from './figureV2'
 import type { Config, Data, Layout } from 'plotly.js'
 import { validateChartView } from './contract'
@@ -39,7 +39,7 @@ export function chartViewToPlotly(input: unknown, options: RenderOptions = {}): 
     ids.set(axis.id, `${direction}${suffix}`)
     const config: Record<string, unknown> = { type: axis.coordinate.kind === 'number' ? 'linear' : axis.coordinate.kind }
     if (axis.coordinate.kind === 'category') { config.categoryorder = 'array'; config.categoryarray = categories(view, axis) }
-    if (axis.coordinate.kind === 'number' && axis.coordinate.unit === 'decimal_ratio') Object.assign(config, { tickformat: '.1%', hoverformat: '.1%' })
+    if (axis.coordinate.kind === 'number') Object.assign(config, plotlyAxisFormat(axis.coordinate.unit))
     const labels = options.categoryLabels?.[axis.id]
     if (labels && axis.coordinate.kind === 'category') Object.assign(config, { tickmode: 'array', tickvals: categories(view, axis), ticktext: categories(view, axis).map(c => literalText(labels.get(c) ?? c)) })
     if (n > 1) { config.overlaying = direction; config.side = direction === 'x' ? 'top' : 'right' }

@@ -94,7 +94,8 @@ it('formats Overview, quantiles, intervals and paired means by explicit result u
   expect(screen.getByText('Mean：15.3%')).toBeTruthy()
   expect(screen.getAllByText('-8.7%')).toHaveLength(2)
   expect(screen.getByText('[-10.0%, 0.0%)')).toBeTruthy()
-  expect(screen.getAllByText('0.5').length).toBeGreaterThan(0) // Quantile probability remains raw.
+  expect(screen.queryAllByText('0.5')).toHaveLength(0) // Quantile probability displays as a percentage.
+  expect(screen.getAllByText('50.0%').length).toBeGreaterThan(0)
   fireEvent.click(container.querySelector('#section-3 .ant-table-row-expand-icon')!)
   expect(screen.getAllByText('Mean：15.3%')).toHaveLength(3)
   expect(data).toEqual(before)
@@ -169,12 +170,12 @@ it.each(['online', 'demo', 'offline'] as const)('switches four-Slot summaries by
   render(<Report data={data} mode={mode} />)
   const summary = screen.getByRole('region', { name: '统计摘要' })
   const cells = () => within(summary).getAllByRole('row').slice(1).map(row => within(row).getAllByRole('cell').map(c => c.textContent))
-  expect(cells()).toEqual(['M0', 'M1', 'Q1', 'Q2'].map((slot, i) => [slot, '2', String(i), String(.1 + i), String(.2 + i), String(.3 + i), String(.4 + i), String(.2 + i)]))
+  expect(cells()).toEqual(['M0', 'M1', 'Q1', 'Q2'].map((slot, i) => [slot, '2', `${i}.00`, `${(.1 + i).toFixed(2)}`, `${(.2 + i).toFixed(2)}`, `${(.3 + i).toFixed(2)}`, `${(.4 + i).toFixed(2)}`, `${(.2 + i).toFixed(2)}`]))
   fireEvent.mouseDown(screen.getByRole('combobox', { name: 'Distribution metric' }))
   fireEvent.click(screen.getByText('basis_ratio', { selector: '.ant-select-item-option-content' }))
   expect(cells()[0]).toEqual(['M0', '2', '0.0%', '10.0%', '20.0%', '30.0%', '40.0%', '20.0%'])
   fireEvent.mouseDown(screen.getByRole('combobox', { name: 'Bin width' }))
-  fireEvent.click(screen.getByText('0.05 个百分点', { selector: '.ant-select-item-option-content' }))
+  fireEvent.click(screen.getByText('0.2 个百分点', { selector: '.ant-select-item-option-content' }))
   expect(cells()).toHaveLength(4)
   expect(cells()[0][0]).toBe('M0')
   expect(screen.queryByRole('heading', { name: '各 Slot 统计均值' })).toBeNull()
@@ -195,7 +196,7 @@ it('renders Partial method failures and empty samples without hiding successful 
   ]
   render(<Report data={data} mode="online" />)
   const rows = within(screen.getByRole('region', { name: '统计摘要' })).getAllByRole('row').slice(1)
-  expect(within(rows[0]).getAllByRole('cell').map(c => c.textContent)).toEqual(['M0', '2', '不可用', '不可用', '0', '不可用', '不可用', '不可用（CalculationFailure）'])
+  expect(within(rows[0]).getAllByRole('cell').map(c => c.textContent)).toEqual(['M0', '2', '不可用', '不可用', '0.00', '不可用', '不可用', '不可用（CalculationFailure）'])
   expect(within(rows[1]).getAllByRole('cell').map(c => c.textContent)).toEqual(['M1', '0', '不可用', '不可用', '不可用', '不可用', '不可用', '不可用（no_eligible_sample）'])
   expect(screen.getByText(/Partial：/)).toBeTruthy()
 })

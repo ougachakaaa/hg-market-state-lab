@@ -69,6 +69,8 @@ it('shows dependency feedback and only submits after an explicit Generate', asyn
   vi.mocked(usePreflight).mockReturnValue({ result: { request, checked_at: '2026-11-10T14:00:00Z', market_date: '2026-11-10', submission: 'blocked', today_gate: 'not_ready', dependencies: [{ dependency: 'futures', scope: 'today', state: 'needs_fetch', coverage: null, reason_code: 'cache_incomplete', message: '本地数据覆盖不完整' }] }, error: undefined, checking: false, confirmed: false, confirm: vi.fn(), canSubmit: false, refresh })
   const { rerender } = render(<FuturesBasisPage />)
   expect(screen.getByText('本地当日数据未就绪，请先完成数据准备，再重新检查。')).toBeTruthy()
+  expect(screen.getByText(/检查时间：2026-11-10 22:00:00（北京时间）/)).toBeTruthy()
+  expect(screen.getByText('2026-11-09 08:00:00（北京时间）')).toBeTruthy()
   fireEvent.click(screen.getByRole('button', { name: '使用原请求创建新 Run' }))
   expect(s.submit).not.toHaveBeenCalled()
   expect(screen.getByRole('button', { name: /生成研究/ }).hasAttribute('disabled')).toBe(true)

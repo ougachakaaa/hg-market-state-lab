@@ -31,7 +31,7 @@ it('projects four ordered Slots, exact quantile identities and independent Metri
   }))
   const before = structuredClone(source)
   expect(distributionSummary(source, 'basis_value')).toEqual(['M0', 'M1', 'Q1', 'Q2'].map((slot, i) => ({
-    slot, n: 2, min: '0', p25: '10', median: '20', p75: '30', max: '40', mean: String([3, 1, 2, 0][i]),
+    slot, n: 2, min: '0.00', p25: '10.00', median: '20.00', p75: '30.00', max: '40.00', mean: `${[3, 1, 2, 0][i]}.00`,
   })))
   expect(distributionSummary(source, 'basis_ratio').every(row => row.n === '不可用')).toBe(true)
   expect(source).toEqual(before)

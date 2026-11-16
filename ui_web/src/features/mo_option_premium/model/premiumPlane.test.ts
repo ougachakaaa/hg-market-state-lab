@@ -3,6 +3,7 @@ import type { PremiumPlane } from '../api/moOptionPremium'
 import {
   classifyStrikeRelativeToReference,
   formatMetric,
+  formatPlaneNumber,
   projectPremiumPlane,
   resolveMetric,
 } from './premiumPlane'
@@ -71,6 +72,9 @@ describe('premium plane projection', () => {
     expect(classifyStrikeRelativeToReference(7305, plane.underlying.price)).toBe('below-reference')
     expect(classifyStrikeRelativeToReference(7305, plane.expiries[0].futures!.price)).toBe('above-reference')
     expect(classifyStrikeRelativeToReference(7305, plane.expiries[1].futures?.price ?? null)).toBe('neutral')
-    expect(formatMetric(-0.0123, 'yield')).toBe('-1.23%')
+    expect(formatMetric(-0.0123, 'yield')).toBe('-1.2%')
+    expect(formatMetric(-12.34, 'points')).toBe('-12.34')
+    expect(formatMetric(0, 'points')).toBe('0.00')
+    expect(formatPlaneNumber(7312.456)).toBe('7312.46')
   })
 })

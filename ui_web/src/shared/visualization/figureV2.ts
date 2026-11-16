@@ -1,5 +1,5 @@
-import { formatUnit } from '../format/unit'
-import { ordinalTicks, type RenderOptions } from './presentation'
+import { formatUnit, isRatioUnit } from '../format/unit'
+import { ordinalTicks, plotlyAxisFormat, type RenderOptions } from './presentation'
 import type { Config, Data, Layout } from 'plotly.js'
 import type { DateMark, ViewV2 } from './contractV2'
 
@@ -17,7 +17,7 @@ function paddedRange(values: number[], fallback: [number, number], singletonPadd
   return [Number.isFinite(min - padding) ? min - padding : min, Number.isFinite(max + padding) ? max + padding : max]
 }
 function tooltip(label: string, mark: DateMark, unit: string, options: RenderOptions): string {
-  return [label, mark.x, mark.y === null ? 'No value' : unit === 'decimal_ratio' ? formatUnit(mark.y, unit) : `${formatUnit(mark.y, unit)} ${unit}`, ...(options.pointDetails?.(mark, unit) ?? mark.details).map(d => `${d.label}: ${d.value}`)].map(literalText).join('<br>')
+  return [label, mark.x, mark.y === null ? 'No value' : isRatioUnit(unit) ? formatUnit(mark.y, unit) : `${formatUnit(mark.y, unit)} ${unit}`, ...(options.pointDetails?.(mark, unit) ?? mark.details).map(d => `${d.label}: ${d.value}`)].map(literalText).join('<br>')
 }
 
 /** Internal projection only; its caller validates the complete View first. */
@@ -58,7 +58,10 @@ export function viewV2ToPlotly(view: ViewV2, options: RenderOptions = {}, resetV
       fixedrange: !p.zoom && !p.pan,
     }
     if (x) Object.assign(config, { uirevision: domain ? `ordinal:${domain.join(',')}` : 'calendar', ...(domain ? { ...ordinalTicks(domain), hoverformat: 'd', labelalias: Object.fromEntries(domain.map((date, index) => [String(index), date])) } : { nticks: 8 }) })
-    if (!x && axis.coordinate.unit === 'decimal_ratio') Object.assign(config, { tickformat: '.1%', hoverformat: '.1%', title: { text: '%' } })
+    if (!x) {
+      Object.assign(config, plotlyAxisFormat(axis.coordinate.unit))
+      if (isRatioUnit(axis.coordinate.unit)) Object.assign(config, { title: { text: '%' } })
+    }
     if (options.axisGrid?.[axis.id]) Object.assign(config, { showgrid: true, ...options.axisGrid[axis.id] })
     if (!x && n > 1) Object.assign(config, { overlaying: 'y', anchor: 'free', side: 'right', autoshift: true })
     layout[`${axis.orientation}axis${suffix}`] = config

@@ -66,7 +66,7 @@ try {
     assert.equal(await page.getByRole('radio', { name, exact: true }).isChecked(), true)
   }
   assert.equal(await page.getByRole('cell', { name: '2026-09-25 no Point' }).textContent(), '')
-  await page.getByText('0.0', { exact: true }).waitFor()
+  await page.getByText('0.00', { exact: true }).waitFor()
   await page.getByRole('button', { name: 'Copy Raw JSON', exact: true }).click()
   await page.getByText('Copied', { exact: true }).waitFor()
   const raw = await page.evaluate(() => navigator.clipboard.readText())
@@ -79,7 +79,7 @@ try {
   await page.getByRole('radio', { name: 'Time value' }).check()
   await page.getByRole('radio', { name: 'Unannualized' }).check()
   await page.getByRole('radio', { name: 'Yield' }).check()
-  await page.getByText('-0.20%', { exact: true }).waitFor()
+  await page.getByText('-0.2%', { exact: true }).waitFor()
   assert.equal(await page.getByRole('cell', { name: '2026-10-23 metric unavailable' }).textContent(), '—')
   assert.deepEqual(await page.locator('.premium-table td').evaluateAll(cells => cells.map(cell => cell.className)), classes)
   await page.getByText('Put', { exact: true }).click()

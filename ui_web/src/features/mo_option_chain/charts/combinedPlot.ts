@@ -17,7 +17,7 @@ function optionTrace(group: ExpiryGroup, points: OptionPoint[], side: 'Call' | '
     connectgaps: false,
     line: { color, width: 2, shape: 'linear', dash: side === 'Call' ? 'solid' : 'dash' },
     marker: { color, size: 8, symbol: side === 'Call' ? 'circle' : 'diamond' },
-    hovertemplate: `%{customdata}<br>${group.expiry_date} ${side} · Strike %{x:.1f} · Price %{y:.1f}<extra></extra>`,
+    hovertemplate: `%{customdata}<br>${group.expiry_date} ${side} · Strike %{x:.2f} · Price %{y:.2f}<extra></extra>`,
   }
 }
 
@@ -40,11 +40,11 @@ export function buildCombinedPlot(
     margin: { t: 24, r: 24, b: 76, l: 62 },
     xaxis: {
       title: { text: 'Strike' }, type: 'linear', range: xDomain, fixedrange: true,
-      tickformat: '.1f', tick0: 0, dtick: 200, showgrid: true, gridcolor: '#30343b',
+      tickformat: '.2f', tick0: 0, dtick: 200, showgrid: true, gridcolor: '#30343b',
     },
     yaxis: {
       title: { text: 'Price' }, type: 'linear', range: projection.yDomain, fixedrange: true,
-      tickformat: '.1f', tick0: 0, dtick: 200, showgrid: true,
+      tickformat: '.2f', tick0: 0, dtick: 200, showgrid: true,
       gridcolor: '#30343b', griddash: 'dash', side: 'left',
       minor: { tick0: 0, dtick: 100, showgrid: true, gridcolor: '#30343b', griddash: 'dash' },
     },
