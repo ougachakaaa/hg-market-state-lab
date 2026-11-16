@@ -5,6 +5,15 @@ sample (STAT-03), operation, method/result unions and failures (STAT-02). Indepe
 readable method contracts are [Quantile](QUANTILE.md) and [IntervalCount](INTERVAL_COUNT.md) and [Mean](MEAN.md).
 STAT-IMP-01 implements these contracts through the public `market_statistics` facade.
 
+## Planned method, separate from current runtime
+
+[Empirical Percentile](EMPIRICAL_PERCENTILE.md) defines the planned
+EmpiricalPercentileSpec/Result and midrank ties rule. Calendar Spread WP3 will
+extend the public exports, unions, validate_spec and compute under that contract.
+The live three-method API below remains unchanged in WP0; the planned method is
+not yet callable. It inherits this contract's sample legality, validation
+precedence, units, pure computation and stable failure categories.
+
 ## Public API and validation
 
 ```text

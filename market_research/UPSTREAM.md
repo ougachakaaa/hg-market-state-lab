@@ -110,3 +110,11 @@ Publicly exposed upstream provenance may be inherited under its contract. Resear
 not obtain credentials, provider transport responses, internal paths or Repository objects
 to manufacture provenance. No provider wrapper, fallback engine, generic data-source
 registry or upstream facade is introduced by this authority.
+
+## Calendar Spread L1 binding navigation
+
+The independent [Calendar Spread input contract](descriptive/cases/futures_calendar_spread/INPUTS.md)
+selects only public CFFEX Calendar and Futures Daily Exports. Its planned product
+queries are read-only and require complete inputs; the case does not inherit the
+Basis SSE/Index preparation workflow or a missing-tolerant Futures policy. Exact
+requests, evidence and failure behavior remain in that narrow contract.

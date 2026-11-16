@@ -36,6 +36,14 @@ results do not automatically become market findings, production states or tradin
 Consumers retain business meanings and interpretation; Statistics owns statistical legality
 and calculation under explicitly defined method contracts.
 
+## Planned empirical percentile extension
+
+[Empirical Percentile](EMPIRICAL_PERCENTILE.md) owns the planned midrank numerical
+method for Calendar Spread L1. It is a business-independent Spec/Result extension
+to the existing facade, not a Research algorithm or right-continuous ECDF. WP0
+establishes authority only; the current runtime methods and unions remain the
+three implemented methods above until Calendar Spread WP3.
+
 ## Extension boundaries (STAT-07 and STAT-08)
 
 Automatic edge generation is a separate future concern: a consumer chooses an explicit

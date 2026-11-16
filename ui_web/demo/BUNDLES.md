@@ -134,3 +134,11 @@ Admission reads local bytes only. Dataset locking, transaction recovery and buil
 remain assigned to DDB-03/DDB-04. Callers must supply a quiescent input directory for DDB-02.
 Focused tests run with `npx vitest run --config demo/build/vitest.config.ts`.
 The tool's type check is `npx tsc -p demo/build/tsconfig.json`.
+
+## Future Calendar Spread captures
+
+The [Calendar Spread integration plan](CALENDAR_SPREAD.md) reserves two future
+capture identities and their formal HTTP sources. They are not registered or
+required Bundles in WP0. WP7 must update this catalog, Registry, Presets, actual
+captures, Manifest and validator dispatch together; the current seven required
+rows remain authoritative until that cutover.

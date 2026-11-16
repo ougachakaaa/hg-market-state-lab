@@ -182,3 +182,10 @@ requirements. DDB-05 owns their integration with existing deploy tooling.
 
 Release specializes this build contract through [deployment authority](../../deploy/ARCHITECTURE.md).
 The root personal-study policy supersedes former authorization gates.
+
+## Planned Calendar Spread extension
+
+[Calendar Spread integration](../CALENDAR_SPREAD.md) assigns future collection and
+static composition to its WP7. Reuse this Collector/admission/build protocol after
+formal HTTP/Web delivery; WP0 adds no Collector branch, Registry entry, data or
+build invocation.

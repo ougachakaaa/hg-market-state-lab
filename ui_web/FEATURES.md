@@ -11,4 +11,15 @@
 | Research Catalog & Workspace | WP3 已实现；只读发现在线 Capability、本地 Case 与离线报告流程 | [research_catalog/ARCHITECTURE.md](src/features/research_catalog/ARCHITECTURE.md) |
 | Futures Basis Research | 已实现 Web Consumer、在线执行与共享报告 Reader；Provider / Cache readiness 独立验证 | [futures_basis_research/ARCHITECTURE.md](src/features/futures_basis_research/ARCHITECTURE.md) |
 
+## Planned slices — no implemented consumer
+
+| Planned slice | Status | Canonical authority entry |
+| --- | --- | --- |
+| Futures Calendar Spread | WP0 authority only; planned Daily Data consumer | [Daily Presentation plan](src/features/futures_calendar_spread/ARCHITECTURE.md) |
+| Calendar Spread Historical Relative Value | WP0 authority only; planned Research consumer | [Research Presentation plan](src/features/calendar_spread_relative_value/ARCHITECTURE.md) |
+
+These rows do not register routes or mark overview cards completed. Backend,
+HTTP, Web and Demo readiness remain separate in the
+[case roadmap](../market_research/descriptive/cases/futures_calendar_spread/ROADMAP.md).
+
 本 catalog 不拥有 input、table/chart、metric、formatting、interaction、empty/error 或其他 visualization semantics。新增、删除或重命名正式 frontend slice 时更新本文件；slice 内部语义变化只更新其 canonical authority。

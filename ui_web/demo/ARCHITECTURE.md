@@ -65,3 +65,9 @@ ID, Preset, contract and actual source description. Eight shared pages use hash 
 Explorer remains hidden from sidebar navigation. Invalid input stops successful rendering.
 
 Release content requirements enter [Release Requirements](release/ARCHITECTURE.md).
+
+## Planned Calendar Spread L1 integration
+
+[Calendar Spread integration](CALENDAR_SPREAD.md) plans two independent formal HTTP
+Result captures and shared Presentation consumers after business/HTTP/Web delivery.
+It changes no active Bundle membership or runtime/build/release readiness in WP0.

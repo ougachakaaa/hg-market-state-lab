@@ -51,3 +51,15 @@ Bare `/backtesting` opens the overview. Login and history follow the same normal
 ## Route and Bundle identities
 
 The eight application pages and seven registered business-result Bundles have independent identities. Overview pages create no additional Bundle. Research Explorer remains directly accessible through its hash route with its Publications Bundle retained. Backtesting M1/Q1 remain two independent Results on the same instance page. Bundle identity is owned by [Bundle authority](demo/BUNDLES.md). The retained StaticWorkspace exhaustively composes all eight paths using shared formal Presentation. DDB-04 owns admitted Bundle adapters and the official runtime/build.
+
+## Planned Calendar Spread L1 surfaces
+
+[Daily Presentation](src/features/futures_calendar_spread/ARCHITECTURE.md) plans
+`/data/futures-calendar-spread` under Daily Data;
+[Historical Relative Value Presentation](src/features/calendar_spread_relative_value/ARCHITECTURE.md)
+plans `/research/calendar-spread-relative-value` under Research. Both are authority
+only: they are not registered routes, available pages or completed Study cards.
+The current route/Bundle inventory above is unchanged by WP0. Register actual
+consumers and update the inventory at WP6; Demo adds the corresponding hash routes
+only at its coordinated WP7 Bundle cutover. No application-level financial or
+statistical computation is introduced.

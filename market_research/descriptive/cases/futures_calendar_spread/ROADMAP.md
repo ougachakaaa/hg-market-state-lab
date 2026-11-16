@@ -1,0 +1,83 @@
+# Calendar Spread L1 work packages and reconciliation
+
+Specializes [the case](ARCHITECTURE.md). This document owns delivery sequencing,
+acceptance and WP0 reconciliation, not competing financial or numerical formulas.
+
+## Baseline and status
+
+WP0 starts on `develop` at `f63327fe887d154f68a85dcc479c24844564baec`, exactly the
+requested baseline, with a clean worktree. Only Authority and navigation Markdown
+are changed. WP0 performs no business tests, dependency installation, generated
+contract update, cache mutation, build or publication. Commit identity is reported
+in the task report/Git history rather than self-embedded in the commit's contents.
+
+WP0 semantic and navigation review is complete as recorded below. WP1 is **READY
+for implementation** after WP0 is committed: the pure financial capability has no
+unresolved business decisions or missing upstream facts. This is not runtime PASS.
+WP1–WP7 are **NOT IMPLEMENTED / NOT VERIFIED** for this case.
+
+## Implementation work packages
+
+| WP | Deliverable and boundary | Acceptance criteria |
+| --- | --- | --- |
+| WP1 | New case public pure financial calculation, immutable named result and explicit failures, under [Definition](DEFINITION.md) and [Application](APPLICATION.md) | Same inputs yield the same three metrics; verify positive/negative/zero spread, units/version, logarithmic formula versus linear, actual expiry spacing versus near DTE, equal/reversed expiry rejection, date-only types, finite positive prices, bool/nonfinite rejection and overflow/underflow failure. No upstream I/O, Basis formula change or frontend calculation. |
+| WP2 | Read-only Input Preparation and Pair-day Observation, consuming the existing public Slot resolver | Verify complete Calendar/Futures proof, schema/scope/window/counter/row validation, missing-proof/incomplete-export failures, no ensure/fallback, six-pair accounting, true identities across transitions, closed day versus proven-empty open day, nonpositive exclusions, stages at DTE 0/7/8/21/22 and retained full public input evidence. Synthetic tests use injected public services, not real cache. |
+| WP3 | Statistics public EmpiricalPercentile Spec/Result, root facade dispatch and numerical backend integration | Satisfy [method fixtures](../../../../market_statistics/EMPIRICAL_PERCENTILE.md), especially ties/all-equal/singleton, exact counts, query order, unchanged units, validation precedence, immutability and backend-result failure. Existing Quantile/IntervalCount/Mean contracts remain unchanged. No Research/domain imports or new dependency. |
+| WP4 | Independent Daily and Historical Relative Value Python queries sharing WP1/WP2 and consuming Statistics | Verify all six pairs and three metric choices; strict pre-evaluation cutoff, history_start boundary, product/pair/stage isolation, stage and all-stage linkage, repeated-value multiplicity, empty and 1/29/30 sample behavior, unavailable current observations, optional explicit-edge histograms and outside counts, unit/method/sample association and propagation of statistical failures. Compare both products' current metrics from the same retained inputs. |
+| WP5 | Two independent formal HTTP products, DTO projection, composition and OpenAPI | Verify actual query delegation, strict parsing and classified error mapping under each HTTP plan, existing authentication/same-origin requirements, no-store, complete finite projection, ordering/null/zero, successful empty/small outcomes and absence of writes/Run lifecycle. Publish actual OpenAPI; no HTTP formula or DataLake import. |
+| WP6 | Two independent Web consumers and shared public Presentation | Generate each consuming feature's types from delivered OpenAPI. Verify explicit controls, query versus local pair selection, current/historical labels and units, empty/small/excluded states, histogram outside values, request cancellation/stale-result handling and preserved financial/source limitations. Register routes/cards only with actual consumers; no frontend metric/statistical computation. |
+| WP7 | Formal HTTP Demo captures, two Bundles, static composition and content requirements | Use explicit real available Presets, complete formal Results and existing admission/transaction/build machinery. Verify request/Result associations, hash/Manifest membership, invalid/missing rejection, failed capture preserving active data, shared Presentation and an actual offline build artifact. Do not invent results or Run identities. No publication/merge is implied. |
+
+Dependencies: WP2 consumes WP1; WP3 is numerically independent and can run alongside
+WP1/WP2; WP4 depends on WP1–WP3; WP5 depends on WP4; WP6 depends on WP5; WP7 depends
+on WP5–WP6. These are sequencing permissions, not instructions to delegate work.
+Each implementation package follows root scoped verification: select directly
+changed cases/files, never restore full-module, browser-matrix or full-repository
+gates. Real-data, browser, platform and publication claims require separately
+requested, actually executed evidence. WP7's actual new Demo build is necessary
+to establish its own artifact delivery, not a WP0 check.
+
+## Reconciliation: authority and current code
+
+Review basis: repository/module authorities; Futures Basis definition, Inputs and
+Slot Resolution; DataLake Calendar/Futures public services and Futures facts;
+Statistics public contract/methods/backend; HTTP product catalog and Basis delivery
+boundary; Web Workspace/Feature/Presentation and Demo Bundle/Build/Release authorities.
+Public exports and Slot resolver/Statistics dispatch source were inspected read-only.
+
+| Concern | Finding and decision | WP0 result |
+| --- | --- | --- |
+| Independent Case | Research/Descriptive permit independent no-Horizon cases. New case specializes those boundaries without changing scalar dispatch or admitting a Plan/Batch/Publication. | PASS — authority reconciliation |
+| DataLake sufficiency | Calendar schema 1 and Futures schema 2 publish candidate dates, Close, identity and delist_date (last trading day), with complete product-day proof. No Index/Snapshot or DataLake extension is needed. | PASS — public capability review |
+| Slot reuse | Existing facade exports `ContractMetadata`, `DailyUniverseEvidence`, `DailySlotResolution` and `resolve_daily_slots`; implementation is pure and accepts complete metadata/evidence. New caller permission is explicit in the existing Slot authority. No private imports or duplicate resolution. | PASS — source/contract review |
+| Basis independence | Existing preparation also fetches SSE/Index facts and its financial/statistics/run contracts are case-specific. Do not reuse those workflows, carriers or formula by masquerading as Basis. | PASS — boundary reconciliation |
+| Shared metrics | No existing Calendar Spread public financial capability was found in reviewed public surfaces. WP1 adds it under the new case; both products consume it. | NEW IMPLEMENTATION — not runtime PASS |
+| Quantile and Histogram | Root `market_statistics` exports NumericSample, QuantileSpec, IntervalCountSpec, results, compute and validate_spec. Reuse unchanged Type 7 and explicit-edge interval accounting. | PASS — public API reuse review |
+| Empirical percentile | Current Statistics union/dispatch has Quantile/IntervalCount/Mean only. Existing extension rules require a separate numerical method contract. The new authority resolves midrank semantics; WP3 still must implement/export it. | AUTHORITY RESOLVED; runtime OPEN until WP3 |
+| Historical relative value | New Pair-day population, expiry stages, cutoff, sample-size interpretation and two assessment bindings belong to Research. No current Basis statistics adapter is reused. | NEW IMPLEMENTATION — WP2/WP4 |
+| HTTP | Existing composition permits Research public case facades. Planned products use that boundary and existing Auth; no adapter-owned business rules or new server identity. | AUTHORITY RESOLVED; runtime OPEN until WP5 |
+| Web | Two planned independent features fit Daily Data and Research. Feature catalogs distinguish planned authority from implemented routes/cards; no sibling semantic state is shared. | AUTHORITY RESOLVED; runtime OPEN until WP6 |
+| Demo | Existing required membership remains seven Bundles. Future two-product cutover is separately planned and consumes complete formal HTTP Results, with no claim of existing data/build/release readiness. | AUTHORITY RESOLVED; runtime OPEN until WP7 |
+| W2 and future levels | W2 Position-Driven Core/Policy, Futures Basis identity/formulas and L2/L3 remain untouched. No future framework or empty implementation is created. | PASS — scope review |
+| Point-in-time limit | DataLake does not promise historically known metadata. Historical date cutoff excludes future observations but cannot establish point-in-time metadata. Retain the producer limitation in results and disclosure. | KNOWN LIMITATION — not a WP1 blocker |
+
+## WP0 acceptance and open issues
+
+Diff review confirms Markdown-only changes, separate canonical ownership of financial,
+observation, statistical, transport, Presentation and Demo concerns, and no change
+to current runtime behavior. Directed navigation review follows Research module →
+Descriptive → case → specialized contracts, Statistics entry → percentile contract,
+HTTP catalog → planned products, Web catalog/Workspace → planned features and Demo
+entry → future integration. Links added/changed by WP0 are checked locally; no
+whole-repository link scan or business tests are required.
+
+The user explicitly selected midrank ties, annualized ratio as default metric,
+explicit historical start, retained small-sample numbers with warning, and the
+limited favorable-direction interpretation. Stage boundaries, default quantile
+points, threshold 30, optional explicit-edge Histogram and read-only synchronous
+query behavior are the recorded L1 defaults. No unresolved business decision needs
+user adjudication before WP1. Runtime gaps in the table are assigned work, not
+authority contradictions or evidence that an unimplemented capability passed.
+
+After the independent WP0 documentation commit, stop. Do not start WP1, merge
+develop/main, capture data or publish Demo as part of this task.

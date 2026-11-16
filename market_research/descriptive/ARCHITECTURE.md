@@ -27,6 +27,7 @@ ObservationJobSpec → validated prepared facts / availability evidence → Obse
 | Independent structured segmentation observation | [Price Segmentation](cases/price_segmentation/ARCHITECTURE.md) |
 | Independent same-day Futures Basis, relative Slots and case-owned numerical adaptation | [Futures Basis / R01-A](cases/futures_basis/ARCHITECTURE.md) → [work packages/readiness](cases/futures_basis/ROADMAP.md) |
 | Online Futures Basis application, standard profile, run lifecycle and read boundary | [R01-A online application](cases/futures_basis/ONLINE_APPLICATION.md) |
+| Independent Calendar Spread L1, shared Daily/Research metrics, Pair-day observations and historical relative value | [Calendar Spread case](cases/futures_calendar_spread/ARCHITECTURE.md) → [WP1–WP7/reconciliation](cases/futures_calendar_spread/ROADMAP.md) (authority only) |
 | First case: formula, public input binding, warm-up, validity and fingerprint | [Trailing Return](cases/trailing_return/ARCHITECTURE.md) |
 | Admitted capability publication and pure preview | [RESEARCH_CAPABILITY.md](RESEARCH_CAPABILITY.md) |
 | Implementation status, cross-stage acceptance scenarios and validation evidence | [ACCEPTANCE.md](ACCEPTANCE.md) |

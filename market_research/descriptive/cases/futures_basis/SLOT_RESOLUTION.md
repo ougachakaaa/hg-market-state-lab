@@ -119,3 +119,16 @@ Same-code and absent-to-absent pairs produce neither record. These records do no
 define execution, returns or chart segments. `SlotResolutionError` retains category,
 product/date, reason, metadata and available evidence; invalid inputs never yield
 a partial successful result.
+
+## Calendar Spread L1 public consumer
+
+The independent [Calendar Spread case](../futures_calendar_spread/ARCHITECTURE.md)
+is authorized to consume `ContractMetadata`, `DailyUniverseEvidence`,
+`DailySlotResolution`, Slot mappings and `resolve_daily_slots` only through the
+existing public `market_research.descriptive.cases.futures_basis` facade. Its own
+Input Preparation must validate/retain final Calendar/Futures Exports before
+constructing resolver evidence under [its Inputs](../futures_calendar_spread/INPUTS.md).
+This caller permission changes no resolver formula, completeness rule, Python
+signature or existing Backtesting permission. It grants no access to Basis private
+modules, financial metrics, Observations, preparation workflow or Run Store.
+Slot semantic ownership remains here; do not copy or relocate the algorithm.

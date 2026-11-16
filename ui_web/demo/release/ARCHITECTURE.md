@@ -26,3 +26,11 @@ failure returns nonzero and invalidates prior release evidence. The publisher ru
 in a clean checkout of the exact remote-main candidate; CI runs it independently.
 
 Agent intent, integration and recovery steps enter the [Release Runbook](RUNBOOK.md).
+
+## Planned Calendar Spread content
+
+[Calendar Spread integration](../CALENDAR_SPREAD.md) plans two future complete
+formal HTTP Result captures. Their actual content selections and release requirements
+belong to WP7 after HTTP/Web delivery. WP0 does not modify requirements.json,
+assert release readiness or authorize publication. Root personal-study policy
+continues to govern source disclosure and authorization-related boundaries.

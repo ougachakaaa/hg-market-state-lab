@@ -4,6 +4,8 @@ This contract specializes the [module authority](ARCHITECTURE.md) and inherits t
 [public contract](CONTRACT.md). It owns numerical library selection, conformance,
 failure adaptation and upgrade policy. Method meaning belongs only to
 [Quantile](QUANTILE.md) and [IntervalCount](INTERVAL_COUNT.md) and [Mean](MEAN.md).
+The planned [Empirical Percentile](EMPIRICAL_PERCENTILE.md) contract owns its
+additional numerical meaning; it is not implemented by the current backend.
 
 ## Selection and runtime boundary
 
@@ -87,3 +89,12 @@ no process-global warning policy is modified. Failure-injection tests cover malf
 outputs, exceptions and finite-looking results after invalid numerical execution.
 
 Mean uses `numpy.mean(array, dtype=numpy.float64)` with finite scalar/type/range validation under the same scoped warning/error boundary. See [Mean](MEAN.md) for intermediate overflow semantics.
+
+## Planned empirical percentile backend
+
+The planned [Empirical Percentile](EMPIRICAL_PERCENTILE.md) method uses existing
+NumPy public sort/searchsorted operations on private copies, with explicit left
+and right comparisons and validation of counts, query association and finite
+midrank fractions. This adds no dependency and transfers no numerical algorithm
+to consumers. Calendar Spread WP3 must implement and verify it; the current runtime
+backend has no empirical-percentile dispatch.

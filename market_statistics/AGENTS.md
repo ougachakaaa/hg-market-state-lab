@@ -8,6 +8,10 @@ Read only the relevant method authority, [Quantile](QUANTILE.md) or
 selection, adaptation, result validation and upgrades. Libraries are implementation
 dependencies, not an alternate source of public statistical meaning.
 
+Calendar Spread L1 also has a planned [Empirical Percentile](EMPIRICAL_PERCENTILE.md)
+method contract. Read it for midrank/ties work; authority-only WP0 does not expose
+a runtime method. Its implementation belongs to Calendar Spread WP3.
+
 Update the narrowest canonical authority before implementation. Resolve pending method
 decisions explicitly; do not infer defaults from statistical convention, old code or user
 silence. Statistics must not depend on Research, DataLake, Snapshot, Modeling or inbound
