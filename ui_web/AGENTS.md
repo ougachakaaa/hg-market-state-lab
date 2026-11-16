@@ -42,8 +42,13 @@ Do not modify real market data or caches to satisfy tests.
 
 ## Static Demo publication
 
-“发布最新的静态 Demo” means run `npm run demo:publish` from ui_web against approved
-remote main. Read [deployment authority](deploy/ARCHITECTURE.md) and
-[release guide](deploy/README.md#verified-demo-pages-release-ddb-06) first.
-Do not dispatch a second workflow, publish current feature HEAD, recollect Bundles or
-claim completion before actual Pages deployment and public acceptance pass.
+“发布 Demo”“发布最新静态 Demo”“按照 XXX 分支发布静态 Demo”“把 XXX 分支发布到
+Demo Pages”“使用 XXX 的最新版本更新作品集”进入唯一
+[Demo Release Agent Workflow](demo/release/RUNBOOK.md)。指定 XXX 时解析该来源分支，
+未指定时使用 fetched remote main。检查或预览指令仅授权检查。
+发布指令授权按 Runbook 自动集成和发布，遇到其决策边界暂停。
+
+先读 [deployment authority](deploy/ARCHITECTURE.md) 和
+[Release Requirements](demo/release/ARCHITECTURE.md)。必须完成准确集成候选的 Release Gate
+与页面验收后才推进发布。正式入口为 `npm run demo:publish`，接收已批准的 remote main。
+禁止直接发布 feature HEAD。实际 Pages 部署和线上验收成功后才能报告发布完成。

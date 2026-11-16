@@ -24,3 +24,5 @@ the site with source SHA, Manifest identity and existing Artifact Receipt.
 then public safety, the existing offline build and Receipt scan/verification. Any
 failure returns nonzero and invalidates prior release evidence. The publisher runs it
 in a clean checkout of the exact remote-main candidate; CI runs it independently.
+
+Agent intent, integration and recovery steps enter the [Release Runbook](RUNBOOK.md).

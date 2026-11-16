@@ -57,6 +57,8 @@
 
 ## Verified Demo Pages release (DDB-06)
 
+Agent 发布任务从唯一 [Release Runbook](../demo/release/RUNBOOK.md) 进入。
+
 Pages remains independent of WSL Online deployment. From ui_web run:
 
 ```powershell
