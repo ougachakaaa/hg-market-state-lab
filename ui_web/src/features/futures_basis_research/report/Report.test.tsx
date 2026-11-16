@@ -262,3 +262,14 @@ it('keeps formal IntervalCount failure visible and never plots its stale result'
   expect(traces[0].y).toEqual([null])
   expect(traces[1].y).toEqual([1, 1])
 })
+
+it('rejects a nonempty Eligible Slot that reports no_eligible_sample instead of hiding its curve', () => {
+  const data = histogramFixture([[1], [2], [3], [4]])
+  data.distributions[2].methods[0].failure_category = 'no_eligible_sample'
+  render(<Report data={data} mode="online" />)
+  const status = screen.getByText(/展示数据不一致/)
+  expect(status.textContent).toContain('Q1')
+  expect(status.textContent).toContain('no_eligible_sample')
+  expect(screen.queryByTestId('distribution-plot')).toBeNull()
+  expect(screen.getByRole('region', { name: '统计摘要' })).toBeTruthy()
+})

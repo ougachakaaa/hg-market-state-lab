@@ -32,3 +32,15 @@ it('omits the curve for failed formal IntervalCount without mutating aggregation
   expect(traces[1].customdata[0]).toEqual(['[0 点, 5 点]', 1, 1, 1])
   expect(projection).toEqual(before)
 })
+
+it('reuses the history Binding color even when producer Binding order differs', () => {
+  const report = histogramFixture([[1], [2], [3], [4]])
+  const view = report.views.history.basis_value
+  if (view.version !== 2) throw new Error('expected V2')
+  view.layers.reverse()
+  const projection = histogramAggregation(report, 'basis_value', 10)
+  if (projection.status !== 'ready') throw new Error(projection.message)
+  const traces = distributionTraces(projection, 'basis_value', 10) as any[]
+  expect(traces.map(t => t.name)).toEqual(['M0', 'M1', 'Q1', 'Q2'])
+  expect(traces.map(t => t.line.color)).toEqual(['#d62728', '#2ca02c', '#ff7f0e', '#1f77b4'])
+})

@@ -82,6 +82,14 @@ failure category and omit that Slot's successful curve. Valid sibling curves rem
 visible. All validated samples still determine shared edges. Empty Slots have N=0
 and no curve or fabricated frequencies; all-empty inputs show no eligible samples.
 
+`no_eligible_sample` is legal only for an empty Eligible population. With N=0 it is an
+empty finding, not a numerical failure, so it needs no failure curve or alert. With N>0
+it contradicts the formal Method contract, so the entire selected Metric's display
+aggregation is rejected as inconsistent instead of silently hiding the curve. A
+nonempty Slot's other formal failure keeps that Slot's curve omitted while the sibling
+Slots stay readable. No reader path may repair, recover or rerun a result the formal
+validator already rejected.
+
 Use zero-anchored integer edge indices and preset integer numerator/denominator
 widths. Generate each binary64 edge directly from its index, correct range estimates
 by exact edge comparisons, and assign using ordered-edge binary search without an

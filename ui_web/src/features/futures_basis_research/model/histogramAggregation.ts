@@ -9,7 +9,7 @@ export const BIN_PRESETS = {
 export type BasisMetric = keyof typeof BIN_PRESETS
 export const MAX_DISPLAY_BINS = 2000
 export interface DisplayBin { left: number; right: number; rightInclusive: boolean; count: number; frequency: number }
-export interface SlotHistogram { slot: string; n: number; bins: DisplayBin[]; failure: string | null }
+export interface SlotHistogram { slot: string; n: number; bins: DisplayBin[]; failure: string | null; layerIndex: number }
 export type HistogramProjection =
   | { status: 'ready'; edges: number[]; slots: SlotHistogram[] }
   | { status: 'empty' | 'inconsistent' | 'capacity'; message: string }
@@ -43,6 +43,7 @@ export function histogramAggregation(report: ReportData, metric: BasisMetric, wi
       const distributions = report.distributions.filter(d => d.request.metric === metric && d.request.slot === slot)
       const accounts = report.accounting.filter(a => a.metric === metric && a.slot === slot)
       if (bindings.length !== 1 || distributions.length !== 1 || accounts.length !== 1) throw new Error(`${slot} 必要输入缺失或重复`)
+      const layerIndex = view.layers.findIndex(b => b.id === slot)
       const layer = bindings[0].layer; const distribution = distributions[0]; const account = accounts[0]
       if (layer.y.unit !== preset.unit || distribution.request.histogram?.unit !== preset.unit) throw new Error(`${slot} 单位`)
       same(unique(layer.data.map(p => p.x)), new Set(dates), slot)
@@ -73,8 +74,13 @@ export function histogramAggregation(report: ReportData, metric: BasisMetric, wi
       const intervals = distribution.methods.filter(m => m.spec.method === 'interval_count')
       if (intervals.length !== 1) throw new Error(`${slot} IntervalCount 缺失或重复`)
       const formal = intervals[0]
+      // `no_eligible_sample` is only legal for an empty Eligible population. With samples
+      // it contradicts the formal Method contract, so the whole Metric is rejected rather
+      // than presenting a silently missing curve.
+      if (values.length && formal.failure_category === 'no_eligible_sample') throw new Error(`${slot} Eligible 样本与 no_eligible_sample 矛盾`)
       if (values.length && !formal.failure_category && !formal.result) throw new Error(`${slot} IntervalCount Result 缺失`)
-      return { slot, values, failure: formal.failure_category }
+      // An empty finding is not a numerical failure; other formal failures stay explicit.
+      return { slot, values, failure: formal.failure_category === 'no_eligible_sample' ? null : formal.failure_category, layerIndex }
     })
     const all = samples.flatMap(s => s.values)
     if (!all.length) return { status: 'empty', message: '无有效样本（Eligible N=0）' }
@@ -97,7 +103,7 @@ export function histogramAggregation(report: ReportData, metric: BasisMetric, wi
     if (last - first > MAX_DISPLAY_BINS || ![first * numerator, last * numerator].every(Number.isSafeInteger)) return capacity()
     const edges = Array.from({ length: last - first + 1 }, (_, i) => edge(first + i))
     if (edges[0] > min || edges.at(-1)! < max || edges.some((e, i) => !Number.isFinite(e) || (i > 0 && e <= edges[i - 1]))) return capacity()
-    const slots = samples.map(({ slot, values, failure }) => {
+    const slots = samples.map(({ slot, values, failure, layerIndex }) => {
       const counts = Array<number>(edges.length - 1).fill(0)
       for (const value of values) {
         // Upper bound: an interior edge belongs to the bin on its right.
@@ -106,7 +112,7 @@ export function histogramAggregation(report: ReportData, metric: BasisMetric, wi
         counts[Math.min(lo - 1, counts.length - 1)]++
       }
       if (counts.reduce((a, b) => a + b, 0) !== values.length) throw new Error(`${slot} Count 不守恒`)
-      return { slot, n: values.length, failure, bins: values.length ? counts.map((count, i) => ({ left: edges[i], right: edges[i + 1], rightInclusive: i === counts.length - 1, count, frequency: count / values.length })) : [] }
+      return { slot, n: values.length, failure, layerIndex, bins: values.length ? counts.map((count, i) => ({ left: edges[i], right: edges[i + 1], rightInclusive: i === counts.length - 1, count, frequency: count / values.length })) : [] }
     })
     return { status: 'ready', edges, slots }
   } catch (error) {

@@ -1,5 +1,5 @@
 import type { Data } from 'plotly.js'
-import { BIN_PRESETS, SLOTS, type BasisMetric, type HistogramProjection } from '../model/histogramAggregation'
+import { BIN_PRESETS, type BasisMetric, type HistogramProjection } from '../model/histogramAggregation'
 
 const colors = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728']
 
@@ -8,7 +8,7 @@ export function distributionTraces(projection: Extract<HistogramProjection, { st
   const ratio = BIN_PRESETS[metric].unit === 'decimal_ratio'
   const precision = ratio ? (width === .05 ? 2 : 1) : 0
   const boundary = (value: number) => `${(value * (ratio ? 100 : 1)).toFixed(precision)}${ratio ? '%' : ' 点'}`
-  return projection.slots.map(({ slot, n, bins, failure }) => {
+  return projection.slots.map(({ slot, n, bins, failure, layerIndex }) => {
     const available = n > 0 && !failure
     // Two vertices per interval preserve horizontal extent and exact edge closures.
     // customdata repeats metadata at both vertices, while the model counts each bin once.
@@ -17,7 +17,8 @@ export function distributionTraces(projection: Extract<HistogramProjection, { st
       type: 'scatter', mode: 'lines', name: slot, uid: slot, legendgroup: slot,
       x: points.length ? points : [null],
       y: available ? bins.flatMap(b => [b.frequency, b.frequency]) : [null],
-      line: { color: colors[SLOTS.indexOf(slot as typeof SLOTS[number])], width: 2 },
+      // Reuse the Slot's history Binding color, never a second Slot-to-color mapping.
+      line: { color: colors[layerIndex % colors.length], width: 2 },
       customdata: available ? bins.flatMap(b => {
         const row = [`[${boundary(b.left)}, ${boundary(b.right)}${b.rightInclusive ? ']' : ')'}`, b.count, b.frequency, n]
         return [row, row]

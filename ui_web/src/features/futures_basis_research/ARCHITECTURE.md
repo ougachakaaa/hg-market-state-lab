@@ -130,7 +130,8 @@ empty findings and validation errors remain explicit. Full payload validation st
 
 Offline retains the complete six-section report, evidence, navigation and reproduction
 instructions. History chart regions retain ChartView options, producer Views, transition
-annotations, null breaks, hover, Metric/Bin Width controls and the date-axis contract.
+annotations, null breaks, hover and the date-axis contract; the distribution region owns
+the Metric and Bin Width controls over its temporary presentation bins.
 
 ## Error, empty and retry presentation
 

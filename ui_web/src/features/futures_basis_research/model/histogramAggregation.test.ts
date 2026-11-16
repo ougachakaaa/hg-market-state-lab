@@ -82,6 +82,29 @@ describe('presentation-only histogram', () => {
     const r = ready(histogramAggregation(report, 'basis_value', 10))
     expect(r.slots[0].failure).toBe('CalculationFailure'); expect(r.edges[0]).toBe(-50)
   })
+  it('treats no_eligible_sample as an empty finding only for an empty Eligible population', () => {
+    const r = ready(histogramAggregation(histogramFixture([[], [1, 2], [], []]), 'basis_value', 10))
+    expect(r.slots.map(s => s.failure)).toEqual([null, null, null, null])
+    expect(r.slots[0].bins).toEqual([])
+    expect(r.slots[1].n).toBe(2); conserved(r)
+  })
+  it('rejects the whole Metric when a nonempty Eligible Slot reports no_eligible_sample', () => {
+    const report = histogramFixture([[1], [2], [3], [4]])
+    report.distributions[1].methods[0].failure_category = 'no_eligible_sample'
+    const result = histogramAggregation(report, 'basis_value', 10)
+    expect(result.status).toBe('inconsistent')
+    if (result.status !== 'inconsistent') throw new Error('expected inconsistent')
+    expect(result.message).toContain('M1')
+    expect(result.message).toContain('no_eligible_sample')
+  })
+  it('keeps one Slot formal failure from erasing sibling Slot results or shared edges', () => {
+    const report = histogramFixture([[-5], [1, 2, 3], [4], [7]])
+    report.distributions[0].methods[0].failure_category = 'CalculationFailure'
+    const r = ready(histogramAggregation(report, 'basis_value', 5))
+    expect(r.slots[0].failure).toBe('CalculationFailure')
+    expect(r.slots.slice(1).map(s => [s.failure, s.n])).toEqual([[null, 3], [null, 1], [null, 1]])
+    expect(r.edges[0]).toBe(-5); conserved(r)
+  })
   it('allows the exact capacity limit and refuses one additional bin', () => {
     const atLimit = ready(histogramAggregation(histogramFixture([[0, 10000]]), 'basis_value', 5))
     expect(atLimit.edges).toHaveLength(2001); conserved(atLimit)
