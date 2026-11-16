@@ -37,8 +37,12 @@ back to the retained Transition records.
 
 Distribution charts may use valid V1 categorical bars for the original Statistics
 counts/frequencies, retaining exact edges/inclusion rules and both outside bins.
-They cannot recompute statistics in browser code. Comparison panels identify
-their common-date populations; persistence panels distinguish complete runs from
+They cannot recompute formal statistics in browser code. The sole bounded
+exception is temporary presentation-only Histogram Aggregation under
+[Statistics scope](STATISTICS.md) and the
+[feature presentation authority](../../../../ui_web/src/features/futures_basis_research/PRESENTATION.md).
+It does not modify producer Views, formal IntervalCount results or evidence.
+Comparison panels identify their common-date populations; persistence panels distinguish complete runs from
 censored fragments. Tables may present numerical results without inventing a
 generic Layer for every output.
 
@@ -116,7 +120,7 @@ transient numerical failure. Nonzero exit reports a mismatch or operation failur
 The standalone ui_web report is separate from application navigation and uses
 existing theme, Ant Design and generic ChartView rendering. Six reader sections
 cover overview, history, distributions, paired term comparisons, persistence and
-evidence/limitations. Metric and Slot selection changes presentation only.
+evidence/limitations. Metric and Bin Width selection changes presentation only; temporary bins do not alter formal results.
 All scripts/styles/data are embedded in one HTML, with no fetch or dynamic chunks.
 Plain producer text is escaped at JSON-to-HTML and chart text boundaries.
 Evidence and packaging are specified in [Evidence](EVIDENCE.md), not test fixtures.

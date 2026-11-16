@@ -8,8 +8,9 @@ through generated types, and renders the R01-A reader owned semantically by
 [Research](../../../../market_research/descriptive/cases/futures_basis/ONLINE_APPLICATION.md).
 It owns input interaction, presentation state, polling and user-visible empty/error
 presentation only. It never acquires market facts, executes Research or recomputes
-Basis, Slot, DTE, statistics, coverage or run length. WP6 defines this authoritative
-slice; WP8 implements it and the offline reader regression.
+Basis, Slot, DTE, formal statistics, coverage or run length. The authorized numerical
+presentation exception is temporary Histogram Aggregation under [Presentation authority](PRESENTATION.md), implemented by the shared reader.
+WP6 defines this authoritative slice; WP8 implements it and the offline reader regression.
 
 ## Application composition
 
@@ -118,15 +119,19 @@ Polling rules:
 
 Online and Demo compose one compact Report Card in the shared reader. Reading order is
 research question (`summary`), initially collapsed producer formulas, history and
-distribution visualizations, then Slot/Metric means. Mean presentation selects the explicit
-`mean` method and preserves units, zero and unavailable states. No statistics are recomputed.
+distribution visualizations with a four-Slot summary of the selected Metric.
+[Presentation authority](PRESENTATION.md) owns SD-01–SD-05, including the implemented
+expiry explanation, summary and dynamic four-Slot distribution comparison.
+Summary presentation selects explicit `mean` / `quantile` methods and quantile
+points, preserving units, zero and unavailable states. No formal statistics are recomputed.
 Compact delivery omits section navigation, coverage/fingerprint/runtime metadata,
 detailed evidence tables, Methods cards and request JSON. Partial retains a short warning;
 empty findings and validation errors remain explicit. Full payload validation still applies.
 
 Offline retains the complete six-section report, evidence, navigation and reproduction
-instructions. Shared chart regions retain ChartView options, producer Views, transition
-annotations, null breaks, hover, Metric/Slot controls and the date-axis contract.
+instructions. History chart regions retain ChartView options, producer Views, transition
+annotations, null breaks, hover and the date-axis contract; the distribution region owns
+the Metric and Bin Width controls over its temporary presentation bins.
 
 ## Error, empty and retry presentation
 
@@ -182,7 +187,7 @@ HTTP envelope is generated; the `data` field is the versioned producer reader
 payload, validated against the shared reader types and the generic Visualization
 validators. This does not create a competing backend response schema.
 
-Non-goals: executing Research in the browser, recomputing statistics or progress,
+Non-goals: executing Research in the browser, recomputing formal statistics or progress,
 storing tokens/results, adding a router/query framework, adding a second
 visualization DSL, exposing offline evidence files through the Web app, and
 changing sibling features or the HTTP contract.
@@ -212,7 +217,7 @@ Only basis_value requests a zero-anchored 100 index_points dashed axis grid.
 Explicit decimal_ratio values display as one-decimal percentages without negative
 zero. Layer/result units determine formatting; probabilities, frequency, count and
 prices retain their own semantics. The feature adapts result details using mark
-values and units. Histogram labels use supplied IntervalCount boundaries and
+values and units. Current producer Histogram labels use supplied IntervalCount boundaries and
 inclusion flags; rounded labels never replace category identity or order.
 Raw Views, reader projection, evidence, exports and fingerprints remain unchanged.
 

@@ -1,3 +1,4 @@
+import { verifyBasisSummary } from './futures_basis_summary_acceptance.mjs'
 import { historicalBasisAcceptance } from './historical_basis_acceptance.mjs'
 // Actual offline file:// acceptance. Never starts a server or permits network I/O.
 import assert from 'node:assert/strict'
@@ -145,6 +146,8 @@ try {
   await page.locator('#section-5').scrollIntoViewIfNeeded()
   await page.screenshot({ path: resolve(output, 'report.png'), fullPage: true })
   pass('Transition, unavailable reason, paired population and evidence/limitations are reader-accessible')
+  await verifyBasisSummary(page, expected)
+  pass('Four-Slot summary matches retained results for every Metric; expiry note and narrow scrolling work offline')
   assert.equal(await page.getByRole('heading', { level: 1, name: `${expected.request.observation.product_code} 历史基差研究报告` }).count(), 1)
   for (const close of await page.locator('.notifier-close').all()) await close.click()
   for (const viewport of [{ width: 1440, height: 900 }, { width: 1024, height: 768 }]) {

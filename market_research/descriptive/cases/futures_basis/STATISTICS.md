@@ -25,8 +25,18 @@ WP4 implements Mean under its independent Statistics authority and public API.
 
 No distribution pools Slots, products or metrics. Histogram frequencies retain
 Statistics' full eligible-sample denominator, underflow and overflow; the chart
-does not recalculate them or infer automatic edges. Sample window means the
-explicit inclusive research dates, not first/last available quote dates.
+does not recalculate these formal results or infer automatic formal edges.
+A bounded frontend exception permits temporary presentation-only Histogram
+Aggregation over already published, validated Eligible historical raw values.
+It preserves each Slot/metric population, duplicates, units and full counts, without
+filling, clipping or altering financial metrics. It never replaces the formal
+IntervalCount result or recomputes Mean/Quantile. Formal statistics and association
+remain Research / Statistics-owned; presentation controls and bin rules belong to
+the [feature presentation authority](../../../../ui_web/src/features/futures_basis_research/PRESENTATION.md).
+The shared reader implements this exception; original producer histogram results and Views remain unchanged.
+
+Sample window means the explicit inclusive research dates, not first/last available
+quote dates.
 
 ## Explicit requests, adaptation and association
 
