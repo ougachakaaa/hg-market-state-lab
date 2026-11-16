@@ -1,11 +1,12 @@
 # Empirical Percentile method authority
 
-Status: planned numerical extension for Calendar Spread L1; no runtime implementation
-or public Python export exists yet. Inherits [the public contract](CONTRACT.md).
+Status: implemented in Calendar Spread WP3 through the public `market_statistics`
+facade, including standalone validation and `compute` dispatch.
+Inherits [the public contract](CONTRACT.md).
 This file owns generic percentile mathematics, ties, Spec/Result and backend
 conformance. Consumers own population selection and interpretation.
 
-## Planned Spec and result
+## Public Spec and result
 
 ```text
 EmpiricalPercentileSpec
@@ -16,9 +17,16 @@ EmpiricalPercentileSpec
 EmpiricalPercentileResult
   method = empirical_percentile
   estimator = midrank_v1
-  query_results: ordered (query, less_count, equal_count, greater_count, percentile)
+  query_results: tuple[EmpiricalPercentileQueryResult, ...]
   sample_count
   unit
+
+EmpiricalPercentileQueryResult (immutable)
+  query: binary64
+  less_count: nonnegative integer
+  equal_count: nonnegative integer
+  greater_count: nonnegative integer
+  percentile: finite binary64 fraction in [0,1]
 ```
 
 Queries follow NumericSample's public scalar/type/float64 rules, including rejection
@@ -62,7 +70,7 @@ estimator and finite fractions before returning. Invalid backend shapes/counts o
 results are CalculationFailure; no repaired sample or successful partial result.
 The [Backend policy](BACKEND.md) governs scoped errors and backend adaptation.
 
-## Acceptance obligations for implementation
+## Acceptance obligations
 
 - Sample `[1,1,3,9]`, queries `[0,1,2,3,9,10]` yields percentiles
   `[0,.25,.5,.625,.875,1]` and exact associated counts.
@@ -72,7 +80,13 @@ The [Backend policy](BACKEND.md) governs scoped errors and backend adaptation.
   sample-first validation precedence and stable failures.
 - Input immutability; malformed backend results fail rather than being repaired.
 
-When WP3 is implemented, extend the existing root facade exports, typed Spec/Result
-unions, validate_spec and compute dispatch. Existing method semantics stay unchanged.
-Until then the live union remains Quantile/IntervalCount/Mean; authority readiness
-does not mean the new method is callable.
+The root facade exports EmpiricalPercentileSpec, EmpiricalPercentileResult and the
+immutable EmpiricalPercentileQueryResult DTO. The Spec/Result unions, validate_spec
+and sole public calculation operation `compute` include this method. Existing
+Quantile/IntervalCount/Mean semantics stay unchanged. Directed executable evidence
+is in `tests/test_empirical_percentile.py` and the public facade examples.
+
+Backend validation checks the sorted copy preserves every sample value and its
+multiplicity, then checks each left/right insertion boundary against its original
+query. Counts must be integer, in range and conserved; malformed outputs fail,
+including plausible counts associated with the wrong query. No backend repair occurs.

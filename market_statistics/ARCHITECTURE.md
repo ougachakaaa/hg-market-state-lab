@@ -6,15 +6,16 @@
 statistics bounded module under the [repository architecture](../ARCHITECTURE.md).
 It owns statistical sample legality, method parameters, computation contracts, typed
 results, numerical failure semantics and validation of statistical backend results.
-The current methods are Quantile, IntervalCount and Mean. This is the canonical identity decision
-STAT-01; the former authority namespace is retired without a compatibility alias.
+The current methods are Quantile, IntervalCount, Mean and EmpiricalPercentile.
+Module identity follows STAT-01; the former authority namespace is retired without a compatibility alias.
 
 The [public numerical contract](CONTRACT.md) is the canonical owner of `NumericSample`,
 `StatisticalSpec`, `StatisticalResult`, `StatisticalFailure`, `compute` and `validate_spec`
 (STAT-02 and STAT-03). Its public API is a Python semantic boundary; it does not imply
 an HTTP service or a separately deployed application. Method contracts specialize it:
 [Quantile](QUANTILE.md) (STAT-05), [IntervalCount](INTERVAL_COUNT.md) (STAT-06)
-and [Mean](MEAN.md) (STAT-09).
+and [Mean](MEAN.md) (STAT-09), plus
+[Empirical Percentile](EMPIRICAL_PERCENTILE.md) (Calendar Spread WP3).
 [Backend policy](BACKEND.md) owns library selection, conformance and upgrades (STAT-04);
 libraries supply numerical implementations, never public semantic authority.
 
@@ -36,13 +37,12 @@ results do not automatically become market findings, production states or tradin
 Consumers retain business meanings and interpretation; Statistics owns statistical legality
 and calculation under explicitly defined method contracts.
 
-## Planned empirical percentile extension
+## Empirical percentile extension
 
-[Empirical Percentile](EMPIRICAL_PERCENTILE.md) owns the planned midrank numerical
-method for Calendar Spread L1. It is a business-independent Spec/Result extension
-to the existing facade, not a Research algorithm or right-continuous ECDF. WP0
-establishes authority only; the current runtime methods and unions remain the
-three implemented methods above until Calendar Spread WP3.
+[Empirical Percentile](EMPIRICAL_PERCENTILE.md) owns the implemented midrank numerical
+method delivered by Calendar Spread WP3. It extends the existing public facade,
+Spec/Result unions, standalone validation and `compute` dispatch. Statistics remains
+business independent; Research population selection and application are outside WP3.
 
 ## Extension boundaries (STAT-07 and STAT-08)
 
@@ -70,10 +70,10 @@ method recommendation is authorized.
 
 ## Authority and runtime status
 
-STAT-IMP-01 publishes the independently installable `market_statistics` Python facade
+STAT-IMP-01 and subsequent method extensions publish the `market_statistics` Python facade
 under `src/market_statistics/`, with immutable NumericSample, typed specs/results,
-standalone validation, the two original V1 methods and Mean and stable statistical failures. NumPy is an
-explicit root dependency; method-local adapters and deterministic tests enforce the
+standalone validation, the two original V1 methods, Mean, EmpiricalPercentile and
+stable statistical failures. NumPy is an explicit root dependency; method-local adapters and deterministic tests enforce the
 published contracts. Public usage and verification entry points are in [README](README.md).
 
 The [repository runtime invariant](../ARCHITECTURE.md#3-python-runtime-与-module-boundary)

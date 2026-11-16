@@ -36,6 +36,9 @@ def test_interval_count_example() -> None:
 
 def test_complete_facade_exports() -> None:
     for name in (
+        "EmpiricalPercentileSpec",
+        "EmpiricalPercentileResult",
+        "EmpiricalPercentileQueryResult",
         "NumericSample",
         "MeanSpec",
         "MeanResult",
@@ -73,6 +76,7 @@ def test_public_result_tree_contains_only_immutable_python_values() -> None:
 
     sample = statistics.NumericSample([1, 2, 3], "u")
     for spec in (
+        statistics.EmpiricalPercentileSpec([3, 1, 3], "u"),
         statistics.MeanSpec(),
         statistics.QuantileSpec([0, 0.25, 0.75, 1]),
         statistics.IntervalCountSpec([0, 2, 4], "u"),
@@ -80,3 +84,8 @@ def test_public_result_tree_contains_only_immutable_python_values() -> None:
         result = statistics.compute(sample, spec)
         assert isinstance(result, statistics.StatisticalResult.__value__)
         visit(result)
+
+
+def test_mean_public_dispatch() -> None:
+    result = statistics.compute(statistics.NumericSample([1, 3], "u"), statistics.MeanSpec())
+    assert result == statistics.MeanResult(2.0, 2, "u")

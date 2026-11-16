@@ -83,3 +83,25 @@ Quantile or IntervalCount. `compute(NumericSample([1, 3], "u"), MeanSpec())` ret
 fail on intermediate overflow even when a mathematical average is finite.
 Numerical conformance and injected backend failures: `tests/test_mean.py`.
 Bounded integration/verification evidence: [WP4 acceptance](../market_research/descriptive/cases/futures_basis/WP4_ACCEPTANCE.md).
+
+## Empirical Percentile (Calendar Spread WP3)
+
+[Empirical Percentile](EMPIRICAL_PERCENTILE.md) implements Midrank V1 through the
+same public `compute` entry. The result and its query rows are immutable typed DTOs.
+
+```python
+from market_statistics import NumericSample, EmpiricalPercentileSpec, compute
+
+result = compute(
+    NumericSample([1, 1, 3, 9], "points"),
+    EmpiricalPercentileSpec([0, 1, 2, 3, 9, 10], "points"),
+)
+assert [r.percentile for r in result.query_results] == [0, .25, .5, .625, .875, 1]
+```
+
+Directed verification (2026-11-16), from the repository root:
+`.venv/bin/python -m pytest market_statistics/tests/test_empirical_percentile.py market_statistics/tests/test_public_api.py -q`
+— **94 passed**. This includes the existing Quantile, IntervalCount and Mean public
+dispatch examples. No full-module/repository regression, architecture scans,
+real-data, browser or deployment checks were run. WP4 Research adaptation remains
+unimplemented; WP3 only supplies its public numerical dependency.

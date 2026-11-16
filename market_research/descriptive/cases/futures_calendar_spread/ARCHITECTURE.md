@@ -1,8 +1,9 @@
 # Futures Calendar Spread L1
 
 Status: WP1 pure financial and WP2 read-only preparation / pure Pair-day
-Observation Python APIs are implemented. WP3–WP7 Statistics, product queries,
-HTTP, Web and Demo remain unimplemented.
+Observation Python APIs are implemented; WP3 delivers the public Statistics
+EmpiricalPercentile method. WP4–WP7 product queries, HTTP, Web and Demo remain
+unimplemented.
 This independent Descriptive case specializes [Research](../../../ARCHITECTURE.md)
 and [Descriptive](../../ARCHITECTURE.md). Case identity is
 `futures_calendar_spread_v1`; financial definition version is

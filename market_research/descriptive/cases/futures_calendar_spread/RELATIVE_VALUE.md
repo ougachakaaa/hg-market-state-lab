@@ -43,8 +43,9 @@ unit; Research retains sample keys and source linkage outside Statistics.
   request. Validate them through `IntervalCountSpec`; no automatic edge generation,
   density, quantile-derived binning or dropped overflow is authorized. When omitted,
   the histogram is `not_requested`, not an empty observed distribution.
-- Current rank consumes the planned [Empirical Percentile method](../../../../market_statistics/EMPIRICAL_PERCENTILE.md)
-  with the current valid metric as query. This capability is not yet implemented.
+- Current rank consumes the implemented Statistics [Empirical Percentile method](../../../../market_statistics/EMPIRICAL_PERCENTILE.md)
+  with the current valid metric as query. The numerical method is implemented in
+  WP3; Research population adaptation and result association remain WP4 work.
 
 No direct NumPy import, local quantile interpolation, histogram or percentile
 counting is authorized in Research. Statistics failures remain explicit analysis

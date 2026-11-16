@@ -17,7 +17,9 @@ the public pure financial API after baseline
 WP1 verification and closure are recorded below. WP2 implements read-only input
 preparation and pure Pair-day construction after baseline
 `cb9f778ae72cb5a331ea890b61bda99c8d8777d8` on the existing `develop` branch.
-WP3–WP7 remain **NOT IMPLEMENTED / NOT VERIFIED** for this case.
+WP3 implements the Statistics method after baseline
+`b83ef47672d8f58a9490335fb1500d58def287f1` on the existing `develop` branch.
+WP4–WP7 remain **NOT IMPLEMENTED / NOT VERIFIED** for this case.
 
 ## Implementation work packages
 
@@ -154,8 +156,35 @@ not authority defects requiring new upstream behavior. WP2 resolves the scoped
 Ensure review without enabling Ensure; query-operation review remains for WP4/WP5,
 and the formal Release Gate remains for WP7.
 
-WP3 is independent of WP2 and remains ready for its separately scoped numerical
-implementation; the WP0 Midrank design attribution is unchanged. WP4 now has its
-WP1/WP2 financial/input/Observation dependencies available, but remains **NOT READY
+At WP2 closure, WP3 was independent of WP2 and ready for its separately scoped
+numerical implementation; the WP0 Midrank design attribution is unchanged. WP4 then had its
+WP1/WP2 financial/input/Observation dependencies available, but remained **NOT READY
 for complete implementation/closure until WP3 is delivered**. Do not begin WP3 or
 WP4 as part of WP2.
+
+## WP3 reconciliation and acceptance (2026-11-16)
+
+**IMPLEMENTED** — the Statistics root facade exports EmpiricalPercentileSpec,
+EmpiricalPercentileResult and immutable EmpiricalPercentileQueryResult. The public
+Spec/Result unions, sample-free validate_spec and sole public numerical operation
+compute include `empirical_percentile`, estimator `midrank_v1`. Generic formulas,
+DTO semantics and backend conformance remain owned by Statistics, not this case.
+WP0's design attribution is retained as history; WP3's execution request explicitly
+freezes Midrank V1. No remaining numerical decision blocks this method.
+
+PASS — 94 directed cases in `market_statistics/tests/test_empirical_percentile.py`
+and `market_statistics/tests/test_public_api.py` cover exact L/E/G and standard
+fractions, ties/all-equal/singleton, negatives/signed zero, exact binary64 ties,
+query order/repeats/outside range, unit propagation, invalid inputs, sample-first
+precedence, standalone validation and compute revalidation, public typed dispatch,
+immutability/determinism and malformed backend values/shapes/counts. Scoped backend
+exceptions, warnings and floating-point errors fail explicitly. Existing three
+public method dispatch examples pass; their implementations and formulas are unchanged.
+
+WP3 is **READY TO CLOSE**. WP4 is **READY FOR IMPLEMENTATION** with WP1–WP3
+available through their public boundaries. WP4 Research queries are not delivered
+or started. Source association, read-only/no-ensure availability and synchronous
+query-operation concerns remain WP4/WP5 tracking items; WP3 changes none of them.
+No Research runtime, HTTP, Web, Demo, W2, dependencies, persistence, caches or
+market data were changed. Broad regression, architecture scans, real-market,
+browser, platform, build and deployment checks were not run and are **NOT VERIFIED**.

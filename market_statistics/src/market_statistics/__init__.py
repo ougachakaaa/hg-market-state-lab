@@ -5,6 +5,9 @@ from .failures import CalculationFailure as CalculationFailure
 from .failures import InvalidSample as InvalidSample
 from .failures import InvalidStatisticalSpec as InvalidStatisticalSpec
 from .failures import StatisticalFailure as StatisticalFailure
+from .models import EmpiricalPercentileQueryResult as EmpiricalPercentileQueryResult
+from .models import EmpiricalPercentileResult as EmpiricalPercentileResult
+from .models import EmpiricalPercentileSpec as EmpiricalPercentileSpec
 from .models import IntervalBin as IntervalBin
 from .models import IntervalCountResult as IntervalCountResult
 from .models import IntervalCountSpec as IntervalCountSpec
