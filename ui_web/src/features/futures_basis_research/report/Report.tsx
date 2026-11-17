@@ -1,4 +1,5 @@
-import { BIN_PRESETS, histogramAggregation, type BasisMetric } from '../model/histogramAggregation'
+import { TailExclusionAudit } from '../components/TailExclusionAudit'
+import { BIN_PRESETS, histogramAggregation, TAIL_EXCLUSION_OPTIONS, type TailExclusionPct, type BasisMetric } from '../model/histogramAggregation'
 import { DistributionComparison } from '../charts/DistributionComparison'
 import { distributionSummary } from '../model/basisPresentation'
 import { formatUnit } from '../../../shared/format/unit'
@@ -53,7 +54,8 @@ export function Report({ data, mode, sourceDisclosure, sectionNavigation = 'frag
   const { token } = theme.useToken()
   const [metric, setMetric] = useState<BasisMetric>('annualized_basis_ratio')
   const [width, setWidth] = useState<number>(BIN_PRESETS.annualized_basis_ratio.default)
-  const projection = useMemo(() => histogramAggregation(data, metric, width), [data, metric, width])
+  const [tail, setTail] = useState<TailExclusionPct>(0)
+  const projection = useMemo(() => histogramAggregation(data, metric, width, tail), [data, metric, width, tail])
   const [timeScale, setTimeScale] = useState<DateAxisMode>(DEFAULT_DATE_AXIS_MODE)
   const historyViews = useMemo(() => Object.fromEntries(metrics.map(metric => {
     const view = data.views.history[metric]
@@ -73,14 +75,14 @@ export function Report({ data, mode, sourceDisclosure, sectionNavigation = 'frag
           dateEventsDisclosure: mode === 'offline' ? undefined : { description: '标记不同期限 Slot 所对应的期货合约发生切换的日期，仅用于描述合约映射变化，不代表实际交易。' } }} /></div></div></div>)}
   </>
   const distributionCharts = <>
-        <Flex gap="middle" wrap align="center"><Typography.Text>指标</Typography.Text><Select aria-label="Distribution metric" value={metric} onChange={(value: BasisMetric) => { setMetric(value); setWidth(BIN_PRESETS[value].default) }} options={metrics.map(value => ({ value, label: metricLabels[value] }))} style={{ minWidth: 0, width: 260, maxWidth: '100%' }} /><Typography.Text>分箱宽度</Typography.Text><Select aria-label="Bin width" value={width} onChange={setWidth} options={BIN_PRESETS[metric].widths.map(value => ({ value, label: `${value} ${metric === 'annualized_basis_value' ? '点/年' : metric === 'basis_value' ? '点' : '个百分点'}` }))} style={{ minWidth: 145 }} /></Flex>
+        <Flex gap="middle" wrap align="center"><Typography.Text>指标</Typography.Text><Select aria-label="Distribution metric" value={metric} onChange={(value: BasisMetric) => { setMetric(value); setWidth(BIN_PRESETS[value].default) }} options={metrics.map(value => ({ value, label: metricLabels[value] }))} style={{ minWidth: 0, width: 260, maxWidth: '100%' }} /><Typography.Text>分箱宽度</Typography.Text><Select aria-label="Bin width" value={width} onChange={setWidth} options={BIN_PRESETS[metric].widths.map(value => ({ value, label: `${value} ${metric === 'annualized_basis_value' ? '点/年' : metric === 'basis_value' ? '点' : '个百分点'}` }))} style={{ minWidth: 145 }} /><Typography.Text>尾部过滤</Typography.Text><Select aria-label="尾部过滤" value={tail} onChange={setTail} options={TAIL_EXCLUSION_OPTIONS.map(value => ({ value, label: value ? `双尾各 ${value}%` : '不排除' }))} style={{ minWidth: 145 }} /></Flex>
         {metric === 'annualized_basis_ratio' && <Typography.Paragraph>年化基差率用于比较不同到期期限下的基差强度，不等于实际持有收益；临近到期时数值可能较敏感。</Typography.Paragraph>}
         {metric === 'annualized_basis_value' && <Typography.Paragraph>年化基差点以点/年表示，不代表实际可获得的年化收益。</Typography.Paragraph>}
         <Typography.Text type="secondary">本地仅进行展示性分箱，正式统计结果保持不变，不会提交请求或重新执行研究。</Typography.Text>
         {data.distributions.filter(d => d.request.metric === metric).flatMap(d => d.methods
           .filter(m => m.spec.method === 'interval_count' && m.failure_category && m.failure_category !== 'no_eligible_sample')
-          .map((m, i) => <Alert key={`${d.request.analysis_id}/${i}`} type="warning" title={`${d.request.slot}：${m.failure_category}（Eligible N=${d.binding.length}）`} />))}
-        <DistributionComparison projection={projection} metric={metric} width={width} />
+          .map((m, i) => <Alert key={`${d.request.analysis_id}/${i}`} type="warning" description={m.reason} title={`${d.request.slot}：${m.failure_category}（Eligible N=${d.binding.length}）`} />))}
+        <DistributionComparison projection={projection} metric={metric} width={width} tail={tail} />
         <section aria-label="统计摘要" style={{ minWidth: 0 }}>
           <Typography.Title level={5}>全样本统计</Typography.Title>
           <Table scroll={{ x: 'max-content' }} pagination={false} size="small" rowKey="slot"
@@ -91,6 +93,7 @@ export function Report({ data, mode, sourceDisclosure, sectionNavigation = 'frag
               { title: 'Max', dataIndex: 'max' }, { title: 'Mean', dataIndex: 'mean' },
             ]} />
         </section>
+        {projection.status !== 'inconsistent' && <TailExclusionAudit selections={projection.selections} tail={tail} />}
         {mode === 'offline' && <Collapse defaultActiveKey={data.distributions.filter(d => d.request.metric === metric).map(d => d.request.analysis_id)} items={data.distributions.filter(d => d.request.metric === metric).map(d => ({ key: d.request.analysis_id, label: `${d.request.slot} 正式统计方法`, children: <Methods methods={d.methods} /> }))} />}
 
   </>

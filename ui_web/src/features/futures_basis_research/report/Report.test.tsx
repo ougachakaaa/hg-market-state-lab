@@ -21,6 +21,34 @@ function selectMetric(label: string) {
   fireEvent.click(screen.getByText(label, { selector: '.ant-select-item-option-content' }))
 }
 afterEach(cleanup)
+it.each(['online', 'demo', 'offline'] as const)('filters locally and exposes complete paginated audit (%s)', async mode => {
+  const data = histogramFixture([Array.from({ length: 120 }, (_, i) => i / 100), [], [], []], 'annualized_basis_ratio')
+  const before = structuredClone(data)
+  const fetchSpy = vi.spyOn(globalThis, 'fetch')
+  render(<Report data={data} mode={mode} sectionNavigation="local" />)
+  const summary = screen.getByRole('region', { name: '统计摘要' }).textContent
+  const route = window.location.href
+  const initialLayout = JSON.parse(screen.getByTestId('distribution-plot').getAttribute('data-layout')!)
+  expect(screen.getByRole('button', { name: '尾部排除明细' }).getAttribute('aria-expanded')).toBe('false')
+  fireEvent.mouseDown(screen.getByRole('combobox', { name: '尾部过滤' }))
+  fireEvent.click(screen.getByText('双尾各 10%', { selector: '.ant-select-item-option-content' }))
+  const trace = JSON.parse(screen.getByTestId('distribution-plot').getAttribute('data-traces')!)[0]
+  expect(trace.customdata[0][3]).toBe(96)
+  expect(trace.hovertemplate).toContain('参与分箱 N')
+  const layout = JSON.parse(screen.getByTestId('distribution-plot').getAttribute('data-layout')!)
+  expect(layout.xaxis.uirevision).not.toBe(initialLayout.xaxis.uirevision)
+  expect(layout.legend.uirevision).toBe(initialLayout.legend.uirevision)
+  fireEvent.click(screen.getByRole('button', { name: '尾部排除明细' }))
+  expect(screen.getAllByText('Raw value').length).toBeGreaterThan(0)
+  expect(screen.getAllByText('2024-10-01').length).toBeGreaterThan(0)
+  fireEvent.click(screen.getByTitle('2'))
+  await waitFor(() => expect(screen.getAllByText('2024-10-11').length).toBeGreaterThan(0))
+  expect(screen.getByRole('region', { name: '统计摘要' }).textContent).toBe(summary)
+  expect(data).toEqual(before)
+  expect(window.location.href).toBe(route)
+  expect(fetchSpy).not.toHaveBeenCalled()
+  fetchSpy.mockRestore()
+})
 describe('shared reader', () => {
   it.each(['online', 'demo'] as const)('renders one compact report with charts before the summary (%s)', mode => {
     const { container } = render(<Report data={readerFixture()} mode={mode} />)
@@ -279,9 +307,11 @@ it('keeps formal IntervalCount failure visible and never plots its stale result'
   const data = histogramFixture([[1], [2], [3], [4]])
   data.status = 'partial'
   data.distributions[0].methods[0].failure_category = 'CalculationFailure'
+  data.distributions[0].methods[0].reason = 'Synthetic calculation failure reason'
   render(<Report data={data} mode="online" />)
   selectMetric('基差（点）')
   expect(screen.getByText('M0：CalculationFailure（Eligible N=1）')).toBeTruthy()
+  expect(screen.getByText('Synthetic calculation failure reason')).toBeTruthy()
   const traces = JSON.parse(screen.getByTestId('distribution-plot').getAttribute('data-traces')!)
   expect(traces[0].y).toEqual([null])
   expect(traces[1].y).toEqual([1, 1])

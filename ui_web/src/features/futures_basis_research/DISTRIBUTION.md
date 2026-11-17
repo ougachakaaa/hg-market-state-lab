@@ -7,7 +7,7 @@ presentation populations, projection and audit. Financial formulas/units belong 
 formal populations and methods belong to
 [Research Statistics](../../../../market_research/descriptive/cases/futures_basis/STATISTICS.md).
 WP3 implements V2 structural admission, Metric/width/format changes and complete
-original-population validation. Rank-based trimming and exclusion audit remain pending WP4.
+original-population validation. WP4 implements rank-based trimming and complete exclusion audit.
 
 ## Controls and interpretation
 

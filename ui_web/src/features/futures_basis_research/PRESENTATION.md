@@ -48,7 +48,7 @@ the selector and retaining Methods, comparisons, evidence and all six sections.
 selection, presentation population, rank-based Tail Exclusion, Count/Frequency,
 input association validation, exclusion audit and capacity/failure behavior. It
 specializes this reader across Online, Static Demo and Offline. The V2 changes
-include implemented WP3 Metric/width presentation and pending WP4 tail selection; no formal statistic or
+include implemented WP3 Metric/width presentation and implemented WP4 tail selection; no formal statistic or
 original Report is modified by those controls.
 
 ## UI-05 no-value dates

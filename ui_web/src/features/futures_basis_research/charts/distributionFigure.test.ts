@@ -17,7 +17,7 @@ it('encodes shared edges, Slot colors and distinguishable percentage interval cl
   ])
   expect(traces[0].hovertemplate).toContain('Count：%{customdata[1]:d}')
   expect(traces[0].hovertemplate).toContain('Frequency：%{customdata[2]:.1%}')
-  expect(traces[0].hovertemplate).toContain('Eligible N：%{customdata[3]:d}')
+  expect(traces[0].hovertemplate).toContain('参与分箱 N：%{customdata[3]:d}')
   expect(traces[2].y).toEqual([null])
 })
 

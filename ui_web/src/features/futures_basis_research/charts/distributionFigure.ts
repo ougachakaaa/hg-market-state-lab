@@ -30,7 +30,7 @@ export function distributionTraces(projection: Extract<HistogramProjection, { st
         const row = [`[${boundary(b.left)}, ${boundary(b.right)}${b.rightInclusive ? ']' : ')'}`, b.count, b.frequency, n]
         return [row, row]
       }) : [],
-      hovertemplate: `${slot}<br>区间：%{customdata[0]}<br>Count：%{customdata[1]:d}<br>Frequency：%{customdata[2]:.1%}<br>Eligible N：%{customdata[3]:d}<extra></extra>`,
+      hovertemplate: `${slot}<br>区间：%{customdata[0]}<br>Count：%{customdata[1]:d}<br>Frequency：%{customdata[2]:.1%}<br>参与分箱 N：%{customdata[3]:d}<extra></extra>`,
       connectgaps: false,
     } as Data
   })

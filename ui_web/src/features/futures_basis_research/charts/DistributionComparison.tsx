@@ -5,7 +5,7 @@ import { Alert, Flex, theme } from 'antd'
 import { BIN_PRESETS, type BasisMetric, type HistogramProjection } from '../model/histogramAggregation'
 import { plotlyAxisFormat } from '../../../shared/visualization/presentation'
 
-export function DistributionComparison({ projection, metric, width }: { projection: HistogramProjection; metric: BasisMetric; width: number }) {
+export function DistributionComparison({ projection, metric, width, tail = 0 }: { projection: HistogramProjection; metric: BasisMetric; width: number; tail?: number }) {
   const { token } = theme.useToken()
   const frame = useRef<HTMLDivElement>(null)
   const [plotWidth, setPlotWidth] = useState<number>()
@@ -28,8 +28,8 @@ export function DistributionComparison({ projection, metric, width }: { projecti
         paper_bgcolor: token.colorBgContainer, plot_bgcolor: token.colorBgContainer, font: { color: token.colorText },
         margin: { l: 60, r: 20, t: 70, b: 65 }, showlegend: true,
         legend: { orientation: 'h', y: 1.12, uirevision: 'slots', itemdoubleclick: false },
-        xaxis: { title: { text: axisTitle }, ...plotlyAxisFormat(BIN_PRESETS[metric].unit), ...(metric === 'basis_ratio' && width === .05 ? { tickformat: '.2%', hoverformat: '.2%' } : {}), uirevision: `${metric}/${width}` },
-        yaxis: { title: { text: 'Frequency（%）' }, ...plotlyAxisFormat('decimal_ratio'), rangemode: 'tozero', uirevision: `${metric}/${width}` },
+        xaxis: { title: { text: axisTitle }, ...plotlyAxisFormat(BIN_PRESETS[metric].unit), ...(metric === 'basis_ratio' && width === .05 ? { tickformat: '.2%', hoverformat: '.2%' } : {}), uirevision: `${metric}/${width}/${tail}` },
+        yaxis: { title: { text: 'Frequency（%）' }, ...plotlyAxisFormat('decimal_ratio'), rangemode: 'tozero', uirevision: `${metric}/${width}/${tail}` },
         hovermode: 'closest', dragmode: 'zoom',
       }} config={{ displaylogo: false, responsive: true, scrollZoom: true, modeBarButtons: [['zoom2d', 'pan2d', 'resetScale2d']] }}
         style={{ width: '100%', height: '100%' }} useResizeHandler />

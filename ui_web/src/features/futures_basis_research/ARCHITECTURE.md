@@ -12,7 +12,7 @@ Basis, Slot, DTE, formal statistics, coverage or run length. The authorized nume
 presentation exception is temporary Histogram Aggregation under
 [Distribution presentation](DISTRIBUTION.md), reached through [Presentation authority](PRESENTATION.md).
 The shared reader implements V2 metric/width admission and presentation (WP3).
-Tail selection and audit remain pending WP4. The committed V1 Demo Bundle requires WP5 recapture. Research's [Roadmap](../../../../market_research/descriptive/cases/futures_basis/ROADMAP.md#distribution-v2-handoff)
+WP4 implements rank-based tail selection and complete exclusion audit. The committed V1 Demo Bundle requires WP5 recapture. Research's [Roadmap](../../../../market_research/descriptive/cases/futures_basis/ROADMAP.md#distribution-v2-handoff)
 distinguishes Authority readiness from implementation.
 WP6 defines this authoritative slice; WP8 implements it and the offline reader regression.
 
