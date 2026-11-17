@@ -9,7 +9,11 @@ through generated types, and renders the R01-A reader owned semantically by
 It owns input interaction, presentation state, polling and user-visible empty/error
 presentation only. It never acquires market facts, executes Research or recomputes
 Basis, Slot, DTE, formal statistics, coverage or run length. The authorized numerical
-presentation exception is temporary Histogram Aggregation under [Presentation authority](PRESENTATION.md), implemented by the shared reader.
+presentation exception is temporary Histogram Aggregation under
+[Distribution presentation](DISTRIBUTION.md), reached through [Presentation authority](PRESENTATION.md).
+The existing shared reader implements V1; accepted V2 metric/width and trimming
+semantics await WP3/WP4. Research's [Roadmap](../../../../market_research/descriptive/cases/futures_basis/ROADMAP.md#distribution-v2-handoff)
+distinguishes Authority readiness from implementation.
 WP6 defines this authoritative slice; WP8 implements it and the offline reader regression.
 
 ## Application composition
@@ -126,8 +130,8 @@ Polling rules:
 Online and Demo compose one compact Report Card in the shared reader. Reading order is
 research question (`summary`), initially collapsed producer formulas, history and
 distribution visualizations with a four-Slot summary of the selected Metric.
-[Presentation authority](PRESENTATION.md) owns SD-01–SD-05, including the implemented
-expiry explanation, summary and dynamic four-Slot distribution comparison.
+[Presentation authority](PRESENTATION.md) owns expiry explanation and full-sample
+summary, and routes distribution controls, validation and audit to its specialized owner.
 Summary presentation selects explicit `mean` / `quantile` methods and quantile
 points, preserving units, zero and unavailable states. No formal statistics are recomputed.
 Compact delivery omits section navigation, coverage/fingerprint/runtime metadata,
@@ -213,7 +217,7 @@ The history charts expose the repository-wide
 [date-axis presentation authority](../../../DATE_AXIS_PRESENTATION.md): the shared
 online/offline reader defaults to Trading Days, all candidate_dates define equally
 spaced positions including missing sessions, and Calendar Days retains natural spacing.
-One local control changes all three charts, resets the horizontal viewport and preserves
+One local control changes all four V2 charts, resets the horizontal viewport and preserves
 legend selection. Marks and events share the mapping; dates absent from the domain are
 errors. Null and segment boundaries remain unchanged. This feature is the reference
 application of that authority, not a second owner of the policy.
@@ -221,7 +225,8 @@ application of that authority, not a second owner of the policy.
 Only basis_value requests a zero-anchored 100 index_points dashed axis grid.
 Display formatting follows the [presentation formatting authority](../../../PRESENTATION_FORMATTING.md):
 explicit decimal_ratio, probability and frequency values display as one-decimal
-percentages without negative zero; non-integer index points and statistical values display
+percentages without negative zero, except the centrally owned narrow Histogram
+boundary exception; non-integer index points and statistical values display
 with two decimals; count values remain integers. Layer/result units determine formatting.
 The feature adapts result details using mark values and units. Current producer Histogram
 labels use supplied IntervalCount boundaries and inclusion flags; rounded labels never

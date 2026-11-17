@@ -5,6 +5,11 @@ Specializes [statistics scope](STATISTICS.md). The public case facade exports
 `discount_runs` and their frozen result carriers. Each analysis request contains
 an explicit nonempty analysis_id, metric, subject Slot/ordered canonical pair,
 inclusive start/end within the source request, QuantileSpec and IntervalCountSpec.
+Definition V2 supports all four metrics in the canonical order published by
+[Observation](OBSERVATION.md#population-and-coverage), including
+`annualized_basis_value` with `index_points_per_year`. The same public analysis
+operations consume each metric independently; no new numerical method is required.
+Frontend tail controls never enter these requests.
 MeanSpec is fixed and parameterless. Quantile/edges are mandatory; histogram units
 must equal metric units. Invalid requests raise AnalysisRequestError retaining request.
 Caller orchestration owns uniqueness of IDs across calls; no global registry exists.

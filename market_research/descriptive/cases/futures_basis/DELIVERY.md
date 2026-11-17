@@ -9,8 +9,9 @@ No Research import of `ui_web`, HTTP DTO or Plotly is authorized.
 ## Projection
 
 Emit one V2 View per product/metric, with a Binding per Slot in M0/M1/Q1/Q2 order,
-date x and the metric's unchanged numerical unit y. Keep raw and annualized ratios
-in explicitly named separate Views. Binding IDs and segment IDs are deterministic
+date x and the metric's unchanged numerical unit y. Emit four history Views for
+definition V2. Keep all four metrics in explicitly named separate Views, including
+annualized points with `index_points_per_year`. Binding IDs and segment IDs are deterministic
 within the case result; they are opaque rendering identities, not contract codes.
 
 Each Slot's candidate date appears once. Eligible values become the supplied y;
@@ -93,14 +94,23 @@ or network. Acquisition failure cannot be replaced by a synthetic real-market re
 Actual inputs and reports remain disposable runtime output outside Git under the
 [repository runtime invariant](../../../../ARCHITECTURE.md#naming-and-transition-authority).
 
+## Distribution V2 delivery target
+
+WP2 extends ReportRequest, report composition, history projection and reader/evidence
+encoding to the four-metric target. The new reader identity is owned by
+[Evidence](EVIDENCE.md). Existing V1 payloads are never relabeled as V2; no legacy
+adapter is required. These targets are not claims that the V2 runtime is implemented.
+
 ## WP5 executable delivery
 
 The case facade publishes `ReportRequest`, `compose_report`, `project_history`,
 `write_evidence`, `load_prepared_inputs`, `verify_delivery` and `replay_delivery`.
 A ReportRequest contains the fixed observation request, explicit QuantileSpec and
-three ordered IntervalCountSpecs (basis value, ratio, annualized ratio). Validate
+four ordered IntervalCountSpecs in the V2 metric order from
+[Observation](OBSERVATION.md#population-and-coverage). Each uses its metric's explicit
+unit; the online preset is owned only by [Online application](ONLINE_APPLICATION.md). Validate
 all parameters before upstream I/O. Composition consumes one existing WP3 result
-and calls the unchanged WP4 APIs for 12 distributions, 18 comparisons and four
+and calls the unchanged WP4 APIs for 16 distributions, 24 comparisons and four
 persistence summaries. Method failures remain visible; no eligible sample is an
 empty finding, not a statistical execution failure. Any actual method failure
 makes report status partial. Input/construction failure produces diagnostics only,
@@ -120,7 +130,9 @@ transient numerical failure. Nonzero exit reports a mismatch or operation failur
 The standalone ui_web report is separate from application navigation and uses
 existing theme, Ant Design and generic ChartView rendering. Six reader sections
 cover overview, history, distributions, paired term comparisons, persistence and
-evidence/limitations. Metric and Bin Width selection changes presentation only; temporary bins do not alter formal results.
+evidence/limitations. Metric, Bin Width and Tail Exclusion selection change presentation only, under
+[Distribution presentation](../../../../ui_web/src/features/futures_basis_research/DISTRIBUTION.md);
+temporary bins and exclusion audits do not alter formal results or evidence.
 All scripts/styles/data are embedded in one HTML, with no fetch or dynamic chunks.
 Plain producer text is escaped at JSON-to-HTML and chart text boundaries.
 Evidence and packaging are specified in [Evidence](EVIDENCE.md), not test fixtures.

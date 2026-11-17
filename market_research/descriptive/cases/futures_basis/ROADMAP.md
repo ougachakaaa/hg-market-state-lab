@@ -6,6 +6,25 @@ read-only preflight, HTTP and Web consumers are implemented.
 The online application exclusively uses [case-owned SQLite](ONLINE_STORAGE.md).
 Completed work packages and their execution records remain in Git history.
 
+## Distribution V2 handoff
+
+WP1 records accepted semantics only; existing runtime remains three-metric V1.
+These package names refer to Distribution V2, independently of historical WP numbers.
+
+- WP2 — implement the fourth metric through Observation, Accounting, formal analyses,
+  Report/History, Evidence/Reader and HTTP, including exact profile/definition
+  associations and generated-contract updates. Do not redefine the first three metrics.
+- WP3 — shared frontend fourth Metric, width presets and boundary formatting under
+  [Distribution presentation](../../../../ui_web/src/features/futures_basis_research/DISTRIBUTION.md).
+- WP4 — full-population validation, local rank-based trimming, Histogram and complete
+  exclusion audit, with deterministic edge-case and conservation tests.
+- WP5 — recapture the formal Basis Bundle, update the unique active Manifest, perform
+  end-to-end acceptance and separately authorized integration/release. No legacy
+  adapter is required to preserve disposable development payloads.
+
+WP1 does not implement, test business runtime, regenerate contracts/Bundles, clean
+stores, merge or publish. No new permanent implementation diary is introduced.
+
 ## Known gaps and defer
 
 - Complete Futures proof is required; the public service does not expose independent

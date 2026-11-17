@@ -1,15 +1,30 @@
-# R01-A offline evidence v1
+# R01-A offline evidence and reader V2 target
 
 Specializes [Delivery](DELIVERY.md). This is a case-specific, versioned interchange
 and replay contract, not Publication V1 or a generic serializer framework.
 
+## Version ownership and rollout
+
+WP1 accepts this target; WP2 implements it. The reader and scientific evidence profile
+is `futures_basis_report_evidence_v2`, paired with `futures_basis_definition_v2`
+and the four-metric ReportRequest. V1 remains a three-metric payload and must not be
+silently upgraded. Unknown or mismatched profile/definition/request associations
+are rejected, not repaired. A current reader need not provide a legacy adapter.
+
+The file-inventory/digest manifest format remains `futures_basis_report_manifest_v1`:
+its structure is unchanged, while payload profile/version checks must require the
+new scientific identity. Canonical upstream input format is unchanged. Visualization
+V1 categorical and V2 date-series versions describe rendering structures, not this
+financial definition or reader profile. WP2 updates verify/replay and profile checks
+without weakening source linkage, exact-byte integrity or reproducibility.
+
 ## Package
 
 - `inputs.canonical.json`: exact WP3 input-profile bytes and fingerprint, unchanged.
-- `evidence.json`: `profile=futures_basis_report_evidence_v1`, explicit request,
+- `evidence.json`: `profile=futures_basis_report_evidence_v2`, explicit request,
   prepared acquisition attempts, observation records/resolutions/accounting,
   distributions, comparisons, persistence, definition version, runtime/code context.
-- `views.json`: three complete V2 history Views and successful V1 count/frequency
+- `views.json`: four complete V2 history Views and successful V1 count/frequency
   histogram Views, with deterministic identities.
 - `associations.json`: point/event identities mapped to Slot-day/Contract-day/source
   references and Transition records. Analysis bindings reference retained Slot-days.
@@ -35,6 +50,12 @@ The operator script collects execution context and supplies it through the requi
 reads frontend dependencies. Runtime context records Python/package/Node versions, Git revision and dirty flag,
 and digests of root Python and frontend dependency locks. It is execution context,
 not an input fingerprint or a claim that a dirty tree equals its HEAD.
+
+The reader includes all four metrics through observations, per-metric Accounting,
+16 Slot distributions, 24 pair comparisons, formulas, method specs/results, four
+history Views and their bindings. Presentation filtering parameters, temporary bins,
+retained populations and tail exclusion audits are local derivations, never additions
+to the original evidence or Research Excluded accounting.
 
 ## Reader, verification and replay
 

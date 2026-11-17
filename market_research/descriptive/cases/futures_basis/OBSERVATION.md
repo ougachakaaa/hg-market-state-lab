@@ -8,7 +8,7 @@ and upstream proof/failures to [Inputs](INPUTS.md).
 
 | Logical carrier | Natural identity | Required retained meaning |
 | --- | --- | --- |
-| Contract-day | `(contract_code, trade_date)` | Product/underlying, actual real contract, same-day prices or missing dependencies, delivery month, list/delist dates, DTE, three metric outcomes, state when eligible, input/definition provenance |
+| Contract-day | `(contract_code, trade_date)` | Product/underlying, actual real contract, same-day prices or missing dependencies, delivery month, list/delist dates, DTE, four metric outcomes under definition V2, state when eligible, input/definition provenance |
 | Slot-day | `(product_code, trade_date, slot)` | Resolved contract and reference to its Contract-day outcome, or proven no-active-contract outcome; resolution evidence |
 
 These keys are scoped by the result's fixed request and actual input fingerprint
@@ -40,7 +40,7 @@ empty active set takes Not Applicable precedence. Otherwise a present nonpositiv
 price is Excluded (`nonpositive_futures_close` / `nonpositive_underlying_close`);
 retain any simultaneously missing dependency. If no present price is disqualifying,
 missing underlying is Unavailable. Otherwise the base outcome and raw metrics are
-Eligible. Only then does D=0 make the annualized metric Not Applicable (`expiry_day`).
+Eligible. Only then does D=0 make both annualized metrics Not Applicable (`expiry_day`).
 D=0 does not override an already unavailable/excluded base observation.
 
 Record all missing/offending facts once with exact identities and source references.
@@ -58,6 +58,12 @@ the denominator. For each Slot and metric retain ordered outcome collections:
 candidate_count = eligible_count + unavailable_count + excluded_count
                   + not_applicable_count
 ```
+
+Definition V2 appends `annualized_basis_value` after the original ordered metrics
+`basis_value`, `basis_ratio`, `annualized_basis_ratio`. Contract-day construction,
+Slot-day references, outcomes, accounting and time-series association include all
+four. The added metric does not change the raw difference/ratio Eligible sets or
+create a second price or contract-resolution path.
 
 The base and each metric have independent accounting; annualized eligibility may
 be smaller than raw eligibility. Collections are disjoint, complete and uniquely
