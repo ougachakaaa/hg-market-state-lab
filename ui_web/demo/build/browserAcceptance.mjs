@@ -126,7 +126,7 @@ export async function verifyBrowser(publicUrl, { reviewOverview = false, outputR
     }
     assert.equal(await page.getByRole('button', { name: '查询', exact: true }).count(), 0)
     await page.getByRole('button', { name: '关于本数据' }).click()
-    await page.getByText(/真实合约同日 Close/).waitFor()
+    await page.getByText('跨期比较使用近端减远端收盘价，以两合约最后交易日间隔年化；期现比较使用期货减同日指数收盘价，以期货剩余自然日数年化。年化价差是价格关系，不代表实际收益率或交易指令。', { exact: true }).waitFor()
     await page.goto(base + '#/research/calendar-spread-relative-value')
     const plot = page.locator('.js-plotly-plot').first()
     await plot.waitFor()
