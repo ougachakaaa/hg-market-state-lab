@@ -136,6 +136,31 @@ export interface components {
             definition_version: "futures_calendar_spread_definition_v1";
             request: components["schemas"]["DailyEcho"];
             source_context: components["schemas"]["SourceContext"];
+            underlying_index?: components["schemas"]["DailyUnderlyingIndex"];
+        };
+        /** DailyUnderlyingIndex */
+        DailyUnderlyingIndex: {
+            /**
+             * Availability
+             * @enum {string}
+             */
+            availability: "available" | "not_applicable" | "unavailable" | "error";
+            /** Close */
+            close: number | null;
+            /** Failure Category */
+            failure_category: ("incomplete_inputs" | "upstream_unavailable" | "input_contract_error") | null;
+            /**
+             * Index Code
+             * @enum {string}
+             */
+            index_code: "000300.SH" | "000016.SH" | "000905.SH" | "000852.SH";
+            /** Reason Code */
+            reason_code: ("non_trading_day" | "cache_incomplete" | "final_export_incomplete" | "credential_missing" | "cache_incompatible" | "operation_unavailable" | "malformed_export" | "malformed_ensure_result" | "upstream_request_rejected") | null;
+            /**
+             * Trade Date
+             * Format: date
+             */
+            trade_date: string;
         };
         /** Day */
         Day: {

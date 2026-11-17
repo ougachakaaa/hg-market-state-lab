@@ -1,6 +1,6 @@
 # Daily underlying index reference
 
-DD-02 target authority, encoded in WP-00; implementation status belongs to
+DD-02 authority, encoded in WP-00 and implemented in WP-01; current delivery status belongs to
 [Roadmap](ROADMAP.md). Specializes [Inputs](INPUTS.md) and [Application](APPLICATION.md).
 This document owns Daily reference selection, preparation and availability;
 [Query Results](QUERY_RESULTS.md#daily-underlying-index-result-dd-02-target) owns its

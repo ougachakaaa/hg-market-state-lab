@@ -1,6 +1,6 @@
 # Daily Data — Futures Calendar Spread HTTP contract
 
-Status: WP5 implemented; acceptance is recorded in the
+Status: WP5 and DD-02 WP-01 implemented; current delivery is recorded in the
 [case Roadmap](../../../market_research/descriptive/cases/futures_calendar_spread/ROADMAP.md).
 Specializes [HTTP ownership](../../ARCHITECTURE.md); business semantics and failures
 belong to [the Research application](../../../market_research/descriptive/cases/futures_calendar_spread/APPLICATION.md).
@@ -153,7 +153,7 @@ decision; do not silently introduce a queue, worker framework or asynchronous Ru
 
 ## DD-02 Daily index projection target
 
-WP-00 encodes this additive target; DTOs/OpenAPI are implemented in DD-02 WP-01.
+WP-00 encoded this additive contract; DTOs/OpenAPI are implemented in DD-02 WP-01.
 Research owns [reference semantics](../../../market_research/descriptive/cases/futures_calendar_spread/DAILY_INDEX_REFERENCE.md)
 and [business carriers](../../../market_research/descriptive/cases/futures_calendar_spread/QUERY_RESULTS.md#daily-underlying-index-result-dd-02-target).
 GET/POST paths, requests, echoed operation, PairObservation and core failure mapping

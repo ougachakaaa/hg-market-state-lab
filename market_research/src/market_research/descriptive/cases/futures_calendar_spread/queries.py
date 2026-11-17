@@ -1,6 +1,7 @@
 """Independent synchronous business queries sharing one WP2 observation collection."""
 
 from collections.abc import Sequence
+from dataclasses import replace
 from datetime import date
 from typing import Literal, cast
 
@@ -18,6 +19,7 @@ from market_statistics import (
 )
 
 from .construction import construct_observations
+from .daily_index import ExecutionIndexService, IndexService, prepare_daily_index
 from .inputs import CalendarSpreadRequest, InputPreparationError
 from .observations import (
     PAIRS,
@@ -129,12 +131,14 @@ def query_daily_spreads(
     *,
     calendar_service: CalendarService | None = None,
     futures_service: FuturesService | None = None,
+    index_service: IndexService | None = None,
 ) -> DailySpreadsResult:
     return _daily_spreads(
         product_code,
         trade_date,
         calendar_service=calendar_service,
         futures_service=futures_service,
+        index_service=index_service,
         execution=False,
     )
 
@@ -145,12 +149,14 @@ def execute_daily_spreads(
     *,
     calendar_service: ExecutionCalendarService | None = None,
     futures_service: ExecutionFuturesService | None = None,
+    index_service: ExecutionIndexService | None = None,
 ) -> DailySpreadsResult:
     return _daily_spreads(
         product_code,
         trade_date,
         calendar_service=calendar_service,
         futures_service=futures_service,
+        index_service=index_service,
         execution=True,
     )
 
@@ -161,16 +167,29 @@ def _daily_spreads(
     *,
     calendar_service: CalendarService | None = None,
     futures_service: FuturesService | None = None,
+    index_service: IndexService | None = None,
     execution: bool,
 ) -> DailySpreadsResult:
     _validate(product_code, trade_date, trade_date)
     collection = _collect(
         product_code, trade_date, trade_date, calendar_service, futures_service, execution=execution
     )
+    reference, evidence = prepare_daily_index(
+        product_code, trade_date, calendar_service=calendar_service,
+        index_service=index_service, execution=execution,
+    )
+    source = EXECUTION_SOURCE_CONTEXT if execution else SourceContext()
+    source = replace(source, limitations=(*source.limitations,
+        "Daily SSE Calendar and Index exports are independent snapshots; the same-day "
+        "index Close is reference-only and never enters futures calculations. "
+        "Reference preparation follows the selected read-only or explicit execution permission.",
+    ))
     return DailySpreadsResult(
         DailySpreadsRequest(product_code, trade_date),
         collection,
-        EXECUTION_SOURCE_CONTEXT if execution else SourceContext(),
+        reference,
+        evidence,
+        source,
     )
 
 

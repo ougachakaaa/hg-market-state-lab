@@ -59,6 +59,7 @@ class Services:
     def __init__(self, start: date = DAY, end: date = DAY, product: str = "IM") -> None:
         self.start, self.end, self.product = start, end, product
         self.calls: list[Any] = []
+        self.reference_calls: list[Any] = []
         self.errors: dict[str, Exception] = {}
         dates = tuple(start + timedelta(days=i) for i in range((end - start).days + 1))
         window = SimpleNamespace(start_date=start, end_date=end)
@@ -96,6 +97,15 @@ class Services:
         )
 
     def export(self, request: TradeCalendarRange | FuturesDailyRange):
+        if isinstance(request, TradeCalendarRange) and request.exchange == "SSE":
+            self.reference_calls.append(("sse_calendar", request))
+            # Existing core fixtures explicitly prove independent SSE closure.
+            return replace(
+                self.calendar, scope=SimpleNamespace(exchange="SSE"),
+                window=SimpleNamespace(start_date=request.start_date, end_date=request.end_date),
+                coverage=coverage(1),
+                records=(TradeCalendarRecord("SSE", request.start_date, 0, None),),
+            )
         name = "calendar" if isinstance(request, TradeCalendarRange) else "futures"
         self.calls.append((name, request))
         if name in self.errors:

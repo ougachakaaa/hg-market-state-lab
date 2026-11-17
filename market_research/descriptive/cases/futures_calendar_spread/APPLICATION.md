@@ -186,8 +186,8 @@ completion. Collector's per-request timeout is independently configurable under 
 
 ## DD-02 Daily reference target
 
-[Daily Index Reference](DAILY_INDEX_REFERENCE.md) adds independent reference Input
-Preparation after successful core construction. Only query_daily_spreads and
+Implemented in DD-02 WP-01. [Daily Index Reference](DAILY_INDEX_REFERENCE.md) adds
+independent reference Input Preparation after successful core construction. Only query_daily_spreads and
 execute_daily_spreads add keyword-only `index_service=None`; query injection requires
 export, execution injection requires export/ensure. Existing calendar_service injection
 also handles explicit SSE requests with the corresponding permission. Callers may omit

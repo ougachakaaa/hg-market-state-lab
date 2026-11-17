@@ -111,11 +111,11 @@ programming exceptions propagate. Invalid query/statistical parameters use
 
 ## Daily underlying index result (DD-02 target)
 
-DailySpreadsResult adds required `underlying_index: DailyUnderlyingIndexReference`
-and `underlying_index_evidence: DailyUnderlyingIndexEvidence`. Both are frozen,
+Implemented in DD-02 WP-01. DailySpreadsResult adds required
+`underlying_index: DailyUnderlyingIndexReference` and `underlying_index_evidence: DailyUnderlyingIndexEvidence`. Both are frozen,
 slotted public carriers exported by the case facade, with tuple-owned sequence
 fields. Existing observation_set, prepared_inputs, day and accounting retain their
-meaning. HistoricalRelativeValueResult/current_day add neither field. WP-01 updates
+meaning. HistoricalRelativeValueResult/current_day add neither field. WP-01 updated
 Daily constructors/fixtures; no fabricated Python default reference is introduced.
 
 DailyUnderlyingIndexReference contains `index_code: str`, `trade_date: date`,

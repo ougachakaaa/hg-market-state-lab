@@ -77,8 +77,8 @@ endpoint, collection permission, Bundle or Manifest change is introduced here.
 
 ## DD-02 additive reference compatibility target
 
-DD-02 WP-00 defines the target; feature validation/presentation is implemented in
-WP-01/WP-02 and acceptance closes in WP-03. The
+DD-02 WP-01 implements the additive HTTP/generated contract; feature validation/presentation
+remains WP-02 work and acceptance closes in WP-03. The
 [Daily HTTP contract](../../ui_http/products/futures_calendar_spread/http-contract.md#dd-02-daily-index-projection-target)
 permits underlying_index omission solely for pre-DD-02 results. Existing Daily Bundle
 bytes and Manifest hashes remain valid under that contract; omission is not null Close.

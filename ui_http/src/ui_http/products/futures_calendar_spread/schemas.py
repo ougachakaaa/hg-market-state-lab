@@ -1,7 +1,7 @@
 """Closed wire DTOs; only selected public business attributes are projected."""
 
 from datetime import date
-from typing import Annotated, Literal, Self
+from typing import Annotated, Literal, Self, cast
 
 from pydantic import BaseModel, BeforeValidator, ConfigDict, Field, model_validator
 
@@ -111,6 +111,43 @@ class SourceContext(Wire):
     limitations: tuple[str, ...]
 
 
+class DailyUnderlyingIndex(Wire):
+    index_code: Literal["000300.SH", "000016.SH", "000905.SH", "000852.SH"]
+    trade_date: DateOnly
+    close: float | None
+    availability: Literal["available", "not_applicable", "unavailable", "error"]
+    reason_code: Literal[
+        "non_trading_day", "cache_incomplete", "final_export_incomplete",
+        "credential_missing", "cache_incompatible", "operation_unavailable",
+        "malformed_export", "malformed_ensure_result", "upstream_request_rejected",
+    ] | None
+    failure_category: Literal[
+        "incomplete_inputs", "upstream_unavailable", "input_contract_error",
+    ] | None
+
+    @model_validator(mode="after")
+    def legal_state(self) -> Self:
+        states: dict[str, set[tuple[str | None, str | None]]] = {
+            "available": {(None, None)},
+            "not_applicable": {("non_trading_day", None)},
+            "unavailable": {("cache_incomplete", None)},
+            "error": {
+                ("final_export_incomplete", "incomplete_inputs"),
+                ("credential_missing", "upstream_unavailable"),
+                ("cache_incompatible", "upstream_unavailable"),
+                ("operation_unavailable", "upstream_unavailable"),
+                ("malformed_export", "input_contract_error"),
+                ("malformed_ensure_result", "input_contract_error"),
+                ("upstream_request_rejected", "input_contract_error"),
+            },
+        }
+        if (self.reason_code, self.failure_category) not in states[self.availability]:
+            raise ValueError("Invalid index reference state")
+        if (self.close is not None) != (self.availability == "available"):
+            raise ValueError("Invalid index reference Close availability")
+        return self
+
+
 class DailyResponse(Wire):
     case: Literal["futures_calendar_spread_v1"]
     definition_version: Literal["futures_calendar_spread_definition_v1"]
@@ -118,6 +155,22 @@ class DailyResponse(Wire):
     day: Day
     accounting: Accounting
     source_context: SourceContext
+    # Default applies to historical omission only; the field type rejects explicit null.
+    underlying_index: DailyUnderlyingIndex = Field(
+        default_factory=lambda: cast(DailyUnderlyingIndex, None),
+        exclude_if=lambda value: value is None,
+    )
+
+    @model_validator(mode="after")
+    def reference_association(self) -> Self:
+        if "underlying_index" in self.model_fields_set:
+            reference = self.underlying_index
+            expected = {"IF": "000300.SH", "IH": "000016.SH",
+                        "IC": "000905.SH", "IM": "000852.SH"}
+            if (reference.index_code != expected[self.request.product_code]
+                    or reference.trade_date != self.request.trade_date):
+                raise ValueError("Index reference request association mismatch")
+        return self
 
 
 ErrorKind = Literal[

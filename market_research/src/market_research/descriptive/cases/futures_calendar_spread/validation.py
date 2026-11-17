@@ -87,7 +87,8 @@ def _coverage(raw: Any, expected: int) -> CoverageResult:
 
 
 def _header(
-    raw: Any, request: CalendarSpreadRequest, *, calendar: bool, expected: int
+    raw: Any, request: CalendarSpreadRequest, *, calendar: bool, expected: int,
+    exchange: str = "CFFEX"
 ) -> CoverageResult:
     dataset, view, version = (
         ("tushare_trade_calendar", "calendar", 1)
@@ -109,7 +110,7 @@ def _header(
     )
     if calendar:
         require(
-            type(raw.scope.exchange) is str and raw.scope.exchange == "CFFEX",
+            type(raw.scope.exchange) is str and raw.scope.exchange == exchange,
             "Wrong calendar scope",
         )
     else:
@@ -121,13 +122,15 @@ def _header(
     return _coverage(raw.coverage, expected)
 
 
-def validate_calendar(raw: Any, request: CalendarSpreadRequest) -> TradeCalendarExport:
+def validate_calendar(
+    raw: Any, request: CalendarSpreadRequest, *, exchange: str = "CFFEX"
+) -> TradeCalendarExport:
     expected = (request.end_date - request.start_date).days + 1
-    proof = _header(raw, request, calendar=True, expected=expected)
+    proof = _header(raw, request, calendar=True, expected=expected, exchange=exchange)
     records = []
     previous = None
     for row in _sequence(raw.records):
-        require(type(row.exchange) is str and row.exchange == "CFFEX", "Wrong row exchange")
+        require(type(row.exchange) is str and row.exchange == exchange, "Wrong row exchange")
         require(
             type(row.cal_date) is date and request.start_date <= row.cal_date <= request.end_date,
             "Calendar date outside window or not date-only",
@@ -147,7 +150,7 @@ def validate_calendar(raw: Any, request: CalendarSpreadRequest) -> TradeCalendar
         "tushare_trade_calendar",
         "calendar",
         1,
-        cast(Any, _CalendarScope("CFFEX")),
+        cast(Any, _CalendarScope(exchange)),
         cast(Any, _Window(request.start_date, request.end_date)),
         proof,
         tuple(records),
@@ -290,7 +293,8 @@ def validate_prepared(prepared: Any) -> None:
 
 
 def validate_ensure(
-    raw: Any, request: CalendarSpreadRequest, dependency: str, sessions: tuple[date, ...]
+    raw: Any, request: CalendarSpreadRequest, dependency: str, sessions: tuple[date, ...],
+    *, target_code: str | None = None, one_record_per_unit: bool = False,
 ) -> EnsureResult:
     names = (
         "requested_units",
@@ -310,7 +314,7 @@ def validate_ensure(
     require(succeeded + failed == attempted, "Wrong Ensure outcome accounting")
     require(type(raw.complete) is bool, "Invalid Ensure complete")
     # Complete is the producer's final coverage signal, not a later Export snapshot.
-    if calendar:
+    if calendar or one_record_per_unit:
         require(written == succeeded, "Wrong Calendar records_written")
     failures = []
     seen = set()
@@ -318,8 +322,11 @@ def validate_ensure(
         identity = _sequence(failure.identity)
         require(len(identity) == 2, "Wrong failure identity shape")
         code, day = identity
+        expected_code = target_code if target_code is not None else (
+            "CFFEX" if calendar else request.product_code
+        )
         require(
-            type(code) is str and code == ("CFFEX" if calendar else request.product_code),
+            type(code) is str and code == expected_code,
             "Wrong failure scope",
         )
         require(type(day) is date, "Wrong failure date type")

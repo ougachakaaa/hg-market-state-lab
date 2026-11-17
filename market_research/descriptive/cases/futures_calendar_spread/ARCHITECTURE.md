@@ -3,8 +3,8 @@
 Status: financial calculation, read-only observations/queries, explicit automatic
 preparation, Statistics, HTTP, Web and static Demo consumption are implemented.
 Current delivery scope and limits are recorded in [Roadmap](ROADMAP.md).
-DD-02 index/Chinese/export enhancements are authority targets only until accepted;
-the existing implemented status does not include them.
+DD-02 WP-01 implements the Daily-only index reference, immutable evidence and HTTP/generated
+contract. Chinese Presentation/export and cross-layer acceptance remain pending under the Roadmap.
 This independent Descriptive case specializes [Research](../../../ARCHITECTURE.md)
 and [Descriptive](../../ARCHITECTURE.md). Case identity is
 `futures_calendar_spread_v1`; financial definition version is
@@ -51,7 +51,8 @@ The public Python facade for WP1/WP2/WP4 is
 `market_research.descriptive.cases.futures_calendar_spread`. It consumes only
 the standard library for WP1; WP2 consumes Calendar/Futures public Exports and
 the existing [public pure Slot resolver](../futures_basis/SLOT_RESOLUTION.md)
-through the public Futures Basis facade. WP4 consumes the root Statistics facade
+through the public Futures Basis facade. Daily additionally consumes public SSE Calendar/Index
+Exports and conditional Ensure under Daily Index Reference. WP4 consumes the root Statistics facade
 for numerical methods. No sibling case private module is authorized.
 The resolver remains owned by its current contract; this case does not copy or
 move it, change `futures_basis_v1`, or consume Basis financial calculations,

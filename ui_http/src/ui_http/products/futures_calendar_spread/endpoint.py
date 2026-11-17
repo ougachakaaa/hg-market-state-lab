@@ -43,7 +43,7 @@ async def daily(
 ) -> Response:
     return await run_in_threadpool(
         execute,
-        lambda: DailyResponse.model_validate(query(params.product_code, params.trade_date)),
+        lambda: project_daily(query(params.product_code, params.trade_date)),
     )
 
 
@@ -59,5 +59,27 @@ async def daily_execution(
 ) -> Response:
     return await run_in_threadpool(
         execute,
-        lambda: DailyResponse.model_validate(operation(body.product_code, body.trade_date)),
+        lambda: project_daily(operation(body.product_code, body.trade_date)),
     )
+
+
+def project_daily(result: DailySpreadsResult) -> DailyResponse:
+    reference = result.underlying_index
+    # Explicit fields only: evidence and original provider failures stay in Research.
+    dto = DailyResponse.model_validate({
+        "case": result.case,
+        "definition_version": result.definition_version,
+        "request": result.request,
+        "day": result.day,
+        "accounting": result.accounting,
+        "source_context": result.source_context,
+        "underlying_index": {
+            "index_code": reference.index_code,
+            "trade_date": reference.trade_date,
+            "close": reference.close,
+            "availability": reference.availability,
+            "reason_code": reference.reason_code,
+            "failure_category": reference.failure_category,
+        },
+    })
+    return dto

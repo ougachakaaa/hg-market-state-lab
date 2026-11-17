@@ -28,17 +28,18 @@ No latency SLA or universal proxy-timeout suitability is claimed.
 
 ## DD-02 Daily enhancement work packages
 
-WP-00 encodes accepted target semantics only. Existing L1 delivery above does not
-mean these enhancements are implemented. Use one branch,
+WP-00 encodes accepted target semantics. WP-01 implements Daily reference preparation,
+immutable evidence, HTTP projection and generated contracts; Chinese Presentation/export
+and cross-layer acceptance remain pending. Use one branch,
 `feat/daily-calendar-spread-enhancement`, throughout; each WP has its own commit.
 Do not return automatically to develop, create further feature branches, merge,
 push or publish. WP-00 stops after its documentation commit for Implementation Review.
 
 | WP | Delivery and acceptance boundary | State |
 | --- | --- | --- |
-| WP-00 — Authority Encoding | Reconcile upstream selection, Daily-only reference/result, additive HTTP, Chinese/export and Demo omission contracts; review documentation diff only | Authority encoded; implementation remains pending |
-| WP-01 — Underlying Index Close Integration | Public Dataset consumption, Daily immutable result/evidence, HTTP projection, affected OpenAPI/TypeScript generation and targeted Python/contract verification | READY after WP-00 commit; not implemented |
-| WP-02 — Chinese Presentation & Export | Chinese controls/table/status, index reference, four local actions, pure feature CSV/Context builders and targeted TypeScript/React verification | Depends on WP-01 |
+| WP-00 — Authority Encoding | Reconcile upstream selection, Daily-only reference/result, additive HTTP, Chinese/export and Demo omission contracts; review documentation diff only | IMPLEMENTED (authority encoding) |
+| WP-01 — Underlying Index Close Integration | Public Dataset consumption, Daily immutable result/evidence, HTTP projection, affected OpenAPI/TypeScript generation and targeted Python/contract verification | IMPLEMENTED; targeted Python, wire and generated-contract checks passed |
+| WP-02 — Chinese Presentation & Export | Chinese controls/table/status, index reference, four local actions, pure feature CSV/Context builders and targeted TypeScript/React verification | READY; not started |
 | WP-03 — Cross-Layer Acceptance & Reconciliation | Targeted Online/Demo/export integration acceptance, necessary drift fixes and current readiness update | Depends on WP-02 |
 
 Canonical target owners: [Daily Index Reference](DAILY_INDEX_REFERENCE.md),
@@ -80,6 +81,14 @@ automatic gates; report actual checks and NOT VERIFIED limits under root policy.
 Reconcile target/readiness text with implemented behavior and close with commit evidence,
 without creating a permanent task diary. No business scope extends to range queries,
 Historical population/statistics, unrelated Daily refactors or deployment.
+
+WP-01 preserves shared preparation and pure construction semantics, reusing local
+Calendar/Ensure validators with explicit SSE/Index target parameters. Only Daily
+adds index_service injection and required reference/evidence carriers. The HTTP field
+is optional solely for retained payloads; both online endpoint projections require it.
+The feature adapter's additional online-presence assertion and present-object frontend
+validation remain WP-02 work. No UI, captured Bundle bytes or Historical contract changed.
+Live Source, browser and deployment verification were not performed in WP-01.
 
 ### Reconciliation and remaining implementation risks
 
