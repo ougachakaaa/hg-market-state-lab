@@ -3,7 +3,7 @@ import { createRequestBoundary, installRequestBoundary } from '../../../shared/h
 import { checkInputs, getReport, getRun, products, submitRun } from './futuresBasis'
 const id = 'a'.repeat(32)
 const request = { product_code: 'IM' as const, start_date: '2024-10-18', end_date: '2024-10-21' }
-const immutable = { ...request, case: 'futures_basis_v1', analysis_profile: 'r01a_standard_v1' }
+const immutable = { ...request, case: 'futures_basis_v1', analysis_profile: 'r01a_standard_v2' }
 const accepted = { run_id: id, request: immutable, status: 'PENDING', created_at: '2026-11-09T00:00:00Z' }
 const response = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status })
 let release: () => void

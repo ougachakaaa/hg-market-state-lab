@@ -75,7 +75,7 @@ Futures Basis Histogram 的分箱边界文本、对应边界 hover 和 X-axis ti
 展示性分箱边界，不扩大到常规金融比例、Mean/Quantile、Frequency、实际排除比例
 或其他 feature。负零仍归一为相应精度的零。只改变文本，不改变 raw edges、数值、
 排序或 category identity，也不得因格式化重新分箱。该例外属于已确认的 Distribution
-V2 目标，待 WP3 实现；入口见
+V2 行为，已由 WP3 实现；入口见
 [Distribution presentation](src/features/futures_basis_research/DISTRIBUTION.md)。
 
 以下内容不使用显示格式化，继续保留原始值或原始文本：

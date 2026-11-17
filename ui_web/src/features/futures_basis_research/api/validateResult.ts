@@ -15,7 +15,7 @@ export type Accepted = Schemas['FuturesBasisRunAccepted']
 export type ImmutableRequest = Schemas['FuturesBasisImmutableRequest']
 export type ReportResponse = Omit<Schemas['FuturesBasisReportResponse'], 'data'> & { data: ReportData }
 export const products = openapi.components.schemas.FuturesBasisRunRequest.properties.product_code.enum
-export const REPORT_PROFILE = 'futures_basis_report_evidence_v1'
+export const REPORT_PROFILE = 'futures_basis_report_evidence_v2'
 
 const ajv = new Ajv2020({ strictSchema: false, strictTypes: false, formats: {
   date: (value: string) => /^\d{4}-\d{2}-\d{2}$/.test(value) && Number.isFinite(Date.parse(value)) && new Date(value).toISOString().slice(0, 10) === value,
@@ -52,6 +52,7 @@ export function validateImmutableRequest(value: unknown): ImmutableRequest {
  * value is recomputed and the payload is returned unchanged.
  */
 export function validateReaderReport(value: unknown, request: ImmutableRequest, resultStatus?: 'complete' | 'partial'): ReportData {
+  if (request.analysis_profile !== 'r01a_standard_v2') throw new Error('Unsupported analysis profile')
   validateReportData(value)
   const data = value
   if (!data.definition_version.trim()) throw new Error('Missing Futures Basis definition version')
@@ -69,7 +70,7 @@ export function validateReaderReport(value: unknown, request: ImmutableRequest, 
 export interface EmbeddedReportPayload {
   /** Fixed immutable request identity of the committed Example. */
   request: unknown
-  /** Complete producer reader payload (`futures_basis_report_evidence_v1`). */
+  /** Complete producer reader payload (`futures_basis_report_evidence_v2`). */
   report: unknown
 }
 

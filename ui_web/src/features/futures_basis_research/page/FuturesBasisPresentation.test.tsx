@@ -40,7 +40,7 @@ it('composes the Production execution regions into the shared page presentation'
   expect(screen.getByText('当前 Run').closest('.ant-card')!.querySelectorAll('.ant-descriptions-item-label')).toHaveLength(2)
   expect(screen.getByText('IM')).toBeTruthy()
   expect(screen.getByText('2024-10-18 至 2024-10-21')).toBeTruthy()
-  expect(screen.queryByText('r01a_standard_v1')).toBeNull()
+  expect(screen.queryByText('r01a_standard_v2')).toBeNull()
   expect(screen.queryByText('研究 Case')).toBeNull()
   expect(screen.queryByTestId('report')).toBeNull()
   expect(screen.queryByText('Embedded Report 已通过静态校验')).toBeNull()

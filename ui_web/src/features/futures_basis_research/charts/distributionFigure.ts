@@ -5,9 +5,16 @@ import { formatUnit } from '../../../shared/format/unit'
 const colors = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728']
 
 /** Feature-owned Plotly encoding; no formal Visualization contract is synthesized. */
-export function distributionTraces(projection: Extract<HistogramProjection, { status: 'ready' }>, metric: BasisMetric): Data[] {
+export function distributionTraces(projection: Extract<HistogramProjection, { status: 'ready' }>, metric: BasisMetric, width = BIN_PRESETS[metric].default as number): Data[] {
   const ratio = BIN_PRESETS[metric].unit === 'decimal_ratio'
-  const boundary = (value: number) => ratio ? formatUnit(value, 'decimal_ratio') : `${formatUnit(value)} 点`
+  const boundary = (value: number) => {
+    if (ratio) {
+      if (width !== .05) return formatUnit(value, 'decimal_ratio')
+      const percent = Number((value * 100).toFixed(2)) || 0
+      return `${percent.toFixed(2)}%`
+    }
+    return `${formatUnit(value)} ${metric === 'annualized_basis_value' ? '点/年' : '点'}`
+  }
   return projection.slots.map(({ slot, n, bins, failure, layerIndex }) => {
     const available = n > 0 && !failure
     // Two vertices per interval preserve horizontal extent and exact edge closures.

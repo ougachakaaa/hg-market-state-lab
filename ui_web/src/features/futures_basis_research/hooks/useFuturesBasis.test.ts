@@ -9,7 +9,7 @@ vi.mock('../api/futuresBasis', async importOriginal => {
 })
 const id = 'a'.repeat(32); const other = 'b'.repeat(32)
 const request = { product_code: 'IM' as const, start_date: '2024-10-18', end_date: '2024-10-21' }
-const accepted = { run_id: id, request: { ...request, case: 'futures_basis_v1' as const, analysis_profile: 'r01a_standard_v1' as const }, status: 'PENDING' as const, created_at: '2026-11-09T00:00:00Z' }
+const accepted = { run_id: id, request: { ...request, case: 'futures_basis_v1' as const, analysis_profile: 'r01a_standard_v2' as const }, status: 'PENDING' as const, created_at: '2026-11-09T00:00:00Z' }
 const pending: Run = { ...accepted, started_at: null, finished_at: null, result_available: false, result_status: null, failure: null }
 const completed = { ...pending, status: 'COMPLETED' as const, result_available: true, result_status: 'partial' as const }
 const report = { run_id: id, request: accepted.request, result_status: 'partial', data: { status: 'partial' } } as Awaited<ReturnType<typeof getReport>>

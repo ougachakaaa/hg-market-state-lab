@@ -1,3 +1,4 @@
+import legacyBundle from '../../../../demo/bundles/basis.json'
 import { describe, expect, it } from 'vitest'
 import { fixture } from '../testing/embeddedReportFixture'
 import {
@@ -20,7 +21,7 @@ describe('Futures Basis pure result validation', () => {
     const before = structuredClone(input)
     const result = validateEmbeddedReport(input)
     expect(result.report.profile).toBe(REPORT_PROFILE)
-    expect(result.report.definition_version).toBe('futures_basis_definition_v1')
+    expect(result.report.definition_version).toBe('futures_basis_definition_v2')
     expect(result.report.status).toBe('complete')
     expect(result.report.request.observation).toMatchObject({
       product_code: 'IM', start_date: '2024-10-18', end_date: '2024-10-21', case: 'futures_basis_v1',
@@ -93,4 +94,29 @@ describe('Futures Basis pure result validation', () => {
     expect(matchesResponse('get', '/research/futures-basis/runs/{run_id}/report', 200, { ...envelope, result_status: 'failed' })).toBe(false)
     expect(matchesResponse('get', '/research/futures-basis/runs/{run_id}/report', 200, { ...envelope, request: { ...request, analysis_profile: 'other' } })).toBe(false)
   })
+})
+
+
+it('rejects V1 identities, missing fourth Metric and incorrect V2 units/order', () => {
+  const mutations = [
+    (r: any) => { r.profile = 'futures_basis_report_evidence_v1' },
+    (r: any) => { r.definition_version = 'futures_basis_definition_v1' },
+    (r: any) => { delete r.views.history.annualized_basis_value },
+    (r: any) => { r.distributions = r.distributions.filter((d: any) => d.request.metric !== 'annualized_basis_value') },
+    (r: any) => { r.request.histograms.pop() },
+    (r: any) => { r.request.histograms.reverse() },
+    (r: any) => { r.views.history.annualized_basis_value.axes[0].coordinate.unit = 'index_points' },
+    (r: any) => { r.distributions.at(-1).request.histogram.unit = 'decimal_ratio' },
+  ]
+  for (const mutate of mutations) {
+    const input = payload()
+    mutate(input.report)
+    expect(() => validateEmbeddedReport(input)).toThrow()
+  }
+  expect(() => validateReaderReport(payload().report, { ...testOnlyRequest, analysis_profile: 'r01a_standard_v1' } as never)).toThrow(/analysis profile/)
+})
+
+
+it('rejects the committed V1 Demo Bundle as a V2 reader', () => {
+  expect(() => validateReaderReport(legacyBundle.result, testOnlyRequest)).toThrow(/Unsupported reader/)
 })

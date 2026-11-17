@@ -11,7 +11,7 @@ export const testOnlyRequest: ImmutableRequest = {
   product_code: 'IM',
   start_date: '2024-10-18',
   end_date: '2024-10-21',
-  analysis_profile: 'r01a_standard_v1',
+  analysis_profile: 'r01a_standard_v2',
 }
 
 export const embeddedReportPayload: EmbeddedReportPayload = {

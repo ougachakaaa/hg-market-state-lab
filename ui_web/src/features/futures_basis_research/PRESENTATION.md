@@ -10,8 +10,8 @@ This document owns presentation only; it creates no wire or Bundle contract.
 
 History chart titles and the distribution metric selector use Chinese presentation
 aliases for the four V2 metrics; financial definitions and units remain Research-owned.
-V2 is an accepted target pending WP2-WP4; current runtime still implements three
-metrics. Compact Demo shows the exact supplied source disclosure in a default-closed
+V2 four-metric reading and Bin Width presentation are implemented in WP3.
+Tail selection remains pending WP4. Compact Demo shows the exact supplied source disclosure in a default-closed
 数据来源 disclosure. It is separate from the always-visible static/investment warning;
 never infer provider authenticity or replace the supplied statement with a new claim.
 
@@ -48,7 +48,7 @@ the selector and retaining Methods, comparisons, evidence and all six sections.
 selection, presentation population, rank-based Tail Exclusion, Count/Frequency,
 input association validation, exclusion audit and capacity/failure behavior. It
 specializes this reader across Online, Static Demo and Offline. The V2 changes
-are accepted semantics, pending WP3/WP4 implementation; no formal statistic or
+include implemented WP3 Metric/width presentation and pending WP4 tail selection; no formal statistic or
 original Report is modified by those controls.
 
 ## UI-05 no-value dates
