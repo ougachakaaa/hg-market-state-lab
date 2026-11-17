@@ -5,9 +5,9 @@ import { resolve } from 'node:path'
 export async function historicalBasisAcceptance(page, expected, output) {
   const plots = page.locator(':is(#section-1, [data-testid="history-charts"]) .js-plotly-plot')
   const control = page.locator(':is(#section-1, [data-testid="history-charts"])')
-  const metrics = ['basis_value', 'basis_ratio', 'annualized_basis_ratio']
+  const metrics = ['basis_value', 'basis_ratio', 'annualized_basis_ratio', 'annualized_basis_value']
   async function projection(trading) {
-    for (let i = 0; i < 3; i++) {
+    for (let i = 0; i < metrics.length; i++) {
       const plot = plots.nth(i)
       await page.waitForFunction(({ index, type }) => document.querySelectorAll(':is(#section-1, [data-testid="history-charts"]) .js-plotly-plot')[index]?._fullLayout.xaxis.type === type, { index: i, type: trading ? 'linear' : 'date' })
       const view = expected.views.history[metrics[i]]
@@ -35,7 +35,7 @@ export async function historicalBasisAcceptance(page, expected, output) {
         assert.equal(actual.y.gridcolor, 'rgba(180,180,180,0.25)')
         assert.equal(actual.shapes.length, view.events.length)
       }
-      if (i > 0 && marks.some(m => m.y !== null)) {
+      if ([1, 2].includes(i) && marks.some(m => m.y !== null)) {
         assert.ok(actual.data.flatMap(t => t.text).some(t => /\d\.\d%/.test(t)))
         assert.ok(!actual.data.flatMap(t => t.text).some(t => t.includes('-0.0%')))
       }

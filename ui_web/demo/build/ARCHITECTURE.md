@@ -213,7 +213,9 @@ The root personal-study policy supersedes former authorization gates.
 Calendar Spread uses the two complete HTTP 200 DTOs specified by
 [its integration contract](../CALENDAR_SPREAD.md#wp7-delivery-contract).
 Repeated `--only` arguments select a set in one candidate transaction. Unselected
-files must match the existing Manifest hashes before copying, including during
+files must match the existing Manifest hashes before copying. Selected Bundles may be
+replaced across a formal contract upgrade without admitting their obsolete payloads;
+the complete replacement candidate must pass current admission. This also applies during
 seven-to-nine membership extension. Independent complete candidate admission remains
 mandatory; no partial membership is allowed by Build or Preflight. Response schema
 validation precedes feature-owned association validation and payload reference retention.

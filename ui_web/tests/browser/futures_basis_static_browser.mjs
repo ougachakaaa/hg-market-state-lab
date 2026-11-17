@@ -118,7 +118,7 @@ try {
   await page.reload()
   await page.getByRole('heading', { name: 'Futures Basis Research', exact: true }).waitFor()
   assert.equal(await hash(), '#/research/futures-basis')
-  assert.equal(await page.locator('[data-testid="history-charts"] .js-plotly-plot').count(), 3)
+  assert.equal(await page.locator('[data-testid="history-charts"] .js-plotly-plot').count(), 4)
   await verifyDateEvents(page, 0)
   pass('Browser Back/Forward and reload keep the static Research route and the embedded report')
 

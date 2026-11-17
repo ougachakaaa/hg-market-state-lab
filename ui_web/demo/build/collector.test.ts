@@ -20,7 +20,7 @@ it('reads the existing configuration and rejects mismatched full HTTP Run envelo
   const configuration = await bridge.execute({ op: 'config' }) as { presets: unknown }
   expect(configuration.presets).toEqual(presets)
   const body = { run_id: '00000000000000000000000000000001', status: 'PENDING',
-    request: { ...presets.basis.request, case: 'futures_basis_v1', analysis_profile: 'r01a_standard_v1' },
+    request: { ...presets.basis.request, case: 'futures_basis_v1', analysis_profile: 'r01a_standard_v2' },
     created_at: '2026-11-15T00:00:00Z' }
   const command = { op: 'response', route: '/research/futures-basis/runs', method: 'post', status: 202,
     bytes: Buffer.from(JSON.stringify(body)).toString('base64') }
