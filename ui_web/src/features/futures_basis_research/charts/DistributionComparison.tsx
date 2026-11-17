@@ -19,7 +19,7 @@ export function DistributionComparison({ projection, metric, width }: { projecti
     return () => observer.disconnect()
   }, [projection.status])
   if (projection.status !== 'ready') return <Alert role="status" type={projection.status === 'inconsistent' ? 'error' : 'info'} title={projection.message} />
-  const ratio = BIN_PRESETS[metric].unit === 'decimal_ratio'
+  const axisTitle = { basis_value: '基差（点）', basis_ratio: '基差率（%）', annualized_basis_ratio: '年化基差率（%）' }[metric]
   return <Flex vertical gap="small" data-testid="distribution-comparison" style={{ minWidth: 0 }}>
     {projection.slots.filter(s => !s.n).map(s => <Alert key={s.slot} type="info" title={`${s.slot}：无有效样本（Eligible N=0）`} />)}
     <div ref={frame} style={{ width: '100%', minWidth: 0, height: 380, overflow: 'hidden' }}>
@@ -28,7 +28,7 @@ export function DistributionComparison({ projection, metric, width }: { projecti
         paper_bgcolor: token.colorBgContainer, plot_bgcolor: token.colorBgContainer, font: { color: token.colorText },
         margin: { l: 60, r: 20, t: 70, b: 65 }, showlegend: true,
         legend: { orientation: 'h', y: 1.12, uirevision: 'slots', itemdoubleclick: false },
-        xaxis: { title: { text: ratio ? '%' : '基差（点）' }, ...plotlyAxisFormat(BIN_PRESETS[metric].unit), uirevision: `${metric}/${width}` },
+        xaxis: { title: { text: axisTitle }, ...plotlyAxisFormat(BIN_PRESETS[metric].unit), uirevision: `${metric}/${width}` },
         yaxis: { title: { text: 'Frequency（%）' }, ...plotlyAxisFormat('decimal_ratio'), rangemode: 'tozero', uirevision: `${metric}/${width}` },
         hovermode: 'closest', dragmode: 'zoom',
       }} config={{ displaylogo: false, responsive: true, scrollZoom: true, modeBarButtons: [['zoom2d', 'pan2d', 'resetScale2d']] }}

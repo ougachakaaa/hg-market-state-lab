@@ -28,6 +28,7 @@
   "ui_web/src/features/calendar_spread_relative_value/testing/signed_spread.json": "c75eb9534f039980b250ac2175328e2d4467ec604abcb21a3f77e922e145023f",
   "ui_web/src/features/futures_calendar_spread/testing/closed.json": "b5a8ac72bde2eddcf6be16a6bf612539ff15b0d60237258fadcfcf4a4a52becf",
   "ui_web/src/features/futures_calendar_spread/testing/daily.json": "fbe7acab245c171be0f2bc311accd59b063441003bd19a33ccf7c23f04835d7d",
+  "ui_web/src/features/futures_calendar_spread/testing/daily_spot.json": "341f6b978f11c80420c34f4af3c1d64e03be268385c1a1fa8fad4a1d85844256",
   "ui_web/src/features/futures_calendar_spread/testing/empty.json": "6dfb7a6b7094c7a7b366685d7e1a905e9a099f4cf49e8045240ae47fef46d1c6",
   "ui_web/src/features/futures_calendar_spread/testing/excluded.json": "a0336b840454e78a88903d8449c890dca6f1625e868b946022371a0cb6bbb6f8",
   "ui_web/src/features/research_catalog/api/catalog.fixture.json": "ba8c965cf444499f17dafb8d727eac292a97f9818f2bd7272bfb721d1b931b6b",

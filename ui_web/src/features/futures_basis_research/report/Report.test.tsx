@@ -15,7 +15,11 @@ vi.mock('../../../shared/visualization', () => ({
   </div>,
   DEFAULT_DATE_AXIS_MODE: 'trading',
 }))
-vi.mock('react-plotly.js', () => ({ default: ({ data }: any) => <div data-testid="distribution-plot" data-traces={JSON.stringify(data)} /> }))
+vi.mock('react-plotly.js', () => ({ default: ({ data, layout }: any) => <div data-testid="distribution-plot" data-traces={JSON.stringify(data)} data-layout={JSON.stringify(layout)} /> }))
+function selectMetric(label: string) {
+  fireEvent.mouseDown(screen.getByRole('combobox', { name: 'Distribution metric' }))
+  fireEvent.click(screen.getByText(label, { selector: '.ant-select-item-option-content' }))
+}
 afterEach(cleanup)
 describe('shared reader', () => {
   it.each(['online', 'demo'] as const)('renders one compact report with charts before the summary (%s)', mode => {
@@ -90,6 +94,8 @@ it('formats Overview, quantiles, intervals and paired means by explicit result u
   data.comparisons = [{ request: { analysis_id: 'pair', metric: 'basis_value', slots: ['M0', 'M1'] }, common_dates: [], dropped: [], dropped_details: [], left_methods: methods, right_methods: methods }]
   const before = structuredClone(data)
   const { container } = render(<Report data={data} mode="offline" />)
+  selectMetric('基差（点）')
+  fireEvent.click(screen.getByText('M0 正式统计方法'))
   expect(screen.getByText('15.3%')).toBeTruthy()
   expect(screen.getByText('Mean：15.3%')).toBeTruthy()
   expect(screen.getAllByText('-8.7%')).toHaveLength(2)
@@ -131,6 +137,7 @@ it.each(['demo', 'online', 'offline'] as const)('renders four Slots and width co
   const data = histogramFixture([[1, 2], [3], [], [5]])
   const before = structuredClone(data)
   render(<Report data={data} mode={mode} />)
+  selectMetric('基差（点）')
   expect(screen.getAllByTestId('chart-mode')).toHaveLength(3)
   const traces = JSON.parse(screen.getByTestId('distribution-plot').getAttribute('data-traces')!)
   expect(traces.map((t: any) => t.name)).toEqual(['M0', 'M1', 'Q1', 'Q2'])
@@ -170,6 +177,7 @@ it.each(['online', 'demo', 'offline'] as const)('switches four-Slot summaries by
   })))
   const before = structuredClone(data)
   render(<Report data={data} mode={mode} />)
+  selectMetric('基差（点）')
   const summary = screen.getByRole('region', { name: '统计摘要' })
   const cells = () => within(summary).getAllByRole('row').slice(1).map(row => within(row).getAllByRole('cell').map(c => c.textContent))
   expect(cells()).toEqual(['M0', 'M1', 'Q1', 'Q2'].map((slot, i) => [slot, '2', `${i}.00`, `${(.1 + i).toFixed(2)}`, `${(.2 + i).toFixed(2)}`, `${(.3 + i).toFixed(2)}`, `${(.4 + i).toFixed(2)}`, `${(.2 + i).toFixed(2)}`]))
@@ -197,6 +205,7 @@ it('renders Partial method failures and empty samples without hiding successful 
     ] },
   ]
   render(<Report data={data} mode="online" />)
+  selectMetric('基差（点）')
   const rows = within(screen.getByRole('region', { name: '统计摘要' })).getAllByRole('row').slice(1)
   expect(within(rows[0]).getAllByRole('cell').map(c => c.textContent)).toEqual(['M0', '2', '不可用', '不可用', '0.00', '不可用', '不可用', '不可用（CalculationFailure）'])
   expect(within(rows[1]).getAllByRole('cell').map(c => c.textContent)).toEqual(['M1', '0', '不可用', '不可用', '不可用', '不可用', '不可用', '不可用（no_eligible_sample）'])
@@ -240,6 +249,7 @@ it('stops the entire Metric comparison for a mismatched Slot and retains the sum
   const data = histogramFixture([[1], [2], [3], [4]])
   data.distributions[2].binding = []
   render(<Report data={data} mode="online" />)
+  selectMetric('基差（点）')
   expect(screen.getByText(/展示数据不一致：Q1/)).toBeTruthy()
   expect(screen.queryByTestId('distribution-plot')).toBeNull()
   expect(screen.getByRole('region', { name: '统计摘要' })).toBeTruthy()
@@ -247,10 +257,12 @@ it('stops the entire Metric comparison for a mismatched Slot and retains the sum
 
 it('shows empty and capacity states without a successful plot', () => {
   const first = render(<Report data={histogramFixture([[]])} mode="online" />)
+  selectMetric('基差（点）')
   expect(screen.getByText('无有效样本（Eligible N=0）')).toBeTruthy()
   expect(screen.queryByTestId('distribution-plot')).toBeNull()
   first.unmount()
   render(<Report data={histogramFixture([[0, 1e10]])} mode="online" />)
+  selectMetric('基差（点）')
   expect(screen.getByText(/分箱范围超出展示容量/)).toBeTruthy()
   expect(screen.queryByTestId('distribution-plot')).toBeNull()
 })
@@ -260,6 +272,7 @@ it('keeps formal IntervalCount failure visible and never plots its stale result'
   data.status = 'partial'
   data.distributions[0].methods[0].failure_category = 'CalculationFailure'
   render(<Report data={data} mode="online" />)
+  selectMetric('基差（点）')
   expect(screen.getByText('M0：CalculationFailure（Eligible N=1）')).toBeTruthy()
   const traces = JSON.parse(screen.getByTestId('distribution-plot').getAttribute('data-traces')!)
   expect(traces[0].y).toEqual([null])
@@ -270,6 +283,7 @@ it('rejects a nonempty Eligible Slot that reports no_eligible_sample instead of 
   const data = histogramFixture([[1], [2], [3], [4]])
   data.distributions[2].methods[0].failure_category = 'no_eligible_sample'
   render(<Report data={data} mode="online" />)
+  selectMetric('基差（点）')
   const status = screen.getByText(/展示数据不一致/)
   expect(status.textContent).toContain('Q1')
   expect(status.textContent).toContain('no_eligible_sample')
@@ -282,4 +296,64 @@ it.each(['online', 'demo', 'offline'] as const)('configures all three history di
  render(<Report data={data} mode={mode} />)
  expect(screen.getAllByTestId('chart-mode').filter(node => node.getAttribute('data-missing') === '无有效指标值日期')).toHaveLength(3)
  expect(data).toEqual(original)
+})
+
+it.each(['online', 'demo', 'offline'] as const)('defaults to annualized samples, formal summaries and five percentage points (%s)', mode => {
+  // The null on the second date models the producer's D=0 Not Applicable outcome.
+  const samples = [[-.06, null, .04], [-.02, .02, .08], [.01, .01, .12], [-.11, 0, .03]]
+  const data = histogramFixture(samples, 'annualized_basis_ratio')
+  for (const metric of ['basis_value', 'basis_ratio'] as const) {
+    const other = histogramFixture(metric === 'basis_value' ? [[10, 20, 30], [40], [50], [60]] : [[.001, .002, .003], [.004], [.005], [.006]], metric)
+    data.views.history[metric] = other.views.history[metric]
+    data.distributions.push(...other.distributions)
+    data.accounting.push(...other.accounting)
+  }
+  for (const distribution of data.distributions.filter(d => d.request.metric === 'annualized_basis_ratio')) {
+    // Deliberately supplied formal values distinguish result consumption from recomputation.
+    const sample_count = distribution.binding.length
+    distribution.methods.push(
+      { spec: { method: 'mean' }, failure_category: null, reason: null, result: { method: 'mean', unit: 'decimal_ratio', sample_count, value: .123 } },
+      { spec: { method: 'quantile' }, failure_category: null, reason: null, result: { method: 'quantile', unit: 'decimal_ratio', sample_count, points_and_values: [[1, .5], [.25, .2], [0, .1], [.75, .4], [.5, .3]] } },
+    )
+  }
+  const before = structuredClone(data)
+  render(<Report data={data} mode={mode} />)
+  const selected = (name: string) => screen.getByRole('combobox', { name }).closest('.ant-select')!.textContent
+  expect(selected('Distribution metric')).toContain('年化基差率（%）')
+  expect(selected('Bin width')).toContain('5 个百分点')
+  expect(screen.getByText('年化基差率用于比较不同到期期限下的基差强度，不等于实际持有收益；临近到期时数值可能较敏感。')).toBeTruthy()
+  const plot = () => screen.getByTestId('distribution-plot')
+  const layout = () => JSON.parse(plot().getAttribute('data-layout')!)
+  expect(layout().xaxis.title.text).toBe('年化基差率（%）')
+  expect(layout().yaxis.title.text).toBe('Frequency（%）')
+  const traces = JSON.parse(plot().getAttribute('data-traces')!)
+  expect(traces.map((trace: any) => trace.name)).toEqual(['M0', 'M1', 'Q1', 'Q2'])
+  traces.forEach((trace: any, i: number) => {
+    const bins = trace.customdata.filter((_: unknown, index: number) => index % 2 === 0)
+    const eligible = samples[i].filter(value => value !== null)
+    expect(bins.reduce((sum: number, bin: any[]) => sum + bin[1], 0)).toBe(eligible.length)
+    expect(bins.reduce((sum: number, bin: any[]) => sum + bin[2], 0)).toBeCloseTo(1)
+    bins.forEach((bin: any[]) => {
+      expect(bin[3]).toBe(eligible.length)
+      expect(bin[2]).toBe(bin[1] / eligible.length)
+    })
+    expect(trace.x).toEqual([-.15, -.1, -.1, -.05, -.05, 0, 0, .05, .05, .1, .1, .15])
+    expect(bins.map((bin: any[]) => bin[1])).toEqual([
+      [0, 1, 0, 1, 0, 0], [0, 0, 1, 1, 1, 0], [0, 0, 0, 2, 0, 1], [1, 0, 0, 2, 0, 0],
+    ][i])
+  })
+  const rows = within(screen.getByRole('region', { name: '统计摘要' })).getAllByRole('row').slice(1)
+  rows.forEach((row, i) => expect(within(row).getAllByRole('cell').map(cell => cell.textContent)).toEqual([
+    ['M0', 'M1', 'Q1', 'Q2'][i], i === 0 ? '2' : '3', '10.0%', '20.0%', '30.0%', '40.0%', '50.0%', '12.3%',
+  ]))
+  expect(data.accounting.find(a => a.metric === 'annualized_basis_ratio' && a.slot === 'M0')!.outcomes.find(o => o.status === 'not_applicable')!.identities).toEqual([['IM', '2024-10-02', 'M0']])
+  for (const [label, width, n] of [['基差（点）', '10 点', 3], ['基差率（%）', '0.1 个百分点', 3], ['年化基差率（%）', '5 个百分点', 2]] as const) {
+    selectMetric(label)
+    expect(selected('Bin width')).toContain(width)
+    expect(screen.queryByText('年化基差率用于比较不同到期期限下的基差强度，不等于实际持有收益；临近到期时数值可能较敏感。') !== null).toBe(label === '年化基差率（%）')
+    expect(layout().xaxis.title.text).toBe(label)
+    expect(layout().yaxis.title.text).toBe('Frequency（%）')
+    expect(JSON.parse(plot().getAttribute('data-traces')!)[0].customdata[0][3]).toBe(n)
+  }
+  expect(data).toEqual(before)
 })
