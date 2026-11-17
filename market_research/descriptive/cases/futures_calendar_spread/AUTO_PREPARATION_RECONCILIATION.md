@@ -6,6 +6,19 @@ and follow-up readiness; input, application, result, HTTP and presentation seman
 remain in their narrow canonical owners below. Original WP0–WP7 closure records are
 historical and are not reinterpreted as Issue #13 acceptance.
 
+## Current delivery and evidence
+
+Issue #13 WP1 Python execution preparation and WP2 HTTP/Web consumers are implemented.
+[WP3 operational acceptance](#wp3-operational-acceptance-and-final-reconciliation-2026-11-16)
+records real fresh/hot execution and local browser evidence for the selected WSL chain,
+plus controlled failure tests. Other deployments/platforms, maximum windows and prolonged
+or cold concurrent load remain NOT VERIFIED. Financial/result semantics remain with
+[Inputs](INPUTS.md), [Application](APPLICATION.md) and [Query Results](QUERY_RESULTS.md).
+
+The WP0 target/implementation gaps and later package reports below retain their original
+stage scope. Their branch, merge and Issue-status observations describe those executions,
+not current GitHub state or instructions to start another package.
+
 ## WP0 baseline and scope (2026-11-16)
 
 Source: [Issue #13](https://github.com/ougachakaaa/hg-market-state-lab/issues/13),

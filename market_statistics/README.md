@@ -42,9 +42,9 @@ immutable Python values. Invalid requests raise `InvalidSample` or
 `InvalidStatisticalSpec`; numerical failures raise `CalculationFailure` with `method`,
 `reason` and an original cause where available. All belong to `StatisticalFailure`.
 
-NumPy 2.5.3 on Python 3.13 is the tested backend. Quantile's frozen binary64 adaptation
+The original STAT-IMP-01 evidence below used NumPy 2.5.3 on Python 3.13. Quantile's frozen binary64 adaptation
 is explained in [BACKEND.md](BACKEND.md); the statistical contracts are unchanged.
-The deterministic suite covers public legality, both methods, backend failure injection,
+The original deterministic suite covered public legality, both V1 methods, backend failure injection,
 isolated installed imports and architecture boundaries. Research Converter, result
 association and Job / Batch Executor remain outside this implementation; prior blocked
 live-data acceptance remains unchanged.
@@ -103,5 +103,8 @@ Directed verification (2026-11-16), from the repository root:
 `.venv/bin/python -m pytest market_statistics/tests/test_empirical_percentile.py market_statistics/tests/test_public_api.py -q`
 — **94 passed**. This includes the existing Quantile, IntervalCount and Mean public
 dispatch examples. No full-module/repository regression, architecture scans,
-real-data, browser or deployment checks were run. WP4 Research adaptation remains
-unimplemented; WP3 only supplies its public numerical dependency.
+real-data, browser or deployment checks were run. At that WP3 stage, WP4 Research
+adaptation was not yet implemented. Current Research query/HTTP/Web delivery is recorded
+in the [Calendar Spread Roadmap](../market_research/descriptive/cases/futures_calendar_spread/ROADMAP.md#baseline-and-status).
+WP3 itself supplied only the public numerical dependency; the directed results above
+remain historical evidence, not a fresh test run.

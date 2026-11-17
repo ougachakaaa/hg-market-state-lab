@@ -9,8 +9,10 @@ The WP0–WP7 closure and acceptance records below describe the original L1 deli
 and remain unchanged. They do not close Issue #13. Its new WP0 Semantic Decision
 Encoding, target/current implementation differences and separately numbered
 Issue #13 WP1–WP3 enter [Automatic preparation reconciliation](AUTO_PREPARATION_RECONCILIATION.md).
-Inputs/Application/HTTP/Web now define that accepted target; no execution runtime
-is delivered by its documentation-only WP0.
+Inputs/Application/HTTP/Web define that accepted behavior. Its WP1/WP2 implementation
+and bounded WP3 operational evidence are recorded in the
+[current delivery summary](AUTO_PREPARATION_RECONCILIATION.md#current-delivery-and-evidence).
+The documentation-only WP0 and original L1 records below retain their historical scope.
 
 ## Baseline and status
 

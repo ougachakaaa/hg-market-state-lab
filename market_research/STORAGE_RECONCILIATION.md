@@ -28,6 +28,12 @@ implementation closure from actual platform acceptance. WP0 inspection descripti
 and original work-package requirements are historical baselines. The repository remains
 pre-production; WP6 final acceptance is recorded in
 [Storage WP6 execution evidence](#storage-wp6-execution-evidence).
+That record reports functional storage acceptance on native Windows, WSL2 Ubuntu
+and Linux Docker; native Linux outside WSL remains NOT RUN and the original
+four-platform gate remains PARTIAL. Consult its
+[remaining risks](#remaining-known-risks-and-unverified-claims) before interpreting
+any historical PASS. The inspection/drift table and work-package plan below record
+the migration stages; their open/unimplemented wording is not current delivery status.
 
 ## Inspected boundaries and reconciliation
 
@@ -250,7 +256,7 @@ deleted; W1, Publication, Auth, DataLake, Workbench, formulas and public DTOs ar
 **WP2 verdict: PARTIAL**: W2 focused/native-Windows checks pass; full HTTP regression
 is blocked by the unchanged W1 POSIX store, and Linux runtime remains NOT RUN.
 Detailed commands, platform results, verdict and remaining blockers are owned by the
-[W2 WP2 evidence](../market_backtesting/cases/futures_roll_long/RECONCILIATION.md#storage-wp2-execution-evidence).
+[W2 WP2 evidence](../market_backtesting/cases/futures_roll_long/ACCEPTANCE_HISTORY.md#storage-wp2-execution-evidence).
 W1 native-Windows POSIX failures remain WP3 work; this summary does not close them.
 
 

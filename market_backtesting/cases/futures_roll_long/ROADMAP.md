@@ -6,8 +6,9 @@ The original case milestones below retain their original evidence and numbering.
 The storage WP0-WP6 series is tracked in
 [Storage reconciliation](../../../market_research/STORAGE_RECONCILIATION.md); its case-owned target is
 [Online storage](ONLINE_STORAGE.md). W2 exclusively uses SQLite after storage WP2; the POSIX adapter is retired.
-Current checks and platform limits are recorded in
-[WP2 evidence](RECONCILIATION.md#storage-wp2-execution-evidence).
+Current platform limits enter
+[Storage WP6 final status](#storage-wp6-final-status-2026-11-13);
+the [WP2 evidence](ACCEPTANCE_HISTORY.md#storage-wp2-execution-evidence) retains its original stage scope.
 Historical original milestones do not establish unexecuted platform acceptance.
 
 This document specializes the [case](ARCHITECTURE.md). It owns current delivery
@@ -43,8 +44,8 @@ single-instrument accounting kernel; W2 is its first case.
   2025-03-24: 26 real CFFEX sessions, 104 Futures rows, real 2025-03-21 expiry rolls,
   final Flat, reproducible replay and identical input fingerprint across profiles.
   Default caches were not touched. Full-window research/Web evidence is recorded in WP8 below.
-- Current verification and real/synthetic evidence are in
-  [Reconciliation](RECONCILIATION.md#validation-evidence).
+- Original WP3 verification and real/synthetic evidence are in
+  [Acceptance history](ACCEPTANCE_HISTORY.md#validation-evidence).
 - **WP4 — PASS (2026-11-11).** Immutable validated BacktestResult, formal trades/rolls,
   fixed limitations, portable versioned Evidence Package, pure offline reproduction
   and producer-owned V2 returns/drawdown Views are implemented. Bounded retained-real
@@ -60,7 +61,7 @@ single-instrument accounting kernel; W2 is its first case.
   DTOs, owner isolation, independent bounded HTTP delivery and offline OpenAPI.
   The [HTTP contract](../../../ui_http/products/backtesting/http-contract.md) owns
   transport details; actual acceptance evidence is in
-  [WP6 reconciliation](RECONCILIATION.md#wp6-http-product-acceptance--2026-11-11).
+  [WP6 reconciliation](ACCEPTANCE_HISTORY.md#wp6-http-product-acceptance--2026-11-11).
   WP7 Web delivery and full-window WP8 acceptance are recorded below.
 - **WP7 — PASS (2026-11-12).** The independent authenticated
   [Web consumer](../../../ui_web/src/features/backtesting/ARCHITECTURE.md) provides
@@ -160,5 +161,5 @@ historical acceptance.
 The independent private SQLite adapter is implemented; production online wiring remains
 legacy POSIX. Storage WP1 acceptance is PARTIAL pending a green supported-platform
 legacy regression and remaining portability evidence. The native Windows adapter tests
-pass with two privilege-dependent skips. See [execution evidence](RECONCILIATION.md#storage-wp1-execution-evidence).
+pass with two privilege-dependent skips. See [execution evidence](ACCEPTANCE_HISTORY.md#storage-wp1-execution-evidence).
 This does not supersede the original W2 delivery WP numbering or historical acceptance.

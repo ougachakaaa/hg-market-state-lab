@@ -9,6 +9,12 @@ validation evidence.
 
 ## Current status
 
+This table covers the scalar Trailing Return path and independent Price Segmentation,
+plus their explicit Publication integration. Its deferred execution/report/frontend scope
+does not describe the separately delivered Futures Basis or Calendar Spread cases;
+their current entries are in [Research architecture](../ARCHITECTURE.md#paradigm-status-and-extensibility).
+Recorded validation outcomes apply only to their stated requests, environments and stages.
+
 | Area | Status | Canonical entry |
 | --- | --- | --- |
 | `trailing_cumulative_return_v1` observation | Implemented; deterministic contract tests; bounded isolated real-market E2E verified | [Observation](OBSERVATION.md), [case](cases/trailing_return/ARCHITECTURE.md) |
@@ -102,9 +108,10 @@ provider freshness or coverage outside it.
   live HTTP readiness.
 - The historical default Trade Calendar cache remained incompatible; default-cache recovery
   was not performed. Verified runs used fresh isolated storage.
-- No execution persistence/replay/result cache, retry/queue/scheduler, CLI, report
-  renderer, Research frontend or Conditional implementation is published; explicit opt-in
-  Publication storage is separate.
+- The scalar execution path has no durable execution/replay/result cache, retry/queue,
+  scheduler, CLI or dedicated execution/report frontend. Explicit opt-in Publication
+  and its Explorer reader are separate, as are the case-specific Futures Basis online
+  application/report and Calendar Spread consumers. Conditional remains unimplemented.
 - Upstream availability, credentials, Calendar completeness and partial Index facts remain
   operational dependencies.
 - Price Segmentation remains a Python observation only; it is not admitted to capability

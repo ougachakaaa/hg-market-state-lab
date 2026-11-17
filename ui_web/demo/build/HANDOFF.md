@@ -1,5 +1,23 @@
 # DDB implementation handoff
 
+## Current delivery and historical evidence
+
+The implemented pipeline admits nine registered Bundles and composes ten static pages.
+Current identities belong to [Demo authority](../ARCHITECTURE.md) and
+[workspace navigation](../../workspace.md#route-and-bundle-identities).
+[WP7](#wp7--calendar-spread-local-delivery-2026-11-16) records the nine-Bundle local
+capture/build/browser delivery; [Issue #13 follow-up](../../../market_research/descriptive/cases/futures_calendar_spread/AUTO_PREPARATION_RECONCILIATION.md#current-delivery-and-evidence)
+records later bounded execution acceptance. Neither record implies a new Pages publication.
+
+[DDB-06 first public execution](#first-public-execution-and-online-acceptance) records
+eight-route online acceptance for its exact original source SHA. It does not verify
+that today's public deployment matches this checkout. This documentation review does
+not rerun deployment or browser acceptance.
+
+Earlier DDB package instructions, missing-data blockers, seven/eight-member counts
+and manual-main release procedures below retain their original historical scope.
+Current publication follows the [Release Runbook](../release/RUNBOOK.md).
+
 Specializes [build authority](ARCHITECTURE.md). This records implementation locations and
 completion criteria, without implementing DDB-02 through DDB-05 in DDB-01.
 All paths below are relative to `ui_web/` unless explicitly repository-root.
@@ -350,7 +368,8 @@ to the protected deploy job; verification failure prevents deployment through ne
 Actual Environment rejection and the Pages upload/deploy path are NOT VERIFIED.
 The deployment job's automatic token permissions are validated only by actual release.
 
-Manual entry and commands are in [deployment guide](../../deploy/README.md#manual-demo-pages-release-ddb-05).
+The DDB-05 manual entry described here is historical and superseded by DDB-06;
+current commands are in the [deployment guide](../../deploy/README.md#verified-demo-pages-release-ddb-06).
 After Final Reconciliation and user-reviewed merge to main, the user explicitly starts
 Manual Demo Pages release on main with its full confirmed SHA. Push main does not
 publish. No further data-rights approval is required by current project policy.

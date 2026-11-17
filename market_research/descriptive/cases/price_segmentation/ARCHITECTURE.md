@@ -120,7 +120,7 @@ entry; none publishes or executes segmentation. Any future integration requires 
 semantic decision and implementation, not a fabricated horizon, scalar or empty Statistics
 AnalysisRequest. Trailing Return contracts and Statistics are unchanged.
 
-Tests for a future implementation must independently verify the input rules and evidence,
+Implementation tests must independently verify the input rules and evidence,
 PIP invocation, all result invariants and exact endpoint mapping, first/last/both boundary
 flags, flat and same-direction segments, N=2, missing dates and invalid closes, failure
 diagnostics, identity stability and sensitivity to changed inputs, window and epsilon.

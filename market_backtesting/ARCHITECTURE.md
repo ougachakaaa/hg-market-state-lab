@@ -3,7 +3,7 @@
 ## Portable storage navigation
 
 The case-owned [online storage contract](cases/futures_roll_long/ONLINE_STORAGE.md)
-defines SQLite persistence; [reconciliation](cases/futures_roll_long/RECONCILIATION.md#storage-wp2-execution-evidence)
+defines SQLite persistence; [historical execution evidence](cases/futures_roll_long/ACCEPTANCE_HISTORY.md#storage-wp2-execution-evidence)
 tracks storage delivery and links the storage work packages. The online application
 exclusively uses the case-owned SQLite adapter after storage WP2;
 the POSIX store is retired.

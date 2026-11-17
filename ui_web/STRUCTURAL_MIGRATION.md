@@ -1,4 +1,12 @@
-# DDB-00 hard retirement — 2026-11-14
+# Historical DDB-00 structural migration — 2026-11-14
+
+This document preserves the DDB-00 transition and its then-blocked implementation
+state. It is not current readiness. Current boundaries enter [Demo authority](demo/ARCHITECTURE.md);
+delivered capture/build and historical release evidence enter the
+[handoff](demo/build/HANDOFF.md#current-delivery-and-historical-evidence).
+The statements below retain their original stage scope.
+
+## DDB-00 hard retirement
 
 Legacy Synthetic V1 and Public/Private V2 Packages are retired by direct cutover.
 No migration, fallback, rollback, archive or compatibility reader remains.

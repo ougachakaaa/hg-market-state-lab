@@ -1,18 +1,11 @@
-# Demo implementation status
-
-DDB-00 retired V1 and Public/Private entries and data. DDB-02 supplies admission,
-DDB-03 supplies explicit authenticated HTTP collection, and DDB-04 supplies the single
-static runtime and coordinated offline build. DDB-04-R1 delivered the real Dataset. DDB-05 supplies manual CI and verified-artifact
-Pages release; actual deployment remains NOT VERIFIED. Current evidence is in the
-[handoff](demo/build/HANDOFF.md#ddb-05-closure---2026-11-15).
-
 # ui_web directory ownership
 
 Specializes [module architecture](ARCHITECTURE.md) and preserves [Presentation boundaries](presentation-architecture.md).
 This is the canonical directory contract. [Demo authority](demo/ARCHITECTURE.md) owns
-the DDB-01 design; the [migration record](STRUCTURAL_MIGRATION.md) retains transition context.
-DDB-00 supersedes the former staged legacy cutover. Runtime/tooling placement below remains
-the target until the assigned DDB implementation work packages deliver it.
+current Demo boundaries and navigation; the [migration record](STRUCTURAL_MIGRATION.md)
+retains historical transition context. The placement below is implemented.
+Current Bundle/page identities and delivery evidence enter the Demo authority,
+not a parallel inventory or release verdict here.
 
 ## Ownership
 
@@ -40,12 +33,13 @@ local presentation state and charts remain in `src/`, never copied into Demo. De
 public Presentation entries; Online must not depend on Demo or test harnesses.
 
 `demo/` is the only formal Demo. DDB-00 retired historical V1 and Public/Private V2 code and data.
-Public distribution still requires authorization for the actual captured material.
+Publication follows the root personal-study policy; preserve truthful source disclosure,
+disclaimers, credential safety and artifact integrity.
 
 ## Data and build boundary
 
-**One Complete Business Result -> One Bundle -> One Hash.** One Manifest indexes all
-seven current Examples as seven Bundles. Multiple HTTP requests may assemble one complete
+**One Complete Business Result -> One Bundle -> One Hash.** One Manifest indexes the
+registered Bundles under [Bundle authority](demo/BUNDLES.md). Multiple HTTP requests may assemble one complete
 business Result Bundle; request count does not determine Bundle count. SHA-256 binds exact bytes.
 Formal producer contracts continue to own Result meaning and DTOs.
 
@@ -64,9 +58,9 @@ Legacy Publication Rights Gates, Evidence Review and independent review records 
 prerequisites. Legacy Envelope validation has been removed.
 Build never invokes Python, generates results or contacts an
 online business HTTP service. Browsers consume static data and shared Presentation only: no financial
-computation, Auth/API requests, polling, preflight or server Run lifecycle. Preserve all eight formal
-routes and existing local interactions. Runtime, Example meaning and distribution decision remain
-owned by the existing [Demo authority](demo/ARCHITECTURE.md) contract.
+computation, Auth/API requests, polling, preflight or server Run lifecycle. Preserve the admitted
+routes and existing local interactions under [workspace authority](workspace.md#static-routing-specialization).
+Runtime and result meaning remain with the Demo and business authorities.
 
 ## Deployment and lifecycle
 
@@ -95,10 +89,5 @@ Independent business results, research evidence and data are preserved. DDB-00 r
 
 Online uses `.build/online`; independent static suites use `.build/tests/<suite>`.
 Demo output belongs under `.build/demo`. Old ignored outputs are not build inputs;
-local cleanup was blocked by tool policy (see acceptance).
-
-## Current implementation status
-
-Old Public/Private/V1 configs and data are removed. The canonical demo/runtime and demo/build trees are implemented. Tests/config inherit tsconfig.app directly. Payload byte rules cover
-remaining independent fixtures only. Source safety and generic artifact integrity
-remain active; publication fails before any upload or deployment.
+historical cleanup observations belong to [DDB-00 acceptance](DDB_00_ACCEPTANCE.md),
+not a current build or publication verdict.
