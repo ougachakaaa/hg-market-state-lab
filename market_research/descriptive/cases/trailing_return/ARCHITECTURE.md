@@ -3,15 +3,17 @@
 This first concrete Descriptive case specializes [Observation](../../OBSERVATION.md),
 [integration](../../STATISTICS_INTEGRATION.md), [execution](../../EXECUTION.md) and
 [public upstream policy](../../../UPSTREAM.md). Status: Implementation Ready for the
-index binding below. The independent Observation runtime is implemented; actual checks
-and the live-data gate are recorded in [Acceptance](../../ACCEPTANCE.md).
+index binding below. The independent Observation runtime is implemented; current
+verification scenarios are in [Descriptive verification](../../ACCEPTANCE.md).
+Executed checks remain in Git history; explicit live verification enters
+[Development](../../../../DEVELOPMENT.md#explicit-research-live-verification).
 
 | Concern | Canonical owner |
 | --- | --- |
 | Fixed question, identity, formula and eligibility | This document |
 | Public binding, Calendar discovery, partial Export validation and fact coverage | [INPUTS.md](INPUTS.md) |
 | Retained evidence and versioned deterministic fingerprint | [INPUT_IDENTITY.md](INPUT_IDENTITY.md) |
-| Cross-contract acceptance scenarios and readiness | [Acceptance](../../ACCEPTANCE.md) |
+| Cross-contract verification scenarios | [Descriptive verification](../../ACCEPTANCE.md) |
 
 ## Fixed question and observation identity
 

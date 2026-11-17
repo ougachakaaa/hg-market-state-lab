@@ -64,7 +64,7 @@ Keep current authorities, contracts, operational guides, active plans and necess
 Before deleting superseded designs, completed work packages, diaries or redundant acceptance records, extract indispensable current semantics into their existing owner and repair inbound references.
 Do not create history/archive replacements or permanent task reports by default; update current authority and close resolved Issues with commit evidence.
 Preserve binding correctness, security, recovery and reproducibility requirements regardless of age; report `HUMAN_DECISION_REQUIRED` for genuine unresolved conflicts.
-This policy supersedes historical Markdown retention instructions, including the formal-evidence protection below for obsolete documentation; runtime evidence/data integrity contracts remain binding.
+This policy supersedes historical Markdown retention instructions for obsolete documentation; runtime evidence/data integrity contracts remain binding.
 
 ## Product Exploration Principle
 

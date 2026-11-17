@@ -16,7 +16,7 @@ SSE is Index Daily's published common calendar basis, never inferred from code s
 DataLake public facts and coverage suffice; no Snapshot Product is selected. No provider,
 SDK, SQLite, Repository, internal planner or CLI/JSON interface is authorized. Runtime
 failure never switches sources. Stock daily facts are absent from the published
-[Dataset catalog](../../../../data_lake/DATASETS.md); see [readiness](../../ACCEPTANCE.md).
+[Dataset catalog](../../../../data_lake/DATASETS.md); see [verification scenarios](../../ACCEPTANCE.md).
 
 ## Invocation and proof validation
 
