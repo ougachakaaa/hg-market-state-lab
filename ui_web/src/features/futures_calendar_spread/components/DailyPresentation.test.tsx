@@ -12,6 +12,28 @@ afterEach(() => { cleanup(); vi.unstubAllGlobals(); vi.restoreAllMocks() })
 function clipboard(writeText = vi.fn().mockResolvedValue(undefined)) {
   vi.stubGlobal('navigator', { clipboard: { writeText } }); return writeText
 }
+it('translates the Daily independent snapshot disclosure only for display', async () => {
+  const original = 'Daily SSE Calendar and Index exports are independent snapshots; the same-day index Close is reference-only and never enters futures calculations. Reference preparation follows the selected read-only or explicit execution permission.'
+  const unknown = 'Unrecognized captured statement.'
+  const r = withReference()
+  r.source_context.limitations.push(original, unknown)
+  const before = JSON.stringify(r)
+  const csv = resultCsv(r)
+  const context = contextJson(r)
+  const writeText = clipboard()
+  render(<DailyPresentation result={validateResult(r)} />)
+  fireEvent.click(screen.getByText('关于本数据'))
+  expect(screen.getByText('每日上交所交易日历与指数导出是独立快照；同日指数收盘价仅供参考，不参与期货计算。参考数据准备遵循所选的只读查询或显式执行权限。')).toBeTruthy()
+  expect(screen.getByText(unknown)).toBeTruthy()
+  expect(screen.queryByText(original)).toBeNull()
+  fireEvent.click(screen.getByRole('button', { name: '复制原始 JSON' }))
+  await screen.findByText('复制成功')
+  expect(JSON.parse(writeText.mock.calls[0][0])).toEqual(r)
+  expect(JSON.parse(context).data.source_context.limitations).toContain(original)
+  expect(contextJson(r)).toBe(context)
+  expect(resultCsv(r)).toBe(csv)
+  expect(JSON.stringify(r)).toBe(before)
+})
 it.each(referenceStates)('shows reference %s/%s/%s alongside six intact pairs', (...state) => {
   render(<DailyPresentation result={validateResult(withReference(daily, state))} />)
   expect(screen.getByText(state[1] ? indexStatusLabels[state[1]] : indexStatusLabels.available)).toBeTruthy()

@@ -4,7 +4,7 @@ import { loadQuery } from './query'
 import { errorMessage } from '../model/format'
 import type { Query } from './validateResult'
 import legacy from '../testing/daily.json'
-import { withReference } from '../testing/reference'
+import { referenceStates, withReference } from '../testing/reference'
 const fixture = withReference(legacy)
 const query: Query = { product_code: 'IM', trade_date: '2024-10-18' }
 const unauthorized = vi.fn()
@@ -82,5 +82,16 @@ it('retains safe legacy feedback without requiring manual data preparation', () 
 it('rejects a legacy omission specifically at the Online boundary', async () => {
   boundary(); const fetch = vi.fn().mockResolvedValue(new Response(JSON.stringify(legacy))); vi.stubGlobal('fetch', fetch)
   await expect(loadQuery(query, new AbortController().signal)).rejects.toMatchObject({ kind: 'invalid_response' })
+  expect(fetch).toHaveBeenCalledOnce()
+})
+it.each(referenceStates)('consumes the complete Online reference %s/%s/%s with unchanged pairs', async (...state) => {
+  boundary()
+  const payload = withReference(legacy, state)
+  const fetch = vi.fn().mockResolvedValue(new Response(JSON.stringify(payload)))
+  vi.stubGlobal('fetch', fetch)
+  const result = await loadQuery(query, new AbortController().signal)
+  expect(result).toEqual(payload)
+  expect(result.day).toEqual(legacy.day)
+  expect(result.accounting).toEqual(legacy.accounting)
   expect(fetch).toHaveBeenCalledOnce()
 })

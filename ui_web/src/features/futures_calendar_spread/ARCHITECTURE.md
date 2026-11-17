@@ -1,8 +1,9 @@
 # Daily Data — Futures Calendar Spread Presentation authority
 
 Status: DD-02 WP-02 Chinese presentation, reference validation/display and four local
-copy/export actions are implemented for Online and Static Demo. WP-03 acceptance
-and deployment/live-source readiness require separate verification.
+copy/export actions are implemented for Online and Static Demo. WP-03 targeted
+acceptance is complete; merge readiness and unverified browser/deployment/live-source
+limits belong to the [case Roadmap](../../../../market_research/descriptive/cases/futures_calendar_spread/ROADMAP.md).
 Inherits [Web boundaries](../../../ARCHITECTURE.md) and
 [Presentation architecture](../../../presentation-architecture.md).
 Business meaning belongs to [Research](../../../../market_research/descriptive/cases/futures_calendar_spread/ARCHITECTURE.md);

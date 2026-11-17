@@ -37,6 +37,7 @@ export const indexStatusLabels = {
   malformed_ensure_result: '数据准备结果异常', upstream_request_rejected: '数据请求被上游拒绝',
 }
 const sourceNotes: Record<string, string> = {
+  'Daily SSE Calendar and Index exports are independent snapshots; the same-day index Close is reference-only and never enters futures calculations. Reference preparation follows the selected read-only or explicit execution permission.': '每日上交所交易日历与指数导出是独立快照；同日指数收盘价仅供参考，不参与期货计算。参考数据准备遵循所选的只读查询或显式执行权限。',
   'Calendar and Futures exports are independent snapshots with no common acquisition time or freshness guarantee.': '交易日历和期货导出是独立快照，不保证共同采集时间或数据新鲜度。',
   'Retained futures metadata is not guaranteed to have been known on the historical trade date.': '保留的期货元数据不保证在历史查询日已知。',
   'Read-only queries require separately prepared complete caches; they never ensure or repair missing data.': '只读查询需要预先准备完整缓存，不会自动准备或修复缺失数据。',

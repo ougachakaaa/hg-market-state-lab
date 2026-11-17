@@ -28,82 +28,40 @@ No latency SLA or universal proxy-timeout suitability is claimed.
 
 ## DD-02 Daily enhancement work packages
 
-WP-00 encodes accepted target semantics. WP-01 implements Daily reference preparation,
-immutable evidence, HTTP projection and generated contracts; Chinese Presentation/export
-and cross-layer acceptance remain pending. Use one branch,
-`feat/daily-calendar-spread-enhancement`, throughout; each WP has its own commit.
-Do not return automatically to develop, create further feature branches, merge,
-push or publish. WP-00 stops after its documentation commit for Implementation Review.
+Status: **IMPLEMENTED — READY_FOR_MERGE**. All four work packages are complete.
+The Daily-only reference, Chinese presentation and four local copy/export actions
+are reconciled across Research, HTTP, Online and the retained static Demo.
 
 | WP | Delivery and acceptance boundary | State |
 | --- | --- | --- |
-| WP-00 — Authority Encoding | Reconcile upstream selection, Daily-only reference/result, additive HTTP, Chinese/export and Demo omission contracts; review documentation diff only | IMPLEMENTED (authority encoding) |
-| WP-01 — Underlying Index Close Integration | Public Dataset consumption, Daily immutable result/evidence, HTTP projection, affected OpenAPI/TypeScript generation and targeted Python/contract verification | IMPLEMENTED; targeted Python, wire and generated-contract checks passed |
-| WP-02 — Chinese Presentation & Export | Chinese controls/table/status, index reference, four local actions, pure feature CSV/Context builders and targeted TypeScript/React verification | READY; not started |
-| WP-03 — Cross-Layer Acceptance & Reconciliation | Targeted Online/Demo/export integration acceptance, necessary drift fixes and current readiness update | Depends on WP-02 |
+| WP-00 — Authority Encoding | Daily-only reference/result, additive HTTP, Chinese/export and Demo omission contracts | IMPLEMENTED |
+| WP-01 — Underlying Index Close Integration | Public Dataset preparation, immutable evidence, HTTP projection and generated contracts | IMPLEMENTED |
+| WP-02 — Chinese Presentation & Export | Chinese controls/table/status, reference display and four local actions | IMPLEMENTED |
+| WP-03 — Cross-Layer Acceptance & Reconciliation | Online/Demo/export acceptance, known source-note translation and final authority reconciliation | IMPLEMENTED — READY_FOR_MERGE |
 
-Canonical target owners: [Daily Index Reference](DAILY_INDEX_REFERENCE.md),
+Canonical owners remain [Daily Index Reference](DAILY_INDEX_REFERENCE.md),
 [Query Results](QUERY_RESULTS.md#daily-underlying-index-result-dd-02-target),
 [Daily HTTP](../../../../ui_http/products/futures_calendar_spread/http-contract.md#dd-02-daily-index-projection-target),
-[Daily Presentation](../../../../ui_web/src/features/futures_calendar_spread/ARCHITECTURE.md#dd-02-chinese-presentation-and-index-target),
+[Daily Presentation](../../../../ui_web/src/features/futures_calendar_spread/ARCHITECTURE.md#dd-02-chinese-presentation-and-index),
 [Daily Export](../../../../ui_web/src/features/futures_calendar_spread/EXPORT.md) and
 [Demo compatibility](../../../../ui_web/demo/CALENDAR_SPREAD.md#dd-02-additive-reference-compatibility-target).
-The shared [Daily Data export standard](../../../../ui_web/data-copy-export.md) applies
-to all Daily features; only Calendar Spread needs implementation in this work.
+The shared [Daily Data export standard](../../../../ui_web/data-copy-export.md)
+owns common lifecycle and encoding invariants.
 
-### Scoped implementation acceptance
+Targeted Python/HTTP and TypeScript/React acceptance verifies reference identity,
+legal states, null/zero, GET read-only versus POST conditional Ensure, safe HTTP
+projection and intact six-pair results. Historical preparation remains independent
+of SSE/Index. Online requires reference presence; the retained Daily Bundle passes
+the same formal validator with omission and displays the historical disclosure.
+Raw/Context preserve the complete response; CSV retains 29 columns, original values,
+order and presence. Local copy/download and stale-result isolation are covered.
+All nine Bundle hashes match the Manifest; Bundle, Manifest and Registry bytes
+remain identical to the reviewed baseline. No capture or publication occurred.
 
-WP-01 tests all four product selections; exact same-date identity; independent SSE
-and CFFEX closures (including CFFEX closed/SSE open); empty Futures universe; hot and
-cold call bounds; GET zero Ensure; POST conditional Ensure; incomplete final proof;
-public factory/operation and malformed Export/Ensure failures. Assert unknown defects
-still fail. For identical core facts compare all six results/accounting across every
-reference state. Historical queries/current assessment must perform no SSE/Index calls
-and retain existing results. Keep validated evidence and fixed safe failures without
-leaking diagnostics. Test new GET/POST presence, old omission, explicit-null rejection,
-wrong index/date and illegal state combinations. Run only directly relevant Python
-cases and wire/type checks; generate contracts under the existing feedback loop.
-
-WP-02 tests Chinese labels, full columns and stages, available/closed/incomplete/error
-reference presentation and historical omission. Verify Raw completeness, identical
-Context copy/download text, fixed CSV row/header order, all original precision,
-zero/null/presence, header-only closure, BOM/CRLF/quoting/formula protection and
-filenames. Verify request replacement/loading/error cannot export stale results,
-draft changes cannot change response identity, and local Demo actions make no requests.
-Use targeted existing/new meaningful TypeScript/React cases; do not broaden regression.
-
-WP-03 uses targeted integration tests for Online response adaptation, the retained
-Daily Bundle's strict feature validation/shared Presentation, malformed-present-field
-rejection and complete exports. Preserve captured bytes/Manifest hashes. No refresh is
-needed; any later explicitly requested capture/build follows the formal Demo workflow.
-Browser matrices, live Source checks, services, topology scans and full builds are not
-automatic gates; report actual checks and NOT VERIFIED limits under root policy.
-Reconcile target/readiness text with implemented behavior and close with commit evidence,
-without creating a permanent task diary. No business scope extends to range queries,
-Historical population/statistics, unrelated Daily refactors or deployment.
-
-WP-01 preserves shared preparation and pure construction semantics, reusing local
-Calendar/Ensure validators with explicit SSE/Index target parameters. Only Daily
-adds index_service injection and required reference/evidence carriers. The HTTP field
-is optional solely for retained payloads; both online endpoint projections require it.
-The feature adapter's additional online-presence assertion and present-object frontend
-validation remain WP-02 work. No UI, captured Bundle bytes or Historical contract changed.
-Live Source, browser and deployment verification were not performed in WP-01.
-
-### Reconciliation and remaining implementation risks
-
-The prior Inputs/UPSTREAM exclusion of Index/SSE now applies to shared/Historical
-preparation only. Core completeness and whole-core failure invariants remain binding;
-classified reference errors alone are successful nested outcomes. Query Results owns
-immutable carriers; reference authority owns acquisition/availability; HTTP only projects.
-Daily export has one shared standard and feature-local mappings. Demo's complete-result
-rule now explicitly follows the additive HTTP contract's optional field, without
-weakening required validation or introducing a historical schema.
-
-Index prerequisite failures may be wrapped OperationError; do not infer unavailable
-SSE dates or deeper Source causes. Independent Calendar snapshots can change between
-operations and must fail association explicitly. Optional/non-null wire modeling needs
-care to avoid injecting null defaults into old payloads. Daily source-context updates
-must not mutate Historical defaults. Source latency and existing synchronous capacity/
-cancellation limits remain as documented; WP-00 establishes no runtime or live-data
-acceptance. Open-day missing Index rows do not prove legal Source no-quote availability.
+Real browser layout/Clipboard/download behavior, live external Source acquisition,
+Windows and deployment are **NOT VERIFIED** by DD-02 acceptance. Deterministic
+DOM and download utility tests do not establish those platform results. Existing
+synchronous capacity/cancellation and independent-snapshot limitations remain binding;
+no latency, freshness or common-snapshot guarantee is added. Merge readiness does
+not constitute deployment or publication acceptance. Completed execution details
+and commit evidence remain in Git history.

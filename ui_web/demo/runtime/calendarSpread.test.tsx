@@ -34,6 +34,15 @@ it.each(['/data/futures-calendar-spread', '/research/calendar-spread-relative-va
       expect(screen.getByText('历史数据包未提供指数参考信息')).toBeTruthy()
       const bundle = Object.entries(files).find(([name]) => name.endsWith('/calendar_spread_daily.json'))![1] as { result: unknown }
       const result = validateResult(bundle.result)
+      const original = JSON.stringify(bundle.result)
+      expect(Object.hasOwn(result, 'underlying_index')).toBe(false)
+      expect(document.querySelectorAll('.ant-table-row')).toHaveLength(6)
+      const rows = Array.from(document.querySelectorAll('.ant-table-row'))
+      result.day.observations.forEach((observation, i) => {
+        expect(rows[i].querySelector('td')?.textContent).toBe(`${observation.near_slot}/${observation.far_slot}`)
+        expect(rows[i].textContent).toContain(observation.near!.contract_code)
+        expect(rows[i].textContent).toContain(observation.far!.contract_code)
+      })
       fireEvent.click(screen.getByRole('button', { name: '复制原始 JSON' }))
       await screen.findByText('复制成功')
       expect(writeText.mock.calls[0][0]).toBe(serializeJson(result))
@@ -44,6 +53,21 @@ it.each(['/data/futures-calendar-spread', '/research/calendar-spread-relative-va
       expect(downloadText).toHaveBeenLastCalledWith(writeText.mock.calls[1][0], exportFilename(result, true), 'application/json;charset=utf-8')
       fireEvent.click(screen.getByRole('button', { name: '导出 CSV' }))
       expect(downloadText).toHaveBeenLastCalledWith(resultCsv(result), exportFilename(result), 'text/csv;charset=utf-8')
+      const csvRows = resultCsv(result).split('\r\n').slice(1, -1)
+      expect(csvRows).toHaveLength(6)
+      csvRows.forEach((row, i) => {
+        const cells = row.split(',')
+        const observation = result.day.observations[i]
+        expect(cells).toHaveLength(29)
+        expect(cells[3]).toBe(result.request.trade_date)
+        expect(cells.slice(17, 20)).toEqual([
+          observation.metrics!.signed_spread.value,
+          observation.metrics!.annualized_point_spread.value,
+          observation.metrics!.annualized_spread_ratio.value,
+        ].map(String))
+        expect(cells.slice(22)).toEqual(['false', 'null', 'null', 'null', 'null', 'null', 'null'])
+      })
+      expect(JSON.stringify(bundle.result)).toBe(original)
     }
     const expected = path.startsWith('/research/') ? 'calendar_spread_relative_value' : 'calendar_spread_daily'
     for (const [id, load] of Object.entries(loaders)) expect(load).toHaveBeenCalledTimes(id === expected ? 1 : 0)

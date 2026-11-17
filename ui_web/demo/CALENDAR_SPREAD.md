@@ -79,7 +79,8 @@ endpoint, collection permission, Bundle or Manifest change is introduced here.
 
 DD-02 WP-01 implements the additive HTTP/generated contract; WP-02 implements shared
 Chinese presentation, reference validation and all four local copy/export actions.
-Acceptance closes in WP-03. The
+WP-03 targeted compatibility/export acceptance is complete; browser and publication
+readiness remain separate. The
 [Daily HTTP contract](../../ui_http/products/futures_calendar_spread/http-contract.md#dd-02-daily-index-projection-target)
 permits underlying_index omission solely for pre-DD-02 results. Existing Daily Bundle
 bytes and Manifest hashes remain valid under that contract; omission is not null Close.

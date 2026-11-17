@@ -3,8 +3,9 @@
 Status: financial calculation, read-only observations/queries, explicit automatic
 preparation, Statistics, HTTP, Web and static Demo consumption are implemented.
 Current delivery scope and limits are recorded in [Roadmap](ROADMAP.md).
-DD-02 WP-01 implements the Daily-only index reference, immutable evidence and HTTP/generated
-contract. Chinese Presentation/export and cross-layer acceptance remain pending under the Roadmap.
+DD-02 implements the Daily-only index reference, immutable evidence, HTTP/generated
+contract, Chinese Presentation and local exports; targeted cross-layer acceptance is
+complete. Merge readiness and unverified platform limits belong to the Roadmap.
 This independent Descriptive case specializes [Research](../../../ARCHITECTURE.md)
 and [Descriptive](../../ARCHITECTURE.md). Case identity is
 `futures_calendar_spread_v1`; financial definition version is
