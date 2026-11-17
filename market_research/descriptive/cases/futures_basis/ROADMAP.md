@@ -15,9 +15,11 @@ fingerprints retain their existing contract. WP3/WP4 shared readers now consume 
 complete original-population validation and rank-based tail exclusion audit. The
 active Basis Demo Bundle has been recaptured through authenticated current-code HTTP
 for IM, 2026-03-01 through 2026-09-30. This is not publication readiness.
-WP5 local release admission remains incomplete: the Windows checkout has an unrelated
-Calendar Spread fixture byte/hash mismatch, and Demo artifact directory promotion
-fails with EPERM after compilation. Browser acceptance is not verified.
+WP5 local release admission passes in an isolated exact-byte checkout, including
+Release Requirements, safety review, offline build, Artifact Receipt and ten-route
+browser acceptance. Developer-checkout line endings and artifact-directory promotion
+failures do not reproduce there. Actual publication requires its own deployment and
+online verification through the Demo Release Runbook.
 These package names refer to Distribution V2, independently of historical WP numbers.
 
 - WP2 (implemented) — the fourth metric through Observation, Accounting, formal analyses,
