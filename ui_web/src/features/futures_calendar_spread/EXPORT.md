@@ -29,38 +29,43 @@ Copy and download call the same serializer and produce identical pretty JSON tex
 Reading notes organize these confirmed meanings in Chinese: real same-day contract
 Close; near minus far spread; annualized price relationship is not return or trading
 instruction; delta/DTE use natural days and actual last trading dates; zero and null
-differ; index Close is an independent same-date reference with no fallback. If the
+differ; index Close is a same-date reference reused by independent futures–spot comparisons with no fallback. If the
 reference field is absent, additionally state 历史数据包未提供指数参考信息. Do not
 infer Source absence from cache/preparation failure or add an investment conclusion.
 Static origin stays in adjacent UI, outside Raw/Context metadata.
 
 ## CSV mapping
 
-Each actual `day.observations` item produces one row in producer order, including
-excluded/not_applicable observations. A closed day has header-only CSV; do not create
-a reference-only placeholder row. Context JSON retains that day's full reference.
-All numbers use original values; ratios stay decimal ratios. No business recomputation.
+Rows are the six actual day.observations in producer order (calendar_spread), then
+actual futures_spot_comparisons in M0/M1/Q1/Q2 order (futures_spot). Closed days are
+header-only. Omitted collections never produce synthetic rows. All values retain
+raw precision, original decimal ratios, null/zero distinction and formal row outcomes.
 
-The fixed 29-column header order is:
+The fixed 35-column order is:
 
 ```text
-case,definition_version,product_code,trade_date,day_status,day_reason,near_slot,far_slot,near_contract_code,near_close,near_delist_date,far_contract_code,far_close,far_delist_date,delta_days,near_dte_days,expiry_stage,signed_spread,annualized_point_spread,annualized_spread_ratio,outcome,reason,underlying_index_present,underlying_index_code,underlying_index_trade_date,underlying_index_close,underlying_index_availability,underlying_index_reason_code,underlying_index_failure_category
+case,definition_version,product_code,trade_date,day_status,day_reason,comparison_type,comparison_definition_version,slot_a,slot_b,instrument_a_type,instrument_a_code,instrument_a_close,instrument_a_delist_date,instrument_b_type,instrument_b_code,instrument_b_close,instrument_b_delist_date,delta_days,remaining_days,expiry_stage,signed_spread,annualized_point_spread,annualized_spread_ratio,outcome,reason,failure_category,underlying_index_present,underlying_index_code,underlying_index_trade_date,underlying_index_close,underlying_index_availability,underlying_index_reason_code,underlying_index_failure_category,futures_spot_comparisons_present
 ```
 
-case/definition_version come from the response; product_code/trade_date from request;
-day_status/day_reason from day. Slots, contracts, delta/DTE/stage and outcome/reason
-come directly from each observation. Contract columns select near/far object's
-contract_code, close and delist_date; absent objects yield null. Metric columns take
-corresponding metrics.<metric>.value; absent metrics yield null. Units remain those
-of the named metrics under the unchanged financial definition.
+Common identity/day fields come from response/request/day. Calendar rows use the
+calendar definition version, near/far slots, futures instrument types and their actual
+contract fields. delta_days is the between-contract interval; remaining_days is near DTE.
+Its metrics select the existing named metric.value fields; failure_category is null.
+Spot rows use their independent definition_version, slot_a=slot, slot_b=null,
+instrument_a_type=futures and instrument_b_type=index. A is the actual futures
+contract or null; B is the returned underlying index identity/Close, never a futures
+code. Index delist_date and delta_days are null; remaining_days is contract DTE.
+Spot metrics/outcome/reason/failure_category map directly from the formal item.
+Missing objects yield null fields, never fake identities or zero prices.
 
-Repeat response-level reference fields on each row. underlying_index_present is
-Object.hasOwn(response, 'underlying_index'); false means all six reference columns
-are null, distinguishing historical omission from provided unavailable/error Close.
-When present, map index_code/trade_date/close/availability/reason_code/failure_category
-verbatim. Do not synthesize identity or state for an old payload.
+Repeat response-level underlying reference fields and presence on each row. Repeat
+futures_spot_comparisons_present using Object.hasOwn; omission is distinct from an
+empty provided collection. Keep BOM, CRLF, escaping, formula protection and literal
+null/numeric zero under the shared CSV contract. No financial recomputation.
 
-Use common UTF-8 BOM/CRLF/quoting/formula protection, literal null and numeric zero
-rules. Filenames are `futures-calendar-spread_{product_code}_{trade_date}.csv` and
-`futures-calendar-spread_{product_code}_{trade_date}_context.json`, using validated
-response identity and shared safe filename handling. Context is UTF-8 without BOM.
+Filenames remain futures-calendar-spread_{product_code}_{trade_date}.csv and
+futures-calendar-spread_{product_code}_{trade_date}_context.json. Context is UTF-8
+without BOM and retains complete response dates, states, omission and new results.
+Reading notes distinguish near-minus-far/between-contract annualization from
+futures-minus-index/remaining-life annualization; missing collections add the exact
+historical-omission explanation. The existing four export actions are unchanged.

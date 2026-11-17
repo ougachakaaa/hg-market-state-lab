@@ -1,11 +1,12 @@
+import spot from '../testing/daily_spot.json'
 import { afterEach, expect, it, vi } from 'vitest'
 import { createRequestBoundary, installRequestBoundary } from '../../../shared/http/protectedRequest'
 import { loadQuery } from './query'
 import { errorMessage } from '../model/format'
-import type { Query } from './validateResult'
+import { validateResult, type Query } from './validateResult'
 import legacy from '../testing/daily.json'
 import { referenceStates, withReference } from '../testing/reference'
-const fixture = withReference(legacy)
+const fixture = spot
 const query: Query = { product_code: 'IM', trade_date: '2024-10-18' }
 const unauthorized = vi.fn()
 let dispose: (() => void) | undefined
@@ -87,6 +88,13 @@ it('rejects a legacy omission specifically at the Online boundary', async () => 
 it.each(referenceStates)('consumes the complete Online reference %s/%s/%s with unchanged pairs', async (...state) => {
   boundary()
   const payload = withReference(legacy, state)
+  payload.futures_spot_comparisons = validateResult(spot).futures_spot_comparisons!.map(item => ({
+    ...item, underlying_index: payload.underlying_index!, signed_spread: null,
+    annualized_point_spread: null, annualized_spread_ratio: null,
+    outcome: state[0] === 'available' ? 'excluded' : 'not_applicable',
+    reason: state[0] === 'available' ? 'nonpositive_close' : 'index_reference_unavailable',
+    failure_category: state[2],
+  }))
   const fetch = vi.fn().mockResolvedValue(new Response(JSON.stringify(payload)))
   vi.stubGlobal('fetch', fetch)
   const result = await loadQuery(query, new AbortController().signal)
@@ -94,4 +102,9 @@ it.each(referenceStates)('consumes the complete Online reference %s/%s/%s with u
   expect(result.day).toEqual(legacy.day)
   expect(result.accounting).toEqual(legacy.accounting)
   expect(fetch).toHaveBeenCalledOnce()
+})
+
+it('rejects online collection omission even though legacy payloads are valid Demo results', async () => {
+  boundary(); vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(JSON.stringify(withReference(legacy)))))
+  await expect(loadQuery(query, new AbortController().signal)).rejects.toMatchObject({ kind: 'invalid_response' })
 })

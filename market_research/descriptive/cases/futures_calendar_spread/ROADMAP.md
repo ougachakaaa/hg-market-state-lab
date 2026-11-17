@@ -51,12 +51,11 @@ owns common lifecycle and encoding invariants.
 Targeted Python/HTTP and TypeScript/React acceptance verifies reference identity,
 legal states, null/zero, GET read-only versus POST conditional Ensure, safe HTTP
 projection and intact six-pair results. Historical preparation remains independent
-of SSE/Index. Online requires reference presence; the retained Daily Bundle passes
+of SSE/Index. Online requires reference and futures–spot collection presence; the retained Daily Bundle passes
 the same formal validator with omission and displays the historical disclosure.
-Raw/Context preserve the complete response; CSV retains 29 columns, original values,
+Raw/Context preserve the complete response; CSV uses the current 35-column mapping for both comparison types and retains original values,
 order and presence. Local copy/download and stale-result isolation are covered.
-All nine Bundle hashes match the Manifest; Bundle, Manifest and Registry bytes
-remain identical to the reviewed baseline. No capture or publication occurred.
+The retained Bundle, Manifest and Registry files are unchanged by this refinement. No capture or publication occurred.
 
 Real browser layout/Clipboard/download behavior, live external Source acquisition,
 Windows and deployment are **NOT VERIFIED** by DD-02 acceptance. Deterministic
@@ -65,3 +64,16 @@ synchronous capacity/cancellation and independent-snapshot limitations remain bi
 no latency, freshness or common-snapshot guarantee is added. Merge readiness does
 not constitute deployment or publication acceptance. Completed execution details
 and commit evidence remain in Git history.
+
+## DD-02 Final Refinement
+
+Daily now additionally owns four [independent futures–spot results](DAILY_FUTURES_SPOT_COMPARISON.md)
+without changing the six calendar-spread pairs, their formulas/accounting or historical
+samples. Same-day reference/Slot/row evidence is reused; new numerical failures are
+isolated per comparison and expiry-day annualization is not applicable. HTTP projects
+these results additively; older Demo payloads may omit the collection. Presentation
+uses adjacent six-row/four-row tables with contiguous identities, Close and metrics,
+and collapsed reason details. JSON preserves all formal fields; CSV distinguishes
+calendar_spread/futures_spot and between-contract versus remaining-life denominators.
+No Bundle/Manifest change, new capture, live Source call or publication is part of this
+refinement. Targeted acceptance and commit evidence remain in Git history.

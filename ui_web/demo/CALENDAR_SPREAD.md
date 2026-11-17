@@ -102,3 +102,12 @@ Capture/Validation/Build transaction; do not patch a price into JSON. Collector 
 GET stays read-only and can capture explicit reference unavailability without Ensure.
 A refreshed reference failure does not waive the six-pair content requirement.
 No release branch changes or publication are authorized by this enhancement.
+
+## Final refinement compatibility
+
+The formal Daily schema additionally permits omission of futures_spot_comparisons for
+older captures. Keep original Bundle bytes and Manifest hashes. Shared validation
+accepts omission, rejects explicit null and validates complete present collections.
+Online alone requires the collection. Missing renders 历史数据包未提供期现比较结果;
+JSON preserves absence and CSV exports only the actual six pairs. No capture,
+publication, admission waiver or synthetic four-row result is introduced.

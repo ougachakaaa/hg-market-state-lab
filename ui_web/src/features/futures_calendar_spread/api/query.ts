@@ -35,7 +35,7 @@ export async function loadQuery(query: Query, signal: AbortSignal): Promise<Resu
   }
   try {
     const result = validateResult(body, query)
-    if (!Object.hasOwn(result, 'underlying_index')) throw new Error('Missing online reference')
+    if (!Object.hasOwn(result, 'underlying_index') || !Object.hasOwn(result, 'futures_spot_comparisons')) throw new Error('Missing online Daily fields')
     return result
   } catch { throw new QueryError('invalid_response') }
 }

@@ -55,17 +55,18 @@ it.each(['/data/futures-calendar-spread', '/research/calendar-spread-relative-va
       expect(downloadText).toHaveBeenLastCalledWith(resultCsv(result), exportFilename(result), 'text/csv;charset=utf-8')
       const csvRows = resultCsv(result).split('\r\n').slice(1, -1)
       expect(csvRows).toHaveLength(6)
+      expect(screen.getByText('历史数据包未提供期现比较结果')).toBeTruthy()
       csvRows.forEach((row, i) => {
         const cells = row.split(',')
         const observation = result.day.observations[i]
-        expect(cells).toHaveLength(29)
+        expect(cells).toHaveLength(35)
         expect(cells[3]).toBe(result.request.trade_date)
-        expect(cells.slice(17, 20)).toEqual([
+        expect(cells.slice(21, 24)).toEqual([
           observation.metrics!.signed_spread.value,
           observation.metrics!.annualized_point_spread.value,
           observation.metrics!.annualized_spread_ratio.value,
         ].map(String))
-        expect(cells.slice(22)).toEqual(['false', 'null', 'null', 'null', 'null', 'null', 'null'])
+        expect(cells.slice(27)).toEqual(['false', 'null', 'null', 'null', 'null', 'null', 'null', 'false'])
       })
       expect(JSON.stringify(bundle.result)).toBe(original)
     }

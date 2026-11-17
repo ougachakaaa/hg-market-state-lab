@@ -1,3 +1,4 @@
+import spot from '../testing/daily_spot.json'
 import { describe, expect, it } from 'vitest'
 import { validateResult } from './validateResult'
 import daily from '../testing/daily.json'
@@ -58,5 +59,28 @@ it('rejects every cross-state reason/category/close mismatch', () => {
   const r = withReference(daily, referenceStates[2]); r.underlying_index!.close = 0
   expect(() => validateResult(r)).toThrow()
   r.underlying_index!.close = null; r.underlying_index!.failure_category = 'incomplete_inputs'
+  expect(() => validateResult(r)).toThrow()
+})
+
+it('validates present spot collections and preserves legacy omission', () => {
+  expect(validateResult(spot).futures_spot_comparisons).toHaveLength(4)
+  const old = structuredClone(spot) as Record<string, unknown>
+  delete old.futures_spot_comparisons
+  delete old.underlying_index
+  expect(Object.hasOwn(validateResult(old), 'futures_spot_comparisons')).toBe(false)
+})
+it.each(['null', 'empty', 'order', 'reference', 'contract', 'date', 'annualized_expiry', 'zero_missing', 'nonfinite', 'category'])('rejects malformed spot %s', defect => {
+  const r = structuredClone(spot)
+  const item = r.futures_spot_comparisons[0]
+  if (defect === 'null') Object.assign(r, { futures_spot_comparisons: null })
+  if (defect === 'empty') r.futures_spot_comparisons = []
+  if (defect === 'order') item.slot = 'M1'
+  if (defect === 'reference') item.underlying_index.close = 1
+  if (defect === 'contract') item.futures.contract_code = 'invented'
+  if (defect === 'date') item.trade_date = '2024-10-19'
+  if (defect === 'annualized_expiry') Object.assign(item, { annualized_spread_ratio: 0 })
+  if (defect === 'zero_missing') Object.assign(item, { signed_spread: null })
+  if (defect === 'nonfinite') Object.assign(item, { signed_spread: Infinity })
+  if (defect === 'category') Object.assign(item, { failure_category: 'calculation_failure' })
   expect(() => validateResult(r)).toThrow()
 })

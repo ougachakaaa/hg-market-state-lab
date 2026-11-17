@@ -1,3 +1,4 @@
+import spot from '../testing/daily_spot.json'
 import { cleanup, fireEvent, render, screen, act, waitFor } from '@testing-library/react'
 import { afterEach, expect, it, vi } from 'vitest'
 import { DailyPresentation } from './DailyPresentation'
@@ -45,7 +46,7 @@ it('shows historical omission, all Chinese columns and three stage labels', () =
   const r = validateResult(structuredClone(daily)); r.day.observations[3].expiry_stage = '8_21'
   render(<DailyPresentation result={r} />)
   expect(screen.getByText('历史数据包未提供指数参考信息')).toBeTruthy()
-  for (const name of ['跨期组合', '近端合约', '远端合约', '近端收盘价', '远端收盘价', '近端最后交易日', '远端最后交易日', '价差（点）', '年化点差（点 / 365 自然日）', '年化价差比例（%）', '期限差（自然日）', '近端剩余到期天数', '到期阶段', '结果状态', '原因']) expect(screen.getByRole('columnheader', { name })).toBeTruthy()
+  for (const name of ['比较组合', '近端合约', '远端合约', '近端收盘价', '远端收盘价', '价差（点）', '年化点差（点 / 365 自然日）', '年化价差比例（%）', '期限差（自然日）', '近端剩余到期天数', '到期阶段']) expect(screen.getByRole('columnheader', { name })).toBeTruthy()
   for (const text of ['0–7 天', '8–21 天', '22 天及以上']) expect(screen.getAllByText(text).length).toBeGreaterThan(0)
   expect(document.querySelector('th.ant-table-cell-fix-start')).toBeTruthy()
   expect(document.querySelector('.ant-table-content')?.getAttribute('style')).toContain('overflow-x: auto')
@@ -95,4 +96,20 @@ it('treats missing clipboard as failure', async () => {
   render(<DailyPresentation result={withReference()} />)
   fireEvent.click(screen.getByRole('button', { name: '复制上下文 JSON' }))
   await waitFor(() => expect(screen.getByText('复制失败')).toBeTruthy())
+})
+
+it('renders six calendar and four spot rows with contiguous labels, prices and metrics', () => {
+  render(<DailyPresentation result={validateResult(spot)} />)
+  expect(document.querySelectorAll('.ant-table-row')).toHaveLength(10)
+  const tables = document.querySelectorAll('.ant-table')
+  const headers = (table: Element) => Array.from(table.querySelectorAll('th')).map(th => th.textContent)
+  expect(headers(tables[0])).toEqual(['比较组合', '近端合约', '远端合约', '近端收盘价', '远端收盘价', '价差（点）', '年化点差（点 / 365 自然日）', '年化价差比例（%）', '期限差（自然日）', '近端剩余到期天数', '到期阶段'])
+  expect(headers(tables[1])).toEqual(['比较组合', '期货合约', '现货指数', '期货收盘价', '现货收盘价', '价差（点）', '年化点差（点 / 365 自然日）', '年化价差比例（%）', '期货剩余期限（自然日）', '到期阶段'])
+  expect(Array.from(tables[1].querySelectorAll('.ant-table-row')).map(row => row.querySelector('td')?.textContent)).toEqual(['M0/现货', 'M1/现货', 'Q1/现货', 'Q2/现货'])
+  for (const name of ['近端最后交易日', '远端最后交易日', '结果状态', '原因']) expect(screen.queryByRole('columnheader', { name })).toBeNull()
+  const expiry = tables[1].querySelector('.ant-table-row')!
+  expect(Array.from(expiry.querySelectorAll('td')).slice(6, 8).map(td => td.textContent)).toEqual(['—', '—'])
+  expect(screen.queryByText('M0/现货：合约到期日，年化指标不适用')).toBeNull()
+  fireEvent.click(screen.getByText('数据说明'))
+  expect(screen.getByText('M0/现货：合约到期日，年化指标不适用')).toBeTruthy()
 })

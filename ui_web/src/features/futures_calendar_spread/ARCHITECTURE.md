@@ -26,8 +26,8 @@ mounts its authenticated HTTP controller; static Demo mounts a Bundle controller
 with the same public Presentation entry.
 
 Show the six ordered pairs with actual near/far contract codes, same-day Close,
-last trading dates, day difference, near DTE/stage and all three named metrics/units.
-Preserve producer order, outcome/reason and null/zero differences. Surface closed
+day difference, near DTE/stage and all three named metrics/units.
+Preserve producer order, outcome/reason evidence and null/zero differences. Surface closed
 date, proven no-active-contract, nonpositive-price exclusion, incomplete inputs,
 unavailability and loading/error independently; do not hide empty data with zeros.
 
@@ -120,10 +120,10 @@ Manifest, capture, financial value or admission contract changes for Issue #13.
 
 All user-facing labels, controls, status/reason explanations and feature-owned
 reading notes use Chinese. Product options retain IF/IH/IC/IM, with underlying names
-as labels; these names never select prices. Label fields as 品种、查询日期、跨期组合、
-近端合约、远端合约、近端收盘价、远端收盘价、近端最后交易日、远端最后交易日、
+as labels; these names never select prices. Label fields as 品种、查询日期、比较组合、
+近端合约、远端合约、近端收盘价、远端收盘价、
 价差（点）、年化点差（点 / 365 自然日）、年化价差比例（%）、期限差（自然日）、
-近端剩余到期天数、到期阶段、结果状态、原因. Slots retain M0/M1/Q1/Q2 identities.
+近端剩余到期天数、到期阶段. Outcome/reason and dates remain in the complete response and exports. Slots retain M0/M1/Q1/Q2 identities.
 Stage labels are 0–7 天、8–21 天、22 天及以上; machine values/boundaries remain
 0_7, 8_21, 22_plus. Preserve every existing datum, six-pair order and all metrics;
 column widths, wrapping, grouped headers and fixed columns may support readability.
@@ -149,3 +149,20 @@ Four local actions and complete business column/context mappings are owned by
 Online and Demo reuse these builders through the same public Presentation. New query
 clears the copy source; changing draft controls alone keeps the existing submitted
 result identity. Demo discloses capture origin and exposes no execution controls.
+
+## Final refinement: independent period-to-spot rows
+
+In one result area, render adjacent Ant Design tables labeled 跨期比较 (six existing pairs) and
+期现比较 (M0/现货, M1/现货, Q1/现货, Q2/现货). The six-pair table orders columns:
+比较组合, 近端合约, 远端合约, 近端收盘价, 远端收盘价, 价差（点）, 年化点差,
+年化价差比例, 期限差（自然日）, 近端剩余到期天数, 到期阶段.
+The period-to-spot table substitutes 期货合约/现货指数 and their Close labels;
+its final columns are 期货剩余期限（自然日） and 到期阶段, avoiding duplicated DTE.
+Explain that calendar-spread annualization uses between-contract dates while
+period-to-spot uses remaining contract life. Never calculate any of these values here.
+Neither table shows last trading dates, outcome or reason columns. Missing metrics
+show —, including expiry-day annualizations; numeric zero remains zero. Brief alerts
+and a default-collapsed 数据说明 expose unavailable/excluded/error reasons per row.
+An omitted collection renders no invented rows and states 历史数据包未提供期现比较结果.
+Online adaptation requires both new collection and underlying_index; Demo accepts
+formal historical omission. Complete JSON/CSV use [Export](EXPORT.md), never table rows.
