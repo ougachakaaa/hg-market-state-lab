@@ -66,6 +66,13 @@ Do not create history/archive replacements or permanent task reports by default;
 Preserve binding correctness, security, recovery and reproducibility requirements regardless of age; report `HUMAN_DECISION_REQUIRED` for genuine unresolved conflicts.
 This policy supersedes historical Markdown retention instructions, including the formal-evidence protection below for obsolete documentation; runtime evidence/data integrity contracts remain binding.
 
+## Product Exploration Principle
+
+Prototype uncertain UI and product interactions before over-designing. Humans steer; Codex implements.
+Explore, observe and converge, then encode accepted semantics in their canonical authority.
+Preserve business correctness, data integrity and accepted invariants; choose the smallest useful implementation and avoid unnecessary complexity.
+This is guidance, not an additional mandatory workflow.
+
 ## Pre-production Publication / Run retention
 
 **用户已明确决定：本项目尚未正式投产；只有用户后续明确宣布投产，才进入 Production 数据保留阶段。** 公开 GitHub 仓库、GitHub Pages Demo、`production` 配置模式、CI 通过或阶段验收，均不构成投产宣告。Agent 不得自行推定已经投产。

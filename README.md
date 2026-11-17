@@ -45,6 +45,11 @@ flowchart LR
 
 完整 Web 包含 Research、Daily Data、Backtesting 总览及业务页面；使用登录、显式执行和服务端 Run。静态 Demo 只阅读捕获结果。项目尚未正式投产，文档中的 Production Web 指完整应用模式。Demo 保留真实来源说明和投资免责声明；第三方许可未核验，不表示提供方授权。
 
+## Engineering Approach
+
+项目自立项起只有一位人类项目负责人，项目代码由 Codex 生成；工程决策、取舍和验收由人类指导与确认。这是维护者对协作责任的声明，Git 提供变更证据。对不确定的产品交互先做可运行原型，观察后收敛到正式语义，同时保留业务正确性。
+参见 [Product Exploration Principle](AGENTS.md#product-exploration-principle) 和 [Engineering Evidence](docs/engineering-evidence.md)。
+
 ## 本地启动
 
 需要 Python 3.13、Poetry、Node.js 20.19+ 或 22.12+、npm。复制根 `.env.example` 为 `.env`；真实行情获取需配置 `TUSHARE_TOKEN`，凭证不进入 Git。初始化和运行方式见 [DEVELOPMENT.md](DEVELOPMENT.md)。
