@@ -108,7 +108,7 @@ it('keeps compact local interactions on the static route and discloses the suppl
   fireEvent.click(screen.getByRole('button', { name: '指标定义与公式' }))
   expect(window.location.hash).toBe('#/research/futures-basis')
   expect(screen.queryByText('private source')).toBeNull()
-  fireEvent.click(screen.getByRole('button', { name: '数据来源', exact: true }))
+  fireEvent.click(screen.getByRole('button', { name: '数据来源' }))
   expect(screen.getByText('private source')).toBeTruthy()
 })
 
