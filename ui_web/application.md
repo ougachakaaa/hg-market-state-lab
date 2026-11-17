@@ -97,7 +97,26 @@ mounts the existing execution Page only at `/backtesting/futures-roll-long`. Sha
 Shell and overview Presentation support static composition. The static Shell harness
 verifies both identities; official Bundle composition uses the admitted Demo runtime.
 
-The shared workspace header remains sticky while scrolling. Its right edge always exposes a GitHub source link to https://github.com/ougachakaaa/hg-market-state-lab in both runtimes, opening a separate tab with noopener/noreferrer. Runtime identity actions remain supplied by composition.
+The shared workspace header remains visible while Content scrolls. Its right edge always exposes a GitHub source link to https://github.com/ougachakaaa/hg-market-state-lab in both runtimes, opening a separate tab with noopener/noreferrer. Runtime identity actions remain supplied by composition.
+
+## Workspace scroll ownership
+
+Authenticated Production Workspace and Static Demo Workspace share a Shell bounded
+by the browser's visible viewport. The sidebar and right-side Header remain visible
+while the right-side Content, the sole vertical scroller for main page content,
+scrolls. Normal long Workspace content must not increase the Document's height into
+a page-level vertical scroller. The sidebar Brand remains at its top; navigation
+that exceeds the remaining height scrolls independently.
+
+Application Shell owns these layout constraints for every business page. Features
+must not implement global navigation fixation. This requirement specifies visible
+behavior, not a particular positioning or CSS technique.
+
+Preserve navigation collapse/expansion, responsive breakpoints, selected and open
+menu state, Production routes and Static hash routes, report section links and
+`scrollIntoView`, feature-local horizontal scrolling and Plotly Zoom/Pan. Shell
+layout must not change Backtesting Activity lifetime or authentication composition;
+login, logout and authentication pages retain their normal layout outside Workspace.
 
 ## Calendar Spread composition
 
