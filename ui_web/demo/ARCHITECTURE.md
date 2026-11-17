@@ -74,7 +74,11 @@ belongs to runtime composition, not the Bundle Registry or Collector.
 
 Each consumed envelope and formal Result must validate before display. Successful
 adaptation and in-flight work are cached within this application instance only; no
-browser persistence or online fallback is introduced. Resource-loading and invalid-data
+browser persistence or online fallback is introduced. Bundle loading and validation
+timing is inspectable through local Performance measures: `demo-bundle:<id>:load`
+covers the static import and `demo-bundle:<id>:validate` covers envelope validation
+and formal adaptation. These diagnostic durations contain no payload data and make
+no rendering-time or transfer-compression claim. Resource-loading and invalid-data
 failures have distinct safe explanations with explicit retry, never raw diagnostics.
 Changing routes/strategy immediately hides the previous result and isolates late
 completions. Unavailable resources do not fabricate results or prevent navigation away.

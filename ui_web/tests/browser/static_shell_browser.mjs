@@ -105,7 +105,7 @@ try {
       assert.equal(new URL(href).origin, new URL(base).origin)
     }
   }
-  pass('All eight canonical identities: menu hrefs, direct hash load, reload, selected leaf, breadcrumb and base containment')
+  pass(`All ${inventory.routes.length} canonical identities: menu hrefs, direct hash load, reload, selected leaf, breadcrumb and base containment`)
   await choose('/data')
   await page.getByRole('button', { name: '打开 MO Option Chain' }).click()
   await current('/data/mo-option-chain')

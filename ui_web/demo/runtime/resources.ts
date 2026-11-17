@@ -15,11 +15,15 @@ export function bundleStore(loaders: BundleLoaders) {
     let found = cache.get(id)
     if (!found) {
       found = resource(async () => {
+        const loadStart = performance.now()
         const module = await loaders[id]()
+        performance.measure(`demo-bundle:${id}:load`, { start: loadStart, end: performance.now() })
+        const validationStart = performance.now()
         try {
           const bundle = validateBundle(id, module.default)
           return { data: adapt(bundle), identity: identity(bundle) }
         } catch { throw new InvalidBundleError() }
+        finally { performance.measure(`demo-bundle:${id}:validate`, { start: validationStart, end: performance.now() }) }
       })
       cache.set(id, found)
     }

@@ -1,5 +1,5 @@
 import { it, expect, beforeAll, afterAll } from 'vitest'
-import { rm, readFile, writeFile, mkdir } from 'node:fs/promises'
+import { rm, readFile, writeFile, mkdir, readdir } from 'node:fs/promises'
 import { resolve } from 'node:path'
 import { isolatedOutput, developerOutputDigest } from './output.fixture'
 import { fixture } from './dataset.fixture'
@@ -15,6 +15,7 @@ it('builds an offline artifact from a private snapshot', async () => {
     expect(await readFile(resolve(isolated.output, 'build-complete.json'), 'utf8')).toContain('ddb04_static_build_v1')
     const graph = await readFile(resolve(isolated.output, 'runtime-dependencies.json'), 'utf8')
     expect(graph).not.toMatch(/shared\/http|\.fixture|\/testing\//)
+    expect((await readdir(isolated.outputRoot)).sort()).toEqual(['demo', 'demo-collection'])
   } finally { await rm(data.root, { recursive: true, force: true }); await isolated.cleanup() }
 }, 120000)
 
@@ -26,6 +27,7 @@ it.each(['missing', 'hash', 'contract'])('fails the build on %s input', async ki
     if (kind === 'hash') await writeFile(data.root + '/chain.json', '{}')
     if (kind === 'contract') { data.data.get('chain').result = {}; await data.save() }
     await expect(buildDemo({ ...isolated, dataset: data.root })).rejects.toThrow('snapshot_admission_failed')
+    expect(await readdir(isolated.outputRoot)).toEqual(['demo-collection'])
   } finally { await rm(data.root, { recursive: true, force: true }); await isolated.cleanup() }
 }, 20000)
 it('freezes bytes before allowing Collector changes and excludes concurrent builds', async () => {
@@ -49,5 +51,6 @@ it('removes formal output when Vite fails', async () => {
   try {
     await expect(buildDemo({ ...isolated, dataset: data.root, compile: async () => { throw new Error('controlled_vite_failure') } })).rejects.toThrow('controlled_vite_failure')
     await expect(readFile(resolve(isolated.output, 'build-complete.json'))).rejects.toThrow()
+    expect(await readdir(isolated.outputRoot)).toEqual(['demo-collection'])
   } finally { await rm(data.root, { recursive: true, force: true }); await isolated.cleanup() }
 })

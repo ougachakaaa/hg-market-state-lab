@@ -7,18 +7,21 @@ import { readFile } from 'node:fs/promises'
 import { sha } from '../../scripts/artifact_integrity.mjs'
 
 export const web = fileURLToPath(new URL('../../', import.meta.url))
-export async function lock(path) {
+export async function assertUnlinked(path) {
   let current = resolve(path)
   while (true) {
-    try { if ((await lstat(current)).isSymbolicLink()) throw new Error('linked_lock_path') }
+    try { if ((await lstat(current)).isSymbolicLink()) throw new Error('linked_build_path') }
     catch (error) { if (error.code !== 'ENOENT') throw error }
     const parent = dirname(current)
     if (parent === current) break
     current = parent
   }
+}
+export async function lock(path) {
+  await assertUnlinked(path)
   await mkdir(dirname(path), { recursive: true })
   try { await mkdir(path) } catch { throw new Error('busy_requires_explicit_recovery') }
-  return () => rmdir(path)
+  return async () => { await assertUnlinked(path); await rmdir(path) }
 }
 export function preflight(snapshot) {
   return new Promise((accept, reject) => {
@@ -31,6 +34,7 @@ async function removeOwned(path) {
   const boundary = resolve(web, '.build')
   const child = relative(boundary, path)
   if (!child || child.startsWith('..') || isAbsolute(child)) throw new Error('unsafe_cleanup')
+  await assertUnlinked(path)
   await rm(path, { recursive: true, force: true })
 }
 export async function buildDemo({ outputRoot = resolve(web, '.build'), dataset = resolve(web, 'demo/bundles'), work = resolve(web, '.build/demo-collection'), compile = compileDemo } = {}) {
@@ -60,9 +64,14 @@ export async function buildDemo({ outputRoot = resolve(web, '.build'), dataset =
     } finally { await releaseDataset() }
     const artifact = resolve(staging, 'artifact')
     await compile(snapshot, artifact)
+    await assertUnlinked(artifact)
+    await assertUnlinked(output)
     await access(resolve(artifact, 'index.html'))
     await access(resolve(artifact, 'assets'))
+    await assertUnlinked(resolve(artifact, 'build-complete.json'))
     await writeFile(resolve(artifact, 'build-complete.json'), JSON.stringify({ format: 'ddb04_static_build_v1', sourceCommit: execFileSync('git', ['rev-parse', 'HEAD'], { cwd: web, encoding: 'utf8' }).trim(), manifestSha256: sha(await readFile(resolve(snapshot, 'manifest.json'))) }) + '\n')
+    await assertUnlinked(artifact)
+    await assertUnlinked(output)
     await rename(artifact, output)
   } catch (error) {
     await removeOwned(output)

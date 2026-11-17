@@ -124,6 +124,11 @@ The default remains `.build`; output, output lock and invocation staging are der
 from that root. Dataset coordination still defaults to the canonical Collector work
 directory independently of output placement. Tests supply their own dataset work
 directory and unique child output root, never developer-owned Demo output or locks.
+Output paths and their existing ancestors must be unlinked at acquisition, cleanup,
+artifact completion/promotion and lock release. A detected redirection fails closed;
+never follow it to remove output or release another directory's lock. This protects
+against observed filesystem redirection, not arbitrary concurrent hostile filesystem
+mutation between a check and a filesystem operation.
 Success, admission failure and compile failure clean only that invocation's resources. Actual Vite build tests are
 an explicit `npm run demo:test:build` specialist check, excluded from ordinary `npm test`.
 Pure runtime adaptation and Bundle admission remain independently selectable tests.
@@ -167,6 +172,10 @@ Focused checks cover full disclosure, horizontal containment, card alignment,
 Production-mode shared Presentation and Chinese/unbroken-English stress inputs in
 a test-only harness. Screenshots are saved to ignored `.build/demo-review/`.
 Production coverage here verifies Presentation, not authenticated backend flows.
+For isolated acceptance, `previewDemo(port, { outputRoot })` and
+`verifyBrowser(url, { outputRoot, reviewRoot })` consume the chosen build without
+rebuilding or replacing developer output. `localReview.mjs --output-root <root>`
+uses that root for preview and review artifacts; the default invocation is unchanged.
 Use installed Playwright Chromium or set `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH`
 to a compatible existing browser. An unavailable browser is NOT VERIFIED.
 These checks are explicit commands, not a default gate for unrelated development.
@@ -208,3 +217,15 @@ files must match the existing Manifest hashes before copying, including during
 seven-to-nine membership extension. Independent complete candidate admission remains
 mandatory; no partial membership is allowed by Build or Preflight. Response schema
 validation precedes feature-owned association validation and payload reference retention.
+
+### Explicit loading measurements
+
+`node demo/build/browserPerformance.mjs <outputRoot> <evidenceRoot>` measures an
+already-built local artifact with installed Chromium, a fresh context and cache-enabled
+same-document navigation. It records actual Resource Timing/CDP transfer and body sizes,
+content encoding, result-ready duration and script execution duration, separately from
+Bundle load/validation measures. It does not intercept requests or rebuild data. An old
+artifact without Bundle measures has no isolated validation timing; never substitute
+result-ready duration for validation time. Store generated evidence in ignored temporary
+output, not tracked historical reports. Compare artifacts only with identical inputs,
+browser and serving conditions; uncompressed preview transfers are not gzip transfers.

@@ -287,8 +287,9 @@ static alert title and this fixed paragraph:
 
 本页面为静态研究成果展示。数据不保证准确，不构成任何投资建议，仅供项目功能演示。
 
-Source provenance and Bundle metadata remain owned by admission. Compact report rendering
-does not repeat sourceDisclosure. Invalid embedded payloads retain the existing error path.
+Source provenance and Bundle metadata remain owned by admission. Compact Demo retains
+the exact supplied sourceDisclosure in the default-closed 数据来源 disclosure, owned by
+[Presentation authority](PRESENTATION.md). Invalid embedded payloads retain the existing error path.
 
 ## V2 origin policy reconciliation
 
@@ -297,7 +298,7 @@ packaging; authenticity and rights (retired; Git history) owns evidence and admi
 This feature owns only their presentation. Static delivery is not a Synthetic source label
 or proof of authenticity. Preserve historical V1/test disclosures, use actual real-market
 origin for V2, and never promote regression inputs to formal Examples. WP-B propagates an explicit validated Example source statement from static composition
-through UI-only `sourceDisclosure` (retained as an input for compatibility; compact delivery omits its display); delivery mode never
+through UI-only `sourceDisclosure` (compact Demo displays it on explicit expansion); delivery mode never
 infers real-market origin. Historical Synthetic defaults and Production/Offline evidence
 remain unchanged. Admission and provenance ownership stay in the
 private build contract (retired; Git history).
