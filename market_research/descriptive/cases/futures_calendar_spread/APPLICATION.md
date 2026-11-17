@@ -128,9 +128,9 @@ historical groups; the final day supplies only current values. Statistics is
 consumed only through its root public Python API. No injected clock, window
 fallback, consumer-specific numeric algorithm or additional default is introduced.
 
-Only preparation performs I/O, exporting Calendar then Futures once each. No
-per-date, per-pair or per-method exports occur. Missing/incomplete caches remain
-explicit failures; operators must prepare them separately. Both independent
+Shared preparation performs core I/O, exporting Calendar then Futures once each. No
+per-date, per-pair or per-method core exports occur. Missing/incomplete core caches
+remain explicit failures; operators must prepare them separately. Both independent
 snapshots and the lack of historical point-in-time metadata are disclosed in
 returned source_context. Queries execute synchronously with memory/time growing
 with the explicitly requested window; no arbitrary date cap or timeout is added.
@@ -183,3 +183,21 @@ Threadpool delegation is not a latency SLA. Client cancellation stops waiting, n
 necessarily Source work or SQLite writes; shared capacity remains held through worker
 completion. Collector's per-request timeout is independently configurable under the
 [build contract](../../../../ui_web/demo/build/ARCHITECTURE.md).
+
+## DD-02 Daily reference target
+
+[Daily Index Reference](DAILY_INDEX_REFERENCE.md) adds independent reference Input
+Preparation after successful core construction. Only query_daily_spreads and
+execute_daily_spreads add keyword-only `index_service=None`; query injection requires
+export, execution injection requires export/ensure. Existing calendar_service injection
+also handles explicit SSE requests with the corresponding permission. Callers may omit
+the new injection; default factories remain lazy. Historical signatures, shared
+preparation carriers/protocols and pure construction remain unchanged.
+
+Daily always returns the new [Query Results](QUERY_RESULTS.md#daily-underlying-index-result-dd-02-target)
+reference carrier, including classified acquisition failures. This deliberately
+specializes whole-query failure policy for the independent reference only. Core and
+Historical failures remain unchanged. GET never Ensures; POST permits bounded
+preparation only. No range query, historical detail endpoint, Run or retry is added.
+Issue #13's unchanged query/injection statements describe that earlier change;
+DD-02 adds this Daily-only dependency without changing read-only permissions.

@@ -3,6 +3,8 @@
 Status: financial calculation, read-only observations/queries, explicit automatic
 preparation, Statistics, HTTP, Web and static Demo consumption are implemented.
 Current delivery scope and limits are recorded in [Roadmap](ROADMAP.md).
+DD-02 index/Chinese/export enhancements are authority targets only until accepted;
+the existing implemented status does not include them.
 This independent Descriptive case specializes [Research](../../../ARCHITECTURE.md)
 and [Descriptive](../../ARCHITECTURE.md). Case identity is
 `futures_calendar_spread_v1`; financial definition version is
@@ -35,6 +37,7 @@ Presentation, and Demo captures only formal HTTP Results.
 | --- | --- |
 | Formula, sign, units and financial interpretation | [Definition](DEFINITION.md) |
 | Public inputs, completeness and reproduction | [Inputs](INPUTS.md) |
+| Daily-only index reference, preparation and isolation | [Daily Index Reference](DAILY_INDEX_REFERENCE.md) |
 | Pair-day population, legality and accounting | [Observation](OBSERVATION.md) |
 | Comparable historical samples and relative assessment | [Relative value](RELATIVE_VALUE.md) |
 | Shared Python business boundary and the two queries | [Application](APPLICATION.md) |

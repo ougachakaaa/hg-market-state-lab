@@ -108,3 +108,34 @@ exceptions, public StatisticalFailure and local association violations. Causes
 remain attached. Raw upstream exception text is not copied to its public reason;
 programming exceptions propagate. Invalid query/statistical parameters use
 `invalid_request` before service construction or calls.
+
+## Daily underlying index result (DD-02 target)
+
+DailySpreadsResult adds required `underlying_index: DailyUnderlyingIndexReference`
+and `underlying_index_evidence: DailyUnderlyingIndexEvidence`. Both are frozen,
+slotted public carriers exported by the case facade, with tuple-owned sequence
+fields. Existing observation_set, prepared_inputs, day and accounting retain their
+meaning. HistoricalRelativeValueResult/current_day add neither field. WP-01 updates
+Daily constructors/fixtures; no fabricated Python default reference is introduced.
+
+DailyUnderlyingIndexReference contains `index_code: str`, `trade_date: date`,
+`close: float | None`, `availability`, `reason_code: str | None` and
+`failure_category: str | None`. Exact state combinations and legality belong solely
+to [Daily Index Reference](DAILY_INDEX_REFERENCE.md). Identity/date bind to the
+request and authority-governed selection; this is separate from PairObservation.
+
+DailyUnderlyingIndexEvidence retains immutable per-dependency attempts with exact
+SSE/Index requests, validated preliminary/final typed Exports and normal EnsureResults,
+plus safe dependency/operation/reason and original exception association on failure.
+Reuse existing acquisition evidence conventions where their types fit; do not insert
+Index evidence into shared Calendar/Futures prepared inputs. An unreached dependency
+has no attempt; a reached failure keeps its request and preceding validated evidence.
+Malformed objects are never retained as validated proof. Evidence is caller-retained
+in memory, with no new store, HTTP representation or persistence identity.
+
+Classified reference failure is a successful Daily result with an explicit reference
+state, a specialization of the whole-core failure rule above. Unknown defects still
+propagate. Daily source_context keeps its shape and CFFEX core identity, adding accurate
+independent SSE/Index snapshot, acquisition-permission and reference-only disclosures.
+Do not mutate shared SourceContext defaults used by Historical. Old captured disclosures
+remain valid; validation never requires updated prose.

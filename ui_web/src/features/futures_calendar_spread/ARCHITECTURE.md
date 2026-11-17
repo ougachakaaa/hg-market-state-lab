@@ -1,6 +1,8 @@
 # Daily Data — Futures Calendar Spread Presentation authority
 
-Status: implemented. Current deployment/live-source readiness requires separate verification.
+Status: existing surface implemented. DD-02 Chinese/index/export changes below are
+authority targets until their work packages are accepted. Current deployment/live-source
+readiness requires separate verification.
 Inherits [Web boundaries](../../../ARCHITECTURE.md) and
 [Presentation architecture](../../../presentation-architecture.md).
 Business meaning belongs to [Research](../../../../market_research/descriptive/cases/futures_calendar_spread/ARCHITECTURE.md);
@@ -14,7 +16,7 @@ which owns preparation and operational limits. Static controllers consume admitt
 ## Surface
 
 The independent Daily Data page is `/data/futures-calendar-spread`, titled
-“Futures Calendar Spread”. Explicit product/date controls issue the formal Daily
+“股指期货跨期价差” (DD-02 target). Explicit product/date controls issue the formal Daily
 execution through `POST /data/futures-calendar-spread/query` (gateway
 `/api/data/futures-calendar-spread/query`). Existing GET remains read-only for its
 callers; Production submit/retry uses POST and never falls back to GET. Do not invent
@@ -112,3 +114,37 @@ Static Demo mounts only its existing Bundle controller and shared pure Presentat
 It has no execution controls, Production hooks, HTTP/Auth/Source calls or Ensure.
 Local pair/axis/viewport interactions retain their offline behavior; no Bundle,
 Manifest, capture, financial value or admission contract changes for Issue #13.
+
+## DD-02 Chinese presentation and index target
+
+All user-facing labels, controls, status/reason explanations and feature-owned
+reading notes use Chinese. Product options retain IF/IH/IC/IM, with underlying names
+as labels; these names never select prices. Label fields as 品种、查询日期、跨期组合、
+近端合约、远端合约、近端收盘价、远端收盘价、近端最后交易日、远端最后交易日、
+价差（点）、年化点差（点 / 365 自然日）、年化价差比例（%）、期限差（自然日）、
+近端剩余到期天数、到期阶段、结果状态、原因. Slots retain M0/M1/Q1/Q2 identities.
+Stage labels are 0–7 天、8–21 天、22 天及以上; machine values/boundaries remain
+0_7, 8_21, 22_plus. Preserve every existing datum, six-pair order and all metrics;
+column widths, wrapping, grouped headers and fixed columns may support readability.
+
+Add an independent 标的指数参考 section with returned index identity, date, Close
+and Chinese availability/reason. Format Close under the common number policy.
+Do not derive identity/price, calculate metrics, infer closure from the Futures day
+or use earlier prices. Translate known state/reason codes using fixed labels;
+reference errors remain visible alongside intact pairs. unavailable/cache_incomplete
+means 缓存尚不完整, not proven Source absence; final_export_incomplete means
+自动准备后数据仍不完整. Distinguish credential/cache/operation/contract failures.
+
+An omitted underlying_index displays 历史数据包未提供指数参考信息. Explicit null,
+wrong identity/date or illegal state combinations fail contract validation. The public
+validator accepts omission under the formal additive schema; Online loadQuery additionally
+requires the field. Neither path mutates validated payloads or relaxes existing checks.
+Translate fixed known source-context explanations for display while retaining raw strings
+for export; unknown captured prose is preserved verbatim rather than silently discarded
+or interpreted. Machine JSON keys, HTTP enums and result identity remain unchanged.
+
+Four local actions and complete business column/context mappings are owned by
+[Daily Export](EXPORT.md), inheriting [Daily Data Copy / Export](../../../data-copy-export.md).
+Online and Demo reuse these builders through the same public Presentation. New query
+clears the copy source; changing draft controls alone keeps the existing submitted
+result identity. Demo discloses capture origin and exposes no execution controls.

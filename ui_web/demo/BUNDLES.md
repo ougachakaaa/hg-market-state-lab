@@ -146,3 +146,14 @@ Echoed server operation/defaults remain inside each complete Result; the envelop
 request is exactly the explicit GET query or POST body. The delivered OpenAPI
 DailyResponse/HistoricalResponse schemas supply the contract identities above.
 No DTO version, Run identity or lifecycle is fabricated.
+
+## DD-02 Daily additive reference target
+
+The current Daily HTTP contract explicitly permits omission of underlying_index for
+older captured bodies. A complete formal Result means all fields required by that
+contract, not all optional additions. This narrow compatibility does not relax other
+fields, envelope closure, Preset identity, numeric admission or Manifest/hash checks.
+Explicit null or a malformed present reference is invalid. The same feature validator
+is used by Build and runtime; do not invent a competing historical schema or inject
+reference values. Details belong to [Calendar Spread integration](CALENDAR_SPREAD.md#dd-02-additive-reference-compatibility-target).
+WP-00 changes no Bundle bytes, Manifest entries or generated contract artifacts.

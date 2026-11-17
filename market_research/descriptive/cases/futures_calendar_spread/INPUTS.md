@@ -16,9 +16,11 @@ DataLake-first review finds the required facts and completeness publicly availab
 Use their public `create_service()`/`export()`/`ensure()` boundaries under
 [Calendar Service](../../../../data_lake/datasets/tushare_trade_calendar/SERVICE.md)
 and [Futures Service](../../../../data_lake/datasets/tushare_equity_index_futures/SERVICE.md).
-No Index Daily, SSE calendar or Snapshot product is needed; the underlying identity
-is metadata association, not a request for an underlying price. No Source client,
-private catalog, SQLite, provider adapter or alternate price source is authorized.
+These are the shared Observation inputs for both products. DD-02 adds Daily-only
+SSE Calendar and Index Daily public consumption under
+[Daily Index Reference](DAILY_INDEX_REFERENCE.md); Historical and shared preparation
+do not acquire them. No Snapshot product, Source client, private catalog, SQLite,
+provider adapter or alternate price source is authorized.
 
 <a id="read-only-preparation-and-completeness"></a>
 
@@ -201,5 +203,7 @@ messages, inspect Provider internals or reinterpret a generic wrapped prerequisi
 OperationError as a more specific cause. UnitFailures followed by an incomplete
 final Export use final_export_incomplete; a later complete legal Export can succeed
 while retaining those diagnostics. Missing input that is successfully prepared is
-normal success, not a new warning/error category. This remains a complete-input
-Case; no legal partial final Calendar/Futures is accepted.
+normal success, not a new warning/error category. Shared Observation preparation
+remains complete-input; no legal partial final Calendar/Futures is accepted. Daily-only SSE/Index preparation specializes failure
+handling under [Daily Index Reference](DAILY_INDEX_REFERENCE.md), without relaxing
+these core requirements.

@@ -41,6 +41,9 @@ HTTP owns transport and authentication. Business modules retain result semantics
   valid committed Bundles (SD-08).
 - Direct cutover maintains one current contract and dataset. DDB-00 retired Synthetic V1 and
   Public/Private V2. Future contract changes update the current delivery directly (SD-09).
+  A current HTTP contract may explicitly admit historical field omission, as for the
+  [DD-02 Daily reference](CALENDAR_SPREAD.md#dd-02-additive-reference-compatibility-target);
+  this does not introduce a second dataset or weaken required-field validation.
 
 The browser loads static resources and runs local presentation interactions. Business HTTP,
 Auth, backend preflight, polling and server Run lifecycle belong to generation/Online.
