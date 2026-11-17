@@ -23,7 +23,7 @@ implementation is authorized for either.
 Two independent products share one Research-owned financial calculation and
 Observation capability:
 
-- **Daily Data — Futures Calendar Spread**: one product/date, six ordered Slot pairs.
+- **Daily Data — Futures Calendar Spread**: one product/date, six ordered Slot pairs plus four independent Daily futures–spot comparisons.
 - **Research — Calendar Spread Historical Relative Value**: one product/evaluation
   date, explicit historical start, comparable distributions and current assessment.
 
@@ -39,6 +39,7 @@ Presentation, and Demo captures only formal HTTP Results.
 | Formula, sign, units and financial interpretation | [Definition](DEFINITION.md) |
 | Public inputs, completeness and reproduction | [Inputs](INPUTS.md) |
 | Daily-only index reference, preparation and isolation | [Daily Index Reference](DAILY_INDEX_REFERENCE.md) |
+| Daily futures–spot formulas and row outcomes | [Daily Futures–Spot Comparison](DAILY_FUTURES_SPOT_COMPARISON.md) |
 | Pair-day population, legality and accounting | [Observation](OBSERVATION.md) |
 | Comparable historical samples and relative assessment | [Relative value](RELATIVE_VALUE.md) |
 | Shared Python business boundary and the two queries | [Application](APPLICATION.md) |

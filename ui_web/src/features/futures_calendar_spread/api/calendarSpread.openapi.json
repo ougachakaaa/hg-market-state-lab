@@ -144,6 +144,177 @@
         "title": "DailyErrorResponse",
         "type": "object"
       },
+      "DailyFuturesSpotComparison": {
+        "additionalProperties": false,
+        "properties": {
+          "annualized_point_spread": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Annualized Point Spread"
+          },
+          "annualized_spread_ratio": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Annualized Spread Ratio"
+          },
+          "definition_version": {
+            "const": "daily_futures_spot_definition_v1",
+            "title": "Definition Version",
+            "type": "string"
+          },
+          "expiry_stage": {
+            "anyOf": [
+              {
+                "enum": [
+                  "0_7",
+                  "8_21",
+                  "22_plus"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expiry Stage"
+          },
+          "failure_category": {
+            "anyOf": [
+              {
+                "enum": [
+                  "incomplete_inputs",
+                  "upstream_unavailable",
+                  "input_contract_error",
+                  "calculation_failure"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Failure Category"
+          },
+          "futures": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Contract"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "outcome": {
+            "enum": [
+              "valid",
+              "not_applicable",
+              "excluded",
+              "error"
+            ],
+            "title": "Outcome",
+            "type": "string"
+          },
+          "product_code": {
+            "enum": [
+              "IF",
+              "IH",
+              "IC",
+              "IM"
+            ],
+            "title": "Product Code",
+            "type": "string"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "enum": [
+                  "no_active_contract",
+                  "index_reference_unavailable",
+                  "nonpositive_close",
+                  "expiry_day",
+                  "calculation_failure"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          },
+          "remaining_days": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Remaining Days"
+          },
+          "signed_spread": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Signed Spread"
+          },
+          "slot": {
+            "enum": [
+              "M0",
+              "M1",
+              "Q1",
+              "Q2"
+            ],
+            "title": "Slot",
+            "type": "string"
+          },
+          "trade_date": {
+            "format": "date",
+            "title": "Trade Date",
+            "type": "string"
+          },
+          "underlying_index": {
+            "$ref": "#/components/schemas/DailyUnderlyingIndex"
+          }
+        },
+        "required": [
+          "product_code",
+          "trade_date",
+          "slot",
+          "futures",
+          "underlying_index",
+          "remaining_days",
+          "expiry_stage",
+          "signed_spread",
+          "annualized_point_spread",
+          "annualized_spread_ratio",
+          "outcome",
+          "reason",
+          "failure_category",
+          "definition_version"
+        ],
+        "title": "DailyFuturesSpotComparison",
+        "type": "object"
+      },
       "DailyRequest": {
         "additionalProperties": false,
         "properties": {
@@ -188,6 +359,13 @@
             "const": "futures_calendar_spread_definition_v1",
             "title": "Definition Version",
             "type": "string"
+          },
+          "futures_spot_comparisons": {
+            "items": {
+              "$ref": "#/components/schemas/DailyFuturesSpotComparison"
+            },
+            "title": "Futures Spot Comparisons",
+            "type": "array"
           },
           "request": {
             "$ref": "#/components/schemas/DailyEcho"

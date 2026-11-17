@@ -64,7 +64,7 @@ and [Observation](OBSERVATION.md#wp2-public-construction).
 
 | Operation | Explicit request | Successful result |
 | --- | --- | --- |
-| `query_daily_spreads` | `product_code`, `trade_date` | Case/definition identity, echoed request, candidate session status, six ordered Pair-day outcomes on open dates, accounting and source context |
+| `query_daily_spreads` | `product_code`, `trade_date` | Case/definition identity, echoed request, candidate session status, six ordered Pair-day outcomes and four independent futures–spot comparisons on open dates, underlying reference, accounting and source context |
 | `query_historical_relative_value` | `product_code`, `history_start`, `evaluation_date`, `metric=annualized_spread_ratio`, optional `histogram_edges` | Identity/request, current Daily observation projection, six pairs' four independent historical distributions, matching-stage/all-stages current assessments, sample/candidate accounting and provenance/limitations |
 
 Daily always returns all three metrics. Research's metric changes the analysis,

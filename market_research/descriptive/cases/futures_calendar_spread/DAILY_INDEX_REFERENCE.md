@@ -25,13 +25,14 @@ Closed/empty Futures days still use the authority-governed selection.
 
 First complete the existing Calendar/Futures preparation and Observation construction;
 only then prepare the Daily reference. Core failures remain whole-query failures and
-do not start reference acquisition. Reference Close never enters financial computation,
-Pair-day population, accounting, DTE or expiry stages. CFFEX and SSE are independent:
+do not start reference acquisition. Reference Close never enters calendar-spread financial computation,
+Pair-day population, accounting, DTE or expiry stages. It additionally supplies the
+independent [Daily futures–spot comparisons](DAILY_FUTURES_SPOT_COMPARISON.md). CFFEX and SSE are independent:
 do not intersect calendars or skip SSE because CFFEX is closed.
 
 Historical Relative Value, including current_day, never acquires this reference.
 Shared prepare_inputs, prepare_inputs_for_execution, prepared carriers and pure
-construction remain unchanged. No new financial module, Source, cache or generic
+construction remain unchanged. No new Source, cache or generic
 preparation framework is introduced.
 
 ## Daily-only preparation

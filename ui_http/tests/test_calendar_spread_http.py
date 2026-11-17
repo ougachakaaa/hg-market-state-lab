@@ -926,7 +926,13 @@ def test_daily_reference_projection_all_states(
         "000852.SH", DAY, close, availability, reason, category,
     )
     query.side_effect = None
-    query.return_value = replace(original, underlying_index=reference)
+    from market_research.descriptive.cases.futures_calendar_spread.daily_spot import (
+        construct_daily_spot_comparisons,
+    )
+
+    query.return_value = replace(original, underlying_index=reference,
+        futures_spot_comparisons=construct_daily_spot_comparisons(
+            original.day, original.prepared_inputs, reference, original.underlying_index_evidence))
     response = request_path(client, path)
     assert response.status_code == 200, response.text
     payload = response.json()
@@ -946,6 +952,7 @@ def test_daily_reference_optional_but_non_null_and_complete():
 
     payload = DailyResponse.model_validate(daily(Services())).model_dump(mode="json")
     reference = payload.pop("underlying_index")
+    payload.pop("futures_spot_comparisons")
     legacy = DailyResponse.model_validate_json(json.dumps(payload))
     assert "underlying_index" not in legacy.model_dump()
     assert "underlying_index" not in json.loads(legacy.model_dump_json())
@@ -1032,3 +1039,66 @@ def test_formal_reference_acquisition_permissions(product, path):
         assert reference["availability"] == "available"
         assert fake.events.count(("sse", "ensure")) == 1
         assert fake.events.count(("index", "ensure")) == 1
+
+
+@pytest.mark.parametrize("path", [DAILY, EXECUTION])
+def test_daily_spot_online_projection_and_internal_evidence_boundary(product, path):
+    from test_calendar_spread_daily_index import ReferenceServices
+
+    _, client, query, _ = product
+    result = ReferenceServices().run()
+    query.side_effect = None
+    query.return_value = result
+    response = request_path(client, path)
+    assert response.status_code == 200, response.text
+    payload = response.json()
+    assert [i["slot"] for i in payload["futures_spot_comparisons"]] == ["M0", "M1", "Q1", "Q2"]
+    assert len(payload["day"]["observations"]) == 6
+    first = payload["futures_spot_comparisons"][0]
+    assert first["signed_spread"] == 110 - 3500.123456789
+    assert first["annualized_point_spread"] is None
+    assert first["remaining_days"] == 0 and first["reason"] == "expiry_day"
+    assert first["underlying_index"] == payload["underlying_index"]
+    assert not any(word in response.text for word in (
+        '"source_evidence":', '"reference_evidence":', '"calculation_exception":',
+    ))
+
+
+@pytest.mark.parametrize(
+    "defect", ["null", "missing_reference", "order", "contract", "date", "expiry", "category"],
+)
+def test_daily_spot_rejects_invalid_wire_associations(defect):
+    from pydantic import ValidationError
+
+    from test_calendar_spread_daily_index import ReferenceServices
+    from ui_http.products.futures_calendar_spread.endpoint import project_daily
+
+    payload = project_daily(ReferenceServices().run()).model_dump(mode="json")
+    item = payload["futures_spot_comparisons"][0]
+    if defect == "null":
+        payload["futures_spot_comparisons"] = None
+    elif defect == "missing_reference":
+        payload.pop("underlying_index")
+    elif defect == "order":
+        payload["futures_spot_comparisons"].reverse()
+    elif defect == "contract":
+        item["futures"]["contract_code"] = "invented"
+    elif defect == "date":
+        item["trade_date"] = AFTER.isoformat()
+    elif defect == "expiry":
+        item["annualized_spread_ratio"] = 0
+    else:
+        item["failure_category"] = "calculation_failure"
+    with pytest.raises(ValidationError):
+        DailyResponse.model_validate_json(json.dumps(payload))
+
+
+def test_daily_spot_omission_preserved_for_both_generations_of_legacy_bundle():
+    payload = DailyResponse.model_validate(daily(Services())).model_dump(mode="json")
+    payload.pop("futures_spot_comparisons")
+    for with_reference in (True, False):
+        if not with_reference:
+            payload.pop("underlying_index")
+        legacy = DailyResponse.model_validate_json(json.dumps(payload))
+        assert "futures_spot_comparisons" not in legacy.model_dump()
+        assert json.loads(legacy.model_dump_json()) == payload

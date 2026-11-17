@@ -16,6 +16,7 @@ from market_statistics import (
 )
 
 from .daily_index import DailyUnderlyingIndexEvidence, DailyUnderlyingIndexReference
+from .daily_spot import DailyFuturesSpotComparison
 from .financial import CalendarSpreadMetric
 from .inputs import (
     CASE,
@@ -88,6 +89,7 @@ class DailySpreadsResult:
     observation_set: CalendarSpreadObservationSet
     underlying_index: DailyUnderlyingIndexReference
     underlying_index_evidence: DailyUnderlyingIndexEvidence
+    futures_spot_comparisons: tuple[DailyFuturesSpotComparison, ...]
     source_context: SourceContext = SourceContext()
     case: str = CASE
     definition_version: str = DEFINITION_VERSION

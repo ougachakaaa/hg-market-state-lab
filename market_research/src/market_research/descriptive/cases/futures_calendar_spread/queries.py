@@ -20,6 +20,7 @@ from market_statistics import (
 
 from .construction import construct_observations
 from .daily_index import ExecutionIndexService, IndexService, prepare_daily_index
+from .daily_spot import construct_daily_spot_comparisons
 from .inputs import CalendarSpreadRequest, InputPreparationError
 from .observations import (
     PAIRS,
@@ -181,7 +182,8 @@ def _daily_spreads(
     source = EXECUTION_SOURCE_CONTEXT if execution else SourceContext()
     source = replace(source, limitations=(*source.limitations,
         "Daily SSE Calendar and Index exports are independent snapshots; the same-day "
-        "index Close is reference-only and never enters futures calculations. "
+        "index Close supplies independent Daily futures–spot comparisons, never "
+        "calendar-spread or historical calculations. "
         "Reference preparation follows the selected read-only or explicit execution permission.",
     ))
     return DailySpreadsResult(
@@ -189,6 +191,9 @@ def _daily_spreads(
         collection,
         reference,
         evidence,
+        construct_daily_spot_comparisons(
+            collection.days[0], collection.prepared_inputs, reference, evidence
+        ),
         source,
     )
 

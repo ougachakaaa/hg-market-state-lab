@@ -191,3 +191,21 @@ relax unrelated fields, store an alternate schema, rewrite old Bundle bytes or s
 an object. Generate affected OpenAPI/TypeScript under the normal feedback loop in WP-01;
 WP-00 does not regenerate artifacts. Any generated sibling snapshot drift must be limited
 to actual generator effects; Historical wire semantics stay unchanged.
+
+## Daily futures–spot additive projection
+
+DailyResponse adds optional, non-null `futures_spot_comparisons`. New Online GET/POST
+success projections always include it and underlying_index; omission is accepted only
+for older captured objects and preserved during serialization. Presence requires the
+underlying_index object. Closed CFFEX days carry an empty collection; open days have
+exactly M0/M1/Q1/Q2 in order. Missing does not mean four null outcomes.
+
+Each item explicitly projects product_code, trade_date, slot, futures (the existing
+Contract DTO or null), underlying_index (the existing reference DTO), remaining_days,
+expiry_stage, signed_spread, annualized_point_spread, annualized_spread_ratio, outcome,
+reason, failure_category and definition_version=daily_futures_spot_definition_v1.
+Finite/null metrics and exact state combinations follow the independent Research
+[authority](../../../market_research/descriptive/cases/futures_calendar_spread/DAILY_FUTURES_SPOT_COMPARISON.md).
+Identity/date, reference equality, Slot-to-pair contract association, count/order and
+state/metric relationships are validated, without financial recomputation.
+No internal evidence is serialized. HistoricalResponse is unchanged.

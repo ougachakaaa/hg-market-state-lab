@@ -136,6 +136,21 @@ in memory, with no new store, HTTP representation or persistence identity.
 Classified reference failure is a successful Daily result with an explicit reference
 state, a specialization of the whole-core failure rule above. Unknown defects still
 propagate. Daily source_context keeps its shape and CFFEX core identity, adding accurate
-independent SSE/Index snapshot, acquisition-permission and reference-only disclosures.
+independent SSE/Index snapshot and acquisition-permission disclosures; the reference supplies independent Daily futures–spot comparisons only.
 Do not mutate shared SourceContext defaults used by Historical. Old captured disclosures
 remain valid; validation never requires updated prose.
+
+## Daily futures–spot results
+
+DailySpreadsResult additionally requires `futures_spot_comparisons`, an immutable tuple
+of frozen/slotted DailyFuturesSpotComparison carriers under the independent
+[financial authority](DAILY_FUTURES_SPOT_COMPARISON.md). Each item contains product_code,
+trade_date, slot, futures (the validated original row or None), underlying_index (the
+same Daily reference), remaining_days, expiry_stage, signed_spread,
+annualized_point_spread, annualized_spread_ratio (nullable floats), outcome, reason,
+failure_category and its own definition_version. Source universe and reference evidence,
+and safe calculation failure association, remain caller-retained internal evidence.
+Open/closed item counts are four/zero, independent of existing six-pair accounting.
+HistoricalRelativeValueResult and all shared observation/sample carriers are unchanged.
+Daily source disclosure now distinguishes reference consumption by these independent
+comparisons from its exclusion from calendar-spread and historical calculations.

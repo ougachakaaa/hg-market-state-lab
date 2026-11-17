@@ -3,6 +3,7 @@
 from .construction import construct_observations as construct_observations
 from .daily_index import DailyUnderlyingIndexEvidence as DailyUnderlyingIndexEvidence
 from .daily_index import DailyUnderlyingIndexReference as DailyUnderlyingIndexReference
+from .daily_spot import DailyFuturesSpotComparison as DailyFuturesSpotComparison
 from .financial import CalendarSpreadCalculationError as CalendarSpreadCalculationError
 from .financial import CalendarSpreadMetric as CalendarSpreadMetric
 from .financial import CalendarSpreadResult as CalendarSpreadResult
