@@ -100,7 +100,12 @@ try {
     assert.equal(await selected.count(), route.sidebarVisible ? 1 : 0)
     if (route.sidebarVisible) assert.equal(await selected.textContent(), route.title)
     if (route.icon === 'overview') assert.equal(await selected.locator('[data-icon="appstore"]').count(), 1)
-    for (const href of await page.locator('a[href]').evaluateAll(links => links.map(link => link.href))) {
+    const source = page.getByRole('link', { name: '查看源码（GitHub）', exact: true })
+    assert.equal(await source.count(), 1)
+    assert.equal(await source.getAttribute('href'), 'https://github.com/ougachakaaa/hg-market-state-lab')
+    assert.equal(await source.getAttribute('target'), '_blank')
+    assert.deepEqual((await source.getAttribute('rel')).split(/\s+/).sort(), ['noopener', 'noreferrer'])
+    for (const href of await page.locator('a[href]:not([aria-label="查看源码（GitHub）"])').evaluateAll(links => links.map(link => link.href))) {
       assert.equal(new URL(href).pathname, prefix)
       assert.equal(new URL(href).origin, new URL(base).origin)
     }
