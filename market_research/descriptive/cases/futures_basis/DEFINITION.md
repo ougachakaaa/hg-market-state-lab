@@ -6,8 +6,8 @@ outcomes under [Observation](OBSERVATION.md).
 
 ## Definition version
 
-The accepted four-metric definition is `futures_basis_definition_v2`, pending WP2
-implementation. `futures_basis_definition_v1` remains the immutable three-metric
+The implemented four-metric definition is `futures_basis_definition_v2`.
+`futures_basis_definition_v1` remains the immutable three-metric
 definition; its formulas are not changed or reinterpreted. The case identity remains
 `futures_basis_v1`. Definition version is distinct from input-profile, analysis-profile,
 reader-profile and packaging versions; changing the metric set does not itself change

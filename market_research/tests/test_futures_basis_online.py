@@ -71,14 +71,18 @@ def error(kind: str, operation) -> None:
 def test_standard_profile_and_completed_reader_survive_restart(tmp_path):
     report_request = standard_report_request(REQUEST)
     assert report_request.quantile.points == (0, 0.25, 0.5, 0.75, 1)
+    assert len(report_request.histograms) == 4
+    assert report_request.histograms[-1].unit == "index_points_per_year"
+    assert report_request.histograms[-1].edges == (-1000, -500, -100, 0, 100, 500, 1000)
     app = application(tmp_path)
     accepted = app.submit(REQUEST, "owner-a")
     run_id = accepted["run_id"]
+    assert accepted["request"]["analysis_profile"] == "r01a_standard_v2"
     assert accepted["status"] == "PENDING" and len(run_id) == 32
     assert settled(app, run_id)["result_status"] == "complete"
     reader = app.get_report(run_id, "owner-a")
     assert reader["request"]["observation"]["product_code"] == "IM"
-    assert reader["profile"] == "futures_basis_report_evidence_v1"
+    assert reader["profile"] == "futures_basis_report_evidence_v2"
     app.observe = lambda *args, **kwargs: pytest.fail("Read recomputed observation")
     app.compose = lambda *args, **kwargs: pytest.fail("Read recomputed statistics")
     again = application(tmp_path)

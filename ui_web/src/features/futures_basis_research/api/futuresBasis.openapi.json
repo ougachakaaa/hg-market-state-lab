@@ -218,7 +218,7 @@
         "additionalProperties": false,
         "properties": {
           "analysis_profile": {
-            "const": "r01a_standard_v1",
+            "const": "r01a_standard_v2",
             "title": "Analysis Profile",
             "type": "string"
           },
@@ -395,7 +395,7 @@
             "additionalProperties": {
               "$ref": "#/components/schemas/JsonValue"
             },
-            "description": "Complete Research-owned futures_basis_report_evidence_v1 reader projection.",
+            "description": "Complete Research-owned futures_basis_report_evidence_v2 reader projection.",
             "title": "Data",
             "type": "object"
           },

@@ -9,7 +9,7 @@ from data_lake.datasets.tushare_index_daily import IndexDailyExport, IndexDailyR
 from data_lake.datasets.tushare_trade_calendar import TradeCalendarExport, TradeCalendarRange
 
 PROFILE = "futures_basis_inputs_v1"
-DEFINITION_VERSION = "futures_basis_definition_v1"
+DEFINITION_VERSION = "futures_basis_definition_v2"
 # Consumption of the published Futures FACTS.md mapping, including empty populations.
 UNDERLYING = {"IF": "000300.SH", "IH": "000016.SH", "IC": "000905.SH", "IM": "000852.SH"}
 PublicRequest = TradeCalendarRange | FuturesDailyRange | IndexDailyRange

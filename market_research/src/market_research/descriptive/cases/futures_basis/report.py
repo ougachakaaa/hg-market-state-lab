@@ -34,13 +34,19 @@ class ReportRequest:
         if type(self.quantile) is not QuantileSpec:
             raise ValueError("Explicit QuantileSpec required")
         validate_spec(self.quantile)
-        if len(self.histograms) != 3:
-            raise ValueError("Three explicit histogram specifications required")
+        if len(self.histograms) != 4:
+            raise ValueError("Four explicit histogram specifications required")
         for metric, spec in zip(METRICS, self.histograms, strict=True):
             if type(spec) is not IntervalCountSpec:
                 raise ValueError("Explicit IntervalCountSpec required")
             validate_spec(spec)
-            if spec.unit != ("index_points" if metric == "basis_value" else "decimal_ratio"):
+            if spec.unit != (
+                "index_points"
+                if metric == "basis_value"
+                else "index_points_per_year"
+                if metric == "annualized_basis_value"
+                else "decimal_ratio"
+            ):
                 raise ValueError("Histogram unit differs from metric")
 
 
@@ -116,7 +122,13 @@ def project_history(
     """Supply generic segments/events; never make the renderer discover financial rules."""
     if metric not in METRICS:
         raise ValueError("Unknown report metric")
-    unit = "index_points" if metric == "basis_value" else "decimal_ratio"
+    unit = (
+        "index_points"
+        if metric == "basis_value"
+        else "index_points_per_year"
+        if metric == "annualized_basis_value"
+        else "decimal_ratio"
+    )
     associations: dict[str, Any] = {"points": {}, "events": {}}
     bindings = []
     for slot in SLOTS:

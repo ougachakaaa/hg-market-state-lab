@@ -8,10 +8,15 @@ Completed work packages and their execution records remain in Git history.
 
 ## Distribution V2 handoff
 
-WP1 records accepted semantics only; existing runtime remains three-metric V1.
+WP2 implements the four-metric backend with definition `futures_basis_definition_v2`,
+reader `futures_basis_report_evidence_v2` and online profile `r01a_standard_v2`.
+The manifest remains `futures_basis_report_manifest_v1`; canonical input bytes and
+fingerprints retain their existing contract. Frontend readers/presentation remain
+V1 pending WP3 and cannot consume V2 results yet; the current Demo Bundle remains
+a WP5 recapture dependency. This is not publication readiness.
 These package names refer to Distribution V2, independently of historical WP numbers.
 
-- WP2 — implement the fourth metric through Observation, Accounting, formal analyses,
+- WP2 (implemented) — the fourth metric through Observation, Accounting, formal analyses,
   Report/History, Evidence/Reader and HTTP, including exact profile/definition
   associations and generated-contract updates. Do not redefine the first three metrics.
 - WP3 — shared frontend fourth Metric, width presets and boundary formatting under

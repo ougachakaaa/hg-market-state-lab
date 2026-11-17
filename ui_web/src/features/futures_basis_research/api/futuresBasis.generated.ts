@@ -149,7 +149,7 @@ export interface components {
              * Analysis Profile
              * @constant
              */
-            analysis_profile: "r01a_standard_v1";
+            analysis_profile: "r01a_standard_v2";
             /**
              * Case
              * @constant
@@ -224,7 +224,7 @@ export interface components {
         FuturesBasisReportResponse: {
             /**
              * Data
-             * @description Complete Research-owned futures_basis_report_evidence_v1 reader projection.
+             * @description Complete Research-owned futures_basis_report_evidence_v2 reader projection.
              */
             data: {
                 [key: string]: components["schemas"]["JsonValue"];

@@ -14,7 +14,7 @@ from .inputs import DEFINITION_VERSION, FuturesBasisRequest
 from .report import ReportRequest, ReportResult
 from .validation import validate_online_request
 
-PROFILE = "r01a_standard_v1"
+PROFILE = "r01a_standard_v2"
 MAX_REPORT_BYTES = 32 * 1024 * 1024
 ID_PATTERN = re.compile(r"[0-9a-f]{32}\Z")
 FAILURE_CATEGORIES = {
@@ -49,6 +49,7 @@ def standard_report_request(request: FuturesBasisRequest) -> ReportRequest:
             IntervalCountSpec((-1000, -500, -100, 0, 100, 500, 1000), "index_points"),
             IntervalCountSpec((-1, -0.1, -0.01, 0, 0.01, 0.1, 1), "decimal_ratio"),
             IntervalCountSpec((-10, -1, -0.1, 0, 0.1, 1, 10), "decimal_ratio"),
+            IntervalCountSpec((-1000, -500, -100, 0, 100, 500, 1000), "index_points_per_year"),
         ),
     )
     result.validate()
