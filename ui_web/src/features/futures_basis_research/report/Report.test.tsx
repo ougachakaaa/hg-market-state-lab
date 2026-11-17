@@ -101,13 +101,15 @@ it('formats Overview, quantiles, intervals and paired means by explicit result u
   expect(data).toEqual(before)
 })
 
-it('keeps compact local interactions on the static route and suppresses repeated source disclosure', () => {
+it('keeps compact local interactions on the static route and discloses the supplied source on demand', () => {
   window.history.replaceState(null, '', '/#/research/futures-basis')
   render(<Report data={readerFixture()} mode="demo" sourceDisclosure="private source" />)
   fireEvent.click(screen.getByText('Calendar Days'))
   fireEvent.click(screen.getByRole('button', { name: '指标定义与公式' }))
   expect(window.location.hash).toBe('#/research/futures-basis')
   expect(screen.queryByText('private source')).toBeNull()
+  fireEvent.click(screen.getByRole('button', { name: '数据来源', exact: true }))
+  expect(screen.getByText('private source')).toBeTruthy()
 })
 
 it('retains all six offline sections and fragment links', () => {
@@ -172,7 +174,7 @@ it.each(['online', 'demo', 'offline'] as const)('switches four-Slot summaries by
   const cells = () => within(summary).getAllByRole('row').slice(1).map(row => within(row).getAllByRole('cell').map(c => c.textContent))
   expect(cells()).toEqual(['M0', 'M1', 'Q1', 'Q2'].map((slot, i) => [slot, '2', `${i}.00`, `${(.1 + i).toFixed(2)}`, `${(.2 + i).toFixed(2)}`, `${(.3 + i).toFixed(2)}`, `${(.4 + i).toFixed(2)}`, `${(.2 + i).toFixed(2)}`]))
   fireEvent.mouseDown(screen.getByRole('combobox', { name: 'Distribution metric' }))
-  fireEvent.click(screen.getByText('basis_ratio', { selector: '.ant-select-item-option-content' }))
+  fireEvent.click(screen.getByText('基差率（%）', { selector: '.ant-select-item-option-content' }))
   expect(cells()[0]).toEqual(['M0', '2', '0.0%', '10.0%', '20.0%', '30.0%', '40.0%', '20.0%'])
   fireEvent.mouseDown(screen.getByRole('combobox', { name: 'Bin width' }))
   fireEvent.click(screen.getByText('0.2 个百分点', { selector: '.ant-select-item-option-content' }))
@@ -221,7 +223,7 @@ it('selects every preset and resets width on Metric change without mutating form
     await waitFor(() => expect(input.getAttribute('aria-expanded')).toBe('false'))
   }
   for (const metric of Object.keys(BIN_PRESETS) as BasisMetric[]) {
-    await select('Distribution metric', metric)
+    await select('Distribution metric', { basis_value: '基差（点）', basis_ratio: '基差率（%）', annualized_basis_ratio: '年化基差率（%）' }[metric])
     const unit = metric === 'basis_value' ? '点' : '个百分点'
     expect(screen.getByRole('combobox', { name: 'Bin width' }).closest('.ant-select')?.textContent).toContain(`${BIN_PRESETS[metric].default} ${unit}`)
     const cells = summary.textContent

@@ -1,6 +1,7 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import { fileURLToPath } from 'node:url'
+import { dependencyInventory } from './dependencyInventory.mjs'
 export default defineConfig({
   root: fileURLToPath(new URL('../runtime', import.meta.url)),
   base: '/hg-market-state-lab/', publicDir: false, envDir: false,
@@ -15,7 +16,7 @@ export default defineConfig({
         if (/\/src\/features\/[^/]+\/page\//.test(id) && !/Presentation\.tsx$/.test(id)) this.error('Forbidden Demo page controller: ' + id)
         if (/\/(testing|tests)\/|\.fixture|\/src\/shared\/http\/|\/src\/app\/(auth|App\.)|\/api\/(auth|backtesting|futuresBasis|research|optionChain|premiumPlane)\.ts|\/hooks\/(useBacktesting|usePreflight|useFuturesBasisResearch|useResearchCatalog|useResearchExplorer)\.ts/.test(id)) this.error('Forbidden Demo dependency: ' + id)
       }
-      this.emitFile({ type: 'asset', fileName: 'runtime-dependencies.json', source: JSON.stringify(modules.map(id => id.replace(fileURLToPath(new URL('../../../', import.meta.url)).replaceAll('\\', '/'), '')), null, 2) })
+      this.emitFile({ type: 'asset', fileName: 'runtime-dependencies.json', source: JSON.stringify(dependencyInventory(modules, fileURLToPath(new URL('../../../', import.meta.url))), null, 2) })
     },
   }],
 })

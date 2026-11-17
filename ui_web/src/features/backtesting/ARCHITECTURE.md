@@ -158,6 +158,11 @@ Demo and Online returns/drawdown share the initially closed 日期事件（Date 
 
 ## UI-04 compact presentation
 
+Beside the seven core metrics, show a short visible reminder that returns are gross,
+use ideal Close execution and exclude fees, slippage, margin and financing costs.
+Keep the complete strategy and normalization explanation in the existing disclosure.
+This is a reading aid, not a change to accounting or execution assumptions.
+
 This page calls a Futures Product 品种, a Futures Instrument 合约标的 and an
 Index Instrument 指数标的; machine fields remain unchanged. Readiness keeps overall
 and dependency status plus actual successful/requested target counts. Normal complete

@@ -60,9 +60,26 @@ disclaimers and safety checks. Release contracts live in
 ## DDB-04 runtime
 
 The sole runtime lives in demo/runtime and consumes the validated private snapshot.
-Its adapter reuses feature public validators and Presentation. Identity contains Bundle
+Its adapters reuse feature public validators and Presentation. Identity contains Bundle
 ID, Preset, contract and actual source description. Ten shared pages use hash routes.
-Explorer remains hidden from sidebar navigation. Invalid input stops successful rendering.
+Explorer remains hidden from sidebar navigation.
+
+Build admits all nine Bundles before emitting separate static JS modules. The initial
+application contains Shell/navigation and loader references, not all Result payloads or
+chart Presentations. Runtime loads only the selected consumer's Presentation, validator
+and Bundle. Research Overview consumes Catalog; Data/Backtesting overviews consume no
+Result; each business page consumes its own Bundle; Explorer consumes Publications.
+Backtesting initially consumes M1, loading Q1 only when selected. Route/component mapping
+belongs to runtime composition, not the Bundle Registry or Collector.
+
+Each consumed envelope and formal Result must validate before display. Successful
+adaptation and in-flight work are cached within this application instance only; no
+browser persistence or online fallback is introduced. Resource-loading and invalid-data
+failures have distinct safe explanations with explicit retry, never raw diagnostics.
+Changing routes/strategy immediately hides the previous result and isolates late
+completions. Unavailable resources do not fabricate results or prevent navigation away.
+Build still rejects any invalid Bundle globally; deferred runtime validation never
+relaxes whole-dataset admission, exact bytes, Manifest identity or release requirements.
 
 Release content requirements enter [Release Requirements](release/ARCHITECTURE.md).
 

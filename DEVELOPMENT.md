@@ -235,6 +235,9 @@ Generate Research。Run ID 写入 URL；刷新和浏览器前进/后退会重新
 
 Use the [local Demo build and review workflow](ui_web/demo/build/ARCHITECTURE.md#local-ui-review-no-publication).
 It reuses committed Bundles and supports static preview and browser checks without remote publication.
+`npm run demo:test:build` (from `ui_web/`) explicitly selects the isolated build/lock/failure
+tests, including a real Vite build. They use unique test output roots and are excluded
+from ordinary `npm test`; pure runtime and admission tests remain individually selectable.
 
 Formal GitHub Pages releases enter the [Demo Release Runbook](ui_web/demo/release/RUNBOOK.md).
 Agent owns source review and develop/main integration; Publisher owns release push,

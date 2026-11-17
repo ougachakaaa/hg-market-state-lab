@@ -33,13 +33,16 @@ async function removeOwned(path) {
   if (!child || child.startsWith('..') || isAbsolute(child)) throw new Error('unsafe_cleanup')
   await rm(path, { recursive: true, force: true })
 }
-export async function buildDemo({ dataset = resolve(web, 'demo/bundles'), work = resolve(web, '.build/demo-collection'), compile = compileDemo } = {}) {
-  const output = resolve(web, '.build/demo')
-  const releaseOutput = await lock(resolve(web, '.build/demo-output.lock'))
+export async function buildDemo({ outputRoot = resolve(web, '.build'), dataset = resolve(web, 'demo/bundles'), work = resolve(web, '.build/demo-collection'), compile = compileDemo } = {}) {
+  outputRoot = resolve(outputRoot)
+  const child = relative(resolve(web, '.build'), outputRoot)
+  if (child.startsWith('..') || isAbsolute(child)) throw new Error('unsafe_output_root')
+  const output = resolve(outputRoot, 'demo')
+  const releaseOutput = await lock(resolve(outputRoot, 'demo-output.lock'))
   let staging
   try {
     await removeOwned(output)
-    staging = await mkdtemp(resolve(web, '.build/demo-invocation-'))
+    staging = await mkdtemp(resolve(outputRoot, 'demo-invocation-'))
     const snapshot = resolve(staging, 'snapshot')
     const releaseDataset = await lock(resolve(work, 'dataset.lock'))
     try {
@@ -70,15 +73,22 @@ export async function buildDemo({ dataset = resolve(web, 'demo/bundles'), work =
     finally { await releaseOutput() }
   }
 }
+export async function readSnapshotBundles(snapshot) {
+  const manifest = JSON.parse(await readFile(resolve(snapshot, 'manifest.json'), 'utf8'))
+  return Promise.all(manifest.bundles.map(async entry => JSON.parse(await readFile(resolve(snapshot, entry.path), 'utf8'))))
+}
 async function compileDemo(snapshot, artifact) {
+  const bundles = await readSnapshotBundles(snapshot)
+  const modules = new Map(bundles.map(bundle => ['virtual:demo-bundle/' + bundle.bundle_id, bundle]))
   await build({ configFile: resolve(web, 'demo/build/vite.config.ts'),
-    plugins: [{ name: 'demo-snapshot', resolveId(id) { if (id === 'virtual:demo-data') return '\0demo-data' },
-      async load(id) {
-        if (id !== '\0demo-data') return
-        const { readFile } = await import('node:fs/promises')
-        const files = (await readdir(snapshot)).filter(name => name !== 'manifest.json')
-        const bundles = await Promise.all(files.map(async name => JSON.parse(await readFile(resolve(snapshot, name), 'utf8'))))
-        return `export default ${JSON.stringify(bundles)}`
+    plugins: [{ name: 'demo-snapshot', resolveId(id) {
+        if (id === 'virtual:demo-data') return '\0demo-data'
+        if (modules.has(id)) return '\0' + id
+      },
+      load(id) {
+        if (id === '\0demo-data') return `export default {${[...modules].map(([key, bundle]) => `${JSON.stringify(bundle.bundle_id)}:()=>import(${JSON.stringify(key)})`).join(',')}}`
+        const bundle = modules.get(id.slice(1))
+        if (id.startsWith('\0virtual:demo-bundle/') && bundle) return `export default ${JSON.stringify(bundle)}`
       } }], build: { outDir: artifact, emptyOutDir: true } })
 }
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {

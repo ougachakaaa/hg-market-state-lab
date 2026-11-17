@@ -1,66 +1,41 @@
-import { DailyPresentation } from '../../src/features/futures_calendar_spread/presentation'
-import { RelativeValuePresentation } from '../../src/features/calendar_spread_relative_value/presentation'
-import { useState, type ReactNode } from 'react'
+import { useMemo, type ComponentType, type ReactNode } from 'react'
+import { Flex, Typography } from 'antd'
 import type { StaticWorkspacePath } from '../../src/app/routeInventory'
-import { Flex, Select, Typography } from 'antd'
 import ApplicationShell from '../../src/app/ApplicationShell'
 import AppUiProvider from '../../src/app/AppUiProvider'
 import BacktestingOverview from '../../src/app/BacktestingOverview'
 import DailyDataLanding from '../../src/app/DailyDataLanding'
 import { staticHref, useHashRoute } from './hashRoutes'
-import { OptionChainPresentation, useOptionChainPresentation } from '../../src/features/mo_option_chain/presentation'
-import { PremiumPlanePresentation, usePremiumPresentation } from '../../src/features/mo_option_premium/presentation'
-import { ResearchOverviewPresentation, useStaticCatalog } from '../../src/features/research_catalog/presentation'
-import { ResearchExplorerPresentation, useStaticExplorer } from '../../src/features/research_explorer/presentation'
-import { FuturesBasisPresentation } from '../../src/features/futures_basis_research/presentation'
-import { BacktestingPresentation, strategyLabels } from '../../src/features/backtesting/presentation'
-import type { ResultIdentity, StaticData } from './results'
+import { bundleStore, resource, type Resource } from './resources'
+import { AsyncContent } from './AsyncContent'
+import type { BundleLoaders } from './results'
+import type { StaticPageProps } from './pages/types'
 
-function Chain({ data, disclose }: StaticProps) {
-  const state = useOptionChainPresentation(data.chain)
-  return <OptionChainPresentation state={{ ...state, page: { status: 'ready', chain: data.chain } }} query={{ mode: 'static', selectedDate: data.chain.target_trade_date, sourceDisclosure: disclose(data.identities.chain) }} />
-}
-function Premium({ data, disclose }: StaticProps) {
-  const state = usePremiumPresentation(data.premium.plane)
-  return <PremiumPlanePresentation state={{ ...state, page: { status: 'ready', ...data.premium } }} query={{ mode: 'static', selectedDate: data.premium.plane.observation.value, priceType: data.premium.plane.price_type, sourceDisclosure: disclose(data.identities.premium) }} />
-}
-function Catalog({ data, navigate, disclose }: StaticContext) {
-  const controller = useStaticCatalog(data.catalogPayload)
-  return <ResearchOverviewPresentation controller={controller} mode="static" navigation={{ openExplorer: () => navigate('/research/publications'), openFuturesBasis: () => navigate('/research/futures-basis'), openCalendarSpread: () => navigate('/research/calendar-spread-relative-value') }} sourceDisclosure={disclose(data.identities.catalog)} />
-}
-function Explorer({ data, disclose }: StaticProps) {
-  const controller = useStaticExplorer(data.publicationPayload)
-  return <ResearchExplorerPresentation controller={controller} mode="static" sourceDisclosure={`${disclose(data.identities.publications)} 正式结果的静态阅读；Analysis 与 View 选择仅使用已装载数据。`} />
-}
-function Backtesting({ data }: StaticProps) {
-  const [strategy, setStrategy] = useState<'expiry_to_M1_v1' | 'expiry_to_Q1_v1'>('expiry_to_M1_v1')
-  return <Flex vertical gap="middle">
-    <Select aria-label="已计算策略结果" value={strategy} onChange={setStrategy} options={(['expiry_to_M1_v1', 'expiry_to_Q1_v1'] as const).map(value => ({ value, label: strategyLabels[value] }))} style={{ width: '100%', maxWidth: 460 }} />
-    <BacktestingPresentation key={strategy} mode="static" state={{ status: 'validated', data: strategy === 'expiry_to_M1_v1' ? data.m1 : data.q1 }} sourceDisclosure={data.identities[strategy].source.description} />
-  </Flex>
-}
-type StaticProps = { data: StaticData; disclose: (identity: ResultIdentity) => string }
-type StaticContext = StaticProps & { navigate: ReturnType<typeof useHashRoute>['navigate'] }
-// Compile-time exhaustive coverage comes from the formal application inventory.
-const staticRoutePresentations = {
-  '/data/futures-calendar-spread': ({ data, disclose }) => <Flex vertical gap="middle"><Typography.Title level={2}>Futures Calendar Spread</Typography.Title><Typography.Paragraph>{disclose(data.identities.calendar_spread_daily)} 静态快照不会获取实时行情；历史元数据不保证在当时已知。</Typography.Paragraph><DailyPresentation result={data.calendarDaily} /></Flex>,
-  '/research/calendar-spread-relative-value': ({ data, disclose }) => <Flex vertical gap="middle"><Typography.Title level={2}>Calendar Spread Historical Relative Value</Typography.Title><Typography.Paragraph>{disclose(data.identities.calendar_spread_relative_value)} 静态快照不会获取实时行情；描述性研究不构成收益预测，历史元数据不保证在当时已知。</Typography.Paragraph><RelativeValuePresentation result={data.calendarHistorical} /></Flex>,
-  '/research': ({ data, navigate, disclose }) => <Catalog data={data} navigate={navigate} disclose={disclose} />,
-  '/research/futures-basis': ({ data, disclose }) => <FuturesBasisPresentation mode="static" state={{ status: 'validated', data: data.basis }} disclosure={disclose(data.identities.basis)} sourceDisclosure={disclose(data.identities.basis)} />,
-  '/research/publications': ({ data, disclose }) => <Explorer data={data} disclose={disclose} />,
-  '/data': ({ navigate }) => <DailyDataLanding mode="static" navigate={navigate} />,
-  '/data/mo-option-chain': ({ data, disclose }) => <Chain data={data} disclose={disclose} />,
-  '/data/mo-premium-plane': ({ data, disclose }) => <Premium data={data} disclose={disclose} />,
-  '/backtesting': ({ navigate }) => <BacktestingOverview navigate={navigate} />,
-  '/backtesting/futures-roll-long': ({ data, disclose }) => <Backtesting data={data} disclose={disclose} />,
-} satisfies Record<StaticWorkspacePath, (context: StaticContext) => ReactNode>
+// Explicit consumer mapping, exhaustively checked against the formal route inventory.
+// These imports load code only; Bundle data remains in the selected consumer's store.
+const pages = {
+  '/data/futures-calendar-spread': resource(() => import('./pages/DailySpread')),
+  '/research/calendar-spread-relative-value': resource(() => import('./pages/CalendarSpread')),
+  '/research': resource(() => import('./pages/Catalog')),
+  '/research/futures-basis': resource(() => import('./pages/Basis')),
+  '/research/publications': resource(() => import('./pages/Explorer')),
+  '/data/mo-option-chain': resource(() => import('./pages/Chain')),
+  '/data/mo-premium-plane': resource(() => import('./pages/Premium')),
+  '/backtesting/futures-roll-long': resource(() => import('./pages/Backtesting')),
+} satisfies Record<Exclude<StaticWorkspacePath, '/data' | '/backtesting'>, Resource<{ default: ComponentType<StaticPageProps> }>>
 
-export function StaticWorkspace({ data, disclose, header, notice }: StaticProps & { header: string; notice: ReactNode }) {
+function StaticPage({ path, ...props }: StaticPageProps & { path: StaticWorkspacePath }) {
+  if (path === '/data') return <DailyDataLanding mode="static" navigate={props.navigate} />
+  if (path === '/backtesting') return <BacktestingOverview navigate={props.navigate} />
+  return <AsyncContent resource={pages[path]}>{({ default: Page }) => <Page {...props} />}</AsyncContent>
+}
+export function StaticWorkspace({ loaders, header, notice }: { loaders: BundleLoaders; header: string; notice: ReactNode }) {
   const { path, navigate } = useHashRoute()
+  const store = useMemo(() => bundleStore(loaders), [loaders])
   return <AppUiProvider><ApplicationShell mode="static" path={path} navigate={navigate} href={staticHref} header={<Typography.Text type="secondary">{header}</Typography.Text>}>
     <Flex vertical gap="large" style={{ minWidth: 0, maxWidth: '100%', overflowX: 'auto' }}>
       {notice}
-      {staticRoutePresentations[path]({ data, navigate, disclose })}
+      <StaticPage key={path} path={path} store={store} navigate={navigate} />
     </Flex>
   </ApplicationShell></AppUiProvider>
 }

@@ -1,6 +1,12 @@
 import { formatDecimal, formatInteger, formatPercent } from '../../../shared/format/number'
 
-export const metricLabels = { signed_spread: 'Signed Spread（点）', annualized_point_spread: 'Annualized Point Spread（点 / 365 自然日）', annualized_spread_ratio: 'Annualized Spread Ratio（%）' }
+export const metricLabels = { signed_spread: '近月减远月价差（点）', annualized_point_spread: '年化点差（点 / 365 自然日）', annualized_spread_ratio: '年化对数价差率（%）' }
+export function stageLabel(stage: string | null | undefined): string {
+  return ({ '0_7': '近月距到期 0–7 天', '8_21': '近月距到期 8–21 天', '22_plus': '近月距到期至少 22 天', all_stages: '全部到期阶段' } as Record<string, string>)[stage ?? ''] ?? '无可用到期阶段'
+}
+export function observationReason(reason: string | null | undefined): string {
+  return ({ non_trading_day: '评价日休市，当前观察不可用。', no_active_contract: '缺少适用的真实合约，当前观察不可用。', nonpositive_close: '合约收盘价不满足正价格要求，当前观察已排除。' } as Record<string, string>)[reason ?? ''] ?? '当前观察不可用；具体原因见方法与状态详情。'
+}
 export function number(value: number | null | undefined, ratio = false): string {
   if (value === null || value === undefined) return '未提供'
   return ratio ? formatPercent(value, '未提供') : formatDecimal(value, '未提供')

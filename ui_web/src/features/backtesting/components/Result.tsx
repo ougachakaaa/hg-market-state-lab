@@ -31,6 +31,7 @@ export function Result({ data, mode = 'production', sourceDisclosure }: { source
           <Statistic style={{ flex: '1 1 180px' }} title="累计 PnL" value={money(s.total_pnl)} />
           <Statistic style={{ flex: '1 1 180px' }} title="展期次数" value={s.roll_count} />
         </Flex>
+        <Typography.Paragraph type="secondary">以上为理想收盘价成交的毛收益；未考虑手续费、滑点、保证金与融资成本。</Typography.Paragraph>
       </section>
       <Collapse items={[{ key: 'rules', label: '策略规则与收益口径', children: <>
         <Typography.Paragraph>{strategyExplanation(data.request.strategy_profile)}</Typography.Paragraph>

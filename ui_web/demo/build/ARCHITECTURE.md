@@ -119,6 +119,22 @@ that snapshot exclusively. Build never runs Python, Collector or business HTTP.
 Vite writes private output, checked before promotion to `.build/demo/`; errors remove
 formal output and never publish a completion marker. Platform claims require actual tests.
 
+Build tooling accepts an internal `outputRoot`, restricted to `.build` or a child of it.
+The default remains `.build`; output, output lock and invocation staging are derived
+from that root. Dataset coordination still defaults to the canonical Collector work
+directory independently of output placement. Tests supply their own dataset work
+directory and unique child output root, never developer-owned Demo output or locks.
+Success, admission failure and compile failure clean only that invocation's resources. Actual Vite build tests are
+an explicit `npm run demo:test:build` specialist check, excluded from ordinary `npm test`.
+Pure runtime adaptation and Bundle admission remain independently selectable tests.
+
+Snapshot loader generation follows the admitted Manifest's canonical Bundle order;
+each Bundle is emitted as its own dynamically imported static JS module. All modules
+come from the frozen snapshot, with complete DTOs and no runtime business acquisition.
+Filesystem enumeration never defines output order. Runtime dependency inventories
+normalize paths and sort them lexically before serialization. These rules do not change Bundle bytes,
+Manifest identity, release admission or the requirement to validate all Bundles.
+
 Both source and private snapshot run independent DDB-02 Preflight. Source admission
 preserves path/reparse protections across copying. Admission verifies Registry, Manifest,
 complete membership, deterministic exact bytes, SHA-256, envelopes, Presets and feature

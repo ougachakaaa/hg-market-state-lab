@@ -20,7 +20,10 @@ try {
   const artifact = resolve(web, '.build/tests/shell')
   const inventory = JSON.parse(await readFile(resolve(artifact, 'shell-routes.json'), 'utf8'))
   const graph = JSON.parse(await readFile(resolve(artifact, 'shell-dependencies.json'), 'utf8'))
-  assert.equal(inventory.routes.length, 8)
+  // The artifact inventory is emitted from the formal workspaceRoutes, and drives
+  // the route loop below. New registered routes must not require a second count.
+  assert.equal(new Set(inventory.routes.map(route => route.path)).size, inventory.routes.length)
+  assert.ok(inventory.routes.some(route => route.path === '/research'))
   assert.ok(graph.projectModules.some(module => module.id === 'src/app/ApplicationShell.tsx'))
   assert.ok(graph.projectModules.some(module => module.id === 'src/app/DailyDataLanding.tsx'))
   assert.ok(graph.projectModules.every(module => !/auth|features|shared\/http|app\/App\.tsx|app\/routes\.ts/.test(module.id)))
