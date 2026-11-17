@@ -18,3 +18,9 @@ it('retains integer counts and feature missing text', () => {
   expect(number(undefined, true)).toBe('未提供')
   expect(count(NaN)).toBe('未提供')
 })
+
+import { sourceNote } from './format'
+it('translates known source notes and preserves unknown prose verbatim', () => {
+  expect(sourceNote('Read-only queries require separately prepared complete caches; they never ensure or repair missing data.')).toContain('只读查询')
+  expect(sourceNote('Unrecognized captured statement.')).toBe('Unrecognized captured statement.')
+})

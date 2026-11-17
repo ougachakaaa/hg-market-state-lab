@@ -1,6 +1,6 @@
 # Daily Data Copy / Export authority
 
-本文档从属于 [ui_web architecture](ARCHITECTURE.md)，在 [presentation architecture](presentation-architecture.md) 与 [UI system](ui-system.md) 边界内，拥有所有 Daily Data Feature 的 Raw / Context JSON 复制与 CSV / Context JSON 导出标准契约。当前及后续新增 Daily Data 原则上必须提供四项操作；例外须在 owning feature authority 明确确认，不得以未实现作为隐式例外。DD-02 本轮只编码 Authority，后续实现仅补齐 Futures Calendar Spread，已满足契约的页面不做无关重构。
+本文档从属于 [ui_web architecture](ARCHITECTURE.md)，在 [presentation architecture](presentation-architecture.md) 与 [UI system](ui-system.md) 边界内，拥有所有 Daily Data Feature 的 Raw / Context JSON 复制与 CSV / Context JSON 导出标准契约。当前及后续新增 Daily Data 原则上必须提供四项操作；例外须在 owning feature authority 明确确认，不得以未实现作为隐式例外。DD-02 WP-02 已补齐 Futures Calendar Spread；已满足契约的页面不做无关重构。
 
 产品特有的 source、response identity、CSV 列映射与 missing-value 阅读说明由 feature 专题拥有：[Option Chain visualization](src/features/mo_option_chain/visualization.md#10-daily-data-copy--export)、[Premium visualization](src/features/mo_option_premium/visualization.md#10-daily-data-copy--export)、[Futures Calendar Spread Export](src/features/futures_calendar_spread/EXPORT.md)。
 

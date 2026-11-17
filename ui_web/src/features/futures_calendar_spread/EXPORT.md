@@ -1,9 +1,9 @@
 # Futures Calendar Spread Daily export
 
-DD-02 target; inherits [feature authority](ARCHITECTURE.md) and
+DD-02 WP-02 implemented; inherits [feature authority](ARCHITECTURE.md) and
 [Daily Data Copy / Export](../../../data-copy-export.md). This document owns only
 feature-local source, Context metadata, CSV mapping and filenames. It creates no
-HTTP schema or financial calculation. WP-02 implements it.
+HTTP schema or financial calculation.
 
 ## Source, actions and Context
 
@@ -41,7 +41,7 @@ excluded/not_applicable observations. A closed day has header-only CSV; do not c
 a reference-only placeholder row. Context JSON retains that day's full reference.
 All numbers use original values; ratios stay decimal ratios. No business recomputation.
 
-The fixed header order is:
+The fixed 29-column header order is:
 
 ```text
 case,definition_version,product_code,trade_date,day_status,day_reason,near_slot,far_slot,near_contract_code,near_close,near_delist_date,far_contract_code,far_close,far_delist_date,delta_days,near_dte_days,expiry_stage,signed_spread,annualized_point_spread,annualized_spread_ratio,outcome,reason,underlying_index_present,underlying_index_code,underlying_index_trade_date,underlying_index_close,underlying_index_availability,underlying_index_reason_code,underlying_index_failure_category

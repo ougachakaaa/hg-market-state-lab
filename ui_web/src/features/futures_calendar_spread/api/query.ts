@@ -33,5 +33,9 @@ export async function loadQuery(query: Query, signal: AbortSignal): Promise<Resu
     if (reason != null && !allowed[error.kind]?.includes(reason)) throw new QueryError('invalid_response')
     throw new QueryError(error.kind, error.param ?? null, reason ?? null)
   }
-  try { return validateResult(body, query) } catch { throw new QueryError('invalid_response') }
+  try {
+    const result = validateResult(body, query)
+    if (!Object.hasOwn(result, 'underlying_index')) throw new Error('Missing online reference')
+    return result
+  } catch { throw new QueryError('invalid_response') }
 }

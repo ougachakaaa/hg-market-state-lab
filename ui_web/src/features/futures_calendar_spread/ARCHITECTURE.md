@@ -1,8 +1,8 @@
 # Daily Data — Futures Calendar Spread Presentation authority
 
-Status: existing surface implemented. DD-02 Chinese/index/export changes below are
-authority targets until their work packages are accepted. Current deployment/live-source
-readiness requires separate verification.
+Status: DD-02 WP-02 Chinese presentation, reference validation/display and four local
+copy/export actions are implemented for Online and Static Demo. WP-03 acceptance
+and deployment/live-source readiness require separate verification.
 Inherits [Web boundaries](../../../ARCHITECTURE.md) and
 [Presentation architecture](../../../presentation-architecture.md).
 Business meaning belongs to [Research](../../../../market_research/descriptive/cases/futures_calendar_spread/ARCHITECTURE.md);
@@ -16,7 +16,7 @@ which owns preparation and operational limits. Static controllers consume admitt
 ## Surface
 
 The independent Daily Data page is `/data/futures-calendar-spread`, titled
-“股指期货跨期价差” (DD-02 target). Explicit product/date controls issue the formal Daily
+“股指期货跨期价差”. Explicit product/date controls issue the formal Daily
 execution through `POST /data/futures-calendar-spread/query` (gateway
 `/api/data/futures-calendar-spread/query`). Existing GET remains read-only for its
 callers; Production submit/retry uses POST and never falls back to GET. Do not invent
@@ -115,7 +115,7 @@ It has no execution controls, Production hooks, HTTP/Auth/Source calls or Ensure
 Local pair/axis/viewport interactions retain their offline behavior; no Bundle,
 Manifest, capture, financial value or admission contract changes for Issue #13.
 
-## DD-02 Chinese presentation and index target
+## DD-02 Chinese presentation and index
 
 All user-facing labels, controls, status/reason explanations and feature-owned
 reading notes use Chinese. Product options retain IF/IH/IC/IM, with underlying names

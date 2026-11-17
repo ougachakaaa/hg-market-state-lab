@@ -48,6 +48,22 @@ export function validateResult(value: unknown, query?: Query): Result {
   check(schema(value)); const r = value as Result
   if (query) check(r.request.product_code === query.product_code && r.request.trade_date === query.trade_date)
   check(r.day.trade_date === r.request.trade_date)
+  if (Object.hasOwn(r, 'underlying_index')) {
+    const ref = r.underlying_index!
+    const indexCodes = { IF: '000300.SH', IH: '000016.SH', IC: '000905.SH', IM: '000852.SH' }
+    check(ref.index_code === indexCodes[r.request.product_code] && ref.trade_date === r.request.trade_date)
+    const states: Record<string, readonly [string, string | null]> = {
+      non_trading_day: ['not_applicable', null], cache_incomplete: ['unavailable', null],
+      final_export_incomplete: ['error', 'incomplete_inputs'],
+      credential_missing: ['error', 'upstream_unavailable'], cache_incompatible: ['error', 'upstream_unavailable'], operation_unavailable: ['error', 'upstream_unavailable'],
+      malformed_export: ['error', 'input_contract_error'], malformed_ensure_result: ['error', 'input_contract_error'], upstream_request_rejected: ['error', 'input_contract_error'],
+    }
+    if (ref.availability === 'available') check(ref.close !== null && ref.reason_code === null && ref.failure_category === null)
+    else {
+      const state = ref.reason_code === null ? undefined : states[ref.reason_code]
+      check(ref.close === null && state && ref.availability === state[0] && ref.failure_category === state[1])
+    }
+  }
   day(r.day, r.request.product_code); accounting(r.accounting, r.day.observations.length)
   for (const outcome of ['valid', 'excluded', 'not_applicable'] as const) check(r.accounting[`${outcome}_count`] === r.day.observations.filter(o => o.outcome === outcome).length)
   return r

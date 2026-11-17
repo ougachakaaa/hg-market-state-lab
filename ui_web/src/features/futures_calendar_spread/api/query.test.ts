@@ -3,7 +3,9 @@ import { createRequestBoundary, installRequestBoundary } from '../../../shared/h
 import { loadQuery } from './query'
 import { errorMessage } from '../model/format'
 import type { Query } from './validateResult'
-import fixture from '../testing/daily.json'
+import legacy from '../testing/daily.json'
+import { withReference } from '../testing/reference'
+const fixture = withReference(legacy)
 const query: Query = { product_code: 'IM', trade_date: '2024-10-18' }
 const unauthorized = vi.fn()
 let dispose: (() => void) | undefined
@@ -75,4 +77,10 @@ it('retains safe legacy feedback without requiring manual data preparation', () 
   expect(errorMessage({ kind: 'incomplete_inputs' })).toContain('所需数据仍不完整')
   expect(errorMessage({ kind: 'incomplete_inputs' })).not.toContain('请先')
   expect(errorMessage({ kind: 'transport_busy' })).toContain('手动重试')
+})
+
+it('rejects a legacy omission specifically at the Online boundary', async () => {
+  boundary(); const fetch = vi.fn().mockResolvedValue(new Response(JSON.stringify(legacy))); vi.stubGlobal('fetch', fetch)
+  await expect(loadQuery(query, new AbortController().signal)).rejects.toMatchObject({ kind: 'invalid_response' })
+  expect(fetch).toHaveBeenCalledOnce()
 })
