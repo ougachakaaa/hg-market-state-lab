@@ -10,12 +10,9 @@ from futures_basis_live_acceptance import isolated_storage
 from market_research.descriptive.cases.futures_basis.evidence import write_json
 
 
-def main() -> None:
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--output", type=Path, required=True)
-    args = parser.parse_args()
-    args.output.mkdir(parents=True, exist_ok=False)
-    report_output = args.output / "delivery"
+def report_command(output: Path) -> list[str]:
+    """Explicit four-metric acceptance invocation, without executing acquisition."""
+    report_output = output / "delivery"
     command = [
         "market_research/scripts/futures_basis_report.py",
         "--product",
@@ -32,9 +29,21 @@ def main() -> None:
         "[-1,-0.1,-0.01,0,0.01,0.1,1]",
         "--annualized-basis-ratio-edges",
         "[-10,-1,-0.1,0,0.1,1,10]",
+        "--annualized-basis-value-edges",
+        "[-1000,-500,-100,0,100,500,1000]",
         "--output",
         str(report_output),
     ]
+    return command
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--output", type=Path, required=True)
+    args = parser.parse_args()
+    args.output.mkdir(parents=True, exist_ok=False)
+    report_output = args.output / "delivery"
+    command = report_command(args.output)
     exit_code = 0
     with (
         isolated_storage(args.output / "dataset-cache") as audit,
