@@ -144,6 +144,177 @@
         "title": "DailyErrorResponse",
         "type": "object"
       },
+      "DailyFuturesSpotComparison": {
+        "additionalProperties": false,
+        "properties": {
+          "annualized_point_spread": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Annualized Point Spread"
+          },
+          "annualized_spread_ratio": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Annualized Spread Ratio"
+          },
+          "definition_version": {
+            "const": "daily_futures_spot_definition_v1",
+            "title": "Definition Version",
+            "type": "string"
+          },
+          "expiry_stage": {
+            "anyOf": [
+              {
+                "enum": [
+                  "0_7",
+                  "8_21",
+                  "22_plus"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expiry Stage"
+          },
+          "failure_category": {
+            "anyOf": [
+              {
+                "enum": [
+                  "incomplete_inputs",
+                  "upstream_unavailable",
+                  "input_contract_error",
+                  "calculation_failure"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Failure Category"
+          },
+          "futures": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Contract"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "outcome": {
+            "enum": [
+              "valid",
+              "not_applicable",
+              "excluded",
+              "error"
+            ],
+            "title": "Outcome",
+            "type": "string"
+          },
+          "product_code": {
+            "enum": [
+              "IF",
+              "IH",
+              "IC",
+              "IM"
+            ],
+            "title": "Product Code",
+            "type": "string"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "enum": [
+                  "no_active_contract",
+                  "index_reference_unavailable",
+                  "nonpositive_close",
+                  "expiry_day",
+                  "calculation_failure"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          },
+          "remaining_days": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Remaining Days"
+          },
+          "signed_spread": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Signed Spread"
+          },
+          "slot": {
+            "enum": [
+              "M0",
+              "M1",
+              "Q1",
+              "Q2"
+            ],
+            "title": "Slot",
+            "type": "string"
+          },
+          "trade_date": {
+            "format": "date",
+            "title": "Trade Date",
+            "type": "string"
+          },
+          "underlying_index": {
+            "$ref": "#/components/schemas/DailyUnderlyingIndex"
+          }
+        },
+        "required": [
+          "product_code",
+          "trade_date",
+          "slot",
+          "futures",
+          "underlying_index",
+          "remaining_days",
+          "expiry_stage",
+          "signed_spread",
+          "annualized_point_spread",
+          "annualized_spread_ratio",
+          "outcome",
+          "reason",
+          "failure_category",
+          "definition_version"
+        ],
+        "title": "DailyFuturesSpotComparison",
+        "type": "object"
+      },
       "DailyRequest": {
         "additionalProperties": false,
         "properties": {
@@ -189,11 +360,21 @@
             "title": "Definition Version",
             "type": "string"
           },
+          "futures_spot_comparisons": {
+            "items": {
+              "$ref": "#/components/schemas/DailyFuturesSpotComparison"
+            },
+            "title": "Futures Spot Comparisons",
+            "type": "array"
+          },
           "request": {
             "$ref": "#/components/schemas/DailyEcho"
           },
           "source_context": {
             "$ref": "#/components/schemas/SourceContext"
+          },
+          "underlying_index": {
+            "$ref": "#/components/schemas/DailyUnderlyingIndex"
           }
         },
         "required": [
@@ -205,6 +386,95 @@
           "source_context"
         ],
         "title": "DailyResponse",
+        "type": "object"
+      },
+      "DailyUnderlyingIndex": {
+        "additionalProperties": false,
+        "properties": {
+          "availability": {
+            "enum": [
+              "available",
+              "not_applicable",
+              "unavailable",
+              "error"
+            ],
+            "title": "Availability",
+            "type": "string"
+          },
+          "close": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Close"
+          },
+          "failure_category": {
+            "anyOf": [
+              {
+                "enum": [
+                  "incomplete_inputs",
+                  "upstream_unavailable",
+                  "input_contract_error"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Failure Category"
+          },
+          "index_code": {
+            "enum": [
+              "000300.SH",
+              "000016.SH",
+              "000905.SH",
+              "000852.SH"
+            ],
+            "title": "Index Code",
+            "type": "string"
+          },
+          "reason_code": {
+            "anyOf": [
+              {
+                "enum": [
+                  "non_trading_day",
+                  "cache_incomplete",
+                  "final_export_incomplete",
+                  "credential_missing",
+                  "cache_incompatible",
+                  "operation_unavailable",
+                  "malformed_export",
+                  "malformed_ensure_result",
+                  "upstream_request_rejected"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason Code"
+          },
+          "trade_date": {
+            "format": "date",
+            "title": "Trade Date",
+            "type": "string"
+          }
+        },
+        "required": [
+          "index_code",
+          "trade_date",
+          "close",
+          "availability",
+          "reason_code",
+          "failure_category"
+        ],
+        "title": "DailyUnderlyingIndex",
         "type": "object"
       },
       "Day": {

@@ -1,6 +1,6 @@
 # Daily Data — Futures Calendar Spread HTTP contract
 
-Status: WP5 implemented; acceptance is recorded in the
+Status: WP5 and DD-02 WP-01 implemented; current delivery is recorded in the
 [case Roadmap](../../../market_research/descriptive/cases/futures_calendar_spread/ROADMAP.md).
 Specializes [HTTP ownership](../../ARCHITECTURE.md); business semantics and failures
 belong to [the Research application](../../../market_research/descriptive/cases/futures_calendar_spread/APPLICATION.md).
@@ -150,3 +150,62 @@ retained after client cancellation. No new arbitrary timeout or latency SLA is
 claimed here. If the existing synchronous stack cannot complete the tested cold
 execution, report operational acceptance failure and obtain a separate semantic
 decision; do not silently introduce a queue, worker framework or asynchronous Run.
+
+## DD-02 Daily index projection target
+
+WP-00 encoded this additive contract; DTOs/OpenAPI are implemented in DD-02 WP-01.
+Research owns [reference semantics](../../../market_research/descriptive/cases/futures_calendar_spread/DAILY_INDEX_REFERENCE.md)
+and [business carriers](../../../market_research/descriptive/cases/futures_calendar_spread/QUERY_RESULTS.md#daily-underlying-index-result-dd-02-target).
+GET/POST paths, requests, echoed operation, PairObservation and core failure mapping
+remain unchanged. HistoricalResponse and its current-day projection do not gain a reference.
+
+DailyResponse adds `underlying_index`, an optional, non-null object. When present all
+six fields are required, and unknown object fields are forbidden:
+
+| Field | Wire type |
+| --- | --- |
+| index_code | string, authority-governed full underlying code |
+| trade_date | canonical ISO date, equal to request.trade_date |
+| close | finite JSON number or null; original unrounded index points |
+| availability | available / not_applicable / unavailable / error |
+| reason_code | null / non_trading_day / cache_incomplete / final_export_incomplete / credential_missing / cache_incompatible / operation_unavailable / malformed_export / malformed_ensure_result / upstream_request_rejected |
+| failure_category | null / incomplete_inputs / upstream_unavailable / input_contract_error |
+
+Only the exact state/reason/category combinations in the Research reference table
+are legal. available requires non-null close; all other states require null. Project
+these fields explicitly, validate identity/date and association, and omit internal
+reference evidence. A known reference error is part of HTTP 200 with complete original
+pairs; it does not use the top-level error envelope. Core failures keep existing statuses.
+Do not reclassify invalid carriers as reference errors or leak raw failure text.
+
+New GET and POST success projection always includes a reference object; missing it is
+an adapter defect. The published schema permits omission solely to admit pre-DD-02
+captured results. Omission means reference information was not supplied, never that
+that date's close was null. Explicit underlying_index=null is invalid. Serialization
+must preserve omission when validating an old object, without injecting a null default.
+
+The formal frontend validator keeps every existing structural/association check and
+validates the new object when present; Online response adaptation additionally requires
+presence. Demo uses the same validator with the formal optional-field contract. Do not
+relax unrelated fields, store an alternate schema, rewrite old Bundle bytes or synthesize
+an object. Generate affected OpenAPI/TypeScript under the normal feedback loop in WP-01;
+WP-00 does not regenerate artifacts. Any generated sibling snapshot drift must be limited
+to actual generator effects; Historical wire semantics stay unchanged.
+
+## Daily futures–spot additive projection
+
+DailyResponse adds optional, non-null `futures_spot_comparisons`. New Online GET/POST
+success projections always include it and underlying_index; omission is accepted only
+for older captured objects and preserved during serialization. Presence requires the
+underlying_index object. Closed CFFEX days carry an empty collection; open days have
+exactly M0/M1/Q1/Q2 in order. Missing does not mean four null outcomes.
+
+Each item explicitly projects product_code, trade_date, slot, futures (the existing
+Contract DTO or null), underlying_index (the existing reference DTO), remaining_days,
+expiry_stage, signed_spread, annualized_point_spread, annualized_spread_ratio, outcome,
+reason, failure_category and definition_version=daily_futures_spot_definition_v1.
+Finite/null metrics and exact state combinations follow the independent Research
+[authority](../../../market_research/descriptive/cases/futures_calendar_spread/DAILY_FUTURES_SPOT_COMPARISON.md).
+Identity/date, reference equality, Slot-to-pair contract association, count/order and
+state/metric relationships are validated, without financial recomputation.
+No internal evidence is serialized. HistoricalResponse is unchanged.

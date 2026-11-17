@@ -902,3 +902,203 @@ def test_daily_execution_streamed_body_and_response_bounds(product, monkeypatch)
     monkeypatch.setattr(transport, "MAX_RESPONSE_BYTES", 100)
     error(client.post(EXECUTION, json=DAILY_BODY), 413, "response_too_large")
     dq.assert_called_once_with("IM", DAY)
+
+
+@pytest.mark.parametrize("path", [DAILY, EXECUTION])
+@pytest.mark.parametrize("availability,reason,category,close", [
+    ("available", None, None, 0.0),
+    ("not_applicable", "non_trading_day", None, None),
+    ("unavailable", "cache_incomplete", None, None),
+    ("error", "final_export_incomplete", "incomplete_inputs", None),
+    ("error", "credential_missing", "upstream_unavailable", None),
+    ("error", "cache_incompatible", "upstream_unavailable", None),
+    ("error", "operation_unavailable", "upstream_unavailable", None),
+    ("error", "malformed_export", "input_contract_error", None),
+    ("error", "malformed_ensure_result", "input_contract_error", None),
+    ("error", "upstream_request_rejected", "input_contract_error", None),
+])
+def test_daily_reference_projection_all_states(
+    product, path, availability, reason, category, close,
+):
+    _, client, query, _ = product
+    original = daily(Services())
+    reference = case.DailyUnderlyingIndexReference(
+        "000852.SH", DAY, close, availability, reason, category,
+    )
+    query.side_effect = None
+    from market_research.descriptive.cases.futures_calendar_spread.daily_spot import (
+        construct_daily_spot_comparisons,
+    )
+
+    query.return_value = replace(original, underlying_index=reference,
+        futures_spot_comparisons=construct_daily_spot_comparisons(
+            original.day, original.prepared_inputs, reference, original.underlying_index_evidence))
+    response = request_path(client, path)
+    assert response.status_code == 200, response.text
+    payload = response.json()
+    assert payload["underlying_index"] == {
+        "index_code": "000852.SH", "trade_date": DAY.isoformat(), "close": close,
+        "availability": availability, "reason_code": reason, "failure_category": category,
+    }
+    assert len(payload["day"]["observations"]) == 6
+    assert payload["day"] == DailyResponse.model_validate(original).model_dump(mode="json")["day"]
+    assert not any(
+        word in response.text for word in ('"attempts":', '"ensure_result":', '"exception":')
+    )
+
+
+def test_daily_reference_optional_but_non_null_and_complete():
+    from pydantic import ValidationError
+
+    payload = DailyResponse.model_validate(daily(Services())).model_dump(mode="json")
+    reference = payload.pop("underlying_index")
+    payload.pop("futures_spot_comparisons")
+    legacy = DailyResponse.model_validate_json(json.dumps(payload))
+    assert "underlying_index" not in legacy.model_dump()
+    assert "underlying_index" not in json.loads(legacy.model_dump_json())
+    DailyResponse.model_validate_json(json.dumps({**payload, "underlying_index": reference}))
+    for bad in (None, {}, {"index_code": "000852.SH"}):
+        with pytest.raises(ValidationError):
+            DailyResponse.model_validate_json(json.dumps({**payload, "underlying_index": bad}))
+    for field in reference:
+        incomplete = {k: v for k, v in reference.items() if k != field}
+        with pytest.raises(ValidationError):
+            DailyResponse.model_validate_json(
+                json.dumps({**payload, "underlying_index": incomplete})
+            )
+
+
+@pytest.mark.parametrize("field,value", [
+    ("index_code", "000300.SH"), ("trade_date", AFTER.isoformat()),
+    ("availability", "missing"), ("reason_code", "cache_incomplete"),
+    ("failure_category", "upstream_unavailable"), ("close", 0.0), ("extra", "forbidden"),
+])
+def test_daily_reference_rejects_bad_association_and_states(field, value):
+    from pydantic import ValidationError
+
+    result = daily(Services())  # proven SSE closure requires null Close
+    payload = DailyResponse.model_validate(result).model_dump(mode="json")
+    payload["underlying_index"][field] = value
+    with pytest.raises(ValidationError):
+        DailyResponse.model_validate_json(json.dumps(payload))
+
+
+@pytest.mark.parametrize("path", [DAILY, EXECUTION])
+@pytest.mark.parametrize("defect", ["null", "missing", "wrong_identity", "wrong_date"])
+def test_online_reference_defects_cannot_be_200(product, path, defect):
+    from types import SimpleNamespace
+
+    _, client, query, _ = product
+    result = daily(Services())
+    if defect == "null":
+        result = replace(result, underlying_index=None)
+    elif defect == "missing":
+        result = SimpleNamespace(**{key: getattr(result, key) for key in (
+            "case", "definition_version", "request", "day", "accounting", "source_context",
+        )})
+    else:
+        changes = (
+            {"index_code": "000300.SH"} if defect == "wrong_identity" else {"trade_date": AFTER}
+        )
+        result = replace(result, underlying_index=replace(result.underlying_index, **changes))
+    query.side_effect = None
+    query.return_value = result
+    error(request_path(client, path), 500, "internal_error")
+
+
+def test_daily_reference_openapi_omission_non_null_and_historical_unchanged():
+    schemas = create_app().openapi()["components"]["schemas"]
+    daily_schema = next(v for v in schemas.values() if v.get("title") == "DailyResponse")
+    assert "underlying_index" not in daily_schema["required"]
+    field = daily_schema["properties"]["underlying_index"]
+    assert "$ref" in field and "anyOf" not in field and "default" not in field
+    reference = schemas[field["$ref"].rsplit("/", 1)[1]]
+    assert reference["additionalProperties"] is False
+    assert set(reference["required"]) == {
+        "index_code", "trade_date", "close", "availability", "reason_code", "failure_category",
+    }
+    for schema in schemas.values():
+        if schema.get("title") in {"HistoricalResponse", "Day", "DaySummary"}:
+            assert "underlying_index" not in schema["properties"]
+
+
+@pytest.mark.parametrize("path", [DAILY, EXECUTION])
+def test_formal_reference_acquisition_permissions(product, path):
+    from test_calendar_spread_daily_index import ReferenceServices
+
+    _, client, query, _ = product
+    fake = ReferenceServices(cold=("sse", "index"))
+    query.side_effect = lambda code, day: fake.run(execution=path == EXECUTION)
+    response = request_path(client, path)
+    assert response.status_code == 200, response.text
+    reference = response.json()["underlying_index"]
+    if path == DAILY:
+        assert reference["availability"] == "unavailable"
+        assert fake.events[-1] == ("sse", "export")
+    else:
+        assert reference["availability"] == "available"
+        assert fake.events.count(("sse", "ensure")) == 1
+        assert fake.events.count(("index", "ensure")) == 1
+
+
+@pytest.mark.parametrize("path", [DAILY, EXECUTION])
+def test_daily_spot_online_projection_and_internal_evidence_boundary(product, path):
+    from test_calendar_spread_daily_index import ReferenceServices
+
+    _, client, query, _ = product
+    result = ReferenceServices().run()
+    query.side_effect = None
+    query.return_value = result
+    response = request_path(client, path)
+    assert response.status_code == 200, response.text
+    payload = response.json()
+    assert [i["slot"] for i in payload["futures_spot_comparisons"]] == ["M0", "M1", "Q1", "Q2"]
+    assert len(payload["day"]["observations"]) == 6
+    first = payload["futures_spot_comparisons"][0]
+    assert first["signed_spread"] == 110 - 3500.123456789
+    assert first["annualized_point_spread"] is None
+    assert first["remaining_days"] == 0 and first["reason"] == "expiry_day"
+    assert first["underlying_index"] == payload["underlying_index"]
+    assert not any(word in response.text for word in (
+        '"source_evidence":', '"reference_evidence":', '"calculation_exception":',
+    ))
+
+
+@pytest.mark.parametrize(
+    "defect", ["null", "missing_reference", "order", "contract", "date", "expiry", "category"],
+)
+def test_daily_spot_rejects_invalid_wire_associations(defect):
+    from pydantic import ValidationError
+
+    from test_calendar_spread_daily_index import ReferenceServices
+    from ui_http.products.futures_calendar_spread.endpoint import project_daily
+
+    payload = project_daily(ReferenceServices().run()).model_dump(mode="json")
+    item = payload["futures_spot_comparisons"][0]
+    if defect == "null":
+        payload["futures_spot_comparisons"] = None
+    elif defect == "missing_reference":
+        payload.pop("underlying_index")
+    elif defect == "order":
+        payload["futures_spot_comparisons"].reverse()
+    elif defect == "contract":
+        item["futures"]["contract_code"] = "invented"
+    elif defect == "date":
+        item["trade_date"] = AFTER.isoformat()
+    elif defect == "expiry":
+        item["annualized_spread_ratio"] = 0
+    else:
+        item["failure_category"] = "calculation_failure"
+    with pytest.raises(ValidationError):
+        DailyResponse.model_validate_json(json.dumps(payload))
+
+
+def test_daily_spot_omission_preserved_for_both_generations_of_legacy_bundle():
+    payload = DailyResponse.model_validate(daily(Services())).model_dump(mode="json")
+    payload.pop("futures_spot_comparisons")
+    for with_reference in (True, False):
+        if not with_reference:
+            payload.pop("underlying_index")
+        legacy = DailyResponse.model_validate_json(json.dumps(payload))
+        assert "futures_spot_comparisons" not in legacy.model_dump()
+        assert json.loads(legacy.model_dump_json()) == payload

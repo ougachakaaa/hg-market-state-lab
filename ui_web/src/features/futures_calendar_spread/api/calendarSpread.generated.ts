@@ -107,6 +107,50 @@ export interface components {
         DailyErrorResponse: {
             error: components["schemas"]["ErrorBody"];
         };
+        /** DailyFuturesSpotComparison */
+        DailyFuturesSpotComparison: {
+            /** Annualized Point Spread */
+            annualized_point_spread: number | null;
+            /** Annualized Spread Ratio */
+            annualized_spread_ratio: number | null;
+            /**
+             * Definition Version
+             * @constant
+             */
+            definition_version: "daily_futures_spot_definition_v1";
+            /** Expiry Stage */
+            expiry_stage: ("0_7" | "8_21" | "22_plus") | null;
+            /** Failure Category */
+            failure_category: ("incomplete_inputs" | "upstream_unavailable" | "input_contract_error" | "calculation_failure") | null;
+            futures: components["schemas"]["Contract"] | null;
+            /**
+             * Outcome
+             * @enum {string}
+             */
+            outcome: "valid" | "not_applicable" | "excluded" | "error";
+            /**
+             * Product Code
+             * @enum {string}
+             */
+            product_code: "IF" | "IH" | "IC" | "IM";
+            /** Reason */
+            reason: ("no_active_contract" | "index_reference_unavailable" | "nonpositive_close" | "expiry_day" | "calculation_failure") | null;
+            /** Remaining Days */
+            remaining_days: number | null;
+            /** Signed Spread */
+            signed_spread: number | null;
+            /**
+             * Slot
+             * @enum {string}
+             */
+            slot: "M0" | "M1" | "Q1" | "Q2";
+            /**
+             * Trade Date
+             * Format: date
+             */
+            trade_date: string;
+            underlying_index: components["schemas"]["DailyUnderlyingIndex"];
+        };
         /** DailyRequest */
         DailyRequest: {
             /**
@@ -134,8 +178,35 @@ export interface components {
              * @constant
              */
             definition_version: "futures_calendar_spread_definition_v1";
+            /** Futures Spot Comparisons */
+            futures_spot_comparisons?: components["schemas"]["DailyFuturesSpotComparison"][];
             request: components["schemas"]["DailyEcho"];
             source_context: components["schemas"]["SourceContext"];
+            underlying_index?: components["schemas"]["DailyUnderlyingIndex"];
+        };
+        /** DailyUnderlyingIndex */
+        DailyUnderlyingIndex: {
+            /**
+             * Availability
+             * @enum {string}
+             */
+            availability: "available" | "not_applicable" | "unavailable" | "error";
+            /** Close */
+            close: number | null;
+            /** Failure Category */
+            failure_category: ("incomplete_inputs" | "upstream_unavailable" | "input_contract_error") | null;
+            /**
+             * Index Code
+             * @enum {string}
+             */
+            index_code: "000300.SH" | "000016.SH" | "000905.SH" | "000852.SH";
+            /** Reason Code */
+            reason_code: ("non_trading_day" | "cache_incomplete" | "final_export_incomplete" | "credential_missing" | "cache_incompatible" | "operation_unavailable" | "malformed_export" | "malformed_ensure_result" | "upstream_request_rejected") | null;
+            /**
+             * Trade Date
+             * Format: date
+             */
+            trade_date: string;
         };
         /** Day */
         Day: {

@@ -17,7 +17,7 @@ from data_lake.datasets.tushare_equity_index_futures._source import DailySource
 from data_lake.datasets.tushare_trade_calendar._service import _create_service as calendar_create
 from data_lake.datasets.tushare_trade_calendar._source import TradeCalSource
 from http_support.auth import authenticated_client
-from market_research.descriptive.cases.futures_calendar_spread import preparation
+from market_research.descriptive.cases.futures_calendar_spread import daily_index, preparation
 from ui_http.app import create_app
 from ui_http.products.calendar_spread_relative_value.schemas import HistoricalResponse
 from ui_http.products.futures_calendar_spread.schemas import DailyResponse
@@ -160,6 +160,23 @@ def test_formal_submission_cold_hot_and_read_only(tmp_path, monkeypatch, start, 
     calendar, futures, source = isolated_services(root, Source())
     monkeypatch.setattr(preparation, "create_calendar_service", lambda: calendar)
     monkeypatch.setattr(preparation, "create_futures_service", lambda: futures)
+    # This existing core acceptance explicitly isolates reference acquisition.
+    # Daily's default reference factory receives deterministic SSE closure proof.
+    from types import SimpleNamespace
+
+    from data_lake import CoverageResult
+    from data_lake.datasets.tushare_trade_calendar import TradeCalendarExport, TradeCalendarRecord
+
+    class ClosedSSE:
+        def export(self, request):
+            return TradeCalendarExport(
+                "tushare_trade_calendar", "calendar", 1,
+                SimpleNamespace(exchange="SSE"), request,
+                CoverageResult(1, 1, 0, 0, 0, True),
+                (TradeCalendarRecord("SSE", request.start_date, 0, None),),
+            )
+
+    monkeypatch.setattr(daily_index, "create_calendar_service", ClosedSSE)
     client = authenticated_client(create_app())
     body = dict(product_code="IF")
     if start:

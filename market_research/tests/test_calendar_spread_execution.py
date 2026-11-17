@@ -39,6 +39,8 @@ class ExecutionServices(Services):
         self.ensured = set()
 
     def export(self, request):
+        if isinstance(request, TradeCalendarRange) and request.exchange == "SSE":
+            return super().export(request)
         name = "calendar" if isinstance(request, TradeCalendarRange) else "futures"
         self.calls.append((name, "export", request))
         error = self.faults.get((name, "final_export" if name in self.ensured else "export"))

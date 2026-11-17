@@ -1,6 +1,9 @@
 # Daily Data — Futures Calendar Spread Presentation authority
 
-Status: implemented. Current deployment/live-source readiness requires separate verification.
+Status: DD-02 WP-02 Chinese presentation, reference validation/display and four local
+copy/export actions are implemented for Online and Static Demo. WP-03 targeted
+acceptance is complete; merge readiness and unverified browser/deployment/live-source
+limits belong to the [case Roadmap](../../../../market_research/descriptive/cases/futures_calendar_spread/ROADMAP.md).
 Inherits [Web boundaries](../../../ARCHITECTURE.md) and
 [Presentation architecture](../../../presentation-architecture.md).
 Business meaning belongs to [Research](../../../../market_research/descriptive/cases/futures_calendar_spread/ARCHITECTURE.md);
@@ -14,7 +17,7 @@ which owns preparation and operational limits. Static controllers consume admitt
 ## Surface
 
 The independent Daily Data page is `/data/futures-calendar-spread`, titled
-“Futures Calendar Spread”. Explicit product/date controls issue the formal Daily
+“股指期货跨期价差”. Explicit product/date controls issue the formal Daily
 execution through `POST /data/futures-calendar-spread/query` (gateway
 `/api/data/futures-calendar-spread/query`). Existing GET remains read-only for its
 callers; Production submit/retry uses POST and never falls back to GET. Do not invent
@@ -23,8 +26,8 @@ mounts its authenticated HTTP controller; static Demo mounts a Bundle controller
 with the same public Presentation entry.
 
 Show the six ordered pairs with actual near/far contract codes, same-day Close,
-last trading dates, day difference, near DTE/stage and all three named metrics/units.
-Preserve producer order, outcome/reason and null/zero differences. Surface closed
+day difference, near DTE/stage and all three named metrics/units.
+Preserve producer order, outcome/reason evidence and null/zero differences. Surface closed
 date, proven no-active-contract, nonpositive-price exclusion, incomplete inputs,
 unavailability and loading/error independently; do not hide empty data with zeros.
 
@@ -112,3 +115,54 @@ Static Demo mounts only its existing Bundle controller and shared pure Presentat
 It has no execution controls, Production hooks, HTTP/Auth/Source calls or Ensure.
 Local pair/axis/viewport interactions retain their offline behavior; no Bundle,
 Manifest, capture, financial value or admission contract changes for Issue #13.
+
+## DD-02 Chinese presentation and index
+
+All user-facing labels, controls, status/reason explanations and feature-owned
+reading notes use Chinese. Product options retain IF/IH/IC/IM, with underlying names
+as labels; these names never select prices. Label fields as 品种、查询日期、比较组合、
+近端合约、远端合约、近端收盘价、远端收盘价、
+价差（点）、年化点差（点 / 365 自然日）、年化价差比例（%）、期限差（自然日）、
+近端剩余到期天数、到期阶段. Outcome/reason and dates remain in the complete response and exports. Slots retain M0/M1/Q1/Q2 identities.
+Stage labels are 0–7 天、8–21 天、22 天及以上; machine values/boundaries remain
+0_7, 8_21, 22_plus. Preserve every existing datum, six-pair order and all metrics;
+column widths, wrapping, grouped headers and fixed columns may support readability.
+
+Add an independent 标的指数参考 section with returned index identity, date, Close
+and Chinese availability/reason. Format Close under the common number policy.
+Do not derive identity/price, calculate metrics, infer closure from the Futures day
+or use earlier prices. Translate known state/reason codes using fixed labels;
+reference errors remain visible alongside intact pairs. unavailable/cache_incomplete
+means 缓存尚不完整, not proven Source absence; final_export_incomplete means
+自动准备后数据仍不完整. Distinguish credential/cache/operation/contract failures.
+
+An omitted underlying_index displays 历史数据包未提供指数参考信息. Explicit null,
+wrong identity/date or illegal state combinations fail contract validation. The public
+validator accepts omission under the formal additive schema; Online loadQuery additionally
+requires the field. Neither path mutates validated payloads or relaxes existing checks.
+Translate fixed known source-context explanations for display while retaining raw strings
+for export; unknown captured prose is preserved verbatim rather than silently discarded
+or interpreted. Machine JSON keys, HTTP enums and result identity remain unchanged.
+
+Four local actions and complete business column/context mappings are owned by
+[Daily Export](EXPORT.md), inheriting [Daily Data Copy / Export](../../../data-copy-export.md).
+Online and Demo reuse these builders through the same public Presentation. New query
+clears the copy source; changing draft controls alone keeps the existing submitted
+result identity. Demo discloses capture origin and exposes no execution controls.
+
+## Final refinement: independent period-to-spot rows
+
+In one result area, render adjacent Ant Design tables labeled 跨期比较 (six existing pairs) and
+期现比较 (M0/现货, M1/现货, Q1/现货, Q2/现货). The six-pair table orders columns:
+比较组合, 近端合约, 远端合约, 近端收盘价, 远端收盘价, 价差（点）, 年化点差,
+年化价差比例, 期限差（自然日）, 近端剩余到期天数, 到期阶段.
+The period-to-spot table substitutes 期货合约/现货指数 and their Close labels;
+its final columns are 期货剩余期限（自然日） and 到期阶段, avoiding duplicated DTE.
+Explain that calendar-spread annualization uses between-contract dates while
+period-to-spot uses remaining contract life. Never calculate any of these values here.
+Neither table shows last trading dates, outcome or reason columns. Missing metrics
+show —, including expiry-day annualizations; numeric zero remains zero. Brief alerts
+and a default-collapsed 数据说明 expose unavailable/excluded/error reasons per row.
+An omitted collection renders no invented rows and states 历史数据包未提供期现比较结果.
+Online adaptation requires both new collection and underlying_index; Demo accepts
+formal historical omission. Complete JSON/CSV use [Export](EXPORT.md), never table rows.

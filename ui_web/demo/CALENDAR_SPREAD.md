@@ -74,3 +74,40 @@ promise worker cancellation or cache rollback and must not cause automatic resub
 The Demo/build authority permits explicit formal HTTP generation; it does not impose
 a permanent no-Ensure restriction on the Collector. No new read-only Historical
 endpoint, collection permission, Bundle or Manifest change is introduced here.
+
+## DD-02 additive reference compatibility target
+
+DD-02 WP-01 implements the additive HTTP/generated contract; WP-02 implements shared
+Chinese presentation, reference validation and all four local copy/export actions.
+WP-03 targeted compatibility/export acceptance is complete; browser and publication
+readiness remain separate. The
+[Daily HTTP contract](../../ui_http/products/futures_calendar_spread/http-contract.md#dd-02-daily-index-projection-target)
+permits underlying_index omission solely for pre-DD-02 results. Existing Daily Bundle
+bytes and Manifest hashes remain valid under that contract; omission is not null Close.
+Display 历史数据包未提供指数参考信息 without adding a field to the captured Result.
+A present object must meet every formal reference check; explicit null is invalid.
+All original six-pair checks and Demo content admission remain binding.
+
+Build and runtime continue to use the feature's formal validator and shared
+Presentation. Online adaptation alone additionally requires reference presence.
+No capture identity, DTO version or alternate schema is added. Raw/Context copy
+preserves omission and all original payload values. CSV uses the feature-owned
+presence column; local actions disclose static origin and perform no HTTP/Auth/Source
+calls. [Feature Export](../src/features/futures_calendar_spread/EXPORT.md) owns mapping.
+
+No Bundle refresh is required by DD-02. WP-03 accepts the existing captured result
+against the implemented additive contract without rewriting bytes or hashes. If a
+later explicit instruction requests refreshed reference data, use the existing formal
+Capture/Validation/Build transaction; do not patch a price into JSON. Collector Daily
+GET stays read-only and can capture explicit reference unavailability without Ensure.
+A refreshed reference failure does not waive the six-pair content requirement.
+No release branch changes or publication are authorized by this enhancement.
+
+## Final refinement compatibility
+
+The formal Daily schema additionally permits omission of futures_spot_comparisons for
+older captures. Keep original Bundle bytes and Manifest hashes. Shared validation
+accepts omission, rejects explicit null and validates complete present collections.
+Online alone requires the collection. Missing renders 历史数据包未提供期现比较结果;
+JSON preserves absence and CSV exports only the actual six pairs. No capture,
+publication, admission waiver or synthetic four-row result is introduced.

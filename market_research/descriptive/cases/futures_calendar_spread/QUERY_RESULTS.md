@@ -108,3 +108,49 @@ exceptions, public StatisticalFailure and local association violations. Causes
 remain attached. Raw upstream exception text is not copied to its public reason;
 programming exceptions propagate. Invalid query/statistical parameters use
 `invalid_request` before service construction or calls.
+
+## Daily underlying index result (DD-02 target)
+
+Implemented in DD-02 WP-01. DailySpreadsResult adds required
+`underlying_index: DailyUnderlyingIndexReference` and `underlying_index_evidence: DailyUnderlyingIndexEvidence`. Both are frozen,
+slotted public carriers exported by the case facade, with tuple-owned sequence
+fields. Existing observation_set, prepared_inputs, day and accounting retain their
+meaning. HistoricalRelativeValueResult/current_day add neither field. WP-01 updated
+Daily constructors/fixtures; no fabricated Python default reference is introduced.
+
+DailyUnderlyingIndexReference contains `index_code: str`, `trade_date: date`,
+`close: float | None`, `availability`, `reason_code: str | None` and
+`failure_category: str | None`. Exact state combinations and legality belong solely
+to [Daily Index Reference](DAILY_INDEX_REFERENCE.md). Identity/date bind to the
+request and authority-governed selection; this is separate from PairObservation.
+
+DailyUnderlyingIndexEvidence retains immutable per-dependency attempts with exact
+SSE/Index requests, validated preliminary/final typed Exports and normal EnsureResults,
+plus safe dependency/operation/reason and original exception association on failure.
+Reuse existing acquisition evidence conventions where their types fit; do not insert
+Index evidence into shared Calendar/Futures prepared inputs. An unreached dependency
+has no attempt; a reached failure keeps its request and preceding validated evidence.
+Malformed objects are never retained as validated proof. Evidence is caller-retained
+in memory, with no new store, HTTP representation or persistence identity.
+
+Classified reference failure is a successful Daily result with an explicit reference
+state, a specialization of the whole-core failure rule above. Unknown defects still
+propagate. Daily source_context keeps its shape and CFFEX core identity, adding accurate
+independent SSE/Index snapshot and acquisition-permission disclosures; the reference supplies independent Daily futures–spot comparisons only.
+Do not mutate shared SourceContext defaults used by Historical. Old captured disclosures
+remain valid; validation never requires updated prose.
+
+## Daily futures–spot results
+
+DailySpreadsResult additionally requires `futures_spot_comparisons`, an immutable tuple
+of frozen/slotted DailyFuturesSpotComparison carriers under the independent
+[financial authority](DAILY_FUTURES_SPOT_COMPARISON.md). Each item contains product_code,
+trade_date, slot, futures (the validated original row or None), underlying_index (the
+same Daily reference), remaining_days, expiry_stage, signed_spread,
+annualized_point_spread, annualized_spread_ratio (nullable floats), outcome, reason,
+failure_category and its own definition_version. Source universe and reference evidence,
+and safe calculation failure association, remain caller-retained internal evidence.
+Open/closed item counts are four/zero, independent of existing six-pair accounting.
+HistoricalRelativeValueResult and all shared observation/sample carriers are unchanged.
+Daily source disclosure now distinguishes reference consumption by these independent
+comparisons from its exclusion from calendar-spread and historical calculations.

@@ -25,3 +25,55 @@ results describe historical Close relationships, not realized returns or trading
 Issue #13's bounded WSL/local-chain acceptance does not establish other deployments,
 maximum 3660-date windows, prolonged load or cold-cache concurrent Source behavior.
 No latency SLA or universal proxy-timeout suitability is claimed.
+
+## DD-02 Daily enhancement work packages
+
+Status: **IMPLEMENTED — READY_FOR_MERGE**. All four work packages are complete.
+The Daily-only reference, Chinese presentation and four local copy/export actions
+are reconciled across Research, HTTP, Online and the retained static Demo.
+
+| WP | Delivery and acceptance boundary | State |
+| --- | --- | --- |
+| WP-00 — Authority Encoding | Daily-only reference/result, additive HTTP, Chinese/export and Demo omission contracts | IMPLEMENTED |
+| WP-01 — Underlying Index Close Integration | Public Dataset preparation, immutable evidence, HTTP projection and generated contracts | IMPLEMENTED |
+| WP-02 — Chinese Presentation & Export | Chinese controls/table/status, reference display and four local actions | IMPLEMENTED |
+| WP-03 — Cross-Layer Acceptance & Reconciliation | Online/Demo/export acceptance, known source-note translation and final authority reconciliation | IMPLEMENTED — READY_FOR_MERGE |
+
+Canonical owners remain [Daily Index Reference](DAILY_INDEX_REFERENCE.md),
+[Query Results](QUERY_RESULTS.md#daily-underlying-index-result-dd-02-target),
+[Daily HTTP](../../../../ui_http/products/futures_calendar_spread/http-contract.md#dd-02-daily-index-projection-target),
+[Daily Presentation](../../../../ui_web/src/features/futures_calendar_spread/ARCHITECTURE.md#dd-02-chinese-presentation-and-index),
+[Daily Export](../../../../ui_web/src/features/futures_calendar_spread/EXPORT.md) and
+[Demo compatibility](../../../../ui_web/demo/CALENDAR_SPREAD.md#dd-02-additive-reference-compatibility-target).
+The shared [Daily Data export standard](../../../../ui_web/data-copy-export.md)
+owns common lifecycle and encoding invariants.
+
+Targeted Python/HTTP and TypeScript/React acceptance verifies reference identity,
+legal states, null/zero, GET read-only versus POST conditional Ensure, safe HTTP
+projection and intact six-pair results. Historical preparation remains independent
+of SSE/Index. Online requires reference and futures–spot collection presence; the retained Daily Bundle passes
+the same formal validator with omission and displays the historical disclosure.
+Raw/Context preserve the complete response; CSV uses the current 35-column mapping for both comparison types and retains original values,
+order and presence. Local copy/download and stale-result isolation are covered.
+The retained Bundle, Manifest and Registry files are unchanged by this refinement. No capture or publication occurred.
+
+Real browser layout/Clipboard/download behavior, live external Source acquisition,
+Windows and deployment are **NOT VERIFIED** by DD-02 acceptance. Deterministic
+DOM and download utility tests do not establish those platform results. Existing
+synchronous capacity/cancellation and independent-snapshot limitations remain binding;
+no latency, freshness or common-snapshot guarantee is added. Merge readiness does
+not constitute deployment or publication acceptance. Completed execution details
+and commit evidence remain in Git history.
+
+## DD-02 Final Refinement
+
+Daily now additionally owns four [independent futures–spot results](DAILY_FUTURES_SPOT_COMPARISON.md)
+without changing the six calendar-spread pairs, their formulas/accounting or historical
+samples. Same-day reference/Slot/row evidence is reused; new numerical failures are
+isolated per comparison and expiry-day annualization is not applicable. HTTP projects
+these results additively; older Demo payloads may omit the collection. Presentation
+uses adjacent six-row/four-row tables with contiguous identities, Close and metrics,
+and collapsed reason details. JSON preserves all formal fields; CSV distinguishes
+calendar_spread/futures_spot and between-contract versus remaining-life denominators.
+No Bundle/Manifest change, new capture, live Source call or publication is part of this
+refinement. Targeted acceptance and commit evidence remain in Git history.

@@ -138,9 +138,13 @@ registry or upstream facade is introduced by this authority.
 ## Calendar Spread L1 binding navigation
 
 The independent [Calendar Spread input contract](descriptive/cases/futures_calendar_spread/INPUTS.md)
-selects only public CFFEX Calendar and Futures Daily services. Existing Python
+selects public CFFEX Calendar and Futures Daily services for shared Observations.
+DD-02 adds Daily-only public SSE Calendar/Index consumption under
+[Daily Index Reference](descriptive/cases/futures_calendar_spread/DAILY_INDEX_REFERENCE.md);
+Historical and shared preparation remain independent. Existing Python
 queries and Daily GET remain read-only; explicit execution entrypoints conditionally
-Ensure legal incomplete inputs, then require complete final Exports. The case does
+Ensure legal incomplete core inputs, then require complete final core Exports.
+Daily reference incompleteness follows its isolated availability contract. The case does
 not inherit Basis SSE/Index preparation or a missing-tolerant Futures policy. Exact
 requests, evidence and failure behavior remain in that narrow contract. Current
 execution entrypoints and operational limits belong to [Application](descriptive/cases/futures_calendar_spread/APPLICATION.md).

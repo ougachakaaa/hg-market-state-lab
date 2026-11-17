@@ -1,6 +1,6 @@
 # Calendar spread financial definition
 
-This is the unique financial definition for [futures_calendar_spread_v1](ARCHITECTURE.md),
+This is the unique calendar-spread financial definition for [futures_calendar_spread_v1](ARCHITECTURE.md),
 shared by both products through [the application boundary](APPLICATION.md).
 DataLake owns the input facts; Statistics owns numerical statistics, not these metrics.
 
@@ -73,3 +73,5 @@ N=90, F=100 produces negative values; equal positive prices produce zero for
 all metrics. Tests must distinguish log from linear annualization and the
 between-contract denominator from near DTE. Price legality and failure outcomes
 follow [Observation](OBSERVATION.md).
+
+Daily-only futures–spot metrics have their independent [authority](DAILY_FUTURES_SPOT_COMPARISON.md); they do not extend these six pairs or historical samples.

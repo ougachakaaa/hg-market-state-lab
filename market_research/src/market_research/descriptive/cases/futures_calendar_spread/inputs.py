@@ -12,7 +12,7 @@ CASE: Literal["futures_calendar_spread_v1"] = "futures_calendar_spread_v1"
 DEFINITION_VERSION: Literal["futures_calendar_spread_definition_v1"] = (
     "futures_calendar_spread_definition_v1"
 )
-# Published Futures FACTS.md product/underlying association; no Index prices are acquired.
+# Published Futures FACTS.md product/underlying association, reused by Daily reference.
 UNDERLYING = {"IF": "000300.SH", "IH": "000016.SH", "IC": "000905.SH", "IM": "000852.SH"}
 
 

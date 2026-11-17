@@ -1,6 +1,8 @@
 # Daily Data Copy / Export authority
 
-本文档从属于 [ui_web architecture](ARCHITECTURE.md)，在 [presentation architecture](presentation-architecture.md) 与 [UI system](ui-system.md) 边界内，拥有 MO Option Chain 与 MO Premium Plane 共同的 Raw / Context JSON 复制与 CSV / Context JSON 导出交互契约。产品特有的 source、response identity 与 missing-value 阅读说明分别由 [Option Chain visualization](src/features/mo_option_chain/visualization.md#10-daily-data-copy--export) 和 [Premium visualization](src/features/mo_option_premium/visualization.md#10-daily-data-copy--export) 拥有。
+本文档从属于 [ui_web architecture](ARCHITECTURE.md)，在 [presentation architecture](presentation-architecture.md) 与 [UI system](ui-system.md) 边界内，拥有所有 Daily Data Feature 的 Raw / Context JSON 复制与 CSV / Context JSON 导出标准契约。当前及后续新增 Daily Data 原则上必须提供四项操作；例外须在 owning feature authority 明确确认，不得以未实现作为隐式例外。DD-02 WP-02 已补齐 Futures Calendar Spread；已满足契约的页面不做无关重构。
+
+产品特有的 source、response identity、CSV 列映射与 missing-value 阅读说明由 feature 专题拥有：[Option Chain visualization](src/features/mo_option_chain/visualization.md#10-daily-data-copy--export)、[Premium visualization](src/features/mo_option_premium/visualization.md#10-daily-data-copy--export)、[Futures Calendar Spread Export](src/features/futures_calendar_spread/EXPORT.md)。
 
 本契约不定义 HTTP schema、金融 DTO 或通用 Export Framework，也不授予 sibling feature 互相依赖或把金融语义移入 `shared` 的权限。HTTP shape 与业务含义继续由各 feature 链接的 owning contracts 决定。
 
@@ -28,26 +30,26 @@ Raw JSON 不添加 envelope、metadata、reading notes、analysis prompt、reque
 }
 ```
 
-`metadata` 的产品身份、response identity 和 reading notes 由各 feature visualization authority 拥有；envelope 与 version 由本共同 authority 拥有。所有身份字段读取同一次成功 validated response，不读取可能已经变化的输入控件、当前日期或 presentation state。`data` 保留 Raw JSON 的全部字段、值与数组顺序；Premium 保留同次成功响应的 raw payload。
+`metadata` 的产品身份、response identity 和 reading notes 由各 feature 的 copy/export 专题 authority 拥有；envelope 与 version 由本共同 authority 拥有。所有身份字段读取同一次成功 validated response，不读取可能已经变化的输入控件、当前日期或 presentation state。`data` 保留 Raw JSON 的全部字段、值与数组顺序；Premium 保留同次成功响应的 raw payload。
 
 Reading notes 仅组织现有 owning contract 已确认的解释，不引入金融计算、单位推断、市场分析、投资结论或研究问题。Metadata 是前端交付上下文，不是新 HTTP response contract 或竞争性业务 DTO。复制与导出均为本地操作，不调用外部 GPT API 或 backend。
 
-Context 文件使用 `.json`、`application/json;charset=utf-8`、UTF-8 无 BOM；Unicode 保持完整。文件名由 feature 指定的 validated response date / price type 生成，再应用与 CSV 相同的安全文件名规则。下载机制、反馈和资源清理见第 6 节。
+Context 文件使用 `.json`、`application/json;charset=utf-8`、UTF-8 无 BOM；Unicode 保持完整。文件名由 feature 指定的 validated response identity（如 date / product / price type）生成，再应用与 CSV 相同的安全文件名规则。下载机制、反馈和资源清理见第 6 节。
 
 ## 3. Current-result Lifecycle
 
 - 只有当前成功、已校验结果允许复制与导出。Idle、loading、error/failure 或 contract-invalid response 不得暴露上一笔结果作为当前查询的复制或导出内容。
-- 新 query 开始或日期清空时，旧结果与对应 copy source 同时退出 current-result 状态。较早请求不得覆盖较新请求的 loading、success 或 failure。
+- 新 query 开始或当前结果按 feature lifecycle 退出时，旧结果与对应 copy source 同时退出 current-result 状态。MO 页面保留日期清空即退出的既有行为；显式提交的 Calendar Spread 修改或清空 draft 日期不改变已提交结果身份。较早请求不得覆盖较新请求的 loading、success 或 failure。
 - 当前结果身份来自已返回的响应；输入控件是 request intent，不能替代 response identity。
 - Presentation state 只改变展示，不影响 Raw / Context JSON 和 CSV 内容。复制与导出不得发起新 HTTP 请求或触发 backend recomputation。
 
 ## 4. Clipboard UX and Content Boundary
 
-两个页面均须在成功结果区域顶部显著提供 `Copy Raw JSON`、`Copy Context JSON`、`Export CSV` 与 `Export Context JSON`，不依赖展开 Inspector 才能访问。使用现有 Ant Design 6 普通 UI 组件及 application 共享主题，不新增通用 UI 组件库。
+所有 Daily Data 页面原则上均须在成功结果区域顶部显著提供 `Copy Raw JSON`、`Copy Context JSON`、`Export CSV` 与 `Export Context JSON`，不依赖展开 Inspector 才能访问。使用现有 Ant Design 6 普通 UI 组件及 application 共享主题，不新增通用 UI 组件库。
 
 复制成功或失败必须有可见反馈；仅在 Clipboard 写入成功后报告成功。访问被拒、Clipboard 不可用或写入失败均必须报告失败，不得误报成功或把内部异常详情放入复制文本。大 payload 仍须完整复制，不得静默截断；可以提示大小或字符数。
 
-复制与导出文本只包含业务响应及本契约允许的上下文；不得加入 JWT、Cookie、认证头、Tushare Token、运行配置或内部异常详情。不得序列化 request、transport/auth state 或 error object 作为复制内容。
+复制与导出文本只包含业务响应及本契约允许的上下文；不得加入 JWT、Cookie、认证头、Tushare Token、运行配置或内部异常详情。不得序列化独立 HTTP request、transport/auth state 或内部 error object 作为复制内容；正式成功业务 Result 内的 echoed request 与已确认的 availability/error 字段必须保留。
 
 Premium 的完整 Raw HTTP Response Inspector 继续遵循其 feature authority；顶部复制入口不改变 Inspector 的查看范围或当前响应语义。
 
@@ -55,32 +57,30 @@ Premium 的完整 Raw HTTP Response Inspector 继续遵循其 feature authority�
 
 CSV 是当前完整、已校验成功响应的衍生 tabular representation，不要求 JSON 可逆，不代替完整 JSON evidence。第 3 节 lifecycle 同样适用：idle/loading/failure/contract-invalid 不提供导出，新 query 清除旧源，迟到请求不能覆盖当前源。Presentation filters 不影响内容，导出不请求 HTTP。
 
-每行只对应 feature 指定的真实 analytical entity。固定 header、列序和 backend 稳定行序；不生成合约、Point 或占位记录，不做金融计算、fallback、补值或插值。无真实记录时为 header-only。产品 column mapping 归 feature visualization authority。
+每行只对应 feature 指定的真实 analytical entity。固定 header、列序和 backend 稳定行序；不生成合约、Point 或占位记录，不做金融计算、fallback、补值或插值。无真实记录时为 header-only。产品 column mapping 归 feature 的 copy/export 专题 authority。
 
-Nullable value 使用字面量 `null`，numeric zero 使用 `0`，boolean 使用 `true` / `false`。缺席 futures 的 identity/price 均为 `null`，以 `futures_present=false` 表达 object absence。数值使用 JavaScript number 字符串表示，不做 display rounding，不恢复 HTTP 原始数字字面写法；yield 保持 decimal ratio。[Presentation formatting authority](PRESENTATION_FORMATTING.md) 的 display rounding 与北京时间规则不适用于 CSV。
+Nullable value 使用字面量 `null`，numeric zero 使用 `0`，boolean 使用 `true` / `false`。对象缺省与显式 null 的区别由 feature 定义的 presence 列表达；例如 MO 缺席 futures 的 identity/price 均为 `null`，以 `futures_present=false` 表达 object absence。数值使用 JavaScript number 字符串表示，不做 display rounding，不恢复 HTTP 原始数字字面写法；yield 保持 decimal ratio。[Presentation formatting authority](PRESENTATION_FORMATTING.md) 的 display rounding 与北京时间规则不适用于 CSV。
 
 CSV 使用 UTF-8 BOM、逗号分隔、CRLF，每条记录（含 header）以 CRLF 结束。包含逗号、双引号或 CR/LF 的 cell 用双引号包裹，内部双引号加倍。文本以 `= + - @`、TAB、CR 或 LF 开头，或去除前导空白/控制字符后以 `= + - @` 开头时，在完整原文本前加单引号，再执行 CSV quoting。此 spreadsheet formula protection 仅作用于风险字符串，不改变 numeric facts，普通文本保持原样。
 
 CSV 构建 `text/csv;charset=utf-8` Blob；下载生命周期与反馈遵循第 6 节。
 
-文件名由 feature 指定的 response date 与 resolved price type 生成；路径分隔符、控制字符及不安全文件名字符替换为 `_`。CSV 只包含业务字段，不序列化 HTTP header、JWT、Cookie、Token、request/auth state 或内部运行信息。
+文件名由 feature 指定的 response identity（如 date / product / resolved price type）生成；路径分隔符、控制字符及不安全文件名字符替换为 `_`。CSV 只包含业务字段，不序列化 HTTP header、JWT、Cookie、Token、request/auth state 或内部运行信息。
 
 Shared CSV utility 仅拥有 ordered header、scalar encoding、quoting、BOM/CRLF；domain-neutral shared download utility 拥有安全文件名和 browser download/resource lifecycle；feature-local pure projection 拥有 flattening，不在 shared 定义金融字段、并行 DTO 或 Export Framework。
 
 ## 6. Shared Download UX
 
-成功结果顶部动作依次为 `Copy Raw JSON | Copy Context JSON | Export CSV | Export Context JSON`，使用现有简洁布局。下载独立于 Clipboard；复制 pending 时整个动作区禁用。
+成功结果顶部动作依次为 `Copy Raw JSON | Copy Context JSON | Export CSV | Export Context JSON`，使用现有简洁布局；用户可见按钮及反馈可按 feature authority 中文化，四项能力和顺序不变。下载独立于 Clipboard；复制 pending 时整个动作区禁用。
 
 以指定 MIME 构建 Blob、Object URL 和临时 anchor，触发一次下载；正常触发后下一事件循环释放 URL/DOM，失败也清理资源。正常触发反馈 `Download started`，异常反馈 `Export failed`，不声称浏览器已保存文件，不暴露内部异常。当前成功结果退出时反馈一同退出；旧操作反馈不得进入新结果。
 
 共享下载层只接受文本、MIME 与文件名，不持有产品 metadata、HTTP DTO、金融语义或 projection。CSV 和 Context JSON 复用同一 browser download 生命周期，不建立通用 Export Framework。
 
-## 7. Static Example specialization
+## 7. Static Demo specialization
 
-[Static Demo](demo/ARCHITECTURE.md) 保留正式 UI 已具备的本地 Copy/Export：source 是完整、通过同一正式契约校验的当前 embedded Example 业务 payload，不是浏览器实际收到的 HTTP response。上述 successful-response/current-result 条款在 Demo 对应 validated Example ready 状态；静态 loading/invalid/error 不暴露旧 source，不创建假的 Query/Run lifecycle。Premium Inspector 和结果旁必须明确 static origin (V2 real_market; Synthetic only for historical V1/test data) 来源，复制/下载入口的说明同样可见；不能把 Example 声称为实时市场或在线请求结果。Raw、Context V1、CSV 内容/字段、precision、完整性与下载反馈规则不变，不把 Demo metadata 加入 Raw 或扩展 Context schema；来源披露由相邻 UI 承担。Presentation filters 不改变完整 Example source，复制导出仍不发请求。两个 feature 的 visualization authority 中 actual-response 要求均按此区分 Production 与 Static 来源。
+[Static Demo](demo/ARCHITECTURE.md) 的 source 是当前完整、通过正式 feature validator 的 Bundle 内业务 Result，不是浏览器收到的在线 HTTP 响应。Successful/current-result 条款对应 validated Bundle ready 状态；loading/invalid/error 不暴露上一结果或旧操作反馈，不创建假的 Query/Run lifecycle。切换 Bundle 时立即退出旧 source。
 
-V2 provenance and local development/public admission follow the
-Example contract (retired; Git history) and Authenticity / Rights (retired; Git history).
-Private local Copy/Export does not grant public redistribution permission; review the actual
-download content before public inclusion. Pending source wording changes belong to the
-implementation handoff (retired; Git history); R0 changes authority only.
+来源披露由相邻 UI 明确说明正式 HTTP 历史捕获及 static origin，不加入 Raw，不扩展 Context V1 envelope，不声称实时市场。Raw/Context 保留原始字段缺省；可缺省字段遵循 owning HTTP contract，不能注入 null 或假价格。CSV 的缺省表达归 feature。Presentation filters 不改变完整 Result，复制导出不触发 HTTP、Auth、Source 或计算。在线与 Demo 复用正式 Presentation 和本地导出 builders。
+
+Bundle identity、Manifest/hash、admission 与后续 capture 遵循 [Bundle contract](demo/BUNDLES.md) 和 [build authority](demo/build/ARCHITECTURE.md)。保留真实来源披露、投资免责声明、凭证安全与 artifact integrity；不恢复 retired Example/V1/V2 admission 流程。发布遵循根 personal-study policy，不新增数据分发授权调查门槛。

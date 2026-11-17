@@ -1,0 +1,393 @@
+{
+  "case": "futures_calendar_spread_v1",
+  "definition_version": "futures_calendar_spread_definition_v1",
+  "request": {
+    "product_code": "IM",
+    "trade_date": "2024-10-18",
+    "operation": "query_daily_spreads"
+  },
+  "day": {
+    "trade_date": "2024-10-18",
+    "status": "open",
+    "reason": null,
+    "observations": [
+      {
+        "product_code": "IM",
+        "trade_date": "2024-10-18",
+        "near_slot": "M0",
+        "far_slot": "M1",
+        "near": {
+          "contract_code": "IM2410.CFX",
+          "close": 110.0,
+          "delist_date": "2024-10-18"
+        },
+        "far": {
+          "contract_code": "IM2411.CFX",
+          "close": 100.0,
+          "delist_date": "2024-11-18"
+        },
+        "delta_days": 31,
+        "near_dte_days": 0,
+        "expiry_stage": "0_7",
+        "metrics": {
+          "signed_spread": {
+            "metric_id": "signed_spread",
+            "value": 10.0,
+            "unit": "index_points"
+          },
+          "annualized_point_spread": {
+            "metric_id": "annualized_point_spread",
+            "value": 117.74193548387096,
+            "unit": "index_points_per_365_natural_days"
+          },
+          "annualized_spread_ratio": {
+            "metric_id": "annualized_spread_ratio",
+            "value": 1.1222005041476968,
+            "unit": "decimal_ratio"
+          },
+          "delta_days": 31,
+          "definition_version": "futures_calendar_spread_definition_v1"
+        },
+        "outcome": "valid",
+        "reason": null
+      },
+      {
+        "product_code": "IM",
+        "trade_date": "2024-10-18",
+        "near_slot": "M0",
+        "far_slot": "Q1",
+        "near": {
+          "contract_code": "IM2410.CFX",
+          "close": 110.0,
+          "delist_date": "2024-10-18"
+        },
+        "far": {
+          "contract_code": "IM2412.CFX",
+          "close": 120.0,
+          "delist_date": "2024-12-18"
+        },
+        "delta_days": 61,
+        "near_dte_days": 0,
+        "expiry_stage": "0_7",
+        "metrics": {
+          "signed_spread": {
+            "metric_id": "signed_spread",
+            "value": -10.0,
+            "unit": "index_points"
+          },
+          "annualized_point_spread": {
+            "metric_id": "annualized_point_spread",
+            "value": -59.83606557377049,
+            "unit": "index_points_per_365_natural_days"
+          },
+          "annualized_spread_ratio": {
+            "metric_id": "annualized_spread_ratio",
+            "value": -0.5206418459215554,
+            "unit": "decimal_ratio"
+          },
+          "delta_days": 61,
+          "definition_version": "futures_calendar_spread_definition_v1"
+        },
+        "outcome": "valid",
+        "reason": null
+      },
+      {
+        "product_code": "IM",
+        "trade_date": "2024-10-18",
+        "near_slot": "M0",
+        "far_slot": "Q2",
+        "near": {
+          "contract_code": "IM2410.CFX",
+          "close": 110.0,
+          "delist_date": "2024-10-18"
+        },
+        "far": {
+          "contract_code": "IM2503.CFX",
+          "close": 110.0,
+          "delist_date": "2025-03-18"
+        },
+        "delta_days": 151,
+        "near_dte_days": 0,
+        "expiry_stage": "0_7",
+        "metrics": {
+          "signed_spread": {
+            "metric_id": "signed_spread",
+            "value": 0.0,
+            "unit": "index_points"
+          },
+          "annualized_point_spread": {
+            "metric_id": "annualized_point_spread",
+            "value": 0.0,
+            "unit": "index_points_per_365_natural_days"
+          },
+          "annualized_spread_ratio": {
+            "metric_id": "annualized_spread_ratio",
+            "value": 0.0,
+            "unit": "decimal_ratio"
+          },
+          "delta_days": 151,
+          "definition_version": "futures_calendar_spread_definition_v1"
+        },
+        "outcome": "valid",
+        "reason": null
+      },
+      {
+        "product_code": "IM",
+        "trade_date": "2024-10-18",
+        "near_slot": "M1",
+        "far_slot": "Q1",
+        "near": {
+          "contract_code": "IM2411.CFX",
+          "close": 100.0,
+          "delist_date": "2024-11-18"
+        },
+        "far": {
+          "contract_code": "IM2412.CFX",
+          "close": 120.0,
+          "delist_date": "2024-12-18"
+        },
+        "delta_days": 30,
+        "near_dte_days": 31,
+        "expiry_stage": "22_plus",
+        "metrics": {
+          "signed_spread": {
+            "metric_id": "signed_spread",
+            "value": -20.0,
+            "unit": "index_points"
+          },
+          "annualized_point_spread": {
+            "metric_id": "annualized_point_spread",
+            "value": -243.33333333333334,
+            "unit": "index_points_per_365_natural_days"
+          },
+          "annualized_spread_ratio": {
+            "metric_id": "annualized_spread_ratio",
+            "value": -2.2182456076597807,
+            "unit": "decimal_ratio"
+          },
+          "delta_days": 30,
+          "definition_version": "futures_calendar_spread_definition_v1"
+        },
+        "outcome": "valid",
+        "reason": null
+      },
+      {
+        "product_code": "IM",
+        "trade_date": "2024-10-18",
+        "near_slot": "M1",
+        "far_slot": "Q2",
+        "near": {
+          "contract_code": "IM2411.CFX",
+          "close": 100.0,
+          "delist_date": "2024-11-18"
+        },
+        "far": {
+          "contract_code": "IM2503.CFX",
+          "close": 110.0,
+          "delist_date": "2025-03-18"
+        },
+        "delta_days": 120,
+        "near_dte_days": 31,
+        "expiry_stage": "22_plus",
+        "metrics": {
+          "signed_spread": {
+            "metric_id": "signed_spread",
+            "value": -10.0,
+            "unit": "index_points"
+          },
+          "annualized_point_spread": {
+            "metric_id": "annualized_point_spread",
+            "value": -30.416666666666668,
+            "unit": "index_points_per_365_natural_days"
+          },
+          "annualized_spread_ratio": {
+            "metric_id": "annualized_spread_ratio",
+            "value": -0.28990179690482154,
+            "unit": "decimal_ratio"
+          },
+          "delta_days": 120,
+          "definition_version": "futures_calendar_spread_definition_v1"
+        },
+        "outcome": "valid",
+        "reason": null
+      },
+      {
+        "product_code": "IM",
+        "trade_date": "2024-10-18",
+        "near_slot": "Q1",
+        "far_slot": "Q2",
+        "near": {
+          "contract_code": "IM2412.CFX",
+          "close": 120.0,
+          "delist_date": "2024-12-18"
+        },
+        "far": {
+          "contract_code": "IM2503.CFX",
+          "close": 110.0,
+          "delist_date": "2025-03-18"
+        },
+        "delta_days": 90,
+        "near_dte_days": 61,
+        "expiry_stage": "22_plus",
+        "metrics": {
+          "signed_spread": {
+            "metric_id": "signed_spread",
+            "value": 10.0,
+            "unit": "index_points"
+          },
+          "annualized_point_spread": {
+            "metric_id": "annualized_point_spread",
+            "value": 40.55555555555556,
+            "unit": "index_points_per_365_natural_days"
+          },
+          "annualized_spread_ratio": {
+            "metric_id": "annualized_spread_ratio",
+            "value": 0.35287947334683156,
+            "unit": "decimal_ratio"
+          },
+          "delta_days": 90,
+          "definition_version": "futures_calendar_spread_definition_v1"
+        },
+        "outcome": "valid",
+        "reason": null
+      }
+    ]
+  },
+  "accounting": {
+    "candidate_count": 6,
+    "valid_count": 6,
+    "not_applicable_count": 0,
+    "excluded_count": 0
+  },
+  "source_context": {
+    "provider": "tushare",
+    "exchange": "CFFEX",
+    "price_field": "close",
+    "limitations": [
+      "Calendar and Futures exports are independent snapshots with no common acquisition time or freshness guarantee.",
+      "Retained futures metadata is not guaranteed to have been known on the historical trade date.",
+      "Read-only queries require separately prepared complete caches; they never ensure or repair missing data.",
+      "Close relationships are descriptive, not executable roll quotes, forecasts or investment recommendations.",
+      "Fees, slippage, margin, financing, dividends, future changes and waiting value are excluded.",
+      "Daily SSE Calendar and Index exports are independent snapshots; the same-day index Close supplies independent Daily futures–spot comparisons, never calendar-spread or historical calculations. Reference preparation follows the selected read-only or explicit execution permission."
+    ]
+  },
+  "underlying_index": {
+    "index_code": "000852.SH",
+    "trade_date": "2024-10-18",
+    "close": 3500.123456789,
+    "availability": "available",
+    "reason_code": null,
+    "failure_category": null
+  },
+  "futures_spot_comparisons": [
+    {
+      "product_code": "IM",
+      "trade_date": "2024-10-18",
+      "slot": "M0",
+      "futures": {
+        "contract_code": "IM2410.CFX",
+        "close": 110.0,
+        "delist_date": "2024-10-18"
+      },
+      "underlying_index": {
+        "index_code": "000852.SH",
+        "trade_date": "2024-10-18",
+        "close": 3500.123456789,
+        "availability": "available",
+        "reason_code": null,
+        "failure_category": null
+      },
+      "remaining_days": 0,
+      "expiry_stage": "0_7",
+      "signed_spread": -3390.123456789,
+      "annualized_point_spread": null,
+      "annualized_spread_ratio": null,
+      "outcome": "not_applicable",
+      "reason": "expiry_day",
+      "failure_category": null,
+      "definition_version": "daily_futures_spot_definition_v1"
+    },
+    {
+      "product_code": "IM",
+      "trade_date": "2024-10-18",
+      "slot": "M1",
+      "futures": {
+        "contract_code": "IM2411.CFX",
+        "close": 100.0,
+        "delist_date": "2024-11-18"
+      },
+      "underlying_index": {
+        "index_code": "000852.SH",
+        "trade_date": "2024-10-18",
+        "close": 3500.123456789,
+        "availability": "available",
+        "reason_code": null,
+        "failure_category": null
+      },
+      "remaining_days": 31,
+      "expiry_stage": "22_plus",
+      "signed_spread": -3400.123456789,
+      "annualized_point_spread": -40033.711668644675,
+      "annualized_spread_ratio": -41.86177151599991,
+      "outcome": "valid",
+      "reason": null,
+      "failure_category": null,
+      "definition_version": "daily_futures_spot_definition_v1"
+    },
+    {
+      "product_code": "IM",
+      "trade_date": "2024-10-18",
+      "slot": "Q1",
+      "futures": {
+        "contract_code": "IM2412.CFX",
+        "close": 120.0,
+        "delist_date": "2024-12-18"
+      },
+      "underlying_index": {
+        "index_code": "000852.SH",
+        "trade_date": "2024-10-18",
+        "close": 3500.123456789,
+        "availability": "available",
+        "reason_code": null,
+        "failure_category": null
+      },
+      "remaining_days": 61,
+      "expiry_stage": "22_plus",
+      "signed_spread": -3380.123456789,
+      "annualized_point_spread": -20225.32888078664,
+      "annualized_spread_ratio": -20.18307456993777,
+      "outcome": "valid",
+      "reason": null,
+      "failure_category": null,
+      "definition_version": "daily_futures_spot_definition_v1"
+    },
+    {
+      "product_code": "IM",
+      "trade_date": "2024-10-18",
+      "slot": "Q2",
+      "futures": {
+        "contract_code": "IM2503.CFX",
+        "close": 110.0,
+        "delist_date": "2025-03-18"
+      },
+      "underlying_index": {
+        "index_code": "000852.SH",
+        "trade_date": "2024-10-18",
+        "close": 3500.123456789,
+        "availability": "available",
+        "reason_code": null,
+        "failure_category": null
+      },
+      "remaining_days": 151,
+      "expiry_stage": "22_plus",
+      "signed_spread": -3390.123456789,
+      "annualized_point_spread": -8194.669282966788,
+      "annualized_spread_ratio": -8.363752989188203,
+      "outcome": "valid",
+      "reason": null,
+      "failure_category": null,
+      "definition_version": "daily_futures_spot_definition_v1"
+    }
+  ]
+}
