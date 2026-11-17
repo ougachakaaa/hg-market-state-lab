@@ -82,7 +82,7 @@ Quantile or IntervalCount. `compute(NumericSample([1, 3], "u"), MeanSpec())` ret
 `MeanResult(value=2.0, sample_count=2, unit="u")`. NumPy float64 accumulation may
 fail on intermediate overflow even when a mathematical average is finite.
 Numerical conformance and injected backend failures: `tests/test_mean.py`.
-Bounded integration/verification evidence: [WP4 acceptance](../market_research/descriptive/cases/futures_basis/WP4_ACCEPTANCE.md).
+Consumer adaptation: [Futures Basis statistics contract](../market_research/descriptive/cases/futures_basis/STATISTICS.md).
 
 ## Empirical Percentile (Calendar Spread WP3)
 
@@ -99,12 +99,7 @@ result = compute(
 assert [r.percentile for r in result.query_results] == [0, .25, .5, .625, .875, 1]
 ```
 
-Directed verification (2026-11-16), from the repository root:
-`.venv/bin/python -m pytest market_statistics/tests/test_empirical_percentile.py market_statistics/tests/test_public_api.py -q`
-— **94 passed**. This includes the existing Quantile, IntervalCount and Mean public
-dispatch examples. No full-module/repository regression, architecture scans,
-real-data, browser or deployment checks were run. At that WP3 stage, WP4 Research
-adaptation was not yet implemented. Current Research query/HTTP/Web delivery is recorded
-in the [Calendar Spread Roadmap](../market_research/descriptive/cases/futures_calendar_spread/ROADMAP.md#baseline-and-status).
-WP3 itself supplied only the public numerical dependency; the directed results above
-remain historical evidence, not a fresh test run.
+Current numerical coverage: [Empirical Percentile tests](tests/test_empirical_percentile.py)
+and [public API tests](tests/test_public_api.py). Select relevant cases under the root
+verification policy. Consumer delivery scope is in the
+[Calendar Spread Roadmap](../market_research/descriptive/cases/futures_calendar_spread/ROADMAP.md).

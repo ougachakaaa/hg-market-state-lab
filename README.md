@@ -7,19 +7,19 @@
 **[Live Demo](https://ougachakaaa.github.io/hg-market-state-lab/)** · **[Source Code](https://github.com/ougachakaaa/hg-market-state-lab)**
 
 Demo 已实现为匿名、只读的 GitHub Pages 站点：复用正式 React Presentation，展示已提交且经过校验的 HTTP 结果 Bundle，不在浏览器中获取实时行情或执行研究。
-当前源码包含九个 Bundle、十个页面；[本地交付与历史发布证据](ui_web/demo/build/HANDOFF.md#current-delivery-and-historical-evidence) 分别记录对应范围，不能据此推定线上部署与当前分支一致。数据与展示边界见 [Demo authority](ui_web/demo/ARCHITECTURE.md)。
+当前源码包含九个 Bundle、十个页面；不能据此推定线上部署与当前分支一致。数据与展示边界见 [Demo authority](ui_web/demo/ARCHITECTURE.md)。
 
 ## 当前能力与架构
 
 | 能力 | 当前交付 | 实现与验证入口 |
 | --- | --- | --- |
 | Data | 四个 Tushare Dataset（日历、指数、股指期货、期权）的 SQLite 缓存与 Coverage；MO Option Chain、Premium Plane 等确定性 Snapshot 产品。 | [Dataset 目录](data_lake/DATASETS.md)、[Snapshot 目录](data_snapshot/CAPABILITIES.md) |
-| Research | Futures Basis 六节报告及在线执行；Calendar Spread 日常数据与历史相对价值；Trailing Return Observation / Batch / Publication；Price Segmentation Python case。 | [模块边界](market_research/ARCHITECTURE.md)、[使用入口](market_research/USAGE.md)、[能力证据映射](docs/recruiter-readiness-phase-1.md#capability-evidence) |
+| Research | Futures Basis 六节报告及在线执行；Calendar Spread 日常数据与历史相对价值；Trailing Return Observation / Batch / Publication；Price Segmentation Python case。 | [模块边界](market_research/ARCHITECTURE.md)、[使用入口](market_research/USAGE.md) |
 | Statistics | 独立 Python 数值 API：Quantile、IntervalCount、Mean、EmpiricalPercentile。 | [公共 API 与示例](market_statistics/README.md)、[方法契约](market_statistics/ARCHITECTURE.md) |
 | Backtesting | Position-Driven Core 与 Futures Roll Long；M1/Q1 策略、PnL / Benchmark / Drawdown、Trades / Rolls 与 Evidence。 | [Core 与 case](market_backtesting/ARCHITECTURE.md)、[交付状态与限制](market_backtesting/cases/futures_roll_long/ROADMAP.md) |
-| Delivery | FastAPI、OpenAPI / generated TypeScript、账户审批与认证；Web 页面；独立 SQLite Run / Publication Store；共享 Presentation 的静态只读组合。 | [HTTP 目录](ui_http/HTTP_PRODUCTS.md)、[Web 导航](ui_web/workspace.md)、[存储验收范围](market_research/STORAGE_RECONCILIATION.md#current-storage-status) |
+| Delivery | FastAPI、OpenAPI / generated TypeScript、账户审批与认证；Web 页面；独立 SQLite Run / Publication Store；共享 Presentation 的静态只读组合。 | [HTTP 目录](ui_http/HTTP_PRODUCTS.md)、[Web 导航](ui_web/workspace.md)、[存储验收范围](market_research/PUBLICATION_STORAGE.md#platform-verification-boundary) |
 
-以上区分代码中已实现的能力与各记录中的验收范围；本次文档审阅未重新执行这些业务验收。[Phase 1 审计记录](docs/recruiter-readiness-phase-1.md) 提供源码、代表性测试与未验证事项的对应关系。
+能力表描述源码中已实现的范围；测试存在或历史验收通过，不代表当前环境已验证。
 
 ```mermaid
 flowchart LR
@@ -91,7 +91,7 @@ npm test -- src/app/routes.test.tsx
 - 静态 Demo 使用固定历史窗口，不能查询实时行情或执行在线研究；完整本地 Web 的显式执行可访问 Provider 并写入缓存。
 - Research Publication 的 HTTP 验证有 4 MiB 预算；较大 Source 的本地 Reader 成功不代表 HTTP 详细读取可用。
 - `market_modeling` 仅预留，尚无模型实现；当前运行方式是单进程和本地 SQLite。
-- Price Segmentation 尚无 HTTP/Web consumer；Conditional Research 未实现。真实数据验收只适用于记录的标的、窗口和环境；存储的原生非 WSL Linux 验收仍未运行，详见 [存储风险与未验证项](market_research/STORAGE_RECONCILIATION.md#remaining-known-risks-and-unverified-claims)。
+- Price Segmentation 尚无 HTTP/Web consumer；Conditional Research 未实现。真实数据验收只适用于记录的标的、窗口和环境；存储的原生非 WSL Linux 验收仍未运行，详见 [存储风险与未验证项](market_research/PUBLICATION_STORAGE.md#platform-verification-boundary)。
 - 本项目仅用于个人软件工程与金融研究方法展示。历史数据及研究结果不保证准确性、完整性或时效性，不构成投资建议。展示的回测结果不代表真实交易表现。
 
 This project is a personal software engineering and financial research portfolio. Historical data and research results are provided for demonstration only, without warranties of accuracy, completeness or timeliness. Nothing constitutes investment advice. Backtested performance does not represent live trading results.

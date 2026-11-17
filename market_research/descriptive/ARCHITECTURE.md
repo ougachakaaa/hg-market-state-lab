@@ -41,9 +41,9 @@ Descriptive association does not establish causality, predictive validity or a t
 
 The [Price Segmentation case](cases/price_segmentation/ARCHITECTURE.md) independently
 observes one complete price series and does not require horizon, scalar ObservationSet,
-conversion or Statistics. Its independent Python observation API is implemented and
-[real-market validation](ACCEPTANCE.md#real-market-validation-evidence) is recorded separately;
-the existing scalar runtime remains unchanged.
+conversion or Statistics. Its independent Python observation API is implemented;
+current verification enters [the case](cases/price_segmentation/ARCHITECTURE.md).
+The existing scalar runtime remains unchanged.
 
 The independent [Futures Basis case](cases/futures_basis/ARCHITECTURE.md) defines
 Contract-day and Slot-day observations with no Horizon. It uses its own population,

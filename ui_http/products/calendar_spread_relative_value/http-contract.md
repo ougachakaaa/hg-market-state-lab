@@ -6,12 +6,9 @@ Specializes [HTTP ownership](../../ARCHITECTURE.md). Query/result, sample policy
 failure classification belong to [Research](../../../market_research/descriptive/cases/futures_calendar_spread/APPLICATION.md),
 with numerical semantics under [Relative value](../../../market_research/descriptive/cases/futures_calendar_spread/RELATIVE_VALUE.md).
 
-## Issue #13 delivery status
-
-Issue #13 WP2 delivers the execution-semantic change below. The original WP5
-read-only POST acceptance remains historical;
-[reconciliation](../../../market_research/descriptive/cases/futures_calendar_spread/AUTO_PREPARATION_RECONCILIATION.md)
-records delivery and operational limits without rewriting historical acceptance.
+Explicit execution and read-only permissions below implement Issue #13.
+Current preparation behavior and operational limits belong to the
+[Research application](../../../market_research/descriptive/cases/futures_calendar_spread/APPLICATION.md).
 
 ## Operation and body
 

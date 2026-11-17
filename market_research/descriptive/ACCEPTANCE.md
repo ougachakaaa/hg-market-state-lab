@@ -1,33 +1,10 @@
-# Research implementation status and validation evidence
+# Descriptive Research verification scope
 
-This is a non-authority status and evidence record for [Descriptive Research](ARCHITECTURE.md).
-Contracts, formulas and workflow semantics remain with their owning documents; ordinary
-implementation work starts from the Descriptive entry and the relevant contract, not this
-file. Previous stage-by-stage reports and commit sequences remain in Git history. Read this
-document for current capability status, release boundaries or the recorded real-market
-validation evidence.
-
-## Current status
-
-This table covers the scalar Trailing Return path and independent Price Segmentation,
-plus their explicit Publication integration. Its deferred execution/report/frontend scope
-does not describe the separately delivered Futures Basis or Calendar Spread cases;
-their current entries are in [Research architecture](../ARCHITECTURE.md#paradigm-status-and-extensibility).
-Recorded validation outcomes apply only to their stated requests, environments and stages.
-
-| Area | Status | Canonical entry |
-| --- | --- | --- |
-| `trailing_cumulative_return_v1` observation | Implemented; deterministic contract tests; bounded isolated real-market E2E verified | [Observation](OBSERVATION.md), [case](cases/trailing_return/ARCHITECTURE.md) |
-| Sample converter | Implemented; deterministic contract tests | [Sample conversion](SAMPLE_CONVERSION.md) |
-| Result association | Implemented; deterministic contract tests; observable linkage only, no execution-origin attestation | [Result association](RESULT_ASSOCIATION.md) |
-| Single Job executor | Implemented for Index Trailing Return; deterministic contract tests | [Single Job](JOB_EXECUTION.md) |
-| ResearchPlan / Batch executor | Implemented; deterministic contract tests | [Batch](BATCH_EXECUTION.md) |
-| Capability publication / HTTP entry | One admitted capability; deterministic HTTP acceptance passed; live HTTP not run | [Capability](RESEARCH_CAPABILITY.md), [HTTP contract](../../ui_http/products/research/http-contract.md) |
-| Price Segmentation V1 | Implemented as an independent Python observation; isolated real-market E2E verified; not admitted to capability publication, preview, Statistics, HTTP or Workbench | [Price Segmentation](cases/price_segmentation/ARCHITECTURE.md) |
-| Publication storage / reader | Implemented; Research Explorer consumes the read-only HTTP delivery | [Publication](../PUBLICATION.md), [storage](../PUBLICATION_STORAGE.md) |
-| Individual-stock, futures and other-series cases | Not declared; stock daily public service, adjusted-return policy, futures contract selection and roll semantics remain gaps | [Observation](OBSERVATION.md), [upstream policy](../UPSTREAM.md) |
-| Persistence / replay / result cache / CLI / report | Deferred or not implemented | [Deferred scope](ARCHITECTURE.md#deferred-scope) |
-| Statistics NumericSample / Quantile / IntervalCount | Independent public Python API implemented; numerical semantics remain Statistics-owned | [Statistics contract](../../market_statistics/CONTRACT.md) |
+Current cross-stage verification specifications for the scalar Trailing Return path.
+Canonical behavior remains in the linked [Descriptive contracts](ARCHITECTURE.md);
+select directly changed cases under the [root verification policy](../../AGENTS.md#verification-policy-user-decision-2026-11-14).
+Futures Basis, Calendar Spread and Price Segmentation have independent case contracts
+and tests. Test existence is not a claim of a current passing run.
 
 ## Deterministic acceptance scenarios
 
@@ -60,69 +37,3 @@ remain with the owning contracts and tests.
 | Plan / Batch | Whole-plan preflight before I/O, exact Cartesian order/identity, required analysis order, no analysis dimension expansion, continue and stop accounting per execution contract. |
 | Statistics | Existing owner fixtures for types, empty/non-finite sample, duplicates, immutability, unit, quantile estimator/extreme arithmetic and interval endpoints/count conservation remain required. |
 | Live data | Explicit metadata-verified CSI1000 code, dates/H and both method parameters; independently check input pairing/returns, sample/binding, analyses/associations and retained fingerprint through authorized public services. No experiments on real user caches. |
-
-## Real-market validation evidence
-
-Both runs used fresh isolated Dataset storage. Default Dataset caches were not opened,
-migrated or repaired. Each result is bounded to its stated scope and does not establish
-provider freshness or coverage outside it.
-
-### Index Trailing Return
-
-- 2026-10-27, PASS: `000852.SH` (CSI1000) confirmed through public metadata, H=2,
-  inclusive anchor window 2024-01-10..2024-01-16, explicit `metric_parameters={}`.
-- Five Eligible observations, zero Unavailable/Excluded; overall Index fact coverage 7/7,
-  warm-up 2/2, sample 5/5; observation coverage 5/5.
-- Quantiles `0.1 / 0.5 / 0.9` = `-0.008045239512030821 / -0.005683318588033837 / 0.010959089549401701`.
-- Interval counts for `[-0.2, 0.0, 0.2]` = `3` and `2`; frequencies 0.6 and 0.4; count conservation 5.
-- Input profile `trailing_return_inputs_v2`; fingerprint
-  `5bbb52782df680da17036420bdee777b9c3febaf19cd08e8f09c383b8ecf2bfc`.
-- Direct Single Job and one-Job Batch both succeeded with two successful analyses.
-- Harness: `poetry run python market_research/tests/live_e2e_acceptance.py --live --output <output.json>`.
-
-### Price Segmentation
-
-- 2026-10-31, PASS: explicit `000852.SH` scopes in isolated storage; every calendar date,
-  open session, public close, PIP point, segment endpoint and fingerprint was checked by an
-  independent oracle.
-- Short-scope important points `(index, date, close)` are `(0, 2024-01-08, 5543.5745)`,
-  `(2, 2024-01-10, 5512.0686)`, `(3, 2024-01-11, 5611.1149)` and
-  `(6, 2024-01-16, 5539.4741)`.
-
-| Scope (inclusive) | epsilon | Calendar | Sessions | Points | Segments | Maximum log error | Fingerprint |
-| --- | ---: | --- | --- | ---: | ---: | ---: | --- |
-| 2024-01-08–2024-01-16 | 0.005 | 9/9 natural days | 7/7 sessions | 4 | 3 | 0.004603231652222206 | `64b2b9cc9ab212442a248cedd1188c3ba0b372f2404674ba7b7baf09bbc49103` |
-| 2024-01-08–2024-02-29 | 0.01 | 53/53 natural days | 33/33 sessions | 21 | 20 | 0.0087081168442662 | `bfc446b97e0422c276920605049651cacb311cf523ec2aa39916b53b3c195095` |
-
-| Start | End | Session intervals | Signed amplitude | Direction | Boundary |
-| --- | --- | ---: | ---: | --- | --- |
-| 2024-01-08 | 2024-01-10 | 2 | -0.005683318588033837 | down | start |
-| 2024-01-10 | 2024-01-11 | 1 | 0.017968988992626 | up | neither |
-| 2024-01-11 | 2024-01-16 | 3 | -0.01276765870540264 | down | end |
-
-- Harness: `poetry run python market_research/tests/segmentation_live_e2e.py --live --long --output <output.json>`.
-
-## Operational limits
-
-- Live HTTP acceptance was not performed. Deterministic HTTP acceptance does not establish
-  live HTTP readiness.
-- The historical default Trade Calendar cache remained incompatible; default-cache recovery
-  was not performed. Verified runs used fresh isolated storage.
-- The scalar execution path has no durable execution/replay/result cache, retry/queue,
-  scheduler, CLI or dedicated execution/report frontend. Explicit opt-in Publication
-  and its Explorer reader are separate, as are the case-specific Futures Basis online
-  application/report and Calendar Spread consumers. Conditional remains unimplemented.
-- Upstream availability, credentials, Calendar completeness and partial Index facts remain
-  operational dependencies.
-- Price Segmentation remains a Python observation only; it is not admitted to capability
-  publication, preview, Statistics, HTTP or Workbench.
-- Validation is bounded to the stated scopes and does not establish financial swing quality,
-  provider freshness or general market readiness.
-
-### Native Windows Publication limitation
-
-Historical POSIX adapter limitation: retired by storage WP4/WP5. Publication now uses
-portable SQLite and explicit portable source capture. Current implementation and actual
-platform verification are owned by [Publication storage](../PUBLICATION_STORAGE.md) and
-[Storage reconciliation](../STORAGE_RECONCILIATION.md). Earlier acceptance evidence does
-not establish acceptance for the replacement backend or unexecuted platforms.

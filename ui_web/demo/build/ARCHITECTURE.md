@@ -1,8 +1,8 @@
 # Demo collection and build authority
 
 Specializes [Demo authority](../ARCHITECTURE.md) and consumes [Bundle contract](../BUNDLES.md).
-Implementation is assigned in [handoff](HANDOFF.md). HTTP evidence is in
-[feasibility](HTTP_FEASIBILITY.md).
+Formal acquisition routes are owned by the [HTTP catalog](../../../ui_http/HTTP_PRODUCTS.md);
+current Bundle membership and capture bindings are declared in the Registry and Presets.
 
 ## Explicit HTTP collection
 

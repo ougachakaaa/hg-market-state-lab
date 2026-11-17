@@ -70,8 +70,8 @@ W2 `daily_return_t` is the unchanged Core daily return; W2 `gross_return_t` is t
 unchanged Core cumulative return. Both use the fixed `N0` supplied as InitialCapital,
 as defined solely by [Core Accounting](../../core/ACCOUNTING.md). They are simple,
 gross and not reinvested. The Analyzer must not fill a missing Core daily-return
-output by calculating it itself. D1 closure evidence is recorded in
-[reconciliation](RECONCILIATION.md#implementation-drift-register).
+output by calculating it itself. Current projections are covered by
+[Performance tests](../../tests/test_futures_roll_performance.py).
 
 Final `gross_return` is the final Core cumulative return. Final `benchmark_return` is
 `benchmark_cumulative_return_final`. Final `excess_return` is:

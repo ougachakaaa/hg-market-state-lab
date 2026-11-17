@@ -198,8 +198,7 @@ fields into Research and does not itself define routes or HTTP DTOs.
 
 Approved in storage WP0 (2026-11-12); implemented by storage WP4/WP5. This section
 owns Publication's active persistence only; [Publication](PUBLICATION.md) remains the
-business authority. [Storage reconciliation](STORAGE_RECONCILIATION.md) owns drift and
-work-package readiness, independently of historical Publication/Workbench WP numbering.
+business authority. Completed migration and work-package records remain in Git history.
 
 ### Independent database and breaking cutover
 
@@ -292,3 +291,13 @@ Keep HTTP routes, DTOs, error mapping, allowlisted safe projections, budgets and
 Explorer behavior unchanged. Never leak source material, owner/credentials, SQL or paths
 through HTTP. Storage failure remains isolated to this product; import/backend startup
 must not require POSIX primitives. WP0 claims no native Windows runtime acceptance.
+
+## Platform verification boundary
+
+The SQLite cutover is implemented. Recorded storage acceptance covered native
+Windows, WSL2 Ubuntu and Linux Docker; native Linux outside WSL remains NOT_VERIFIED.
+Privileged Windows file/directory-symlink branches and WSL2/Docker browser end-to-end
+were not fully verified. Storage checks do not establish browser, Source or production
+readiness. Current trust limitations remain binding: local operator-controlled filesystems,
+one backend process, no hostile concurrent writer, no shared/network filesystem or
+multi-worker guarantee, and no perfect power-loss durability claim.

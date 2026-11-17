@@ -4,9 +4,7 @@
 
 [Structure](STRUCTURE.md) owns canonical placement. Current Demo tasks enter
 [Demo authority](demo/ARCHITECTURE.md), then its Bundle/build contracts as needed.
-[Structural migration](STRUCTURAL_MIGRATION.md) records the superseded transition and
-DDB-00 retirement context. Historical inventories are consulted only for a task that
-needs their migration evidence.
+Completed structural migrations and their verification remain in Git history.
 
 ## 适用范围
 

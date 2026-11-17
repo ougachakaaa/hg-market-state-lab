@@ -296,10 +296,6 @@ competing backend schema.
 - Deployment, HTTPS termination, proxy trust and public exposure remain outside
   this contract and follow the existing Auth deployment boundary.
 
-## Runtime acceptance
-
-WP8-A synthetic runtime evidence and handoff are recorded in [HTTP acceptance](ACCEPTANCE.md).
-
 ## Input preflight delivery
 
 `POST /research/futures-basis/preflight` consumes the same strict three-field body,

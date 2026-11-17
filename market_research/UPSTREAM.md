@@ -142,6 +142,5 @@ selects only public CFFEX Calendar and Futures Daily services. Existing Python
 queries and Daily GET remain read-only; explicit execution entrypoints conditionally
 Ensure legal incomplete inputs, then require complete final Exports. The case does
 not inherit Basis SSE/Index preparation or a missing-tolerant Futures policy. Exact
-requests, evidence and failure behavior remain in that narrow contract. Issue #13
-[reconciliation](descriptive/cases/futures_calendar_spread/AUTO_PREPARATION_RECONCILIATION.md)
-tracks Python delivery and the remaining integration and operational acceptance.
+requests, evidence and failure behavior remain in that narrow contract. Current
+execution entrypoints and operational limits belong to [Application](descriptive/cases/futures_calendar_spread/APPLICATION.md).

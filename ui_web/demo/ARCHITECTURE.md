@@ -5,7 +5,7 @@ This is the canonical Demo entry. DDB-01 encodes the design. DDB-02 supplies the
 Registry, explicit initial Presets and executable offline Bundle admission. DDB-03 supplies
 the HTTP Collector and transaction recovery. DDB-04-R1 delivered real captures. DDB-04 implements the sole runtime and offline build.
 DDB-06 extends DDB-05 verified artifacts with release requirements and dedicated-branch
-publication. Actual release evidence enters the implementation handoff below.
+publication. Actual releases require their own receipts and online acceptance.
 
 ## Purpose and ownership
 
@@ -50,8 +50,8 @@ Build Preflight is an offline admission step in the build process.
 
 - [Bundle contract](BUNDLES.md) owns identities, Registry, Presets, Manifest and exact bytes.
 - [Build authority](build/ARCHITECTURE.md) owns collection, transactions and build admission.
-- [HTTP feasibility](build/HTTP_FEASIBILITY.md) records DDB-01 source evidence and limitations.
-- [Implementation handoff](build/HANDOFF.md) defines DDB-02 through DDB-05 boundaries.
+- [HTTP catalog](../../ui_http/HTTP_PRODUCTS.md) owns the formal capture operations.
+- [Release Runbook](release/RUNBOOK.md) owns publication and recovery.
 
 Publication follows the root personal-study policy. Preserve source disclosure,
 disclaimers and safety checks. Release contracts live in
@@ -70,6 +70,5 @@ Release content requirements enter [Release Requirements](release/ARCHITECTURE.m
 
 [Calendar Spread integration](CALENDAR_SPREAD.md) adds two independent formal HTTP
 Result captures and consumes the WP6 public Presentations. The sole active dataset
-has nine Bundles; the runtime has ten routes. Actual local capture/build/browser
-and release-check evidence is recorded in [WP7 acceptance](CALENDAR_SPREAD_ACCEPTANCE.md).
-No publication is implied or authorized by this integration.
+has nine Bundles; the runtime has ten routes. Capture, identity and offline consumption
+requirements remain in that integration contract. No publication is implied or authorized.

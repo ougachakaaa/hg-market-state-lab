@@ -43,15 +43,12 @@ Contract-day/Slot-day observations under [Inputs](INPUTS.md) and [Observation](O
 | Exact public bindings, dual calendars, completeness and reproducibility (SD06) | [Inputs](INPUTS.md) |
 | Observation grain, validity, accounting and continuity (SD05, SD07–SD08) | [Observation](OBSERVATION.md) |
 | Populations, distributions, paired comparisons, runs and numerical ownership (SD09) | [Statistics scope](STATISTICS.md) |
-| Python statistics usage and acceptance | [Usage](USAGE.md), [WP4 acceptance](WP4_ACCEPTANCE.md) |
+| Python statistics usage | [Usage](USAGE.md) |
 | Business projection and offline report evidence | [Delivery](DELIVERY.md) |
 | Read-only online input assessment and Web admission | [Preflight](PREFLIGHT.md) |
 | Online application, standard profile, run lifecycle, result store and reader boundary | [Online application](ONLINE_APPLICATION.md) |
-| WP3 runtime/real-market evidence and reproduction | [WP3 acceptance](WP3_ACCEPTANCE.md) |
 | Offline evidence encoding and replay | [Evidence](EVIDENCE.md) |
-| Offline report acceptance and reproduction | [WP5 acceptance](WP5_ACCEPTANCE.md) |
-| WSL online integration, real IM evidence and unverified platform/deployment boundaries | [WP9 acceptance](WP9_ACCEPTANCE.md) |
-| Work packages, readiness, reconciliation and known gaps | [Roadmap](ROADMAP.md) |
+| Current delivery, remaining verification and limitations | [Roadmap](ROADMAP.md) |
 
 ## Request and compatibility
 
@@ -72,18 +69,12 @@ its converter, execution, association and capability dispatch retain their curre
 scope. This case does not fabricate `horizon=1`, repurpose a scalar carrier, or
 claim admission to those APIs. Case-owned adaptation consumes only the root
 [Statistics public API](../../../../market_statistics/CONTRACT.md).
-Existing Snapshot/Workbench semantics stay frozen; see [reconciliation](ROADMAP.md#reconciliation).
+Existing Snapshot/Workbench semantics stay frozen; see [case limitations](ROADMAP.md#known-gaps-and-defer).
 
-Status: WP0 is authority-only; WP1–WP3 have independent runtime acceptance.
-WP3 also passed bounded real IM acceptance; evidence and reproduction instructions
-are in [WP3 acceptance](WP3_ACCEPTANCE.md). WP4 statistics have independent runtime and real IM acceptance; WP5 report
-acceptance is recorded separately in [WP5 acceptance](WP5_ACCEPTANCE.md). WP6 adds
-the online application, HTTP and Web authority in
-[Online application](ONLINE_APPLICATION.md); WP7 Python application/store and
-WP8-A HTTP delivery and WP8-B Web integration are implemented under synthetic
-acceptance; WP9 WSL/real-market integrated acceptance and outstanding platform
-boundaries are recorded in [WP9 acceptance](WP9_ACCEPTANCE.md). The offline path and its scientific contracts remain
-unchanged. No new CLI,
+Status: financial/observation/statistics, offline evidence/report and online
+Python/HTTP/Web paths are implemented. Current scope and unverified platforms
+enter [Roadmap](ROADMAP.md); reproducibility enters [Evidence](EVIDENCE.md).
+The offline scientific contracts remain unchanged. No new CLI,
 Research database, publication lifecycle or Modeling import permission is introduced;
 the online run store is case-specific disposable runtime state, not Publication or a
 generic Research execution identity.

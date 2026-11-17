@@ -5,8 +5,7 @@ preparation/construction APIs and WP4 independent queries are implemented throug
 `market_research.descriptive.cases.futures_calendar_spread`. They are Python
 semantic boundaries; HTTP delivery is owned separately. Issue #13's explicit
 execution APIs were delivered in Issue #13 WP1; HTTP/Web integration was delivered
-in Issue #13 WP2. Operational readiness and retained limits enter
-[reconciliation](AUTO_PREPARATION_RECONCILIATION.md). The immutable
+in Issue #13 WP2. Operational verification limits are recorded below. The immutable
 business schema and association contract are owned by [Query Results](QUERY_RESULTS.md).
 
 ## Shared capability
@@ -174,3 +173,13 @@ POST delegates to execute_daily_spreads. Historical POST keeps its path and HTTP
 operationId but explicitly changes to execute_historical_relative_value. This is
 a documented execution-semantic change, not permission for arbitrary POST reads
 to acquire facts. Preflight/Readiness and static Demo remain read-only.
+
+## Operational verification limits
+
+Explicit preparation remains synchronous. Bounded local WSL/browser cold/hot execution
+was accepted; other deployment proxy deadlines, maximum legal 3660-date requests,
+prolonged load and cold-cache concurrent Source contention remain NOT_VERIFIED.
+Threadpool delegation is not a latency SLA. Client cancellation stops waiting, not
+necessarily Source work or SQLite writes; shared capacity remains held through worker
+completion. Collector's per-request timeout is independently configurable under the
+[build contract](../../../../ui_web/demo/build/ARCHITECTURE.md).

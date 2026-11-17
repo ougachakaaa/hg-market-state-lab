@@ -109,17 +109,16 @@ API, hook and page tests are feature-local. Real Chromium acceptance uses Vite,
 FastAPI, actual Auth/worker/temporary Store and synthetic public services. The feature-local
 Shared Presentation and Static Controller also have a test-only static build/browser harness
 that validates the committed producer regression Result without Production transport.
-Actual results and remaining gates are recorded in [acceptance](ACCEPTANCE.md) and the
-[D2-F acceptance](testing/ACCEPTANCE.md).
-Full-window real-market and Windows Chrome evidence is owned by the independent
-[WP8 acceptance record](../../../../market_backtesting/cases/futures_roll_long/WP8_ACCEPTANCE.md).
+Manual real-market/reproduction commands and truthful exit semantics belong to
+[case Evidence](../../../../market_backtesting/cases/futures_roll_long/EVIDENCE.md#explicit-integrated-verification).
+Dated execution results remain in Git history.
 
 ## Runtime scope
 
 Query inputs, protected HTTP reads, preflight, retries and Run lifecycle in this feature
 authority describe the Production controller. `page/BacktestingPage.tsx` is that Production
 composition root; `page/BacktestingPresentation.tsx` is the single formal page Presentation
-shared with [Static Demo Runtime](../../demo/ARCHITECTURE.md). The transport-free public
+shared with [Static Demo Runtime](../../../demo/ARCHITECTURE.md). The transport-free public
 entry is `presentation.ts`; `api/validateResult.ts` owns pure generated-contract validation;
 `static/useStaticBacktesting.ts` validates a fixed request plus complete Embedded Backtest
 Result once. Static composition never mounts the production controller or fabricates its

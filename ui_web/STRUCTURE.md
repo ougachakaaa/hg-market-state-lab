@@ -2,8 +2,7 @@
 
 Specializes [module architecture](ARCHITECTURE.md) and preserves [Presentation boundaries](presentation-architecture.md).
 This is the canonical directory contract. [Demo authority](demo/ARCHITECTURE.md) owns
-current Demo boundaries and navigation; the [migration record](STRUCTURAL_MIGRATION.md)
-retains historical transition context. The placement below is implemented.
+current Demo boundaries and navigation. The placement below is implemented.
 Current Bundle/page identities and delivery evidence enter the Demo authority,
 not a parallel inventory or release verdict here.
 
@@ -70,7 +69,7 @@ inspection, upload/online verification and release support belong to `deploy/`; 
 remain under repository `.github/workflows/`. Local Online deployment remains supported independently.
 
 The user selected a hard cutover: remove V1 recovery and do not add previous-generation recovery or
-long-term build-history retention. DDB-00 retires identifiable old Demo build outputs; local deletion status is in acceptance.
+long-term build-history retention. Old ignored build outputs are not current inputs.
 This does not authorize deleting formal committed evidence, source, raw/external data, Dataset caches,
 credentials or another environment's data. Existing exact-artifact verification, truthful provenance,
 distribution bindings and deployment permissions remain required. No production declaration is inferred.
@@ -78,7 +77,7 @@ distribution bindings and deployment permissions remain required. No production 
 ## Maintenance
 
 Directory ownership changes here; current Demo design changes in its specialized authorities.
-The migration record retains historical transition context. Runtime capability,
+Runtime capability,
 Examples, authenticity and release semantics stay with their narrow existing owners. Move those
 authorities and repair inbound/outbound navigation with their implementation, without parallel owners.
 Only one formal Demo generation is retained. Superseded Demo documents retire after extracting
@@ -88,6 +87,5 @@ Independent business results, research evidence and data are preserved. DDB-00 r
 ## Build outputs
 
 Online uses `.build/online`; independent static suites use `.build/tests/<suite>`.
-Demo output belongs under `.build/demo`. Old ignored outputs are not build inputs;
-historical cleanup observations belong to [DDB-00 acceptance](DDB_00_ACCEPTANCE.md),
-not a current build or publication verdict.
+Demo output belongs under `.build/demo`. Old ignored outputs are not build inputs.
+Historical cleanup observations remain in Git history and are not a current publication verdict.

@@ -1,7 +1,6 @@
 # Calendar Spread Historical Relative Value Presentation authority
 
-Status: WP6 implemented and READY TO CLOSE; targeted evidence and unverified
-real-data/deployment limits are recorded in [Acceptance](ACCEPTANCE.md).
+Status: implemented. Current deployment/live-source readiness requires separate verification.
 Inherits [Web boundaries](../../../ARCHITECTURE.md) and
 [Presentation architecture](../../../presentation-architecture.md).
 Financial/population meaning belongs to [Research](../../../../market_research/descriptive/cases/futures_calendar_spread/RELATIVE_VALUE.md);
@@ -9,10 +8,8 @@ transport belongs to [Research HTTP](../../../../ui_http/products/calendar_sprea
 
 ## Issue #13 execution target
 
-Original WP6 delivery/acceptance remains historical evidence. The Production
-execution changes below are delivered by Issue #13 WP2 under the frozen WP0 Authority;
-[reconciliation](../../../../market_research/descriptive/cases/futures_calendar_spread/AUTO_PREPARATION_RECONCILIATION.md)
-tracks delivery and retained operational limits separately. Existing static Bundles stay unchanged.
+Production uses explicit execution under the [Research application](../../../../market_research/descriptive/cases/futures_calendar_spread/APPLICATION.md),
+which owns preparation and operational limits. Static controllers consume admitted Bundles only.
 
 ## Surface and state
 

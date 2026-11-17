@@ -5,11 +5,9 @@ Status: WP5 implemented; acceptance is recorded in the
 Specializes [HTTP ownership](../../ARCHITECTURE.md); business semantics and failures
 belong to [the Research application](../../../market_research/descriptive/cases/futures_calendar_spread/APPLICATION.md).
 
-## Issue #13 delivery status
-
-The existing GET remains read-only. Issue #13 WP2 delivers the new POST and
-additive error reason_code below under the frozen WP0 contract. [Issue reconciliation](../../../market_research/descriptive/cases/futures_calendar_spread/AUTO_PREPARATION_RECONCILIATION.md)
-tracks implementation separately from the original WP5 acceptance.
+Explicit execution and read-only permissions below implement Issue #13.
+Current preparation behavior and operational limits belong to the
+[Research application](../../../market_research/descriptive/cases/futures_calendar_spread/APPLICATION.md).
 
 ## Operation and request
 

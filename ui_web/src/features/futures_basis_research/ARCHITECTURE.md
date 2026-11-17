@@ -206,7 +206,6 @@ is independent of the current terminal report, which survives rejected submissio
 The shared reader accepts explicit online/offline disclosure mode; only the offline
 shell supplies standalone theme, font and adjacent-file evidence instructions.
 
-Execution evidence and reproduction: [WP8-B acceptance](ACCEPTANCE.md).
 
 ## Historical presentation controls
 
@@ -229,7 +228,6 @@ labels use supplied IntervalCount boundaries and inclusion flags; rounded labels
 replace category identity or order. Raw Views, reader projection, evidence, exports and
 fingerprints remain unchanged.
 
-Verification and reproduction: [Historical presentation acceptance](HISTORICAL_PRESENTATION_ACCEPTANCE.md).
 
 ## Read-only input preflight
 
@@ -259,7 +257,7 @@ phase and failure fields. User-facing failure reasons and manual actions stay vi
 
 ## Runtime scope
 
-Query inputs, protected HTTP reads, preflight, retries and Run lifecycle in this feature authority describe the Production controller. The same feature-owned Presentation also serves [Static Demo Runtime](../../demo/ARCHITECTURE.md) using validated embedded Examples (retired; Git history), fixed visible request parameters and local presentation state. Static composition never mounts the production controller or fabricates its lifecycle; it preserves this feature's result/visualization semantics and applicable local Copy/Export. Shared presentation remains here, not in parallel Demo pages.
+Query inputs, protected HTTP reads, preflight, retries and Run lifecycle in this feature authority describe the Production controller. The same feature-owned Presentation also serves [Static Demo Runtime](../../../demo/ARCHITECTURE.md) using validated embedded Examples (retired; Git history), fixed visible request parameters and local presentation state. Static composition never mounts the production controller or fabricates its lifecycle; it preserves this feature's result/visualization semantics and applicable local Copy/Export. Shared presentation remains here, not in parallel Demo pages.
 
 ## Shared page presentation and static composition (D2-E)
 

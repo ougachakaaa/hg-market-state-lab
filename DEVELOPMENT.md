@@ -6,7 +6,7 @@ W2 Online exclusively uses SQLite. `LAB_BACKTESTING_RUN_ROOT` remains an absolut
 directory containing `runs.sqlite3`; the default remains the ignored Backtesting
 runtime directory. Old Run directories are ignored without migration or deletion.
 Native Windows and local Linux/WSL use the same single-process implementation;
-actual platform verification is recorded in [Storage reconciliation](market_research/STORAGE_RECONCILIATION.md).
+platform verification limits are recorded in [W2 storage](market_backtesting/cases/futures_roll_long/ONLINE_STORAGE.md#platform-verification-boundary).
 W1 Online exclusively uses its independent `<LAB_FUTURES_BASIS_RUN_ROOT>/runs.sqlite3`.
 Publication exclusively uses `<LAB_RESEARCH_PUBLICATION_ROOT>/publications.sqlite3`;
 configure the directory root explicitly. Legacy files are ignored and never deleted.
@@ -111,7 +111,7 @@ bash scripts/market-lab.sh stop    # 从另一终端停止两个服务
 
 `start` 分别检查 Python 环境与 frontend 依赖，只修复缺失或与 `package-lock.json` 不一致的部分；两者都完整时不重复执行 Poetry 安装或 `npm ci`。frontend 修复前会检测仍占用 `ui_web/node_modules` 的仓库进程；`npm ci` 因 Windows 文件占用失败时，错误会报告被阻塞的路径与可能的进程，并将完整安装输出保存到 `ui_http/data/one-click/`。手工 bootstrap 仍可运行 `.\.codex\scripts\setup.ps1`；只修复一侧时可用 `-Dependencies python` 或 `-Dependencies frontend`。
 
-Publication uses independent portable SQLite on native Windows. Configure the absolute directory `LAB_RESEARCH_PUBLICATION_ROOT` explicitly. Legacy Publication files are ignored without migration or deletion. Only operator-controlled local filesystems and the existing single-process deployment are supported. Actual platform verification is recorded in [Storage reconciliation](market_research/STORAGE_RECONCILIATION.md).
+Publication uses independent portable SQLite on native Windows. Configure the absolute directory `LAB_RESEARCH_PUBLICATION_ROOT` explicitly. Legacy Publication files are ignored without migration or deletion. Only operator-controlled local filesystems and the existing single-process deployment are supported. Platform verification limits are recorded in [Publication storage platform boundary](market_research/PUBLICATION_STORAGE.md#platform-verification-boundary).
 
 首次使用时在网页注册，然后在仓库根目录的另一个终端运行 `poetry run lab auth pending`，取得用户 ID 后运行 `poetry run lab auth approve <user-id>`，再返回网页登录。若在 process environment 或根 `.env` 设置了 `LAB_AUTH_DB_PATH`，审批终端也必须使用相同的值。
 
@@ -198,7 +198,7 @@ poetry run python -c 'import secrets; print(secrets.token_urlsafe(32))'
 
 遇到 incompatible generation 或损坏缓存时先停止使用该 Dataset 的 writers，保留原文件供诊断；coverage/export 不负责修复。确需 rebuild 时，由 operator 显式将该 Dataset 的完整 `data/` 目录移至仓库外的备份位置，再使用原 semantic request 执行 ensure，由 service 重新创建 owned cache。不要复制旧 SQLite 内容进入新库，不自动迁移、删除原缓存或重建 sibling Dataset。Calendar 与三个行情库分别拥有生命周期；重建 Calendar 后须先恢复所需日期范围，才能为行情 operations 提供完整 prerequisite。具体 compatibility / integrity 规则见 [PERSISTENCE.md](data_lake/PERSISTENCE.md)。
 
-日常 ensure 不刷新已有 success，不保证 provider-current freshness；无需通过重建缓存例行更新历史事实。运行验收使用系统临时存储并重定向内部 Composition 路径，不把 token 或 storage path 加入 public request，不对默认用户缓存做试验。历史 V1 验收证据见 [Historical Acceptance](data_lake/RELEASE_ACCEPTANCE.md)（仅历史基线，非当前验收或操作指令）；当前验证按受影响模块的 Agent rules 执行。
+日常 ensure 不刷新已有 success，不保证 provider-current freshness；无需通过重建缓存例行更新历史事实。运行验收使用系统临时存储并重定向内部 Composition 路径，不把 token 或 storage path 加入 public request，不对默认用户缓存做试验。历史 V1 验收记录由 Git history 保留；当前验证按受影响模块的 Agent rules 执行。
 
 Research publishes an independent [Python Observation API](market_research/README.md)
 for index Trailing Return, a reusable scalar Sample Converter and independent Result
@@ -218,8 +218,8 @@ Generate Research。Run ID 写入 URL；刷新和浏览器前进/后退会重新
 它使用临时 Auth / Run Store 和 synthetic public services，经过真实 Cookie、Vite、FastAPI
 和 Plotly，不访问真实行情或默认缓存。端口和 Chromium 前提同下文 Auth/Research 测试。
 `npm run test:futures-basis-report-browser` 无参数时自动生成合成离线报告并验证；也保留
-显式传入已有报告目录的用法。运行结果见
-[WP8-B acceptance](ui_web/src/features/futures_basis_research/ACCEPTANCE.md)。
+显式传入已有报告目录的用法。交互契约见
+[Web feature](ui_web/src/features/futures_basis_research/ARCHITECTURE.md)。
 
 ### Daily Data Copy / Export browser acceptance
 
@@ -305,12 +305,13 @@ requires its own Release Gate, CI artifact verification and online browser accep
 a normal development check passing is not a release PASS. Follow the
 [Release Runbook](ui_web/demo/release/RUNBOOK.md), not a full development checklist.
 
-This policy/tooling change is verified by collection listings, one small retained
-business test and diff/config review. No full suite, build matrix or browser acceptance.
+### Explicit Research live verification
 
-Implementation check (2026-11-14): frontend listings show 73 normal files and 9
-manual-only files. Targeted Python mixed-file collection retains 80 cases and
-excludes 4 diagnostics; manual collection finds the selected diagnostic cases.
-One retained business oracle test passes. Broad Python collection also exposes an
-existing duplicate `test_core` module-name collision; no full regression was run
-and that unrelated collection issue is not a development handoff gate.
+Only on explicit request, from repository root with configured Source access, use
+`poetry run python market_research/tests/live_e2e_acceptance.py --live --output <output.json>`
+for scalar Trailing Return, or
+`poetry run python market_research/tests/segmentation_live_e2e.py --live --long --output <output.json>`
+for Price Segmentation. Both isolate Dataset storage; never experiment on user caches.
+These commands do not establish live HTTP, provider freshness or general market readiness.
+Backtesting reproduction and the Windows/WSL integrated harness enter
+[case Evidence](market_backtesting/cases/futures_roll_long/EVIDENCE.md#explicit-integrated-verification).

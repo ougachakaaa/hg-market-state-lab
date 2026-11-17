@@ -125,7 +125,7 @@ charts; measurable spacing difference across a long non-session interval; Zoom, 
 Reset in both modes; legend retention; tooltip real date; event alignment; no new request
 and no value change.
 
-Evidence lives in the owning feature acceptance record.
+Current coverage lives in owning feature tests; completed execution records remain in Git history.
 
 ## 7. Conformance inventory
 
@@ -133,7 +133,7 @@ Evidence lives in the owning feature acceptance record.
 | --- | --- | --- |
 | W1 historical basis charts (`basis_value`, `basis_ratio`, `annualized_basis_ratio`) | report `candidate_dates` | conforming; one shared control in `Report` |
 | W2 cumulative return and drawdown | `BacktestResult.daily[].trade_date` | conforming after UI-WP01; one control in `Result` |
-| Calendar Spread Historical Relative Value | ordered open `historical_days` dates plus open `current_day.trade_date` | WP6 conforming; one shared DateAxisControl; [acceptance](src/features/calendar_spread_relative_value/ACCEPTANCE.md) |
+| Calendar Spread Historical Relative Value | ordered open `historical_days` dates plus open `current_day.trade_date` | WP6 conforming; one shared DateAxisControl; [feature contract](src/features/calendar_spread_relative_value/ARCHITECTURE.md) |
 | Research Explorer published-View reader | none for arbitrary publications | exception: no authoritative session domain; keeps natural date spacing, no mode control |
 | W1 histogram charts, W2 trades/rolls tables | category / numeric / tabular | not applicable: no date x-axis |
 | MO Option Chain, MO Premium Plane | strike / numeric plane | not applicable: no date x-axis |

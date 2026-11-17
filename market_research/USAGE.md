@@ -3,8 +3,8 @@
 This is the stable usage entry, not semantic authority. Start with the Research-owned
 [capability contract](descriptive/RESEARCH_CAPABILITY.md), [Plan/Batch contract](descriptive/BATCH_EXECUTION.md)
 or [HTTP transport contract](../ui_http/products/research/http-contract.md) for authoritative rules.
-Executed verification, bounded real-market validation and live HTTP limits are recorded in
-[Acceptance](descriptive/ACCEPTANCE.md).
+Current cross-stage test scenarios are in [Descriptive verification](descriptive/ACCEPTANCE.md).
+Live verification requires explicit invocation; historical runs remain in Git history.
 
 ## What is available
 
@@ -16,7 +16,7 @@ The first is descriptive **`trailing_cumulative_return_v1`**:
 index trailing cumulative return `close(T) / close(T-H) - 1`, in `decimal_ratio`.
 `0.1` means 10%, without percentage conversion in the API. It uses full canonical
 index_code identities and the SSE trading-session calendar. `000852.SH` is CSI1000,
-verified against public metadata in [bounded real-market validation](descriptive/ACCEPTANCE.md#real-market-validation-evidence).
+the explicit CSI1000 example; verify current membership through the public service.
 It is an example, never a default. A syntactically legal code does not prove current
 upstream membership or readiness. Stock returns and Conditional Research are not supported.
 
@@ -45,8 +45,8 @@ subject, provider, parameters or policy. Bool and numeric strings are not coordi
 ## Python: Price Segmentation
 
 `price_segmentation_v1` observes one complete Index Daily Close series over an explicit
-inclusive date range. Its independent Python API is implemented and has passed the isolated
-[real-market validation](descriptive/ACCEPTANCE.md#real-market-validation-evidence).
+inclusive date range. Its independent Python API is implemented; live verification uses
+the [opt-in harness](tests/segmentation_live_e2e.py) in isolated storage.
 It is not published by the existing capability/preview API and is not integrated with
 ResearchPlan, Statistics, the scalar converter, HTTP or Workbench.
 
@@ -291,15 +291,13 @@ Completed Failed/partial batches stay 200 with classified records, not transport
 One process permits one execution; it has no distributed lock, queue or wall-clock deadline.
 Discovery remains responsive while the synchronous worker runs off the event loop.
 
-## Operational limits and current evidence
+## Operational limits
 
-The existing **isolated real-market validation is Verified** for the Python research chain. The historical
-default Trade Calendar cache was incompatible; **default-cache recovery was NOT performed**.
-It remains unchanged by this work. Do not test or repair that user cache implicitly. See
-[validation evidence](descriptive/ACCEPTANCE.md#real-market-validation-evidence), [DataLake lifecycle](../data_lake/PERSISTENCE.md)
-and [local environment](../DEVELOPMENT.md). Upstream availability, credentials, Calendar
-completeness and partial Index facts remain operational dependencies. Deterministic HTTP
-acceptance does not pass a live HTTP gate.
+Live verification uses isolated storage and explicit invocation; instructions are in
+[Development](../DEVELOPMENT.md#explicit-research-live-verification).
+Do not test or repair user caches implicitly; follow [DataLake lifecycle](../data_lake/PERSISTENCE.md).
+Upstream availability, credentials, Calendar completeness and partial Index facts
+remain operational dependencies. Deterministic tests do not establish live HTTP readiness.
 
 Explicit Research publication and its read-only Research Explorer are available as described
 in the publication authority. Execution has no automatic result cache, scheduler,

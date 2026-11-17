@@ -52,9 +52,8 @@ observed session count is a lower bound, not a complete duration. Slots share
 underlyings/dates; neither daily levels nor runs assert independent draws. This
 short window is an E2E check and supports no long-term inference.
 
-The earlier WP4 cache replay remains test infrastructure, documented in
-[WP4 acceptance](WP4_ACCEPTANCE.md). WP5 adds the independent formal offline
-delivery below; no lab command, HTTP endpoint or publication lifecycle is added.
+The formal offline delivery below uses the existing Python APIs; it introduces
+no lab command or Publication lifecycle.
 
 ## WP5 一次执行并交付报告
 
@@ -91,7 +90,7 @@ poetry run python market_research/scripts/futures_basis_report.py replay /tmp/im
 verify 校验包内摘要、版本、指纹与关联；replay 从保留的公共 inputs 重新执行既有构建与
 统计并比较结果。都不访问 Source、HTTP 或 SQLite。篡改、未知版本、缺文件或重放差异返回非零。
 实际方法失败可能不可重复；其原始失败仍保留。详细契约见 [Evidence](EVIDENCE.md)，
-真实验收及作品集路径见 [WP5 acceptance](WP5_ACCEPTANCE.md)。
+当前交付范围与未验证项见 [Roadmap](ROADMAP.md)。
 
 ## Online input preflight
 
@@ -119,4 +118,4 @@ for dependency in assessment.dependencies:
 The HTTP equivalent is `POST /research/futures-basis/preflight` with the existing
 three-field query body and authenticated Cookie/same-origin access. The assessment
 never replaces final preparation. Cache gaps do not prove upstream absence. See
-[Preflight semantics](PREFLIGHT.md) and [acceptance](PREFLIGHT_ACCEPTANCE.md).
+[Preflight semantics](PREFLIGHT.md) and [remaining verification](ROADMAP.md).

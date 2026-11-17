@@ -6,12 +6,8 @@ It does not authorize reuse of another case's store, database or execution ident
 
 ## Delivery status and cutover
 
-**Storage WP2 cutover:** the online application exclusively uses the case-owned SQLite
-adapter. The POSIX adapter is retired. Historical platform acceptance remains in
-[WP1 evidence](ACCEPTANCE_HISTORY.md#storage-wp1-execution-evidence) and
-[WP2 evidence](ACCEPTANCE_HISTORY.md#storage-wp2-execution-evidence); later platform
-acceptance enters [the current storage summary](RECONCILIATION.md#storage-wp6-final-status-2026-11-13).
-Storage WP numbering is independent of original case milestones.
+The online application exclusively uses the case-owned SQLite adapter.
+The POSIX adapter is retired; completed migration records remain in Git history.
 
 Use standard-library `sqlite3`, with no database dependency, ORM, generic store framework,
 queue, cross-module persistence abstraction or scheduling change. Existing public Python
@@ -111,3 +107,13 @@ concurrent path replacement; SQLite and SHA-256 do not protect against a hostile
 rewriting both metadata and payload. No authenticity, distributed coordination or perfect
 power-loss durability claim is made. Permissions/storage errors fail explicitly without
 leaking local details; unavailable storage does not disable unrelated products.
+
+## Platform verification boundary
+
+The SQLite cutover is implemented. Recorded storage acceptance covered native
+Windows, WSL2 Ubuntu and Linux Docker; native Linux outside WSL remains NOT_VERIFIED.
+Privileged Windows file/directory-symlink branches and WSL2/Docker browser end-to-end
+were not fully verified. Storage checks do not establish browser, Source or production
+readiness. Current trust limitations remain binding: local operator-controlled filesystems,
+one backend process, no hostile concurrent writer, no shared/network filesystem or
+multi-worker guarantee, and no perfect power-loss durability claim.

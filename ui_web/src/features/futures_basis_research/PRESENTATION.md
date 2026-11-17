@@ -107,7 +107,6 @@ percentage boundaries and two decimals for index-point boundaries. The 0.1 perce
 minimum width keeps one-decimal percentage boundaries distinguishable. Offline retains
 formal method details for every Slot and all six report sections.
 
-Execution evidence: [Task 2 distribution acceptance](DISTRIBUTION_ACCEPTANCE.md).
 
 ## UI-05 no-value dates
 
