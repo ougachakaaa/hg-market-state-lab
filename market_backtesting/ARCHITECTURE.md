@@ -3,10 +3,8 @@
 ## Portable storage navigation
 
 The case-owned [online storage contract](cases/futures_roll_long/ONLINE_STORAGE.md)
-defines SQLite persistence; [reconciliation](cases/futures_roll_long/RECONCILIATION.md#storage-wp2-execution-evidence)
-tracks storage delivery and links the storage work packages. The online application
-exclusively uses the case-owned SQLite adapter after storage WP2;
-the POSIX store is retired.
+defines current SQLite persistence and its platform/trust limits. The online application
+exclusively uses the case-owned SQLite adapter; the POSIX store is retired.
 This grants no Research store reuse and changes no public application or HTTP contract.
 
 `market_backtesting` is the repository business module for deterministic strategy
@@ -17,8 +15,8 @@ navigation. Strategy, accounting, input, result and online semantics are divided
 
 The module separates strategy-independent Core from the W2 case adapter and analysis.
 Current implementation readiness and remaining delivery gates belong to the
-[roadmap](cases/futures_roll_long/ROADMAP.md); current authority review and implementation
-differences belong to [reconciliation](cases/futures_roll_long/RECONCILIATION.md).
+[roadmap](cases/futures_roll_long/ROADMAP.md); current authority/consumer mapping
+belongs to [reconciliation](cases/futures_roll_long/RECONCILIATION.md).
 
 ## Purpose
 
@@ -111,7 +109,7 @@ framework from it.
 | Portable evidence package, encoding and pure offline reproduction | [Evidence](cases/futures_roll_long/EVIDENCE.md) |
 | Online request, run lifecycle, storage, concurrency and delivery ownership | [Online application](cases/futures_roll_long/ONLINE_APPLICATION.md) |
 | Delivery status, remaining work packages and acceptance | [Roadmap](cases/futures_roll_long/ROADMAP.md) |
-| Concern/consumer inventory, current semantic review and implementation drift | [Reconciliation](cases/futures_roll_long/RECONCILIATION.md) |
+| Current authority/consumer inventory | [Reconciliation](cases/futures_roll_long/RECONCILIATION.md) |
 
 Core imports neither W1 nor W2; only the W2 case adapter may consume authorized W1 symbols.
 The package root must not eagerly import the case, so Core can load without Research.
@@ -132,7 +130,6 @@ independent of Research Publication, Job/Batch and Workbench identities.
 
 The [roadmap](cases/futures_roll_long/ROADMAP.md) is the sole current delivery/status
 entry. Synthetic Core checks, full research capability and end-to-end W2 completion
-are separate acceptance gates. A passing implementation test does not close an
-[implementation drift](cases/futures_roll_long/RECONCILIATION.md#implementation-drift-register).
+are separate acceptance gates. Passing tests alone do not resolve a contradiction with accepted authority.
 
 Agent execution policy is in [AGENTS.md](AGENTS.md).

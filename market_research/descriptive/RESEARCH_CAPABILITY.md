@@ -30,9 +30,7 @@ Descriptors perform no service creation, export, ensure, provider probing or mar
 The descriptor publishes these explicit constraints, without defaults:
 
 - Full canonical index_code, pattern `[0-9]{6}\.(SH|SZ|CSI)`; `000852.SH` is the
-  metadata-verified CSI1000 example from
-  [bounded real-market validation](ACCEPTANCE.md#real-market-validation-evidence),
-  never a subject default. Syntax validation does not prove provider membership.
+  explicit CSI1000 example, never a subject default. Syntax validation does not prove provider membership.
 - Exact versioned metric and explicit `metric_parameters={}`. Ordered non-empty unique
   subjects, horizons and windows; ordered non-empty analyses with unique unchanged IDs.
 - Positive non-bool integer horizons in trading_sessions; date-only inclusive windows,

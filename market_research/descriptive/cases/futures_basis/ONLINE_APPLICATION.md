@@ -57,8 +57,7 @@ IntervalCountSpec(
 
 The histogram order is `basis_value`, `basis_ratio`, `annualized_basis_ratio`,
 matching the existing `ReportRequest` validation. These values exactly match the
-accepted WP4/WP5 request in [usage](USAGE.md) and
-[WP5 acceptance](WP5_ACCEPTANCE.md); no adjustment was required. The profile name
+request in [usage](USAGE.md). The profile name
 is immutable: a changed quantile, edge or unit requires a new profile version and
 new run request identity. Historical runs retain the formal `ReportRequest` in
 their stored reader projection, so a later code revision cannot silently

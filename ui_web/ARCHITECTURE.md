@@ -4,9 +4,7 @@
 
 [Structure](STRUCTURE.md) owns canonical placement. Current Demo tasks enter
 [Demo authority](demo/ARCHITECTURE.md), then its Bundle/build contracts as needed.
-[Structural migration](STRUCTURAL_MIGRATION.md) records the superseded transition and
-DDB-00 retirement context. Historical inventories are consulted only for a task that
-needs their migration evidence.
+Completed structural migrations and their verification remain in Git history.
 
 本文件定义 `ui_web` 的稳定职责、数据依赖方向与 authority 路由。仓库级定位见 [../ARCHITECTURE.md](../ARCHITECTURE.md)；具体 vertical slice 的 authority 与实现共址于 `src/features/`。
 
@@ -34,7 +32,7 @@ visualization
 上述 online 产品消费路径之外，已明确契约化的 offline report 可以渲染 producer 提供的完整通用 Visualization Views；
 例如 [R01-A offline delivery](../market_research/descriptive/cases/futures_basis/DELIVERY.md)。ui_web 只拥有渲染及静态资源封装，
 其 R01-A standalone reader 入口为 [offline reader](src/offline/futures_basis/ARCHITECTURE.md)。不直接 import Research/business internals、执行研究、获取市场数据或绕过 HTTP authentication；该离线路径不发布新的 HTTP product。
-The sole Demo reuses formal Presentation in an anonymous read-only static runtime. DDB-00 retired all V1/Public/Private data and entries; DDB-02 supplies Bundle admission and DDB-03 implements explicit HTTP collection. DDB-04 supplies the single runtime and offline build; DDB-04-R1 delivered real data. DDB-06 extends DDB-05 artifact verification with release requirements and dedicated-branch publication. Current execution evidence enters [Demo handoff](demo/build/HANDOFF.md). The current design enters [Demo authority](demo/ARCHITECTURE.md).
+The sole Demo reuses formal Presentation in an anonymous read-only static runtime. DDB-00 retired all V1/Public/Private data and entries; DDB-02 supplies Bundle admission and DDB-03 implements explicit HTTP collection. DDB-04 supplies the single runtime and offline build; DDB-04-R1 delivered real data. DDB-06 extends DDB-05 artifact verification with release requirements and dedicated-branch publication. Collection and build requirements enter [Demo build](demo/build/ARCHITECTURE.md). The current design enters [Demo authority](demo/ARCHITECTURE.md).
 
 ## 3. 数据依赖方向
 

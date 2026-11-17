@@ -6,6 +6,14 @@ Demo and Offline reader. Research owns [definitions](../../../../market_research
 and [formal statistics](../../../../market_research/descriptive/cases/futures_basis/STATISTICS.md).
 This document owns presentation only; it creates no wire or Bundle contract.
 
+## Reader labels and source disclosure
+
+History chart titles and the distribution metric selector use Chinese presentation
+aliases for the three existing metrics; producer IDs, units, Views and samples remain
+unchanged. Compact Demo shows the exact supplied source disclosure in a default-closed
+数据来源 disclosure. It is separate from the always-visible static/investment warning;
+never infer provider authenticity or replace the supplied statement with a new claim.
+
 ## Implemented: expiry explanation and summary (SD-01, SD-04)
 
 Show this directly beside the annualized history chart, outside any disclosure:
@@ -107,7 +115,6 @@ percentage boundaries and two decimals for index-point boundaries. The 0.1 perce
 minimum width keeps one-decimal percentage boundaries distinguishable. Offline retains
 formal method details for every Slot and all six report sections.
 
-Execution evidence: [Task 2 distribution acceptance](DISTRIBUTION_ACCEPTANCE.md).
 
 ## UI-05 no-value dates
 

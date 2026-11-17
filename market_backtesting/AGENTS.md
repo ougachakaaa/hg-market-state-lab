@@ -17,8 +17,8 @@
 | Portable evidence package、encoding、pure offline reproduction | [Evidence](cases/futures_roll_long/EVIDENCE.md) |
 | Online request、run lifecycle、store、concurrency、HTTP/Web ownership | [Online application](cases/futures_roll_long/ONLINE_APPLICATION.md) |
 | 当前状态、剩余 WP、acceptance、deferred | [Roadmap](cases/futures_roll_long/ROADMAP.md) |
-| 当前职责映射、语义审查、Implementation Drift | [Reconciliation](cases/futures_roll_long/RECONCILIATION.md) |
-| Actual real-market、HTTP、Windows Chrome 执行证据 | [WP8 acceptance](cases/futures_roll_long/WP8_ACCEPTANCE.md) |
+| 当前 authority / consumer 职责映射 | [Reconciliation](cases/futures_roll_long/RECONCILIATION.md) |
+| 手动真实行情验证与离线复现命令 | [Evidence](cases/futures_roll_long/EVIDENCE.md#explicit-integrated-verification) |
 
 ## 执行规则
 

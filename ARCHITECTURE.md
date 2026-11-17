@@ -8,10 +8,8 @@ own their databases, schema and lifecycle; this creates no shared Run Store or r
 persistence framework. PostgreSQL, Redis, SQLAlchemy and new database dependencies are
 not introduced by this migration. DataLake SQLite, Auth SQLite and Workbench storage are outside
 this migration. Follow module entries to case storage contracts and
-[Publication storage](market_research/PUBLICATION_STORAGE.md). The
-[storage reconciliation](market_research/STORAGE_RECONCILIATION.md) tracks independent W1/W2/Publication SQLite
-cutovers and actual platform verification;
-storage WP0 itself changed no runtime behavior.
+[Publication storage](market_research/PUBLICATION_STORAGE.md). Each store owns its
+platform verification and trust boundary; completed cutover records remain in Git history.
 
 Publication's development-time breaking cutover may abandon the old store, without
 migration or compatibility. This does not make newly committed Publication snapshots
@@ -87,7 +85,7 @@ Research result 是 evidence / finding，不是 production market-state output�
 
 ### `market_statistics`
 
-独立、业务无关的 contract-driven 数值统计 bounded module，拥有 statistical sample legality、统计方法参数、计算契约、typed results、统计失败语义及 numerical backend result validation；当前包含 Quantile、IntervalCount 与 Mean。它不理解市场标的、金融公式、Research ObservationSet / Job / Batch，也不获取市场数据。Research 仅通过其 public Python semantic boundary 消费统计能力；Statistics 不依赖 Research、DataLake、Snapshot、Modeling 或 inbound UI，该 boundary 不表示 HTTP 服务。
+独立、业务无关的 contract-driven 数值统计 bounded module，拥有 statistical sample legality、统计方法参数、计算契约、typed results、统计失败语义及 numerical backend result validation；当前方法目录由 [Statistics module authority](market_statistics/ARCHITECTURE.md) 拥有。它不理解市场标的、金融公式、Research ObservationSet / Job / Batch，也不获取市场数据。Research 仅通过其 public Python semantic boundary 消费统计能力；Statistics 不依赖 Research、DataLake、Snapshot、Modeling 或 inbound UI，该 boundary 不表示 HTTP 服务。
 
 独立 Python 数值 API 由根项目安装。模块边界与公共数值契约入口见 [market_statistics/ARCHITECTURE.md](market_statistics/ARCHITECTURE.md)。
 

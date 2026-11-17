@@ -1,30 +1,29 @@
 import type { validateResult as validateDaily } from '../../src/features/futures_calendar_spread/presentation'
 import type { validateResult as validateHistorical } from '../../src/features/calendar_spread_relative_value/presentation'
-import type { validateOptionChain } from '../../src/features/mo_option_chain/api/validateOptionChain'
-import type { validatePremiumPlane } from '../../src/features/mo_option_premium/api/validatePremiumPlane'
-import type { validateEmbeddedReport } from '../../src/features/futures_basis_research/api/validateResult'
-import type { validateEmbeddedBacktestResult } from '../../src/features/backtesting/api/validateResult'
-import type { validateEmbeddedCatalog } from '../../src/features/research_catalog/api/validateCatalog'
-import type { validateEmbeddedPublicationSet } from '../../src/features/research_explorer/api/validateEmbeddedPublication'
+import type { validateOptionChain } from '../../src/features/mo_option_chain/presentation'
+import type { validatePremiumPlane } from '../../src/features/mo_option_premium/presentation'
+import type { validateEmbeddedReport } from '../../src/features/futures_basis_research/presentation'
+import type { validateEmbeddedBacktestResult } from '../../src/features/backtesting/presentation'
+import type { EmbeddedCatalogPayload } from '../../src/features/research_catalog/presentation'
+import type { EmbeddedPublicationSetPayload } from '../../src/features/research_explorer/presentation'
+import type { RegistryEntry } from '../build/registry'
 
-export const exampleKeys = ['calendar_spread_daily', 'calendar_spread_relative_value', 'chain', 'premium', 'basis', 'catalog', 'publications', 'expiry_to_M1_v1', 'expiry_to_Q1_v1'] as const
-export type ExampleKey = typeof exampleKeys[number]
+export type ExampleKey = RegistryEntry['bundle_id']
 export interface ResultIdentity {
   id: ExampleKey
   preset_id: string
   result_contract: string
   source: { kind: 'formal_http'; description: string }
 }
-// Composition types only: no legacy package admission or fixed dataset profile.
-export interface StaticData {
-  calendarDaily: ReturnType<typeof validateDaily>
-  calendarHistorical: ReturnType<typeof validateHistorical>
+export interface BundleData {
+  calendar_spread_daily: ReturnType<typeof validateDaily>
+  calendar_spread_relative_value: ReturnType<typeof validateHistorical>
   chain: ReturnType<typeof validateOptionChain>
   premium: ReturnType<typeof validatePremiumPlane>
   basis: ReturnType<typeof validateEmbeddedReport>
-  m1: ReturnType<typeof validateEmbeddedBacktestResult>
-  q1: ReturnType<typeof validateEmbeddedBacktestResult>
-  catalogPayload: Parameters<typeof validateEmbeddedCatalog>[0]
-  publicationPayload: Parameters<typeof validateEmbeddedPublicationSet>[0]
-  identities: Record<ExampleKey, ResultIdentity>
+  expiry_to_M1_v1: ReturnType<typeof validateEmbeddedBacktestResult>
+  expiry_to_Q1_v1: ReturnType<typeof validateEmbeddedBacktestResult>
+  catalog: EmbeddedCatalogPayload
+  publications: EmbeddedPublicationSetPayload
 }
+export type BundleLoaders = Record<ExampleKey, () => Promise<{ default: unknown }>>

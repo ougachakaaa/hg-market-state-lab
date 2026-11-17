@@ -72,7 +72,7 @@ No ticket, fingerprint or retained final-input proof is produced. Logs retain a
 server-generated correlation ID, dependency/scope/operation, exception type,
 coverage and duration; only fixed safe messages enter the public result.
 
-## Runtime acceptance
+## Usage and verification
 
-Synthetic Linux implementation and verification are recorded in
-[Preflight acceptance](PREFLIGHT_ACCEPTANCE.md); human usage is in [Usage](USAGE.md).
+Current usage is in [Usage](USAGE.md); remaining environment verification is in
+[case scope](ROADMAP.md). Select affected tests under the root verification policy.

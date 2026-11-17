@@ -59,13 +59,11 @@ Preparation failures expose `stage`, `category`, `request` and obtained `evidenc
 fails preparation; a validated partial Index Export can produce unavailable outcomes.
 Construction makes no upstream calls. This API requires no Statistics, Converter or Executor.
 
-Current status, validation evidence and limitations are in [Acceptance](descriptive/ACCEPTANCE.md).
+Current cross-stage verification specifications are in [Descriptive verification](descriptive/ACCEPTANCE.md).
 
-The bounded isolated real-market validation is recorded in
-[Acceptance](descriptive/ACCEPTANCE.md#real-market-validation-evidence) and uses fresh
-isolated Dataset storage. Its [opt-in harness](tests/live_e2e_acceptance.py) runs only
-when explicitly invoked; ordinary pytest remains deterministic. The historical
-incompatible default Calendar cache was neither repaired nor changed.
+Live verification uses fresh isolated Dataset storage. Its [opt-in harness](tests/live_e2e_acceptance.py) runs only
+when explicitly invoked; ordinary pytest remains deterministic. Do not repair user
+caches implicitly; follow the [DataLake lifecycle](../data_lake/PERSISTENCE.md).
 
 ## Pure scalar conversion and Statistics reuse
 

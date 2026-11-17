@@ -1,1 +1,4 @@
-declare module 'virtual:demo-data' { const bundles: unknown; export default bundles }
+declare module 'virtual:demo-data' {
+  const loaders: import('./results').BundleLoaders
+  export default loaders
+}

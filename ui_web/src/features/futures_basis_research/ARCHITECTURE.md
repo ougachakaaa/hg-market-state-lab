@@ -206,7 +206,6 @@ is independent of the current terminal report, which survives rejected submissio
 The shared reader accepts explicit online/offline disclosure mode; only the offline
 shell supplies standalone theme, font and adjacent-file evidence instructions.
 
-Execution evidence and reproduction: [WP8-B acceptance](ACCEPTANCE.md).
 
 ## Historical presentation controls
 
@@ -229,7 +228,6 @@ labels use supplied IntervalCount boundaries and inclusion flags; rounded labels
 replace category identity or order. Raw Views, reader projection, evidence, exports and
 fingerprints remain unchanged.
 
-Verification and reproduction: [Historical presentation acceptance](HISTORICAL_PRESENTATION_ACCEPTANCE.md).
 
 ## Read-only input preflight
 
@@ -259,7 +257,7 @@ phase and failure fields. User-facing failure reasons and manual actions stay vi
 
 ## Runtime scope
 
-Query inputs, protected HTTP reads, preflight, retries and Run lifecycle in this feature authority describe the Production controller. The same feature-owned Presentation also serves [Static Demo Runtime](../../demo/ARCHITECTURE.md) using validated embedded Examples (retired; Git history), fixed visible request parameters and local presentation state. Static composition never mounts the production controller or fabricates its lifecycle; it preserves this feature's result/visualization semantics and applicable local Copy/Export. Shared presentation remains here, not in parallel Demo pages.
+Query inputs, protected HTTP reads, preflight, retries and Run lifecycle in this feature authority describe the Production controller. The same feature-owned Presentation also serves [Static Demo Runtime](../../../demo/ARCHITECTURE.md) using validated embedded Examples (retired; Git history), fixed visible request parameters and local presentation state. Static composition never mounts the production controller or fabricates its lifecycle; it preserves this feature's result/visualization semantics and applicable local Copy/Export. Shared presentation remains here, not in parallel Demo pages.
 
 ## Shared page presentation and static composition (D2-E)
 
@@ -289,8 +287,9 @@ static alert title and this fixed paragraph:
 
 本页面为静态研究成果展示。数据不保证准确，不构成任何投资建议，仅供项目功能演示。
 
-Source provenance and Bundle metadata remain owned by admission. Compact report rendering
-does not repeat sourceDisclosure. Invalid embedded payloads retain the existing error path.
+Source provenance and Bundle metadata remain owned by admission. Compact Demo retains
+the exact supplied sourceDisclosure in the default-closed 数据来源 disclosure, owned by
+[Presentation authority](PRESENTATION.md). Invalid embedded payloads retain the existing error path.
 
 ## V2 origin policy reconciliation
 
@@ -299,7 +298,7 @@ packaging; authenticity and rights (retired; Git history) owns evidence and admi
 This feature owns only their presentation. Static delivery is not a Synthetic source label
 or proof of authenticity. Preserve historical V1/test disclosures, use actual real-market
 origin for V2, and never promote regression inputs to formal Examples. WP-B propagates an explicit validated Example source statement from static composition
-through UI-only `sourceDisclosure` (retained as an input for compatibility; compact delivery omits its display); delivery mode never
+through UI-only `sourceDisclosure` (compact Demo displays it on explicit expansion); delivery mode never
 infers real-market origin. Historical Synthetic defaults and Production/Offline evidence
 remain unchanged. Admission and provenance ownership stay in the
 private build contract (retired; Git history).

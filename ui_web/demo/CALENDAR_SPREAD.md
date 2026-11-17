@@ -1,6 +1,6 @@
 # Calendar Spread L1 Demo integration
 
-Status: WP7 locally delivered and READY TO CLOSE; see the acceptance evidence. No publication is authorized. Specializes [Demo](ARCHITECTURE.md),
+Status: locally implemented. No publication is authorized. Specializes [Demo](ARCHITECTURE.md),
 [Bundle](BUNDLES.md), [Build](build/ARCHITECTURE.md) and
 [Release Requirements](release/ARCHITECTURE.md).
 
@@ -23,8 +23,8 @@ Results pass the same feature-owned validators and public Presentations as
 Production. Query controls are absent; local Pair, axis, viewport, sample-detail
 and disclosure interactions remain available.
 
-Implementation and operational evidence: [WP7 acceptance](CALENDAR_SPREAD_ACCEPTANCE.md).
-Closure is local integration only and never means Pages publication.
+The integration is implemented. Local integration never means Pages publication;
+completed execution evidence remains in Git history.
 
 ## WP7 delivery contract
 

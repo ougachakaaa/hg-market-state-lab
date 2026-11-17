@@ -4,8 +4,7 @@
 
 The independent [W1 storage target](descriptive/cases/futures_basis/ONLINE_STORAGE.md)
 and [Publication storage](PUBLICATION_STORAGE.md) own their respective database contracts.
-[Storage reconciliation](STORAGE_RECONCILIATION.md) owns this migration's drift and WP
-readiness. W1 online Runs and Publication use independent SQLite databases;
+Each storage owner also records its platform and trust limitations. W1 online Runs and Publication use independent SQLite databases;
 no generic mandatory Research persistence or shared execution identity is introduced.
 
 ## Mission and authority
@@ -150,10 +149,9 @@ No Research CLI is published. R01-A has a separately bounded
 its case-owned Python application and run store implemented in WP7, HTTP delivery
 in WP8-A and Web Consumer in WP8-B; bounded WSL/real-market acceptance and the
 unverified Windows/deployment boundaries are recorded in
-[WP9 acceptance](descriptive/cases/futures_basis/WP9_ACCEPTANCE.md). The independent Statistics
-public API is implemented; deterministic execution and bounded isolated real-market
-validation evidence, including current limitations, are recorded in
-[Acceptance](descriptive/ACCEPTANCE.md).
+[case scope](descriptive/cases/futures_basis/ROADMAP.md). The independent Statistics
+public API is implemented. Current cross-stage verification specifications enter
+[Descriptive verification](descriptive/ACCEPTANCE.md); dated execution records remain in Git history.
 The concrete first case and implementation acceptance gates are reached through the
 Descriptive entry; semantic readiness alone does not establish runtime or live acceptance. Agent
 execution policy is in [AGENTS.md](AGENTS.md); upstream semantics belong only to

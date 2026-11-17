@@ -20,7 +20,10 @@ try {
   const artifact = resolve(web, '.build/tests/shell')
   const inventory = JSON.parse(await readFile(resolve(artifact, 'shell-routes.json'), 'utf8'))
   const graph = JSON.parse(await readFile(resolve(artifact, 'shell-dependencies.json'), 'utf8'))
-  assert.equal(inventory.routes.length, 8)
+  // The artifact inventory is emitted from the formal workspaceRoutes, and drives
+  // the route loop below. New registered routes must not require a second count.
+  assert.equal(new Set(inventory.routes.map(route => route.path)).size, inventory.routes.length)
+  assert.ok(inventory.routes.some(route => route.path === '/research'))
   assert.ok(graph.projectModules.some(module => module.id === 'src/app/ApplicationShell.tsx'))
   assert.ok(graph.projectModules.some(module => module.id === 'src/app/DailyDataLanding.tsx'))
   assert.ok(graph.projectModules.every(module => !/auth|features|shared\/http|app\/App\.tsx|app\/routes\.ts/.test(module.id)))
@@ -97,12 +100,17 @@ try {
     assert.equal(await selected.count(), route.sidebarVisible ? 1 : 0)
     if (route.sidebarVisible) assert.equal(await selected.textContent(), route.title)
     if (route.icon === 'overview') assert.equal(await selected.locator('[data-icon="appstore"]').count(), 1)
-    for (const href of await page.locator('a[href]').evaluateAll(links => links.map(link => link.href))) {
+    const source = page.getByRole('link', { name: '查看源码（GitHub）', exact: true })
+    assert.equal(await source.count(), 1)
+    assert.equal(await source.getAttribute('href'), 'https://github.com/ougachakaaa/hg-market-state-lab')
+    assert.equal(await source.getAttribute('target'), '_blank')
+    assert.deepEqual((await source.getAttribute('rel')).split(/\s+/).sort(), ['noopener', 'noreferrer'])
+    for (const href of await page.locator('a[href]:not([aria-label="查看源码（GitHub）"])').evaluateAll(links => links.map(link => link.href))) {
       assert.equal(new URL(href).pathname, prefix)
       assert.equal(new URL(href).origin, new URL(base).origin)
     }
   }
-  pass('All eight canonical identities: menu hrefs, direct hash load, reload, selected leaf, breadcrumb and base containment')
+  pass(`All ${inventory.routes.length} canonical identities: menu hrefs, direct hash load, reload, selected leaf, breadcrumb and base containment`)
   await choose('/data')
   await page.getByRole('button', { name: '打开 MO Option Chain' }).click()
   await current('/data/mo-option-chain')

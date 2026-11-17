@@ -1,7 +1,6 @@
 # Calendar Spread Historical Relative Value Presentation authority
 
-Status: WP6 implemented and READY TO CLOSE; targeted evidence and unverified
-real-data/deployment limits are recorded in [Acceptance](ACCEPTANCE.md).
+Status: implemented. Current deployment/live-source readiness requires separate verification.
 Inherits [Web boundaries](../../../ARCHITECTURE.md) and
 [Presentation architecture](../../../presentation-architecture.md).
 Financial/population meaning belongs to [Research](../../../../market_research/descriptive/cases/futures_calendar_spread/RELATIVE_VALUE.md);
@@ -9,10 +8,8 @@ transport belongs to [Research HTTP](../../../../ui_http/products/calendar_sprea
 
 ## Issue #13 execution target
 
-Original WP6 delivery/acceptance remains historical evidence. The Production
-execution changes below are delivered by Issue #13 WP2 under the frozen WP0 Authority;
-[reconciliation](../../../../market_research/descriptive/cases/futures_calendar_spread/AUTO_PREPARATION_RECONCILIATION.md)
-tracks delivery and retained operational limits separately. Existing static Bundles stay unchanged.
+Production uses explicit execution under the [Research application](../../../../market_research/descriptive/cases/futures_calendar_spread/APPLICATION.md),
+which owns preparation and operational limits. Static controllers consume admitted Bundles only.
 
 ## Surface and state
 
@@ -33,6 +30,21 @@ no Run creation, polling, restore ticket or Publication dependency. The sibling
 Daily page is an independent consumer, not a source of shared semantic state.
 
 ## Presentation
+
+The reading order is the long-roll research question, selected pair/current result,
+the two independent historical percentile comparisons, history chart, then expandable
+distribution details and evidence. Each comparison keeps its own N, actual coverage,
+stage and availability visible. Explain beside the results that empirical percentile
+is a historical rank (with the published tie method), whereas Quantile is a metric
+value at a specified historical distribution point. No trading threshold is introduced.
+
+Use Chinese business labels for query fields, metric names, expiry-stage ranges and
+outcomes. Raw stage/reason codes, estimator and L/E/G remain available in collapsed
+method details. Empty/unavailable comparisons and every small-sample warning stay
+visible outside collapsed details; all-stage results never substitute for matching-stage.
+Four-group Quantile, supplied Histogram and original samples are secondary disclosures.
+Production's optional explicit JSON histogram edges live in default-closed advanced
+parameters, retaining the same parsing, metric units, defaults and submit identity.
 
 Display current actual contracts/value/stage, all four historical group sizes and
 quantile values, and separately labeled matching-stage/all-stages assessments.

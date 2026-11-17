@@ -13,8 +13,8 @@ views; these are not canonical segmentation observations.
 future Research-owned numerical adaptation boundary.
 
 Status: the independent PIP algorithm, Input Preparation and segmentation observation
-Python APIs are implemented and verified. Price Segmentation V1's isolated real-market
-scopes are recorded in [Acceptance](../../ACCEPTANCE.md#real-market-validation-evidence);
+Python APIs are implemented. [Observation tests](../../../tests/test_segmentation_observation.py)
+and the explicit [live harness](../../../tests/segmentation_live_e2e.py) cover this case.
 Statistics, converter, HTTP and Workbench integration are not implemented.
 
 ## Request and identity
@@ -120,7 +120,7 @@ entry; none publishes or executes segmentation. Any future integration requires 
 semantic decision and implementation, not a fabricated horizon, scalar or empty Statistics
 AnalysisRequest. Trailing Return contracts and Statistics are unchanged.
 
-Tests for a future implementation must independently verify the input rules and evidence,
+Implementation tests must independently verify the input rules and evidence,
 PIP invocation, all result invariants and exact endpoint mapping, first/last/both boundary
 flags, flat and same-direction segments, N=2, missing dates and invalid closes, failure
 diagnostics, identity stability and sensitivity to changed inputs, window and epsilon.

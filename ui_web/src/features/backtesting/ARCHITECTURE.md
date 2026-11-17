@@ -109,17 +109,16 @@ API, hook and page tests are feature-local. Real Chromium acceptance uses Vite,
 FastAPI, actual Auth/worker/temporary Store and synthetic public services. The feature-local
 Shared Presentation and Static Controller also have a test-only static build/browser harness
 that validates the committed producer regression Result without Production transport.
-Actual results and remaining gates are recorded in [acceptance](ACCEPTANCE.md) and the
-[D2-F acceptance](testing/ACCEPTANCE.md).
-Full-window real-market and Windows Chrome evidence is owned by the independent
-[WP8 acceptance record](../../../../market_backtesting/cases/futures_roll_long/WP8_ACCEPTANCE.md).
+Manual real-market/reproduction commands and truthful exit semantics belong to
+[case Evidence](../../../../market_backtesting/cases/futures_roll_long/EVIDENCE.md#explicit-integrated-verification).
+Dated execution results remain in Git history.
 
 ## Runtime scope
 
 Query inputs, protected HTTP reads, preflight, retries and Run lifecycle in this feature
 authority describe the Production controller. `page/BacktestingPage.tsx` is that Production
 composition root; `page/BacktestingPresentation.tsx` is the single formal page Presentation
-shared with [Static Demo Runtime](../../demo/ARCHITECTURE.md). The transport-free public
+shared with [Static Demo Runtime](../../../demo/ARCHITECTURE.md). The transport-free public
 entry is `presentation.ts`; `api/validateResult.ts` owns pure generated-contract validation;
 `static/useStaticBacktesting.ts` validates a fixed request plus complete Embedded Backtest
 Result once. Static composition never mounts the production controller or fabricates its
@@ -158,6 +157,11 @@ Run URLs normalize according to Workspace authority before mounting this feature
 Demo and Online returns/drawdown share the initially closed 日期事件（Date Events） disclosure via their common chart options. Its description is: 标记策略开仓、到期换仓及最终平仓的日期，帮助理解持仓变化与收益曲线的关系。 Producer Entry/Roll/Exit identities, order, details and Plotly markers remain intact. Expansion changes only local UI state, with no HTTP or recalculation.
 
 ## UI-04 compact presentation
+
+Beside the seven core metrics, show a short visible reminder that returns are gross,
+use ideal Close execution and exclude fees, slippage, margin and financing costs.
+Keep the complete strategy and normalization explanation in the existing disclosure.
+This is a reading aid, not a change to accounting or execution assumptions.
 
 This page calls a Futures Product 品种, a Futures Instrument 合约标的 and an
 Index Instrument 指数标的; machine fields remain unchanged. Readiness keeps overall

@@ -5,7 +5,7 @@ This is the canonical Demo entry. DDB-01 encodes the design. DDB-02 supplies the
 Registry, explicit initial Presets and executable offline Bundle admission. DDB-03 supplies
 the HTTP Collector and transaction recovery. DDB-04-R1 delivered real captures. DDB-04 implements the sole runtime and offline build.
 DDB-06 extends DDB-05 verified artifacts with release requirements and dedicated-branch
-publication. Actual release evidence enters the implementation handoff below.
+publication. Actual releases require their own receipts and online acceptance.
 
 ## Purpose and ownership
 
@@ -50,8 +50,8 @@ Build Preflight is an offline admission step in the build process.
 
 - [Bundle contract](BUNDLES.md) owns identities, Registry, Presets, Manifest and exact bytes.
 - [Build authority](build/ARCHITECTURE.md) owns collection, transactions and build admission.
-- [HTTP feasibility](build/HTTP_FEASIBILITY.md) records DDB-01 source evidence and limitations.
-- [Implementation handoff](build/HANDOFF.md) defines DDB-02 through DDB-05 boundaries.
+- [HTTP catalog](../../ui_http/HTTP_PRODUCTS.md) owns the formal capture operations.
+- [Release Runbook](release/RUNBOOK.md) owns publication and recovery.
 
 Publication follows the root personal-study policy. Preserve source disclosure,
 disclaimers and safety checks. Release contracts live in
@@ -60,9 +60,30 @@ disclaimers and safety checks. Release contracts live in
 ## DDB-04 runtime
 
 The sole runtime lives in demo/runtime and consumes the validated private snapshot.
-Its adapter reuses feature public validators and Presentation. Identity contains Bundle
+Its adapters reuse feature public validators and Presentation. Identity contains Bundle
 ID, Preset, contract and actual source description. Ten shared pages use hash routes.
-Explorer remains hidden from sidebar navigation. Invalid input stops successful rendering.
+Explorer remains hidden from sidebar navigation.
+
+Build admits all nine Bundles before emitting separate static JS modules. The initial
+application contains Shell/navigation and loader references, not all Result payloads or
+chart Presentations. Runtime loads only the selected consumer's Presentation, validator
+and Bundle. Research Overview consumes Catalog; Data/Backtesting overviews consume no
+Result; each business page consumes its own Bundle; Explorer consumes Publications.
+Backtesting initially consumes M1, loading Q1 only when selected. Route/component mapping
+belongs to runtime composition, not the Bundle Registry or Collector.
+
+Each consumed envelope and formal Result must validate before display. Successful
+adaptation and in-flight work are cached within this application instance only; no
+browser persistence or online fallback is introduced. Bundle loading and validation
+timing is inspectable through local Performance measures: `demo-bundle:<id>:load`
+covers the static import and `demo-bundle:<id>:validate` covers envelope validation
+and formal adaptation. These diagnostic durations contain no payload data and make
+no rendering-time or transfer-compression claim. Resource-loading and invalid-data
+failures have distinct safe explanations with explicit retry, never raw diagnostics.
+Changing routes/strategy immediately hides the previous result and isolates late
+completions. Unavailable resources do not fabricate results or prevent navigation away.
+Build still rejects any invalid Bundle globally; deferred runtime validation never
+relaxes whole-dataset admission, exact bytes, Manifest identity or release requirements.
 
 Release content requirements enter [Release Requirements](release/ARCHITECTURE.md).
 
@@ -70,6 +91,5 @@ Release content requirements enter [Release Requirements](release/ARCHITECTURE.m
 
 [Calendar Spread integration](CALENDAR_SPREAD.md) adds two independent formal HTTP
 Result captures and consumes the WP6 public Presentations. The sole active dataset
-has nine Bundles; the runtime has ten routes. Actual local capture/build/browser
-and release-check evidence is recorded in [WP7 acceptance](CALENDAR_SPREAD_ACCEPTANCE.md).
-No publication is implied or authorized by this integration.
+has nine Bundles; the runtime has ten routes. Capture, identity and offline consumption
+requirements remain in that integration contract. No publication is implied or authorized.

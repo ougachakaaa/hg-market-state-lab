@@ -14,7 +14,7 @@
 
 ## Runtime scope
 
-Query inputs, protected HTTP reads, preflight, retries and Run lifecycle in this feature authority describe the Production controller. The same feature-owned Presentation also serves [Static Demo Runtime](../../demo/ARCHITECTURE.md) using validated embedded Examples (retired; Git history), fixed visible request parameters and local presentation state. Static composition never mounts the production controller or fabricates its lifecycle; it preserves this feature’s result/visualization semantics and applicable local Copy/Export. Shared presentation remains here, not in parallel Demo pages. D2-A implements this boundary: `page/OptionChainPage.tsx` composes the production
+Query inputs, protected HTTP reads, preflight, retries and Run lifecycle in this feature authority describe the Production controller. The same feature-owned Presentation also serves [Static Demo Runtime](../../../demo/ARCHITECTURE.md) using validated embedded Examples (retired; Git history), fixed visible request parameters and local presentation state. Static composition never mounts the production controller or fabricates its lifecycle; it preserves this feature’s result/visualization semantics and applicable local Copy/Export. Shared presentation remains here, not in parallel Demo pages. D2-A implements this boundary: `page/OptionChainPage.tsx` composes the production
 query controller with `page/OptionChainPresentation.tsx`. Static consumers enter through
 `presentation.ts`, supplying a validated complete result, fixed query identity and source
 disclosure, plus `useOptionChainPresentation(result)` local state. The hook resets expiry

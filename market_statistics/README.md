@@ -42,9 +42,9 @@ immutable Python values. Invalid requests raise `InvalidSample` or
 `InvalidStatisticalSpec`; numerical failures raise `CalculationFailure` with `method`,
 `reason` and an original cause where available. All belong to `StatisticalFailure`.
 
-NumPy 2.5.3 on Python 3.13 is the tested backend. Quantile's frozen binary64 adaptation
+The original STAT-IMP-01 evidence below used NumPy 2.5.3 on Python 3.13. Quantile's frozen binary64 adaptation
 is explained in [BACKEND.md](BACKEND.md); the statistical contracts are unchanged.
-The deterministic suite covers public legality, both methods, backend failure injection,
+The original deterministic suite covered public legality, both V1 methods, backend failure injection,
 isolated installed imports and architecture boundaries. Research Converter, result
 association and Job / Batch Executor remain outside this implementation; prior blocked
 live-data acceptance remains unchanged.
@@ -82,7 +82,7 @@ Quantile or IntervalCount. `compute(NumericSample([1, 3], "u"), MeanSpec())` ret
 `MeanResult(value=2.0, sample_count=2, unit="u")`. NumPy float64 accumulation may
 fail on intermediate overflow even when a mathematical average is finite.
 Numerical conformance and injected backend failures: `tests/test_mean.py`.
-Bounded integration/verification evidence: [WP4 acceptance](../market_research/descriptive/cases/futures_basis/WP4_ACCEPTANCE.md).
+Consumer adaptation: [Futures Basis statistics contract](../market_research/descriptive/cases/futures_basis/STATISTICS.md).
 
 ## Empirical Percentile (Calendar Spread WP3)
 
@@ -99,9 +99,7 @@ result = compute(
 assert [r.percentile for r in result.query_results] == [0, .25, .5, .625, .875, 1]
 ```
 
-Directed verification (2026-11-16), from the repository root:
-`.venv/bin/python -m pytest market_statistics/tests/test_empirical_percentile.py market_statistics/tests/test_public_api.py -q`
-— **94 passed**. This includes the existing Quantile, IntervalCount and Mean public
-dispatch examples. No full-module/repository regression, architecture scans,
-real-data, browser or deployment checks were run. WP4 Research adaptation remains
-unimplemented; WP3 only supplies its public numerical dependency.
+Current numerical coverage: [Empirical Percentile tests](tests/test_empirical_percentile.py)
+and [public API tests](tests/test_public_api.py). Select relevant cases under the root
+verification policy. Consumer delivery scope is in the
+[Calendar Spread Roadmap](../market_research/descriptive/cases/futures_calendar_spread/ROADMAP.md).

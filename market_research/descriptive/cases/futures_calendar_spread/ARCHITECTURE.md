@@ -1,11 +1,8 @@
 # Futures Calendar Spread L1
 
-Status: WP1 pure financial and WP2 read-only preparation / pure Pair-day
-Observation Python APIs are implemented; WP3 delivers the public Statistics
-EmpiricalPercentile method. WP4 delivers the independent Daily and Historical
-Relative Value Python queries. WP5 delivers both formal HTTP products in the
-composed app; WP6 delivers both Production Web consumers. WP7 delivers both formal HTTP Demo captures and shared static Presentation;
-delivery evidence and limits are recorded in the Roadmap.
+Status: financial calculation, read-only observations/queries, explicit automatic
+preparation, Statistics, HTTP, Web and static Demo consumption are implemented.
+Current delivery scope and limits are recorded in [Roadmap](ROADMAP.md).
 This independent Descriptive case specializes [Research](../../../ARCHITECTURE.md)
 and [Descriptive](../../ARCHITECTURE.md). Case identity is
 `futures_calendar_spread_v1`; financial definition version is
@@ -42,8 +39,8 @@ Presentation, and Demo captures only formal HTTP Results.
 | Comparable historical samples and relative assessment | [Relative value](RELATIVE_VALUE.md) |
 | Shared Python business boundary and the two queries | [Application](APPLICATION.md) |
 | Immutable query results, evidence references and statistical association | [Query Results](QUERY_RESULTS.md) |
-| Original WP0–WP7, acceptance and delivery history | [Roadmap](ROADMAP.md) |
-| Issue #13 automatic preparation: target/current drift, WP0 reconciliation and WP1–WP3 readiness | [Automatic preparation reconciliation](AUTO_PREPARATION_RECONCILIATION.md) |
+| Current delivery scope and limitations | [Roadmap](ROADMAP.md) |
+| Explicit automatic preparation and operational limits | [Application](APPLICATION.md) |
 
 ## Independence and reuse
 

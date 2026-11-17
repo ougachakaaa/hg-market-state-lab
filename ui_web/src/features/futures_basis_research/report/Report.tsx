@@ -11,6 +11,7 @@ import { ChartView, DateAxisControl, DEFAULT_DATE_AXIS_MODE, type DateAxisMode }
 import type { Method, ReportData, Run } from './types'
 
 const metrics = ['basis_value', 'basis_ratio', 'annualized_basis_ratio']
+const metricLabels: Record<string, string> = { basis_value: '基差（点）', basis_ratio: '基差率（%）', annualized_basis_ratio: '年化基差率（%）' }
 const sections = ['研究概览', '历史基差', '基差分布', '期限结构', '贴水持续区间', '证据与限制']
 
 function Methods({ methods }: { methods: Method[] }) {
@@ -39,7 +40,7 @@ function RunTable({ runs }: { runs: Run[] }) {
   ]} />
 }
 
-export function Report({ data, mode, sectionNavigation = 'fragment' }: {
+export function Report({ data, mode, sourceDisclosure, sectionNavigation = 'fragment' }: {
   sourceDisclosure?: string
   data: ReportData
   mode: 'online' | 'offline' | 'demo'
@@ -54,6 +55,10 @@ export function Report({ data, mode, sectionNavigation = 'fragment' }: {
   const [width, setWidth] = useState<number>(BIN_PRESETS.basis_value.default)
   const projection = useMemo(() => histogramAggregation(data, metric, width), [data, metric, width])
   const [timeScale, setTimeScale] = useState<DateAxisMode>(DEFAULT_DATE_AXIS_MODE)
+  const historyViews = useMemo(() => Object.fromEntries(metrics.map(metric => {
+    const view = data.views.history[metric]
+    return [metric, { ...view, layout: { ...view.layout, title: `历史${metricLabels[metric]}` } }]
+  })), [data.views.history])
   if (data.profile !== 'futures_basis_report_evidence_v1') throw new Error('Unsupported report version')
   const obs = data.request.observation
   const sectionTitle = (title: string, index: number) => `${String(index + 1).padStart(2, '0')} · ${title}`
@@ -62,12 +67,12 @@ export function Report({ data, mode, sectionNavigation = 'fragment' }: {
         <DateAxisControl label="历史基差时间轴" value={timeScale} onChange={setTimeScale} />
         {metrics.map(m => <div key={m}>
           {m === 'annualized_basis_ratio' && <Typography.Paragraph>合约到期日的剩余期限 D=0，年化基差按研究定义主动留空，并非行情数据错误；原始基差仍然保留。</Typography.Paragraph>}
-          <div tabIndex={mode === 'demo' ? 0 : undefined} aria-label={mode === 'demo' ? `${m} 图表，窄屏可横向滚动` : undefined} style={{ minWidth: 0, overflow: mode === 'demo' ? 'auto' : 'hidden' }}><div style={{ minWidth: mode === 'demo' ? 640 : undefined }}><ChartView view={data.views.history[m]} minPlotHeight={480} options={{ ...historyOptions(data.views.history[m], data.candidate_dates, timeScale === 'trading', m === 'basis_value'),
+          <div tabIndex={mode === 'demo' ? 0 : undefined} aria-label={mode === 'demo' ? `${metricLabels[m]} 图表，窄屏可横向滚动` : undefined} style={{ minWidth: 0, overflow: mode === 'demo' ? 'auto' : 'hidden' }}><div style={{ minWidth: mode === 'demo' ? 640 : undefined }}><ChartView view={historyViews[m]} minPlotHeight={480} options={{ ...historyOptions(data.views.history[m], data.candidate_dates, timeScale === 'trading', m === 'basis_value'),
           missingValuesDisclosure: { title: '无有效指标值日期', description: '包含合约到期、无有效合约或数据不可用等情况，具体原因见日期详情。' },
           dateEventsDisclosure: mode === 'offline' ? undefined : { description: '标记不同期限 Slot 所对应的期货合约发生切换的日期，仅用于描述合约映射变化，不代表实际交易。' } }} /></div></div></div>)}
   </>
   const distributionCharts = <>
-        <Flex gap="middle" wrap align="center"><Typography.Text>指标</Typography.Text><Select aria-label="Distribution metric" value={metric} onChange={(value: BasisMetric) => { setMetric(value); setWidth(BIN_PRESETS[value].default) }} options={metrics.map(value => ({ value, label: value }))} style={{ minWidth: 0, width: 260, maxWidth: '100%' }} /><Typography.Text>分箱宽度</Typography.Text><Select aria-label="Bin width" value={width} onChange={setWidth} options={BIN_PRESETS[metric].widths.map(value => ({ value, label: `${value} ${metric === 'basis_value' ? '点' : '个百分点'}` }))} style={{ minWidth: 145 }} /></Flex>
+        <Flex gap="middle" wrap align="center"><Typography.Text>指标</Typography.Text><Select aria-label="Distribution metric" value={metric} onChange={(value: BasisMetric) => { setMetric(value); setWidth(BIN_PRESETS[value].default) }} options={metrics.map(value => ({ value, label: metricLabels[value] }))} style={{ minWidth: 0, width: 260, maxWidth: '100%' }} /><Typography.Text>分箱宽度</Typography.Text><Select aria-label="Bin width" value={width} onChange={setWidth} options={BIN_PRESETS[metric].widths.map(value => ({ value, label: `${value} ${metric === 'basis_value' ? '点' : '个百分点'}` }))} style={{ minWidth: 145 }} /></Flex>
         <Typography.Text type="secondary">本地仅进行展示性分箱，正式统计结果保持不变，不会提交请求或重新执行研究。</Typography.Text>
         {data.distributions.filter(d => d.request.metric === metric).flatMap(d => d.methods
           .filter(m => m.spec.method === 'interval_count' && m.failure_category && m.failure_category !== 'no_eligible_sample')
@@ -91,6 +96,7 @@ export function Report({ data, mode, sectionNavigation = 'fragment' }: {
     {data.status === 'partial' && <Alert showIcon type="warning" title="Partial：研究执行已完成，部分统计方法失败。" />}
     <Typography.Title level={4}>研究问题</Typography.Title>
     <Typography.Paragraph>{data.summary}</Typography.Paragraph>
+    {mode === 'demo' && sourceDisclosure && <Collapse items={[{ key: 'source', label: '数据来源', children: <Typography.Paragraph style={{ overflowWrap: 'anywhere' }}>{sourceDisclosure}</Typography.Paragraph> }]} />}
     <Collapse items={[{ key: 'formulas', label: '指标定义与公式', children: data.formulas.map(formula => <Typography.Paragraph key={formula}><Typography.Text code>{formula}</Typography.Text></Typography.Paragraph>) }]} />
     <Typography.Title level={4}>研究可视化</Typography.Title>
     <section aria-label="历史基差" data-testid="history-charts" style={{ minWidth: 0 }}>

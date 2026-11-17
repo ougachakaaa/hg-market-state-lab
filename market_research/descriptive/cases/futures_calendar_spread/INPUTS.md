@@ -25,8 +25,8 @@ private catalog, SQLite, provider adapter or alternate price source is authorize
 ## Preparation modes and completeness
 
 Issue #13 defines the execution target below; the existing read-only APIs remain
-supported. [Reconciliation](AUTO_PREPARATION_RECONCILIATION.md) owns implementation
-status and follow-up acceptance, not an alternative input policy.
+supported. [Application](APPLICATION.md) owns execution entrypoints and operational
+verification limits, not an alternative input policy.
 
 Validate explicit canonical product/date inputs before service construction or I/O.
 Dates are date-only; reject timestamps, reversed ranges and market end dates after

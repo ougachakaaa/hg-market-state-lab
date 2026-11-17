@@ -81,3 +81,24 @@ All functions above are exported from
 `market_backtesting.cases.futures_roll_long`; preparation and preflight retain their
 existing contracts. Reproduction has no dependency on the original process, objects,
 cache contents, credentials or temporary paths.
+
+## Explicit integrated verification
+
+These commands are manual only. From repository root, use an absolute external
+artifact directory and an explicitly configured Source:
+
+```bash
+poetry run python market_backtesting/tests/wp8_real_acceptance.py --root /tmp/w2-wp8-real-im --mode python
+poetry run python market_backtesting/tests/wp8_real_acceptance.py --root /tmp/w2-wp8-real-im --mode reproduce
+# Then from ui_web, with ports 8011/5173 free:
+node scripts/wp8_real_acceptance.mjs /tmp/w2-wp8-real-im
+```
+
+Only PASS exits zero; FAIL=1, PARTIAL=2 and NOT RUN=3. Missing evidence and an
+unexecuted Windows Chrome gate are nonzero. Reproduction requires a PASS Python
+acceptance with the same input identity and never performs Source acquisition.
+The integrated harness isolates storage and removes its private Auth/Run runtime;
+results, evidence, coverage and screenshots remain outside Git. Windows automation
+failure cannot be substituted with Linux headless acceptance. Current output names
+are `python-acceptance.json`, `offline-reproduction.json`, `http-acceptance.json`
+and `windows-acceptance.json`, with per-profile Result/Evidence/SSE-calendar files.

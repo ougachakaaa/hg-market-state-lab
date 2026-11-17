@@ -57,6 +57,22 @@ implementation details
 
 已经明显需要的拆分必须在本次 authority 落位中完成，不将“未来再整理文档”作为默认 deferred work；真正需要新 semantic decision 的 gap 应明确记录，不以文档重组发明业务语义。
 
+## Documentation Lifecycle
+
+Git preserves history; the working tree preserves only currently effective knowledge.
+Keep current authorities, contracts, operational guides, active plans and necessary verification instructions, with one canonical owner per concern.
+Before deleting superseded designs, completed work packages, diaries or redundant acceptance records, extract indispensable current semantics into their existing owner and repair inbound references.
+Do not create history/archive replacements or permanent task reports by default; update current authority and close resolved Issues with commit evidence.
+Preserve binding correctness, security, recovery and reproducibility requirements regardless of age; report `HUMAN_DECISION_REQUIRED` for genuine unresolved conflicts.
+This policy supersedes historical Markdown retention instructions for obsolete documentation; runtime evidence/data integrity contracts remain binding.
+
+## Product Exploration Principle
+
+Prototype uncertain UI and product interactions before over-designing. Humans steer; Codex implements.
+Explore, observe and converge, then encode accepted semantics in their canonical authority.
+Preserve business correctness, data integrity and accepted invariants; choose the smallest useful implementation and avoid unnecessary complexity.
+This is guidance, not an additional mandatory workflow.
+
 ## Pre-production Publication / Run retention
 
 **用户已明确决定：本项目尚未正式投产；只有用户后续明确宣布投产，才进入 Production 数据保留阶段。** 公开 GitHub 仓库、GitHub Pages Demo、`production` 配置模式、CI 通过或阶段验收，均不构成投产宣告。Agent 不得自行推定已经投产。

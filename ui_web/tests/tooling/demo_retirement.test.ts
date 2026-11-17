@@ -5,7 +5,6 @@ it('keeps one formal build entry and retired data absent', () => {
   const pkg = JSON.parse(readFileSync('package.json', 'utf8'))
   expect(pkg.scripts['demo:build']).toBe('node demo/build/build.mjs')
   expect(pkg.scripts['demo:preview']).toBe('node demo/build/preview.mjs')
-  const workflow = readFileSync('../.github/workflows/deploy-demo-pages.yml', 'utf8')
-  expect(workflow).not.toMatch(/deploy-pages@|upload-pages-artifact@|rollback|recovery/)
-  expect(workflow).toContain('exit 1')
+  // Current release permissions and artifact verification are covered by
+  // demo/release/workflow.test.mjs; deployment is no longer retired.
 })

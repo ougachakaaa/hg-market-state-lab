@@ -92,9 +92,9 @@ BacktestResult remain case concerns. Only input preparation may perform market I
 | BacktestResult, evidence, limitations, result-version and V2 projection | [Result](RESULT.md) |
 | Portable evidence package contents, encoding and pure offline reproduction | [Evidence](EVIDENCE.md) |
 | Online request, run lifecycle, ownership, store, concurrency, HTTP/Web ownership | [Online application](ONLINE_APPLICATION.md) |
-| Delivery, WP2–WP8 acceptance and deferred scope | [Roadmap](ROADMAP.md) |
-| Concern/consumer inventory, current semantic review and implementation drift | [Reconciliation](RECONCILIATION.md) |
-| Actual real-market, HTTP and Windows Chrome execution evidence | [WP8 acceptance](WP8_ACCEPTANCE.md) |
+| Current delivery scope and limitations | [Roadmap](ROADMAP.md) |
+| Current authority/consumer inventory | [Reconciliation](RECONCILIATION.md) |
+| Manual integrated verification and reproducibility | [Evidence](EVIDENCE.md#explicit-integrated-verification) |
 
 W1's descriptive futures-basis work remains owned by
 [`market_research`](../../../market_research/descriptive/cases/futures_basis/ARCHITECTURE.md).

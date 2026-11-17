@@ -3,8 +3,7 @@ import { mkdir } from 'node:fs/promises'
 import { resolve } from 'node:path'
 
 // Shared by the real Demo artifact and the Production-mode Presentation harness.
-export async function verifyOverviewLayout(browser, url, { mode = 'static', disclosure, label = 'demo' } = {}) {
-  const output = resolve('.build/demo-review')
+export async function verifyOverviewLayout(browser, url, { mode = 'static', disclosure, label = 'demo', output = resolve('.build/demo-review') } = {}) {
   await mkdir(output, { recursive: true })
   let originalText
   for (const width of [1280, 1024, 768]) {
