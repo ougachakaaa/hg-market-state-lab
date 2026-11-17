@@ -67,13 +67,29 @@ it('groups Backtesting overview and instance with matching icon roles and breadc
   expect(screen.getByRole('link', { name: '回测总览' })).toBeTruthy()
 })
 
-it('keeps a source link in the sticky shared header', () => {
+it('keeps a source link in the shared header', () => {
   const { container } = render(<ApplicationShell path="/research" href={path => path} navigate={vi.fn()} header={null}>Study</ApplicationShell>)
   const link = screen.getByRole('link', { name: '查看源码（GitHub）' })
   expect(link.getAttribute('href')).toBe('https://github.com/ougachakaaa/hg-market-state-lab')
   expect(link.getAttribute('target')).toBe('_blank')
   expect(link.getAttribute('rel')).toBe('noopener noreferrer')
-  expect((container.querySelector('.ant-layout-header') as HTMLElement).style.position).toBe('sticky')
+  expect((container.querySelector('.ant-layout-header') as HTMLElement).style.flexShrink).toBe('0')
+})
+
+it.each(['production', 'static'] as const)('bounds %s workspace scrolling to Content and navigation', mode => {
+  const { container } = render(<ApplicationShell mode={mode} path="/research" href={path => path} navigate={vi.fn()} header={null}>Long content</ApplicationShell>)
+  const root = container.firstElementChild as HTMLElement
+  expect(['100vh', '100dvh']).toContain(root.style.height)
+  expect(root.style.minHeight).toBe('0px')
+  expect(root.style.overflow).toBe('hidden')
+  const content = container.querySelector('.ant-layout-content') as HTMLElement
+  expect(content.style.overflowY).toBe('auto')
+  expect(content.style.minHeight).toBe('0px')
+  expect(content.style.minWidth).toBe('0px')
+  expect(content.style.maxWidth).toBe('1500px')
+  const navigation = screen.getByRole('menu', { name: '业务导航' }).parentElement!
+  expect(navigation.style.overflowY).toBe('auto')
+  expect(navigation.style.minHeight).toBe('0px')
 })
 
 it('shows Calendar Spread in both admitted runtimes', () => {
