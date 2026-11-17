@@ -49,7 +49,7 @@ and formal summary use the same selected Metric and its corresponding Eligible s
 
 X-axis titles identify the selected Metric explicitly: 基差（点）, 基差率（%） or
 年化基差率（%）. The Y-axis remains Frequency（%）, independently of Metric.
-Near the distribution controls show:
+Only when `annualized_basis_ratio` is selected, show near the distribution controls:
 
 > 年化基差率用于比较不同到期期限下的基差强度，不等于实际持有收益；临近到期时数值可能较敏感。
 

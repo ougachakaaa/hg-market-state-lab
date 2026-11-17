@@ -73,7 +73,7 @@ export function Report({ data, mode, sourceDisclosure, sectionNavigation = 'frag
   </>
   const distributionCharts = <>
         <Flex gap="middle" wrap align="center"><Typography.Text>指标</Typography.Text><Select aria-label="Distribution metric" value={metric} onChange={(value: BasisMetric) => { setMetric(value); setWidth(BIN_PRESETS[value].default) }} options={metrics.map(value => ({ value, label: metricLabels[value] }))} style={{ minWidth: 0, width: 260, maxWidth: '100%' }} /><Typography.Text>分箱宽度</Typography.Text><Select aria-label="Bin width" value={width} onChange={setWidth} options={BIN_PRESETS[metric].widths.map(value => ({ value, label: `${value} ${metric === 'basis_value' ? '点' : '个百分点'}` }))} style={{ minWidth: 145 }} /></Flex>
-        <Typography.Paragraph>年化基差率用于比较不同到期期限下的基差强度，不等于实际持有收益；临近到期时数值可能较敏感。</Typography.Paragraph>
+        {metric === 'annualized_basis_ratio' && <Typography.Paragraph>年化基差率用于比较不同到期期限下的基差强度，不等于实际持有收益；临近到期时数值可能较敏感。</Typography.Paragraph>}
         <Typography.Text type="secondary">本地仅进行展示性分箱，正式统计结果保持不变，不会提交请求或重新执行研究。</Typography.Text>
         {data.distributions.filter(d => d.request.metric === metric).flatMap(d => d.methods
           .filter(m => m.spec.method === 'interval_count' && m.failure_category && m.failure_category !== 'no_eligible_sample')

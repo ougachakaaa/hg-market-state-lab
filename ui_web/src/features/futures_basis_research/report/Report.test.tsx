@@ -350,6 +350,7 @@ it.each(['online', 'demo', 'offline'] as const)('defaults to annualized samples,
   for (const [label, width, n] of [['基差（点）', '10 点', 3], ['基差率（%）', '0.1 个百分点', 3], ['年化基差率（%）', '5 个百分点', 2]] as const) {
     selectMetric(label)
     expect(selected('Bin width')).toContain(width)
+    expect(screen.queryByText('年化基差率用于比较不同到期期限下的基差强度，不等于实际持有收益；临近到期时数值可能较敏感。') !== null).toBe(label === '年化基差率（%）')
     expect(layout().xaxis.title.text).toBe(label)
     expect(layout().yaxis.title.text).toBe('Frequency（%）')
     expect(JSON.parse(plot().getAttribute('data-traces')!)[0].customdata[0][3]).toBe(n)
