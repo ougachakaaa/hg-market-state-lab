@@ -6,6 +6,34 @@ read-only preflight, HTTP and Web consumers are implemented.
 The online application exclusively uses [case-owned SQLite](ONLINE_STORAGE.md).
 Completed work packages and their execution records remain in Git history.
 
+## Distribution V2 handoff
+
+WP2 implements the four-metric backend with definition `futures_basis_definition_v2`,
+reader `futures_basis_report_evidence_v2` and online profile `r01a_standard_v2`.
+The manifest remains `futures_basis_report_manifest_v1`; canonical input bytes and
+fingerprints retain their existing contract. WP3/WP4 shared readers now consume V2 with four metrics, configurable bin widths,
+complete original-population validation and rank-based tail exclusion audit. The
+active Basis Demo Bundle has been recaptured through authenticated current-code HTTP
+for IM, 2026-03-01 through 2026-09-30. This is not publication readiness.
+WP5 local release admission remains incomplete: the Windows checkout has an unrelated
+Calendar Spread fixture byte/hash mismatch, and Demo artifact directory promotion
+fails with EPERM after compilation. Browser acceptance is not verified.
+These package names refer to Distribution V2, independently of historical WP numbers.
+
+- WP2 (implemented) — the fourth metric through Observation, Accounting, formal analyses,
+  Report/History, Evidence/Reader and HTTP, including exact profile/definition
+  associations and generated-contract updates. Do not redefine the first three metrics.
+- WP3 (implemented) — shared frontend fourth Metric, width presets and boundary formatting under
+  [Distribution presentation](../../../../ui_web/src/features/futures_basis_research/DISTRIBUTION.md).
+- WP4 (implemented) — full-population validation, local rank-based trimming, Histogram and complete
+  exclusion audit, with deterministic edge-case and conservation tests.
+- WP5 — recapture the formal Basis Bundle, update the unique active Manifest, perform
+  end-to-end acceptance and separately authorized integration/release. No legacy
+  adapter is required to preserve disposable development payloads.
+
+WP1 does not implement, test business runtime, regenerate contracts/Bundles, clean
+stores, merge or publish. No new permanent implementation diary is introduced.
+
 ## Known gaps and defer
 
 - Complete Futures proof is required; the public service does not expose independent

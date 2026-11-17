@@ -26,6 +26,14 @@ BatchResult, Workbench Run or generic durable execution identity. No queue,
 message broker, Celery/Redis, scheduler, database migration, generic task
 framework or distributed execution is introduced.
 
+## Distribution V2 status
+
+The V2 profile and reader below are implemented in WP2. The historical V1 profile
+remains immutable: it contains
+only the original three ordered Histogram Specifications below and the same quantiles.
+`r01a_standard_v1` must never mean a four-metric request. Current V1 payloads cannot
+be read as V2. The case identity and product/date request fields remain unchanged.
+
 ## Request and standard analysis profile
 
 The semantic request is:
@@ -35,7 +43,7 @@ case              = futures_basis_v1
 product_code      = IM | IC | IF | IH
 start_date        = date (inclusive)
 end_date          = date (inclusive)
-analysis_profile  = r01a_standard_v1
+analysis_profile  = r01a_standard_v2
 ```
 
 No subject, source, date, Horizon, method or statistical-parameter defaults exist.
@@ -53,11 +61,17 @@ IntervalCountSpec(
     (-1, -0.1, -0.01, 0, 0.01, 0.1, 1), "decimal_ratio")
 IntervalCountSpec(
     (-10, -1, -0.1, 0, 0.1, 1, 10), "decimal_ratio")
+IntervalCountSpec(
+    (-1000, -500, -100, 0, 100, 500, 1000), "index_points_per_year")
 ```
 
 The histogram order is `basis_value`, `basis_ratio`, `annualized_basis_ratio`,
-matching the existing `ReportRequest` validation. These values exactly match the
-request in [usage](USAGE.md). The profile name
+`annualized_basis_value`: preserve the original relative order and append the new
+metric. The first three specs/quantiles are unchanged from the immutable V1 preset;
+the fourth reuses raw point edges with its distinct annualized-point unit. These
+are formal IntervalCount edges, unrelated to frontend selectable Bin Width or
+Tail Exclusion. WP2 updates ReportRequest validation and executable usage accordingly.
+The profile name
 is immutable: a changed quantile, edge or unit requires a new profile version and
 new run request identity. Historical runs retain the formal `ReportRequest` in
 their stored reader projection, so a later code revision cannot silently
@@ -137,7 +151,7 @@ The worker executes the accepted public path:
 ```text
 FuturesBasisRequest(product, start, end)
     → observe_futures_basis (existing public preparation + construction)
-    → ReportRequest(observation, r01a_standard_v1 specs)
+    → ReportRequest(observation, r01a_standard_v2 specs)
     → compose_report (existing WP4 analysis)
     → existing case-owned reader projection (no recomputation)
     → validate profile, status, request, fingerprint and serialization
@@ -145,7 +159,7 @@ FuturesBasisRequest(product, start, end)
     → atomically publish COMPLETED state
 ```
 
-The result payload is the existing `futures_basis_report_evidence_v1` reader
+The V2 result payload is the `futures_basis_report_evidence_v2` reader
 projection defined by [Evidence](EVIDENCE.md) and produced by the same case-owned
 projection logic as the offline report. It includes the formal `ReportRequest`
 with its explicit quantile/histograms, fingerprint, definition version, coverage,
@@ -181,6 +195,13 @@ paths, provider credentials, URLs, raw exception text or traceback may enter a r
 or HTTP projection. Missing market facts that are legal under the case policy stay
 observation outcomes, not execution failures. Actual statistical method failures
 stay `partial`; they are retained in the report as failures.
+
+Bin Width and `tail_exclusion_pct` never enter the online semantic request or trigger
+execution, acquisition, status changes or report rewriting. The producer always
+publishes the complete formal result. Unsupported old results may be rejected or
+owned development Runs rebuilt under the root pre-production retention policy;
+no compatibility store, automatic cleanup or migration framework is required.
+WP1 performs no cleanup. Existing ownership, integrity and safe-failure rules remain.
 
 ## Runtime storage and retention
 

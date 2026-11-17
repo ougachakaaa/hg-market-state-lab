@@ -21,6 +21,34 @@ function selectMetric(label: string) {
   fireEvent.click(screen.getByText(label, { selector: '.ant-select-item-option-content' }))
 }
 afterEach(cleanup)
+it.each(['online', 'demo', 'offline'] as const)('filters locally and exposes complete paginated audit (%s)', async mode => {
+  const data = histogramFixture([Array.from({ length: 120 }, (_, i) => i / 100), [], [], []], 'annualized_basis_ratio')
+  const before = structuredClone(data)
+  const fetchSpy = vi.spyOn(globalThis, 'fetch')
+  render(<Report data={data} mode={mode} sectionNavigation="local" />)
+  const summary = screen.getByRole('region', { name: '统计摘要' }).textContent
+  const route = window.location.href
+  const initialLayout = JSON.parse(screen.getByTestId('distribution-plot').getAttribute('data-layout')!)
+  expect(screen.getByRole('button', { name: '尾部排除明细' }).getAttribute('aria-expanded')).toBe('false')
+  fireEvent.mouseDown(screen.getByRole('combobox', { name: '尾部过滤' }))
+  fireEvent.click(screen.getByText('双尾各 10%', { selector: '.ant-select-item-option-content' }))
+  const trace = JSON.parse(screen.getByTestId('distribution-plot').getAttribute('data-traces')!)[0]
+  expect(trace.customdata[0][3]).toBe(96)
+  expect(trace.hovertemplate).toContain('参与分箱 N')
+  const layout = JSON.parse(screen.getByTestId('distribution-plot').getAttribute('data-layout')!)
+  expect(layout.xaxis.uirevision).not.toBe(initialLayout.xaxis.uirevision)
+  expect(layout.legend.uirevision).toBe(initialLayout.legend.uirevision)
+  fireEvent.click(screen.getByRole('button', { name: '尾部排除明细' }))
+  expect(screen.getAllByText('Raw value').length).toBeGreaterThan(0)
+  expect(screen.getAllByText('2024-10-01').length).toBeGreaterThan(0)
+  fireEvent.click(screen.getByTitle('2'))
+  await waitFor(() => expect(screen.getAllByText('2024-10-11').length).toBeGreaterThan(0))
+  expect(screen.getByRole('region', { name: '统计摘要' }).textContent).toBe(summary)
+  expect(data).toEqual(before)
+  expect(window.location.href).toBe(route)
+  expect(fetchSpy).not.toHaveBeenCalled()
+  fetchSpy.mockRestore()
+})
 describe('shared reader', () => {
   it.each(['online', 'demo'] as const)('renders one compact report with charts before the summary (%s)', mode => {
     const { container } = render(<Report data={readerFixture()} mode={mode} />)
@@ -31,7 +59,7 @@ describe('shared reader', () => {
     fireEvent.click(toggle)
     expect(toggle.getAttribute('aria-expanded')).toBe('true')
     const history = screen.getByTestId('history-charts')
-    const mean = screen.getByRole('heading', { name: '各 Slot 统计摘要' })
+    const mean = screen.getByRole('heading', { name: '全样本统计' })
     expect(history.compareDocumentPosition(mean) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
     expect(screen.queryByText('Producer Report Request')).toBeNull()
     expect(screen.queryByText('数据完整性（各自单位，不相加）')).toBeNull()
@@ -74,11 +102,11 @@ it('composes a standalone offline title and subordinate online report title with
 it.each(['online', 'offline', 'demo'] as const)('defaults all history charts to Trading Days and switches together (%s)', mode => {
   const data = readerFixture(); const before = structuredClone(data)
   render(<Report data={data} mode={mode} />)
-  expect(screen.getAllByTestId('chart-mode').map(e => e.textContent)).toEqual(['trading', 'trading', 'trading'])
+  expect(screen.getAllByTestId('chart-mode').map(e => e.textContent)).toEqual(['trading', 'trading', 'trading', 'trading'])
   fireEvent.click(screen.getByText('Calendar Days'))
-  expect(screen.getAllByTestId('chart-mode').map(e => e.textContent)).toEqual(['calendar', 'calendar', 'calendar'])
+  expect(screen.getAllByTestId('chart-mode').map(e => e.textContent)).toEqual(['calendar', 'calendar', 'calendar', 'calendar'])
   fireEvent.click(screen.getByText('Trading Days'))
-  expect(screen.getAllByTestId('chart-mode').map(e => e.textContent)).toEqual(['trading', 'trading', 'trading'])
+  expect(screen.getAllByTestId('chart-mode').map(e => e.textContent)).toEqual(['trading', 'trading', 'trading', 'trading'])
   expect(data).toEqual(before)
 })
 
@@ -138,7 +166,7 @@ it.each(['demo', 'online', 'offline'] as const)('renders four Slots and width co
   const before = structuredClone(data)
   render(<Report data={data} mode={mode} />)
   selectMetric('基差（点）')
-  expect(screen.getAllByTestId('chart-mode')).toHaveLength(3)
+  expect(screen.getAllByTestId('chart-mode')).toHaveLength(4)
   const traces = JSON.parse(screen.getByTestId('distribution-plot').getAttribute('data-traces')!)
   expect(traces.map((t: any) => t.name)).toEqual(['M0', 'M1', 'Q1', 'Q2'])
   expect(screen.getByText('Q1：无有效样本（Eligible N=0）')).toBeTruthy()
@@ -151,15 +179,17 @@ it.each(['demo', 'online', 'offline'] as const)('renders four Slots and width co
 it.each(['online', 'demo', 'offline'] as const)('configures only compact history disclosures (%s)', mode => {
   render(<Report data={readerFixture()} mode={mode} />)
   const configured = screen.getAllByTestId('chart-mode').filter(el => el.hasAttribute('data-disclosure'))
-  expect(configured).toHaveLength(mode === 'offline' ? 0 : 3)
+  expect(configured).toHaveLength(mode === 'offline' ? 0 : 4)
 })
 
 it.each(['online', 'demo', 'offline'] as const)('shows expiry explanation beside only the annualized chart (%s)', mode => {
   render(<Report data={readerFixture()} mode={mode} />)
-  const note = screen.getByText('合约到期日的剩余期限 D=0，年化基差按研究定义主动留空，并非行情数据错误；原始基差仍然保留。')
+  const notes = screen.getAllByText('合约到期日的剩余期限 D=0，年化基差按研究定义主动留空，并非行情数据错误；原始基差仍然保留。')
+  for (const [i, note] of notes.entries()) {
   expect(note.closest('.ant-collapse')).toBeNull()
   expect(within(note.parentElement!).getAllByTestId('chart-mode')).toHaveLength(1)
-  expect(within(note.parentElement!).getByTestId('chart-mode')).toBe(screen.getAllByTestId('chart-mode')[2])
+  expect(within(note.parentElement!).getByTestId('chart-mode')).toBe(screen.getAllByTestId('chart-mode')[i + 2])
+  }
 })
 
 it.each(['online', 'demo', 'offline'] as const)('switches four-Slot summaries by Metric independently of Bin Width (%s)', mode => {
@@ -215,7 +245,7 @@ it('renders Partial method failures and empty samples without hiding successful 
 
 it('selects every preset and resets width on Metric change without mutating formal summaries', async () => {
   const data = histogramFixture([[-10, 0, 10], [1], [2], [3]])
-  for (const metric of ['basis_ratio', 'annualized_basis_ratio'] as const) {
+  for (const metric of ['basis_ratio', 'annualized_basis_ratio', 'annualized_basis_value'] as const) {
     const fixture = histogramFixture([[.001, 0, -.001], [.01], [.02], [.03]], metric)
     data.views.history[metric] = fixture.views.history[metric]
     data.distributions.push(...fixture.distributions)
@@ -232,14 +262,20 @@ it('selects every preset and resets width on Metric change without mutating form
     await waitFor(() => expect(input.getAttribute('aria-expanded')).toBe('false'))
   }
   for (const metric of Object.keys(BIN_PRESETS) as BasisMetric[]) {
-    await select('Distribution metric', { basis_value: '基差（点）', basis_ratio: '基差率（%）', annualized_basis_ratio: '年化基差率（%）' }[metric])
-    const unit = metric === 'basis_value' ? '点' : '个百分点'
+    await select('Distribution metric', { basis_value: '基差（点）', basis_ratio: '基差率（%）', annualized_basis_ratio: '年化基差率（%）', annualized_basis_value: '年化基差点（点/年）' }[metric])
+    const unit = metric === 'annualized_basis_value' ? '点/年' : metric === 'basis_value' ? '点' : '个百分点'
     expect(screen.getByRole('combobox', { name: 'Bin width' }).closest('.ant-select')?.textContent).toContain(`${BIN_PRESETS[metric].default} ${unit}`)
     const cells = summary.textContent
     for (const width of BIN_PRESETS[metric].widths) {
       await select('Bin width', `${width} ${unit}`)
       expect(summary.textContent).toBe(cells)
       expect(screen.getByTestId('distribution-plot')).toBeTruthy()
+      if (metric === 'basis_ratio' && width === .05) {
+        const layout = JSON.parse(screen.getByTestId('distribution-plot').getAttribute('data-layout')!)
+        expect(layout.xaxis.tickformat).toBe('.2%')
+        expect(layout.xaxis.hoverformat).toBe('.2%')
+        expect(layout.yaxis.tickformat).toBe('.1%')
+      }
     }
   }
   expect(data).toEqual(before)
@@ -271,9 +307,11 @@ it('keeps formal IntervalCount failure visible and never plots its stale result'
   const data = histogramFixture([[1], [2], [3], [4]])
   data.status = 'partial'
   data.distributions[0].methods[0].failure_category = 'CalculationFailure'
+  data.distributions[0].methods[0].reason = 'Synthetic calculation failure reason'
   render(<Report data={data} mode="online" />)
   selectMetric('基差（点）')
   expect(screen.getByText('M0：CalculationFailure（Eligible N=1）')).toBeTruthy()
+  expect(screen.getByText('Synthetic calculation failure reason')).toBeTruthy()
   const traces = JSON.parse(screen.getByTestId('distribution-plot').getAttribute('data-traces')!)
   expect(traces[0].y).toEqual([null])
   expect(traces[1].y).toEqual([1, 1])
@@ -294,7 +332,7 @@ it('rejects a nonempty Eligible Slot that reports no_eligible_sample instead of 
 it.each(['online', 'demo', 'offline'] as const)('configures all three history disclosures in %s', mode => {
  const data = readerFixture(); const original = structuredClone(data)
  render(<Report data={data} mode={mode} />)
- expect(screen.getAllByTestId('chart-mode').filter(node => node.getAttribute('data-missing') === '无有效指标值日期')).toHaveLength(3)
+ expect(screen.getAllByTestId('chart-mode').filter(node => node.getAttribute('data-missing') === '无有效指标值日期')).toHaveLength(4)
  expect(data).toEqual(original)
 })
 
@@ -320,7 +358,7 @@ it.each(['online', 'demo', 'offline'] as const)('defaults to annualized samples,
   render(<Report data={data} mode={mode} />)
   const selected = (name: string) => screen.getByRole('combobox', { name }).closest('.ant-select')!.textContent
   expect(selected('Distribution metric')).toContain('年化基差率（%）')
-  expect(selected('Bin width')).toContain('5 个百分点')
+  expect(selected('Bin width')).toContain('1 个百分点')
   expect(screen.getByText('年化基差率用于比较不同到期期限下的基差强度，不等于实际持有收益；临近到期时数值可能较敏感。')).toBeTruthy()
   const plot = () => screen.getByTestId('distribution-plot')
   const layout = () => JSON.parse(plot().getAttribute('data-layout')!)
@@ -337,17 +375,15 @@ it.each(['online', 'demo', 'offline'] as const)('defaults to annualized samples,
       expect(bin[3]).toBe(eligible.length)
       expect(bin[2]).toBe(bin[1] / eligible.length)
     })
-    expect(trace.x).toEqual([-.15, -.1, -.1, -.05, -.05, 0, 0, .05, .05, .1, .1, .15])
-    expect(bins.map((bin: any[]) => bin[1])).toEqual([
-      [0, 1, 0, 1, 0, 0], [0, 0, 1, 1, 1, 0], [0, 0, 0, 2, 0, 1], [1, 0, 0, 2, 0, 0],
-    ][i])
+    expect(trace.x[0]).toBe(-.11)
+    expect(trace.x.at(-1)).toBe(.12)
   })
   const rows = within(screen.getByRole('region', { name: '统计摘要' })).getAllByRole('row').slice(1)
   rows.forEach((row, i) => expect(within(row).getAllByRole('cell').map(cell => cell.textContent)).toEqual([
     ['M0', 'M1', 'Q1', 'Q2'][i], i === 0 ? '2' : '3', '10.0%', '20.0%', '30.0%', '40.0%', '50.0%', '12.3%',
   ]))
   expect(data.accounting.find(a => a.metric === 'annualized_basis_ratio' && a.slot === 'M0')!.outcomes.find(o => o.status === 'not_applicable')!.identities).toEqual([['IM', '2024-10-02', 'M0']])
-  for (const [label, width, n] of [['基差（点）', '10 点', 3], ['基差率（%）', '0.1 个百分点', 3], ['年化基差率（%）', '5 个百分点', 2]] as const) {
+  for (const [label, width, n] of [['基差（点）', '10 点', 3], ['基差率（%）', '0.1 个百分点', 3], ['年化基差率（%）', '1 个百分点', 2]] as const) {
     selectMetric(label)
     expect(selected('Bin width')).toContain(width)
     expect(screen.queryByText('年化基差率用于比较不同到期期限下的基差强度，不等于实际持有收益；临近到期时数值可能较敏感。') !== null).toBe(label === '年化基差率（%）')

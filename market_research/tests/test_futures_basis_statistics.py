@@ -36,7 +36,12 @@ def request(metric="basis_value", slot="M0", start=DAY, end=AFTER):
         end,
         stats.QuantileSpec([0, 0.5, 1]),
         stats.IntervalCountSpec(
-            [-100, 0, 10, 100], "index_points" if metric == "basis_value" else "decimal_ratio"
+            [-100, 0, 10, 100],
+            "index_points"
+            if metric == "basis_value"
+            else "index_points_per_year"
+            if metric == "annualized_basis_value"
+            else "decimal_ratio",
         ),
     )
 
@@ -55,7 +60,7 @@ def test_distribution_exact_binding_and_original_result(metric):
     )
     assert result.binding == expected
     assert result.source is original and result.request is req
-    assert result.count("eligible") == (1 if metric == "annualized_basis_ratio" else 2)
+    assert result.count("eligible") == (1 if metric.startswith("annualized_basis_") else 2)
     assert compute.call_args_list[0].args[0].values == tuple(
         r.outcome(metric).value for r in expected
     )
@@ -69,7 +74,7 @@ def test_distribution_exact_binding_and_original_result(metric):
     assert sum(
         b.frequency for b in hist.bins
     ) + hist.underflow_frequency + hist.overflow_frequency == pytest.approx(1)
-    assert result.count("not_applicable") == (1 if metric == "annualized_basis_ratio" else 0)
+    assert result.count("not_applicable") == (1 if metric.startswith("annualized_basis_") else 0)
 
 
 @pytest.mark.parametrize("pair", PAIRS)

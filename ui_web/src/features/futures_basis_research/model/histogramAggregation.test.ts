@@ -1,5 +1,4 @@
 import { describe, expect, it } from 'vitest'
-import bundle from '../../../../demo/bundles/basis.json'
 import { BIN_PRESETS, histogramAggregation, type BasisMetric, type HistogramProjection } from './histogramAggregation'
 import { histogramFixture } from './histogramAggregation.fixture'
 import type { ReportData } from '../report/types'
@@ -48,12 +47,12 @@ describe('presentation-only histogram', () => {
     const r = ready(histogramAggregation(histogramFixture([[.001 - Number.EPSILON * .001, .001, .001 + Number.EPSILON * .001, .002]], 'basis_ratio'), 'basis_ratio', .1))
     expect(r.slots[0].bins.map(b => b.count)).toEqual([1, 3]); conserved(r)
   })
-  it.each(Object.keys(BIN_PRESETS) as BasisMetric[])('conserves real Bundle %s for every width deterministically without mutation', metric => {
-    const report = structuredClone(bundle.result) as ReportData
+  it.each(Object.keys(BIN_PRESETS) as BasisMetric[])('conserves synthetic V2 population %s for every width deterministically without mutation', metric => {
+    const report = histogramFixture([[-.001, 0, .001], [.002], [0, 0], []], metric)
     const before = structuredClone(report)
     for (const width of BIN_PRESETS[metric].widths) {
       const r = ready(histogramAggregation(report, metric, width)); conserved(r)
-      expect(r.slots.map(s => s.n)).toEqual(metric === 'annualized_basis_ratio' ? [140, 147, 147, 147] : [147, 147, 147, 147])
+      expect(r.slots.map(s => s.n)).toEqual([3, 1, 2, 0])
       expect(histogramAggregation(report, metric, width)).toEqual(r)
     }
     expect(report).toEqual(before)
@@ -113,4 +112,17 @@ describe('presentation-only histogram', () => {
   it.each([1e10, Number.MAX_VALUE])('explicitly refuses excessive range/unsafe edges %s', max => {
     expect(histogramAggregation(histogramFixture([[0, max]]), 'basis_value', 5).status).toBe('capacity')
   })
+})
+
+
+it.each(Object.keys(BIN_PRESETS) as BasisMetric[])('uses exact rational shared edges for every %s preset', metric => {
+  for (const width of BIN_PRESETS[metric].widths) {
+    const raw = width / BIN_PRESETS[metric].denominator
+    const report = histogramFixture([[-raw, -0, 0, raw, raw], [0], [raw], []], metric)
+    const result = ready(histogramAggregation(report, metric, width))
+    expect(result.edges).toEqual([-raw, 0, raw])
+    expect(result.slots[0].bins.map(b => b.count)).toEqual([1, 4])
+    result.slots.filter(s => s.n).forEach(s => expect(s.bins.map(b => [b.left, b.right])).toEqual([[-raw, 0], [0, raw]]))
+    conserved(result)
+  }
 })

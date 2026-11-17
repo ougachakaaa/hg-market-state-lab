@@ -3,8 +3,9 @@ import { BIN_PRESETS, SLOTS, type BasisMetric } from './histogramAggregation'
 
 export function histogramFixture(samples: (number | null)[][], metric: BasisMetric = 'basis_value') {
   const report = readerFixture()
+  report.distributions = []
   const n = Math.max(0, ...samples.map(s => s.length))
-  const dates = Array.from({ length: n }, (_, i) => `2024-10-${String(i + 1).padStart(2, '0')}`)
+  const dates = Array.from({ length: n }, (_, i) => new Date(Date.UTC(2024, 9, 1 + i)).toISOString().slice(0, 10))
   report.candidate_dates = dates
   const unit = BIN_PRESETS[metric].unit
   const keys = (slot: string, selected: string[]) => selected.map(date => ['IM', date, slot])

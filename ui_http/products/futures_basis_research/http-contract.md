@@ -20,6 +20,20 @@ This is an independent product. It does not modify the semantics of
 Research Explorer. R01-A is not admitted to the Descriptive Research capability,
 Plan/Batch or Publication paths.
 
+## Distribution V2 target (WP2 pending)
+
+This document encodes the accepted V2 target, not current runtime readiness. WP2
+updates the profile literal, fourth Histogram Specification and reader/definition
+identities shown below, together with OpenAPI and the feature-owned generated types.
+Financial formulas remain solely Research-owned. The HTTP route/operation identities,
+three-field submit body, lifecycle, authentication, size limits and error mappings
+stay unchanged. No Bin Width or `tail_exclusion_pct` is accepted as HTTP input.
+The profile and Reader payload are distinct version axes from HTTP V1 transport.
+V1 request/result identities are never silently interpreted as V2; no legacy adapter
+is required. Immutable profile specifications belong only to
+[Online application](../../../market_research/descriptive/cases/futures_basis/ONLINE_APPLICATION.md).
+WP1 changes no executable DTO, OpenAPI or generated artifact.
+
 ## Operations
 
 | Method / path | Stable operationId | Success |
@@ -55,7 +69,7 @@ Research, acquires facts or recomputes statistics.
 - Research validates product membership, date order, the Asia/Shanghai future limit
   and the `1,096`-inclusive-day maximum before any run creation or I/O. HTTP maps
   the classified failure and never runs a parallel semantic validator.
-- The server selects the immutable profile `r01a_standard_v1`; the client cannot
+- The server selects the immutable profile `r01a_standard_v2`; the client cannot
   select or override quantiles, histogram edges, methods, strategy parameters or
   backtest behavior.
 
@@ -80,7 +94,7 @@ end_date:     YYYY-MM-DD
     "product_code": "IM",
     "start_date": "2024-01-01",
     "end_date": "2026-10-30",
-    "analysis_profile": "r01a_standard_v1"
+    "analysis_profile": "r01a_standard_v2"
   },
   "created_at": "2026-11-06T13:44:29Z"
 }
@@ -99,7 +113,7 @@ already observe `RUNNING` or a terminal state. There is no `Location` requiremen
     "product_code": "IM",
     "start_date": "2024-01-01",
     "end_date": "2026-10-30",
-    "analysis_profile": "r01a_standard_v1"
+    "analysis_profile": "r01a_standard_v2"
   },
   "status": "COMPLETED",
   "created_at": "2026-11-06T13:44:29Z",
@@ -147,11 +161,11 @@ fixed safe text. HTTP never rewrites a Research classification.
     "product_code": "IM",
     "start_date": "2024-01-01",
     "end_date": "2026-10-30",
-    "analysis_profile": "r01a_standard_v1"
+    "analysis_profile": "r01a_standard_v2"
   },
   "result_status": "complete",
   "data": {
-    "profile": "futures_basis_report_evidence_v1",
+    "profile": "futures_basis_report_evidence_v2",
     "status": "complete",
     "request": {
       "observation": {
@@ -164,11 +178,12 @@ fixed safe text. HTTP never rewrites a Research classification.
       "histograms": [
         { "method": "interval_count", "unit": "index_points", "edges": [-1000, -500, -100, 0, 100, 500, 1000] },
         { "method": "interval_count", "unit": "decimal_ratio", "edges": [-1, -0.1, -0.01, 0, 0.01, 0.1, 1] },
-        { "method": "interval_count", "unit": "decimal_ratio", "edges": [-10, -1, -0.1, 0, 0.1, 1, 10] }
+        { "method": "interval_count", "unit": "decimal_ratio", "edges": [-10, -1, -0.1, 0, 0.1, 1, 10] },
+        { "method": "interval_count", "unit": "index_points_per_year", "edges": [-1000, -500, -100, 0, 100, 500, 1000] }
       ]
     },
     "fingerprint": "…",
-    "definition_version": "futures_basis_definition_v1",
+    "definition_version": "futures_basis_definition_v2",
     "coverage": {},
     "accounting": [],
     "candidate_dates": [],
@@ -184,7 +199,7 @@ fixed safe text. HTTP never rewrites a Research classification.
 }
 ```
 
-`data` is the complete existing `futures_basis_report_evidence_v1` reader
+`data` is the complete V2 target `futures_basis_report_evidence_v2` reader
 projection owned by [Evidence](../../../market_research/descriptive/cases/futures_basis/EVIDENCE.md)
 and [Delivery](../../../market_research/descriptive/cases/futures_basis/DELIVERY.md).
 It is a versioned producer payload, not a second financial DTO or an HTTP-only
@@ -193,7 +208,7 @@ schema. The envelope is typed; the frontend owns the reader types and validates
 rendering.
 
 `data.request` is the formal `ReportRequest` projection: `observation`, the
-explicit quantile specification and the three ordered histogram specifications.
+explicit quantile specification and the four ordered histogram specifications.
 Top-level `request` is the run identity. The server verifies
 `data.request.observation` matches the run request, `data.status == result_status`,
 and the reader profile is exact. `data.views.history` contains V2 date-series

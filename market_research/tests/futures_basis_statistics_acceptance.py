@@ -29,6 +29,24 @@ from market_research.descriptive.cases.futures_basis.statistics import METRICS, 
 from market_statistics import IntervalCountSpec, MeanResult, QuantileResult, QuantileSpec
 
 
+def metric_specs(metric: str) -> tuple[QuantileSpec, IntervalCountSpec]:
+    """Explicit acceptance specifications; no statistical defaults."""
+    edges: dict[str, list[float]] = {
+        "basis_value": [-1000, -500, -100, 0, 100, 500, 1000],
+        "basis_ratio": [-1, -0.1, -0.01, 0, 0.01, 0.1, 1],
+        "annualized_basis_ratio": [-10, -1, -0.1, 0, 0.1, 1, 10],
+        "annualized_basis_value": [-1000, -500, -100, 0, 100, 500, 1000],
+    }
+    unit = (
+        "index_points"
+        if metric == "basis_value"
+        else "index_points_per_year"
+        if metric == "annualized_basis_value"
+        else "decimal_ratio"
+    )
+    return QuantileSpec([0, 0.25, 0.5, 0.75, 1]), IntervalCountSpec(edges[metric], unit)
+
+
 def run(wp3: Path, output: Path) -> dict:
     output.mkdir(parents=True, exist_ok=False)
     canonical = (wp3 / "inputs.canonical.json").read_bytes()
@@ -46,17 +64,8 @@ def run(wp3: Path, output: Path) -> dict:
         assert prepared.input_fingerprint == fingerprint
         source = construct_observations(REQUEST, prepared)
     distributions, comparisons = [], []
-    edges: dict[str, list[float]] = {
-        "basis_value": [-1000, -500, -100, 0, 100, 500, 1000],
-        "basis_ratio": [-1, -0.1, -0.01, 0, 0.01, 0.1, 1],
-        "annualized_basis_ratio": [-10, -1, -0.1, 0, 0.1, 1, 10],
-    }
     for metric in METRICS:
-        unit = "index_points" if metric == "basis_value" else "decimal_ratio"
-        quantile, histogram = (
-            QuantileSpec([0, 0.25, 0.5, 0.75, 1]),
-            IntervalCountSpec(edges[metric], unit),
-        )
+        quantile, histogram = metric_specs(metric)
         for slot in SLOTS:
             req = DistributionRequest(
                 f"{metric}-{slot}",

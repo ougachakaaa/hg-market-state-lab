@@ -34,6 +34,17 @@ resolver and transition detection are implemented under [Slot resolution](SLOT_R
 Preparation alone performs upstream I/O; WP3 implements public preparation and pure
 Contract-day/Slot-day observations under [Inputs](INPUTS.md) and [Observation](OBSERVATION.md).
 
+## Distribution V2 authority target
+
+WP1 encodes the accepted four-metric extension; implementation remains pending.
+The case identity stays `futures_basis_v1`. Formula/definition version belongs to
+[Definition](DEFINITION.md), analysis-profile version to
+[Online application](ONLINE_APPLICATION.md), and scientific reader/evidence version
+to [Evidence](EVIDENCE.md). Presentation filtering is separately owned by the
+[feature distribution contract](../../../../ui_web/src/features/futures_basis_research/DISTRIBUTION.md),
+never by Research eligibility or Statistics methods. Current delivery and the
+WP2-WP5 handoff enter [Roadmap](ROADMAP.md#distribution-v2-handoff).
+
 ## Authority navigation
 
 | Concern | Canonical owner |
@@ -74,7 +85,7 @@ Existing Snapshot/Workbench semantics stay frozen; see [case limitations](ROADMA
 Status: financial/observation/statistics, offline evidence/report and online
 Python/HTTP/Web paths are implemented. Current scope and unverified platforms
 enter [Roadmap](ROADMAP.md); reproducibility enters [Evidence](EVIDENCE.md).
-The offline scientific contracts remain unchanged. No new CLI,
+The Distribution V2 scientific target is explicitly versioned above; its implementation is pending. No new CLI,
 Research database, publication lifecycle or Modeling import permission is introduced;
 the online run store is case-specific disposable runtime state, not Publication or a
 generic Research execution identity.

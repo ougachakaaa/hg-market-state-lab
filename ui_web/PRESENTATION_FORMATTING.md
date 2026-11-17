@@ -22,7 +22,7 @@ contract、原始数值、坐标、排序、null/zero/absence 语义、identity 
 
 ## 2. 比例
 
-所有用户可见比例显示为百分数，固定 1 位小数，并保留负号：
+所有用户可见比例显示为百分数，默认固定 1 位小数，并保留负号；仅第 5 节明示例外可改变精度：
 
 ```text
 0.15342   -> 15.3%
@@ -33,7 +33,7 @@ contract、原始数值、坐标、排序、null/zero/absence 语义、identity 
 ```
 
 适用范围包括 `decimal_ratio`、probability、frequency、coverage ratio 与
-percentile rank。禁止继续以 `0.15342`、`15.342%` 或 6 位小数等形式显示这些值。
+percentile rank。除第 5 节边界精度例外外，禁止继续以 `0.15342`、`15.342%` 或 6 位小数等形式显示这些值。
 `-0` 与四舍五入后的负零必须归一为 `0.0%`。
 
 ## 3. 非整数数值
@@ -64,10 +64,19 @@ delta days、sessions、roll count、jobs/analyses counts、bytes 与同类计�
 - category identity 必须与显示 label 分离。多个 bin 的 rounded label 相同时，
   仍须用独立 raw category identity / `tickvals` 保留每个真实 bin 和 bar。
 
-严格 1 位小数百分比意味着极近的区间边界可能显示相同文本；这只能是 label
+除第 5 节窄例外外，严格 1 位小数百分比意味着极近的区间边界可能显示相同文本；这只能是 label
 重合，不能变成数据合并、去重或重新分箱。
 
 ## 5. 例外
+
+Futures Basis Histogram 的分箱边界文本、对应边界 hover 和 X-axis tick labels
+允许使用足以区分相邻区间的显示精度。0.05 个百分点宽度采用 2 位百分数小数
+（如 0.05%、0.10%）；其余当前预设保持 1 位。该窄例外只服务该 feature 的
+展示性分箱边界，不扩大到常规金融比例、Mean/Quantile、Frequency、实际排除比例
+或其他 feature。负零仍归一为相应精度的零。只改变文本，不改变 raw edges、数值、
+排序或 category identity，也不得因格式化重新分箱。该例外属于已确认的 Distribution
+V2 行为，已由 WP3 实现；入口见
+[Distribution presentation](src/features/futures_basis_research/DISTRIBUTION.md)。
 
 以下内容不使用显示格式化，继续保留原始值或原始文本：
 

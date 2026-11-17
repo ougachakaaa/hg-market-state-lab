@@ -157,3 +157,24 @@ Explicit null or a malformed present reference is invalid. The same feature vali
 is used by Build and runtime; do not invent a competing historical schema or inject
 reference values. Details belong to [Calendar Spread integration](CALENDAR_SPREAD.md#dd-02-additive-reference-compatibility-target).
 WP-00 changes no Bundle bytes, Manifest entries or generated contract artifacts.
+
+## Futures Basis Distribution V2 dependency
+
+The accepted Research [V2 profile](../../market_research/descriptive/cases/futures_basis/ONLINE_APPLICATION.md#distribution-v2-status)
+and [reader identity](../../market_research/descriptive/cases/futures_basis/EVIDENCE.md#version-ownership-and-rollout)
+require WP5 to recapture the `basis` Bundle from the complete formal HTTP result,
+with the fourth metric, explicit `index_points_per_year`, four History Views,
+Accounting and formal analyses. Collector/Build/feature validators must agree on the
+new immutable request profile and reader/definition identities. Old V1 bytes must
+not be relabeled or supplemented by browser financial calculations.
+
+Replace the current Basis capture and update its SHA-256 in the sole active
+`demo/bundles/manifest.json`; do not create a second dataset/Manifest or legacy
+adapter. The registry Result Contract reference, `demo_bundle_v1` and
+`demo_manifest_v1` structural formats remain unchanged. Preserve existing exact-byte
+and complete-result admission, truthful source disclosure and the investment warning.
+Tail controls are local Presentation state, never stored as filtered formal results
+in a Bundle or sent during capture. This dependency is not satisfied by documentation
+alone: existing committed Basis data remains V1 until WP5 recapture. WP1 performs
+no acquisition, Bundle/Manifest rewrite, build or release. Future publication requires
+its own authorized workflow and successful admission of the current contract/data.

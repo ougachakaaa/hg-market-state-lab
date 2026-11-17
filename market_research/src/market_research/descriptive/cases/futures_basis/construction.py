@@ -123,6 +123,7 @@ def _contract(
     value = ObservationOutcome(status, unit="index_points", reason=reason)
     ratio = ObservationOutcome(status, unit="decimal_ratio", reason=reason)
     annualized = ratio
+    annualized_value = ObservationOutcome(status, unit="index_points_per_year", reason=reason)
     if status == "eligible":
         spot = cast(float, underlying)
         try:
@@ -135,9 +136,17 @@ def _contract(
                 annual = (365 / dte) * log(quotient)
                 require(isfinite(annual), "Nonfinite log annualization")
                 annualized = ObservationOutcome("eligible", annual, "decimal_ratio")
+                point_scale = spot * (365 / dte)
+                require(isfinite(point_scale), "Nonfinite annualized point scale")
+                points = point_scale * log(quotient)
+                require(isfinite(points), "Nonfinite annualized basis value")
+                annualized_value = ObservationOutcome("eligible", points, "index_points_per_year")
             else:
                 annualized = ObservationOutcome(
                     "not_applicable", unit="decimal_ratio", reason="expiry_day"
+                )
+                annualized_value = ObservationOutcome(
+                    "not_applicable", unit="index_points_per_year", reason="expiry_day"
                 )
         except (ValueError, OverflowError, ZeroDivisionError) as exc:
             raise ObservationConstructionError(
@@ -158,6 +167,7 @@ def _contract(
         value,
         ratio,
         annualized,
+        annualized_value,
         state,
         tuple(issues),
         fut_ref,

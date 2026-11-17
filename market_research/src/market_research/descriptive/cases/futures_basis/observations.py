@@ -8,10 +8,18 @@ from .inputs import PreparedFuturesBasisInputs
 from .models import ContractMetadata, DailySlotResolution, Slot, SlotMapping, TransitionResult
 
 Outcome = Literal["eligible", "unavailable", "excluded", "not_applicable"]
-Metric = Literal["base", "basis_value", "basis_ratio", "annualized_basis_ratio"]
+Metric = Literal[
+    "base", "basis_value", "basis_ratio", "annualized_basis_ratio", "annualized_basis_value"
+]
 SlotDayKey = tuple[str, date, Slot]
 OUTCOMES: tuple[Outcome, ...] = ("eligible", "unavailable", "excluded", "not_applicable")
-METRICS: tuple[Metric, ...] = ("base", "basis_value", "basis_ratio", "annualized_basis_ratio")
+METRICS: tuple[Metric, ...] = (
+    "base",
+    "basis_value",
+    "basis_ratio",
+    "annualized_basis_ratio",
+    "annualized_basis_value",
+)
 
 
 @dataclass(frozen=True, slots=True)
@@ -48,6 +56,7 @@ class ContractDayObservation:
     basis_value: ObservationOutcome
     basis_ratio: ObservationOutcome
     annualized_basis_ratio: ObservationOutcome
+    annualized_basis_value: ObservationOutcome
     basis_state: Literal["Premium", "Parity", "Discount"] | None
     issues: tuple[SourceIssue, ...]
     futures_source: SourceReference
@@ -88,6 +97,8 @@ class SlotDayObservation:
             if metric == "base"
             else "index_points"
             if metric == "basis_value"
+            else "index_points_per_year"
+            if metric == "annualized_basis_value"
             else "decimal_ratio"
         )
         return ObservationOutcome("not_applicable", unit=unit, reason="no_active_contract")

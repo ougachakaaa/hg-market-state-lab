@@ -27,7 +27,7 @@ class FuturesBasisImmutableRequest(DTO):
     product_code: Product
     start_date: date
     end_date: date
-    analysis_profile: Literal["r01a_standard_v1"]
+    analysis_profile: Literal["r01a_standard_v2"]
 
 
 class FuturesBasisFailure(DTO):
@@ -80,7 +80,7 @@ class FuturesBasisReportResponse(DTO):
     request: FuturesBasisImmutableRequest
     result_status: ScientificStatus
     data: dict[str, JsonValue] = Field(
-        description="Complete Research-owned futures_basis_report_evidence_v1 reader projection."
+        description="Complete Research-owned futures_basis_report_evidence_v2 reader projection."
     )
 
 

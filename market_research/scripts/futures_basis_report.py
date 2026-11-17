@@ -103,7 +103,12 @@ def main() -> int:
     parser.add_argument("--start", type=date.fromisoformat, required=True)
     parser.add_argument("--end", type=date.fromisoformat, required=True)
     parser.add_argument("--quantile-points", type=json.loads, required=True)
-    for metric in ("basis-value", "basis-ratio", "annualized-basis-ratio"):
+    for metric in (
+        "basis-value",
+        "basis-ratio",
+        "annualized-basis-ratio",
+        "annualized-basis-value",
+    ):
         parser.add_argument(f"--{metric}-edges", type=json.loads, required=True)
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--inputs", type=Path, help="保留的 inputs.canonical.json；禁止行情 I/O")
@@ -115,6 +120,7 @@ def main() -> int:
             IntervalCountSpec(args.basis_value_edges, "index_points"),
             IntervalCountSpec(args.basis_ratio_edges, "decimal_ratio"),
             IntervalCountSpec(args.annualized_basis_ratio_edges, "decimal_ratio"),
+            IntervalCountSpec(args.annualized_basis_value_edges, "index_points_per_year"),
         ),
     )
     request.validate()

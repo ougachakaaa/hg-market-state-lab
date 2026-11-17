@@ -2,22 +2,72 @@ import type { ReportData } from '../report/types'
 
 export const SLOTS = ['M0', 'M1', 'Q1', 'Q2'] as const
 export const BIN_PRESETS = {
-  basis_value: { default: 10, widths: [5, 10, 20, 50], unit: 'index_points', denominator: 1 },
+  basis_value: { default: 10, widths: [2, 5, 10, 15, 20], unit: 'index_points', denominator: 1 },
   basis_ratio: { default: .1, widths: [.05, .1, .2, .5], unit: 'decimal_ratio', denominator: 100 },
-  annualized_basis_ratio: { default: 5, widths: [2.5, 5, 10, 20], unit: 'decimal_ratio', denominator: 100 },
+  annualized_basis_ratio: { default: 1, widths: [.5, 1, 2, 5, 10, 20], unit: 'decimal_ratio', denominator: 100 },
+  annualized_basis_value: { default: 10, widths: [2, 5, 10, 15, 20], unit: 'index_points_per_year', denominator: 1 },
 } as const
 export type BasisMetric = keyof typeof BIN_PRESETS
 export const MAX_DISPLAY_BINS = 2000
 export interface DisplayBin { left: number; right: number; rightInclusive: boolean; count: number; frequency: number }
 export interface SlotHistogram { slot: string; n: number; bins: DisplayBin[]; failure: string | null; layerIndex: number }
+export const TAIL_EXCLUSION_OPTIONS = [0, 1, 2, 5, 10] as const
+export type TailExclusionPct = typeof TAIL_EXCLUSION_OPTIONS[number]
+export interface OriginalSample {
+  product: string
+  date: string
+  slot: string
+  metric: BasisMetric
+  value: number
+  unit: string
+}
+export interface SlotSelection {
+  slot: string
+  original: OriginalSample[]
+  retained: OriginalSample[]
+  excluded: (OriginalSample & { direction: 'lower' | 'upper' })[]
+  lowerExcludedN: number
+  upperExcludedN: number
+  actualExcludedFraction: number | null
+  lowerCutoff: number | null
+  upperCutoff: number | null
+  retainedMin: number | null
+  retainedMax: number | null
+}
+
+function selectTails(original: OriginalSample[], slot: string, pct: TailExclusionPct): SlotSelection {
+  const sorted = original.map(sample => sample.value).sort((a, b) => a - b)
+  const k = Math.floor(original.length * pct / 100)
+  const lowerCutoff = k ? sorted[k] : null
+  const upperCutoff = k ? sorted[sorted.length - k - 1] : null
+  const retained: OriginalSample[] = []
+  const excluded: SlotSelection['excluded'] = []
+  for (const sample of original) {
+    if (lowerCutoff !== null && sample.value < lowerCutoff) excluded.push({ ...sample, direction: 'lower' })
+    else if (upperCutoff !== null && sample.value > upperCutoff) excluded.push({ ...sample, direction: 'upper' })
+    else retained.push(sample)
+  }
+  const lowerExcludedN = excluded.filter(sample => sample.direction === 'lower').length
+  const upperExcludedN = excluded.length - lowerExcludedN
+  return {
+    slot, original, retained, excluded, lowerExcludedN, upperExcludedN,
+    actualExcludedFraction: original.length ? excluded.length / original.length : null,
+    lowerCutoff, upperCutoff,
+    retainedMin: sorted.length ? sorted[lowerExcludedN] : null,
+    retainedMax: sorted.length ? sorted[sorted.length - upperExcludedN - 1] : null,
+  }
+}
+
 export type HistogramProjection =
-  | { status: 'ready'; edges: number[]; slots: SlotHistogram[] }
-  | { status: 'empty' | 'inconsistent' | 'capacity'; message: string }
+  | { status: 'ready'; edges: number[]; slots: SlotHistogram[]; selections: SlotSelection[] }
+  | { status: 'empty' | 'capacity'; message: string; selections: SlotSelection[] }
+  | { status: 'inconsistent'; message: string }
 
 /** Feature-local display aggregation. Original samples, report and formal results stay untouched. */
-export function histogramAggregation(report: ReportData, metric: BasisMetric, width: number): HistogramProjection {
+export function histogramAggregation(report: ReportData, metric: BasisMetric, width: number, tailExclusionPct: TailExclusionPct = 0): HistogramProjection {
   const preset = BIN_PRESETS[metric]
   if (!(preset.widths as readonly number[]).includes(width)) return { status: 'inconsistent', message: '展示数据不一致：不支持的分箱宽度。' }
+  if (!(TAIL_EXCLUSION_OPTIONS as readonly number[]).includes(tailExclusionPct)) return { status: 'inconsistent', message: '展示数据不一致：不支持的尾部过滤比例。' }
   try {
     const view = report.views.history[metric]
     if (view.version !== 2) throw new Error('历史 View 版本')
@@ -49,11 +99,13 @@ export function histogramAggregation(report: ReportData, metric: BasisMetric, wi
       same(unique(layer.data.map(p => p.x)), new Set(dates), slot)
       same(identities(distribution.candidates, slot), new Set(dates), slot)
       if (account.candidate_count !== dates.length) throw new Error(`${slot} 候选数`)
-      const values: number[] = []; const eligibleDates: string[] = []
+      const original: OriginalSample[] = []
+      const eligibleDates: string[] = []
       for (const point of layer.data) {
         if (point.y === null) continue
         if (typeof point.y !== 'number' || !Number.isFinite(point.y)) throw new Error(`${slot} 非有限数值`)
-        values.push(point.y); eligibleDates.push(point.x)
+        original.push({ product, date: point.x, slot, metric, value: point.y, unit: preset.unit })
+        eligibleDates.push(point.x)
       }
       const eligible = unique(eligibleDates)
       same(eligible, identities(distribution.binding, slot), slot)
@@ -69,7 +121,7 @@ export function histogramAggregation(report: ReportData, metric: BasisMetric, wi
       }
       same(unique(population), new Set(dates), slot)
       for (const method of distribution.methods) {
-        if (!method.failure_category && method.result && (method.result.method !== method.spec.method || method.result.sample_count !== values.length || method.result.unit !== preset.unit)) throw new Error(`${slot} Method Result`)
+        if (!method.failure_category && method.result && (method.result.method !== method.spec.method || method.result.sample_count !== original.length || method.result.unit !== preset.unit)) throw new Error(`${slot} Method Result`)
       }
       const intervals = distribution.methods.filter(m => m.spec.method === 'interval_count')
       if (intervals.length !== 1) throw new Error(`${slot} IntervalCount 缺失或重复`)
@@ -77,13 +129,16 @@ export function histogramAggregation(report: ReportData, metric: BasisMetric, wi
       // `no_eligible_sample` is only legal for an empty Eligible population. With samples
       // it contradicts the formal Method contract, so the whole Metric is rejected rather
       // than presenting a silently missing curve.
-      if (values.length && formal.failure_category === 'no_eligible_sample') throw new Error(`${slot} Eligible 样本与 no_eligible_sample 矛盾`)
-      if (values.length && !formal.failure_category && !formal.result) throw new Error(`${slot} IntervalCount Result 缺失`)
+      if (original.length && formal.failure_category === 'no_eligible_sample') throw new Error(`${slot} Eligible 样本与 no_eligible_sample 矛盾`)
+      if (original.length && !formal.failure_category && !formal.result) throw new Error(`${slot} IntervalCount Result 缺失`)
       // An empty finding is not a numerical failure; other formal failures stay explicit.
-      return { slot, values, failure: formal.failure_category === 'no_eligible_sample' ? null : formal.failure_category, layerIndex }
+      return { slot, original, failure: formal.failure_category === 'no_eligible_sample' ? null : formal.failure_category, layerIndex }
     })
-    const all = samples.flatMap(s => s.values)
-    if (!all.length) return { status: 'empty', message: '无有效样本（Eligible N=0）' }
+    // Select only after every Slot has passed full original-population validation.
+    const selections = samples.map(sample => selectTails(sample.original, sample.slot, tailExclusionPct))
+    const selectedSamples = samples.map((sample, index) => ({ ...sample, values: selections[index].retained.map(row => row.value) }))
+    const all = selectedSamples.flatMap(s => s.values)
+    if (!all.length) return { status: 'empty', selections, message: '无有效样本（Eligible N=0）' }
     let min = all[0]; let max = min
     for (const value of all) { min = Math.min(min, value); max = Math.max(max, value) }
     // Presets are rational decimal widths. Generate each edge independently instead
@@ -93,7 +148,7 @@ export function histogramAggregation(report: ReportData, metric: BasisMetric, wi
     const edge = (index: number) => index * numerator / denominator
     let first = Math.floor(min / (numerator / denominator))
     let last = Math.ceil(max / (numerator / denominator))
-    const capacity = (): HistogramProjection => ({ status: 'capacity', message: `分箱范围超出展示容量（最多 ${MAX_DISPLAY_BINS} 个 Bin），请选择更大的分箱宽度。` })
+    const capacity = (): HistogramProjection => ({ status: 'capacity', selections, message: `分箱范围超出展示容量（最多 ${MAX_DISPLAY_BINS} 个 Bin），请选择更大的分箱宽度。` })
     if (![first, last, first * numerator, last * numerator].every(Number.isSafeInteger)) return capacity()
     if (edge(first) > min) first--
     else if (edge(first + 1) <= min) first++
@@ -103,7 +158,7 @@ export function histogramAggregation(report: ReportData, metric: BasisMetric, wi
     if (last - first > MAX_DISPLAY_BINS || ![first * numerator, last * numerator].every(Number.isSafeInteger)) return capacity()
     const edges = Array.from({ length: last - first + 1 }, (_, i) => edge(first + i))
     if (edges[0] > min || edges.at(-1)! < max || edges.some((e, i) => !Number.isFinite(e) || (i > 0 && e <= edges[i - 1]))) return capacity()
-    const slots = samples.map(({ slot, values, failure, layerIndex }) => {
+    const slots = selectedSamples.map(({ slot, values, failure, layerIndex }) => {
       const counts = Array<number>(edges.length - 1).fill(0)
       for (const value of values) {
         // Upper bound: an interior edge belongs to the bin on its right.
@@ -114,7 +169,7 @@ export function histogramAggregation(report: ReportData, metric: BasisMetric, wi
       if (counts.reduce((a, b) => a + b, 0) !== values.length) throw new Error(`${slot} Count 不守恒`)
       return { slot, n: values.length, failure, layerIndex, bins: values.length ? counts.map((count, i) => ({ left: edges[i], right: edges[i + 1], rightInclusive: i === counts.length - 1, count, frequency: count / values.length })) : [] }
     })
-    return { status: 'ready', edges, slots }
+    return { status: 'ready', edges, slots, selections }
   } catch (error) {
     return { status: 'inconsistent', message: `展示数据不一致：${error instanceof Error ? error.message : '必要输入损坏'}。` }
   }

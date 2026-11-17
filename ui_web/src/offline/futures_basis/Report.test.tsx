@@ -15,7 +15,7 @@ vi.mock('../../shared/visualization', () => ({
 function fixture(): ReportData {
   const empty = { version: 2 as const, axes: [], layers: [], events: [], layout: { title: '' }, presentation: { show_legend: true, zoom: true, pan: true, reset: true } }
   return {
-    profile: 'futures_basis_report_evidence_v1', status: 'partial', fingerprint: 'retained-fingerprint', definition_version: 'futures_basis_definition_v1',
+    profile: 'futures_basis_report_evidence_v2', status: 'partial', fingerprint: 'retained-fingerprint', definition_version: 'futures_basis_definition_v2',
     summary: '<script>window.injected=true</script>', sources: 'retained source', formulas: ['producer formula'], limitations: ['producer limitation'],
     request: { observation: { product_code: 'IM', start_date: '2024-10-18', end_date: '2024-10-21' } }, candidate_dates: [], coverage: {}, accounting: [],
     distributions: [{ request: { analysis_id: 'basis_value-M0', metric: 'basis_value', slot: 'M0' }, candidates: [], binding: [], methods: [
@@ -24,14 +24,17 @@ function fixture(): ReportData {
     ] }],
     comparisons: [{ request: { analysis_id: 'pair', metric: 'basis_value', slots: ['M0', 'M1'] }, common_dates: [], dropped: [['retained-reference']], left_methods: [], right_methods: [], dropped_details: [{ date: '2024-10-18', left: { slot: 'M0', outcome: { status: 'not_applicable', reason: 'expiry_day' } }, right: { slot: 'M1', outcome: { status: 'eligible', reason: null } } }] }],
     persistence: [{ slot: 'M0', complete: [], censored: [{ slot: 'M0', start: '2024-10-18', end: '2024-10-21', observed_trading_sessions: 2, left_boundary: 'window', right_boundary: 'gap', transitions: [] }] }],
-    views: { history: { basis_value: empty, basis_ratio: empty, annualized_basis_ratio: empty }, histograms: {} },
+    views: { history: { basis_value: empty, basis_ratio: empty, annualized_basis_ratio: empty, annualized_basis_value: empty }, histograms: {} },
   }
 }
 
 describe('R01-A reader', () => {
   it('renders six sections, producer failures and empty samples without using a failed raw result', () => {
     const { container } = render(<Report data={fixture()} />)
+    fireEvent.mouseDown(screen.getByRole('combobox', { name: 'Distribution metric' }))
+    fireEvent.click(screen.getByText('基差（点）', { selector: '.ant-select-item-option-content' }))
     expect(container.querySelectorAll('[id^="section-"]')).toHaveLength(6)
+    fireEvent.click(screen.getByText('M0 正式统计方法'))
     expect(screen.getAllByText('CalculationFailure').length).toBeGreaterThan(0)
     expect(screen.getByText('no_eligible_sample')).toBeTruthy()
     expect(screen.queryByText('999')).toBeNull()
@@ -42,6 +45,8 @@ describe('R01-A reader', () => {
   })
   it('exposes common-date loss and censored run limits', () => {
     const { container } = render(<Report data={fixture()} />)
+    fireEvent.mouseDown(screen.getByRole('combobox', { name: 'Distribution metric' }))
+    fireEvent.click(screen.getByText('基差（点）', { selector: '.ant-select-item-option-content' }))
     fireEvent.click(container.querySelector('.ant-table-row-expand-icon')!)
     expect(screen.getByText('M0: not_applicable expiry_day')).toBeTruthy()
     expect(screen.getByText('共同日期：无')).toBeTruthy()

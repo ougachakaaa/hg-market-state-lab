@@ -11,29 +11,36 @@ confidence-interval or significance claim.
 | Output | Population and required interpretation |
 | --- | --- |
 | Basis distributions | Separately for `basis_value` and `basis_ratio`, one product/Slot/window; all and only that metric's Eligible days |
-| Annualized distribution | Same, for `annualized_basis_ratio`; report expiry-day Not Applicable separately and sensitivity near expiry |
+| Annualized distribution | Same, for `annualized_basis_ratio` and `annualized_basis_value`; report expiry-day Not Applicable separately and sensitivity near expiry |
 | Term structure comparison | All six unordered Slot pairs in M0/M1/Q1/Q2 order, separately for each metric, using common Eligible dates |
 | Slot-level persistence | Observed consecutive Discount spans on the complete CFFEX calendar; complete runs and censored fragments separated |
 | Data quality / coverage | Per-source units/proofs, per-Slot/base/metric candidate accounting, missing/exclusion/Not Applicable reasons and common-date sample loss |
 
-For each of the three metrics deliver Quantile and explicit-edge IntervalCount
-distributions and an arithmetic mean. Mean is a required WP4 addition to Statistics,
-not an algorithm to copy into Research. The Statistics owner must define its
-method contract, typed spec/result, backend and numerical failure/conformance
-tests before runtime extension, under its [extension policy](../../../../market_statistics/ARCHITECTURE.md#extension-boundaries-stat-07-and-stat-08).
-WP4 implements Mean under its independent Statistics authority and public API.
+For each of the four V2 metrics deliver Quantile and explicit-edge IntervalCount
+distributions and an arithmetic mean. Reuse the existing Mean, Quantile and
+IntervalCount public methods; no new generic Statistics method is introduced.
+Numerical algorithms and conformance remain Statistics-owned, never copied into Research.
 
 No distribution pools Slots, products or metrics. Histogram frequencies retain
 Statistics' full eligible-sample denominator, underflow and overflow; the chart
 does not recalculate these formal results or infer automatic formal edges.
 A bounded frontend exception permits temporary presentation-only Histogram
 Aggregation over already published, validated Eligible historical raw values.
-It preserves each Slot/metric population, duplicates, units and full counts, without
-filling, clipping or altering financial metrics. It never replaces the formal
+It preserves the complete original Slot/metric Eligible population, identities,
+duplicates and units before any display selection. A separate Presentation Population
+may retain only the samples selected by the feature's rank-based tail rule. Retained
+and tail-excluded identities are disjoint and together recover the complete original
+Eligible population. Display Count/Frequency use retained samples and their per-Slot
+denominator; formal Statistics continue to use the original complete population.
+This does not redefine Eligible, create Research Excluded outcomes or alter financial
+metrics. No filling, winsorization or modification of original samples is allowed.
+It never replaces the formal
 IntervalCount result or recomputes Mean/Quantile. Formal statistics and association
 remain Research / Statistics-owned; presentation controls and bin rules belong to
 the [feature presentation authority](../../../../ui_web/src/features/futures_basis_research/PRESENTATION.md).
-The shared reader implements this exception; original producer histogram results and Views remain unchanged.
+The shared reader implements the existing full-population aggregation; V2 tail
+selection is an accepted WP4 target, not implemented runtime behavior. Original
+producer histogram results and Views remain unchanged.
 
 Sample window means the explicit inclusive research dates, not first/last available
 quote dates.
@@ -111,7 +118,7 @@ and parameters, source association and limitations. Report Dependence: Slot valu
 share underlyings and market dates; run lengths and daily levels are not independent
 draws. Annualized and raw comparisons may use different date populations.
 
-WP4 fixtures must verify order/multiplicity and exact keys, all three metrics,
+WP4 fixtures must verify order/multiplicity and exact keys, all four V2 metrics,
 expiry-day sample differences, pairwise common-date equality and empty intersection,
 full histogram accounting, mean delegation, no empty numerical calls and failure
 association. Run fixtures cover negative→zero/positive, contract switches within a

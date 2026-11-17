@@ -18,12 +18,18 @@ from data_lake.datasets.tushare_index_daily import IndexDailyExport, IndexDailyR
 from data_lake.datasets.tushare_trade_calendar import TradeCalendarExport, TradeCalendarRecord
 
 from .construction import construct_observations
-from .inputs import PROFILE, FuturesBasisRequest, InputAttempt, PreparedFuturesBasisInputs
+from .inputs import (
+    DEFINITION_VERSION,
+    PROFILE,
+    FuturesBasisRequest,
+    InputAttempt,
+    PreparedFuturesBasisInputs,
+)
 from .report import LIMITATIONS, ReportRequest, ReportResult, compose_report, project_history
 from .statistics import METRICS
 from .validation import CalendarScope, Window
 
-PROFILE_REPORT = "futures_basis_report_evidence_v1"
+PROFILE_REPORT = "futures_basis_report_evidence_v2"
 PROFILE_MANIFEST = "futures_basis_report_manifest_v1"
 
 
@@ -350,6 +356,8 @@ def scientific_payload(
             "basis_ratio = (F_close − S_close) / S_close (decimal_ratio)",
             "annualized_basis_ratio = (365 / DTE) × ln(F_close / S_close) "
             "(decimal_ratio); DTE=0 不适用",
+            "annualized_basis_value = S_close * (365 / DTE) * ln(F_close / S_close) "
+            "(index_points_per_year); DTE=0 not_applicable",
         ],
         sources=(
             "Tushare public DataLake Exports · CFFEX futures / SSE CSI index "
@@ -450,6 +458,11 @@ def verify_delivery(output: Path) -> dict[str, Any]:
         raise ValueError("Unknown evidence profile")
     if not manifest["status"] == evidence["status"] == reader["status"]:
         raise ValueError("Report status association mismatch")
+    if (
+        evidence["definition_version"] != DEFINITION_VERSION
+        or reader["definition_version"] != DEFINITION_VERSION
+    ):
+        raise ValueError("Definition version mismatch")
     request_from_json(evidence["science"]["request"])
     fingerprint = digest((output / "inputs.canonical.json").read_bytes())
     if (

@@ -74,6 +74,10 @@ def test_independent_formula_values(price, state, difference, ratio) -> None:
         ctx.prec = 60
         expected = Decimal(365) / Decimal(37) * (Decimal(str(price)) / Decimal(100)).ln()
     assert r.annualized_basis_ratio.value == pytest.approx(float(expected), rel=2e-14, abs=1e-16)
+    assert r.annualized_basis_value.value == pytest.approx(
+        float(Decimal(100) * expected), rel=2e-14, abs=1e-16
+    )
+    assert r.annualized_basis_value.unit == "index_points_per_year"
     if price != 100:
         assert r.annualized_basis_ratio.value != pytest.approx(365 / 37 * ratio)
 
@@ -86,6 +90,8 @@ def test_expiry_and_accounting() -> None:
         expiry.base.status == expiry.basis_value.status == expiry.basis_ratio.status == "eligible"
     )
     assert expiry.annualized_basis_ratio.reason == "expiry_day"
+    assert expiry.annualized_basis_value.reason == "expiry_day"
+    assert expiry.annualized_basis_value.status == "not_applicable"
     for accounting in result.accounting:
         assert accounting.candidate_count == 2
         assert sum(c.count for c in accounting.outcomes) == 2
@@ -109,7 +115,12 @@ def test_nonpositive_precedes_missing_and_expiry(price, missing) -> None:
         s.missing_index()
     result = observe(s)
     row = result.contract_days[0]
-    assert row.base.status == row.annualized_basis_ratio.status == "excluded"
+    assert (
+        row.base.status
+        == row.annualized_basis_ratio.status
+        == row.annualized_basis_value.status
+        == "excluded"
+    )
     assert row.base.reason == "nonpositive_futures_close"
     assert len(row.issues) == (2 if missing else 1)
     assert result.resolutions[0].mappings[0].contract_code == "IM2410.CFX"
@@ -562,3 +573,23 @@ def test_construction_is_deterministic_without_services_or_clock(monkeypatch) ->
     first = construct_observations(REQUEST, prepared)
     assert first == construct_observations(REQUEST, prepared)
     assert first.prepared is prepared
+
+
+def test_annualized_point_intermediate_overflow_fails_construction():
+    services = Services()
+    services.futures = replace(
+        services.futures,
+        records=tuple(
+            replace(r, close=1e308, delist_date=date(2024, 11, 24))
+            if r.delivery_month == "202411"
+            else r
+            for r in services.futures.records
+        ),
+    )
+    services.index = replace(
+        services.index, records=tuple(replace(r, close=1e308) for r in services.index.records)
+    )
+    with pytest.raises(ObservationConstructionError) as error:
+        observe(services)
+    assert error.value.category == "numerical_failure"
+    assert "point scale" in error.value.reason

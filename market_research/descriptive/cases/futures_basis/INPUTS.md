@@ -119,7 +119,10 @@ for deterministic tests; omitted services use their published factories. Frozen
 copies retain all public Export fields, ordered records, actual requests and
 preliminary/ensure/final attempts. The prepared value also retains canonical bytes,
 SHA-256 fingerprint, CFFEX/SSE sessions and definition version
-`futures_basis_definition_v1` (the current Definition contract).
+as owned by [Definition](DEFINITION.md#definition-version). WP2 updates the prepared
+definition identity to the accepted V2 target. This identity is outside the
+canonical `{profile, calendar_cffex, calendar_sse, futures, index}` payload; the
+input format/fingerprint still identifies exactly the retained upstream facts.
 
 `InputPreparationError` exposes stage `input_preparation`, category, dependency,
 reason and obtained attempts; it does not publish a successful fingerprint.

@@ -33,7 +33,10 @@ print(runs.complete, runs.censored)
 ```
 
 For `basis_ratio` or `annualized_basis_ratio`, explicitly supply edges in
-`decimal_ratio`, e.g. `[-1, -.1, -.01, 0, .01, .1, 1]`. The three methods are
+`decimal_ratio`, e.g. `[-1, -.1, -.01, 0, .01, .1, 1]`.
+`annualized_basis_value` uses `index_points_per_year` and the logarithmic formula
+`S * (365 / D) * ln(F / S)`. Formal ReportRequest requires four explicit Histogram
+Specifications in canonical metric order. The unchanged three methods are
 Mean, Quantile and IntervalCount, in that order. There are no default quantile
 points or edges. Inspect each method's failure_category before interpreting it.
 Empty eligibility gives `no_eligible_sample`; histogram outside counts retain the
@@ -60,6 +63,10 @@ no lab command or Publication lifecycle.
 从 repository root 执行。输出必须是仓库外尚不存在的新目录；以下研究参数均为显式输入，
 不是默认值。首次获取行情需要现有 DataLake provider 配置；只读重放不需要凭证或网络。
 
+V2 offline HTML packaging is **WP3 Pending** until the frontend Reader supports
+V2. This invocation does not claim successful V2 HTML delivery; Reader validation
+remains unchanged.
+
 ```bash
 poetry run python market_research/scripts/futures_basis_report.py \
   --product IM --start 2026-10-12 --end 2026-10-23 \
@@ -67,12 +74,13 @@ poetry run python market_research/scripts/futures_basis_report.py \
   --basis-value-edges '[-1000,-500,-100,0,100,500,1000]' \
   --basis-ratio-edges '[-1,-0.1,-0.01,0,0.01,0.1,1]' \
   --annualized-basis-ratio-edges '[-10,-1,-0.1,0,0.1,1,10]' \
+  --annualized-basis-value-edges '[-1000,-500,-100,0,100,500,1000]' \
   --output /tmp/im-basis-report-new
 ```
 
 生成需要根 Poetry 环境、Node 及已安装的 `ui_web/node_modules`。命令成功后双击
 `/tmp/im-basis-report-new/report.html`，无需启动服务。HTML 可单独复制离线阅读；
-审计和复现时保留整个目录。原始值使用 index_points / decimal_ratio，不自动缩放。
+审计和复现时保留整个目录。原始值使用 index_points / decimal_ratio / index_points_per_year，不自动缩放。
 
 长期候选将日期明确改为 `--start 2024-01-01 --end 2026-10-30`，并使用另一个新输出目录。
 缺失或失败不会被短样本替代；输入完整性不通过时仅输出诊断包并返回非零状态。

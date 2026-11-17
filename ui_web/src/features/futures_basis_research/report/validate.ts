@@ -33,11 +33,28 @@ function methods(value: unknown) {
 function request(value: unknown) { const r = object(value); string(r.analysis_id); string(r.metric); if (r.slot !== undefined) string(r.slot); if (r.slots !== undefined) strings(r.slots); if (r.histogram !== undefined) string(object(r.histogram).unit) }
 export function validateReportData(input: unknown): asserts input is ReportData {
   const d = object(input)
-  if (d.profile !== 'futures_basis_report_evidence_v1' || !['complete', 'partial'].includes(d.status)) throw new Error('Unsupported reader')
+  if (d.profile !== 'futures_basis_report_evidence_v2' || !['complete', 'partial'].includes(d.status)) throw new Error('Unsupported reader')
   for (const key of ['fingerprint', 'definition_version', 'summary', 'sources']) string(d[key])
+  if (d.definition_version !== 'futures_basis_definition_v2') throw new Error('Unsupported definition version')
+  const metrics = ['basis_value', 'basis_ratio', 'annualized_basis_ratio', 'annualized_basis_value']
+  const units = ['index_points', 'decimal_ratio', 'decimal_ratio', 'index_points_per_year']
   const formal = object(d.request)
   const quantile = object(formal.quantile); string(quantile.method); list(quantile.points).forEach(number)
   list(formal.histograms).forEach(raw => { const h = object(raw); string(h.method); string(h.unit); list(h.edges).forEach(number) })
+  if (formal.histograms.length !== 4 || formal.histograms.some((h: any, i: number) => h.unit !== units[i] || h.method !== 'interval_count')) {
+    throw new Error('Invalid ordered V2 Histogram Specifications')
+  }
+  for (const metric of metrics) {
+    const distributions = list(d.distributions).filter(x => object(x.request).metric === metric)
+    if (distributions.length !== 4 || ['M0', 'M1', 'Q1', 'Q2'].some(slot => distributions.filter(x => x.request.slot === slot).length !== 1)) throw new Error(`Missing or duplicate V2 Metric/Slot: ${metric}`)
+  }
+  for (const raw of [...list(d.distributions), ...list(d.comparisons)]) {
+    const x = object(raw); const index = metrics.indexOf(object(x.request).metric)
+    if (index < 0 || x.request.histogram?.unit !== units[index]) throw new Error('Invalid Metric/unit')
+    for (const m of [...(x.methods ?? []), ...(x.left_methods ?? []), ...(x.right_methods ?? [])]) {
+      if (m.result && m.result.unit !== units[index]) throw new Error('Invalid Method Result unit')
+    }
+  }
   if (!d.fingerprint.length) throw new Error('Missing fingerprint')
   const obs = object(formal.observation)
   if (obs.case !== 'futures_basis_v1') throw new Error('Unsupported case')
@@ -56,7 +73,16 @@ export function validateReportData(input: unknown): asserts input is ReportData 
   })
   list(d.persistence).forEach(raw => { const p = object(raw); string(p.slot); for (const kind of ['complete', 'censored']) list(p[kind]).forEach(rawRun => { const r = object(rawRun); for (const k of ['slot', 'start', 'end', 'left_boundary', 'right_boundary']) string(r[k]); number(r.observed_trading_sessions); list(r.transitions) }) })
   const views = object(d.views); const history = object(views.history)
-  for (const metric of ['basis_value', 'basis_ratio', 'annualized_basis_ratio']) validateVisualizationView(history[metric])
+  metrics.forEach((metric, i) => {
+    const view = object(history[metric])
+    validateVisualizationView(view)
+    if (view.version !== 2 || view.layers.length !== 4
+      || ['M0', 'M1', 'Q1', 'Q2'].some(slot => view.layers.filter((b: any) => b.id === slot).length !== 1)
+      || !view.axes.some((a: any) => a.orientation === 'y' && a.coordinate.unit === units[i])
+      || view.layers.some((b: any) => b.layer.y.unit !== units[i])) {
+      throw new Error('Invalid V2 History Metric/unit')
+    }
+  })
   Object.values(history).forEach(validateVisualizationView)
   Object.values(object(views.histograms)).forEach(validateVisualizationView)
   if (d.runtime !== undefined) { const r = object(d.runtime); for (const k of ['revision', 'python', 'node']) string(r[k]); if (typeof r.dirty !== 'boolean') throw new Error('Invalid runtime'); Object.values(object(r.packages)).forEach(string); Object.values(object(r.frontend_packages)).forEach(string) }

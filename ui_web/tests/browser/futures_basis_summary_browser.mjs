@@ -33,11 +33,11 @@ try {
   await page.locator('.js-plotly-plot').first().waitFor()
   await verifyBasisSummary(page, report)
   assert.equal(new URL(page.url()).hash, '#/research/futures-basis')
-  assert.equal(await page.locator('.js-plotly-plot').count(), 4) // Three histories and one distribution comparison.
+  assert.equal(await page.locator('.js-plotly-plot').count(), 5) // Four histories and one distribution comparison.
   const plots = page.getByTestId('history-charts').locator('.js-plotly-plot')
   const before = await plots.evaluateAll(plots => plots.map(el => el.data.map(t => t.y)))
   assert.deepEqual(before.map(traces => traces.flat().filter(v => v != null).sort((a, b) => a - b)),
-    ['basis_value', 'basis_ratio', 'annualized_basis_ratio'].map(metric => report.views.history[metric].layers.flatMap(b => b.layer.data).map(m => m.y).filter(v => v != null).sort((a, b) => a - b)))
+    ['basis_value', 'basis_ratio', 'annualized_basis_ratio', 'annualized_basis_value'].map(metric => report.views.history[metric].layers.flatMap(b => b.layer.data).map(m => m.y).filter(v => v != null).sort((a, b) => a - b)))
   for (const mode of ['Calendar Days', 'Trading Days']) {
     await page.getByText(mode, { exact: true }).click()
     await page.waitForFunction(type => [...document.querySelectorAll('[data-testid="history-charts"] .js-plotly-plot')].every(el => el._fullLayout.xaxis.type === type), mode === 'Calendar Days' ? 'date' : 'linear')

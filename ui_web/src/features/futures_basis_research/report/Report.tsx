@@ -1,4 +1,5 @@
-import { BIN_PRESETS, histogramAggregation, type BasisMetric } from '../model/histogramAggregation'
+import { TailExclusionAudit } from '../components/TailExclusionAudit'
+import { BIN_PRESETS, histogramAggregation, TAIL_EXCLUSION_OPTIONS, type TailExclusionPct, type BasisMetric } from '../model/histogramAggregation'
 import { DistributionComparison } from '../charts/DistributionComparison'
 import { distributionSummary } from '../model/basisPresentation'
 import { formatUnit } from '../../../shared/format/unit'
@@ -10,8 +11,8 @@ import { Alert, Card, Collapse, Descriptions, Flex, Select, Table, Tag, Typograp
 import { ChartView, DateAxisControl, DEFAULT_DATE_AXIS_MODE, type DateAxisMode } from '../../../shared/visualization'
 import type { Method, ReportData, Run } from './types'
 
-const metrics = ['basis_value', 'basis_ratio', 'annualized_basis_ratio']
-const metricLabels: Record<string, string> = { basis_value: '基差（点）', basis_ratio: '基差率（%）', annualized_basis_ratio: '年化基差率（%）' }
+const metrics = ['basis_value', 'basis_ratio', 'annualized_basis_ratio', 'annualized_basis_value']
+const metricLabels: Record<string, string> = { basis_value: '基差（点）', basis_ratio: '基差率（%）', annualized_basis_ratio: '年化基差率（%）', annualized_basis_value: '年化基差点（点/年）' }
 const sections = ['研究概览', '历史基差', '基差分布', '期限结构', '贴水持续区间', '证据与限制']
 
 function Methods({ methods }: { methods: Method[] }) {
@@ -53,34 +54,37 @@ export function Report({ data, mode, sourceDisclosure, sectionNavigation = 'frag
   const { token } = theme.useToken()
   const [metric, setMetric] = useState<BasisMetric>('annualized_basis_ratio')
   const [width, setWidth] = useState<number>(BIN_PRESETS.annualized_basis_ratio.default)
-  const projection = useMemo(() => histogramAggregation(data, metric, width), [data, metric, width])
+  const [tail, setTail] = useState<TailExclusionPct>(0)
+  const projection = useMemo(() => histogramAggregation(data, metric, width, tail), [data, metric, width, tail])
   const [timeScale, setTimeScale] = useState<DateAxisMode>(DEFAULT_DATE_AXIS_MODE)
   const historyViews = useMemo(() => Object.fromEntries(metrics.map(metric => {
     const view = data.views.history[metric]
     return [metric, { ...view, layout: { ...view.layout, title: `历史${metricLabels[metric]}` } }]
   })), [data.views.history])
-  if (data.profile !== 'futures_basis_report_evidence_v1') throw new Error('Unsupported report version')
+  if (data.profile !== 'futures_basis_report_evidence_v2') throw new Error('Unsupported report version')
   const obs = data.request.observation
   const sectionTitle = (title: string, index: number) => `${String(index + 1).padStart(2, '0')} · ${title}`
   const jump = (index: number) => document.getElementById(`section-${index}`)?.scrollIntoView({ block: 'start' })
   const historyCharts = <>
         <DateAxisControl label="历史基差时间轴" value={timeScale} onChange={setTimeScale} />
         {metrics.map(m => <div key={m}>
-          {m === 'annualized_basis_ratio' && <Typography.Paragraph>合约到期日的剩余期限 D=0，年化基差按研究定义主动留空，并非行情数据错误；原始基差仍然保留。</Typography.Paragraph>}
+          {m.startsWith('annualized_') && <Typography.Paragraph>合约到期日的剩余期限 D=0，年化基差按研究定义主动留空，并非行情数据错误；原始基差仍然保留。</Typography.Paragraph>}
+          {m === 'annualized_basis_value' && <Typography.Paragraph>年化基差点以点/年表示，不代表实际可获得的年化收益。</Typography.Paragraph>}
           <div tabIndex={mode === 'demo' ? 0 : undefined} aria-label={mode === 'demo' ? `${metricLabels[m]} 图表，窄屏可横向滚动` : undefined} style={{ minWidth: 0, overflow: mode === 'demo' ? 'auto' : 'hidden' }}><div style={{ minWidth: mode === 'demo' ? 640 : undefined }}><ChartView view={historyViews[m]} minPlotHeight={480} options={{ ...historyOptions(data.views.history[m], data.candidate_dates, timeScale === 'trading', m === 'basis_value'),
           missingValuesDisclosure: { title: '无有效指标值日期', description: '包含合约到期、无有效合约或数据不可用等情况，具体原因见日期详情。' },
           dateEventsDisclosure: mode === 'offline' ? undefined : { description: '标记不同期限 Slot 所对应的期货合约发生切换的日期，仅用于描述合约映射变化，不代表实际交易。' } }} /></div></div></div>)}
   </>
   const distributionCharts = <>
-        <Flex gap="middle" wrap align="center"><Typography.Text>指标</Typography.Text><Select aria-label="Distribution metric" value={metric} onChange={(value: BasisMetric) => { setMetric(value); setWidth(BIN_PRESETS[value].default) }} options={metrics.map(value => ({ value, label: metricLabels[value] }))} style={{ minWidth: 0, width: 260, maxWidth: '100%' }} /><Typography.Text>分箱宽度</Typography.Text><Select aria-label="Bin width" value={width} onChange={setWidth} options={BIN_PRESETS[metric].widths.map(value => ({ value, label: `${value} ${metric === 'basis_value' ? '点' : '个百分点'}` }))} style={{ minWidth: 145 }} /></Flex>
+        <Flex gap="middle" wrap align="center"><Typography.Text>指标</Typography.Text><Select aria-label="Distribution metric" value={metric} onChange={(value: BasisMetric) => { setMetric(value); setWidth(BIN_PRESETS[value].default) }} options={metrics.map(value => ({ value, label: metricLabels[value] }))} style={{ minWidth: 0, width: 260, maxWidth: '100%' }} /><Typography.Text>分箱宽度</Typography.Text><Select aria-label="Bin width" value={width} onChange={setWidth} options={BIN_PRESETS[metric].widths.map(value => ({ value, label: `${value} ${metric === 'annualized_basis_value' ? '点/年' : metric === 'basis_value' ? '点' : '个百分点'}` }))} style={{ minWidth: 145 }} /><Typography.Text>尾部过滤</Typography.Text><Select aria-label="尾部过滤" value={tail} onChange={setTail} options={TAIL_EXCLUSION_OPTIONS.map(value => ({ value, label: value ? `双尾各 ${value}%` : '不排除' }))} style={{ minWidth: 145 }} /></Flex>
         {metric === 'annualized_basis_ratio' && <Typography.Paragraph>年化基差率用于比较不同到期期限下的基差强度，不等于实际持有收益；临近到期时数值可能较敏感。</Typography.Paragraph>}
+        {metric === 'annualized_basis_value' && <Typography.Paragraph>年化基差点以点/年表示，不代表实际可获得的年化收益。</Typography.Paragraph>}
         <Typography.Text type="secondary">本地仅进行展示性分箱，正式统计结果保持不变，不会提交请求或重新执行研究。</Typography.Text>
         {data.distributions.filter(d => d.request.metric === metric).flatMap(d => d.methods
           .filter(m => m.spec.method === 'interval_count' && m.failure_category && m.failure_category !== 'no_eligible_sample')
-          .map((m, i) => <Alert key={`${d.request.analysis_id}/${i}`} type="warning" title={`${d.request.slot}：${m.failure_category}（Eligible N=${d.binding.length}）`} />))}
-        <DistributionComparison projection={projection} metric={metric} width={width} />
+          .map((m, i) => <Alert key={`${d.request.analysis_id}/${i}`} type="warning" description={m.reason} title={`${d.request.slot}：${m.failure_category}（Eligible N=${d.binding.length}）`} />))}
+        <DistributionComparison projection={projection} metric={metric} width={width} tail={tail} />
         <section aria-label="统计摘要" style={{ minWidth: 0 }}>
-          <Typography.Title level={5}>各 Slot 统计摘要</Typography.Title>
+          <Typography.Title level={5}>全样本统计</Typography.Title>
           <Table scroll={{ x: 'max-content' }} pagination={false} size="small" rowKey="slot"
             dataSource={distributionSummary(data.distributions, metric)} columns={[
               { title: 'Slot', dataIndex: 'slot' }, { title: 'N', dataIndex: 'n' },
@@ -89,6 +93,7 @@ export function Report({ data, mode, sourceDisclosure, sectionNavigation = 'frag
               { title: 'Max', dataIndex: 'max' }, { title: 'Mean', dataIndex: 'mean' },
             ]} />
         </section>
+        {projection.status !== 'inconsistent' && <TailExclusionAudit selections={projection.selections} tail={tail} />}
         {mode === 'offline' && <Collapse defaultActiveKey={data.distributions.filter(d => d.request.metric === metric).map(d => d.request.analysis_id)} items={data.distributions.filter(d => d.request.metric === metric).map(d => ({ key: d.request.analysis_id, label: `${d.request.slot} 正式统计方法`, children: <Methods methods={d.methods} /> }))} />}
 
   </>

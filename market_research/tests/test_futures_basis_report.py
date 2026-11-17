@@ -37,6 +37,7 @@ def report(services=None):
             IntervalCountSpec([-100, 0, 100], "index_points"),
             IntervalCountSpec([-1, 0, 1], "decimal_ratio"),
             IntervalCountSpec([-10, 0, 10], "decimal_ratio"),
+            IntervalCountSpec([-100, 0, 100], "index_points_per_year"),
         ),
     )
     return compose_report(source, request)
@@ -67,7 +68,7 @@ def package(tmp_path: Path, result):
 
 def test_composition_preserves_wp4_original_objects_and_order():
     result = report()
-    assert len(result.distributions) == 12 and len(result.comparisons) == 18
+    assert len(result.distributions) == 16 and len(result.comparisons) == 24
     assert [r.slot for r in result.persistence] == ["M0", "M1", "Q1", "Q2"]
     for distribution in result.distributions:
         assert distribution.source is result.source
@@ -76,16 +77,17 @@ def test_composition_preserves_wp4_original_objects_and_order():
             any(r is original for original in result.source.slot_days) for r in distribution.binding
         )
     science, views, associations, reader = scientific_payload(result)
-    assert len(science["distributions"]) == 12
-    assert len(views["history"]) == 3 and len(views["histograms"]) == 24
+    assert len(science["distributions"]) == 16
+    assert len(views["history"]) == 4 and len(views["histograms"]) == 32
     assert reader["distributions"][0]["methods"] == encode(result.distributions[0].methods)
     assert len(associations["basis_value"]["points"]) == len(result.source.slot_days)
     assert "(F_close − S_close) / S_close" in reader["formulas"][1]
 
 
-def test_segments_events_and_expiry_null_keep_source_values():
+@pytest.mark.parametrize("metric", ("annualized_basis_ratio", "annualized_basis_value"))
+def test_segments_events_and_expiry_null_keep_source_values(metric):
     result = report()
-    view, associations = project_history(result.source, "annualized_basis_ratio")
+    view, associations = project_history(result.source, metric)
     assert [b["label"] for b in view["layers"]] == ["M0", "M1", "Q1", "Q2"]
     marks = view["layers"][0]["layer"]["data"]
     assert marks[0]["y"] is None and marks[1]["y"] is not None
@@ -95,9 +97,7 @@ def test_segments_events_and_expiry_null_keep_source_values():
     assert len(associations["events"]) == len(view["events"])
     for binding in view["layers"]:
         rows = [r for r in result.source.slot_days if r.slot == binding["label"]]
-        assert [m["y"] for m in binding["layer"]["data"]] == [
-            r.outcome("annualized_basis_ratio").value for r in rows
-        ]
+        assert [m["y"] for m in binding["layer"]["data"]] == [r.outcome(metric).value for r in rows]
 
 
 def test_partial_index_missing_transition_is_retained_and_replays(tmp_path):
@@ -230,6 +230,8 @@ def test_operator_retained_input_failure_sealed_without_success(tmp_path):
         "[-1,0,1]",
         "--annualized-basis-ratio-edges",
         "[-10,0,10]",
+        "--annualized-basis-value-edges",
+        "[-100,0,100]",
         "--inputs",
         str(tmp_path / "absent.json"),
         "--output",
@@ -255,4 +257,32 @@ def test_resealed_html_cannot_disagree_with_evidence(tmp_path):
     )
     seal_delivery(tmp_path, result.status, result.source.prepared.input_fingerprint)
     with pytest.raises(ValueError, match="HTML reader payload"):
+        verify_delivery(tmp_path)
+
+
+@pytest.mark.parametrize("change", ("missing", "unit"))
+def test_v2_report_requires_four_ordered_units(change):
+    request = report().request
+    histograms = (
+        request.histograms[:-1] if change == "missing" else tuple(reversed(request.histograms))
+    )
+    with pytest.raises(ValueError):
+        replace(request, histograms=histograms).validate()
+
+
+@pytest.mark.parametrize(
+    "field,value",
+    (
+        ("profile", "futures_basis_report_evidence_v1"),
+        ("definition_version", "futures_basis_definition_v1"),
+    ),
+)
+def test_resealed_old_evidence_identity_is_rejected(tmp_path, field, value):
+    result = report()
+    package(tmp_path, result)
+    data = json.loads((tmp_path / "evidence.json").read_bytes())
+    data[field] = value
+    write_json(tmp_path / "evidence.json", data)
+    seal_delivery(tmp_path, result.status, result.source.prepared.input_fingerprint)
+    with pytest.raises(ValueError, match="profile|version"):
         verify_delivery(tmp_path)

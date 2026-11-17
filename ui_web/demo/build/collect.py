@@ -396,8 +396,6 @@ def generate(bridge, collector, only=None, active=ACTIVE, work=WORK, authenticat
     with dataset_lock(work):
         finish_transaction(active, work, registry)
         reject_links(active)
-        if selected_ids and all((active / entry["path"]).is_file() for entry in registry):
-            preflight(active)
         if active.exists() and any(
             item.name not in {row["path"] for row in registry} | {"manifest.json"}
             for item in active.iterdir()

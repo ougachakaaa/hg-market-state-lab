@@ -10,8 +10,15 @@ import market_statistics as stats
 from .models import SLOTS, ContractTransition, Slot
 from .observations import FuturesBasisResult, SlotDayObservation
 
-type AnalysisMetric = Literal["basis_value", "basis_ratio", "annualized_basis_ratio"]
-METRICS: tuple[AnalysisMetric, ...] = ("basis_value", "basis_ratio", "annualized_basis_ratio")
+type AnalysisMetric = Literal[
+    "basis_value", "basis_ratio", "annualized_basis_ratio", "annualized_basis_value"
+]
+METRICS: tuple[AnalysisMetric, ...] = (
+    "basis_value",
+    "basis_ratio",
+    "annualized_basis_ratio",
+    "annualized_basis_value",
+)
 PAIRS = tuple(combinations(SLOTS, 2))
 
 
@@ -109,7 +116,13 @@ def _validate(source: FuturesBasisResult, request: DistributionRequest | Compari
 
 
 def _unit(metric: AnalysisMetric) -> str:
-    return "index_points" if metric == "basis_value" else "decimal_ratio"
+    return (
+        "index_points"
+        if metric == "basis_value"
+        else "index_points_per_year"
+        if metric == "annualized_basis_value"
+        else "decimal_ratio"
+    )
 
 
 def _rows(

@@ -110,7 +110,7 @@ class ControlledServer(BaseHTTPRequestHandler):
             basis = path.startswith("/research/")
             request = {**body, "case": "futures_basis_v1" if basis else "futures_roll_long_v1"}
             if basis:
-                request["analysis_profile"] = "r01a_standard_v1"
+                request["analysis_profile"] = "r01a_standard_v2"
             identity = f"{state['submits']:032x}"
             state["runs"][identity] = request
             status = 202
@@ -360,6 +360,15 @@ class CollectionTests(unittest.TestCase):
             (self.active / (identity + ".json")).unlink()
         with self.assertRaisesRegex(collect.CollectionError, "retained_file_integrity"):
             self.generate(selected)
+
+    def test_selected_obsolete_payload_can_be_replaced(self):
+        self.generate()
+        original = {p.name: p.read_bytes() for p in self.active.iterdir()}
+        (self.active / "basis.json").write_text("{}")
+        self.generate("basis")
+        collect.preflight(self.active)
+        for name, data in original.items():
+            self.assertEqual(data, (self.active / name).read_bytes())
 
     def test_auth_lock_and_numeric(self):
         self.collector.origin = "http://wrong-origin.invalid"

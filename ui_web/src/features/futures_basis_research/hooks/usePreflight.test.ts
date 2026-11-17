@@ -8,7 +8,7 @@ vi.mock('../api/futuresBasis', async importOriginal => ({
 }))
 const query = { product_code: 'IM' as const, start_date: '2026-11-01', end_date: '2026-11-10' }
 function assessment(submission: Preflight['submission'] = 'allowed'): Preflight {
-  return { request: { ...query, case: 'futures_basis_v1', analysis_profile: 'r01a_standard_v1' },
+  return { request: { ...query, case: 'futures_basis_v1', analysis_profile: 'r01a_standard_v2' },
     checked_at: '2026-11-10T15:59:59Z', market_date: '2026-11-10', today_gate: 'ready', submission, dependencies: [] }
 }
 function deferred<T>() { let resolve!: (v: T) => void; const promise = new Promise<T>(done => { resolve = done }); return { promise, resolve } }

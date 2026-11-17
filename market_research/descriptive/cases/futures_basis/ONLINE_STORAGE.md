@@ -11,7 +11,8 @@ SQLite cutover is implemented; platform verification limits are recorded below.
 Use standard-library `sqlite3`, with no database dependency, ORM, generic store framework,
 queue, cross-module persistence abstraction or scheduling change. Existing public Python
 operations, HTTP endpoints/DTOs, generated contracts, financial calculations and report
-profiles remain unchanged. Scientific result status remains `complete` or `partial`; `no_eligible_sample` remains a legal empty finding.
+profiles were unchanged by the SQLite cutover. The separate Distribution V2 target
+is owned by [Online application](ONLINE_APPLICATION.md#distribution-v2-status). Scientific result status remains `complete` or `partial`; `no_eligible_sample` remains a legal empty finding.
 
 ## Ownership, location and initialization
 
@@ -46,7 +47,10 @@ state, safe failure record, result profile/scientific status, exact byte length 
 SHA-256 where applicable. Preserve existing request canonicalization, metadata limits
 and request association checks. A result record is keyed by Run identity and contains
 the exact existing canonical UTF-8 JSON bytes, not re-encoded SQLite JSON values.
-Result profile remains `futures_basis_report_evidence_v1`. SQL layout and connection encapsulation are private
+Result profile is bound to the exact reader identity owned by
+[Evidence](EVIDENCE.md#version-ownership-and-rollout). The accepted WP2 target is V2;
+current runtime V1 is not silently reinterpreted. This changes profile validation,
+not the SQLite schema or `user_version`. SQL layout and connection encapsulation are private
 implementation details; parameterize all identity/owner queries and never derive SQL
 or file paths from a Run ID.
 

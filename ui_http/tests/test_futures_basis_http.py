@@ -98,7 +98,7 @@ def test_completed_payload_dto_and_repeated_lightweight_status(product, monkeypa
     assert response.status_code == 200, response.text
     payload = response.json()
     FuturesBasisReportResponse.model_validate_json(response.content)
-    assert payload["data"]["profile"] == "futures_basis_report_evidence_v1"
+    assert payload["data"]["profile"] == "futures_basis_report_evidence_v2"
     metadata = json.loads(db(research, "SELECT metadata FROM runs WHERE run_id=?", (run_id,))[0][0])
     identity = client.get("/auth/me").json()
     assert metadata["owner_scope"] == identity["id"]

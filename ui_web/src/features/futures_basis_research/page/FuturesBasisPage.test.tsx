@@ -8,7 +8,7 @@ vi.mock('../hooks/useFuturesBasis', () => ({ useFuturesBasis: vi.fn() }))
 vi.mock('../hooks/usePreflight', async importOriginal => ({ ...await importOriginal<typeof import('../hooks/usePreflight')>(), usePreflight: vi.fn() }))
 vi.mock('../report/Report', () => ({ Report: () => <div>Retained report</div> }))
 afterEach(cleanup)
-const request = { product_code: 'IC' as const, start_date: '2024-10-18', end_date: '2024-10-21', case: 'futures_basis_v1' as const, analysis_profile: 'r01a_standard_v1' as const }
+const request = { product_code: 'IC' as const, start_date: '2024-10-18', end_date: '2024-10-21', case: 'futures_basis_v1' as const, analysis_profile: 'r01a_standard_v2' as const }
 function state(overrides: Record<string, unknown> = {}) {
   vi.mocked(usePreflight).mockReturnValue({ result: undefined, error: undefined, checking: false, refresh: vi.fn() })
   const value = { phase: 'IDLE', id: '', feedback: undefined, submitting: false, submit: vi.fn(), retry: vi.fn(), ...overrides }

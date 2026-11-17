@@ -55,9 +55,9 @@ try {
   assert.ok((await page.locator('#section-0').textContent()).includes(expected.fingerprint))
   pass('Six reader sections render; embedded data exactly equals producer payload and fingerprint')
   const plots = page.locator('#section-1 .js-plotly-plot')
-  assert.equal(await plots.count(), 3)
-  for (let i = 0; i < 3; i++) {
-    const metric = ['basis_value', 'basis_ratio', 'annualized_basis_ratio'][i]
+  assert.equal(await plots.count(), 4)
+  for (let i = 0; i < 4; i++) {
+    const metric = ['basis_value', 'basis_ratio', 'annualized_basis_ratio', 'annualized_basis_value'][i]
     const view = expected.views.history[metric]
     const plot = plots.nth(i)
     await plot.locator('.nsewdrag').waitFor()
@@ -67,7 +67,7 @@ try {
     const points = await plot.evaluate(el => el.data.flatMap(t => t.y ?? []).filter(y => y !== null).length)
     assert.equal(points, view.layers.flatMap(b => b.layer.data).filter(m => m.y !== null).length)
   }
-  pass('Three independent metrics render all supplied finite points, four Slot legends and every real transition')
+  pass('Four independent metrics render all supplied finite points, four Slot legends and every real transition')
   await historicalBasisAcceptance(page, expected, output)
   const hasNumeric = expected.views.history.basis_value.layers.some(b => b.layer.data.some(m => m.y !== null))
   if (hasNumeric) {
@@ -118,7 +118,7 @@ try {
     await page.waitForFunction(() => document.querySelector('#section-1 .js-plotly-plot')._fullData.some(t => t.visible === 'legendonly'))
     pass('Real box Zoom, drag Pan, Reset and grouped Slot legend interactions work offline')
   } else {
-    assert.equal(await page.getByText('No numeric data', { exact: true }).count(), 3)
+    assert.equal(await page.getByText('No numeric data', { exact: true }).count(), 4)
     pass('All-null series explicitly show no numeric data without invented values')
   }
   if (expected.distributions.some(d => d.methods.some(m => m.failure_category === 'CalculationFailure'))) {

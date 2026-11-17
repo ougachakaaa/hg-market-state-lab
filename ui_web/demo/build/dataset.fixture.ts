@@ -25,7 +25,7 @@ export async function fixture() {
       case 'chain': result = { ...structuredClone(chain), ...request }; break
       case 'premium': result = { ...structuredClone(plane), observation: { kind: 'trade_date', value: request.as_of } }; break
       case 'basis': {
-        request = { ...request, case: 'futures_basis_v1', analysis_profile: 'r01a_standard_v1' }
+        request = { ...request, case: 'futures_basis_v1', analysis_profile: 'r01a_standard_v2' }
         const report = readerFixture()
         report.request.observation = { ...report.request.observation, ...presets.basis.request }
         result = report
