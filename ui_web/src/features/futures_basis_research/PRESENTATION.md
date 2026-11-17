@@ -40,6 +40,24 @@ Compact removes the redundant 12-row mean table. Offline replaces that overview
 table with the summary near distributions, keeping every Metric accessible through
 the selector and retaining Methods, comparisons, evidence and all six sections.
 
+## Distribution default and interpretation
+
+Online, Static Demo and Offline default to `annualized_basis_ratio` with the existing
+5-percentage-point bin width. Users can still select `basis_value` or `basis_ratio`;
+every Metric change resets the width to that Metric's default below. The comparison
+and formal summary use the same selected Metric and its corresponding Eligible samples.
+
+X-axis titles identify the selected Metric explicitly: 基差（点）, 基差率（%） or
+年化基差率（%）. The Y-axis remains Frequency（%）, independently of Metric.
+Near the distribution controls show:
+
+> 年化基差率用于比较不同到期期限下的基差强度，不等于实际持有收益；临近到期时数值可能较敏感。
+
+Annualized values retain Research's existing continuous-compounding definition;
+presentation changes no backend formula. At D=0 retain the existing Not Applicable
+semantics and sample validity rules, with no filling or approximation. Annualized
+basis ratios do not directly represent actually realizable investment returns.
+
 ## Implemented: dynamic presentation bins (SD-02)
 
 The shared reader aggregates already published, validated Eligible historical raw
