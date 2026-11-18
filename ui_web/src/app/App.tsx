@@ -8,6 +8,7 @@ import OptionChainPage from '../features/mo_option_chain'
 import PremiumPlanePage from '../features/mo_option_premium'
 import ResearchExplorerPage from '../features/research_explorer/page/ResearchExplorerPage'
 import ResearchWorkspacePage from '../features/research_catalog/page/ResearchWorkspacePage'
+import { StrategyResearchMap } from '../features/strategy_research_map/presentation'
 import BacktestingPage from '../features/backtesting/page/BacktestingPage'
 import AppUiProvider from './AppUiProvider'
 import ApplicationShell from './ApplicationShell'
@@ -18,7 +19,7 @@ import { useAuthentication } from './auth/useAuthentication'
 import type { CurrentUser, LoginRequest } from './auth/api/auth'
 import { useWorkspaceRoute } from './routes'
 import { useRunNavigation } from './useRunNavigation'
-import { isWorkspacePath, type WorkspacePath } from './routeInventory'
+import { defaultWorkspacePath, isWorkspacePath, type WorkspacePath } from './routeInventory'
 
 function ProductionWorkspace({ user, signOut, path, navigate: navigateRoute }: {
   user: CurrentUser; signOut: () => Promise<void>; path: WorkspacePath;
@@ -34,7 +35,8 @@ function ProductionWorkspace({ user, signOut, path, navigate: navigateRoute }: {
       <Button icon={<LogoutOutlined aria-hidden="true" />} onClick={() => void signOut()}>退出登录</Button>
     </Flex>
   }>
-    {path === '/research' ? <ResearchWorkspacePage openExplorer={() => navigate('/research/publications')} openFuturesBasis={() => navigate('/research/futures-basis')} openCalendarSpread={() => navigate('/research/calendar-spread-relative-value')} />
+    {path === defaultWorkspacePath ? <StrategyResearchMap navigate={navigate} href={path => path} />
+      : path === '/research' ? <ResearchWorkspacePage openExplorer={() => navigate('/research/publications')} openFuturesBasis={() => navigate('/research/futures-basis')} openCalendarSpread={() => navigate('/research/calendar-spread-relative-value')} />
       : path === '/research/calendar-spread-relative-value' ? <RelativeValuePage />
       : path === '/data/futures-calendar-spread' ? <DailyCalendarSpreadPage />
       : path === '/research/futures-basis' ? <FuturesBasisPage />
@@ -56,12 +58,12 @@ function AuthenticationGate() {
   const { path, navigate } = useWorkspaceRoute()
   useEffect(() => {
     if (state.status === 'authenticated' && !isWorkspacePath(window.location.pathname)) {
-      navigate('/research', true)
+      navigate(defaultWorkspacePath, true)
     }
   }, [state.status, navigate])
   const login = async (credentials: LoginRequest) => {
     await signIn(credentials)
-    if (!isWorkspacePath(window.location.pathname)) navigate('/research', true)
+    if (!isWorkspacePath(window.location.pathname)) navigate(defaultWorkspacePath, true)
   }
   if (state.status === 'authenticated') return <ProductionWorkspace user={state.user} signOut={signOut} path={path} navigate={navigate} />
   if (state.status === 'anonymous') return <AuthForm signIn={login} />

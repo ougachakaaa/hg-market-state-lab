@@ -114,8 +114,10 @@ Build holds a separate `.build/demo-output.lock/` for its entire invocation to s
 output replacement. The same explicit stale-lock procedure applies. After acquiring it,
 Build removes prior formal output. Under the dataset lock it rejects pending.json, copies
 all dataset files to private staging and independently runs DDB-02 Preflight there.
-Only after admission fixes the snapshot does it release the dataset lock. Vite consumes
-that snapshot exclusively. Build never runs Python, Collector or business HTTP.
+Only after admission fixes the snapshot does it release the dataset lock. Vite takes
+all business Result Bundles from that snapshot and validates the shared repository
+[Strategy Research Map definition](../../../docs/strategy-research/MAP_CONTRACT.md)
+during compilation. Build never runs Python, Collector or business HTTP.
 Vite writes private output, checked before promotion to `.build/demo/`; errors remove
 formal output and never publish a completion marker. Platform claims require actual tests.
 
@@ -160,13 +162,13 @@ npm run demo:build
 npm run demo:preview
 ```
 
-Open http://127.0.0.1:4173/hg-market-state-lab/#/research for visual review;
+Open http://127.0.0.1:4173/hg-market-state-lab/#/roadmap for visual review;
 stop preview with Ctrl+C. Rebuild and reload after editing; preview serves the built
 artifact, without hot reload. No backend, collection, remote push, Actions build
 or Pages publication is needed.
 
 Run `npm run demo:test:browser` after the build for local Playwright review. It starts
-temporary loopback previews and closes them afterward, checks all ten Demo routes
+temporary loopback previews and closes them afterward, checks all eleven Demo routes
 and existing interactions, and checks Research Overview at 1280, 1024 and 768px.
 Focused checks cover full disclosure, horizontal containment, card alignment,
 Production-mode shared Presentation and Chinese/unbroken-English stress inputs in

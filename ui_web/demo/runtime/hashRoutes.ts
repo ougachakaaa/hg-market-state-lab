@@ -1,11 +1,11 @@
 import { useCallback, useEffect, useState } from 'react'
-import { isStaticWorkspacePath, type StaticWorkspacePath, type WorkspacePath } from '../../src/app/routeInventory'
+import { defaultWorkspacePath, isStaticWorkspacePath, type StaticWorkspacePath, type WorkspacePath } from '../../src/app/routeInventory'
 
 export const staticHref = (path: WorkspacePath) => `#${path}`
 export function hashWorkspacePath(hash: string): StaticWorkspacePath {
   // Server query identity is never part of the static runtime.
   const path = hash.slice(1).split('?')[0]
-  return isStaticWorkspacePath(path) ? path : '/research'
+  return isStaticWorkspacePath(path) ? path : defaultWorkspacePath
 }
 function normalizeHash() {
   const path = hashWorkspacePath(window.location.hash)

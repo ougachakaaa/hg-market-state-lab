@@ -49,7 +49,7 @@ Stable dependencies continue to follow published boundaries: `ui_cli` delegates 
 
 ## 1. 仓库定位
 
-`hg-market-state-lab` 是用于市场状态数据准备、探索研究、策略回测、市场状态建模与结果展示的实验性系统。
+`hg-market-state-lab` 是用于市场状态数据准备、探索研究、策略回测、市场状态建模与结果展示的实验性系统。跨阶段的研究职责与地图从 [Strategy Research](docs/strategy-research/README.md) 进入。
 
 ## 2. 顶层模块
 

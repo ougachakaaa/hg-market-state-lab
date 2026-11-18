@@ -109,7 +109,7 @@ against its freshly built local artifact.
 node --input-type=module -e "import { verifyBrowser } from './demo/build/browserAcceptance.mjs'; await verifyBrowser()"
 ```
 
-This exercises ten hash routes, expected results/charts, read-only local interactions,
+This exercises eleven hash routes, expected results/charts, read-only local interactions,
 history and network/runtime errors. Check main ancestry and release FF eligibility
 separately. Every part must pass before publication. Unavailable prerequisites are
 NOT VERIFIED and prevent publication until resolved. This complete release acceptance
@@ -182,7 +182,7 @@ npm run demo:verify-release -- --run <run-id> --remote github
 
 Use the recorded run ID, not latest main/HEAD. This checks repository/workflow/branch,
 run SHA/attempt, matching deployment, CI Requirements/Manifest, downloaded site/receipt,
-actual public bytes and ten routes. Changed attempts, expired/missing CI evidence and
+actual public bytes and eleven routes. Changed attempts, expired/missing CI evidence and
 a public version overwritten by another release stop verification. Do not rebuild as
 replacement evidence. The command performs no branch advancement or Actions rerun.
 It requires installed locked dependencies and Playwright, but does not install them.

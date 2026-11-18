@@ -167,7 +167,7 @@ poetry run python -c 'import secrets; print(secrets.token_urlsafe(32))'
 2. 另一个终端从仓库根执行 `poetry run lab serve frontend`，打开 `http://127.0.0.1:5173/`。始终使用 `127.0.0.1`，不与 `localhost` 混用。
 3. 点击 Register，输入 username/password 并提交；202 只表示等待审批，不会登录。输入规则见 [Auth authority](ui_http/AUTHENTICATION.md#2-user-identity-and-persistence)。
 4. Operator 从仓库根执行 `poetry run lab auth pending`，读取申请 ID，再执行 `poetry run lab auth approve <user-id>`。
-5. 返回 Login，使用已审批账号登录。默认进入 Research Workspace，可切换 MO Option Chain、MO Premium Plane 或 Research Explorer；MO 页面选择日期才发起行情请求。行情仍依赖其 Source 配置和数据可用性。
+5. 返回 Login，使用已审批账号登录。默认进入策略研究地图（`/roadmap`），可切换 MO Option Chain、MO Premium Plane 或 Research Explorer；MO 页面选择日期才发起行情请求。行情仍依赖其 Source 配置和数据可用性。
 6. 刷新时由 `/auth/me` 检查 HttpOnly Cookie 恢复身份。Logout 期间卸载业务页面；成功返回登录，失败显示重试退出。登录过期的业务 401 同样返回登录。
 
 所有浏览器请求走相对 URL 和 Vite 同源代理，不直接调用 `:8011`，无需 CORS 或本地认证绕过。

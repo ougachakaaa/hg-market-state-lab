@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 
-import { isWorkspacePath, type WorkspacePath } from './routeInventory'
+import { defaultWorkspacePath, isWorkspacePath, type WorkspacePath } from './routeInventory'
 
 export function currentWorkspacePath(): WorkspacePath {
   const url = new URL(window.location.href)
@@ -9,14 +9,14 @@ export function currentWorkspacePath(): WorkspacePath {
     window.history.replaceState(null, '', url.pathname + url.search + url.hash)
   }
   return isWorkspacePath(window.location.pathname)
-    ? window.location.pathname : '/research'
+    ? window.location.pathname : defaultWorkspacePath
 }
 
 export function useWorkspaceRoute() {
   const [path, setPath] = useState(currentWorkspacePath)
   useEffect(() => {
     const sync = () => {
-      if (!isWorkspacePath(window.location.pathname)) window.history.replaceState(null, '', '/research')
+      if (!isWorkspacePath(window.location.pathname)) window.history.replaceState(null, '', defaultWorkspacePath)
       setPath(currentWorkspacePath())
     }
     window.addEventListener('popstate', sync)

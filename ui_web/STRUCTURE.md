@@ -10,6 +10,7 @@ not a parallel inventory or release verdict here.
 
 ```text
 ui_web/
+  research-map/       Strategy Research Map definition, schema and build-time validation
   src/                Online Web and shared Presentation, including formal offline reader
   demo/
     runtime/          one anonymous read-only composition and static loading

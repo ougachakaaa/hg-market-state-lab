@@ -1,6 +1,7 @@
 import { useMemo, type ComponentType, type ReactNode } from 'react'
 import { Flex, Typography } from 'antd'
-import type { StaticWorkspacePath } from '../../src/app/routeInventory'
+import { StrategyResearchMap } from '../../src/features/strategy_research_map/presentation'
+import { defaultWorkspacePath, type StaticWorkspacePath } from '../../src/app/routeInventory'
 import ApplicationShell from '../../src/app/ApplicationShell'
 import AppUiProvider from '../../src/app/AppUiProvider'
 import BacktestingOverview from '../../src/app/BacktestingOverview'
@@ -22,9 +23,10 @@ const pages = {
   '/data/mo-option-chain': resource(() => import('./pages/Chain')),
   '/data/mo-premium-plane': resource(() => import('./pages/Premium')),
   '/backtesting/futures-roll-long': resource(() => import('./pages/Backtesting')),
-} satisfies Record<Exclude<StaticWorkspacePath, '/data' | '/backtesting'>, Resource<{ default: ComponentType<StaticPageProps> }>>
+} satisfies Record<Exclude<StaticWorkspacePath, '/data' | '/backtesting' | typeof defaultWorkspacePath>, Resource<{ default: ComponentType<StaticPageProps> }>>
 
 function StaticPage({ path, ...props }: StaticPageProps & { path: StaticWorkspacePath }) {
+  if (path === defaultWorkspacePath) return <StrategyResearchMap navigate={props.navigate} href={staticHref} />
   if (path === '/data') return <DailyDataLanding mode="static" navigate={props.navigate} />
   if (path === '/backtesting') return <BacktestingOverview navigate={props.navigate} />
   return <AsyncContent resource={pages[path]}>{({ default: Page }) => <Page {...props} />}</AsyncContent>

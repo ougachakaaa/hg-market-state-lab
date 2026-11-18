@@ -7,17 +7,17 @@ import { hashWorkspacePath, staticHref, useHashRoute } from '../../demo/runtime/
 afterEach(() => { cleanup(); window.history.replaceState(null, '', '/') })
 
 describe('canonical routes and runtime adapters', () => {
-  it('declares ten Production and Static pages once', () => {
+  it('declares eleven Production and Static pages once', () => {
     expect(workspaceRoutes.map(route => route.path)).toEqual([
-      '/research', '/research/futures-basis', '/research/calendar-spread-relative-value', '/research/publications', '/data',
+      '/roadmap', '/research', '/research/futures-basis', '/research/calendar-spread-relative-value', '/research/publications', '/data',
       '/data/mo-option-chain', '/data/mo-premium-plane', '/data/futures-calendar-spread', '/backtesting', '/backtesting/futures-roll-long',
     ])
-    expect(new Set(workspaceRoutes.map(route => route.path)).size).toBe(10)
+    expect(new Set(workspaceRoutes.map(route => route.path)).size).toBe(11)
     for (const route of workspaceRoutes) {
       expect(isWorkspacePath(route.path)).toBe(true)
-      expect(hashWorkspacePath(staticHref(route.path))).toBe(isStaticWorkspacePath(route.path) ? route.path : '/research')
+      expect(hashWorkspacePath(staticHref(route.path))).toBe(isStaticWorkspacePath(route.path) ? route.path : '/roadmap')
     }
-    expect(workspaceRoutes.filter(route => isStaticWorkspacePath(route.path))).toHaveLength(10)
+    expect(workspaceRoutes.filter(route => isStaticWorkspacePath(route.path))).toHaveLength(11)
     expect(isWorkspacePath('/unknown')).toBe(false)
     expect(workspaceRoutes.filter(route => route.area === '/research' && route.sidebarVisible).map(route => route.path))
       .toEqual(['/research', '/research/futures-basis', '/research/calendar-spread-relative-value'])
@@ -42,9 +42,9 @@ describe('canonical routes and runtime adapters', () => {
   it.each(['', '#', '#unknown', '#/unknown', '#section-1'])('normalizes unknown/empty hash %s without leaving the base', hash => {
     window.history.replaceState(null, '', `/hg-market-state-lab/${hash}`)
     const { result } = renderHook(useHashRoute)
-    expect(result.current.path).toBe('/research')
+    expect(result.current.path).toBe('/roadmap')
     expect(window.location.pathname).toBe('/hg-market-state-lab/')
-    expect(window.location.hash).toBe('#/research')
+    expect(window.location.hash).toBe('#/roadmap')
   })
 
   it('isolates static route identity from server Run query and synchronizes hash changes', () => {
@@ -89,6 +89,6 @@ it('normalizes legacy Run deep links on mount and history without losing identit
 it('uses one overview icon and one instance icon across every visible route', () => {
   const overviews = ['/data', '/research', '/backtesting']
   for (const route of workspaceRoutes.filter(route => route.sidebarVisible)) {
-    expect(route.icon).toBe(overviews.includes(route.path) ? 'overview' : 'instance')
+    expect(route.icon).toBe(route.path === '/roadmap' ? 'roadmap' : overviews.includes(route.path) ? 'overview' : 'instance')
   }
 })

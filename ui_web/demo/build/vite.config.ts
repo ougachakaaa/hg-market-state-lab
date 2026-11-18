@@ -1,12 +1,13 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
+import { researchMapValidation } from '../../research-map/vite.ts'
 import { fileURLToPath } from 'node:url'
 import { dependencyInventory } from './dependencyInventory.mjs'
 export default defineConfig({
   root: fileURLToPath(new URL('../runtime', import.meta.url)),
   base: '/hg-market-state-lab/', publicDir: false, envDir: false,
   cacheDir: fileURLToPath(new URL('../../.build/cache/demo', import.meta.url)),
-  plugins: [react(), {
+  plugins: [researchMapValidation(), react(), {
     name: 'demo-runtime-isolation',
     generateBundle() {
       const modules = [...this.getModuleIds()].map(id => id.replaceAll('\\', '/'))

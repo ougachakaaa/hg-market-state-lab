@@ -1,15 +1,19 @@
 // Pure application identities and discovery metadata. No runtime/router imports.
-export type NavigationIcon = 'overview' | 'data' | 'research' | 'backtesting' | 'instance' | 'explorer'
+export type NavigationIcon = 'overview' | 'data' | 'research' | 'backtesting' | 'instance' | 'explorer' | 'roadmap'
 export const workspaceAreas = {
   '/research': { title: '研究', icon: 'research' },
   '/data': { title: '日常数据', icon: 'data' },
   '/backtesting': { title: '回测', icon: 'backtesting' },
 } as const
 type RouteMetadata = {
-  path: string; title: string; area: keyof typeof workspaceAreas;
+  path: string; title: string; area: keyof typeof workspaceAreas | null;
   icon: NavigationIcon; sidebarVisible: boolean; productionOnly?: boolean;
 }
+export const defaultWorkspacePath = '/roadmap'
+export const roadmapRoute = { path: defaultWorkspacePath, title: '策略研究地图', area: null, icon: 'roadmap', sidebarVisible: true } as const
+
 export const workspaceRoutes = [
+  roadmapRoute,
   { path: '/research', title: '研究总览', area: '/research', icon: 'overview', sidebarVisible: true },
   { path: '/research/futures-basis', title: '历史基差研究', area: '/research', icon: 'instance', sidebarVisible: true },
   { path: '/research/calendar-spread-relative-value', title: '历史跨期相对价值研究', area: '/research', icon: 'instance', sidebarVisible: true },

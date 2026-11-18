@@ -4,6 +4,7 @@
 
 | Frontend slice | 状态与用途 | Canonical authority entry |
 | --- | --- | --- |
+| Strategy Research Map | Online 与 Static Demo 共用的只读策略研究地图 | [Presentation](src/features/strategy_research_map/ARCHITECTURE.md) |
 | Backtesting | WP7 已实现；Futures Roll Long 参数、只读检查、显式执行、Run 恢复与结果阅读 | [backtesting/ARCHITECTURE.md](src/features/backtesting/ARCHITECTURE.md) |
 | MO Option Chain | 已实现；展示指定交易日的完整 MO 期权链价格分布 | [mo_option_chain/ARCHITECTURE.md](src/features/mo_option_chain/ARCHITECTURE.md) |
 | MO Premium Plane | 已实现；检视指定 observation 与取价口径下的 MO 稀疏年化权利金数值平面 | [mo_option_premium/ARCHITECTURE.md](src/features/mo_option_premium/ARCHITECTURE.md) |

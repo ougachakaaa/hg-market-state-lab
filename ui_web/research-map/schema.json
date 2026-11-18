@@ -1,0 +1,73 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["nodes", "edges"],
+  "properties": {
+    "nodes": { "type": "array", "minItems": 1, "items": { "$ref": "#/definitions/node" } },
+    "edges": { "type": "array", "items": { "$ref": "#/definitions/edge" } }
+  },
+  "definitions": {
+    "text": { "type": "string", "pattern": "\\S" },
+    "id": { "type": "string", "pattern": "^[A-Z][A-Z0-9_-]{0,39}$" },
+    "namedNote": {
+      "type": "object", "additionalProperties": false, "required": ["name", "note"],
+      "properties": { "name": { "$ref": "#/definitions/text" }, "note": { "$ref": "#/definitions/text" } }
+    },
+    "metric": {
+      "type": "object", "additionalProperties": false, "required": ["name", "availability"],
+      "properties": {
+        "name": { "$ref": "#/definitions/text" },
+        "availability": { "enum": ["planned", "available"] },
+        "note": { "$ref": "#/definitions/text" }
+      }
+    },
+    "reference": {
+      "type": "object", "additionalProperties": false, "required": ["kind", "label", "target", "value"],
+      "properties": {
+        "kind": { "enum": ["navigation", "source", "result", "report"] },
+        "label": { "$ref": "#/definitions/text" },
+        "target": { "enum": ["workspace", "repository"] },
+        "value": { "$ref": "#/definitions/text" }
+      },
+      "if": { "properties": { "kind": { "const": "navigation" } } },
+      "then": { "properties": { "target": { "const": "workspace" }, "value": { "type": "string", "pattern": "^/[a-z0-9-]+(/[a-z0-9-]+)*$" } } },
+      "else": { "properties": { "target": { "const": "repository" }, "value": { "type": "string", "pattern": "^[A-Za-z0-9_][A-Za-z0-9_-]*(/[A-Za-z0-9_][A-Za-z0-9_.-]*)+\\.(md|json)$" } } }
+    },
+    "node": {
+      "type": "object", "additionalProperties": false,
+      "required": ["id", "kind", "title", "purpose", "questions", "metrics", "planning", "implementation", "evidence", "conclusion", "references"],
+      "properties": {
+        "id": { "$ref": "#/definitions/id" },
+        "kind": { "enum": ["strategy", "strategy-definition", "baseline", "evaluation", "attribution", "study", "hypothesis", "optimization", "validation"] },
+        "title": { "$ref": "#/definitions/text" },
+        "purpose": { "$ref": "#/definitions/text" },
+        "questions": { "type": "array", "items": { "$ref": "#/definitions/text" } },
+        "topics": { "type": "array", "items": { "$ref": "#/definitions/namedNote" } },
+        "metrics": { "type": "array", "items": { "$ref": "#/definitions/metric" } },
+        "parameters": { "type": "array", "items": { "$ref": "#/definitions/namedNote" } },
+        "planning": { "enum": ["planned", "defined", "in-progress"] },
+        "implementation": { "enum": ["none", "partial", "available"] },
+        "evidence": { "enum": ["pending", "available", "accepted"] },
+        "conclusion": {
+          "type": "object", "additionalProperties": false, "required": ["status", "summary"],
+          "properties": {
+            "status": { "enum": ["pending", "supported", "rejected", "inconclusive"] },
+            "summary": { "$ref": "#/definitions/text" },
+            "review": { "$ref": "#/definitions/text" }
+          }
+        },
+        "references": { "type": "array", "items": { "$ref": "#/definitions/reference" } }
+      }
+    },
+    "edge": {
+      "type": "object", "additionalProperties": false, "required": ["from", "to", "kind"],
+      "properties": {
+        "from": { "$ref": "#/definitions/id" },
+        "to": { "$ref": "#/definitions/id" },
+        "kind": { "enum": ["dependency", "motivates", "feedback"] },
+        "label": { "$ref": "#/definitions/text" }
+      }
+    }
+  }
+}

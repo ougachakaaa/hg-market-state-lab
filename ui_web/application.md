@@ -72,7 +72,7 @@ Application composition 不改变各 feature 的 backend dependencies，也不�
 
 认证 HTTP、用户状态、审批、Cookie、限流与同源协议唯一归 [Authentication MVP V1](../ui_http/AUTHENTICATION.md)。本节只拥有 application 交互和 gate；G3 已实现下述交互，G4 已完成本地跨层验收。
 
-Login / Registration 是 application-level 入口；普通登录进入 Research Workspace，直接访问已知深层页面且认证成功时保留该页面。用户可切换 Research Catalog、Research Explorer 和两个 MO feature；Futures Basis Research 已实现 Web Consumer。登录状态不属于各 feature 的 local query/presentation state，不经 sibling feature 共享；shell 不因此接管产品 query、DTO 或图表语义。
+Login / Registration 是 application-level 入口；普通登录进入 `/roadmap` 策略研究地图，直接访问已知深层页面且认证成功时保留该页面。用户可切换 Research Catalog、Research Explorer 和两个 MO feature；Futures Basis Research 已实现 Web Consumer。登录状态不属于各 feature 的 local query/presentation state，不经 sibling feature 共享；shell 不因此接管产品 query、DTO 或图表语义。
 
 同一认证 lifecycle 内，已取消的 feature 请求若仍返回 401，也必须关闭该 gate；已关闭的旧 lifecycle 不得影响后续登录。
 
@@ -123,5 +123,5 @@ login, logout and authentication pages retain their normal layout outside Worksp
 Calendar Spread has independent Daily and Historical Relative Value controllers under
 Production's authentication gate. Since WP7, shared navigation/overviews also expose
 the two admitted Static pages through formal Presentation, without online controllers.
-Both runtimes compose ten routes; Demo's nine Bundles remain independently owned by
+Both runtimes compose eleven routes; Demo's nine Bundles remain independently owned by
 [Demo authority](demo/ARCHITECTURE.md).

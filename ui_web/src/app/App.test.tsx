@@ -38,13 +38,15 @@ describe('workspace shell and authentication', () => {
     expect(fetch.mock.calls[0][0]).toBe('/auth/me')
   })
 
-  it('logs in at root to Research', async () => {
+  it('logs in at root to the strategy map', async () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValueOnce(unauthorized()).mockResolvedValueOnce(response(identity)))
     render(<App />)
     await screen.findByRole('button', { name: '登录' })
     await submitLogin()
-    await screen.findByRole('menuitem', { name: '研究总览' })
-    expect(window.location.pathname).toBe('/research')
+    await screen.findByRole('heading', { name: '策略研究地图' })
+    const navigation = screen.getByRole('menu', { name: '业务导航' })
+    expect(within(navigation).getAllByRole('menuitem')[0].textContent).toBe('策略研究地图')
+    expect(window.location.pathname).toBe('/roadmap')
   })
 
   it('restores deep route, navigates with history and logs out', async () => {
@@ -81,12 +83,12 @@ describe('workspace shell and authentication', () => {
     await screen.findByRole('button', { name: '登录' })
   })
 
-  it('normalizes an unknown history destination to Research', async () => {
+  it('normalizes an unknown history destination to the strategy map', async () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(response(identity)))
     render(<App />)
     await screen.findByRole('button', { name: '退出登录' })
     await act(async () => { window.history.pushState(null, '', '/unknown'); window.dispatchEvent(new PopStateEvent('popstate')) })
-    expect(window.location.pathname).toBe('/research')
+    expect(window.location.pathname).toBe('/roadmap')
   })
 })
 
@@ -143,6 +145,7 @@ describe('integrated feature routes', () => {
   })
 
   it('closes the workspace on a Catalog 401 and discards a late catalog result', async () => {
+    window.history.replaceState(null, '', '/research')
     const old = deferred<Response>()
     const fetch = vi.fn().mockResolvedValueOnce(response(identity)).mockImplementationOnce(() => old.promise)
     vi.stubGlobal('fetch', fetch)
@@ -238,7 +241,7 @@ it('preserves the Futures Basis deep link through login and clears its result on
   const id = 'a'.repeat(32)
   window.history.replaceState(null, '', `/research/futures-basis?run_id=${id}`)
   const data = readerFixture()
-  const request = { ...data.request.observation, case: 'futures_basis_v1', analysis_profile: 'r01a_standard_v1' }
+  const request = { ...data.request.observation, case: 'futures_basis_v1', analysis_profile: 'r01a_standard_v2' }
   let signedIn = false
   vi.stubGlobal('fetch', vi.fn((url: string) => {
     if (url === '/auth/me') return Promise.resolve(signedIn ? response(identity) : unauthorized())

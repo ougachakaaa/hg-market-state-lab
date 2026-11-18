@@ -8,6 +8,11 @@ import { verifyOverviewLayout } from '../../tests/browser/research_overview_layo
 export async function assertRouteResult(page, route) {
   const main = page.locator('main')
   switch (route) {
+    case '/roadmap':
+      await main.getByRole('heading', { name: '策略研究地图', exact: true }).waitFor()
+      await main.getByRole('region', { name: '研究详情' }).waitFor()
+      await main.locator('.react-flow__node').first().waitFor()
+      break
     case '/data':
       await main.getByRole('heading', { name: '数据总览', exact: true }).waitFor()
       for (const name of ['MO Option Chain', 'MO Premium Plane', 'Futures Calendar Spread']) await main.getByRole('button', { name: '打开 ' + name, exact: true }).waitFor()
@@ -72,7 +77,10 @@ export async function verifyBrowser(publicUrl, { reviewOverview = false, outputR
         await route.abort()
       } else await route.continue()
     })
-    const routes = ['/data/futures-calendar-spread', '/research/calendar-spread-relative-value', '/data', '/data/mo-option-chain', '/data/mo-premium-plane', '/research',
+    await page.goto(base)
+    await page.waitForURL('**/#/roadmap')
+    await assertRouteResult(page, '/roadmap')
+    const routes = ['/roadmap', '/data/futures-calendar-spread', '/research/calendar-spread-relative-value', '/data', '/data/mo-option-chain', '/data/mo-premium-plane', '/research',
       '/research/futures-basis', '/research/publications', '/backtesting', '/backtesting/futures-roll-long']
     if (reviewOverview) await verifyOverviewLayout(browser, base + '#/research', { output: reviewRoot })
     for (const route of routes) {

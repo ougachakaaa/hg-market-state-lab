@@ -108,7 +108,7 @@ try {
   await page.getByLabel('用户名', { exact: true }).fill('g3_browser_user')
   await page.getByLabel('密码', { exact: true }).fill(password)
   await page.getByRole('button', { name: '登录', exact: true }).click()
-  await page.getByRole('menuitem', { name: '研究总览', exact: true }).waitFor()
+  await page.getByRole('heading', { name: '策略研究地图', exact: true }).waitFor()
   if (!(await page.getByRole('menuitem', { name: '数据总览', exact: true }).isVisible())) await page.getByRole('menuitem', { name: '日常数据', exact: true }).click()
   await page.getByRole('menuitem', { name: '数据总览', exact: true }).click()
   await page.getByRole('button', { name: '打开 MO Option Chain', exact: true }).click()

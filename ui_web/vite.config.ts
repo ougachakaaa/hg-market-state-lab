@@ -1,11 +1,12 @@
 import react from '@vitejs/plugin-react'
+import { researchMapValidation } from './research-map/vite.ts'
 import { configDefaults, defineConfig } from 'vitest/config'
 
 // https://vite.dev/config/
 export default defineConfig({
   cacheDir: '.build/cache/vite',
   build: { outDir: '.build/online' },
-  plugins: [react()],
+  plugins: [researchMapValidation(), react()],
   server: {
     host: '127.0.0.1',
     proxy: {

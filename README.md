@@ -7,7 +7,11 @@
 **[Live Demo](https://ougachakaaa.github.io/hg-market-state-lab/)** · **[Source Code](https://github.com/ougachakaaa/hg-market-state-lab)**
 
 Demo 已实现为匿名、只读的 GitHub Pages 站点：复用正式 React Presentation，展示已提交且经过校验的 HTTP 结果 Bundle，不在浏览器中获取实时行情或执行研究。
-当前源码包含九个 Bundle、十个页面；不能据此推定线上部署与当前分支一致。数据与展示边界见 [Demo authority](ui_web/demo/ARCHITECTURE.md)。
+当前源码包含九个 Bundle、十一个页面；不能据此推定线上部署与当前分支一致。数据与展示边界见 [Demo authority](ui_web/demo/ARCHITECTURE.md)。
+
+## Strategy Research
+
+从[研究方法论入口](docs/strategy-research/README.md)发现七类研究职责、地图契约和两种 Web 运行时共用的 JSON 定义。
 
 ## 当前能力与架构
 
@@ -43,7 +47,7 @@ flowchart LR
 
 箭头表示授权的数据流。业务模块只通过公开边界交互；浏览器不重算金融结果。仓库使用唯一根 Poetry / Python 环境，前端是独立 npm 项目。完整边界见 [ARCHITECTURE.md](ARCHITECTURE.md)。
 
-完整 Web 包含 Research、Daily Data、Backtesting 总览及业务页面；使用登录、显式执行和服务端 Run。静态 Demo 只阅读捕获结果。项目尚未正式投产，文档中的 Production Web 指完整应用模式。Demo 保留真实来源说明和投资免责声明；第三方许可未核验，不表示提供方授权。
+完整 Web 默认进入策略研究地图，并包含 Research、Daily Data、Backtesting 总览及业务页面；使用登录、显式执行和服务端 Run。静态 Demo 只阅读捕获结果。项目尚未正式投产，文档中的 Production Web 指完整应用模式。Demo 保留真实来源说明和投资免责声明；第三方许可未核验，不表示提供方授权。
 
 ## Engineering Approach
 

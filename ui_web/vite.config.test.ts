@@ -1,3 +1,4 @@
+// @vitest-environment node
 import { describe, expect, it } from 'vitest'
 import type { UserConfig } from 'vite'
 import config from './vite.config.ts'
