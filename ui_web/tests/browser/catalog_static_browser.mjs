@@ -59,7 +59,7 @@ try {
   page.on('console', message => { if (message.type() === 'error') evidence.errors.push(message.text()) })
   page.on('response', response => { if (response.status() >= 400) evidence.errors.push(`HTTP ${response.status()}: ${response.url()}`) })
 
-  await page.goto(base)
+  await page.goto(base + '#/research')
   await page.getByRole('heading', { name: '研究总览', exact: true }).waitFor()
   await page.getByText(disclosure, { exact: true }).waitFor()
   for (const title of ['历史基差研究', '价格分段研究', '指数滚动收益研究']) {

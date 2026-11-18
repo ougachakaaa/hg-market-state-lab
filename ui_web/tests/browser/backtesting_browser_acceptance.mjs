@@ -73,7 +73,7 @@ try {
   await page.getByLabel('用户名', { exact: true }).fill('g3_browser_user')
   await page.getByLabel('密码', { exact: true }).fill(password)
   await page.getByRole('button', { name: '登录', exact: true }).click()
-  await page.getByRole('menuitem', { name: '研究总览', exact: true }).waitFor()
+  await page.getByRole('heading', { name: '策略研究地图', exact: true }).waitFor()
   const cookie = (await context.cookies()).find(value => value.name === 'lab_access_token')
   assert.ok(cookie?.httpOnly)
   assert.equal(cookie.sameSite, 'Strict')

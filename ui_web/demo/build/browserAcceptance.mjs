@@ -197,7 +197,7 @@ export async function verifyBrowser(publicUrl, { reviewOverview = false, outputR
     assert.deepEqual(errors, [])
     await verifyLoadingLifecycle(browser, base)
     await writeFile(resolve(reviewRoot, 'calendar-spread-acceptance.json'), JSON.stringify({ routes: routes.length, product: captured.request.product_code, request: captured.request, allStageSamples: captured.pairs.map(p => p.samples.length), errors, result: 'PASS' }, null, 2) + '\n')
-    console.log('PASS Demo browser ten routes, Calendar Spread exact values and both date axes, local interactions, history and static network isolation')
+    console.log(`PASS Demo browser ${routes.length} routes, Calendar Spread exact values and both date axes, local interactions, history and static network isolation`)
   } finally {
     if (browser) await browser.close()
     if (server) await new Promise(done => server.httpServer.close(done))

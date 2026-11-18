@@ -76,10 +76,10 @@ try {
       return
     }
     const collapsed = await page.getByRole('button', { name: '展开导航', exact: true }).isVisible()
-    const scope = collapsed
+    const scope = collapsed && route.area
       ? page.locator('.ant-menu-submenu-popup:visible') : page.getByRole('menu', { name: '业务导航' })
     const leaf = scope.getByRole('menuitem', { name: route.title, exact: true })
-    if (collapsed || !await leaf.isVisible()) {
+    if (route.area && (collapsed || !await leaf.isVisible())) {
       await page.getByRole('menuitem', { name: inventory.areas[route.area].title, exact: true }).click()
     }
     await leaf.waitFor({ state: 'visible' })
@@ -88,7 +88,7 @@ try {
     await current(path)
   }
   await page.goto(base)
-  await current('/research')
+  await current('/roadmap')
   for (const route of inventory.routes) {
     await choose(route.path)
     // Direct URL and reload use the same built HTML under the Pages base.
@@ -126,10 +126,10 @@ try {
   pass('Shared Daily Landing, both product buttons, parent breadcrumbs and real Back/Forward')
   for (const hash of ['', '#unknown', '#/unknown', '#/backtesting?run_id=server']) {
     await page.goto(`${base}${hash}`)
-    await current(hash.includes('backtesting') ? '/backtesting' : '/research')
+    await current(hash.includes('backtesting') ? '/backtesting' : '/roadmap')
   }
   await page.evaluate(() => { location.hash = '#/unknown' })
-  await current('/research')
+  await current('/roadmap')
   pass('Empty/unknown hashes normalize; static routing discards server run_id')
   for (const width of [1440, 390]) {
     await page.setViewportSize({ width, height: 900 })
