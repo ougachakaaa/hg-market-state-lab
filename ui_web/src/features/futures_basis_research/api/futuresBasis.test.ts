@@ -46,6 +46,18 @@ describe('Futures Basis HTTP adapter', () => {
     await expect(getRun(id, signal())).rejects.toMatchObject({ name: 'AbortError' })
     expect(unauthorized).toHaveBeenCalledOnce()
   })
+
+  it('accepts historical completed status and projects an unsupported historical report', async () => {
+    const historical = {
+      ...accepted, request: { ...immutable, analysis_profile: 'r01a_standard_v1' },
+      status: 'COMPLETED', started_at: accepted.created_at, finished_at: accepted.created_at,
+      result_available: true, result_status: 'complete', failure: null,
+    }
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValueOnce(response(historical))
+      .mockResolvedValueOnce(response({ error: { kind: 'unsupported_version', detail: 'safe', param: null } }, 409)))
+    expect(await getRun(id, signal())).toEqual(historical)
+    await expect(getReport(id, signal())).rejects.toMatchObject({ kind: 'unsupported_version' })
+  })
 })
 
 it('validates complete producer payload association and every View', async () => {

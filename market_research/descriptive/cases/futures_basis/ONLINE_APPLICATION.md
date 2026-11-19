@@ -28,9 +28,10 @@ framework or distributed execution is introduced.
 
 ## Distribution V2 status
 
-The V2 profile and reader below are implemented in WP2. The historical V1 profile
-remains immutable: it contains
-only the original three ordered Histogram Specifications below and the same quantiles.
+The V2 profile and reader below are implemented in WP2. Known V1 completed Runs
+retain owner-scoped status and their stored bytes. Their reports return
+`unsupported_version`. The immutable V1 profile contains the original three
+ordered Histogram Specifications below and the same quantiles.
 `r01a_standard_v1` must never mean a four-metric request. Current V1 payloads cannot
 be read as V2. The case identity and product/date request fields remain unchanged.
 

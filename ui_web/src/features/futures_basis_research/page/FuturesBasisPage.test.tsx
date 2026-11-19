@@ -62,6 +62,29 @@ it('retries an unavailable status read as status even when the last accepted Run
   expect(s.submit).not.toHaveBeenCalled()
 })
 
+it('shows unconfirmed submission independently of preflight and avoids exposing server detail', () => {
+  const s = state({ feedback: new ResearchError('unavailable', 'private database path') })
+  vi.mocked(usePreflight).mockReturnValue({
+    result: { request, checked_at: '2026-11-19T08:00:00Z', market_date: '2026-11-19', submission: 'confirm_required', today_gate: 'not_applicable', dependencies: [] },
+    error: undefined, checking: false, refresh: vi.fn(),
+  })
+  render(<FuturesBasisPage />)
+  expect(screen.getByText('正式执行可能需要获取缺失数据')).toBeTruthy()
+  expect(screen.getByText('研究提交未确认 · UNAVAILABLE')).toBeTruthy()
+  expect(screen.getByText(/修正原因后按需重启后端/)).toBeTruthy()
+  expect(screen.queryByText('private database path')).toBeNull()
+  expect(s.submit).not.toHaveBeenCalled()
+})
+
+it('keeps the completed state when the historical report version is unsupported', () => {
+  const s = state({ phase: 'REPORT_ERROR', errorRead: 'report', run: { run_id: 'a'.repeat(32), status: 'COMPLETED', request: { ...request, analysis_profile: 'r01a_standard_v1' } }, error: new ResearchError('unsupported_version') })
+  render(<FuturesBasisPage />)
+  expect(screen.getByText('已完成')).toBeTruthy()
+  expect(screen.getByText('当前服务无法读取此版本的研究报告。')).toBeTruthy()
+  fireEvent.click(screen.getByRole('button', { name: '重新读取报告' }))
+  expect(s.retry).toHaveBeenCalledWith(true)
+  expect(s.submit).not.toHaveBeenCalled()
+})
 
 it('shows dependency feedback and only submits after an explicit Generate', async () => {
   const s = state({ phase: 'FAILED', run: { run_id: 'a'.repeat(32), request, created_at: '2026-11-09T00:00:00Z', failure: null } })

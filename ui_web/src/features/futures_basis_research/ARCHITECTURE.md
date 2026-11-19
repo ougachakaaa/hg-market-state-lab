@@ -157,7 +157,12 @@ the Metric and Bin Width controls over its temporary presentation bins.
 - Status/report/network failure: distinguishable manual retry contexts.
 - Corrupt/unsupported version: report/run cannot be read; no automatic repair.
 - Response too large: report exceeds the display bound; no truncation.
-- Storage/read capacity unavailable: retry may be possible; no queue.
+- Run submission unavailability is shown separately from data preflight and from
+  status/report reads. A persistent storage failure directs the user to the
+  operator, who checks backend logs and restarts after addressing the cause if
+  required. The UI cannot infer restart requirements from the generic 503.
+- A completed historical Run keeps its status when its report version is
+  unsupported. Read retries never resubmit research.
 - 401: application gate; stale results are discarded.
 - 403 origin failure: show access denied without treating the account as invalid.
 - Unknown/foreign run: same not-found presentation; no ownership disclosure.

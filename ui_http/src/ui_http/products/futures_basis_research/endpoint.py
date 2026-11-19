@@ -217,11 +217,15 @@ async def preflight(request: Request) -> Response:
 )
 async def submit_run(request: Request) -> Response:
     body = await parse_request(request)
-    result = await run_in_threadpool(
-        application(request.app).submit,
-        body,
-        request.state.auth_user.id,
-    )
+    try:
+        validate_online_request(body)
+    except RequestValidationError:
+        raise OnlineError("invalid_request") from None
+
+    def submit() -> dict[str, Any]:
+        return application(request.app, "submit").submit(body, request.state.auth_user.id)
+
+    result = await run_in_threadpool(submit)
     return serialize(FuturesBasisRunAccepted, result, MAX_RUN_BYTES, 202)
 
 

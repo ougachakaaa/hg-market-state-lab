@@ -16,6 +16,7 @@ from .online_record import (
     ID_PATTERN,
     MAX_REPORT_BYTES,
     OnlineError,
+    OnlineInitializationError,
     _decode,
     _failure_reason,
     _now,
@@ -32,6 +33,36 @@ _SCHEMA = (
     "result_length INTEGER, profile TEXT, scientific_status TEXT)",
     "CREATE TABLE results (run_id TEXT PRIMARY KEY REFERENCES runs(run_id), payload BLOB NOT NULL)",
 )
+_HISTORICAL_REPORT_PROFILE = "futures_basis_report_evidence_v1"
+_HISTORICAL_ANALYSIS_PROFILE = "r01a_standard_v1"
+_RETRYABLE_SQLITE_CODES = {sqlite3.SQLITE_BUSY, sqlite3.SQLITE_LOCKED, sqlite3.SQLITE_IOERR}
+
+
+def _initialization_failure(stage: str, exc: Exception, *, new: bool) -> OnlineInitializationError:
+    code = (getattr(exc, "sqlite_errorcode", None) or 0) & 255
+    kind = exc.kind if isinstance(exc, OnlineError) else "unavailable"
+    if code in {sqlite3.SQLITE_CORRUPT, sqlite3.SQLITE_NOTADB, sqlite3.SQLITE_SCHEMA}:
+        kind = "corrupt"
+    if stage in {"schema", "recovery"} and isinstance(
+        exc, ValueError | TypeError | KeyError | OverflowError | RecursionError
+    ):
+        kind = "corrupt"
+    if stage in {"rollback", "close"}:
+        category = "uncertain_cleanup"
+    elif kind in {"corrupt", "unsupported_version"}:
+        category = "integrity" if kind == "corrupt" else "unsupported_version"
+    elif code in {sqlite3.SQLITE_BUSY, sqlite3.SQLITE_LOCKED}:
+        category = "sqlite_lock"
+    elif code == sqlite3.SQLITE_IOERR:
+        category = "sqlite_io"
+    elif isinstance(exc, PermissionError) or code in {sqlite3.SQLITE_READONLY, sqlite3.SQLITE_PERM}:
+        category = "permission"
+    elif stage in {"paths", "create_file"}:
+        category = "path_unavailable"
+    else:
+        category = "storage_error"
+    retryable = not new and stage not in {"rollback", "close"} and code in _RETRYABLE_SQLITE_CODES
+    return OnlineInitializationError(kind, stage, category, exc, retryable=retryable)
 
 
 class FuturesBasisSQLiteRunStore:
@@ -90,34 +121,43 @@ class FuturesBasisSQLiteRunStore:
         self, *, write: bool = False, initialize: bool = False
     ) -> Iterator[sqlite3.Connection]:
         connection = None
+        new = False
+        stage = "paths"
         try:
             self._paths(create=initialize)
-            new = False
             if initialize:
+                stage = "create_file"
                 try:
                     with self.path.open("xb"):
-                        pass
-                    new = True
+                        new = True
                 except FileExistsError:
                     pass
+                stage = "paths"
                 self._paths()
             if not self.path.exists():
                 raise OnlineError("run_not_found")
+            stage = "connect"
             connection = sqlite3.connect(
                 self.path.as_uri() + "?mode=rw", uri=True, timeout=1.0, isolation_level=None
             )
+            stage = "paths"
             self._paths()
+            stage = "transaction"
             connection.execute("PRAGMA foreign_keys=ON")
             connection.execute("PRAGMA synchronous=FULL")
             connection.execute("BEGIN IMMEDIATE" if write else "BEGIN")
+            stage = "schema"
             if new:
                 for statement in _SCHEMA:
                     connection.execute(statement)
                 connection.execute("PRAGMA user_version=1")
             self._schema(connection)
+            stage = "recovery"
             yield connection
             if write:
+                stage = "paths"
                 self._paths()
+                stage = "commit"
                 self._commit(connection)
             else:
                 connection.rollback()
@@ -125,8 +165,12 @@ class FuturesBasisSQLiteRunStore:
             if connection is not None:
                 try:
                     connection.rollback()
-                except sqlite3.Error:
+                except sqlite3.Error as cleanup:
+                    if initialize and isinstance(exc, Exception):
+                        raise _initialization_failure("rollback", cleanup, new=new) from None
                     raise OnlineError("unavailable") from None
+            if initialize and isinstance(exc, Exception):
+                raise _initialization_failure(stage, exc, new=new) from None
             if isinstance(exc, OnlineError):
                 raise
             if isinstance(exc, sqlite3.Error):
@@ -152,7 +196,9 @@ class FuturesBasisSQLiteRunStore:
             if connection is not None:
                 try:
                     connection.close()
-                except sqlite3.Error:
+                except sqlite3.Error as exc:
+                    if initialize:
+                        raise _initialization_failure("close", exc, new=new) from None
                     raise OnlineError("unavailable") from None
 
     def _commit(self, connection: sqlite3.Connection) -> None:
@@ -235,7 +281,10 @@ class FuturesBasisSQLiteRunStore:
             req["case"],
         )
         validate_request(request, check_today=False)
-        if req != _request_data(request) or (request.end_date - request.start_date).days + 1 > 1096:
+        expected_request = _request_data(request)
+        if status == "COMPLETED" and profile == _HISTORICAL_REPORT_PROFILE:
+            expected_request["analysis_profile"] = _HISTORICAL_ANALYSIS_PROFILE
+        if req != expected_request or (request.end_date - request.start_date).days + 1 > 1096:
             raise OnlineError("corrupt")
         _validate_state(s)
         if s["created_at"] != m["created_at"] or s["status"] != status:
@@ -250,7 +299,7 @@ class FuturesBasisSQLiteRunStore:
                 type(length) is not int
                 or not 0 < length <= MAX_REPORT_BYTES
                 or result != ("blob", length)
-                or profile != PROFILE_REPORT
+                or profile not in (PROFILE_REPORT, _HISTORICAL_REPORT_PROFILE)
                 or science != s["result_status"]
             ):
                 raise OnlineError("corrupt")
@@ -304,9 +353,17 @@ class FuturesBasisSQLiteRunStore:
             self._transition(c, run_id, status, failure)
 
     @staticmethod
-    def validate_payload(payload: bytes, metadata: dict[str, Any], state: dict[str, Any]) -> Any:
+    def validate_payload(
+        payload: bytes,
+        metadata: dict[str, Any],
+        state: dict[str, Any],
+        *,
+        stored_profile: str | None = None,
+    ) -> Any:
         reader = _decode(payload)
         if not isinstance(reader, dict):
+            raise OnlineError("corrupt")
+        if stored_profile == _HISTORICAL_REPORT_PROFILE and reader.get("profile") != stored_profile:
             raise OnlineError("corrupt")
         if reader.get("profile") != PROFILE_REPORT:
             raise OnlineError("unsupported_version")
@@ -367,12 +424,14 @@ class FuturesBasisSQLiteRunStore:
                     if s["status"] in {"PENDING", "RUNNING"}
                     else "result_unavailable"
                 )
-            payload = c.execute("SELECT payload FROM results WHERE run_id=?", (run_id,)).fetchone()[
-                0
-            ]
+            payload, profile = c.execute(
+                "SELECT results.payload, runs.profile FROM results JOIN runs USING (run_id) "
+                "WHERE run_id=?",
+                (run_id,),
+            ).fetchone()
             if hashlib.sha256(payload).hexdigest() != s["result_digest"]:
                 raise OnlineError("corrupt")
-            return self.validate_payload(payload, m, s)
+            return self.validate_payload(payload, m, s, stored_profile=profile)
 
     def recover(self, active: tuple[str, str] | None = None) -> None:
         with self._connection(write=True, initialize=True) as c:

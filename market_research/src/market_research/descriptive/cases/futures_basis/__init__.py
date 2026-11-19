@@ -32,6 +32,7 @@ from .observations import SourceReference as SourceReference
 from .online import FuturesBasisOnlineApplication as FuturesBasisOnlineApplication
 from .online import OnlineError as OnlineError
 from .online import OnlineServices as OnlineServices
+from .online_record import OnlineInitializationError as OnlineInitializationError
 from .online import standard_report_request as standard_report_request
 from .preflight import FuturesBasisPreflight as FuturesBasisPreflight
 from .preflight import PreflightDependency as PreflightDependency

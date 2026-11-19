@@ -17,8 +17,8 @@ const messages: Record<string, string> = {
   invalid_request: 'FORM_ERROR：请求无效，请检查品种和日期。',
   request_too_large: 'FORM_ERROR：请求超过大小限制。',
   origin_forbidden: '访问被拒绝，请检查同源访问入口。',
-  unavailable: 'UNAVAILABLE：研究运行存储或平台能力不可用，请稍后重试。',
-  corrupt: '研究记录无法通过完整性校验。', unsupported_version: '此研究版本暂不支持。',
+  unavailable: '研究运行存储暂不可用。若持续失败，请联系维护者查看后端日志，修正原因后按需重启后端。',
+  corrupt: '研究记录无法通过完整性校验。', unsupported_version: '此研究记录的版本暂不受支持。',
   response_too_large: '报告超过读取大小限制，无法显示。', read_busy: '报告读取容量已占用，请手动重试。',
   result_not_ready: '报告尚未准备完成。', result_unavailable: '此 Run 没有可读取的报告。',
   internal_error: '服务暂时无法完成请求。',
@@ -85,7 +85,9 @@ export default function FuturesBasisPage() {
       </>}
     </Flex>
     {research.submitting && <Alert showIcon type="info" title="正在提交 · SUBMITTING" description="等待服务器确认 Run；已有结果仍可阅读。" />}
-    {research.feedback && <Alert showIcon type="warning" title={messages[research.feedback.kind] ?? '提交未被确认。'} description={research.feedback.kind === 'invalid_request' ? research.feedback.detail : undefined} />}
+    {research.feedback && <Alert showIcon type="warning"
+      title={research.feedback.kind === 'unavailable' ? '研究提交未确认 · UNAVAILABLE' : messages[research.feedback.kind] ?? '提交未被确认。'}
+      description={research.feedback.kind === 'unavailable' ? messages.unavailable : research.feedback.kind === 'invalid_request' ? research.feedback.detail : undefined} />}
   </>
 
   const run = <>
@@ -106,7 +108,7 @@ export default function FuturesBasisPage() {
     {research.phase === 'UNKNOWN_RUN' && <Alert showIcon type="warning" title="研究不存在或不可访问" description="请核对 Run 链接，或显式提交新的研究。" />}
     {research.error && research.phase !== 'UNKNOWN_RUN' && <Alert showIcon type="error"
       title={retryReport ? '报告读取失败' : '状态读取失败'}
-      description={research.error.kind === 'network' ? '网络读取失败，请手动重试；不会创建新 Run。' : research.error.kind === 'invalid_response' ? '读取响应无法验证，请手动重试。' : messages[research.error.kind] ?? '读取失败，请手动重试。'} />}
+      description={research.error.kind === 'network' ? '网络读取失败，请手动重试；不会创建新 Run。' : research.error.kind === 'invalid_response' ? '读取响应无法验证，请手动重试。' : retryReport && research.error.kind === 'unsupported_version' ? '当前服务无法读取此版本的研究报告。' : messages[research.error.kind] ?? '读取失败，请手动重试。'} />}
     {['STATUS_ERROR', 'REPORT_ERROR', 'UNAVAILABLE'].includes(research.phase) && <Flex><Button icon={<ReloadOutlined aria-hidden="true" />} disabled={research.submitting} onClick={() => research.retry(retryReport)}>{retryReport ? '重新读取报告' : '重新读取状态'}</Button></Flex>}
     {research.run && ['FAILED', 'INTERRUPTED'].includes(research.phase) && <Flex vertical gap="small">
       <Alert showIcon type="error" title={research.phase === 'INTERRUPTED' ? '研究执行已中断' : '研究执行失败'} description={'failure' in research.run && research.run.failure ? research.run.failure.reason : '未生成研究报告，请检查服务后显式重试。'} />

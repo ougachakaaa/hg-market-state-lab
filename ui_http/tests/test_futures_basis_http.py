@@ -414,7 +414,7 @@ def test_successful_runtime_is_shared_across_concurrent_compositions(tmp_path, m
     monkeypatch.setattr(runtime, "FuturesBasisOnlineApplication", factory)
     apps = [create_app() for _ in range(4)]
     with ThreadPoolExecutor(max_workers=4) as pool:
-        instances = list(pool.map(runtime.application, apps))
+        instances = list(pool.map(lambda app: runtime.application(app, "startup"), apps))
     assert factory.call_count == 1
     assert all(instance is instances[0] for instance in instances)
     clients = [authenticated_client(app) for app in apps[:2]]
@@ -562,6 +562,7 @@ def test_preflight_returns_assessment_even_when_run_storage_unavailable(monkeypa
     assert response.json()["dependencies"][0]["state"] == "operation_error"
     assert response.headers["cache-control"] == "no-store"
     assert "/private" not in response.text and "run_id" not in response.json()
+    assert_error(client.post(PATH, json=BODY), 503, "unavailable")
     # All success decisions use the same typed transport projection.
     for submission in ("allowed", "confirm_required"):
         monkeypatch.setattr(
@@ -586,3 +587,162 @@ def test_preflight_openapi_is_bounded_authenticated_and_has_no_422():
 def db(research, statement, args=()):
     with sqlite3.connect(research.root / "runs.sqlite3") as connection:
         return connection.execute(statement, args).fetchall()
+
+
+def test_historical_completed_status_keeps_its_profile_after_restart(product):
+    from market_research.descriptive.cases.futures_basis.evidence import json_bytes
+
+    app, research, services = product
+    client = authenticated_client(app)
+    run_id = client.post(PATH, json=BODY).json()["run_id"]
+    assert terminal(client, run_id)["status"] == "COMPLETED"
+    with sqlite3.connect(research.root / "runs.sqlite3") as connection:
+        metadata, state, payload = connection.execute(
+            "SELECT metadata, state, payload FROM runs JOIN results USING (run_id)"
+        ).fetchone()
+        metadata, state, reader = map(json.loads, (metadata, state, payload))
+        metadata["request"]["analysis_profile"] = "r01a_standard_v1"
+        reader["profile"] = "futures_basis_report_evidence_v1"
+        payload = json_bytes(reader)
+        state["result_digest"] = hashlib.sha256(payload).hexdigest()
+        connection.execute(
+            "UPDATE runs SET metadata=?, state=?, profile=?",
+            (json_bytes(metadata), json_bytes(state), reader["profile"]),
+        )
+        connection.execute("UPDATE results SET payload=?", (payload,))
+    app.state.futures_basis_application = FuturesBasisOnlineApplication(
+        root=research.root, services=OnlineServices(services, services, services)
+    )
+    response = client.get(f"{PATH}/{run_id}")
+    assert response.status_code == 200
+    assert response.json()["request"]["analysis_profile"] == "r01a_standard_v1"
+    assert response.json()["result_available"] is True
+    assert_error(client.get(f"{PATH}/{run_id}/report"), 409, "unsupported_version")
+    service = create_service()
+    service.register("other_consumer", PASSWORD)
+    service.approve(service.list_pending()[0].id)
+    other = TestClient(app, base_url=ORIGIN, headers={"Origin": ORIGIN})
+    assert other.post(
+        "/auth/login", json={"username": "other_consumer", "password": PASSWORD}
+    ).status_code == 200
+    for suffix in ("", "/report"):
+        assert_error(other.get(f"{PATH}/{run_id}{suffix}"), 404, "run_not_found")
+    assert db(research, "SELECT payload FROM results") == [(payload,)]
+
+
+def test_real_sqlite_lock_recovers_on_explicit_post_after_cooldown(product, monkeypatch, caplog):
+    from contextlib import closing
+
+    app, research, services = product
+    app.state.futures_basis_application = None
+    monkeypatch.setenv("LAB_FUTURES_BASIS_RUN_ROOT", str(research.root))
+    factory = Mock(side_effect=lambda: FuturesBasisOnlineApplication(
+        services=OnlineServices(services, services, services)
+    ))
+    monkeypatch.setattr(runtime, "FuturesBasisOnlineApplication", factory)
+    clock = Mock(return_value=100.0)
+    monkeypatch.setattr(runtime, "monotonic", clock)
+    client = authenticated_client(app)
+    with closing(sqlite3.connect(research.root / "runs.sqlite3")) as blocker:
+        blocker.execute("BEGIN IMMEDIATE")
+        with client:
+            assert_error(client.post(PATH, json=BODY), 503, "unavailable")
+            assert "stage=transaction category=sqlite_lock" in caplog.text
+            assert "exception_type=OperationalError" in caplog.text
+            blocker.rollback()
+            clock.return_value = 129.0
+            assert_error(client.post(PATH, json=BODY), 503, "unavailable")
+            clock.return_value = 130.0
+            assert_error(client.get(f"{PATH}/{'0' * 32}"), 503, "unavailable")
+            invalid = client.post(PATH, json={**BODY, "product_code": "no"})
+            assert_error(invalid, 400, "invalid_request")
+            assert factory.call_count == 1
+            response = client.post(PATH, json=BODY)
+            assert response.status_code == 202, response.text
+            assert factory.call_count == 2
+            assert terminal(client, response.json()["run_id"])["status"] == "COMPLETED"
+    assert db(research, "SELECT count(*) FROM runs") == [(1,)]
+
+
+@pytest.mark.parametrize("recovers", [True, False])
+def test_initialization_io_retry_limit_with_real_store(product, monkeypatch, caplog, recovers):
+    app, research, services = product
+    app.state.futures_basis_application = None
+    monkeypatch.setenv("LAB_FUTURES_BASIS_RUN_ROOT", str(research.root))
+    monkeypatch.setattr(
+        runtime, "FuturesBasisOnlineApplication",
+        lambda: FuturesBasisOnlineApplication(
+            services=OnlineServices(services, services, services)
+        ),
+    )
+    clock = Mock(return_value=100.0)
+    monkeypatch.setattr(runtime, "monotonic", clock)
+    store_type = type(research._store)
+    commit = store_type._commit
+
+    def fail_commit(*args):
+        error = sqlite3.OperationalError("/private transient I/O")
+        error.sqlite_errorcode = sqlite3.SQLITE_IOERR
+        raise error
+
+    monkeypatch.setattr(store_type, "_commit", fail_commit)
+    client = authenticated_client(app)
+    with client:
+        if recovers:
+            assert_error(client.post(PATH, json=BODY), 503, "unavailable")
+            clock.return_value = 130.0
+            monkeypatch.setattr(store_type, "_commit", commit)
+            response = client.post(PATH, json=BODY)
+            assert response.status_code == 202
+            assert terminal(client, response.json()["run_id"])["status"] == "COMPLETED"
+            assert runtime._runtime.attempts == 2
+            assert db(research, "SELECT count(*) FROM runs") == [(1,)]
+            return
+        for moment in (100.0, 130.0, 160.0, 190.0):
+            clock.return_value = moment
+            assert_error(client.post(PATH, json=BODY), 503, "unavailable")
+    assert runtime._runtime.attempts == 3
+    assert "stage=commit category=sqlite_io exception_type=OperationalError" in caplog.text
+    assert "inspect_storage_and_restart_backend" in caplog.text
+    assert "/private" not in caplog.text
+    assert db(research, "SELECT count(*) FROM runs") == [(0,)]
+
+
+@pytest.mark.parametrize(
+    ("problem", "category"),
+    [("file_root", "path_unavailable"), ("permission", "permission"), ("bad_db", "integrity")],
+)
+def test_permanent_storage_failures_are_not_retried(
+    tmp_path, monkeypatch, caplog, problem, category
+):
+    root = tmp_path / "store"
+    root.mkdir()
+    if problem == "file_root":
+        root = root / "file"
+        root.touch()
+    elif problem == "bad_db":
+        (root / "runs.sqlite3").write_bytes(b"invalid SQLite file")
+    else:
+        lstat = Path.lstat
+
+        def denied(path, *args, **kwargs):
+            if path == root:
+                raise PermissionError("/private root")
+            return lstat(path, *args, **kwargs)
+
+        monkeypatch.setattr(type(root), "lstat", denied)
+
+    monkeypatch.setenv("LAB_FUTURES_BASIS_RUN_ROOT", str(root))
+    clock = Mock(return_value=100.0)
+    monkeypatch.setattr(runtime, "monotonic", clock)
+    app = create_app()
+    client = authenticated_client(app)
+    with client:
+        clock.return_value = 1_000.0
+        assert_error(client.post(PATH, json=BODY), 503, "unavailable")
+    assert runtime._runtime.attempts == 1
+    assert f"category={category}" in caplog.text
+    assert "inspect_storage_and_restart_backend" in caplog.text
+    assert "/private" not in caplog.text
+    if problem == "bad_db":
+        assert (root / "runs.sqlite3").read_bytes() == b"invalid SQLite file"

@@ -22,12 +22,16 @@ class FuturesBasisRunRequest(DTO):
     end_date: date
 
 
-class FuturesBasisImmutableRequest(DTO):
+class FuturesBasisRequestIdentity(FuturesBasisRunRequest):
     case: Literal["futures_basis_v1"]
-    product_code: Product
-    start_date: date
-    end_date: date
+
+
+class FuturesBasisImmutableRequest(FuturesBasisRequestIdentity):
     analysis_profile: Literal["r01a_standard_v2"]
+
+
+class FuturesBasisStatusRequest(FuturesBasisRequestIdentity):
+    analysis_profile: Literal["r01a_standard_v1", "r01a_standard_v2"]
 
 
 class FuturesBasisFailure(DTO):
@@ -65,7 +69,7 @@ class FuturesBasisRunAccepted(DTO):
 
 class FuturesBasisRun(DTO):
     run_id: RunId
-    request: FuturesBasisImmutableRequest
+    request: FuturesBasisStatusRequest
     status: Status
     created_at: str = Field(json_schema_extra={"format": "date-time"})
     started_at: str | None = Field(json_schema_extra={"format": "date-time"})

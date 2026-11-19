@@ -27,7 +27,7 @@ def test_process_restart_preserves_completed_and_interrupts_running(
     service.register("restart_user", "synthetic-test-password")
     service.approve(service.list_pending()[0].id)
     command = [
-        sys.executable, "-m", "uvicorn", "--app-dir", "ui_web/scripts",
+        sys.executable, "-m", "uvicorn", "--app-dir", "ui_web/tests/fixtures",
         "futures_basis_browser_app:create_app", "--factory", "--host", "127.0.0.1",
         "--port", str(port), "--no-proxy-headers",
     ]

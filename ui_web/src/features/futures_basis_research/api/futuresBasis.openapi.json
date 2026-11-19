@@ -249,10 +249,10 @@
           }
         },
         "required": [
-          "case",
           "product_code",
           "start_date",
           "end_date",
+          "case",
           "analysis_profile"
         ],
         "title": "FuturesBasisImmutableRequest",
@@ -456,7 +456,7 @@
             "title": "Finished At"
           },
           "request": {
-            "$ref": "#/components/schemas/FuturesBasisImmutableRequest"
+            "$ref": "#/components/schemas/FuturesBasisStatusRequest"
           },
           "result_available": {
             "title": "Result Available",
@@ -581,6 +581,53 @@
           "end_date"
         ],
         "title": "FuturesBasisRunRequest",
+        "type": "object"
+      },
+      "FuturesBasisStatusRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "analysis_profile": {
+            "enum": [
+              "r01a_standard_v1",
+              "r01a_standard_v2"
+            ],
+            "title": "Analysis Profile",
+            "type": "string"
+          },
+          "case": {
+            "const": "futures_basis_v1",
+            "title": "Case",
+            "type": "string"
+          },
+          "end_date": {
+            "format": "date",
+            "title": "End Date",
+            "type": "string"
+          },
+          "product_code": {
+            "enum": [
+              "IM",
+              "IC",
+              "IF",
+              "IH"
+            ],
+            "title": "Product Code",
+            "type": "string"
+          },
+          "start_date": {
+            "format": "date",
+            "title": "Start Date",
+            "type": "string"
+          }
+        },
+        "required": [
+          "product_code",
+          "start_date",
+          "end_date",
+          "case",
+          "analysis_profile"
+        ],
+        "title": "FuturesBasisStatusRequest",
         "type": "object"
       },
       "JsonValue": {}

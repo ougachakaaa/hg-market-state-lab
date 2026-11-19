@@ -17,6 +17,7 @@ from .observations import ObservationConstructionError
 from .online_record import (
     MAX_REPORT_BYTES,
     OnlineError,
+    OnlineInitializationError,
     _ExecutionFailure,
     _failure,
     _validate_reader,
@@ -55,8 +56,10 @@ class FuturesBasisOnlineApplication:
     ) -> None:
         try:
             configured = futures_basis_run_root() if root is None else None
-        except ConfigError:
-            raise OnlineError("unavailable") from None
+        except ConfigError as exc:
+            raise OnlineInitializationError(
+                "unavailable", "configuration", "configuration", exc
+            ) from None
         self.root = (
             Path(configured)
             if configured is not None
@@ -65,9 +68,16 @@ class FuturesBasisOnlineApplication:
         self.services = services or OnlineServices()
         self.observe = observe
         self.compose = compose
-        self._store = FuturesBasisSQLiteRunStore(self.root)
+        try:
+            self._store = FuturesBasisSQLiteRunStore(self.root)
+        except OnlineError as exc:
+            raise OnlineInitializationError(
+                "unavailable", "configuration", "invalid_root", exc
+            ) from None
         with _PROCESS_LOCK:
-            self._available()
+            if str(self.root) in _UNAVAILABLE:
+                exc = OnlineError("unavailable")
+                raise OnlineInitializationError("unavailable", "recovery", "terminal_state", exc)
             self._store.recover(_PROCESS_ACTIVE)
 
     def _available(self) -> None:

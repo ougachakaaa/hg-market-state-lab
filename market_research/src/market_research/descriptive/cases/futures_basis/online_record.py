@@ -35,6 +35,20 @@ class OnlineError(Exception):
         self.kind = kind
 
 
+class OnlineInitializationError(OnlineError):
+    """Safe diagnostics from online application initialization."""
+
+    def __init__(
+        self, kind: str, stage: str, category: str, cause: Exception, *, retryable: bool = False
+    ) -> None:
+        super().__init__(kind)
+        self.stage = stage
+        self.category = category
+        self.exception_type = type(cause).__name__
+        self.sqlite_code: int | None = getattr(cause, "sqlite_errorcode", None)
+        self.retryable = retryable
+
+
 def _now() -> str:
     return datetime.now(UTC).isoformat().replace("+00:00", "Z")
 

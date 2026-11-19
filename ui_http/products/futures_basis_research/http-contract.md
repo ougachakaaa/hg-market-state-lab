@@ -3,8 +3,8 @@
 ## Storage transition status
 
 W1 online Runs exclusively use the case-owned [portable SQLite storage](../../../market_research/descriptive/cases/futures_basis/ONLINE_STORAGE.md).
-Native Windows no longer has a POSIX capability gate. Endpoints, DTOs, Auth, owner
-isolation and safe unavailable/corrupt mappings remain unchanged. Actual platform
+Native Windows uses the portable storage checks. The existing endpoints, Auth, owner
+isolation and safe unavailable/corrupt mappings apply. Actual platform
 verification is recorded in the shared storage reconciliation; portability is not
 acceptance evidence for unexecuted platforms.
 
@@ -20,19 +20,17 @@ This is an independent product. It does not modify the semantics of
 Research Explorer. R01-A is not admitted to the Descriptive Research capability,
 Plan/Batch or Publication paths.
 
-## Distribution V2 target (WP2 pending)
+## Distribution V2
 
-This document encodes the accepted V2 target, not current runtime readiness. WP2
-updates the profile literal, fourth Histogram Specification and reader/definition
-identities shown below, together with OpenAPI and the feature-owned generated types.
+V2 is the profile for current submissions and report delivery. The fourth
+Histogram Specification and reader/definition identities belong to this profile.
 Financial formulas remain solely Research-owned. The HTTP route/operation identities,
 three-field submit body, lifecycle, authentication, size limits and error mappings
 stay unchanged. No Bin Width or `tail_exclusion_pct` is accepted as HTTP input.
-The profile and Reader payload are distinct version axes from HTTP V1 transport.
-V1 request/result identities are never silently interpreted as V2; no legacy adapter
-is required. Immutable profile specifications belong only to
+The analysis profile, reader payload and HTTP transport have separate version
+identities. Historical status retains its original analysis profile. Immutable
+profile specifications belong only to
 [Online application](../../../market_research/descriptive/cases/futures_basis/ONLINE_APPLICATION.md).
-WP1 changes no executable DTO, OpenAPI or generated artifact.
 
 ## Operations
 
@@ -287,9 +285,18 @@ OpenAPI publishes the four operations, the Cookie security requirement, the
 accepted/run/report/failure/error DTOs, concrete statuses and `no-store` behavior;
 it removes the unused framework `422`. The HTTP composition initializes and reuses
 one process-wide online application.
-Initialization is attempted once per process. Failure makes only this product
-unavailable until backend restart. Offline OpenAPI export does not initialize run
-storage.
+Initialization starts at backend startup. After a retryable initialization failure
+identified by Research, only an authenticated, valid POST Run request can trigger
+another attempt, after a 30-second cooldown and within three total attempts per
+process. The HTTP runtime serializes attempts and logs safe stage, category,
+exception type, SQLite error code when available, operation and attempt identity.
+Permanent failures or exhausted attempts require operator action and restart.
+Initialization failure remains `503 unavailable`. GET, preflight and offline OpenAPI
+never trigger initialization or recovery. The adapter never replays a submission.
+An intact V1 completed Run retains its status DTO and `result_available=true`
+for its owner. The status request identity admits the original `r01a_standard_v1`
+literal. Its report returns `409 unsupported_version`. New submissions,
+preflight and report success responses continue to use the V2 identity.
 
 WP8-A implements HTTP delivery only; WP8-B introduces the first Web consumer and
 its generated artifacts and freshness checks. The new frontend feature owns its committed

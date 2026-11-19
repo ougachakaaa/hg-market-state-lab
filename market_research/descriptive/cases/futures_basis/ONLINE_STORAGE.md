@@ -48,9 +48,12 @@ SHA-256 where applicable. Preserve existing request canonicalization, metadata l
 and request association checks. A result record is keyed by Run identity and contains
 the exact existing canonical UTF-8 JSON bytes, not re-encoded SQLite JSON values.
 Result profile is bound to the exact reader identity owned by
-[Evidence](EVIDENCE.md#version-ownership-and-rollout). The accepted WP2 target is V2;
-current runtime V1 is not silently reinterpreted. This changes profile validation,
-not the SQLite schema or `user_version`. SQL layout and connection encapsulation are private
+[Evidence](EVIDENCE.md#version-ownership-and-rollout). V2 is the current report profile.
+Known V1 completed rows retain their V1 request identity and remain eligible for
+recovery and owner-scoped status after metadata, state and BLOB association checks.
+Report reads verify size and digest and reject an intact V1 report as
+`unsupported_version`. Unknown stored profile values fail closed. The store retains
+the original rows and report bytes at `user_version=1`. SQL layout and connection encapsulation are private
 implementation details; parameterize all identity/owner queries and never derive SQL
 or file paths from a Run ID.
 
@@ -110,6 +113,12 @@ concurrent path replacement; SQLite and SHA-256 do not protect against a hostile
 rewriting both metadata and payload. No authenticity, distributed coordination or perfect
 power-loss durability claim is made. Permissions/storage errors fail explicitly without
 leaking local details; unavailable storage does not disable unrelated products.
+
+Initialization and recovery retain a safe failure stage, category, exception type
+and SQLite error code when available. Busy, locked and I/O failures may be retried
+only after transaction cleanup succeeds and while no unverified freshly created
+database would be reused. Configuration, permission and integrity failures and
+uncertain cleanup require operator attention and a process restart.
 
 ## Platform verification boundary
 
