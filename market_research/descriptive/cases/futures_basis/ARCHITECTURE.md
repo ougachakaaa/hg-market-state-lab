@@ -34,16 +34,16 @@ resolver and transition detection are implemented under [Slot resolution](SLOT_R
 Preparation alone performs upstream I/O; WP3 implements public preparation and pure
 Contract-day/Slot-day observations under [Inputs](INPUTS.md) and [Observation](OBSERVATION.md).
 
-## Distribution V2 authority target
+## Distribution V2 ownership
 
-WP1 encodes the accepted four-metric extension; implementation remains pending.
+The four-metric Distribution V2 is implemented.
 The case identity stays `futures_basis_v1`. Formula/definition version belongs to
 [Definition](DEFINITION.md), analysis-profile version to
 [Online application](ONLINE_APPLICATION.md), and scientific reader/evidence version
 to [Evidence](EVIDENCE.md). Presentation filtering is separately owned by the
 [feature distribution contract](../../../../ui_web/src/features/futures_basis_research/DISTRIBUTION.md),
-never by Research eligibility or Statistics methods. Current delivery and the
-WP2-WP5 handoff enter [Roadmap](ROADMAP.md#distribution-v2-handoff).
+never by Research eligibility or Statistics methods. Current delivery and
+verification limits enter [Roadmap](ROADMAP.md#distribution-v2-handoff).
 
 ## Authority navigation
 
@@ -57,7 +57,8 @@ WP2-WP5 handoff enter [Roadmap](ROADMAP.md#distribution-v2-handoff).
 | Python statistics usage | [Usage](USAGE.md) |
 | Business projection and offline report evidence | [Delivery](DELIVERY.md) |
 | Read-only online input assessment and Web admission | [Preflight](PREFLIGHT.md) |
-| Online application, standard profile, run lifecycle, result store and reader boundary | [Online application](ONLINE_APPLICATION.md) |
+| Online application, standard profile, Run lifecycle and reader boundary | [Online application](ONLINE_APPLICATION.md) |
+| Run Contract Version, active store, recovery and sealing | [Online storage](ONLINE_STORAGE.md) |
 | Offline evidence encoding and replay | [Evidence](EVIDENCE.md) |
 | Current delivery, remaining verification and limitations | [Roadmap](ROADMAP.md) |
 
@@ -84,8 +85,6 @@ Existing Snapshot/Workbench semantics stay frozen; see [case limitations](ROADMA
 
 Status: financial/observation/statistics, offline evidence/report and online
 Python/HTTP/Web paths are implemented. Current scope and unverified platforms
-enter [Roadmap](ROADMAP.md); reproducibility enters [Evidence](EVIDENCE.md).
-The Distribution V2 scientific target is explicitly versioned above; its implementation is pending. No new CLI,
-Research database, publication lifecycle or Modeling import permission is introduced;
-the online run store is case-specific disposable runtime state, not Publication or a
-generic Research execution identity.
+enter [Roadmap](ROADMAP.md). Reproducibility enters [Evidence](EVIDENCE.md).
+The online Run Store is case-specific and follows the development retention and
+sealing rules in [Online storage](ONLINE_STORAGE.md).

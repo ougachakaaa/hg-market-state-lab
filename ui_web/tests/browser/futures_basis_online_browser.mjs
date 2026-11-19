@@ -110,8 +110,8 @@ try {
   assert.equal(await page.getByRole('navigation', { name: '报告章节' }).count(), 0)
   assert.equal(await page.getByText(/相邻 inputs.canonical.json/).count(), 0)
   const plots = page.locator('[data-testid="history-charts"] .js-plotly-plot')
-  assert.equal(await plots.count(), 3)
-  await verifyDateEvents(page, 3)
+  assert.equal(await plots.count(), 4)
+  await verifyDateEvents(page, 4)
   assert.equal(await plots.first().locator('.legend .traces').count(), 4)
   assert.ok(states.includes('RUNNING'))
   assert.ok(states.includes('COMPLETED'))
@@ -120,7 +120,7 @@ try {
   await verifyBasisSummary(page, presentationReport.data)
   await page.screenshot({ path: resolve(output, 'online-report.png'), fullPage: true })
   await page.screenshot({ path: resolve(output, 'online-overview.png') })
-  // Verify the Web-only today gate using a blocked public assessment without
+  // Verify advisory today readiness using a blocked public assessment without
   // acquiring Source data or creating a Run.
   await page.route('**/api/research/futures-basis/preflight', async route => {
     const r = await route.fetch()
@@ -133,9 +133,9 @@ try {
     }
     await route.fulfill({ response: r, json: result })
   })
-  await page.getByRole('button', { name: '重新检查输入' }).click()
-  await page.getByText('本地当日数据未就绪，请先完成数据准备，再重新检查。', { exact: true }).waitFor()
-  assert.equal(await page.getByRole('button', { name: '生成研究' }).isEnabled(), false)
+  await page.getByRole('button', { name: '重新检查', exact: true }).click()
+  await page.getByText('当日缓存不完整', { exact: true }).waitFor()
+  assert.equal(await page.getByRole('button', { name: '生成研究' }).isEnabled(), true)
   assert.equal(evidence.filter(entry => entry.startsWith('POST /api/research/futures-basis/runs ')).length, 2)
   await page.unroute('**/api/research/futures-basis/preflight')
   // An invalid future request must preserve the existing terminal report and URL.
@@ -144,8 +144,7 @@ try {
     await page.getByRole('textbox', { name: label, exact: true }).press('Enter')
   }
   assert.equal(evidence.filter(entry => entry.startsWith('POST /api/research/futures-basis/runs ')).length, 2)
-  await page.getByText('输入检查失败，请重新检查').waitFor()
-  assert.equal(await page.getByRole('button', { name: '生成研究' }).isEnabled(), false)
+  await page.getByText('数据检查失败，可重试', { exact: true }).waitFor()
   assert.equal(evidence.filter(entry => entry.startsWith('POST /api/research/futures-basis/runs ')).length, 2)
   assert.equal(await page.locator('[data-testid="compact-report"]').count(), 1)
   assert.ok(page.url().includes(firstId))

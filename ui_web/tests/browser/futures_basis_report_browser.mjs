@@ -135,11 +135,12 @@ try {
     await eventReadout.locator('.ant-collapse-header').first().click()
     assert.ok((await eventReadout.textContent()).includes('观测到的角色映射变化'))
   }
-  const missing = page.locator('#section-1 section[aria-label="Missing values"]')
   if (expected.views.history.annualized_basis_ratio.layers.some(b => b.layer.data.some(m => m.y === null))) {
-    assert.ok(await missing.count() > 0)
-    await missing.first().locator('.ant-collapse-header').first().click()
-    assert.ok((await missing.first().textContent()).includes('原因'))
+    const missing = page.locator('#section-1 section[aria-label="无有效指标值日期"]').first()
+    await missing.getByRole('button', { name: '无有效指标值日期', exact: true }).click()
+    const dates = missing.locator('.ant-collapse').nth(1).getByRole('button')
+    await dates.first().click()
+    assert.ok((await missing.textContent()).includes('原因:'))
   }
   await page.locator('#section-3 .ant-table-row-expand-icon').first().click()
   assert.ok((await page.locator('#section-3').textContent()).includes('共同日期'))

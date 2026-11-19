@@ -1,4 +1,4 @@
-# R01-A offline evidence and reader V2 target
+# R01-A offline evidence and reader V2 contract
 
 Specializes [Delivery](DELIVERY.md). This is a case-specific, versioned interchange
 and replay contract, not Publication V1 or a generic serializer framework.

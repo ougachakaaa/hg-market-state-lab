@@ -1,19 +1,24 @@
 import assert from 'node:assert/strict'
 
 const presets = {
-  basis_value: { default: 10, widths: [5, 10, 20, 50], scale: 1 },
-  basis_ratio: { default: .1, widths: [.1, .2, .5], scale: 100 },
-  annualized_basis_ratio: { default: 5, widths: [2.5, 5, 10, 20], scale: 100 },
+  basis_value: { label: '基差（点）', unit: '点', default: 10, widths: [2, 5, 10, 15, 20], scale: 1 },
+  basis_ratio: { label: '基差率（%）', unit: '个百分点', default: .1, widths: [.05, .1, .2, .5], scale: 100 },
+  annualized_basis_ratio: { label: '年化基差率（%）', unit: '个百分点', default: 1, widths: [.5, 1, 2, 5, 10, 20], scale: 100 },
+  annualized_basis_value: { label: '年化基差点（点/年）', unit: '点/年', default: 10, widths: [2, 5, 10, 15, 20], scale: 1 },
 }
 const slots = ['M0', 'M1', 'Q1', 'Q2']
+
+export async function selectDistributionMetric(page, metric) {
+  await page.getByRole('combobox', { name: 'Distribution metric' }).click()
+  await page.locator('.ant-select-item-option-content').getByText(presets[metric].label, { exact: true }).click()
+}
 
 export async function verifyBasisDistribution(page, report) {
   const plot = page.getByTestId('distribution-comparison').locator('.js-plotly-plot')
   const summary = page.getByRole('region', { name: '统计摘要' })
   for (const [metric, preset] of Object.entries(presets)) {
-    await page.getByRole('combobox', { name: 'Distribution metric' }).click()
-    await page.locator('.ant-select-item-option-content').getByText(metric, { exact: true }).click()
-    const unit = metric === 'basis_value' ? '点' : '个百分点'
+    await selectDistributionMetric(page, metric)
+    const { unit } = preset
     assert.ok((await page.getByRole('combobox', { name: 'Bin width' }).evaluate(el => el.closest('.ant-select').textContent)).includes(`${preset.default} ${unit}`))
     const beforeSummary = await summary.textContent()
     const distributions = report.distributions.filter(d => d.request.metric === metric)
@@ -32,7 +37,7 @@ export async function verifyBasisDistribution(page, report) {
     for (const width of preset.widths) {
       await page.getByRole('combobox', { name: 'Bin width' }).click()
       await page.locator('.ant-select-item-option-content').getByText(`${width} ${unit}`, { exact: true }).click()
-      await page.waitForFunction(revision => document.querySelector('[data-testid="distribution-comparison"] .js-plotly-plot')?._fullLayout.xaxis.uirevision === revision, `${metric}/${width}`)
+      await page.waitForFunction(revision => document.querySelector('[data-testid="distribution-comparison"] .js-plotly-plot')?._fullLayout.xaxis.uirevision === revision, `${metric}/${width}/0`)
       const traces = await plot.evaluate(el => el.data.map(t => ({ name: t.name, x: t.x, y: t.y, customdata: t.customdata, color: t.line.color, hovertemplate: t.hovertemplate })))
       assert.deepEqual(traces.map(t => t.name), slots)
       assert.deepEqual(traces.map(t => t.color), ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728'])
@@ -66,7 +71,7 @@ export async function verifyBasisDistribution(page, report) {
         assert.equal(total, distribution.binding.length)
         assert.ok(trace.hovertemplate.includes('Count：%{customdata[1]:d}'))
         assert.ok(trace.hovertemplate.includes('Frequency：%{customdata[2]:.1%}'))
-        assert.ok(trace.hovertemplate.includes('Eligible N：%{customdata[3]:d}'))
+        assert.ok(trace.hovertemplate.includes('参与分箱 N：%{customdata[3]:d}'))
       }
       assert.equal(await summary.textContent(), beforeSummary)
       // Legend visibility changes neither the traces nor their common edges.
@@ -80,8 +85,7 @@ export async function verifyBasisDistribution(page, report) {
     }
     console.log(`PASS distribution ${metric}: N=${distributions.map(d => d.binding.length).join('/')} conserved for all preset widths`)
   }
-  await page.getByRole('combobox', { name: 'Distribution metric' }).click()
-  await page.locator('.ant-select-item-option-content').getByText('basis_value', { exact: true }).click()
+  await selectDistributionMetric(page, 'basis_value')
   await page.locator('.ant-select-dropdown:visible').waitFor({ state: 'hidden' })
 }
 
@@ -125,8 +129,8 @@ export async function verifyDistributionInteractions(page) {
     return { x: box.x + el._fullLayout.xaxis._offset + el._fullLayout.xaxis.l2p(trace.x[i]), y: box.y + el._fullLayout.yaxis._offset + el._fullLayout.yaxis.l2p(trace.y[i]) }
   })
   await page.mouse.move(point.x, point.y)
-  await page.waitForFunction(() => document.querySelector('[data-testid="distribution-comparison"] .hoverlayer')?.textContent.includes('Eligible N'))
+  await page.waitForFunction(() => document.querySelector('[data-testid="distribution-comparison"] .hoverlayer')?.textContent.includes('参与分箱 N'))
   const hover = await plot.locator('.hoverlayer').textContent()
-  for (const word of ['区间', 'Count', 'Frequency', 'Eligible N']) assert.ok(hover.includes(word), hover)
+  for (const word of ['区间', 'Count', 'Frequency', '参与分箱 N']) assert.ok(hover.includes(word), hover)
   console.log('PASS distribution real hover, Zoom/Pan/Reset and parent-only responsive resize')
 }

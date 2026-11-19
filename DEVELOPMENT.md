@@ -222,6 +222,13 @@ Generate Research。Run ID 写入 URL；刷新和浏览器前进/后退会重新
 显式传入已有报告目录的用法。交互契约见
 [Web feature](ui_web/src/features/futures_basis_research/ARCHITECTURE.md)。
 
+#### Run Store 切换验收
+
+1. 确认实际 `LAB_FUTURES_BASIS_RUN_ROOT` 和仍可能使用旧库的后端。正常停掉已确认的旧写入者及其自动重启来源。无法确认时停止切换。
+2. 用普通文件读取记录旧数据库和 `-journal`、`-wal`、`-shm` 的存在性、长度和 SHA-256。
+3. 启动当前后端，检查 `futures_basis_initialization_succeeded` 中的 `active_run_version` 和[当前库路径](market_research/descriptive/cases/futures_basis/ONLINE_STORAGE.md#ownership-location-and-initialization)。以已认证用户选一个缓存齐备的短窗口，依次调用 Preflight、提交 Run、轮询至完成并读取 Report。用已知旧 ID 查状态和报告，应均返回 `run_not_found`。
+4. 复核旧文件清单、长度和 SHA-256。若初始化失败，先查 `futures_basis_initialization_failed` 的 `stage`、`category`、`sqlite_code` 和 `action`。
+
 ### Daily Data Copy / Export browser acceptance
 
 在 `ui_web/` 执行 `npm run test:daily-data-copy-export-browser`，Chromium、系统库与空闲端口要求同 Auth browser smoke。脚本经过真实注册、审批、登录与应用页面，使用独立 synthetic providers 和临时 Auth 库，验证真实 Clipboard、CSV download、presentation independence 与 failure/stale lifecycle。下载文件和 `acceptance.json` 保留在输出所示的系统临时目录；认证材料删除，服务和浏览器关闭。成功路径不 mock Clipboard 或 download。

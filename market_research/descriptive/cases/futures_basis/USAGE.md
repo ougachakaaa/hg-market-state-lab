@@ -63,9 +63,7 @@ no lab command or Publication lifecycle.
 从 repository root 执行。输出必须是仓库外尚不存在的新目录；以下研究参数均为显式输入，
 不是默认值。首次获取行情需要现有 DataLake provider 配置；只读重放不需要凭证或网络。
 
-V2 offline HTML packaging is **WP3 Pending** until the frontend Reader supports
-V2. This invocation does not claim successful V2 HTML delivery; Reader validation
-remains unchanged.
+此命令使用当前 V2 离线报告契约。生成的单文件 HTML 携带当前 Reader 和报告数据。
 
 ```bash
 poetry run python market_research/scripts/futures_basis_report.py \
@@ -103,13 +101,13 @@ verify 校验包内摘要、版本、指纹与关联；replay 从保留的公共
 ## Online input preflight
 
 The Web query defaults only its end date to Shanghai today. Select product and
-start date; after editing stops the page checks local input coverage. Historical
-gaps require an explicit acquisition-risk confirmation. Today requires complete
-local calendars, Futures and Index coverage (zero session targets are legal).
-If blocked, change the end date or prepare data through a separate existing
-DataLake workflow, then select “重新检查输入”. Checking does not fetch data or
-create a Run; only “生成研究” creates one. A failed Run's request-reuse action
-loads/checks the original query and still requires a subsequent Generate.
+start date. The page checks local coverage after edits and displays cache gaps
+and possible acquisition. Today is ready with complete local calendars, Futures
+and Index coverage, including valid zero-session targets. After preparing data
+through an existing DataLake workflow, select “重新检查”. The check is advisory
+and performs no acquisition or Run creation. “生成研究” explicitly submits the
+request for final preparation. A failed Run's request-reuse action loads and
+checks the original query for a new explicit submission.
 
 The independent Python check also performs no Source access or writes:
 

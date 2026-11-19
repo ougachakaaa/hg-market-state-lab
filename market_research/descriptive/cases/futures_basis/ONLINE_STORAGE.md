@@ -4,15 +4,8 @@ This contract specializes [Online application](ONLINE_APPLICATION.md), which own
 owner, lifecycle, failure and result semantics. It owns only this case's persistence.
 It does not authorize reuse of another case's store, database or execution identity.
 
-## Delivery status and cutover
-
-SQLite cutover is implemented; platform verification limits are recorded below.
-
-Use standard-library `sqlite3`, with no database dependency, ORM, generic store framework,
-queue, cross-module persistence abstraction or scheduling change. Existing public Python
-operations, HTTP endpoints/DTOs, generated contracts, financial calculations and report
-profiles were unchanged by the SQLite cutover. The separate Distribution V2 target
-is owned by [Online application](ONLINE_APPLICATION.md#distribution-v2-status). Scientific result status remains `complete` or `partial`; `no_eligible_sample` remains a legal empty finding.
+The case uses standard-library `sqlite3` and owns its store independently.
+Platform verification limits are recorded below.
 
 ## Ownership, location and initialization
 
@@ -36,11 +29,15 @@ quiescence cannot be confirmed, stop the cutover. Old IDs are absent from curren
 For each incompatible Research Run contract change, explicitly increase
 `ACTIVE_RUN_VERSION` and verify that the new runtime starts and runs with the
 superseded store present and unchanged. The current contract snapshot guards
-representative request, result and storage identities. Review its changes against
-the previous commit and do not rebaseline an incompatible change at the same
-version. Contract version is independent of SQLite `user_version`, record format,
-analysis profile and report reader identities. A version increment requires a
-contract change and cannot be used to recover a damaged current store.
+representative request, result and storage identities. Explicitly assess whether
+formula, input selection, eligibility or other business changes alter the meaning
+of existing Runs even when the snapshot matches. Review snapshot changes against
+the previous commit and record the compatibility decision before changing the
+digest or version. A test failure alone warrants neither a digest update nor a
+version increment. Keep the same version for compatible changes and preserve its
+persisted contract. Contract version is independent of SQLite `user_version`,
+record format, analysis profile and report reader identities. A version increment
+requires an incompatible change and cannot be used to recover a damaged current store.
 
 ### Current store initialization
 

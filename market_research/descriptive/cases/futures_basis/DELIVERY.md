@@ -94,12 +94,11 @@ or network. Acquisition failure cannot be replaced by a synthetic real-market re
 Actual inputs and reports remain disposable runtime output outside Git under the
 [repository runtime invariant](../../../../ARCHITECTURE.md#naming-and-transition-authority).
 
-## Distribution V2 delivery target
+## Distribution V2 delivery
 
-WP2 extends ReportRequest, report composition, history projection and reader/evidence
-encoding to the four-metric target. The new reader identity is owned by
-[Evidence](EVIDENCE.md). Existing V1 payloads are never relabeled as V2; no legacy
-adapter is required. These targets are not claims that the V2 runtime is implemented.
+ReportRequest, report composition, history projection and evidence use the
+current four-metric contract. [Evidence](EVIDENCE.md) owns the reader identity and
+version validation.
 
 ## WP5 executable delivery
 

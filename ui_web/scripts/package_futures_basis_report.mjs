@@ -8,7 +8,7 @@ import { fileURLToPath } from 'node:url'
 const root = fileURLToPath(new URL('..', import.meta.url))
 const output = resolve(process.argv[2])
 const data = JSON.parse(await readFile(resolve(output, 'report-data.json'), 'utf8'))
-if (data.profile !== 'futures_basis_report_evidence_v1') throw new Error('Unsupported report profile')
+if (data.profile !== 'futures_basis_report_evidence_v2') throw new Error('Unsupported report profile')
 const result = await build({
   configFile: false, root, plugins: [react()],
   define: { 'process.env.NODE_ENV': JSON.stringify('production') },

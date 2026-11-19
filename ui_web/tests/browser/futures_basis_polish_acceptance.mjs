@@ -3,6 +3,7 @@
 import assert from 'node:assert/strict'
 import { mkdir, writeFile } from 'node:fs/promises'
 import { resolve } from 'node:path'
+import { selectDistributionMetric } from './futures_basis_distribution_acceptance.mjs'
 
 export async function polishAcceptance(page, context, output, sourceId, base = 'http://127.0.0.1:5173') {
   const api = '/api/research/futures-basis/runs'
@@ -67,10 +68,10 @@ export async function polishAcceptance(page, context, output, sourceId, base = '
     fixtureRun = { ...sourceRun, ...accepted, started_at: null, finished_at: null, result_available: false, result_status: null, failure: null }
     reportPayload = { ...sourceReport, run_id: accepted.run_id }
     release()
-    await page.getByText('已接受，等待执行', { exact: true }).waitFor()
+    await page.getByText('等待执行', { exact: true }).waitFor()
     await shot('pending')
     fixtureRun = { ...fixtureRun, status: 'RUNNING', started_at: sourceRun.started_at }
-    await page.getByText('正在执行', { exact: true }).waitFor()
+    await page.getByText('运行中', { exact: true }).waitFor()
     await shot('running')
     fixtureRun = { ...sourceRun, run_id: accepted.run_id }
     await page.locator('[data-testid="compact-report"]').waitFor()
@@ -89,8 +90,7 @@ export async function polishAcceptance(page, context, output, sourceId, base = '
     assert.equal(reads, readsBeforeNavigation)
     const before = posts
     const readsBeforeControls = reads
-    await page.getByRole('combobox', { name: 'Distribution metric', exact: true }).click()
-    await page.getByTitle('basis_ratio', { exact: true }).click()
+    await selectDistributionMetric(page, 'basis_ratio')
     await page.getByRole('combobox', { name: 'Bin width', exact: true }).click()
     await page.getByTitle('0.2 个百分点', { exact: true }).click()
     await page.locator('section[aria-label="基差分布"]').scrollIntoViewIfNeeded()
@@ -113,6 +113,7 @@ export async function polishAcceptance(page, context, output, sourceId, base = '
     method.failure_category = 'CalculationFailure'; method.reason = 'Synthetic producer method failure'; method.result = null
     await navigate()
     await page.getByText(/Partial：研究执行已完成/).waitFor()
+    await selectDistributionMetric(page, reportPayload.data.distributions[0].request.metric)
     await shot('partial')
     assert.ok(await page.getByText('不可用（CalculationFailure）', { exact: true }).count() > 0)
     for (const status of ['FAILED', 'INTERRUPTED']) {
