@@ -55,6 +55,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/auth/mode": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Mode */
+        get: operations["get_auth_mode"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/auth/register": {
         parameters: {
             query?: never;
@@ -182,6 +199,13 @@ export interface operations {
                     "application/json": components["schemas"]["AuthErrorResponse"];
                 };
             };
+            /** @description Account operation unavailable in local mode */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
             /** @description Too Many Requests */
             429: {
                 headers: {
@@ -237,6 +261,13 @@ export interface operations {
                     "application/json": components["schemas"]["AuthErrorResponse"];
                 };
             };
+            /** @description Account operation unavailable in local mode */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
             /** @description HTTP access error */
             500: {
                 headers: {
@@ -282,6 +313,51 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["AuthErrorResponse"];
+                };
+            };
+            /** @description HTTP access error */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AuthErrorResponse"];
+                };
+            };
+            /** @description Account operation unavailable in local mode */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description HTTP access error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AuthErrorResponse"];
+                };
+            };
+        };
+    };
+    get_auth_mode: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": "local" | "authenticated";
                 };
             };
             /** @description HTTP access error */
@@ -343,6 +419,13 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["AuthErrorResponse"];
                 };
+            };
+            /** @description Account operation unavailable in local mode */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Too Many Requests */
             429: {

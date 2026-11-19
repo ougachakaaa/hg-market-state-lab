@@ -1,11 +1,12 @@
 """One HTTP access gate for composed apps, product apps and framework routes."""
 
+import ipaddress
 import json
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from dataclasses import asdict
 from datetime import UTC, datetime
-from typing import Annotated, Any
+from typing import Annotated, Any, Literal
 
 import jwt
 from fastapi import APIRouter, FastAPI, Request, Response, Security
@@ -25,9 +26,29 @@ from ._http_models import (
     AuthHttpError,
     Credentials,
 )
-from ._session import COOKIE, TTL, AuthConfig, origin
+from ._session import (
+    COOKIE,
+    LOCAL_WEB_ORIGIN,
+    TTL,
+    AuthConfig,
+    LocalAccess,
+    loopback_address,
+    origin,
+    serving_config,
+)
 
-PUBLIC = frozenset(("POST", f"/auth/{name}") for name in ("register", "login", "logout"))
+MODE_PATH = "/auth/mode"
+ACCOUNT_PATHS = frozenset(f"/auth/{name}" for name in ("register", "login", "logout", "me"))
+PUBLIC = frozenset(
+    {
+        ("GET", MODE_PATH),
+        ("POST", "/auth/register"),
+        ("POST", "/auth/login"),
+        ("POST", "/auth/logout"),
+    }
+)
+SAFE_METHODS = frozenset({"GET", "HEAD", "OPTIONS"})
+AuthMode = Literal["local", "authenticated"]
 cookie_security = APIKeyCookie(name=COOKIE, auto_error=False, scheme_name="CookieSession")
 
 
@@ -40,31 +61,41 @@ def service_error(error: AuthServiceError, *, login: bool = False) -> AuthHttpEr
 
 
 class AuthRuntime:
-    def __init__(self) -> None:
-        self.config = AuthConfig.from_environment()
+    def __init__(self, config: AuthConfig) -> None:
+        self.config = config
         self.service = create_service()
 
 
-def runtime(application: FastAPI) -> AuthRuntime:
+def runtime(application: FastAPI) -> LocalAccess | AuthRuntime:
     # Also protects ASGI consumers that don't run lifespan. No unconfigured serving path.
     if getattr(application.state, "auth", None) is None:
-        application.state.auth = AuthRuntime()
-    result: AuthRuntime = application.state.auth
+        config = serving_config()
+        application.state.auth = config if isinstance(config, LocalAccess) else AuthRuntime(config)
+    result: LocalAccess | AuthRuntime = application.state.auth
     return result
+
+
+def authenticated_runtime(application: FastAPI) -> AuthRuntime:
+    auth = runtime(application)
+    if isinstance(auth, LocalAccess):
+        raise AuthHttpError("authentication_required")
+    return auth
 
 
 async def require_user(
     request: Request,
     token: Annotated[str | None, Security(cookie_security)],
 ) -> UserIdentity | None:
-    if (request.method, request.url.path) in PUBLIC:
+    if getattr(request.state, "local_access_granted", False):
+        return None
+    if (request.method, request.scope["path"]) in PUBLIC:
         return None
     if hasattr(request.state, "auth_user"):
         user: UserIdentity = request.state.auth_user
         return user
     if token is None or len(token) > 4096:
         raise AuthHttpError("authentication_required")
-    auth = runtime(request.app)
+    auth = authenticated_runtime(request.app)
     try:
         subject = auth.config.subject(token)
     except (jwt.InvalidTokenError, ValueError, TypeError, OverflowError):
@@ -77,18 +108,53 @@ async def require_user(
     return user
 
 
-def check_origin(request: Request, config: AuthConfig) -> None:
-    if request.method in {"GET", "HEAD", "OPTIONS"}:
+def check_origin(
+    request: Request, expected: tuple[str, str, int], *, local: bool = False
+) -> None:
+    safe = request.method in SAFE_METHODS
+    if safe and not local:
         return
     values = request.headers.getlist("origin")
     referer = not values
     if referer:
         values = request.headers.getlist("referer")
+    if safe and not values:
+        return
     try:
-        if len(values) != 1 or origin(values[0], referer=referer) != config.browser_origin:
+        if len(values) != 1 or origin(values[0], referer=referer) != expected:
             raise ValueError
     except ValueError:
         raise AuthHttpError("origin_forbidden") from None
+
+
+def check_local_access(request: Request) -> None:
+    server = request.scope.get("server")
+    peer = request.scope.get("client")
+    hosts = request.headers.getlist("host")
+    fetch_site = request.headers.getlist("sec-fetch-site")
+    if (
+        not server
+        or not loopback_address(server[0])
+        or not peer
+        or not loopback_address(peer[0])
+        or request.scope.get("scheme") != "http"
+        or len(hosts) != 1
+        or any(character in hosts[0] for character in "/?#")
+        or fetch_site not in ([], ["same-origin"], ["none"])
+        or any(
+            name.startswith("x-forwarded-") or name in {"forwarded", "via", "x-real-ip"}
+            for name in request.headers
+        )
+    ):
+        raise AuthHttpError("origin_forbidden")
+    try:
+        target = origin(f"http://{hosts[0]}")
+    except ValueError:
+        raise AuthHttpError("origin_forbidden") from None
+    listener = ("http", str(ipaddress.ip_address(server[0])), server[1])
+    if target not in (listener, LOCAL_WEB_ORIGIN):
+        raise AuthHttpError("origin_forbidden")
+    check_origin(request, target, local=True)
 
 
 def unique_pairs(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
@@ -157,25 +223,46 @@ class AccessGate:
             await self.app(scope, receive, send)
             return
         request = Request(scope, receive)
-        public = (request.method, request.url.path) in PUBLIC
-        is_auth = request.url.path in {"/auth/register", "/auth/login", "/auth/me", "/auth/logout"}
+        path = scope["path"]
+        public = (request.method, path) in PUBLIC
+        is_auth = path in ACCOUNT_PATHS
         downstream_receive: Receive
         try:
             auth = runtime(self.application)
+        except (RuntimeError, AuthServiceError):
+            await AuthHttpError("internal_error").response()(scope, receive, send)
+            return
+
+        if isinstance(auth, LocalAccess):
+            try:
+                check_local_access(request)
+            except AuthHttpError as error:
+                await error.response()(scope, receive, send)
+                return
+            if path.rstrip("/") in ACCOUNT_PATHS:
+                await Response(status_code=404, headers={"Cache-Control": "no-store"})(
+                    scope, receive, send
+                )
+                return
+            request.state.local_access_granted = True
+            await self.app(scope, receive, send)
+            return
+
+        try:
             auth.config.validate_listener((scope.get("server") or ("", 0))[0])
-            if (request.method, request.url.path) in {
+            if (request.method, path) in {
                 ("POST", "/auth/register"),
                 ("POST", "/auth/login"),
             }:
                 peer = scope.get("client")
                 retry = _limiter.limiter.reserve(
-                    request.url.path.rsplit("/", 1)[1], peer[0] if peer else "unknown"
+                    path.rsplit("/", 1)[1], peer[0] if peer else "unknown"
                 )
                 if retry is not None:
                     raise AuthHttpError("rate_limited", retry)
             if not public:
                 await require_user(request, await cookie_security(request))
-            check_origin(request, auth.config)
+            check_origin(request, auth.config.browser_origin)
             if is_auth:
                 raw = await auth_body(request)
                 delivered = False
@@ -230,6 +317,19 @@ AUTH_RESPONSES: dict[int | str, dict[str, Any]] = {
     400: {"model": AuthErrorResponse},
     429: {"model": AuthErrorResponse, "headers": {"Retry-After": {"schema": {"type": "integer"}}}},
 }
+LOCAL_DISABLED: dict[int | str, dict[str, Any]] = {
+    404: {"description": "Account operation unavailable in local mode"}
+}
+
+
+@router.get(
+    "/mode",
+    response_model=AuthMode,
+    operation_id="get_auth_mode",
+)
+def get_mode(request: Request, response: Response) -> AuthMode:
+    response.headers["Cache-Control"] = "no-store"
+    return "local" if isinstance(runtime(request.app), LocalAccess) else "authenticated"
 
 
 @router.post(
@@ -237,11 +337,12 @@ AUTH_RESPONSES: dict[int | str, dict[str, Any]] = {
     status_code=202,
     response_model=Accepted,
     operation_id="register_auth_user",
-    responses=AUTH_RESPONSES,
+    responses={**AUTH_RESPONSES, **LOCAL_DISABLED},
 )
 def register(credentials: Credentials, request: Request) -> Accepted:
+    auth = authenticated_runtime(request.app)
     try:
-        runtime(request.app).service.register(credentials.username, credentials.password)
+        auth.service.register(credentials.username, credentials.password)
     except AuthServiceError as error:
         raise service_error(error) from None
     return Accepted()
@@ -251,10 +352,10 @@ def register(credentials: Credentials, request: Request) -> Accepted:
     "/login",
     response_model=ActiveIdentity,
     operation_id="login_auth_user",
-    responses={**AUTH_RESPONSES, 401: {"model": AuthErrorResponse}},
+    responses={**AUTH_RESPONSES, **LOCAL_DISABLED, 401: {"model": AuthErrorResponse}},
 )
 def login(credentials: Credentials, request: Request, response: Response) -> ActiveIdentity:
-    auth = runtime(request.app)
+    auth = authenticated_runtime(request.app)
     try:
         user = auth.service.verify_credentials(credentials.username, credentials.password)
     except AuthServiceError as error:
@@ -267,7 +368,7 @@ def login(credentials: Credentials, request: Request, response: Response) -> Act
     "/me",
     response_model=ActiveIdentity,
     operation_id="get_auth_user",
-    responses={**ACCESS_RESPONSES, 400: {"model": AuthErrorResponse}},
+    responses={**ACCESS_RESPONSES, **LOCAL_DISABLED, 400: {"model": AuthErrorResponse}},
 )
 def me(request: Request) -> ActiveIdentity:
     return ActiveIdentity(**asdict(request.state.auth_user))
@@ -278,6 +379,7 @@ def me(request: Request) -> ActiveIdentity:
     status_code=204,
     operation_id="logout_auth_user",
     responses={
+        **LOCAL_DISABLED,
         400: {"model": AuthErrorResponse},
         403: {"model": AuthErrorResponse},
         500: {"model": AuthErrorResponse},
@@ -288,7 +390,7 @@ def logout(request: Request) -> Response:
     response.delete_cookie(
         COOKIE,
         path="/",
-        secure=runtime(request.app).config.secure,
+        secure=authenticated_runtime(request.app).config.secure,
         httponly=True,
         samesite="strict",
     )

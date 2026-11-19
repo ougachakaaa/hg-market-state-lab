@@ -572,9 +572,10 @@ def test_offline_schema_publishes_auth_and_security_without_secrets_or_storage(
             for method, operation in methods.items():
                 public = (method.upper(), path) in _http.PUBLIC
                 assert operation["security"] == ([] if public else [{"CookieSession": []}])
-                if path in {
-                    "/data/futures-calendar-spread",
-                    "/research/calendar-spread-relative-value/query",
+                if (method, path) in {
+                    ("get", "/data/futures-calendar-spread"),
+                    ("post", "/data/futures-calendar-spread/query"),
+                    ("post", "/research/calendar-spread-relative-value/query"),
                 }:
                     assert "422" in operation["responses"]
                 else:

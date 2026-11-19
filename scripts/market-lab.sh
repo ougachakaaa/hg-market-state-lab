@@ -147,29 +147,19 @@ ensure_environment() {
         || fail 'Poetry must use the repository root .venv.'
 }
 
-has_local_setting() {
-    [[ -f "${repo_root}/.env" ]] || return 1
-    grep -Eq "^[[:space:]]*(export[[:space:]]+)?$1[[:space:]]*=" "${repo_root}/.env"
-}
-
 configure_auth() {
-    if [[ ! ${LAB_AUTH_MODE+x} ]] && ! has_local_setting LAB_AUTH_MODE; then
-        export LAB_AUTH_MODE='loopback-http'
-    fi
-    if [[ ! ${LAB_AUTH_ORIGIN+x} ]] && ! has_local_setting LAB_AUTH_ORIGIN; then
+    local settings origin_fallback secret_fallback
+    settings="$("${repo_root}/.venv/bin/python" scripts/market_lab_auth.py prepare "${runtime_dir}")" \
+        || fail 'Auth configuration is invalid for local HTTP.'
+    read -r expected_mode origin_fallback secret_fallback <<< "${settings}"
+    if [[ "${origin_fallback}" == origin ]]; then
         export LAB_AUTH_ORIGIN='http://127.0.0.1:5173'
     fi
-    if [[ ! ${LAB_AUTH_JWT_SECRET+x} ]] && ! has_local_setting LAB_AUTH_JWT_SECRET; then
-        local secret_file="${runtime_dir}/jwt-secret"
-        if [[ ! -f "${secret_file}" ]]; then
-            (umask 077; set -C; python3.13 -c 'import secrets; print(secrets.token_urlsafe(32))' > "${secret_file}") \
-                || [[ -f "${secret_file}" ]] || fail 'Could not create local JWT secret.'
-        fi
-        [[ -r "${secret_file}" ]] || fail 'Local JWT secret is not readable.'
-        export LAB_AUTH_JWT_SECRET="$(<"${secret_file}")"
+    if [[ "${secret_fallback}" == secret ]]; then
+        local secret
+        secret="$(tr -d '[:space:]' < "${runtime_dir}/jwt-secret")" || fail 'Local JWT secret is not readable.'
+        export LAB_AUTH_JWT_SECRET="${secret}"
     fi
-    poetry run python -c 'from ui_http.auth._session import AuthConfig; c = AuthConfig.from_environment(); c.validate_listener("127.0.0.1"); assert not c.secure and c.browser_origin == ("http", "127.0.0.1", 5173)' >/dev/null 2>&1 \
-        || fail 'Auth configuration is invalid for local HTTP; existing settings were not changed.'
 }
 
 write_state() {
@@ -243,6 +233,7 @@ start() {
     check_prerequisites
     assert_free_ports
     ensure_environment
+    local expected_mode
     configure_auth
     printf 'Checking backend imports...\n'
     poetry run python -c 'import ui_http.app' || fail 'Backend import preflight failed.'
@@ -258,7 +249,7 @@ start() {
         same_process "${backend_pid}" "${backend_start}" || fail "Backend exited during startup; see ${runtime_dir}/${run_id}-backend.log."
         same_process "${frontend_pid}" "${frontend_start}" || fail "Frontend exited during startup; see ${runtime_dir}/${run_id}-frontend.log."
         if port_owned_by_group 8011 "${backend_pid}" && port_owned_by_group 5173 "${frontend_pid}" \
-            && http_ready 'http://127.0.0.1:8011/openapi.json' 401 && http_ready "${url}" 200; then
+            && "${repo_root}/.venv/bin/python" scripts/market_lab_auth.py ready "${expected_mode}" && http_ready "${url}" 200; then
             printf 'Both services are ready: %s\n' "${url}"
             printf 'Keep this terminal open. Press Ctrl+C to stop, or run bash scripts/market-lab.sh stop elsewhere.\n'
             while :; do

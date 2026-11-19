@@ -100,3 +100,18 @@ def test_loopback_mode_refuses_external_bind_before_starting_server(
     monkeypatch.setenv("LAB_AUTH_ORIGIN", "http://127.0.0.1:5173")
     with pytest.raises(RuntimeError, match="listener"):
         serve(load_shim(), monkeypatch, ["--host", "0.0.0.0"])
+
+
+def test_default_local_mode_validates_listener_without_auth_configuration(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    import lab_config
+
+    monkeypatch.setattr(lab_config, "ENV_FILE", tmp_path / "missing.env")
+    for setting in ("LAB_AUTH_MODE", "LAB_AUTH_ORIGIN", "LAB_AUTH_JWT_SECRET"):
+        monkeypatch.delenv(setting)
+    calls = serve(load_shim(), monkeypatch, [])
+    assert calls["host"] == DOCUMENTED_HOST
+    assert calls["proxy_headers"] is False
+    with pytest.raises(RuntimeError, match="listener"):
+        serve(load_shim(), monkeypatch, ["--host", "0.0.0.0"])

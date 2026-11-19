@@ -1,5 +1,5 @@
-// A boundary belongs to one authenticated application lifetime. Capturing it at
-// request start prevents a late 401 from invalidating a later login.
+// A boundary belongs to one online Workspace lifetime. Capturing it at
+// request start prevents a late 401 from invalidating a later Workspace.
 export function createRequestBoundary(onUnauthorized: () => void) {
   let closed = false
   const pending = new Set<AbortController>()

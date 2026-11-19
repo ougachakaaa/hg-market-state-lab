@@ -1,5 +1,5 @@
 import { afterEach, expect, it, vi } from 'vitest'
-import { login, logout, me, register } from './auth'
+import { getMode, login, logout, me, register } from './auth'
 import { authErrorMessage, AuthRequestError } from './authError'
 
 afterEach(() => vi.unstubAllGlobals())
@@ -48,4 +48,18 @@ it('keeps network and unknown HTTP failures distinct from credentials errors', a
 it('requires the exact logout 204 contract instead of accepting an identity body', async () => {
   vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(JSON.stringify(identity))))
   await expect(logout()).rejects.toMatchObject({ status: 'invalid_response' })
+})
+
+it.each(['local', 'authenticated'])('reads the generated %s access mode', async (mode) => {
+  const fetch = vi.fn().mockResolvedValue(new Response(JSON.stringify(mode)))
+  vi.stubGlobal('fetch', fetch)
+  expect(await getMode()).toBe(mode)
+  expect(fetch).toHaveBeenCalledWith('/auth/mode', expect.objectContaining({
+    method: 'GET', credentials: 'same-origin', cache: 'no-store',
+  }))
+})
+
+it('rejects an unknown access mode', async () => {
+  vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(JSON.stringify('production'))))
+  await expect(getMode()).rejects.toMatchObject({ status: 'invalid_response' })
 })

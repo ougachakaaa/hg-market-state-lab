@@ -17,12 +17,17 @@ ISSUER = "hg-market-state-lab"
 AUDIENCE = "hg-market-state-lab:http"
 COOKIE = "lab_access_token"
 TTL = 3600
+LOCAL_WEB_ORIGIN = ("http", "127.0.0.1", 5173)
 
 
 def loopback(host: str) -> bool:
     # localhost is an explicit local development entry; never resolve arbitrary DNS.
     if host == "localhost":
         return True
+    return loopback_address(host)
+
+
+def loopback_address(host: str) -> bool:
     try:
         return ipaddress.ip_address(host).is_loopback
     except ValueError:
@@ -62,6 +67,13 @@ def origin(value: str, *, referer: bool = False) -> tuple[str, str, int]:
     )
 
 
+def read_serving_settings() -> lab_config.AuthSettings:
+    try:
+        return lab_config.auth_settings()
+    except lab_config.ConfigError:
+        raise RuntimeError("Invalid authentication serving configuration.") from None
+
+
 @dataclass(frozen=True)
 class AuthConfig:
     key: bytes
@@ -70,8 +82,11 @@ class AuthConfig:
 
     @classmethod
     def from_environment(cls) -> "AuthConfig":
+        return cls.from_settings(read_serving_settings())
+
+    @classmethod
+    def from_settings(cls, settings: lab_config.AuthSettings) -> "AuthConfig":
         try:
-            settings = lab_config.auth_settings()
             secret = settings.lab_auth_jwt_secret
             if secret is None or not re.fullmatch(r"[A-Za-z0-9_-]+={0,2}", secret):
                 raise ValueError
@@ -92,7 +107,7 @@ class AuthConfig:
             else:
                 raise ValueError
             return cls(key, target, mode == "production")
-        except (lab_config.ConfigError, ValueError, binascii.Error):
+        except (ValueError, binascii.Error):
             raise RuntimeError("Invalid authentication serving configuration.") from None
 
     def validate_listener(self, host: str) -> None:
@@ -133,3 +148,16 @@ class AuthConfig:
         ):
             raise ValueError("Invalid token claims")
         return str(claims["sub"])
+
+
+class LocalAccess:
+    def validate_listener(self, host: str) -> None:
+        if not loopback(host):
+            raise RuntimeError("Local mode requires a loopback listener.")
+
+
+def serving_config() -> LocalAccess | AuthConfig:
+    settings = read_serving_settings()
+    if settings.lab_auth_mode == "local":
+        return LocalAccess()
+    return AuthConfig.from_settings(settings)

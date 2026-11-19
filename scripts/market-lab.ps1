@@ -9,19 +9,6 @@ $repoRoot = Split-Path -Parent $PSScriptRoot
 $runtimeDir = Join-Path $repoRoot 'ui_http\data\one-click'
 $ports = @(8011, 5173)
 
-function Get-LocalSettingNames([string]$Path) {
-    $names = @{}
-    if (-not (Test-Path -LiteralPath $Path -PathType Leaf)) { return $names }
-    foreach ($line in Get-Content -LiteralPath $Path -Encoding UTF8) {
-        $trimmed = $line.Trim()
-        if (-not $trimmed -or $trimmed.StartsWith('#')) { continue }
-        if ($trimmed -match '^(?:export\s+)?([A-Za-z_][A-Za-z0-9_]*)\s*=') {
-            $names[$Matches[1]] = $true
-        }
-    }
-    return $names
-}
-
 function Test-NativeCommand([string]$Command, [string[]]$Arguments) {
     $ErrorActionPreference = 'Continue'
     & $Command @Arguments *> $null
@@ -150,27 +137,16 @@ function Test-OwnedListener([int]$Port, [int]$RootId) {
     return $true
 }
 
-function Test-Http([string]$Url, [bool]$Protected) {
+function Test-FrontendHttp {
     try {
-        $request = [System.Net.HttpWebRequest]::Create($Url)
+        $request = [System.Net.HttpWebRequest]::Create('http://127.0.0.1:5173/')
         $request.Proxy = $null
         $request.Timeout = 2000
         $response = $request.GetResponse()
-        try { return (-not $Protected -and [int]$response.StatusCode -eq 200) }
+        try { return ([int]$response.StatusCode -eq 200) }
         finally { $response.Dispose() }
     } catch [System.Net.WebException] {
-        $response = $_.Exception.Response
-        if (-not $response) { return $false }
-        try {
-            if ($Protected -and [int]$response.StatusCode -eq 401) {
-                $reader = New-Object System.IO.StreamReader($response.GetResponseStream())
-                try { $body = $reader.ReadToEnd() | ConvertFrom-Json }
-                finally { $reader.Dispose() }
-                return ($body.error.kind -eq 'authentication_required' -and
-                    $body.error.detail -eq 'Authentication required.' -and $null -eq $body.error.param)
-            }
-        } catch { return $false }
-        finally { $response.Dispose() }
+        if ($_.Exception.Response) { $_.Exception.Response.Dispose() }
         return $false
     }
 }
@@ -237,7 +213,6 @@ function Start-MarketLab {
 
     try {
         Set-Location -LiteralPath $repoRoot
-        $localSettings = Get-LocalSettingNames (Join-Path $repoRoot '.env')
         Write-Host 'Checking Windows development prerequisites...'
         foreach ($name in @('poetry', 'node', 'npm', 'powershell.exe', 'taskkill.exe')) {
             if (-not (Get-Command $name -ErrorAction SilentlyContinue)) { throw "Environment missing: $name is not available on PATH." }
@@ -285,26 +260,16 @@ function Start-MarketLab {
             throw 'Project dependency error: Poetry must use the repository root .venv. Run .codex\scripts\setup.ps1.'
         }
 
-        if ($null -eq $env:LAB_AUTH_MODE -and -not $localSettings.ContainsKey('LAB_AUTH_MODE')) { $env:LAB_AUTH_MODE = 'loopback-http' }
-        if ($null -eq $env:LAB_AUTH_ORIGIN -and -not $localSettings.ContainsKey('LAB_AUTH_ORIGIN')) { $env:LAB_AUTH_ORIGIN = 'http://127.0.0.1:5173' }
         New-Item -ItemType Directory -Force -Path $runtimeDir | Out-Null
-        if ($null -eq $env:LAB_AUTH_JWT_SECRET -and -not $localSettings.ContainsKey('LAB_AUTH_JWT_SECRET')) {
-            $secretPath = Join-Path $runtimeDir 'jwt-secret'
-            if (-not (Test-Path -LiteralPath $secretPath)) {
-                $bytes = New-Object byte[] 32
-                $rng = [Security.Cryptography.RandomNumberGenerator]::Create()
-                try { $rng.GetBytes($bytes) } finally { $rng.Dispose() }
-                $secret = [Convert]::ToBase64String($bytes).TrimEnd('=').Replace('+', '-').Replace('/', '_')
-                try {
-                    $file = [System.IO.File]::Open($secretPath, [System.IO.FileMode]::CreateNew, [System.IO.FileAccess]::Write, [System.IO.FileShare]::None)
-                    try { $writer = [System.IO.StreamWriter]::new($file); try { $writer.Write($secret) } finally { $writer.Dispose() } }
-                    finally { $file.Dispose() }
-                } catch [System.IO.IOException] { if (-not (Test-Path -LiteralPath $secretPath)) { throw } }
-            }
-            $env:LAB_AUTH_JWT_SECRET = [System.IO.File]::ReadAllText($secretPath)
+        $pythonExe = Join-Path $repoRoot '.venv\Scripts\python.exe'
+        $authHelper = Join-Path $PSScriptRoot 'market_lab_auth.py'
+        $authSettings = & $pythonExe $authHelper prepare $runtimeDir
+        if ($LASTEXITCODE -ne 0) { throw 'Auth configuration is invalid for local HTTP.' }
+        $expectedMode, $originFallback, $secretFallback = $authSettings.Trim().Split(' ')
+        if ($originFallback -eq 'origin') { $env:LAB_AUTH_ORIGIN = 'http://127.0.0.1:5173' }
+        if ($secretFallback -eq 'secret') {
+            $env:LAB_AUTH_JWT_SECRET = [System.IO.File]::ReadAllText((Join-Path $runtimeDir 'jwt-secret')).Trim()
         }
-        $authCheck = 'from ui_http.auth._session import AuthConfig; c = AuthConfig.from_environment(); c.validate_listener(\"127.0.0.1\"); assert not c.secure and c.browser_origin == (\"http\", \"127.0.0.1\", 5173)'
-        if (-not (Test-NativeCommand 'poetry' @('run', 'python', '-c', $authCheck))) { throw 'Auth configuration error: invalid JWT secret or local settings; existing values were not changed.' }
 
         Write-Host 'Checking backend imports...'
         $ErrorActionPreference = 'Continue'
@@ -329,8 +294,8 @@ function Start-MarketLab {
             if ($frontend.Process.HasExited) { throw "Frontend startup failed (exit $(Get-ExitLabel $frontend.Process)); see logs above and in $runtimeDir." }
             $backendOwned = Test-OwnedListener 8011 $backend.Process.Id
             $frontendOwned = Test-OwnedListener 5173 $frontend.Process.Id
-            if ($backendOwned -and $frontendOwned -and (Test-Http 'http://127.0.0.1:8011/openapi.json' $true) -and
-                (Test-Http 'http://127.0.0.1:5173/' $false)) {
+            if ($backendOwned -and $frontendOwned -and (Test-NativeCommand $pythonExe @($authHelper, 'ready', $expectedMode)) -and
+                (Test-FrontendHttp)) {
                 $ready = $true; break
             }
             Start-Sleep -Milliseconds 500

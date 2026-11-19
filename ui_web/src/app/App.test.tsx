@@ -12,6 +12,10 @@ const defaultStrategy = canonicalMap.nodes.find(node => node.kind === 'strategy'
 const strategyPath = `/roadmap/${defaultStrategy.id}`
 const identity = { id: 'test-user', username: 'alice', status: 'active' }
 const response = (body: unknown, status = 200) => new Response(status === 204 ? null : JSON.stringify(body), { status })
+function stubAuthenticatedFetch(fetch: (url: string, options?: RequestInit) => Promise<Response>) {
+  vi.stubGlobal('fetch', (url: string, options?: RequestInit) =>
+    url === '/auth/mode' ? Promise.resolve(response('authenticated')) : fetch(url, options))
+}
 const unauthorized = () => response({ error: { kind: 'authentication_required', detail: 'Error', param: null } }, 401)
 function deferred<T>() {
   let resolve!: (value: T) => void
@@ -31,9 +35,9 @@ describe('workspace shell and authentication', () => {
     window.history.replaceState(null, '', '/data/mo-option-chain')
     const pending = deferred<Response>()
     const fetch = vi.fn((_url: string) => pending.promise)
-    vi.stubGlobal('fetch', fetch)
+    stubAuthenticatedFetch(fetch)
     render(<App />)
-    expect(screen.getByText('正在检查登录状态…')).toBeTruthy()
+    expect(screen.getByText('正在检查工作区访问状态…')).toBeTruthy()
     expect(screen.queryByRole('menuitem', { name: '数据总览' })).toBeNull()
     pending.resolve(unauthorized())
     await screen.findByRole('button', { name: '登录' })
@@ -42,7 +46,7 @@ describe('workspace shell and authentication', () => {
   })
 
   it('logs in at root to the strategy map', async () => {
-    vi.stubGlobal('fetch', vi.fn().mockResolvedValueOnce(unauthorized()).mockResolvedValueOnce(response(identity)))
+    stubAuthenticatedFetch(vi.fn().mockResolvedValueOnce(unauthorized()).mockResolvedValueOnce(response(identity)))
     render(<App />)
     await screen.findByRole('button', { name: '登录' })
     await submitLogin()
@@ -54,7 +58,7 @@ describe('workspace shell and authentication', () => {
 
   it('restores deep route, navigates with history and logs out', async () => {
     window.history.replaceState(null, '', '/backtesting/futures-roll-long')
-    vi.stubGlobal('fetch', vi.fn((url: string) => Promise.resolve(url === '/auth/me' ? response(identity)
+    stubAuthenticatedFetch(vi.fn((url: string) => Promise.resolve(url === '/auth/me' ? response(identity)
       : url === '/api/research/capabilities' ? response([]) : response(null, 204))))
     render(<App />)
     await screen.findByRole('heading', { name: /期货展期做多回测/ })
@@ -71,7 +75,7 @@ describe('workspace shell and authentication', () => {
 
   it('keeps logout failure explicit and retryable', async () => {
     let logoutAttempts = 0
-    vi.stubGlobal('fetch', vi.fn((url: string) => {
+    stubAuthenticatedFetch(vi.fn((url: string) => {
       if (url === '/auth/me') return Promise.resolve(unauthorized())
       if (url === '/auth/login') return Promise.resolve(response(identity))
       if (url === '/api/research/capabilities') return Promise.resolve(response([]))
@@ -87,7 +91,7 @@ describe('workspace shell and authentication', () => {
   })
 
   it('normalizes an unknown history destination to the strategy map', async () => {
-    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(response(identity)))
+    stubAuthenticatedFetch(vi.fn().mockResolvedValue(response(identity)))
     render(<App />)
     await screen.findByRole('button', { name: '退出登录' })
     await act(async () => { window.history.pushState(null, '', '/unknown'); window.dispatchEvent(new PopStateEvent('popstate')) })
@@ -95,11 +99,65 @@ describe('workspace shell and authentication', () => {
   })
 })
 
+describe('local online access', () => {
+  it('retries failed mode discovery without opening the login gate', async () => {
+    const fetch = vi.fn().mockResolvedValueOnce(unauthorized()).mockResolvedValueOnce(response('local'))
+    vi.stubGlobal('fetch', fetch)
+    render(<App />)
+    expect((await screen.findByRole('alert')).textContent).toContain('无法确认工作区访问模式')
+    expect(screen.queryByRole('button', { name: '登录' })).toBeNull()
+    fireEvent.click(screen.getByRole('button', { name: '重试访问检查' }))
+    await screen.findByText('本地模式')
+    expect(fetch.mock.calls.map(([url]) => url)).toEqual(['/auth/mode', '/auth/mode'])
+  })
+
+  it('waits for mode and opens a deep link without requesting an identity', async () => {
+    window.history.replaceState(null, '', '/research/publications')
+    const mode = deferred<Response>()
+    const fetch = vi.fn((url: string) => url === '/auth/mode' ? mode.promise
+      : Promise.resolve(response({ data: [], next_cursor: null })))
+    vi.stubGlobal('fetch', fetch)
+    render(<App />)
+    expect(screen.getByText('正在检查工作区访问状态…')).toBeTruthy()
+    expect(window.location.pathname).toBe('/research/publications')
+    expect(fetch.mock.calls.map(([url]) => url)).toEqual(['/auth/mode'])
+    mode.resolve(response('local'))
+    await screen.findByText('Publication Store 为空。')
+    expect(screen.getByText('本地模式')).toBeTruthy()
+    expect(screen.queryByRole('button', { name: '登录' })).toBeNull()
+    expect(screen.queryByRole('button', { name: '退出登录' })).toBeNull()
+    await act(async () => {
+      window.history.pushState(null, '', '/backtesting')
+      window.dispatchEvent(new PopStateEvent('popstate'))
+    })
+    await screen.findByRole('heading', { name: '回测总览' })
+    expect(fetch.mock.calls.map(([url]) => url)).toEqual(['/auth/mode', '/api/research/publications'])
+  })
+
+  it('shows a retryable access failure when a local business request returns 401', async () => {
+    window.history.replaceState(null, '', '/research/publications')
+    const fetch = vi.fn().mockResolvedValueOnce(response('local')).mockResolvedValueOnce(unauthorized())
+      .mockResolvedValueOnce(response('local'))
+      .mockResolvedValueOnce(response({ data: [], next_cursor: null }))
+    vi.stubGlobal('fetch', fetch)
+    render(<App />)
+    expect((await screen.findByRole('alert')).textContent).toContain('本地模式的业务请求意外返回 401')
+    expect(screen.queryByRole('button', { name: '登录' })).toBeNull()
+    expect(screen.queryByRole('heading', { name: '研究结果浏览' })).toBeNull()
+    fireEvent.click(screen.getByRole('button', { name: '重试访问检查' }))
+    await screen.findByText('Publication Store 为空。')
+    expect(window.location.pathname).toBe('/research/publications')
+    expect(fetch.mock.calls.map(([url]) => url)).toEqual([
+      '/auth/mode', '/api/research/publications', '/auth/mode', '/api/research/publications',
+    ])
+  })
+})
+
 describe('integrated feature routes', () => {
   it('opens all three pages and restores a direct Explorer URL', async () => {
     const fetch = vi.fn((url: string) => Promise.resolve(url === '/auth/me' ? response(identity)
       : url === '/api/research/capabilities' ? response([]) : response({ data: [], next_cursor: null })))
-    vi.stubGlobal('fetch', fetch)
+    stubAuthenticatedFetch(fetch)
     render(<App />)
     await act(async () => { window.history.pushState(null, '', '/research/publications'); window.dispatchEvent(new PopStateEvent('popstate')) })
     await screen.findByText('Publication Store 为空。')
@@ -121,7 +179,7 @@ describe('integrated feature routes', () => {
   it('returns to the gate on a feature 401 and isolates its result', async () => {
     window.history.replaceState(null, '', '/data/mo-option-chain')
     const fetch = vi.fn().mockResolvedValueOnce(response(identity)).mockResolvedValueOnce(unauthorized())
-    vi.stubGlobal('fetch', fetch)
+    stubAuthenticatedFetch(fetch)
     render(<App />)
     await screen.findByRole('heading', { name: 'MO 期权链' })
     commitDate(screen.getByLabelText('观察日期'), '2026-09-21')
@@ -137,7 +195,7 @@ describe('integrated feature routes', () => {
     const fetch = vi.fn().mockResolvedValueOnce(response(identity))
       .mockImplementationOnce((_url, init) => { signal = init.signal; return old.promise })
       .mockResolvedValueOnce(response(null, 204))
-    vi.stubGlobal('fetch', fetch)
+    stubAuthenticatedFetch(fetch)
     render(<App />)
     await waitFor(() => expect(signal).toBeDefined())
     fireEvent.click(screen.getByRole('button', { name: '退出登录' }))
@@ -151,7 +209,7 @@ describe('integrated feature routes', () => {
     window.history.replaceState(null, '', '/research')
     const old = deferred<Response>()
     const fetch = vi.fn().mockResolvedValueOnce(response(identity)).mockImplementationOnce(() => old.promise)
-    vi.stubGlobal('fetch', fetch)
+    stubAuthenticatedFetch(fetch)
     render(<App />)
     await screen.findByRole('heading', { name: '研究总览' })
     old.resolve(unauthorized())
@@ -162,7 +220,7 @@ describe('integrated feature routes', () => {
 
   it('restores the Workspace on direct reload and browser history', async () => {
     window.history.replaceState(null, '', '/research')
-    vi.stubGlobal('fetch', vi.fn((url: string) => Promise.resolve(url === '/auth/me' ? response(identity)
+    stubAuthenticatedFetch(vi.fn((url: string) => Promise.resolve(url === '/auth/me' ? response(identity)
       : url === '/api/research/capabilities' ? response([]) : response({ data: [], next_cursor: null }))))
     render(<App />)
     await screen.findByRole('heading', { name: '研究总览' })
@@ -178,7 +236,7 @@ describe('authentication regressions across the workspace', () => {
   it('registers without opening the workspace', async () => {
     const fetch = vi.fn().mockResolvedValueOnce(unauthorized())
       .mockResolvedValueOnce(response({ message: 'Registration request accepted.' }, 202))
-    vi.stubGlobal('fetch', fetch)
+    stubAuthenticatedFetch(fetch)
     render(<App />)
     fireEvent.click(await screen.findByRole('button', { name: '注册' }))
     fireEvent.change(screen.getByLabelText('用户名'), { target: { value: 'alice' } })
@@ -194,7 +252,7 @@ describe('authentication regressions across the workspace', () => {
     [403, '请求来源被拒绝，请从配置的应用地址访问。'],
     [429, '请求过于频繁，请稍后重试。'], [500, '认证服务暂时不可用，请重试。'],
   ])('shows login HTTP %i without opening the workspace', async (status, message) => {
-    vi.stubGlobal('fetch', vi.fn().mockResolvedValueOnce(unauthorized())
+    stubAuthenticatedFetch(vi.fn().mockResolvedValueOnce(unauthorized())
       .mockResolvedValueOnce(response({ error: { kind: 'invalid_credentials', detail: '', param: null } }, status)))
     render(<App />)
     await screen.findByRole('button', { name: '登录' })
@@ -208,15 +266,15 @@ describe('authentication regressions across the workspace', () => {
     if (kind === 'network') fetch.mockRejectedValueOnce(new TypeError('offline'))
     else fetch.mockResolvedValueOnce(response({ error: { kind: 'internal_error', detail: '', param: null } }, 500))
     fetch.mockResolvedValueOnce(response(identity))
-    vi.stubGlobal('fetch', fetch)
+    stubAuthenticatedFetch(fetch)
     render(<App />)
-    fireEvent.click(await screen.findByRole('button', { name: '重试登录状态检查' }))
+    fireEvent.click(await screen.findByRole('button', { name: '重试访问检查' }))
     await screen.findByRole('button', { name: '退出登录' })
   })
 
   it.each([403, 429, 500])('keeps the gate open for business HTTP %i', async (status) => {
     window.history.replaceState(null, '', '/data/mo-option-chain')
-    vi.stubGlobal('fetch', vi.fn().mockResolvedValueOnce(response(identity))
+    stubAuthenticatedFetch(vi.fn().mockResolvedValueOnce(response(identity))
       .mockResolvedValueOnce(response({ error: { kind: 'internal_error', detail: '', param: null } }, status)))
     render(<App />)
     await screen.findByRole('heading', { name: 'MO 期权链' })
@@ -225,16 +283,32 @@ describe('authentication regressions across the workspace', () => {
     expect(screen.getByRole('button', { name: '退出登录' })).toBeTruthy()
   })
 
-  it('isolates an obsolete StrictMode identity response', async () => {
+  it('isolates an obsolete StrictMode mode response', async () => {
     const obsolete = deferred<Response>()
     const latest = deferred<Response>()
     const fetch = vi.fn().mockReturnValueOnce(obsolete.promise).mockReturnValueOnce(latest.promise)
+      .mockResolvedValueOnce(response(identity))
     vi.stubGlobal('fetch', fetch)
     render(<StrictMode><App /></StrictMode>)
     await waitFor(() => expect(fetch).toHaveBeenCalledTimes(2))
-    latest.resolve(response(identity))
+    latest.resolve(response('authenticated'))
     await screen.findByRole('button', { name: '退出登录' })
-    obsolete.resolve(unauthorized())
+    await act(async () => { obsolete.resolve(response('local')) })
+    expect(screen.getByText('alice')).toBeTruthy()
+    expect(fetch.mock.calls.map(([url]) => url)).toEqual(['/auth/mode', '/auth/mode', '/auth/me'])
+  })
+
+  it('isolates an identity response after its application unmounts', async () => {
+    const obsolete = deferred<Response>()
+    const fetch = vi.fn().mockReturnValueOnce(obsolete.promise).mockResolvedValueOnce(response(identity))
+    stubAuthenticatedFetch(fetch)
+    const first = render(<App />)
+    await waitFor(() => expect(fetch).toHaveBeenCalledTimes(1))
+    first.unmount()
+    expect(fetch.mock.calls[0][1].signal.aborted).toBe(true)
+    render(<App />)
+    await screen.findByRole('button', { name: '退出登录' })
+    await act(async () => { obsolete.resolve(unauthorized()) })
     expect(screen.getByText('alice')).toBeTruthy()
   })
 })
@@ -246,7 +320,7 @@ it('preserves the Futures Basis deep link through login and clears its result on
   const data = readerFixture()
   const request = { ...data.request.observation, case: 'futures_basis_v1', analysis_profile: 'r01a_standard_v2' }
   let signedIn = false
-  vi.stubGlobal('fetch', vi.fn((url: string) => {
+  stubAuthenticatedFetch(vi.fn((url: string) => {
     if (url === '/auth/me') return Promise.resolve(signedIn ? response(identity) : unauthorized())
     if (url === '/auth/login') { signedIn = true; return Promise.resolve(response(identity)) }
     if (url === '/auth/logout') return Promise.resolve(response(null, 204))
@@ -266,7 +340,7 @@ it('returns a restored Futures Basis run to the authentication gate on a protect
   window.history.replaceState(null, '', `/research/futures-basis?run_id=${'a'.repeat(32)}`)
   const protectedReply = deferred<Response>()
   const fetch = vi.fn((url: string) => url === '/auth/me' ? Promise.resolve(response(identity)) : protectedReply.promise)
-  vi.stubGlobal('fetch', fetch)
+  stubAuthenticatedFetch(fetch)
   render(<App />)
   await screen.findByRole('heading', { name: 'Futures Basis Research' })
   expect(fetch.mock.calls.some(([url]) => url.includes('/runs/'))).toBe(true)
@@ -278,7 +352,7 @@ it('returns a restored Futures Basis run to the authentication gate on a protect
 describe('WP1 navigation composition', () => {
   it('shows studies directly and retains the hidden Explorer route', async () => {
     window.history.replaceState(null, '', '/research')
-    vi.stubGlobal('fetch', vi.fn((url: string) => Promise.resolve(url === '/auth/me' ? response(identity)
+    stubAuthenticatedFetch(vi.fn((url: string) => Promise.resolve(url === '/auth/me' ? response(identity)
       : url === '/api/research/capabilities' ? response([]) : response({ data: [], next_cursor: null }))))
     const { container } = render(<App />)
     const navigation = await screen.findByRole('menu', { name: '业务导航' })
@@ -295,7 +369,7 @@ describe('WP1 navigation composition', () => {
 
   it('keeps group toggles out of history and selects only the destination leaf', async () => {
     window.history.replaceState(null, '', '/research')
-    vi.stubGlobal('fetch', vi.fn((url: string) => Promise.resolve(url === '/auth/me' ? response(identity) : response([]))))
+    stubAuthenticatedFetch(vi.fn((url: string) => Promise.resolve(url === '/auth/me' ? response(identity) : response([]))))
     const { container } = render(<App />)
     await screen.findByRole('button', { name: '退出登录' })
     const navigation = screen.getByRole('menu', { name: '业务导航' })
@@ -326,7 +400,7 @@ describe('WP1 navigation composition', () => {
     const matchMedia = window.matchMedia.bind(window)
     vi.spyOn(window, 'matchMedia').mockImplementation(query => ({ ...matchMedia(query), matches: query.includes('1199.98px') }))
     window.history.replaceState(null, '', '/data')
-    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(response(identity)))
+    stubAuthenticatedFetch(vi.fn().mockResolvedValue(response(identity)))
     render(<App />)
     await screen.findByRole('button', { name: '展开导航' })
     fireEvent.click(screen.getByRole('menuitem', { name: '日常数据' }))
@@ -357,7 +431,7 @@ describe('authenticated Run navigation retention', () => {
       if (url.startsWith('/api/research/futures-basis/')) return Promise.resolve(unauthorized())
       return Promise.resolve(response([]))
     })
-    vi.stubGlobal('fetch', fetch)
+    stubAuthenticatedFetch(fetch)
     return fetch
   }
   async function openResearch() {
@@ -419,7 +493,7 @@ describe('authenticated Run navigation retention', () => {
 it('opens Backtesting Overview without business requests and navigates explicitly to the instance', async () => {
   window.history.replaceState(null, '', '/backtesting')
   const fetch = vi.fn((url: string) => Promise.resolve(url === '/auth/me' ? response(identity) : response(null, 204)))
-  vi.stubGlobal('fetch', fetch)
+  stubAuthenticatedFetch(fetch)
   render(<App />)
   await screen.findByRole('heading', { name: '回测总览' })
   expect(fetch.mock.calls.map(([url]) => url)).toEqual(['/auth/me'])
@@ -430,7 +504,7 @@ it('opens Backtesting Overview without business requests and navigates explicitl
 
 it('preserves an anonymous legacy Run deep link through login', async () => {
   window.history.replaceState(null, '', '/backtesting?run_id=bookmark')
-  vi.stubGlobal('fetch', vi.fn((url: string) => Promise.resolve(url === '/auth/me' ? unauthorized()
+  stubAuthenticatedFetch(vi.fn((url: string) => Promise.resolve(url === '/auth/me' ? unauthorized()
     : url === '/auth/login' ? response(identity) : response({ error: { kind: 'not_found' } }, 404))))
   render(<App />)
   await screen.findByRole('button', { name: '登录' })

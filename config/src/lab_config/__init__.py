@@ -65,7 +65,7 @@ class TushareRateSettings(_RepositorySettings):
 
 class AuthSettings(_RepositorySettings):
     lab_auth_jwt_secret: str | None = Field(default=None, repr=False)
-    lab_auth_mode: str = "production"
+    lab_auth_mode: str = "local"
     lab_auth_origin: str | None = None
     lab_auth_db_path: str | None = None
 

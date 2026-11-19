@@ -15,16 +15,16 @@ function locationRoute(strategies: StrategyRoutes, normalize = false) {
   return path
 }
 
-export function useWorkspaceRoute(strategies: StrategyRoutes, authenticated = true) {
+export function useWorkspaceRoute(strategies: StrategyRoutes, ready = true) {
   const [path, setPath] = useState(() => locationRoute(strategies))
   useEffect(() => {
-    const sync = () => setPath(locationRoute(strategies, authenticated))
+    const sync = () => setPath(locationRoute(strategies, ready))
     sync()
     window.addEventListener('popstate', sync)
     return () => window.removeEventListener('popstate', sync)
-  }, [strategies, authenticated])
+  }, [strategies, ready])
 
-  // Optional Run identity is supplied only by authenticated menu navigation.
+  // Online menu navigation can supply an optional Run identity.
   const navigate = useCallback((destination: WorkspaceDestination, replace = false, runId?: string) => {
     const next = strategies.resolve(destination, 'production')
     if (window.location.pathname !== next) {

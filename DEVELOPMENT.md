@@ -44,9 +44,9 @@ process environment > repository-root .env > built-in defaults
 | --- | --- |
 | `TUSHARE_TOKEN` | Tushare Source I/O 所需 credential；缺失/空白时 Source operation 失败 |
 | `TUSHARE_CALLS_PER_MINUTE` | 可选，整数 1..500，默认 180；只在需要 Source I/O 时读取 |
-| `LAB_AUTH_JWT_SECRET` | Auth serving 必填，base64url 编码的至少 32 random bytes |
-| `LAB_AUTH_MODE` | `production`（默认）或 `loopback-http` |
-| `LAB_AUTH_ORIGIN` | Auth serving 必填的 browser-facing origin |
+| `LAB_AUTH_JWT_SECRET` | 认证模式必填，base64url 编码的至少 32 random bytes |
+| `LAB_AUTH_MODE` | `local`（默认）、`loopback-http` 或 `production` |
+| `LAB_AUTH_ORIGIN` | 认证模式必填的 browser-facing origin |
 | `LAB_AUTH_DB_PATH` | 可选，Auth SQLite 绝对路径；默认 `ui_http/data/auth.sqlite3` |
 | `LAB_RESEARCH_PUBLICATION_ROOT` | 可选，Publication storage 绝对路径 |
 | `LAB_FUTURES_BASIS_RUN_ROOT` | 可选，Futures Basis Online Run Store 基础目录的绝对路径，默认 `market_research/.runtime/futures_basis_online/` |
@@ -55,7 +55,7 @@ process environment > repository-root .env > built-in defaults
 
 ```powershell
 Copy-Item .env.example .env
-# 编辑 .env，填入 TUSHARE_TOKEN 与需要的 Auth 配置
+# 需要行情获取或启用认证时，填入相应配置
 ```
 
 `data_snapshot/.env` 是退休位置，不再被读取；旧 worktree 可把 token 手工迁移到根 `.env`。
@@ -92,9 +92,9 @@ bash scripts/market-lab.sh status  # 查看本启动器的 backend/frontend
 bash scripts/market-lab.sh stop    # 从另一终端停止两个服务
 ```
 
-`start` 在前台运行，检查 Python 3.13、Poetry、Node.js（20.19+ 或 22.12+）、npm、Linux 进程工具和默认端口 8011/5173。项目依赖缺失或不完整时，它调用现有 `.codex/scripts/setup.sh` 在仓库根目录安装依赖；首次安装可能需要网络。启动器通过 `poetry run lab serve backend/frontend` 启动服务，确认后端认证响应与 Web 首页就绪后打印 `http://127.0.0.1:5173/`，不自动打开浏览器。按 Ctrl+C 会停止本次启动的两个服务。
+`start` 在前台运行，检查 Python 3.13、Poetry、Node.js（20.19+ 或 22.12+）、npm、Linux 进程工具和默认端口 8011/5173。项目依赖缺失或不完整时，它调用现有 `.codex/scripts/setup.sh` 在仓库根目录安装依赖；首次安装可能需要网络。启动器通过 `poetry run lab serve backend/frontend` 启动服务，确认后端访问模式、业务探针和 Web 首页就绪后打印 `http://127.0.0.1:5173/`，不自动打开浏览器。按 Ctrl+C 会停止本次启动的两个服务。
 
-启动器使用根 `.env` 或进程环境的 Auth 设置，进程环境优先。未显式设置时使用 `loopback-http` 和 `http://127.0.0.1:5173`；JWT 密钥仅在缺失时生成并保存于已忽略的 `ui_http/data/one-click/jwt-secret`，供重启复用，不覆盖现有配置。日志与进程状态也位于 `ui_http/data/one-click/`。`status` 和 `stop` 只操作经进程身份核验的本启动器实例；端口被其他程序占用时启动失败，不会终止该程序。启动失败可查看该目录日志并运行 `poetry run lab doctor`。首次注册及审批步骤见下文。
+两个一键启动器默认使用 `local`，无需 Auth 设置。显式选择 `loopback-http` 后，缺少 Origin 时使用 `http://127.0.0.1:5173`，缺少 JWT 密钥时生成并复用已忽略的 `ui_http/data/one-click/jwt-secret`。配置来源优先级仍为进程环境、根 `.env` 和默认值。一键启动器确认 `/auth/mode` 后，使用无需行情 I/O 的业务探针验证 Local 200 或认证 401。日志与进程状态位于 `ui_http/data/one-click/`。Linux `status` 和 `stop` 只操作经过进程身份核验的启动器实例。端口被其他程序占用时启动失败，可查看日志并运行 `poetry run lab doctor`。
 
 ## Windows One-Click Development Startup
 
@@ -114,9 +114,9 @@ bash scripts/market-lab.sh stop    # 从另一终端停止两个服务
 
 Publication uses independent portable SQLite on native Windows. Configure the absolute directory `LAB_RESEARCH_PUBLICATION_ROOT` explicitly. Legacy Publication files are ignored without migration or deletion. Only operator-controlled local filesystems and the existing single-process deployment are supported. Platform verification limits are recorded in [Publication storage platform boundary](market_research/PUBLICATION_STORAGE.md#platform-verification-boundary).
 
-首次使用时在网页注册，然后在仓库根目录的另一个终端运行 `poetry run lab auth pending`，取得用户 ID 后运行 `poetry run lab auth approve <user-id>`，再返回网页登录。若在 process environment 或根 `.env` 设置了 `LAB_AUTH_DB_PATH`，审批终端也必须使用相同的值。
+显式启用 `loopback-http` 时，在网页注册，然后在仓库根目录的另一个终端运行 `poetry run lab auth pending`，取得用户 ID 后运行 `poetry run lab auth approve <user-id>`，再返回网页登录。若在 process environment 或根 `.env` 设置了 `LAB_AUTH_DB_PATH`，审批终端也必须使用相同的值。
 
-保持启动窗口打开，按任意键停止两个服务。若启动窗口已关闭而服务仍在运行，在另一个终端运行 `.\market-lab.cmd stop`；它按默认端口 8011/5173 查找本仓库的 backend/frontend 并停止，不会终止使用这些端口的其他程序。启动失败时查看窗口提示和 `ui_http/data/one-click/` 中的日志；检查工具是否在 PATH、依赖安装是否成功、默认端口 8011 和 5173 是否被占用，以及显式 Auth 配置是否与本地 loopback 模式匹配。可在仓库根运行 `poetry run lab doctor` 进一步诊断。启动器在该已忽略目录中保存本机 JWT 密钥以便重启复用，不会清空用户库或行情缓存；根 `.env` 已提供 `LAB_AUTH_MODE` / `LAB_AUTH_ORIGIN` / `LAB_AUTH_JWT_SECRET` 时，启动器不会覆盖，process environment 仍优先。
+保持启动窗口打开，按任意键停止两个服务。若启动窗口已关闭而服务仍在运行，在另一个终端运行 `.\market-lab.cmd stop`；它按默认端口 8011/5173 查找本仓库的 backend/frontend 并停止，不会终止使用这些端口的其他程序。启动失败时查看窗口提示和 `ui_http/data/one-click/` 中的日志；检查工具是否在 PATH、依赖安装是否成功、默认端口 8011 和 5173 是否被占用，以及显式 Auth 配置是否与本地 loopback 模式匹配。可在仓库根运行 `poetry run lab doctor` 进一步诊断。Windows 使用与 Linux 相同的认证预检和 readiness 判定。
 
 ## 当前可运行命令
 
@@ -132,13 +132,13 @@ poetry run lab auth pending
 
 ## 当前命令与状态
 
-Auth 已提供持久化注册 Python service 与 `lab auth pending/approve/reject/disable`，使用方式见 [CLI usage guide](ui_cli/README.md#authentication注册申请与-operator-审批)。默认独立数据库为 `ui_http/data/auth.sqlite3`；`LAB_AUTH_DB_PATH` 只接受绝对路径，CLI 与 HTTP Auth 使用相同 composition，不依赖当前目录。整个 `ui_http/data/`（含 journal/WAL）已忽略。首次操作创建数据库；既有不兼容或损坏 schema 明确失败，不自动恢复。Auth CLI 不需要 JWT 配置；HTTP runtime 已强制认证，包括 docs/schema 与独立 product app。注册、登录、身份查询、退出见 [Auth HTTP contract](ui_http/AUTHENTICATION.md#4-http-contract-and-access-order)。Web 已提供登录/注册、启动 Cookie 身份检查、退出及 `/auth` Vite proxy。
+Auth 已提供持久化注册 Python service 与 `lab auth pending/approve/reject/disable`，使用方式见 [CLI usage guide](ui_cli/README.md#authentication注册申请与-operator-审批)。默认独立数据库为 `ui_http/data/auth.sqlite3`；`LAB_AUTH_DB_PATH` 只接受绝对路径，CLI 与 HTTP Auth 使用相同 composition，不依赖当前目录。整个 `ui_http/data/`（含 journal/WAL）已忽略。首次操作创建数据库；既有不兼容或损坏 schema 明确失败，不自动恢复。Auth CLI 不需要 JWT 配置；HTTP runtime 默认对本机请求开放 Workspace 和 docs/schema；两种认证模式均保护 docs/schema 与独立 product app。注册、登录、身份查询、退出见 [Auth HTTP contract](ui_http/AUTHENTICATION.md#4-http-contract-and-access-order)。Web 通过 `/auth/mode` 选择本地 Workspace 或 Cookie 认证流程。
 
-`doctor` 检查仓库结构、backend launcher、当前 Python 3.13 runtime 是否位于根 `.venv`、根 `.env` 与 `TUSHARE_TOKEN` presence、是否存在 module-local `.venv`，以及 Node 和 npm。它报告默认本地地址 `127.0.0.1:8011` 的 backend 状态：未监听为 `stopped`，监听且 `/openapi.json` 返回预期认证 401 为 `running / authentication required`，旧版有效 schema 200 为 `running / healthy`，否则为 `port occupied / unhealthy`。服务未启动是正常状态。若 `ui_web/package.json` 不存在，frontend 报告 `not initialized`；存在后检查默认 `127.0.0.1:5173` 是否监听，不要求专用 health endpoint。
+`doctor` 检查仓库结构、backend launcher、当前 Python 3.13 runtime 是否位于根 `.venv`、根 `.env` 与 `TUSHARE_TOKEN` presence、是否存在 module-local `.venv`，以及 Node 和 npm。它报告默认本地地址 `127.0.0.1:8011` 的 backend 状态：未监听为 `stopped`，监听且 `/openapi.json` 返回预期认证 401 为 `running / authentication required`，有效 schema 200 为 `running / healthy`，否则为 `port occupied / unhealthy`。服务未启动是正常状态。若 `ui_web/package.json` 不存在，frontend 报告 `not initialized`；存在后检查默认 `127.0.0.1:5173` 是否监听，不要求专用 health endpoint。
 
 `doctor` 在必要的仓库结构、backend launcher、Poetry 或 Python 3.13 条件不满足时非零退出；frontend 已初始化但 Node/npm 不可用时也非零退出。frontend 尚未初始化和服务停止本身不使 `doctor` 失败。检查只读，不创建虚拟环境、不安装依赖，也不调用 Tushare 或运行 pytest、Ruff、mypy。
 
-启动 backend 前必须配置 Auth；没有有效配置会拒绝启动。本机 HTTP 示例（仓库根目录）：
+默认启动使用 `local`，无需 Auth 设置。Local 只允许本机 loopback，禁止经公网代理、隧道或端口转发公开。手动启用本机 HTTP 认证时，在仓库根目录配置：
 
 ```dotenv
 # .env（repository root）
@@ -155,12 +155,12 @@ poetry run python -c 'import secrets; print(secrets.token_urlsafe(32))'
 
 也可以继续使用 shell/process environment 变量；process environment 优先于根 `.env`。`poetry run lab serve backend` 从 `.env` 读取其余配置。
 
-密钥从进程继承或从根 `.env` 读取，应通过安全配置保存以便重启复用；根 `.env` 已被 Git 忽略。重新生成会使旧 JWT 失效，不在仓库保存或打印真实密钥。Production（默认模式）要求 HTTPS browser origin，Cookie 固定 Secure；本机模式只接受 loopback listener/origin。Launcher 禁用隐式 proxy-header trust。无浏览器的 unsafe HTTP caller 同样须携带匹配 Origin；登录只通过 HttpOnly Cookie，没有 Bearer 入口。首次浏览器注册为 Pending，再用 `lab auth approve` 审批；具体步骤见下文。
+密钥从进程继承或从根 `.env` 读取，应通过安全配置保存以便重启复用；根 `.env` 已被 Git 忽略。重新生成会使旧 JWT 失效，不在仓库保存或打印真实密钥。部署完整在线应用时，必须显式设置 `LAB_AUTH_MODE=production`、HTTPS browser origin 和 JWT secret，包括以前依赖默认模式的部署。Production Cookie 固定 Secure。一键 HTTP 启动器支持 Local 和 Loopback HTTP。Launcher 禁用隐式 proxy-header trust。无浏览器的 unsafe HTTP caller 同样须携带匹配 Origin；登录只通过 HttpOnly Cookie，没有 Bearer 入口。首次浏览器注册为 Pending，再用 `lab auth approve` 审批；具体步骤见下文。
 
 `lab serve backend` 从 repository root 使用当前 Python interpreter 前台执行 `ui_http/scripts/api.py`。`lab serve frontend` 在 `ui_web/` 前台执行系统解析到的 npm `run dev`；首次启动前需在 `ui_web/` 自行执行 `npm install`。两个命令继承标准输入输出、传递子进程退出码，Ctrl+C 结束前台进程。缺少启动前提时明确报错，不自动修复环境。
 
 
-`ui_web/` 是独立 npm project，使用 Vite + React + TypeScript。Node.js 需满足当前 Vite 要求（20.19+ 或 22.12+）。`npm run dev` 在 `http://127.0.0.1:5173/` 提供认证入口、Research Workspace、Futures Basis Research、Research Explorer 与两个 MO 页面，与 `doctor` 的本地诊断地址一致；`npm run build` 执行 TypeScript 检查及 production build，`npm run lint` 运行 Oxlint，`npm run test` 运行前端测试。Vite dev proxy 将 frontend origin 的 `/api/research/*` 去除 `/api` 前缀后转发到 `http://127.0.0.1:8011`，并原样转发 `/auth`、`/mo-option-chain`、`/mo-option-premium-plane`，不需要 backend CORS policy。默认 provider 已接入真实读取链路；具体响应取决于目标日期与 Source 数据。
+`ui_web/` 是独立 npm project，使用 Vite + React + TypeScript。Node.js 需满足当前 Vite 要求（20.19+ 或 22.12+）。`npm run dev` 在 `http://127.0.0.1:5173/` 提供 Online Workspace 及其研究、日常数据和回测页面，与 `doctor` 的本地诊断地址一致；`npm run build` 执行 TypeScript 检查及 production build，`npm run lint` 运行 Oxlint，`npm run test` 运行前端测试。Vite dev proxy 将 frontend origin 的 `/api/research/*` 去除 `/api` 前缀后转发到 `http://127.0.0.1:8011`，并原样转发 `/auth`、`/mo-option-chain`、`/mo-option-premium-plane`，不需要 backend CORS policy。默认 provider 已接入真实读取链路；具体响应取决于目标日期与 Source 数据。
 
 ### 浏览器注册、审批与登录
 

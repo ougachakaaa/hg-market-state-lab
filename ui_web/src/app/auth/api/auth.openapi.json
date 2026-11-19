@@ -172,6 +172,9 @@
             },
             "description": "HTTP access error"
           },
+          "404": {
+            "description": "Account operation unavailable in local mode"
+          },
           "429": {
             "content": {
               "application/json": {
@@ -233,6 +236,9 @@
               }
             },
             "description": "HTTP access error"
+          },
+          "404": {
+            "description": "Account operation unavailable in local mode"
           },
           "500": {
             "content": {
@@ -296,6 +302,9 @@
             },
             "description": "HTTP access error"
           },
+          "404": {
+            "description": "Account operation unavailable in local mode"
+          },
           "500": {
             "content": {
               "application/json": {
@@ -313,6 +322,53 @@
           }
         ],
         "summary": "Me",
+        "tags": [
+          "Authentication"
+        ]
+      }
+    },
+    "/auth/mode": {
+      "get": {
+        "operationId": "get_auth_mode",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "enum": [
+                    "local",
+                    "authenticated"
+                  ],
+                  "title": "Response Get Auth Mode",
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthErrorResponse"
+                }
+              }
+            },
+            "description": "HTTP access error"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthErrorResponse"
+                }
+              }
+            },
+            "description": "HTTP access error"
+          }
+        },
+        "security": [],
+        "summary": "Get Mode",
         "tags": [
           "Authentication"
         ]
@@ -361,6 +417,9 @@
               }
             },
             "description": "HTTP access error"
+          },
+          "404": {
+            "description": "Account operation unavailable in local mode"
           },
           "429": {
             "content": {

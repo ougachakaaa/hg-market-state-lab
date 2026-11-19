@@ -8,11 +8,13 @@ export type RegisterResponse = operations['register_auth_user']['responses'][202
 export type LoginRequest = operations['login_auth_user']['requestBody']['content']['application/json']
 export type LoginResponse = operations['login_auth_user']['responses'][200]['content']['application/json']
 export type CurrentUser = operations['get_auth_user']['responses'][200]['content']['application/json']
+export type AuthMode = operations['get_auth_mode']['responses'][200]['content']['application/json']
 export type LogoutResponse = operations['logout_auth_user']['responses'][204]['content']
 export type AuthErrorResponse = components['schemas']['AuthErrorResponse']
 
 const ajv = new Ajv2020({ strictSchema: false })
 const validateIdentity = ajv.compile({ ...openApi.components.schemas.ActiveIdentity, components: openApi.components })
+const validateMode = ajv.compile(openApi.paths['/auth/mode'].get.responses['200'].content['application/json'].schema)
 const validateAccepted = ajv.compile(openApi.components.schemas.Accepted)
 const validateError = ajv.compile({ ...openApi.components.schemas.AuthErrorResponse, components: openApi.components })
 
@@ -34,7 +36,8 @@ async function request(path: string, method: 'GET' | 'POST', signal?: AbortSigna
     throw new AuthRequestError(response.status, response.headers.get('Retry-After'),
       validateError(payload) ? payload as AuthErrorResponse : undefined)
   }
-  if ((response.status === 202 && path === 'register' && validateAccepted(payload)) ||
+  if ((response.status === 200 && path === 'mode' && validateMode(payload)) ||
+      (response.status === 202 && path === 'register' && validateAccepted(payload)) ||
       (response.status === 200 && (path === 'login' || path === 'me') && validateIdentity(payload))) return payload
   throw new AuthRequestError('invalid_response')
 }
@@ -44,4 +47,5 @@ export const register = (body: RegisterRequest, signal?: AbortSignal) =>
 export const login = (body: LoginRequest, signal?: AbortSignal) =>
   request('login', 'POST', signal, body) as Promise<LoginResponse>
 export const me = (signal?: AbortSignal) => request('me', 'GET', signal) as Promise<CurrentUser>
+export const getMode = (signal?: AbortSignal) => request('mode', 'GET', signal) as Promise<AuthMode>
 export const logout = (signal?: AbortSignal) => request('logout', 'POST', signal) as Promise<LogoutResponse>

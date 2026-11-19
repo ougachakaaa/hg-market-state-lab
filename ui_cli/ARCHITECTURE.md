@@ -130,7 +130,7 @@ lab auth disable <user-id>
 | parsing、invalid input、unknown user ID 或 invalid transition | 2 | 安全的输入/目标错误 |
 | storage/configuration/operational failure | 1 | 安全的执行错误，无 SQL、hash、secret |
 
-G2 同时按 Auth authority 调整 `doctor`：受保护 `/openapi.json` 的预期 401 报告 `running / authentication required`，不使 readiness 失败，不获取凭据、不登录、不添加匿名健康路由。其他 prerequisite 检查、端口诊断与退出码保持原边界。G0/G1 的无认证 runtime 仍按现有 200 OpenAPI 检测；正式 Auth 生效后不保留匿名 schema exemption。
+G2 同时按 Auth authority 调整 `doctor`：受保护 `/openapi.json` 的预期 401 报告 `running / authentication required`，不使 readiness 失败，不获取凭据、不登录、不添加匿名健康路由。其他 prerequisite 检查、端口诊断与退出码保持原边界。Local 以有效的匿名 OpenAPI 200 报告 `running / healthy`。
 
 ## Research retirement
 

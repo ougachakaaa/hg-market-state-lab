@@ -6,11 +6,8 @@ executable.
 
 Authority: ``ARCHITECTURE.md`` and the contracts under ``products/``.
 
-The adapter binds ``127.0.0.1:8011`` by default, which the repository README
-documents as the local HTTP API address. The bind address is a launcher detail,
-not part of the HTTP transport contract: it can be overridden with ``--host`` /
-``--port``, and ``products/mo_option_chain/http-contract.md`` section 8 leaves
-server deployment to V1 non-goals.
+The adapter binds ``127.0.0.1:8011`` by default. The ``--host`` and ``--port``
+options select a listener subject to the access mode in ``AUTHENTICATION.md``.
 
     poetry run python ui_http/scripts/api.py
     poetry run python ui_http/scripts/api.py --host 127.0.0.1 --port 8011
@@ -27,7 +24,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src"))
 import uvicorn  # noqa: E402
 
 from ui_http import app  # noqa: E402
-from ui_http.auth._session import AuthConfig  # noqa: E402
+from ui_http.auth._session import serving_config  # noqa: E402
 
 
 def main(argv: list[str] | None = None) -> None:
@@ -35,7 +32,7 @@ def main(argv: list[str] | None = None) -> None:
     parser.add_argument("--host", default="127.0.0.1", help="Bind host.")
     parser.add_argument("--port", type=int, default=8011, help="Bind port.")
     args = parser.parse_args(argv)
-    AuthConfig.from_environment().validate_listener(args.host)
+    serving_config().validate_listener(args.host)
     uvicorn.run(app, host=args.host, port=args.port, proxy_headers=False)
 
 

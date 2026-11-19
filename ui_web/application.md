@@ -4,7 +4,7 @@
 
 ## Dual Runtime composition
 
-Production 与 Static Demo 共用正式 Shell、导航和 feature Presentation；application composition 分别选择 Production Auth/HTTP controllers 与 anonymous static Bundle controllers (DDB-04)。Shared Shell 的展示边界不依赖 Auth、在线 Page 或业务请求 Hook；身份/退出动作、路由和 feature content 由 composition 提供。Production 的认证 gate 与下述 lifecycle 维持不变，仅 Production 可 mount 在线 controller。Demo 细节进入 [Demo authority](demo/ARCHITECTURE.md)，其 feature Presentation 仍由正式 feature 拥有；不得复制 Demo 业务页面。本文中的登录、请求、preflight、Run lifecycle 均描述 Production；静态 runtime 不模拟这些状态。
+Production 与 Static Demo 共用正式 Shell、导航和 feature Presentation；application composition 分别选择 Production Online access/HTTP controllers 与 anonymous static Bundle controllers (DDB-04)。Shared Shell 的展示边界不依赖 Auth、在线 Page 或业务请求 Hook；身份/退出动作、路由和 feature content 由 composition 提供。Production Online 入口支持本机匿名和认证模式，仅该入口 mount 在线 controller。Demo 细节进入 [Demo authority](demo/ARCHITECTURE.md)，其 feature Presentation 仍由正式 feature 拥有；不得复制 Demo 业务页面。本文中的登录、请求、preflight、Run lifecycle 均描述 Production；静态 runtime 不模拟这些状态。
 
 The sole static composition lives in demo/runtime. Formal FastAPI HTTP business results require Bundle admission before static display. Controlled synthetic fixtures belong only to tests. Demo Build requires the real admitted dataset; publication integration belongs to DDB-05.
 
@@ -19,7 +19,7 @@ Research → Research Catalog & Workspace / Research Explorer（已实现）；F
 Backtesting → Backtesting Overview / Futures Roll Long（WP7 Web Consumer 已实现）
 ```
 
-登录后默认进入首个策略的 `/roadmap/:strategyId`，不提供独立宣传首页。既有在线 feature 保持可访问且相互独立。Research Overview 是面向用户的 Research Study 导览，展示研究目的与独立 Web 页面的完成状态；不以 Capability readiness 推断完成状态。Research Explorer 是辅助成果浏览工具，保留正式路由，通过已知 URL 与浏览器历史访问，不作为 Study 或侧栏项目。Capability 发现继续由原 controller 与 validator 拥有。Futures Basis Online Research 已完成 WP8-B Web Consumer，并复用在线和离线共享 Reader。导航和 URL 由 [Workspace authority](workspace.md) 细化。
+进入在线 Workspace 后默认进入首个策略的 `/roadmap/:strategyId`，不提供独立宣传首页。既有在线 feature 保持可访问且相互独立。Research Overview 是面向用户的 Research Study 导览，展示研究目的与独立 Web 页面的完成状态；不以 Capability readiness 推断完成状态。Research Explorer 是辅助成果浏览工具，保留正式路由，通过已知 URL 与浏览器历史访问，不作为 Study 或侧栏项目。Capability 发现继续由原 controller 与 validator 拥有。Futures Basis Online Research 已完成 WP8-B Web Consumer，并复用在线和离线共享 Reader。导航和 URL 由 [Workspace authority](workspace.md) 细化。
 
 ## 2. Application Ownership
 
@@ -30,7 +30,7 @@ application entry
 feature discovery and navigation
 application layout / shell
 feature composition boundary
-production authentication composition state and access gate (outside shared shell presentation)
+online access composition state and gate (outside shared shell presentation)
 production login / registration / logout interaction
 ```
 
@@ -48,7 +48,7 @@ feature-local loading, failure or presentation state
 Application navigation 只选择当前 feature surface，不成为 backend product contract 或 feature-local state 的 semantic owner。
 
 Production Workspace also owns the most recently visited Run route identities and
-navigation parameters, within the authenticated lifecycle defined by
+navigation parameters, within the online Workspace lifecycle defined by
 [Workspace Run navigation identity](workspace.md#production-run-navigation-identity).
 Navigation memory stores URL identity only. Production composition also owns the
 first-visited Backtesting Activity instance and visibility, destroyed with Workspace.
@@ -56,7 +56,7 @@ The retained feature continues to own all its data and presentation state.
 Features retain ownership of Run lifecycle,
 GET/POST, validation, polling, cancellation and result presentation; Application
 neither interprets Run status/results nor caches feature DTOs or presentation state.
-Navigation memory ends with the authenticated Workspace, even though the outer
+Navigation memory ends with the online Workspace, even though the outer
 authentication gate and history adapter may remain mounted.
 
 ## 3. Feature Independence
@@ -79,17 +79,20 @@ Login / Registration 是 application-level 入口；普通登录进入默认策�
 
 Application 管理以下状态及行为：
 
-- 启动/重新载入时只执行一次按当前 application lifecycle 发起的 `/auth/me` 检查；checking 时不 mount 会发业务请求的 surface。成功则 authenticated，401 则 anonymous；网络/500 错误提供失败与重试状态，不把它当作确认退出。
+- 启动或重载时先查询 `/auth/mode`。探测期间保留当前 URL 并暂缓 mount 业务；探测失败显示可重试错误。
+- Local 初始化业务请求生命周期并恢复路由，直接打开同一个 Workspace。Header 显示「本地模式」，跳过 `/auth/me`，隐藏账号操作。
+- Authenticated 继续检查 `/auth/me`，成功恢复身份，401 进入登录入口，其他故障显示可重试错误。
 - Anonymous 显示 username/password 登录和注册入口。注册 202 只显示通用“申请已受理，等待 Operator 审批后登录”，不获取用户 ID、不判断是否重复、不自动登录或轮询审批。Operator 从服务器 `lab auth` 处理；无 Web admin surface。
 - 登录成功依据最小 user identity 开放 gate；失败保留通用 credentials 错误，不能根据 401 猜测账号是否存在、pending 或 rejected。400、403、429（含 Retry-After）、500 有各自可理解的反馈。
-- 任一受保护业务/me 请求 401 使 application 返回匿名 gate，停止新业务请求、中止/隔离旧请求并清除本客户端已显示的身份/业务结果；stale success 不得恢复登录或旧结果。403 来源拒绝、429 或产品业务错误不自动清除登录状态。
+- 认证模式的受保护业务/me 请求 401 使 application 返回登录 gate，停止新业务请求、中止/隔离旧请求并清除本客户端已显示的身份/业务结果；stale success 不得恢复登录或旧结果。403 来源拒绝、429 或产品业务错误不自动清除登录状态。
+- Local 的意外业务 401 关闭同一请求生命周期，隔离旧请求并显示可重试的本地访问异常。重试重新探测模式。
 - Logout 发同源 POST，pending 期间阻止新业务请求并中止/隔离旧请求。204 后清除本地身份与产品结果并回到匿名入口；失败时保留可重试的退出状态，不声称服务端已清 Cookie。过期或缺失 Cookie 的 logout 仍可正常完成。
 
 Application 只消费服务端 identity；JWT 只由浏览器 HttpOnly Cookie 管理，不生成、解析、读写、刷新或保存在 local/session storage。请求使用相对同源 URL 和 Cookie credentials；不做后台续期、me heartbeat 或 retry-on-401 刷新。登录/me 的用户信息不能用前端时间或旧 local state 取代服务器认证。
 
 Auth request adaptation、generated schema/types 及 React lifecycle 属于 application 的 Auth concern（可放在 `src/app/auth/`，incidental filenames 由实现决定），独立于产品 DTO。Domain-neutral `shared/http` 可以传递 401/credentials 信号，但不能依赖 app/feature 或解释产品 state；由 application 显式组合 callback/context。不得为了全局 gate 引入通用 feature runtime。
 
-G3 的本地 dev proxy 增加 `/auth`，保持正常 frontend origin 和 Set-Cookie；浏览器不直接调用不同 port 的 backend。Cookie/CSRF 和 loopback/production 配置遵循 Auth authority。无 local bypass，UI gate 也不能替代后端 access check。无状态 logout 在途 Cookie 竞争的限制由 Auth authority 明示，frontend 不承诺全设备即时撤销。
+G3 的本地 dev proxy 增加 `/auth`，保持正常 frontend origin 和 Set-Cookie；浏览器不直接调用不同 port 的 backend。Cookie/CSRF 和 loopback/production 配置遵循 Auth authority。Local 本机访问约束由后端 AccessGate 执行。无状态 logout 在途 Cookie 竞争的限制由 Auth authority 明示，frontend 不承诺全设备即时撤销。
 
 ## Backtesting overview composition
 
@@ -102,7 +105,7 @@ The shared workspace header remains visible while Content scrolls. Its right edg
 
 ## Workspace scroll ownership
 
-Authenticated Production Workspace and Static Demo Workspace share a Shell bounded
+Production Online Workspace and Static Demo Workspace share a Shell bounded
 by the browser's visible viewport. The sidebar and right-side Header remain visible
 while the right-side Content, the sole vertical scroller for main page content,
 scrolls. Normal long Workspace content must not increase the Document's height into

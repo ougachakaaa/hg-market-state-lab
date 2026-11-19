@@ -47,7 +47,7 @@ flowchart LR
 
 箭头表示授权的数据流。业务模块只通过公开边界交互；浏览器不重算金融结果。仓库使用唯一根 Poetry / Python 环境，前端是独立 npm 项目。完整边界见 [ARCHITECTURE.md](ARCHITECTURE.md)。
 
-完整 Web 默认进入策略研究地图，并包含 Research、Daily Data、Backtesting 总览及业务页面；使用登录、显式执行和服务端 Run。静态 Demo 只阅读捕获结果。项目尚未正式投产，文档中的 Production Web 指完整应用模式。Demo 保留真实来源说明和投资免责声明；第三方许可未核验，不表示提供方授权。
+完整 Web 默认进入策略研究地图，并包含 Research、Daily Data、Backtesting 总览及业务页面；支持本机免登录、显式执行和服务端 Run。静态 Demo 只阅读捕获结果。项目尚未正式投产，文档中的 Production Web 指完整应用模式。Demo 保留真实来源说明和投资免责声明；第三方许可未核验，不表示提供方授权。
 
 ## Engineering Approach
 
@@ -56,7 +56,7 @@ flowchart LR
 
 ## 本地启动
 
-需要 Python 3.13、Poetry、Node.js 20.19+ 或 22.12+、npm。复制根 `.env.example` 为 `.env`；真实行情获取需配置 `TUSHARE_TOKEN`，凭证不进入 Git。初始化和运行方式见 [DEVELOPMENT.md](DEVELOPMENT.md)。
+需要 Python 3.13、Poetry、Node.js 20.19+ 或 22.12+、npm。默认启动无需 `.env` 或账号。需要获取真实行情时，复制根 `.env.example` 为 `.env` 并配置 `TUSHARE_TOKEN`。凭证不进入 Git。初始化和运行方式见 [DEVELOPMENT.md](DEVELOPMENT.md)。
 
 ```bash
 # Linux / WSL，首次启动自动准备项目依赖
@@ -64,12 +64,7 @@ bash scripts/market-lab.sh start
 # Windows：.\market-lab.cmd start
 ```
 
-打开 `http://127.0.0.1:5173/`。本地 Production Web 使用登录；首次注册后从仓库根审批：
-
-```bash
-poetry run lab auth pending
-poetry run lab auth approve <user-id>
-```
+打开 `http://127.0.0.1:5173/` 即可进入完整 Workspace，页头显示「本地模式」。本地模式仅限本机 loopback，禁止经公网代理、隧道或端口转发公开。需要在本机启用登录时，显式设置 `LAB_AUTH_MODE=loopback-http`。部署完整在线应用时，必须显式设置 `LAB_AUTH_MODE=production`，并配置 HTTPS origin 和 JWT secret。已有部署也应检查是否显式设置了该模式。配置及账号审批见 [DEVELOPMENT.md](DEVELOPMENT.md)。
 
 公共静态构建仅消费已提交的独立结果包，不获取行情、不运行 Producer：
 

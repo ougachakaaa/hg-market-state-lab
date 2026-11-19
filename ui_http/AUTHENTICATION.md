@@ -8,7 +8,7 @@ G0 仅编码已确认的 MVP 语义、必要的输入规则与验收契约。本
 
 G1 已实现 Auth-owned SQLite、注册与审批 Public Python Service、canonical `lab auth` 以及无 HTTP app 构造的 Auth import。G2 已实现 Auth HTTP endpoints、HS256 Cookie/sliding session、统一 Access Gate、同源验证与内存限流，以及 OpenAPI/doctor 和两个 MO consumer 的 reconciliation。G3 已实现 Web 登录/注册、application gate、Cookie 身份恢复、退出、401 与旧请求隔离，以及独立 Auth generated contract 和同源 dev proxy。G4 已完成本地跨层验收；运行方式与公网开放前的部署事项见 [development guide](../DEVELOPMENT.md)。
 
-Auth 是 `ui_http` 内的技术访问能力，不是新的 business module、HTTP runtime、Python project 或通用用户平台。所有本地和服务器访问都需要登录；不提供 local bypass。Operator 是拥有服务器操作权限的人，无 Web 管理员角色、Admin HTTP API 或管理页面。MVP 不包含 OAuth、RBAC、邮件、密码找回、验证码、Refresh Token、Redis 或复杂风控。
+Auth 是 `ui_http` 内的技术访问能力，不是新的 business module、HTTP runtime、Python project 或通用用户平台。本机默认使用 Local 匿名访问；部署必须显式启用 Production 认证。Operator 是拥有服务器操作权限的人，无 Web 管理员角色、Admin HTTP API 或管理页面。MVP 不包含 OAuth、RBAC、邮件、密码找回、验证码、Refresh Token、Redis 或复杂风控。
 
 ## 2. User identity and persistence
 
@@ -80,16 +80,20 @@ Auth 配置来自 process environment；本地开发也可写入 repository root
 
 | Setting | Contract |
 | --- | --- |
-| `LAB_AUTH_JWT_SECRET` | 必填；base64url 编码的至少 32 random bytes，解码后作为签名密钥；不得使用内建、自动生成或示例 fallback |
-| `LAB_AUTH_MODE` | `production`（默认）或显式 `loopback-http`；未知值拒绝启动 |
-| `LAB_AUTH_ORIGIN` | 必填，唯一 browser-facing origin，scheme/host/effective port，无 path/query/fragment；同源验证的可信目标 |
+| `LAB_AUTH_JWT_SECRET` | 认证模式必填；base64url 编码的至少 32 random bytes。一键启动器可为显式 `loopback-http` 生成并复用本机密钥 |
+| `LAB_AUTH_MODE` | `local`（默认）、`loopback-http` 或 `production`；空值及未知值拒绝启动 |
+| `LAB_AUTH_ORIGIN` | 认证模式必填，唯一 browser-facing origin，scheme/host/effective port，无 path/query/fragment；同源验证的可信目标 |
 | `LAB_AUTH_DB_PATH` | 可选，语义见 storage section |
 
 `.env` 只提供本地文件来源，不改变上表的 required / validation 语义；缺失或非法配置仍在 serving startup fail closed。`.env` 不进入 Git，production 应显式使用 server environment 变量。
 
-Production origin 必须 HTTPS，Cookie Secure 固定开启，不接受环境变量单独关闭。`loopback-http` 仅允许 loopback listener 和显式 loopback HTTP origin，Cookie 可 `Secure=false`；默认本地前端 origin 为配置值 `http://127.0.0.1:5173`，后端 listener 为 `127.0.0.1:8011`。不允许非 loopback bind 套用该模式。所有模式仍要求 secret、数据库状态检查及登录。配置缺失/不安全时 serving startup fail closed，不回退到 no-auth。
+Production origin 必须 HTTPS，Cookie Secure 固定开启，不接受环境变量单独关闭。`loopback-http` 仅允许 loopback listener 和显式 loopback HTTP origin，Cookie 可 `Secure=false`；默认本地前端 origin 为配置值 `http://127.0.0.1:5173`，后端 listener 为 `127.0.0.1:8011`。不允许非 loopback bind 套用该模式。两种认证模式均要求 secret、数据库状态检查及登录；缺失必需配置或配置不安全时拒绝启动。
 
-Secret/config 校验属于 serving startup，不属于纯 `.openapi()` schema construction 或 G1 CLI 操作；不得因为可离线生成 schema 就允许未配置的 app 被 HTTP 调用。测试可显式注入临时 DB、固定时钟、合成 key/config，不提供可从网络触发的 test bypass。
+Local 使用统一 AccessGate 的本机匿名策略。HTTP runtime 无需 JWT 配置，也不初始化 Auth service、访问用户库或签发、清除会话 Cookie。显式 Operator CLI 操作仍可独立管理 Auth 用户库。
+
+Local 仅支持仓库控制的本机入口。Backend launcher 在 bind 前拒绝非 loopback。在请求层，AccessGate 要求 loopback listener 和直接 socket peer，并检查单一合法 Host。可接受的 HTTP authority 是实际 API listener 地址或标准 Vite 入口 `http://127.0.0.1:5173`。Vite 本机入口保留 Host。Local 拒绝代理转发标记以及浏览器跨站或跨 origin 请求。写请求必须提供同源 Origin 或 Referer，Origin 优先。未带来源的安全方法可供本机工具使用。Local 禁止经公网代理、隧道或端口转发公开；此类入口可能隐藏原始请求信息，部署必须显式启用 `production`。
+
+认证模式的 secret/config 校验在 serving startup 执行。离线 `.openapi()` schema construction 和 Operator CLI 无需有效的 HTTP serving 配置。测试可显式注入临时 DB、固定时钟、合成 key/config，不提供可从网络触发的 test bypass。
 
 ## 4. HTTP contract and access order
 
@@ -101,12 +105,13 @@ Minimal user identity 的固定 JSON shape 是 `{"id":"<uuid>","username":"<cano
 
 | Method / path | operationId | Access | Success / Cookie |
 | --- | --- | --- | --- |
+| GET `/auth/mode` | get_auth_mode | public | 200 JSON 字符串 `"local"` 或 `"authenticated"`；no-store，无 Cookie |
 | POST `/auth/register` | register_auth_user | public | 202 `{"message":"Registration request accepted."}`；包括重复注册；不签发 token |
 | POST `/auth/login` | login_auth_user | public | 200 minimal user identity；设置 Cookie |
 | GET `/auth/me` | get_auth_user | authenticated | 200 minimal user identity；正常滑动续期 |
 | POST `/auth/logout` | logout_auth_user | public | 204，无 body；清除 Cookie，不验证 JWT，有/无/过期 Cookie 均可 |
 
-Me / logout 不接受 query 或 body。所有 POST 仍须同源检查；public 只表示不要求已有 JWT。注册不返回 user ID 或 existing/status 提示；pending、rejected、disabled、未知账号及密码错误的有效登录请求全部返回相同 401 body，无 403 账号状态提示。未知账号使用 dummy Argon2id verification，已有账号的失败分支采用等价验证，避免快速存在性 oracle；不承诺网络延迟的数学恒定。
+Local 的注册、登录、退出和当前用户路径在本机安全检查通过后、解析请求体前返回 404（空 body、no-store）。下述账号及会话行为适用于认证模式。Me / logout 不接受 query 或 body。所有 POST 仍须同源检查；public 只表示不要求已有 JWT。注册不返回 user ID 或 existing/status 提示；pending、rejected、disabled、未知账号及密码错误的有效登录请求全部返回相同 401 body，无 403 账号状态提示。未知账号使用 dummy Argon2id verification，已有账号的失败分支采用等价验证，避免快速存在性 oracle；不承诺网络延迟的数学恒定。
 
 Auth/access errors 使用独立 schema，固定形状为 `{"error":{"kind":"<kind>","detail":"<safe text>","param":null}}`。`param` 始终 null；不混入任何 product 的 closed kind enum：
 
@@ -123,11 +128,9 @@ Auth/access errors 使用独立 schema，固定形状为 `{"error":{"kind":"<kin
 
 ### Default protection and execution order
 
-唯一匿名 allowlist 是精确的 method/path：`POST /auth/register`、`POST /auth/login`、`POST /auth/logout`。`GET /auth/me`、MO、Research 所有路径（包括 discovery/preview）、后续 business routes 以及实际 HTTP `/docs`、`/openapi.json`、`/redoc`、`/docs/oauth2-redirect` 都必须经过认证；不存在 public health endpoint、静态业务页面、alternate product app 或 local exemption。
+认证模式的匿名 allowlist 只包含精确 method/path：`GET /auth/mode`、`POST /auth/register`、`POST /auth/login` 和 `POST /auth/logout`。业务、当前用户和实际 HTTP docs/schema 均需要认证。Local 通过本机检查后可匿名访问业务和 docs/schema，FastAPI Security dependency 复用 gate 的检查结果。所有可服务 app factories 采用相同访问策略，离线 OpenAPI 继续发布认证部署的 security metadata。
 
-所有实际 HTTP surfaces，包括保留的 product-only app factories，都必须使用相同 access policy；它们只可作为离线 schema builders 消费时不需要登录，不能成为可服务的匿名替代 app。不使用仅覆盖 APIRouter 的 dependency 假定框架 docs 已受保护。
-
-可观察处理顺序：
+认证模式的可观察处理顺序：
 
 1. 从可信连接解析 client IP；register/login 原子地预留 rate-limit slot，超限立即 429，不读大 body、不 hash、不写用户。
 2. Protected paths 通过 FastAPI Security 验证 JWT 与当前用户状态。无效身份在业务 validation、body parsing、依赖解析、Research preflight/guard 或任何 owning-module 调用前返回 401；只允许限额判断等廉价 transport 工作先行。
@@ -151,9 +154,9 @@ Limiter 必须位于 password hashing、verification、JSON parsing、数据库�
 
 ### Same-origin policy
 
-所有非 GET/HEAD/OPTIONS HTTP 请求在副作用前验证来源，包括 register/login/logout 和 Research POST。若有 Origin，必须是一个合法、非 `null` 的 origin，按 scheme、规范化 host、effective port 与 `LAB_AUTH_ORIGIN` 精确相等；有 Origin 时不能用 Referer 覆盖失败。无 Origin 才回退到合法 Referer 的 origin。两者皆缺失、空值、malformed、多值或跨 origin 均 403。拒绝 suffix/substring matches，不将请求 Host / forwarded headers 当作可信配置。此策略采用 [OWASP origin verification guidance](https://cheatsheetseries.owasp.org/cheatsheets/Cross-Site_Request_Forgery_Prevention_Cheat_Sheet.html)。
+所有非 GET/HEAD/OPTIONS HTTP 请求在副作用前验证来源，包括 register/login/logout 和 Research POST。认证模式下，若有 Origin，必须是一个合法、非 `null` 的 origin，按 scheme、规范化 host、effective port 与 `LAB_AUTH_ORIGIN` 精确相等；有 Origin 时不能用 Referer 覆盖失败。无 Origin 才回退到合法 Referer 的 origin。两者皆缺失、空值、malformed、多值或跨 origin 均 403。拒绝 suffix/substring matches，不将请求 Host / forwarded headers 当作可信配置。此策略采用 [OWASP origin verification guidance](https://cheatsheetseries.owasp.org/cheatsheets/Cross-Site_Request_Forgery_Prevention_Cheat_Sheet.html)。
 
-SameSite 是额外防护，不能替代来源校验。不引入 CSRF session/token framework 或宽泛 credentialed CORS。无浏览器的 HTTP caller 在 unsafe methods 也必须提供匹配的 Origin 和 Cookie；Operator CLI 走本地 Python service，不使用浏览器 cookie。
+SameSite 是额外防护，不能替代来源校验。不引入 CSRF session/token framework 或宽泛 credentialed CORS。无浏览器的 HTTP caller 在 unsafe methods 也必须提供匹配的 Origin；认证模式的 protected paths 同时需要 Cookie；Operator CLI 走本地 Python service，不使用浏览器 cookie。
 
 本地 React 从 frontend origin 请求相对 `/auth/*` 和 business paths，通过同源 dev proxy 到既有 backend，保持 Origin/Referer 和 Set-Cookie；G3 增加 `/auth` proxy。Backend 验证配置的 browser-facing origin `http://127.0.0.1:5173`，而非内部 upstream `:8011`；无需 CORS、frontend token parsing 或特殊 CSRF header。`localhost` 与 `127.0.0.1` 不混用。
 
@@ -163,9 +166,9 @@ SameSite 是额外防护，不能替代来源校验。不引入 CSRF session/tok
 
 G2 在 composed runtime 和 product contract builders 中发布 Cookie security scheme、protected operation security requirement、公共操作的 `security: []`、Auth schemas 及真实 access failure responses；Auth envelope 用独立 component，与产品 error enum 分离。MO / Research request/response DTO、原 failure classification 和 Research HTTP bounds / process-wide execution guard 不变。
 
-离线 `.openapi()` 与 contract exporter 不通过实际 HTTP、不需要真实密码/secret、不创建默认用户库；它们生成的 security contract 与 serving 相同。HTTP schema/docs tests 必须使用显式合成认证，或在仅检查 schema 时直接 `.openapi()`；不得为现有匿名 TestClient 测试保留 bypass。Descriptive Research HTTP 仍无 Web consumer，继续不生成该产品的 Research TypeScript；单独的 [Online Futures Basis Research](products/futures_basis_research/http-contract.md) 是另一个 HTTP product，由自己的 frontend feature 拥有 generated OpenAPI/TypeScript，不改变这里的 Auth 语义。
+离线 `.openapi()` 与 contract exporter 不通过实际 HTTP、不需要真实密码/secret、不创建默认用户库；它们发布两种认证模式使用的 security contract。认证模式的 HTTP schema/docs tests 必须使用显式合成认证，或在仅检查 schema 时直接 `.openapi()`；不得为现有匿名 TestClient 测试保留 bypass。Descriptive Research HTTP 仍无 Web consumer，继续不生成该产品的 Research TypeScript；单独的 [Online Futures Basis Research](products/futures_basis_research/http-contract.md) 是另一个 HTTP product，由自己的 frontend feature 拥有 generated OpenAPI/TypeScript，不改变这里的 Auth 语义。
 
-现有 `lab doctor` 用匿名 `/openapi.json` 判定 healthy，与新访问策略冲突。G2 将其 readiness 改为识别受保护 OpenAPI 的预期 401 Auth envelope，报告 `running / authentication required`（非失败）；不读取凭据、不登录、不新开 public health route。200 OpenAPI 只作为 G0/G1 旧运行状态识别；受认证的 G2 runtime 不得匿名返回 200。实际 schema 生成与 freshness 继续走离线 builder。
+默认本机地址的 `lab doctor` 以有效 OpenAPI 200 识别 Local 就绪；认证模式的预期 401 Auth envelope 表示就绪且需要登录。一键启动器先核对 `/auth/mode`，再用无需行情 I/O 的 `GET /research/capabilities` 验证匿名 200 或认证 401。
 
 G2 实际改变 OpenAPI 时更新已有 MO committed OpenAPI / TypeScript；G3 添加 application-owned Auth generated boundary，按 [Web contract authority](../ui_web/contracts.md) 覆盖全部 consumers。G0 只改 authority，禁止提前生成不存在的 routes 或手写 TypeScript schema。
 
@@ -194,7 +197,7 @@ MO 的 auth non-goal 解释为“产品不拥有认证协议”，不再是运�
 - 注册 202 无 Cookie、重复不可枚举；pending/rejected/disabled/错误密码/未知用户统一登录失败；active 登录 200、me 200、logout 204。所有 failure statuses、JSON shape 和 Cookie attrs 符合本文。
 - 固定时钟验证 3600 秒 exp、边界过期、缺失/错误 claims、错误签名/算法、每个成功 2xx 的滑动、业务 200 partial renewal、所有失败不续期，以及 logout 清除优先。重启不保存 JWT/session cache。
 - 登录后 disable，旧 token 在下一请求失败；数据库故障 fail closed。未经认证的 malformed business POST 不解析/不执行，不调用市场 service、不取得 Research guard。
-- 所有 composed/product app、docs/schema 和新 route 默认受保护；离线 schema 不要求 secret 或 DB，不存在环境/网络 bypass。缺失 key、不安全 production/local 配置和代理伪造均有 negative tests。
+- 认证模式下，所有 composed/product app、docs/schema 和新 route 均受保护；离线 schema 无需 secret 或 DB。缺失 key、不安全 production/local 配置和代理伪造均有 negative tests。
 - 滚动窗口/并发 slot/失败请求计数/重启限制、chunked oversize/字段边界、Origin/Referer 缺失/null/伪造与正常 dev origin 都有检查；先 limiter 后 hash，先 access 再业务。
 - 原 product DTO/errors/resource bounds/guard 的 tests 在认证上下文中继续通过；Auth validation 不污染 product errors。Doctor 识别 protected readiness；运行 HTTP/CLI 适用测试、Ruff/mypy、MO contract generation/freshness 和消费者检查。
 
@@ -207,7 +210,7 @@ MO 的 auth non-goal 解释为“产品不拥有认证协议”，不再是运�
 
 ### G4 gate and deferred boundary
 
-使用隔离数据库和合成密钥完成 browser → register → CLI pending/approve → login → 两个 MO surfaces → me/sliding → logout；另验 rejected/disabled、重复注册不改密码、超限、跨站拒绝、过期 401、所有 docs/schema 受保护、无配置拒绝 serving、离线 export 不受影响。业务 provider 可用性与身份认证分别验证，不能用 auth 成功证明真实数据已可用。
+使用隔离数据库和合成密钥完成 browser → register → CLI pending/approve → login → 两个 MO surfaces → me/sliding → logout；另验 rejected/disabled、重复注册不改密码、超限、跨站拒绝、过期 401、所有 docs/schema 受保护、显式认证配置缺失时拒绝 serving、离线 export 不受影响。业务 provider 可用性与身份认证分别验证，不能用 auth 成功证明真实数据已可用。
 
 实际 HTTPS 配置下验证 Secure/SameSite/HttpOnly 和 no-store；loopback 模式验证不允许外网 bind。不需要为验收部署公网，但必须记录未完成的公网 Deployment Gate。Research 使用确定性 service fixture 验证认证先行且原 bounds/guard 保留，禁止通过验收对默认缓存执行高成本采集。
 

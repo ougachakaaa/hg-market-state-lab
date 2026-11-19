@@ -82,7 +82,7 @@ def test_missing_env_file_uses_defaults(env_file: Path) -> None:
     assert lab_config.tushare_calls_per_minute() == 180
     auth = lab_config.auth_settings()
     assert auth.lab_auth_jwt_secret is None
-    assert auth.lab_auth_mode == "production"
+    assert auth.lab_auth_mode == "local"
     assert auth.lab_auth_origin is None
     assert auth.lab_auth_db_path is None
     assert lab_config.publication_root() is None
