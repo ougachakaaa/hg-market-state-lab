@@ -75,24 +75,24 @@ Application composition 不改变各 feature 的 backend dependencies，也不�
 
 Login / Registration 是 application-level 入口；普通登录进入默认策略的 `/roadmap/:strategyId`，直接访问已知深层页面且认证成功时保留该页面。用户可切换 Research Catalog、Research Explorer 和两个 MO feature；Futures Basis Research 已实现 Web Consumer。登录状态不属于各 feature 的 local query/presentation state，不经 sibling feature 共享；shell 不因此接管产品 query、DTO 或图表语义。
 
-同一认证 lifecycle 内，已取消的 feature 请求若仍返回 401，也必须关闭该 gate；已关闭的旧 lifecycle 不得影响后续登录。
+同一 Workspace 请求生命周期内，已取消的 feature 请求若仍返回 401，也必须关闭当前 gate。已关闭的旧生命周期不得影响后续打开的 Workspace。
 
 Application 管理以下状态及行为：
 
 - 启动或重载时先查询 `/auth/mode`。探测期间保留当前 URL 并暂缓 mount 业务；探测失败显示可重试错误。
 - Local 初始化业务请求生命周期并恢复路由，直接打开同一个 Workspace。Header 显示「本地模式」，跳过 `/auth/me`，隐藏账号操作。
-- Authenticated 继续检查 `/auth/me`，成功恢复身份，401 进入登录入口，其他故障显示可重试错误。
+- `loopback-http` 和 `production` 均以 `"authenticated"` 进入同一 Web 会话流程。应用继续检查 `/auth/me`，成功时恢复身份，401 时进入登录入口，其他故障显示可重试错误。
 - Anonymous 显示 username/password 登录和注册入口。注册 202 只显示通用“申请已受理，等待 Operator 审批后登录”，不获取用户 ID、不判断是否重复、不自动登录或轮询审批。Operator 从服务器 `lab auth` 处理；无 Web admin surface。
 - 登录成功依据最小 user identity 开放 gate；失败保留通用 credentials 错误，不能根据 401 猜测账号是否存在、pending 或 rejected。400、403、429（含 Retry-After）、500 有各自可理解的反馈。
 - 认证模式的受保护业务/me 请求 401 使 application 返回登录 gate，停止新业务请求、中止/隔离旧请求并清除本客户端已显示的身份/业务结果；stale success 不得恢复登录或旧结果。403 来源拒绝、429 或产品业务错误不自动清除登录状态。
 - Local 的意外业务 401 关闭同一请求生命周期，隔离旧请求并显示可重试的本地访问异常。重试重新探测模式。
 - Logout 发同源 POST，pending 期间阻止新业务请求并中止/隔离旧请求。204 后清除本地身份与产品结果并回到匿名入口；失败时保留可重试的退出状态，不声称服务端已清 Cookie。过期或缺失 Cookie 的 logout 仍可正常完成。
 
-Application 只消费服务端 identity；JWT 只由浏览器 HttpOnly Cookie 管理，不生成、解析、读写、刷新或保存在 local/session storage。请求使用相对同源 URL 和 Cookie credentials；不做后台续期、me heartbeat 或 retry-on-401 刷新。登录/me 的用户信息不能用前端时间或旧 local state 取代服务器认证。
+认证模式的身份来自服务端，浏览器通过 HttpOnly Cookie 管理 JWT。应用请求使用相对同源 URL 和 Cookie credentials。会话续期随服务端成功响应进行，应用依靠登录和 `/auth/me` 的响应恢复身份。前端禁止处理或保存 JWT，也不发起后台续期、会话心跳或 401 刷新。
 
 Auth request adaptation、generated schema/types 及 React lifecycle 属于 application 的 Auth concern（可放在 `src/app/auth/`，incidental filenames 由实现决定），独立于产品 DTO。Domain-neutral `shared/http` 可以传递 401/credentials 信号，但不能依赖 app/feature 或解释产品 state；由 application 显式组合 callback/context。不得为了全局 gate 引入通用 feature runtime。
 
-G3 的本地 dev proxy 增加 `/auth`，保持正常 frontend origin 和 Set-Cookie；浏览器不直接调用不同 port 的 backend。Cookie/CSRF 和 loopback/production 配置遵循 Auth authority。Local 本机访问约束由后端 AccessGate 执行。无状态 logout 在途 Cookie 竞争的限制由 Auth authority 明示，frontend 不承诺全设备即时撤销。
+本地 Vite proxy 为 `/auth` 和业务路径保留浏览器 Host、来源头及 Set-Cookie。浏览器使用 frontend origin。后端 AccessGate 执行 Local 的本机约束与认证模式的 Cookie 和来源检查，具体规则及无状态 logout 语义见 Auth authority。
 
 ## Backtesting overview composition
 

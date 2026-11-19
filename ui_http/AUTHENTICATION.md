@@ -87,11 +87,15 @@ Auth 配置来自 process environment；本地开发也可写入 repository root
 
 `.env` 只提供本地文件来源，不改变上表的 required / validation 语义；缺失或非法配置仍在 serving startup fail closed。`.env` 不进入 Git，production 应显式使用 server environment 变量。
 
-Production origin 必须 HTTPS，Cookie Secure 固定开启，不接受环境变量单独关闭。`loopback-http` 仅允许 loopback listener 和显式 loopback HTTP origin，Cookie 可 `Secure=false`；默认本地前端 origin 为配置值 `http://127.0.0.1:5173`，后端 listener 为 `127.0.0.1:8011`。不允许非 loopback bind 套用该模式。两种认证模式均要求 secret、数据库状态检查及登录；缺失必需配置或配置不安全时拒绝启动。
+`production` 要求 HTTPS origin，并始终为会话 Cookie 设置 Secure。`loopback-http` 只接受 loopback listener 和 loopback HTTP origin，会话 Cookie 省略 Secure。两种认证模式均校验 JWT 和当前账号状态，且在缺少必需配置或配置不安全时拒绝启动。
+
+Linux 和 Windows 的一键 HTTP 启动器共用配置预检，仅支持 `local` 和 `loopback-http`。显式 `loopback-http` 缺少 Origin 时使用 `http://127.0.0.1:5173`，缺少 JWT 密钥时生成或复用本机密钥。显式空值按无效配置处理。手动启动认证后端时须提供完整配置。默认后端 listener 为 `127.0.0.1:8011`。
 
 Local 使用统一 AccessGate 的本机匿名策略。HTTP runtime 无需 JWT 配置，也不初始化 Auth service、访问用户库或签发、清除会话 Cookie。显式 Operator CLI 操作仍可独立管理 Auth 用户库。
 
-Local 仅支持仓库控制的本机入口。Backend launcher 在 bind 前拒绝非 loopback。在请求层，AccessGate 要求 loopback listener 和直接 socket peer，并检查单一合法 Host。可接受的 HTTP authority 是实际 API listener 地址或标准 Vite 入口 `http://127.0.0.1:5173`。Vite 本机入口保留 Host。Local 拒绝代理转发标记以及浏览器跨站或跨 origin 请求。写请求必须提供同源 Origin 或 Referer，Origin 优先。未带来源的安全方法可供本机工具使用。Local 禁止经公网代理、隧道或端口转发公开；此类入口可能隐藏原始请求信息，部署必须显式启用 `production`。
+Local 仅支持仓库控制的本机入口。Backend launcher 在 bind 前拒绝非 loopback。在请求层，AccessGate 要求 loopback listener 和直接 socket peer，并检查单一合法 Host。可接受的 HTTP authority 是实际 API listener 地址或标准 Vite 入口 `http://127.0.0.1:5173`。Vite 本机入口保留 Host。Local 拒绝代理转发标记以及标记为跨 origin 的浏览器请求。
+
+Local 的 GET、HEAD 和 OPTIONS 可以省略来源，其他方法必须提供同源 Origin 或 Referer。所有方法只要带来源，都按已通过验证的 HTTP authority 检查 scheme、host 和 port。有 Origin 时优先验证 Origin。禁止经公网代理、隧道或端口转发公开 Local，因为此类入口可能隐藏原始请求信息。部署必须显式启用 `production`。
 
 认证模式的 secret/config 校验在 serving startup 执行。离线 `.openapi()` schema construction 和 Operator CLI 无需有效的 HTTP serving 配置。测试可显式注入临时 DB、固定时钟、合成 key/config，不提供可从网络触发的 test bypass。
 
@@ -105,13 +109,15 @@ Minimal user identity 的固定 JSON shape 是 `{"id":"<uuid>","username":"<cano
 
 | Method / path | operationId | Access | Success / Cookie |
 | --- | --- | --- | --- |
-| GET `/auth/mode` | get_auth_mode | public | 200 JSON 字符串 `"local"` 或 `"authenticated"`；no-store，无 Cookie |
+| GET `/auth/mode` | get_auth_mode | public | 200 JSON 字符串 `"local"` 或 `"authenticated"`，no-store，无 Cookie |
 | POST `/auth/register` | register_auth_user | public | 202 `{"message":"Registration request accepted."}`；包括重复注册；不签发 token |
 | POST `/auth/login` | login_auth_user | public | 200 minimal user identity；设置 Cookie |
 | GET `/auth/me` | get_auth_user | authenticated | 200 minimal user identity；正常滑动续期 |
 | POST `/auth/logout` | logout_auth_user | public | 204，无 body；清除 Cookie，不验证 JWT，有/无/过期 Cookie 均可 |
 
-Local 的注册、登录、退出和当前用户路径在本机安全检查通过后、解析请求体前返回 404（空 body、no-store）。下述账号及会话行为适用于认证模式。Me / logout 不接受 query 或 body。所有 POST 仍须同源检查；public 只表示不要求已有 JWT。注册不返回 user ID 或 existing/status 提示；pending、rejected、disabled、未知账号及密码错误的有效登录请求全部返回相同 401 body，无 403 账号状态提示。未知账号使用 dummy Argon2id verification，已有账号的失败分支采用等价验证，避免快速存在性 oracle；不承诺网络延迟的数学恒定。
+组合 HTTP 应用提供 `/auth/mode`，两种认证模式均返回 `"authenticated"`。Local 的模式探测仍须通过本机安全检查。`public` 表示允许没有 JWT 的请求，适用的访问检查照常执行。
+
+Local 的注册、登录、退出和当前用户路径在本机安全检查通过后、解析请求体前返回 404（空 body、no-store）。下述账号及会话行为适用于认证模式。Me / logout 不接受 query 或 body。所有 POST 仍须同源检查。注册不返回 user ID 或 existing/status 提示。Pending、rejected、disabled、未知账号及密码错误的有效登录请求全部返回相同 401 body，无 403 账号状态提示。未知账号使用 dummy Argon2id verification，已有账号的失败分支采用等价验证，避免快速存在性 oracle。网络延迟仍可能波动。
 
 Auth/access errors 使用独立 schema，固定形状为 `{"error":{"kind":"<kind>","detail":"<safe text>","param":null}}`。`param` 始终 null；不混入任何 product 的 closed kind enum：
 
@@ -158,7 +164,7 @@ Limiter 必须位于 password hashing、verification、JSON parsing、数据库�
 
 SameSite 是额外防护，不能替代来源校验。不引入 CSRF session/token framework 或宽泛 credentialed CORS。无浏览器的 HTTP caller 在 unsafe methods 也必须提供匹配的 Origin；认证模式的 protected paths 同时需要 Cookie；Operator CLI 走本地 Python service，不使用浏览器 cookie。
 
-本地 React 从 frontend origin 请求相对 `/auth/*` 和 business paths，通过同源 dev proxy 到既有 backend，保持 Origin/Referer 和 Set-Cookie；G3 增加 `/auth` proxy。Backend 验证配置的 browser-facing origin `http://127.0.0.1:5173`，而非内部 upstream `:8011`；无需 CORS、frontend token parsing 或特殊 CSRF header。`localhost` 与 `127.0.0.1` 不混用。
+本地 React 从 frontend origin 请求相对 `/auth/*` 和业务路径。同源 Vite proxy 保留 Host、Origin、Referer 和 Set-Cookie。通过 Vite 的写请求以浏览器 origin `http://127.0.0.1:5173` 校验。同源交互无需 CORS、frontend token parsing 或特殊 CSRF header。使用标准入口 `127.0.0.1`。
 
 安全 methods 不提交用户操作或 Research execute；既有 MO GET 内部数据准备副作用仍由产品拥有，不因此重定义为写 API。通过认证的 GET 包含滑动 Cookie，不能缓存或开放跨站读取；本契约不重新分类既有产品业务流程。
 

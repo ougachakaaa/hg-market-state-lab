@@ -82,7 +82,13 @@ def create_projection(paths: set[str]) -> FastAPI:
 
 
 def create_auth_app() -> FastAPI:
-    return create_projection({"/auth/mode", "/auth/register", "/auth/login", "/auth/me", "/auth/logout"})
+    return create_projection({
+        "/auth/mode",
+        "/auth/register",
+        "/auth/login",
+        "/auth/me",
+        "/auth/logout",
+    })
 
 
 def create_research_app() -> FastAPI:
