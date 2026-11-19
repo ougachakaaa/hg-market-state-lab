@@ -6,9 +6,11 @@ import { fileURLToPath } from 'node:url'
 import { inventory, sha, verifyArtifact } from './artifact_integrity.mjs'
 const web = fileURLToPath(new URL('../', import.meta.url))
 export function checkoutIdentity() {
-  const git = args => execFileSync('git', args, { cwd: web })
+  const git = args => execFileSync('git', args, { cwd: resolve(web, '..') })
   const sourceCommit = git(['rev-parse', 'HEAD']).toString().trim()
-  assert.equal(git(['diff', 'HEAD', '--', 'ui_web']).length, 0, 'Source differs from Git')
+  const graphInputs = ['docs/strategy-research/map.json', 'docs/strategy-research/schema.json']
+  git(['ls-files', '--error-unmatch', ...graphInputs])
+  assert.equal(git(['diff', 'HEAD', '--', 'ui_web', ...graphInputs]).length, 0, 'Source differs from Git')
   const tracked = git(['show', `${sourceCommit}:ui_web/demo/bundles/manifest.json`])
   assert.equal(sha(readFileSync(resolve(web, 'demo/bundles/manifest.json'))), sha(tracked), 'Manifest differs from Git')
   assert.equal(git(['diff', 'HEAD', '--', 'ui_web/demo/bundles', 'ui_web/demo/build/presets.json']).length, 0, 'Dataset differs from Git')

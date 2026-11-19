@@ -1,0 +1,410 @@
+{
+  "nodes": [
+    {
+      "id": "strategy-futures-long",
+      "kind": "strategy",
+      "title": "股指期货长期多头",
+      "purpose": "以固定规则持有并展期一手股指期货多头，研究其长期持有结果。",
+      "questions": [
+        "在固定持仓和展期规则下，长期持有的收益来源与风险是什么？"
+      ],
+      "parameters": [
+        {
+          "name": "初始持仓",
+          "note": "使用决策日 M1 的真实合约，一手多头。"
+        },
+        {
+          "name": "换仓规则",
+          "note": "冻结的 M1 策略在持有合约到期时换入当日 M1。"
+        },
+        {
+          "name": "标的与研究窗口",
+          "note": "由后续基准记录明确锁定。"
+        },
+        {
+          "name": "成交与资本",
+          "note": "沿用既有回测口径作为起点，真实成本与资本约束待定义。"
+        }
+      ],
+      "planning": "defined",
+      "implementation": "available",
+      "evidence": "pending",
+      "conclusion": {
+        "status": "pending",
+        "summary": "策略规则已定义。新增研究维度不改变持仓与展期规则。"
+      },
+      "references": [
+        {
+          "kind": "source",
+          "label": "Futures Roll Long 策略规则",
+          "target": "repository",
+          "value": "market_backtesting/cases/futures_roll_long/STRATEGY.md"
+        },
+        {
+          "kind": "source",
+          "label": "现有绩效与资本口径",
+          "target": "repository",
+          "value": "market_backtesting/cases/futures_roll_long/PERFORMANCE.md"
+        },
+        {
+          "kind": "navigation",
+          "label": "查看日常数据",
+          "target": "workspace",
+          "value": "/data"
+        }
+      ]
+    },
+    {
+      "id": "baseline-futures-long",
+      "kind": "baseline",
+      "title": "固定策略基准回测",
+      "purpose": "以现有到期换入 M1 的规则和标的指数买入持有序列建立比较基准。",
+      "questions": [
+        "哪次执行及哪些输入、日期和证据可用于重放基准？"
+      ],
+      "parameters": [
+        {
+          "name": "基准策略",
+          "note": "expiry_to_M1_v1"
+        }
+      ],
+      "planning": "defined",
+      "implementation": "partial",
+      "evidence": "pending",
+      "conclusion": {
+        "status": "pending",
+        "summary": "现有回测支持固定规则与指数对照。用于本研究的具体运行、窗口和输入指纹待指定。"
+      },
+      "references": [
+        {
+          "kind": "source",
+          "label": "策略与基准口径",
+          "target": "repository",
+          "value": "market_backtesting/cases/futures_roll_long/ARCHITECTURE.md"
+        },
+        {
+          "kind": "navigation",
+          "label": "查看期货展期做多回测",
+          "target": "workspace",
+          "value": "/backtesting/futures-roll-long"
+        }
+      ]
+    },
+    {
+      "id": "dimension-futures-long-index",
+      "kind": "dimension",
+      "title": "指数涨跌贡献",
+      "purpose": "研究实际持有区间内标的指数价格变动对毛损益的贡献。",
+      "questions": [
+        "指数收益的分布和不同市场状态如何影响长期多头？"
+      ],
+      "planning": "defined",
+      "implementation": "none",
+      "evidence": "pending",
+      "conclusion": {
+        "status": "pending",
+        "summary": "持有区间的指数贡献尚未完成对账。"
+      },
+      "references": [
+        {
+          "kind": "source",
+          "label": "回测绩效与限制",
+          "target": "repository",
+          "value": "market_backtesting/cases/futures_roll_long/PERFORMANCE.md"
+        }
+      ]
+    },
+    {
+      "id": "dimension-futures-long-basis",
+      "kind": "dimension",
+      "title": "基差变化贡献",
+      "purpose": "研究实际持有合约的基差变化对毛损益的贡献。",
+      "questions": [
+        "如何用持有合约的同期基差变化与回测毛损益对账？"
+      ],
+      "planning": "defined",
+      "implementation": "partial",
+      "evidence": "pending",
+      "conclusion": {
+        "status": "pending",
+        "summary": "已有历史基差统计。按实际持仓区间分解的基差贡献待研究。"
+      },
+      "references": [
+        {
+          "kind": "source",
+          "label": "损益核算与绩效边界",
+          "target": "repository",
+          "value": "market_backtesting/cases/futures_roll_long/PERFORMANCE.md"
+        }
+      ]
+    },
+    {
+      "id": "dimension-futures-long-trading-cost",
+      "kind": "dimension",
+      "title": "交易成本",
+      "purpose": "核算开仓、换仓和退出产生的费用、滑点与成交限制。",
+      "questions": [
+        "计入费用和滑点后，毛损益与净损益相差多少？"
+      ],
+      "planning": "defined",
+      "implementation": "none",
+      "evidence": "pending",
+      "conclusion": {
+        "status": "pending",
+        "summary": "现有基准使用理想收盘价且未计交易成本。成本模型及敏感性分析待研究。"
+      },
+      "references": [
+        {
+          "kind": "source",
+          "label": "回测绩效与限制",
+          "target": "repository",
+          "value": "market_backtesting/cases/futures_roll_long/PERFORMANCE.md"
+        }
+      ]
+    },
+    {
+      "id": "dimension-futures-long-drawdown",
+      "kind": "dimension",
+      "title": "回撤与持有风险",
+      "purpose": "研究权益曲线回撤、持续时间以及持有期间的路径风险。",
+      "questions": [
+        "期货与指数对照的最大回撤和恢复时间如何表现？"
+      ],
+      "planning": "defined",
+      "implementation": "partial",
+      "evidence": "pending",
+      "conclusion": {
+        "status": "pending",
+        "summary": "现有回测提供回撤口径。跨窗口持有风险分析待开展。"
+      },
+      "references": [
+        {
+          "kind": "source",
+          "label": "回测绩效与限制",
+          "target": "repository",
+          "value": "market_backtesting/cases/futures_roll_long/PERFORMANCE.md"
+        },
+        {
+          "kind": "navigation",
+          "label": "查看回测页面",
+          "target": "workspace",
+          "value": "/backtesting"
+        }
+      ]
+    },
+    {
+      "id": "dimension-futures-long-margin",
+      "kind": "dimension",
+      "title": "保证金与资金管理",
+      "purpose": "研究保证金占用、追加资金压力和可用现金管理。",
+      "questions": [
+        "在逐日结算和保证金约束下，持有所需资金如何变化？"
+      ],
+      "planning": "defined",
+      "implementation": "none",
+      "evidence": "pending",
+      "conclusion": {
+        "status": "pending",
+        "summary": "现有回测采用固定初始指数等价名义本金。保证金账户和资金约束待研究。"
+      },
+      "references": [
+        {
+          "kind": "source",
+          "label": "回测绩效与限制",
+          "target": "repository",
+          "value": "market_backtesting/cases/futures_roll_long/PERFORMANCE.md"
+        }
+      ]
+    },
+    {
+      "id": "study-index-return-distribution",
+      "kind": "study",
+      "title": "指数收益分布",
+      "purpose": "描述股指期货标的指数的价格收益分布。",
+      "questions": [
+        "日频及不同持有窗口的指数收益分布和尾部损失有何特征？"
+      ],
+      "analyses": [
+        {
+          "name": "收益分布与尾部",
+          "note": "比较日频和不同持有窗口的经验分布、分位数与极端损失。",
+          "availability": "planned"
+        }
+      ],
+      "planning": "planned",
+      "implementation": "none",
+      "evidence": "pending",
+      "conclusion": {
+        "status": "pending",
+        "summary": "样本范围、窗口和统计结果待确定。"
+      },
+      "references": []
+    },
+    {
+      "id": "study-market-regime",
+      "kind": "study",
+      "title": "市场状态研究",
+      "purpose": "研究不同市场状态下指数收益及风险的差异。",
+      "questions": [
+        "预先定义的市场状态之间，指数收益和尾部风险如何变化？"
+      ],
+      "analyses": [
+        {
+          "name": "条件收益分布",
+          "note": "在明确状态定义和样本切分后，比较各状态下的收益分布和尾部风险。",
+          "availability": "planned"
+        }
+      ],
+      "planning": "planned",
+      "implementation": "none",
+      "evidence": "pending",
+      "conclusion": {
+        "status": "pending",
+        "summary": "状态口径、样本及验证方法待确定。"
+      },
+      "references": []
+    },
+    {
+      "id": "study-basis-historical",
+      "kind": "study",
+      "title": "基差历史统计",
+      "purpose": "描述股指期货基差的历史分布、时间特征和期限结构。",
+      "questions": [
+        "基差的历史分布和期限结构有什么特征？",
+        "基差和市场变量有哪些可重复观察的统计关联？"
+      ],
+      "analyses": [
+        {
+          "name": "基差点与基差率分布",
+          "note": "按标的、合约分组和观测窗口查看现有描述统计。",
+          "availability": "available"
+        },
+        {
+          "name": "年化基差点与年化基差率",
+          "note": "查看现有统计，沿用来源定义的到期日不适用条件。",
+          "availability": "available"
+        },
+        {
+          "name": "时间、期限结构与市场变量关联",
+          "note": "区分已有描述统计与待设计的样本配对及关联检验。",
+          "availability": "planned"
+        }
+      ],
+      "planning": "defined",
+      "implementation": "partial",
+      "evidence": "available",
+      "conclusion": {
+        "status": "pending",
+        "summary": "现有 Demo 捕获可用于部分描述统计。关联分析、机制和交易解释待研究与验收。"
+      },
+      "references": [
+        {
+          "kind": "source",
+          "label": "现有基差指标定义",
+          "target": "repository",
+          "value": "market_research/descriptive/cases/futures_basis/DEFINITION.md"
+        },
+        {
+          "kind": "navigation",
+          "label": "查看历史基差研究",
+          "target": "workspace",
+          "value": "/research/futures-basis"
+        },
+        {
+          "kind": "result",
+          "label": "Static Demo 描述性结果捕获",
+          "target": "repository",
+          "value": "ui_web/demo/bundles/basis.json"
+        }
+      ]
+    },
+    {
+      "id": "study-basis-realization",
+      "kind": "study",
+      "title": "基差收益兑现",
+      "purpose": "以实际持有的合约与换仓时点追踪可计入毛损益的基差变化。",
+      "questions": [
+        "入场至退出或换仓的基差变化如何与实际持仓毛损益对账？"
+      ],
+      "analyses": [
+        {
+          "name": "持有区间基差变化",
+          "note": "按真实合约和持有区间配对期货与指数价格，区分持仓损益和跨合约价差。",
+          "availability": "planned"
+        },
+        {
+          "name": "损益对账",
+          "note": "将持有期的指数及基差贡献与现有回测的毛损益口径核对。",
+          "availability": "planned"
+        }
+      ],
+      "planning": "planned",
+      "implementation": "none",
+      "evidence": "pending",
+      "conclusion": {
+        "status": "pending",
+        "summary": "实际持仓归因、换仓衔接和对账结果待研究。历史折价只提供描述性背景。"
+      },
+      "references": [
+        {
+          "kind": "source",
+          "label": "损益核算与绩效边界",
+          "target": "repository",
+          "value": "market_backtesting/cases/futures_roll_long/PERFORMANCE.md"
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "kind": "branch",
+      "from": "strategy-futures-long",
+      "to": "baseline-futures-long"
+    },
+    {
+      "kind": "branch",
+      "from": "baseline-futures-long",
+      "to": "dimension-futures-long-index"
+    },
+    {
+      "kind": "branch",
+      "from": "baseline-futures-long",
+      "to": "dimension-futures-long-basis"
+    },
+    {
+      "kind": "branch",
+      "from": "baseline-futures-long",
+      "to": "dimension-futures-long-trading-cost"
+    },
+    {
+      "kind": "branch",
+      "from": "baseline-futures-long",
+      "to": "dimension-futures-long-drawdown"
+    },
+    {
+      "kind": "branch",
+      "from": "baseline-futures-long",
+      "to": "dimension-futures-long-margin"
+    },
+    {
+      "kind": "attach",
+      "from": "dimension-futures-long-index",
+      "to": "study-index-return-distribution"
+    },
+    {
+      "kind": "attach",
+      "from": "dimension-futures-long-index",
+      "to": "study-market-regime"
+    },
+    {
+      "kind": "attach",
+      "from": "dimension-futures-long-basis",
+      "to": "study-basis-historical"
+    },
+    {
+      "kind": "attach",
+      "from": "dimension-futures-long-basis",
+      "to": "study-basis-realization"
+    }
+  ]
+}

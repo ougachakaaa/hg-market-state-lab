@@ -3,11 +3,12 @@ import { resolve } from 'node:path'
 import { fileURLToPath, URL } from 'node:url'
 import { Ajv } from 'ajv'
 import { isStaticWorkspacePath } from '../src/app/routeInventory.ts'
-import { edgeId, type ResearchMap, type ResearchReference } from './definition.ts'
+import { edgeId, isEvidenceReference, type ResearchMap, type ResearchReference } from './definition.ts'
 
 const root = fileURLToPath(new URL('../../', import.meta.url))
-export const mapPath = fileURLToPath(new URL('./map.json', import.meta.url))
-export const schemaPath = fileURLToPath(new URL('./schema.json', import.meta.url))
+export const mapLocation = 'docs/strategy-research/map.json'
+export const mapPath = resolve(root, mapLocation)
+export const schemaPath = resolve(root, 'docs/strategy-research/schema.json')
 const researchDirectory = /^(?:market_research|market_backtesting|docs\/strategy-research)\//
 const sourceDirectory = /^(?:docs\/strategy-research|market_research|market_backtesting|market_statistics|data_lake|data_snapshot)\//
 
@@ -45,14 +46,23 @@ export function validateResearchMap(input: unknown): ResearchMap {
   const valid = ajv.compile<ResearchMap>(JSON.parse(readFileSync(schemaPath, 'utf8')))
   if (!valid(input)) fail(ajv.errorsText(valid.errors, { separator: '\n' }))
 
-  const dependencies = new Map<string, string[]>()
+  const nodes = new Map<string, ResearchMap['nodes'][number]>()
   for (const node of input.nodes) {
-    const { id, evidence, conclusion, references } = node
-    if (dependencies.has(id)) fail(`duplicate node ${id}`)
-    dependencies.set(id, [])
+    if (nodes.has(node.id)) fail(`duplicate node ${node.id}`)
+    nodes.set(node.id, node)
+  }
+  if (!input.nodes.some(node => node.kind === 'strategy')) fail('expected at least one Strategy')
+
+  for (const node of input.nodes) {
+    const { id, kind, evidence, conclusion, references } = node
+    if (!id.startsWith(`${kind}-`)) fail(`${id} must start with ${kind}-`)
     for (const reference of references) validateReference(id, reference)
-    const hasEvidence = references.some(({ kind }) => kind === 'result' || kind === 'report')
-    if (evidence !== 'pending' && !hasEvidence) fail(`${id} needs a concrete result or report`)
+    if (kind === 'finding') {
+      if (evidence !== 'accepted') fail(`${id} must be accepted`)
+      if (references.some(isEvidenceReference)) fail(`${id} takes result and report references from its Studies`)
+    } else if (evidence !== 'pending' && !references.some(isEvidenceReference)) {
+      fail(`${id} needs a concrete result or report`)
+    }
     if (evidence === 'accepted') {
       if (conclusion.status === 'pending' || !conclusion.review) fail(`${id} needs a conclusion and review for accepted evidence`)
     } else if (conclusion.status !== 'pending' || conclusion.review) {
@@ -61,27 +71,36 @@ export function validateResearchMap(input: unknown): ResearchMap {
   }
 
   const edges = new Set<string>()
+  const branchChildren = new Set<string>()
+  const sourcedFindings = new Set<string>()
   for (const edge of input.edges) {
     const { from, to, kind } = edge
     const id = edgeId(edge)
-    const targets = dependencies.get(from)
-    if (!targets || !dependencies.has(to)) fail(`dangling edge ${id}`)
+    const source = nodes.get(from)
+    const target = nodes.get(to)
+    if (!source || !target) fail(`dangling edge ${id}`)
     if (from === to) fail(`self edge ${id}`)
     if (edges.has(id)) fail(`duplicate edge ${id}`)
     edges.add(id)
-    if (kind === 'dependency') targets.push(to)
+
+    if (kind === 'branch') {
+      // Strictly increasing structural ranks also rule out cycles.
+      if (!((source.kind === 'strategy' && target.kind === 'baseline') ||
+        (source.kind === 'baseline' && target.kind === 'dimension'))) fail(`invalid branch direction ${id}`)
+      if (branchChildren.has(to)) fail(`${to} has multiple branch parents`)
+      branchChildren.add(to)
+    } else if (kind === 'attach') {
+      if (source.kind !== 'dimension' || target.kind !== 'study') fail(`invalid attach direction ${id}`)
+    } else {
+      if (source.kind !== 'study' || target.kind !== 'finding') fail(`invalid derived_from direction ${id}`)
+      if (source.evidence !== 'accepted') fail(`${to} needs accepted evidence from ${from}`)
+      sourcedFindings.add(to)
+    }
   }
 
-  const visiting = new Set<string>()
-  const visited = new Set<string>()
-  function visit(id: string) {
-    if (visiting.has(id)) fail(`dependency cycle at ${id}`)
-    if (visited.has(id)) return
-    visiting.add(id)
-    for (const target of dependencies.get(id)!) visit(target)
-    visiting.delete(id)
-    visited.add(id)
+  for (const { id, kind } of input.nodes) {
+    if ((kind === 'baseline' || kind === 'dimension') && !branchChildren.has(id)) fail(`${id} needs a branch parent`)
+    if (kind === 'finding' && !sourcedFindings.has(id)) fail(`${id} needs an accepted source Study`)
   }
-  for (const id of dependencies.keys()) visit(id)
   return input
 }

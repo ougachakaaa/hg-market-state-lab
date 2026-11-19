@@ -4,12 +4,11 @@ export type Planning = 'planned' | 'defined' | 'in-progress'
 export type Implementation = 'none' | 'partial' | 'available'
 export type Evidence = 'pending' | 'available' | 'accepted'
 export type ConclusionStatus = 'pending' | 'supported' | 'rejected' | 'inconclusive'
-export type NodeKind = 'strategy' | 'strategy-definition' | 'baseline' | 'evaluation' | 'attribution'
-  | 'study' | 'hypothesis' | 'optimization' | 'validation'
-export type EdgeKind = 'dependency' | 'motivates' | 'feedback'
+export type NodeKind = 'strategy' | 'baseline' | 'dimension' | 'study' | 'finding'
+export type EdgeKind = 'branch' | 'attach' | 'derived_from'
 
 type NamedNote = { name: string; note: string }
-type Metric = { name: string; availability: 'planned' | 'available'; note?: string }
+type Analysis = NamedNote & { availability: 'planned' | 'available' }
 export type ResearchReference =
   | { kind: 'navigation'; target: 'workspace'; label: string; value: WorkspacePath }
   | { kind: 'source' | 'result' | 'report'; target: 'repository'; label: string; value: string }
@@ -20,8 +19,7 @@ export type ResearchNode = {
   title: string
   purpose: string
   questions: string[]
-  topics?: NamedNote[]
-  metrics: Metric[]
+  analyses?: Analysis[]
   parameters?: NamedNote[]
   planning: Planning
   implementation: Implementation
@@ -35,4 +33,8 @@ export type ResearchMap = { nodes: ResearchNode[]; edges: ResearchEdge[] }
 
 export function edgeId(edge: ResearchEdge) {
   return `${edge.from}:${edge.to}:${edge.kind}`
+}
+
+export function isEvidenceReference({ kind }: ResearchReference) {
+  return kind === 'result' || kind === 'report'
 }

@@ -1,6 +1,18 @@
+.research-map {
+  --map-canvas-height: clamp(510px, 67vh, 730px);
+}
+
+.research-map__header {
+  margin-block-end: 16px;
+}
+
+.research-map__header h1.ant-typography {
+  margin: 0;
+}
+
 .research-map__workspace {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(280px, 340px);
+  grid-template-columns: minmax(0, 1fr) minmax(280px, 320px);
   gap: 16px;
 }
 
@@ -17,19 +29,33 @@
   padding: 16px;
 }
 
+.research-map__legend {
+  border-bottom: 1px solid var(--map-border);
+}
+
 .research-map__canvas {
-  height: clamp(430px, 66vh, 730px);
+  height: var(--map-canvas-height);
+}
+
+.research-map__canvas .react-flow {
+  border-radius: 0 0 8px 8px;
 }
 
 .research-map__inspector {
-  max-height: calc(clamp(430px, 66vh, 730px) + 54px);
+  max-height: calc(var(--map-canvas-height) + 56px);
   overflow: auto;
+  overflow-wrap: anywhere;
 }
 
 .research-map__inspector h2,
 .research-map__inspector h3,
 .research-map__inspector h4 {
   margin-block: 0 8px;
+}
+
+.research-map__identifier {
+  display: block;
+  margin-block-end: 8px;
 }
 
 .research-map__inspector :is(ul, dl) {
@@ -51,30 +77,45 @@
   height: 100%;
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  padding: 12px;
-  border: 1px solid var(--map-selection);
+  justify-content: center;
+  gap: 3px;
+  padding: 8px 12px;
+  border: 1px solid var(--map-accent);
+  border-top-width: 3px;
   border-radius: 8px;
-  background: var(--map-surface);
+  background: var(--map-card);
   cursor: pointer;
 }
 
-.research-map__node--dependency .research-map__card {
-  border-color: #a7b3c0;
-  border-style: dashed;
+.research-map__card[data-kind="strategy"] { --map-accent: #e9ba6e; }
+.research-map__card[data-kind="baseline"] { --map-accent: #8dbcf1; }
+.research-map__card[data-kind="dimension"] { --map-accent: #72d4cc; }
+.research-map__card[data-kind="study"] { --map-accent: #c8a9ee; }
+.research-map__card[data-kind="finding"] { --map-accent: #9ad6a6; }
+
+.research-map__card .research-map__node-kind {
+  color: var(--map-accent);
+  font-size: 16px;
+}
+
+.research-map__node--related .research-map__card {
+  background: color-mix(in srgb, var(--map-card) 93%, var(--map-accent));
 }
 
 .research-map__card--selected,
-.research-map__card:hover {
-  box-shadow: inset 0 0 0 1px var(--map-selection);
+.research-map__card:hover,
+.react-flow__node:focus-visible .research-map__card {
+  box-shadow: 0 0 0 2px var(--map-selection);
 }
 
-.research-map__node-title,
-.research-map__node-purpose {
+.research-map__card .research-map__node-title {
   display: -webkit-box;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
   overflow: hidden;
+  overflow-wrap: anywhere;
+  font-size: 17px;
+  line-height: 1.2;
 }
 
 .research-map__card .react-flow__handle {
@@ -82,7 +123,7 @@
   pointer-events: none;
 }
 
-@media (max-width: 900px) {
+@media (max-width: 1050px) {
   .research-map__workspace {
     grid-template-columns: minmax(0, 1fr);
   }

@@ -9,13 +9,13 @@
   },
   "definitions": {
     "text": { "type": "string", "pattern": "\\S" },
-    "id": { "type": "string", "pattern": "^[A-Z][A-Z0-9_-]{0,39}$" },
+    "id": { "type": "string", "pattern": "^(strategy|baseline|dimension|study|finding)-[a-z][a-z0-9]*(?:-[a-z0-9]+)*$" },
     "namedNote": {
       "type": "object", "additionalProperties": false, "required": ["name", "note"],
       "properties": { "name": { "$ref": "#/definitions/text" }, "note": { "$ref": "#/definitions/text" } }
     },
-    "metric": {
-      "type": "object", "additionalProperties": false, "required": ["name", "availability"],
+    "analysis": {
+      "type": "object", "additionalProperties": false, "required": ["name", "note", "availability"],
       "properties": {
         "name": { "$ref": "#/definitions/text" },
         "availability": { "enum": ["planned", "available"] },
@@ -36,15 +36,14 @@
     },
     "node": {
       "type": "object", "additionalProperties": false,
-      "required": ["id", "kind", "title", "purpose", "questions", "metrics", "planning", "implementation", "evidence", "conclusion", "references"],
+      "required": ["id", "kind", "title", "purpose", "questions", "planning", "implementation", "evidence", "conclusion", "references"],
       "properties": {
         "id": { "$ref": "#/definitions/id" },
-        "kind": { "enum": ["strategy", "strategy-definition", "baseline", "evaluation", "attribution", "study", "hypothesis", "optimization", "validation"] },
+        "kind": { "enum": ["strategy", "baseline", "dimension", "study", "finding"] },
         "title": { "$ref": "#/definitions/text" },
         "purpose": { "$ref": "#/definitions/text" },
         "questions": { "type": "array", "items": { "$ref": "#/definitions/text" } },
-        "topics": { "type": "array", "items": { "$ref": "#/definitions/namedNote" } },
-        "metrics": { "type": "array", "items": { "$ref": "#/definitions/metric" } },
+        "analyses": { "type": "array", "minItems": 1, "items": { "$ref": "#/definitions/analysis" } },
         "parameters": { "type": "array", "items": { "$ref": "#/definitions/namedNote" } },
         "planning": { "enum": ["planned", "defined", "in-progress"] },
         "implementation": { "enum": ["none", "partial", "available"] },
@@ -58,14 +57,25 @@
           }
         },
         "references": { "type": "array", "items": { "$ref": "#/definitions/reference" } }
-      }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "kind": { "const": "study" } } },
+          "then": { "required": ["analyses"], "properties": { "questions": { "type": "array", "minItems": 1 } } },
+          "else": { "properties": { "analyses": false } }
+        },
+        {
+          "if": { "properties": { "kind": { "enum": ["strategy", "baseline"] } } },
+          "else": { "properties": { "parameters": false } }
+        }
+      ]
     },
     "edge": {
       "type": "object", "additionalProperties": false, "required": ["from", "to", "kind"],
       "properties": {
         "from": { "$ref": "#/definitions/id" },
         "to": { "$ref": "#/definitions/id" },
-        "kind": { "enum": ["dependency", "motivates", "feedback"] },
+        "kind": { "enum": ["branch", "attach", "derived_from"] },
         "label": { "$ref": "#/definitions/text" }
       }
     }

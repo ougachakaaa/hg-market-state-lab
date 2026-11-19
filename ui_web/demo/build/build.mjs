@@ -105,7 +105,7 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
   catch (error) {
     const reason = ['busy_requires_explicit_recovery', 'pending_transaction'].includes(error.message)
       ? error.message : 'admission_or_build_failed'
-    if (error.message?.includes('Invalid Research Map (research-map/map.json)')) console.error(error.message)
+    if (error.message?.includes('Invalid Strategy Research Map (docs/strategy-research/map.json)')) console.error(error.message)
     console.error('FAIL demo build ' + reason)
     process.exitCode = 1
   }
