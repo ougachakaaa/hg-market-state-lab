@@ -29,6 +29,24 @@ const nodeById = (page, id) => page.getByTestId(`rf__node-${id}`)
 const inspector = page => page.getByRole('region', { name: '研究详情' })
 const inspectorTitle = (page, id) => heading(inspector(page), map.nodes.find(node => node.id === id).title)
 
+async function waitForActiveEdges(page, graph, nodeId) {
+  const selector = '.research-map__edge--active'
+  const expected = graph.edges
+    .filter(({ from, to }) => from === nodeId || to === nodeId)
+    .map(({ from, to, kind }) => `${from}:${to}:${kind}`)
+    .sort()
+  try {
+    await page.waitForFunction(({ selector, expected }) => {
+      const actual = Array.from(document.querySelectorAll(selector), edge => edge.getAttribute('data-id')).sort()
+      return actual.length === expected.length && actual.every((id, index) => id === expected[index])
+    }, { selector, expected }, { timeout: 4000 })
+  } catch (error) {
+    if (error.name !== 'TimeoutError') throw error
+    const actual = await page.locator(selector).evaluateAll(edges => edges.map(edge => edge.getAttribute('data-id')).sort())
+    throw new Error(`Active edges did not match for ${nodeId}. Expected ${JSON.stringify(expected)}, actual ${JSON.stringify(actual)}`, { cause: error })
+  }
+}
+
 async function verifyGraph(page) {
   await heading(page, '策略研究地图').waitFor()
   await verifyStrategyLocation(page, defaultStrategy)
@@ -79,10 +97,11 @@ async function verifyGraph(page) {
   await nodeById(page, baselineId).press('Enter')
   await inspectorTitle(page, baselineId).waitFor()
   await inspector(page).getByText('expiry_to_M1_v1', { exact: true }).waitFor()
-  assert.equal(await page.locator('.research-map__edge--active').count(), 6)
+  await waitForActiveEdges(page, map, baselineId)
   assert.ok(await nodeById(page, strategyId).evaluate(node => node.classList.contains('research-map__node--related')))
   await nodeById(page, basisStudy).click()
   await inspectorTitle(page, basisStudy).waitFor()
+  await waitForActiveEdges(page, map, basisStudy)
   await heading(inspector(page), '统计分析计划').waitFor()
   await heading(inspector(page), '研究结论').waitFor()
   await inspector(page).getByRole('link', { name: 'Static Demo 描述性结果捕获' }).waitFor()
@@ -94,8 +113,7 @@ async function verifyGraph(page) {
     await nodeById(page, node.id).press('Enter')
     await inspectorTitle(page, node.id).waitFor()
     for (const { name } of node.analyses) await inspector(page).getByRole('listitem').filter({ hasText: `${name} ·` }).waitFor()
-    assert.equal(await page.locator('.research-map__edge--active').count(),
-      map.edges.filter(edge => edge.from === node.id || edge.to === node.id).length)
+    await waitForActiveEdges(page, map, node.id)
   }
 }
 
@@ -205,9 +223,11 @@ async function verifyMultipleStrategies(page, base, fixture) {
   assert.equal(new Set(accents).size, 5)
   await nodeById(page, basisStudy).press('Enter')
   await inspectorTitle(page, basisStudy).waitFor()
+  await waitForActiveEdges(page, fixture, basisStudy)
   assert.equal(await page.locator('.research-map__node--related [data-kind="dimension"]').count(), 2)
   await nodeById(page, 'finding-browser-example').press('Enter')
   await heading(inspector(page), '合成测试发现').waitFor()
+  await waitForActiveEdges(page, fixture, 'finding-browser-example')
   assert.equal(await inspector(page).getByRole('link', { name: 'Static Demo 描述性结果捕获' }).count(), 2)
   await screenshot(page, 'multi-strategy')
 
@@ -324,8 +344,7 @@ try {
   } else {
     temporary = await mkdtemp(resolve(tmpdir(), 'strategy-research-map-auth-'))
     const backendPort = await unusedPort()
-    const frontendPort = await unusedPort()
-    const origin = `http://127.0.0.1:${frontendPort}`
+    const origin = 'http://127.0.0.1:5173'
     const env = { ...process.env, LAB_AUTH_MODE: 'loopback-http', LAB_AUTH_ORIGIN: origin,
       LAB_AUTH_JWT_SECRET: randomBytes(32).toString('base64url'), LAB_AUTH_DB_PATH: resolve(temporary, 'auth.sqlite3'),
       LAB_BROWSER_API_ORIGIN: `http://127.0.0.1:${backendPort}` }
@@ -333,7 +352,7 @@ try {
     const backend = harness.start('poetry', ['run', 'python', '-m', 'uvicorn', '--app-dir', 'ui_http/tests',
       'http_support.auth_browser_app:create_app', '--factory', '--host', '127.0.0.1', '--port', String(backendPort), '--no-proxy-headers'])
     const frontend = harness.start(process.execPath, ['node_modules/vite/bin/vite.js', '--config', 'tests/config/vite.browser.config.ts',
-      '--strictPort', '--port', String(frontendPort)], web)
+      '--strictPort'], web)
     await harness.ready(`${env.LAB_BROWSER_API_ORIGIN}/auth/me`, backend, 401)
     await harness.ready(origin, frontend, 200)
     page.on('request', request => {
