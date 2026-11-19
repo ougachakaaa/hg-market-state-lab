@@ -1,3 +1,4 @@
+import { strategyRoutesFixture } from '../strategyRoutesFixture'
 import { Button, Flex, Typography } from 'antd'
 import { createRoot } from 'react-dom/client'
 import AppUiProvider from '../../../src/app/AppUiProvider'
@@ -9,7 +10,7 @@ import '../../../src/index.css'
 // D2-E verification harness only. It mounts the shared feature presentation with the static
 // controller; it is not a second Demo page, not a D3 Example and not the public V1 entry.
 export function StaticFuturesBasisHarness() {
-  const { path, navigate } = useHashRoute()
+  const { path, navigate } = useHashRoute(strategyRoutesFixture)
   const invalid = new URLSearchParams(window.location.search).get('invalid') === '1'
   const state = useStaticFuturesBasis(invalid ? mismatchedReportPayload : embeddedReportPayload)
   if (path !== '/research/futures-basis') return <Flex vertical gap="middle" style={{ padding: 24 }}>

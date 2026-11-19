@@ -1,35 +1,37 @@
 import { useCallback, useEffect, useState } from 'react'
 
-import { defaultWorkspacePath, isWorkspacePath, type WorkspacePath } from './routeInventory'
+import type { StrategyRoutes } from './strategyRoutes'
+import type { WorkspaceDestination } from './routeInventory'
 
-export function currentWorkspacePath(): WorkspacePath {
+function locationRoute(strategies: StrategyRoutes, normalize = false) {
   const url = new URL(window.location.href)
   if (url.pathname === '/backtesting' && url.searchParams.has('run_id')) {
-    url.pathname = '/backtesting/futures-roll-long'
-    window.history.replaceState(null, '', url.pathname + url.search + url.hash)
+    const path = '/backtesting/futures-roll-long'
+    if (normalize) window.history.replaceState(null, '', path + url.search + url.hash)
+    return path
   }
-  return isWorkspacePath(window.location.pathname)
-    ? window.location.pathname : defaultWorkspacePath
+  const path = strategies.resolve(url.pathname, 'production')
+  if (normalize && path !== url.pathname) window.history.replaceState(null, '', path)
+  return path
 }
 
-export function useWorkspaceRoute() {
-  const [path, setPath] = useState(currentWorkspacePath)
+export function useWorkspaceRoute(strategies: StrategyRoutes, authenticated = true) {
+  const [path, setPath] = useState(() => locationRoute(strategies))
   useEffect(() => {
-    const sync = () => {
-      if (!isWorkspacePath(window.location.pathname)) window.history.replaceState(null, '', defaultWorkspacePath)
-      setPath(currentWorkspacePath())
-    }
+    const sync = () => setPath(locationRoute(strategies, authenticated))
+    sync()
     window.addEventListener('popstate', sync)
     return () => window.removeEventListener('popstate', sync)
-  }, [])
-  // Optional identity is supplied only by authenticated menu navigation. History
-  // synchronization and direct URL restoration never consult navigation memory.
-  const navigate = useCallback((next: WorkspacePath, replace = false, runId?: string) => {
+  }, [strategies, authenticated])
+
+  // Optional Run identity is supplied only by authenticated menu navigation.
+  const navigate = useCallback((destination: WorkspaceDestination, replace = false, runId?: string) => {
+    const next = strategies.resolve(destination, 'production')
     if (window.location.pathname !== next) {
       const query = runId ? `?${new URLSearchParams({ run_id: runId })}` : ''
       window.history[replace ? 'replaceState' : 'pushState'](null, '', next + query)
     }
     setPath(next)
-  }, [])
+  }, [strategies])
   return { path, navigate }
 }

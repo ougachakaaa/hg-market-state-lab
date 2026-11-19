@@ -1,29 +1,32 @@
 import { useCallback, useMemo, useRef, useState, type CSSProperties } from 'react'
-import { Background, Controls, getNodesBounds, getViewportForBounds, ReactFlow, type OnInit } from '@xyflow/react'
-import { Flex, Select, theme, Typography } from 'antd'
+import { Background, BaseEdge, Controls, getNodesBounds, getViewportForBounds, ReactFlow, type EdgeProps, type OnInit } from '@xyflow/react'
+import { Flex, theme, Typography } from 'antd'
 import '@xyflow/react/dist/style.css'
-import map from 'virtual:strategy-research-map'
-import { isEvidenceReference } from '../../../research-map/definition'
-import { edgeStyles, graphEdges, layoutNodes, projectStrategy, type FlowNode } from './graph'
+import { isEvidenceReference, type ResearchMap } from '../../../research-map/definition'
+import { edgeStyles, graphEdges, layoutNodes, projectStrategy, type FlowNode, type FlowEdge } from './graph'
+import { layoutTree } from './treeLayout'
 import { ResearchCard } from './ResearchCard'
 import { Inspector, type MapNavigation } from './Inspector'
 import './research-map.css'
 
 const nodeTypes = { research: ResearchCard }
 const labels = { 'controls.ariaLabel': '地图视图', 'controls.zoomIn.ariaLabel': '放大', 'controls.zoomOut.ariaLabel': '缩小', 'controls.fitView.ariaLabel': '适应视图' }
-const strategies = map.nodes.filter(node => node.kind === 'strategy')
-const strategyOptions = strategies.map(({ id, title }) => ({ value: id, label: title }))
-const canonicalNodes = new Map(map.nodes.map(node => [node.id, node]))
+function RelationshipEdge({ id, data, markerEnd, style }: EdgeProps<FlowEdge>) {
+  return <BaseEdge id={id} path={data!.path} markerEnd={markerEnd} style={style} />
+}
+
+const edgeTypes = { relationship: RelationshipEdge }
 const fitOptions = { padding: '16px' } as const
 
-export function StrategyResearchMap({ navigate, href }: MapNavigation) {
+export function StrategyResearchMap({ map, strategyId, navigate, href }: MapNavigation & { map: ResearchMap; strategyId: string }) {
   const { token } = theme.useToken()
-  const [strategyId, setStrategy] = useState(strategies[0].id)
   const [selectedId, select] = useState(strategyId)
   const canvas = useRef<HTMLDivElement>(null)
-  const tree = useMemo(() => projectStrategy(map, strategyId), [strategyId])
+  const tree = useMemo(() => projectStrategy(map, strategyId), [map, strategyId])
   const byId = useMemo(() => new Map(tree.nodes.map(node => [node.id, node])), [tree])
-  const positioned = useMemo(() => layoutNodes(tree), [tree])
+  const layout = useMemo(() => layoutTree(tree, strategyId), [tree, strategyId])
+  const positioned = useMemo(() => layoutNodes(tree, layout), [tree, layout])
+  const canonicalNodes = useMemo(() => new Map(map.nodes.map(node => [node.id, node])), [map])
   const selected = byId.get(selectedId) ?? byId.get(strategyId)!
   const related = tree.edges.filter(edge => edge.from === selected.id || edge.to === selected.id)
   const findingsSources = selected.kind === 'finding' ? map.edges
@@ -38,7 +41,7 @@ export function StrategyResearchMap({ navigate, href }: MapNavigation) {
     domAttributes: { 'aria-pressed': node.id === selected.id },
     className: node.id !== selected.id && related.some(edge => edge.from === node.id || edge.to === node.id) ? 'research-map__node--related' : undefined,
   }))
-  const edges = graphEdges(tree, selected.id)
+  const edges = graphEdges(tree, layout, selected.id)
 
   const frameTree = useCallback<OnInit<FlowNode>>(flow => {
     const { clientWidth: width, clientHeight: height } = canvas.current!
@@ -62,22 +65,24 @@ export function StrategyResearchMap({ navigate, href }: MapNavigation) {
     '--map-border': token.colorBorderSecondary,
     '--map-selection': token.colorText,
   } as CSSProperties}>
-    <Flex wrap align="center" justify="space-between" gap="small" className="research-map__header">
+    <div className="research-map__header">
       <Typography.Title id="strategy-research-map-title" level={1}>策略研究地图</Typography.Title>
-      {strategies.length > 1 && <Select aria-label="选择策略" value={strategyId} options={strategyOptions} virtual={false}
-        onChange={id => { setStrategy(id); select(id) }} />}
-    </Flex>
+    </div>
     <div className="research-map__workspace">
       <div className="research-map__graph">
         <Flex wrap gap="middle" className="research-map__legend" aria-label="关系图例">
-          {Object.values(edgeStyles).map(({ label, color, dash }) =>
+          {Object.values(edgeStyles).map(({ label, color }) =>
             <Flex key={label} gap="small" align="center">
-              <span aria-hidden="true" style={{ borderTop: `2px ${dash === '2 5' ? 'dotted' : dash ? 'dashed' : 'solid'} ${color}`, width: 24 }} />
+              <span aria-hidden="true" style={{ borderTop: `2px solid ${color}`, width: 24 }} />
               <Typography.Text type="secondary">{label}</Typography.Text>
             </Flex>)}
+          {layout.primary.size < tree.edges.length && <Flex gap="small" align="center">
+            <span aria-hidden="true" style={{ borderTop: `2px dashed ${token.colorTextSecondary}`, width: 24 }} />
+            <Typography.Text type="secondary">次级关联</Typography.Text>
+          </Flex>}
         </Flex>
         <div className="research-map__canvas" ref={canvas}>
-          <ReactFlow<FlowNode> key={strategyId} nodes={nodes} edges={edges} nodeTypes={nodeTypes} colorMode="dark"
+          <ReactFlow<FlowNode, FlowEdge> nodes={nodes} edges={edges} nodeTypes={nodeTypes} edgeTypes={edgeTypes} colorMode="dark"
             aria-label="策略研究关系图" ariaLabelConfig={labels}
             onInit={frameTree} fitViewOptions={fitOptions} minZoom={0.2}
             nodesDraggable={false} nodesConnectable={false} edgesReconnectable={false}

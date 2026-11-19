@@ -168,7 +168,7 @@ artifact, without hot reload. No backend, collection, remote push, Actions build
 or Pages publication is needed.
 
 Run `npm run demo:test:browser` after the build for local Playwright review. It starts
-temporary loopback previews and closes them afterward, checks all eleven Demo routes
+temporary loopback previews and closes them afterward, checks the fixed Demo routes and Graph-derived Strategy routes
 and existing interactions, and checks Research Overview at 1280, 1024 and 768px.
 Focused checks cover full disclosure, horizontal containment, card alignment,
 Production-mode shared Presentation and Chinese/unbroken-English stress inputs in

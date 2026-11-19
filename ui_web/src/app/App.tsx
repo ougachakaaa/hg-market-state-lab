@@ -2,7 +2,7 @@ import DailyCalendarSpreadPage from '../features/futures_calendar_spread/page/Da
 import RelativeValuePage from '../features/calendar_spread_relative_value/page/RelativeValuePage'
 import { LogoutOutlined, ReloadOutlined } from '@ant-design/icons'
 import { Alert, Button, Flex, Spin, Typography, theme } from 'antd'
-import { Activity, useEffect, useState } from 'react'
+import { Activity, useState } from 'react'
 import FuturesBasisPage from '../features/futures_basis_research/page/FuturesBasisPage'
 import OptionChainPage from '../features/mo_option_chain'
 import PremiumPlanePage from '../features/mo_option_premium'
@@ -16,26 +16,31 @@ import BacktestingOverview from './BacktestingOverview'
 import DailyDataLanding from './DailyDataLanding'
 import AuthForm from './auth/AuthForm'
 import { useAuthentication } from './auth/useAuthentication'
-import type { CurrentUser, LoginRequest } from './auth/api/auth'
+import type { CurrentUser } from './auth/api/auth'
 import { useWorkspaceRoute } from './routes'
 import { useRunNavigation } from './useRunNavigation'
-import { defaultWorkspacePath, isWorkspacePath, type WorkspacePath } from './routeInventory'
+import map from 'virtual:strategy-research-map'
+import type { WorkspaceDestination, WorkspacePath } from './routeInventory'
+import { createStrategyRoutes } from './strategyRoutes'
+
+const strategies = createStrategyRoutes(map.nodes)
 
 function ProductionWorkspace({ user, signOut, path, navigate: navigateRoute }: {
   user: CurrentUser; signOut: () => Promise<void>; path: WorkspacePath;
-  navigate: (path: WorkspacePath, replace?: boolean, runId?: string) => void;
+  navigate: (path: WorkspaceDestination, replace?: boolean, runId?: string) => void;
 }) {
   const navigate = useRunNavigation(navigateRoute)
+  const strategy = strategies.match(path)
   const active = path === '/backtesting/futures-roll-long'
   const [visited, setVisited] = useState(active)
   if (active && !visited) setVisited(true)
-  return <ApplicationShell path={path} navigate={navigate} href={path => path} header={
+  return <ApplicationShell strategies={strategies} path={path} navigate={navigate} href={path => path} header={
     <Flex align="center" gap="middle" wrap>
       <Typography.Text type="secondary" style={{ overflowWrap: 'anywhere' }}>{user.username}</Typography.Text>
       <Button icon={<LogoutOutlined aria-hidden="true" />} onClick={() => void signOut()}>退出登录</Button>
     </Flex>
   }>
-    {path === defaultWorkspacePath ? <StrategyResearchMap navigate={navigate} href={path => path} />
+    {strategy ? <StrategyResearchMap key={strategy.id} map={map} strategyId={strategy.id} navigate={navigate} href={path => path} />
       : path === '/research' ? <ResearchWorkspacePage openExplorer={() => navigate('/research/publications')} openFuturesBasis={() => navigate('/research/futures-basis')} openCalendarSpread={() => navigate('/research/calendar-spread-relative-value')} />
       : path === '/research/calendar-spread-relative-value' ? <RelativeValuePage />
       : path === '/data/futures-calendar-spread' ? <DailyCalendarSpreadPage />
@@ -55,18 +60,9 @@ function ProductionWorkspace({ user, signOut, path, navigate: navigateRoute }: {
 function AuthenticationGate() {
   const { token } = theme.useToken()
   const { state, check, signIn, signOut } = useAuthentication()
-  const { path, navigate } = useWorkspaceRoute()
-  useEffect(() => {
-    if (state.status === 'authenticated' && !isWorkspacePath(window.location.pathname)) {
-      navigate(defaultWorkspacePath, true)
-    }
-  }, [state.status, navigate])
-  const login = async (credentials: LoginRequest) => {
-    await signIn(credentials)
-    if (!isWorkspacePath(window.location.pathname)) navigate(defaultWorkspacePath, true)
-  }
+  const { path, navigate } = useWorkspaceRoute(strategies, state.status === 'authenticated')
   if (state.status === 'authenticated') return <ProductionWorkspace user={state.user} signOut={signOut} path={path} navigate={navigate} />
-  if (state.status === 'anonymous') return <AuthForm signIn={login} />
+  if (state.status === 'anonymous') return <AuthForm signIn={signIn} />
   return <Flex vertical align="center" justify="center" gap="middle" style={{ minHeight: '100vh', padding: 24,
     boxSizing: 'border-box', background: token.colorBgLayout }}>
     {state.status === 'checking' && <><Spin /><Typography.Text>正在检查登录状态…</Typography.Text></>}

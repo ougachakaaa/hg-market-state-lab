@@ -1,3 +1,4 @@
+import { strategyRoutesFixture } from '../strategyRoutesFixture'
 import { createRoot } from 'react-dom/client'
 import ApplicationShell from '../../../src/app/ApplicationShell'
 import AppUiProvider from '../../../src/app/AppUiProvider'
@@ -7,8 +8,8 @@ import '../../../src/index.css'
 
 const mode = new URL(location.href).searchParams.get('mode') === 'static' ? 'static' : 'production'
 function Harness() {
-  const { path, navigate } = (mode === 'static' ? useHashRoute : useWorkspaceRoute)()
-  return <AppUiProvider><ApplicationShell mode={mode} path={path} navigate={navigate}
+  const { path, navigate } = (mode === 'static' ? useHashRoute : useWorkspaceRoute)(strategyRoutesFixture)
+  return <AppUiProvider><ApplicationShell strategies={strategyRoutesFixture} mode={mode} path={path} navigate={navigate}
     href={mode === 'static' ? staticHref : path => path} header={<span>Scroll acceptance · {mode}</span>}>
     <h1>{path}</h1>
     <button onClick={() => document.getElementById('chapter')?.scrollIntoView({ block: 'start' })}>章节跳转</button>

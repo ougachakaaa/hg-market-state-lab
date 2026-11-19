@@ -1,7 +1,9 @@
 // @vitest-environment node
 import { readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
-import { layoutNodes, projectStrategy } from '../src/features/strategy_research_map/graph'
+import { projectStrategy } from '../src/features/strategy_research_map/graph'
+import { cardHeight, cardWidth, layoutTree } from '../src/features/strategy_research_map/treeLayout'
+import { edgeId } from './definition'
 import type { ResearchEdge, ResearchMap, ResearchNode } from './definition'
 import { mapPath, validateResearchMap } from './validate'
 
@@ -39,17 +41,11 @@ describe('Strategy Research Map validation and projection', () => {
       { from: basis, to: 'study-basis-realization', kind: 'attach' },
     ])
     expect(projectStrategy(map, strategy)).toEqual(map)
-    const positionsByKind = Map.groupBy(layoutNodes(map), node => node.data.research.kind)
-    const rows = [...positionsByKind.values()].map(nodes => {
-      const rows = new Set(nodes.map(node => node.position.y))
-      expect(rows.size).toBe(1)
-      const sorted = [...nodes].sort((a, b) => a.position.x - b.position.x)
-      for (let i = 1; i < sorted.length; i++) {
-        expect(sorted[i].position.x).toBeGreaterThan(sorted[i - 1].position.x + sorted[i - 1].width!)
-      }
-      return nodes[0].position.y
-    })
-    expect(rows).toEqual([...rows].sort((a, b) => a - b))
+    verifyGeometry(map)
+    const tree = layoutTree(map, strategy)
+    const center = (id: string) => tree.positions.get(id)!.x + cardWidth / 2
+    expect(center(index)).toBe((center('study-index-return-distribution') + center('study-market-regime')) / 2)
+    expect(center(basis)).toBe((center(basisStudy) + center('study-basis-realization')) / 2)
   })
 
   it('admits an independent Study and a planned Strategy with no Baseline', () => {
@@ -59,7 +55,9 @@ describe('Strategy Research Map validation and projection', () => {
     const draft = { ...study, id: 'study-draft-example', evidence: 'pending', references: [] } as const
     map.nodes.push(planned, draft)
     validateResearchMap(map)
-    expect(projectStrategy(map, planned.id)).toEqual({ nodes: [planned], edges: [] })
+    const projection = projectStrategy(map, planned.id)
+    expect(projection).toEqual({ nodes: [planned], edges: [] })
+    expect([...layoutTree(projection, planned.id).positions]).toEqual([[planned.id, { x: 0, y: 0 }]])
     expect(projectStrategy(map, strategy).nodes).not.toContain(draft)
     map.edges.push({ from: basis, to: draft.id, kind: 'attach' })
     validateResearchMap(map)
@@ -184,4 +182,87 @@ describe('Strategy Research Map validation and projection', () => {
     finding.conclusion = { status: 'pending', summary: '未审阅' }
     expect(() => validateResearchMap(map)).toThrow(/needs a conclusion and review/)
   })
+})
+
+function verifyGeometry(map: ResearchMap) {
+  const tree = layoutTree(map, strategy)
+  const cards = [...tree.positions]
+  expect(cards).toHaveLength(map.nodes.length)
+  for (const [position, [id, card]] of cards.entries()) {
+    for (const [other, neighbor] of cards.slice(position + 1)) {
+      const overlaps = Math.abs(card.x - neighbor.x) < cardWidth && Math.abs(card.y - neighbor.y) < cardHeight
+      expect(overlaps, `${id} overlaps ${other}`).toBe(false)
+    }
+  }
+  for (const edge of map.edges) {
+    const points = tree.connector(edge)
+    expect(tree.positions.get(edge.to)!.y).toBeGreaterThan(tree.positions.get(edge.from)!.y + cardHeight)
+    for (const [id, card] of cards) {
+      if (id === edge.from || id === edge.to) continue
+      for (let i = 1; i < points.length; i++) {
+        const [a, b] = [points[i - 1], points[i]]
+        const intersects = Math.max(a.x, b.x) > card.x && Math.min(a.x, b.x) < card.x + cardWidth
+          && Math.max(a.y, b.y) > card.y && Math.min(a.y, b.y) < card.y + cardHeight
+        expect(intersects, `${edgeId(edge)} intersects ${id}`).toBe(false)
+      }
+    }
+  }
+  return tree
+}
+
+it('allocates unequal child subtrees in stable order when adding ordinary Studies', () => {
+  const map = graph()
+  const dimensions = map.nodes.filter(node => node.kind === 'dimension')
+  const order = (tree: ReturnType<typeof layoutTree>) => [...dimensions]
+    .sort((a, b) => tree.positions.get(a.id)!.x - tree.positions.get(b.id)!.x).map(node => node.id)
+  const before = verifyGeometry(map)
+  const sample = map.nodes.find(node => node.id === basisStudy)!
+  for (const [i, parent] of [index, basis].entries()) {
+    const study = { ...sample, id: `study-extra-${i}`, evidence: 'pending', references: [] } as const
+    map.nodes.push({ ...study, references: [] })
+    map.edges.push({ from: parent, to: study.id, kind: 'attach' })
+  }
+  const extended = verifyGeometry(validateResearchMap(map))
+  expect(order(extended)).toEqual(order(before))
+
+  for (const [i, parent] of dimensions.entries()) {
+    for (let j = 0; j < i; j++) {
+      const study: ResearchNode = { ...sample, id: `study-synthetic-${i}-${j}`, evidence: 'pending', references: [] }
+      map.nodes.push(study)
+      map.edges.push({ from: parent.id, to: study.id, kind: 'attach' })
+    }
+  }
+  const expanded = verifyGeometry(validateResearchMap(map))
+  const ranges = dimensions.map(parent => {
+    const childIds = map.edges.filter(edge => edge.from === parent.id).map(edge => edge.to)
+    const xs = [parent.id, ...childIds].map(id => expanded.positions.get(id)!.x)
+    return [Math.min(...xs), Math.max(...xs) + cardWidth]
+  })
+  ranges.slice(1).forEach(([left], i) => expect(left).toBeGreaterThan(ranges[i][1]))
+})
+
+it('uses the first projected parent for shared Studies and Findings and retains collision-free cross-branch edges', () => {
+  const map = graph()
+  const source = map.nodes.find(node => node.id === basisStudy)!
+  const other = map.nodes.find(node => node.id === 'study-market-regime')!
+  for (const study of [source, other]) {
+    study.evidence = 'accepted'
+    study.conclusion = proposedReview
+    study.references = source.references
+  }
+  const finding = acceptedFinding()
+  map.nodes.push(finding)
+  const related: ResearchEdge[] = [
+    { kind: 'attach', from: index, to: source.id },
+    { kind: 'derived_from', from: source.id, to: finding.id },
+    { kind: 'derived_from', from: other.id, to: finding.id },
+  ]
+  map.edges.push(...related)
+  const projected = projectStrategy(validateResearchMap(map), strategy)
+  const layout = verifyGeometry(projected)
+  expect(projected.nodes.filter(node => node.id === source.id)).toHaveLength(1)
+  expect(layout.primary.has(edgeId({ kind: 'attach', from: basis, to: source.id }))).toBe(true)
+  expect(related.map(edge => layout.primary.has(edgeId(edge)))).toEqual([false, true, false])
+  expect(layout.positions.get(finding.id)!.x).toBe(layout.positions.get(source.id)!.x)
+  expect(layout.positions.get(finding.id)!.y).toBeGreaterThan(layout.positions.get(source.id)!.y)
 })

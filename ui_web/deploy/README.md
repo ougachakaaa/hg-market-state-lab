@@ -53,7 +53,7 @@
 
 ## Workspace 路由前提
 
-`/research/publications` 是浏览器页面路径，也是后端 Publication API 路径。站点网关需把 `/roadmap`、`/research`、`/research/publications`、`/data/*`、`/backtesting` 的 HTML navigation 回退到 `index.html`，并把同源 `/api/data/*`、`/api/research/*` 去除 `/api` 后转发至原后端路径，保留 Cookie、query、状态码与响应体。Daily 浏览器 `/data/futures-calendar-spread` 必须返回 SPA，而 `/api/data/futures-calendar-spread` 必须转发为后端 `/data/futures-calendar-spread`，不能按 Accept 猜测两者身份。此仓库不包含实际 Nginx 站点配置；发布前应在目标网关验证这两类请求，不能仅以普通 SPA fallback 检查代替。
+`/research/publications` 是浏览器页面路径，也是后端 Publication API 路径。站点网关需把 `/roadmap`、`/roadmap/*`、`/research`、`/research/publications`、`/data/*`、`/backtesting` 的 HTML navigation 回退到 `index.html`，并把同源 `/api/data/*`、`/api/research/*` 去除 `/api` 后转发至原后端路径，保留 Cookie、query、状态码与响应体。Daily 浏览器 `/data/futures-calendar-spread` 必须返回 SPA，而 `/api/data/futures-calendar-spread` 必须转发为后端 `/data/futures-calendar-spread`，不能按 Accept 猜测两者身份。此仓库不包含实际 Nginx 站点配置；发布前应在目标网关验证这两类请求，不能仅以普通 SPA fallback 检查代替。
 
 ## Verified Demo Pages release (DDB-06)
 

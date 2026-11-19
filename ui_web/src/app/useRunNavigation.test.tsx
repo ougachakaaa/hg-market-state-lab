@@ -1,3 +1,4 @@
+import { strategyRoutesFixture } from '../../tests/static/strategyRoutesFixture'
 import { act, cleanup, renderHook, waitFor } from '@testing-library/react'
 import { afterEach, expect, it } from 'vitest'
 import { useWorkspaceRoute } from './routes'
@@ -6,7 +7,7 @@ import { useRunNavigation } from './useRunNavigation'
 const backtest = '/backtesting/futures-roll-long'
 const research = '/research/futures-basis'
 function useNavigation() {
-  const route = useWorkspaceRoute()
+  const route = useWorkspaceRoute(strategyRoutesFixture)
   return { path: route.path, navigate: useRunNavigation(route.navigate) }
 }
 function visit(url: string) {

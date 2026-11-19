@@ -5,15 +5,18 @@ export const workspaceAreas = {
   '/data': { title: '日常数据', icon: 'data' },
   '/backtesting': { title: '回测', icon: 'backtesting' },
 } as const
-type RouteMetadata = {
-  path: string; title: string; area: keyof typeof workspaceAreas | null;
+export type RouteMetadata = {
+  path: string; title: string; area: keyof typeof workspaceAreas;
   icon: NavigationIcon; sidebarVisible: boolean; productionOnly?: boolean;
 }
-export const defaultWorkspacePath = '/roadmap'
-export const roadmapRoute = { path: defaultWorkspacePath, title: '策略研究地图', area: null, icon: 'roadmap', sidebarVisible: true } as const
+export const roadmapAlias = '/roadmap'
+export type StrategyPath = `/roadmap/${string}`
+
+export function strategyIdFromPath(path: string): string | undefined {
+  return /^\/roadmap\/(strategy-[a-z][a-z0-9]*(?:-[a-z0-9]+)*)$/.exec(path)?.[1]
+}
 
 export const workspaceRoutes = [
-  roadmapRoute,
   { path: '/research', title: '研究总览', area: '/research', icon: 'overview', sidebarVisible: true },
   { path: '/research/futures-basis', title: '历史基差研究', area: '/research', icon: 'instance', sidebarVisible: true },
   { path: '/research/calendar-spread-relative-value', title: '历史跨期相对价值研究', area: '/research', icon: 'instance', sidebarVisible: true },
@@ -25,11 +28,17 @@ export const workspaceRoutes = [
   { path: '/backtesting', title: '回测总览', area: '/backtesting', icon: 'overview', sidebarVisible: true },
   { path: '/backtesting/futures-roll-long', title: '期货展期做多回测', area: '/backtesting', icon: 'instance', sidebarVisible: true },
 ] as const satisfies readonly RouteMetadata[]
-export type WorkspacePath = typeof workspaceRoutes[number]['path']
+export type FixedWorkspacePath = typeof workspaceRoutes[number]['path']
+export type WorkspacePath = FixedWorkspacePath | StrategyPath
+export type WorkspaceDestination = WorkspacePath | typeof roadmapAlias
+export type WorkspaceReferencePath = FixedWorkspacePath | typeof roadmapAlias
 const paths = new Set<string>(workspaceRoutes.map(route => route.path))
-export function isWorkspacePath(path: string): path is WorkspacePath { return paths.has(path) }
+export function isFixedWorkspacePath(path: string): path is FixedWorkspacePath { return paths.has(path) }
 
-export type StaticWorkspacePath = WorkspacePath
-export function isStaticWorkspacePath(path: string): path is StaticWorkspacePath {
+export function isStaticWorkspacePath(path: string): path is FixedWorkspacePath {
   return workspaceRoutes.some(route => route.path === path && !('productionOnly' in route && route.productionOnly))
+}
+
+export function isWorkspaceReferencePath(path: string): path is WorkspaceReferencePath {
+  return path === roadmapAlias || isStaticWorkspacePath(path)
 }

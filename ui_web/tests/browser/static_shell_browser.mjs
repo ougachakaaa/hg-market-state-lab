@@ -88,7 +88,7 @@ try {
     await current(path)
   }
   await page.goto(base)
-  await current('/roadmap')
+  await current(inventory.defaultPath)
   for (const route of inventory.routes) {
     await choose(route.path)
     // Direct URL and reload use the same built HTML under the Pages base.
@@ -126,10 +126,10 @@ try {
   pass('Shared Daily Landing, both product buttons, parent breadcrumbs and real Back/Forward')
   for (const hash of ['', '#unknown', '#/unknown', '#/backtesting?run_id=server']) {
     await page.goto(`${base}${hash}`)
-    await current(hash.includes('backtesting') ? '/backtesting' : '/roadmap')
+    await current(hash.includes('backtesting') ? '/backtesting' : inventory.defaultPath)
   }
   await page.evaluate(() => { location.hash = '#/unknown' })
-  await current('/roadmap')
+  await current(inventory.defaultPath)
   pass('Empty/unknown hashes normalize; static routing discards server run_id')
   for (const width of [1440, 390]) {
     await page.setViewportSize({ width, height: 900 })

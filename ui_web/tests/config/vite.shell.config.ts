@@ -3,6 +3,7 @@ import { isAbsolute, relative } from 'node:path'
 import ts from 'typescript'
 import { mergeConfig, type Plugin } from 'vite'
 import { workspaceRoutes, workspaceAreas } from '../../src/app/routeInventory.ts'
+import { strategyRoutesFixture } from '../static/strategyRoutesFixture.ts'
 import demoConfig from './vite.static-base.ts'
 
 const web = fileURLToPath(new URL('../..', import.meta.url))
@@ -11,7 +12,7 @@ const allowed = new Set([
   'tests/static/shell/StaticShellHarness.tsx', 'demo/runtime/hashRoutes.ts',
   'src/app/ApplicationShell.tsx', 'src/app/AppUiProvider.tsx',
   'src/app/BacktestingOverview.tsx', 'src/app/DailyDataLanding.tsx', 'src/app/routeInventory.ts',
-  'src/shared/ui/theme.ts', 'src/index.css',
+  'src/app/strategyRoutes.ts', 'tests/static/strategyRoutesFixture.ts', 'src/shared/ui/theme.ts', 'src/index.css',
 ])
 const projectPath = (id: string) => relative(web, id.split('?')[0]).replaceAll('\\', '/')
 const isProject = (id: string) => isAbsolute(id) && !id.includes('/node_modules/')
@@ -46,7 +47,14 @@ function shellIsolation(): Plugin {
           }
         }
       }
-      this.emitFile({ type: 'asset', fileName: 'shell-routes.json', source: JSON.stringify({ routes: workspaceRoutes, areas: workspaceAreas }) })
+      this.emitFile({ type: 'asset', fileName: 'shell-routes.json', source: JSON.stringify({
+        defaultPath: strategyRoutesFixture.defaultPath,
+        routes: [
+          ...strategyRoutesFixture.entries.map(entry => ({ ...entry, area: 'strategy', sidebarVisible: true, icon: 'instance' })),
+          ...workspaceRoutes,
+        ],
+        areas: { strategy: { title: '策略' }, ...workspaceAreas },
+      }) })
       this.emitFile({ type: 'asset', fileName: 'shell-dependencies.json', source: JSON.stringify({
         projectModules: modules.filter(m => isProject(m.id)).map(m => ({
           id: projectPath(m.id),

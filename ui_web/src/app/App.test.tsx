@@ -1,3 +1,4 @@
+import canonicalMap from '../../../docs/strategy-research/map.json'
 import { commitDate } from '../test/datePicker'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { StrictMode } from 'react'
@@ -7,6 +8,8 @@ import backtestFixture from '../features/backtesting/api/result.fixture.json'
 
 vi.mock('react-plotly.js', () => ({ default: () => <div data-testid="plot" /> }))
 
+const defaultStrategy = canonicalMap.nodes.find(node => node.kind === 'strategy')!
+const strategyPath = `/roadmap/${defaultStrategy.id}`
 const identity = { id: 'test-user', username: 'alice', status: 'active' }
 const response = (body: unknown, status = 200) => new Response(status === 204 ? null : JSON.stringify(body), { status })
 const unauthorized = () => response({ error: { kind: 'authentication_required', detail: 'Error', param: null } }, 401)
@@ -45,8 +48,8 @@ describe('workspace shell and authentication', () => {
     await submitLogin()
     await screen.findByRole('heading', { name: '策略研究地图' })
     const navigation = screen.getByRole('menu', { name: '业务导航' })
-    expect(within(navigation).getAllByRole('menuitem')[0].textContent).toBe('策略研究地图')
-    expect(window.location.pathname).toBe('/roadmap')
+    expect(within(navigation).getAllByRole('menuitem')[0].textContent).toBe('策略')
+    expect(window.location.pathname).toBe(strategyPath)
   })
 
   it('restores deep route, navigates with history and logs out', async () => {
@@ -88,7 +91,7 @@ describe('workspace shell and authentication', () => {
     render(<App />)
     await screen.findByRole('button', { name: '退出登录' })
     await act(async () => { window.history.pushState(null, '', '/unknown'); window.dispatchEvent(new PopStateEvent('popstate')) })
-    expect(window.location.pathname).toBe('/roadmap')
+    expect(window.location.pathname).toBe(strategyPath)
   })
 })
 

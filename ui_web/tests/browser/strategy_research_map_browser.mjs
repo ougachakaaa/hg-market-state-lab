@@ -6,6 +6,7 @@ import { tmpdir } from 'node:os'
 import { resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { chromium } from 'playwright'
+import { build, preview } from 'vite'
 import { previewDemo } from '../../demo/build/preview.mjs'
 import { onlineHarness, unusedPort } from './online_harness.mjs'
 
@@ -15,7 +16,9 @@ const map = JSON.parse(await readFile(resolve(root, 'docs/strategy-research/map.
 const mode = process.argv[2]
 assert.ok(mode === 'online' || mode === 'static', 'Choose online or static')
 const screenshotDir = process.env.LAB_RESEARCH_MAP_SCREENSHOTS
-const strategyId = 'strategy-futures-long'
+const strategyId = map.nodes.find(node => node.kind === 'strategy').id
+const defaultStrategy = map.nodes.find(node => node.id === strategyId)
+const defaultStrategyPath = `/roadmap/${strategyId}`
 const baselineId = 'baseline-futures-long'
 const basisStudy = 'study-basis-historical'
 const errors = []
@@ -28,7 +31,7 @@ const inspectorTitle = (page, id) => heading(inspector(page), map.nodes.find(nod
 
 async function verifyGraph(page) {
   await heading(page, '策略研究地图').waitFor()
-  assert.equal(await page.getByRole('menu', { name: '业务导航' }).getByRole('menuitem').first().innerText(), '策略研究地图')
+  await verifyStrategyLocation(page, defaultStrategy)
   for (const { id } of map.nodes) await nodeById(page, id).waitFor()
   for (const { from, to, kind } of map.edges) {
     const edge = page.getByTestId(`rf__edge-${from}:${to}:${kind}`).locator('path.react-flow__edge-path')
@@ -38,16 +41,24 @@ async function verifyGraph(page) {
   await checkReadableFrame(page)
   const cards = await page.locator('.research-map__card').evaluateAll(cards => cards.map(card => {
     const { x, y, width, height } = card.getBoundingClientRect()
-    return { kind: card.dataset.kind, x, y, width, height }
+    return { id: card.closest('[data-id]').dataset.id, x, y, width, height }
   }))
-  const rank = ['strategy', 'baseline', 'dimension', 'study']
   for (const [i, a] of cards.entries()) {
     for (const b of cards.slice(i + 1)) {
       const overlap = a.x < b.x + b.width && a.x + a.width > b.x && a.y < b.y + b.height && a.y + a.height > b.y
-      assert.equal(overlap, false, `Cards overlap: ${a.kind} and ${b.kind}`)
-      assert.equal(Math.sign(a.y - b.y), Math.sign(rank.indexOf(a.kind) - rank.indexOf(b.kind)), 'Vertical ranks')
+      assert.equal(overlap, false, `Cards overlap: ${a.id} and ${b.id}`)
     }
   }
+  const canvas = await page.locator('.research-map__canvas').boundingBox()
+  for (const card of cards) {
+    assert.ok(card.x >= canvas.x && card.x + card.width <= canvas.x + canvas.width, `Desktop clips ${card.id}`)
+  }
+  for (const { from, to } of map.edges) {
+    const parent = cards.find(card => card.id === from)
+    const child = cards.find(card => card.id === to)
+    assert.ok(parent.y + parent.height < child.y)
+  }
+  await verifyEdgeClearance(page)
   await screenshot(page, 'desktop')
   const view = page.locator('.react-flow__viewport')
   const transform = () => view.evaluate(el => el.style.transform)
@@ -103,6 +114,8 @@ async function checkReadableFrame(page) {
   const canvas = await page.locator('.research-map__canvas').boundingBox()
   assert.ok(box.x >= canvas.x && box.x + box.width <= canvas.x + canvas.width)
   assert.ok(box.y >= canvas.y && box.y + box.height <= canvas.y + canvas.height)
+  assert.deepEqual(await page.locator('.research-map__node-title').evaluateAll(titles =>
+    titles.filter(title => title.scrollHeight > title.clientHeight + 1).map(title => title.textContent)), [])
 }
 
 async function verifyNarrow(page) {
@@ -118,48 +131,145 @@ async function verifyNarrow(page) {
   await page.setViewportSize(size)
 }
 
-async function verifyStrategySelector(page) {
+async function verifyEdgeClearance(page) {
+  const intersections = await page.locator('path.react-flow__edge-path').evaluateAll(paths => {
+    const cards = [...document.querySelectorAll('.research-map__card')].map(card => card.getBoundingClientRect())
+    return paths.flatMap(path => {
+      const transform = path.getScreenCTM()
+      const length = path.getTotalLength()
+      return Array.from({ length: Math.ceil(length / 2) }, (_, i) => (i + 0.5) * 2)
+        .map(distance => new DOMPoint(path.getPointAtLength(distance).x, path.getPointAtLength(distance).y).matrixTransform(transform))
+        .some(({ x, y }) => cards.some(card => x > card.left + 2 && x < card.right - 2 && y > card.top + 2 && y < card.bottom - 2))
+        ? [path.id] : []
+    })
+  })
+  assert.deepEqual(intersections, [], 'Connectors avoid card interiors')
+}
+
+function multiStrategyFixture() {
   const fixture = structuredClone(map)
-  const [strategy, baseline, dimension] = fixture.nodes
+  const [strategy, , dimension] = fixture.nodes
   const shared = fixture.nodes.find(node => node.id === basisStudy)
-  shared.evidence = 'accepted'
-  shared.conclusion = { status: 'inconclusive', summary: '合成浏览器测试结论', review: '合成验收说明' }
+  const secondSource = fixture.nodes.find(node => node.id === 'study-market-regime')
+  const review = { status: 'inconclusive', summary: '合成浏览器测试结论', review: '合成验收说明' }
+  for (const source of [shared, secondSource]) {
+    source.evidence = 'accepted'
+    source.conclusion = review
+    source.references = shared.references
+  }
   fixture.nodes.push(
-    { ...strategy, id: 'strategy-selector-example', title: '测试策略' },
-    { ...baseline, id: 'baseline-selector-example' },
-    { ...dimension, id: 'dimension-selector-example' },
-    { ...strategy, id: 'finding-selector-example', kind: 'finding', title: '合成测试发现', parameters: undefined,
-      evidence: 'accepted', conclusion: shared.conclusion, references: [] },
+    { ...strategy, id: 'strategy-planned-example', title: '规划中测试策略',
+      planning: 'planned', implementation: 'none', parameters: undefined, references: [] },
+    { ...strategy, id: 'finding-browser-example', kind: 'finding', title: '合成测试发现',
+      parameters: undefined, evidence: 'accepted', conclusion: review, references: [] },
   )
   fixture.edges.push(
     { from: dimension.id, to: shared.id, kind: 'attach' },
-    { from: 'strategy-selector-example', to: 'baseline-selector-example', kind: 'branch' },
-    { from: 'baseline-selector-example', to: 'dimension-selector-example', kind: 'branch' },
-    { from: 'dimension-selector-example', to: shared.id, kind: 'attach' },
-    { from: shared.id, to: 'finding-selector-example', kind: 'derived_from' },
+    { from: shared.id, to: 'finding-browser-example', kind: 'derived_from' },
+    { from: secondSource.id, to: 'finding-browser-example', kind: 'derived_from' },
   )
-  await page.route(url => url.pathname.includes('__x00__virtual:strategy-research-map'), route => route.fulfill({
-    contentType: 'application/javascript', body: `export default ${JSON.stringify(fixture)}`,
-  }))
-  await page.goto(new URL('/roadmap', page.url()).href)
-  const picker = page.getByRole('combobox', { name: '选择策略' })
-  await picker.waitFor()
-  assert.equal(await nodeById(page, shared.id).count(), 1)
+  return fixture
+}
+
+const strategyUrl = (base, id) => new URL((mode === 'static' ? '#/roadmap' : '/roadmap') + (id ? `/${id}` : ''), base).href
+const strategyLocation = url => mode === 'static' ? url.hash.slice(1) : url.pathname
+const strategyMenu = page => page.getByRole('menu', { name: '业务导航' })
+const strategyGroup = page => strategyMenu(page).getByRole('menuitem', { name: '策略', exact: true })
+const strategyLink = (page, strategy, collapsed = false) =>
+  (collapsed ? page.locator('.ant-menu-submenu-popup:visible') : strategyMenu(page))
+    .getByRole('link', { name: strategy.title, exact: true })
+
+async function verifyStrategyLocation(page, strategy, collapsed = false) {
+  const path = `/roadmap/${strategy.id}`
+  await page.waitForURL(url => strategyLocation(url) === path)
+  await nodeById(page, strategy.id).waitFor()
+  await heading(inspector(page), strategy.title).waitFor()
+  assert.deepEqual(await page.locator('.ant-breadcrumb li:not(.ant-breadcrumb-separator)').allTextContents(), ['策略', strategy.title])
+  if (collapsed) await strategyGroup(page).click()
+  const link = strategyLink(page, strategy, collapsed)
+  await link.waitFor()
+  assert.equal(await link.getAttribute('href'), mode === 'static' ? '#' + path : path)
+  assert.ok(await link.evaluate(el => el.closest('li').classList.contains('ant-menu-item-selected')))
+}
+
+async function verifyMultipleStrategies(page, base, fixture) {
+  const [first, second] = fixture.nodes.filter(node => node.kind === 'strategy')
+  await page.goto(strategyUrl(base, first.id))
+  await verifyStrategyLocation(page, first)
+  assert.deepEqual(await strategyMenu(page).locator('a[href*="/roadmap/"]').allTextContents(), [first.title, second.title])
+  assert.equal(await page.getByRole('combobox', { name: '选择策略' }).count(), 0)
+  await verifyEdgeClearance(page)
+  assert.equal(await nodeById(page, basisStudy).count(), 1)
   const accents = await page.locator('.research-map__card').evaluateAll(cards =>
     cards.map(card => getComputedStyle(card).getPropertyValue('--map-accent').trim()))
   assert.equal(new Set(accents).size, 5)
-  await picker.click()
-  await page.getByRole('option', { name: '测试策略' }).click()
-  await heading(inspector(page), '测试策略').waitFor()
-  assert.equal(await nodeById(page, strategyId).count(), 0)
-  assert.equal(await nodeById(page, shared.id).count(), 1)
-  assert.equal(await page.locator('.research-map__card').count(), 5)
-  await nodeById(page, 'finding-selector-example').press('Enter')
+  await nodeById(page, basisStudy).press('Enter')
+  await inspectorTitle(page, basisStudy).waitFor()
+  assert.equal(await page.locator('.research-map__node--related [data-kind="dimension"]').count(), 2)
+  await nodeById(page, 'finding-browser-example').press('Enter')
   await heading(inspector(page), '合成测试发现').waitFor()
-  await inspector(page).getByRole('link', { name: 'Static Demo 描述性结果捕获' }).waitFor()
-  await picker.click()
-  await page.getByRole('option', { name: map.nodes[0].title }).click()
-  await inspectorTitle(page, strategyId).waitFor()
+  assert.equal(await inspector(page).getByRole('link', { name: 'Static Demo 描述性结果捕获' }).count(), 2)
+  await screenshot(page, 'multi-strategy')
+
+  await strategyLink(page, second).click()
+  await verifyStrategyLocation(page, second)
+  assert.equal(await page.locator('.research-map__card').count(), 1)
+  await page.reload()
+  await verifyStrategyLocation(page, second)
+  await page.goBack()
+  await verifyStrategyLocation(page, first)
+  await page.goForward()
+  await verifyStrategyLocation(page, second)
+  await screenshot(page, 'planned-strategy')
+
+  await page.getByRole('button', { name: '折叠导航' }).click()
+  await verifyStrategyLocation(page, second, true)
+  await strategyLink(page, first, true).click()
+  await page.waitForURL(url => strategyLocation(url) === defaultStrategyPath)
+  await page.getByRole('button', { name: '展开导航' }).click()
+  await verifyStrategyLocation(page, first)
+
+  for (const id of ['strategy-unknown', undefined]) {
+    await page.goto(strategyUrl(base, id))
+    await verifyStrategyLocation(page, first)
+  }
+}
+
+async function verifyStaticFixture(browser, fixture) {
+  const outDir = await mkdtemp(resolve(web, '.build/research-map-fixture-'))
+  let server
+  try {
+    await build({
+      configFile: resolve(web, 'demo/build/vite.config.ts'),
+      logLevel: 'error',
+      build: { outDir },
+      plugins: [{
+        name: 'research-map-browser-fixture',
+        enforce: 'pre',
+        resolveId(id) {
+          if (id === 'virtual:strategy-research-map' || id === 'virtual:demo-data') return '\0research-map-fixture:' + id
+        },
+        load(id) {
+          if (id === '\0research-map-fixture:virtual:strategy-research-map') return `export default ${JSON.stringify(fixture)}`
+          if (id === '\0research-map-fixture:virtual:demo-data') return 'export default {}'
+        },
+      }],
+    })
+    server = await preview({
+      configFile: false, root: web, base: '/hg-market-state-lab/', publicDir: false, envDir: false,
+      build: { outDir }, preview: { host: '127.0.0.1', port: 0 },
+    })
+    const base = `http://127.0.0.1:${server.httpServer.address().port}/hg-market-state-lab/`
+    const page = await browser.newPage({ viewport: { width: 1440, height: 1000 } })
+    page.on('pageerror', error => errors.push(error.message))
+    page.on('request', request => {
+      if (/^\/(api|auth)\//.test(new URL(request.url()).pathname)) errors.push('Unexpected Static fixture API request')
+    })
+    await verifyMultipleStrategies(page, base, fixture)
+  } finally {
+    await server?.close()
+    await rm(outDir, { recursive: true, force: true })
+  }
 }
 
 async function verifyLinks(page) {
@@ -204,12 +314,13 @@ try {
       }
     })
     await page.goto(base)
-    await page.waitForURL('**/#/roadmap')
+    await page.waitForURL(url => url.hash === '#' + defaultStrategyPath)
     await verifyGraph(page)
     await verifyNarrow(page)
     const { bundles } = JSON.parse(await readFile(resolve(web, 'demo/bundles/manifest.json'), 'utf8'))
     assert.ok(!staticRequests.some(url => bundles.some(({ bundle_id }) => new URL(url).pathname.includes(`/assets/${bundle_id}-`))))
     await verifyLinks(page)
+    await verifyStaticFixture(browser, multiStrategyFixture())
   } else {
     temporary = await mkdtemp(resolve(tmpdir(), 'strategy-research-map-auth-'))
     const backendPort = await unusedPort()
@@ -250,7 +361,7 @@ try {
       await page.getByRole('button', { name: '登录', exact: true }).click()
     }
     await login()
-    await page.waitForURL('**/roadmap')
+    await page.waitForURL(url => url.pathname === defaultStrategyPath)
     await verifyGraph(page)
     await verifyNarrow(page)
     assert.deepEqual(businessRequests, [], 'The map does not fetch business data')
@@ -263,7 +374,20 @@ try {
     await login()
     await heading(page, '研究总览').waitFor()
     assert.equal(new URL(page.url()).pathname, '/research')
-    await verifyStrategySelector(page)
+    await page.getByRole('button', { name: '退出登录' }).click()
+    await page.getByRole('button', { name: '登录', exact: true }).waitFor()
+    const fixture = multiStrategyFixture()
+    const planned = fixture.nodes.find(node => node.id === 'strategy-planned-example')
+    await page.route(url => url.pathname.includes('__x00__virtual:strategy-research-map'), route => route.fulfill({
+      contentType: 'application/javascript', body: `export default ${JSON.stringify(fixture)}`,
+    }))
+    await page.goto(strategyUrl(origin, planned.id))
+    await page.getByRole('button', { name: '登录', exact: true }).waitFor()
+    assert.equal(await heading(page, '策略研究地图').count(), 0)
+    assert.equal(new URL(page.url()).pathname, `/roadmap/${planned.id}`)
+    await login()
+    await verifyStrategyLocation(page, planned)
+    await verifyMultipleStrategies(page, origin, fixture)
   }
   assert.deepEqual(errors, [])
   console.log(`PASS ${mode}: ${map.nodes.length} nodes, ${map.edges.length} edges, Inspector, keyboard, canvas, routes`)

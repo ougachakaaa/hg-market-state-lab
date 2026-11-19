@@ -1,3 +1,4 @@
+import { strategyRoutesFixture } from '../../tests/static/strategyRoutesFixture'
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, expect, it, vi } from 'vitest'
 import ApplicationShell from './ApplicationShell'
@@ -7,12 +8,12 @@ afterEach(cleanup)
 it('orders areas and directly exposes implemented studies with selection and collapse', () => {
   const navigate = vi.fn()
   const { container, rerender } = render(<AppUiProvider>
-    <ApplicationShell path="/research/futures-basis" href={path => path} navigate={navigate}
+    <ApplicationShell strategies={strategyRoutesFixture} path="/research/futures-basis" href={path => path} navigate={navigate}
       header={null}>Study</ApplicationShell>
   </AppUiProvider>)
   const menu = screen.getByRole('menu', { name: '业务导航' })
   expect([...menu.children].map(item => item.textContent)).toEqual([
-    expect.stringContaining('日常数据'), expect.stringContaining('研究'), expect.stringContaining('回测'),
+    '策略', expect.stringContaining('日常数据'), expect.stringContaining('研究'), expect.stringContaining('回测'),
   ])
   expect(container.querySelector('.ant-menu-item-selected')?.textContent).toBe('历史基差研究')
   expect(screen.queryByText('DESCRIPTIVE RESEARCH')).toBeNull()
@@ -22,14 +23,14 @@ it('orders areas and directly exposes implemented studies with selection and col
   expect(screen.getByRole('button', { name: '展开导航' }).getAttribute('aria-expanded')).toBe('false')
   fireEvent.click(screen.getByRole('button', { name: '展开导航' }))
   rerender(<AppUiProvider>
-    <ApplicationShell path="/data" href={path => path} navigate={navigate} header={null}>Data</ApplicationShell>
+    <ApplicationShell strategies={strategyRoutesFixture} path="/data" href={path => path} navigate={navigate} header={null}>Data</ApplicationShell>
   </AppUiProvider>)
   expect(container.querySelector('.ant-menu-item-selected')?.textContent).toBe('数据总览')
 })
 it('composes arbitrary header/content and receives runtime-specific navigation hrefs', () => {
   const navigate = vi.fn()
   const { container, rerender } = render(<AppUiProvider>
-    <ApplicationShell path="/research/publications" href={path => `#${path}`} navigate={navigate}
+    <ApplicationShell strategies={strategyRoutesFixture} path="/research/publications" href={path => `#${path}`} navigate={navigate}
       header={<span>Anonymous disclosure</span>}><h1>Injected content</h1></ApplicationShell>
   </AppUiProvider>)
   expect(screen.getByText('Anonymous disclosure')).toBeTruthy()
@@ -42,7 +43,7 @@ it('composes arbitrary header/content and receives runtime-specific navigation h
   expect(navigate).toHaveBeenCalledWith('/research')
   expect(screen.queryByRole('link', { name: 'Research Explorer' })).toBeNull()
   rerender(<AppUiProvider>
-    <ApplicationShell path="/research/publications" href={path => path} navigate={navigate}
+    <ApplicationShell strategies={strategyRoutesFixture} path="/research/publications" href={path => path} navigate={navigate}
       header={<span>Production identity</span>}><h1>Other content</h1></ApplicationShell>
   </AppUiProvider>)
   expect(screen.getByRole('link', { name: '研究' }).getAttribute('href')).toBe('/research')
@@ -53,7 +54,7 @@ it('composes arbitrary header/content and receives runtime-specific navigation h
 it('groups Backtesting overview and instance with matching icon roles and breadcrumb navigation', () => {
   const navigate = vi.fn()
   const { container } = render(<AppUiProvider>
-    <ApplicationShell path="/backtesting/futures-roll-long" href={path => path} navigate={navigate} header={null}>Result</ApplicationShell>
+    <ApplicationShell strategies={strategyRoutesFixture} path="/backtesting/futures-roll-long" href={path => path} navigate={navigate} header={null}>Result</ApplicationShell>
   </AppUiProvider>)
   expect(container.querySelector('.ant-menu-item-selected')?.textContent).toBe('期货展期做多回测')
   const overview = screen.getByRole('link', { name: '回测总览' }).closest('li')!
@@ -68,7 +69,7 @@ it('groups Backtesting overview and instance with matching icon roles and breadc
 })
 
 it('keeps a source link in the shared header', () => {
-  const { container } = render(<ApplicationShell path="/research" href={path => path} navigate={vi.fn()} header={null}>Study</ApplicationShell>)
+  const { container } = render(<ApplicationShell strategies={strategyRoutesFixture} path="/research" href={path => path} navigate={vi.fn()} header={null}>Study</ApplicationShell>)
   const link = screen.getByRole('link', { name: '查看源码（GitHub）' })
   expect(link.getAttribute('href')).toBe('https://github.com/ougachakaaa/hg-market-state-lab')
   expect(link.getAttribute('target')).toBe('_blank')
@@ -77,7 +78,7 @@ it('keeps a source link in the shared header', () => {
 })
 
 it.each(['production', 'static'] as const)('bounds %s workspace scrolling to Content and navigation', mode => {
-  const { container } = render(<ApplicationShell mode={mode} path="/research" href={path => path} navigate={vi.fn()} header={null}>Long content</ApplicationShell>)
+  const { container } = render(<ApplicationShell strategies={strategyRoutesFixture} mode={mode} path="/research" href={path => path} navigate={vi.fn()} header={null}>Long content</ApplicationShell>)
   const root = container.firstElementChild as HTMLElement
   expect(['100vh', '100dvh']).toContain(root.style.height)
   expect(root.style.minHeight).toBe('0px')
@@ -93,10 +94,23 @@ it.each(['production', 'static'] as const)('bounds %s workspace scrolling to Con
 })
 
 it('shows Calendar Spread in both admitted runtimes', () => {
-  const props = { path: '/research' as const, href: (path: string) => path, navigate: vi.fn(), header: null, children: 'Content' }
+  const props = { strategies: strategyRoutesFixture, path: '/research' as const, href: (path: string) => path, navigate: vi.fn(), header: null, children: 'Content' }
   const { rerender } = render(<ApplicationShell {...props} />)
   expect(screen.getByRole('link', { name: '历史跨期相对价值研究' })).toBeTruthy()
   rerender(<ApplicationShell {...props} mode="static" />)
   expect(screen.getByRole('link', { name: '历史跨期相对价值研究' })).toBeTruthy()
   expect(screen.getByRole('link', { name: '历史基差研究' })).toBeTruthy()
+})
+
+it('renders strategy titles and breadcrumb from the graph-derived routes', () => {
+  const [first, second] = strategyRoutesFixture.entries
+  const navigate = vi.fn()
+  const { container } = render(<ApplicationShell strategies={strategyRoutesFixture} path={second.path}
+    href={path => `#${path}`} navigate={navigate} header={null} mode="static">Map</ApplicationShell>)
+  expect(container.querySelector('.ant-menu-item-selected')?.textContent).toBe(second.title)
+  expect(container.querySelector('.ant-breadcrumb')?.textContent).toMatch(new RegExp(`策略.*${second.title}`))
+  const link = screen.getByRole('link', { name: first.title })
+  expect(link.getAttribute('href')).toBe(`#${first.path}`)
+  fireEvent.click(link)
+  expect(navigate).toHaveBeenCalledWith(first.path)
 })

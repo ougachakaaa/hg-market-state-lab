@@ -1,3 +1,4 @@
+import { strategyRoutesFixture } from '../strategyRoutesFixture'
 import { Alert, Flex, Typography } from 'antd'
 import ApplicationShell from '../../../src/app/ApplicationShell'
 import AppUiProvider from '../../../src/app/AppUiProvider'
@@ -7,10 +8,10 @@ import { workspaceRoutes } from '../../../src/app/routeInventory'
 import { staticHref, useHashRoute } from '../../../demo/runtime/hashRoutes'
 
 export default function StaticShellHarness() {
-  const { path, navigate } = useHashRoute()
-  const route = workspaceRoutes.find(route => route.path === path)!
+  const { path, navigate } = useHashRoute(strategyRoutesFixture)
+  const route = strategyRoutesFixture.match(path) ?? workspaceRoutes.find(route => route.path === path)!
   return <AppUiProvider>
-    <ApplicationShell path={path} navigate={navigate} href={staticHref} header={
+    <ApplicationShell strategies={strategyRoutesFixture} path={path} navigate={navigate} href={staticHref} header={
       <Typography.Text type="secondary">D1 静态 Shell 验证 · 匿名 · 无业务数据</Typography.Text>
     }>
       <Flex vertical gap="large">

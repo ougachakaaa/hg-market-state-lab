@@ -9,7 +9,7 @@ export default mergeConfig(demoConfig, {
   plugins: [staticPresentationIsolation(
     'research_catalog',
     /(api\/catalog\.ts|hooks\/useCatalog\.ts|page\/ResearchWorkspacePage\.tsx)$/,
-    ['src/app/routeInventory.ts', 'demo/runtime/hashRoutes.ts'],
+    ['src/app/routeInventory.ts', 'src/app/strategyRoutes.ts', 'tests/static/strategyRoutesFixture.ts', 'demo/runtime/hashRoutes.ts'],
   )],
   build: { outDir: fileURLToPath(new URL('../../.build/tests/catalog', import.meta.url)) },
 })

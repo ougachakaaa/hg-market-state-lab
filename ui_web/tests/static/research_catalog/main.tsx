@@ -1,3 +1,4 @@
+import { strategyRoutesFixture } from '../strategyRoutesFixture'
 import { Button, Flex, Typography } from 'antd'
 import { createRoot } from 'react-dom/client'
 import AppUiProvider from '../../../src/app/AppUiProvider'
@@ -11,7 +12,7 @@ const TEST_ONLY_DISCLOSURE =
 
 export function StaticCatalogHarness() {
   const params = new URLSearchParams(window.location.search)
-  const { path, navigate } = useHashRoute()
+  const { path, navigate } = useHashRoute(strategyRoutesFixture)
   const controller = useStaticCatalog(embeddedCatalog)
   if (path !== '/research') return <Flex vertical gap="middle" style={{ padding: 24 }}>
     <Typography.Title level={2} style={{ margin: 0 }}>静态导航目标</Typography.Title>

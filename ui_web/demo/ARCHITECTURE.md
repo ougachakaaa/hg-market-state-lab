@@ -64,7 +64,9 @@ disclaimers and safety checks. Release contracts live in
 
 The sole runtime lives in demo/runtime and consumes the validated private snapshot.
 Its adapters reuse feature public validators and Presentation. Identity contains Bundle
-ID, Preset, contract and actual source description. Eleven shared pages use hash routes. The Strategy Research Map at `#/roadmap` is the default entry and reads the same validated repository definition as Online.
+ID, Preset, contract and actual source description. Fixed pages and Graph-derived
+Strategy pages use hash routes. The default opens the first Strategy at
+`#/roadmap/:strategyId` using the same validated repository definition as Online.
 Explorer remains hidden from sidebar navigation.
 
 Build admits all nine Bundles before emitting separate static JS modules. The initial
@@ -94,5 +96,5 @@ Release content requirements enter [Release Requirements](release/ARCHITECTURE.m
 
 [Calendar Spread integration](CALENDAR_SPREAD.md) adds two independent formal HTTP
 Result captures and consumes the WP6 public Presentations. The sole active dataset
-has nine Bundles; the runtime has eleven routes. Capture, identity and offline consumption
-requirements remain in that integration contract. No publication is implied or authorized.
+has nine Bundles. Runtime route identities follow the [Workspace authority](../workspace.md).
+Capture, identity and offline consumption requirements remain in that integration contract. No publication is implied or authorized.

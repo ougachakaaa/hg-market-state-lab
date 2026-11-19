@@ -10,15 +10,16 @@ The sole static composition lives in demo/runtime. Formal FastAPI HTTP business 
 
 ## 1. Application Surfaces
 
-Production Web application 以 Research 为登录后默认入口，包含三个一级业务区：
+Production Web application 以 canonical Graph 的首个 Strategy 为登录后默认入口，包含四个一级业务区：
 
 ```text
+Strategy → Canonical Graph 中的各个 Strategy
 Daily Data → MO Option Chain / MO Premium Plane / Futures Calendar Spread（已实现）
 Research → Research Catalog & Workspace / Research Explorer（已实现）；Futures Basis Online Research / Calendar Spread Historical Relative Value（已实现 Web Consumer）
 Backtesting → Backtesting Overview / Futures Roll Long（WP7 Web Consumer 已实现）
 ```
 
-登录后默认进入 `/research`，不提供独立宣传首页。既有在线 feature 保持可访问且相互独立。Research Overview 是面向用户的 Research Study 导览，展示研究目的与独立 Web 页面的完成状态；不以 Capability readiness 推断完成状态。Research Explorer 是辅助成果浏览工具，保留正式路由，通过已知 URL 与浏览器历史访问，不作为 Study 或侧栏项目。Capability 发现继续由原 controller 与 validator 拥有。Futures Basis Online Research 已完成 WP8-B Web Consumer，并复用在线和离线共享 Reader。导航和 URL 由 [Workspace authority](workspace.md) 细化。
+登录后默认进入首个策略的 `/roadmap/:strategyId`，不提供独立宣传首页。既有在线 feature 保持可访问且相互独立。Research Overview 是面向用户的 Research Study 导览，展示研究目的与独立 Web 页面的完成状态；不以 Capability readiness 推断完成状态。Research Explorer 是辅助成果浏览工具，保留正式路由，通过已知 URL 与浏览器历史访问，不作为 Study 或侧栏项目。Capability 发现继续由原 controller 与 validator 拥有。Futures Basis Online Research 已完成 WP8-B Web Consumer，并复用在线和离线共享 Reader。导航和 URL 由 [Workspace authority](workspace.md) 细化。
 
 ## 2. Application Ownership
 
@@ -72,7 +73,7 @@ Application composition 不改变各 feature 的 backend dependencies，也不�
 
 认证 HTTP、用户状态、审批、Cookie、限流与同源协议唯一归 [Authentication MVP V1](../ui_http/AUTHENTICATION.md)。本节只拥有 application 交互和 gate；G3 已实现下述交互，G4 已完成本地跨层验收。
 
-Login / Registration 是 application-level 入口；普通登录进入 `/roadmap` 策略研究地图，直接访问已知深层页面且认证成功时保留该页面。用户可切换 Research Catalog、Research Explorer 和两个 MO feature；Futures Basis Research 已实现 Web Consumer。登录状态不属于各 feature 的 local query/presentation state，不经 sibling feature 共享；shell 不因此接管产品 query、DTO 或图表语义。
+Login / Registration 是 application-level 入口；普通登录进入默认策略的 `/roadmap/:strategyId`，直接访问已知深层页面且认证成功时保留该页面。用户可切换 Research Catalog、Research Explorer 和两个 MO feature；Futures Basis Research 已实现 Web Consumer。登录状态不属于各 feature 的 local query/presentation state，不经 sibling feature 共享；shell 不因此接管产品 query、DTO 或图表语义。
 
 同一认证 lifecycle 内，已取消的 feature 请求若仍返回 401，也必须关闭该 gate；已关闭的旧 lifecycle 不得影响后续登录。
 
@@ -123,5 +124,7 @@ login, logout and authentication pages retain their normal layout outside Worksp
 Calendar Spread has independent Daily and Historical Relative Value controllers under
 Production's authentication gate. Since WP7, shared navigation/overviews also expose
 the two admitted Static pages through formal Presentation, without online controllers.
-Both runtimes compose eleven routes; Demo's nine Bundles remain independently owned by
+Both runtimes compose fixed Workspace routes and a Strategy route family derived
+from the same Graph. Composition supplies the runtime Strategy catalog to the shared
+Shell and route adapters. Demo's nine Bundles remain independently owned by
 [Demo authority](demo/ARCHITECTURE.md).

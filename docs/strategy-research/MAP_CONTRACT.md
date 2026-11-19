@@ -14,6 +14,8 @@
 
 `edges` 使用 `from`、`to`、`kind`，可附 `label`。禁止重复节点 ID、同型同向重复边、自连和悬空端点。地图至少有一个 Strategy。
 
+每个 Strategy 的结构树由 `branch` 形成。进入该树的 Dimension 可关联独立 Study，Study 可跨维度和策略复用。每个可见 Study 或 Finding 在同一投影中只出现一次。展示层按投影内入向边在 `edges` 中的顺序选取主要视觉父节点。Study 使用 `attach`，Finding 使用 `derived_from`。主要视觉父节点用于分配画布空间，所有业务引用及证据来源仍按 Graph 记录。
+
 ## 状态与证据
 
 | 字段 | 取值 |
@@ -25,7 +27,7 @@
 
 `conclusion.summary` 记录当前解释或待办。一般节点的 `available` 与 `accepted` 需要至少一个具体 `result` 或 `report`。只有 `accepted` 可以记录正式结论，并必须附 `conclusion.review`。结论默认保留在 Study 内。独立 Finding 必须为 `accepted` 且记录自己的结论与审阅说明，证据链接从关联的已验收 Study 取得。每条 `derived_from` 都必须从具备具体证据的已验收 Study 出发。构建校验证据可定位性与记录一致性，研究结论及其适用范围由人工审阅。
 
-`references` 使用 `kind`、`label`、`target`、`value`。 `workspace` 用于共享路由清单中的 `navigation`。 `repository` 使用仓库相对文件路径。 `source` 引用公开 authority Markdown，`report` 引用研究或回测目录下的 `evidence/` 或 `reports/` 文件，`result` 引用这些目录中的 JSON 或 Demo Manifest 已注册的 Bundle。引用应指向可随 Git 交付的真实文件，禁止路径穿越或符号链接。临时 Run、页面导航和 authority 文档只提供上下文，结果与报告的内容和生命周期由原业务模块负责。
+`references` 使用 `kind`、`label`、`target`、`value`。 `workspace` 用于指向固定共享页面或默认策略别名 `/roadmap` 的 `navigation`。 `repository` 使用仓库相对文件路径。 `source` 引用公开 authority Markdown，`report` 引用研究或回测目录下的 `evidence/` 或 `reports/` 文件，`result` 引用这些目录中的 JSON 或 Demo Manifest 已注册的 Bundle。引用应指向可随 Git 交付的真实文件，禁止路径穿越或符号链接。临时 Run、页面导航和 authority 文档只提供上下文，结果与报告的内容和生命周期由原业务模块负责。
 
 ## 添加 Study
 
@@ -49,4 +51,4 @@
 }
 ```
 
-在 `edges` 加入 `{"from":"dimension-futures-long-trading-cost","to":"study-roll-liquidity","kind":"attach"}`。在另一维度复用同一 Study 时，只追加引用该 ID 的边。Online 开发页重新加载并校验定义，Static Demo 重建后在 `#/roadmap` 展示。
+在 `edges` 加入 `{"from":"dimension-futures-long-trading-cost","to":"study-roll-liquidity","kind":"attach"}`。在另一维度复用同一 Study 时，只追加引用该 ID 的边。Online 开发页重新加载并校验定义，Static Demo 重建后在对应的 `#/roadmap/:strategyId` 展示。

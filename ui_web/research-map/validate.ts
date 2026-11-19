@@ -2,7 +2,7 @@ import { readFileSync, realpathSync, statSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { fileURLToPath, URL } from 'node:url'
 import { Ajv } from 'ajv'
-import { isStaticWorkspacePath } from '../src/app/routeInventory.ts'
+import { isWorkspaceReferencePath } from '../src/app/routeInventory.ts'
 import { edgeId, isEvidenceReference, type ResearchMap, type ResearchReference } from './definition.ts'
 
 const root = fileURLToPath(new URL('../../', import.meta.url))
@@ -19,7 +19,7 @@ function fail(message: string): never {
 function validateReference(nodeId: string, reference: ResearchReference) {
   const { kind, value } = reference
   if (reference.target === 'workspace') {
-    if (!isStaticWorkspacePath(value)) fail(`${nodeId} references unknown shared workspace path ${value}`)
+    if (!isWorkspaceReferencePath(value)) fail(`${nodeId} references unknown shared workspace path ${value}`)
     return
   }
   const evidencePath = researchDirectory.test(value) && /\/(evidence|reports)\//.test(value)

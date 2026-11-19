@@ -1,7 +1,7 @@
 import { Button, Flex, Typography } from 'antd'
 import type { MouseEvent } from 'react'
 import type { ResearchEdge, ResearchNode, ResearchReference } from '../../../research-map/definition'
-import type { WorkspacePath } from '../../app/routeInventory'
+import type { WorkspaceDestination } from '../../app/routeInventory'
 import { edgeStyles, evidenceLabels, implementationLabels, planningLabels } from './graph'
 
 const conclusionLabels = { pending: '待研究或验收', supported: '支持假设', rejected: '否定假设', inconclusive: '无定论' }
@@ -9,11 +9,11 @@ const referenceLabels = { navigation: '页面', source: '来源', result: '结�
 const repository = 'https://github.com/ougachakaaa/hg-market-state-lab/blob/develop/'
 
 export type MapNavigation = {
-  navigate: (path: WorkspacePath) => void
-  href: (path: WorkspacePath) => string
+  navigate: (path: WorkspaceDestination) => void
+  href: (path: WorkspaceDestination) => string
 }
 
-function followWorkspace(event: MouseEvent<HTMLElement>, path: WorkspacePath, navigate: MapNavigation['navigate']) {
+function followWorkspace(event: MouseEvent<HTMLElement>, path: WorkspaceDestination, navigate: MapNavigation['navigate']) {
   if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return
   event.preventDefault()
   navigate(path)

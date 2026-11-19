@@ -1,23 +1,23 @@
 import { useCallback, useEffect, useState } from 'react'
-import { defaultWorkspacePath, isStaticWorkspacePath, type StaticWorkspacePath, type WorkspacePath } from '../../src/app/routeInventory'
+import type { StrategyRoutes } from '../../src/app/strategyRoutes'
+import type { WorkspaceDestination } from '../../src/app/routeInventory'
 
-export const staticHref = (path: WorkspacePath) => `#${path}`
-export function hashWorkspacePath(hash: string): StaticWorkspacePath {
+export const staticHref = (path: WorkspaceDestination) => `#${path}`
+export function hashWorkspacePath(hash: string, strategies: StrategyRoutes) {
   // Server query identity is never part of the static runtime.
-  const path = hash.slice(1).split('?')[0]
-  return isStaticWorkspacePath(path) ? path : defaultWorkspacePath
+  return strategies.resolve(hash.slice(1).split('?')[0], 'static')
 }
-function normalizeHash() {
-  const path = hashWorkspacePath(window.location.hash)
-  if (window.location.hash !== staticHref(path)) {
-    window.history.replaceState(null, '', `${window.location.pathname}${window.location.search}${staticHref(path)}`)
-  }
-  return path
-}
-export function useHashRoute() {
-  const [path, setPath] = useState(() => hashWorkspacePath(window.location.hash))
+
+export function useHashRoute(strategies: StrategyRoutes) {
+  const [path, setPath] = useState(() => hashWorkspacePath(window.location.hash, strategies))
   useEffect(() => {
-    const sync = () => setPath(normalizeHash())
+    const sync = () => {
+      const next = hashWorkspacePath(window.location.hash, strategies)
+      if (window.location.hash !== staticHref(next)) {
+        window.history.replaceState(null, '', `${window.location.pathname}${window.location.search}${staticHref(next)}`)
+      }
+      setPath(next)
+    }
     sync()
     window.addEventListener('hashchange', sync)
     window.addEventListener('popstate', sync)
@@ -25,10 +25,11 @@ export function useHashRoute() {
       window.removeEventListener('hashchange', sync)
       window.removeEventListener('popstate', sync)
     }
-  }, [])
-  const navigate = useCallback((next: WorkspacePath) => {
+  }, [strategies])
+  const navigate = useCallback((destination: WorkspaceDestination) => {
+    const next = strategies.resolve(destination, 'static')
     if (window.location.hash !== staticHref(next)) window.location.hash = staticHref(next)
-    setPath(hashWorkspacePath(staticHref(next)))
-  }, [])
+    setPath(next)
+  }, [strategies])
   return { path, navigate }
 }
