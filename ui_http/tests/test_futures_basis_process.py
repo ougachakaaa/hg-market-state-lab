@@ -2,9 +2,11 @@
 
 import os
 import socket
+import sqlite3
 import subprocess
 import sys
 import time
+from contextlib import closing
 from pathlib import Path
 
 import httpx
@@ -23,6 +25,14 @@ def test_process_restart_preserves_completed_and_interrupts_running(
     monkeypatch.setenv("LAB_AUTH_MODE", "loopback-http")
     monkeypatch.setenv("LAB_AUTH_ORIGIN", origin)
     monkeypatch.setenv("LAB_RESEARCH_PUBLICATION_ROOT", str(tmp_path / "publications"))
+    run_root = tmp_path / "futures-basis-runs"
+    run_root.mkdir()
+    legacy = run_root / "runs.sqlite3"
+    legacy_id = "e" * 32
+    with closing(sqlite3.connect(legacy)) as connection, connection:
+        connection.execute("CREATE TABLE runs (run_id TEXT PRIMARY KEY, obsolete_record BLOB)")
+        connection.execute("INSERT INTO runs VALUES (?, ?)", (legacy_id, b"{"))
+    legacy_before = legacy.read_bytes()
     service = create_service()
     service.register("restart_user", "synthetic-test-password")
     service.approve(service.list_pending()[0].id)
@@ -72,6 +82,10 @@ def test_process_restart_preserves_completed_and_interrupts_running(
                 pytest.fail("Synthetic run did not complete")
             before = client.get(f"{path}/{completed_id}/report")
             assert before.status_code == 200
+            for suffix in ("", "/report"):
+                old = client.get(f"{path}/{legacy_id}{suffix}")
+                assert old.status_code == 404
+                assert old.json()["error"]["kind"] == "run_not_found"
             # The completed worker may still be releasing its process permit.
             for _ in range(100):
                 accepted = client.post(path, json=body)
@@ -109,3 +123,4 @@ def test_process_restart_preserves_completed_and_interrupts_running(
         if server.poll() is None:
             server.terminate()
             server.wait(timeout=10)
+    assert legacy.read_bytes() == legacy_before

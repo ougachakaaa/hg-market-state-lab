@@ -251,7 +251,7 @@ export interface components {
              * Format: date-time
              */
             finished_at: string | null;
-            request: components["schemas"]["FuturesBasisStatusRequest"];
+            request: components["schemas"]["FuturesBasisImmutableRequest"];
             /** Result Available */
             result_available: boolean;
             /** Result Status */
@@ -287,34 +287,6 @@ export interface components {
         };
         /** FuturesBasisRunRequest */
         FuturesBasisRunRequest: {
-            /**
-             * End Date
-             * Format: date
-             */
-            end_date: string;
-            /**
-             * Product Code
-             * @enum {string}
-             */
-            product_code: "IM" | "IC" | "IF" | "IH";
-            /**
-             * Start Date
-             * Format: date
-             */
-            start_date: string;
-        };
-        /** FuturesBasisStatusRequest */
-        FuturesBasisStatusRequest: {
-            /**
-             * Analysis Profile
-             * @enum {string}
-             */
-            analysis_profile: "r01a_standard_v1" | "r01a_standard_v2";
-            /**
-             * Case
-             * @constant
-             */
-            case: "futures_basis_v1";
             /**
              * End Date
              * Format: date

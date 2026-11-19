@@ -28,12 +28,9 @@ framework or distributed execution is introduced.
 
 ## Distribution V2 status
 
-The V2 profile and reader below are implemented in WP2. Known V1 completed Runs
-retain owner-scoped status and their stored bytes. Their reports return
-`unsupported_version`. The immutable V1 profile contains the original three
-ordered Histogram Specifications below and the same quantiles.
-`r01a_standard_v1` must never mean a four-metric request. Current V1 payloads cannot
-be read as V2. The case identity and product/date request fields remain unchanged.
+The V2 profile and reader below define current online execution. The application
+creates, executes, recovers and reads only current-version Runs. Owner-scoped
+status and report reads return `run_not_found` for IDs absent from the current store.
 
 ## Request and standard analysis profile
 
@@ -67,16 +64,11 @@ IntervalCountSpec(
 ```
 
 The histogram order is `basis_value`, `basis_ratio`, `annualized_basis_ratio`,
-`annualized_basis_value`: preserve the original relative order and append the new
-metric. The first three specs/quantiles are unchanged from the immutable V1 preset;
-the fourth reuses raw point edges with its distinct annualized-point unit. These
-are formal IntervalCount edges, unrelated to frontend selectable Bin Width or
-Tail Exclusion. WP2 updates ReportRequest validation and executable usage accordingly.
-The profile name
-is immutable: a changed quantile, edge or unit requires a new profile version and
-new run request identity. Historical runs retain the formal `ReportRequest` in
-their stored reader projection, so a later code revision cannot silently
-reinterpret them.
+`annualized_basis_value`. The fourth spec uses raw point edges with its distinct
+annualized-point unit. The formal IntervalCount edges define the server-side
+analysis independently of frontend Bin Width and Tail Exclusion.
+A changed quantile, edge or unit requires a new profile version and
+new run request identity. The stored reader includes the formal `ReportRequest`.
 
 Validation before any run creation or upstream I/O:
 
@@ -138,7 +130,8 @@ browser polls status. No HTTP request remains open during acquisition or
 computation. No wall-clock deadline or cancellation is provided; provider
 availability and long-running work are not promised.
 
-Startup recovery excludes the current process active Run and marks other persisted `PENDING` or `RUNNING` run
+Startup recovery scans only the current store, excludes the current process active
+Run and marks other persisted `PENDING` or `RUNNING` Runs
 `INTERRUPTED`, with `finished_at` set to the recovery time. A run that is not the
 current process's active run is never reported as running. If the process stops
 before the result and completed state transaction commits, the
@@ -199,14 +192,12 @@ stay `partial`; they are retained in the report as failures.
 
 Bin Width and `tail_exclusion_pct` never enter the online semantic request or trigger
 execution, acquisition, status changes or report rewriting. The producer always
-publishes the complete formal result. Unsupported old results may be rejected or
-owned development Runs rebuilt under the root pre-production retention policy;
-no compatibility store, automatic cleanup or migration framework is required.
-WP1 performs no cleanup. Existing ownership, integrity and safe-failure rules remain.
+publishes the complete formal result.
 
 ## Runtime storage and retention
 
-The case owns an independent portable SQLite database `<run_root>/runs.sqlite3`. Configuration, initialization, bounded reads, recovery, trust and retention are defined exclusively by [Online storage](ONLINE_STORAGE.md). Old per-run directories are ignored and never read, migrated or deleted.
+Configuration, versioned paths, initialization, bounded reads, recovery, trust and
+retention are defined by [Online storage](ONLINE_STORAGE.md).
 
 ## Report-read boundary and evidence scope
 

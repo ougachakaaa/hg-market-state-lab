@@ -235,10 +235,11 @@ instance per backend process. `submit(FuturesBasisRequest(...), owner_scope)` re
 the accepted `PENDING` snapshot immediately; `get_run(run_id, owner_scope)` returns
 the persisted status, and `get_report(run_id, owner_scope)` reads the completed WP5
 reader projection without running research. `OnlineError.kind` is the safe application
-error for the HTTP adapter to map. The server selects `r01a_standard_v1`; callers
+error for the HTTP adapter to map. The server selects the current analysis profile; callers
 cannot supply statistical parameters.
 
-The default store is `market_research/.runtime/futures_basis_online/` (Git ignored).
+The default base directory is `market_research/.runtime/futures_basis_online/` (Git ignored).
+See [Online storage](descriptive/cases/futures_basis/ONLINE_STORAGE.md) for the active database path.
 An absolute server-owned `LAB_FUTURES_BASIS_RUN_ROOT` can be supplied through the
 repository root `.env` or process environment. Single-process operation is required;
 no queue, cancellation, HTTP route or Publication admission is provided by this API.

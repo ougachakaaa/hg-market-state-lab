@@ -33,8 +33,7 @@ _SCHEMA = (
     "result_length INTEGER, profile TEXT, scientific_status TEXT)",
     "CREATE TABLE results (run_id TEXT PRIMARY KEY REFERENCES runs(run_id), payload BLOB NOT NULL)",
 )
-_HISTORICAL_REPORT_PROFILE = "futures_basis_report_evidence_v1"
-_HISTORICAL_ANALYSIS_PROFILE = "r01a_standard_v1"
+ACTIVE_RUN_VERSION = 2
 _RETRYABLE_SQLITE_CODES = {sqlite3.SQLITE_BUSY, sqlite3.SQLITE_LOCKED, sqlite3.SQLITE_IOERR}
 
 
@@ -69,8 +68,8 @@ class FuturesBasisSQLiteRunStore:
     def __init__(self, root: Path) -> None:
         if not root.is_absolute() or ".." in root.parts:
             raise OnlineError("unavailable")
-        self.root = root
-        self.path = root / "runs.sqlite3"
+        self.root = root / "versions" / f"v{ACTIVE_RUN_VERSION}"
+        self.path = self.root / "runs.sqlite3"
         self._identity: tuple[int, int] | None = None
         self._root_identity: tuple[int, int] | None = None
 
@@ -206,10 +205,13 @@ class FuturesBasisSQLiteRunStore:
 
     @staticmethod
     def _schema(connection: sqlite3.Connection) -> None:
+        version = connection.execute("PRAGMA user_version").fetchone()[0]
+        if version > 0 and version != 1:
+            raise OnlineError("unsupported_version")
         objects = connection.execute(
             "SELECT sql FROM sqlite_master WHERE name NOT LIKE 'sqlite_%' ORDER BY name"
         ).fetchall()
-        if connection.execute("PRAGMA user_version").fetchone()[0] != 1 or objects != [
+        if version != 1 or objects != [
             (_SCHEMA[1],),
             (_SCHEMA[0],),
         ]:
@@ -281,10 +283,7 @@ class FuturesBasisSQLiteRunStore:
             req["case"],
         )
         validate_request(request, check_today=False)
-        expected_request = _request_data(request)
-        if status == "COMPLETED" and profile == _HISTORICAL_REPORT_PROFILE:
-            expected_request["analysis_profile"] = _HISTORICAL_ANALYSIS_PROFILE
-        if req != expected_request or (request.end_date - request.start_date).days + 1 > 1096:
+        if req != _request_data(request) or (request.end_date - request.start_date).days + 1 > 1096:
             raise OnlineError("corrupt")
         _validate_state(s)
         if s["created_at"] != m["created_at"] or s["status"] != status:
@@ -299,10 +298,13 @@ class FuturesBasisSQLiteRunStore:
                 type(length) is not int
                 or not 0 < length <= MAX_REPORT_BYTES
                 or result != ("blob", length)
-                or profile not in (PROFILE_REPORT, _HISTORICAL_REPORT_PROFILE)
                 or science != s["result_status"]
+                or not isinstance(profile, str)
+                or not profile
             ):
                 raise OnlineError("corrupt")
+            if profile != PROFILE_REPORT:
+                raise OnlineError("unsupported_version")
         elif result is not None or any(x is not None for x in (length, profile, science)):
             raise OnlineError("corrupt")
         return m, s
@@ -357,13 +359,9 @@ class FuturesBasisSQLiteRunStore:
         payload: bytes,
         metadata: dict[str, Any],
         state: dict[str, Any],
-        *,
-        stored_profile: str | None = None,
     ) -> Any:
         reader = _decode(payload)
         if not isinstance(reader, dict):
-            raise OnlineError("corrupt")
-        if stored_profile == _HISTORICAL_REPORT_PROFILE and reader.get("profile") != stored_profile:
             raise OnlineError("corrupt")
         if reader.get("profile") != PROFILE_REPORT:
             raise OnlineError("unsupported_version")
@@ -424,14 +422,13 @@ class FuturesBasisSQLiteRunStore:
                     if s["status"] in {"PENDING", "RUNNING"}
                     else "result_unavailable"
                 )
-            payload, profile = c.execute(
-                "SELECT results.payload, runs.profile FROM results JOIN runs USING (run_id) "
-                "WHERE run_id=?",
+            (payload,) = c.execute(
+                "SELECT payload FROM results WHERE run_id=?",
                 (run_id,),
             ).fetchone()
             if hashlib.sha256(payload).hexdigest() != s["result_digest"]:
                 raise OnlineError("corrupt")
-            return self.validate_payload(payload, m, s, stored_profile=profile)
+            return self.validate_payload(payload, m, s)
 
     def recover(self, active: tuple[str, str] | None = None) -> None:
         with self._connection(write=True, initialize=True) as c:

@@ -82,6 +82,18 @@ This is guidance, not an additional mandatory workflow.
 - 此规则只放宽**历史开发数据的保留义务**，不放宽运行中的业务契约、发布身份/引用一致性、权限隔离、完整性验证、安全约束或 Public Demo 真实数据与授权门槛。
 - 用户明确宣布投产后，本项破坏性清理授权立即失效；任何生产数据删除、清库或不兼容存储切换，均须重新制定数据保留/迁移方案并获得明确批准。
 
+### Run Version Isolation & Sealing Policy
+
+开发期 Run 的默认不兼容升级策略是显式递增 Run Contract Version，为当前版本分配独立存储。
+当前运行时只创建、执行、恢复和查询当前版本。切换前确认旧存储写入者已退出，封版后原地
+保留旧数据库及 sidecar 的原始字节。历史存储不参与当前启动验证或 Recovery，也不自动
+删除、转换或迁移。当前运行时不保留旧算法、业务 DTO、Reader Profile 或迁移链。未来如
+确有需要，由独立的可选只读 Reader 显式指定历史版本与 Run ID。
+
+未知版本和存储损坏分别诊断。当前版本存储损坏必须失败关闭，禁止用版本递增绕过校验。
+默认保留不撤销上文已授权的定向开发期清理。正式投产后的保留与升级政策另行审查。
+Futures Basis 的具体路径与可执行约束见 [Online Storage](market_research/descriptive/cases/futures_basis/ONLINE_STORAGE.md)。
+
 ## Repository-wide Rules
 
 - 清理操作被执行工具以 `blocked by policy` 等策略拒绝时，不得仅报告受阻并留下产物不作交接。对于已经核实归属、用途和可删除性的临时或无用产物，必须向用户提供可直接执行的删除命令，注明执行目录、准确目标与影响范围，并明确尚未删除；由用户执行清理。Windows 命令使用 PowerShell `Remove-Item -LiteralPath`，递归删除前核实绝对路径和清理边界；不使用宽泛通配符，不波及用户改动、凭证或正式证据。不确定可删除性的内容先澄清，不得把“无用”作为未经核实的删除依据，也不得更换工具或语言绕过策略拒绝。

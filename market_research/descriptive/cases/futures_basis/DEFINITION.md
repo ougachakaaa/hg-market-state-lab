@@ -6,9 +6,7 @@ outcomes under [Observation](OBSERVATION.md).
 
 ## Definition version
 
-The implemented four-metric definition is `futures_basis_definition_v2`.
-`futures_basis_definition_v1` remains the immutable three-metric
-definition; its formulas are not changed or reinterpreted. The case identity remains
+The current four-metric definition is `futures_basis_definition_v2`. Its case identity is
 `futures_basis_v1`. Definition version is distinct from input-profile, analysis-profile,
 reader-profile and packaging versions; changing the metric set does not itself change
 canonical upstream input bytes or their format.
@@ -55,8 +53,7 @@ no D+1, zero, interpolation, forward fill or other substitute. Valid raw basis_v
 and basis_ratio remain available. This is neither missing market data nor a
 calculation failure. The [outcome precedence](OBSERVATION.md#outcomes-and-precedence)
 still applies before expiry-day applicability, including excluded prices and missing
-underlying facts; neither is masked by expiry_day. The original three formulas remain
-unchanged; the added annualized point metric is explicitly identified by definition V2.
+underlying facts.
 
 Reusable principle: for a derived metric requiring a strictly positive time span,
 a zero span that removes its business definition should be expressed as Not

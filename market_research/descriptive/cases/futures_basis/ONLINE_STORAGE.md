@@ -19,14 +19,36 @@ is owned by [Online application](ONLINE_APPLICATION.md#distribution-v2-status). 
 `LAB_FUTURES_BASIS_RUN_ROOT` remains an absolute server-controlled **directory root**, without parent
 traversal. Unset configuration keeps `market_research/.runtime/futures_basis_online/`, independent of working directory.
 Resolve configuration only through root `lab_config`; process environment precedes root
-`.env`. The owned database is `<root>/runs.sqlite3`; it is independent of W1/W2's other
-store, Publication, Auth, DataLake and Workbench. Database and sidecars stay outside Git.
+`.env`. Research owns the active Run Contract Version. Resolve its store as
+`<root>/versions/v<ACTIVE_RUN_VERSION>/runs.sqlite3`. V2 is active. Only this path
+participates in initialization, recovery, writes and reads. It is independent of
+Backtesting, Publication, Auth, DataLake and Workbench. Database and sidecars stay outside Git.
+
+### Version cutover and sealing
+
+The unversioned `<root>/runs.sqlite3` is one sealed Legacy Store, including any V2
+Runs already in it. Leave it and its sidecars in place. No current operation opens,
+validates, copies, migrates, recovers or deletes them or any superseded version.
+Confirm old backend writers have stopped before cutover and check the old database
+and sidecars for byte preservation across startup, execution and reads. If writer
+quiescence cannot be confirmed, stop the cutover. Old IDs are absent from current queries.
+
+For each incompatible Research Run contract change, explicitly increase
+`ACTIVE_RUN_VERSION` and verify that the new runtime starts and runs with the
+superseded store present and unchanged. The current contract snapshot guards
+representative request, result and storage identities. Review its changes against
+the previous commit and do not rebaseline an incompatible change at the same
+version. Contract version is independent of SQLite `user_version`, record format,
+analysis profile and report reader identities. A version increment requires a
+contract change and cannot be used to recover a damaged current store.
+
+### Current store initialization
 
 Only a writing/initialization operation may create the database. Create the schema and
 set `PRAGMA user_version=1` in one transaction. An existing database must have version 1
 and the expected structure; version 0 is not an invitation to initialize an existing
-file. Reject unknown/incompatible versions, missing or malformed structures and corrupt
-SQLite explicitly using existing `corrupt`/`unavailable` application categories; ordinary
+file. Classify an unknown positive SQLite schema version as `unsupported_version`.
+Missing or malformed expected schema and corrupt SQLite fail as `corrupt`. Ordinary
 I/O, permissions and lock/capacity failures are unavailable. Do not repair, replace,
 upgrade or silently recreate a database. Run creation is permitted to initialize an
 absent database; unavailable initialization isolates this product, not backend startup
@@ -34,10 +56,8 @@ or read-only preflight. No operation other than run submission creates a Run. Re
 an absent database themselves; an absent owned Run is `run_not_found`. Application startup
 initialization/recovery is an explicit writing operation, not a status-read side effect.
 
-Old per-run directories are disposable and ignored, including during recovery. A new
-SQLite database may be created inside the existing configured root without reading,
-copying, migrating or deleting old files. An old Run ID is not found in the new store.
-No automatic cleanup, TTL, quota, deletion API or compatibility path is added.
+Old per-run directories are ignored, including during recovery. Retention follows the
+repository policy for development Runs.
 
 ## Logical records and validation
 
@@ -48,14 +68,10 @@ SHA-256 where applicable. Preserve existing request canonicalization, metadata l
 and request association checks. A result record is keyed by Run identity and contains
 the exact existing canonical UTF-8 JSON bytes, not re-encoded SQLite JSON values.
 Result profile is bound to the exact reader identity owned by
-[Evidence](EVIDENCE.md#version-ownership-and-rollout). V2 is the current report profile.
-Known V1 completed rows retain their V1 request identity and remain eligible for
-recovery and owner-scoped status after metadata, state and BLOB association checks.
-Report reads verify size and digest and reject an intact V1 report as
-`unsupported_version`. Unknown stored profile values fail closed. The store retains
-the original rows and report bytes at `user_version=1`. SQL layout and connection encapsulation are private
-implementation details; parameterize all identity/owner queries and never derive SQL
-or file paths from a Run ID.
+[Evidence](EVIDENCE.md#version-ownership-and-rollout). The request and result association
+must match the current profile. Unknown stored profile values fail closed. SQL layout
+and connection encapsulation are private. Parameterize all identity/owner queries and
+never derive SQL or file paths from a Run ID.
 
 Reject malformed IDs before storage access. Check immutable owner before returning state
 or validating owner-private contents: malformed, absent and foreign IDs all remain
@@ -81,8 +97,8 @@ are atomic, conditional on the expected nonterminal state. Never overwrite a ter
 row; FAILED/INTERRUPTED serve no result. Commit before reporting success; rollback on
 failure. Serialization and computation do not hold long-lived database/state locks.
 
-Startup recovery atomically marks abandoned PENDING/RUNNING rows INTERRUPTED with recovery
-finish time and existing safe interruption failure. Initialization/recovery is serialized
+Startup recovery atomically marks abandoned current-version PENDING/RUNNING rows
+INTERRUPTED with recovery finish time and a safe interruption failure. Initialization/recovery is serialized
 with process admission and excludes the actual current-process active Run. Do not resume
 work or infer success from orphan bytes. A crash before completion commit recovers as
 interrupted; a crash after commit preserves the validated completed result. Corrupt state

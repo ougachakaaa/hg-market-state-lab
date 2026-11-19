@@ -8,6 +8,7 @@ from time import monotonic
 from fastapi import FastAPI
 
 from market_research.descriptive.cases.futures_basis import (
+    ACTIVE_RUN_VERSION,
     FuturesBasisOnlineApplication,
     OnlineError,
     OnlineInitializationError,
@@ -60,10 +61,12 @@ class OnlineRuntime:
                 )
                 _LOG.error(
                     "futures_basis_initialization_failed pid=%s attempt=%s operation=%s "
-                    "stage=%s category=%s exception_type=%s sqlite_code=%s action=%s",
+                    "active_run_version=%s stage=%s category=%s exception_type=%s "
+                    "sqlite_code=%s action=%s",
                     getpid(),
                     self.attempts,
                     operation,
+                    ACTIVE_RUN_VERSION,
                     stage,
                     category,
                     exception_type,
@@ -71,13 +74,14 @@ class OnlineRuntime:
                     action,
                 )
                 raise OnlineError("unavailable") from None
-            if self.attempts > 1:
-                _LOG.info(
-                    "futures_basis_initialization_recovered pid=%s attempt=%s operation=%s",
-                    getpid(),
-                    self.attempts,
-                    operation,
-                )
+            _LOG.info(
+                "futures_basis_initialization_succeeded pid=%s attempt=%s operation=%s "
+                "active_run_version=%s",
+                getpid(),
+                self.attempts,
+                operation,
+                ACTIVE_RUN_VERSION,
+            )
             return self.application
 
 

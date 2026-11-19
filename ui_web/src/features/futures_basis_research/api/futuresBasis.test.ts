@@ -47,16 +47,18 @@ describe('Futures Basis HTTP adapter', () => {
     expect(unauthorized).toHaveBeenCalledOnce()
   })
 
-  it('accepts historical completed status and projects an unsupported historical report', async () => {
+  it('rejects historical status identities and classifies missing run links', async () => {
     const historical = {
       ...accepted, request: { ...immutable, analysis_profile: 'r01a_standard_v1' },
       status: 'COMPLETED', started_at: accepted.created_at, finished_at: accepted.created_at,
       result_available: true, result_status: 'complete', failure: null,
     }
+    const missing = { error: { kind: 'run_not_found', detail: 'safe', param: null } }
     vi.stubGlobal('fetch', vi.fn().mockResolvedValueOnce(response(historical))
-      .mockResolvedValueOnce(response({ error: { kind: 'unsupported_version', detail: 'safe', param: null } }, 409)))
-    expect(await getRun(id, signal())).toEqual(historical)
-    await expect(getReport(id, signal())).rejects.toMatchObject({ kind: 'unsupported_version' })
+      .mockResolvedValueOnce(response(missing, 404)).mockResolvedValueOnce(response(missing, 404)))
+    await expect(getRun(id, signal())).rejects.toMatchObject({ kind: 'invalid_response' })
+    await expect(getRun(id, signal())).rejects.toMatchObject({ kind: 'run_not_found' })
+    await expect(getReport(id, signal())).rejects.toMatchObject({ kind: 'run_not_found' })
   })
 })
 

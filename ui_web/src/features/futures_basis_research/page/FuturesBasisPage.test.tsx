@@ -76,11 +76,11 @@ it('shows unconfirmed submission independently of preflight and avoids exposing 
   expect(s.submit).not.toHaveBeenCalled()
 })
 
-it('keeps the completed state when the historical report version is unsupported', () => {
-  const s = state({ phase: 'REPORT_ERROR', errorRead: 'report', run: { run_id: 'a'.repeat(32), status: 'COMPLETED', request: { ...request, analysis_profile: 'r01a_standard_v1' } }, error: new ResearchError('unsupported_version') })
+it('allows a report read retry for an unsupported payload in the current store', () => {
+  const s = state({ phase: 'REPORT_ERROR', errorRead: 'report', run: { run_id: 'a'.repeat(32), status: 'COMPLETED', request }, error: new ResearchError('unsupported_version') })
   render(<FuturesBasisPage />)
   expect(screen.getByText('已完成')).toBeTruthy()
-  expect(screen.getByText('当前服务无法读取此版本的研究报告。')).toBeTruthy()
+  expect(screen.getByText('此研究记录的版本暂不受支持。')).toBeTruthy()
   fireEvent.click(screen.getByRole('button', { name: '重新读取报告' }))
   expect(s.retry).toHaveBeenCalledWith(true)
   expect(s.submit).not.toHaveBeenCalled()

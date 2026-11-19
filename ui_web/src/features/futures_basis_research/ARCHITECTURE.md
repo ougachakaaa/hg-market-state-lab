@@ -11,10 +11,8 @@ presentation only. It never acquires market facts, executes Research or recomput
 Basis, Slot, DTE, formal statistics, coverage or run length. The authorized numerical
 presentation exception is temporary Histogram Aggregation under
 [Distribution presentation](DISTRIBUTION.md), reached through [Presentation authority](PRESENTATION.md).
-The shared reader implements V2 metric/width admission and presentation (WP3).
-WP4 implements rank-based tail selection and complete exclusion audit. The committed V1 Demo Bundle requires WP5 recapture. Research's [Roadmap](../../../../market_research/descriptive/cases/futures_basis/ROADMAP.md#distribution-v2-handoff)
-distinguishes Authority readiness from implementation.
-WP6 defines this authoritative slice; WP8 implements it and the offline reader regression.
+The reader supports the current four metrics, width presets, rank-based tail
+selection and complete exclusion audit.
 
 ## Application composition
 
@@ -161,11 +159,11 @@ the Metric and Bin Width controls over its temporary presentation bins.
   status/report reads. A persistent storage failure directs the user to the
   operator, who checks backend logs and restarts after addressing the cause if
   required. The UI cannot infer restart requirements from the generic 503.
-- A completed historical Run keeps its status when its report version is
-  unsupported. Read retries never resubmit research.
+- Read retries never resubmit research.
 - 401: application gate; stale results are discarded.
 - 403 origin failure: show access denied without treating the account as invalid.
-- Unknown/foreign run: same not-found presentation; no ownership disclosure.
+- Runs outside the current query scope and foreign Runs use the same
+  missing or inaccessible Run state.
 
 The UI never displays internal filesystem paths, owner IDs, provider credentials,
 raw exception text, private source metadata or a second interpretation of the

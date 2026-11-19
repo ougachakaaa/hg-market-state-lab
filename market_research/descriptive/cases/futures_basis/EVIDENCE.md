@@ -5,11 +5,10 @@ and replay contract, not Publication V1 or a generic serializer framework.
 
 ## Version ownership and rollout
 
-WP1 accepts this target; WP2 implements it. The reader and scientific evidence profile
+The current reader and scientific evidence profile
 is `futures_basis_report_evidence_v2`, paired with `futures_basis_definition_v2`
-and the four-metric ReportRequest. V1 remains a three-metric payload and must not be
-silently upgraded. Unknown or mismatched profile/definition/request associations
-are rejected, not repaired. A current reader need not provide a legacy adapter.
+and the four-metric ReportRequest. Unknown or mismatched profile, definition or
+request associations are rejected.
 
 The file-inventory/digest manifest format remains `futures_basis_report_manifest_v1`:
 its structure is unchanged, while payload profile/version checks must require the

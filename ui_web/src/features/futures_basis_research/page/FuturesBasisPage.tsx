@@ -108,7 +108,7 @@ export default function FuturesBasisPage() {
     {research.phase === 'UNKNOWN_RUN' && <Alert showIcon type="warning" title="研究不存在或不可访问" description="请核对 Run 链接，或显式提交新的研究。" />}
     {research.error && research.phase !== 'UNKNOWN_RUN' && <Alert showIcon type="error"
       title={retryReport ? '报告读取失败' : '状态读取失败'}
-      description={research.error.kind === 'network' ? '网络读取失败，请手动重试；不会创建新 Run。' : research.error.kind === 'invalid_response' ? '读取响应无法验证，请手动重试。' : retryReport && research.error.kind === 'unsupported_version' ? '当前服务无法读取此版本的研究报告。' : messages[research.error.kind] ?? '读取失败，请手动重试。'} />}
+      description={research.error.kind === 'network' ? '网络读取失败，请手动重试；不会创建新 Run。' : research.error.kind === 'invalid_response' ? '读取响应无法验证，请手动重试。' : messages[research.error.kind] ?? '读取失败，请手动重试。'} />}
     {['STATUS_ERROR', 'REPORT_ERROR', 'UNAVAILABLE'].includes(research.phase) && <Flex><Button icon={<ReloadOutlined aria-hidden="true" />} disabled={research.submitting} onClick={() => research.retry(retryReport)}>{retryReport ? '重新读取报告' : '重新读取状态'}</Button></Flex>}
     {research.run && ['FAILED', 'INTERRUPTED'].includes(research.phase) && <Flex vertical gap="small">
       <Alert showIcon type="error" title={research.phase === 'INTERRUPTED' ? '研究执行已中断' : '研究执行失败'} description={'failure' in research.run && research.run.failure ? research.run.failure.reason : '未生成研究报告，请检查服务后显式重试。'} />

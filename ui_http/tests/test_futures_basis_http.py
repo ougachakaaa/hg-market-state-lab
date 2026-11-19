@@ -2,11 +2,13 @@
 
 import hashlib
 import json
+import shutil
 import sqlite3
 import sys
 import threading
 import time
 from concurrent.futures import ThreadPoolExecutor
+from contextlib import closing
 from pathlib import Path
 from unittest.mock import Mock, patch
 
@@ -15,12 +17,15 @@ from fastapi.testclient import TestClient
 
 from http_support.auth import ORIGIN, PASSWORD, authenticated_client
 from market_research.descriptive.cases.futures_basis import (
+    ACTIVE_RUN_VERSION,
     FuturesBasisOnlineApplication,
     OnlineError,
     OnlineServices,
     compose_report,
     online,
 )
+from market_research.descriptive.cases.futures_basis.evidence import json_bytes
+from market_research.descriptive.cases.futures_basis.online_record import _failure_reason
 from market_statistics import CalculationFailure
 from ui_http.app import create_app
 from ui_http.auth import create_service
@@ -365,7 +370,7 @@ def test_singleton_startup_offline_export_and_platform_isolation(tmp_path, monke
     root = tmp_path / "portable"
     portable = FuturesBasisOnlineApplication(root=root)
     assert portable.root == root
-    assert (root / "runs.sqlite3").is_file()
+    assert active_db(root).is_file()
 
 
 def test_openapi_exact_operations_and_access(product):
@@ -584,40 +589,98 @@ def test_preflight_openapi_is_bounded_authenticated_and_has_no_422():
         assert response["headers"]["Cache-Control"]["schema"]["const"] == "no-store"
 
 
+def active_db(root):
+    return root / "versions" / f"v{ACTIVE_RUN_VERSION}" / "runs.sqlite3"
+
+
 def db(research, statement, args=()):
-    with sqlite3.connect(research.root / "runs.sqlite3") as connection:
+    with closing(sqlite3.connect(active_db(research.root))) as connection, connection:
         return connection.execute(statement, args).fetchall()
 
 
-def test_historical_completed_status_keeps_its_profile_after_restart(product):
-    from market_research.descriptive.cases.futures_basis.evidence import json_bytes
-
+@pytest.mark.parametrize("legacy_kind", ["completed", "other_states", "mixed", "corrupt"])
+def test_sealed_legacy_is_excluded_from_http_lifecycle(product, tmp_path, monkeypatch, legacy_kind):
     app, research, services = product
     client = authenticated_client(app)
     run_id = client.post(PATH, json=BODY).json()["run_id"]
     assert terminal(client, run_id)["status"] == "COMPLETED"
-    with sqlite3.connect(research.root / "runs.sqlite3") as connection:
+    cutover = tmp_path / "cutover"
+    cutover.mkdir()
+    legacy = cutover / "runs.sqlite3"
+    shutil.copyfile(active_db(research.root), legacy)
+    legacy_ids = [run_id]
+    with closing(sqlite3.connect(legacy)) as connection, connection:
         metadata, state, payload = connection.execute(
             "SELECT metadata, state, payload FROM runs JOIN results USING (run_id)"
         ).fetchone()
+        owner = connection.execute("SELECT owner FROM runs").fetchone()[0]
         metadata, state, reader = map(json.loads, (metadata, state, payload))
         metadata["request"]["analysis_profile"] = "r01a_standard_v1"
-        reader["profile"] = "futures_basis_report_evidence_v1"
-        payload = json_bytes(reader)
-        state["result_digest"] = hashlib.sha256(payload).hexdigest()
-        connection.execute(
-            "UPDATE runs SET metadata=?, state=?, profile=?",
-            (json_bytes(metadata), json_bytes(state), reader["profile"]),
-        )
-        connection.execute("UPDATE results SET payload=?", (payload,))
+        if legacy_kind in {"completed", "mixed"}:
+            reader["profile"] = "futures_basis_report_evidence_v1"
+            reader["definition_version"] = "futures_basis_definition_v1"
+            reader["request"]["histograms"].pop()
+            payload = json_bytes(reader)
+            state["result_digest"] = hashlib.sha256(payload).hexdigest()
+            legacy_id = run_id if legacy_kind == "completed" else "e" * 32
+            if legacy_kind == "mixed":
+                legacy_ids.append(legacy_id)
+                connection.execute(
+                    "INSERT INTO runs SELECT ?,owner,metadata,state,status,result_length,"
+                    "profile,scientific_status FROM runs WHERE run_id=?", (legacy_id, run_id)
+                )
+                connection.execute("INSERT INTO results VALUES (?, ?)", (legacy_id, payload))
+            else:
+                connection.execute("UPDATE results SET payload=?", (payload,))
+            connection.execute(
+                "UPDATE runs SET metadata=?,state=?,profile=?,result_length=? WHERE run_id=?",
+                (json_bytes(metadata), json_bytes(state), reader["profile"], len(payload), legacy_id),
+            )
+        elif legacy_kind == "other_states":
+            connection.execute("DELETE FROM results")
+            connection.execute("DELETE FROM runs")
+            legacy_ids.clear()
+            for i, status in enumerate(("PENDING", "RUNNING", "FAILED", "INTERRUPTED")):
+                legacy_id = f"{i:032x}"
+                legacy_ids.append(legacy_id)
+                stage = "execution"
+                category = {"FAILED": "internal_failure", "INTERRUPTED": "interrupted"}.get(status)
+                failure = None if category is None else {
+                    "stage": stage, "category": category, "dependency": None,
+                    "reason": _failure_reason(stage, category),
+                }
+                persisted = {
+                    **state, "status": status,
+                    "started_at": state["started_at"] if status == "RUNNING" else None,
+                    "finished_at": state["finished_at"] if failure else None,
+                    "result_status": None, "result_digest": None, "failure": failure,
+                }
+                connection.execute(
+                    "INSERT INTO runs VALUES (?,?,?,?,?,NULL,NULL,NULL)",
+                    (legacy_id, owner, json_bytes(metadata), json_bytes(persisted), status),
+                )
+        else:
+            connection.execute("UPDATE runs SET metadata=?", (b"{",))
+    for suffix in ("-journal", "-wal", "-shm"):
+        (cutover / (legacy.name + suffix)).write_bytes(suffix.encode())
+    sealed = {path: path.read_bytes() for path in cutover.iterdir()}
+    opened = set()
+    connect = sqlite3.connect
+
+    def tracked(database, *args, **kwargs):
+        if "runs.sqlite3" in str(database):
+            opened.add(database)
+        return connect(database, *args, **kwargs)
+
+    monkeypatch.setattr(sqlite3, "connect", tracked)
     app.state.futures_basis_application = FuturesBasisOnlineApplication(
-        root=research.root, services=OnlineServices(services, services, services)
+        root=cutover, services=OnlineServices(services, services, services)
     )
-    response = client.get(f"{PATH}/{run_id}")
-    assert response.status_code == 200
-    assert response.json()["request"]["analysis_profile"] == "r01a_standard_v1"
-    assert response.json()["result_available"] is True
-    assert_error(client.get(f"{PATH}/{run_id}/report"), 409, "unsupported_version")
+    accepted = client.post(PATH, json=BODY)
+    assert accepted.status_code == 202
+    current_id = accepted.json()["run_id"]
+    assert terminal(client, current_id)["status"] == "COMPLETED"
+    assert client.get(f"{PATH}/{current_id}/report").status_code == 200
     service = create_service()
     service.register("other_consumer", PASSWORD)
     service.approve(service.list_pending()[0].id)
@@ -626,13 +689,16 @@ def test_historical_completed_status_keeps_its_profile_after_restart(product):
         "/auth/login", json={"username": "other_consumer", "password": PASSWORD}
     ).status_code == 200
     for suffix in ("", "/report"):
-        assert_error(other.get(f"{PATH}/{run_id}{suffix}"), 404, "run_not_found")
-    assert db(research, "SELECT payload FROM results") == [(payload,)]
+        for legacy_id in legacy_ids:
+            assert_error(client.get(f"{PATH}/{legacy_id}{suffix}"), 404, "run_not_found")
+            assert_error(other.get(f"{PATH}/{legacy_id}{suffix}"), 404, "run_not_found")
+        assert_error(other.get(f"{PATH}/{current_id}{suffix}"), 404, "run_not_found")
+    assert opened == {active_db(cutover).as_uri() + "?mode=rw"}
+    assert {path: path.read_bytes() for path in cutover.iterdir() if path.is_file()} == sealed
 
 
 def test_real_sqlite_lock_recovers_on_explicit_post_after_cooldown(product, monkeypatch, caplog):
-    from contextlib import closing
-
+    caplog.set_level("INFO", logger="uvicorn.error.futures_basis")
     app, research, services = product
     app.state.futures_basis_application = None
     monkeypatch.setenv("LAB_FUTURES_BASIS_RUN_ROOT", str(research.root))
@@ -643,12 +709,14 @@ def test_real_sqlite_lock_recovers_on_explicit_post_after_cooldown(product, monk
     clock = Mock(return_value=100.0)
     monkeypatch.setattr(runtime, "monotonic", clock)
     client = authenticated_client(app)
-    with closing(sqlite3.connect(research.root / "runs.sqlite3")) as blocker:
+    with closing(sqlite3.connect(active_db(research.root))) as blocker:
         blocker.execute("BEGIN IMMEDIATE")
         with client:
             assert_error(client.post(PATH, json=BODY), 503, "unavailable")
             assert "stage=transaction category=sqlite_lock" in caplog.text
             assert "exception_type=OperationalError" in caplog.text
+            assert f"active_run_version={ACTIVE_RUN_VERSION}" in caplog.text
+            assert "sqlite_code=5" in caplog.text
             blocker.rollback()
             clock.return_value = 129.0
             assert_error(client.post(PATH, json=BODY), 503, "unavailable")
@@ -661,6 +729,7 @@ def test_real_sqlite_lock_recovers_on_explicit_post_after_cooldown(product, monk
             assert response.status_code == 202, response.text
             assert factory.call_count == 2
             assert terminal(client, response.json()["run_id"])["status"] == "COMPLETED"
+    assert "futures_basis_initialization_succeeded" in caplog.text
     assert db(research, "SELECT count(*) FROM runs") == [(1,)]
 
 
@@ -721,7 +790,8 @@ def test_permanent_storage_failures_are_not_retried(
         root = root / "file"
         root.touch()
     elif problem == "bad_db":
-        (root / "runs.sqlite3").write_bytes(b"invalid SQLite file")
+        active_db(root).parent.mkdir(parents=True)
+        active_db(root).write_bytes(b"invalid SQLite file")
     else:
         lstat = Path.lstat
 
@@ -745,4 +815,4 @@ def test_permanent_storage_failures_are_not_retried(
     assert "inspect_storage_and_restart_backend" in caplog.text
     assert "/private" not in caplog.text
     if problem == "bad_db":
-        assert (root / "runs.sqlite3").read_bytes() == b"invalid SQLite file"
+        assert active_db(root).read_bytes() == b"invalid SQLite file"

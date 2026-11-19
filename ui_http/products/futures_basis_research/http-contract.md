@@ -28,7 +28,7 @@ Financial formulas remain solely Research-owned. The HTTP route/operation identi
 three-field submit body, lifecycle, authentication, size limits and error mappings
 stay unchanged. No Bin Width or `tail_exclusion_pct` is accepted as HTTP input.
 The analysis profile, reader payload and HTTP transport have separate version
-identities. Historical status retains its original analysis profile. Immutable
+identities. Submit, status and report responses use the current analysis profile. Immutable
 profile specifications belong only to
 [Online application](../../../market_research/descriptive/cases/futures_basis/ONLINE_APPLICATION.md).
 
@@ -225,14 +225,14 @@ successful HTTP read with a partial scientific status.
 | POST | 500 | `internal_error` | Unexpected transport/runtime defect |
 | GET run | 200 | — | Existing owned run in any state |
 | GET run | 400 | `invalid_request` | Query parameters are forbidden |
-| GET run | 404 | `run_not_found` | Unknown, malformed or foreign run |
+| GET run | 404 | `run_not_found` | Absent from current-version store, malformed or foreign run |
 | GET run | 409 | `corrupt` | Stored request/state/result association is corrupt |
 | GET run | 409 | `unsupported_version` | Unknown stored run schema |
 | GET run | 503 | `unavailable` | Run storage unavailable |
 | GET run | 500 | `internal_error` | Unexpected transport/runtime defect |
 | GET report | 200 | — | `COMPLETED` result with `complete` or `partial` status |
 | GET report | 400 | `invalid_request` | Query parameters are forbidden |
-| GET report | 404 | `run_not_found` | Unknown, malformed or foreign run |
+| GET report | 404 | `run_not_found` | Absent from current-version store, malformed or foreign run |
 | GET report | 409 | `result_not_ready` | Run is `PENDING` or `RUNNING` |
 | GET report | 409 | `result_unavailable` | Run is `FAILED` or `INTERRUPTED` |
 | GET report | 409 | `corrupt` | Stored result/profile/association is corrupt |
@@ -288,15 +288,14 @@ one process-wide online application.
 Initialization starts at backend startup. After a retryable initialization failure
 identified by Research, only an authenticated, valid POST Run request can trigger
 another attempt, after a 30-second cooldown and within three total attempts per
-process. The HTTP runtime serializes attempts and logs safe stage, category,
+process. The HTTP runtime serializes attempts and logs the active Run Contract
+Version and initialization outcome. Failure logs include safe stage, category,
 exception type, SQLite error code when available, operation and attempt identity.
 Permanent failures or exhausted attempts require operator action and restart.
 Initialization failure remains `503 unavailable`. GET, preflight and offline OpenAPI
 never trigger initialization or recovery. The adapter never replays a submission.
-An intact V1 completed Run retains its status DTO and `result_available=true`
-for its owner. The status request identity admits the original `r01a_standard_v1`
-literal. Its report returns `409 unsupported_version`. New submissions,
-preflight and report success responses continue to use the V2 identity.
+GET status and report query only the current store. An ID in a sealed store is
+indistinguishable from any other absent ID and returns `404 run_not_found`.
 
 WP8-A implements HTTP delivery only; WP8-B introduces the first Web consumer and
 its generated artifacts and freshness checks. The new frontend feature owns its committed

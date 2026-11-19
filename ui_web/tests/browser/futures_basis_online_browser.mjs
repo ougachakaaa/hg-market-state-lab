@@ -175,8 +175,8 @@ try {
   // The prior report must survive and the client must not create another Run.
   const runCount = () => {
     const result = spawnSync('poetry', ['run', 'python', '-c',
-      'import sqlite3,sys; from pathlib import Path; c=sqlite3.connect(Path(sys.argv[1]).as_uri()+"?mode=ro",uri=True); print(c.execute("SELECT count(*) FROM runs").fetchone()[0]); c.close()',
-      resolve(env.LAB_FUTURES_BASIS_RUN_ROOT, 'runs.sqlite3')], { cwd: root, env, encoding: 'utf8' })
+      'import sqlite3,sys; from pathlib import Path; from market_research.descriptive.cases.futures_basis import ACTIVE_RUN_VERSION; p=Path(sys.argv[1])/"versions"/f"v{ACTIVE_RUN_VERSION}"/"runs.sqlite3"; c=sqlite3.connect(p.as_uri()+"?mode=ro",uri=True); print(c.execute("SELECT count(*) FROM runs").fetchone()[0]); c.close()',
+      env.LAB_FUTURES_BASIS_RUN_ROOT], { cwd: root, env, encoding: 'utf8' })
     assert.equal(result.status, 0, result.stderr)
     return Number(result.stdout.trim())
   }

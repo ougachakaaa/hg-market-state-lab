@@ -44,7 +44,7 @@ class OnlineServices:
 
 
 class FuturesBasisOnlineApplication:
-    """One active run, persisted state and read-only historical projection."""
+    """One active Run with persisted state and result in the current store."""
 
     def __init__(
         self,
@@ -75,13 +75,13 @@ class FuturesBasisOnlineApplication:
                 "unavailable", "configuration", "invalid_root", exc
             ) from None
         with _PROCESS_LOCK:
-            if str(self.root) in _UNAVAILABLE:
+            if str(self._store.root) in _UNAVAILABLE:
                 exc = OnlineError("unavailable")
                 raise OnlineInitializationError("unavailable", "recovery", "terminal_state", exc)
             self._store.recover(_PROCESS_ACTIVE)
 
     def _available(self) -> None:
-        if str(self.root) in _UNAVAILABLE:
+        if str(self._store.root) in _UNAVAILABLE:
             raise OnlineError("unavailable")
 
     def submit(self, request: FuturesBasisRequest, owner_scope: str) -> dict[str, Any]:
@@ -98,14 +98,14 @@ class FuturesBasisOnlineApplication:
                 raise OnlineError("run_busy")
             accepted = self._store.create(request, owner_scope)
             run_id = accepted["run_id"]
-            _PROCESS_ACTIVE = (str(self.root), run_id)
+            _PROCESS_ACTIVE = (str(self._store.root), run_id)
             try:
                 threading.Thread(target=self._execute, args=(run_id, request), daemon=True).start()
             except BaseException as exc:
                 try:
                     self._store.transition(run_id, "FAILED", _failure(exc))
                 except BaseException:
-                    _UNAVAILABLE.add(str(self.root))
+                    _UNAVAILABLE.add(str(self._store.root))
                 finally:
                     _PROCESS_ACTIVE = None
                 raise OnlineError("unavailable") from None
@@ -159,7 +159,7 @@ class FuturesBasisOnlineApplication:
                 try:
                     self._store.transition(run_id, "FAILED", _failure(exc))
                 except BaseException:
-                    _UNAVAILABLE.add(str(self.root))
+                    _UNAVAILABLE.add(str(self._store.root))
                 finally:
                     _PROCESS_ACTIVE = None
 
@@ -169,7 +169,7 @@ class FuturesBasisOnlineApplication:
             self._available()
             result = self._store.status(run_id, owner_scope)
             if result["status"] in {"PENDING", "RUNNING"} and _PROCESS_ACTIVE != (
-                str(self.root),
+                str(self._store.root),
                 run_id,
             ):
                 raise OnlineError("unavailable")

@@ -1,6 +1,6 @@
 import { Alert, Card, Collapse, Descriptions, Flex, Typography } from 'antd'
 import type { ReactNode } from 'react'
-import type { RunRequest } from '../api/validateResult'
+import type { ImmutableRequest } from '../api/validateResult'
 import { STATIC_BASIS_DISCLOSURE } from '../model/basisPresentation'
 import { Report } from '../report/Report'
 import type { ReportData } from '../report/types'
@@ -17,7 +17,7 @@ export type FuturesBasisPresentationProps =
     /** Production Run lifecycle region: phase, accepted identity, reads and retries. */
     run: ReactNode
     /** Immutable request of the accepted Run; the editable query form is not this identity. */
-    request: RunRequest | null
+    request: ImmutableRequest | null
     /** Validated online Report. */
     report?: ReportData
     /** Report identity used to reset reader-local state for a different Run. */
@@ -33,7 +33,7 @@ export type FuturesBasisPresentationProps =
     sourceDisclosure?: string
   }
 
-function RequestFacts({ request }: { request: RunRequest }) {
+function RequestFacts({ request }: { request: ImmutableRequest }) {
   return <Descriptions size="small" column={{ xs: 1, md: 2 }} items={[
     { key: 'product', label: '品种', children: request.product_code },
     { key: 'window', label: '请求范围（含首尾）', children: `${request.start_date} 至 ${request.end_date}` },

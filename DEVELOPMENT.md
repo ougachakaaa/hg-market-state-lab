@@ -7,7 +7,8 @@ directory containing `runs.sqlite3`; the default remains the ignored Backtesting
 runtime directory. Old Run directories are ignored without migration or deletion.
 Native Windows and local Linux/WSL use the same single-process implementation;
 platform verification limits are recorded in [W2 storage](market_backtesting/cases/futures_roll_long/ONLINE_STORAGE.md#platform-verification-boundary).
-W1 Online exclusively uses its independent `<LAB_FUTURES_BASIS_RUN_ROOT>/runs.sqlite3`.
+W1 Online uses a versioned database under `LAB_FUTURES_BASIS_RUN_ROOT`. See
+[Futures Basis storage](market_research/descriptive/cases/futures_basis/ONLINE_STORAGE.md).
 Publication exclusively uses `<LAB_RESEARCH_PUBLICATION_ROOT>/publications.sqlite3`;
 configure the directory root explicitly. Legacy files are ignored and never deleted.
 W2 storage cutover is not a production deployment declaration.
@@ -48,7 +49,7 @@ process environment > repository-root .env > built-in defaults
 | `LAB_AUTH_ORIGIN` | Auth serving 必填的 browser-facing origin |
 | `LAB_AUTH_DB_PATH` | 可选，Auth SQLite 绝对路径；默认 `ui_http/data/auth.sqlite3` |
 | `LAB_RESEARCH_PUBLICATION_ROOT` | 可选，Publication storage 绝对路径 |
-| `LAB_FUTURES_BASIS_RUN_ROOT` | 可选，Futures Basis Online Run Store 绝对路径；默认 `market_research/.runtime/futures_basis_online/` |
+| `LAB_FUTURES_BASIS_RUN_ROOT` | 可选，Futures Basis Online Run Store 基础目录的绝对路径，默认 `market_research/.runtime/futures_basis_online/` |
 
 首次准备：
 

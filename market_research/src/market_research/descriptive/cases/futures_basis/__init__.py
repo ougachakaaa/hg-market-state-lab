@@ -33,6 +33,7 @@ from .online import FuturesBasisOnlineApplication as FuturesBasisOnlineApplicati
 from .online import OnlineError as OnlineError
 from .online import OnlineServices as OnlineServices
 from .online_record import OnlineInitializationError as OnlineInitializationError
+from .online_sqlite_store import ACTIVE_RUN_VERSION as ACTIVE_RUN_VERSION
 from .online import standard_report_request as standard_report_request
 from .preflight import FuturesBasisPreflight as FuturesBasisPreflight
 from .preflight import PreflightDependency as PreflightDependency

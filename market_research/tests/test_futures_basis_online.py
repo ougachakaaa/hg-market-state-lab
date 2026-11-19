@@ -1,8 +1,11 @@
 """WP7 application acceptance with only synthetic public facts."""
 
+import hashlib
+import json
 import sqlite3
 import threading
 import time
+from contextlib import closing
 from dataclasses import replace
 from pathlib import Path
 from unittest.mock import patch
@@ -11,6 +14,8 @@ import pytest
 
 import lab_config
 from futures_basis_observation_fixtures import REQUEST, Services
+from market_research.descriptive.cases.futures_basis import online_sqlite_store
+from market_research.descriptive.cases.futures_basis.evidence import json_bytes
 from market_research.descriptive.cases.futures_basis.online import (
     FuturesBasisOnlineApplication,
     OnlineError,
@@ -18,6 +23,9 @@ from market_research.descriptive.cases.futures_basis.online import (
     standard_report_request,
 )
 from market_research.descriptive.cases.futures_basis.report import compose_report
+from market_research.descriptive.cases.futures_basis.online_sqlite_store import (
+    FuturesBasisSQLiteRunStore,
+)
 from market_statistics import CalculationFailure
 
 # Terminal state is published before the worker's finally releases the process permit.
@@ -203,7 +211,7 @@ def test_simultaneous_submit_accepts_only_one(tmp_path):
 
 
 def sql(app, statement, args=()):
-    with sqlite3.connect(app.root / "runs.sqlite3") as c:
+    with closing(sqlite3.connect(app._store.path)) as c, c:
         return c.execute(statement, args).fetchall()
 
 
@@ -349,11 +357,15 @@ def test_recovery_treats_malformed_stored_identity_as_corrupt(tmp_path):
     error("corrupt", store.recover)
 
 
-@pytest.mark.parametrize("version", [0, 2])
-def test_existing_invalid_schema_is_not_initialized(tmp_path, version):
-    with sqlite3.connect(tmp_path / "runs.sqlite3") as c:
+@pytest.mark.parametrize("version,kind", [(0, "corrupt"), (2, "unsupported_version")])
+def test_existing_invalid_schema_is_not_initialized(tmp_path, version, kind):
+    path = FuturesBasisSQLiteRunStore(tmp_path).path
+    path.parent.mkdir(parents=True)
+    with closing(sqlite3.connect(path)) as c, c:
         c.execute(f"PRAGMA user_version={version}")
-    error("corrupt", lambda: application(tmp_path))
+    before = path.read_bytes()
+    error(kind, lambda: application(tmp_path))
+    assert path.read_bytes() == before
 
 
 def test_atomic_commit_failure_and_failed_terminal_persistence(tmp_path, monkeypatch):
@@ -446,7 +458,7 @@ def commit(c):
     if sys.argv[4] == 'True': c.commit()
     os._exit(73)
 store._commit = commit
-store.publish(sys.argv[3], (store.root/'fixture.json').read_bytes(), 'complete')
+store.publish(sys.argv[3], (Path(sys.argv[2])/'fixture.json').read_bytes(), 'complete')
 """
     result = subprocess.run(
         [
@@ -467,7 +479,8 @@ store.publish(sys.argv[3], (store.root/'fixture.json').read_bytes(), 'complete')
     if after_commit:
         assert store.read_report(run_id, "owner-a") == json.loads(payload)
     else:
-        assert sql(type("App", (), {"root": tmp_path})(), "SELECT count(*) FROM results") == [(0,)]
+        with closing(sqlite3.connect(store.path)) as connection:
+            assert connection.execute("SELECT count(*) FROM results").fetchone() == (0,)
 
 
 def test_publish_commit_rollback_and_scientific_parity(tmp_path, monkeypatch):
@@ -526,6 +539,78 @@ def test_collision_and_legacy_files_ignored(tmp_path, monkeypatch):
     assert (legacy / "state.json").read_bytes() == b"unreadable legacy state"
 
 
+def test_current_run_contract_snapshot(tmp_path):
+    app = application(tmp_path)
+    run_id = app.submit(REQUEST, "owner-a")["run_id"]
+    assert settled(app, run_id)["status"] == "COMPLETED"
+    reader = app.get_report(run_id, "owner-a")
+    metadata, state = map(json.loads, sql(app, "SELECT metadata,state FROM runs")[0])
+    snapshot = {
+        "schema_version": sql(app, "PRAGMA user_version")[0][0],
+        "schema": sql(app, "SELECT sql FROM sqlite_master WHERE sql IS NOT NULL ORDER BY name"),
+        "metadata": sorted(metadata),
+        "metadata_version": metadata["version"],
+        "state": sorted(state),
+        "state_version": state["version"],
+        "run_request": metadata["request"],
+        "reader_fields": sorted(reader),
+        "definition": reader["definition_version"],
+        "reader_profile": reader["profile"],
+        "report_request": reader["request"],
+    }
+    # Review incompatible changes against this snapshot before incrementing the contract version.
+    actual = hashlib.sha256(json_bytes(snapshot)).hexdigest()
+    assert (online_sqlite_store.ACTIVE_RUN_VERSION, actual) == (
+        2, "9a6765fce5e39a0828c04640aab0727e47a7fdaa4575b357ae44a2e8d998e8e5"
+    ), "Review the Run Contract Version before changing the snapshot"
+
+
+def test_next_version_runs_with_previous_version_store_present(tmp_path, monkeypatch):
+    prior = application(tmp_path)
+    prior_id = prior.submit(REQUEST, "owner-a")["run_id"]
+    assert settled(prior, prior_id)["status"] == "COMPLETED"
+    prior_path = prior._store.path
+    before = prior_path.read_bytes()
+    next_version = online_sqlite_store.ACTIVE_RUN_VERSION + 1
+    monkeypatch.setattr(online_sqlite_store, "ACTIVE_RUN_VERSION", next_version)
+
+    connections = []
+    connect = sqlite3.connect
+
+    def track(database, *args, **kwargs):
+        connections.append(database)
+        return connect(database, *args, **kwargs)
+
+    monkeypatch.setattr(sqlite3, "connect", track)
+    current = application(tmp_path)
+    expected = tmp_path / "versions" / f"v{next_version}" / "runs.sqlite3"
+    assert current._store.path == expected
+    error("run_not_found", lambda: current.get_run(prior_id, "owner-a"))
+    error("run_not_found", lambda: current.get_report(prior_id, "owner-a"))
+    current_id = current.submit(REQUEST, "owner-a")["run_id"]
+    assert settled(current, current_id)["status"] == "COMPLETED"
+    assert current.get_report(current_id, "owner-a")["profile"]
+    assert set(connections) == {expected.as_uri() + "?mode=rw"}
+    assert prior_path.read_bytes() == before
+
+
+def test_corrupt_active_store_does_not_fall_back_to_another_version(tmp_path, monkeypatch):
+    active_version = online_sqlite_store.ACTIVE_RUN_VERSION
+    active = FuturesBasisSQLiteRunStore(tmp_path)
+    active.root.mkdir(parents=True)
+    broken = b"invalid current SQLite database"
+    active.path.write_bytes(broken)
+    with monkeypatch.context() as context:
+        context.setattr(online_sqlite_store, "ACTIVE_RUN_VERSION", active_version + 1)
+        other = FuturesBasisSQLiteRunStore(tmp_path)
+        other.initialize()
+    before = other.path.read_bytes()
+
+    error("corrupt", lambda: application(tmp_path))
+    assert active.path.read_bytes() == broken
+    assert other.path.read_bytes() == before
+
+
 @pytest.mark.parametrize("sidecar", ["-journal", "-wal", "-shm"])
 def test_unsafe_sidecar_and_root_rejected(tmp_path, sidecar):
     from market_research.descriptive.cases.futures_basis.online_sqlite_store import (
@@ -533,17 +618,20 @@ def test_unsafe_sidecar_and_root_rejected(tmp_path, sidecar):
     )
 
     error("unavailable", lambda: application(Path("relative")))
-    (tmp_path / ("runs.sqlite3" + sidecar)).mkdir()
-    error("corrupt", lambda: FuturesBasisSQLiteRunStore(tmp_path).initialize())
+    store = FuturesBasisSQLiteRunStore(tmp_path)
+    store.root.mkdir(parents=True)
+    store.path.with_name(store.path.name + sidecar).mkdir()
+    error("corrupt", store.initialize)
 
 
 @pytest.mark.parametrize("kind", ["missing", "wrong", "corrupt"])
 def test_malformed_database_rejected_without_repair(tmp_path, kind):
-    path = tmp_path / "runs.sqlite3"
+    path = FuturesBasisSQLiteRunStore(tmp_path).path
+    path.parent.mkdir(parents=True)
     if kind == "corrupt":
         path.write_bytes(b"invalid database")
     else:
-        with sqlite3.connect(path) as c:
+        with closing(sqlite3.connect(path)) as c, c:
             c.execute("PRAGMA user_version=1")
             if kind == "wrong":
                 c.execute("CREATE TABLE runs (unexpected TEXT)")
